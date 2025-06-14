@@ -57,9 +57,9 @@
                     <span class="notification-text">
                         通知：
                         <br>
-                        1. 上线最新功能=>【传输】: 此功能方便在你的设备之间传输文件和文本。采用端到端加密技术，保护隐私性!
+                        1. 由于遭遇到youbube官方的限制，本站不再支持youtube视频下载。
                         <br>
-                        2. youtube下载遇到了些问题，正在修复中...
+                        2. 本站最新上线传输文件功能，你可以在自己的设备中任意传输文本和文件，特别适合用户不能使用微信,QQ的场景。
                     </span>                    
                     <button 
                         class="notification-close" 

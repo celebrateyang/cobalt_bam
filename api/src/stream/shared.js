@@ -45,7 +45,6 @@ export function closeResponse(res) {
 }
 
 export function getHeaders(service) {
-    console.log(`======> [getHeaders] Getting headers for service: ${service}`);
     
     // Converting all header values to strings
     const baseHeaders = Object.entries({ ...defaultHeaders, ...serviceHeaders[service] })
@@ -53,40 +52,37 @@ export function getHeaders(service) {
     
     // For YouTube, always try to add authentication cookies
     if (service === 'youtube') {
-        console.log(`======> [getHeaders] YouTube service detected, checking for authentication cookies`);
+        
         
         // First try OAuth cookies, then regular cookies
         let cookie = getCookie('youtube_oauth');
         if (!cookie) {
-            console.log(`======> [getHeaders] No OAuth cookies found, trying regular youtube cookies`);
+            
             cookie = getCookie('youtube');
         }
         
         if (cookie) {
             const cookieStr = cookie.toString();
             baseHeaders.Cookie = cookieStr;
-            console.log(`======> [getHeaders] Added authentication cookie for YouTube: ${cookieStr.substring(0, 50)}${cookieStr.length > 50 ? '...' : ''}`);
-        } else {
-            console.log(`======> [getHeaders] WARNING: No YouTube authentication cookies found! Requests may fail.`);
-        }
+            
+        } 
     }
     
-    console.log(`======> [getHeaders] Final headers for ${service}:`, Object.keys(baseHeaders));
     return baseHeaders;
 }
 
 export function pipe(from, to, done) {
     let bytesTransferred = 0;
     let startTime = Date.now();
-    console.log(`[pipe] Starting pipe operation`);
+    
 
     from.on('error', (error) => {
-        console.log(`[pipe] Source stream error after ${bytesTransferred} bytes: ${error}`);
+        
         done(error);
     })
     .on('close', () => {
         const duration = Date.now() - startTime;
-        console.log(`[pipe] Source stream closed after ${bytesTransferred} bytes in ${duration}ms`);
+        
         done();
     })    .on('data', (chunk) => {
         bytesTransferred += chunk.length;
@@ -97,17 +93,17 @@ export function pipe(from, to, done) {
     });
 
     to.on('error', (error) => {
-        console.log(`[pipe] Destination stream error after ${bytesTransferred} bytes: ${error}`);
+        
         done(error);
     })
     .on('close', () => {
         const duration = Date.now() - startTime;
-        console.log(`[pipe] Destination stream closed after ${bytesTransferred} bytes in ${duration}ms`);
+        
         done();
     });
 
     from.pipe(to);
-    console.log(`[pipe] Pipe established between streams`);
+    
 }
 
 export async function estimateTunnelLength(streamInfo, multiplier = 1.1) {

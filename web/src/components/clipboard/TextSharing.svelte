@@ -116,7 +116,26 @@
 
 <SettingsCategory title="文本分享" sectionId="text-sharing">
     <div class="text-sharing-section">
-        <!-- 接收文本区域 - 移到上方 -->
+        <!-- 发送文本区域 - 移到上方 -->
+        <div class="send-text">
+            <h4>发送文本</h4>
+            <textarea
+                class="text-input"
+                bind:value={textContent}
+                placeholder="输入要发送的文本..."
+                rows="4"
+                disabled={!peerConnected}
+            ></textarea>
+            <ActionButton
+                id="send-text"
+                disabled={!peerConnected || !textContent.trim()}
+                click={sendText}
+            >
+                发送文本
+            </ActionButton>
+        </div>
+
+        <!-- 接收文本区域 - 移到下方 -->
         <div class="received-text" class:new-message={isNewMessage} bind:this={receivedTextElement}>
             <h4>已接收文本 {#if isNewMessage}<span class="new-badge">新</span>{/if}</h4>
             {#if receivedText}
@@ -142,25 +161,6 @@
                     暂无接收到的文本
                 </div>
             {/if}
-        </div>
-
-        <!-- 发送文本区域 - 移到下方 -->
-        <div class="send-text">
-            <h4>发送文本</h4>
-            <textarea
-                class="text-input"
-                bind:value={textContent}
-                placeholder="输入要发送的文本..."
-                rows="4"
-                disabled={!peerConnected}
-            ></textarea>
-            <ActionButton
-                id="send-text"
-                disabled={!peerConnected || !textContent.trim()}
-                click={sendText}
-            >
-                发送文本
-            </ActionButton>
         </div>
     </div>
 </SettingsCategory>
@@ -513,8 +513,7 @@
             margin: 0 auto;
             display: block;
         }
-        
-        /* 调整发送文本区域 */
+          /* 调整发送文本区域 */
         .send-text {
             order: 1;
         }

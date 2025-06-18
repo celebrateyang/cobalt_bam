@@ -87,9 +87,9 @@ export function pipe(from, to, done) {
     })    .on('data', (chunk) => {
         bytesTransferred += chunk.length;
         // Log every 8MB (chunk size) or first few chunks
-        if (bytesTransferred % (8 * 1024 * 1024) < chunk.length || bytesTransferred < 32 * 1024) {
-            console.log(`[pipe] Data transferred: ${bytesTransferred} bytes`);
-        }
+        // if (bytesTransferred % (8 * 1024 * 1024) < chunk.length || bytesTransferred < 32 * 1024) {
+        //     console.log(`[pipe] Data transferred: ${bytesTransferred} bytes`);
+        // }
     });
 
     to.on('error', (error) => {

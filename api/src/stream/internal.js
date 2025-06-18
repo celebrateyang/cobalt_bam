@@ -293,18 +293,15 @@ async function handleGenericStream(streamInfo, res) {
 }
 
 export function internalStream(streamInfo, res) {
-    console.log(`[internalStream] Starting stream - service: ${streamInfo.service}, isHLS: ${streamInfo.isHLS}, URL: ${streamInfo.url}`);
     
     if (streamInfo.headers) {
         streamInfo.headers.delete('icy-metadata');
     }
 
     if (streamInfo.service === 'youtube' && !streamInfo.isHLS) {
-        console.log(`[internalStream] Routing to handleYoutubeStream`);
         return handleYoutubeStream(streamInfo, res);
     }
 
-    console.log(`[internalStream] Routing to handleGenericStream`);
     return handleGenericStream(streamInfo, res);
 }
 

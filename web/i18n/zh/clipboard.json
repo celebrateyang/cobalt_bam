@@ -25,6 +25,21 @@
     "receiving": "接收中",
     "received_files": "已接收文件",
     "disconnect": "断开连接",
+    "file_transfer": {
+        "title": "文件传输",
+        "send_files": "发送文件",
+        "drop_zone_text": "📁 拖拽文件到这里或点击选择",
+        "selected_files": "已选择文件: (已自动发送或等待连接)",
+        "sending_files": "正在发送的文件:",
+        "sending_progress": "发送进度",
+        "receiving_progress": "接收进度",
+        "cancel_sending": "取消发送",
+        "auto_sent": "✅ 文件已自动发送",
+        "waiting_connection": "⚠️ 等待连接建立后自动发送",
+        "no_received_files": "暂无接收到的文件",
+        "download": "📥 下载",
+        "remove": "删除文件"
+    },
     "error": {
         "session_not_found": "会话不存在或已过期",
         "session_full": "会话已满",

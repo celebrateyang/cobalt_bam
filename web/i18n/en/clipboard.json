@@ -25,6 +25,21 @@
     "receiving": "Receiving",
     "received_files": "Received Files",
     "disconnect": "Disconnect",
+    "file_transfer": {
+        "title": "File Transfer",
+        "send_files": "Send Files",
+        "drop_zone_text": "📁 Drag files here or click to select",
+        "selected_files": "Selected Files: (Auto-sent or waiting for connection)",
+        "sending_files": "Sending Files:",
+        "sending_progress": "Sending Progress",
+        "receiving_progress": "Receiving Progress",
+        "cancel_sending": "Cancel Sending",
+        "auto_sent": "✅ Files auto-sent",
+        "waiting_connection": "⚠️ Waiting for connection to auto-send",
+        "no_received_files": "No received files yet",
+        "download": "📥 Download",
+        "remove": "Remove file"
+    },
     "error": {
         "session_not_found": "Session not found or expired",
         "session_full": "Session is full",

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import { t } from '$lib/i18n/translations';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
     import ActionButton from '$components/buttons/ActionButton.svelte';
     
@@ -14,12 +15,33 @@
     export let peerConnected: boolean;
     
     let fileInput: HTMLInputElement;
+    let autoSendScheduled = false; // 防止重复自动发送的标志
+    let pendingFiles: File[] = []; // 等待连接的文件
     
     function handleFileSelect(event: Event): void {
         const target = event.target as HTMLInputElement;
         if (target.files) {
             const newFiles = Array.from(target.files);
             dispatch('filesSelected', { files: newFiles });
+            
+            // 如果已连接且不在发送中，立即发送
+            if (peerConnected && !sendingFiles) {
+                scheduleAutoSend();
+            } else {
+                // 如果未连接，保存待发送文件
+                pendingFiles = newFiles;
+            }
+        }
+    }
+
+    function scheduleAutoSend(): void {
+        if (!autoSendScheduled) {
+            autoSendScheduled = true;
+            setTimeout(() => {
+                dispatch('sendFiles');
+                autoSendScheduled = false;
+                pendingFiles = []; // 清空待发送文件
+            }, 100);
         }
     }
 
@@ -38,6 +60,14 @@
         if (event.dataTransfer?.files) {
             const droppedFiles = Array.from(event.dataTransfer.files);
             dispatch('filesSelected', { files: droppedFiles });
+            
+            // 如果已连接且不在发送中，立即发送
+            if (peerConnected && !sendingFiles) {
+                scheduleAutoSend();
+            } else {
+                // 如果未连接，保存待发送文件
+                pendingFiles = droppedFiles;
+            }
         }
     }
 
@@ -47,6 +77,12 @@
 
     function sendFiles(): void {
         dispatch('sendFiles');
+        pendingFiles = []; // 开始发送时清空待发送列表
+    }
+
+    function cancelSending(): void {
+        dispatch('cancelSending');
+        autoSendScheduled = false; // 取消时重置标志
     }
 
     function downloadReceivedFile(file: any): void {
@@ -64,12 +100,22 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
+
+    // 只监听连接状态变化，当从未连接变为连接时发送待发送文件
+    let wasConnected = peerConnected;
+    $: {
+        // 连接状态从 false 变为 true
+        if (peerConnected && !wasConnected && pendingFiles.length > 0 && !sendingFiles) {
+            scheduleAutoSend();
+        }
+        wasConnected = peerConnected;
+    }
 </script>
 
-<SettingsCategory title="文件传输" sectionId="file-transfer">
+<SettingsCategory title={$t("clipboard.file_transfer.title")} sectionId="file-transfer">
     <div class="file-transfer-section">
         <div class="send-files">
-            <h4>发送文件</h4>
+            <h4>{$t("clipboard.file_transfer.send_files")}</h4>
             
             <div
                 class="file-drop-zone"
@@ -82,7 +128,7 @@
                 on:click={() => fileInput?.click()}
                 on:keydown={(e) => e.key === 'Enter' && fileInput?.click()}
             >
-                <p>📁 拖拽文件到这里或点击选择</p>
+                <p>{$t("clipboard.file_transfer.drop_zone_text")}</p>
                 <input
                     bind:this={fileInput}
                     type="file"
@@ -92,9 +138,9 @@
                 />
             </div>
 
-            {#if files.length > 0}
+            {#if files.length > 0 && !sendingFiles}
                 <div class="file-list">
-                    <h5>待发送文件:</h5>
+                    <h5>{$t("clipboard.file_transfer.selected_files")}</h5>
                     {#each files as file, index (file.name + index)}
                         <div class="file-item">
                             <span class="file-name">{file.name}</span>
@@ -102,38 +148,61 @@
                             <button
                                 class="remove-file"
                                 on:click={() => removeFile(index)}
-                                aria-label="Remove file"
+                                aria-label={$t("clipboard.file_transfer.remove")}
                             >
                                 ❌
                             </button>
                         </div>
                     {/each}
-                    <ActionButton
-                        id="send-files"
-                        disabled={!peerConnected || sendingFiles}
-                        click={sendFiles}
-                    >
-                        {sendingFiles ? '发送中...' : '发送文件'}
-                    </ActionButton>
+                    {#if !peerConnected}
+                        <div class="connection-warning">
+                            {$t("clipboard.file_transfer.waiting_connection")}
+                        </div>
+                    {:else}
+                        <div class="success-info">
+                            {$t("clipboard.file_transfer.auto_sent")}
+                        </div>
+                    {/if}
                 </div>
             {/if}
 
             {#if sendingFiles}
                 <div class="progress-section">
-                    <h4>发送进度: {Math.round(transferProgress)}%</h4>
+                    <div class="progress-header">
+                        <h4>{$t("clipboard.file_transfer.sending_progress")}: {Math.round(transferProgress)}%</h4>
+                        <ActionButton
+                            id="cancel-sending"
+                            disabled={false}
+                            click={cancelSending}
+                        >
+                            {$t("clipboard.file_transfer.cancel_sending")}
+                        </ActionButton>
+                    </div>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: {transferProgress}%"></div>
                     </div>
+                    {#if files.length > 0}
+                        <div class="sending-files">
+                            <h5>{$t("clipboard.file_transfer.sending_files")}</h5>
+                            {#each files as file, index (file.name + index)}
+                                <div class="file-item sending">
+                                    <span class="file-name">{file.name}</span>
+                                    <span class="file-size">({formatFileSize(file.size)})</span>
+                                    <span class="sending-indicator">📤</span>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </div>
 
         <div class="received-files">
-            <h4>已接收文件</h4>
+            <h4>{$t("clipboard.received_files")}</h4>
             
             {#if receivingFiles}
                 <div class="progress-section">
-                    <h4>接收进度: {Math.round(transferProgress)}%</h4>
+                    <h4>{$t("clipboard.file_transfer.receiving_progress")}: {Math.round(transferProgress)}%</h4>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: {transferProgress}%"></div>
                     </div>
@@ -151,12 +220,12 @@
                                     class="download-btn"
                                     on:click={() => downloadReceivedFile(file)}
                                 >
-                                    📥 下载
+                                    {$t("clipboard.file_transfer.download")}
                                 </button>
                                 <button
                                     class="remove-file"
                                     on:click={() => removeReceivedFile(index)}
-                                    aria-label="Remove file"
+                                    aria-label={$t("clipboard.file_transfer.remove")}
                                 >
                                     ❌
                                 </button>
@@ -166,7 +235,7 @@
                 </div>
             {:else if !receivingFiles}
                 <div class="empty-state">
-                    暂无接收到的文件
+                    {$t("clipboard.file_transfer.no_received_files")}
                 </div>
             {/if}
         </div>
@@ -363,6 +432,69 @@
         color: var(--text);
         font-size: 1rem;
         font-weight: 600;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-header h4 {
+        margin: 0;
+        flex: 1;
+    }
+
+    .connection-warning {
+        text-align: center;
+        color: #ff9800;
+        background: rgba(255, 152, 0, 0.1);
+        border: 1px solid rgba(255, 152, 0, 0.2);
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+
+    .success-info {
+        text-align: center;
+        color: #4caf50;
+        background: rgba(76, 175, 80, 0.1);
+        border: 1px solid rgba(76, 175, 80, 0.2);
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+
+    .sending-files {
+        margin-top: 1rem;
+    }
+
+    .sending-files h5 {
+        margin: 0 0 0.75rem 0;
+        font-weight: 600;
+        color: var(--text);
+        font-size: 0.95rem;
+    }
+
+    .file-item.sending {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+
+    .sending-indicator {
+        color: #667eea;
+        font-size: 1rem;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
     }
 
     .progress-bar {

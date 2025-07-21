@@ -8,6 +8,35 @@
         "title": "Freesavevideo.online Online Video Downloader Guide",
         "description1": "Use Freesavevideo.online, the leading online video downloader to download videos and music. No extra software is required; you can save your favorite media directly from the web. Our intuitive platform makes video downloading simple and efficient.",
         "description2": "Easily access and download various content, from popular movies and TV shows to exciting sports clips. Simply paste the video URL into the designated field and click the download button."
+    },
+    "notification": {
+        "title": "Notice:",
+        "close": "Close notification",
+        "file_transfer_optimization": "1. Optimized file transfer user experience. 2025-07-21",
+        "youtube_restriction": "2. Due to YouTube official restrictions, this site no longer supports YouTube video downloads. 2025-06-05"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "Chat with strangers based on similar ideas, no awkward conversations",
+            "features": {
+                "1": "1. Post your thoughts from your mind at any moment",
+                "2": "2. Perfect match, semantic match, complementary match",
+                "3": "3. Click on matched users to start chatting",
+                "4": "4. Offline matching email notifications",
+                "5": "5. Limited-time content & privacy protection, auto-destroy to reduce information burden"
+            },
+            "visit": "Visit Mindsou"
+        },
+        "yumcheck": {
+            "title": "Food ingredient analysis, photo automatic query and analysis",
+            "features": {
+                "1": "Take photos of ingredient lists for one-click ingredient analysis and health risk assessment",
+                "2": "Compare food additives with EU standards for multi-dimensional understanding",
+                "3": "Scan food standard numbers for quick interpretation of regulatory information",
+                "4": "Intelligent analysis of blood test reports, making blood reports understandable for ordinary people"
+            },
+            "visit": "Visit YumCheck"
+        }
     }
 
 }

@@ -55,16 +55,17 @@
                 <div class="notification-content">
                     <span class="notification-icon">🎉</span>
                     <span class="notification-text">
-                        通知：
+                        {$t("general.notification.title")}
                         <br>
-                        1. 由于遭遇到youbube官方的限制，本站不再支持youtube视频下载。
+                        {$t("general.notification.file_transfer_optimization")}
                         <br>
-                        2. 本站最新上线传输文件功能，你可以在自己的设备中任意传输文本和文件，特别适合用户不能使用微信,QQ的场景。
+                        {$t("general.notification.youtube_restriction")}
                     </span>                    
                     <button 
                         class="notification-close" 
-                        aria-label="关闭通知"
+                        aria-label={$t("general.notification.close")}
                         on:click={closeNotification}
+                    >
                     >
                         ×
                     </button>
@@ -90,20 +91,20 @@
                 <img src="/popularize/mindsou_logo.png"
                      alt="Mindsou Logo"
                      class="section-icon" />
-                <span>基于相同想法的陌生人聊天网站,不用担心尬聊</span>
+                <span>{$t("general.promotions.mindsou.title")}</span>
                 <span class="arrow">{showMindsou ? '▲' : '▼'}</span>
             </button>
             {#if showMindsou}
                 <div class="details" role="region">
                     <ul> 
-                        <li>1.发布你大脑中某时刻的想法</li>
-                        <li>2.完全匹配,语义匹配,互补匹配</li>
-                        <li>3.点击匹配对象即可聊天</li>
-                        <li>4.离线匹配邮件提醒</li>
-                        <li>5.限时内容 & 隐私保护，自动销毁减少信息负担</li>
+                        <li>{$t("general.promotions.mindsou.features.1")}</li>
+                        <li>{$t("general.promotions.mindsou.features.2")}</li>
+                        <li>{$t("general.promotions.mindsou.features.3")}</li>
+                        <li>{$t("general.promotions.mindsou.features.4")}</li>
+                        <li>{$t("general.promotions.mindsou.features.5")}</li>
                     </ul>
                     <a class="button" href="https://mindsou.online" target="_blank" rel="noopener noreferrer">
-                        访问 Mindsou
+                        {$t("general.promotions.mindsou.visit")}
                     </a>
                 </div>
             {/if}
@@ -120,19 +121,19 @@
                 <img src="/popularize/yumcheck.ico"
                      alt="YumCheck Logo"
                      class="section-icon" />
-                <span>食品配料表,拍照自动查询分析</span>
+                <span>{$t("general.promotions.yumcheck.title")}</span>
                 <span class="arrow">{showYumcheck ? '▲' : '▼'}</span>
             </button>
             {#if showYumcheck}
                 <div class="details" role="region">
                     <ul>
-                        <li>拍摄配料表，一键成分分析与健康风险评估</li>
-                        <li>食品添加剂对比欧盟标准，多维度了解</li>
-                        <li>扫描食品标准号，快速解读规范信息</li>
-                        <li>血液检测报告智能解析，普通人也能读懂血液报告</li>
+                        <li>{$t("general.promotions.yumcheck.features.1")}</li>
+                        <li>{$t("general.promotions.yumcheck.features.2")}</li>
+                        <li>{$t("general.promotions.yumcheck.features.3")}</li>
+                        <li>{$t("general.promotions.yumcheck.features.4")}</li>
                     </ul>
                     <a class="button" href="https://yumcheck.online" target="_blank" rel="noopener noreferrer">
-                        访问 YumCheck
+                        {$t("general.promotions.yumcheck.visit")}
                     </a>
                 </div>
             {/if}

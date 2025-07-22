@@ -11,8 +11,11 @@
     "notification": {
         "title": "通知：",
         "close": "关闭通知",
-        "file_transfer_optimization": "1. 优化文件传输用户体验。2025-07-21",
-        "youtube_restriction": "2. 由于遭遇到youbube官方的限制，本站不再支持youtube视频下载。2025-06-05"
+        "mindsou_affiliate": "1. Mindsou.online 联盟营销火爆上线！💰",
+        "mindsou_affiliate_link": "立即开始赚钱",
+        "mindsou_affiliate_commission": "推荐月订阅用户赚3美元，推荐年订阅用户赚20美元！推荐10个年用户等于赚200美元！2025-07-22",
+        "file_transfer_optimization": "2. 优化文件传输用户体验。2025-07-21",
+        "youtube_restriction": "3. 由于遭遇到youbube官方的限制，本站不再支持youtube视频下载。2025-06-05"
     },
     "promotions": {
         "mindsou": {

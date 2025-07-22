@@ -21,7 +21,7 @@
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
-        const notificationClosed = localStorage.getItem('notification-xiaohongshu-youtube-closed');
+        const notificationClosed = localStorage.getItem('notification-mindsou-affiliate-closed');
         if (notificationClosed === 'true') {
             showNotification = false;
         }
@@ -30,7 +30,7 @@
     // 关闭通知并保存状态到本地存储
     const closeNotification = () => {
         showNotification = false;
-        localStorage.setItem('notification-xiaohongshu-youtube-closed', 'true');
+        localStorage.setItem('notification-mindsou-affiliate-closed', 'true');
     };
 </script>
 
@@ -57,6 +57,17 @@
                     <span class="notification-text">
                         {$t("general.notification.title")}
                         <br>
+                        {$t("general.notification.mindsou_affiliate")}
+                        <a 
+                            href={$INTERNAL_locale === 'zh' ? 'https://mindsou.online/zh/dashboard/affiliate' : 'https://mindsou.online/en/dashboard/affiliate'}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="notification-link"
+                        >
+                            {$t("general.notification.mindsou_affiliate_link")}
+                        </a>
+                        {$t("general.notification.mindsou_affiliate_commission")}
+                        <br>
                         {$t("general.notification.file_transfer_optimization")}
                         <br>
                         {$t("general.notification.youtube_restriction")}
@@ -65,7 +76,6 @@
                         class="notification-close" 
                         aria-label={$t("general.notification.close")}
                         on:click={closeNotification}
-                    >
                     >
                         ×
                     </button>
@@ -335,12 +345,33 @@
         opacity: 0.7;
     }
 
+    .notification-link {
+        color: #1976d2;
+        text-decoration: underline;
+        font-weight: 500;
+        margin: 0 4px;
+        transition: color 0.2s;
+    }
+
+    .notification-link:hover {
+        color: #1565c0;
+        text-decoration: none;
+    }
+
     /* 深色模式下的通知样式 */
     @media (prefers-color-scheme: dark) {
         .notification {
             background-color: #1b3e1f;
             color: #81c784;
             border-color: #2e7d32;
+        }
+        
+        .notification-link {
+            color: #64b5f6;
+        }
+        
+        .notification-link:hover {
+            color: #90caf9;
         }
     }
 

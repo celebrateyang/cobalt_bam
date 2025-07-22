@@ -12,8 +12,11 @@
     "notification": {
         "title": "Notice:",
         "close": "Close notification",
-        "file_transfer_optimization": "1. Optimized file transfer user experience. 2025-07-21",
-        "youtube_restriction": "2. Due to YouTube official restrictions, this site no longer supports YouTube video downloads. 2025-06-05"
+        "mindsou_affiliate": "1. Mindsou.online Affiliate Program Now Live! 💰",
+        "mindsou_affiliate_link": "Start Earning Now",
+        "mindsou_affiliate_commission": "Earn $3 per monthly user, $20 per yearly user! Refer 10 yearly users = $200! 2025-07-22",
+        "file_transfer_optimization": "2. Optimized file transfer user experience. 2025-07-21",
+        "youtube_restriction": "3. Due to YouTube official restrictions, this site no longer supports YouTube video downloads. 2025-06-05"
     },
     "promotions": {
         "mindsou": {

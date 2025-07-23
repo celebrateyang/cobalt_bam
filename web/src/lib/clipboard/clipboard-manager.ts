@@ -61,6 +61,7 @@ export class ClipboardManager {
     private reconnectDelay = 1000; // Start with 1 second
     private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     private isReconnecting = false;
+    private dataChannelForceConnected = false; // 新增：标记数据通道强制连接状态
 
     constructor() {
         this.loadStoredSession();
@@ -104,24 +105,32 @@ export class ClipboardManager {
         // 在移动端使用更频繁的状态检查以确保UI及时更新
         const isMobile = typeof window !== 'undefined' && 
             (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-        const checkInterval = isMobile ? 300 : 1000; // 移动端300ms，桌面端1秒
+        const checkInterval = isMobile ? 500 : 1000; // 移动端500ms，桌面端1秒
         
         this.statusInterval = setInterval(() => {
             const wsConnected = this.ws?.readyState === WebSocket.OPEN;
-            const peerConnected = this.dataChannel?.readyState === 'open';
+            const dataChannelOpen = this.dataChannel?.readyState === 'open';
             
             // 获取当前状态避免不必要的更新
             let currentState: any = {};
             const unsubscribe = clipboardState.subscribe(s => currentState = s);
             unsubscribe();
             
+            // 如果数据通道被强制设置为已连接，则不要覆盖这个状态
+            const effectivePeerConnected = this.dataChannelForceConnected || dataChannelOpen;
+            
             // 只在状态真正变化时更新
-            if (currentState.isConnected !== wsConnected || currentState.peerConnected !== peerConnected) {
-                console.log('📱 Status update:', { wsConnected, peerConnected, isMobile });
+            if (currentState.isConnected !== wsConnected || currentState.peerConnected !== effectivePeerConnected) {
+                console.log('📱 Status update:', { 
+                    wsConnected, 
+                    dataChannelOpen, 
+                    dataChannelForceConnected: this.dataChannelForceConnected,
+                    effectivePeerConnected 
+                });
                 clipboardState.update(state => ({
                     ...state,
                     isConnected: wsConnected,
-                    peerConnected: peerConnected
+                    peerConnected: effectivePeerConnected
                 }));
             }
         }, checkInterval);
@@ -718,9 +727,13 @@ export class ClipboardManager {
                         }, 150);
                     }
                 } else if (state === 'failed') {
-                    console.warn('❌ Peer connection failed, retrying...');
+                    console.warn('❌ Peer connection failed');
                     clipboardState.update(state => ({ ...state, peerConnected: false }));
                     
+                    // 暂时禁用自动重启来调试问题
+                    console.log('🚫 Auto-restart disabled for debugging');
+                    
+                    /*
                     // 移动端使用更短的重试间隔
                     const retryDelay = isMobile ? 1000 : 2000;
                     setTimeout(() => {
@@ -729,10 +742,15 @@ export class ClipboardManager {
                             this.restartWebRTC();
                         }
                     }, retryDelay);
+                    */
                 } else if (state === 'disconnected') {
                     console.warn('⚠️ Peer connection disconnected');
                     clipboardState.update(state => ({ ...state, peerConnected: false }));
                     
+                    // 暂时禁用移动端快速恢复来调试问题
+                    console.log('🚫 Mobile reconnection disabled for debugging');
+                    
+                    /*
                     // 移动端快速恢复尝试
                     if (isMobile) {
                         setTimeout(() => {
@@ -742,6 +760,7 @@ export class ClipboardManager {
                             }
                         }, 800);
                     }
+                    */
                 }
             };if (isInitiator) {
                 this.dataChannel = this.peerConnection.createDataChannel('files', {
@@ -828,18 +847,27 @@ export class ClipboardManager {
 
         this.dataChannel.onopen = () => {
             console.log('🎉 Data channel opened!');
-            // 立即更新状态，不等待状态检查间隔
+            console.log('📊 Data channel state:', this.dataChannel?.readyState);
+            
+            // 设置强制连接标记，防止状态检查器覆盖
+            this.dataChannelForceConnected = true;
+            
+            // 强制设置 peerConnected 为 true 并保持
+            console.log('🔄 Force setting peerConnected to true');
             clipboardState.update(state => ({ ...state, peerConnected: true }));
             
-            // 移动端额外的状态确认延迟，确保UI有足够时间响应
-            const isMobile = typeof window !== 'undefined' && 
-                (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-            if (isMobile) {
-                setTimeout(() => {
-                    console.log('📱 Mobile connection confirmation');
+            // 额外的确认机制
+            setTimeout(() => {
+                console.log('🔄 Second confirmation: peerConnected = true');
+                clipboardState.update(state => ({ ...state, peerConnected: true }));
+            }, 100);
+            
+            setTimeout(() => {
+                if (this.dataChannel?.readyState === 'open') {
+                    console.log('� Third confirmation: peerConnected = true');
                     clipboardState.update(state => ({ ...state, peerConnected: true }));
-                }, 200);
-            }
+                }
+            }, 1000);
         };
 
         this.dataChannel.onclose = () => {

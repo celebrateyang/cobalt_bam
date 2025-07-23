@@ -15,48 +15,16 @@
     export let peerConnected: boolean;
     export let qrCodeUrl: string;
     
-    // State for copy link functionality
-    let showLinkCopied = false;
-    let showSessionIdCopied = false;
-    
     function handleCreateSession() {
         dispatch('createSession');
     }
-      function handleJoinSession() {
+    
+    function handleJoinSession() {
         dispatch('joinSession');
     }
     
     function handleCleanup() {
         dispatch('cleanup');
-    }
-    
-    // Copy session link handler
-    function handleCopySessionLink() {
-        if (sessionId) {
-            const sessionUrl = `${window.location.origin}${window.location.pathname}?session=${sessionId}`;
-            navigator.clipboard.writeText(sessionUrl).then(() => {
-                showLinkCopied = true;
-                setTimeout(() => {
-                    showLinkCopied = false;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy link:', err);
-            });
-        }
-    }
-    
-    // Copy session ID handler
-    function handleCopySessionId() {
-        if (sessionId) {
-            navigator.clipboard.writeText(sessionId).then(() => {
-                showSessionIdCopied = true;
-                setTimeout(() => {
-                    showSessionIdCopied = false;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy session ID:', err);
-            });
-        }
     }
 </script>
 
@@ -102,43 +70,20 @@
     <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
         <div class="session-info">
             <div class="session-details">                
-                <!-- Only show session ID and copy link when peer is not connected -->
-                {#if !peerConnected}
-                    <div class="session-id">
-                        <span>{$t("clipboard.session_id")}:</span>
-                        <div class="session-id-container">
-                            <code>{sessionId}</code>
-                            <button class="btn-copy-id" on:click={handleCopySessionId} title="复制会话ID">
-                                📋
-                            </button>
-                            {#if showSessionIdCopied}
-                                <span class="copy-success-small">已复制!</span>
-                            {/if}
-                        </div>
-                    </div>
-                    
-                    <!-- Copy Session Link Button -->
-                    {#if sessionId}
-                        <div class="session-link-actions">
-                            <button class="btn-copy-link" on:click={handleCopySessionLink}>
-                                {$t("clipboard.copy_session_link")}
-                            </button>
-                            {#if showLinkCopied}
-                                <span class="copy-success">{$t("clipboard.link_copied")}</span>
-                            {/if}
-                        </div>
-                    {/if}
-                {/if}
+                <!-- Session ID and copy link removed for cleaner UI when connected -->
                 
-                {#if isCreator && sessionId && !peerConnected && qrCodeUrl}                    <div class="qr-code">
+                {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
+                    <div class="qr-code">
                         <h4>{$t("clipboard.scan_qr")}</h4>
                         <img src={qrCodeUrl} alt="QR Code" />
                     </div>
                 {/if}
-                  <div class="connection-status">
+                
+                <div class="connection-status">
                     <div class="status-indicator" class:connected={peerConnected}></div>
                     <span>{peerConnected ? $t("clipboard.peer_connected") : $t("clipboard.waiting_peer")}</span>
                 </div>
+                
             </div>
         </div>
     </SettingsCategory>
@@ -307,49 +252,8 @@
         grid-template-columns: 1fr;
         max-width: 800px;
         margin: 0 auto;
-    }.session-id {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        padding: 1rem;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        width: 100%;
-        max-width: 400px;
-        transition: all 0.3s ease;
     }
-
-    .session-id:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        border-color: rgba(102, 126, 234, 0.3);
-    }
-
-    .session-id span {
-        font-weight: 600;
-        color: var(--secondary);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .session-id code {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-        padding: 0.75rem 1.25rem;
-        border-radius: 10px;
-        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.3);
-        font-size: 1.1rem;        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        flex: 1;
-        text-align: center;
-    }
-
+    
     .qr-code {
         text-align: center;
         padding: 1rem;
@@ -544,10 +448,6 @@
             justify-items: center;
         }
 
-        .session-id {
-            justify-self: center;
-        }
-
         .qr-code {
             justify-self: center;
         }
@@ -678,31 +578,6 @@
             gap: 0.75rem;
         }
 
-        .session-id {
-            flex-direction: column;
-            gap: 0.5rem;
-            text-align: center;
-            max-width: 100%;
-        }
-
-        .session-id code {
-            font-size: 0.95rem;
-            padding: 0.6rem;
-            word-break: break-all;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-            border-radius: 8px;
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: #667eea;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            display: block;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
         .qr-code {
             max-width: 220px;
             padding: 0.75rem;
@@ -719,157 +594,6 @@
         .disconnect-section {
             margin-top: 0.4rem;
             padding-top: 0.4rem;
-        }
-    }
-
-    /* Copy link button styles */
-    .session-link-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        justify-content: center;
-        margin: 1rem 0;
-        flex-wrap: wrap;
-    }
-
-    .btn-copy-link {
-        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-        border: none;
-        border-radius: 10px;
-        padding: 0.7rem 1.5rem;
-        color: white;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 3px 12px rgba(var(--accent-rgb), 0.3);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .btn-copy-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(var(--accent-rgb), 0.4);
-        background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-    }
-
-    .btn-copy-link::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
-    }
-
-    .btn-copy-link:hover::before {
-        left: 100%;
-    }
-
-    .copy-success {
-        color: var(--accent);
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding: 0.3rem 0.6rem;
-        background: var(--accent-background);
-        border-radius: 6px;
-        border: 1px solid rgba(var(--accent-rgb), 0.3);
-        animation: fadeInOut 2s ease-in-out forwards;
-    }
-
-    @keyframes fadeInOut {
-        0% { opacity: 0; transform: translateY(-5px); }
-        20% { opacity: 1; transform: translateY(0); }
-        80% { opacity: 1; transform: translateY(0); }
-        100% { opacity: 0; transform: translateY(-5px); }
-    }
-
-    /* Session ID container styles */
-    .session-id-container {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 0.5rem;
-    }
-
-    .btn-copy-id {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s ease;
-        color: var(--text);
-        min-width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-copy-id:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-        transform: scale(1.05);
-    }
-
-    .copy-success-small {
-        color: var(--accent);
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.2rem 0.4rem;
-        background: var(--accent-background);
-        border-radius: 4px;
-        border: 1px solid rgba(var(--accent-rgb), 0.3);
-        animation: fadeInOut 2s ease-in-out forwards;
-        white-space: nowrap;
-    }
-
-    /* Mobile responsive styles for copy link */
-    @media (max-width: 768px) {
-        .session-link-actions {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .btn-copy-link {
-            padding: 0.6rem 1.2rem;
-            font-size: 0.85rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .session-link-actions {
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .btn-copy-link {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-            width: 100%;
-        }
-
-        .copy-success {
-            font-size: 0.8rem;
-            text-align: center;
-        }
-
-        .session-id-container {
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-
-        .btn-copy-id {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.4rem;
-            min-width: 28px;
-            height: 28px;
         }
     }
 </style>

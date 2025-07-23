@@ -605,7 +605,7 @@
     }
 
     .btn-copy-link {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
         border: none;
         border-radius: 10px;
         padding: 0.7rem 1.5rem;
@@ -614,15 +614,15 @@
         font-size: 0.9rem;
         cursor: pointer;
         transition: all 0.3s ease;
-        box-shadow: 0 3px 12px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 3px 12px rgba(var(--accent-rgb), 0.3);
         position: relative;
         overflow: hidden;
     }
 
     .btn-copy-link:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4);
-        background: linear-gradient(135deg, #16a34a, #15803d);
+        box-shadow: 0 5px 20px rgba(var(--accent-rgb), 0.4);
+        background: linear-gradient(135deg, var(--accent-hover), var(--accent-active));
     }
 
     .btn-copy-link::before {
@@ -641,13 +641,13 @@
     }
 
     .copy-success {
-        color: #22c55e;
+        color: var(--accent);
         font-size: 0.85rem;
         font-weight: 500;
         padding: 0.3rem 0.6rem;
-        background: rgba(34, 197, 94, 0.1);
+        background: var(--accent-background);
         border-radius: 6px;
-        border: 1px solid rgba(34, 197, 94, 0.3);
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
         animation: fadeInOut 2s ease-in-out forwards;
     }
 

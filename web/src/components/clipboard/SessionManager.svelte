@@ -101,29 +101,33 @@
     <!-- Session Info -->
     <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
         <div class="session-info">
-            <div class="session-details">                <div class="session-id">
-                    <span>{$t("clipboard.session_id")}:</span>
-                    <div class="session-id-container">
-                        <code>{sessionId}</code>
-                        <button class="btn-copy-id" on:click={handleCopySessionId} title="复制会话ID">
-                            📋
-                        </button>
-                        {#if showSessionIdCopied}
-                            <span class="copy-success-small">已复制!</span>
-                        {/if}
+            <div class="session-details">                
+                <!-- Only show session ID and copy link when peer is not connected -->
+                {#if !peerConnected}
+                    <div class="session-id">
+                        <span>{$t("clipboard.session_id")}:</span>
+                        <div class="session-id-container">
+                            <code>{sessionId}</code>
+                            <button class="btn-copy-id" on:click={handleCopySessionId} title="复制会话ID">
+                                📋
+                            </button>
+                            {#if showSessionIdCopied}
+                                <span class="copy-success-small">已复制!</span>
+                            {/if}
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Copy Session Link Button -->
-                {#if sessionId}
-                    <div class="session-link-actions">
-                        <button class="btn-copy-link" on:click={handleCopySessionLink}>
-                            {$t("clipboard.copy_session_link")}
-                        </button>
-                        {#if showLinkCopied}
-                            <span class="copy-success">{$t("clipboard.link_copied")}</span>
-                        {/if}
-                    </div>
+                    
+                    <!-- Copy Session Link Button -->
+                    {#if sessionId}
+                        <div class="session-link-actions">
+                            <button class="btn-copy-link" on:click={handleCopySessionLink}>
+                                {$t("clipboard.copy_session_link")}
+                            </button>
+                            {#if showLinkCopied}
+                                <span class="copy-success">{$t("clipboard.link_copied")}</span>
+                            {/if}
+                        </div>
+                    {/if}
                 {/if}
                 
                 {#if isCreator && sessionId && !peerConnected && qrCodeUrl}                    <div class="qr-code">
@@ -684,7 +688,20 @@
         .session-id code {
             font-size: 0.95rem;
             padding: 0.6rem;
-            word-break: break-all;        }
+            word-break: break-all;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border-radius: 8px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
         .qr-code {
             max-width: 220px;
@@ -716,7 +733,7 @@
     }
 
     .btn-copy-link {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
         border: none;
         border-radius: 10px;
         padding: 0.7rem 1.5rem;
@@ -725,15 +742,15 @@
         font-size: 0.9rem;
         cursor: pointer;
         transition: all 0.3s ease;
-        box-shadow: 0 3px 12px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 3px 12px rgba(var(--accent-rgb), 0.3);
         position: relative;
         overflow: hidden;
     }
 
     .btn-copy-link:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4);
-        background: linear-gradient(135deg, #16a34a, #15803d);
+        box-shadow: 0 5px 20px rgba(var(--accent-rgb), 0.4);
+        background: linear-gradient(135deg, var(--accent-hover), var(--accent));
     }
 
     .btn-copy-link::before {
@@ -752,13 +769,13 @@
     }
 
     .copy-success {
-        color: #22c55e;
+        color: var(--accent);
         font-size: 0.85rem;
         font-weight: 500;
         padding: 0.3rem 0.6rem;
-        background: rgba(34, 197, 94, 0.1);
+        background: var(--accent-background);
         border-radius: 6px;
-        border: 1px solid rgba(34, 197, 94, 0.3);
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
         animation: fadeInOut 2s ease-in-out forwards;
     }
 
@@ -802,13 +819,13 @@
     }
 
     .copy-success-small {
-        color: #22c55e;
+        color: var(--accent);
         font-size: 0.75rem;
         font-weight: 500;
         padding: 0.2rem 0.4rem;
-        background: rgba(34, 197, 94, 0.1);
+        background: var(--accent-background);
         border-radius: 4px;
-        border: 1px solid rgba(34, 197, 94, 0.3);
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
         animation: fadeInOut 2s ease-in-out forwards;
         white-space: nowrap;
     }

@@ -17,6 +17,31 @@
     let fileInput: HTMLInputElement;
     let autoSendScheduled = false; // 防止重复自动发送的标志
     let pendingFiles: File[] = []; // 等待连接的文件
+    let showReceivedNotification = false; // 新文件接收通知
+    let isMobile = false; // 检测是否为移动端
+    
+    // 检测屏幕尺寸
+    function checkScreenSize() {
+        if (typeof window !== 'undefined') {
+            isMobile = window.innerWidth < 1024; // 1024px以下认为是移动端/平板
+        }
+    }
+    
+    // 检测是否有新接收的文件
+    let previousReceivedCount = receivedFiles.length;
+    $: {
+        if (receivedFiles.length > previousReceivedCount) {
+            // 只在移动端显示通知
+            checkScreenSize();
+            if (isMobile) {
+                showReceivedNotification = true;
+                setTimeout(() => {
+                    showReceivedNotification = false;
+                }, 3000); // 3秒后自动隐藏
+            }
+        }
+        previousReceivedCount = receivedFiles.length;
+    }
     
     function handleFileSelect(event: Event): void {
         const target = event.target as HTMLInputElement;
@@ -110,10 +135,39 @@
         }
         wasConnected = peerConnected;
     }
+    
+    // 组件挂载时检测屏幕尺寸，并监听窗口大小变化
+    import { onMount, onDestroy } from 'svelte';
+    
+    let resizeHandler: () => void;
+    
+    onMount(() => {
+        checkScreenSize();
+        resizeHandler = () => checkScreenSize();
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', resizeHandler);
+        }
+    });
+    
+    onDestroy(() => {
+        if (typeof window !== 'undefined' && resizeHandler) {
+            window.removeEventListener('resize', resizeHandler);
+        }
+    });
 </script>
 
 <SettingsCategory title={$t("clipboard.file_transfer.title")} sectionId="file-transfer">
-    <div class="file-transfer-section">
+    <!-- 新文件接收通知 -->
+    {#if showReceivedNotification}
+        <div class="received-notification">
+            <div class="notification-content">
+                <span class="notification-icon">📥</span>
+                <span class="notification-text">{$t("clipboard.file_transfer.new_file_received")}</span>
+            </div>
+        </div>
+    {/if}
+    
+    <div class="file-transfer-section" class:has-received-files={receivedFiles.length > 0}>
         <div class="send-files">
             <h4>{$t("clipboard.file_transfer.send_files")}</h4>
             
@@ -326,6 +380,44 @@
         font-weight: 500;
         position: relative;
         z-index: 1;
+    }
+
+    /* 新文件接收通知样式 */
+    .received-notification {
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .notification-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .notification-icon {
+        font-size: 1.1rem;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 
     .file-list {
@@ -556,6 +648,29 @@
             gap: 1.5rem;
         }
         
+        /* 当有接收文件时，压缩发送区域 */
+        .file-transfer-section.has-received-files .send-files {
+            flex: 0 0 auto;
+        }
+        
+        .file-transfer-section.has-received-files .send-files .file-drop-zone {
+            padding: 1rem 0.75rem;
+            min-height: 80px;
+        }
+        
+        .file-transfer-section.has-received-files .send-files .file-drop-zone p {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* 突出显示接收文件区域 */
+        .file-transfer-section.has-received-files .received-files {
+            flex: 1;
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
+        }
+        
         .file-drop-zone {
             padding: 1.5rem 1rem;
         }
@@ -568,6 +683,16 @@
 
         .file-actions {
             align-self: flex-end;
+        }
+        
+        /* 移动端通知位置调整 */
+        .received-notification {
+            top: 60px;
+            left: 1rem;
+            right: 1rem;
+            transform: none;
+            font-size: 0.85rem;
+            padding: 0.6rem 1rem;
         }
     }    /* PC/Desktop 优化 - 1024px 及以上 - 横向布局 */
     @media (min-width: 1024px) {
@@ -603,6 +728,11 @@
         .file-drop-zone {
             min-height: 140px;
             padding: 2rem 1.5rem;
+        }
+        
+        /* PC端不显示通知（因为右侧接收区域很明显） */
+        .received-notification {
+            display: none;
         }
         
         /* 优化PC端文件列表滚动条 */
@@ -649,6 +779,11 @@
         .file-item {
             padding: 1.2rem;
         }
+        
+        /* 超大屏幕也不显示通知 */
+        .received-notification {
+            display: none;
+        }
     }/* 平板优化 - 768px 到 1023px */
     @media (min-width: 768px) and (max-width: 1023px) {
         .file-transfer-section {
@@ -665,6 +800,44 @@
         .file-list {
             max-height: 280px;
             overflow-y: auto;
+        }
+    }
+
+    /* 超小屏幕优化 - 480px 以下 */
+    @media (max-width: 480px) {
+        .file-transfer-section {
+            gap: 1rem;
+        }
+        
+        /* 极度压缩发送区域当有接收文件时 */
+        .file-transfer-section.has-received-files .send-files .file-drop-zone {
+            padding: 0.75rem 0.5rem;
+            min-height: 60px;
+        }
+        
+        .file-transfer-section.has-received-files .send-files .file-drop-zone p {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* 接收文件区域突出显示 */
+        .file-transfer-section.has-received-files .received-files {
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.15);
+        }
+        
+        .received-notification {
+            top: 50px;
+            font-size: 0.8rem;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .notification-content {
+            gap: 0.25rem;
+        }
+        
+        .notification-icon {
+            font-size: 1rem;
         }
     }
 </style>

@@ -40,6 +40,7 @@
         "auto_sent": "✅ Files auto-sent",
         "waiting_connection": "⚠️ Waiting for connection to auto-send",
         "no_received_files": "No received files yet",
+        "new_file_received": "New file received!",
         "download": "📥 Download",
         "remove": "Remove file"
     },

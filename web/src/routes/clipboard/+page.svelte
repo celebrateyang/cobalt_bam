@@ -153,6 +153,18 @@
         clipboardManager?.clearError();
     }
 
+    // 文件选择前的准备工作
+    function handlePrepareFileSelection() {
+        console.log('📱 准备文件选择');
+        clipboardManager?.prepareForFileSelection();
+    }
+
+    // 文件选择完成后的处理
+    async function handleFileSelectionComplete() {
+        console.log('📱 文件选择完成');
+        await clipboardManager?.completeFileSelection();
+    }
+
     // Copy session link handler
     function handleCopySessionLink() {
         if (sessionId) {
@@ -170,7 +182,14 @@
 
 // Lifecycle functions
     onMount(async () => {
+        // 立即清除任何错误状态
+        errorMessage = '';
+        showError = false;
+        
         clipboardManager = new ClipboardManager();
+        
+        // 再次确保清除错误状态
+        clipboardManager.clearError();
         
         // Check for session parameter in URL
         if (typeof window !== 'undefined') {
@@ -257,6 +276,8 @@
                     on:sendFiles={handleSendFiles}
                     on:downloadFile={handleDownloadFile}
                     on:removeReceivedFile={handleRemoveReceivedFile}
+                    on:prepareFileSelection={handlePrepareFileSelection}
+                    on:fileSelectionComplete={handleFileSelectionComplete}
                 />
             {/if}
 

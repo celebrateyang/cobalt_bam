@@ -52,8 +52,12 @@
             return;
         }
         
+        // 文件选择完成后的处理
         const target = event.target as HTMLInputElement;
         if (target.files) {
+            // 通知连接管理器文件选择完成
+            dispatch('fileSelectionComplete');
+            
             const newFiles = Array.from(target.files);
             
             // 检查文件大小限制
@@ -89,6 +93,21 @@
                 }
             }
         }
+    }
+
+    // 文件选择点击处理
+    function handleFileInputClick() {
+        if (!isTransferring) {
+            // 通知连接管理器准备文件选择
+            dispatch('prepareFileSelection');
+            fileInput?.click();
+        }
+    }
+
+    // 文件input的focus事件处理
+    function handleFileInputFocus() {
+        console.log('📱 文件选择器获得焦点');
+        dispatch('prepareFileSelection');
     }
 
     function scheduleAutoSend(): void {
@@ -252,8 +271,8 @@
                 on:drop={handleDrop}
                 role="button"
                 tabindex={isTransferring ? -1 : 0}
-                on:click={() => !isTransferring && fileInput?.click()}
-                on:keydown={(e) => !isTransferring && e.key === 'Enter' && fileInput?.click()}
+                on:click={handleFileInputClick}
+                on:keydown={(e) => !isTransferring && e.key === 'Enter' && handleFileInputClick()}
             >
                 {#if isTransferring}
                     <p>🚫 {$t("clipboard.file_transfer.transfer_in_progress")}</p>
@@ -266,6 +285,7 @@
                     multiple
                     disabled={isTransferring}
                     on:change={handleFileSelect}
+                    on:focus={handleFileInputFocus}
                     style="display: none;"
                 />
             </div>

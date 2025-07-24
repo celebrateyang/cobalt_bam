@@ -78,10 +78,21 @@ export class ClipboardManager {
     private isReconnecting = false;
     private dataChannelForceConnected = false; // 新增：标记数据通道强制连接状态
     private isSendingFiles = false; // 新增：发送文件锁，防止并发发送
+    private isSelectingFiles = false; // 新增：文件选择状态
+    private connectionStateBeforeFileSelect: boolean = false; // 新增：文件选择前的连接状态
+    private fileSelectStartTime: number = 0; // 新增：文件选择开始时间
 
     constructor() {
         this.loadStoredSession();
         this.startStatusCheck();
+        this.setupVisibilityChangeHandler(); // 新增：设置页面可见性变化处理
+        
+        // 清除任何现有的错误状态
+        clipboardState.update(state => ({
+            ...state,
+            errorMessage: '',
+            showError: false
+        }));
     }
 
     // Session persistence
@@ -132,6 +143,12 @@ export class ClipboardManager {
             const unsubscribe = clipboardState.subscribe(s => currentState = s);
             unsubscribe();
             
+            // 如果正在选择文件，暂时保持连接状态不变，避免误报
+            if (this.isSelectingFiles) {
+                console.log('📱 文件选择中，跳过状态检查');
+                return;
+            }
+            
             // 如果数据通道被强制设置为已连接，则不要覆盖这个状态
             const effectivePeerConnected = this.dataChannelForceConnected || dataChannelOpen;
             
@@ -141,7 +158,8 @@ export class ClipboardManager {
                     wsConnected, 
                     dataChannelOpen, 
                     dataChannelForceConnected: this.dataChannelForceConnected,
-                    effectivePeerConnected 
+                    effectivePeerConnected,
+                    isSelectingFiles: this.isSelectingFiles
                 });
                 clipboardState.update(state => ({
                     ...state,
@@ -194,7 +212,19 @@ export class ClipboardManager {
                 
                 this.ws.onclose = (event) => {
                     console.log(`🔌 WebSocket disconnected: code=${event.code}, reason=${event.reason}`);
-                    clipboardState.update(state => ({ ...state, isConnected: false }));
+                    
+                    // 如果正在选择文件，不要更新连接状态，避免触发UI重置
+                    if (!this.isSelectingFiles) {
+                        clipboardState.update(state => ({ ...state, isConnected: false }));
+                    } else {
+                        console.log('📱 文件选择中，暂停连接状态更新');
+                    }
+                    
+                    // 如果正在选择文件，完全禁用自动重连
+                    if (this.isSelectingFiles) {
+                        console.log('📱 文件选择中，禁用自动重连');
+                        return;
+                    }
                     
                     // Only attempt reconnection if we have a session and we're not manually disconnecting
                     if (!this.isReconnecting && this.shouldReconnect(event.code)) {
@@ -215,6 +245,12 @@ export class ClipboardManager {
 
     // Reconnection logic
     private shouldReconnect(closeCode: number): boolean {
+        // 如果正在选择文件，禁用重连
+        if (this.isSelectingFiles) {
+            console.log('📱 文件选择中，禁用重连检查');
+            return false;
+        }
+        
         // Get current session state
         const state = this.getCurrentState();
         
@@ -543,6 +579,11 @@ export class ClipboardManager {
             clearInterval(this.statusInterval);
         }
         
+        // 移除页面可见性监听器
+        if (typeof window !== 'undefined') {
+            document.removeEventListener('visibilitychange', this.checkConnectionAfterVisibilityChange);
+        }
+        
         clipboardState.update(state => ({
             ...state,
             sessionId: '',
@@ -563,6 +604,9 @@ export class ClipboardManager {
         this.remotePublicKey = null;
         this.currentReceivingFile = null;
         this.isSendingFiles = false; // 重置发送锁
+        this.isSelectingFiles = false; // 重置文件选择状态
+        this.connectionStateBeforeFileSelect = false; // 重置连接状态
+        this.fileSelectStartTime = 0; // 重置选择时间
         this.clearStoredSession();
     }
 
@@ -574,6 +618,272 @@ export class ClipboardManager {
             showError: false,
             waitingForCreator: false
         }));
+    }
+
+    // 文件选择前的连接保护
+    prepareForFileSelection(): void {
+        this.isSelectingFiles = true;
+        this.fileSelectStartTime = Date.now();
+        this.connectionStateBeforeFileSelect = this.dataChannel?.readyState === 'open';
+        
+        console.log('📱 准备文件选择，启动全面保护模式:', {
+            isSelectingFiles: this.isSelectingFiles,
+            connectionState: this.connectionStateBeforeFileSelect,
+            wsState: this.ws?.readyState,
+            timestamp: this.fileSelectStartTime
+        });
+        
+        // 暂停自动重连机制，避免在文件选择期间的无效重连
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+        
+        // 强制保持连接状态显示，防止UI状态闪烁
+        this.dataChannelForceConnected = this.dataChannel?.readyState === 'open';
+        
+        // 发送文件选择开始信号给对端，让对端也进入等待模式
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(JSON.stringify({
+                    type: 'file_selection_start',
+                    message: 'Mobile device starting file selection',
+                    timestamp: this.fileSelectStartTime
+                }));
+                console.log('📱 已通知对端开始文件选择');
+            } catch (error) {
+                console.warn('📱 发送文件选择开始信号失败:', error);
+            }
+        }
+        
+        // 设置保护超时机制，防止无限期等待
+        setTimeout(() => {
+            if (this.isSelectingFiles) {
+                console.log('📱 文件选择超时（30秒），自动结束保护模式');
+                this.completeFileSelection();
+            }
+        }, 30000);
+        
+        console.log('📱 文件选择保护模式已启动，禁用自动重连和状态更新');
+    }
+
+    // 文件选择完成后的连接恢复
+    async completeFileSelection(): Promise<void> {
+        const selectDuration = Date.now() - this.fileSelectStartTime;
+        console.log('📱 文件选择完成，耗时:', selectDuration, 'ms');
+        
+        this.isSelectingFiles = false;
+        
+        // 重置强制连接状态，允许正常的状态检查
+        this.dataChannelForceConnected = false;
+        
+        // 通知对端文件选择完成
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(JSON.stringify({
+                    type: 'file_selection_complete',
+                    message: 'File selection completed',
+                    duration: selectDuration
+                }));
+                console.log('📱 已通知对端文件选择完成');
+            } catch (error) {
+                console.warn('📱 发送文件选择完成信号失败:', error);
+            }
+        }
+        
+        // 检查连接状态是否发生变化
+        const currentWsState = this.ws?.readyState === WebSocket.OPEN;
+        const currentConnectionState = this.dataChannel?.readyState === 'open';
+        const connectionLost = this.connectionStateBeforeFileSelect && !currentConnectionState;
+        const wsLost = !currentWsState;
+        
+        console.log('📱 连接状态检查:', {
+            selectDuration,
+            beforeSelection: this.connectionStateBeforeFileSelect,
+            afterSelection: currentConnectionState,
+            wsState: currentWsState,
+            connectionLost,
+            wsLost
+        });
+        
+        // 如果WebSocket断开或DataChannel断开，或文件选择时间过长，尝试恢复
+        if (wsLost || connectionLost || selectDuration > 8000) { // 超过8秒视为需要恢复
+            console.log('📱 检测到连接问题，尝试恢复连接...');
+            
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: '正在恢复连接，请稍候...',
+                showError: true
+            }));
+            
+            await this.recoverConnectionAfterFileSelect();
+        } else {
+            console.log('📱 连接状态正常，可以继续传输');
+            // 确保UI状态正确
+            clipboardState.update(state => ({
+                ...state,
+                isConnected: currentWsState,
+                peerConnected: currentConnectionState,
+                errorMessage: '',
+                showError: false
+            }));
+        }
+    }
+
+    // 文件选择后的连接恢复机制
+    private async recoverConnectionAfterFileSelect(): Promise<void> {
+        try {
+            console.log('📱 开始连接恢复流程...');
+            
+            // 先尝试简单的状态检查，避免不必要的重连
+            const wsConnected = this.ws?.readyState === WebSocket.OPEN;
+            const dataChannelConnected = this.dataChannel?.readyState === 'open';
+            
+            console.log('📱 当前连接状态:', { wsConnected, dataChannelConnected });
+            
+            // 如果WebSocket还在但DataChannel断了，尝试重新建立DataChannel
+            if (wsConnected && !dataChannelConnected) {
+                console.log('📱 WebSocket正常，尝试恢复DataChannel...');
+                
+                try {
+                    // 发送恢复信号
+                    this.ws?.send(JSON.stringify({
+                        type: 'recovery',
+                        message: 'Reconnecting DataChannel after file selection'
+                    }));
+                    
+                    // 等待DataChannel自动恢复
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    if (this.dataChannel?.readyState === 'open') {
+                        console.log('📱 DataChannel恢复成功');
+                        clipboardState.update(state => ({
+                            ...state,
+                            isConnected: true,
+                            peerConnected: true,
+                            errorMessage: '连接已恢复',
+                            showError: true
+                        }));
+                        
+                        // 3秒后清除提示
+                        setTimeout(() => {
+                            clipboardState.update(state => ({
+                                ...state,
+                                errorMessage: '',
+                                showError: false
+                            }));
+                        }, 3000);
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('📱 发送恢复信号失败:', error);
+                }
+            }
+            
+            // 如果WebSocket也断了，进行完整重连
+            if (!wsConnected) {
+                console.log('📱 WebSocket断开，需要完整重连...');
+                
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: '文件选择期间连接中断，正在重新连接...',
+                    showError: true
+                }));
+                
+                await this.connectWebSocket();
+                await this.rejoinSession();
+                
+                // 等待连接建立
+                const maxWaitTime = 10000;
+                const startTime = Date.now();
+                
+                while (Date.now() - startTime < maxWaitTime) {
+                    if (this.ws?.readyState === WebSocket.OPEN && this.dataChannel?.readyState === 'open') {
+                        console.log('📱 完整重连成功');
+                        clipboardState.update(state => ({
+                            ...state,
+                            isConnected: true,
+                            peerConnected: true,
+                            errorMessage: '连接已恢复',
+                            showError: true
+                        }));
+                        
+                        setTimeout(() => {
+                            clipboardState.update(state => ({
+                                ...state,
+                                errorMessage: '',
+                                showError: false
+                            }));
+                        }, 3000);
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            // 如果所有自动恢复都失败，提示用户但不强制断开
+            console.log('📱 自动恢复失败，保持当前状态并提示用户');
+            
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: '文件选择过程中连接不稳定，建议重新建立连接以确保传输质量',
+                showError: true,
+                isConnected: wsConnected,
+                peerConnected: dataChannelConnected
+            }));
+            
+        } catch (error) {
+            console.error('📱 连接恢复过程出错:', error);
+            
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: '连接状态检查失败，建议刷新页面重新连接',
+                showError: true
+            }));
+        }
+    }
+
+    // 页面可见性变化处理（移动端优化）
+    private setupVisibilityChangeHandler(): void {
+        if (typeof window === 'undefined') return;
+        
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (!isMobile) return; // 只在移动端启用
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 页面变为隐藏状态');
+                // 页面隐藏时不做任何操作，避免误断连接
+            } else {
+                console.log('📱 页面变为可见状态');
+                // 页面恢复可见时，检查连接状态
+                setTimeout(() => {
+                    this.checkConnectionAfterVisibilityChange();
+                }, 100);
+            }
+        });
+    }
+
+    // 页面可见性恢复后的连接检查
+    private async checkConnectionAfterVisibilityChange(): Promise<void> {
+        if (this.isSelectingFiles) {
+            console.log('📱 正在选择文件，跳过可见性检查');
+            return;
+        }
+        
+        const wsConnected = this.ws?.readyState === WebSocket.OPEN;
+        const dataChannelConnected = this.dataChannel?.readyState === 'open';
+        
+        console.log('📱 可见性恢复连接检查:', {
+            websocket: wsConnected,
+            dataChannel: dataChannelConnected
+        });
+        
+        // 如果连接断开，尝试恢复
+        if (!wsConnected || !dataChannelConnected) {
+            console.log('📱 检测到连接断开，尝试恢复...');
+            await this.recoverConnectionAfterFileSelect();
+        }
     }// WebSocket message handler
     private async handleWebSocketMessage(message: any): Promise<void> {
         console.log('Handling WebSocket message:', message.type);
@@ -665,8 +975,53 @@ export class ClipboardManager {
                 await this.handleIceCandidate(message.candidate);
                 break;
                 
+            case 'file_selection_start':
+                console.log('📱 对端开始文件选择，进入等待模式');
+                // 不显示提示信息，静默处理
+                break;
+                
+            case 'file_selection_complete':
+                console.log('📱 对端文件选择完成，耗时:', message.duration, 'ms');
+                // 清除等待提示
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: '',
+                    showError: false
+                }));
+                break;
+                
+            case 'recovery':
+                console.log('📱 收到对端恢复信号:', message.message);
+                // 可以在这里处理连接恢复逻辑
+                break;
+                
+            case 'heartbeat':
+                // 处理心跳消息，通常不需要特殊处理
+                console.log('💓 收到心跳消息');
+                break;
+                
+            case 'ping':
+                // 处理ping消息，通常返回pong
+                console.log('🏓 收到ping消息');
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({ type: 'pong' }));
+                }
+                break;
+                
+            case 'pong':
+                // 处理pong响应
+                console.log('🏓 收到pong响应');
+                break;
+                
             case 'error':
                 console.error('Server error:', message);
+                
+                // 忽略"Unknown message type"错误，不显示给用户
+                if (message.message === 'Unknown message type') {
+                    console.warn('⚠️ 忽略服务器"Unknown message type"错误');
+                    return; // 直接返回，不更新UI状态
+                }
+                
                 let errorMessage = '连接错误';
                 
                 // 处理特定的错误消息
@@ -698,6 +1053,14 @@ export class ClipboardManager {
                     errorMessage,
                     showError: true
                 }));
+                break;
+                
+            default:
+                // 处理未知消息类型，避免显示错误
+                console.warn(`⚠️ 收到未知消息类型: ${message.type}`, message);
+                
+                // 不显示错误提示，只在控制台记录
+                // 这避免了用户看到"Unknown message type"的错误
                 break;
         }
     }    // WebRTC setup and handlers

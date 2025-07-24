@@ -698,6 +698,14 @@
             gap: 1.5rem;
         }
         
+        /* 确保移动端保持纵向布局 */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
         /* 当有接收文件时，压缩发送区域 */
         .file-transfer-section.has-received-files .send-files {
             flex: 0 0 auto;
@@ -775,6 +783,47 @@
             overflow-y: auto;
         }
         
+        /* PC端接收文件列表优化 - 网格布局 */
+        .received-files .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        /* PC端接收文件项优化 */
+        .received-files .file-item {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 1rem;
+            min-height: 100px;
+            justify-content: space-between;
+        }
+        
+        .received-files .file-name {
+            font-size: 0.9rem;
+            line-height: 1.3;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        
+        .received-files .file-size {
+            font-size: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .received-files .file-actions {
+            width: 100%;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+        
         .file-drop-zone {
             min-height: 140px;
             padding: 2rem 1.5rem;
@@ -821,13 +870,26 @@
             max-height: 450px;
         }
         
+        /* 超大屏幕的网格布局优化 */
+        .received-files .file-list {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .received-files .file-item {
+            min-height: 110px;
+            padding: 1.2rem;
+        }
+        
+        .received-files .file-name {
+            font-size: 0.95rem;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+        }
+        
         .file-drop-zone {
             min-height: 160px;
             padding: 2.5rem 2rem;
-        }
-        
-        .file-item {
-            padding: 1.2rem;
         }
         
         /* 超大屏幕也不显示通知 */

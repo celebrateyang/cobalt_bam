@@ -15,6 +15,10 @@
     export let peerConnected: boolean;
     export let qrCodeUrl: string;
     
+    // Copy states
+    let showSessionIdCopied = false;
+    let showLinkCopied = false;
+    
     function handleCreateSession() {
         dispatch('createSession');
     }
@@ -25,6 +29,35 @@
     
     function handleCleanup() {
         dispatch('cleanup');
+    }
+    
+    // Copy session ID
+    function handleCopySessionId() {
+        if (sessionId) {
+            navigator.clipboard.writeText(sessionId).then(() => {
+                showSessionIdCopied = true;
+                setTimeout(() => {
+                    showSessionIdCopied = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy session ID:', err);
+            });
+        }
+    }
+    
+    // Copy session link
+    function handleCopySessionLink() {
+        if (sessionId) {
+            const sessionUrl = `${window.location.origin}${window.location.pathname}?session=${sessionId}`;
+            navigator.clipboard.writeText(sessionUrl).then(() => {
+                showLinkCopied = true;
+                setTimeout(() => {
+                    showLinkCopied = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+            });
+        }
     }
 </script>
 
@@ -70,7 +103,58 @@
     <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
         <div class="session-info">
             <div class="session-details">                
-                <!-- Session ID and copy link removed for cleaner UI when connected -->
+                {#if isCreator && sessionId}
+                    <!-- Session ID Display -->
+                    <div class="session-copy-section">
+                        <h4>会话信息</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">会话ID</span>
+                                <div class="info-content">
+                                    <code class="session-code">{sessionId}</code>
+                                    <button 
+                                        class="copy-button" 
+                                        class:copied={showSessionIdCopied}
+                                        on:click={handleCopySessionId}
+                                        title="复制会话ID"
+                                        aria-label="复制会话ID"
+                                    >
+                                        {#if showSessionIdCopied}
+                                            <span class="copy-icon">✓</span>
+                                            <span class="copy-text">已复制</span>
+                                        {:else}
+                                            <span class="copy-icon">📋</span>
+                                            <span class="copy-text">复制</span>
+                                        {/if}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">分享链接</span>
+                                <div class="info-content">
+                                    <div class="link-display">
+                                        <span class="link-text">{window?.location?.origin}{window?.location?.pathname}?session={sessionId}</span>
+                                    </div>
+                                    <button 
+                                        class="copy-button" 
+                                        class:copied={showLinkCopied}
+                                        on:click={handleCopySessionLink}
+                                        title="复制分享链接"
+                                        aria-label="复制分享链接"
+                                    >
+                                        {#if showLinkCopied}
+                                            <span class="copy-icon">✓</span>
+                                            <span class="copy-text">已复制</span>
+                                        {:else}
+                                            <span class="copy-icon">🔗</span>
+                                            <span class="copy-text">复制</span>
+                                        {/if}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
                 
                 {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
                     <div class="qr-code">
@@ -241,9 +325,10 @@
         }
     }.session-info {
         text-align: center;
-        padding: 0.75rem;
+        padding: 0.75rem 1.25rem;
         max-width: 900px;
         margin: 0 auto;
+        box-sizing: border-box;
     }    .session-details {
         display: grid;
         gap: 0.75rem;
@@ -267,11 +352,8 @@
         margin: 0 auto;
         justify-self: center;
         align-self: center;
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
     }.qr-code:hover {
-        transform: translateX(-50%) translateY(-2px);
+        transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         border-color: rgba(102, 126, 234, 0.3);
     }    .qr-code h4 {
@@ -573,7 +655,7 @@
         }
 
         .session-info {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
         }        .session-details {
             gap: 0.75rem;
         }
@@ -594,6 +676,209 @@
         .disconnect-section {
             margin-top: 0.4rem;
             padding-top: 0.4rem;
+        }
+    }
+
+    /* Session Copy Section Styles */
+    .session-copy-section {
+        width: calc(100% - 2rem);
+        max-width: 580px;
+        margin: 0 auto 1rem auto;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.06) 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        box-sizing: border-box;
+    }
+
+    .session-copy-section:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        border-color: rgba(102, 126, 234, 0.25);
+    }
+
+    .session-copy-section h4 {
+        margin: 0 0 1.25rem 0;
+        font-weight: 700;
+        color: var(--text);
+        font-size: 1.1rem;
+        text-align: center;
+        letter-spacing: 0.3px;
+    }
+
+    .info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-item {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(8px);
+    }
+
+    .info-item:hover {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%);
+        border-color: rgba(102, 126, 234, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-content {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .session-code {
+        flex: 1;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: var(--text);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.08) 100%);
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(34, 197, 94, 0.15);
+        letter-spacing: 1px;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .link-display {
+        flex: 1;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.08) 100%);
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(34, 197, 94, 0.15);
+    }
+
+    .link-text {
+        font-size: 0.75rem;
+        color: var(--text);
+        word-break: break-all;
+        opacity: 0.9;
+        line-height: 1.3;
+        display: block;
+    }
+
+    .copy-button {
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        border: none;
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        box-shadow: 0 3px 12px rgba(var(--accent-rgb), 0.3);
+        min-width: 80px;
+        justify-content: center;
+    }
+
+    .copy-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 20px rgba(var(--accent-rgb), 0.4);
+    }
+
+    .copy-button:active {
+        transform: translateY(0);
+    }
+
+    .copy-button.copied {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 3px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .copy-button.copied:hover {
+        box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .copy-icon {
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+
+    .copy-text {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Mobile responsive styles for copy sections */
+    @media (max-width: 768px) {
+        .session-copy-section {
+            width: calc(100% - 1rem);
+            padding: 1rem;
+            max-width: 100%;
+            margin: 0 auto 1rem auto;
+        }
+
+        .info-grid {
+            gap: 0.75rem;
+        }
+
+        .info-item {
+            padding: 0.8rem;
+        }
+
+        .info-content {
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        .session-code, .link-display {
+            padding: 0.7rem;
+        }
+
+        .session-code {
+            font-size: 0.8rem;
+        }
+
+        .link-text {
+            font-size: 0.7rem;
+        }
+
+        .copy-button {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .copy-text {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Tablet styles */
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .session-copy-section {
+            max-width: 550px;
+        }
+
+        .copy-button {
+            min-width: 90px;
         }
     }
 </style>

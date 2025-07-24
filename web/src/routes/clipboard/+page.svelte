@@ -201,16 +201,18 @@
 
     <!-- Error Message Display -->
     {#if showError && errorMessage}
-        <div class="error-notification" class:waiting={waitingForCreator}>
+        <div class="error-notification" class:waiting={waitingForCreator} class:success={errorMessage.includes('成功')}>
             <div class="error-content">
                 <div class="error-icon">
                     {#if waitingForCreator}
                         <div class="spinner"></div>
+                    {:else if errorMessage.includes('成功')}
+                        ✅
                     {:else}
                         ⚠️
                     {/if}
                 </div>                <div class="error-text">
-                    <strong>{waitingForCreator ? '等待中' : '提示'}</strong>
+                    <strong>{waitingForCreator ? '等待中' : errorMessage.includes('成功') ? '成功' : '提示'}</strong>
                     <p>{errorMessage}</p>
                 </div>
                 <button class="error-close" on:click={handleClearError} aria-label="关闭">
@@ -381,6 +383,11 @@
         border-color: rgba(34, 197, 94, 0.3);
     }
 
+    .error-notification.success {
+        background: rgba(34, 197, 94, 0.08);
+        border-color: rgba(34, 197, 94, 0.25);
+    }
+
     .error-content {
         display: flex;
         align-items: flex-start;
@@ -414,6 +421,10 @@
     }
 
     .error-notification.waiting .error-text strong {
+        color: #22c55e;
+    }
+
+    .error-notification.success .error-text strong {
         color: #22c55e;
     }
 

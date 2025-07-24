@@ -129,10 +129,8 @@ export class ClipboardManager {
             localStorage.removeItem('clipboard_session');
         }
     }    private startStatusCheck(): void {
-        // 在移动端使用更频繁的状态检查以确保UI及时更新
-        const isMobile = typeof window !== 'undefined' && 
-            (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-        const checkInterval = isMobile ? 500 : 1000; // 移动端500ms，桌面端1秒
+        // 统一使用5秒间隔进行状态检查，平衡性能和及时性
+        const checkInterval = 5000; // 5秒间隔
         
         this.statusInterval = setInterval(() => {
             const wsConnected = this.ws?.readyState === WebSocket.OPEN;
@@ -154,7 +152,7 @@ export class ClipboardManager {
             
             // 只在状态真正变化时更新
             if (currentState.isConnected !== wsConnected || currentState.peerConnected !== effectivePeerConnected) {
-                console.log('📱 Status update:', { 
+                console.log('� Status update (5s check):', { 
                     wsConnected, 
                     dataChannelOpen, 
                     dataChannelForceConnected: this.dataChannelForceConnected,

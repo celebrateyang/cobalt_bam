@@ -32,6 +32,7 @@
         "title": "File Transfer",
         "send_files": "Send Files",
         "drop_zone_text": "📁 Drag files here or click to select",
+        "transfer_in_progress": "File transfer in progress, please wait",
         "selected_files": "Selected Files: (Auto-sent or waiting for connection)",
         "sending_files": "Sending Files:",
         "sending_progress": "Sending Progress",

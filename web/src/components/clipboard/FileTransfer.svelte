@@ -13,6 +13,7 @@
     export let transferProgress: number;
     export let dragover: boolean;
     export let peerConnected: boolean;
+    export let isTransferring: boolean = false; // 新增：传输状态
     
     let fileInput: HTMLInputElement;
     let autoSendScheduled = false; // 防止重复自动发送的标志
@@ -46,6 +47,11 @@
     const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
     
     function handleFileSelect(event: Event): void {
+        // 如果正在传输文件，则不处理新的文件选择
+        if (isTransferring) {
+            return;
+        }
+        
         const target = event.target as HTMLInputElement;
         if (target.files) {
             const newFiles = Array.from(target.files);
@@ -97,15 +103,31 @@
     }
 
     function handleDragOver(event: DragEvent): void {
+        // 如果正在传输文件，则不允许拖拽
+        if (isTransferring) {
+            return;
+        }
+        
         event.preventDefault();
         dragover = true;
     }
 
     function handleDragLeave(): void {
+        // 如果正在传输文件，则不处理拖拽离开事件
+        if (isTransferring) {
+            return;
+        }
+        
         dragover = false;
     }
 
     function handleDrop(event: DragEvent): void {
+        // 如果正在传输文件，则不处理拖拽放置
+        if (isTransferring) {
+            event.preventDefault();
+            return;
+        }
+        
         event.preventDefault();
         dragover = false;
         if (event.dataTransfer?.files) {
@@ -224,19 +246,25 @@
             <div
                 class="file-drop-zone"
                 class:dragover
+                class:disabled={isTransferring}
                 on:dragover={handleDragOver}
                 on:dragleave={handleDragLeave}
                 on:drop={handleDrop}
                 role="button"
-                tabindex="0"
-                on:click={() => fileInput?.click()}
-                on:keydown={(e) => e.key === 'Enter' && fileInput?.click()}
+                tabindex={isTransferring ? -1 : 0}
+                on:click={() => !isTransferring && fileInput?.click()}
+                on:keydown={(e) => !isTransferring && e.key === 'Enter' && fileInput?.click()}
             >
-                <p>{$t("clipboard.file_transfer.drop_zone_text")}</p>
+                {#if isTransferring}
+                    <p>🚫 {$t("clipboard.file_transfer.transfer_in_progress")}</p>
+                {:else}
+                    <p>{$t("clipboard.file_transfer.drop_zone_text")}</p>
+                {/if}
                 <input
                     bind:this={fileInput}
                     type="file"
                     multiple
+                    disabled={isTransferring}
                     on:change={handleFileSelect}
                     style="display: none;"
                 />
@@ -421,6 +449,29 @@
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         transform: scale(1.02);
         box-shadow: 0 12px 35px rgba(102, 126, 234, 0.25);
+    }
+
+    .file-drop-zone.disabled {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(128, 128, 128, 0.02) 0%, rgba(128, 128, 128, 0.005) 100%);
+        cursor: not-allowed;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .file-drop-zone.disabled p {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .file-drop-zone.disabled:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(128, 128, 128, 0.02) 0%, rgba(128, 128, 128, 0.005) 100%);
+        transform: none;
+        box-shadow: none;
+    }
+
+    .file-drop-zone.disabled::before {
+        display: none;
     }
 
     .file-drop-zone p {

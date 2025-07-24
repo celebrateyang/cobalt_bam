@@ -41,6 +41,7 @@
     let dragover = false;
     let sendingFiles = false;    let receivingFiles = false;
     let transferProgress = 0;
+    let isTransferring = false; // 新增：传输状态
     let currentReceivingFile: ReceivingFile | null = null;
     let dataChannel: RTCDataChannel | null = null;
     let peerConnection: RTCPeerConnection | null = null;
@@ -72,6 +73,7 @@
             sendingFiles = state.sendingFiles;
             receivingFiles = state.receivingFiles;
             transferProgress = state.transferProgress;
+            isTransferring = state.isTransferring; // 新增：订阅传输状态
             dataChannel = state.dataChannel;
             peerConnection = state.peerConnection;
             errorMessage = state.errorMessage;
@@ -249,6 +251,7 @@
                     {transferProgress}
                     {dragover}
                     {peerConnected}
+                    {isTransferring}
                     on:filesSelected={handleFilesSelected}
                     on:removeFile={handleRemoveFile}
                     on:sendFiles={handleSendFiles}

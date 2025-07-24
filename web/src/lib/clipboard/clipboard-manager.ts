@@ -12,15 +12,21 @@ export interface FileItem {
 }
 
 interface ReceivingFile {
+    id: string;
     name: string;
     size: number;
     type: string;
-    chunks: Uint8Array[];
+    chunks: Map<number, Uint8Array>; // 使用Map存储chunks，支持乱序接收
+    receivedChunks: number;
+    totalChunks: number;
     receivedSize: number;
 }
 
 // Constants
 const CHUNK_SIZE = 64 * 1024; // 64KB chunks for file transfer
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
+const MAX_BUFFER_SIZE = 1024 * 1024; // 1MB buffer threshold
+const BUFFER_CHECK_INTERVAL = 10; // 10ms buffer check interval
 
 // Store for reactive state
 export const clipboardState = writable({
@@ -889,11 +895,10 @@ export class ClipboardManager {
                 }, 500);
             }
         };        this.dataChannel.onmessage = async (event) => {
-            console.log('📨 Data channel message received:', event.data);
+            console.log('📨 Data channel message received, type:', typeof event.data);
             try {
-                const data = JSON.parse(event.data);
-                console.log('📦 Parsed data:', data.type, data);
-                await this.handleDataChannelMessage(data);
+                // 直接传递原始数据给处理函数，让它判断是二进制还是JSON
+                await this.handleDataChannelMessage(event.data);
             } catch (error) {
                 console.error('Error handling data channel message:', error);
             }
@@ -938,90 +943,236 @@ export class ClipboardManager {
             console.error('Error handling ICE candidate:', error);
         }
     }    private async handleDataChannelMessage(data: any): Promise<void> {
-        console.log('🔍 Handling data channel message type:', data.type);
-        // Handle different types of data channel messages
-        switch (data.type) {            case 'text':
-                // Convert array back to ArrayBuffer for decryption
-                const encryptedBuffer = new Uint8Array(data.content).buffer;
-                const decryptedText = await this.decryptData(encryptedBuffer);
-                clipboardState.update(state => ({
-                    ...state,
-                    receivedText: decryptedText,
-                    activeTab: 'text' // 自动切换到文本分享标签
-                }));
-                console.log('Text received successfully, switched to text tab');
-                break;
-                  case 'file_start':
-                // Start receiving a new file
-                this.currentReceivingFile = {
-                    name: data.name,
-                    size: data.size,
-                    type: data.mimeType || data.type,
-                    chunks: [],
-                    receivedSize: 0
-                };
-                clipboardState.update(state => ({ 
-                    ...state, 
-                    receivingFiles: true, 
-                    transferProgress: 0,
-                    activeTab: 'files' // 自动切换到文件传输标签
-                }));
-                console.log('Started receiving file:', data.name, ', switched to files tab');
-                break;
-                
-            case 'file_chunk':
-                if (this.currentReceivingFile) {
-                    // Decrypt and store chunk
-                    const encryptedData = new Uint8Array(data.data).buffer;
-                    const decryptedChunk = await this.decryptBinaryData(encryptedData);
-                    
-                    this.currentReceivingFile.chunks.push(decryptedChunk);
-                    this.currentReceivingFile.receivedSize += decryptedChunk.length;
-                    
-                    // Update progress
-                    const progress = (this.currentReceivingFile.receivedSize / this.currentReceivingFile.size) * 100;
-                    clipboardState.update(state => ({ 
-                        ...state, 
-                        transferProgress: Math.min(progress, 100) 
-                    }));
-                }
-                break;
-                
-            case 'file_end':
-                if (this.currentReceivingFile && this.currentReceivingFile.name === data.name) {
-                    // Combine all chunks into a single file
-                    const totalSize = this.currentReceivingFile.chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-                    const combinedArray = new Uint8Array(totalSize);
-                    let offset = 0;
-                    
-                    for (const chunk of this.currentReceivingFile.chunks) {
-                        combinedArray.set(chunk, offset);
-                        offset += chunk.length;
-                    }
-                    
-                    const blob = new Blob([combinedArray], { type: this.currentReceivingFile.type });
-                    const fileItem: FileItem = {
-                        name: this.currentReceivingFile.name,
-                        size: this.currentReceivingFile.size,
-                        type: this.currentReceivingFile.type,
-                        blob: blob
-                    };
-                    
-                    // Add to received files
+        // 检查是否为二进制数据
+        if (data instanceof ArrayBuffer) {
+            await this.handleBinaryMessage(data);
+            return;
+        }
+        
+        // 处理JSON消息（file_start, file_end, text等）
+        try {
+            const message = typeof data === 'string' ? JSON.parse(data) : data;
+            console.log('🔍 Handling JSON message type:', message.type);
+            
+            switch (message.type) {
+                case 'text':
+                    // Convert array back to ArrayBuffer for decryption
+                    const encryptedBuffer = new Uint8Array(message.content).buffer;
+                    const decryptedText = await this.decryptData(encryptedBuffer);
                     clipboardState.update(state => ({
                         ...state,
-                        receivedFiles: [...state.receivedFiles, fileItem],
-                        receivingFiles: false,
-                        transferProgress: 0
+                        receivedText: decryptedText,
+                        activeTab: 'text' // 自动切换到文本分享标签
                     }));
+                    console.log('Text received successfully, switched to text tab');
+                    break;
                     
-                    console.log('File received successfully:', data.name);
-                    this.currentReceivingFile = null;
-                }
-                break;
+                case 'file_start':
+                    await this.handleFileStart(message);
+                    break;
+                    
+                case 'file_end':
+                    await this.handleFileEnd(message);
+                    break;
+                    
+                default:
+                    console.warn('⚠️ Unknown message type:', message.type);
+            }
+        } catch (error) {
+            console.error('❌ Error parsing JSON message:', error);
         }
     }
-    
+
+    private async handleBinaryMessage(data: ArrayBuffer): Promise<void> {
+        try {
+            const view = new DataView(data);
+            const uint8View = new Uint8Array(data);
+            
+            let offset = 0;
+            
+            // 读取消息类型
+            const messageType = view.getUint8(offset);
+            offset += 1;
+            
+            if (messageType === 0x01) { // file_chunk
+                // 读取fileId长度
+                const fileIdLength = view.getUint8(offset);
+                offset += 1;
+                
+                // 读取fileId
+                const fileIdBytes = uint8View.slice(offset, offset + fileIdLength);
+                const fileId = new TextDecoder().decode(fileIdBytes);
+                offset += fileIdLength;
+                
+                // 读取chunkIndex
+                const chunkIndex = view.getUint32(offset, true);
+                offset += 4;
+                
+                // 读取totalChunks
+                const totalChunks = view.getUint32(offset, true);
+                offset += 4;
+                
+                // 剩余的就是加密的chunk数据
+                const encryptedChunkData = uint8View.slice(offset);
+                
+                await this.handleFileChunkOptimized(fileId, chunkIndex, totalChunks, encryptedChunkData);
+            }
+        } catch (error) {
+            console.error('❌ Error handling binary message:', error);
+        }
+    }
+
+    private async handleFileStart(data: any): Promise<void> {
+        // 检查文件大小是否超出限制
+        if (data.size > MAX_FILE_SIZE) {
+            const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+            const fileSizeMB = Math.round(data.size / (1024 * 1024) * 100) / 100;
+            console.error(`❌ 拒绝接收过大的文件: ${data.name} (${fileSizeMB}MB > ${maxSizeMB}MB)`);
+            
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: `文件过大！${data.name} (${fileSizeMB}MB) 超过 ${maxSizeMB}MB 限制`,
+                showError: true
+            }));
+            return;
+        }
+        
+        // Start receiving a new file
+        const fileSizeMB = Math.round(data.size / (1024 * 1024) * 100) / 100;
+        console.log(`📥 开始接收文件: ${data.name} (${fileSizeMB}MB)`);
+        
+        this.currentReceivingFile = {
+            id: data.fileId,
+            name: data.name,
+            size: data.size,
+            type: data.mimeType || data.type,
+            chunks: new Map<number, Uint8Array>(),
+            receivedChunks: 0,
+            totalChunks: 0, // 会在第一个chunk中更新
+            receivedSize: 0
+        };
+        
+        clipboardState.update(state => ({ 
+            ...state, 
+            receivingFiles: true, 
+            transferProgress: 0,
+            activeTab: 'files', // 自动切换到文件传输标签
+            errorMessage: '',
+            showError: false
+        }));
+    }
+
+    private async handleFileChunkOptimized(fileId: string, chunkIndex: number, totalChunks: number, encryptedChunkData: Uint8Array): Promise<void> {
+        const receivingFile = this.currentReceivingFile;
+        
+        if (!receivingFile || receivingFile.id !== fileId) {
+            console.warn('⚠️ Received chunk for unknown file:', fileId);
+            return;
+        }
+        
+        try {
+            // 解密chunk数据
+            const decryptedChunk = await this.decryptBinaryData(encryptedChunkData.buffer as ArrayBuffer);
+            
+            // 存储chunk数据
+            receivingFile.chunks.set(chunkIndex, decryptedChunk);
+            receivingFile.receivedChunks++;
+            receivingFile.receivedSize += decryptedChunk.length;
+            receivingFile.totalChunks = totalChunks;
+            
+            // 更新接收进度
+            const progress = Math.round((receivingFile.receivedChunks / totalChunks) * 100);
+            const receivedMB = Math.round(receivingFile.receivedSize / (1024 * 1024) * 100) / 100;
+            const totalMB = Math.round(receivingFile.size / (1024 * 1024) * 100) / 100;
+            
+            // 减少日志频率以提高性能
+            if (receivingFile.receivedChunks % 10 === 0 || receivingFile.receivedChunks === totalChunks) {
+                console.log(`📥 ${receivingFile.name} 接收进度: ${progress}% (${receivedMB}/${totalMB}MB, ${receivingFile.receivedChunks}/${totalChunks} 块)`);
+            }
+            
+            clipboardState.update(state => ({ 
+                ...state, 
+                transferProgress: Math.min(progress, 100) 
+            }));
+            
+            // 检查是否接收完成
+            if (receivingFile.receivedChunks === totalChunks) {
+                await this.assembleReceivedFile();
+            }
+        } catch (error) {
+            console.error('❌ Error processing file chunk:', error);
+        }
+    }
+
+    private async handleFileEnd(data: any): Promise<void> {
+        const receivingFile = this.currentReceivingFile;
+        
+        if (receivingFile && receivingFile.id === data.fileId) {
+            // 如果还没有组装完成，触发组装
+            if (receivingFile.receivedChunks === receivingFile.totalChunks) {
+                await this.assembleReceivedFile();
+            }
+        }
+    }
+
+    private async assembleReceivedFile(): Promise<void> {
+        const receivingFile = this.currentReceivingFile;
+        if (!receivingFile) return;
+        
+        try {
+            // 按顺序组装所有chunks
+            const totalSize = receivingFile.receivedSize;
+            const combinedArray = new Uint8Array(totalSize);
+            let offset = 0;
+            
+            // 按chunk索引顺序组装
+            for (let i = 0; i < receivingFile.totalChunks; i++) {
+                const chunk = receivingFile.chunks.get(i);
+                if (chunk) {
+                    combinedArray.set(chunk, offset);
+                    offset += chunk.length;
+                } else {
+                    console.error(`❌ Missing chunk ${i} for file ${receivingFile.name}`);
+                    return;
+                }
+            }
+            
+            const blob = new Blob([combinedArray], { type: receivingFile.type });
+            const fileItem: FileItem = {
+                name: receivingFile.name,
+                size: receivingFile.size,
+                type: receivingFile.type,
+                blob: blob
+            };
+            
+            const fileSizeMB = Math.round(receivingFile.size / (1024 * 1024) * 100) / 100;
+            console.log(`✅ 文件接收完成: ${receivingFile.name} (${fileSizeMB}MB)`);
+            
+            // Add to received files
+            clipboardState.update(state => ({
+                ...state,
+                receivedFiles: [...state.receivedFiles, fileItem],
+                receivingFiles: false,
+                transferProgress: 0,
+                errorMessage: `成功接收文件: ${receivingFile.name}`,
+                showError: true
+            }));
+            
+            // 3秒后清除成功消息
+            setTimeout(() => {
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: '',
+                    showError: false
+                }));
+            }, 3000);
+            
+            this.currentReceivingFile = null;
+        } catch (error) {
+            console.error('❌ Error assembling received file:', error);
+        }
+    }
+
     // Public methods for sending data
     async sendText(text: string): Promise<void> {
         if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
@@ -1052,6 +1203,7 @@ export class ClipboardManager {
     async sendFiles(): Promise<void> {
         if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
             console.error('Data channel not ready');
+            this.showError('连接未准备就绪，请等待连接建立');
             return;
         }
         
@@ -1065,37 +1217,93 @@ export class ClipboardManager {
             console.log('No files to send');
             return;
         }
-          try {
+        
+        // 检查文件大小限制
+        const oversizedFiles = currentFiles.filter(file => file.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+            const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+            this.showError(`文件过大！以下文件超过${maxSizeMB}MB限制：${oversizedFiles.map(f => f.name).join(', ')}`);
+            return;
+        }
+        
+        // 计算总大小
+        const totalSize = currentFiles.reduce((sum, file) => sum + file.size, 0);
+        const totalSizeMB = Math.round(totalSize / (1024 * 1024) * 100) / 100;
+        console.log(`准备发送 ${currentFiles.length} 个文件，总大小: ${totalSizeMB}MB`);
+        
+        try {
             // 自动切换到文件传输标签
             clipboardState.update(state => ({ 
                 ...state, 
                 sendingFiles: true, 
                 transferProgress: 0,
-                activeTab: 'files'
+                activeTab: 'files',
+                errorMessage: '',
+                showError: false
             }));
             console.log('Switched to files tab for sending');
             
             for (let i = 0; i < currentFiles.length; i++) {
                 const file = currentFiles[i];
+                
+                // 显示当前发送的文件名
+                console.log(`📤 开始发送文件 ${i + 1}/${currentFiles.length}: ${file.name}`);
+                
                 await this.sendSingleFile(file);
                 
-                // Update progress
-                const progress = ((i + 1) / currentFiles.length) * 100;
-                clipboardState.update(state => ({ ...state, transferProgress: progress }));
+                // Update progress for multiple files (individual file progress is handled in sendFileInBinaryChunks)
+                if (currentFiles.length > 1) {
+                    const progress = ((i + 1) / currentFiles.length) * 100;
+                    clipboardState.update(state => ({ ...state, transferProgress: progress }));
+                }
             }
             
-            clipboardState.update(state => ({ ...state, sendingFiles: false, transferProgress: 0 }));
-            console.log('All files sent successfully');
+            clipboardState.update(state => ({ 
+                ...state, 
+                sendingFiles: false, 
+                transferProgress: 0 
+            }));
+            console.log('✅ 所有文件发送成功');
+            
+            // 显示成功消息
+            setTimeout(() => {
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: `成功发送 ${currentFiles.length} 个文件`,
+                    showError: true
+                }));
+                
+                // 3秒后自动清除成功消息
+                setTimeout(() => {
+                    clipboardState.update(state => ({
+                        ...state,
+                        errorMessage: '',
+                        showError: false
+                    }));
+                }, 3000);
+            }, 100);
+            
         } catch (error) {
-            console.error('Error sending files:', error);
-            clipboardState.update(state => ({ ...state, sendingFiles: false, transferProgress: 0 }));
+            console.error('❌ 发送文件时出错:', error);
+            const errorMessage = error instanceof Error ? error.message : '发送文件时发生未知错误';
+            clipboardState.update(state => ({ 
+                ...state, 
+                sendingFiles: false, 
+                transferProgress: 0,
+                errorMessage: `发送失败: ${errorMessage}`,
+                showError: true
+            }));
         }
     }
 
     private async sendSingleFile(file: File): Promise<void> {
-        // Send file start message
+        // 生成唯一的文件ID
+        const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Send file start message (仍使用JSON，因为信息量小)
         const fileStartMessage = {
             type: 'file_start',
+            fileId: fileId,
             name: file.name,
             size: file.size,
             mimeType: file.type
@@ -1103,32 +1311,117 @@ export class ClipboardManager {
         
         this.dataChannel!.send(JSON.stringify(fileStartMessage));
         
-        // Send file in chunks
-        const arrayBuffer = await file.arrayBuffer();
-        const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK_SIZE);
-        
-        for (let i = 0; i < totalChunks; i++) {
-            const start = i * CHUNK_SIZE;
-            const end = Math.min(start + CHUNK_SIZE, arrayBuffer.byteLength);
-            const chunk = arrayBuffer.slice(start, end);
-            const encryptedChunk = await this.encryptBinaryData(new Uint8Array(chunk));
-            
-            const chunkMessage = {
-                type: 'file_chunk',
-                index: i,
-                data: Array.from(new Uint8Array(encryptedChunk))
-            };
-            
-            this.dataChannel!.send(JSON.stringify(chunkMessage));
-        }
+        // 使用流式处理避免大文件全部加载到内存
+        await this.sendFileInBinaryChunks(file, fileId);
         
         // Send file end message
         const fileEndMessage = {
             type: 'file_end',
+            fileId: fileId,
             name: file.name
         };
         
         this.dataChannel!.send(JSON.stringify(fileEndMessage));
+        console.log(`✅ 文件发送完成: ${file.name}`);
+    }
+
+    private async sendFileInBinaryChunks(file: File, fileId: string): Promise<void> {
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const fileSizeMB = Math.round(file.size / (1024 * 1024) * 100) / 100;
+        console.log(`开始发送文件: ${file.name} (${fileSizeMB}MB, ${totalChunks} 个分块)`);
+        
+        let consecutiveSends = 0;
+        
+        for (let i = 0; i < totalChunks; i++) {
+            // 智能流控制
+            await this.smartFlowControl(consecutiveSends);
+            
+            // 流式读取文件块，而不是全部加载到内存
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const fileSlice = file.slice(start, end);
+            const chunkBuffer = await fileSlice.arrayBuffer();
+            
+            // 加密数据块
+            const encryptedChunk = await this.encryptBinaryData(new Uint8Array(chunkBuffer));
+            
+            // 创建二进制消息
+            const binaryMessage = this.createBinaryChunkMessage(fileId, i, totalChunks, encryptedChunk);
+            
+            // 发送二进制数据
+            this.dataChannel!.send(binaryMessage);
+            consecutiveSends++;
+            
+            // 更新进度（减少频率以提高性能）
+            if (i % 5 === 0 || i === totalChunks - 1) {
+                const progress = Math.round(((i + 1) / totalChunks) * 100);
+                console.log(`${file.name} 发送进度: ${progress}%`);
+                
+                // 更新UI状态
+                clipboardState.update(state => ({
+                    ...state,
+                    transferProgress: progress
+                }));
+            }
+        }
+    }
+
+    private async smartFlowControl(consecutiveSends: number): Promise<void> {
+        const bufferAmount = this.dataChannel!.bufferedAmount;
+        const maxBuffer = MAX_BUFFER_SIZE; // 1MB
+        const targetBuffer = MAX_BUFFER_SIZE / 2; // 512KB
+        
+        // 如果缓冲区过满，等待
+        if (bufferAmount > maxBuffer) {
+            console.log(`⏸️ 缓冲区过满 (${(bufferAmount/1024/1024).toFixed(1)}MB)，等待清空...`);
+            
+            while (this.dataChannel!.bufferedAmount > targetBuffer) {
+                await new Promise(resolve => setTimeout(resolve, 5));
+            }
+        }
+        
+        // 每发送20个chunk给浏览器喘息机会
+        if (consecutiveSends % 20 === 0 && consecutiveSends > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1));
+        }
+    }
+
+    private createBinaryChunkMessage(fileId: string, chunkIndex: number, totalChunks: number, encryptedData: ArrayBuffer): ArrayBuffer {
+        // 创建紧凑的二进制头部
+        const fileIdBytes = new TextEncoder().encode(fileId);
+        const headerSize = 1 + 1 + fileIdBytes.length + 4 + 4; // type + fileIdLen + fileId + chunkIndex + totalChunks
+        
+        const totalSize = headerSize + encryptedData.byteLength;
+        const message = new ArrayBuffer(totalSize);
+        const view = new DataView(message);
+        const uint8View = new Uint8Array(message);
+        
+        let offset = 0;
+        
+        // 消息类型标识 (1 byte) - 0x01 = file_chunk
+        view.setUint8(offset, 0x01);
+        offset += 1;
+        
+        // fileId长度 (1 byte)
+        view.setUint8(offset, fileIdBytes.length);
+        offset += 1;
+        
+        // fileId
+        uint8View.set(fileIdBytes, offset);
+        offset += fileIdBytes.length;
+        
+        // chunkIndex (4 bytes)
+        view.setUint32(offset, chunkIndex, true);
+        offset += 4;
+        
+        // totalChunks (4 bytes)
+        view.setUint32(offset, totalChunks, true);
+        offset += 4;
+        
+        // 加密的数据块
+        uint8View.set(new Uint8Array(encryptedData), offset);
+        
+        return message;
     }
 
     // Expose peer connection and data channel for debug panel
@@ -1137,6 +1430,41 @@ export class ClipboardManager {
             peerConnection: this.peerConnection,
             dataChannel: this.dataChannel,
             sharedKey: this.sharedKey ? 'Present' : 'Not available'
+        };
+    }
+    
+    // 文件大小验证
+    validateFileSize(file: File): { valid: boolean; error?: string } {
+        if (file.size > MAX_FILE_SIZE) {
+            const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+            return {
+                valid: false,
+                error: `文件 "${file.name}" 大小超过 ${maxSizeMB}MB 限制`
+            };
+        }
+        return { valid: true };
+    }
+    
+    // 格式化文件大小显示
+    formatFileSize(bytes: number): string {
+        if (bytes === 0) return '0 B';
+        
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        const size = bytes / Math.pow(1024, i);
+        
+        return `${Math.round(size * 100) / 100} ${sizes[i]}`;
+    }
+    
+    // 获取DataChannel缓冲区状态
+    getBufferStatus(): { bufferedAmount: number; isOverloaded: boolean } {
+        if (!this.dataChannel) {
+            return { bufferedAmount: 0, isOverloaded: false };
+        }
+        
+        return {
+            bufferedAmount: this.dataChannel.bufferedAmount,
+            isOverloaded: this.dataChannel.bufferedAmount > MAX_BUFFER_SIZE
         };
     }
 }

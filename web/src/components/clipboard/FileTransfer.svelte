@@ -43,18 +43,44 @@
         previousReceivedCount = receivedFiles.length;
     }
     
+    const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
+    
     function handleFileSelect(event: Event): void {
         const target = event.target as HTMLInputElement;
         if (target.files) {
             const newFiles = Array.from(target.files);
-            dispatch('filesSelected', { files: newFiles });
             
-            // 如果已连接且不在发送中，立即发送
-            if (peerConnected && !sendingFiles) {
-                scheduleAutoSend();
+            // 检查文件大小限制
+            const oversizedFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+            if (oversizedFiles.length > 0) {
+                const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+                const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+                alert(`以下文件超过${maxSizeMB}MB限制，无法发送：\n${oversizedNames}`);
+                
+                // 只选择符合大小要求的文件
+                const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
+                if (validFiles.length === 0) {
+                    return; // 如果没有有效文件，直接返回
+                }
+                dispatch('filesSelected', { files: validFiles });
+                
+                // 如果已连接且不在发送中，立即发送有效文件
+                if (peerConnected && !sendingFiles) {
+                    scheduleAutoSend();
+                } else {
+                    // 如果未连接，保存待发送文件
+                    pendingFiles = validFiles;
+                }
             } else {
-                // 如果未连接，保存待发送文件
-                pendingFiles = newFiles;
+                dispatch('filesSelected', { files: newFiles });
+                
+                // 如果已连接且不在发送中，立即发送
+                if (peerConnected && !sendingFiles) {
+                    scheduleAutoSend();
+                } else {
+                    // 如果未连接，保存待发送文件
+                    pendingFiles = newFiles;
+                }
             }
         }
     }
@@ -84,14 +110,38 @@
         dragover = false;
         if (event.dataTransfer?.files) {
             const droppedFiles = Array.from(event.dataTransfer.files);
-            dispatch('filesSelected', { files: droppedFiles });
             
-            // 如果已连接且不在发送中，立即发送
-            if (peerConnected && !sendingFiles) {
-                scheduleAutoSend();
+            // 检查文件大小限制
+            const oversizedFiles = droppedFiles.filter(file => file.size > MAX_FILE_SIZE);
+            if (oversizedFiles.length > 0) {
+                const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+                const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+                alert(`以下文件超过${maxSizeMB}MB限制，无法发送：\n${oversizedNames}`);
+                
+                // 只处理符合大小要求的文件
+                const validFiles = droppedFiles.filter(file => file.size <= MAX_FILE_SIZE);
+                if (validFiles.length === 0) {
+                    return; // 如果没有有效文件，直接返回
+                }
+                dispatch('filesSelected', { files: validFiles });
+                
+                // 如果已连接且不在发送中，立即发送有效文件
+                if (peerConnected && !sendingFiles) {
+                    scheduleAutoSend();
+                } else {
+                    // 如果未连接，保存待发送文件
+                    pendingFiles = validFiles;
+                }
             } else {
-                // 如果未连接，保存待发送文件
-                pendingFiles = droppedFiles;
+                dispatch('filesSelected', { files: droppedFiles });
+                
+                // 如果已连接且不在发送中，立即发送
+                if (peerConnected && !sendingFiles) {
+                    scheduleAutoSend();
+                } else {
+                    // 如果未连接，保存待发送文件
+                    pendingFiles = droppedFiles;
+                }
             }
         }
     }

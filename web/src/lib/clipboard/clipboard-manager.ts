@@ -20,6 +20,11 @@ interface ReceivingFile {
     receivedChunks: number;
     totalChunks: number;
     receivedSize: number;
+    retryCount: number;
+    lastRetryTime: number;
+    retryTimer?: ReturnType<typeof setTimeout>; // 重传定时器
+    missingChunks: Set<number>; // 跟踪缺失的chunks
+    lastActivity: number; // 最后活动时间
 }
 
 // Constants
@@ -27,6 +32,9 @@ const CHUNK_SIZE = 64 * 1024; // 64KB chunks for file transfer
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
 const MAX_BUFFER_SIZE = 1024 * 1024; // 1MB buffer threshold
 const BUFFER_CHECK_INTERVAL = 10; // 10ms buffer check interval
+const RETRY_TIMEOUT = 3000; // 3秒后检查缺失的chunks
+const MAX_RETRY_COUNT = 3; // 最大重传次数
+const RETRY_DELAY = 1000; // 重传延迟
 
 // Store for reactive state
 export const clipboardState = writable({
@@ -511,6 +519,12 @@ export class ClipboardManager {
         this.isReconnecting = false;
         this.reconnectAttempts = 0;
         
+        // 清理文件重传定时器
+        if (this.currentReceivingFile?.retryTimer) {
+            clearTimeout(this.currentReceivingFile.retryTimer);
+            this.currentReceivingFile.retryTimer = undefined;
+        }
+        
         if (this.dataChannel) {
             this.dataChannel.close();
             this.dataChannel = null;
@@ -540,6 +554,7 @@ export class ClipboardManager {
         
         this.sharedKey = null;
         this.remotePublicKey = null;
+        this.currentReceivingFile = null;
         this.clearStoredSession();
     }
 
@@ -737,9 +752,9 @@ export class ClipboardManager {
                     clipboardState.update(state => ({ ...state, peerConnected: false }));
                     
                     // 暂时禁用自动重启来调试问题
-                    console.log('🚫 Auto-restart disabled for debugging');
+                    //console.log('🚫 Auto-restart disabled for debugging');
                     
-                    /*
+                    
                     // 移动端使用更短的重试间隔
                     const retryDelay = isMobile ? 1000 : 2000;
                     setTimeout(() => {
@@ -748,15 +763,15 @@ export class ClipboardManager {
                             this.restartWebRTC();
                         }
                     }, retryDelay);
-                    */
+                    
                 } else if (state === 'disconnected') {
                     console.warn('⚠️ Peer connection disconnected');
                     clipboardState.update(state => ({ ...state, peerConnected: false }));
                     
                     // 暂时禁用移动端快速恢复来调试问题
-                    console.log('🚫 Mobile reconnection disabled for debugging');
+                    //console.log('🚫 Mobile reconnection disabled for debugging');
                     
-                    /*
+                    
                     // 移动端快速恢复尝试
                     if (isMobile) {
                         setTimeout(() => {
@@ -766,7 +781,7 @@ export class ClipboardManager {
                             }
                         }, 800);
                     }
-                    */
+                    
                 }
             };if (isInitiator) {
                 this.dataChannel = this.peerConnection.createDataChannel('files', {
@@ -895,9 +910,7 @@ export class ClipboardManager {
                 }, 500);
             }
         };        this.dataChannel.onmessage = async (event) => {
-            console.log('📨 Data channel message received, type:', typeof event.data);
             try {
-                // 直接传递原始数据给处理函数，让它判断是二进制还是JSON
                 await this.handleDataChannelMessage(event.data);
             } catch (error) {
                 console.error('Error handling data channel message:', error);
@@ -952,7 +965,6 @@ export class ClipboardManager {
         // 处理JSON消息（file_start, file_end, text等）
         try {
             const message = typeof data === 'string' ? JSON.parse(data) : data;
-            console.log('🔍 Handling JSON message type:', message.type);
             
             switch (message.type) {
                 case 'text':
@@ -962,9 +974,8 @@ export class ClipboardManager {
                     clipboardState.update(state => ({
                         ...state,
                         receivedText: decryptedText,
-                        activeTab: 'text' // 自动切换到文本分享标签
+                        activeTab: 'text'
                     }));
-                    console.log('Text received successfully, switched to text tab');
                     break;
                     
                 case 'file_start':
@@ -975,11 +986,12 @@ export class ClipboardManager {
                     await this.handleFileEnd(message);
                     break;
                     
-                default:
-                    console.warn('⚠️ Unknown message type:', message.type);
+                case 'retry_chunks':
+                    await this.handleRetryChunksRequest(message);
+                    break;
             }
         } catch (error) {
-            console.error('❌ Error parsing JSON message:', error);
+            console.error('Error parsing JSON message:', error);
         }
     }
 
@@ -1018,16 +1030,25 @@ export class ClipboardManager {
                 await this.handleFileChunkOptimized(fileId, chunkIndex, totalChunks, encryptedChunkData);
             }
         } catch (error) {
-            console.error('❌ Error handling binary message:', error);
+            console.error('Error handling binary message:', error);
         }
     }
 
     private async handleFileStart(data: any): Promise<void> {
+        // 检查是否已经在接收同一个文件
+        if (this.currentReceivingFile && this.currentReceivingFile.id === data.fileId) {
+            return;
+        }
+        
+        // 检查是否已经在接收其他文件且进度超过50%
+        if (this.currentReceivingFile && this.currentReceivingFile.chunks.size > this.currentReceivingFile.totalChunks * 0.5) {
+            return;
+        }
+        
         // 检查文件大小是否超出限制
         if (data.size > MAX_FILE_SIZE) {
             const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
             const fileSizeMB = Math.round(data.size / (1024 * 1024) * 100) / 100;
-            console.error(`❌ 拒绝接收过大的文件: ${data.name} (${fileSizeMB}MB > ${maxSizeMB}MB)`);
             
             clipboardState.update(state => ({
                 ...state,
@@ -1038,9 +1059,6 @@ export class ClipboardManager {
         }
         
         // Start receiving a new file
-        const fileSizeMB = Math.round(data.size / (1024 * 1024) * 100) / 100;
-        console.log(`📥 开始接收文件: ${data.name} (${fileSizeMB}MB)`);
-        
         this.currentReceivingFile = {
             id: data.fileId,
             name: data.name,
@@ -1048,15 +1066,19 @@ export class ClipboardManager {
             type: data.mimeType || data.type,
             chunks: new Map<number, Uint8Array>(),
             receivedChunks: 0,
-            totalChunks: 0, // 会在第一个chunk中更新
-            receivedSize: 0
+            totalChunks: 0,
+            receivedSize: 0,
+            retryCount: 0,
+            lastRetryTime: 0,
+            missingChunks: new Set<number>(),
+            lastActivity: Date.now()
         };
         
         clipboardState.update(state => ({ 
             ...state, 
             receivingFiles: true, 
             transferProgress: 0,
-            activeTab: 'files', // 自动切换到文件传输标签
+            activeTab: 'files',
             errorMessage: '',
             showError: false
         }));
@@ -1066,29 +1088,37 @@ export class ClipboardManager {
         const receivingFile = this.currentReceivingFile;
         
         if (!receivingFile || receivingFile.id !== fileId) {
-            console.warn('⚠️ Received chunk for unknown file:', fileId);
             return;
         }
+        
+        // 更新最后活动时间
+        receivingFile.lastActivity = Date.now();
         
         try {
             // 解密chunk数据
             const decryptedChunk = await this.decryptBinaryData(encryptedChunkData.buffer as ArrayBuffer);
             
+            // 检查是否为重复chunk
+            const isNewChunk = !receivingFile.chunks.has(chunkIndex);
+            
             // 存储chunk数据
             receivingFile.chunks.set(chunkIndex, decryptedChunk);
-            receivingFile.receivedChunks++;
-            receivingFile.receivedSize += decryptedChunk.length;
+            
+            // 从缺失列表中移除这个chunk
+            if (receivingFile.missingChunks.has(chunkIndex)) {
+                receivingFile.missingChunks.delete(chunkIndex);
+            }
+            
+            // 只有新chunk才增加计数和大小
+            if (isNewChunk) {
+                receivingFile.receivedChunks++;
+                receivingFile.receivedSize += decryptedChunk.length;
+            }
+            
             receivingFile.totalChunks = totalChunks;
             
             // 更新接收进度
             const progress = Math.round((receivingFile.receivedChunks / totalChunks) * 100);
-            const receivedMB = Math.round(receivingFile.receivedSize / (1024 * 1024) * 100) / 100;
-            const totalMB = Math.round(receivingFile.size / (1024 * 1024) * 100) / 100;
-            
-            // 减少日志频率以提高性能
-            if (receivingFile.receivedChunks % 10 === 0 || receivingFile.receivedChunks === totalChunks) {
-                console.log(`📥 ${receivingFile.name} 接收进度: ${progress}% (${receivedMB}/${totalMB}MB, ${receivingFile.receivedChunks}/${totalChunks} 块)`);
-            }
             
             clipboardState.update(state => ({ 
                 ...state, 
@@ -1096,30 +1126,106 @@ export class ClipboardManager {
             }));
             
             // 检查是否接收完成
-            if (receivingFile.receivedChunks === totalChunks) {
+            const actualReceivedChunks = receivingFile.chunks.size;
+            
+            // 检查缺失chunks并启动重传机制
+            if (actualReceivedChunks > totalChunks * 0.8) {
+                const missingChunks = [];
+                for (let i = 0; i < totalChunks; i++) {
+                    if (!receivingFile.chunks.has(i)) {
+                        missingChunks.push(i);
+                    }
+                }
+                
+                if (missingChunks.length === 0) {
+                    // 所有chunks已接收
+                } else if (missingChunks.length <= 5) {
+                    // 启动重传机制
+                    this.scheduleRetryMissingChunks(receivingFile, missingChunks);
+                }
+            }
+            
+            if (actualReceivedChunks === totalChunks) {
+                // 清除重传定时器
+                if (receivingFile.retryTimer) {
+                    clearTimeout(receivingFile.retryTimer);
+                    receivingFile.retryTimer = undefined;
+                }
+                
                 await this.assembleReceivedFile();
             }
         } catch (error) {
-            console.error('❌ Error processing file chunk:', error);
+            console.error('Error processing file chunk:', error);
         }
+    }
+
+    private async handleRetryChunksRequest(message: any): Promise<void> {
+        // 这里需要发送方重新发送指定的chunks
+        // 实际的重传逻辑需要在发送方实现
     }
 
     private async handleFileEnd(data: any): Promise<void> {
         const receivingFile = this.currentReceivingFile;
         
-        if (receivingFile && receivingFile.id === data.fileId) {
-            // 如果还没有组装完成，触发组装
-            if (receivingFile.receivedChunks === receivingFile.totalChunks) {
+        if (!receivingFile) {
+            return;
+        }
+        
+        if (receivingFile.id === data.fileId) {
+            // 检查哪些chunks缺失
+            const missingChunks: number[] = [];
+            for (let i = 0; i < receivingFile.totalChunks; i++) {
+                if (!receivingFile.chunks.has(i)) {
+                    missingChunks.push(i);
+                }
+            }
+            
+            if (missingChunks.length === 0) {
+                
+                // 清除重传定时器
+                if (receivingFile.retryTimer) {
+                    clearTimeout(receivingFile.retryTimer);
+                    receivingFile.retryTimer = undefined;
+                }
+                
                 await this.assembleReceivedFile();
+            } else {
+                // 如果缺失chunks不多，启动重传机制
+                if (missingChunks.length <= 10 && receivingFile.retryCount < MAX_RETRY_COUNT) {
+                    console.log(`� 启动重传机制，缺失${missingChunks.length}个chunks`);
+                    this.scheduleRetryMissingChunks(receivingFile, missingChunks);
+                } else {
+                    await this.assembleReceivedFileWithMissingChunks(missingChunks);
+                }
             }
         }
     }
 
     private async assembleReceivedFile(): Promise<void> {
         const receivingFile = this.currentReceivingFile;
-        if (!receivingFile) return;
+        if (!receivingFile) {
+            return;
+        }
         
         try {
+            // 检查chunk完整性
+            const missingChunks = [];
+            let totalActualSize = 0;
+            
+            for (let i = 0; i < receivingFile.totalChunks; i++) {
+                const chunk = receivingFile.chunks.get(i);
+                if (chunk) {
+                    totalActualSize += chunk.length;
+                } else {
+                    missingChunks.push(i);
+                }
+            }
+            
+            if (missingChunks.length > 0) {
+                await this.assembleReceivedFileWithMissingChunks(missingChunks);
+                return;
+            }
+            
             // 按顺序组装所有chunks
             const totalSize = receivingFile.receivedSize;
             const combinedArray = new Uint8Array(totalSize);
@@ -1132,7 +1238,7 @@ export class ClipboardManager {
                     combinedArray.set(chunk, offset);
                     offset += chunk.length;
                 } else {
-                    console.error(`❌ Missing chunk ${i} for file ${receivingFile.name}`);
+                    console.error(`Missing chunk ${i} for file ${receivingFile.name}`);
                     return;
                 }
             }
@@ -1144,9 +1250,6 @@ export class ClipboardManager {
                 type: receivingFile.type,
                 blob: blob
             };
-            
-            const fileSizeMB = Math.round(receivingFile.size / (1024 * 1024) * 100) / 100;
-            console.log(`✅ 文件接收完成: ${receivingFile.name} (${fileSizeMB}MB)`);
             
             // Add to received files
             clipboardState.update(state => ({
@@ -1169,7 +1272,131 @@ export class ClipboardManager {
             
             this.currentReceivingFile = null;
         } catch (error) {
-            console.error('❌ Error assembling received file:', error);
+            console.error('Error assembling received file:', error);
+        }
+    }
+
+    // 重传机制相关方法
+    private scheduleRetryMissingChunks(receivingFile: ReceivingFile, missingChunks: number[]): void {
+        // 如果已经有重传定时器在运行，先清除
+        if (receivingFile.retryTimer) {
+            clearTimeout(receivingFile.retryTimer);
+        }
+        
+        // 更新缺失的chunks列表
+        missingChunks.forEach(chunkIndex => {
+            receivingFile.missingChunks.add(chunkIndex);
+        });
+        
+        // 设置重传定时器
+        receivingFile.retryTimer = setTimeout(() => {
+            this.requestMissingChunks(receivingFile);
+        }, RETRY_TIMEOUT);
+    }
+    
+    private async requestMissingChunks(receivingFile: ReceivingFile): Promise<void> {
+        if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
+            return;
+        }
+        
+        if (receivingFile.retryCount >= MAX_RETRY_COUNT) {
+            // 强制组装现有chunks
+            const currentMissingChunks = Array.from(receivingFile.missingChunks);
+            await this.assembleReceivedFileWithMissingChunks(currentMissingChunks);
+            return;
+        }
+        
+        const currentMissingChunks = Array.from(receivingFile.missingChunks);
+        if (currentMissingChunks.length === 0) {
+            return;
+        }
+        
+        receivingFile.retryCount++;
+        receivingFile.lastRetryTime = Date.now();
+        
+        try {
+            // 发送重传请求
+            const retryMessage = {
+                type: 'retry_chunks',
+                fileId: receivingFile.id,
+                missingChunks: currentMissingChunks,
+                retryCount: receivingFile.retryCount
+            };
+            
+            this.dataChannel.send(JSON.stringify(retryMessage));
+            
+            // 设置下次重传定时器
+            receivingFile.retryTimer = setTimeout(() => {
+                this.requestMissingChunks(receivingFile);
+            }, RETRY_DELAY * receivingFile.retryCount); // 指数退避
+            
+        } catch (error) {
+            console.error('发送重传请求失败:', error);
+        }
+    }
+
+    private async assembleReceivedFileWithMissingChunks(missingChunks: number[]): Promise<void> {
+        const receivingFile = this.currentReceivingFile;
+        if (!receivingFile) {
+            return;
+        }
+        
+        try {
+            // 计算当前接收的数据总大小
+            let actualSize = 0;
+            const sortedChunks: { index: number; data: Uint8Array }[] = [];
+            
+            // 收集所有已接收的chunks并排序
+            for (let i = 0; i < receivingFile.totalChunks; i++) {
+                const chunk = receivingFile.chunks.get(i);
+                if (chunk) {
+                    sortedChunks.push({ index: i, data: chunk });
+                    actualSize += chunk.length;
+                }
+            }
+            
+            // 按索引排序
+            sortedChunks.sort((a, b) => a.index - b.index);
+            
+            // 组装文件
+            const combinedArray = new Uint8Array(actualSize);
+            let offset = 0;
+            
+            for (const { data } of sortedChunks) {
+                combinedArray.set(data, offset);
+                offset += data.length;
+            }
+            
+            const blob = new Blob([combinedArray], { type: receivingFile.type });
+            const fileItem: FileItem = {
+                name: `${receivingFile.name}`,
+                size: actualSize,
+                type: receivingFile.type,
+                blob: blob
+            };
+            
+            // Add to received files
+            clipboardState.update(state => ({
+                ...state,
+                receivedFiles: [...state.receivedFiles, fileItem],
+                receivingFiles: false,
+                transferProgress: 100,
+                errorMessage: `部分接收文件: ${receivingFile.name} (缺失${missingChunks.length}个片段)`,
+                showError: true
+            }));
+            
+            // 5秒后清除消息
+            setTimeout(() => {
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: '',
+                    showError: false
+                }));
+            }, 5000);
+            
+            this.currentReceivingFile = null;
+        } catch (error) {
+            console.error('Error assembling received file with missing chunks:', error);
         }
     }
 
@@ -1181,9 +1408,7 @@ export class ClipboardManager {
         }        try {
             // 自动切换到文本分享标签
             clipboardState.update(state => ({ ...state, activeTab: 'text' }));
-            console.log('Switched to text tab for sending');
             
-            console.log('🔐 Encrypting text:', text.substring(0, 20) + '...');
             const encryptedText = await this.encryptData(text);
             // Convert ArrayBuffer to Array for JSON serialization
             const encryptedArray = Array.from(new Uint8Array(encryptedText));
@@ -1192,9 +1417,7 @@ export class ClipboardManager {
                 content: encryptedArray
             };
             
-            console.log('📤 Sending message:', message.type, 'with content length:', message.content.length);
             this.dataChannel.send(JSON.stringify(message));
-            console.log('Text sent successfully');
         } catch (error) {
             console.error('Error sending text:', error);
         }
@@ -1228,8 +1451,6 @@ export class ClipboardManager {
         
         // 计算总大小
         const totalSize = currentFiles.reduce((sum, file) => sum + file.size, 0);
-        const totalSizeMB = Math.round(totalSize / (1024 * 1024) * 100) / 100;
-        console.log(`准备发送 ${currentFiles.length} 个文件，总大小: ${totalSizeMB}MB`);
         
         try {
             // 自动切换到文件传输标签
@@ -1246,9 +1467,6 @@ export class ClipboardManager {
             for (let i = 0; i < currentFiles.length; i++) {
                 const file = currentFiles[i];
                 
-                // 显示当前发送的文件名
-                console.log(`📤 开始发送文件 ${i + 1}/${currentFiles.length}: ${file.name}`);
-                
                 await this.sendSingleFile(file);
                 
                 // Update progress for multiple files (individual file progress is handled in sendFileInBinaryChunks)
@@ -1263,7 +1481,7 @@ export class ClipboardManager {
                 sendingFiles: false, 
                 transferProgress: 0 
             }));
-            console.log('✅ 所有文件发送成功');
+
             
             // 显示成功消息
             setTimeout(() => {
@@ -1322,7 +1540,7 @@ export class ClipboardManager {
         };
         
         this.dataChannel!.send(JSON.stringify(fileEndMessage));
-        console.log(`✅ 文件发送完成: ${file.name}`);
+
     }
 
     private async sendFileInBinaryChunks(file: File, fileId: string): Promise<void> {
@@ -1331,6 +1549,7 @@ export class ClipboardManager {
         console.log(`开始发送文件: ${file.name} (${fileSizeMB}MB, ${totalChunks} 个分块)`);
         
         let consecutiveSends = 0;
+        const sentChunks = new Set<number>(); // 记录已发送的chunks
         
         for (let i = 0; i < totalChunks; i++) {
             // 智能流控制
@@ -1351,6 +1570,12 @@ export class ClipboardManager {
             // 发送二进制数据
             this.dataChannel!.send(binaryMessage);
             consecutiveSends++;
+            sentChunks.add(i); // 记录已发送
+            
+            // 在最后几个chunks时添加额外日志
+            if (i >= totalChunks - 5) {
+                console.log(`📤 发送chunk ${i}/${totalChunks - 1}, 文件: ${file.name}`);
+            }
             
             // 更新进度（减少频率以提高性能）
             if (i % 5 === 0 || i === totalChunks - 1) {
@@ -1364,6 +1589,18 @@ export class ClipboardManager {
                 }));
             }
         }
+        
+        // 验证所有chunks都已发送
+        console.log(`📤 文件发送完成验证: ${file.name}, 发送了 ${sentChunks.size}/${totalChunks} 个chunks`);
+        if (sentChunks.size !== totalChunks) {
+            const missingChunks = [];
+            for (let i = 0; i < totalChunks; i++) {
+                if (!sentChunks.has(i)) {
+                    missingChunks.push(i);
+                }
+            }
+            console.error(`❌ 发送端缺失chunks: [${missingChunks.join(', ')}]`);
+        }
     }
 
     private async smartFlowControl(consecutiveSends: number): Promise<void> {
@@ -1373,7 +1610,7 @@ export class ClipboardManager {
         
         // 如果缓冲区过满，等待
         if (bufferAmount > maxBuffer) {
-            console.log(`⏸️ 缓冲区过满 (${(bufferAmount/1024/1024).toFixed(1)}MB)，等待清空...`);
+            
             
             while (this.dataChannel!.bufferedAmount > targetBuffer) {
                 await new Promise(resolve => setTimeout(resolve, 5));

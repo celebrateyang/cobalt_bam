@@ -101,6 +101,50 @@ export const setupSignalingServer = (httpServer) => {
                     case 'disconnect':
                         handleDisconnect(sessionId, userRole);
                         break;
+                    case 'keep_alive':
+                        console.log(`Keep alive signal from ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
+                        // 响应保活信号
+                        if (ws.readyState === ws.OPEN) {
+                            ws.send(JSON.stringify({ 
+                                type: 'keep_alive_ack', 
+                                message: 'Keep alive acknowledged by server',
+                                timestamp: Date.now()
+                            }));
+                        }
+                        break;
+                    case 'keep_alive_ack':
+                        console.log(`Keep alive ack from ${userRole || 'unknown'}`);
+                        break;
+                    case 'file_selection_start':
+                        console.log(`File selection started by ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
+                        // 转发给对端
+                        handleSignaling(ws, message, sessionId, userRole);
+                        break;
+                    case 'file_selection_complete':
+                        console.log(`File selection completed by ${userRole || 'unknown'} in session ${sessionId || 'none'}, duration: ${message.duration}ms`);
+                        // 转发给对端
+                        handleSignaling(ws, message, sessionId, userRole);
+                        break;
+                    case 'recovery':
+                        console.log(`Recovery signal from ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
+                        // 转发给对端
+                        handleSignaling(ws, message, sessionId, userRole);
+                        break;
+                    case 'heartbeat':
+                        // 处理心跳消息
+                        console.log(`Heartbeat from ${userRole || 'unknown'}`);
+                        break;
+                    case 'ping':
+                        // 处理ping消息，返回pong
+                        if (ws.readyState === ws.OPEN) {
+                            ws.send(JSON.stringify({ type: 'pong' }));
+                        }
+                        break;
+                    case 'pong':
+                        // 更新最后pong时间
+                        lastPongTime = Date.now();
+                        missedPongs = 0;
+                        break;
                     default:
                         console.log(`Unknown message type: ${message.type}`);
                         ws.send(JSON.stringify({ 

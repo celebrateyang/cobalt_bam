@@ -2,6 +2,7 @@
     import { createEventDispatcher, onMount } from 'svelte';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
     import ActionButton from '$components/buttons/ActionButton.svelte';
+    import { t } from '$lib/i18n/translations';
     
     const dispatch = createEventDispatcher();
     
@@ -106,23 +107,23 @@
         <div class="notification-content">
             <div class="notification-icon">📩</div>
             <div class="notification-text">
-                <strong>收到新消息</strong>
-                <span>点击此处查看</span>
+                <strong>{$t('clipboard.new_message_received')}</strong>
+                <span>{$t('clipboard.click_to_view')}</span>
             </div>
             <button class="notification-close" on:click|stopPropagation={dismissNotification}>✕</button>
         </div>
     </div>
 {/if}
 
-<SettingsCategory title="文本分享" sectionId="text-sharing">
+<SettingsCategory title={$t('clipboard.send_text')} sectionId="text-sharing">
     <div class="text-sharing-section">
         <!-- 发送文本区域 - 移到上方 -->
         <div class="send-text">
-            <h4>发送文本</h4>
+            <h4>{$t('clipboard.send_text')}</h4>
             <textarea
                 class="text-input"
                 bind:value={textContent}
-                placeholder="输入要发送的文本..."
+                placeholder={$t('clipboard.text_placeholder')}
                 rows="4"
                 disabled={!peerConnected}
             ></textarea>
@@ -131,13 +132,13 @@
                 disabled={!peerConnected || !textContent.trim()}
                 click={sendText}
             >
-                发送文本
+                {$t('clipboard.send_text')}
             </ActionButton>
         </div>
 
         <!-- 接收文本区域 - 移到下方 -->
         <div class="received-text" class:new-message={isNewMessage} bind:this={receivedTextElement}>
-            <h4>已接收文本 {#if isNewMessage}<span class="new-badge">新</span>{/if}</h4>
+            <h4>{$t('clipboard.received_text')} {#if isNewMessage}<span class="new-badge">{$t('clipboard.new_badge')}</span>{/if}</h4>
             {#if receivedText}
                 <div class="text-display">
                     <div class="text-content">{receivedText}</div>
@@ -146,19 +147,19 @@
                             class="copy-btn"
                             on:click={copyReceivedText}
                         >
-                            📋 复制
+                            📋 {$t('clipboard.copy')}
                         </button>
                         <button
                             class="clear-btn"
                             on:click={clearReceivedText}
                         >
-                            🗑️ 清除
+                            🗑️ {$t('clipboard.clear')}
                         </button>
                     </div>
                 </div>
             {:else}
                 <div class="empty-state">
-                    暂无接收到的文本
+                    {$t('clipboard.no_text_received')}
                 </div>
             {/if}
         </div>

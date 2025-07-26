@@ -2,6 +2,7 @@
 import { writable } from 'svelte/store';
 import { currentApiURL } from '$lib/api/api-url';
 import QRCode from 'qrcode';
+import { t } from '$lib/i18n/translations';
 
 // Types
 export interface FileItem {
@@ -83,6 +84,8 @@ export class ClipboardManager {
     private fileSelectStartTime: number = 0; // 新增：文件选择开始时间
     private peerIsSelectingFiles = false; // 新增：对端文件选择状态
     private peerFileSelectStartTime: number = 0; // 新增：对端文件选择开始时间
+    private cancelTransmission = false; // 新增：取消传输标志
+    private currentSendingFileId: string | null = null; // 新增：当前发送文件ID
 
     constructor() {
         this.loadStoredSession();
@@ -319,7 +322,7 @@ export class ClipboardManager {
                             ...state,
                             isConnected: true,
                             peerConnected: true,
-                            errorMessage: '连接已完全恢复',
+                            errorMessage: t.get('clipboard.messages.connection_restored'),
                             showError: true
                         }));
                         
@@ -346,7 +349,7 @@ export class ClipboardManager {
                     ...state,
                     isConnected: true,
                     peerConnected: false,
-                    errorMessage: 'WebSocket已连接，但文件传输功能可能不可用，请尝试重新建立连接',
+                    errorMessage: t.get('clipboard.messages.websocket_connected_partial'),
                     showError: true
                 }));
                 
@@ -392,7 +395,7 @@ export class ClipboardManager {
         clipboardState.update(state => ({
             ...state,
             peerConnected: false,
-            errorMessage: '正在重建连接...',
+            errorMessage: t.get('clipboard.messages.rebuilding_connection'),
             showError: true
         }));
         
@@ -543,6 +546,170 @@ export class ClipboardManager {
         return new Uint8Array(decrypted);
     }
 
+    // 文件传输取消功能
+    
+    // 取消发送文件
+    async cancelSending(): Promise<void> {
+        if (!this.isSendingFiles && !this.currentSendingFileId) {
+            console.log('🚫 没有正在发送的文件，无需取消');
+            return;
+        }
+        
+        console.log('🚫 用户取消文件发送', {
+            isSendingFiles: this.isSendingFiles,
+            currentFileId: this.currentSendingFileId
+        });
+        
+        this.cancelTransmission = true;
+        
+        // 发送取消信号给接收端
+        if (this.dataChannel?.readyState === 'open') {
+            try {
+                this.dataChannel.send(JSON.stringify({
+                    type: 'file_cancel',
+                    reason: 'user_cancelled',
+                    fileId: this.currentSendingFileId,
+                    timestamp: Date.now()
+                }));
+                console.log('🚫 已发送取消信号给接收端');
+            } catch (error) {
+                console.warn('🚫 发送取消信号失败:', error);
+            }
+        }
+        
+        // 重置发送状态
+        this.resetSendingState(t.get('clipboard.messages.file_sending_cancelled'));
+    }
+    
+    // 取消接收文件
+    async cancelReceiving(): Promise<void> {
+        if (!this.currentReceivingFile) {
+            console.log('🚫 没有正在接收的文件，无需取消');
+            return;
+        }
+        
+        console.log('🚫 用户取消文件接收', {
+            fileId: this.currentReceivingFile.id,
+            fileName: this.currentReceivingFile.name
+        });
+        
+        // 清理接收状态
+        this.cleanupReceivingState(t.get('clipboard.messages.file_receiving_cancelled'));
+        
+        // 发送取消确认给发送端
+        if (this.dataChannel?.readyState === 'open') {
+            try {
+                this.dataChannel.send(JSON.stringify({
+                    type: 'file_cancel_ack',
+                    reason: 'receiver_cancelled',
+                    fileId: this.currentReceivingFile?.id,
+                    timestamp: Date.now()
+                }));
+                console.log('🚫 已发送取消确认给发送端');
+            } catch (error) {
+                console.warn('🚫 发送取消确认失败:', error);
+            }
+        }
+    }
+    
+    // 处理对端取消信号
+    private handleFileCancellation(message: any): void {
+        console.log('🚫 处理对端取消信号:', message);
+        
+        // 如果正在接收文件，清理状态
+        if (this.currentReceivingFile) {
+            this.cleanupReceivingState(t.get('clipboard.messages.peer_cancelled_transmission'));
+            
+            // 发送确认
+            if (this.dataChannel?.readyState === 'open') {
+                try {
+                    this.dataChannel.send(JSON.stringify({
+                        type: 'file_cancel_ack',
+                        reason: 'acknowledged',
+                        fileId: message.fileId
+                    }));
+                } catch (error) {
+                    console.warn('🚫 发送取消确认失败:', error);
+                }
+            }
+        }
+        
+        // 如果正在发送文件，也要停止
+        if (this.isSendingFiles) {
+            this.cancelTransmission = true;
+            this.resetSendingState(t.get('clipboard.messages.acknowledge_peer_cancel'));
+        }
+    }
+    
+    // 处理取消确认
+    private handleCancelAcknowledgment(message: any): void {
+        console.log('🚫 处理取消确认:', message);
+        
+        // 发送端收到取消确认，确保状态已清理
+        if (this.isSendingFiles || this.cancelTransmission) {
+            this.resetSendingState(t.get('clipboard.messages.transmission_cancelled'));
+        }
+    }
+    
+    // 重置发送状态
+    private resetSendingState(errorMessage: string = t.get('clipboard.messages.transmission_cancelled')): void {
+        this.isSendingFiles = false;
+        this.cancelTransmission = false;
+        this.currentSendingFileId = null;
+        
+        // 结束文件选择保护（如果还在选择状态）
+        if (this.isSelectingFiles) {
+            this.completeFileSelection();
+        }
+        
+        clipboardState.update(state => ({
+            ...state,
+            sendingFiles: false,
+            transferProgress: 0,
+            isTransferring: false,
+            files: [], // 清空文件列表
+            errorMessage,
+            showError: true
+        }));
+        
+        // 3秒后清除错误消息
+        setTimeout(() => {
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: '',
+                showError: false
+            }));
+        }, 3000);
+    }
+    
+    // 清理接收状态
+    private cleanupReceivingState(errorMessage: string = t.get('clipboard.messages.file_receiving_cancelled')): void {
+        if (this.currentReceivingFile?.retryTimer) {
+            clearTimeout(this.currentReceivingFile.retryTimer);
+        }
+        
+        this.currentReceivingFile = null;
+        this.cancelTransmission = false; // 🚫 重置取消传输标志
+        
+        clipboardState.update(state => ({
+            ...state,
+            receivingFiles: false,
+            transferProgress: 0,
+            isTransferring: false,
+            errorMessage,
+            showError: true
+        }));
+        
+        // 3秒后清除错误消息
+        setTimeout(() => {
+            clipboardState.update(state => ({
+                ...state,
+                errorMessage: '',
+                showError: false
+            }));
+        }, 3000);
+    }
+
     // Public API methods
     async createSession(): Promise<void> {
         try {
@@ -690,6 +857,9 @@ export class ClipboardManager {
         this.isSelectingFiles = false; // 重置文件选择状态
         this.connectionStateBeforeFileSelect = false; // 重置连接状态
         this.fileSelectStartTime = 0; // 重置选择时间
+        this.peerIsSelectingFiles = false; // 重置对端文件选择状态
+        this.cancelTransmission = false; // 重置取消传输标志
+        this.currentSendingFileId = null; // 重置当前发送文件ID
         this.clearStoredSession();
     }
 
@@ -829,7 +999,7 @@ export class ClipboardManager {
             
             clipboardState.update(state => ({
                 ...state,
-                errorMessage: '正在恢复连接，请稍候...',
+                errorMessage: t.get('clipboard.messages.recovering_connection'),
                 showError: true
             }));
             
@@ -878,7 +1048,7 @@ export class ClipboardManager {
                             ...state,
                             isConnected: true,
                             peerConnected: true,
-                            errorMessage: '连接已恢复',
+                            errorMessage: t.get('clipboard.messages.connection_recovered'),
                             showError: true
                         }));
                         
@@ -903,7 +1073,7 @@ export class ClipboardManager {
                 
                 clipboardState.update(state => ({
                     ...state,
-                    errorMessage: '文件选择期间连接中断，正在重新连接...',
+                    errorMessage: t.get('clipboard.messages.file_selection_interrupted'),
                     showError: true
                 }));
                 
@@ -921,7 +1091,7 @@ export class ClipboardManager {
                             ...state,
                             isConnected: true,
                             peerConnected: true,
-                            errorMessage: '连接已恢复',
+                            errorMessage: t.get('clipboard.messages.connection_recovered'),
                             showError: true
                         }));
                         
@@ -1224,6 +1394,16 @@ export class ClipboardManager {
                 }));
                 break;
                 
+            case 'file_cancel':
+                console.log('🚫 收到对端取消文件传输信号');
+                this.handleFileCancellation(message);
+                break;
+                
+            case 'file_cancel_ack':
+                console.log('🚫 收到取消确认响应');
+                this.handleCancelAcknowledgment(message);
+                break;
+                
             case 'keep_alive':
                 console.log('📱 收到保活信号:', message.message);
                 // 回应保活信号，确保连接活跃
@@ -1282,17 +1462,17 @@ export class ClipboardManager {
                 if (message.message) {
                     switch (message.message) {
                         case '会话不存在或已过期':
-                            errorMessage = '会话已过期或不存在，请创建新会话';
+                            errorMessage = t.get('clipboard.messages.session_expired');
                             this.clearStoredSession(); // 清理本地存储的过期会话
                             break;
                         case '会话已满':
-                            errorMessage = '会话已满，无法加入';
+                            errorMessage = t.get('clipboard.messages.session_full');
                             break;
                         case '未知消息类型':
-                            errorMessage = '通信协议错误';
+                            errorMessage = t.get('clipboard.messages.protocol_error');
                             break;
                         case '消息格式错误':
-                            errorMessage = '数据格式错误';
+                            errorMessage = t.get('clipboard.messages.data_format_error');
                             break;
                         default:
                             errorMessage = message.message;
@@ -1653,6 +1833,16 @@ export class ClipboardManager {
                 case 'retry_chunks':
                     await this.handleRetryChunksRequest(message);
                     break;
+                    
+                case 'file_cancel':
+                    console.log('🚫 收到DataChannel取消信号');
+                    this.handleFileCancellation(message);
+                    break;
+                    
+                case 'file_cancel_ack':
+                    console.log('🚫 收到DataChannel取消确认');
+                    this.handleCancelAcknowledgment(message);
+                    break;
             }
         } catch (error) {
             console.error('Error parsing JSON message:', error);
@@ -1701,6 +1891,12 @@ export class ClipboardManager {
     private async handleFileStart(data: any): Promise<void> {
         console.log(`📁 开始接收新文件: ${data.name}, ID: ${data.fileId}`);
         
+        // 🚫 检查传输是否已被取消
+        if (this.cancelTransmission) {
+            console.log('🚫', t.get('clipboard.messages.refuse_new_file_cancelled').replace('{fileName}', data.name));
+            return;
+        }
+        
         // 检查是否已经在接收同一个文件
         if (this.currentReceivingFile && this.currentReceivingFile.id === data.fileId) {
             console.log(`⚠️ 文件 ${data.fileId} 已在接收中，忽略重复的 file_start`);
@@ -1728,7 +1924,10 @@ export class ClipboardManager {
             
             clipboardState.update(state => ({
                 ...state,
-                errorMessage: `文件过大！${data.name} (${fileSizeMB}MB) 超过 ${maxSizeMB}MB 限制`,
+                errorMessage: t.get('clipboard.messages.file_too_large')
+                    .replace('{fileName}', data.name)
+                    .replace('{fileSize}', fileSizeMB.toString())
+                    .replace('{maxSize}', maxSizeMB.toString()),
                 showError: true
             }));
             return;
@@ -1772,6 +1971,12 @@ export class ClipboardManager {
         if (receivingFile.id !== fileId) {
             console.warn(`⚠️ FileID不匹配: 期望=${receivingFile.id}, 收到=${fileId}, chunk=${chunkIndex}`);
             console.log(`🔄 当前接收文件: ${receivingFile.name}, 新FileID: ${fileId}`);
+            return;
+        }
+        
+        // 🚫 检查传输是否已被取消
+        if (this.cancelTransmission) {
+            console.log('🚫', t.get('clipboard.messages.discard_chunk_cancelled').replace('{fileId}', fileId).replace('{chunkIndex}', chunkIndex.toString()));
             return;
         }
         
@@ -1858,6 +2063,12 @@ export class ClipboardManager {
         
         if (receivingFile.id !== data.fileId) {
             console.warn(`⚠️ file_end FileID不匹配: 期望=${receivingFile.id}, 收到=${data.fileId}`);
+            return;
+        }
+        
+        // 🚫 检查传输是否已被取消
+        if (this.cancelTransmission) {
+            console.log('🚫', t.get('clipboard.messages.ignore_end_signal_cancelled').replace('{fileName}', receivingFile.name));
             return;
         }
         
@@ -2126,14 +2337,14 @@ export class ClipboardManager {
     async sendFiles(): Promise<void> {
         if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
             console.error('Data channel not ready');
-            this.showError('连接未准备就绪，请等待连接建立');
+            this.showError(t.get('clipboard.messages.connection_not_ready'));
             return;
         }
         
         // 检查是否已经在发送文件，防止并发发送
         if (this.isSendingFiles) {
             console.warn('⚠️ 文件发送正在进行中，请等待当前发送完成');
-            this.showError('文件发送正在进行中，请等待当前发送完成');
+            this.showError(t.get('clipboard.messages.file_sending_in_progress'));
             
             // 3秒后自动清除警告消息
             setTimeout(() => {
@@ -2149,7 +2360,7 @@ export class ClipboardManager {
         // 检查是否正在接收文件，防止并发传输
         if (this.currentReceivingFile) {
             console.warn('⚠️ 正在接收文件，无法同时发送文件');
-            this.showError('正在接收文件，请等待接收完成后再发送');
+            this.showError(t.get('clipboard.messages.receiving_files_wait'));
             
             // 3秒后自动清除警告消息
             setTimeout(() => {
@@ -2179,7 +2390,9 @@ export class ClipboardManager {
         const oversizedFiles = currentFiles.filter(file => file.size > MAX_FILE_SIZE);
         if (oversizedFiles.length > 0) {
             const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-            this.showError(`文件过大！以下文件超过${maxSizeMB}MB限制：${oversizedFiles.map(f => f.name).join(', ')}`);
+            this.showError(t.get('clipboard.messages.files_too_large')
+                .replace('{maxSize}', maxSizeMB.toString())
+                .replace('{fileNames}', oversizedFiles.map(f => f.name).join(', ')));
             return;
         }
         
@@ -2204,6 +2417,16 @@ export class ClipboardManager {
             console.log('Switched to files tab for sending');
             
             for (let i = 0; i < currentFiles.length; i++) {
+                // 🚫 检查传输是否已被取消
+                if (this.cancelTransmission) {
+                    console.log('🚫 多文件发送被取消，停止发送剩余文件', {
+                        currentFile: i,
+                        totalFiles: currentFiles.length,
+                        fileName: currentFiles[i]?.name
+                    });
+                    throw new Error('传输被用户取消');
+                }
+                
                 const file = currentFiles[i];
                 
                 await this.sendSingleFile(file);
@@ -2233,7 +2456,7 @@ export class ClipboardManager {
             setTimeout(() => {
                 clipboardState.update(state => ({
                     ...state,
-                    errorMessage: `成功发送 ${currentFiles.length} 个文件`,
+                    errorMessage: t.get('clipboard.messages.files_sent_successfully').replace('{count}', currentFiles.length.toString()),
                     showError: true
                 }));
                 
@@ -2249,54 +2472,87 @@ export class ClipboardManager {
             
         } catch (error) {
             console.error('❌ 发送文件时出错:', error);
-            const errorMessage = error instanceof Error ? error.message : '发送文件时发生未知错误';
+            const errorMessage = error instanceof Error ? error.message : t.get('clipboard.messages.send_failed').replace('{error}', '未知错误');
+            
+            // 区分取消和真正的错误
+            const isCancelled = this.cancelTransmission || errorMessage.includes('取消');
+            const displayMessage = isCancelled ? t.get('clipboard.messages.transmission_cancelled') : t.get('clipboard.messages.send_failed').replace('{error}', errorMessage);
+            
             clipboardState.update(state => ({ 
                 ...state, 
                 sendingFiles: false, 
                 transferProgress: 0,
                 files: [], // 出错时也清空文件列表
                 isTransferring: false, // 清除传输状态
-                errorMessage: `发送失败: ${errorMessage}`,
+                errorMessage: displayMessage,
                 showError: true
             }));
             
-            // 释放发送锁
+            // 释放发送锁和清理状态
             this.isSendingFiles = false;
-            console.log('🔓 发送失败，释放文件发送锁');
+            this.currentSendingFileId = null;
+            this.cancelTransmission = false;
+            console.log('🔓 发送失败/取消，释放文件发送锁');
         }
     }
 
     private async sendSingleFile(file: File): Promise<void> {
+        // 🚫 检查传输是否已被取消
+        if (this.cancelTransmission) {
+            console.log('🚫 单文件发送被取消:', file.name);
+            throw new Error('传输被用户取消');
+        }
+        
         // 生成唯一的文件ID
         const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
+        // 设置当前发送文件ID
+        this.currentSendingFileId = fileId;
+        
         console.log(`📤 开始发送文件: ${file.name} (ID: ${fileId}, 大小: ${file.size} bytes)`);
         
-        // Send file start message (仍使用JSON，因为信息量小)
-        const fileStartMessage = {
-            type: 'file_start',
-            fileId: fileId,
-            name: file.name,
-            size: file.size,
-            mimeType: file.type
-        };
-        
-        this.dataChannel!.send(JSON.stringify(fileStartMessage));
-        console.log(`📤 已发送 file_start: ${file.name} (ID: ${fileId})`);
-        
-        // 使用流式处理避免大文件全部加载到内存
-        await this.sendFileInBinaryChunks(file, fileId);
-        
-        // Send file end message
-        const fileEndMessage = {
-            type: 'file_end',
-            fileId: fileId,
-            name: file.name
-        };
-        
-        this.dataChannel!.send(JSON.stringify(fileEndMessage));
-        console.log(`📤 已发送 file_end: ${file.name} (ID: ${fileId})`);
-
+        try {
+            // Send file start message (仍使用JSON，因为信息量小)
+            const fileStartMessage = {
+                type: 'file_start',
+                fileId: fileId,
+                name: file.name,
+                size: file.size,
+                mimeType: file.type
+            };
+            
+            this.dataChannel!.send(JSON.stringify(fileStartMessage));
+            console.log(`📤 已发送 file_start: ${file.name} (ID: ${fileId})`);
+            
+            // 使用流式处理避免大文件全部加载到内存
+            await this.sendFileInBinaryChunks(file, fileId);
+            
+            // 🚫 检查传输是否已被取消（在发送结束信号前）
+            if (this.cancelTransmission) {
+                console.log('🚫 传输被取消，不发送 file_end 信号:', file.name);
+                throw new Error('传输被用户取消');
+            }
+            
+            // Send file end message
+            const fileEndMessage = {
+                type: 'file_end',
+                fileId: fileId,
+                name: file.name
+            };
+            
+            this.dataChannel!.send(JSON.stringify(fileEndMessage));
+            console.log(`📤 已发送 file_end: ${file.name} (ID: ${fileId})`);
+            
+        } catch (error) {
+            // 传输出错时清理文件ID
+            this.currentSendingFileId = null;
+            throw error; // 重新抛出错误
+        } finally {
+            // 成功完成时清理文件ID
+            if (!this.cancelTransmission) {
+                this.currentSendingFileId = null;
+            }
+        }
     }
 
     private async sendFileInBinaryChunks(file: File, fileId: string): Promise<void> {
@@ -2308,6 +2564,25 @@ export class ClipboardManager {
         const sentChunks = new Set<number>(); // 记录已发送的chunks
         
         for (let i = 0; i < totalChunks; i++) {
+            // 🔥 关键：检查取消标志
+            if (this.cancelTransmission) {
+                console.log('🚫 发送被取消，停止发送chunks', {
+                    file: file.name,
+                    chunkIndex: i,
+                    totalChunks
+                });
+                throw new Error('传输被用户取消');
+            }
+            
+            // 检查连接状态
+            if (this.dataChannel?.readyState !== 'open') {
+                console.log('🚫 DataChannel连接断开，停止发送', {
+                    file: file.name,
+                    readyState: this.dataChannel?.readyState
+                });
+                throw new Error(t.get('clipboard.messages.connection_disconnected'));
+            }
+            
             // 智能流控制
             await this.smartFlowControl(consecutiveSends);
             
@@ -2366,9 +2641,14 @@ export class ClipboardManager {
         
         // 如果缓冲区过满，等待
         if (bufferAmount > maxBuffer) {
-            
+            console.log(`⏳ 缓冲区过满 (${Math.round(bufferAmount/1024)}KB/${Math.round(maxBuffer/1024)}KB)，等待清空...`);
             
             while (this.dataChannel!.bufferedAmount > targetBuffer) {
+                // 🚫 在等待期间检查取消标志
+                if (this.cancelTransmission) {
+                    console.log('🚫 流控制等待期间检测到取消');
+                    throw new Error('传输被用户取消');
+                }
                 await new Promise(resolve => setTimeout(resolve, 5));
             }
         }

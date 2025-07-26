@@ -116,6 +116,16 @@
         clipboardManager?.sendFiles();
     }
 
+    function handleCancelSending() {
+        console.log('🚫 处理取消发送事件');
+        clipboardManager?.cancelSending();
+    }
+
+    function handleCancelReceiving() {
+        console.log('🚫 处理取消接收事件');
+        clipboardManager?.cancelReceiving();
+    }
+
     function handleDownloadFile(event: CustomEvent) {
         const file = event.detail.file;
         const url = URL.createObjectURL(file.blob);
@@ -248,7 +258,7 @@
         <div class="session-status">
             <div class="status-badge">
                 <div class="status-dot connected"></div>
-                <span class="status-text">已连接到会话</span>
+                <span class="status-text">{$t('clipboard.peer_connected')}</span>
             </div>
         </div>
 
@@ -274,6 +284,8 @@
                     on:filesSelected={handleFilesSelected}
                     on:removeFile={handleRemoveFile}
                     on:sendFiles={handleSendFiles}
+                    on:cancelSending={handleCancelSending}
+                    on:cancelReceiving={handleCancelReceiving}
                     on:downloadFile={handleDownloadFile}
                     on:removeReceivedFile={handleRemoveReceivedFile}
                     on:prepareFileSelection={handlePrepareFileSelection}
@@ -302,7 +314,7 @@
                 
                 <div class="session-actions">
                     <button class="btn-secondary danger" on:click={handleCleanup}>
-                        断开连接
+                        {$t('clipboard.disconnect')}
                     </button>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import { t } from '$lib/i18n/translations';
     
     export let activeTab: 'files' | 'text';
     
@@ -14,14 +15,14 @@
         class:active={activeTab === 'files'}
         on:click={() => dispatch('tabChange', 'files')}
     >
-        📁 文件传输
+        📁 {$t('clipboard.file_transfer.title')}
     </button>
     <button 
         class="tab-button" 
         class:active={activeTab === 'text'}
         on:click={() => dispatch('tabChange', 'text')}
     >
-        📝 文本分享
+        📝 {$t('clipboard.send_text')}
     </button>
 </div>
 

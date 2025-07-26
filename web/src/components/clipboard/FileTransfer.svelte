@@ -201,6 +201,10 @@
         autoSendScheduled = false; // 取消时重置标志
     }
 
+    function cancelReceiving(): void {
+        dispatch('cancelReceiving');
+    }
+
     function downloadReceivedFile(file: any): void {
         dispatch('downloadFile', { file });
     }
@@ -354,7 +358,16 @@
             
             {#if receivingFiles}
                 <div class="progress-section">
-                    <h4>{$t("clipboard.file_transfer.receiving_progress")}: {Math.round(transferProgress)}%</h4>
+                    <div class="progress-header">
+                        <h4>{$t("clipboard.file_transfer.receiving_progress")}: {Math.round(transferProgress)}%</h4>
+                        <ActionButton
+                            id="cancel-receiving"
+                            disabled={false}
+                            click={cancelReceiving}
+                        >
+                            {$t("clipboard.file_transfer.cancel_receiving")}
+                        </ActionButton>
+                    </div>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: {transferProgress}%"></div>
                     </div>

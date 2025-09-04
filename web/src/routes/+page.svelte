@@ -21,7 +21,7 @@
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
-        const notificationClosed = localStorage.getItem('notification-mindsou-affiliate-closed');
+        const notificationClosed = localStorage.getItem('notification-finditbuddy-launch-closed');
         if (notificationClosed === 'true') {
             showNotification = false;
         }
@@ -30,7 +30,7 @@
     // 关闭通知并保存状态到本地存储
     const closeNotification = () => {
         showNotification = false;
-        localStorage.setItem('notification-mindsou-affiliate-closed', 'true');
+        localStorage.setItem('notification-finditbuddy-launch-closed', 'true');
     };
 </script>
 
@@ -52,33 +52,22 @@
         <!-- 通知信息 -->
         {#if showNotification}
             <div class="notification" role="alert">
+                <button 
+                    class="notification-close" 
+                    aria-label={$t("general.notification.close")}
+                    on:click={closeNotification}
+                >
+                    ×
+                </button>
                 <div class="notification-content">
                     <span class="notification-icon">🎉</span>
                     <span class="notification-text">
                         {$t("general.notification.title")}
                         <br>
-                        {$t("general.notification.mindsou_affiliate")}
-                        <a 
-                            href={$INTERNAL_locale === 'zh' ? 'https://mindsou.online/zh/dashboard/affiliate' : 'https://mindsou.online/en/dashboard/affiliate'}
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            class="notification-link"
-                        >
-                            {$t("general.notification.mindsou_affiliate_link")}
-                        </a>
-                        {$t("general.notification.mindsou_affiliate_commission")}
-                        <br>
-                        {$t("general.notification.file_transfer_optimization")}
+                        {@html $t("general.notification.finditbuddy_launch").replace('FindItBuddy.online', '<a href="https://finditbuddy.online" target="_blank" rel="noopener noreferrer" class="notification-link">FindItBuddy.online</a>')}
                         <br>
                         {$t("general.notification.youtube_restriction")}
-                    </span>                    
-                    <button 
-                        class="notification-close" 
-                        aria-label={$t("general.notification.close")}
-                        on:click={closeNotification}
-                    >
-                        ×
-                    </button>
+                    </span>
                 </div>
             </div>
         {/if}
@@ -385,4 +374,8 @@
             transform: translateY(0);
         }
     }
+    /* overrides for notification layout */
+    .notification { position: relative; }
+    .notification-content { align-items: flex-start; padding-right: 28px; }
+    .notification-close { position: absolute; top:6px; right:8px; margin-left:0; padding:4px; line-height:1; }
 </style>

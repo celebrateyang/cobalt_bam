@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, tick } from 'svelte';
     import { t } from '$lib/i18n/translations';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
     import ActionButton from '$components/buttons/ActionButton.svelte';
+    import QrScanner from '$components/clipboard/QrScanner.svelte';
     
     const dispatch = createEventDispatcher();
     
@@ -18,6 +19,11 @@
     // Copy states
     let showSessionIdCopied = false;
     let showLinkCopied = false;
+
+    // QR scanner state
+    let showScanner = false;
+    let scannerError: string | null = null;
+    const scannerTitleId = 'clipboard-scanner-title';
     
     function handleCreateSession() {
         dispatch('createSession');
@@ -29,6 +35,85 @@
     
     function handleCleanup() {
         dispatch('cleanup');
+    }
+
+    function openScanner() {
+        scannerError = null;
+        showScanner = true;
+    }
+
+    function closeScanner() {
+        showScanner = false;
+    }
+
+    function extractSessionCode(value: string): string | null {
+        if (!value) return null;
+
+        const trimmed = value.trim();
+
+        try {
+            const url = new URL(trimmed);
+            const queryValue = url.searchParams.get('session');
+            if (queryValue) return queryValue;
+
+            if (url.hash) {
+                const hashMatch = url.hash.match(/session=([^&]+)/i);
+                if (hashMatch?.[1]) {
+                    return hashMatch[1];
+                }
+            }
+        } catch (error) {
+            // Not a URL, continue parsing as plain text
+        }
+
+        const inlineMatch = trimmed.match(/session=([^&]+)/i);
+        if (inlineMatch?.[1]) {
+            return inlineMatch[1];
+        }
+
+        if (/^https?:\/\//i.test(trimmed)) {
+            return null;
+        }
+
+        return trimmed;
+    }
+
+    async function handleScanResult(event: CustomEvent<{ text: string }>) {
+        const extracted = extractSessionCode(event.detail.text);
+
+        if (!extracted) {
+            scannerError = t.get('clipboard.scan_decode_error');
+            return;
+        }
+
+        joinCode = extracted;
+        scannerError = null;
+        showScanner = false;
+
+        await tick();
+        handleJoinSession();
+    }
+
+    function handleScannerError(event: CustomEvent<{ message: string }>) {
+        const message = event.detail?.message;
+        if (!message) {
+            scannerError = null;
+            return;
+        }
+
+        scannerError = message ?? t.get('clipboard.scan_decode_error');
+    }
+
+    function handleOverlayKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape' || event.key === 'Esc') {
+            event.preventDefault();
+            closeScanner();
+        }
+
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            closeScanner();
+        }
     }
     
     // Copy session ID
@@ -80,24 +165,70 @@
             </div>
               <div class="setup-option">
                 <h3>{$t("clipboard.join_session")}</h3>
-                <p>{$t("clipboard.join_description")}</p>
+                <div class="scan-option">
+                        <ActionButton
+                            id="scan-session"
+                            disabled={isJoining}
+                            click={openScanner}
+                        >
+                            {$t("clipboard.scan_with_camera")}
+                        </ActionButton>
+                       
+                        {#if scannerError && !showScanner}
+                            <p class="scan-error">{scannerError}</p>
+                        {/if}
+                    </div>
+                
                 <div class="join-form">
                     <input
                         type="text"
                         bind:value={joinCode}
                         placeholder={$t("clipboard.enter_code")}
                         disabled={isJoining}
-                    />                    <ActionButton
+                    />
+                    <ActionButton
                         id="join-session"
                         disabled={isJoining || !joinCode.trim()}
                         click={handleJoinSession}
                     >
                         {isJoining ? $t("clipboard.joining") : $t("clipboard.join")}
                     </ActionButton>
+                    
                 </div>
             </div>
         </div>
     </SettingsCategory>
+    {#if showScanner}
+        <div
+            class="scanner-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={scannerTitleId}
+            tabindex="0"
+            on:click={closeScanner}
+            on:keydown={handleOverlayKeydown}
+        >
+            <div class="scanner-panel" on:click|stopPropagation>
+                <div class="scanner-header">
+                    <h4 id={scannerTitleId}>{$t("clipboard.scan_with_camera")}</h4>
+                    <button
+                        class="close-scanner"
+                        on:click={closeScanner}
+                        aria-label={$t("clipboard.scan_cancel")}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <QrScanner on:result={handleScanResult} on:error={handleScannerError} />
+                {#if scannerError}
+                    <p class="scanner-error">{scannerError}</p>
+                {/if}
+                <ActionButton id="cancel-scan" click={closeScanner}>
+                    {$t("clipboard.scan_cancel")}
+                </ActionButton>
+            </div>
+        </div>
+    {/if}
 {:else}
     <!-- Session Info -->
     <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
@@ -280,7 +411,33 @@
         margin: 0 auto;
         align-items: center;
         width: 100%;
-    }    .join-form input {
+    }
+
+    .scan-option {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 0.85rem;
+    }
+
+    .manual-hint {
+        font-size: 0.75rem;
+        color: var(--secondary);
+        margin: 0;
+        text-align: center;
+        opacity: 0.8;
+    }
+
+    .scan-error {
+        font-size: 0.8rem;
+        color: #f87171;
+        margin: 0;
+        text-align: center;
+    }
+
+    .join-form input {
         padding: 0.8rem 1rem;
         border: 2px solid rgba(255, 255, 255, 0.1);
         border-radius: 12px;
@@ -310,6 +467,82 @@
         min-height: 48px;
         font-size: 1rem;
         font-weight: 600;
+    }
+
+    :global(#button-scan-session) {
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        color: var(--text);
+    }
+
+    :global(#button-scan-session:hover) {
+        background: rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.4);
+    }
+
+    .scanner-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 12, 20, 0.55);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        z-index: 1000;
+    }
+
+    .scanner-panel {
+        width: min(420px, 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 1.5rem 1.25rem;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .scanner-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .scanner-header h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text);
+    }
+
+    .close-scanner {
+        border: none;
+        background: transparent;
+        color: var(--text);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .close-scanner:hover {
+        transform: scale(1.1);
+    }
+
+    .scanner-error {
+        font-size: 0.85rem;
+        color: #f87171;
+        margin: 0;
+        text-align: center;
+    }
+
+    :global(#button-cancel-scan) {
+        width: 100%;
     }
 
     /* ActionButton optimization for desktop */

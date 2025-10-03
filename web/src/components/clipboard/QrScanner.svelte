@@ -3,7 +3,8 @@
     import { t } from '$lib/i18n/translations';
     import {
         BrowserQRCodeReader,
-        type IScannerControls
+        type IScannerControls,
+        type Result
     } from '@zxing/browser';
 
     const dispatch = createEventDispatcher<{
@@ -35,7 +36,7 @@
             controls = await reader.decodeFromVideoDevice(
                 undefined,
                 videoElement,
-                (result, error) => {
+                (result: Result | undefined, error: unknown) => {
                     if (result) {
                         stopScanning();
                         dispatch('result', { text: result.getText() });

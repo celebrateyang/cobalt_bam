@@ -674,6 +674,8 @@ export class ClipboardManager {
         this.isSendingFiles = false;
         this.cancelTransmission = false;
         this.currentSendingFileId = null;
+
+        this.releaseMobilePowerProtection('sending');
         
         // 结束文件选择保护（如果还在选择状态）
         if (this.isSelectingFiles) {
@@ -708,6 +710,8 @@ export class ClipboardManager {
         
         this.currentReceivingFile = null;
         this.cancelTransmission = false; // 🚫 重置取消传输标志
+
+        this.releaseMobilePowerProtection('receiving');
         
         clipboardState.update(state => ({
             ...state,
@@ -850,8 +854,8 @@ export class ClipboardManager {
         // 停止文件选择保活机制
         this.stopFileSelectionKeepAlive();
         
-        // 禁用移动端电源保护
-        this.disableMobilePowerProtection();
+    // 禁用移动端电源保护
+    this.clearMobilePowerProtection();
         
         clipboardState.update(state => ({
             ...state,
@@ -917,13 +921,7 @@ export class ClipboardManager {
             timestamp: this.fileSelectStartTime
         });
         
-        // 检测移动设备并启用强力保护模式
-        const isMobile = typeof window !== 'undefined' && 
-            (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-        
-        if (isMobile) {
-            this.enableMobilePowerProtection();
-        }
+        void this.acquireMobilePowerProtection('file-selection');
         
         // 暂停自动重连机制，避免在文件选择期间的无效重连
         if (this.reconnectTimer) {
@@ -982,8 +980,8 @@ export class ClipboardManager {
         // 停止保活机制
         this.stopFileSelectionKeepAlive();
         
-        // 禁用移动端电源保护
-        this.disableMobilePowerProtection();
+    // 禁用移动端电源保护
+    this.releaseMobilePowerProtection('file-selection');
         
         // 重置强制连接状态，允许正常的状态检查
         this.dataChannelForceConnected = false;
@@ -1209,9 +1207,59 @@ export class ClipboardManager {
     private wakeLock: any = null;
     private audioContext: AudioContext | null = null;
     private oscillator: OscillatorNode | null = null;
+    private mobilePowerProtectionReasons = new Set<string>();
+
+    private isMobileDevice(): boolean {
+        return typeof window !== 'undefined' &&
+            (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    }
+
+    private async acquireMobilePowerProtection(reason: string): Promise<void> {
+        if (!this.isMobileDevice()) {
+            return;
+        }
+
+        if (!this.mobilePowerProtectionReasons.has(reason)) {
+            this.mobilePowerProtectionReasons.add(reason);
+        }
+
+        if (this.mobilePowerProtectionReasons.size === 1) {
+            try {
+                await this.enableMobilePowerProtection();
+            } catch (error) {
+                console.warn('📱 启用移动端电源保护失败:', error);
+            }
+        }
+    }
+
+    private releaseMobilePowerProtection(reason: string): void {
+        if (!this.isMobileDevice()) {
+            return;
+        }
+
+        if (this.mobilePowerProtectionReasons.delete(reason) && this.mobilePowerProtectionReasons.size === 0) {
+            this.disableMobilePowerProtection();
+        }
+    }
+
+    private clearMobilePowerProtection(): void {
+        if (!this.isMobileDevice()) {
+            return;
+        }
+
+        if (this.mobilePowerProtectionReasons.size > 0) {
+            this.mobilePowerProtectionReasons.clear();
+            this.disableMobilePowerProtection();
+        }
+    }
     
     private async enableMobilePowerProtection(): Promise<void> {
         console.log('📱 启用移动端电源保护机制');
+
+        if (this.wakeLock || this.audioContext || this.oscillator) {
+            console.log('📱 移动端电源保护已处于启用状态');
+            return;
+        }
         
         try {
             // 1. 尝试使用 Wake Lock API（Chrome 84+）
@@ -1933,6 +1981,8 @@ export class ClipboardManager {
             console.log('🚫', t.get('clipboard.messages.refuse_new_file_cancelled').replace('{fileName}', data.name));
             return;
         }
+
+        await this.acquireMobilePowerProtection('receiving');
         
         // 检查是否已经在接收同一个文件
         if (this.currentReceivingFile && this.currentReceivingFile.id === data.fileId) {
@@ -2252,6 +2302,7 @@ export class ClipboardManager {
             
             console.log(`🧹 清理接收文件状态: ${receivingFile.name} (ID: ${receivingFile.id})`);
             this.currentReceivingFile = null;
+            this.releaseMobilePowerProtection('receiving');
         } catch (error) {
             console.error('Error assembling received file:', error);
         }
@@ -2346,6 +2397,7 @@ export class ClipboardManager {
         }, 5000);
 
         this.currentReceivingFile = null;
+        this.releaseMobilePowerProtection('receiving');
     }
 
     // Public methods for sending data
@@ -2433,6 +2485,11 @@ export class ClipboardManager {
             return;
         }
         
+        const shouldProtectMobilePower = this.isMobileDevice();
+        if (shouldProtectMobilePower) {
+            await this.acquireMobilePowerProtection('sending');
+        }
+
         // 设置发送锁
         this.isSendingFiles = true;
         console.log('🔒 设置文件发送锁');
@@ -2530,6 +2587,11 @@ export class ClipboardManager {
             this.currentSendingFileId = null;
             this.cancelTransmission = false;
             console.log('🔓 发送失败/取消，释放文件发送锁');
+        }
+        finally {
+            if (shouldProtectMobilePower) {
+                this.releaseMobilePowerProtection('sending');
+            }
         }
     }
 

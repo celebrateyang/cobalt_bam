@@ -234,6 +234,13 @@
     <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
         <div class="session-info">
             <div class="session-details">                
+                {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
+                    <div class="qr-code">
+                        <h4>{$t("clipboard.scan_qr")}</h4>
+                        <img src={qrCodeUrl} alt="QR Code" />
+                    </div>
+                {/if}
+                
                 {#if isCreator && sessionId}
                     <!-- Session ID Display -->
                     <div class="session-copy-section">
@@ -284,13 +291,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                {/if}
-                
-                {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
-                    <div class="qr-code">
-                        <h4>{$t("clipboard.scan_qr")}</h4>
-                        <img src={qrCodeUrl} alt="QR Code" />
                     </div>
                 {/if}
                 
@@ -555,6 +555,19 @@
         
         .join-form :global(.action-button) {
             min-height: 42px;
+        }
+
+        .session-details {
+            grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+            align-items: start;
+        }
+
+        .session-details .qr-code {
+            margin: 0 auto;
+        }
+
+        .session-copy-section {
+            width: 100%;
         }
     }.session-info {
         text-align: center;

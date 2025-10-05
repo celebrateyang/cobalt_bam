@@ -43,6 +43,8 @@
     "receiving": "Receiving",
     "received_files": "Received Files",
     "disconnect": "Disconnect",
+    "collapse_header": "Hide intro",
+    "expand_header": "Show intro",
     "file_transfer": {
         "title": "File Transfer",
         "send_files": "Send Files",

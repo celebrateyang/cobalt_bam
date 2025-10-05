@@ -43,6 +43,8 @@
     "receiving": "接收中",
     "received_files": "已接收文件",
     "disconnect": "断开连接",
+    "collapse_header": "收起说明",
+    "expand_header": "展开说明",
     "file_transfer": {
         "title": "文件传输",
         "send_files": "发送文件",

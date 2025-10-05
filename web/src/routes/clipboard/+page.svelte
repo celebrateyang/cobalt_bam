@@ -1,6 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/translations';
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
 // Import clipboard components
     import FileTransfer from '$components/clipboard/FileTransfer.svelte';
     import SessionManager from '$components/clipboard/SessionManager.svelte';
@@ -17,10 +17,7 @@
         receivedSize: number;
     }
 
-    // Constants
-    const CHUNK_SIZE = 64 * 1024; // 64KB chunks for file transfer
-
-    // State variables - bound to clipboard manager
+    // Clipboard session state
     let sessionId = '';
     let joinCode = '';
     let isConnected = false;
@@ -29,7 +26,7 @@
     let isCreator = false;
     let peerConnected = false;
     let qrCodeUrl = '';
-    
+
     // Navigation state
     let activeTab: 'files' | 'text' = 'files';
     
@@ -51,9 +48,20 @@
     let showError = false;
     let waitingForCreator = false;
     let showLinkCopied = false;
+
+    const COMPACT_VIEWPORT_MAX_WIDTH = 768;
+
+    let headerCollapsed = false;
+    let headerManualOverride: 'collapsed' | 'expanded' | null = null;
+    let isCompactViewport = false;
+    let shouldCollapseAutomatically = false;
+    let autoCollapseWasActive = false;
+    let tabContentEl: HTMLDivElement | null = null;
+    let detachViewportListener: (() => void) | null = null;
     
     // Clipboard manager instance
-    let clipboardManager: ClipboardManager;    // Subscribe to clipboard state
+    let clipboardManager: ClipboardManager;
+
     $: if (clipboardManager) {
         clipboardState.subscribe(state => {
             sessionId = state.sessionId;
@@ -80,6 +88,38 @@
             showError = state.showError;
             waitingForCreator = state.waitingForCreator;
         });
+    }
+
+    $: shouldCollapseAutomatically = isCompactViewport && (isTransferring || sendingFiles || receivingFiles || transferProgress > 0);
+
+    $: {
+        if (shouldCollapseAutomatically) {
+            if (headerManualOverride === null) {
+                headerCollapsed = true;
+            }
+        } else {
+            if (headerManualOverride === null || headerManualOverride === 'expanded') {
+                headerCollapsed = false;
+            } else if (headerManualOverride === 'collapsed') {
+                headerCollapsed = true;
+            }
+
+            if (headerManualOverride === 'expanded') {
+                headerManualOverride = null;
+            }
+        }
+    }
+
+    $: if (shouldCollapseAutomatically && !autoCollapseWasActive) {
+        autoCollapseWasActive = true;
+        if (isCompactViewport) {
+            (async () => {
+                await tick();
+                tabContentEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })();
+        }
+    } else if (!shouldCollapseAutomatically && autoCollapseWasActive) {
+        autoCollapseWasActive = false;
     }
 
     // Event handlers for components
@@ -190,6 +230,18 @@
         }
     }
 
+    function toggleHeaderCollapse() {
+        headerCollapsed = !headerCollapsed;
+        headerManualOverride = headerCollapsed ? 'collapsed' : 'expanded';
+
+        if (!headerCollapsed && isCompactViewport) {
+            (async () => {
+                await tick();
+                tabContentEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })();
+        }
+    }
+
 // Lifecycle functions
     onMount(async () => {
         // 立即清除任何错误状态
@@ -201,8 +253,22 @@
         // 再次确保清除错误状态
         clipboardManager.clearError();
         
-        // Check for session parameter in URL
         if (typeof window !== 'undefined') {
+            const viewportQuery = window.matchMedia(`(max-width: ${COMPACT_VIEWPORT_MAX_WIDTH}px)`);
+
+            const applyViewportMatch = (matches: boolean) => {
+                isCompactViewport = matches;
+            };
+
+            applyViewportMatch(viewportQuery.matches);
+
+            const handleViewportChange = (event: MediaQueryListEvent) => {
+                applyViewportMatch(event.matches);
+            };
+
+            viewportQuery.addEventListener('change', handleViewportChange);
+            detachViewportListener = () => viewportQuery.removeEventListener('change', handleViewportChange);
+
             const urlParams = new URLSearchParams(window.location.search);
             const sessionParam = urlParams.get('session');
             if (sessionParam) {
@@ -210,7 +276,10 @@
                 await clipboardManager.joinSession(joinCode);
             }
         }
-    });    onDestroy(() => {
+    });
+
+    onDestroy(() => {
+        detachViewportListener?.();
         clipboardManager?.cleanup();
     });
 </script>
@@ -223,12 +292,36 @@
 </svelte:head>
 
 <div class="clipboard-container">
-    <div class="clipboard-header">
-        <h1>{$t("clipboard.title")}</h1>
-        <div class="description-container">
-            <p class="description-main">{$t("clipboard.description")}</p>
-            <p class="description-subtitle">{$t("clipboard.description_subtitle")}</p>
-        </div>    </div>
+    <div class="clipboard-header" class:collapsed={headerCollapsed}>
+        <div class="header-top">
+            <h1>{$t("clipboard.title")}</h1>
+            {#if isCompactViewport}
+                <button
+                    type="button"
+                    class="header-toggle"
+                    on:click={toggleHeaderCollapse}
+                    aria-expanded={!headerCollapsed}
+                    aria-controls="clipboard-header-description"
+                    aria-label={headerCollapsed ? $t("clipboard.expand_header") : $t("clipboard.collapse_header")}
+                >
+                    <span class="toggle-label">{headerCollapsed ? $t("clipboard.expand_header") : $t("clipboard.collapse_header")}</span>
+                    <svg class="toggle-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            {/if}
+        </div>
+        <div
+            class="header-description"
+            id="clipboard-header-description"
+            aria-hidden={headerCollapsed}
+        >
+            <div class="description-container">
+                <p class="description-main">{$t("clipboard.description")}</p>
+                <p class="description-subtitle">{$t("clipboard.description_subtitle")}</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Error Message Display -->
     {#if showError && errorMessage}
@@ -269,7 +362,7 @@
         />
 
         <!-- Content Area - Moved to top -->
-        <div class="tab-content">
+    <div class="tab-content" bind:this={tabContentEl}>
             <!-- File Transfer Component -->
             {#if activeTab === 'files'}
                 <FileTransfer
@@ -349,9 +442,15 @@
         min-height: 60vh;
     }.clipboard-header {
         text-align: center;
-        margin-bottom: 0.5rem;
-        padding: 0.25rem 0;
+        margin-bottom: 0.75rem;
+        padding: 0.35rem 0 0.85rem;
         position: relative;
+        transition: padding 0.3s ease, margin 0.3s ease;
+    }
+
+    .clipboard-header.collapsed {
+        margin-bottom: 0.2rem;
+        padding-bottom: 0.25rem;
     }
 
     .clipboard-header::before {
@@ -365,7 +464,16 @@
         background: linear-gradient(90deg, var(--accent), var(--accent-hover));
         border-radius: 2px;
         margin-bottom: 1rem;
-    }    .clipboard-header h1 {
+    }
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .clipboard-header h1 {
         margin-bottom: 0.2rem;
         font-size: 2.2rem;
         font-weight: 700;
@@ -374,12 +482,92 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-top: 0.3rem;
-    }.clipboard-header p {
-        color: var(--subtext);
-        font-size: 1.1rem;
-        font-weight: 400;
-        opacity: 0.8;
-    }    .description-container {
+    }
+
+    .header-description {
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+        max-height: 220px;
+        opacity: 1;
+        margin-top: 0.35rem;
+    }
+
+    .clipboard-header.collapsed .header-description {
+        max-height: 0;
+        opacity: 0;
+        margin-top: 0;
+        pointer-events: none;
+    }
+
+    .header-toggle {
+        display: none;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+        padding: 0.35rem 0.8rem;
+        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .header-toggle:hover,
+    .header-toggle:focus-visible {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.3);
+        outline: none;
+    }
+
+    .header-toggle:active {
+        transform: translateY(1px);
+    }
+
+    .header-toggle .toggle-label {
+        white-space: nowrap;
+    }
+
+    .header-toggle .toggle-icon {
+        transition: transform 0.25s ease;
+        transform: rotate(180deg);
+    }
+
+    .clipboard-header.collapsed .header-toggle .toggle-icon {
+        transform: rotate(0deg);
+    }
+
+    @media (max-width: 768px) {
+        .header-top {
+            justify-content: space-between;
+        }
+
+        .header-toggle {
+            display: inline-flex;
+        }
+
+        .header-toggle .toggle-label {
+            font-size: 0.8rem;
+        }
+
+        .clipboard-header.collapsed h1 {
+            font-size: 1.7rem;
+            margin-bottom: 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-toggle {
+            padding: 0.3rem 0.6rem;
+        }
+
+        .header-toggle .toggle-label {
+            display: none;
+        }
+    }
+
+    .description-container {
         display: flex;
         flex-direction: column;
         gap: 0.02rem;
@@ -846,9 +1034,6 @@
 
         .clipboard-header h1 {
             font-size: 1.9rem;
-        }        .clipboard-header {
-            padding: 0.5rem 0;
-            margin-bottom: 0.75rem;
         }
 
         :global(.card) {

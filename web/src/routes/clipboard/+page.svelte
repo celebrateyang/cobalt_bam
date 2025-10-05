@@ -751,9 +751,7 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: visible; /* 允许通知显示在容器外 */
-        /* PC端高度限制 - 增加高度 */
-        max-height: 65vh;
-        overflow-y: auto;
+    /* 允许内容根据实际高度扩展，避免桌面端被裁剪 */
     }
 
     .tab-content:hover {
@@ -963,15 +961,11 @@
     }    /* Responsive Design */    /* PC/Desktop 优化 - 1024px 及以上 */
     @media (min-width: 1024px) {
         .clipboard-container {
-            max-height: 95vh;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
         
         .tab-content {
-            max-height: 85vh;
-            overflow-y: auto;
             flex: 1;
             padding: 1rem;
             /* 确保子组件可以使用横向布局 */
@@ -1003,23 +997,16 @@
         }
     }    /* 超大桌面屏幕优化 - 1440px 及以上 */
     @media (min-width: 1440px) {
-        .clipboard-container {
-            max-height: 98vh;
-        }
-        
         .tab-content {
-            max-height: 90vh;
             padding: 1.5rem;
         }
     }/* 平板优化 - 768px 到 1023px */    @media (min-width: 768px) and (max-width: 1023px) {
         .clipboard-container {
-            max-height: 90vh;
-            overflow-y: auto;
+            overflow-y: visible;
         }
         
         .tab-content {
-            max-height: 70vh;
-            overflow-y: auto;
+            overflow-y: visible;
         }
     }
     
@@ -1028,8 +1015,6 @@
             padding: 0.75rem;
             margin: 0.75rem;
             border-radius: 16px;
-            max-height: 85vh;
-            overflow-y: auto;
         }
 
         .clipboard-header h1 {

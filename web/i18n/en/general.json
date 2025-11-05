@@ -12,8 +12,7 @@
     "notification": {
         "title": "Notice:",
         "close": "Close notification",
-        "finditbuddy_launch": "1. FindItBuddy.online launched! Lost something? Don’t worry — FindItBuddy knows where it’s hiding better than you do!. 2025-09-04",
-        "youtube_restriction": "2. Due to YouTube official restrictions, this site no longer supports YouTube video downloads. 2025-06-05"
+        "youtube_restriction": "YouTube downloads are not supported, but you can refer to this video for download instructions: https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
         "mindsou": {

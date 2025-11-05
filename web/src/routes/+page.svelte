@@ -60,13 +60,11 @@
                     ×
                 </button>
                 <div class="notification-content">
-                    <span class="notification-icon">🎉</span>
+                    <span class="notification-icon">📢</span>
                     <span class="notification-text">
                         {$t("general.notification.title")}
                         <br>
-                        {@html $t("general.notification.finditbuddy_launch").replace('FindItBuddy.online', '<a href="https://finditbuddy.online" target="_blank" rel="noopener noreferrer" class="notification-link">FindItBuddy.online</a>')}
-                        <br>
-                        {$t("general.notification.youtube_restriction")}
+                        {@html $t("general.notification.youtube_restriction").replace('https://www.bilibili.com/video/BV1Bp4EzeEJo', '<a href="https://www.bilibili.com/video/BV1Bp4EzeEJo" target="_blank" rel="noopener noreferrer" class="notification-link">https://www.bilibili.com/video/BV1Bp4EzeEJo</a>')}
                     </span>
                 </div>
             </div>

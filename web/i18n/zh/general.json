@@ -11,12 +11,11 @@
     "notification": {
         "title": "通知：",
         "close": "关闭通知",
-        "finditbuddy_launch": "1. FindItBuddy.online 上线啦! 找不到东西？别慌，FindItBuddy 比你还清楚它们躲在哪儿！. 2025-09-04",
-        "youtube_restriction": "2. 由于遭遇到youbube官方的限制，本站不再支持youtube视频下载。2025-06-05"
+        "youtube_restriction": "YouTube下载不支持，但是可以参看这个视频进行下载：https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
         "mindsou": {
-            "title": "基于相同想法的陌生人聊天网站,不用担心尬聊",
+            "title": "用你脑中的想法找到同类,取得联系",
             "features": {
                 "1": "1.发布你大脑中某时刻的想法",
                 "2": "2.完全匹配,语义匹配,互补匹配",

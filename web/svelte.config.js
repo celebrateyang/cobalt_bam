@@ -84,6 +84,7 @@ const config = {
                     "tpc.googlesyndication.com",
                     "www.google.com",
                     "https://ep2.adtrafficquality.google",
+                    "pl27990830.effectivegatecpm.com",
                     // eslint-disable-next-line no-undef
                     process.env.WEB_PLAUSIBLE_HOST ? process.env.WEB_PLAUSIBLE_HOST : "",
 

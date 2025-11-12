@@ -48,14 +48,16 @@ const config = {
             precompress: false,
             strict: true
         }),
-        csp: {
-            mode: "hash",
+        // CSP disabled to allow third-party ad scripts like Adsterra
+        // Configure CSP via Firebase hosting headers or server instead
+        /* csp: {
+            mode: "auto",
             directives: {
                 "connect-src": ["*"],
                 "default-src": ["none"],
 
-                "font-src": ["self"],
-                "style-src": ["self", "unsafe-inline"],
+                "font-src": ["self", "fonts.googleapis.com", "fonts.gstatic.com"],
+                "style-src": ["self", "unsafe-inline", "fonts.googleapis.com"],
                 "img-src": ["*", "data:"],
                 "manifest-src": ["self"],
                 "worker-src": ["self"],
@@ -75,6 +77,7 @@ const config = {
 
                 "script-src": [
                     "self",
+                    "unsafe-inline",
                     "wasm-unsafe-eval",
                     "challenges.cloudflare.com",
                     "www.googletagmanager.com",
@@ -86,17 +89,12 @@ const config = {
                     "https://ep2.adtrafficquality.google",
                     "pl27990830.effectivegatecpm.com",
                     // eslint-disable-next-line no-undef
-                    process.env.WEB_PLAUSIBLE_HOST ? process.env.WEB_PLAUSIBLE_HOST : "",
-
-                    // hash of the theme preloader in app.html
-                    "sha256-g67gIjM3G8yMbjbxyc3QUoVsKhdxgcQzCmSKXiZZo6s=",
-                    "sha256-oQHnOU77SR8E/F28VTyS5XSYOYZVgdVbOb/tEkoMvfs=",
-                    "sha256-g470uH8o3FuThko7QqgqCsn3Ue7t+nDxAGnzyiI1LnY="
+                    process.env.WEB_PLAUSIBLE_HOST ? process.env.WEB_PLAUSIBLE_HOST : ""
                 ],
 
                 "frame-ancestors": ["none"]
             }
-        },
+        }, */
         env: {
             publicPrefix: 'WEB_'
         },

@@ -13,7 +13,8 @@
         "setup-youtube": "node setup-youtube-auth.js",
         "verify-cookies": "node verify-cookies.js",
         "test": "node src/util/test",
-        "token:jwt": "node src/util/generate-jwt-secret"
+        "token:jwt": "node src/util/generate-jwt-secret",
+        "init-social": "node init-social.js"
     },
     "repository": {
         "type": "git",
@@ -43,7 +44,10 @@
         "url-pattern": "1.0.3",
         "ws": "^8.18.2",
         "youtubei.js": "^13.4.0",
-        "zod": "^3.23.8"
+        "zod": "^3.23.8",
+        "better-sqlite3": "^11.7.0",
+        "bcrypt": "^5.1.1",
+        "jsonwebtoken": "^9.0.2"
     },
     "optionalDependencies": {
         "freebind": "^0.2.2",

@@ -30,7 +30,9 @@ type CobaltSettingsPrivacy = {
 type CobaltSettingsProcessing = {
     allowDefaultOverride: boolean,
     customInstanceURL: string,
+    customApiKey: string,
     enableCustomInstances: boolean,
+    enableCustomApiKey: boolean,
     seenCustomWarning: boolean,
     seenOverrideWarning: boolean,
 }

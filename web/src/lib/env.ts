@@ -13,7 +13,7 @@ const variables = {
     HOST: getEnv('HOST'),
     PLAUSIBLE_HOST: getEnv('PLAUSIBLE_HOST'),
     PLAUSIBLE_ENABLED: getEnv('HOST') && getEnv('PLAUSIBLE_HOST'),
-    DEFAULT_API: getEnv('DEFAULT_API'),
+    DEFAULT_API: getEnv('DEFAULT_API') || 'https://api.freesavevideo.online',
 }
 
 const contacts = {
@@ -55,8 +55,7 @@ const docs = {
     apiLicense: "https://github.com/imputnet/cobalt/blob/main/api/LICENSE",
 };
 
-// 生产环境使用环境变量或默认值
-const apiURL = variables.DEFAULT_API || "https://api.freesavevideo.online/";
+const officialApiURL = "https://api.freesavevideo.online";
 
-export { donate, apiURL, contacts, partners, siriShortcuts, docs };
+export { donate, officialApiURL, contacts, partners, siriShortcuts, docs };
 export default variables;

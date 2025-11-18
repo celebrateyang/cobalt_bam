@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@imput/libav.js-remux-cli':
+        specifier: ^5.5.6
+        version: 5.5.6
 
   api:
     dependencies:
@@ -53,8 +57,8 @@ importers:
         specifier: 2.6.0
         version: 2.6.0
       undici:
-        specifier: ^5.19.1
-        version: 5.28.4
+        specifier: ^6.21.3
+        version: 6.22.0
       url-pattern:
         specifier: 1.0.3
         version: 1.0.3
@@ -62,8 +66,8 @@ importers:
         specifier: ^8.18.2
         version: 8.18.2
       youtubei.js:
-        specifier: ^13.4.0
-        version: 13.4.0
+        specifier: 15.1.1
+        version: 15.1.1
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -2205,6 +2209,10 @@ packages:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
 
+  undici@6.22.0:
+    resolution: {integrity: sha512-hU/10obOIu62MGYjdskASR3CUAiYaFTtC9Pa6vHyf//mAipSvSQg6od2CnJswq7fvzNS3zJhxoRkgNVaHurWKw==}
+    engines: {node: '>=18.17'}
+
   unist-util-stringify-position@2.0.3:
     resolution: {integrity: sha512-3faScn5I+hy9VleOq/qNbAd6pAx7iH5jYBMS9I1HgQVijz/4mv5Bvw5iw1sC/90CODiKo81G/ps8AJrISn687g==}
 
@@ -2332,8 +2340,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  youtubei.js@13.4.0:
-    resolution: {integrity: sha512-+fmIZU/dWAjsROONrASy1REwVpy6umAPVuoNLr/4iNmZXl84LyBef0n3hrd1Vn9035EuINToGyQcBmifwUEemA==}
+  youtubei.js@15.1.1:
+    resolution: {integrity: sha512-fuEDj9Ky6cAQg93BrRVCbr+GTYNZQAIFZrx/a3oDRuGc3Mf5bS0dQfoYwwgjtSV7sgAKQEEdGtzRdBzOc8g72Q==}
 
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
@@ -2526,7 +2534,8 @@ snapshots:
 
   '@eslint/js@9.8.0': {}
 
-  '@fastify/busboy@2.1.1': {}
+  '@fastify/busboy@2.1.1':
+    optional: true
 
   '@fontsource-variable/noto-sans-mono@5.0.20': {}
 
@@ -4220,6 +4229,9 @@ snapshots:
   undici@5.28.4:
     dependencies:
       '@fastify/busboy': 2.1.1
+    optional: true
+
+  undici@6.22.0: {}
 
   unist-util-stringify-position@2.0.3:
     dependencies:
@@ -4321,11 +4333,10 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  youtubei.js@13.4.0:
+  youtubei.js@15.1.1:
     dependencies:
       '@bufbuild/protobuf': 2.2.3
       jintr: 3.3.1
-      tslib: 2.6.3
-      undici: 5.28.4
+      undici: 6.22.0
 
   zod@3.23.8: {}

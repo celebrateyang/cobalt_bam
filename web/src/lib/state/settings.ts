@@ -1,13 +1,11 @@
-import { derived, readable, type Updater } from 'svelte/store';
+﻿import { derived, readable, type Updater } from 'svelte/store';
 import { browser } from '$app/environment';
 import { merge } from 'ts-deepmerge';
-
 import type {
-    CobaltSettings,
     PartialSettings,
-    AllPartialSettingsWithSchema
+    AllPartialSettingsWithSchema,
+    CobaltSettings
 } from '../types/settings';
-
 import { migrateOldSettings } from '../settings/migrate';
 import defaultSettings from '../settings/defaults';
 
@@ -28,21 +26,6 @@ const writeToStorage = (settings: PartialSettings) => {
     return settings;
 }
 
-type Migrator = (s: AllPartialSettingsWithSchema) => AllPartialSettingsWithSchema;
-const migrations: Record<number, Migrator> = {
-
-}
-
-const migrate = (settings: AllPartialSettingsWithSchema): PartialSettings => {
-    return Object.keys(migrations)
-        .map(Number)
-        .filter(version => version > settings.schemaVersion)
-        .reduce((settings, migrationVersion) => {
-            return migrations[migrationVersion](settings);
-        }, settings as AllPartialSettingsWithSchema);
-}
-
-
 const loadFromStorage = () => {
     if (!browser)
         return {};
@@ -62,10 +45,7 @@ const loadFromStorage = () => {
 
 export const loadFromString = (settings: string) => {
     const parsed = JSON.parse(settings) as AllPartialSettingsWithSchema;
-    if (parsed.schemaVersion < defaultSettings.schemaVersion) {
-        return migrate(parsed);
-    }
-
+    // 简化版本：不做迁移，直接返回
     return parsed;
 }
 

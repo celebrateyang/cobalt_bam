@@ -29,11 +29,6 @@ const waitForTurnstile = async () => {
 }
 
 const getAuthorization = async () => {
-    const processing = get(settings).processing;
-    if (processing.enableCustomApiKey && processing.customApiKey.length > 0) {
-        return `Api-Key ${processing.customApiKey}`;
-    }
-
     if (!get(turnstileEnabled)) {
         return;
     }

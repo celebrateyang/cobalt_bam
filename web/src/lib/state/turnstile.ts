@@ -1,4 +1,4 @@
-import settings from "$lib/state/settings";
+﻿import settings from "$lib/state/settings";
 import cachedInfo from "$lib/state/server-info";
 import { derived, writable } from "svelte/store";
 

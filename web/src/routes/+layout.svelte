@@ -7,7 +7,8 @@
     import { updated } from "$app/stores";
     import { browser } from "$app/environment";
     import { afterNavigate } from "$app/navigation";
-    import { getServerInfo, cachedInfo } from "$lib/api/server-info";
+    import { getServerInfo } from "$lib/api/server-info";
+    import cachedInfo from "$lib/state/server-info";
 
     import "$lib/polyfills";
     import env from "$lib/env";

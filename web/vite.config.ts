@@ -62,7 +62,7 @@ const enableCOEP: PluginOption = {
 
 export default defineConfig({
     plugins: [
-        basicSSL(),
+        //basicSSL(),
         sveltekit(),
         enableCOEP,
         exposeLibAV

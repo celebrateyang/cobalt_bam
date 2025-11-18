@@ -29,6 +29,9 @@ const serviceHeaders = {
     },
     vk: {
         'user-agent': vkClientAgent
+    },
+    tiktok: {
+        referer: 'https://www.tiktok.com/',
     }
 }
 

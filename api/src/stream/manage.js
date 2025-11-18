@@ -311,15 +311,42 @@ function wrapStream(streamInfo) {
         streamInfo.transplant = transplantTunnel.bind(streamInfo);
     }
 
-    if (typeof url === 'string') {
-        streamInfo.urls = createInternalStream(url, streamInfo);
-    } else if (Array.isArray(url)) {
-        for (const idx in streamInfo.urls) {
-            streamInfo.urls[idx] = createInternalStream(
-                streamInfo.urls[idx], streamInfo
+    // For FFmpeg operations (merge/remux/mute), create external tunnel URLs
+    // that FFmpeg can access from outside the Node.js process
+    if (['merge', 'remux', 'mute'].includes(streamInfo.type)) {
+        if (typeof url === 'string') {
+            streamInfo.urls = createStream({
+                type: 'proxy',
+                url: url,
+                service: streamInfo.service,
+                filename: streamInfo.filename,
+                headers: streamInfo.headers,
+                requestIP: streamInfo.requestIP,
+            });
+        } else if (Array.isArray(url)) {
+            streamInfo.urls = streamInfo.urls.map(singleUrl => 
+                createStream({
+                    type: 'proxy',
+                    url: singleUrl,
+                    service: streamInfo.service,
+                    filename: streamInfo.filename,
+                    headers: streamInfo.headers,
+                    requestIP: streamInfo.requestIP,
+                })
             );
         }
-    } else throw 'invalid urls';
+    } else {
+        // For other types, use internal streams as before
+        if (typeof url === 'string') {
+            streamInfo.urls = createInternalStream(url, streamInfo);
+        } else if (Array.isArray(url)) {
+            for (const idx in streamInfo.urls) {
+                streamInfo.urls[idx] = createInternalStream(
+                    streamInfo.urls[idx], streamInfo
+                );
+            }
+        } else throw 'invalid urls';
+    }
 
     if (streamInfo.subtitles) {
         streamInfo.subtitles = createInternalStream(

@@ -69,6 +69,8 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
             ...ffargs,
         ];
 
+        console.log('[ffmpeg.render] Spawning FFmpeg with args:', args);
+        
         process = spawn(...getCommand(args), {
             windowsHide: true,
             stdio: [
@@ -77,21 +79,36 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
             ],
         });
 
+        console.log('[ffmpeg.render] FFmpeg process spawned, PID:', process.pid);
+
         const [,,, muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
 
-        res.setHeader(
-            'Estimated-Content-Length',
-            await estimateTunnelLength(streamInfo, estimateMultiplier)
-        );
+        const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
+        console.log('[ffmpeg.render] Estimated length:', estimatedLength);
+        
+        res.setHeader('Estimated-Content-Length', estimatedLength);
 
+        console.log('[ffmpeg.render] Setting up pipe to response...');
         pipe(muxOutput, res, shutdown);
 
-        process.on('close', shutdown);
-        res.on('finish', shutdown);
-    } catch {
+        process.on('close', (code) => {
+            console.log('[ffmpeg.render] Process closed with code:', code);
+            shutdown();
+        });
+        
+        process.on('error', (err) => {
+            console.error('[ffmpeg.render] Process error:', err);
+        });
+        
+        res.on('finish', () => {
+            console.log('[ffmpeg.render] Response finished');
+            shutdown();
+        });
+    } catch (e) {
+        console.error('[ffmpeg.render] Exception:', e);
         shutdown();
     }
 }
@@ -99,10 +116,17 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
 const remux = async (streamInfo, res) => {
     const format = streamInfo.filename.split('.').pop();
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
+    
+    console.log('[ffmpeg.remux] Type:', streamInfo.type);
+    console.log('[ffmpeg.remux] Format:', format);
+    console.log('[ffmpeg.remux] URLs:', urls);
+    console.log('[ffmpeg.remux] URLs length:', urls.length);
+    
     const args = urls.flatMap(url => ['-i', url]);
 
     // if the stream type is merge, we expect two URLs
     if (streamInfo.type === 'merge' && urls.length !== 2) {
+        console.log('[ffmpeg.remux] ERROR: merge type requires exactly 2 URLs');
         return closeResponse(res);
     }
 
@@ -149,6 +173,9 @@ const remux = async (streamInfo, res) => {
 
     args.push('-f', format === 'mkv' ? 'matroska' : format, 'pipe:3');
 
+    console.log('[ffmpeg.remux] Final FFmpeg args:', args);
+    console.log('[ffmpeg.remux] About to call render...');
+    
     await render(res, streamInfo, args);
 }
 

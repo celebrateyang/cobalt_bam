@@ -99,6 +99,9 @@ const proxy = async (streamInfo, res) => {
 }
 
 const merge = async (streamInfo, res) => {
+    console.log('[merge] Starting merge process for service:', streamInfo.service);
+    console.log('[merge] URLs count:', streamInfo.urls?.length);
+    
     let process;
     const shutdown = () => (
         killProcess(process),
@@ -110,9 +113,14 @@ const merge = async (streamInfo, res) => {
     const rawHeaders = toRawHeaders(headers);
 
     try {
-        if (streamInfo.urls.length !== 2) return shutdown();
+        if (streamInfo.urls.length !== 2) {
+            console.log('[merge] ERROR: Expected 2 URLs but got:', streamInfo.urls.length);
+            return shutdown();
+        }
 
+        console.log('[merge] Getting format from filename:', streamInfo.filename);
         const format = streamInfo.filename.split('.').pop();
+        console.log('[merge] Format:', format);
 
         let args = [
             '-loglevel', '-8',
@@ -124,7 +132,9 @@ const merge = async (streamInfo, res) => {
             '-map', '1:a',
         ]
 
+        console.log('[merge] Initial ffmpeg args created');
         args = args.concat(ffmpegArgs[format]);
+        console.log('[merge] Added format args for:', format);
 
         if (hlsExceptions.includes(streamInfo.service) && streamInfo.isHLS) {
             if (streamInfo.service === "youtube" && format === "webm") {
@@ -140,7 +150,12 @@ const merge = async (streamInfo, res) => {
 
         args.push('-f', format, 'pipe:3');
 
-        process = spawn(...getCommand(args), {
+        console.log('[merge] About to spawn process with args:', JSON.stringify(args));
+        console.log('[merge] Getting command...');
+        const command = getCommand(args);
+        console.log('[merge] Command:', command);
+
+        process = spawn(...command, {
             windowsHide: true,
             stdio: [
                 'inherit', 'inherit', 'inherit',
@@ -148,17 +163,35 @@ const merge = async (streamInfo, res) => {
             ],
         });
 
+        console.log('[merge] Process spawned with PID:', process.pid);
+
         const [,,, muxOutput] = process.stdio;
+
+        console.log('[merge] Estimating tunnel length...');
+        const estimatedLength = await estimateTunnelLength(streamInfo);
+        console.log(`[merge] Estimated content length: ${estimatedLength}`);
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
-        res.setHeader('Estimated-Content-Length', await estimateTunnelLength(streamInfo));
+        
+        console.log('[merge] Setting response headers...');
+        if (estimatedLength > 0) {
+            res.setHeader('Content-Length', estimatedLength);
+            console.log(`[merge] Set Content-Length: ${estimatedLength}`);
+        } else {
+            console.log(`[merge] WARNING: Invalid estimated length (${estimatedLength}), not setting Content-Length`);
+        }
 
+        console.log('[merge] Piping muxOutput to response...');
         pipe(muxOutput, res, shutdown);
 
+        console.log('[merge] Setting up event handlers...');
         process.on('close', shutdown);
         res.on('finish', shutdown);
-    } catch {
+        
+        console.log('[merge] Merge setup complete, streaming...');
+    } catch (e) {
+        console.error('[merge] Exception caught:', e);
         shutdown();
     }
 }

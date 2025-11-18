@@ -1,43 +1,70 @@
 import { get } from "svelte/store";
 
 import settings from "$lib/state/settings";
-import lazySettingGetter from "$lib/settings/lazy-get";
 
-import { getSession } from "$lib/api/session";
+import { getSession, resetSession } from "$lib/api/session";
 import { currentApiURL } from "$lib/api/api-url";
-import { turnstileLoaded } from "$lib/state/turnstile";
-import { cachedInfo, getServerInfo } from "$lib/api/server-info";
+import { turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
+import cachedInfo from "$lib/state/server-info";
+import { getServerInfo } from "$lib/api/server-info";
 
 import type { Optional } from "$lib/types/generic";
-import type { CobaltAPIResponse, CobaltErrorResponse } from "$lib/types/api";
+import type { CobaltAPIResponse, CobaltErrorResponse, CobaltSaveRequestBody } from "$lib/types/api";
 
-const request = async (url: string) => {
-    const getSetting = lazySettingGetter(get(settings));
+const waitForTurnstile = async () => {
+    return await new Promise((resolve, reject) => {
+        const unsub = turnstileSolved.subscribe((solved) => {
+            if (solved) {
+                unsub();
+                resolve(true);
+            }
+        });
 
-    const request = {
-        url,
+        // wait for turnstile to finish for 15 seconds
+        setTimeout(() => {
+            unsub();
+            reject(false);
+        }, 15 * 1000)
+    });
+}
 
-        downloadMode: getSetting("save", "downloadMode"),
-        audioBitrate: getSetting("save", "audioBitrate"),
-        audioFormat: getSetting("save", "audioFormat"),
-        tiktokFullAudio: getSetting("save", "tiktokFullAudio"),
-        youtubeDubBrowserLang: getSetting("save", "youtubeDubBrowserLang"),
-
-        youtubeVideoCodec: getSetting("save", "youtubeVideoCodec"),
-        videoQuality: getSetting("save", "videoQuality"),
-
-        filenameStyle: getSetting("save", "filenameStyle"),
-        disableMetadata: getSetting("save", "disableMetadata"),
-
-        twitterGif: getSetting("save", "twitterGif"),
-        tiktokH265: getSetting("save", "tiktokH265"),
-
-        alwaysProxy: getSetting("privacy", "alwaysProxy"),
+const getAuthorization = async () => {
+    const processing = get(settings).processing;
+    if (processing.enableCustomApiKey && processing.customApiKey.length > 0) {
+        return `Api-Key ${processing.customApiKey}`;
     }
 
+    if (!get(turnstileEnabled)) {
+        return;
+    }
 
-    /*await apiOverrideWarning();*/
+    if (!get(turnstileSolved)) {
+        try {
+            await waitForTurnstile();
+        } catch {
+            return {
+                status: "error",
+                error: {
+                    code: "error.captcha_too_long"
+                }
+            } as CobaltErrorResponse;
+        }
+    }
 
+    const session = await getSession();
+
+    if (session) {
+        if ("error" in session) {
+            if (session.error.code !== "error.api.auth.not_configured") {
+                return session;
+            }
+        } else {
+            return `Bearer ${session.token}`;
+        }
+    }
+}
+
+const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) => {
     await getServerInfo();
 
     const getCachedInfo = get(cachedInfo);
@@ -51,45 +78,32 @@ const request = async (url: string) => {
         } as CobaltErrorResponse;
     }
 
-    if (getCachedInfo?.info?.cobalt?.turnstileSitekey && !get(turnstileLoaded)) {
-        return {
-            status: "error",
-            error: {
-                code: "error.captcha_ongoing"
-            }
-        } as CobaltErrorResponse;
-    }    
     const api = currentApiURL();
-    const session = getCachedInfo?.info?.cobalt?.turnstileSitekey
-                    ? await getSession() : undefined;
+    const authorization = await getAuthorization();
 
-    let extraHeaders = {}
+    if (authorization && typeof authorization !== "string") {
+        return authorization;
+    }
 
-    if (session) {
-        if ("error" in session) {
-            if (session.error.code !== "error.api.auth.not_configured") {
-                return session;
-            }
-        } else {
-            extraHeaders = {
-                "Authorization": `Bearer ${session.token}`,
-            };
+    let extraHeaders = {};
+
+    if (authorization) {
+        extraHeaders = {
+            "Authorization": authorization
         }
     }
 
-    const requestOptions = {
+    const response: Optional<CobaltAPIResponse> = await fetch(api, {
         method: "POST",
-        redirect: "manual" as RequestRedirect,
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify(request),
+        redirect: "manual",
+        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify(requestBody),
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json",
             ...extraHeaders,
         },
-    };
-
-    const response: Optional<CobaltAPIResponse> = await fetch(api, requestOptions)
+    })
     .then(r => r.json())
     .catch((e) => {
         if (e?.message?.includes("timed out")) {
@@ -99,9 +113,18 @@ const request = async (url: string) => {
                     code: "error.api.timed_out"
                 }
             } as CobaltErrorResponse;
-        }    });
+        }
+    });
 
-   
+    if (
+        response?.status === 'error'
+            && response?.error.code === 'error.api.auth.jwt.invalid'
+            && !justRetried
+    ) {
+        resetSession();
+        await getAuthorization();
+        return request(requestBody, true);
+    }
 
     return response;
 }

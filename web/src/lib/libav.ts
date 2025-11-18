@@ -2,7 +2,6 @@ import mime from "mime";
 import LibAV, { type LibAV as LibAVInstance } from "@imput/libav.js-remux-cli";
 import type { FFmpegProgressCallback, FFmpegProgressEvent, FFmpegProgressStatus, FileInfo, RenderParams } from "./types/libav";
 import type { FfprobeData } from "fluent-ffmpeg";
-import { browser } from "$app/environment";
 
 export default class LibAVWrapper {
     libav: Promise<LibAVInstance> | null;
@@ -11,7 +10,9 @@ export default class LibAVWrapper {
 
     constructor(onProgress?: FFmpegProgressCallback) {
         this.libav = null;
-        this.concurrency = Math.min(4, browser ? navigator.hardwareConcurrency : 0);
+        // Check if we're in a browser environment by checking for window object
+        const isBrowser = typeof window !== 'undefined' && typeof navigator !== 'undefined';
+        this.concurrency = Math.min(4, isBrowser ? navigator.hardwareConcurrency : 0);
         this.onProgress = onProgress;
     }
 

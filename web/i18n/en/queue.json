@@ -1,0 +1,15 @@
+{
+    "title": "queue",
+    "state": {
+        "running": {
+            "fetch": "fetching",
+            "remux": "remuxing"
+        },
+        "starting": {
+            "fetch": "starting fetch",
+            "remux": "starting remux"
+        },
+        "retrying": "retrying",
+        "waiting": "waiting"
+    }
+}

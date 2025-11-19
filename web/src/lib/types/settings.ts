@@ -9,21 +9,29 @@ export const filenameStyleOptions = ["classic", "basic", "pretty", "nerdy"] as c
 export const videoQualityOptions = ["max", "2160", "1440", "1080", "720", "480", "360", "240", "144"] as const;
 export const youtubeVideoCodecOptions = ["h264", "av1", "vp9"] as const;
 export const savingMethodOptions = ["ask", "download", "share", "copy"] as const;
+export const localProcessingOptions = ["disabled", "preferred", "forced"] as const;
+export const youtubeVideoContainerOptions = ["auto", "mp4", "webm", "mkv"] as const;
 
 type CobaltSettingsAppearance = {
     theme: typeof themeOptions[number],
     language: keyof typeof languages,
     autoLanguage: boolean,
+    hideRemuxTab: boolean,
+};
+
+type CobaltSettingsAccessibility = {
     reduceMotion: boolean,
     reduceTransparency: boolean,
+    disableHaptics: boolean,
+    dontAutoOpenQueue: boolean,
 };
 
 type CobaltSettingsAdvanced = {
     debug: boolean,
+    useWebCodecs: boolean,
 };
 
 type CobaltSettingsPrivacy = {
-    alwaysProxy: boolean,
     disableAnalytics: boolean,
 };
 
@@ -38,24 +46,31 @@ type CobaltSettingsProcessing = {
 }
 
 type CobaltSettingsSave = {
+    alwaysProxy: boolean,
+    localProcessing: typeof localProcessingOptions[number],
     audioFormat: typeof audioFormatOptions[number],
     audioBitrate: typeof audioBitrateOptions[number],
     disableMetadata: boolean,
     downloadMode: typeof downloadModeOptions[number],
     filenameStyle: typeof filenameStyleOptions[number],
     savingMethod: typeof savingMethodOptions[number],
-    tiktokH265: boolean,
-    tiktokFullAudio: boolean,
-    twitterGif: boolean,
     videoQuality: typeof videoQualityOptions[number],
     youtubeVideoCodec: typeof youtubeVideoCodecOptions[number],
-    youtubeDubBrowserLang: boolean,
+    youtubeVideoContainer: typeof youtubeVideoContainerOptions[number],
+    youtubeDubLang: string,
+    youtubeHLS: boolean,
+    youtubeBetterAudio: boolean,
+    tiktokFullAudio: boolean,
+    allowH265: boolean,
+    convertGif: boolean,
+    subtitleLang: string,
 };
 
 export type CurrentCobaltSettings = {
-    schemaVersion: 2,
+    schemaVersion: 6,
     advanced: CobaltSettingsAdvanced,
     appearance: CobaltSettingsAppearance,
+    accessibility: CobaltSettingsAccessibility,
     save: CobaltSettingsSave,
     privacy: CobaltSettingsPrivacy,
     processing: CobaltSettingsProcessing,

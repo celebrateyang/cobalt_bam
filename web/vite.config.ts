@@ -6,7 +6,11 @@ import mime from "mime";
 
 import { cp, readdir, mkdir } from "node:fs/promises";
 import { createReadStream } from "node:fs";
-import { join, basename } from "node:path";
+import { join, basename, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const exposeLibAV: PluginOption = (() => {
     const IMPUT_MODULE_DIR = join(__dirname, 'node_modules/@imput');
@@ -19,7 +23,24 @@ const exposeLibAV: PluginOption = (() => {
                 const filename = basename(req.url).split('?')[0];
                 if (!filename) return next();
 
-                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename));
+                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename).replace(/\\/g, '/'));
+                if (!file) return next();
+
+                const fileType = mime.getType(filename);
+                if (!fileType) return next();
+
+                res.setHeader('Content-Type', fileType);
+                return createReadStream(file).pipe(res);
+            });
+        },
+        configurePreviewServer(server) {
+            server.middlewares.use(async (req, res, next) => {
+                if (!req.url?.startsWith('/_libav/')) return next();
+
+                const filename = basename(req.url).split('?')[0];
+                if (!filename) return next();
+
+                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename).replace(/\\/g, '/'));
                 if (!file) return next();
 
                 const fileType = mime.getType(filename);
@@ -101,6 +122,6 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        exclude: [ "@imput/libav.js-remux-cli" ]
+        exclude: [ "@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli" ]
     },
 });

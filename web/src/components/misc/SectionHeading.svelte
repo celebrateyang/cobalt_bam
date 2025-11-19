@@ -8,6 +8,7 @@
     export let title: string;
     export let sectionId: string;
     export let beta = false;
+    export let nolink = false;
 
     let copied = false;
 
@@ -18,22 +19,30 @@
     }
 </script>
 
-<!-- <div class="heading-container">
-    <h3 class="content-title">{title}</h3>
+<div class="heading-container">
+    <h3 id="{sectionId}-title" class="content-title">
+        {title}
+    </h3>
+
     {#if beta}
-        <div class="beta-label">{$t("general.beta")}</div>
+        <div class="beta-label">
+            {$t("general.beta")}
+        </div>
     {/if}
-    <button
-        class="link-copy"
-        aria-label={copied ? $t("button.copied") : $t("button.copy.section")}
-        on:click={() => {
-            copied = true;
-            copyURL(`${$page.url.origin}${$page.url.pathname}#${sectionId}`);
-        }}
-    >
-        <CopyIcon check={copied} />
-    </button>
-</div> -->
+
+    {#if !nolink}
+        <button
+            class="link-copy"
+            aria-label={copied ? $t("button.copied") : $t("button.copy.section")}
+            on:click={() => {
+                copied = true;
+                copyURL(`${$page.url.origin}${$page.url.pathname}#${sectionId}`);
+            }}
+        >
+            <CopyIcon check={copied} />
+        </button>
+    {/if}
+</div>
 
 <style>
     .heading-container {

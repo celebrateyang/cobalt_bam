@@ -4,6 +4,7 @@
     "page.video": "video",
     "page.audio": "audio",
     "page.download": "downloading",
+    "page.local": "local processing",
     "page.advanced": "advanced",
     "page.debug": "debug information",
     "page.instances": "instances",
@@ -80,6 +81,12 @@
     "saving.share": "share",
     "saving.copy": "copy",
     "saving.description": "preferred way of saving the file or link from freesavevideo. if preferred method is unavailable or something goes wrong, freesavevideo will ask you what to do next.",
+
+    "local.saving": "local processing",
+    "local.saving.disabled": "disabled",
+    "local.saving.preferred": "preferred",
+    "local.saving.forced": "forced",
+    "local.saving.description": "when enabled, audio and GIF conversions are done in your browser. this allows for faster processing and reduces server load, but may use more battery and system resources.\n\npreferred: use local processing when possible, fallback to server when not supported.\nforced: always use local processing, fail if not supported.",
 
     "accessibility": "accessibility",
     "accessibility.transparency.title": "reduce visual transparency",

@@ -1,0 +1,15 @@
+{
+    "title": "队列",
+    "state": {
+        "running": {
+            "fetch": "获取中",
+            "remux": "混流中"
+        },
+        "starting": {
+            "fetch": "开始获取",
+            "remux": "开始混流"
+        },
+        "retrying": "重试中",
+        "waiting": "等待中"
+    }
+}

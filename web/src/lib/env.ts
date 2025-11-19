@@ -14,6 +14,8 @@ const variables = {
     PLAUSIBLE_HOST: getEnv('PLAUSIBLE_HOST'),
     PLAUSIBLE_ENABLED: getEnv('HOST') && getEnv('PLAUSIBLE_HOST'),
     DEFAULT_API: getEnv('DEFAULT_API') || 'https://api.freesavevideo.online',
+    ENABLE_WEBCODECS: getEnv('ENABLE_WEBCODECS') === 'true',
+    ENABLE_DEPRECATED_YOUTUBE_HLS: getEnv('ENABLE_DEPRECATED_YOUTUBE_HLS') === 'true',
 }
 
 const contacts = {

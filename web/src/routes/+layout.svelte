@@ -25,6 +25,7 @@
     import Turnstile from "$components/misc/Turnstile.svelte";
     import NotchSticker from "$components/misc/NotchSticker.svelte";
     import DialogHolder from "$components/dialog/DialogHolder.svelte";
+    import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
 
     $: reduceMotion =
@@ -84,6 +85,7 @@
         {/if}
         <DialogHolder />
         <Sidebar />
+        <ProcessingQueue />
         <div id="content">
             {#if (spawnTurnstile && $page.url.pathname === "/") || $turnstileCreated}
                 <Turnstile />

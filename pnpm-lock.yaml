@@ -117,6 +117,9 @@ importers:
       '@fontsource/redaction-10':
         specifier: ^5.0.2
         version: 5.0.2
+      '@imput/libav.js-encode-cli':
+        specifier: ^5.5.6
+        version: 5.7.6
       '@imput/libav.js-remux-cli':
         specifier: ^5.5.6
         version: 5.5.6
@@ -547,6 +550,9 @@ packages:
   '@humanwhocodes/object-schema@2.0.3':
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
+
+  '@imput/libav.js-encode-cli@5.7.6':
+    resolution: {integrity: sha512-XDO4fUqXVTT3SH+mGehrCtHk1Cf+r4AhStBMFyN/bt080lYTeedZ2L01HU1tOOdHPgXxfEnRP9kx23livr5YYQ==}
 
   '@imput/libav.js-remux-cli@5.5.6':
     resolution: {integrity: sha512-XdAab90EZKf6ULtD/x9Y2bnlmNJodXSO6w8aWrn97+N2IRuOS8zv3tAFPRC69SWKa8Utjeu5YTYuTolnX3QprQ==}
@@ -2554,6 +2560,8 @@ snapshots:
   '@humanwhocodes/module-importer@1.0.1': {}
 
   '@humanwhocodes/object-schema@2.0.3': {}
+
+  '@imput/libav.js-encode-cli@5.7.6': {}
 
   '@imput/libav.js-remux-cli@5.5.6': {}
 

@@ -4,6 +4,7 @@
     "page.video": "视频",
     "page.audio": "音频",
     "page.download": "下载",
+    "page.local": "本地处理",
     "page.advanced": "高级",
     "page.debug": "调试信息",
     "page.instances": "实例",
@@ -80,6 +81,12 @@
     "saving.share": "分享",
     "saving.copy": "复制",
     "saving.description": "首选的文件或链接保存方式。如果首选方式不可用或出错，Freesavevideo将询问您接下来要怎么做。",
+
+    "local.saving": "本地处理",
+    "local.saving.disabled": "禁用",
+    "local.saving.preferred": "优先",
+    "local.saving.forced": "强制",
+    "local.saving.description": "启用后，音频和GIF转换将在浏览器中完成。这可以加快处理速度并减少服务器负载，但可能会消耗更多电池和系统资源。\n\n优先：尽可能使用本地处理，不支持时回退到服务器。\n强制：始终使用本地处理，不支持时失败。",
 
     "accessibility": "辅助功能",
     "accessibility.transparency.title": "减少视觉透明度",

@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "queue status",
+        "ongoing": "queue processing",
+        "completed": "queue completed"
+    }
+}

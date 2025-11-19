@@ -12,11 +12,13 @@ export default class LibAVWrapper {
 
     constructor(onProgress?: FFmpegProgressCallback) {
         this.libav = null;
-        this.concurrency = Math.min(4, navigator.hardwareConcurrency || 0);
+        this.concurrency = (typeof navigator !== "undefined") ? Math.min(4, navigator.hardwareConcurrency || 0) : 1;
         this.onProgress = onProgress;
     }
 
     init(options: any = {}) {
+        if (typeof navigator === 'undefined') return;
+
         const variant = options?.variant || 'remux';
         let constructor: typeof LibAV.LibAV;
 

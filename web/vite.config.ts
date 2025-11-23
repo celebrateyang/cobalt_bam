@@ -19,7 +19,7 @@ const exposeLibAV: PluginOption = (() => {
                 const filename = basename(req.url).split('?')[0];
                 if (!filename) return next();
 
-                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename));
+                const [file] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename));
                 if (!file) return next();
 
                 const fileType = mime.getType(filename);
@@ -80,7 +80,7 @@ export default defineConfig({
                 }
             }
         }
-    },    server: {
+    }, server: {
         host: '0.0.0.0', // 允许外部访问
         port: 5173,
         headers: {
@@ -101,6 +101,6 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        exclude: [ "@imput/libav.js-remux-cli" ]
+        exclude: ["@imput/libav.js-remux-cli"]
     },
 });

@@ -11,8 +11,8 @@ const TOKEN_EXPIRY = '7d'; // 7天过期
  */
 export const generateToken = (user) => {
     return jwt.sign(
-        { 
-            id: user.id, 
+        {
+            id: user.id,
             username: user.username,
             email: user.email
         },
@@ -49,36 +49,36 @@ export const hashPassword = (password) => {
 /**
  * 登录处理
  */
-export const loginAdmin = (username, password) => {
-    const admin = getAdminByUsername(username);
-    
+export const loginAdmin = async (username, password) => {
+    const admin = await getAdminByUsername(username);
+
     if (!admin) {
         return {
             success: false,
             error: 'Invalid username or password'
         };
     }
-    
+
     if (!admin.is_active) {
         return {
             success: false,
             error: 'Account is disabled'
         };
     }
-    
+
     if (!verifyPassword(password, admin.password_hash)) {
         return {
             success: false,
             error: 'Invalid username or password'
         };
     }
-    
+
     // 更新最后登录时间
-    updateLastLogin(admin.id);
-    
+    await updateLastLogin(admin.id);
+
     // 生成 token
     const token = generateToken(admin);
-    
+
     return {
         success: true,
         token,
@@ -95,7 +95,7 @@ export const loginAdmin = (username, password) => {
  */
 export const requireAuth = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
             status: 'error',
@@ -105,10 +105,10 @@ export const requireAuth = (req, res, next) => {
             }
         });
     }
-    
+
     const token = authHeader.substring(7); // 移除 "Bearer " 前缀
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
         return res.status(401).json({
             status: 'error',
@@ -118,7 +118,7 @@ export const requireAuth = (req, res, next) => {
             }
         });
     }
-    
+
     // 将用户信息附加到请求对象
     req.user = decoded;
     next();
@@ -129,15 +129,15 @@ export const requireAuth = (req, res, next) => {
  */
 export const optionalAuth = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         const decoded = verifyToken(token);
-        
+
         if (decoded) {
             req.user = decoded;
         }
     }
-    
+
     next();
 };

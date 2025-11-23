@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { getVersion } from "@imput/version-info";
 import { loadEnvs, validateEnvs, setupEnvWatcher } from "./core/env.js";
 
@@ -12,9 +13,36 @@ const cobaltUserAgent = `cobalt/${version} (+https://github.com/imputnet/cobalt)
 if (!env.jwtSecret) {
     env.jwtSecret = process.env.JWT_SECRET || 'cobalt-social-media-secret-key-change-in-production';
 }
-if (!env.dbPath) {
-    env.dbPath = process.env.DB_PATH || './db.sqlite3';
+
+// 数据库配置 - 支持 SQLite 和 PostgreSQL
+if (!env.dbType) {
+    env.dbType = process.env.DB_TYPE || (process.env.DB_PATH ? 'sqlite' : 'postgresql');
 }
+
+if (env.dbType === 'sqlite') {
+    // SQLite 配置
+    if (!env.dbPath) {
+        env.dbPath = process.env.DB_PATH || './db.sqlite3';
+    }
+} else if (env.dbType === 'postgresql') {
+    // PostgreSQL 配置
+    if (!env.dbHost) {
+        env.dbHost = process.env.DB_HOST || 'localhost';
+    }
+    if (!env.dbPort) {
+        env.dbPort = parseInt(process.env.DB_PORT) || 5432;
+    }
+    if (!env.dbUser) {
+        env.dbUser = process.env.DB_USER || 'postgres';
+    }
+    if (!env.dbPassword) {
+        env.dbPassword = process.env.DB_PASSWORD || '';
+    }
+    if (!env.dbName) {
+        env.dbName = process.env.DB_NAME || 'cobalt';
+    }
+}
+
 if (!env.adminUsername) {
     env.adminUsername = process.env.ADMIN_USERNAME || 'admin';
 }

@@ -40,12 +40,14 @@
         error = '';
         try {
             const response = await accounts.list();
-            if (response.status === 'success') {
-                accountList = response.data.accounts;
+            if (response.status === 'success' && response.data) {
+                accountList = response.data.accounts || [];
             } else {
+                accountList = [];
                 error = response.error?.message || '加载失败';
             }
         } catch (e) {
+            accountList = [];
             error = '网络错误';
         } finally {
             loading = false;

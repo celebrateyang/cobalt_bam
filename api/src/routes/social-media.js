@@ -51,10 +51,10 @@ const adminLimiter = rateLimit({
  * POST /api/social/auth/login
  * 管理员登录
  */
-router.post('/auth/login', publicLimiter, (req, res) => {
+router.post('/auth/login', publicLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
-        
+        console.log('Login attempt========>:', username, password);
         if (!username || !password) {
             return res.status(400).json({
                 status: 'error',
@@ -64,9 +64,9 @@ router.post('/auth/login', publicLimiter, (req, res) => {
                 }
             });
         }
-        
-        const result = loginAdmin(username, password);
-        
+
+        const result = await loginAdmin(username, password);
+
         if (!result.success) {
             return res.status(401).json({
                 status: 'error',
@@ -76,7 +76,7 @@ router.post('/auth/login', publicLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: {
@@ -127,9 +127,9 @@ router.get('/accounts', publicLimiter, (req, res) => {
             sort: req.query.sort,
             order: req.query.order
         };
-        
+
         const result = getAccounts(filters);
-        
+
         res.json({
             status: 'success',
             data: result
@@ -153,7 +153,7 @@ router.get('/accounts', publicLimiter, (req, res) => {
 router.get('/accounts/stats', publicLimiter, (req, res) => {
     try {
         const stats = getStats();
-        
+
         res.json({
             status: 'success',
             data: stats
@@ -177,7 +177,7 @@ router.get('/accounts/stats', publicLimiter, (req, res) => {
 router.get('/accounts/:id', publicLimiter, (req, res) => {
     try {
         const account = getAccountById(parseInt(req.params.id));
-        
+
         if (!account) {
             return res.status(404).json({
                 status: 'error',
@@ -187,7 +187,7 @@ router.get('/accounts/:id', publicLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: account
@@ -210,9 +210,9 @@ router.get('/accounts/:id', publicLimiter, (req, res) => {
  */
 router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
     try {
-        const { platform, username, display_name, avatar_url, profile_url, 
-                description, follower_count, category, tags, priority, is_active } = req.body;
-        
+        const { platform, username, display_name, avatar_url, profile_url,
+            description, follower_count, category, tags, priority, is_active } = req.body;
+
         if (!platform || !username) {
             return res.status(400).json({
                 status: 'error',
@@ -222,7 +222,7 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         const accountData = {
             platform,
             username,
@@ -236,16 +236,16 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
             priority,
             is_active
         };
-        
+
         const account = createAccount(accountData);
-        
+
         res.status(201).json({
             status: 'success',
             data: account
         });
     } catch (error) {
         console.error('Create account error:', error);
-        
+
         if (error.message && error.message.includes('UNIQUE constraint failed')) {
             return res.status(409).json({
                 status: 'error',
@@ -255,7 +255,7 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.status(500).json({
             status: 'error',
             error: {
@@ -274,9 +274,9 @@ router.put('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const updates = req.body;
-        
+
         const account = updateAccount(id, updates);
-        
+
         if (!account) {
             return res.status(404).json({
                 status: 'error',
@@ -286,7 +286,7 @@ router.put('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: account
@@ -311,7 +311,7 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const success = deleteAccount(id);
-        
+
         if (!success) {
             return res.status(404).json({
                 status: 'error',
@@ -321,7 +321,7 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: { message: 'Account deleted successfully' }
@@ -357,9 +357,9 @@ router.get('/videos', publicLimiter, (req, res) => {
             sort: req.query.sort,
             order: req.query.order
         };
-        
+
         const result = getVideos(filters);
-        
+
         res.json({
             status: 'success',
             data: result
@@ -386,13 +386,13 @@ router.get('/videos/grouped', publicLimiter, (req, res) => {
             platform: req.query.platform,
             is_active: true // 只显示活跃的视频
         };
-        
+
         // 获取所有视频
         const result = getVideos({ ...filters, limit: 1000 });
         const videos = result.videos || [];
-        
+
         console.log(`[Grouped] Found ${videos.length} videos`); // 调试日志
-        
+
         // 按账号分组
         const grouped = {};
         videos.forEach(video => {
@@ -416,14 +416,14 @@ router.get('/videos/grouped', publicLimiter, (req, res) => {
                 created_at: video.created_at
             });
         });
-        
+
         // 转换为数组并按账号名称排序
-        const groupedArray = Object.values(grouped).sort((a, b) => 
+        const groupedArray = Object.values(grouped).sort((a, b) =>
             a.account.name.localeCompare(b.account.name, 'zh-CN')
         );
-        
+
         console.log(`[Grouped] Returning ${groupedArray.length} account groups`); // 调试日志
-        
+
         res.json({
             status: 'success',
             data: groupedArray
@@ -448,7 +448,7 @@ router.get('/videos/featured', publicLimiter, (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
         const result = getFeaturedVideos(limit);
-        
+
         res.json({
             status: 'success',
             data: result.videos
@@ -472,7 +472,7 @@ router.get('/videos/featured', publicLimiter, (req, res) => {
 router.get('/videos/:id', publicLimiter, (req, res) => {
     try {
         const video = getVideoById(parseInt(req.params.id));
-        
+
         if (!video) {
             return res.status(404).json({
                 status: 'error',
@@ -482,7 +482,7 @@ router.get('/videos/:id', publicLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: video
@@ -506,9 +506,9 @@ router.get('/videos/:id', publicLimiter, (req, res) => {
 router.post('/videos', requireAuth, adminLimiter, (req, res) => {
     try {
         const { account_id, platform, video_id, title, description, video_url,
-                thumbnail_url, duration, view_count, like_count, publish_date,
-                tags, is_featured, is_active, display_order } = req.body;
-        
+            thumbnail_url, duration, view_count, like_count, publish_date,
+            tags, is_featured, is_active, display_order } = req.body;
+
         if (!account_id || !video_url) {
             return res.status(400).json({
                 status: 'error',
@@ -518,7 +518,7 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         // 验证账号是否存在
         const account = getAccountById(account_id);
         if (!account) {
@@ -530,7 +530,7 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         const videoData = {
             account_id,
             platform: platform || account.platform,
@@ -548,9 +548,9 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
             is_active,
             display_order
         };
-        
+
         const video = createVideo(videoData);
-        
+
         res.status(201).json({
             status: 'success',
             data: video
@@ -575,9 +575,9 @@ router.put('/videos/:id', requireAuth, adminLimiter, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const updates = req.body;
-        
+
         const video = updateVideo(id, updates);
-        
+
         if (!video) {
             return res.status(404).json({
                 status: 'error',
@@ -587,7 +587,7 @@ router.put('/videos/:id', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: video
@@ -612,7 +612,7 @@ router.delete('/videos/:id', requireAuth, adminLimiter, (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const success = deleteVideo(id);
-        
+
         if (!success) {
             return res.status(404).json({
                 status: 'error',
@@ -622,7 +622,7 @@ router.delete('/videos/:id', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: { message: 'Video deleted successfully' }
@@ -647,7 +647,7 @@ router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, (req, res)
     try {
         const id = parseInt(req.params.id);
         const video = toggleFeatured(id);
-        
+
         if (!video) {
             return res.status(404).json({
                 status: 'error',
@@ -657,7 +657,7 @@ router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, (req, res)
                 }
             });
         }
-        
+
         res.json({
             status: 'success',
             data: video

@@ -33,7 +33,7 @@
 
     onMount(async () => {
         const verified = await auth.verify();
-        if (!verified) {
+        if (verified.status !== 'success') {
             goto('/admin');
             return;
         }
@@ -50,13 +50,18 @@
             if (filters.account_id) params.account_id = parseInt(filters.account_id);
             if (filters.is_featured) params.is_featured = filters.is_featured === 'true';
 
+            console.log('Loading videos with params:', params);
             const response = await videos.list(params);
+            console.log('Videos response:', response);
             if (response.status === 'success') {
                 videoList = response.data.videos;
+                console.log('Loaded videos:', videoList.length);
             } else {
+                console.error('Failed to load videos:', response);
                 error = response.error?.message || '加载失败';
             }
         } catch (e) {
+            console.error('Exception in loadVideos:', e);
             error = '网络错误';
         } finally {
             loading = false;

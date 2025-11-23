@@ -27,7 +27,7 @@
     onMount(async () => {
         // 验证登录状态
         const verified = await auth.verify();
-        if (!verified) {
+        if (verified.status !== 'success') {
             goto('/admin');
             return;
         }
@@ -92,6 +92,7 @@
 
     async function handleSubmit() {
         try {
+            console.log('Submitting account:', formData);
             const data = {
                 ...formData,
                 tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
@@ -101,16 +102,20 @@
             if (editingAccount) {
                 response = await accounts.update(editingAccount.id, data);
             } else {
+                console.log('Creating new account:', data);
                 response = await accounts.create(data);
+                console.log('Create response:', response);
             }
 
             if (response.status === 'success') {
                 showAddModal = false;
                 await loadAccounts();
             } else {
+                console.error('Account operation failed:', response);
                 error = response.error?.message || '操作失败';
             }
         } catch (e) {
+            console.error('Exception in handleSubmit:', e);
             error = '网络错误';
         }
     }

@@ -115,8 +115,10 @@ router.get('/auth/verify', requireAuth, (req, res) => {
  * GET /api/social/accounts
  * 获取账号列表（公开）
  */
-router.get('/accounts', publicLimiter, (req, res) => {
+router.get('/accounts', publicLimiter, async (req, res) => {
     try {
+        console.log('========== GET ACCOUNTS REQUEST ==========');
+        console.log('Query params:', req.query);
         const filters = {
             platform: req.query.platform,
             category: req.query.category,
@@ -128,12 +130,16 @@ router.get('/accounts', publicLimiter, (req, res) => {
             order: req.query.order
         };
 
-        const result = getAccounts(filters);
+        console.log('Filters:', filters);
+        const result = await getAccounts(filters);  // ← 添加了 await！
+        console.log('Accounts count:', result.accounts ? result.accounts.length : 0);
 
         res.json({
             status: 'success',
             data: result
         });
+        console.log('✅ Response sent successfully');
+        console.log('========== END GET ACCOUNTS ==========');
     } catch (error) {
         console.error('Get accounts error:', error);
         res.status(500).json({
@@ -150,9 +156,9 @@ router.get('/accounts', publicLimiter, (req, res) => {
  * GET /api/social/accounts/stats
  * 获取统计信息（公开）
  */
-router.get('/accounts/stats', publicLimiter, (req, res) => {
+router.get('/accounts/stats', publicLimiter, async (req, res) => {
     try {
-        const stats = getStats();
+        const stats = await getStats();
 
         res.json({
             status: 'success',
@@ -174,9 +180,9 @@ router.get('/accounts/stats', publicLimiter, (req, res) => {
  * GET /api/social/accounts/:id
  * 获取账号详情（公开）
  */
-router.get('/accounts/:id', publicLimiter, (req, res) => {
+router.get('/accounts/:id', publicLimiter, async (req, res) => {
     try {
-        const account = getAccountById(parseInt(req.params.id));
+        const account = await getAccountById(parseInt(req.params.id));
 
         if (!account) {
             return res.status(404).json({
@@ -208,12 +214,19 @@ router.get('/accounts/:id', publicLimiter, (req, res) => {
  * POST /api/social/accounts
  * 创建账号（需要认证）
  */
-router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
+router.post('/accounts', requireAuth, adminLimiter, async (req, res) => {
     try {
+        console.log('========== CREATE ACCOUNT REQUEST ==========');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        console.log('User:', req.user);
+
         const { platform, username, display_name, avatar_url, profile_url,
             description, follower_count, category, tags, priority, is_active } = req.body;
 
+        console.log('Extracted fields:', { platform, username, display_name, follower_count, category });
+
         if (!platform || !username) {
+            console.log('❌ Validation failed: Missing platform or username');
             return res.status(400).json({
                 status: 'error',
                 error: {
@@ -222,6 +235,8 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
                 }
             });
         }
+
+        console.log('✅ Validation passed');
 
         const accountData = {
             platform,
@@ -237,14 +252,17 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
             is_active
         };
 
-        const account = createAccount(accountData);
+        console.log('Creating account with data:', JSON.stringify(accountData, null, 2));
+        const account = await createAccount(accountData);
+        console.log('✅ Account created successfully:', account);
 
         res.status(201).json({
             status: 'success',
             data: account
         });
+        console.log('========== END CREATE ACCOUNT ==========');
     } catch (error) {
-        console.error('Create account error:', error);
+        console.error('❌ Create account error:', error);
 
         if (error.message && error.message.includes('UNIQUE constraint failed')) {
             return res.status(409).json({
@@ -270,12 +288,12 @@ router.post('/accounts', requireAuth, adminLimiter, (req, res) => {
  * PUT /api/social/accounts/:id
  * 更新账号（需要认证）
  */
-router.put('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
+router.put('/accounts/:id', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const updates = req.body;
 
-        const account = updateAccount(id, updates);
+        const account = await updateAccount(id, updates);
 
         if (!account) {
             return res.status(404).json({
@@ -307,10 +325,10 @@ router.put('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
  * DELETE /api/social/accounts/:id
  * 删除账号（需要认证）
  */
-router.delete('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
+router.delete('/accounts/:id', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const success = deleteAccount(id);
+        const success = await deleteAccount(id);
 
         if (!success) {
             return res.status(404).json({
@@ -344,7 +362,7 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, (req, res) => {
  * GET /api/social/videos
  * 获取视频列表（公开）
  */
-router.get('/videos', publicLimiter, (req, res) => {
+router.get('/videos', publicLimiter, async (req, res) => {
     try {
         const filters = {
             account_id: req.query.account_id,
@@ -358,7 +376,7 @@ router.get('/videos', publicLimiter, (req, res) => {
             order: req.query.order
         };
 
-        const result = getVideos(filters);
+        const result = await getVideos(filters);
 
         res.json({
             status: 'success',
@@ -380,7 +398,7 @@ router.get('/videos', publicLimiter, (req, res) => {
  * GET /api/social/videos/grouped
  * 获取按博主分组的视频列表（公开）
  */
-router.get('/videos/grouped', publicLimiter, (req, res) => {
+router.get('/videos/grouped', publicLimiter, async (req, res) => {
     try {
         const filters = {
             platform: req.query.platform,
@@ -388,7 +406,7 @@ router.get('/videos/grouped', publicLimiter, (req, res) => {
         };
 
         // 获取所有视频
-        const result = getVideos({ ...filters, limit: 1000 });
+        const result = await getVideos({ ...filters, limit: 1000 });
         const videos = result.videos || [];
 
         console.log(`[Grouped] Found ${videos.length} videos`); // 调试日志
@@ -444,10 +462,10 @@ router.get('/videos/grouped', publicLimiter, (req, res) => {
  * GET /api/social/videos/featured
  * 获取精选视频列表（公开）
  */
-router.get('/videos/featured', publicLimiter, (req, res) => {
+router.get('/videos/featured', publicLimiter, async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
-        const result = getFeaturedVideos(limit);
+        const result = await getFeaturedVideos(limit);
 
         res.json({
             status: 'success',
@@ -469,9 +487,9 @@ router.get('/videos/featured', publicLimiter, (req, res) => {
  * GET /api/social/videos/:id
  * 获取视频详情（公开）
  */
-router.get('/videos/:id', publicLimiter, (req, res) => {
+router.get('/videos/:id', publicLimiter, async (req, res) => {
     try {
-        const video = getVideoById(parseInt(req.params.id));
+        const video = await getVideoById(parseInt(req.params.id));
 
         if (!video) {
             return res.status(404).json({
@@ -503,7 +521,7 @@ router.get('/videos/:id', publicLimiter, (req, res) => {
  * POST /api/social/videos
  * 创建视频（需要认证）
  */
-router.post('/videos', requireAuth, adminLimiter, (req, res) => {
+router.post('/videos', requireAuth, adminLimiter, async (req, res) => {
     try {
         const { account_id, platform, video_id, title, description, video_url,
             thumbnail_url, duration, view_count, like_count, publish_date,
@@ -520,7 +538,7 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
         }
 
         // 验证账号是否存在
-        const account = getAccountById(account_id);
+        const account = await getAccountById(account_id);
         if (!account) {
             return res.status(400).json({
                 status: 'error',
@@ -549,7 +567,7 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
             display_order
         };
 
-        const video = createVideo(videoData);
+        const video = await createVideo(videoData);
 
         res.status(201).json({
             status: 'success',
@@ -571,12 +589,12 @@ router.post('/videos', requireAuth, adminLimiter, (req, res) => {
  * PUT /api/social/videos/:id
  * 更新视频（需要认证）
  */
-router.put('/videos/:id', requireAuth, adminLimiter, (req, res) => {
+router.put('/videos/:id', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const updates = req.body;
 
-        const video = updateVideo(id, updates);
+        const video = await updateVideo(id, updates);
 
         if (!video) {
             return res.status(404).json({
@@ -608,10 +626,10 @@ router.put('/videos/:id', requireAuth, adminLimiter, (req, res) => {
  * DELETE /api/social/videos/:id
  * 删除视频（需要认证）
  */
-router.delete('/videos/:id', requireAuth, adminLimiter, (req, res) => {
+router.delete('/videos/:id', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const success = deleteVideo(id);
+        const success = await deleteVideo(id);
 
         if (!success) {
             return res.status(404).json({
@@ -643,10 +661,10 @@ router.delete('/videos/:id', requireAuth, adminLimiter, (req, res) => {
  * POST /api/social/videos/:id/toggle-featured
  * 切换精选状态（需要认证）
  */
-router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, (req, res) => {
+router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const video = toggleFeatured(id);
+        const video = await toggleFeatured(id);
 
         if (!video) {
             return res.status(404).json({

@@ -45,16 +45,28 @@ const adminLimiter = rateLimit({
     }
 });
 
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15分钟
+    max: 5, // 只允许5次登录尝试
+    skipSuccessfulRequests: true, // 成功的登录不计入限制
+    message: {
+        status: 'error',
+        error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many login attempts, please try again later'
+        }
+    }
+});
+
 // ==================== 认证路由 ====================
 
 /**
  * POST /api/social/auth/login
  * 管理员登录
  */
-router.post('/auth/login', publicLimiter, async (req, res) => {
+router.post('/auth/login', loginLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
-        console.log('Login attempt========>:', username, password);
         if (!username || !password) {
             return res.status(400).json({
                 status: 'error',

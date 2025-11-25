@@ -1,34 +1,34 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import { auth, accounts, type SocialAccount } from '$lib/api/social';
+    import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    import { auth, accounts, type SocialAccount } from "$lib/api/social";
 
     let accountList: SocialAccount[] = [];
     let loading = true;
-    let error = '';
+    let error = "";
     let showAddModal = false;
     let editingAccount: SocialAccount | null = null;
 
     // 表单数据
     let formData = {
-        platform: 'tiktok',
-        username: '',
-        display_name: '',
-        avatar_url: '',
-        profile_url: '',
-        description: '',
+        platform: "tiktok",
+        username: "",
+        display_name: "",
+        avatar_url: "",
+        profile_url: "",
+        description: "",
         follower_count: 0,
-        category: 'beauty',
-        tags: '',
+        category: "beauty",
+        tags: "",
         priority: 5,
-        is_active: true
+        is_active: true,
     };
 
     onMount(async () => {
         // 验证登录状态
         const verified = await auth.verify();
-        if (verified.status !== 'success') {
-            goto('/admin');
+        if (verified.status !== "success") {
+            goto("/console-manage-2025");
             return;
         }
 
@@ -37,18 +37,18 @@
 
     async function loadAccounts() {
         loading = true;
-        error = '';
+        error = "";
         try {
             const response = await accounts.list();
-            if (response.status === 'success' && response.data) {
+            if (response.status === "success" && response.data) {
                 accountList = response.data.accounts || [];
             } else {
                 accountList = [];
-                error = response.error?.message || '加载失败';
+                error = response.error?.message || "加载失败";
             }
         } catch (e) {
             accountList = [];
-            error = '网络错误';
+            error = "网络错误";
         } finally {
             loading = false;
         }
@@ -57,17 +57,17 @@
     function openAddModal() {
         editingAccount = null;
         formData = {
-            platform: 'tiktok',
-            username: '',
-            display_name: '',
-            avatar_url: '',
-            profile_url: '',
-            description: '',
+            platform: "tiktok",
+            username: "",
+            display_name: "",
+            avatar_url: "",
+            profile_url: "",
+            description: "",
             follower_count: 0,
-            category: 'beauty',
-            tags: '',
+            category: "beauty",
+            tags: "",
             priority: 5,
-            is_active: true
+            is_active: true,
         };
         showAddModal = true;
     }
@@ -77,80 +77,83 @@
         formData = {
             platform: account.platform,
             username: account.username,
-            display_name: account.display_name || '',
-            avatar_url: account.avatar_url || '',
-            profile_url: account.profile_url || '',
-            description: account.description || '',
+            display_name: account.display_name || "",
+            avatar_url: account.avatar_url || "",
+            profile_url: account.profile_url || "",
+            description: account.description || "",
             follower_count: account.follower_count,
             category: account.category,
-            tags: account.tags.join(', '),
+            tags: account.tags.join(", "),
             priority: account.priority,
-            is_active: account.is_active
+            is_active: account.is_active,
         };
         showAddModal = true;
     }
 
     async function handleSubmit() {
         try {
-            console.log('Submitting account:', formData);
+            console.log("Submitting account:", formData);
             const data = {
                 ...formData,
-                tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+                tags: formData.tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter((t) => t),
             };
 
             let response;
             if (editingAccount) {
                 response = await accounts.update(editingAccount.id, data);
             } else {
-                console.log('Creating new account:', data);
+                console.log("Creating new account:", data);
                 response = await accounts.create(data);
-                console.log('Create response:', response);
+                console.log("Create response:", response);
             }
 
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 showAddModal = false;
                 await loadAccounts();
             } else {
-                console.error('Account operation failed:', response);
-                error = response.error?.message || '操作失败';
+                console.error("Account operation failed:", response);
+                error = response.error?.message || "操作失败";
             }
         } catch (e) {
-            console.error('Exception in handleSubmit:', e);
-            error = '网络错误';
+            console.error("Exception in handleSubmit:", e);
+            error = "网络错误";
         }
     }
 
     async function handleDelete(id: number) {
-        if (!confirm('确定要删除这个账号吗？')) return;
+        if (!confirm("确定要删除这个账号吗？")) return;
 
         try {
             const response = await accounts.delete(id);
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 await loadAccounts();
             } else {
-                error = response.error?.message || '删除失败';
+                error = response.error?.message || "删除失败";
             }
         } catch (e) {
-            error = '网络错误';
+            error = "网络错误";
         }
     }
 
     async function handleToggleActive(account: SocialAccount) {
         try {
             const response = await accounts.update(account.id, {
-                is_active: !account.is_active
+                is_active: !account.is_active,
             });
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 await loadAccounts();
             }
         } catch (e) {
-            error = '操作失败';
+            error = "操作失败";
         }
     }
 
     function handleLogout() {
         auth.logout();
-        goto('/admin');
+        goto("/console-manage-2025");
     }
 </script>
 
@@ -158,8 +161,14 @@
     <header class="admin-header">
         <h1>账号管理</h1>
         <div class="header-actions">
-            <button class="btn-primary" on:click={openAddModal}>+ 添加账号</button>
-            <button class="btn-secondary" on:click={() => goto('/admin/videos')}>视频管理</button>
+            <button class="btn-primary" on:click={openAddModal}
+                >+ 添加账号</button
+            >
+            <button
+                class="btn-secondary"
+                on:click={() => goto("/console-manage-2025/videos")}
+                >视频管理</button
+            >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
     </header>
@@ -177,32 +186,54 @@
                     <div class="account-main">
                         <div class="account-left">
                             {#if account.avatar_url}
-                                <img src={account.avatar_url} alt={account.username} class="avatar-small" />
+                                <img
+                                    src={account.avatar_url}
+                                    alt={account.username}
+                                    class="avatar-small"
+                                />
                             {:else}
                                 <div class="avatar-placeholder-small">
-                                    {(account.display_name || account.username).charAt(0).toUpperCase()}
+                                    {(account.display_name || account.username)
+                                        .charAt(0)
+                                        .toUpperCase()}
                                 </div>
                             {/if}
-                            
+
                             <div class="account-info">
                                 <div class="name-row">
-                                    <h3 class="account-name">{account.display_name || account.username}</h3>
-                                    <span class="username-text">@{account.username}</span>
+                                    <h3 class="account-name">
+                                        {account.display_name ||
+                                            account.username}
+                                    </h3>
+                                    <span class="username-text"
+                                        >@{account.username}</span
+                                    >
                                 </div>
                                 <div class="meta-row">
-                                    <span class="platform-badge-small" 
-                                          class:tiktok={account.platform === 'tiktok'}
-                                          class:instagram={account.platform === 'instagram'}
-                                          class:youtube={account.platform === 'youtube'}>
-                                        {#if account.platform === 'tiktok'}🎵
-                                        {:else if account.platform === 'instagram'}📷
-                                        {:else if account.platform === 'youtube'}▶️
+                                    <span
+                                        class="platform-badge-small"
+                                        class:tiktok={account.platform ===
+                                            "tiktok"}
+                                        class:instagram={account.platform ===
+                                            "instagram"}
+                                        class:youtube={account.platform ===
+                                            "youtube"}
+                                    >
+                                        {#if account.platform === "tiktok"}🎵
+                                        {:else if account.platform === "instagram"}📷
+                                        {:else if account.platform === "youtube"}▶️
                                         {:else}🌐{/if}
                                         {account.platform}
                                     </span>
-                                    <span class="stat-item">👥 {account.follower_count.toLocaleString()}</span>
-                                    <span class="stat-item">🎬 {account.video_count || 0}</span>
-                                    <span class="stat-item">⭐ {account.priority}</span>
+                                    <span class="stat-item"
+                                        >👥 {account.follower_count.toLocaleString()}</span
+                                    >
+                                    <span class="stat-item"
+                                        >🎬 {account.video_count || 0}</span
+                                    >
+                                    <span class="stat-item"
+                                        >⭐ {account.priority}</span
+                                    >
                                 </div>
                                 {#if account.tags.length > 0}
                                     <div class="tags-inline">
@@ -213,18 +244,30 @@
                                 {/if}
                             </div>
                         </div>
-                        
+
                         <div class="account-actions">
-                            <button class="toggle-btn-small" 
-                                    class:active={account.is_active}
-                                    on:click={() => handleToggleActive(account)}
-                                    title={account.is_active ? '点击禁用' : '点击启用'}>
-                                {account.is_active ? '✓' : '✗'}
+                            <button
+                                class="toggle-btn-small"
+                                class:active={account.is_active}
+                                on:click={() => handleToggleActive(account)}
+                                title={account.is_active
+                                    ? "点击禁用"
+                                    : "点击启用"}
+                            >
+                                {account.is_active ? "✓" : "✗"}
                             </button>
-                            <button class="btn-icon btn-edit" on:click={() => openEditModal(account)} title="编辑">
+                            <button
+                                class="btn-icon btn-edit"
+                                on:click={() => openEditModal(account)}
+                                title="编辑"
+                            >
                                 ✏️
                             </button>
-                            <button class="btn-icon btn-delete" on:click={() => handleDelete(account.id)} title="删除">
+                            <button
+                                class="btn-icon btn-delete"
+                                on:click={() => handleDelete(account.id)}
+                                title="删除"
+                            >
                                 🗑️
                             </button>
                         </div>
@@ -236,10 +279,10 @@
 </div>
 
 {#if showAddModal}
-    <div class="modal-overlay" on:click={() => showAddModal = false}>
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
         <div class="modal" on:click|stopPropagation>
-            <h2>{editingAccount ? '编辑账号' : '添加账号'}</h2>
-            
+            <h2>{editingAccount ? "编辑账号" : "添加账号"}</h2>
+
             <form on:submit|preventDefault={handleSubmit}>
                 <div class="form-group">
                     <label>平台</label>
@@ -250,44 +293,58 @@
                         <option value="other">其他</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label>用户名 *</label>
-                    <input type="text" bind:value={formData.username} required />
+                    <input
+                        type="text"
+                        bind:value={formData.username}
+                        required
+                    />
                 </div>
-                
+
                 <div class="form-group">
                     <label>显示名称</label>
                     <input type="text" bind:value={formData.display_name} />
                 </div>
-                
+
                 <div class="form-group">
                     <label>头像 URL</label>
                     <input type="url" bind:value={formData.avatar_url} />
                 </div>
-                
+
                 <div class="form-group">
                     <label>主页 URL</label>
                     <input type="url" bind:value={formData.profile_url} />
                 </div>
-                
+
                 <div class="form-group">
                     <label>简介</label>
-                    <textarea bind:value={formData.description} rows="3"></textarea>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>粉丝数</label>
-                        <input type="number" bind:value={formData.follower_count} min="0" />
+                        <input
+                            type="number"
+                            bind:value={formData.follower_count}
+                            min="0"
+                        />
                     </div>
-                    
+
                     <div class="form-group">
                         <label>优先级 (1-10)</label>
-                        <input type="number" bind:value={formData.priority} min="1" max="10" />
+                        <input
+                            type="number"
+                            bind:value={formData.priority}
+                            min="1"
+                            max="10"
+                        />
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label>分类</label>
                     <select bind:value={formData.category}>
@@ -298,25 +355,36 @@
                         <option value="other">其他</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label>标签（逗号分隔）</label>
-                    <input type="text" bind:value={formData.tags} placeholder="美女, 自拍, 时尚" />
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
                 </div>
-                
+
                 <div class="form-group checkbox">
                     <label>
-                        <input type="checkbox" bind:checked={formData.is_active} />
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_active}
+                        />
                         启用此账号
                     </label>
                 </div>
-                
+
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" on:click={() => showAddModal = false}>
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
                         取消
                     </button>
                     <button type="submit" class="btn-primary">
-                        {editingAccount ? '保存' : '添加'}
+                        {editingAccount ? "保存" : "添加"}
                     </button>
                 </div>
             </form>
@@ -391,7 +459,8 @@
         min-width: 0;
     }
 
-    .avatar-small, .avatar-placeholder-small {
+    .avatar-small,
+    .avatar-placeholder-small {
         width: 48px;
         height: 48px;
         border-radius: 50%;
@@ -460,9 +529,15 @@
         text-transform: capitalize;
     }
 
-    .platform-badge-small.tiktok { background: #000; }
-    .platform-badge-small.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743); }
-    .platform-badge-small.youtube { background: #ff0000; }
+    .platform-badge-small.tiktok {
+        background: #000;
+    }
+    .platform-badge-small.instagram {
+        background: linear-gradient(45deg, #f09433, #e6683c, #dc2743);
+    }
+    .platform-badge-small.youtube {
+        background: #ff0000;
+    }
 
     .stat-item {
         color: var(--gray);
@@ -572,9 +647,22 @@
         color: var(--white);
     }
 
-    .platform-badge.tiktok { background: #000; }
-    .platform-badge.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-    .platform-badge.youtube { background: #ff0000; }
+    .platform-badge.tiktok {
+        background: #000;
+    }
+    .platform-badge.instagram {
+        background: linear-gradient(
+            45deg,
+            #f09433,
+            #e6683c,
+            #dc2743,
+            #cc2366,
+            #bc1888
+        );
+    }
+    .platform-badge.youtube {
+        background: #ff0000;
+    }
 
     .toggle-btn {
         padding: 4px 10px;
@@ -652,7 +740,11 @@
         gap: 8px;
     }
 
-    .btn-primary, .btn-secondary, .btn-logout, .btn-edit, .btn-delete {
+    .btn-primary,
+    .btn-secondary,
+    .btn-logout,
+    .btn-edit,
+    .btn-delete {
         padding: 10px 16px;
         border: none;
         border-radius: var(--border-radius);
@@ -848,7 +940,8 @@
             gap: calc(var(--padding) / 2);
         }
 
-        .avatar-small, .avatar-placeholder-small {
+        .avatar-small,
+        .avatar-placeholder-small {
             width: 40px;
             height: 40px;
         }

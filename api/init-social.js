@@ -47,7 +47,7 @@ async function initialize() {
     console.log('📝 Next steps:');
     console.log('   1. Start the API server: pnpm start');
     console.log('   2. Start the web server: cd ../web && pnpm dev');
-    console.log('   3. Visit http://localhost:5173/admin to login');
+    console.log('   3. Visit http://localhost:5173/console-manage-2025 to login');
     console.log('   4. Visit http://localhost:5173/discover to see videos\n');
 
     process.exit(0);

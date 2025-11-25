@@ -1,40 +1,46 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import { auth, videos, accounts, type SocialVideo, type SocialAccount } from '$lib/api/social';
+    import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    import {
+        auth,
+        videos,
+        accounts,
+        type SocialVideo,
+        type SocialAccount,
+    } from "$lib/api/social";
 
     let videoList: SocialVideo[] = [];
     let accountList: SocialAccount[] = [];
     let loading = true;
-    let error = '';
+    let error = "";
     let showAddModal = false;
     let editingVideo: SocialVideo | null = null;
 
     // 筛选条件
     let filters = {
-        platform: '',
-        account_id: '',
-        is_featured: ''
+        platform: "",
+        account_id: "",
+        is_featured: "",
     };
 
     // 表单数据
     let formData = {
         account_id: 0,
-        title: '',
-        description: '',
-        video_url: '',
-        thumbnail_url: '',
+        title: "",
+        description: "",
+        video_url: "",
+        thumbnail_url: "",
         duration: 0,
         view_count: 0,
         like_count: 0,
         is_featured: false,
-        tags: ''
+        tags: "",
     };
 
     onMount(async () => {
         const verified = await auth.verify();
-        if (verified.status !== 'success') {
-            goto('/admin');
+        if (verified.status !== "success") {
+            goto("/console-manage-2025");
             return;
         }
 
@@ -43,26 +49,28 @@
 
     async function loadVideos() {
         loading = true;
-        error = '';
+        error = "";
         try {
             const params: any = {};
             if (filters.platform) params.platform = filters.platform;
-            if (filters.account_id) params.account_id = parseInt(filters.account_id);
-            if (filters.is_featured) params.is_featured = filters.is_featured === 'true';
+            if (filters.account_id)
+                params.account_id = parseInt(filters.account_id);
+            if (filters.is_featured)
+                params.is_featured = filters.is_featured === "true";
 
-            console.log('Loading videos with params:', params);
+            console.log("Loading videos with params:", params);
             const response = await videos.list(params);
-            console.log('Videos response:', response);
-            if (response.status === 'success') {
+            console.log("Videos response:", response);
+            if (response.status === "success") {
                 videoList = response.data.videos;
-                console.log('Loaded videos:', videoList.length);
+                console.log("Loaded videos:", videoList.length);
             } else {
-                console.error('Failed to load videos:', response);
-                error = response.error?.message || '加载失败';
+                console.error("Failed to load videos:", response);
+                error = response.error?.message || "加载失败";
             }
         } catch (e) {
-            console.error('Exception in loadVideos:', e);
-            error = '网络错误';
+            console.error("Exception in loadVideos:", e);
+            error = "网络错误";
         } finally {
             loading = false;
         }
@@ -70,7 +78,7 @@
 
     async function loadAccounts() {
         const response = await accounts.list();
-        if (response.status === 'success') {
+        if (response.status === "success") {
             accountList = response.data.accounts;
         }
     }
@@ -79,15 +87,15 @@
         editingVideo = null;
         formData = {
             account_id: accountList[0]?.id || 0,
-            title: '',
-            description: '',
-            video_url: '',
-            thumbnail_url: '',
+            title: "",
+            description: "",
+            video_url: "",
+            thumbnail_url: "",
             duration: 0,
             view_count: 0,
             like_count: 0,
             is_featured: false,
-            tags: ''
+            tags: "",
         };
         showAddModal = true;
     }
@@ -97,14 +105,14 @@
         formData = {
             account_id: video.account_id,
             title: video.title,
-            description: video.description || '',
+            description: video.description || "",
             video_url: video.video_url,
-            thumbnail_url: video.thumbnail_url || '',
+            thumbnail_url: video.thumbnail_url || "",
             duration: video.duration,
             view_count: video.view_count,
             like_count: video.like_count,
             is_featured: video.is_featured,
-            tags: video.tags.join(', ')
+            tags: video.tags.join(", "),
         };
         showAddModal = true;
     }
@@ -113,7 +121,10 @@
         try {
             const data = {
                 ...formData,
-                tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+                tags: formData.tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter((t) => t),
             };
 
             let response;
@@ -123,57 +134,57 @@
                 response = await videos.create(data);
             }
 
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 showAddModal = false;
                 await loadVideos();
             } else {
-                error = response.error?.message || '操作失败';
+                error = response.error?.message || "操作失败";
             }
         } catch (e) {
-            error = '网络错误';
+            error = "网络错误";
         }
     }
 
     async function handleDelete(id: number) {
-        if (!confirm('确定要删除这个视频吗？')) return;
+        if (!confirm("确定要删除这个视频吗？")) return;
 
         try {
             const response = await videos.delete(id);
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 await loadVideos();
             } else {
-                error = response.error?.message || '删除失败';
+                error = response.error?.message || "删除失败";
             }
         } catch (e) {
-            error = '网络错误';
+            error = "网络错误";
         }
     }
 
     async function handleToggleFeatured(video: SocialVideo) {
         try {
             const response = await videos.toggleFeatured(video.id);
-            if (response.status === 'success') {
+            if (response.status === "success") {
                 await loadVideos();
             }
         } catch (e) {
-            error = '操作失败';
+            error = "操作失败";
         }
     }
 
     function getAccountName(accountId: number): string {
-        const account = accountList.find(a => a.id === accountId);
-        return account ? (account.display_name || account.username) : '未知';
+        const account = accountList.find((a) => a.id === accountId);
+        return account ? account.display_name || account.username : "未知";
     }
 
     function formatDuration(seconds: number): string {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
     }
 
     function handleLogout() {
         auth.logout();
-        goto('/admin');
+        goto("/console-manage-2025");
     }
 </script>
 
@@ -181,8 +192,14 @@
     <header class="admin-header">
         <h1>视频管理</h1>
         <div class="header-actions">
-            <button class="btn-primary" on:click={openAddModal}>+ 添加视频</button>
-            <button class="btn-secondary" on:click={() => goto('/admin/accounts')}>账号管理</button>
+            <button class="btn-primary" on:click={openAddModal}
+                >+ 添加视频</button
+            >
+            <button
+                class="btn-secondary"
+                on:click={() => goto("/console-manage-2025/accounts")}
+                >账号管理</button
+            >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
     </header>
@@ -198,7 +215,9 @@
         <select bind:value={filters.account_id} on:change={loadVideos}>
             <option value="">所有账号</option>
             {#each accountList as account}
-                <option value={account.id}>{account.display_name || account.username}</option>
+                <option value={account.id}
+                    >{account.display_name || account.username}</option
+                >
             {/each}
         </select>
 
@@ -223,24 +242,37 @@
                         <div class="video-left">
                             <div class="thumbnail-small">
                                 {#if video.thumbnail_url}
-                                    <img src={video.thumbnail_url} alt={video.title} />
+                                    <img
+                                        src={video.thumbnail_url}
+                                        alt={video.title}
+                                    />
                                 {:else}
                                     <div class="no-thumbnail-small">📹</div>
                                 {/if}
-                                <div class="duration-badge">{formatDuration(video.duration)}</div>
+                                <div class="duration-badge">
+                                    {formatDuration(video.duration)}
+                                </div>
                                 {#if video.is_featured}
                                     <div class="featured-star">⭐</div>
                                 {/if}
                             </div>
-                            
+
                             <div class="video-info">
                                 <div class="title-row">
                                     <h3 class="video-title">{video.title}</h3>
                                 </div>
                                 <div class="meta-row">
-                                    <span class="account-badge">{getAccountName(video.account_id)}</span>
-                                    <span class="stat-item">👁 {video.view_count.toLocaleString()}</span>
-                                    <span class="stat-item">❤️ {video.like_count.toLocaleString()}</span>
+                                    <span class="account-badge"
+                                        >{getAccountName(
+                                            video.account_id,
+                                        )}</span
+                                    >
+                                    <span class="stat-item"
+                                        >👁 {video.view_count.toLocaleString()}</span
+                                    >
+                                    <span class="stat-item"
+                                        >❤️ {video.like_count.toLocaleString()}</span
+                                    >
                                 </div>
                                 {#if video.tags.length > 0}
                                     <div class="tags-inline">
@@ -251,18 +283,30 @@
                                 {/if}
                             </div>
                         </div>
-                        
+
                         <div class="video-actions">
-                            <button class="toggle-btn-small" 
-                                    class:active={video.is_featured}
-                                    on:click={() => handleToggleFeatured(video)}
-                                    title={video.is_featured ? '取消精选' : '设为精选'}>
+                            <button
+                                class="toggle-btn-small"
+                                class:active={video.is_featured}
+                                on:click={() => handleToggleFeatured(video)}
+                                title={video.is_featured
+                                    ? "取消精选"
+                                    : "设为精选"}
+                            >
                                 ⭐
                             </button>
-                            <button class="btn-icon btn-edit" on:click={() => openEditModal(video)} title="编辑">
+                            <button
+                                class="btn-icon btn-edit"
+                                on:click={() => openEditModal(video)}
+                                title="编辑"
+                            >
                                 ✏️
                             </button>
-                            <button class="btn-icon btn-delete" on:click={() => handleDelete(video.id)} title="删除">
+                            <button
+                                class="btn-icon btn-delete"
+                                on:click={() => handleDelete(video.id)}
+                                title="删除"
+                            >
                                 🗑️
                             </button>
                         </div>
@@ -274,9 +318,9 @@
 </div>
 
 {#if showAddModal}
-    <div class="modal-overlay" on:click={() => showAddModal = false}>
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
         <div class="modal" on:click|stopPropagation>
-            <h2>{editingVideo ? '编辑视频' : '添加视频'}</h2>
+            <h2>{editingVideo ? "编辑视频" : "添加视频"}</h2>
 
             <form on:submit|preventDefault={handleSubmit}>
                 <div class="form-group">
@@ -297,12 +341,17 @@
 
                 <div class="form-group">
                     <label>描述</label>
-                    <textarea bind:value={formData.description} rows="3"></textarea>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
                 </div>
 
                 <div class="form-group">
                     <label>视频 URL *</label>
-                    <input type="url" bind:value={formData.video_url} required />
+                    <input
+                        type="url"
+                        bind:value={formData.video_url}
+                        required
+                    />
                 </div>
 
                 <div class="form-group">
@@ -313,38 +362,61 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>时长（秒）</label>
-                        <input type="number" bind:value={formData.duration} min="0" />
+                        <input
+                            type="number"
+                            bind:value={formData.duration}
+                            min="0"
+                        />
                     </div>
 
                     <div class="form-group">
                         <label>观看数</label>
-                        <input type="number" bind:value={formData.view_count} min="0" />
+                        <input
+                            type="number"
+                            bind:value={formData.view_count}
+                            min="0"
+                        />
                     </div>
 
                     <div class="form-group">
                         <label>点赞数</label>
-                        <input type="number" bind:value={formData.like_count} min="0" />
+                        <input
+                            type="number"
+                            bind:value={formData.like_count}
+                            min="0"
+                        />
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>标签（逗号分隔）</label>
-                    <input type="text" bind:value={formData.tags} placeholder="美女, 自拍, 时尚" />
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
                 </div>
 
                 <div class="form-group checkbox">
                     <label>
-                        <input type="checkbox" bind:checked={formData.is_featured} />
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_featured}
+                        />
                         设为精选视频
                     </label>
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" on:click={() => showAddModal = false}>
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
                         取消
                     </button>
                     <button type="submit" class="btn-primary">
-                        {editingVideo ? '保存' : '添加'}
+                        {editingVideo ? "保存" : "添加"}
                     </button>
                 </div>
             </form>
@@ -728,7 +800,12 @@
         gap: 6px;
     }
 
-    .btn-primary, .btn-secondary, .btn-logout, .btn-edit, .btn-delete, .btn-featured {
+    .btn-primary,
+    .btn-secondary,
+    .btn-logout,
+    .btn-edit,
+    .btn-delete,
+    .btn-featured {
         padding: 10px 16px;
         border: none;
         border-radius: var(--border-radius);

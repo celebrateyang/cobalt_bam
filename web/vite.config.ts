@@ -23,24 +23,7 @@ const exposeLibAV: PluginOption = (() => {
                 const filename = basename(req.url).split('?')[0];
                 if (!filename) return next();
 
-                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename).replace(/\\/g, '/'));
-                if (!file) return next();
-
-                const fileType = mime.getType(filename);
-                if (!fileType) return next();
-
-                res.setHeader('Content-Type', fileType);
-                return createReadStream(file).pipe(res);
-            });
-        },
-        configurePreviewServer(server) {
-            server.middlewares.use(async (req, res, next) => {
-                if (!req.url?.startsWith('/_libav/')) return next();
-
-                const filename = basename(req.url).split('?')[0];
-                if (!filename) return next();
-
-                const [ file ] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename).replace(/\\/g, '/'));
+                const [file] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename));
                 if (!file) return next();
 
                 const fileType = mime.getType(filename);
@@ -83,7 +66,7 @@ const enableCOEP: PluginOption = {
 
 export default defineConfig({
     plugins: [
-        //basicSSL(),
+        basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
         sveltekit(),
         enableCOEP,
         exposeLibAV
@@ -101,7 +84,7 @@ export default defineConfig({
                 }
             }
         }
-    },    server: {
+    }, server: {
         host: '0.0.0.0', // 允许外部访问
         port: 5173,
         headers: {

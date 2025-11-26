@@ -6,6 +6,7 @@
     import SidebarTab from "$components/sidebar/SidebarTab.svelte";    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
+    import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
 
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
@@ -32,6 +33,9 @@
             </SidebarTab>
             <SidebarTab tabName="clipboard" tabLink="/clipboard">
                 <IconClipboard />
+            </SidebarTab>
+            <SidebarTab tabName="discover" tabLink="/discover">
+                <IconVideo />
             </SidebarTab>
             <SidebarTab tabName="remux" tabLink="/remux" beta>
                 <IconRepeat />

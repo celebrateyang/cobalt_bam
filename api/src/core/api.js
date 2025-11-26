@@ -25,6 +25,11 @@ import * as APIKeys from "../security/api-keys.js";
 import * as Cookies from "../processing/cookie/manager.js";
 import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 
+// 社交媒体路由
+import socialMediaRouter from "../routes/social-media.js";
+import { initDatabase } from "../db/social-media.js";
+import { initSocialMedia } from "../setup-social.js";
+
 const git = {
     branch: await getBranch(),
     commit: await getCommit(),
@@ -122,6 +127,21 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         ],
         ...corsConfig,
     }));
+
+    // 社交媒体 API 路由 - 支持 GET/POST/PUT/DELETE
+    app.use('/social', cors({
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        exposedHeaders: [
+            'Ratelimit-Limit',
+            'Ratelimit-Policy',
+            'Ratelimit-Remaining',
+            'Ratelimit-Reset'
+        ],
+        ...corsConfig,
+    }));
+    
+    app.use(express.json({ limit: '1mb' }));
+    app.use('/social', socialMediaRouter);
 
     app.post('/', (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {
@@ -401,6 +421,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 "~~~~~~\n" +
                 Bright("📊 Logging enabled: ") + "Video download requests will be tracked\n"
             );
+        }
+
+        // 初始化社交媒体数据库
+        try {
+            initSocialMedia();
+        } catch (error) {
+            console.error("Failed to initialize social media module:", error);
         }
 
         if (env.apiKeyURL) {

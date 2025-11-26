@@ -7,13 +7,15 @@
     "type": "module",
     "engines": {
         "node": ">=18"
-    },    "scripts": {
+    },
+    "scripts": {
         "start": "node src/cobalt",
         "dev": "node dev-start.js",
         "setup-youtube": "node setup-youtube-auth.js",
         "verify-cookies": "node verify-cookies.js",
         "test": "node src/util/test",
-        "token:jwt": "node src/util/generate-jwt-secret"
+        "token:jwt": "node src/util/generate-jwt-secret",
+        "init-social": "node init-social.js"
     },
     "repository": {
         "type": "git",
@@ -28,6 +30,8 @@
         "@datastructures-js/priority-queue": "^6.3.1",
         "@imput/psl": "^2.0.4",
         "@imput/version-info": "workspace:^",
+        "bcrypt": "^5.1.1",
+        "better-sqlite3": "^11.7.0",
         "content-disposition-header": "0.6.0",
         "cors": "^2.8.5",
         "dotenv": "^16.0.1",
@@ -36,10 +40,12 @@
         "ffmpeg-static": "^5.1.0",
         "hls-parser": "^0.10.7",
         "ipaddr.js": "2.2.0",
+        "jsonwebtoken": "^9.0.2",
         "mime": "^4.0.4",
         "nanoid": "^5.0.9",
+        "pg": "^8.16.3",
         "set-cookie-parser": "2.6.0",
-        "undici": "^6.21.3",
+        "undici": "^6.22.0",
         "url-pattern": "1.0.3",
         "ws": "^8.18.2",
         "youtubei.js": "15.1.1",

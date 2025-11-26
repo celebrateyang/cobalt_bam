@@ -71,6 +71,9 @@ export default defineConfig({
         enableCOEP,
         exposeLibAV
     ],
+    define: {
+        apiURL: JSON.stringify(process.env.VITE_API_URL || "")
+    },
     build: {
         rollupOptions: {
             output: {
@@ -105,6 +108,6 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        exclude: [ "@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli" ]
+        exclude: ["@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli"]
     },
 });

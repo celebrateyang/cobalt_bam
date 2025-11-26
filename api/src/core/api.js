@@ -139,7 +139,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         ],
         ...corsConfig,
     }));
-    
+
     app.use(express.json({ limit: '1mb' }));
     app.use('/social', socialMediaRouter);
 
@@ -196,7 +196,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 return fail(res, "error.api.auth.jwt.invalid");
             }
 
-            const [ type, token, ...rest ] = authorization.split(" ");
+            const [type, token, ...rest] = authorization.split(" ");
             if (!token || type.toLowerCase() !== 'bearer' || rest.length) {
                 return fail(res, "error.api.auth.jwt.invalid");
             }
@@ -358,8 +358,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     })
 
     app.get('/ws/health', (_, res) => {
-        res.status(200).json({ 
-            status: 'websocket_ready', 
+        res.status(200).json({
+            status: 'websocket_ready',
             timestamp: new Date().toISOString(),
             path: '/ws'
         });
@@ -394,7 +394,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     });
 
     const server = http.createServer(app);
-    
+
     // 设置WebSocket信令服务器
     setupSignalingServer(server);
 
@@ -402,7 +402,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         port: env.apiPort,
         host: env.listenAddress,
         reusePort: env.instanceCount > 1 || undefined
-    }, () => {
+    }, async () => {
         if (isPrimary) {
             console.log(`\n` +
                 Bright(Cyan("cobalt ")) + Bright("API ^ω^") + "\n" +
@@ -417,7 +417,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
                 Bright("url: ") + Bright(Cyan(env.apiURL)) + "\n" +
                 Bright("port: ") + env.apiPort + "\n" +
-                
+
                 "~~~~~~\n" +
                 Bright("📊 Logging enabled: ") + "Video download requests will be tracked\n"
             );
@@ -425,7 +425,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
         // 初始化社交媒体数据库
         try {
-            initSocialMedia();
+            await initSocialMedia();
         } catch (error) {
             console.error("Failed to initialize social media module:", error);
         }

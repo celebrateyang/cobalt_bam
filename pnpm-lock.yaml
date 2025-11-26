@@ -69,7 +69,7 @@ importers:
         specifier: 2.6.0
         version: 2.6.0
       undici:
-        specifier: ^6.21.3
+        specifier: ^6.22.0
         version: 6.22.0
       url-pattern:
         specifier: 1.0.3

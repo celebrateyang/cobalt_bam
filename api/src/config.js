@@ -54,7 +54,6 @@ if (!env.adminEmail) {
     env.adminEmail = process.env.ADMIN_EMAIL || '';
 }
 
-export const canonicalEnv = Object.freeze(structuredClone(process.env));
 export const setTunnelPort = (port) => env.tunnelPort = port;
 export const isCluster = env.instanceCount > 1;
 export const updateEnv = (newEnv) => {

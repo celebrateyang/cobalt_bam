@@ -1,12 +1,13 @@
 import UrlPattern from "url-pattern";
 
-export const audioIgnore = ["vk", "ok", "loom"];
-export const hlsExceptions = ["dailymotion", "vimeo", "rutube", "bsky", "youtube"];
+export const audioIgnore = new Set(["vk", "ok", "loom"]);
+export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube"]);
 
 export const services = {
     bilibili: {
         patterns: [
             "video/:comId",
+            "video/:comId?p=:partId",
             "_shortLink/:comShortLink",
             "_tv/:lang/video/:tvId",
             "_tv/video/:tvId"
@@ -73,6 +74,12 @@ export const services = {
             "pin/:id/:garbage",
             "url_shortener/:shortLink"
         ],
+    },
+    newgrounds: {
+        patterns: [
+            "portal/view/:id",
+            "audio/listen/:audioId",
+        ]
     },
     reddit: {
         patterns: [
@@ -159,6 +166,7 @@ export const services = {
     twitch: {
         patterns: [":channel/clip/:clip"],
         tld: "tv",
+        subdomains: ["clips", "www", "m"],
     },
     twitter: {
         patterns: [
@@ -177,7 +185,8 @@ export const services = {
             ":id",
             "video/:id",
             ":id/:password",
-            "/channels/:user/:id"
+            "/channels/:user/:id",
+            "groups/:groupId/videos/:id"
         ],
         subdomains: ["player"],
     },
@@ -185,12 +194,13 @@ export const services = {
         patterns: [
             "video:ownerId_:videoId",
             "clip:ownerId_:videoId",
-            "clips:duplicate?z=clip:ownerId_:videoId",
-            "videos:duplicate?z=video:ownerId_:videoId",
             "video:ownerId_:videoId_:accessKey",
             "clip:ownerId_:videoId_:accessKey",
-            "clips:duplicate?z=clip:ownerId_:videoId_:accessKey",
-            "videos:duplicate?z=video:ownerId_:videoId_:accessKey"
+
+            // links with a duplicate author id and/or zipper query param
+            "clips:duplicateId",
+            "videos:duplicateId",
+            "search/video"
         ],
         subdomains: ["m"],
         altDomains: ["vkvideo.ru", "vk.ru"],
@@ -199,7 +209,7 @@ export const services = {
         patterns: [
             "explore/:id?xsec_token=:token",
             "discovery/item/:id?xsec_token=:token",
-            "a/:shareId"
+            ":shareType/:shareId",
         ],
         altDomains: ["xhslink.com"],
     },
@@ -207,7 +217,8 @@ export const services = {
         patterns: [
             "watch?v=:id",
             "embed/:id",
-            "watch/:id"
+            "watch/:id",
+            "v/:id"
         ],
         subdomains: ["music", "m"],
     }

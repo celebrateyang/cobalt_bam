@@ -34,5 +34,12 @@
     "api.auth.turnstile.invalid": "无法确认您是否是人类，因为您的访问令牌已过期且未续期。请稍后重试或刷新页面！",
     "api.unreachable": "无法连接到处理服务器。请检查您的网络连接并重试。",
     "api.timed_out": "处理服务器响应时间过长。可能当前服务器负载较大，请稍后重试！",
-    "api.rate_exceeded": "请求频率过高。请稍后再试！"
+    "api.rate_exceeded": "请求频率过高。请稍后再试！",
+
+    "queue.ffmpeg.probe_failed": "无法探测文件。它可能已损坏或不兼容。",
+    "queue.ffmpeg.no_args": "FFmpeg 工作进程启动时没有参数。",
+    "queue.ffmpeg.out_of_memory": "FFmpeg 内存不足。",
+    "queue.ffmpeg.no_input_format": "无法确定输入格式。",
+    "queue.ffmpeg.no_audio_channel": "视频没有音频通道。",
+    "queue.ffmpeg.no_input_type": "输入文件没有类型。"
 }

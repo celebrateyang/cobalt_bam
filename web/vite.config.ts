@@ -6,7 +6,11 @@ import mime from "mime";
 
 import { cp, readdir, mkdir } from "node:fs/promises";
 import { createReadStream } from "node:fs";
-import { join, basename } from "node:path";
+import { join, basename, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const exposeLibAV: PluginOption = (() => {
     const IMPUT_MODULE_DIR = join(__dirname, 'node_modules/@imput');
@@ -101,6 +105,6 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        exclude: ["@imput/libav.js-remux-cli"]
+        exclude: [ "@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli" ]
     },
 });

@@ -7,7 +7,8 @@
     import { updated } from "$app/stores";
     import { browser } from "$app/environment";
     import { afterNavigate } from "$app/navigation";
-    import { getServerInfo, cachedInfo } from "$lib/api/server-info";
+    import { getServerInfo } from "$lib/api/server-info";
+    import cachedInfo from "$lib/state/server-info";
 
     import "$lib/polyfills";
     import env from "$lib/env";
@@ -24,6 +25,7 @@
     import Turnstile from "$components/misc/Turnstile.svelte";
     import NotchSticker from "$components/misc/NotchSticker.svelte";
     import DialogHolder from "$components/dialog/DialogHolder.svelte";
+    import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
 
     $: reduceMotion =
@@ -83,6 +85,7 @@
         {/if}
         <DialogHolder />
         <Sidebar />
+        <ProcessingQueue />
         <div id="content">
             {#if (spawnTurnstile && $page.url.pathname === "/") || $turnstileCreated}
                 <Turnstile />

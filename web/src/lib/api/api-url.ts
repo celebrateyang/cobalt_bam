@@ -1,6 +1,5 @@
+import env from "$lib/env";
 import { get } from "svelte/store";
-
-import env, { apiURL } from "$lib/env";
 import settings from "$lib/state/settings";
 
 export const currentApiURL = () => {

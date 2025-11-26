@@ -6,12 +6,13 @@
 
     import { t } from "$lib/i18n/translations";
 
-    import dialogs from "$lib/dialogs";
+    import dialogs from "$lib/state/dialogs";
 
     import { link } from "$lib/state/omnibox";
-    import { cachedInfo } from "$lib/api/server-info";
+    import cachedInfo from "$lib/state/server-info";
     import { updateSetting } from "$lib/state/settings";
-    import { turnstileLoaded } from "$lib/state/turnstile";
+    import { turnstileSolved } from "$lib/state/turnstile";
+    import { savingHandler } from "$lib/api/saving-handler";
 
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
@@ -32,7 +33,6 @@
     import IconClipboard from "$components/icons/Clipboard.svelte";
 
     let linkInput: Optional<HTMLInputElement>;
-    let downloadButton: SvelteComponent;
 
     let isFocused = false;
 
@@ -61,7 +61,7 @@
     }
 
     $: if ($cachedInfo?.info?.cobalt?.turnstileSitekey) {
-        if ($turnstileLoaded) {
+        if ($turnstileSolved) {
             isBotCheckOngoing = false;
         } else {
             isBotCheckOngoing = true;
@@ -82,7 +82,7 @@
 
                 if (!isBotCheckOngoing) {
                     await tick(); // wait for button to render
-                    downloadButton.download($link);
+                    savingHandler({ url: $link });
                 }
             }
         });
@@ -102,7 +102,7 @@
         }
 
         if (e.key === "Enter" && validLink($link) && isFocused) {
-            downloadButton.download($link);
+            savingHandler({ url: $link });
         }
 
         if (["Escape", "Clear"].includes(e.key) && isFocused) {
@@ -176,7 +176,6 @@
         {#if validLink($link)}
             <DownloadButton
                 url={$link}
-                bind:this={downloadButton}
                 bind:disabled={isDisabled}
                 bind:loading={isLoading}
             />

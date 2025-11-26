@@ -5,17 +5,59 @@ import { updateEnv, canonicalEnv, env as currentEnv } from "../config.js";
 import { FileWatcher } from "../misc/file-watcher.js";
 import { isURL } from "../misc/utils.js";
 import * as cluster from "../misc/cluster.js";
-import { Yellow } from "../misc/console-text.js";
+import { Green, Yellow } from "../misc/console-text.js";
 
 const forceLocalProcessingOptions = ["never", "session", "always"];
+const youtubeHlsOptions = ["never", "key", "always"];
+
+const httpProxyVariables = ["NO_PROXY", "HTTP_PROXY", "HTTPS_PROXY"].flatMap(
+    k => [ k, k.toLowerCase() ]
+);
+
+const changeCallbacks = {};
+
+const onEnvChanged = (changes) => {
+    for (const key of changes) {
+        if (changeCallbacks[key]) {
+            changeCallbacks[key].map(fn => {
+                try { fn() } catch {}
+            });
+        }
+    }
+}
+
+const subscribe = (keys, fn) => {
+    keys = [keys].flat();
+
+    for (const key of keys) {
+        if (key in currentEnv && key !== 'subscribe') {
+            changeCallbacks[key] ??= [];
+            changeCallbacks[key].push(fn);
+            fn();
+        } else throw `invalid env key ${key}`;
+    }
+}
 
 export const loadEnvs = (env = process.env) => {
+    const allServices = new Set(Object.keys(services));
     const disabledServices = env.DISABLED_SERVICES?.split(',') || [];
     const enabledServices = new Set(Object.keys(services).filter(e => {
         if (!disabledServices.includes(e)) {
             return e;
         }
     }));
+
+    // we need to copy the proxy envs (HTTP_PROXY, HTTPS_PROXY)
+    // back into process.env, so that EnvHttpProxyAgent can pick
+    // them up later
+    for (const key of httpProxyVariables) {
+        const value = env[key] ?? canonicalEnv[key];
+        if (value !== undefined) {
+            process.env[key] = env[key];
+        } else {
+            delete process.env[key];
+        }
+    }
 
     return {
         apiURL: env.API_URL || '',
@@ -37,7 +79,12 @@ export const loadEnvs = (env = process.env) => {
         tunnelRateLimitMax: (env.TUNNEL_RATELIMIT_MAX && parseInt(env.TUNNEL_RATELIMIT_MAX)) || 40,
 
         sessionRateLimitWindow: (env.SESSION_RATELIMIT_WINDOW && parseInt(env.SESSION_RATELIMIT_WINDOW)) || 60,
-        sessionRateLimit: (env.SESSION_RATELIMIT && parseInt(env.SESSION_RATELIMIT)) || 10,
+        sessionRateLimit:
+            // backwards compatibility with SESSION_RATELIMIT
+            // till next major due to an error in docs
+            (env.SESSION_RATELIMIT_MAX && parseInt(env.SESSION_RATELIMIT_MAX))
+            || (env.SESSION_RATELIMIT && parseInt(env.SESSION_RATELIMIT))
+            || 10,
 
         durationLimit: (env.DURATION_LIMIT && parseInt(env.DURATION_LIMIT)) || 10800,
         streamLifespan: (env.TUNNEL_LIFESPAN && parseInt(env.TUNNEL_LIFESPAN)) || 90,
@@ -47,6 +94,9 @@ export const loadEnvs = (env = process.env) => {
             && parseInt(env.PROCESSING_PRIORITY),
 
         externalProxy: env.API_EXTERNAL_PROXY,
+
+        // used only for comparing against old values when envs are being updated
+        httpProxyValues: httpProxyVariables.map(k => String(env[k])).join(''),
 
         turnstileSitekey: env.TURNSTILE_SITEKEY,
         turnstileSecret: env.TURNSTILE_SECRET,
@@ -63,6 +113,7 @@ export const loadEnvs = (env = process.env) => {
         instanceCount: (env.API_INSTANCE_COUNT && parseInt(env.API_INSTANCE_COUNT)) || 1,
         keyReloadInterval: 900,
 
+        allServices,
         enabledServices,
 
         customInnertubeClient: env.CUSTOM_INNERTUBE_CLIENT,
@@ -74,10 +125,17 @@ export const loadEnvs = (env = process.env) => {
         // "never" | "session" | "always"
         forceLocalProcessing: env.FORCE_LOCAL_PROCESSING ?? "never",
 
+        // "never" | "key" | "always"
+        enableDeprecatedYoutubeHls: env.ENABLE_DEPRECATED_YOUTUBE_HLS ?? "never",
+
         envFile: env.API_ENV_FILE,
         envRemoteReloadInterval: 300,
+
+        subscribe,
     };
 }
+
+let loggedProxyWarning = false;
 
 export const validateEnvs = async (env) => {
     if (env.sessionEnabled && env.jwtSecret.length < 16) {
@@ -106,9 +164,26 @@ export const validateEnvs = async (env) => {
         throw new Error("Invalid FORCE_LOCAL_PROCESSING");
     }
 
+    if (env.enableDeprecatedYoutubeHls && !youtubeHlsOptions.includes(env.enableDeprecatedYoutubeHls)) {
+        console.error("ENABLE_DEPRECATED_YOUTUBE_HLS is invalid.");
+        console.error(`Supported options are are: ${youtubeHlsOptions.join(', ')}\n`);
+        throw new Error("Invalid ENABLE_DEPRECATED_YOUTUBE_HLS");
+    }
+
     if (env.externalProxy && env.freebindCIDR) {
         throw new Error('freebind is not available when external proxy is enabled')
     }
+
+    if (env.externalProxy && !loggedProxyWarning) {
+        console.error('API_EXTERNAL_PROXY is deprecated and will be removed in a future release.');
+        console.error('Use HTTP_PROXY or HTTPS_PROXY instead.');
+        console.error('You can read more about the new proxy variables in docs/api-env-variables.md\n');
+
+        // prevent the warning from being printed on every env validation
+        loggedProxyWarning = true;
+    }
+
+    return env;
 }
 
 const reloadEnvs = async (contents) => {
@@ -136,14 +211,37 @@ const reloadEnvs = async (contents) => {
         ...newEnvs,
     };
 
-    const parsed = loadEnvs(candidate);
-    await validateEnvs(parsed);
-    updateEnv(parsed);
+    const parsed = await validateEnvs(
+        loadEnvs(candidate)
+    );
+
     cluster.broadcast({ env_update: resolvedContents });
+    return updateEnv(parsed);
 }
 
 const wrapReload = (contents) => {
     reloadEnvs(contents)
+    .then(changes => {
+        if (changes.length === 0) {
+            return;
+        }
+
+        onEnvChanged(changes);
+
+        console.log(`${Green('[✓]')} envs reloaded successfully!`);
+        for (const key of changes) {
+            const value = currentEnv[key];
+            const isSecret = key.toLowerCase().includes('apikey')
+                          || key.toLowerCase().includes('secret')
+                          || key === 'httpProxyValues';
+
+            if (!value) {
+                console.log(`    removed: ${key}`);
+            } else {
+                console.log(`    changed: ${key} -> ${isSecret ? '***' : value}`);
+            }
+        }
+    })
     .catch((e) => {
         console.error(`${Yellow('[!]')} Failed reloading environment variables at ${new Date().toISOString()}.`);
         console.error('Error:', e);

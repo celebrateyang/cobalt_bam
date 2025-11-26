@@ -18,6 +18,7 @@
 
     import IconBug from "@tabler/icons-svelte/IconBug.svelte";
     import IconWorld from "@tabler/icons-svelte/IconWorld.svelte";
+    import IconCpu from "@tabler/icons-svelte/IconCpu.svelte";
     import IconSettingsBolt from "@tabler/icons-svelte/IconSettingsBolt.svelte";
 
     $: versionText = $version ? `v${$version.version}-${$version.commit.slice(0, 8)}` : '\xa0';
@@ -68,6 +69,13 @@
                 iconColor="green"
             >
                 <IconFileDownload />
+            </PageNavTab>
+            <PageNavTab
+                tabPath="/settings/local"
+                tabTitle={$t("settings.page.local")}
+                iconColor="blue"
+            >
+                <IconCpu />
             </PageNavTab>
         </PageNavSection>
 

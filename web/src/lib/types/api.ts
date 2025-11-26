@@ -1,3 +1,5 @@
+import type { CobaltSettings } from "$lib/types/settings";
+
 enum CobaltResponseType {
     Error = 'error',
     Picker = 'picker',
@@ -40,6 +42,23 @@ type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
 } & CobaltPartialURLResponse;
 
+export const CobaltFileMetadataKeys = [
+    'album',
+    'composer',
+    'genre',
+    'copyright',
+    'title',
+    'artist',
+    'album_artist',
+    'track',
+    'date',
+    'sublanguage',
+];
+
+export type CobaltFileMetadata = Record<
+    typeof CobaltFileMetadataKeys[number], string | undefined
+>;
+
 export type CobaltFileUrlType = "redirect" | "tunnel";
 
 export type CobaltSession = {
@@ -62,6 +81,12 @@ export type CobaltServerInfo = {
         remote: string,
     }
 }
+
+// TODO: strict partial
+// this allows for extra properties, which is not ideal,
+// but i couldn't figure out how to make a strict partial :(
+export type CobaltSaveRequestBody =
+    { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>>;
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;
 export type CobaltServerInfoResponse = CobaltServerInfo | CobaltErrorResponse;

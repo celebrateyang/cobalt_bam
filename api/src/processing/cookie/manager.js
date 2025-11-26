@@ -13,7 +13,7 @@ const VALID_SERVICES = new Set([
     'reddit',
     'twitter',
     'youtube',
-    'youtube_oauth',
+    'vimeo_bearer',
 ]);
 
 const invalidCookies = {};

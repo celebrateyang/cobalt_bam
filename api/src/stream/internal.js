@@ -6,6 +6,8 @@ import { handleHlsPlaylist, isHlsResponse, probeInternalHLSTunnel } from "./inte
 const CHUNK_SIZE = BigInt(8e6); // 8 MB
 const min = (a, b) => a < b ? a : b;
 
+const serviceNeedsChunks = new Set(["youtube", "vk"]);
+
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     console.log(`======> [readChunks] YouTube chunk download with authentication started`);
@@ -27,7 +29,10 @@ async function* readChunks(streamInfo, size) {
         console.log(`======> [readChunks] Chunk request using authenticated headers: ${!!headers.Cookie}`);
 
         const chunk = await request(streamInfo.url, {
-            headers,
+            headers: {
+                ...getHeaders(streamInfo.service),
+                Range: `bytes=${read}-${read + CHUNK_SIZE}`
+            },
             dispatcher: streamInfo.dispatcher,
             signal: streamInfo.controller.signal,
             maxRedirections: 4
@@ -123,7 +128,7 @@ async function* readChunks(streamInfo, size) {
     console.log(`[readChunks] Download completed: total read=${read}/${size}`);
 }
 
-async function handleYoutubeStream(streamInfo, res) {
+async function handleChunkedStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
     const cleanup = () => {
         console.log(`[handleYoutubeStream] Cleanup called`);
@@ -144,7 +149,7 @@ async function handleYoutubeStream(streamInfo, res) {
             console.log(`======> [handleYoutubeStream] HEAD request headers prepared with auth: ${!!headers.Cookie}`);
             
             req = await fetch(streamInfo.url, {
-                headers,
+                headers: getHeaders(streamInfo.service),
                 method: 'HEAD',
                 dispatcher: streamInfo.dispatcher,
                 signal
@@ -298,8 +303,8 @@ export function internalStream(streamInfo, res) {
         streamInfo.headers.delete('icy-metadata');
     }
 
-    if (streamInfo.service === 'youtube' && !streamInfo.isHLS) {
-        return handleYoutubeStream(streamInfo, res);
+    if (serviceNeedsChunks.has(streamInfo.service) && !streamInfo.isHLS) {
+        return handleChunkedStream(streamInfo, res);
     }
 
     return handleGenericStream(streamInfo, res);

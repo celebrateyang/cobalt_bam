@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "队列状态",
+        "ongoing": "队列处理中",
+        "completed": "队列完成"
+    }
+}

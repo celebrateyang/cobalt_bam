@@ -10,12 +10,28 @@ export const currentApiURL = () => {
         return new URL(customInstanceURL).origin;
     }
 
-    if (env.DEFAULT_API && processingSettings.allowDefaultOverride) {
-        return new URL(env.DEFAULT_API).origin;
+    // If env.DEFAULT_API is set (from .env.development or .env.production), use it.
+    if (env.DEFAULT_API) {
+        const apiOrigin = new URL(env.DEFAULT_API).origin;
+
+        // In development mode, use proxy path if API is local
+        // This avoids CORS issues when dev server is on different port
+        if (import.meta.env.DEV && isLocalURL(apiOrigin)) {
+            return '/api';
+        }
+
+        return apiOrigin;
     }
 
-    // 确保 apiURL 有值，否则使用硬编码的默认值
-    const finalApiURL = apiURL || "https://api.freesavevideo.online/";
+    // Final fallback if env.DEFAULT_API is not configured
+    return "https://api.freesavevideo.online";
+}
 
-    return new URL(finalApiURL).origin;
+// Helper function to check if URL is localhost/local network
+const isLocalURL = (url: string) => {
+    return url.includes('localhost') ||
+        url.includes('127.0.0.1') ||
+        url.match(/192\.168\.\d+\.\d+/) ||
+        url.match(/10\.\d+\.\d+\.\d+/) ||
+        url.match(/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+/);
 }

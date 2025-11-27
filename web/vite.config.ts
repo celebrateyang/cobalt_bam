@@ -1,4 +1,4 @@
-import { defineConfig, searchForWorkspaceRoot, type PluginOption } from "vite";
+import { defineConfig, searchForWorkspaceRoot, type PluginOption, loadEnv } from "vite";
 import { sveltekit } from "@sveltejs/kit/vite";
 import basicSSL from "@vitejs/plugin-basic-ssl";
 import { glob } from "glob";
@@ -23,7 +23,8 @@ const exposeLibAV: PluginOption = (() => {
                 const filename = basename(req.url).split('?')[0];
                 if (!filename) return next();
 
-                const [file] = await glob(join(IMPUT_MODULE_DIR, '/**/dist/', filename));
+                const pattern = `${IMPUT_MODULE_DIR}/**/dist/${filename}`.replace(/\\/g, '/');
+                const [file] = await glob(pattern);             
                 if (!file) return next();
 
                 const fileType = mime.getType(filename);
@@ -64,50 +65,58 @@ const enableCOEP: PluginOption = {
     }
 };
 
-export default defineConfig({
-    plugins: [
-        basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
-        sveltekit(),
-        enableCOEP,
-        exposeLibAV
-    ],
-    define: {
-        apiURL: JSON.stringify(process.env.VITE_API_URL || "")
-    },
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: (id) => {
-                    if (id.includes('/web/i18n') && id.endsWith('.json')) {
-                        const lang = id.split('/web/i18n/')?.[1].split('/')?.[0];
-                        if (lang) {
-                            return `i18n_${lang}`;
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd(), '');
+    const apiUrl = env.WEB_DEFAULT_API || 'http://192.168.1.12:9000';
+    const wsUrl = apiUrl.replace(/^http/, 'ws');
+
+    return {
+        plugins: [
+            // basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
+            sveltekit(),
+            enableCOEP,
+            exposeLibAV
+        ],
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: (id) => {
+                        if (id.includes('/web/i18n') && id.endsWith('.json')) {
+                            const lang = id.split('/web/i18n/')?.[1].split('/')?.[0];
+                            if (lang) {
+                                return `i18n_${lang}`;
+                            }
                         }
                     }
                 }
             }
-        }
-    }, server: {
-        host: '0.0.0.0', // 允许外部访问
-        port: 5173,
-        headers: {
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp"
-        },
-        fs: {
-            allow: [
-                searchForWorkspaceRoot(process.cwd())
-            ]
-        },
-        proxy: {
-            '/ws': {
-                target: 'ws://192.168.1.12:9000',
-                ws: true,
-                changeOrigin: true
+        }, server: {
+            host: '0.0.0.0', // 允许外部访问
+            port: 5173,
+            headers: {
+                "Cross-Origin-Opener-Policy": "same-origin",
+                "Cross-Origin-Embedder-Policy": "require-corp"
+            },
+            fs: {
+                allow: [
+                    searchForWorkspaceRoot(process.cwd())
+                ]
+            },
+            proxy: {
+                '/api': {
+                    target: apiUrl,
+                    changeOrigin: true,
+                    rewrite: (path) => path.replace(/^\/api/, '')
+                },
+                '/ws': {
+                    target: wsUrl,
+                    ws: true,
+                    changeOrigin: true
+                }
             }
-        }
-    },
-    optimizeDeps: {
-        exclude: ["@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli"]
-    },
+        },
+        optimizeDeps: {
+            exclude: ["@imput/libav.js-remux-cli", "@imput/libav.js-encode-cli"]
+        },
+    };
 });

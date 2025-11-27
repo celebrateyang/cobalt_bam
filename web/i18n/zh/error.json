@@ -17,6 +17,7 @@
     "api.content.video.private": "该视频是私密的，因此我无法访问。请更改其可见性或尝试其他视频！",
     "api.content.video.age": "该视频有年龄限制，因此我无法匿名访问。请尝试其他视频！",
     "api.content.video.region": "该视频有地区限制，而处理服务器位于不同位置。请尝试其他视频！",
+    "api.youtube.disabled": "由于 youtube 的限制，youtube 下载暂时禁用。我们正在寻找绕过限制的方法。<br><br>可以自己手动安装插件来下载 youtube 视频，<a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">请看我录制的教程</a>",
     "api.content.post.unavailable": "无法找到该帖子的相关信息。其可见性可能受限，或帖子不存在。请确认链接是否有效，并在几秒钟后再试！",
     "api.content.post.private": "该帖子来自私人账号，因此我无法访问。您粘贴的链接正确吗？",
     "api.content.post.age": "该帖子有年龄限制，因此我无法匿名访问。您粘贴的链接正确吗？",

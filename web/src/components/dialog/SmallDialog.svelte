@@ -15,6 +15,7 @@
     export let icon: Optional<SmallDialogIcons> = undefined;
     export let title = "";
     export let bodyText = "";
+    export let bodyHtml = "";
     export let bodySubText = "";
     export let buttons: Optional<DialogButton[]> = undefined;
     export let dismissable = true;
@@ -49,6 +50,9 @@
             {/if}
             {#if bodyText}
                 <div class="body-text" tabindex="-1">{bodyText}</div>
+            {/if}
+            {#if bodyHtml}
+                <div class="body-text" tabindex="-1">{@html bodyHtml}</div>
             {/if}
             {#if bodySubText}
                 <div class="subtext popup-subtext">{bodySubText}</div>

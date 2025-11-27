@@ -28,6 +28,7 @@ type SmallDialog = Dialog & {
     icon?: SmallDialogIcons,
     title?: string,
     bodyText?: string,
+    bodyHtml?: string,
     bodySubText?: string,
     buttons?: DialogButton[],
     leftAligned?: boolean,

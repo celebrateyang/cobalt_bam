@@ -43,6 +43,8 @@
     "api.content.video.age": "this video is age-restricted, so i can't access it anonymously. try another one!",
     "api.content.video.region": "this video is region locked, and the processing server is in a different location. try another one!",
 
+    "api.youtube.disabled": "youtube downloading is temporarily disabled due to restrictions from youtube's side. we're already looking for ways to go around them.<br><br>you can manually install a plugin to download youtube videos. for the tutorial, please <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">watch this video</a>.",
+
     "api.content.post.unavailable": "couldn't find anything about this post. its visibility may be limited or it may not exist at all. make sure your link works and try again in a few seconds!",
     "api.content.post.private": "this post is from a private account, so i can't access it. have you pasted the right link?",
     "api.content.post.age": "this post is age-restricted, so i can't access it anonymously. have you pasted the right link?",

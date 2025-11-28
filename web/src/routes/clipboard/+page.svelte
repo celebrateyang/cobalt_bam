@@ -285,11 +285,14 @@
 </script>
 
 <svelte:head>
-    <title>竹子下载 | {$t("clipboard.title")}</title>
-    <meta property="og:title" content="竹子下载 | {$t("clipboard.title")}" />
-    <meta property="og:description" content={$t("clipboard.description")} />
-    <meta property="description" content={$t("clipboard.description")} />
+    <title>{$t("general.seo.transfer.title")}</title>
+    <meta name="description" content={$t("general.seo.transfer.description")} />
+    <meta name="keywords" content={$t("general.seo.transfer.keywords")} />
+    <meta property="og:title" content={$t("general.seo.transfer.title")} />
+    <meta property="og:description" content={$t("general.seo.transfer.description")} />
 </svelte:head>
+
+
 
 <div class="clipboard-container">
     <div class="clipboard-header" class:collapsed={headerCollapsed}>

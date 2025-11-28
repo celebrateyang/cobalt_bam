@@ -40,5 +40,22 @@
             "install_prompt": "该网站支持安装到桌面",
             "install": "安装",
             "close": "关闭"
+        },
+    "seo": {
+        "home": {
+            "title": "免费在线视频下载器 - 支持YouTube, TikTok, Instagram等平台 | 视频保存 | 高清视频下载",
+            "description": "最好用的免费在线视频下载工具。支持YouTube, TikTok, Instagram, Twitter等多个平台的视频下载。无水印，高清画质，快速保存。",
+            "keywords": "视频下载, 在线视频下载, YouTube下载, TikTok无水印下载, Instagram视频保存, 免费视频下载器"
+        },
+        "transfer": {
+            "title": "跨设备文件传输 - 手机电脑互传 | 极速快传 | 安全分享",
+            "description": "简单快速的跨设备文件传输工具。无需安装APP，在手机和电脑之间轻松传输文件、文本。安全，高速，免费。",
+            "keywords": "文件传输, 手机电脑互传, 跨平台传输, 文件快传, 在线传文件, 剪贴板同步"
+        },
+        "discover": {
+            "title": "发现热门视频 - 精选美女、搞笑、网红视频 | 每日更新",
+            "description": "汇集全网最火视频。精选美女视频、搞笑片段、网红动态。每日更新，精彩不断。",
+            "keywords": "热门视频, 美女视频, 搞笑视频, 网红视频, 视频推荐, 精彩短视频"
         }
+    }
 }

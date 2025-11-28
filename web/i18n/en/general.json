@@ -41,5 +41,22 @@
             "install_prompt": "This website supports installation to desktop",
             "install": "Install",
             "close": "Close"
+    },
+    "seo": {
+        "home": {
+            "title": "Free Online Video Downloader - Support YouTube, TikTok, Instagram | Save Videos | HD Quality",
+            "description": "The best free online video downloader. Download videos from YouTube, TikTok, Instagram, Twitter, and more. No watermark, HD quality, fast download.",
+            "keywords": "video downloader, online video downloader, youtube downloader, tiktok downloader no watermark, instagram video saver, free video downloader"
+        },
+        "transfer": {
+            "title": "Cross-Device File Transfer - PC to Mobile | Fast Share | Secure",
+            "description": "Simple and fast cross-device file transfer tool. Transfer files and text between mobile and PC without installing apps. Secure, high-speed, free.",
+            "keywords": "file transfer, pc to mobile transfer, cross-platform share, fast file share, online file transfer, clipboard sync"
+        },
+        "discover": {
+            "title": "Discover Trending Videos - Beauty, Funny, Viral Clips | Daily Updates",
+            "description": "Collection of the hottest videos on the web. Curated beauty videos, funny clips, and viral trends. Updated daily.",
+            "keywords": "trending videos, beauty videos, funny videos, viral clips, hot videos, video recommendations"
+        }
     }
 }

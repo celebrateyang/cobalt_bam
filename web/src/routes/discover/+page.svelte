@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { t } from '$lib/i18n/translations';
     import { onMount } from 'svelte';
     import { videos, type GroupedVideos } from '$lib/api/social';
     
@@ -79,8 +80,14 @@
 </script>
 
 <svelte:head>
-    <title>发现精彩视频 - Cobalt Social</title>
+    <title>{$t("general.seo.discover.title")}</title>
+    <meta name="description" content={$t("general.seo.discover.description")} />
+    <meta name="keywords" content={$t("general.seo.discover.keywords")} />
+    <meta property="og:title" content={$t("general.seo.discover.title")} />
+    <meta property="og:description" content={$t("general.seo.discover.description")} />
 </svelte:head>
+
+
 
 <div class="discover-container">
     <header class="header">

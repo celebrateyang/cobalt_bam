@@ -35,8 +35,11 @@
 </script>
 
 <svelte:head>
-    <title>{$t("general.cobalt")}</title>
-    <meta property="og:title" content={$t("general.cobalt")} />
+    <title>{$t("general.seo.home.title")}</title>
+    <meta name="description" content={$t("general.seo.home.description")} />
+    <meta name="keywords" content={$t("general.seo.home.keywords")} />
+    <meta property="og:title" content={$t("general.seo.home.title")} />
+    <meta property="og:description" content={$t("general.seo.home.description")} />
 </svelte:head>
 
 <!--<Header />-->

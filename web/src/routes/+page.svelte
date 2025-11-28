@@ -6,6 +6,11 @@
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
     import UserGuide from "$components/misc/UseGuide.svelte";
+    
+    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
+    import IconClipboard from "$components/icons/Clipboard.svelte";
+    import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+
     /*import Header from "$components/misc/Header.svelte"; // 导航栏组件
     import BlogPreview from "$components/blog/BlogPreview.svelte"; // 博客预览组件*/
     const donateLinks: Record<'en' | 'th' | 'zh' | 'ru', string> = {
@@ -77,6 +82,31 @@
         <Omnibox />
         <!--<UserGuide/>-->
     </main>
+
+    <!-- Feature Cards -->
+    <section class="feature-cards">
+        <a href="/" class="feature-card active">
+            <div class="icon-wrapper"><IconDownload size={28} /></div>
+            <div class="card-content">
+                <h3>Media Downloader</h3>
+                <p class="card-desc">{$t("general.seo.home.description")}</p>
+            </div>
+        </a>
+        <a href="/clipboard" class="feature-card">
+            <div class="icon-wrapper"><IconClipboard /></div>
+            <div class="card-content">
+                <h3>File Transfer</h3>
+                <p class="card-desc">{$t("general.seo.transfer.description")}</p>
+            </div>
+        </a>
+        <a href="/discover" class="feature-card">
+            <div class="icon-wrapper"><IconVideo size={28} /></div>
+            <div class="card-content">
+                <h3>Discover Trends</h3>
+                <p class="card-desc">{$t("general.seo.discover.description")}</p>
+            </div>
+        </a>
+    </section>
 
     <!-- 引流推广模块 -->
     <section id="promotions">
@@ -382,4 +412,74 @@
     .notification { position: relative; }
     .notification-content { align-items: flex-start; padding-right: 28px; }
     .notification-close { position: absolute; top:6px; right:8px; margin-left:0; padding:4px; line-height:1; }
+
+    /* Feature Cards */
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        width: 100%;
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 var(--padding);
+    }
+
+    .feature-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: var(--surface-1);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        color: var(--text);
+        transition: transform 0.2s, background 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-2px);
+        background: var(--surface-2);
+        border-color: var(--accent);
+    }
+
+    .feature-card.active {
+        border-color: var(--accent);
+        background: var(--surface-2);
+    }
+
+    .icon-wrapper {
+        color: var(--accent);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--surface-3);
+        border-radius: 50%;
+    }
+
+    .card-content h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .card-desc {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.8;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+    }
+
+    @media (max-width: 600px) {
+        .feature-cards {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>

@@ -117,8 +117,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
     app.set('trust proxy', ['loopback', 'uniquelocal']);
 
-    app.use('/', cors({
-        methods: ['GET', 'POST'],
+    // 社交媒体 API 路由 - 支持 GET/POST/PUT/DELETE
+    app.use('/social', cors({
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         exposedHeaders: [
             'Ratelimit-Limit',
             'Ratelimit-Policy',
@@ -128,9 +129,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         ...corsConfig,
     }));
 
-    // 社交媒体 API 路由 - 支持 GET/POST/PUT/DELETE
-    app.use('/social', cors({
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    app.use('/', cors({
+        methods: ['GET', 'POST'],
         exposedHeaders: [
             'Ratelimit-Limit',
             'Ratelimit-Policy',

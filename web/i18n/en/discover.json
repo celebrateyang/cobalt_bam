@@ -1,0 +1,26 @@
+{
+  "title": "🌟 Discover Amazing Videos",
+  "subtitle": "Premium content from top global creators",
+  "filter": {
+    "all": "All Platforms"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "Load failed",
+    "empty": {
+      "title": "No videos",
+      "description": "No video content added yet"
+    }
+  },
+  "account": {
+    "videoCount": "{{count}} videos"
+  },
+  "action": {
+    "copy": "📋 Copy",
+    "copied": "✓ Copied",
+    "copyTitle": "Copy video address",
+    "copyFailed": "Copy failed:",
+    "manualCopy": "Cannot copy automatically, please copy manually:\n{{url}}",
+    "closeDialog": "Click \"OK\" to close this message"
+  }
+}

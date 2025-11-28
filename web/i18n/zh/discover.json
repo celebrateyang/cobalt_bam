@@ -1,0 +1,26 @@
+{
+  "title": "🌟 发现精彩视频",
+  "subtitle": "来自全球顶级创作者的优质内容",
+  "filter": {
+    "all": "全部平台"
+  },
+  "status": {
+    "loading": "加载中...",
+    "error": "加载失败",
+    "empty": {
+      "title": "暂无视频",
+      "description": "还没有添加任何视频内容"
+    }
+  },
+  "account": {
+    "videoCount": "{{count}} 个视频"
+  },
+  "action": {
+    "copy": "📋 拷贝",
+    "copied": "✓ 已复制",
+    "copyTitle": "复制视频地址",
+    "copyFailed": "复制失败:",
+    "manualCopy": "无法自动复制，请手动复制:\n{{url}}",
+    "closeDialog": "点击\"确定\"关闭此消息"
+  }
+}

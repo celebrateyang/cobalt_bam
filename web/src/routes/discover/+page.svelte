@@ -8,9 +8,11 @@
     let error = '';
     let selectedPlatform = 'all';
     let copiedId: number | null = null;
+
+    $: translate = (key: string, vars?: any) => $t(key, vars);
     
-    const platforms = [
-        { value: 'all', label: '全部平台', icon: '🌐' },
+    $: platforms = [
+        { value: 'all', label: $t('discover.filter.all'), icon: '🌐' },
         { value: 'tiktok', label: 'TikTok', icon: '🎵' },
         { value: 'instagram', label: 'Instagram', icon: '📷' },
         { value: 'youtube', label: 'YouTube', icon: '▶️' },
@@ -32,7 +34,7 @@
         if (response.status === 'success' && response.data) {
             groupedVideos = response.data;
         } else {
-            error = response.error?.message || '加载失败';
+            error = response.error?.message || $t('discover.status.error');
         }
     }
     
@@ -71,8 +73,8 @@
         } catch (err) {
             console.error('复制失败:', err);
             // 提供更友好的错误提示
-            const message = `无法自动复制，请手动复制:\n${url}`;
-            if (confirm(message + '\n\n点击"确定"关闭此消息')) {
+            const message = $t('discover.action.manualCopy', { url } as any);
+            if (confirm(message + '\n\n' + $t('discover.action.closeDialog'))) {
                 // 用户关闭了对话框
             }
         }
@@ -92,8 +94,8 @@
 <div class="discover-container">
     <header class="header">
         <div class="header-content">
-            <h1 class="title">🌟 发现精彩视频</h1>
-            <p class="subtitle">来自全球顶级创作者的优质内容</p>
+            <h1 class="title">{$t('discover.title')}</h1>
+            <p class="subtitle">{$t('discover.subtitle')}</p>
         </div>
     </header>
     
@@ -119,13 +121,13 @@
     {#if loading}
         <div class="loading-container">
             <div class="spinner"></div>
-            <p>加载中...</p>
+            <p>{$t('discover.status.loading')}</p>
         </div>
     {:else if groupedVideos.length === 0}
         <div class="empty-state">
             <div class="empty-icon">📹</div>
-            <h3>暂无视频</h3>
-            <p>还没有添加任何视频内容</p>
+            <h3>{$t('discover.status.empty.title')}</h3>
+            <p>{$t('discover.status.empty.description')}</p>
         </div>
     {:else}
         <div class="content">
@@ -150,7 +152,7 @@
                                     {group.account.platform}
                                 </span>
                                 <span class="username">@{group.account.username}</span>
-                                <span class="video-count">{group.videos.length} 个视频</span>
+                                <span class="video-count">{translate('discover.account.videoCount', { count: group.videos.length })}</span>
                             </p>
                         </div>
                     </div>
@@ -165,12 +167,12 @@
                                     class="copy-btn"
                                     class:copied={copiedId === video.id}
                                     on:click={() => copyUrl(video.url, video.id)}
-                                    title="复制视频地址"
+                                    title={$t('discover.action.copyTitle')}
                                 >
                                     {#if copiedId === video.id}
-                                        ✓ 已复制
+                                        {$t('discover.action.copied')}
                                     {:else}
-                                        📋 拷贝
+                                        {$t('discover.action.copy')}
                                     {/if}
                                 </button>
                             </div>

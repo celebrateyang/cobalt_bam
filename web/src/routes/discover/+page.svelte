@@ -6,7 +6,7 @@
     let groupedVideos: GroupedVideos[] = [];
     let loading = true;
     let error = '';
-    let selectedPlatform = 'all';
+    let selectedPlatform = 'tiktok';
     let copiedId: number | null = null;
 
     $: translate = (key: string, vars?: any) => $t(key, vars);
@@ -100,16 +100,20 @@
     </header>
     
     <div class="filter-bar">
-        {#each platforms as platform}
-            <button
-                class="filter-btn"
-                class:active={selectedPlatform === platform.value}
-                on:click={() => handlePlatformChange(platform.value)}
+        <div class="select-wrapper">
+            <select 
+                bind:value={selectedPlatform} 
+                on:change={() => loadVideos()}
+                class="platform-select"
             >
-                <span class="icon">{platform.icon}</span>
-                {platform.label}
-            </button>
-        {/each}
+                {#each platforms as platform}
+                    <option value={platform.value}>
+                        {platform.icon} {platform.label}
+                    </option>
+                {/each}
+            </select>
+            <div class="select-arrow">▼</div>
+        </div>
     </div>
     
     {#if error}
@@ -220,43 +224,50 @@
     
     .filter-bar {
         display: flex;
-        gap: calc(var(--padding) / 2);
         justify-content: center;
         margin-bottom: calc(var(--padding) * 2);
-        flex-wrap: wrap;
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
+        width: 100%;
     }
     
-    .filter-btn {
-        padding: 10px 20px;
-        border: none;
+    .select-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 200px;
+    }
+
+    .platform-select {
+        width: 100%;
+        padding: 12px 40px 12px 16px;
+        appearance: none;
+        -webkit-appearance: none;
         background: var(--button);
         color: var(--button-text);
+        border: none;
         border-radius: var(--border-radius);
-        cursor: pointer;
-        font-size: 14px;
+        font-size: 1rem;
         font-weight: 500;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        cursor: pointer;
         box-shadow: var(--button-box-shadow);
+        transition: all 0.2s;
     }
-    
-    .filter-btn:hover {
+
+    .platform-select:hover {
         background: var(--button-hover);
     }
-    
-    .filter-btn.active {
-        background: var(--secondary);
-        color: var(--primary);
-        box-shadow: none;
+
+    .platform-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--secondary);
     }
-    
-    .icon {
-        font-size: 1.2rem;
+
+    .select-arrow {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--gray);
+        font-size: 0.8rem;
     }
     
     .error-banner {
@@ -477,17 +488,7 @@
         }
         
         .filter-bar {
-            gap: 6px;
             margin-bottom: var(--padding);
-        }
-        
-        .filter-btn {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-        }
-        
-        .icon {
-            font-size: 1rem;
         }
         
         .content {

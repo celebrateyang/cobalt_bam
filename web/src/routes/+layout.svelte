@@ -27,6 +27,7 @@
     import DialogHolder from "$components/dialog/DialogHolder.svelte";
     import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
+    import PwaInstallBanner from "$components/misc/PwaInstallBanner.svelte";
 
     $: reduceMotion =
         $settings.appearance.reduceMotion || device.prefers.reducedMotion;
@@ -87,6 +88,7 @@
         <Sidebar />
         <ProcessingQueue />
         <div id="content">
+            <PwaInstallBanner />
             {#if (spawnTurnstile && $page.url.pathname === "/") || $turnstileCreated}
                 <Turnstile />
             {/if}
@@ -301,6 +303,7 @@
 
     #content {
         display: flex;
+        flex-direction: column;
         overflow: scroll;
         background-color: var(--primary);
 

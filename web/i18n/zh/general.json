@@ -11,11 +11,11 @@
     "notification": {
         "title": "通知：",
         "close": "关闭通知",
-        "youtube_restriction": "YouTube下载不支持，但是可以参看这个视频进行下载：https://www.bilibili.com/video/BV1Bp4EzeEJo"
+        "youtube_restriction": "新上线[发现]功能,探索各平台的优质视频 2025/11/28"
     },
     "promotions": {
         "mindsou": {
-            "title": "用你脑中的想法找到同类,取得联系",
+            "title": "成年人只筛选,不教育",
             "features": {
                 "1": "1.发布你大脑中某时刻的想法",
                 "2": "2.完全匹配,语义匹配,互补匹配",
@@ -35,5 +35,10 @@
             },
             "visit": "访问 YumCheck"
         }
-    }
+    },
+        "pwa": {
+            "install_prompt": "该网站支持安装到桌面",
+            "install": "安装",
+            "close": "关闭"
+        }
 }

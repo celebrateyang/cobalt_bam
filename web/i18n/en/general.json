@@ -36,6 +36,10 @@
             },
             "visit": "Visit YumCheck"
         }
+    },
+    "pwa": {
+            "install_prompt": "This website supports installation to desktop",
+            "install": "Install",
+            "close": "Close"
     }
-
 }

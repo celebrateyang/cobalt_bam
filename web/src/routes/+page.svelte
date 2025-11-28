@@ -144,6 +144,9 @@
         /* 允许纵向滚动，移除 overflow:hidden 限制 */
         overflow-y: auto;
         overflow-x: hidden;
+        justify-content: space-between;
+        min-height: 100%;
+        box-sizing: border-box;
     }
 
     #cobalt-save {
@@ -152,7 +155,7 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        height: 100%;
+        flex: 1;
         gap: 15px;
     }
 

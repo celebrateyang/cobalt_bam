@@ -7,6 +7,14 @@
         <meta name="og:type" content="article">
         <meta name="twitter:card" content="summary">
 
+        <script>
+            window.deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                window.deferredPrompt = e;
+            });
+        </script>
+
         %sveltekit.head%
 
         <meta name="mobile-web-app-capable" content="yes">

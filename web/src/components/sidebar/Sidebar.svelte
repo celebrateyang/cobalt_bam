@@ -7,6 +7,7 @@
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+    import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
 
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
@@ -36,6 +37,9 @@
             </SidebarTab>
             <SidebarTab tabName="discover" tabLink="/discover">
                 <IconVideo />
+            </SidebarTab>
+            <SidebarTab tabName="history" tabLink="/history">
+                <IconHistory />
             </SidebarTab>
             <SidebarTab tabName="remux" tabLink="/remux" beta>
                 <IconRepeat />

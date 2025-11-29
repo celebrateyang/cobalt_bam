@@ -9,6 +9,7 @@ import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
 import { createSavePipeline } from "$lib/task-manager/queue";
+import { addToHistory } from "$lib/history";
 
 import type { CobaltSaveRequestBody } from "$lib/types/api";
 
@@ -92,6 +93,18 @@ export const savingHandler = async ({ url, request, oldTaskId }: SavingHandlerAr
     if (!response) {
         downloadButtonState.set("error");
         return error(get(t)("error.api.unreachable"));
+    }
+
+    if (response.status !== "error") {
+        let title = selectedRequest.url;
+        if ('filename' in response && response.filename) {
+            title = response.filename;
+        }
+        addToHistory({
+            url: selectedRequest.url,
+            title: title,
+            type: response.status
+        });
     }
 
     if (response.status === "error") {

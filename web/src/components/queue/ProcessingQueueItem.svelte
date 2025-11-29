@@ -25,6 +25,10 @@
     import IconMovie from "@tabler/icons-svelte/IconMovie.svelte";
     import IconMusic from "@tabler/icons-svelte/IconMusic.svelte";
     import IconPhoto from "@tabler/icons-svelte/IconPhoto.svelte";
+    import IconDeviceMobile from "@tabler/icons-svelte/IconDeviceMobile.svelte";
+
+    import { goto } from "$app/navigation";
+    import { clipboardState } from "$lib/clipboard/clipboard-manager";
 
     const itemIcons = {
         file: IconFile,
@@ -75,6 +79,17 @@
             */
             downloading = false;
         }, 3000)
+    };
+
+    const transfer = async (file: File) => {
+        // Add file to clipboard manager state
+        const fileToSend = new File([file], info.filename, { type: info.mimeType });
+        clipboardState.update(state => ({
+            ...state,
+            files: [...state.files, fileToSend]
+        }));
+        // Navigate to clipboard page
+        await goto('/clipboard');
     };
 
     type StatusText = {
@@ -232,6 +247,14 @@
                 {:else}
                     <IconLoader2 />
                 {/if}
+            </button>
+            <button
+                class="button action-button"
+                aria-label="Send to other device"
+                title="Send to other device"
+                on:click={() => transfer(info.resultFile)}
+            >
+                <IconDeviceMobile />
             </button>
         {/if}
 

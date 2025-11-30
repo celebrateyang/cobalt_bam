@@ -57,6 +57,7 @@ export const clipboardState = writable({
     receivingFiles: false,
     transferProgress: 0,
     isTransferring: false, // 新增：标记是否有文件正在传输（发送或接收）
+    isLAN: false, // 新增：标记是否为局域网直连
     dataChannel: null as RTCDataChannel | null,
     peerConnection: null as RTCPeerConnection | null,
     errorMessage: '' as string,
@@ -1575,10 +1576,21 @@ export class ClipboardManager {
         try {
             this.peerConnection = new RTCPeerConnection({
                 iceServers: [
+                    // Google (全球通用，国内部分可用)
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }  // 添加备用STUN服务器
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    
+                    // 小米 (国内速度快，推荐)
+                    { urls: 'stun:stun.miwifi.com' },
+                    
+                    // QQ (腾讯，国内稳定)
+                    { urls: 'stun:stun.qq.com' },
+                    
+                    // 3CX (备用)
+                    { urls: 'stun:stun.3cx.com' }
                 ],
-                iceCandidatePoolSize: 10  // 增加ICE候选池大小
+                iceCandidatePoolSize: 10,
+                iceTransportPolicy: 'all' // 明确允许所有传输方式，包括局域网
             });
 
             // Update state with peer connection
@@ -1637,6 +1649,35 @@ export class ClipboardManager {
                 if (state === 'connected') {
                     console.log('🎉 Peer connected!');
                     clipboardState.update(state => ({ ...state, peerConnected: true }));
+
+                    // Check for LAN connection
+                    this.peerConnection?.getStats().then(stats => {
+                        stats.forEach(report => {
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                const localCandidate = stats.get(report.localCandidateId);
+                                const remoteCandidate = stats.get(report.remoteCandidateId);
+                                
+                                if (localCandidate && remoteCandidate) {
+                                    console.log('📡 Connection candidates:', {
+                                        local: localCandidate.candidateType,
+                                        remote: remoteCandidate.candidateType,
+                                        protocol: localCandidate.protocol
+                                    });
+                                    
+                                    // If both are host candidates, it's likely a LAN connection
+                                    const isLocalHost = localCandidate.candidateType === 'host';
+                                    const isRemoteHost = remoteCandidate.candidateType === 'host';
+                                    
+                                    if (isLocalHost && isRemoteHost) {
+                                        console.log('🏠 LAN Direct Connection detected!');
+                                        clipboardState.update(s => ({ ...s, isLAN: true }));
+                                    } else {
+                                        clipboardState.update(s => ({ ...s, isLAN: false }));
+                                    }
+                                }
+                            }
+                        });
+                    });
                     
                     // 移动端额外确认连接状态
                     if (isMobile) {

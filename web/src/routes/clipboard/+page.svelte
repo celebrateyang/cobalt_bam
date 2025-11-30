@@ -26,6 +26,7 @@
     let isCreator = false;
     let peerConnected = false;
     let qrCodeUrl = '';
+    let isLAN = false; // 新增：LAN状态
 
     // Navigation state
     let activeTab: 'files' | 'text' = 'files';
@@ -71,6 +72,7 @@
             isCreator = state.isCreator;
             peerConnected = state.peerConnected;
             qrCodeUrl = state.qrCodeUrl;
+            isLAN = state.isLAN; // 新增：订阅LAN状态
             activeTab = state.activeTab;
             files = state.files;
             receivedFiles = state.receivedFiles;
@@ -356,6 +358,12 @@
                 <div class="status-dot connected"></div>
                 <span class="status-text">{$t('clipboard.peer_connected')}</span>
             </div>
+            {#if isLAN}
+                <div class="status-badge lan" title={$t('clipboard.lan_direct')}>
+                    <span class="status-icon">⚡</span>
+                    <span class="status-text">{$t('clipboard.lan_direct')}</span>
+                </div>
+            {/if}
         </div>
 
         <!-- Tab Navigation Component - Moved to top -->
@@ -731,6 +739,24 @@
         font-weight: 500;
         color: #22c55e;
         font-size: 0.95rem;
+    }
+
+    .status-badge.lan {
+        background: rgba(59, 130, 246, 0.15);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        margin-left: 1rem;
+    }
+
+    .status-badge.lan .status-text {
+        color: #60a5fa;
+        font-size: 0.85rem;
+    }
+    
+    .status-badge.lan .status-icon {
+        margin-right: 0.4rem;
+        font-size: 0.9rem;
     }
 
     @keyframes pulse {

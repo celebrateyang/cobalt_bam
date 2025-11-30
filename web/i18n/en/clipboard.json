@@ -26,6 +26,7 @@
     "session_management": "Session Management",
     "scan_qr": "Scan QR code to join from another device",
     "peer_connected": "Device connected",
+    "lan_direct": "LAN Direct",
     "waiting_peer": "Waiting for device to connect",
     "send_text": "Send Text",
     "enter_text": "Enter text to share",

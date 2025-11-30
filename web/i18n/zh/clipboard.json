@@ -26,6 +26,7 @@
     "scan_decode_error": "暂未识别到有效会话码，请重试。",
     "scan_cancel": "取消扫描",
     "peer_connected": "设备已连接",
+    "lan_direct": "局域网直连",
     "waiting_peer": "等待设备连接",
     "send_text": "发送文本",
     "enter_text": "输入要分享的文本",

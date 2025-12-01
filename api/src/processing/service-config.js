@@ -66,6 +66,14 @@ export const services = {
         ],
         altDomains: ["ddinstagram.com"],
     },
+    kuaishou: {
+        patterns: [
+            "short-video/:id",
+            "video/:id",
+            "_shortLink/:shortLink"
+        ],
+        subdomains: ["v", "www"],
+    },
     loom: {
         patterns: ["share/:id", "embed/:id"],
     },

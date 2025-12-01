@@ -77,6 +77,12 @@ function aliasURL(url) {
             }
             break;
 
+        case "kuaishou":
+            if (url.hostname === 'v.kuaishou.com' && parts.length === 2) {
+                url = new URL(`https://kuaishou.com/_shortLink/${parts[1]}`);
+            }
+            break;
+
         case "facebook":
         case "fb":
             if (url.searchParams.get('v')) {

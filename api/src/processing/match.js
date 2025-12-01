@@ -31,6 +31,7 @@ import bluesky from "./services/bluesky.js";
 import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
 import douyin from "./services/douyin.js";
+import kuaishou from "./services/kuaishou.js";
 
 let freebind;
 
@@ -234,6 +235,10 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "douyin":
                 r = await douyin(patternMatch);
+                break;
+
+            case "kuaishou":
+                r = await kuaishou(patternMatch);
                 break;
 
             case "snapchat":

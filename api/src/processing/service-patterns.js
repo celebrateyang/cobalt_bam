@@ -26,6 +26,10 @@ export const testers = {
         pattern.shareId?.length <= 16 ||
         (pattern.username?.length <= 30 && pattern.storyId?.length <= 24),
 
+    "kuaishou": pattern =>
+        pattern.id?.length <= 32 ||
+        pattern.shortLink?.length <= 16,
+
     "loom": pattern =>
         pattern.id?.length <= 32,
 

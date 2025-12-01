@@ -17,7 +17,7 @@
 
     <section>
         <h2>2. 支持哪些平台？</h2>
-        <p>我们支持从 YouTube、Facebook、Instagram、Twitter、抖音 (Douyin) 等多个流行平台下载视频。</p>
+        <p>我们支持从 YouTube、Facebook、Instagram、Twitter、抖音 (Douyin)、快手 (Kuaishou) 等多个流行平台下载视频。</p>
     </section>
 
     <section>

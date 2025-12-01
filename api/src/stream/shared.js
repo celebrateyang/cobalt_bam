@@ -35,6 +35,9 @@ const serviceHeaders = {
     },
     douyin: {
         referer: 'https://www.douyin.com/',
+    },
+    kuaishou: {
+        referer: 'https://www.kuaishou.com/',
     }
 }
 

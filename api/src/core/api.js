@@ -267,9 +267,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
 
         // Log the requested video URL for tracking user download attempts
-        console.log(`[DOWNLOAD REQUEST] User attempting to download: ${normalizedRequest.url}`);
-        console.log(`[DOWNLOAD REQUEST] Client IP: ${getIP(req)}`);
-        console.log(`[DOWNLOAD REQUEST] Timestamp: ${new Date().toISOString()}`);
+        // console.log(`[DOWNLOAD REQUEST] User attempting to download: ${normalizedRequest.url}`);
+        // console.log(`[DOWNLOAD REQUEST] Client IP: ${getIP(req)}`);
+        // console.log(`[DOWNLOAD REQUEST] Timestamp: ${new Date().toISOString()}`);
 
         const parsed = extract(
             normalizedRequest.url,
@@ -277,12 +277,12 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         );
 
         if (!parsed) {
-            console.log(`[DOWNLOAD REQUEST] Failed - Invalid URL: ${normalizedRequest.url}`);
+            // console.log(`[DOWNLOAD REQUEST] Failed - Invalid URL: ${normalizedRequest.url}`);
             return fail(res, "error.api.link.invalid");
         }
 
         if ("error" in parsed) {
-            console.log(`[DOWNLOAD REQUEST] Failed - Parse error for URL: ${normalizedRequest.url}, Error: ${parsed.error}`);
+            // console.log(`[DOWNLOAD REQUEST] Failed - Parse error for URL: ${normalizedRequest.url}, Error: ${parsed.error}`);
             let context;
             if (parsed?.context) {
                 context = parsed.context;
@@ -290,7 +290,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, `error.api.${parsed.error}`, context);
         }
 
-        console.log(`[DOWNLOAD REQUEST] Successfully parsed URL: ${normalizedRequest.url}, Service: ${parsed.host}`);
+        // console.log(`[DOWNLOAD REQUEST] Successfully parsed URL: ${normalizedRequest.url}, Service: ${parsed.host}`);
 
         try {
             const result = await match({
@@ -300,10 +300,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 authType: req.authType ?? "none",
             });
 
-            console.log(`[DOWNLOAD REQUEST] Processing completed for URL: ${normalizedRequest.url}, Status: ${result.status}`);
+            // console.log(`[DOWNLOAD REQUEST] Processing completed for URL: ${normalizedRequest.url}, Status: ${result.status}`);
             res.status(result.status).json(result.body);
         } catch (error) {
-            console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);
+            // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);
             fail(res, "error.api.generic");
         }
     });

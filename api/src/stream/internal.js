@@ -9,24 +9,24 @@ const min = (a, b) => a < b ? a : b;
 const serviceNeedsChunks = new Set(["youtube", "vk"]);
 
 async function* readChunks(streamInfo, size) {
-    let read = 0n, chunksSinceTransplant = 0;    console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
-    console.log(`======> [readChunks] YouTube chunk download with authentication started`);
+    let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
+    // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
     
     while (read < size) {
         if (streamInfo.controller.signal.aborted) {
-            console.log(`[readChunks] Controller aborted at read=${read}/${size}`);
+            // console.log(`[readChunks] Controller aborted at read=${read}/${size}`);
             throw new Error("controller aborted");
         }
 
         const rangeStart = read;
         const rangeEnd = read + CHUNK_SIZE;
-        console.log(`[readChunks] Requesting chunk: bytes=${rangeStart}-${rangeEnd}, read=${read}/${size}`);
+        // console.log(`[readChunks] Requesting chunk: bytes=${rangeStart}-${rangeEnd}, read=${read}/${size}`);
 
         const headers = {
             ...getHeaders('youtube'),
             Range: `bytes=${read}-${read + CHUNK_SIZE}`
         };
-        console.log(`======> [readChunks] Chunk request using authenticated headers: ${!!headers.Cookie}`);
+        // console.log(`======> [readChunks] Chunk request using authenticated headers: ${!!headers.Cookie}`);
 
         const chunk = await request(streamInfo.url, {
             headers: {
@@ -38,23 +38,24 @@ async function* readChunks(streamInfo, size) {
             maxRedirections: 4
         });
 
-        console.log(`[readChunks] Chunk response: status=${chunk.statusCode}, content-length=${chunk.headers['content-length']}`);
-        console.log(`======> [readChunks] Authenticated chunk request result: status=${chunk.statusCode}`);
+        // console.log(`[readChunks] Chunk response: status=${chunk.statusCode}, content-length=${chunk.headers['content-length']}`);
+        // console.log(`======> [readChunks] Authenticated chunk request result: status=${chunk.statusCode}`);
         
         if (chunk.statusCode === 403 && chunksSinceTransplant >= 3 && streamInfo.originalRequest) {
             chunksSinceTransplant = 0;
-            console.log(`[readChunks] 403 error after 3+ chunks, attempting fresh YouTube API call`);
-            console.log(`======> [readChunks] 403 error detected, attempting fresh authenticated API call`);
+            // console.log(`[readChunks] 403 error after 3+ chunks, attempting fresh YouTube API call`);
+            // console.log(`======> [readChunks] 403 error detected, attempting fresh authenticated API call`);
             try {
                 // Import YouTube service dynamically
                 const handler = await import(`../processing/services/youtube.js`);
-                console.log(`[readChunks] Calling YouTube service for fresh URLs`);
+                // console.log(`[readChunks] Calling YouTube service for fresh URLs`);
                 
                 const response = await handler.default({
                     ...streamInfo.originalRequest,
                     dispatcher: streamInfo.dispatcher
                 });
 
+                /*
                 console.log(`[readChunks] Fresh API response:`, {
                     hasUrls: !!response.urls,
                     urlsLength: response.urls ? [response.urls].flat().length : 0,
@@ -62,6 +63,7 @@ async function* readChunks(streamInfo, size) {
                     type: response.type
                 });
                 console.log(`======> [readChunks] Fresh authenticated API call result:`, { hasUrls: !!response.urls, error: response.error });
+                */
 
                 if (response.urls) {
                     response.urls = [response.urls].flat();
@@ -69,33 +71,33 @@ async function* readChunks(streamInfo, size) {
                     // Update the URL for this stream based on audio/video selection
                     if (streamInfo.originalRequest.isAudioOnly && response.urls.length > 1) {
                         streamInfo.url = response.urls[1];
-                        console.log(`[readChunks] Updated to fresh audio URL`);
+                        // console.log(`[readChunks] Updated to fresh audio URL`);
                     } else if (streamInfo.originalRequest.isAudioMuted) {
                         streamInfo.url = response.urls[0];
-                        console.log(`[readChunks] Updated to fresh video URL`);
+                        // console.log(`[readChunks] Updated to fresh video URL`);
                     } else {
                         // For video streams, use the first URL
                         streamInfo.url = response.urls[0];
-                        console.log(`[readChunks] Updated to fresh video URL`);
+                        // console.log(`[readChunks] Updated to fresh video URL`);
                     }
                     
-                    console.log(`[readChunks] Fresh URL obtained, retrying chunk request`);
+                    // console.log(`[readChunks] Fresh URL obtained, retrying chunk request`);
                     continue; // Retry with fresh URL
                 } else {
-                    console.log(`[readChunks] Fresh API call failed, falling back to transplant`);
+                    // console.log(`[readChunks] Fresh API call failed, falling back to transplant`);
                     if (streamInfo.transplant) {
                         await streamInfo.transplant(streamInfo.dispatcher);
-                        console.log(`[readChunks] Transplant successful, retrying`);
+                        // console.log(`[readChunks] Transplant successful, retrying`);
                         continue;
                     }
                 }
             } catch (error) {
-                console.log(`[readChunks] Fresh API call failed:`, error);
+                // console.log(`[readChunks] Fresh API call failed:`, error);
                 // Fallback to transplant
                 if (streamInfo.transplant) {
                     try {
                         await streamInfo.transplant(streamInfo.dispatcher);
-                        console.log(`[readChunks] Transplant successful, retrying`);
+                        // console.log(`[readChunks] Transplant successful, retrying`);
                         continue;
                     } catch (transplantError) {
                         console.log(`[readChunks] Both fresh API and transplant failed:`, transplantError);
@@ -199,18 +201,18 @@ async function handleChunkedStream(streamInfo, res) {
                         console.log(`[handleYoutubeStream] Fresh API call failed, falling back to transplant`);
                         if (streamInfo.transplant) {
                             await streamInfo.transplant(streamInfo.dispatcher);
-                            console.log(`[handleYoutubeStream] Transplant completed as fallback`);
+                            // console.log(`[handleYoutubeStream] Transplant completed as fallback`);
                         }
                     }
                 } catch (error) {
-                    console.log(`[handleYoutubeStream] Fresh API call failed:`, error);
+                    // console.log(`[handleYoutubeStream] Fresh API call failed:`, error);
                     // Fallback to transplant
                     if (streamInfo.transplant) {
                         try {
                             await streamInfo.transplant(streamInfo.dispatcher);
-                            console.log(`[handleYoutubeStream] Transplant completed as fallback`);
+                            // console.log(`[handleYoutubeStream] Transplant completed as fallback`);
                         } catch (transplantError) {
-                            console.log(`[handleYoutubeStream] Both fresh API and transplant failed:`, transplantError);
+                            // console.log(`[handleYoutubeStream] Both fresh API and transplant failed:`, transplantError);
                         }
                     }
                 }
@@ -218,18 +220,18 @@ async function handleChunkedStream(streamInfo, res) {
         }
 
         const size = BigInt(req.headers.get('content-length'));
-        console.log(`[handleYoutubeStream] Content length: ${size}, status: ${req.status}`);
+        // console.log(`[handleYoutubeStream] Content length: ${size}, status: ${req.status}`);
 
         if (req.status !== 200 || !size) {
-            console.log(`[handleYoutubeStream] Invalid response - status: ${req.status}, size: ${size}, calling cleanup`);
+            // console.log(`[handleYoutubeStream] Invalid response - status: ${req.status}, size: ${size}, calling cleanup`);
             return cleanup();
         }
 
-        console.log(`[handleYoutubeStream] Creating generator for size: ${size}`);
+        // console.log(`[handleYoutubeStream] Creating generator for size: ${size}`);
         const generator = readChunks(streamInfo, size);
 
         const abortGenerator = () => {
-            console.log(`[handleYoutubeStream] Abort generator called`);
+            // console.log(`[handleYoutubeStream] Abort generator called`);
             generator.return();
             signal.removeEventListener('abort', abortGenerator);
         }
@@ -237,21 +239,21 @@ async function handleChunkedStream(streamInfo, res) {
         signal.addEventListener('abort', abortGenerator);
 
         const stream = Readable.from(generator);
-        console.log(`[handleYoutubeStream] Created readable stream`);
+        // console.log(`[handleYoutubeStream] Created readable stream`);
 
         // Set response headers
         for (const headerName of ['content-type', 'content-length']) {
             const headerValue = req.headers.get(headerName);
             if (headerValue) {
                 res.setHeader(headerName, headerValue);
-                console.log(`[handleYoutubeStream] Set header ${headerName}: ${headerValue}`);
+                // console.log(`[handleYoutubeStream] Set header ${headerName}: ${headerValue}`);
             }
         }
 
-        console.log(`[handleYoutubeStream] Starting pipe operation`);
+        // console.log(`[handleYoutubeStream] Starting pipe operation`);
         pipe(stream, res, cleanup);
     } catch (error) {
-        console.log(`[handleYoutubeStream] Error occurred: ${error}`);
+        // console.log(`[handleYoutubeStream] Error occurred: ${error}`);
         cleanup();
     }
 }

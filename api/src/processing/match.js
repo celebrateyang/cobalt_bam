@@ -30,6 +30,7 @@ import facebook from "./services/facebook.js";
 import bluesky from "./services/bluesky.js";
 import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
+import douyin from "./services/douyin.js";
 
 let freebind;
 
@@ -229,6 +230,10 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "dailymotion":
                 r = await dailymotion(patternMatch);
+                break;
+
+            case "douyin":
+                r = await douyin(patternMatch);
                 break;
 
             case "snapchat":

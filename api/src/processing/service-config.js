@@ -23,6 +23,14 @@ export const services = {
     dailymotion: {
         patterns: ["video/:id"],
     },
+    douyin: {
+        patterns: [
+            "video/:id",
+            "note/:id",
+            "_shortLink/:shortLink"
+        ],
+        subdomains: ["v", "www"],
+    },
     facebook: {
         patterns: [
             "_shortLink/:shortLink",

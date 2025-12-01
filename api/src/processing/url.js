@@ -71,6 +71,12 @@ function aliasURL(url) {
             }
             break;
 
+        case "douyin":
+            if (url.hostname === 'v.douyin.com' && parts.length === 2) {
+                url = new URL(`https://douyin.com/_shortLink/${parts[1]}`);
+            }
+            break;
+
         case "facebook":
         case "fb":
             if (url.searchParams.get('v')) {

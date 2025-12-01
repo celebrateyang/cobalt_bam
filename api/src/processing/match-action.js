@@ -173,6 +173,7 @@ export default function({
 
                 case "vk":
                 case "tiktok":
+                case "douyin":
                     params = {
                         type: r.subtitles ? "remux" : "proxy"
                     };

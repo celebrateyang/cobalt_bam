@@ -10,6 +10,10 @@ export const testers = {
 
     "dailymotion": pattern => pattern.id?.length <= 32,
 
+    "douyin": pattern =>
+        pattern.id?.length <= 24 ||
+        pattern.shortLink?.length <= 12,
+
     "facebook": pattern =>
         pattern.shortLink?.length <= 11 ||
         pattern.username?.length <= 30 ||

@@ -32,6 +32,9 @@ const serviceHeaders = {
     },
     tiktok: {
         referer: 'https://www.tiktok.com/',
+    },
+    douyin: {
+        referer: 'https://www.douyin.com/',
     }
 }
 

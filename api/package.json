@@ -30,7 +30,7 @@
         "@datastructures-js/priority-queue": "^6.3.1",
         "@imput/psl": "^2.0.4",
         "@imput/version-info": "workspace:^",
-        "bcrypt": "^5.1.1",
+        "bcryptjs": "^2.4.3",
         "better-sqlite3": "^11.7.0",
         "content-disposition-header": "0.6.0",
         "cors": "^2.8.5",

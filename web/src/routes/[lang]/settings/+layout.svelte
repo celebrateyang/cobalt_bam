@@ -21,26 +21,29 @@
     import IconCpu from "@tabler/icons-svelte/IconCpu.svelte";
     import IconSettingsBolt from "@tabler/icons-svelte/IconSettingsBolt.svelte";
 
+    export let data;
+
+    $: currentLang = data.lang;
     $: versionText = $version ? `v${$version.version}-${$version.commit.slice(0, 8)}` : '\xa0';
 </script>
 
 <PageNav
     pageName="settings"
     pageSubtitle={versionText}
-    homeNavPath="/settings"
+    homeNavPath="/{currentLang}/settings"
     homeTitle={$t("tabs.settings")}
 >
     <svelte:fragment slot="navigation">
         <PageNavSection>
             <PageNavTab
-                tabPath="/settings/appearance"
+                tabPath="/{currentLang}/settings/appearance"
                 tabTitle={$t("settings.page.appearance")}
                 iconColor="blue"
             >
                 <IconSunHigh />
             </PageNavTab>
             <PageNavTab
-                tabPath="/settings/privacy"
+                tabPath="/{currentLang}/settings/privacy"
                 tabTitle={$t("settings.page.privacy")}
                 iconColor="blue"
             >
@@ -50,28 +53,28 @@
 
         <PageNavSection>
             <PageNavTab
-                tabPath="/settings/video"
+                tabPath="/{currentLang}/settings/video"
                 tabTitle={$t("settings.page.video")}
                 iconColor="green"
             >
                 <IconMovie />
             </PageNavTab>
             <PageNavTab
-                tabPath="/settings/audio"
+                tabPath="/{currentLang}/settings/audio"
                 tabTitle={$t("settings.page.audio")}
                 iconColor="green"
             >
                 <IconMusic />
             </PageNavTab>
             <PageNavTab
-                tabPath="/settings/download"
+                tabPath="/{currentLang}/settings/download"
                 tabTitle={$t("settings.page.download")}
                 iconColor="green"
             >
                 <IconFileDownload />
             </PageNavTab>
             <PageNavTab
-                tabPath="/settings/local"
+                tabPath="/{currentLang}/settings/local"
                 tabTitle={$t("settings.page.local")}
                 iconColor="blue"
             >
@@ -81,14 +84,14 @@
 
         <!--<PageNavSection>
             <PageNavTab
-                tabPath="/settings/instances"
+                tabPath="/{currentLang}/settings/instances"
                 tabTitle={$t("settings.page.instances")}
                 iconColor="gray"
             >
                 <IconWorld />
             </PageNavTab>
             <PageNavTab
-                tabPath="/settings/advanced"
+                tabPath="/{currentLang}/settings/advanced"
                 tabTitle={$t("settings.page.advanced")}
                 iconColor="gray"
             >
@@ -96,7 +99,7 @@
             </PageNavTab>
             {#if $settings.advanced.debug}
                 <PageNavTab
-                    tabPath="/settings/debug"
+                    tabPath="/{currentLang}/settings/debug"
                     tabTitle={$t("settings.page.debug")}
                     iconColor="gray"
                 >

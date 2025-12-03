@@ -25,9 +25,11 @@
 
     $: isMobile = screenWidth <= 750;
     $: isHome = $page.url.pathname === homeNavPath;
+    $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
     $: {
         if (browser && !isMobile && isHome) {
-            goto(defaultNavPage(pageName), { replaceState: true });
+            const navPage = defaultNavPage(pageName);
+            goto(`/${currentLang}${navPage}`, { replaceState: true });
         }
     }
 </script>

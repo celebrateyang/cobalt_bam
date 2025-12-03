@@ -57,7 +57,8 @@
         }
 
         // clear hash and query to prevent bookmarking unwanted links
-        goto("/", { replaceState: true });
+        const currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+        goto(`/${currentLang}`, { replaceState: true });
     }
 
     $: if ($cachedInfo?.info?.cobalt?.turnstileSitekey) {
@@ -231,7 +232,7 @@
         display: flex;
         box-shadow: 0 0 0 1.5px var(--input-border) inset;
         border-radius: var(--border-radius);
-        padding: 0 10px;
+        padding: 10px;
         align-items: center;
         gap: 10px;
         font-size: 14px;
@@ -283,7 +284,7 @@
         display: flex;
         width: 100%;
         margin: 0;
-        padding: 10px 0;
+        padding: 0;
         height: 18px;
 
         align-items: center;

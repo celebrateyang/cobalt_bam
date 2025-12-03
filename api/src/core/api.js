@@ -28,7 +28,7 @@ import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
-import { initSocialMedia } from "../setup-social.js";
+// import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
 const git = {
     branch: await getBranch(),
@@ -424,11 +424,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
 
         // 初始化社交媒体数据库
-        try {
-            await initSocialMedia();
-        } catch (error) {
-            console.error("Failed to initialize social media module:", error);
-        }
+        // try {
+        //     await initSocialMedia();
+        // } catch (error) {
+        //     console.error("Failed to initialize social media module:", error);
+        // }
 
         if (env.apiKeyURL) {
             APIKeys.setup(env.apiKeyURL);

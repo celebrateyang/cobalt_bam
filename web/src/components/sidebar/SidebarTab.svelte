@@ -11,8 +11,9 @@
 
     let tab: HTMLElement;
 
-    $: currentTab = $page.url.pathname.split("/")[1];
-    $: baseTabPath = tabLink.split("/")[1];
+    // Extract the actual page path after the language prefix
+    $: currentTab = $page.url.pathname.replace(/^\/[a-z]{2}/, '').split("/")[1] || "save";
+    $: baseTabPath = tabLink.replace(/^\/[a-z]{2}/, '').split("/")[1] || "save";
 
     $: isTabActive = currentTab === baseTabPath;
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
+    import { page } from "$app/stores";
     import { formatFileSize } from "$lib/util";
     import { downloadFile } from "$lib/download";
     import { getProgress } from "$lib/task-manager/queue";
@@ -89,7 +90,8 @@
             files: [...state.files, fileToSend]
         }));
         // Navigate to clipboard page
-        await goto('/clipboard');
+        const currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+        await goto(`/${currentLang}/clipboard`);
     };
 
     type StatusText = {

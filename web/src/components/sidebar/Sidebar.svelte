@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
+    import { page } from "$app/stores";
     import { defaultNavPage } from "$lib/subnav";
 
     import CobaltLogo from "$components/sidebar/CobaltLogo.svelte";
@@ -16,12 +17,19 @@
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
 
     let screenWidth: number;
-    let settingsLink = defaultNavPage("settings");
-    let aboutLink = defaultNavPage("about");
-
-    $: screenWidth,
-       settingsLink = defaultNavPage("settings"),
-       aboutLink = defaultNavPage("about");
+    
+    // Get current language from URL
+    $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+    
+    // Generate language-aware links
+    $: homeLink = `/${currentLang}`;
+    $: clipboardLink = `/${currentLang}/clipboard`;
+    $: discoverLink = `/${currentLang}/discover`;
+    $: historyLink = `/${currentLang}/history`;
+    $: remuxLink = `/${currentLang}/remux`;
+    $: faqLink = `/${currentLang}/faq`;
+    $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
+    $: aboutLink = `/${currentLang}${defaultNavPage("about")}`;
 </script>
 
 <svelte:window bind:innerWidth={screenWidth} />
@@ -29,21 +37,23 @@
 <nav id="sidebar" aria-label={$t("a11y.tabs.tab_panel")}>
     <CobaltLogo />
     <div id="sidebar-tabs" role="tablist">        <div id="sidebar-actions" class="sidebar-inner-container">
-            <SidebarTab tabName="save" tabLink="/">
+            <SidebarTab tabName="save" tabLink={homeLink}>
                 <IconDownload />
             </SidebarTab>
-            <SidebarTab tabName="clipboard" tabLink="/clipboard">
+            <SidebarTab tabName="clipboard" tabLink={clipboardLink}>
                 <IconClipboard />
             </SidebarTab>
-            <SidebarTab tabName="discover" tabLink="/discover">
+            <SidebarTab tabName="discover" tabLink={discoverLink}>
                 <IconVideo />
             </SidebarTab>
-            <SidebarTab tabName="history" tabLink="/history">
+            <SidebarTab tabName="history" tabLink={historyLink}>
                 <IconHistory />
             </SidebarTab>
-            <SidebarTab tabName="remux" tabLink="/remux" beta>
+            <!-- Remux page doesn't exist yet
+            <SidebarTab tabName="remux" tabLink={remuxLink} beta>
                 <IconRepeat />
             </SidebarTab>
+            -->
             <SidebarTab tabName="settings" tabLink={settingsLink}>
                 <IconSettings />
             </SidebarTab>
@@ -58,7 +68,7 @@
                 <IconComet />
             </SidebarTab>
             -->
-            <SidebarTab tabName="faq" tabLink="/faq">
+            <SidebarTab tabName="faq" tabLink={faqLink}>
                 <IconComet />
             </SidebarTab>
             <SidebarTab tabName="about" tabLink={aboutLink}>

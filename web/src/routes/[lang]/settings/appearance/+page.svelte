@@ -25,12 +25,6 @@
 </SettingsCategory>
 
 <SettingsCategory sectionId="language" title={$t("settings.language")}>
-    <SettingsToggle
-        settingContext="appearance"
-        settingId="autoLanguage"
-        title={$t("settings.language.auto.title")}
-        description={$t("settings.language.auto.description")}
-    />
     <LanguageDropdown />
 </SettingsCategory>
 

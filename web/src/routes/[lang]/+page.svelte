@@ -11,6 +11,11 @@
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
 
+    export let data;
+
+    // Get current locale from data (set by [lang]/+layout.server.ts)
+    $: currentLocale = data.lang || $INTERNAL_locale;
+
     /*import Header from "$components/misc/Header.svelte"; // 导航栏组件
     import BlogPreview from "$components/blog/BlogPreview.svelte"; // 博客预览组件*/
     const donateLinks: Record<'en' | 'th' | 'zh' | 'ru', string> = {
@@ -19,7 +24,7 @@
         zh: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
         ru: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
     };
-    let key: string = $INTERNAL_locale;
+    let key: string = currentLocale;
     const donateLink = donateLinks[key as keyof typeof donateLinks];    let showMindsou = false;
     let showYumcheck = false;
     let showNotification = true; // 控制通知显示
@@ -85,21 +90,21 @@
 
     <!-- Feature Cards -->
     <section class="feature-cards">
-        <a href="/" class="feature-card active">
+        <a href="/{currentLocale}" class="feature-card active">
             <div class="icon-wrapper"><IconDownload size={28} /></div>
             <div class="card-content">
                 <h3>Media Downloader</h3>
                 <p class="card-desc">{$t("general.seo.home.description")}</p>
             </div>
         </a>
-        <a href="/clipboard" class="feature-card">
+        <a href="/{currentLocale}/clipboard" class="feature-card">
             <div class="icon-wrapper"><IconClipboard /></div>
             <div class="card-content">
                 <h3>File Transfer</h3>
                 <p class="card-desc">{$t("general.seo.transfer.description")}</p>
             </div>
         </a>
-        <a href="/discover" class="feature-card">
+        <a href="/{currentLocale}/discover" class="feature-card">
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
                 <h3>Discover Trends</h3>

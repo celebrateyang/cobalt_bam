@@ -46,7 +46,7 @@ const config = {
             assets: 'build',
             fallback: 'index.html',
             precompress: false,
-            strict: true
+            strict: false
         }),
         // CSP disabled to allow third-party ad scripts like Adsterra
         // Configure CSP via Firebase hosting headers or server instead

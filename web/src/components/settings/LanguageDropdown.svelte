@@ -1,22 +1,28 @@
 <script lang="ts">
     import languages from "$i18n/languages.json";
 
-    import { t, locales } from "$lib/i18n/translations";
-    import settings, { updateSetting } from "$lib/state/settings";
+    import { t, locales, INTERNAL_locale } from "$lib/i18n/translations";
+    import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
 
     import IconSelector from "@tabler/icons-svelte/IconSelector.svelte";
 
-    $: currentSetting = $settings.appearance.language;
-    $: disabled = $settings.appearance.autoLanguage;
+    $: currentSetting = $INTERNAL_locale;
+    // Disable language dropdown - we use URL-based i18n now
+    $: disabled = false;
 
     const updateLocale = (event: Event) => {
-       const target = event.target as HTMLSelectElement;
-
-        updateSetting({
-            appearance: {
-                language: target.value as keyof typeof languages,
-            },
-        });
+        const target = event.target as HTMLSelectElement;
+        const newLang = target.value;
+        
+        // Get current path without language prefix
+        const currentPath = $page.url.pathname.replace(/^\/[^/]+/, '') || '/';
+        
+        // Navigate to new language URL
+        goto(`/${newLang}${currentPath}`, { replaceState: false });
+        
+        // Save preference to cookie for root redirect
+        document.cookie = `preferred-language=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
     };
 </script>
 

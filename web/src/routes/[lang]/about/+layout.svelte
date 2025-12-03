@@ -11,11 +11,15 @@
     import IconLicense from "@tabler/icons-svelte/IconLicense.svelte";
     import IconChecklist from "@tabler/icons-svelte/IconChecklist.svelte";
     import IconUsersGroup from "@tabler/icons-svelte/IconUsersGroup.svelte";
+
+    export let data;
+
+    $: currentLang = data.lang;
 </script>
 
 <PageNav
     pageName="about"
-    homeNavPath="/about"
+    homeNavPath="/{currentLang}/about"
     homeTitle={$t("tabs.about")}
     contentPadding
     wideContent
@@ -23,14 +27,14 @@
     <svelte:fragment slot="navigation">
         <PageNavSection>
             <PageNavTab
-                tabPath="/about/general"
+                tabPath="/{currentLang}/about/general"
                 tabTitle={$t("about.page.general")}
                 iconColor="blue"
             >
                 <IconComet />
             </PageNavTab>
             <!--<PageNavTab
-                tabPath="/about/community"
+                tabPath="/{currentLang}/about/community"
                 tabTitle={$t("about.page.community")}
                 iconColor="green"
             >
@@ -40,21 +44,21 @@
 
         <PageNavSection>
             <PageNavTab
-                tabPath="/about/terms"
+                tabPath="/{currentLang}/about/terms"
                 tabTitle={$t("about.page.terms")}
                 iconColor="gray"
             >
                 <IconChecklist />
             </PageNavTab>
             <PageNavTab
-                tabPath="/about/privacy"
+                tabPath="/{currentLang}/about/privacy"
                 tabTitle={$t("about.page.privacy")}
                 iconColor="gray"
             >
                 <IconLock />
             </PageNavTab>
             <!--<PageNavTab
-                tabPath="/about/credits"
+                tabPath="/{currentLang}/about/credits"
                 tabTitle={$t("about.page.credits")}
                 iconColor="gray"
             >

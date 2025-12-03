@@ -24,7 +24,7 @@ processing servers work like advanced proxies and don't ever write any content t
 everything is handled in RAM and permanently purged once the tunnel is done.
 we have no downloading logs and can't identify anyone.
 
-[you can read more about how tunnels work in our privacy policy.](/about/privacy)
+[you can read more about how tunnels work in our privacy policy.](privacy)
 </section>
 
 <section id="responsibility">
@@ -52,5 +52,5 @@ we have no way of detecting abusive behavior automatically, as freesavevideo is 
 
 
 please note that this email is not intended for user support.
-if you're experiencing issues, contact us via any preferred method on [the support page](/about/community).
+if you're experiencing issues, contact us via any preferred method on [the support page](community).
 </section>

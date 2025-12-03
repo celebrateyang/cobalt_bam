@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { env } from '../config.js';
 import { getAdminByUsername, updateLastLogin } from '../db/social-media.js';
 

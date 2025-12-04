@@ -1,0 +1,128 @@
+{
+    "page.appearance": "外観",
+    "page.privacy": "プライバシー",
+    "page.video": "ビデオ",
+    "page.audio": "オーディオ",
+    "page.download": "ダウンロード",
+    "page.local": "ローカル処理",
+    "page.advanced": "詳細",
+    "page.debug": "デバッグ情報",
+    "page.instances": "インスタンス",
+
+    "section.general": "一般",
+    "section.save": "保存",
+
+    "theme": "テーマ",
+    "theme.auto": "自動",
+    "theme.light": "ライト",
+    "theme.dark": "ダーク",
+    "theme.description": "自動テーマは、デバイスの表示モードに応じてライトテーマとダークテーマを切り替えます。",
+
+    "video.quality": "ビデオ品質",
+    "video.quality.max": "8k+",
+    "video.quality.2160": "4k",
+    "video.quality.1440": "1440p",
+    "video.quality.1080": "1080p",
+    "video.quality.720": "720p",
+    "video.quality.480": "480p",
+    "video.quality.360": "360p",
+    "video.quality.240": "240p",
+    "video.quality.144": "144p",
+    "video.quality.description": "優先ビデオ品質が利用できない場合は、代わりに次善のものが選択されます。",
+
+    "video.youtube.codec": "YouTubeビデオコーデックとコンテナ",
+    "video.youtube.codec.description": "h264：最高の互換性、平均的なビットレート。最大品質は1080p。\nav1：最高の品質、効率、ビットレート。8kとHDRをサポート。\nvp9：av1と同じ品質とビットレートですが、ファイルサイズは約2倍。4kとHDRをサポート。\n\nav1とvp9はh264ほど広くサポートされていません。",
+
+    "video.twitter.gif": "Twitter/X",
+    "video.twitter.gif.title": "ループ動画をGIFに変換",
+    "video.twitter.gif.description": "GIF変換は非効率的で、変換されたファイルは不快なほど大きくて低品質になる可能性があります。",
+
+    "video.tiktok.h265": "TikTok",
+    "video.tiktok.h265.title": "HEVC/H265形式を優先",
+    "video.tiktok.h265.description": "互換性を犠牲にして1080pで動画をダウンロードできます。",
+
+    "audio.format": "オーディオ形式",
+    "audio.format.best": "最高",
+    "audio.format.mp3": "mp3",
+    "audio.format.ogg": "ogg",
+    "audio.format.wav": "wav",
+    "audio.format.opus": "opus",
+    "audio.format.description": "「最高」以外のすべての形式は変換され、品質が低下します。「最高」形式が選択されている場合のみ、オーディオは再エンコードされません。",
+
+    "audio.bitrate": "オーディオビットレート",
+    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.description": "ビットレートはオーディオ変換にのみ適用されます。freesavevideoはソースオーディオの品質を向上させることはできないため、128kbpsを超えるビットレートを選択すると、聴覚的な違いなしにファイルサイズが膨らむ可能性があります。知覚される品質は形式によって異なる場合があります。",
+
+    "audio.youtube.dub": "YouTube",
+    "audio.youtube.dub.title": "吹き替え動画にブラウザの言語を使用",
+    "audio.youtube.dub.description": "freesavevideoがあなたの言語に翻訳されていなくても機能します。",
+
+    "audio.tiktok.original": "TikTok",
+    "audio.tiktok.original.title": "オリジナルサウンドをダウンロード",
+    "audio.tiktok.original.description": "freesavevideoは、投稿者による変更なしに動画からサウンドをダウンロードします。",
+
+    "metadata.filename": "ファイル名スタイル",
+    "metadata.filename.classic": "クラシック",
+    "metadata.filename.basic": "ベーシック",
+    "metadata.filename.pretty": "プリティ",
+    "metadata.filename.nerdy": "ナーディ",
+    "metadata.filename.description": "ファイル名スタイルは、freesavevideoによってトンネルされたファイルにのみ使用されます。一部のサービスは、クラシック以外のファイル名スタイルをサポートしていません。",
+
+    "metadata.filename.preview.video": "ビデオタイトル",
+    "metadata.filename.preview.audio": "オーディオタイトル - オーディオアーティスト",
+
+    "metadata.file": "ファイルメタデータ",
+    "metadata.disable.title": "ファイルメタデータを無効にする",
+    "metadata.disable.description": "タイトル、アーティスト、その他の情報はファイルに追加されません。",
+
+    "saving.title": "保存方法",
+    "saving.ask": "確認",
+    "saving.download": "ダウンロード",
+    "saving.share": "共有",
+    "saving.copy": "コピー",
+    "saving.description": "freesavevideoからファイルまたはリンクを保存する優先方法。優先方法が利用できない場合、または何か問題が発生した場合、freesavevideoは次に何をするか尋ねます。",
+
+    "local.saving": "ローカル処理",
+    "local.saving.disabled": "無効",
+    "local.saving.preferred": "優先",
+    "local.saving.forced": "強制",
+    "local.saving.description": "有効にすると、オーディオとGIF変換はブラウザで実行されます。これにより、処理が高速になり、サーバーの負荷が軽減されますが、バッテリーとシステムリソースをより多く使用する可能性があります。\n\n優先：可能な場合はローカル処理を使用し、サポートされていない場合はサーバーにフォールバック。\n強制：常にローカル処理を使用し、サポートされていない場合は失敗。",
+
+    "accessibility": "アクセシビリティ",
+    "accessibility.transparency.title": "視覚的な透明度を下げる",
+    "accessibility.transparency.description": "サーフェスの透明度を下げ、ぼかし効果を無効にします。",
+    "accessibility.motion.title": "モーションを減らす",
+    "accessibility.motion.description": "可能な限りアニメーションとトランジションを無効にします。",
+
+    "language": "言語",
+    "language.auto.title": "自動選択",
+    "language.auto.description": "翻訳が利用可能な場合、freesavevideoはブラウザのデフォルト言語を使用します。そうでない場合は、英語が使用されます。",
+    "language.preferred.title": "優先言語",
+    "language.preferred.description": "自動選択が無効になっている場合、この言語が使用されます。翻訳されていないテキストは英語で表示されます。\n\n英語、ロシア語、チェコ語以外の言語には、コミュニティソースの翻訳を使用しています。不正確または不完全な場合があります。",
+
+    "privacy.analytics": "匿名トラフィック分析",
+    "privacy.analytics.title": "分析に貢献しない",
+    "privacy.analytics.description": "匿名トラフィック分析は、アクティブなfreesavevideoユーザーのおおよその数を取得するために必要です。識別可能な情報は保存されません。処理されたすべてのデータは匿名化され、集約されます。\n\nクッキーを使用せず、GDPR、CCPA、PECRに完全に準拠した自己ホスト型のplausibleインスタンスを使用しています。",
+    "privacy.analytics.learnmore": "plausibleのプライバシーへの献身について詳しく学ぶ。",
+
+    "privacy.tunnel": "トンネリング",
+    "privacy.tunnel.title": "常にファイルをトンネルする",
+    "privacy.tunnel.description": "freesavevideoはIPアドレス、ブラウザ情報を隠し、ローカルネットワーク制限を回避します。有効にすると、ファイルには読みやすいファイル名が付けられます。そうでない場合は意味不明になります。",
+
+    "advanced.debug": "デバッグ",
+    "advanced.debug.title": "デバッグ機能を有効にする",
+    "advanced.debug.description": "デバッグに役立つさまざまな情報を含むページへのアクセスを提供します。",
+
+    "advanced.data": "設定データ",
+
+    "processing.override": "デフォルトインスタンスの上書き",
+    "processing.override.title": "インスタンスが提供する処理サーバーを使用",
+    "processing.override.description": "Webインスタンスが独自のデフォルト処理サーバーを提供する場合、メイン処理サーバーの代わりにそれを使用することを選択できます。信頼できるサーバーであることを確認してください。",
+
+    "processing.community": "コミュニティインスタンス",
+
+    "processing.enable_custom.title": "カスタム処理サーバーを使用",
+    "processing.enable_custom.description": "選択すると、freesavevideoはカスタム処理サーバーを使用します。freesavevideoにはいくつかのセキュリティ対策がありますが、コミュニティインスタンスを介して行われた損害については責任を負いません。私たちはそれらを制御できないためです。\n\nどのインスタンスを使用するかは慎重に判断し、信頼できる人がホストしていることを確認してください。",
+
+    "processing.custom.placeholder": "カスタムインスタンスドメイン"
+}

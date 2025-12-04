@@ -1,0 +1,17 @@
+{
+    "save": "índice",
+    "clipboard": "portapapeles",
+    "discover": "descubrir",
+    "settings": "configuración",
+    "updates": "actualizaciones",
+    "donate": "donar",
+    "about": "acerca de",
+    "remux": "remux",
+    "history": "historial",
+    "faq": "FAQ",
+    "feature": {
+        "media_downloader": "Descargador de Medios",
+        "file_transfer": "Transferencia de Archivos",
+        "discover_trends": "Descubre Tendencias"
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "대기열 상태",
+        "ongoing": "대기열 처리 중",
+        "completed": "대기열 완료"
+    }
+}

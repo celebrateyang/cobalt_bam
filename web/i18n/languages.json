@@ -2,5 +2,11 @@
     "en": "english",
     "ru": "русский",
     "zh": "中文",
-    "th": "ภาษาไทย"
+    "th": "ภาษาไทย",
+    "ja": "日本語",
+    "es": "español",
+    "vi": "Tiếng Việt",
+    "ko": "한국어",
+    "fr": "français",
+    "de": "Deutsch"
 }

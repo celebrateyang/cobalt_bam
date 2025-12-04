@@ -1,0 +1,62 @@
+{
+    "cobalt": "bamboo download, Tải Video Miễn Phí - YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter",
+    "meowbalt": "bamboo download",
+    "beta": "beta",
+    "or": "hoặc",
+    "embed.description": "Tải video miễn phí từ YouTube, TikTok, Bilibili, Instagram, Facebook và Twitter. Không cần đăng ký. Tải video dễ dàng và nhanh chóng.",
+    "guide": {
+        "title": "Hướng Dẫn Tải Video Online Freesavevideo.online",
+        "description1": "Sử dụng Freesavevideo.online, công cụ tải video online hàng đầu để tải video và nhạc. Không cần phần mềm bổ sung; bạn có thể lưu nội dung yêu thích trực tiếp từ web. Nền tảng trực quan của chúng tôi giúp việc tải video trở nên đơn giản và hiệu quả.",
+        "description2": "Dễ dàng truy cập và tải xuống nhiều nội dung khác nhau, từ phim và chương trình TV phổ biến đến các clip thể thao thú vị. Chỉ cần dán URL video vào trường được chỉ định và nhấp vào nút tải xuống."
+    },
+    "notification": {
+        "title": "Thông báo:",
+        "close": "Đóng thông báo",
+        "youtube_restriction": "Không hỗ trợ tải YouTube, nhưng bạn có thể tham khảo video này để biết hướng dẫn tải: https://www.bilibili.com/video/BV1Bp4EzeEJo"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "Trò chuyện với người lạ dựa trên sở thích tương tự, không còn câu chuyện ngượng ngùng",
+            "features": {
+                "1": "1. Đăng suy nghĩ của bạn từ tâm trí bất cứ lúc nào",
+                "2": "2. Ghép đôi hoàn hảo, ghép đôi ngữ nghĩa, ghép đôi bổ sung",
+                "3": "3. Nhấp vào người dùng được ghép đôi để bắt đầu trò chuyện",
+                "4": "4. Thông báo email ghép đôi ngoại tuyến",
+                "5": "5. Nội dung có thời hạn & bảo vệ quyền riêng tư, tự động hủy để giảm gánh nặng thông tin"
+            },
+            "visit": "Truy cập Mindsou"
+        },
+        "yumcheck": {
+            "title": "Phân tích thành phần thực phẩm, tự động truy vấn và phân tích qua ảnh",
+            "features": {
+                "1": "Chụp ảnh danh sách thành phần để phân tích thành phần và đánh giá rủi ro sức khỏe một chạm",
+                "2": "So sánh phụ gia thực phẩm với tiêu chuẩn EU để hiểu đa chiều",
+                "3": "Quét số tiêu chuẩn thực phẩm để giải thích nhanh thông tin quy định",
+                "4": "Phân tích thông minh báo cáo xét nghiệm máu, giúp báo cáo máu dễ hiểu với mọi người"
+            },
+            "visit": "Truy cập YumCheck"
+        }
+    },
+    "pwa": {
+            "install_prompt": "Trang web này hỗ trợ cài đặt lên máy tính",
+            "install": "Cài đặt",
+            "close": "Đóng"
+    },
+    "seo": {
+        "home": {
+            "title": "Bamboo downloader，Trình Tải Video Online Miễn Phí - Hỗ trợ YouTube, TikTok, Instagram, Twitter | Lưu Video | Chất Lượng HD",
+            "description": "Công cụ tải video online miễn phí tốt nhất. Tải video từ YouTube, TikTok, Instagram, Twitter và nhiều hơn nữa. Không có watermark, chất lượng HD, tải xuống nhanh.",
+            "keywords": "tải video, tải video online, tải youtube, tải tiktok không có watermark, lưu video instagram, tải video miễn phí"
+        },
+        "transfer": {
+            "title": "Chuyển File Online Miễn Phí - Không Cần Ứng Dụng | Chia Sẻ P2P | Đa Thiết Bị",
+            "description": "Cách tốt nhất để chuyển file giữa các thiết bị mà không cần cài đặt ứng dụng. Chia sẻ file P2P an toàn, đồng bộ clipboard đa nền tảng. Nhanh, miễn phí và riêng tư.",
+            "keywords": "chuyển file, chia sẻ file không cần app, chuyển file p2p, sao chép dán đa thiết bị, thả file online, thay thế snapdrop"
+        },
+        "discover": {
+            "title": "Khám Phá Video Thịnh Hành - Làm Đẹp, Hài Hước, Clip Viral | Cập Nhật Hàng Ngày",
+            "description": "Bộ sưu tập các video hot nhất trên web. Video làm đẹp được tuyển chọn, clip hài hước và xu hướng viral. Cập nhật hàng ngày.",
+            "keywords": "video thịnh hành, video làm đẹp, video hài hước, clip viral, video hot, đề xuất video"
+        }
+    }
+}

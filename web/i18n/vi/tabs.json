@@ -1,0 +1,17 @@
+{
+    "save": "trang chủ",
+    "clipboard": "clipboard",
+    "discover": "khám phá",
+    "settings": "cài đặt",
+    "updates": "cập nhật",
+    "donate": "quyên góp",
+    "about": "về chúng tôi",
+    "remux": "remux",
+    "history": "lịch sử",
+    "faq": "Câu hỏi",
+    "feature": {
+        "media_downloader": "Trình Tải Xuống Media",
+        "file_transfer": "Truyền Tệp",
+        "discover_trends": "Khám Phá Xu Hướng"
+    }
+}

@@ -6,5 +6,10 @@
     "donate": "บริจาค",
     "about": "เกี่ยวกับ",
     "remux": "รีมักซ์",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "feature": {
+        "media_downloader": "โปรแกรมดาวน์โหลดสื่อ",
+        "file_transfer": "ถ่ายโอนไฟล์",
+        "discover_trends": "ค้นหาเทรนด์"
+    }
 }

@@ -1,0 +1,31 @@
+{
+    "page.general": "qu'est-ce que bamboo download ?",
+    "page.faq": "FAQ",
+
+    "page.community": "communauté et assistance",
+
+    "page.privacy": "politique de confidentialité",
+    "page.terms": "conditions d'utilisation et éthique",
+    "page.credits": "remerciements et licences",
+
+    "community.discord": "serveur discord de la communauté",
+    "community.twitter": "compte d'actualités sur twitter",
+    "community.github": "dépôt github",
+    "community.email": "email d'assistance",
+    "community.telegram": "canal d'actualités sur telegram",
+
+    "heading.general": "conditions générales",
+    "heading.licenses": "licences",
+    "heading.summary": "la meilleure façon de sauvegarder ce que vous aimez",
+    "heading.privacy": "confidentialité de premier plan",
+    "heading.community": "communauté ouverte",
+    "heading.local": "traitement sur l'appareil",
+    "heading.saving": "sauvegarde",
+    "heading.encryption": "chiffrement",
+    "heading.plausible": "analyses de trafic anonymes",
+    "heading.cloudflare": "confidentialité et sécurité web",
+    "heading.responsibility": "responsabilités des utilisateurs",
+    "heading.abuse": "signaler un abus",
+    "heading.motivation": "motivation",
+    "heading.testers": "testeurs bêta"
+}

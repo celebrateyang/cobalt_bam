@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "statut de la file d'attente",
+        "ongoing": "traitement de la file d'attente",
+        "completed": "file d'attente terminée"
+    }
+}

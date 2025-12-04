@@ -1,0 +1,13 @@
+{
+    "link_area": "リンク入力エリア",
+    "link_area.turnstile": "リンク入力エリア。ロボットではないか確認中。",
+    "clear_input": "入力をクリア",
+    "download": "ダウンロード",
+    "download.think": "リンクを処理中...",
+    "download.check": "ダウンロードを確認中...",
+    "download.done": "ダウンロード完了",
+    "download.error": "ダウンロードエラー",
+
+    "tutorial.shortcut.photos": "写真ショートカットを追加",
+    "tutorial.shortcut.files": "ファイルショートカットを追加"
+}

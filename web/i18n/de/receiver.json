@@ -1,0 +1,5 @@
+{
+    "title": "Datei ziehen oder auswählen",
+    "title.drop": "Datei hier ablegen!",
+    "accept": "Unterstützte Formate: {{ formats }}."
+}

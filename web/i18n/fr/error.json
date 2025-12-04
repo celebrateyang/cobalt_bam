@@ -1,0 +1,64 @@
+{
+    "import.no_data": "il n'y a rien à charger à partir du fichier. êtes-vous sûr que c'est le bon ?",
+    "import.invalid": "votre fichier n'a pas de paramètres cobalt valides à importer. êtes-vous sûr que c'est le bon ?",
+    "import.unknown": "impossible de charger les données du fichier. il peut être corrompu ou de mauvais format. voici l'erreur que j'ai obtenue :\n\n{{ value }}",
+
+    "remux.corrupted": "impossible de lire les métadonnées de ce fichier, il peut être corrompu.",
+    "remux.out_of_resources": "cobalt a manqué de ressources et ne peut pas continuer le traitement sur l'appareil. cela est lié aux limitations du côté de votre navigateur. essayez de rafraîchir ou de rouvrir l'application et de réessayer. certains appareils ne peuvent traiter que de minuscules fichiers.",
+
+    "tunnel.probe": "impossible de vérifier si vous pouvez télécharger ce fichier. réessayez dans quelques secondes !",
+
+    "captcha_ongoing": "toujours en train de vérifier si vous n'êtes pas un robot. attendez que le spinner disparaisse et réessayez.\n\nsi cela prend trop de temps, veuillez nous en informer ! nous utilisons cloudflare turnstile pour la protection contre les robots et parfois il bloque les gens sans raison.",
+
+    "api.auth.jwt.missing": "impossible de confirmer si vous n'êtes pas un robot car le serveur de traitement n'a pas reçu le jeton d'accès humain. réessayez dans quelques secondes ou rechargez la page !",
+    "api.auth.jwt.invalid": "impossible de confirmer si vous n'êtes pas un robot car votre jeton d'accès humain a expiré et n'a pas été renouvelé. réessayez dans quelques secondes ou rechargez la page !",
+    "api.auth.turnstile.missing": "impossible de confirmer si vous n'êtes pas un robot car le serveur de traitement n'a pas reçu le jeton d'accès humain. réessayez dans quelques secondes ou rechargez la page !",
+    "api.auth.turnstile.invalid": "impossible de confirmer si vous n'êtes pas un robot car votre jeton d'accès humain a expiré et n'a pas été renouvelé. réessayez dans quelques secondes ou rechargez la page !",
+
+    "api.unreachable": "impossible de se connecter au serveur de traitement. vérifiez votre connexion internet et réessayez.",
+    "api.timed_out": "le serveur de traitement a mis beaucoup trop de temps à répondre. il peut être surchargé en ce moment, réessayez dans quelques secondes !",
+    "api.rate_exceeded": "vous faites beaucoup trop de demandes. réessayez dans {{ limit }} secondes !",
+    "api.capacity": "cobalt est à pleine capacité et ne peut pas traiter votre demande pour le moment. réessayez dans quelques secondes. si cela ne fonctionne toujours pas, faites-le nous savoir et nous essaierons d'aider !",
+
+    "api.generic": "quelque chose s'est mal passé et je n'ai rien pu obtenir pour vous. réessayez dans quelques secondes, mais si le problème persiste, faites-le nous savoir et nous essaierons d'aider !",
+    "api.unknown_response": "impossible d'analyser la réponse du serveur. cela pourrait être causé par une incompatibilité de version. êtes-vous sûr d'être sur la dernière version de cobalt ?",
+
+    "api.service.unsupported": "ce service n'est pas encore pris en charge. avez-vous collé le bon lien ?",
+    "api.service.disabled": "ce service est pris en charge par cobalt, mais il est désactivé sur cette instance. essayez un lien d'un autre service !",
+
+    "api.link.invalid": "votre lien n'est pas valide ou ce service n'est pas encore pris en charge. avez-vous collé le bon lien ?",
+    "api.link.unsupported": "{{ service }} est pris en charge, mais je n'ai pas pu reconnaître votre lien. avez-vous collé le bon ?",
+
+    "api.fetch.fail": "quelque chose s'est mal passé lors de la récupération des informations de {{ service }} et je n'ai rien pu trouver pour vous. êtes-vous sûr que votre lien fonctionne ? si c'est le cas et que vous voyez toujours cette erreur, faites-le nous savoir et nous essaierons d'aider !",
+    "api.fetch.critical": "le module {{ service }} a renvoyé une erreur que je ne reconnais pas. réessayez dans quelques secondes, mais si le problème persiste, faites-le nous savoir !",
+    "api.fetch.empty": "impossible de trouver des médias que je puisse télécharger pour vous. êtes-vous sûr d'avoir collé le bon lien ?",
+    "api.fetch.rate": "le serveur de traitement cobalt a été limité en débit par l'API {{ service }}. réessayez dans quelques secondes !",
+    "api.fetch.short_link": "impossible d'obtenir les informations du lien à partir du lien court. êtes-vous sûr qu'il fonctionne ? si c'est le cas et que vous obtenez toujours cette erreur, faites-le nous savoir et nous essaierons d'aider !",
+
+    "api.content.too_long": "le média que vous avez demandé est trop long. la limite de durée actuelle est de {{ limit }} minutes. essayez quelque chose de plus court !",
+
+    "api.content.video.unavailable": "je ne peux pas accéder à cette vidéo. elle peut être restreinte du côté de {{ service }}. avez-vous collé le bon lien ?",
+    "api.content.video.live": "cette vidéo est actuellement en direct, donc je ne peux pas encore la télécharger. attendez que le direct se termine, puis réessayez !",
+    "api.content.video.private": "cette vidéo est privée, donc je ne peux pas y accéder. modifiez sa visibilité ou essayez-en une autre !",
+    "api.content.video.age": "cette vidéo est soumise à une restriction d'âge, donc je ne peux pas y accéder anonymement. essayez-en une autre !",
+    "api.content.video.region": "cette vidéo est verrouillée par région, et le serveur de traitement est dans un autre endroit. essayez-en une autre !",
+
+    "api.youtube.disabled": "le téléchargement youtube est temporairement désactivé en raison de restrictions du côté de youtube. nous cherchons déjà des moyens de les contourner.<br><br>vous pouvez installer manuellement un plugin pour télécharger des vidéos youtube. pour le tutoriel, veuillez <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">regarder cette vidéo</a>.",
+
+    "api.content.post.unavailable": "impossible de trouver quoi que ce soit sur ce post. sa visibilité peut être limitée ou il peut ne pas exister du tout. assurez-vous que votre lien fonctionne et réessayez dans quelques secondes !",
+    "api.content.post.private": "ce post provient d'un compte privé, donc je ne peux pas y accéder. avez-vous collé le bon lien ?",
+    "api.content.post.age": "ce post est soumis à une restriction d'âge, donc je ne peux pas y accéder anonymement. avez-vous collé le bon lien ?",
+
+    "api.youtube.codec": "youtube n'a rien renvoyé avec votre codec vidéo préféré. essayez-en un autre dans les paramètres !",
+
+    "queue.ffmpeg.probe_failed": "échec de l'analyse du fichier. il peut être corrompu ou incompatible.",
+    "queue.ffmpeg.no_args": "le worker ffmpeg a démarré sans arguments.",
+    "queue.ffmpeg.out_of_memory": "ffmpeg a manqué de mémoire.",
+    "queue.ffmpeg.no_input_format": "impossible de déterminer le format d'entrée.",
+    "queue.ffmpeg.no_audio_channel": "la vidéo n'a pas de canal audio.",
+    "queue.ffmpeg.no_input_type": "le fichier d'entrée n'a pas de type.",
+
+    "api.youtube.decipher": "youtube a mis à jour son algorithme de déchiffrement et je n'ai pas pu extraire les informations sur la vidéo.\n\nréessayez dans quelques secondes, mais si le problème persiste, contactez-nous pour obtenir de l'aide.",
+    "api.youtube.login": "impossible d'obtenir cette vidéo car youtube m'a étiqueté comme un robot. cela est potentiellement causé par l'instance de traitement n'ayant pas de jetons de compte actifs. réessayez dans quelques secondes, mais si cela ne fonctionne toujours pas, informez le propriétaire de l'instance de cette erreur !",
+    "api.youtube.token_expired": "impossible d'obtenir cette vidéo car le jeton youtube a expiré et je n'ai pas pu le rafraîchir. réessayez dans quelques secondes, mais si cela ne fonctionne toujours pas, informez le propriétaire de l'instance de cette erreur !"
+}

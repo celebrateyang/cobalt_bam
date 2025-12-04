@@ -1,0 +1,37 @@
+{
+    "banner.title": "このウェブサイトは素晴らしい、少し感謝を！",
+    "banner.subtitle": "imputに寄付するか、\ncobaltの喜びを友達と共有しましょう",
+
+    "body.motivation": "cobaltは制作者、教育者、ビデオメーカー、その他多くの人々が好きなことをするのを助けます。これは愛情を込めて作られた、利益のためではない、異なる種類のサービスです。",
+    "body.no_bullshit": "私たちはインターネットが怖くある必要はないと信じています。そのため、cobaltには広告やその他の種類の悪意のあるコンテンツは決してありません。これは私たちが固く守る約束です。私たちが行うすべてのことは、プライバシー、アクセシビリティ、使いやすさを念頭に置いて構築されており、cobaltをすべての人が利用できるようにしています。",
+    "body.keep_going": "cobaltが役に立ったと思ったら、私たちの仕事をサポートすることを検討してください！寄付をするか、友達とcobaltを共有することで私たちを助けることができます。すべての寄付は大変感謝され、cobaltやその他のプロジェクトに取り組み続けるのに役立ちます。",
+
+    "card.once": "1回限りの寄付",
+    "card.recurring": "定期的な寄付",
+    "card.custom": "カスタム金額（$2から）",
+
+    "card.processor": "{{value}}経由",
+
+    "card.option.5": "コーヒー1杯",
+    "card.option.10": "フルサイズのピザ",
+    "card.option.15": "フルランチ",
+    "card.option.30": "2人分のランチ",
+    "card.option.50": "10kgのキャットフード",
+    "card.option.100": "1年分のドメイン",
+    "card.option.200": "エアフライヤー",
+    "card.option.500": "高級オフィスチェア",
+    "card.option.1599": "ベースのMacBook Pro",
+    "card.option.4900": "10,000個のリンゴ",
+    "card.option.7398": "最大構成のMacBook Pro",
+    "card.option.8629": "小さな土地",
+    "card.option.9433": "高級ホットタブ",
+
+    "card.custom.submit": "カスタム金額を寄付",
+
+    "share.title": "友達とcobaltを共有",
+
+    "alternative.title": "代替の寄付方法",
+
+    "alt.copy": "{{ value }}。暗号通貨ウォレットアドレス。押してコピー。",
+    "alt.open": "{{ value }}。押して開く。"
+}

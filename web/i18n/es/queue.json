@@ -1,0 +1,15 @@
+{
+    "title": "cola",
+    "state": {
+        "running": {
+            "fetch": "obteniendo",
+            "remux": "remezclando"
+        },
+        "starting": {
+            "fetch": "iniciando obtención",
+            "remux": "iniciando remezcla"
+        },
+        "retrying": "reintentando",
+        "waiting": "esperando"
+    }
+}

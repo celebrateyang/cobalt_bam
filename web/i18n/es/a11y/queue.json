@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "estado de la cola",
+        "ongoing": "procesamiento de la cola",
+        "completed": "cola completada"
+    }
+}

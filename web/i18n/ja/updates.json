@@ -1,0 +1,4 @@
+{
+    "button.next": "古い変更ログに移動（{{ value }}）",
+    "button.previous": "新しい変更ログに移動（{{ value }}）"
+}

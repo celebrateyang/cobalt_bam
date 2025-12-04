@@ -1,0 +1,31 @@
+{
+    "page.general": "bamboo download이 무엇인가요?",
+    "page.faq": "FAQ",
+
+    "page.community": "커뮤니티 & 지원",
+
+    "page.privacy": "개인정보 보호정책",
+    "page.terms": "이용약관 및 윤리",
+    "page.credits": "감사 & 라이선스",
+
+    "community.discord": "커뮤니티 디스코드 서버",
+    "community.twitter": "트위터 소식 계정",
+    "community.github": "깃허브 저장소",
+    "community.email": "지원 이메일",
+    "community.telegram": "텔레그램 소식 채널",
+
+    "heading.general": "일반 약관",
+    "heading.licenses": "라이선스",
+    "heading.summary": "좋아하는 것을 저장하는 가장 좋은 방법",
+    "heading.privacy": "선도적인 개인정보 보호",
+    "heading.community": "오픈 커뮤니티",
+    "heading.local": "기기 내 처리",
+    "heading.saving": "저장",
+    "heading.encryption": "암호화",
+    "heading.plausible": "익명 트래픽 분석",
+    "heading.cloudflare": "웹 개인정보 보호 & 보안",
+    "heading.responsibility": "사용자 책임",
+    "heading.abuse": "악용 신고",
+    "heading.motivation": "동기",
+    "heading.testers": "베타 테스터"
+}

@@ -1,12 +1,17 @@
 {
     "save": "首页",
-    "clipboard": "传输",
+    "clipboard": "剪贴板",
     "discover": "发现",
     "settings": "设置",
     "updates": "更新",
     "donate": "捐赠",
     "about": "关于",
-    "remux": "混流",
-    "history": "历史",
-    "faq": "常见问题"
+    "remux": "重新封装",
+    "history": "历史记录",
+    "faq": "常见问题",
+    "feature": {
+        "media_downloader": "媒体下载器",
+        "file_transfer": "文件传输",
+        "discover_trends": "发现趋势"
+    }
 }

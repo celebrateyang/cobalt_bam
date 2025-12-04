@@ -1,0 +1,62 @@
+{
+    "cobalt": "bamboo download, Descargar Videos Gratis - YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter",
+    "meowbalt": "bamboo download",
+    "beta": "beta",
+    "or": "o",
+    "embed.description": "Descarga videos gratis desde YouTube, TikTok, Bilibili, Instagram, Facebook y Twitter. Sin registro necesario. Descargas de video fáciles y rápidas.",
+    "guide": {
+        "title": "Guía del Descargador de Videos Online Freesavevideo.online",
+        "description1": "Usa Freesavevideo.online, el descargador de videos online líder para descargar videos y música. No se requiere software adicional; puedes guardar tu contenido multimedia favorito directamente desde la web. Nuestra plataforma intuitiva hace que descargar videos sea simple y eficiente.",
+        "description2": "Accede y descarga fácilmente varios contenidos, desde películas y programas de TV populares hasta emocionantes clips deportivos. Simplemente pega la URL del video en el campo designado y haz clic en el botón de descarga."
+    },
+    "notification": {
+        "title": "Aviso:",
+        "close": "Cerrar notificación",
+        "youtube_restriction": "Las descargas de YouTube no están soportadas, pero puedes consultar este video para instrucciones de descarga: https://www.bilibili.com/video/BV1Bp4EzeEJo"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "Chatea con extraños basándote en ideas similares, sin conversaciones incómodas",
+            "features": {
+                "1": "1. Publica tus pensamientos en cualquier momento",
+                "2": "2. Coincidencia perfecta, coincidencia semántica, coincidencia complementaria",
+                "3": "3. Haz clic en usuarios coincidentes para empezar a chatear",
+                "4": "4. Notificaciones por email de coincidencias sin conexión",
+                "5": "5. Contenido temporal y protección de privacidad, autodestrucción para reducir la carga de información"
+            },
+            "visit": "Visitar Mindsou"
+        },
+        "yumcheck": {
+            "title": "Análisis de ingredientes alimenticios, consulta automática y análisis por foto",
+            "features": {
+                "1": "Toma fotos de listas de ingredientes para análisis de ingredientes con un clic y evaluación de riesgos para la salud",
+                "2": "Compara aditivos alimentarios con estándares de la UE para comprensión multidimensional",
+                "3": "Escanea números de estándares alimentarios para interpretación rápida de información regulatoria",
+                "4": "Análisis inteligente de informes de análisis de sangre, haciendo los informes comprensibles para personas comunes"
+            },
+            "visit": "Visitar YumCheck"
+        }
+    },
+    "pwa": {
+            "install_prompt": "Este sitio web soporta instalación en el escritorio",
+            "install": "Instalar",
+            "close": "Cerrar"
+    },
+    "seo": {
+        "home": {
+            "title": "Bamboo downloader, Descargador de Videos Online Gratis - Compatible con YouTube, TikTok, Instagram, twitter | Guardar Videos | Calidad HD",
+            "description": "El mejor descargador de videos online gratuito. Descarga videos de YouTube, TikTok, Instagram, Twitter y más. Sin marca de agua, calidad HD, descarga rápida.",
+            "keywords": "descargador de videos, descargador de videos online, descargador de youtube, descargador de tiktok sin marca de agua, guardador de videos de instagram, descargador de videos gratis"
+        },
+        "transfer": {
+            "title": "Transferencia de Archivos Online Gratis - Sin App Necesaria | Compartir P2P | Entre Dispositivos",
+            "description": "La mejor manera de transferir archivos entre dispositivos sin instalar apps. Compartir archivos P2P seguro, sincronización de portapapeles multiplataforma. Rápido, gratis y privado.",
+            "keywords": "transferencia de archivos, compartir archivos sin app, transferencia de archivos p2p, copiar pegar entre dispositivos, drop de archivos online, alternativa a snapdrop"
+        },
+        "discover": {
+            "title": "Descubre Videos Tendencia - Belleza, Divertidos, Clips Virales | Actualizaciones Diarias",
+            "description": "Colección de los videos más populares de la web. Videos de belleza seleccionados, clips divertidos y tendencias virales. Actualizado diariamente.",
+            "keywords": "videos tendencia, videos de belleza, videos divertidos, clips virales, videos populares, recomendaciones de videos"
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "save": "インデックス",
+    "clipboard": "クリップボード",
+    "discover": "発見",
+    "settings": "設定",
+    "updates": "更新",
+    "donate": "寄付",
+    "about": "について",
+    "remux": "リミックス",
+    "history": "履歴",
+    "faq": "よくある質問",
+    "feature": {
+        "media_downloader": "メディアダウンローダー",
+        "file_transfer": "ファイル転送",
+        "discover_trends": "トレンドを発見"
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "page.general": "bamboo downloadとは？",
+    "page.faq": "よくある質問",
+
+    "page.community": "コミュニティとサポート",
+
+    "page.privacy": "プライバシーポリシー",
+    "page.terms": "利用規約と倫理",
+    "page.credits": "謝辞とライセンス",
+
+    "community.discord": "コミュニティDiscordサーバー",
+    "community.twitter": "Twitterのニュースアカウント",
+    "community.github": "GitHubリポジトリ",
+    "community.email": "サポートメール",
+    "community.telegram": "Telegramのニュースチャンネル",
+
+    "heading.general": "一般条項",
+    "heading.licenses": "ライセンス",
+    "heading.summary": "好きなものを保存する最良の方法",
+    "heading.privacy": "最高のプライバシー",
+    "heading.community": "オープンコミュニティ",
+    "heading.local": "デバイス上での処理",
+    "heading.saving": "保存",
+    "heading.encryption": "暗号化",
+    "heading.plausible": "匿名トラフィック分析",
+    "heading.cloudflare": "Webプライバシーとセキュリティ",
+    "heading.responsibility": "ユーザーの責任",
+    "heading.abuse": "不正利用の報告",
+    "heading.motivation": "モチベーション",
+    "heading.testers": "ベータテスター"
+}

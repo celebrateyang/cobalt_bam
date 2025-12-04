@@ -1,0 +1,5 @@
+{
+    "title": "kéo hoặc chọn một file",
+    "title.drop": "thả file vào đây!",
+    "accept": "định dạng được hỗ trợ: {{ formats }}."
+}

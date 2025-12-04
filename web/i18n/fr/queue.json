@@ -1,0 +1,15 @@
+{
+    "title": "file d'attente",
+    "state": {
+        "running": {
+            "fetch": "récupération",
+            "remux": "remuxage"
+        },
+        "starting": {
+            "fetch": "démarrage de la récupération",
+            "remux": "démarrage du remuxage"
+        },
+        "retrying": "nouvelle tentative",
+        "waiting": "en attente"
+    }
+}

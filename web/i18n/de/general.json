@@ -1,0 +1,62 @@
+{
+    "cobalt": "bamboo download, Videos kostenlos herunterladen - YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter",
+    "meowbalt": "bamboo download",
+    "beta": "Beta",
+    "or": "oder",
+    "embed.description": "Videos kostenlos von YouTube, TikTok, Bilibili, Instagram, Facebook und Twitter herunterladen. Keine Registrierung erforderlich. Einfache und schnelle Video-Downloads.",
+    "guide": {
+        "title": "Freesavevideo.online Online-Video-Downloader-Anleitung",
+        "description1": "Verwenden Sie Freesavevideo.online, den führenden Online-Video-Downloader zum Herunterladen von Videos und Musik. Es ist keine zusätzliche Software erforderlich; Sie können Ihre Lieblingsmedien direkt aus dem Web speichern. Unsere intuitive Plattform macht das Herunterladen von Videos einfach und effizient.",
+        "description2": "Greifen Sie einfach auf verschiedene Inhalte zu und laden Sie sie herunter, von beliebten Filmen und Fernsehsendungen bis hin zu aufregenden Sportclips. Fügen Sie einfach die Video-URL in das dafür vorgesehene Feld ein und klicken Sie auf die Download-Schaltfläche."
+    },
+    "notification": {
+        "title": "Hinweis:",
+        "close": "Benachrichtigung schließen",
+        "youtube_restriction": "YouTube-Downloads werden nicht unterstützt, aber Sie können sich für Download-Anweisungen dieses Video ansehen: https://www.bilibili.com/video/BV1Bp4EzeEJo"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "Chatten Sie mit Fremden basierend auf ähnlichen Ideen, keine peinlichen Gespräche",
+            "features": {
+                "1": "1. Veröffentlichen Sie Ihre Gedanken zu jedem Zeitpunkt",
+                "2": "2. Perfekte Übereinstimmung, semantische Übereinstimmung, komplementäre Übereinstimmung",
+                "3": "3. Klicken Sie auf übereinstimmende Benutzer, um mit dem Chatten zu beginnen",
+                "4": "4. Offline-Matching-E-Mail-Benachrichtigungen",
+                "5": "5. Zeitlich begrenzter Inhalt & Datenschutz, automatische Zerstörung zur Reduzierung der Informationsbelastung"
+            },
+            "visit": "Besuchen Sie Mindsou"
+        },
+        "yumcheck": {
+            "title": "Lebensmittelzutatenanalyse, automatische Abfrage und Analyse per Foto",
+            "features": {
+                "1": "Machen Sie Fotos von Zutatenlisten für Eine-Klick-Zutatenanalyse und Gesundheitsrisikobewertung",
+                "2": "Vergleichen Sie Lebensmittelzusatzstoffe mit EU-Standards für mehrdimensionales Verständnis",
+                "3": "Scannen Sie Lebensmittelstandardnummern für schnelle Interpretation von Regulierungsinformationen",
+                "4": "Intelligente Analyse von Blutuntersuchungsberichten, die Blutberichte für normale Menschen verständlich macht"
+            },
+            "visit": "Besuchen Sie YumCheck"
+        }
+    },
+    "pwa": {
+        "install_prompt": "Diese Website unterstützt die Installation auf dem Desktop",
+        "install": "Installieren",
+        "close": "Schließen"
+    },
+    "seo": {
+        "home": {
+            "title": "Bamboo Downloader, Kostenloser Online-Video-Downloader - Unterstützt YouTube, TikTok, Instagram, Twitter | Videos speichern | HD-Qualität",
+            "description": "Der beste kostenlose Online-Video-Downloader. Videos von YouTube, TikTok, Instagram, Twitter und mehr herunterladen. Kein Wasserzeichen, HD-Qualität, schneller Download.",
+            "keywords": "Video-Downloader, Online-Video-Downloader, YouTube-Downloader, TikTok-Downloader ohne Wasserzeichen, Instagram-Video-Saver, kostenloser Video-Downloader"
+        },
+        "transfer": {
+            "title": "Kostenlose Online-Dateiübertragung - Keine App erforderlich | P2P-Freigabe | Geräteübergreifend",
+            "description": "Der beste Weg, Dateien zwischen Geräten zu übertragen, ohne Apps zu installieren. Sichere P2P-Dateifreigabe, plattformübergreifende Zwischenablage-Synchronisation. Schnell, kostenlos und privat.",
+            "keywords": "Dateiübertragung, Dateifreigabe ohne App, P2P-Dateiübertragung, geräteübergreifendes Kopieren und Einfügen, Online-Dateiablage, Snapdrop-Alternative"
+        },
+        "discover": {
+            "title": "Entdecken Sie Trendvideos - Schönheit, lustig, virale Clips | Tägliche Updates",
+            "description": "Sammlung der heißesten Videos im Web. Kuratierte Schönheitsvideos, lustige Clips und virale Trends. Täglich aktualisiert.",
+            "keywords": "Trendvideos, Schönheitsvideos, lustige Videos, virale Clips, heiße Videos, Video-Empfehlungen"
+        }
+    }
+}

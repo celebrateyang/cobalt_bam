@@ -1,0 +1,13 @@
+{
+    "link_area": "Link-Eingabebereich",
+    "link_area.turnstile": "Link-Eingabebereich. Überprüfe, ob Sie kein Roboter sind.",
+    "clear_input": "Eingabe löschen",
+    "download": "Herunterladen",
+    "download.think": "Link wird verarbeitet...",
+    "download.check": "Download wird überprüft...",
+    "download.done": "Download abgeschlossen",
+    "download.error": "Download-Fehler",
+
+    "tutorial.shortcut.photos": "Fotos-Kurzbefehl hinzufügen",
+    "tutorial.shortcut.files": "Dateien-Kurzbefehl hinzufügen"
+}

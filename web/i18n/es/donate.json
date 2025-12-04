@@ -1,0 +1,37 @@
+{
+    "banner.title": "¡Este sitio web es genial, un poco de aprecio!",
+    "banner.subtitle": "dona a imput o comparte la\nalegría de cobalt con un amigo",
+
+    "body.motivation": "cobalt ayuda a productores, educadores, creadores de video y muchos otros a hacer lo que aman. es un tipo diferente de servicio que está hecho con amor, no con fines de lucro.",
+    "body.no_bullshit": "creemos que internet no tiene que ser aterrador, por eso cobalt nunca tendrá anuncios u otros tipos de contenido malicioso. es una promesa que mantenemos firmemente. todo lo que hacemos está construido con privacidad, accesibilidad y facilidad de uso en mente, haciendo cobalt disponible para todos.",
+    "body.keep_going": "si encontraste cobalt útil, ¡por favor considera apoyar nuestro trabajo! puedes ayudarnos haciendo una donación o compartiendo cobalt con un amigo. cada donación es muy apreciada y nos ayuda a seguir trabajando en cobalt y otros proyectos.",
+
+    "card.once": "donación única",
+    "card.recurring": "donación recurrente",
+    "card.custom": "cantidad personalizada (desde $2)",
+
+    "card.processor": "vía {{value}}",
+
+    "card.option.5": "taza de café",
+    "card.option.10": "pizza tamaño completo",
+    "card.option.15": "almuerzo completo",
+    "card.option.30": "almuerzo para dos",
+    "card.option.50": "10kg de comida para gatos",
+    "card.option.100": "un año de dominios",
+    "card.option.200": "freidora de aire",
+    "card.option.500": "silla de oficina elegante",
+    "card.option.1599": "macbook pro básico",
+    "card.option.4900": "10,000 manzanas",
+    "card.option.7398": "macbook pro al máximo",
+    "card.option.8629": "un pequeño terreno",
+    "card.option.9433": "jacuzzi de lujo",
+
+    "card.custom.submit": "donar cantidad personalizada",
+
+    "share.title": "comparte cobalt con un amigo",
+
+    "alternative.title": "formas alternativas de donar",
+
+    "alt.copy": "{{ value }}. dirección de billetera cripto. presiona para copiar.",
+    "alt.open": "{{ value }}. presiona para abrir."
+}

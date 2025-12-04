@@ -1,0 +1,15 @@
+{
+    "title": "hàng đợi",
+    "state": {
+        "running": {
+            "fetch": "đang tìm nạp",
+            "remux": "đang remux"
+        },
+        "starting": {
+            "fetch": "bắt đầu tìm nạp",
+            "remux": "bắt đầu remux"
+        },
+        "retrying": "đang thử lại",
+        "waiting": "đang chờ"
+    }
+}

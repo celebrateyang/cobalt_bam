@@ -1,0 +1,17 @@
+{
+    "save": "인덱스",
+    "clipboard": "클립보드",
+    "discover": "발견",
+    "settings": "설정",
+    "updates": "업데이트",
+    "donate": "기부",
+    "about": "정보",
+    "remux": "리먹스",
+    "history": "기록",
+    "faq": "FAQ",
+    "feature": {
+        "media_downloader": "미디어 다운로더",
+        "file_transfer": "파일 전송",
+        "discover_trends": "트렌드 발견"
+    }
+}

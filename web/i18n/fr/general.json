@@ -1,0 +1,62 @@
+{
+    "cobalt": "bamboo download, Télécharger des vidéos gratuitement - YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter",
+    "meowbalt": "bamboo download",
+    "beta": "bêta",
+    "or": "ou",
+    "embed.description": "Téléchargez des vidéos gratuitement depuis YouTube, TikTok, Bilibili, Instagram, Facebook et Twitter. Aucune inscription nécessaire. Téléchargements de vidéos faciles et rapides.",
+    "guide": {
+        "title": "Guide du téléchargeur de vidéos en ligne Freesavevideo.online",
+        "description1": "Utilisez Freesavevideo.online, le téléchargeur de vidéos en ligne de premier plan pour télécharger des vidéos et de la musique. Aucun logiciel supplémentaire n'est requis ; vous pouvez enregistrer vos médias préférés directement depuis le web. Notre plateforme intuitive rend le téléchargement de vidéos simple et efficace.",
+        "description2": "Accédez et téléchargez facilement divers contenus, des films et émissions de télévision populaires aux clips sportifs passionnants. Collez simplement l'URL de la vidéo dans le champ désigné et cliquez sur le bouton de téléchargement."
+    },
+    "notification": {
+        "title": "Avis :",
+        "close": "Fermer la notification",
+        "youtube_restriction": "Les téléchargements YouTube ne sont pas pris en charge, mais vous pouvez vous référer à cette vidéo pour les instructions de téléchargement : https://www.bilibili.com/video/BV1Bp4EzeEJo"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "Discutez avec des inconnus basés sur des idées similaires, pas de conversations gênantes",
+            "features": {
+                "1": "1. Publiez vos pensées de votre esprit à tout moment",
+                "2": "2. Correspondance parfaite, correspondance sémantique, correspondance complémentaire",
+                "3": "3. Cliquez sur les utilisateurs correspondants pour commencer à discuter",
+                "4": "4. Notifications par email de correspondance hors ligne",
+                "5": "5. Contenu à durée limitée et protection de la vie privée, destruction automatique pour réduire la charge d'information"
+            },
+            "visit": "Visiter Mindsou"
+        },
+        "yumcheck": {
+            "title": "Analyse des ingrédients alimentaires, requête et analyse automatiques par photo",
+            "features": {
+                "1": "Prenez des photos des listes d'ingrédients pour une analyse d'ingrédients en un clic et une évaluation des risques pour la santé",
+                "2": "Comparez les additifs alimentaires avec les normes de l'UE pour une compréhension multidimensionnelle",
+                "3": "Scannez les numéros de normes alimentaires pour une interprétation rapide des informations réglementaires",
+                "4": "Analyse intelligente des rapports de tests sanguins, rendant les rapports sanguins compréhensibles pour les personnes ordinaires"
+            },
+            "visit": "Visiter YumCheck"
+        }
+    },
+    "pwa": {
+        "install_prompt": "Ce site prend en charge l'installation sur le bureau",
+        "install": "Installer",
+        "close": "Fermer"
+    },
+    "seo": {
+        "home": {
+            "title": "Bamboo downloader, Téléchargeur de vidéos en ligne gratuit - Support YouTube, TikTok, Instagram, twitter | Enregistrer des vidéos | Qualité HD",
+            "description": "Le meilleur téléchargeur de vidéos en ligne gratuit. Téléchargez des vidéos depuis YouTube, TikTok, Instagram, Twitter et plus encore. Sans filigrane, qualité HD, téléchargement rapide.",
+            "keywords": "téléchargeur de vidéos, téléchargeur de vidéos en ligne, téléchargeur youtube, téléchargeur tiktok sans filigrane, enregistreur de vidéos instagram, téléchargeur de vidéos gratuit"
+        },
+        "transfer": {
+            "title": "Transfert de fichiers en ligne gratuit - Aucune application nécessaire | Partage P2P | Multi-appareils",
+            "description": "La meilleure façon de transférer des fichiers entre appareils sans installer d'applications. Partage de fichiers P2P sécurisé, synchronisation du presse-papiers multiplateforme. Rapide, gratuit et privé.",
+            "keywords": "transfert de fichiers, partage de fichiers sans application, transfert de fichiers p2p, copier-coller entre appareils, dépôt de fichiers en ligne, alternative à snapdrop"
+        },
+        "discover": {
+            "title": "Découvrez les vidéos tendance - Beauté, drôle, clips viraux | Mises à jour quotidiennes",
+            "description": "Collection des vidéos les plus populaires sur le web. Vidéos de beauté sélectionnées, clips drôles et tendances virales. Mis à jour quotidiennement.",
+            "keywords": "vidéos tendance, vidéos de beauté, vidéos drôles, clips viraux, vidéos populaires, recommandations de vidéos"
+        }
+    }
+}

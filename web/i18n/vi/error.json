@@ -1,0 +1,64 @@
+{
+    "import.no_data": "không có gì để tải từ file. bạn có chắc đó là file đúng không?",
+    "import.invalid": "file của bạn không có cài đặt cobalt hợp lệ để nhập. bạn có chắc đó là file đúng không?",
+    "import.unknown": "không thể tải dữ liệu từ file. nó có thể bị hỏng hoặc sai định dạng. đây là lỗi tôi nhận được:\n\n{{ value }}",
+
+    "remux.corrupted": "không thể đọc metadata từ file này, nó có thể bị hỏng.",
+    "remux.out_of_resources": "cobalt đã hết tài nguyên và không thể tiếp tục xử lý trên thiết bị. điều này liên quan đến giới hạn ở phía trình duyệt của bạn. thử làm mới hoặc mở lại ứng dụng và thử lại. một số thiết bị chỉ có thể xử lý các file nhỏ.",
+
+    "tunnel.probe": "không thể xác minh xem bạn có thể tải file này hay không. thử lại sau vài giây!",
+
+    "captcha_ongoing": "vẫn đang kiểm tra xem bạn có phải là bot không. đợi biểu tượng quay biến mất và thử lại.\n\nnếu mất quá nhiều thời gian, vui lòng cho chúng tôi biết! chúng tôi sử dụng cloudflare turnstile để bảo vệ bot và đôi khi nó chặn mọi người vô cớ.",
+
+    "api.auth.jwt.missing": "không thể xác nhận xem bạn có phải là robot không vì máy chủ xử lý không nhận được token truy cập của người dùng. thử lại sau vài giây hoặc tải lại trang!",
+    "api.auth.jwt.invalid": "không thể xác nhận xem bạn có phải là robot không vì token truy cập của bạn đã hết hạn và không được gia hạn. thử lại sau vài giây hoặc tải lại trang!",
+    "api.auth.turnstile.missing": "không thể xác nhận xem bạn có phải là robot không vì máy chủ xử lý không nhận được token truy cập của người dùng. thử lại sau vài giây hoặc tải lại trang!",
+    "api.auth.turnstile.invalid": "không thể xác nhận xem bạn có phải là robot không vì token truy cập của bạn đã hết hạn và không được gia hạn. thử lại sau vài giây hoặc tải lại trang!",
+
+    "api.unreachable": "không thể kết nối với máy chủ xử lý. kiểm tra kết nối internet của bạn và thử lại.",
+    "api.timed_out": "máy chủ xử lý mất quá nhiều thời gian để phản hồi. nó có thể bị quá tải vào lúc này, thử lại sau vài giây!",
+    "api.rate_exceeded": "bạn đang thực hiện quá nhiều yêu cầu. thử lại sau {{ limit }} giây!",
+    "api.capacity": "cobalt đang ở mức tối đa và không thể xử lý yêu cầu của bạn vào lúc này. thử lại sau vài giây. nếu vẫn không hoạt động, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+
+    "api.generic": "có gì đó không ổn và tôi không thể lấy gì cho bạn. thử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+    "api.unknown_response": "không thể phân tích phản hồi từ máy chủ. điều này có thể do không khớp phiên bản. bạn có chắc mình đang dùng phiên bản cobalt mới nhất không?",
+
+    "api.service.unsupported": "dịch vụ này chưa được hỗ trợ. bạn đã dán đúng liên kết chưa?",
+    "api.service.disabled": "dịch vụ này được cobalt hỗ trợ, nhưng nó bị tắt trên phiên bản này. thử liên kết từ dịch vụ khác!",
+
+    "api.link.invalid": "liên kết của bạn không hợp lệ hoặc dịch vụ này chưa được hỗ trợ. bạn đã dán đúng liên kết chưa?",
+    "api.link.unsupported": "{{ service }} được hỗ trợ, nhưng tôi không thể nhận ra liên kết của bạn. bạn đã dán đúng chưa?",
+
+    "api.fetch.fail": "có gì đó không ổn khi lấy thông tin từ {{ service }} và tôi không thể tìm thấy gì cho bạn. bạn có chắc liên kết của bạn hoạt động không? nếu có và bạn vẫn thấy lỗi này, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+    "api.fetch.critical": "module {{ service }} trả về lỗi mà tôi không nhận ra. thử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, hãy cho chúng tôi biết!",
+    "api.fetch.empty": "không thể tìm thấy phương tiện nào mà tôi có thể tải cho bạn. bạn có chắc đã dán đúng liên kết không?",
+    "api.fetch.rate": "máy chủ xử lý cobalt bị giới hạn tốc độ bởi api {{ service }}. thử lại sau vài giây!",
+    "api.fetch.short_link": "không thể lấy thông tin liên kết từ liên kết ngắn. bạn có chắc nó hoạt động không? nếu có và bạn vẫn gặp lỗi này, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+
+    "api.content.too_long": "phương tiện bạn yêu cầu quá dài. giới hạn thời lượng hiện tại là {{ limit }} phút. thử cái gì đó ngắn hơn thay thế!",
+
+    "api.content.video.unavailable": "tôi không thể truy cập video này. nó có thể bị hạn chế ở phía {{ service }}. bạn đã dán đúng liên kết chưa?",
+    "api.content.video.live": "video này hiện đang phát trực tiếp, nên tôi chưa thể tải xuống. đợi phát trực tiếp kết thúc, sau đó thử lại!",
+    "api.content.video.private": "video này riêng tư, nên tôi không thể truy cập. thay đổi khả năng hiển thị của nó hoặc thử video khác!",
+    "api.content.video.age": "video này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. thử video khác!",
+    "api.content.video.region": "video này bị khóa khu vực và máy chủ xử lý ở một vị trí khác. thử video khác!",
+
+    "api.youtube.disabled": "tải youtube tạm thời bị tắt do hạn chế từ phía youtube. chúng tôi đang tìm cách giải quyết.<br><br>bạn có thể cài đặt plugin thủ công để tải video youtube. để biết hướng dẫn, vui lòng <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">xem video này</a>.",
+
+    "api.content.post.unavailable": "không thể tìm thấy gì về bài đăng này. khả năng hiển thị của nó có thể bị hạn chế hoặc nó có thể không tồn tại. đảm bảo liên kết của bạn hoạt động và thử lại sau vài giây!",
+    "api.content.post.private": "bài đăng này từ một tài khoản riêng tư, nên tôi không thể truy cập. bạn đã dán đúng liên kết chưa?",
+    "api.content.post.age": "bài đăng này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. bạn đã dán đúng liên kết chưa?",
+
+    "api.youtube.codec": "youtube không trả về gì với codec video ưa thích của bạn. thử codec khác trong cài đặt!",
+
+    "queue.ffmpeg.probe_failed": "không thể kiểm tra file. nó có thể bị hỏng hoặc không tương thích.",
+    "queue.ffmpeg.no_args": "ffmpeg worker bắt đầu không có đối số.",
+    "queue.ffmpeg.out_of_memory": "ffmpeg hết bộ nhớ.",
+    "queue.ffmpeg.no_input_format": "không thể xác định định dạng đầu vào.",
+    "queue.ffmpeg.no_audio_channel": "video không có kênh âm thanh.",
+    "queue.ffmpeg.no_input_type": "file đầu vào không có loại.",
+
+    "api.youtube.decipher": "youtube đã cập nhật thuật toán giải mã của nó và tôi không thể trích xuất thông tin về video.\n\nthử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, liên hệ chúng tôi để được hỗ trợ.",
+    "api.youtube.login": "không thể lấy video này vì youtube đã gắn nhãn tôi là bot. điều này có thể do phiên bản xử lý không có token tài khoản hoạt động nào. thử lại sau vài giây, nhưng nếu vẫn không hoạt động, hãy cho chủ sở hữu phiên bản biết về lỗi này!",
+    "api.youtube.token_expired": "không thể lấy video này vì token youtube đã hết hạn và tôi không thể làm mới nó. thử lại sau vài giây, nhưng nếu vẫn không hoạt động, hãy cho chủ sở hữu phiên bản biết về lỗi này!"
+}

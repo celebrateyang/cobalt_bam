@@ -1,0 +1,25 @@
+{
+    "reset.title": "réinitialiser tous les paramètres ?",
+    "reset.body": "êtes-vous sûr de vouloir réinitialiser tous les paramètres ? cette action est immédiate et irréversible.",
+
+    "picker.title": "sélectionnez ce que vous souhaitez enregistrer",
+    "picker.description.desktop": "cliquez sur un élément pour l'enregistrer. les images peuvent également être enregistrées via le menu du clic droit.",
+    "picker.description.phone": "appuyez sur un élément pour l'enregistrer. les images peuvent également être enregistrées avec un appui long.",
+    "picker.description.ios": "appuyez sur un élément pour l'enregistrer avec un raccourci. les images peuvent également être enregistrées avec un appui long.",
+
+    "saving.title": "choisissez comment enregistrer",
+    "saving.blocked": "bamboo download a essayé d'ouvrir le fichier dans un nouvel onglet, mais votre navigateur l'a bloqué. vous pouvez autoriser les fenêtres contextuelles pour bamboo download pour éviter que cela ne se reproduise.",
+    "saving.timeout": "bamboo download a essayé d'enregistrer le fichier automatiquement, mais votre navigateur l'a arrêté. vous devez sélectionner manuellement une méthode préférée.",
+
+    "safety.title": "avis de sécurité important",
+
+    "import.body": "l'importation de fichiers inconnus ou corrompus peut altérer ou casser de manière inattendue les fonctionnalités de bamboo download. n'importez que les fichiers que vous avez personnellement exportés et que vous n'avez pas modifiés. si quelqu'un vous a demandé d'importer ce fichier - ne le faites pas.\n\nnous ne sommes pas responsables des dommages causés par l'importation de fichiers de paramètres inconnus.",
+
+    "api.override.title": "substitution de l'instance de traitement",
+    "api.override.body": "{{ value }} est maintenant l'instance de traitement. si vous ne lui faites pas confiance, appuyez sur \"annuler\" et elle sera ignorée.\n\nvous pouvez modifier votre choix plus tard dans les paramètres de traitement.",
+
+    "safety.custom_instance.body": "les instances personnalisées peuvent potentiellement présenter des risques pour la confidentialité et la sécurité.\n\nles mauvaises instances peuvent :\n1. vous rediriger loin de bamboo download et essayer de vous arnaquer.\n2. enregistrer toutes les informations sur vos demandes, les stocker indéfiniment et les utiliser pour vous suivre.\n3. vous servir des fichiers malveillants (tels que des logiciels malveillants).\n4. vous forcer à regarder des publicités ou à payer pour télécharger.\n\naprès ce point, nous ne pouvons plus vous protéger. veuillez faire attention aux instances que vous utilisez et faites toujours confiance à votre instinct. si quelque chose semble anormal, revenez à cette page, réinitialisez l'instance personnalisée et signalez-la nous sur github.",
+
+    "processing.ongoing": "bamboo download traite actuellement des médias dans cet onglet. partir annulera le traitement. êtes-vous sûr de vouloir faire cela ?",
+    "processing.title.ongoing": "le traitement sera annulé"
+}

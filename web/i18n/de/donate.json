@@ -1,0 +1,37 @@
+{
+    "banner.title": "Diese Website ist großartig, zeigen Sie etwas Wertschätzung!",
+    "banner.subtitle": "Spenden Sie für imput oder teilen Sie die\nFreude an cobalt mit einem Freund",
+
+    "body.motivation": "cobalt hilft Produzenten, Pädagogen, Videomachern und vielen anderen, das zu tun, was sie lieben. Es ist eine andere Art von Service, der mit Liebe gemacht wird, nicht für Profit.",
+    "body.no_bullshit": "Wir glauben, dass das Internet nicht beängstigend sein muss, weshalb cobalt niemals Werbung oder andere Arten von bösartigen Inhalten haben wird. Es ist ein Versprechen, zu dem wir fest stehen. Alles, was wir tun, ist mit Datenschutz, Barrierefreiheit und Benutzerfreundlichkeit im Hinterkopf gebaut, wodurch cobalt für jeden verfügbar ist.",
+    "body.keep_going": "Wenn Sie cobalt nützlich fanden, erwägen Sie bitte, unsere Arbeit zu unterstützen! Sie können uns helfen, indem Sie eine Spende machen oder cobalt mit einem Freund teilen. Jede Spende wird sehr geschätzt und hilft uns, weiter an cobalt und anderen Projekten zu arbeiten.",
+
+    "card.once": "Einmalige Spende",
+    "card.recurring": "Wiederkehrende Spende",
+    "card.custom": "Benutzerdefinierter Betrag (ab $2)",
+
+    "card.processor": "über {{value}}",
+
+    "card.option.5": "Tasse Kaffee",
+    "card.option.10": "Große Pizza",
+    "card.option.15": "Vollständiges Mittagessen",
+    "card.option.30": "Mittagessen für zwei",
+    "card.option.50": "10kg Katzenfutter",
+    "card.option.100": "Ein Jahr Domains",
+    "card.option.200": "Heißluftfritteuse",
+    "card.option.500": "Schicker Bürostuhl",
+    "card.option.1599": "Basis MacBook Pro",
+    "card.option.4900": "10.000 Äpfel",
+    "card.option.7398": "Maximal ausgestattetes MacBook Pro",
+    "card.option.8629": "Ein kleines Grundstück",
+    "card.option.9433": "Luxus-Whirlpool",
+
+    "card.custom.submit": "Benutzerdefinierten Betrag spenden",
+
+    "share.title": "cobalt mit einem Freund teilen",
+
+    "alternative.title": "Alternative Möglichkeiten zu spenden",
+
+    "alt.copy": "{{ value }}. Krypto-Wallet-Adresse. Drücken Sie zum Kopieren.",
+    "alt.open": "{{ value }}. Drücken Sie zum Öffnen."
+}

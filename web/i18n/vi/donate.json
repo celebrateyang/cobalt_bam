@@ -1,0 +1,37 @@
+{
+    "banner.title": "Trang web này tuyệt vời, một chút cảm ơn!",
+    "banner.subtitle": "quyên góp cho imput hoặc chia sẻ niềm vui\ncủa cobalt với một người bạn",
+
+    "body.motivation": "cobalt giúp các nhà sản xuất, giáo viên, người làm video và nhiều người khác làm những gì họ yêu thích. đây là một loại dịch vụ khác được tạo ra với tình yêu, không vì lợi nhuận.",
+    "body.no_bullshit": "chúng tôi tin rằng internet không phải là nơi đáng sợ, đó là lý do tại sao cobalt sẽ không bao giờ có quảng cáo hoặc các loại nội dung độc hại khác. đó là một lời hứa mà chúng tôi kiên định. mọi thứ chúng tôi làm đều được xây dựng với sự riêng tư, khả năng tiếp cận và dễ sử dụng, làm cho cobalt có sẵn cho mọi người.",
+    "body.keep_going": "nếu bạn thấy cobalt hữu ích, vui lòng xem xét hỗ trợ công việc của chúng tôi! bạn có thể giúp chúng tôi bằng cách quyên góp hoặc chia sẻ cobalt với một người bạn. mỗi khoản đóng góp đều được đánh giá cao và giúp chúng tôi tiếp tục làm việc trên cobalt và các dự án khác.",
+
+    "card.once": "quyên góp một lần",
+    "card.recurring": "quyên góp định kỳ",
+    "card.custom": "số tiền tùy chỉnh (từ $2)",
+
+    "card.processor": "qua {{value}}",
+
+    "card.option.5": "cốc cà phê",
+    "card.option.10": "pizza cỡ lớn",
+    "card.option.15": "bữa trưa đầy đủ",
+    "card.option.30": "bữa trưa cho hai người",
+    "card.option.50": "10kg thức ăn cho mèo",
+    "card.option.100": "một năm tên miền",
+    "card.option.200": "nồi chiên không khí",
+    "card.option.500": "ghế văn phòng sang trọng",
+    "card.option.1599": "macbook pro cơ bản",
+    "card.option.4900": "10,000 quả táo",
+    "card.option.7398": "macbook pro cấu hình tối đa",
+    "card.option.8629": "một mảnh đất nhỏ",
+    "card.option.9433": "bồn tắm nóng sang trọng",
+
+    "card.custom.submit": "quyên góp số tiền tùy chỉnh",
+
+    "share.title": "chia sẻ cobalt với một người bạn",
+
+    "alternative.title": "các cách quyên góp thay thế",
+
+    "alt.copy": "{{ value }}. địa chỉ ví tiền điện tử. nhấn để sao chép.",
+    "alt.open": "{{ value }}. nhấn để mở."
+}

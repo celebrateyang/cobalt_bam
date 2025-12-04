@@ -1,0 +1,17 @@
+{
+    "save": "Index",
+    "clipboard": "Zwischenablage",
+    "discover": "Entdecken",
+    "settings": "Einstellungen",
+    "updates": "Updates",
+    "donate": "Spenden",
+    "about": "Über",
+    "remux": "Remux",
+    "history": "Verlauf",
+    "faq": "FAQ",
+    "feature": {
+        "media_downloader": "Medien-Downloader",
+        "file_transfer": "Dateiübertragung",
+        "discover_trends": "Trends Entdecken"
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "キューの状態",
+        "ongoing": "キュー処理中",
+        "completed": "キュー完了"
+    }
+}

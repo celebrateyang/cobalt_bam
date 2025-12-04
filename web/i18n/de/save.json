@@ -1,0 +1,23 @@
+{
+    "paste": "Einfügen",
+    "paste.long": "Einfügen und herunterladen",
+    "auto": "Auto",
+    "audio": "Audio",
+    "mute": "Stumm",
+    "input.placeholder": "Fügen Sie den Link hier ein",
+    "terms.note.agreement": "Durch Fortfahren stimmen Sie zu",
+    "terms.note.link": "Nutzungsbedingungen und Ethik",
+    "services.title": "Unterstützte Dienste",
+    "services.title_show": "Unterstützte Dienste anzeigen",
+    "services.title_hide": "Unterstützte Dienste ausblenden",
+    "services.disclaimer": "freesavevideo ist nicht mit einem der oben aufgeführten Dienste verbunden.",
+
+    "tutorial.title": "Wie auf iOS speichern?",
+    "tutorial.intro": "Um Medien auf iOS bequem zu speichern, müssen Sie einen begleitenden Siri-Kurzbefehl aus dem Teilen-Blatt verwenden.",
+    "tutorial.step.1": "Fügen Sie begleitende Siri-Kurzbefehle hinzu:",
+    "tutorial.step.2": "Drücken Sie die \"Teilen\"-Schaltfläche im Speicherdialog von cobalt.",
+    "tutorial.step.3": "Wählen Sie den entsprechenden Kurzbefehl im Teilen-Blatt aus.",
+    "tutorial.outro": "Diese Kurzbefehle funktionieren nur in der cobalt-App, das Teilen von Links aus anderen Apps funktioniert nicht.",
+    "tutorial.shortcut.photos": "zu Fotos",
+    "tutorial.shortcut.files": "zu Dateien"
+}

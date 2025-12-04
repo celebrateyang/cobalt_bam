@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
 
-    const supportedLanguages = ['en', 'zh', 'th', 'ru'];
+    const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
     const defaultLanguage = 'en';
 
     function getCookie(name: string): string | null {

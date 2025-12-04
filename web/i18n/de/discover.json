@@ -1,0 +1,26 @@
+{
+  "title": "🌟 Entdecken Sie erstaunliche Videos",
+  "subtitle": "Premium-Inhalte von Top-Kreativen weltweit",
+  "filter": {
+    "all": "Alle Plattformen"
+  },
+  "status": {
+    "loading": "Wird geladen...",
+    "error": "Laden fehlgeschlagen",
+    "empty": {
+      "title": "Keine Videos",
+      "description": "Noch keine Videoinhalte hinzugefügt"
+    }
+  },
+  "account": {
+    "videoCount": "{{count}} Videos"
+  },
+  "action": {
+    "copy": "📋 Kopieren",
+    "copied": "✓ Kopiert",
+    "copyTitle": "Videoadresse kopieren",
+    "copyFailed": "Kopieren fehlgeschlagen:",
+    "manualCopy": "Automatisches Kopieren nicht möglich, bitte manuell kopieren:\n{{url}}",
+    "closeDialog": "Klicken Sie auf \"OK\", um diese Meldung zu schließen"
+  }
+}

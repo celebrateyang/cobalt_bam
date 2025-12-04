@@ -1,0 +1,128 @@
+{
+    "page.appearance": "giao diện",
+    "page.privacy": "quyền riêng tư",
+    "page.video": "video",
+    "page.audio": "âm thanh",
+    "page.download": "tải xuống",
+    "page.local": "xử lý cục bộ",
+    "page.advanced": "nâng cao",
+    "page.debug": "thông tin gỡ lỗi",
+    "page.instances": "phiên bản",
+
+    "section.general": "chung",
+    "section.save": "lưu",
+
+    "theme": "giao diện",
+    "theme.auto": "tự động",
+    "theme.light": "sáng",
+    "theme.dark": "tối",
+    "theme.description": "giao diện tự động chuyển đổi giữa giao diện sáng và tối tùy thuộc vào chế độ hiển thị của thiết bị của bạn.",
+
+    "video.quality": "chất lượng video",
+    "video.quality.max": "8k+",
+    "video.quality.2160": "4k",
+    "video.quality.1440": "1440p",
+    "video.quality.1080": "1080p",
+    "video.quality.720": "720p",
+    "video.quality.480": "480p",
+    "video.quality.360": "360p",
+    "video.quality.240": "240p",
+    "video.quality.144": "144p",
+    "video.quality.description": "nếu chất lượng video ưa thích không có sẵn, chất lượng tốt nhất tiếp theo sẽ được chọn thay thế.",
+
+    "video.youtube.codec": "codec và container video youtube",
+    "video.youtube.codec.description": "h264: tương thích tốt nhất, bitrate trung bình. chất lượng tối đa là 1080p. \nav1: chất lượng tốt nhất, hiệu quả và bitrate. hỗ trợ 8k & HDR. \nvp9: cùng chất lượng & bitrate với av1, nhưng file lớn gấp đôi. hỗ trợ 4k & HDR.\n\nav1 và vp9 không được hỗ trợ rộng rãi như h264.",
+
+    "video.twitter.gif": "twitter/x",
+    "video.twitter.gif.title": "chuyển video lặp thành GIF",
+    "video.twitter.gif.description": "chuyển đổi GIF không hiệu quả, file chuyển đổi có thể to và chất lượng thấp một cách khó chịu.",
+
+    "video.tiktok.h265": "tiktok",
+    "video.tiktok.h265.title": "ưu tiên định dạng HEVC/H265",
+    "video.tiktok.h265.description": "cho phép tải video ở 1080p với chi phí tương thích.",
+
+    "audio.format": "định dạng âm thanh",
+    "audio.format.best": "tốt nhất",
+    "audio.format.mp3": "mp3",
+    "audio.format.ogg": "ogg",
+    "audio.format.wav": "wav",
+    "audio.format.opus": "opus",
+    "audio.format.description": "tất cả các định dạng ngoại trừ \"tốt nhất\" đều được chuyển đổi, có nghĩa là sẽ có một số mất chất lượng. âm thanh không được mã hóa lại chỉ khi định dạng \"tốt nhất\" được chọn.",
+
+    "audio.bitrate": "bitrate âm thanh",
+    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.description": "bitrate chỉ áp dụng cho chuyển đổi âm thanh. freesavevideo không thể cải thiện chất lượng âm thanh nguồn, vì vậy chọn bitrate trên 128kbps có thể làm tăng kích thước file mà không có sự khác biệt nghe được. chất lượng cảm nhận có thể khác nhau theo định dạng.",
+
+    "audio.youtube.dub": "youtube",
+    "audio.youtube.dub.title": "sử dụng ngôn ngữ trình duyệt cho video lồng tiếng",
+    "audio.youtube.dub.description": "hoạt động ngay cả khi freesavevideo chưa được dịch sang ngôn ngữ của bạn.",
+
+    "audio.tiktok.original": "tiktok",
+    "audio.tiktok.original.title": "tải âm thanh gốc",
+    "audio.tiktok.original.description": "freesavevideo sẽ tải âm thanh từ video mà không có bất kỳ thay đổi nào bởi tác giả bài đăng.",
+
+    "metadata.filename": "kiểu tên file",
+    "metadata.filename.classic": "cổ điển",
+    "metadata.filename.basic": "cơ bản",
+    "metadata.filename.pretty": "đẹp",
+    "metadata.filename.nerdy": "chuyên nghiệp",
+    "metadata.filename.description": "kiểu tên file sẽ chỉ được sử dụng cho các file được truyền bởi freesavevideo. một số dịch vụ không hỗ trợ kiểu tên file khác với cổ điển.",
+
+    "metadata.filename.preview.video": "Tiêu Đề Video",
+    "metadata.filename.preview.audio": "Tiêu Đề Âm Thanh - Tác Giả Âm Thanh",
+
+    "metadata.file": "metadata file",
+    "metadata.disable.title": "tắt metadata file",
+    "metadata.disable.description": "tiêu đề, nghệ sĩ và thông tin khác sẽ không được thêm vào file.",
+
+    "saving.title": "phương thức lưu",
+    "saving.ask": "hỏi",
+    "saving.download": "tải xuống",
+    "saving.share": "chia sẻ",
+    "saving.copy": "sao chép",
+    "saving.description": "cách ưa thích để lưu file hoặc liên kết từ freesavevideo. nếu phương thức ưa thích không có sẵn hoặc có gì đó sai, freesavevideo sẽ hỏi bạn làm gì tiếp theo.",
+
+    "local.saving": "xử lý cục bộ",
+    "local.saving.disabled": "tắt",
+    "local.saving.preferred": "ưu tiên",
+    "local.saving.forced": "bắt buộc",
+    "local.saving.description": "khi bật, chuyển đổi âm thanh và GIF được thực hiện trong trình duyệt của bạn. điều này cho phép xử lý nhanh hơn và giảm tải máy chủ, nhưng có thể sử dụng nhiều pin và tài nguyên hệ thống hơn.\n\nưu tiên: sử dụng xử lý cục bộ khi có thể, dự phòng sang máy chủ khi không được hỗ trợ.\nbắt buộc: luôn sử dụng xử lý cục bộ, thất bại nếu không được hỗ trợ.",
+
+    "accessibility": "khả năng tiếp cận",
+    "accessibility.transparency.title": "giảm độ trong suốt trực quan",
+    "accessibility.transparency.description": "giảm độ trong suốt của bề mặt và tắt hiệu ứng mờ.",
+    "accessibility.motion.title": "giảm chuyển động",
+    "accessibility.motion.description": "tắt hoạt ảnh và chuyển tiếp bất cứ khi nào có thể.",
+
+    "language": "ngôn ngữ",
+    "language.auto.title": "lựa chọn tự động",
+    "language.auto.description": "freesavevideo sẽ sử dụng ngôn ngữ mặc định của trình duyệt của bạn nếu bản dịch có sẵn. nếu không, tiếng anh sẽ được sử dụng thay thế.",
+    "language.preferred.title": "ngôn ngữ ưa thích",
+    "language.preferred.description": "ngôn ngữ này sẽ được sử dụng khi lựa chọn tự động bị tắt. bất kỳ văn bản nào không được dịch sẽ được hiển thị bằng tiếng anh.\n\nchúng tôi sử dụng bản dịch từ cộng đồng cho các ngôn ngữ khác với tiếng anh, tiếng nga và tiếng séc. chúng có thể không chính xác hoặc không đầy đủ.",
+
+    "privacy.analytics": "phân tích lưu lượng ẩn danh",
+    "privacy.analytics.title": "không đóng góp vào phân tích",
+    "privacy.analytics.description": "phân tích lưu lượng ẩn danh cần thiết để có số lượng người dùng freesavevideo hoạt động gần đúng. không có thông tin nhận dạng nào về bạn được lưu trữ. tất cả dữ liệu được xử lý đều được ẩn danh và tổng hợp.\n\nchúng tôi sử dụng phiên bản plausible tự lưu trữ không sử dụng cookie và tuân thủ hoàn toàn GDPR, CCPA và PECR.",
+    "privacy.analytics.learnmore": "tìm hiểu thêm về sự cống hiến của plausible cho quyền riêng tư.",
+
+    "privacy.tunnel": "truyền",
+    "privacy.tunnel.title": "luôn truyền file",
+    "privacy.tunnel.description": "freesavevideo sẽ ẩn địa chỉ ip của bạn, thông tin trình duyệt và bỏ qua hạn chế mạng cục bộ. khi bật, các file cũng sẽ có tên file có thể đọc được mà nếu không sẽ là ký tự vô nghĩa.",
+
+    "advanced.debug": "gỡ lỗi",
+    "advanced.debug.title": "bật tính năng gỡ lỗi",
+    "advanced.debug.description": "cho phép bạn truy cập vào trang với nhiều thông tin khác nhau có thể hữu ích cho việc gỡ lỗi.",
+
+    "advanced.data": "dữ liệu cài đặt",
+
+    "processing.override": "ghi đè phiên bản mặc định",
+    "processing.override.title": "sử dụng máy chủ xử lý do phiên bản cung cấp",
+    "processing.override.description": "nếu phiên bản web cung cấp máy chủ xử lý mặc định riêng của nó, bạn có thể chọn sử dụng nó thay vì máy chủ xử lý chính. đảm bảo đó là máy chủ bởi người mà bạn tin tưởng.",
+
+    "processing.community": "phiên bản cộng đồng",
+
+    "processing.enable_custom.title": "sử dụng máy chủ xử lý tùy chỉnh",
+    "processing.enable_custom.description": "freesavevideo sẽ sử dụng máy chủ xử lý tùy chỉnh nếu bạn chọn. mặc dù freesavevideo có một số biện pháp bảo mật, chúng tôi không chịu trách nhiệm cho bất kỳ thiệt hại nào qua phiên bản cộng đồng, vì chúng tôi không có quyền kiểm soát chúng.\n\nvui lòng lưu ý những phiên bản nào bạn sử dụng và đảm bảo chúng được lưu trữ bởi những người bạn tin tưởng.",
+
+    "processing.custom.placeholder": "tên miền phiên bản tùy chỉnh"
+}

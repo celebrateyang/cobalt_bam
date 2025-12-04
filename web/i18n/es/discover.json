@@ -1,0 +1,26 @@
+{
+  "title": "🌟 Descubre Videos Increíbles",
+  "subtitle": "Contenido premium de los mejores creadores globales",
+  "filter": {
+    "all": "Todas las Plataformas"
+  },
+  "status": {
+    "loading": "Cargando...",
+    "error": "Falló la carga",
+    "empty": {
+      "title": "Sin videos",
+      "description": "Aún no se ha agregado contenido de video"
+    }
+  },
+  "account": {
+    "videoCount": "{{count}} videos"
+  },
+  "action": {
+    "copy": "📋 Copiar",
+    "copied": "✓ Copiado",
+    "copyTitle": "Copiar dirección del video",
+    "copyFailed": "Falló la copia:",
+    "manualCopy": "No se puede copiar automáticamente, por favor copia manualmente:\n{{url}}",
+    "closeDialog": "Haz clic en \"OK\" para cerrar este mensaje"
+  }
+}

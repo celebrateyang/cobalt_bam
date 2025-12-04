@@ -1,0 +1,64 @@
+{
+    "import.no_data": "no hay nada que cargar del archivo. ¿estás seguro de que es el correcto?",
+    "import.invalid": "tu archivo no tiene configuraciones válidas de cobalt para importar. ¿estás seguro de que es el correcto?",
+    "import.unknown": "no se pudieron cargar datos del archivo. puede estar corrupto o en formato incorrecto. aquí está el error que obtuve:\n\n{{ value }}",
+
+    "remux.corrupted": "no se pudieron leer los metadatos de este archivo, puede estar corrupto.",
+    "remux.out_of_resources": "cobalt se quedó sin recursos y no puede continuar con el procesamiento en el dispositivo. esto está relacionado con limitaciones del lado de tu navegador. intenta refrescar o reabrir la aplicación e intentar de nuevo. algunos dispositivos solo pueden procesar archivos pequeños.",
+
+    "tunnel.probe": "no se pudo verificar si puedes descargar este archivo. ¡intenta de nuevo en unos segundos!",
+
+    "captcha_ongoing": "todavía verificando si no eres un bot. espera a que el spinner desaparezca e intenta de nuevo.\n\nsi tarda demasiado, ¡por favor háznoslo saber! usamos cloudflare turnstile para protección contra bots y a veces bloquea a personas sin razón.",
+
+    "api.auth.jwt.missing": "no se pudo confirmar si no eres un robot porque el servidor de procesamiento no recibió el token de acceso humano. ¡intenta de nuevo en unos segundos o recarga la página!",
+    "api.auth.jwt.invalid": "no se pudo confirmar si no eres un robot porque tu token de acceso humano expiró y no se renovó. ¡intenta de nuevo en unos segundos o recarga la página!",
+    "api.auth.turnstile.missing": "no se pudo confirmar si no eres un robot porque el servidor de procesamiento no recibió el token de acceso humano. ¡intenta de nuevo en unos segundos o recarga la página!",
+    "api.auth.turnstile.invalid": "no se pudo confirmar si no eres un robot porque tu token de acceso humano expiró y no se renovó. ¡intenta de nuevo en unos segundos o recarga la página!",
+
+    "api.unreachable": "no se pudo conectar al servidor de procesamiento. verifica tu conexión a internet e intenta de nuevo.",
+    "api.timed_out": "el servidor de procesamiento tardó demasiado en responder. puede estar abrumado en este momento, ¡intenta de nuevo en unos segundos!",
+    "api.rate_exceeded": "estás haciendo demasiadas solicitudes. ¡intenta de nuevo en {{ limit }} segundos!",
+    "api.capacity": "cobalt está al máximo de capacidad y no puede procesar tu solicitud en este momento. intenta de nuevo en unos segundos. si aún no funciona, ¡háznoslo saber e intentaremos ayudar!",
+
+    "api.generic": "algo salió mal y no pude obtener nada para ti. intenta de nuevo en unos segundos, pero si el problema persiste, ¡háznoslo saber e intentaremos ayudar!",
+    "api.unknown_response": "no se pudo analizar la respuesta del servidor. esto podría deberse a una incompatibilidad de versiones. ¿estás seguro de que estás en la última versión de cobalt?",
+
+    "api.service.unsupported": "este servicio aún no es compatible. ¿has pegado el enlace correcto?",
+    "api.service.disabled": "este servicio es compatible con cobalt, pero está deshabilitado en esta instancia. ¡intenta un enlace de otro servicio!",
+
+    "api.link.invalid": "tu enlace no es válido o este servicio aún no es compatible. ¿has pegado el enlace correcto?",
+    "api.link.unsupported": "{{ service }} es compatible, pero no pude reconocer tu enlace. ¿has pegado el correcto?",
+
+    "api.fetch.fail": "algo salió mal al obtener información de {{ service }} y no pude encontrar nada para ti. ¿estás seguro de que tu enlace funciona? si funciona y aún ves este error, ¡háznoslo saber e intentaremos ayudar!",
+    "api.fetch.critical": "el módulo de {{ service }} devolvió un error que no reconozco. intenta de nuevo en unos segundos, pero si el problema persiste, ¡háznoslo saber!",
+    "api.fetch.empty": "no pude encontrar ningún medio que pueda descargar para ti. ¿estás seguro de que pegaste el enlace correcto?",
+    "api.fetch.rate": "el servidor de procesamiento de cobalt fue limitado por la api de {{ service }}. ¡intenta de nuevo en unos segundos!",
+    "api.fetch.short_link": "no se pudo obtener información del enlace corto. ¿estás seguro de que funciona? si funciona y aún obtienes este error, ¡háznoslo saber e intentaremos ayudar!",
+
+    "api.content.too_long": "el medio que solicitaste es demasiado largo. el límite de duración actual es {{ limit }} minutos. ¡intenta algo más corto!",
+
+    "api.content.video.unavailable": "no puedo acceder a este video. puede estar restringido del lado de {{ service }}. ¿has pegado el enlace correcto?",
+    "api.content.video.live": "este video está actualmente en vivo, así que aún no puedo descargarlo. ¡espera a que el stream en vivo termine e intenta de nuevo!",
+    "api.content.video.private": "este video es privado, así que no puedo acceder a él. ¡cambia su visibilidad o intenta otro!",
+    "api.content.video.age": "este video tiene restricción de edad, así que no puedo acceder a él anónimamente. ¡intenta otro!",
+    "api.content.video.region": "este video está bloqueado por región, y el servidor de procesamiento está en una ubicación diferente. ¡intenta otro!",
+
+    "api.youtube.disabled": "la descarga de youtube está temporalmente deshabilitada debido a restricciones del lado de youtube. ya estamos buscando maneras de evitarlas.<br><br>puedes instalar manualmente un plugin para descargar videos de youtube. para el tutorial, por favor <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">mira este video</a>.",
+
+    "api.content.post.unavailable": "no pude encontrar nada sobre esta publicación. su visibilidad puede estar limitada o puede no existir en absoluto. ¡asegúrate de que tu enlace funcione e intenta de nuevo en unos segundos!",
+    "api.content.post.private": "esta publicación es de una cuenta privada, así que no puedo acceder a ella. ¿has pegado el enlace correcto?",
+    "api.content.post.age": "esta publicación tiene restricción de edad, así que no puedo acceder a ella anónimamente. ¿has pegado el enlace correcto?",
+
+        "api.youtube.codec": "youtube no devolvió nada con tu códec de video preferido. ¡intenta otro en la configuración!",
+
+    "queue.ffmpeg.probe_failed": "falló al sondear el archivo. puede estar corrupto o ser incompatible.",
+    "queue.ffmpeg.no_args": "el worker de ffmpeg se inició sin argumentos.",
+    "queue.ffmpeg.out_of_memory": "ffmpeg se quedó sin memoria.",
+    "queue.ffmpeg.no_input_format": "no se pudo determinar el formato de entrada.",
+    "queue.ffmpeg.no_audio_channel": "el video no tiene canal de audio.",
+    "queue.ffmpeg.no_input_type": "el archivo de entrada no tiene tipo.",
+
+    "api.youtube.decipher": "youtube actualizó su algoritmo de descifrado y no pude extraer la información sobre el video.\n\nintenta de nuevo en unos segundos, pero si el problema persiste, contáctanos para soporte.",
+    "api.youtube.login": "no pude obtener este video porque youtube me etiquetó como bot. esto es potencialmente causado por la instancia de procesamiento que no tiene tokens de cuenta activos. intenta de nuevo en unos segundos, pero si aún no funciona, ¡dile al propietario de la instancia sobre este error!",
+    "api.youtube.token_expired": "no pude obtener este video porque el token de youtube expiró y no pude renovarlo. intenta de nuevo en unos segundos, pero si aún no funciona, ¡dile al propietario de la instancia sobre este error!"
+}

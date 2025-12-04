@@ -5,5 +5,10 @@
     "updates": "новости",
     "donate": "донаты",
     "about": "инфа",
-    "remux": "ремукс"
+    "remux": "ремукс",
+    "feature": {
+        "media_downloader": "Загрузчик Медиа",
+        "file_transfer": "Передача Файлов",
+        "discover_trends": "Открыть Тренды"
+    }
 }

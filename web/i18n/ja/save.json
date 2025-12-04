@@ -1,0 +1,23 @@
+{
+    "paste": "貼り付け",
+    "paste.long": "貼り付けてダウンロード",
+    "auto": "自動",
+    "audio": "オーディオ",
+    "mute": "ミュート",
+    "input.placeholder": "ここにリンクを貼り付けてください",
+    "terms.note.agreement": "続行することで、以下に同意します",
+    "terms.note.link": "利用規約と倫理規定",
+    "services.title": "サポートされているサービス",
+    "services.title_show": "サポートされているサービスを表示",
+    "services.title_hide": "サポートされているサービスを非表示",
+    "services.disclaimer": "freesavevideoは上記のサービスとは提携していません。",
+
+    "tutorial.title": "iOSで保存する方法は？",
+    "tutorial.intro": "iOSでメディアを便利に保存するには、共有シートからコンパニオンSiriショートカットを使用する必要があります。",
+    "tutorial.step.1": "コンパニオンSiriショートカットを追加：",
+    "tutorial.step.2": "cobaltの保存ダイアログで「共有」ボタンを押します。",
+    "tutorial.step.3": "共有シートで対応するショートカットを選択します。",
+    "tutorial.outro": "これらのショートカットはcobaltアプリからのみ機能し、他のアプリからのリンクの共有は機能しません。",
+    "tutorial.shortcut.photos": "写真へ",
+    "tutorial.shortcut.files": "ファイルへ"
+}

@@ -1,0 +1,26 @@
+{
+  "title": "🌟 素晴らしい動画を発見",
+  "subtitle": "世界のトップクリエイターからのプレミアムコンテンツ",
+  "filter": {
+    "all": "すべてのプラットフォーム"
+  },
+  "status": {
+    "loading": "読み込み中...",
+    "error": "読み込みに失敗しました",
+    "empty": {
+      "title": "動画がありません",
+      "description": "まだ動画コンテンツが追加されていません"
+    }
+  },
+  "account": {
+    "videoCount": "{{count}}本の動画"
+  },
+  "action": {
+    "copy": "📋 コピー",
+    "copied": "✓ コピーしました",
+    "copyTitle": "動画アドレスをコピー",
+    "copyFailed": "コピーに失敗しました：",
+    "manualCopy": "自動的にコピーできません。手動でコピーしてください：\n{{url}}",
+    "closeDialog": "「OK」をクリックしてこのメッセージを閉じる"
+  }
+}

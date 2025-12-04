@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "Warteschlangenstatus",
+        "ongoing": "Warteschlangenverarbeitung",
+        "completed": "Warteschlange abgeschlossen"
+    }
+}

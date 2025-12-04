@@ -1,0 +1,15 @@
+{
+    "title": "Warteschlange",
+    "state": {
+        "running": {
+            "fetch": "Abrufen",
+            "remux": "Remuxen"
+        },
+        "starting": {
+            "fetch": "Abruf starten",
+            "remux": "Remux starten"
+        },
+        "retrying": "Wiederholen",
+        "waiting": "Warten"
+    }
+}

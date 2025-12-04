@@ -1,0 +1,15 @@
+{
+    "title": "대기열",
+    "state": {
+        "running": {
+            "fetch": "가져오는 중",
+            "remux": "리먹싱 중"
+        },
+        "starting": {
+            "fetch": "가져오기 시작 중",
+            "remux": "리먹스 시작 중"
+        },
+        "retrying": "재시도 중",
+        "waiting": "대기 중"
+    }
+}

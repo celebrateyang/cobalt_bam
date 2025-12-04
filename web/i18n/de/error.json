@@ -1,0 +1,64 @@
+{
+    "import.no_data": "Es gibt nichts aus der Datei zu laden. Sind Sie sicher, dass es die richtige ist?",
+    "import.invalid": "Ihre Datei enthält keine gültigen cobalt-Einstellungen zum Importieren. Sind Sie sicher, dass es die richtige ist?",
+    "import.unknown": "Daten konnten nicht aus der Datei geladen werden. Sie könnte beschädigt oder im falschen Format sein. Hier ist der Fehler, den ich erhalten habe:\n\n{{ value }}",
+
+    "remux.corrupted": "Die Metadaten dieser Datei konnten nicht gelesen werden, sie könnte beschädigt sein.",
+    "remux.out_of_resources": "cobalt hat keine Ressourcen mehr und kann die geräteinterne Verarbeitung nicht fortsetzen. Dies hängt mit Einschränkungen auf Seiten Ihres Browsers zusammen. Versuchen Sie, die App zu aktualisieren oder neu zu öffnen und es erneut zu versuchen. Einige Geräte können nur winzige Dateien verarbeiten.",
+
+    "tunnel.probe": "Es konnte nicht überprüft werden, ob Sie diese Datei herunterladen können. Versuchen Sie es in ein paar Sekunden erneut!",
+
+    "captcha_ongoing": "Überprüfe noch, ob Sie kein Bot sind. Warten Sie, bis der Spinner verschwindet, und versuchen Sie es erneut.\n\nWenn es zu lange dauert, lassen Sie es uns bitte wissen! Wir verwenden Cloudflare Turnstile zum Bot-Schutz und manchmal blockiert es Menschen ohne Grund.",
+
+    "api.auth.jwt.missing": "Es konnte nicht bestätigt werden, ob Sie kein Roboter sind, da der Verarbeitungsserver das Zugriffstoken für Menschen nicht erhalten hat. Versuchen Sie es in ein paar Sekunden erneut oder laden Sie die Seite neu!",
+    "api.auth.jwt.invalid": "Es konnte nicht bestätigt werden, ob Sie kein Roboter sind, da Ihr Zugriffstoken für Menschen abgelaufen ist und nicht erneuert wurde. Versuchen Sie es in ein paar Sekunden erneut oder laden Sie die Seite neu!",
+    "api.auth.turnstile.missing": "Es konnte nicht bestätigt werden, ob Sie kein Roboter sind, da der Verarbeitungsserver das Zugriffstoken für Menschen nicht erhalten hat. Versuchen Sie es in ein paar Sekunden erneut oder laden Sie die Seite neu!",
+    "api.auth.turnstile.invalid": "Es konnte nicht bestätigt werden, ob Sie kein Roboter sind, da Ihr Zugriffstoken für Menschen abgelaufen ist und nicht erneuert wurde. Versuchen Sie es in ein paar Sekunden erneut oder laden Sie die Seite neu!",
+
+    "api.unreachable": "Verbindung zum Verarbeitungsserver konnte nicht hergestellt werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "api.timed_out": "Der Verarbeitungsserver hat viel zu lange zum Antworten gebraucht. Er könnte im Moment überlastet sein, versuchen Sie es in ein paar Sekunden erneut!",
+    "api.rate_exceeded": "Sie stellen viel zu viele Anfragen. Versuchen Sie es in {{ limit }} Sekunden erneut!",
+    "api.capacity": "cobalt ist ausgelastet und kann Ihre Anfrage im Moment nicht verarbeiten. Versuchen Sie es in ein paar Sekunden erneut. Wenn es immer noch nicht funktioniert, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
+
+    "api.generic": "Etwas ist schiefgelaufen und ich konnte nichts für Sie bekommen. Versuchen Sie es in ein paar Sekunden erneut, aber wenn das Problem anhält, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
+    "api.unknown_response": "Die Antwort vom Server konnte nicht geparst werden. Dies könnte durch eine Versionsabweichung verursacht werden. Sind Sie sicher, dass Sie die neueste Version von cobalt verwenden?",
+
+    "api.service.unsupported": "Dieser Dienst wird noch nicht unterstützt. Haben Sie den richtigen Link eingefügt?",
+    "api.service.disabled": "Dieser Dienst wird von cobalt unterstützt, aber er ist auf dieser Instanz deaktiviert. Versuchen Sie einen Link von einem anderen Dienst!",
+
+    "api.link.invalid": "Ihr Link ist ungültig oder dieser Dienst wird noch nicht unterstützt. Haben Sie den richtigen Link eingefügt?",
+    "api.link.unsupported": "{{ service }} wird unterstützt, aber ich konnte Ihren Link nicht erkennen. Haben Sie den richtigen eingefügt?",
+
+    "api.fetch.fail": "Etwas ist beim Abrufen von Informationen von {{ service }} schiefgelaufen und ich konnte nichts für Sie finden. Sind Sie sicher, dass Ihr Link funktioniert? Wenn er es tut und Sie diesen Fehler immer noch sehen, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
+    "api.fetch.critical": "Das {{ service }} Modul hat einen Fehler zurückgegeben, den ich nicht erkenne. Versuchen Sie es in ein paar Sekunden erneut, aber wenn das Problem anhält, lassen Sie es uns wissen!",
+    "api.fetch.empty": "Es konnten keine Medien gefunden werden, die ich für Sie herunterladen könnte. Sind Sie sicher, dass Sie den richtigen Link eingefügt haben?",
+    "api.fetch.rate": "Der cobalt-Verarbeitungsserver wurde von der {{ service }} API ratenbegrenzt. Versuchen Sie es in ein paar Sekunden erneut!",
+    "api.fetch.short_link": "Link-Informationen konnten nicht vom Kurzlink abgerufen werden. Sind Sie sicher, dass er funktioniert? Wenn er es tut und Sie diesen Fehler immer noch erhalten, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
+
+    "api.content.too_long": "Die von Ihnen angeforderten Medien sind zu lang. Die aktuelle Dauerbegrenzung beträgt {{ limit }} Minuten. Versuchen Sie stattdessen etwas Kürzeres!",
+
+    "api.content.video.unavailable": "Ich kann nicht auf dieses Video zugreifen. Es könnte auf Seiten von {{ service }} eingeschränkt sein. Haben Sie den richtigen Link eingefügt?",
+    "api.content.video.live": "Dieses Video ist derzeit live, daher kann ich es noch nicht herunterladen. Warten Sie, bis der Livestream beendet ist, und versuchen Sie es dann erneut!",
+    "api.content.video.private": "Dieses Video ist privat, daher kann ich nicht darauf zugreifen. Ändern Sie seine Sichtbarkeit oder versuchen Sie ein anderes!",
+    "api.content.video.age": "Dieses Video ist altersbeschränkt, daher kann ich nicht anonym darauf zugreifen. Versuchen Sie ein anderes!",
+    "api.content.video.region": "Dieses Video ist regional gesperrt und der Verarbeitungsserver befindet sich an einem anderen Ort. Versuchen Sie ein anderes!",
+
+    "api.youtube.disabled": "YouTube-Downloads sind aufgrund von Einschränkungen seitens YouTube vorübergehend deaktiviert. Wir suchen bereits nach Möglichkeiten, diese zu umgehen.<br><br>Sie können manuell ein Plugin installieren, um YouTube-Videos herunterzuladen. Für die Anleitung sehen Sie sich bitte <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">dieses Video an</a>.",
+
+    "api.content.post.unavailable": "Es konnte nichts über diesen Beitrag gefunden werden. Seine Sichtbarkeit könnte eingeschränkt sein oder er existiert möglicherweise überhaupt nicht. Stellen Sie sicher, dass Ihr Link funktioniert, und versuchen Sie es in ein paar Sekunden erneut!",
+    "api.content.post.private": "Dieser Beitrag stammt von einem privaten Konto, daher kann ich nicht darauf zugreifen. Haben Sie den richtigen Link eingefügt?",
+    "api.content.post.age": "Dieser Beitrag ist altersbeschränkt, daher kann ich nicht anonym darauf zugreifen. Haben Sie den richtigen Link eingefügt?",
+
+    "api.youtube.codec": "YouTube hat nichts mit Ihrem bevorzugten Video-Codec zurückgegeben. Versuchen Sie einen anderen in den Einstellungen!",
+
+    "queue.ffmpeg.probe_failed": "Datei konnte nicht untersucht werden. Sie könnte beschädigt oder inkompatibel sein.",
+    "queue.ffmpeg.no_args": "FFmpeg-Worker ohne Argumente gestartet.",
+    "queue.ffmpeg.out_of_memory": "FFmpeg hat keinen Speicher mehr.",
+    "queue.ffmpeg.no_input_format": "Eingabeformat konnte nicht bestimmt werden.",
+    "queue.ffmpeg.no_audio_channel": "Video hat keinen Audiokanal.",
+    "queue.ffmpeg.no_input_type": "Eingabedatei hat keinen Typ.",
+
+    "api.youtube.decipher": "YouTube hat seinen Entschlüsselungsalgorithmus aktualisiert und ich konnte die Informationen über das Video nicht extrahieren.\n\nVersuchen Sie es in ein paar Sekunden erneut, aber wenn das Problem anhält, kontaktieren Sie uns für Support.",
+    "api.youtube.login": "Dieses Video konnte nicht abgerufen werden, da YouTube mich als Bot markiert hat. Dies wird möglicherweise dadurch verursacht, dass die Verarbeitungsinstanz keine aktiven Konto-Token hat. Versuchen Sie es in ein paar Sekunden erneut, aber wenn es immer noch nicht funktioniert, informieren Sie den Instanzbesitzer über diesen Fehler!",
+    "api.youtube.token_expired": "Dieses Video konnte nicht abgerufen werden, da das YouTube-Token abgelaufen ist und ich es nicht erneuern konnte. Versuchen Sie es in ein paar Sekunden erneut, aber wenn es immer noch nicht funktioniert, informieren Sie den Instanzbesitzer über diesen Fehler!"
+}

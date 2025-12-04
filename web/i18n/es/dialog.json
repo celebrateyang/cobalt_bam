@@ -1,0 +1,25 @@
+{
+    "reset.title": "¿restablecer todas las configuraciones?",
+    "reset.body": "¿estás seguro de que quieres restablecer todas las configuraciones? esta acción es inmediata e irreversible.",
+
+    "picker.title": "selecciona qué guardar",
+    "picker.description.desktop": "haz clic en un elemento para guardarlo. las imágenes también se pueden guardar a través del menú del clic derecho.",
+    "picker.description.phone": "presiona un elemento para guardarlo. las imágenes también se pueden guardar con una pulsación larga.",
+    "picker.description.ios": "presiona un elemento para guardarlo con un atajo. las imágenes también se pueden guardar con una pulsación larga.",
+
+    "saving.title": "elige cómo guardar",
+    "saving.blocked": "bamboo download intentó abrir el archivo en una nueva pestaña, pero tu navegador lo bloqueó. puedes permitir ventanas emergentes para bamboo download para evitar que esto suceda la próxima vez.",
+    "saving.timeout": "bamboo download intentó guardar el archivo automáticamente, pero tu navegador lo detuvo. tienes que seleccionar un método preferido manualmente.",
+
+    "safety.title": "aviso de seguridad importante",
+
+    "import.body": "importar archivos desconocidos o corruptos puede alterar o romper inesperadamente la funcionalidad de bamboo download. solo importa archivos que hayas exportado personalmente y no hayas modificado. si alguien te pidió que importes este archivo - no lo hagas.\n\nno somos responsables de ningún daño causado por importar archivos de configuración desconocidos.",
+
+    "api.override.title": "anulación de instancia de procesamiento",
+    "api.override.body": "{{ value }} es ahora la instancia de procesamiento. si no confías en ella, presiona \"cancelar\" y será ignorada.\n\npuedes cambiar tu elección más tarde en la configuración de procesamiento.",
+
+    "safety.custom_instance.body": "las instancias personalizadas pueden potencialmente presentar riesgos de privacidad y seguridad.\n\nlas instancias malas pueden:\n1. redirigirte fuera de bamboo download e intentar estafarte.\n2. registrar toda la información sobre tus solicitudes, almacenarla para siempre y usarla para rastrearte.\n3. servirte archivos maliciosos (como malware).\n4. obligarte a ver anuncios, o hacerte pagar por descargar.\n\ndespués de este punto, no podemos protegerte. por favor ten cuidado con qué instancias usar y siempre confía en tu instinto. si algo se siente mal, vuelve a esta página, restablece la instancia personalizada y repórtala en github.",
+
+    "processing.ongoing": "bamboo download está procesando actualmente medios en esta pestaña. salir lo abortará. ¿estás seguro de que quieres hacer esto?",
+    "processing.title.ongoing": "el procesamiento será cancelado"
+}

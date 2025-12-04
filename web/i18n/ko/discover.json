@@ -1,0 +1,26 @@
+{
+  "title": "🌟 놀라운 영상 발견",
+  "subtitle": "전 세계 최고의 크리에이터가 제공하는 프리미엄 콘텐츠",
+  "filter": {
+    "all": "모든 플랫폼"
+  },
+  "status": {
+    "loading": "로딩 중...",
+    "error": "로드 실패",
+    "empty": {
+      "title": "영상 없음",
+      "description": "아직 추가된 영상 콘텐츠가 없습니다"
+    }
+  },
+  "account": {
+    "videoCount": "영상 {{count}}개"
+  },
+  "action": {
+    "copy": "📋 복사",
+    "copied": "✓ 복사됨",
+    "copyTitle": "영상 주소 복사",
+    "copyFailed": "복사 실패:",
+    "manualCopy": "자동으로 복사할 수 없습니다. 수동으로 복사하세요:\n{{url}}",
+    "closeDialog": "\"확인\"을 클릭하여 이 메시지 닫기"
+  }
+}

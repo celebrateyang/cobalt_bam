@@ -1,0 +1,25 @@
+{
+    "reset.title": "đặt lại tất cả cài đặt?",
+    "reset.body": "bạn có chắc chắn muốn đặt lại tất cả cài đặt? hành động này ngay lập tức và không thể hoàn tác.",
+
+    "picker.title": "chọn nội dung để lưu",
+    "picker.description.desktop": "nhấp vào một mục để lưu nó. hình ảnh cũng có thể được lưu qua menu chuột phải.",
+    "picker.description.phone": "nhấn vào một mục để lưu nó. hình ảnh cũng có thể được lưu bằng cách nhấn giữ.",
+    "picker.description.ios": "nhấn vào một mục để lưu nó bằng phím tắt. hình ảnh cũng có thể được lưu bằng cách nhấn giữ.",
+
+    "saving.title": "chọn cách lưu",
+    "saving.blocked": "bamboo download đã thử mở file trong tab mới, nhưng trình duyệt của bạn đã chặn nó. bạn có thể cho phép cửa sổ bật lên cho bamboo download để ngăn điều này xảy ra lần sau.",
+    "saving.timeout": "bamboo download đã thử lưu file tự động, nhưng trình duyệt của bạn đã dừng nó. bạn phải chọn phương thức ưa thích thủ công.",
+
+    "safety.title": "thông báo an toàn quan trọng",
+
+    "import.body": "nhập file không xác định hoặc bị hỏng có thể thay đổi hoặc phá vỡ chức năng của bamboo download một cách không mong muốn. chỉ nhập các file mà bạn đã tự xuất và chưa sửa đổi. nếu ai đó yêu cầu bạn nhập file này - đừng làm.\n\nchúng tôi không chịu trách nhiệm cho bất kỳ thiệt hại nào gây ra bởi việc nhập các file cài đặt không xác định.",
+
+    "api.override.title": "ghi đè phiên bản xử lý",
+    "api.override.body": "{{ value }} hiện là phiên bản xử lý. nếu bạn không tin tưởng nó, nhấn \"hủy\" và nó sẽ bị bỏ qua.\n\nbạn có thể thay đổi lựa chọn của mình sau trong cài đặt xử lý.",
+
+    "safety.custom_instance.body": "phiên bản tùy chỉnh có thể gây rủi ro về quyền riêng tư & an toàn.\n\nphiên bản xấu có thể:\n1. chuyển hướng bạn khỏi bamboo download và cố gắng lừa đảo bạn.\n2. ghi lại tất cả thông tin về các yêu cầu của bạn, lưu trữ mãi mãi và sử dụng để theo dõi bạn.\n3. phục vụ bạn các file độc hại (như phần mềm độc hại).\n4. buộc bạn xem quảng cáo hoặc khiến bạn phải trả tiền để tải xuống.\n\nsau điểm này, chúng tôi không thể bảo vệ bạn. vui lòng lưu ý những phiên bản nào để sử dụng và luôn tin tưởng trực giác của bạn. nếu có gì cảm thấy không đúng, quay lại trang này, đặt lại phiên bản tùy chỉnh và báo cáo với chúng tôi trên github.",
+
+    "processing.ongoing": "bamboo download hiện đang xử lý phương tiện trong tab này. rời đi sẽ hủy bỏ nó. bạn có chắc chắn muốn làm điều này?",
+    "processing.title.ongoing": "xử lý sẽ bị hủy"
+}

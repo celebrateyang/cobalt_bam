@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { redirect } from '@sveltejs/kit';
 
-const supportedLanguages = ['en', 'zh', 'th', 'ru'];
+const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 const defaultLanguage = 'en';
 
 export const GET: RequestHandler = async ({ request, cookies }) => {

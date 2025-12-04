@@ -1,0 +1,62 @@
+{
+    "cobalt": "bamboo download, 무료 동영상 다운로드 - YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter",
+    "meowbalt": "bamboo download",
+    "beta": "베타",
+    "or": "또는",
+    "embed.description": "YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter에서 무료로 동영상을 다운로드하세요. 등록이 필요 없습니다. 쉽고 빠른 동영상 다운로드.",
+    "guide": {
+        "title": "Freesavevideo.online 온라인 동영상 다운로더 가이드",
+        "description1": "Freesavevideo.online을 사용하여 동영상과 음악을 다운로드하세요. 추가 소프트웨어가 필요 없으며 웹에서 직접 좋아하는 미디어를 저장할 수 있습니다. 우리의 직관적인 플랫폼은 동영상 다운로드를 간단하고 효율적으로 만듭니다.",
+        "description2": "인기 영화 및 TV 프로그램부터 흥미진진한 스포츠 클립까지 다양한 콘텐츠에 쉽게 액세스하고 다운로드하세요. 지정된 필드에 동영상 URL을 붙여넣고 다운로드 버튼을 클릭하기만 하면 됩니다."
+    },
+    "notification": {
+        "title": "공지:",
+        "close": "알림 닫기",
+        "youtube_restriction": "YouTube 다운로드는 지원되지 않지만 다운로드 지침은 이 영상을 참조할 수 있습니다: https://www.bilibili.com/video/BV1Bp4EzeEJo"
+    },
+    "promotions": {
+        "mindsou": {
+            "title": "비슷한 생각을 가진 낯선 사람과 채팅, 어색한 대화 없음",
+            "features": {
+                "1": "1. 언제든지 마음속의 생각을 게시하세요",
+                "2": "2. 완벽한 매칭, 의미론적 매칭, 보완적 매칭",
+                "3": "3. 매칭된 사용자를 클릭하여 채팅 시작",
+                "4": "4. 오프라인 매칭 이메일 알림",
+                "5": "5. 기간 제한 콘텐츠 및 개인정보 보호, 자동 파괴로 정보 부담 감소"
+            },
+            "visit": "Mindsou 방문"
+        },
+        "yumcheck": {
+            "title": "식품 성분 분석, 사진 자동 조회 및 분석",
+            "features": {
+                "1": "성분 목록 사진을 찍어 원클릭 성분 분석 및 건강 위험 평가",
+                "2": "식품 첨가물을 EU 기준과 비교하여 다차원 이해",
+                "3": "식품 표준 번호를 스캔하여 규제 정보를 빠르게 해석",
+                "4": "혈액 검사 보고서의 지능형 분석으로 일반인이 혈액 보고서를 이해할 수 있도록"
+            },
+            "visit": "YumCheck 방문"
+        }
+    },
+    "pwa": {
+        "install_prompt": "이 웹사이트는 데스크톱에 설치를 지원합니다",
+        "install": "설치",
+        "close": "닫기"
+    },
+    "seo": {
+        "home": {
+            "title": "Bamboo downloader, 무료 온라인 동영상 다운로더 - YouTube, TikTok, Instagram, Twitter 지원 | 동영상 저장 | HD 품질",
+            "description": "최고의 무료 온라인 동영상 다운로더. YouTube, TikTok, Instagram, Twitter 등에서 동영상을 다운로드하세요. 워터마크 없음, HD 품질, 빠른 다운로드.",
+            "keywords": "동영상 다운로더, 온라인 동영상 다운로더, 유튜브 다운로더, 틱톡 다운로더 워터마크 없음, 인스타그램 동영상 저장, 무료 동영상 다운로더"
+        },
+        "transfer": {
+            "title": "무료 온라인 파일 전송 - 앱 필요 없음 | P2P 공유 | 기기 간",
+            "description": "앱을 설치하지 않고 기기 간에 파일을 전송하는 가장 좋은 방법. 안전한 P2P 파일 공유, 크로스 플랫폼 클립보드 동기화. 빠르고, 무료이며, 비공개입니다.",
+            "keywords": "파일 전송, 앱 없는 파일 공유, p2p 파일 전송, 기기 간 복사 붙여넣기, 온라인 파일 드롭, snapdrop 대안"
+        },
+        "discover": {
+            "title": "트렌딩 동영상 발견 - 뷰티, 재미있는, 바이럴 클립 | 매일 업데이트",
+            "description": "웹에서 가장 인기 있는 동영상 모음. 엄선된 뷰티 동영상, 재미있는 클립, 바이럴 트렌드. 매일 업데이트.",
+            "keywords": "트렌딩 동영상, 뷰티 동영상, 재미있는 동영상, 바이럴 클립, 인기 동영상, 동영상 추천"
+        }
+    }
+}

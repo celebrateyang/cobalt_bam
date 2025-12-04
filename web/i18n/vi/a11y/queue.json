@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "trạng thái hàng đợi",
+        "ongoing": "đang xử lý hàng đợi",
+        "completed": "hàng đợi hoàn tất"
+    }
+}

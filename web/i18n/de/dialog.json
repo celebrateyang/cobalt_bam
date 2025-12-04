@@ -1,0 +1,25 @@
+{
+    "reset.title": "Alle Einstellungen zurücksetzen?",
+    "reset.body": "Sind Sie sicher, dass Sie alle Einstellungen zurücksetzen möchten? Diese Aktion ist sofort und unumkehrbar.",
+
+    "picker.title": "Wählen Sie aus, was gespeichert werden soll",
+    "picker.description.desktop": "Klicken Sie auf ein Element, um es zu speichern. Bilder können auch über das Rechtsklick-Menü gespeichert werden.",
+    "picker.description.phone": "Drücken Sie auf ein Element, um es zu speichern. Bilder können auch durch langes Drücken gespeichert werden.",
+    "picker.description.ios": "Drücken Sie auf ein Element, um es mit einer Verknüpfung zu speichern. Bilder können auch durch langes Drücken gespeichert werden.",
+
+    "saving.title": "Wählen Sie, wie gespeichert werden soll",
+    "saving.blocked": "bamboo download hat versucht, die Datei in einem neuen Tab zu öffnen, aber Ihr Browser hat dies blockiert. Sie können Pop-ups für bamboo download zulassen, um dies in Zukunft zu verhindern.",
+    "saving.timeout": "bamboo download hat versucht, die Datei automatisch zu speichern, aber Ihr Browser hat dies gestoppt. Sie müssen manuell eine bevorzugte Methode auswählen.",
+
+    "safety.title": "Wichtiger Sicherheitshinweis",
+
+    "import.body": "Das Importieren unbekannter oder beschädigter Dateien kann die Funktionalität von bamboo download unerwartet verändern oder beschädigen. Importieren Sie nur Dateien, die Sie persönlich exportiert und nicht verändert haben. Wenn Sie von jemandem aufgefordert wurden, diese Datei zu importieren - tun Sie es nicht.\n\nWir sind nicht verantwortlich für Schäden, die durch das Importieren unbekannter Einstellungsdateien verursacht werden.",
+
+    "api.override.title": "Verarbeitungsinstanz überschreiben",
+    "api.override.body": "{{ value }} ist jetzt die Verarbeitungsinstanz. Wenn Sie ihr nicht vertrauen, drücken Sie \"Abbrechen\" und sie wird ignoriert.\n\nSie können Ihre Wahl später in den Verarbeitungseinstellungen ändern.",
+
+    "safety.custom_instance.body": "Benutzerdefinierte Instanzen können potenzielle Datenschutz- und Sicherheitsrisiken darstellen.\n\nSchlechte Instanzen können:\n1. Sie von bamboo download wegleiten und versuchen, Sie zu betrügen.\n2. Alle Informationen über Ihre Anfragen protokollieren, sie für immer speichern und verwenden, um Sie zu verfolgen.\n3. Ihnen bösartige Dateien (wie Malware) bereitstellen.\n4. Sie zwingen, Werbung anzusehen oder für Downloads zu bezahlen.\n\nAb diesem Punkt können wir Sie nicht mehr schützen. Bitte seien Sie achtsam, welche Instanzen Sie verwenden und vertrauen Sie immer Ihrem Bauchgefühl. Wenn sich etwas nicht richtig anfühlt, kehren Sie zu dieser Seite zurück, setzen Sie die benutzerdefinierte Instanz zurück und melden Sie es uns auf GitHub.",
+
+    "processing.ongoing": "bamboo download verarbeitet derzeit Medien in diesem Tab. Wenn Sie weggehen, wird dies abgebrochen. Sind Sie sicher, dass Sie dies tun möchten?",
+    "processing.title.ongoing": "Verarbeitung wird abgebrochen"
+}

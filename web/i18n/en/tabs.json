@@ -8,5 +8,10 @@
     "about": "about",
     "remux": "remux",
     "history": "history",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "feature": {
+        "media_downloader": "Media Downloader",
+        "file_transfer": "File Transfer",
+        "discover_trends": "Discover Trends"
+    }
 }

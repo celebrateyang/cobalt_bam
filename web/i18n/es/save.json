@@ -1,0 +1,23 @@
+{
+    "paste": "pegar",
+    "paste.long": "pegar y descargar",
+    "auto": "auto",
+    "audio": "audio",
+    "mute": "silenciar",
+    "input.placeholder": "pega el enlace aquí",
+    "terms.note.agreement": "al continuar, aceptas",
+    "terms.note.link": "términos y ética de uso",
+    "services.title": "servicios compatibles",
+    "services.title_show": "mostrar servicios compatibles",
+    "services.title_hide": "ocultar servicios compatibles",
+    "services.disclaimer": "freesavevideo no está afiliado con ninguno de los servicios listados arriba.",
+
+    "tutorial.title": "¿cómo guardar en ios?",
+    "tutorial.intro": "para guardar medios convenientemente en ios, necesitarás usar un atajo de siri complementario desde la hoja de compartir.",
+    "tutorial.step.1": "agrega atajos de siri complementarios:",
+    "tutorial.step.2": "presiona el botón \"compartir\" en el diálogo de guardado de cobalt.",
+    "tutorial.step.3": "selecciona el atajo respectivo en la hoja de compartir.",
+    "tutorial.outro": "estos atajos solo funcionarán desde la aplicación de cobalt, compartir enlaces desde otras aplicaciones no funcionará.",
+    "tutorial.shortcut.photos": "a fotos",
+    "tutorial.shortcut.files": "a archivos"
+}

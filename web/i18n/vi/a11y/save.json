@@ -1,0 +1,13 @@
+{
+    "link_area": "vùng nhập liên kết",
+    "link_area.turnstile": "vùng nhập liên kết. đang kiểm tra bạn có phải là robot không.",
+    "clear_input": "xóa đầu vào",
+    "download": "tải xuống",
+    "download.think": "đang xử lý liên kết...",
+    "download.check": "đang xác minh tải xuống...",
+    "download.done": "tải xuống hoàn tất",
+    "download.error": "lỗi tải xuống",
+
+    "tutorial.shortcut.photos": "thêm phím tắt ảnh",
+    "tutorial.shortcut.files": "thêm phím tắt file"
+}

@@ -1,0 +1,128 @@
+{
+    "page.appearance": "apariencia",
+    "page.privacy": "privacidad",
+    "page.video": "video",
+    "page.audio": "audio",
+    "page.download": "descarga",
+    "page.local": "procesamiento local",
+    "page.advanced": "avanzado",
+    "page.debug": "información de depuración",
+    "page.instances": "instancias",
+
+    "section.general": "general",
+    "section.save": "guardar",
+
+    "theme": "tema",
+    "theme.auto": "auto",
+    "theme.light": "claro",
+    "theme.dark": "oscuro",
+    "theme.description": "el tema automático cambia entre temas claro y oscuro dependiendo del modo de visualización de tu dispositivo.",
+
+    "video.quality": "calidad de video",
+    "video.quality.max": "8k+",
+    "video.quality.2160": "4k",
+    "video.quality.1440": "1440p",
+    "video.quality.1080": "1080p",
+    "video.quality.720": "720p",
+    "video.quality.480": "480p",
+    "video.quality.360": "360p",
+    "video.quality.240": "240p",
+    "video.quality.144": "144p",
+    "video.quality.description": "si la calidad de video preferida no está disponible, se elige la siguiente mejor.",
+
+    "video.youtube.codec": "códec y contenedor de video de youtube",
+    "video.youtube.codec.description": "h264: mejor compatibilidad, tasa de bits promedio. calidad máxima es 1080p. \nav1: mejor calidad, eficiencia y tasa de bits. soporta 8k y HDR. \nvp9: misma calidad y tasa de bits que av1, pero el archivo es aproximadamente dos veces más grande. soporta 4k y HDR.\n\nav1 y vp9 no son tan ampliamente compatibles como h264.",
+
+    "video.twitter.gif": "twitter/x",
+    "video.twitter.gif.title": "convertir videos en bucle a GIF",
+    "video.twitter.gif.description": "la conversión a GIF es ineficiente, el archivo convertido puede ser enormemente grande y de baja calidad.",
+
+    "video.tiktok.h265": "tiktok",
+    "video.tiktok.h265.title": "preferir formato HEVC/H265",
+    "video.tiktok.h265.description": "permite descargar videos en 1080p a costa de compatibilidad.",
+
+    "audio.format": "formato de audio",
+    "audio.format.best": "mejor",
+    "audio.format.mp3": "mp3",
+    "audio.format.ogg": "ogg",
+    "audio.format.wav": "wav",
+    "audio.format.opus": "opus",
+    "audio.format.description": "todos los formatos excepto \"mejor\" son convertidos, lo que significa que habrá alguna pérdida de calidad. el audio no se recodifica solo cuando se selecciona el formato \"mejor\".",
+
+    "audio.bitrate": "tasa de bits de audio",
+    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.description": "la tasa de bits se aplica solo a la conversión de audio. freesavevideo no puede mejorar la calidad de audio de la fuente, así que elegir una tasa de bits superior a 128kbps puede inflar el tamaño del archivo sin diferencia audible. la calidad percibida puede variar según el formato.",
+
+    "audio.youtube.dub": "youtube",
+    "audio.youtube.dub.title": "usar idioma del navegador para videos doblados",
+    "audio.youtube.dub.description": "funciona incluso si freesavevideo no está traducido a tu idioma.",
+
+    "audio.tiktok.original": "tiktok",
+    "audio.tiktok.original.title": "descargar sonido original",
+    "audio.tiktok.original.description": "freesavevideo descargará el sonido del video sin ningún cambio del autor de la publicación.",
+
+    "metadata.filename": "estilo de nombre de archivo",
+    "metadata.filename.classic": "clásico",
+    "metadata.filename.basic": "básico",
+    "metadata.filename.pretty": "bonito",
+    "metadata.filename.nerdy": "técnico",
+    "metadata.filename.description": "el estilo de nombre de archivo solo se usará para archivos canalizados por freesavevideo. algunos servicios no soportan estilos de nombre de archivo diferentes al clásico.",
+
+    "metadata.filename.preview.video": "Título del Video",
+    "metadata.filename.preview.audio": "Título del Audio - Autor del Audio",
+
+    "metadata.file": "metadatos del archivo",
+    "metadata.disable.title": "deshabilitar metadatos del archivo",
+    "metadata.disable.description": "el título, artista y otra información no se agregará al archivo.",
+
+    "saving.title": "método de guardado",
+    "saving.ask": "preguntar",
+    "saving.download": "descargar",
+    "saving.share": "compartir",
+    "saving.copy": "copiar",
+    "saving.description": "forma preferida de guardar el archivo o enlace de freesavevideo. si el método preferido no está disponible o algo sale mal, freesavevideo te preguntará qué hacer a continuación.",
+
+    "local.saving": "procesamiento local",
+    "local.saving.disabled": "deshabilitado",
+    "local.saving.preferred": "preferido",
+    "local.saving.forced": "forzado",
+    "local.saving.description": "cuando está habilitado, las conversiones de audio y GIF se realizan en tu navegador. esto permite un procesamiento más rápido y reduce la carga del servidor, pero puede usar más batería y recursos del sistema.\n\npreferido: usar procesamiento local cuando sea posible, recurrir al servidor cuando no sea compatible.\nforzado: siempre usar procesamiento local, fallar si no es compatible.",
+
+    "accessibility": "accesibilidad",
+    "accessibility.transparency.title": "reducir transparencia visual",
+    "accessibility.transparency.description": "reduce la transparencia de las superficies y deshabilita los efectos de desenfoque.",
+    "accessibility.motion.title": "reducir movimiento",
+    "accessibility.motion.description": "deshabilita animaciones y transiciones siempre que sea posible.",
+
+    "language": "idioma",
+    "language.auto.title": "selección automática",
+    "language.auto.description": "freesavevideo usará el idioma predeterminado de tu navegador si la traducción está disponible. si no, se usará inglés en su lugar.",
+    "language.preferred.title": "idioma preferido",
+    "language.preferred.description": "este idioma se usará cuando la selección automática esté deshabilitada. cualquier texto que no esté traducido se mostrará en inglés.\n\nusamos traducciones de la comunidad para idiomas diferentes al inglés, ruso y checo. pueden ser inexactas o incompletas.",
+
+    "privacy.analytics": "análisis de tráfico anónimo",
+    "privacy.analytics.title": "no contribuir a los análisis",
+    "privacy.analytics.description": "los análisis de tráfico anónimos son necesarios para obtener un número aproximado de usuarios activos de freesavevideo. nunca se almacena información identificable sobre ti. todos los datos procesados se anonimizan y agregan.\n\nusamos una instancia de plausible autohospedada que no usa cookies y es totalmente compatible con GDPR, CCPA y PECR.",
+    "privacy.analytics.learnmore": "aprende más sobre la dedicación de plausible a la privacidad.",
+
+    "privacy.tunnel": "canalización",
+    "privacy.tunnel.title": "canalizar siempre los archivos",
+    "privacy.tunnel.description": "freesavevideo ocultará tu dirección IP, información del navegador y evitará restricciones de red local. cuando está habilitado, los archivos también tendrán nombres de archivo legibles que de otro modo serían incomprensibles.",
+
+    "advanced.debug": "depuración",
+    "advanced.debug.title": "habilitar características de depuración",
+    "advanced.debug.description": "te da acceso a una página con información variada que puede ser útil para depuración.",
+
+    "advanced.data": "datos de configuración",
+
+    "processing.override": "anulación de instancia predeterminada",
+    "processing.override.title": "usar el servidor de procesamiento proporcionado por la instancia",
+    "processing.override.description": "si la instancia web proporciona su propio servidor de procesamiento predeterminado, puedes elegir usarlo en lugar del servidor de procesamiento principal. asegúrate de que sea un servidor de alguien en quien confíes.",
+
+    "processing.community": "instancias de la comunidad",
+
+    "processing.enable_custom.title": "usar un servidor de procesamiento personalizado",
+    "processing.enable_custom.description": "freesavevideo usará un servidor de procesamiento personalizado si lo eliges. aunque freesavevideo tiene algunas medidas de seguridad en su lugar, no somos responsables de ningún daño realizado a través de una instancia de la comunidad, ya que no tenemos control sobre ellas.\n\npor favor ten cuidado con las instancias que uses y asegúrate de que estén alojadas por personas en las que confías.",
+
+    "processing.custom.placeholder": "dominio de instancia personalizada"
+}

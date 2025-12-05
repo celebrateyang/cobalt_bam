@@ -32,6 +32,15 @@
     export let data;
 
     const supportedLanguages = Object.keys(languages);
+    const stripYouTube = (value: string) => {
+        if (!value) return value;
+        let v = value.replace(/YouTube[、,，]?\s*/gi, "");
+        v = v.replace(/youtube[、,，]?\s*/gi, "");
+        v = v.replace(/[、,，]\s*[、,，]+/g, "、");
+        v = v.replace(/^\s*[、,，]\s*/, "");
+        v = v.replace(/\s{2,}/g, " ").trim();
+        return v;
+    };
 
     // Set locale based on URL parameter instead of localStorage
     $: if (data.lang) {
@@ -61,8 +70,8 @@
 </script>
 
 <svelte:head>
-    <meta name="description" content={$t("general.embed.description")}>
-    <meta property="og:description" content={$t("general.embed.description")}>
+    <meta name="description" content={stripYouTube($t("general.embed.description"))}>
+    <meta property="og:description" content={stripYouTube($t("general.embed.description"))}>
 
     {#if env.HOST}
         <meta property="og:url" content="https://{env.HOST}{$page.url.pathname}">

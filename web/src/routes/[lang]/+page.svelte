@@ -10,6 +10,7 @@
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+    import env from "$lib/env";
 
     export let data;
 
@@ -25,9 +26,37 @@
         ru: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
     };
     let key: string = currentLocale;
-    const donateLink = donateLinks[key as keyof typeof donateLinks];    let showMindsou = false;
+    const donateLink = donateLinks[key as keyof typeof donateLinks];
+    let showMindsou = false;
     let showYumcheck = false;
-    let showNotification = true; // 控制通知显示
+    let showNotification = false; // 暂时关闭通知以避免展示已失效的来源
+    $: siteUrl = env.HOST ? `https://${env.HOST}` : "";
+    $: canonicalUrl = siteUrl ? `${siteUrl}/${currentLocale}` : "";
+    const stripYouTube = (value: string) => {
+        if (!value) return value;
+        let v = value.replace(/YouTube[、,，]?\s*/gi, "");
+        v = v.replace(/youtube[、,，]?\s*/gi, "");
+        v = v.replace(/[、,，]\s*[、,，]+/g, "、");
+        v = v.replace(/^\s*[、,，]\s*/, "");
+        v = v.replace(/\s{2,}/g, " ").trim();
+        return v;
+    };
+
+    $: seoName = stripYouTube($t("general.cobalt"));
+    $: seoTitle = stripYouTube($t("general.seo.home.title"));
+    $: seoDescription = stripYouTube($t("general.seo.home.description"));
+    $: seoKeywords = stripYouTube($t("general.seo.home.keywords"));
+    $: embedDescription = stripYouTube($t("general.embed.description"));
+    $: guideDescription1 = stripYouTube($t("general.guide.description1"));
+    $: guideDescription2 = stripYouTube($t("general.guide.description2"));
+    $: jsonLd = canonicalUrl ? {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "url": canonicalUrl,
+        "inLanguage": currentLocale,
+        "name": seoName,
+        "description": seoDescription
+    } : null;
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
@@ -45,11 +74,20 @@
 </script>
 
 <svelte:head>
-    <title>{$t("general.seo.home.title")}</title>
-    <meta name="description" content={$t("general.seo.home.description")} />
-    <meta name="keywords" content={$t("general.seo.home.keywords")} />
-    <meta property="og:title" content={$t("general.seo.home.title")} />
-    <meta property="og:description" content={$t("general.seo.home.description")} />
+    <title>{seoTitle}</title>
+    <meta name="description" content={seoDescription} />
+    <meta name="keywords" content={seoKeywords} />
+    <meta property="og:title" content={seoTitle} />
+    <meta property="og:description" content={seoDescription} />
+    {#if canonicalUrl}
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:url" content={canonicalUrl} />
+    {/if}
+    {#if jsonLd}
+        <script type="application/ld+json">
+            {JSON.stringify(jsonLd)}
+        </script>
+    {/if}
 </svelte:head>
 
 <!--<Header />-->
@@ -94,7 +132,7 @@
             <div class="icon-wrapper"><IconDownload size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.media_downloader")}</h3>
-                <p class="card-desc">{$t("general.seo.home.description")}</p>
+                <p class="card-desc">{seoDescription}</p>
             </div>
         </a>
         <a href="/{currentLocale}/clipboard" class="feature-card">
@@ -111,6 +149,38 @@
                 <p class="card-desc">{$t("general.seo.discover.description")}</p>
             </div>
         </a>
+    </section>
+
+    <section class="seo-hero seo-section">
+        <h1>{seoTitle}</h1>
+        <p>{seoDescription}</p>
+    </section>
+
+    <section class="seo-body seo-section">
+        <div class="seo-text">
+            <h2>{$t("general.guide.title")}</h2>
+            <p>{guideDescription1}</p>
+            <p>{guideDescription2}</p>
+        </div>
+
+        <div class="seo-grid">
+            <article class="seo-card">
+                <h3>{$t("tabs.feature.media_downloader")}</h3>
+                <p>{seoDescription}</p>
+            </article>
+            <article class="seo-card">
+                <h3>{$t("tabs.feature.file_transfer")}</h3>
+                <p>{$t("general.seo.transfer.description")}</p>
+            </article>
+            <article class="seo-card">
+                <h3>{$t("tabs.feature.discover_trends")}</h3>
+                <p>{$t("general.seo.discover.description")}</p>
+            </article>
+            <article class="seo-card">
+                <h3>{embedDescription}</h3>
+                <p>{seoKeywords}</p>
+            </article>
+        </div>
     </section>
 
     <!-- 引流推广模块 -->
@@ -418,6 +488,87 @@
     .notification-content { align-items: flex-start; padding-right: 28px; }
     .notification-close { position: absolute; top:6px; right:8px; margin-left:0; padding:4px; line-height:1; }
 
+    .seo-section {
+        width: 100%;
+        max-width: 1100px;
+        margin: 28px auto;
+        padding: 0 var(--padding);
+        box-sizing: border-box;
+    }
+
+    .seo-hero {
+        padding: 22px 20px;
+        border-radius: 16px;
+        background: var(--surface-1);
+        border: 1px solid var(--surface-2);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.06);
+    }
+
+    .seo-hero h1 {
+        margin: 0 0 10px;
+        font-size: clamp(22px, 3vw, 30px);
+        line-height: 1.25;
+        color: var(--secondary);
+    }
+
+    .seo-hero p {
+        margin: 0;
+        font-size: 15px;
+        color: var(--secondary-600);
+        line-height: 1.55;
+        max-width: 900px;
+    }
+
+    .seo-body {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .seo-text h2 {
+        margin: 0;
+        font-size: clamp(19px, 2.4vw, 24px);
+        color: var(--secondary);
+    }
+
+    .seo-text p {
+        margin: 6px 0 0;
+        color: var(--secondary-600);
+        line-height: 1.65;
+        max-width: 960px;
+    }
+
+    .seo-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        width: 100%;
+    }
+
+    .seo-card {
+        padding: 16px;
+        border-radius: 14px;
+        background: var(--surface-1);
+        border: 1px solid var(--surface-2);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .seo-card h3 {
+        margin: 0;
+        font-size: 15px;
+        color: var(--secondary);
+    }
+
+    .seo-card p {
+        margin: 0;
+        color: var(--secondary-600);
+        line-height: 1.5;
+        font-size: 14px;
+    }
+
     /* Feature Cards */
     .feature-cards {
         display: grid;
@@ -485,6 +636,27 @@
     @media (max-width: 600px) {
         .feature-cards {
             grid-template-columns: 1fr;
+        }
+
+        .seo-section {
+            padding: 0 14px;
+            margin: 20px auto;
+        }
+
+        .seo-hero {
+            padding: 18px;
+        }
+
+        .seo-hero h1 {
+            font-size: clamp(20px, 6vw, 26px);
+        }
+
+        .seo-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .seo-text p {
+            font-size: 14px;
         }
     }
 </style>

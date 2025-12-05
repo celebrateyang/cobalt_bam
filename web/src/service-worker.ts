@@ -16,6 +16,7 @@ self.addEventListener('install', (event) => {
         await cache.addAll(ASSETS);
     }
 
+    self.skipWaiting();
     event.waitUntil(addFilesToCache());
 });
 
@@ -28,14 +29,20 @@ self.addEventListener('activate', (event) => {
     }
 
     event.waitUntil(deleteOldCaches());
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
     // ignore POST requests etc
     if (event.request.method !== 'GET') return;
 
+    const url = new URL(event.request.url);
+    // Ignore non-HTTP(S) schemes and cross-origin requests entirely
+    if (!(url.protocol === 'http:' || url.protocol === 'https:') || url.origin !== self.location.origin) {
+        return;
+    }
+
     async function respond() {
-        const url = new URL(event.request.url);
         const cache = await caches.open(CACHE);
 
         // `build`/`files` can always be served from the cache

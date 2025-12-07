@@ -14,8 +14,21 @@ const __dirname = dirname(__filename);
 
 const exposeLibAV: PluginOption = (() => {
     const IMPUT_MODULE_DIR = join(__dirname, 'node_modules/@imput');
+
+    const findLibavFile = async (filename: string) => {
+        const pattern = `${IMPUT_MODULE_DIR}/**/dist/${filename}`.replace(/\\/g, '/');
+        const [file] = await glob(pattern);
+        return file;
+    };
+
     return {
         name: "vite-libav.js",
+        async resolveId(source) {
+            if (!source.startsWith('/_libav/')) return null;
+            const filename = basename(source);
+            const file = await findLibavFile(filename);
+            return file || null;
+        },
         configureServer(server) {
             server.middlewares.use(async (req, res, next) => {
                 if (!req.url?.startsWith('/_libav/')) return next();
@@ -23,8 +36,7 @@ const exposeLibAV: PluginOption = (() => {
                 const filename = basename(req.url).split('?')[0];
                 if (!filename) return next();
 
-                const pattern = `${IMPUT_MODULE_DIR}/**/dist/${filename}`.replace(/\\/g, '/');
-                const [file] = await glob(pattern);             
+                const file = await findLibavFile(filename);
                 if (!file) return next();
 
                 const fileType = mime.getType(filename);

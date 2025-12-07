@@ -8,6 +8,7 @@ const pages = [
     '',           // 首页
     'clipboard',  // 文件传输
     'discover',   // 发现
+    'youtube-tampermonkey', // Tampermonkey tutorial
     'about',      // 关于
     'donate',     // 捐赠
     'settings',   // 设置

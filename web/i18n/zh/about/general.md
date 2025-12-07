@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import { t } from "$lib/i18n/translations";
     import { partners, contacts, docs } from "$lib/env";
 
@@ -45,7 +45,8 @@ all they'll see is that you're using a bamboo download instance.
     sectionId="local"
 />
 
-newest features, such as [remuxing](/remux), work locally on your device.
+newest features, such as [remuxing](../remux/remux), work locally on your device.
 on-device processing is efficient and never sends anything over the internet.
 it perfectly aligns with our future goal of moving as much processing as possible to the client.
 </section>
+

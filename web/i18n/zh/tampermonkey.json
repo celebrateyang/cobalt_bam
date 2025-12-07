@@ -1,0 +1,72 @@
+{
+    "seo": {
+        "title": "Tampermonkey YouTube 下载脚本教程（B站）| 油猴脚本下载 YouTube",
+        "description": "逐步讲解如何安装 Tampermonkey、添加 YouTube 下载脚本，并附上我的 B 站视频。当直接下载受限时，作为补充方案。",
+        "keywords": "tampermonkey youtube 下载, 油猴 youtube 下载, youtube 下载脚本, B站 教程, 油猴脚本下载 youtube",
+        "brand": "Freesavevideo.online"
+    },
+    "hero": {
+        "badge": "B站教程",
+        "title": "用 Tampermonkey 油猴脚本下载 YouTube 视频",
+        "summary": "跟着我的 B 站视频走一遍：安装 Tampermonkey + 添加下载脚本，当直接下载被限制时，用这个方法补充。",
+        "primary_cta": "立即去下载",
+        "secondary_cta": "查看 B 站视频"
+    },
+    "video": {
+        "title": "完整步骤视频",
+        "description": "展示脚本来源、如何启用以及在 YouTube 播放页触发下载。",
+        "runtime": "约 4 分钟",
+        "open": "打开教程"
+    },
+    "highlights": {
+        "title": "你能获得什么",
+        "points": {
+            "reliable": "平台屏蔽直链时的备用方案。",
+            "safe": "脚本只在你自己的浏览器里运行，无需账号。",
+            "multi": "适用于 Chrome、Edge、Firefox 等主流浏览器。",
+            "combo": "和 freesavevideo.online 搭配，覆盖更多站点。"
+        }
+    },
+    "steps": {
+        "title": "脚本使用步骤",
+        "install": {
+            "title": "安装 Tampermonkey 插件",
+            "desc": "在 Chrome 应用商店或浏览器插件商店安装 Tampermonkey，并把图标固定到工具栏。"
+        },
+        "script": {
+            "title": "添加 YouTube 下载脚本",
+            "desc": "从 B 站视频简介或置顶评论打开脚本链接，确认代码来源后在 Tampermonkey 中点击“安装”。"
+        },
+        "download": {
+            "title": "打开 YouTube 视频并选择清晰度",
+            "desc": "刷新播放页，脚本会出现下载按钮，选择 MP4 清晰度后等待脚本拉取资源。"
+        },
+        "legal": {
+            "title": "合规下载",
+            "desc": "只下载有权限保存的内容，遵守 YouTube 服务条款和版权法规。"
+        }
+    },
+    "faq": {
+        "title": "常见问题",
+        "items": {
+            "quality": {
+                "q": "支持哪些清晰度？",
+                "a": "大多数脚本可下 720p/1080p，超高分辨率或年龄限制视频可能需要 DASH 合并，有些脚本不支持。"
+            },
+            "broken": {
+                "q": "脚本失效怎么办？",
+                "a": "YouTube 经常更新，去 B 站视频简介查看更新链接，重新安装最新版，或切换到 freesavevideo.online 下载其他平台视频。"
+            },
+            "safe": {
+                "q": "安全吗、合法吗？",
+                "a": "脚本本地运行，不会上传账号数据。但请只下载有授权的内容，避免商业传播。"
+            }
+        }
+    },
+    "cta": {
+        "title": "需要备用下载方案？",
+        "subtitle": "TikTok、Instagram、Facebook 等平台请用 freesavevideo.online，YouTube 则保留油猴脚本。",
+        "primary": "打开下载器",
+        "secondary": "再看一遍教程"
+    }
+}

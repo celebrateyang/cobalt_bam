@@ -1,0 +1,72 @@
+{
+    "seo": {
+        "title": "Tampermonkey YouTube download tutorial (Bilibili) | Free userscript guide",
+        "description": "Step-by-step Tampermonkey userscript workflow to save YouTube videos. Includes my Bilibili tutorial video, setup steps, and safety notes.",
+        "keywords": "tampermonkey youtube download, youtube download script, grease monkey, bilibili tutorial, userscript downloader, download youtube video tampermonkey",
+        "brand": "Freesavevideo.online"
+    },
+    "hero": {
+        "badge": "Bilibili tutorial",
+        "title": "Download YouTube videos with a Tampermonkey userscript",
+        "summary": "Follow my Bilibili walkthrough to install Tampermonkey and add a YouTube download script. Works alongside freesavevideo.online when direct downloads are blocked.",
+        "primary_cta": "Try the downloader",
+        "secondary_cta": "Watch on Bilibili"
+    },
+    "video": {
+        "title": "Watch the full Tampermonkey setup",
+        "description": "The video shows where to grab the userscript, how to enable it, and how to trigger downloads on a YouTube watch page.",
+        "runtime": "Approx. 4 minutes",
+        "open": "Open tutorial"
+    },
+    "highlights": {
+        "title": "What you get",
+        "points": {
+            "reliable": "A fallback when platforms block direct downloads.",
+            "safe": "Keep scripts in your own browser; no account needed.",
+            "multi": "Works on Chrome, Edge, Firefox and other Chromium-based browsers.",
+            "combo": "Pair the script with freesavevideo.online to cover more sites."
+        }
+    },
+    "steps": {
+        "title": "How to use the script",
+        "install": {
+            "title": "Install Tampermonkey",
+            "desc": "Add the Tampermonkey extension from the Chrome Web Store or your browser's add-on store, then pin it for quick access."
+        },
+        "script": {
+            "title": "Add the YouTube download script",
+            "desc": "Open the script link from the Bilibili video description or pinned comment, review the code, and click “Install” in Tampermonkey."
+        },
+        "download": {
+            "title": "Open a YouTube video and pick a quality",
+            "desc": "Refresh the YouTube watch page; the script shows a download button. Choose MP4 quality, then let the script fetch the media."
+        },
+        "legal": {
+            "title": "Stay compliant",
+            "desc": "Download only content you have rights to. Respect YouTube’s Terms of Service and local copyright rules."
+        }
+    },
+    "faq": {
+        "title": "FAQ",
+        "items": {
+            "quality": {
+                "q": "Which qualities does the script support?",
+                "a": "Most scripts provide 720p or 1080p. Very high resolutions or age-restricted videos may require DASH merging, which some scripts skip."
+            },
+            "broken": {
+                "q": "What if the script stops working?",
+                "a": "YouTube updates often. Check the Bilibili description for updates, reinstall the latest script, or switch to freesavevideo.online for other platforms."
+            },
+            "safe": {
+                "q": "Is this safe and legal?",
+                "a": "The script runs locally in your browser. Still, only download videos you own or have permission to save, and avoid commercial redistribution."
+            }
+        }
+    },
+    "cta": {
+        "title": "Need a backup downloader?",
+        "subtitle": "Use freesavevideo.online for TikTok, Instagram, Facebook, and more while keeping the Tampermonkey script for YouTube.",
+        "primary": "Go to downloader",
+        "secondary": "Rewatch the tutorial"
+    }
+}

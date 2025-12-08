@@ -44,7 +44,7 @@ t岷 c岷?nh峄痭g g矛 h峄?th岷 l脿 b岷 膽ang s峄?d峄g m峄
     sectionId="local"
 />
 
-c谩c t铆nh n膬ng m峄沬 nh岷, ch岷硁g h岷 nh瓢 [remuxing](../remux/remux), ho岷 膽峄檔g c峄 b峄?tr锚n thi岷縯 b峄?c峄 b岷.
+c谩c t铆nh n膬ng m峄沬 nh岷, ch岷硁g h岷 nh瓢 [remuxing](../remux), ho岷 膽峄檔g c峄 b峄?tr锚n thi岷縯 b峄?c峄 b岷.
 x峄?l媒 tr锚n thi岷縯 b峄?hi峄噓 qu岷?v脿 kh么ng bao gi峄?g峄璱 b岷 k峄?th峄?g矛 qua internet.
 n贸 ho脿n to脿n ph霉 h峄 v峄沬 m峄 ti锚u t瓢啤ng lai c峄 ch煤ng t么i l脿 chuy峄僴 c脿ng nhi峄乽 x峄?l媒 c脿ng t峄憈 sang m谩y kh谩ch.
 </section>

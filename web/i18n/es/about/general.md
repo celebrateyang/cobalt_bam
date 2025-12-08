@@ -44,7 +44,7 @@ todo lo que ver谩n es que est谩s usando una instancia de bamboo download.
     sectionId="local"
 />
 
-las caracter铆sticas m谩s nuevas, como [remezclar](../remux/remux), funcionan localmente en tu dispositivo.
+las caracter铆sticas m谩s nuevas, como [remezclar](../remux), funcionan localmente en tu dispositivo.
 el procesamiento en el dispositivo es eficiente y nunca env铆a nada por internet.
 se alinea perfectamente con nuestro objetivo futuro de mover tanto procesamiento como sea posible al cliente.
 </section>

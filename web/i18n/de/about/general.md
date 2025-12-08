@@ -44,7 +44,7 @@ Alles, was sie sehen werden, ist, dass Sie eine bamboo download-Instanz verwende
     sectionId="local"
 />
 
-Neueste Funktionen, wie [Remuxing](../remux/remux), arbeiten lokal auf Ihrem Ger盲t.
+Neueste Funktionen, wie [Remuxing](../remux), arbeiten lokal auf Ihrem Ger盲t.
 Die ger盲teinterne Verarbeitung ist effizient und sendet niemals etwas 眉ber das Internet.
 Es passt perfekt zu unserem zuk眉nftigen Ziel, so viel Verarbeitung wie m枚glich auf den Client zu verlagern.
 </section>

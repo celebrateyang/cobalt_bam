@@ -44,7 +44,7 @@ tout ce qu'ils verront, c'est que vous utilisez une instance bamboo download.
     sectionId="local"
 />
 
-les nouvelles fonctionnalit茅s, telles que le [remuxage](../remux/remux), fonctionnent localement sur votre appareil.
+les nouvelles fonctionnalit茅s, telles que le [remuxage](../remux), fonctionnent localement sur votre appareil.
 le traitement sur l'appareil est efficace et n'envoie jamais rien sur internet.
 cela s'aligne parfaitement avec notre objectif futur de d茅placer autant de traitement que possible vers le client.
 </section>

@@ -88,17 +88,29 @@
 
     #sidebar {
         background: var(--sidebar-bg);
-        height: 100vh;
+        min-height: 100vh;
         width: calc(var(--sidebar-width) + var(--sidebar-inner-padding) * 2);
         position: sticky;
+        top: 0;
+        padding: calc(var(--padding) * 1.2) var(--sidebar-inner-padding);
+        box-sizing: border-box;
+        flex-shrink: 0;
     }
 
     #sidebar-tabs {
         height: 100%;
         justify-content: space-between;
-        padding: var(--sidebar-inner-padding);
-        padding-bottom: var(--border-radius);
-        overflow-y: scroll;
+        padding: 0;
+        gap: var(--padding);
+        overflow-y: auto;
+    }
+
+    .sidebar-inner-container {
+        gap: 8px;
+    }
+
+    #sidebar-tabs::-webkit-scrollbar {
+        display: none;
     }
 
     @media screen and (max-width: 535px) {
@@ -116,6 +128,7 @@
             justify-content: center;
             align-items: flex-start;
             z-index: 3;
+            padding: 0;
         }
 
         #sidebar::before {
@@ -135,6 +148,7 @@
             padding-bottom: 0;
             padding: var(--sidebar-inner-padding) 0;
             height: fit-content;
+            gap: var(--sidebar-inner-padding);
         }
 
         #sidebar :global(.sidebar-inner-container:first-child) {

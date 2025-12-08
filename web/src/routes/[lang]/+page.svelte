@@ -27,17 +27,55 @@
     };
     let key: string = currentLocale;
     const donateLink = donateLinks[key as keyof typeof donateLinks];
+    
     let showMindsou = false;
     let showYumcheck = false;
-    let showNotification = false; // 暂时关闭通知以避免展示已失效的来源
-    $: siteUrl = env.HOST ? `https://${env.HOST}` : "";
-    $: canonicalUrl = siteUrl ? `${siteUrl}/${currentLocale}` : "";
+    let showNotification = false; // ?????????????????
+    const fallbackHost = env.HOST || "freesavevideo.online";
+    const platformCards = [
+        { slug: "douyin", name: "抖音无水印下载", desc: "支持国内外版抖音/TikTok，一键去水印，保持高清音画。" },
+        { slug: "bilibili", name: "B站视频下载", desc: "支持番剧、UP主投稿及课程视频，保留清晰度和字幕。" },
+        { slug: "kuaishou", name: "快手去水印", desc: "复制快手链接即可解析，批量下载更高效。" },
+        { slug: "xiaohongshu", name: "小红书保存视频", desc: "去除站内水印，保留封面与高清原声。" },
+        { slug: "instagram", name: "Instagram Reels 下载", desc: "支持 Reels、帖子与故事视频，直接保存到本地。" },
+        { slug: "youtube", name: "YouTube 视频下载", desc: "支持 1080P/4K，下载后离线观看，自动匹配最佳格式。" },
+        { slug: "facebook", name: "Facebook 视频下载", desc: "公开/私密分享链接均可解析，多种分辨率可选。" },
+        { slug: "twitter", name: "X(Twitter) 视频保存", desc: "复制推文链接即可提取原视频，保持清晰度。" }
+    ];
+    const faqItems = [
+        {
+            q: currentLocale === "zh"
+                ? "如何下载抖音、B站、快手、小红书等平台的视频？"
+                : "How to download videos from Douyin, Bilibili, Kuaishou or Xiaohongshu?",
+            a: currentLocale === "zh"
+                ? "复制视频链接，粘贴到输入框，保持“自动”模式，点击“解析链接”即可生成无水印下载地址。"
+                : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link."
+        },
+        {
+            q: currentLocale === "zh"
+                ? "可以批量解析或切换音频/静音吗？"
+                : "Can I batch process or grab audio-only files?",
+            a: currentLocale === "zh"
+                ? "支持批量解析入口，下载模式可在自动、音频、静音间切换。长视频会展示进度和速度。"
+                : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress."
+        },
+        {
+            q: currentLocale === "zh"
+                ? "手机也能用吗，会不会有水印？"
+                : "Is it mobile-friendly and watermark-free?",
+            a: currentLocale === "zh"
+                ? "完全网页版，手机/平板/电脑都可直接使用，解析后输出无水印高清文件。"
+                : "It runs in the browser on mobile/desktop and returns watermark-free HD files."
+        }
+    ];
+    $: siteUrl = `https://${fallbackHost}`;
+    $: canonicalUrl = `${siteUrl}/${currentLocale}`;
     const stripYouTube = (value: string) => {
         if (!value) return value;
-        let v = value.replace(/YouTube[、,，]?\s*/gi, "");
-        v = v.replace(/youtube[、,，]?\s*/gi, "");
-        v = v.replace(/[、,，]\s*[、,，]+/g, "、");
-        v = v.replace(/^\s*[、,，]\s*/, "");
+        let v = value.replace(/YouTube[, ]?\s*/gi, "");
+        v = v.replace(/youtube[, ]?\s*/gi, "");
+        v = v.replace(/[, ]\s*[, ]+/g, ",");
+        v = v.replace(/^\s*[, ]\s*/, "");
         v = v.replace(/\s{2,}/g, " ").trim();
         return v;
     };
@@ -57,6 +95,19 @@
         "name": seoName,
         "description": seoDescription
     } : null;
+    $: faqJsonLd = canonicalUrl ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqItems.map((item) => ({
+            "@type": "Question",
+            "name": item.q,
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": item.a
+            }
+        }))
+    } : null;
+    $: structuredData = [jsonLd, faqJsonLd].filter(Boolean);
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
@@ -77,16 +128,22 @@
     <title>{seoTitle}</title>
     <meta name="description" content={seoDescription} />
     <meta name="keywords" content={seoKeywords} />
+    <meta name="applicable-device" content="pc,mobile" />
+    <meta http-equiv="Cache-Control" content="no-transform" />
+    <meta name="robots" content="index,follow" />
     <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={seoDescription} />
+    <meta property="og:type" content="website" />
     {#if canonicalUrl}
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:url" content={canonicalUrl} />
     {/if}
-    {#if jsonLd}
-        <script type="application/ld+json">
-            {JSON.stringify(jsonLd)}
-        </script>
+    {#if structuredData.length}
+        {#each structuredData as ld}
+            <script type="application/ld+json">
+                {JSON.stringify(ld)}
+            </script>
+        {/each}
     {/if}
 </svelte:head>
 
@@ -149,6 +206,25 @@
                 <p class="card-desc">{$t("general.seo.discover.description")}</p>
             </div>
         </a>
+    </section>
+
+    <section class="platform-section seo-section" id="platforms">
+        <div class="platform-heading">
+            <h2>热门平台无水印下载</h2>
+            <p>覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。</p>
+        </div>
+        <div class="platform-grid">
+            {#each platformCards as card}
+                <a
+                    class="platform-card"
+                    id={"platform-" + card.slug}
+                    href={canonicalUrl ? `${canonicalUrl}#platform-${card.slug}` : `/${currentLocale}#platform-${card.slug}`}
+                >
+                    <div class="platform-name">{card.name}</div>
+                    <p>{card.desc}</p>
+                </a>
+            {/each}
+        </div>
     </section>
 
     <section class="seo-hero seo-section">
@@ -569,6 +645,58 @@
         font-size: 14px;
     }
 
+    .platform-section {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto 12px;
+        padding: 0 var(--padding);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .platform-heading h2 {
+        margin: 0;
+        font-size: clamp(19px, 2.4vw, 24px);
+        color: var(--secondary);
+    }
+    .platform-heading p {
+        margin: 6px 0 0;
+        color: var(--secondary-600);
+        line-height: 1.55;
+    }
+    .platform-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .platform-card {
+        display: block;
+        padding: 14px;
+        border-radius: 12px;
+        background: var(--surface-1);
+        border: 1px solid var(--surface-2);
+        text-decoration: none;
+        color: var(--text);
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .platform-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    }
+    .platform-name {
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--secondary);
+    }
+    .platform-card p {
+        margin: 0;
+        color: var(--secondary-600);
+        line-height: 1.45;
+        font-size: 14px;
+    }
+
     /* Feature Cards */
     .feature-cards {
         display: grid;
@@ -657,6 +785,9 @@
 
         .seo-text p {
             font-size: 14px;
+        }
+        .platform-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>

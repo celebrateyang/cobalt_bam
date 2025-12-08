@@ -1,54 +1,54 @@
 {
-    "cobalt": "竹子下载,免费下载视频 - B站(Bilibili),YouTube,TikTok,Instagram,Facebook,Twitter",
+    "cobalt": "竹子下载，免费视频下载 - B站、YouTube、TikTok、Instagram、Facebook、Twitter 无水印解析",
     "meowbalt": "竹子下载",
     "beta": "测试版",
-    "embed.description": "从YouTube、TikTok、Bilibili、Instagram、Facebook和Twitter免费下载视频。无需注册。快速简单的视频下载。",
+    "embed.description": "从YouTube、TikTok、Bilibili、Instagram、Facebook 和 Twitter 免费下载视频。无需注册，快速无水印下载。",
     "guide": {
         "title": "使用竹子下载在线视频下载指南",
-        "description1": "使用竹子下载，这是首屈一指的在线视频下载器，下载视频和音乐。无需额外的软件，直接从网上保存您喜欢的媒体。我们直观的平台使视频下载变得简单高效。",
-        "description2": "轻松访问并下载各种内容，从热门大片和流行电视剧到激动人心的体育片段。只需将视频URL粘贴到指定字段并点击下载按钮。"
+        "description1": "使用竹子下载，这是一款领先的在线视频下载器，可下载视频和音乐。无需额外软件，直接在线保存喜欢的媒体。界面简单，流程高效。",
+        "description2": "轻松获取各种内容：热门电影、流行剧集、体育集锦或创作者作品。只需将视频 URL 粘贴到输入框并点击下载按钮。"
     },
     "notification": {
-        "title": "通知：",
+        "title": "通知",
         "close": "关闭通知",
-        "youtube_restriction": "新上线[发现]功能,探索各平台的优质视频 2025/11/28"
+        "youtube_restriction": "新上线【发现】功能，探索各平台优质视频 2025/11/28"
     },
     "promotions": {
         "mindsou": {
-            "title": "成年人只筛选,不教育",
+            "title": "成年人只筛选，不教育",
             "features": {
-                "1": "1.发布你大脑中某时刻的想法",
-                "2": "2.完全匹配,语义匹配,互补匹配",
-                "3": "3.点击匹配对象即可聊天",
-                "4": "4.离线匹配邮件提醒",
-                "5": "5.限时内容 & 隐私保护，自动销毁减少信息负担"
+                "1": "1. 发布你脑海中的某个时刻想法",
+                "2": "2. 完全匹配、语义匹配、互补匹配",
+                "3": "3. 点击匹配对象即可聊天",
+                "4": "4. 离线匹配邮件提醒",
+                "5": "5. 限时内容与隐私保护，自动销毁减少信息负担"
             },
             "visit": "访问 Mindsou"
         },
         "yumcheck": {
-            "title": "食品配料表,拍照自动查询分析",
+            "title": "食品配料表，拍照自动查询分析",
             "features": {
                 "1": "拍摄配料表，一键成分分析与健康风险评估",
                 "2": "食品添加剂对比欧盟标准，多维度了解",
                 "3": "扫描食品标准号，快速解读规范信息",
-                "4": "血液检测报告智能解析，普通人也能读懂血液报告"
+                "4": "血液检测报告智能解析，普通人也能读懂检测单"
             },
             "visit": "访问 YumCheck"
         }
     },
-        "pwa": {
-            "install_prompt": "该网站支持安装到桌面",
-            "install": "安装",
-            "close": "关闭"
-        },
+    "pwa": {
+        "install_prompt": "该网站支持安装到桌面",
+        "install": "安装",
+        "close": "关闭"
+    },
     "seo": {
         "home": {
-            "title": "竹子下载 免费视频下载 - 支持抖音,B站,快手,小红书等平台 | 视频保存 | 高清视频下载",
-            "description": "最好用的免费在线视频下载工具。支持YouTube, TikTok, Instagram, Twitter等多个平台的视频下载。无水印，高清画质，快速保存。",
-            "keywords": "视频下载, 在线视频下载, YouTube下载, TikTok无水印下载, Instagram视频保存, 免费视频下载器"
+            "title": "竹子下载 免费视频下载 - 支持抖音 B站 快手 小红书 TikTok | 视频保存 | 高清视频下载",
+            "description": "最好用的免费在线视频下载工具。支持TikTok、Bilibili、Instagram、Twitter等多个平台的视频下载。无水印，高清画质，快速保存。",
+            "keywords": "抖音无水印下载,B站视频下载,快手去水印,小红书保存视频,YouTube 下载器,免费视频下载"
         },
         "transfer": {
-            "title": "免费在线文件传输 - 无需App | P2P极速快传 | 手机电脑互传",
+            "title": "免费资料传输 - 无需App | P2P 极速快传 | 手机电脑互传",
             "description": "无需安装任何App，直接在浏览器中实现手机和电脑之间的文件传输。安全P2P连接，跨设备剪贴板同步。比微信传文件更方便，保护隐私。",
             "keywords": "文件传输, 手机电脑互传, 免App传文件, P2P文件分享, 跨设备剪贴板, 在线快传, 局域网传输"
         },

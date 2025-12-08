@@ -32,12 +32,13 @@
     export let data;
 
     const supportedLanguages = Object.keys(languages);
+    const fallbackHost = env.HOST || "freesavevideo.online";
     const stripYouTube = (value: string) => {
         if (!value) return value;
-        let v = value.replace(/YouTube[、,，]?\s*/gi, "");
-        v = v.replace(/youtube[、,，]?\s*/gi, "");
-        v = v.replace(/[、,，]\s*[、,，]+/g, "、");
-        v = v.replace(/^\s*[、,，]\s*/, "");
+        let v = value.replace(/YouTube[??,]?\s*/gi, "");
+        v = v.replace(/youtube[??,]?\s*/gi, "");
+        v = v.replace(/[??,]\s*[??,]+/g, "?");
+        v = v.replace(/^\s*[??,]\s*/, "");
         v = v.replace(/\s{2,}/g, " ").trim();
         return v;
     };
@@ -70,18 +71,13 @@
 </script>
 
 <svelte:head>
-    <meta name="description" content={stripYouTube($t("general.embed.description"))}>
-    <meta property="og:description" content={stripYouTube($t("general.embed.description"))}>
-
-    {#if env.HOST}
-        <meta property="og:url" content="https://{env.HOST}{$page.url.pathname}">
-    {/if}
+    <meta property="og:url" content="https://{fallbackHost}{$page.url.pathname}">
 
     <!-- hreflang tags for SEO -->
     {#each supportedLanguages as lang}
-        <link rel="alternate" hreflang={lang} href="https://{env.HOST}/{lang}{currentPath}" />
+        <link rel="alternate" hreflang={lang} href="https://{fallbackHost}/{lang}{currentPath}" />
     {/each}
-    <link rel="alternate" hreflang="x-default" href="https://{env.HOST}/en{currentPath}" />
+    <link rel="alternate" hreflang="x-default" href="https://{fallbackHost}/en{currentPath}" />
 
     {#if device.is.mobile}
         <meta name="theme-color" content={statusBarColors[$currentTheme]} />

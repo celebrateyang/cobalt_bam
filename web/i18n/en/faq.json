@@ -1,0 +1,22 @@
+{
+    "title": "Frequently Asked Questions",
+    "description": "Common answers about using the downloader safely and for free.",
+    "items": {
+        "usage": {
+            "q": "How do I use the downloader?",
+            "a": "Paste the video link into the input box and click download. We will fetch a clean link for you automatically."
+        },
+        "platforms": {
+            "q": "Which platforms are supported?",
+            "a": "YouTube, Facebook, Instagram, Twitter (X), Douyin, Kuaishou, Bilibili and other popular platforms are supported."
+        },
+        "free": {
+            "q": "Is it free to use?",
+            "a": "Yes. All downloads are free to use."
+        },
+        "contact": {
+            "q": "How can I send new requirements?",
+            "a": "Email celebrateyang@gmail.com and we will review your request."
+        }
+    }
+}

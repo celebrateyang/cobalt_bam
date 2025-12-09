@@ -1,24 +1,20 @@
 import type { RequestHandler } from './$types';
 
-const site = 'https://freesavevideo.online'; // 您的域名
+const site = 'https://freesavevideo.online';
 const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 
-// 定义所有需要包含在 sitemap 中的页面路径
+// paths to include in sitemap
 const pages = [
-    '',           // 首页
-    'clipboard',  // 文件传输
-    'discover',   // 发现
-    'youtube-tampermonkey', // Tampermonkey tutorial
-    'about',      // 关于
-    'donate',     // 捐赠
-    'settings',   // 设置
-    'remux',      // Remux
-    'history',    // 历史记录
-    'faq',        // FAQ
-    'guide',      // 指南
+    '',
+    'clipboard',
+    'discover',
+    'youtube-tampermonkey',
+    'about/general',
+    'remux',
+    'faq',
 ];
 
-// 关于页面的子页面
+// sub-pages under /about
 const aboutPages = [
     'about/privacy',
     'about/terms',
@@ -28,15 +24,14 @@ const aboutPages = [
 function generateSitemap(): string {
     const urls: string[] = [];
     const now = new Date().toISOString();
-    
-    // 为每种语言生成所有页面的 URL
+
     for (const lang of languages) {
-        // 添加普通页面
+        // top-level pages
         for (const page of pages) {
             const path = page ? `/${lang}/${page}` : `/${lang}`;
             const priority = page === '' ? '1.0' : '0.8';
             const changefreq = page === '' ? 'daily' : 'weekly';
-            
+
             urls.push(`
     <url>
         <loc>${site}${path}</loc>
@@ -45,8 +40,8 @@ function generateSitemap(): string {
         <priority>${priority}</priority>
     </url>`);
         }
-        
-        // 添加关于页面的子页面
+
+        // about sub-pages
         for (const aboutPage of aboutPages) {
             urls.push(`
     <url>
@@ -57,7 +52,7 @@ function generateSitemap(): string {
     </url>`);
         }
     }
-    
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('')}
@@ -66,7 +61,7 @@ ${urls.join('')}
 
 export const GET: RequestHandler = () => {
     const sitemap = generateSitemap();
-    
+
     return new Response(sitemap, {
         headers: {
             'Content-Type': 'application/xml; charset=utf-8',
@@ -75,5 +70,4 @@ export const GET: RequestHandler = () => {
     });
 };
 
-// 关键：启用预渲染，在构建时生成静态 sitemap.xml
 export const prerender = true;

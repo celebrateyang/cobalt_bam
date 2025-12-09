@@ -1,45 +1,112 @@
-<script>
+<script lang="ts">
+    import { t } from '$lib/i18n/translations';
 
+    const itemKeys = ['usage', 'platforms', 'free', 'contact'] as const;
+
+    $: title = $t('faq.title');
+    $: description = $t('faq.description');
 </script>
 
 <svelte:head>
-    <title>常见问题 (FAQ) - 视频下载器</title>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
 </svelte:head>
 
-
 <main id="faq">
-    <h1>常见问题 (FAQ)</h1>
+    <h1>{title}</h1>
+    <p class="lede">{description}</p>
 
-    <section>
-        <h2>1. 如何使用视频下载工具？</h2>
-        <p>您只需将视频链接粘贴到输入框中，然后点击“下载”按钮，即可开始下载。</p>
-    </section>
-
-    <section>
-        <h2>2. 支持哪些平台？</h2>
-        <p>我们支持从 YouTube、Facebook、Instagram、Twitter、抖音 (Douyin)、快手 (Kuaishou) 等多个流行平台下载视频。</p>
-    </section>
-
-    <section>
-        <h2>3. 是否免费使用？</h2>
-        <p>是的，您可以免费使用我们的视频下载工具。</p>
-    </section>
-    <section>
-        <h2>4. 使用建议？</h2>
-        <p>如果你在使用中，有什么新的需求，非常欢迎你告诉我 celebrateyang@gmail.com</p>
-    </section>
+    <div class="faq-list">
+        {#each itemKeys as key, index}
+            <section class="faq-item">
+                <div class="question">
+                    <span class="number">{(index + 1).toString().padStart(2, '0')}</span>
+                    <h2>{$t(`faq.items.${key}.q`)}</h2>
+                </div>
+                <p class="answer">{$t(`faq.items.${key}.a`)}</p>
+            </section>
+        {/each}
+    </div>
 </main>
 
 <style>
     #faq {
-        padding: var(--padding);
+        padding: calc(var(--padding) * 2) var(--padding);
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    h1, h2 {
-        color: var(--blue);
+    h1 {
+        margin: 0;
+        color: var(--secondary);
+        font-size: clamp(22px, 3vw, 28px);
     }
 
-    section {
-        margin-bottom: var(--padding);
+    .lede {
+        margin: 0;
+        color: var(--secondary-600);
+        line-height: 1.6;
+    }
+
+    .faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .faq-item {
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .question {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .number {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--surface-3);
+        color: var(--secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-family: "IBM Plex Mono", monospace;
+    }
+
+    h2 {
+        margin: 0;
+        font-size: 17px;
+        color: var(--secondary);
+    }
+
+    .answer {
+        margin: 0;
+        color: var(--secondary-600);
+        line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+        #faq {
+            padding: calc(var(--padding) * 1.5) var(--padding);
+        }
+
+        .faq-item {
+            padding: 12px;
+        }
     }
 </style>

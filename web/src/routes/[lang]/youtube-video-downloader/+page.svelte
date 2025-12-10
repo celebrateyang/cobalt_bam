@@ -1,6 +1,8 @@
 <script lang="ts">
     import { t, INTERNAL_locale } from "$lib/i18n/translations";
     import env from "$lib/env";
+    import { onMount } from "svelte";
+    import { browser } from "$app/environment";
 
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconPlayerPlay from "@tabler/icons-svelte/IconPlayerPlay.svelte";
@@ -15,13 +17,14 @@
     const highlightKeys = ["reliable", "safe", "multi", "combo"] as const;
     const faqKeys = ["quality", "broken", "safe"] as const;
     let embedFailed = false;
+    let disableEmbed = false;
 
     $: currentLocale = data.lang || $INTERNAL_locale;
     $: seoTitle = $t("tampermonkey.seo.title");
     $: seoDescription = $t("tampermonkey.seo.description");
     $: seoKeywords = $t("tampermonkey.seo.keywords");
     $: siteUrl = env.HOST ? `https://${env.HOST}` : "";
-    $: canonicalUrl = siteUrl ? `${siteUrl}/${currentLocale}/youtube-tampermonkey` : "";
+    $: canonicalUrl = siteUrl ? `${siteUrl}/${currentLocale}/youtube-video-downloader` : "";
     $: thumbnailUrl = siteUrl ? `${siteUrl}/icons/android-chrome-512x512.png` : "";
     $: jsonLd = canonicalUrl
         ? {
@@ -44,6 +47,19 @@
             }
         }
         : null;
+
+    onMount(() => {
+        if (!browser) return;
+        const mq = window.matchMedia("(max-width: 900px)");
+        const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+            disableEmbed = e.matches;
+        };
+        handler(mq);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    });
+
+    $: showEmbed = !disableEmbed && !embedFailed;
 </script>
 
 <svelte:head>
@@ -85,23 +101,28 @@
 
     <section class="video card">
         <div class="iframe-wrap">
-            <iframe
-                class:hidden={embedFailed}
-                title={$t("tampermonkey.video.title")}
-                src={embedUrl}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowfullscreen
-                loading="lazy"
-                on:load={() => embedFailed = false}
-                on:error={() => embedFailed = true}
-            ></iframe>
-            {#if embedFailed}
+            {#if showEmbed}
+                <iframe
+                    title={$t("tampermonkey.video.title")}
+                    src={embedUrl}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowfullscreen
+                    loading="lazy"
+                    on:load={() => embedFailed = false}
+                    on:error={() => embedFailed = true}
+                ></iframe>
+            {/if}
+            {#if !showEmbed}
                 <div class="iframe-fallback">
                     <p>{$t("tampermonkey.video.title")}</p>
                     <p class="fallback-copy">
                         {currentLocale === 'zh'
-                            ? "B站播放器限制了外站内嵌。点击下方按钮在新标签打开。"
-                            : "The Bilibili player blocked embedding. Open the tutorial in a new tab instead."}
+                            ? disableEmbed
+                                ? "移动端内嵌 B站 播放器不稳定，点击下方按钮在新标签打开。"
+                                : "B站播放器限制了外站内嵌。点击下方按钮在新标签打开。"
+                            : disableEmbed
+                                ? "Bilibili embed is unstable on mobile. Open in a new tab instead."
+                                : "The Bilibili player blocked embedding. Open the tutorial in a new tab instead."}
                     </p>
                     <a class="btn primary" href={videoUrl} target="_blank" rel="noopener noreferrer">
                         <IconPlayerPlay size={18} />
@@ -189,10 +210,10 @@
         width: 100%;
         max-width: 1120px;
         margin: 0 auto;
-        padding: calc(var(--padding) * 2) var(--padding) calc(var(--padding) * 3);
+        padding: clamp(16px, 4vw, 36px) clamp(14px, 3vw, 28px) clamp(28px, 5vw, 48px);
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: clamp(14px, 2vw, 22px);
         box-sizing: border-box;
     }
 
@@ -200,7 +221,7 @@
         background: var(--surface-1);
         border: 1px solid var(--surface-2);
         border-radius: 18px;
-        padding: calc(var(--padding) * 1.5);
+        padding: clamp(16px, 3vw, 28px);
         box-shadow: 0 16px 42px rgba(0, 0, 0, 0.06);
     }
 
@@ -274,11 +295,12 @@
         display: grid;
         grid-template-columns: 1.4fr 1fr;
         gap: 16px;
+        align-items: center;
     }
 
     .iframe-wrap {
         position: relative;
-        padding-top: 56.25%;
+        aspect-ratio: 16 / 9;
         border-radius: 14px;
         overflow: hidden;
         background: #0f1115;
@@ -290,6 +312,7 @@
         width: 100%;
         height: 100%;
         border: none;
+        border-radius: inherit;
     }
     .iframe-wrap iframe.hidden {
         display: none;
@@ -464,16 +487,28 @@
         .video {
             grid-template-columns: 1fr;
         }
+
+        .video-meta {
+            order: 2;
+        }
+
+        .iframe-wrap {
+            order: 1;
+        }
     }
 
     @media (max-width: 640px) {
         .page {
-            padding: calc(var(--padding) * 1.5) var(--padding) calc(var(--padding) * 2);
+            padding: clamp(16px, 6vw, 24px);
             gap: 14px;
         }
 
         .card {
-            padding: var(--padding);
+            padding: clamp(14px, 5vw, 20px);
+        }
+
+        .hero {
+            text-align: center;
         }
 
         .cta {

@@ -8,7 +8,7 @@ const pages = [
     '',
     'clipboard',
     'discover',
-    'youtube-tampermonkey',
+    'youtube-video-downloader',
     'about/general',
     'remux',
     'faq',

@@ -11,7 +11,7 @@ const serviceNeedsChunks = new Set(["youtube", "vk"]);
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
-    
+
     while (read < size) {
         if (streamInfo.controller.signal.aborted) {
             // console.log(`[readChunks] Controller aborted at read=${read}/${size}`);
@@ -40,7 +40,7 @@ async function* readChunks(streamInfo, size) {
 
         // console.log(`[readChunks] Chunk response: status=${chunk.statusCode}, content-length=${chunk.headers['content-length']}`);
         // console.log(`======> [readChunks] Authenticated chunk request result: status=${chunk.statusCode}`);
-        
+
         if (chunk.statusCode === 403 && chunksSinceTransplant >= 3 && streamInfo.originalRequest) {
             chunksSinceTransplant = 0;
             // console.log(`[readChunks] 403 error after 3+ chunks, attempting fresh YouTube API call`);
@@ -49,7 +49,7 @@ async function* readChunks(streamInfo, size) {
                 // Import YouTube service dynamically
                 const handler = await import(`../processing/services/youtube.js`);
                 // console.log(`[readChunks] Calling YouTube service for fresh URLs`);
-                
+
                 const response = await handler.default({
                     ...streamInfo.originalRequest,
                     dispatcher: streamInfo.dispatcher
@@ -67,7 +67,7 @@ async function* readChunks(streamInfo, size) {
 
                 if (response.urls) {
                     response.urls = [response.urls].flat();
-                    
+
                     // Update the URL for this stream based on audio/video selection
                     if (streamInfo.originalRequest.isAudioOnly && response.urls.length > 1) {
                         streamInfo.url = response.urls[1];
@@ -80,7 +80,7 @@ async function* readChunks(streamInfo, size) {
                         streamInfo.url = response.urls[0];
                         // console.log(`[readChunks] Updated to fresh video URL`);
                     }
-                    
+
                     // console.log(`[readChunks] Fresh URL obtained, retrying chunk request`);
                     continue; // Retry with fresh URL
                 } else {
@@ -126,7 +126,7 @@ async function* readChunks(streamInfo, size) {
 
         console.log(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${received}, read progress=${read + received}/${size}`);
         read += received;
-    }    
+    }
     console.log(`[readChunks] Download completed: total read=${read}/${size}`);
 }
 
@@ -145,11 +145,11 @@ async function handleChunkedStream(streamInfo, res) {
         let req, attempts = 3;
         console.log(`[handleYoutubeStream] Starting HEAD request with ${attempts} attempts`);
         console.log(`======> [handleYoutubeStream] Using authenticated headers for HEAD request`);
-        
+
         while (attempts--) {
             const headers = getHeaders('youtube');
             console.log(`======> [handleYoutubeStream] HEAD request headers prepared with auth: ${!!headers.Cookie}`);
-            
+
             req = await fetch(streamInfo.url, {
                 headers: getHeaders(streamInfo.service),
                 method: 'HEAD',
@@ -159,14 +159,14 @@ async function handleChunkedStream(streamInfo, res) {
 
             console.log(`[handleYoutubeStream] HEAD response: status=${req.status}, url=${req.url}`);
             console.log(`======> [handleYoutubeStream] Authenticated HEAD request completed: status=${req.status}`);
-            
-            streamInfo.url = req.url;if (req.status === 403 && streamInfo.originalRequest && attempts > 0) {
+
+            streamInfo.url = req.url; if (req.status === 403 && streamInfo.originalRequest && attempts > 0) {
                 console.log(`[handleYoutubeStream] Got 403, attempting fresh YouTube API call (attempts left: ${attempts})`);
                 try {
                     // Import YouTube service dynamically
                     const handler = await import(`../processing/services/youtube.js`);
                     console.log(`[handleYoutubeStream] Calling YouTube service for fresh URLs`);
-                    
+
                     const response = await handler.default({
                         ...streamInfo.originalRequest,
                         dispatcher: streamInfo.dispatcher
@@ -181,7 +181,7 @@ async function handleChunkedStream(streamInfo, res) {
 
                     if (response.urls) {
                         response.urls = [response.urls].flat();
-                        
+
                         // Update the URL for this stream based on audio/video selection
                         if (streamInfo.originalRequest.isAudioOnly && response.urls.length > 1) {
                             streamInfo.url = response.urls[1];
@@ -194,7 +194,7 @@ async function handleChunkedStream(streamInfo, res) {
                             streamInfo.url = response.urls[0];
                             console.log(`[handleYoutubeStream] Updated to fresh video URL`);
                         }
-                        
+
                         console.log(`[handleYoutubeStream] Fresh URL obtained, retrying HEAD request`);
                         continue; // Retry with fresh URL
                     } else {
@@ -260,9 +260,23 @@ async function handleChunkedStream(streamInfo, res) {
 
 async function handleGenericStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
-    const cleanup = () => res.end();
+    const requestId = Math.random().toString(36).substring(7);
+
+    console.log(`[GenericStream ${requestId}] 开始处理`, {
+        service: streamInfo.service,
+        url: streamInfo.url?.substring(0, 100),
+        isHLS: streamInfo.isHLS
+    });
+
+    const cleanup = () => {
+        console.log(`[GenericStream ${requestId}] cleanup 被调用`);
+        res.end();
+    };
 
     try {
+        console.log(`[GenericStream ${requestId}] 发起请求到源服务器...`);
+        const startTime = Date.now();
+
         const fileResponse = await request(streamInfo.url, {
             headers: {
                 ...Object.fromEntries(streamInfo.headers),
@@ -273,34 +287,79 @@ async function handleGenericStream(streamInfo, res) {
             maxRedirections: 16
         });
 
+        console.log(`[GenericStream ${requestId}] 源服务器响应`, {
+            statusCode: fileResponse.statusCode,
+            contentLength: fileResponse.headers['content-length'],
+            contentType: fileResponse.headers['content-type'],
+            requestTime: Date.now() - startTime + 'ms'
+        });
+
         res.status(fileResponse.statusCode);
-        fileResponse.body.on('error', () => {});
+        fileResponse.body.on('error', (err) => {
+            console.error(`[GenericStream ${requestId}] 源响应 body 错误:`, err.message);
+        });
 
         const isHls = isHlsResponse(fileResponse, streamInfo);
 
-        for (const [ name, value ] of Object.entries(fileResponse.headers)) {
+        for (const [name, value] of Object.entries(fileResponse.headers)) {
             if (!isHls || name.toLowerCase() !== 'content-length') {
                 res.setHeader(name, value);
             }
         }
 
         if (fileResponse.statusCode < 200 || fileResponse.statusCode > 299) {
+            console.log(`[GenericStream ${requestId}] 状态码异常，结束处理`);
             return cleanup();
         }
 
         if (isHls) {
+            console.log(`[GenericStream ${requestId}] 处理 HLS 流...`);
             await handleHlsPlaylist(streamInfo, fileResponse, res);
         } else {
-            pipe(fileResponse.body, res, cleanup);
+            console.log(`[GenericStream ${requestId}] 开始 pipe 数据...`);
+            let bytesSent = 0;
+            const logInterval = setInterval(() => {
+                console.log(`[GenericStream ${requestId}] pipe 进度: ${bytesSent} bytes, 已用时间: ${Date.now() - startTime}ms`);
+            }, 10000); // 每10秒记录一次
+
+            fileResponse.body.on('data', (chunk) => {
+                bytesSent += chunk.length;
+            });
+
+            fileResponse.body.on('end', () => {
+                clearInterval(logInterval);
+                console.log(`[GenericStream ${requestId}] 源数据流结束`, {
+                    totalBytes: bytesSent,
+                    totalTime: Date.now() - startTime + 'ms'
+                });
+            });
+
+            res.on('close', () => {
+                clearInterval(logInterval);
+                console.log(`[GenericStream ${requestId}] 客户端连接关闭`, {
+                    bytesSent,
+                    totalTime: Date.now() - startTime + 'ms'
+                });
+            });
+
+            pipe(fileResponse.body, res, () => {
+                clearInterval(logInterval);
+                console.log(`[GenericStream ${requestId}] pipe 完成`, {
+                    totalBytes: bytesSent,
+                    totalTime: Date.now() - startTime + 'ms'
+                });
+                cleanup();
+            });
         }
-    } catch {
+    } catch (err) {
+        console.error(`[GenericStream ${requestId}] 异常:`, err.message, err.stack?.substring(0, 300));
         closeRequest(streamInfo.controller);
         cleanup();
     }
 }
 
 export function internalStream(streamInfo, res) {
-    
+
     if (streamInfo.headers) {
         streamInfo.headers.delete('icy-metadata');
     }
@@ -346,5 +405,5 @@ export async function probeInternalTunnel(streamInfo) {
             throw "content-length is not a number";
 
         return size;
-    } catch {}
+    } catch { }
 }

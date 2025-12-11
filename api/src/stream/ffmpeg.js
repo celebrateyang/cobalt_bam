@@ -23,7 +23,7 @@ const metadataTags = new Set([
 const convertMetadataToFFmpeg = (metadata) => {
     const args = [];
 
-    for (const [ name, value ] of Object.entries(metadata)) {
+    for (const [name, value] of Object.entries(metadata)) {
         if (metadataTags.has(name)) {
             if (name === "sublanguage") {
                 args.push('-metadata:s:s:0', `language=${value}`);
@@ -57,11 +57,26 @@ const getCommand = (args) => {
 const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
     let process;
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
-    const shutdown = () => (
-        killProcess(process),
-        closeResponse(res),
-        urls.map(destroyInternalStream)
-    );
+    const renderId = Math.random().toString(36).substring(7);
+    const startTime = Date.now();
+    let bytesSent = 0;
+
+    console.log(`[ffmpeg.render ${renderId}] 开始渲染`, {
+        service: streamInfo.service,
+        type: streamInfo.type,
+        filename: streamInfo.filename,
+        urlCount: urls.length
+    });
+
+    const shutdown = () => {
+        console.log(`[ffmpeg.render ${renderId}] shutdown 被调用`, {
+            bytesSent,
+            elapsedTime: Date.now() - startTime + 'ms'
+        });
+        killProcess(process);
+        closeResponse(res);
+        urls.map(destroyInternalStream);
+    };
 
     try {
         const args = [
@@ -69,8 +84,8 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
             ...ffargs,
         ];
 
-        console.log('[ffmpeg.render] Spawning FFmpeg with args:', args);
-        
+        console.log(`[ffmpeg.render ${renderId}] Spawning FFmpeg with args:`, args);
+
         process = spawn(...getCommand(args), {
             windowsHide: true,
             stdio: [
@@ -79,36 +94,89 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
             ],
         });
 
-        console.log('[ffmpeg.render] FFmpeg process spawned, PID:', process.pid);
+        console.log(`[ffmpeg.render ${renderId}] FFmpeg process spawned, PID:`, process.pid);
 
-        const [,,, muxOutput] = process.stdio;
+        const [, , , muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
+        // 添加 CORS 相关头以支持跨域请求
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
         const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
-        console.log('[ffmpeg.render] Estimated length:', estimatedLength);
-        
+        console.log(`[ffmpeg.render ${renderId}] Estimated length:`, estimatedLength);
+
         res.setHeader('Estimated-Content-Length', estimatedLength);
 
-        console.log('[ffmpeg.render] Setting up pipe to response...');
-        pipe(muxOutput, res, shutdown);
+        // 监控 muxOutput 数据
+        muxOutput.on('data', (chunk) => {
+            bytesSent += chunk.length;
+        });
 
-        process.on('close', (code) => {
-            console.log('[ffmpeg.render] Process closed with code:', code);
+        muxOutput.on('error', (err) => {
+            console.error(`[ffmpeg.render ${renderId}] muxOutput 错误:`, err.message);
+        });
+
+        muxOutput.on('end', () => {
+            console.log(`[ffmpeg.render ${renderId}] muxOutput 结束`, {
+                bytesSent,
+                elapsedTime: Date.now() - startTime + 'ms'
+            });
+        });
+
+        // 监控响应状态
+        res.on('close', () => {
+            console.log(`[ffmpeg.render ${renderId}] 响应关闭`, {
+                bytesSent,
+                elapsedTime: Date.now() - startTime + 'ms',
+                writableEnded: res.writableEnded,
+                writableFinished: res.writableFinished
+            });
+        });
+
+        res.on('error', (err) => {
+            console.error(`[ffmpeg.render ${renderId}] 响应错误:`, err.message);
+        });
+
+        // 每10秒记录一次进度
+        const logInterval = setInterval(() => {
+            console.log(`[ffmpeg.render ${renderId}] 进度`, {
+                bytesSent,
+                elapsedTime: Date.now() - startTime + 'ms',
+                processExitCode: process?.exitCode
+            });
+        }, 10000);
+
+        console.log(`[ffmpeg.render ${renderId}] Setting up pipe to response...`);
+        pipe(muxOutput, res, () => {
+            clearInterval(logInterval);
             shutdown();
         });
-        
-        process.on('error', (err) => {
-            console.error('[ffmpeg.render] Process error:', err);
+
+        process.on('close', (code) => {
+            clearInterval(logInterval);
+            console.log(`[ffmpeg.render ${renderId}] Process closed with code:`, code, {
+                bytesSent,
+                elapsedTime: Date.now() - startTime + 'ms'
+            });
+            shutdown();
         });
-        
+
+        process.on('error', (err) => {
+            clearInterval(logInterval);
+            console.error(`[ffmpeg.render ${renderId}] Process error:`, err);
+        });
+
         res.on('finish', () => {
-            console.log('[ffmpeg.render] Response finished');
+            clearInterval(logInterval);
+            console.log(`[ffmpeg.render ${renderId}] Response finished`, {
+                bytesSent,
+                elapsedTime: Date.now() - startTime + 'ms'
+            });
             shutdown();
         });
     } catch (e) {
-        console.error('[ffmpeg.render] Exception:', e);
+        console.error(`[ffmpeg.render ${renderId}] Exception:`, e);
         shutdown();
     }
 }
@@ -116,12 +184,12 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
 const remux = async (streamInfo, res) => {
     const format = streamInfo.filename.split('.').pop();
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
-    
+
     console.log('[ffmpeg.remux] Type:', streamInfo.type);
     console.log('[ffmpeg.remux] Format:', format);
     console.log('[ffmpeg.remux] URLs:', urls);
     console.log('[ffmpeg.remux] URLs length:', urls.length);
-    
+
     const args = urls.flatMap(url => ['-i', url]);
 
     // if the stream type is merge, we expect two URLs
@@ -175,7 +243,7 @@ const remux = async (streamInfo, res) => {
 
     console.log('[ffmpeg.remux] Final FFmpeg args:', args);
     console.log('[ffmpeg.remux] About to call render...');
-    
+
     await render(res, streamInfo, args);
 }
 

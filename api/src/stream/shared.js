@@ -11,7 +11,7 @@ const defaultHeaders = {
 const serviceHeaders = {
     bilibili: {
         referer: 'https://www.bilibili.com/'
-    },    youtube: {
+    }, youtube: {
         accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'accept-language': 'en-US,en;q=0.9',
         'accept-encoding': 'gzip, deflate, br',
@@ -42,7 +42,7 @@ const serviceHeaders = {
 }
 
 export function closeRequest(controller) {
-    try { controller.abort() } catch {}
+    try { controller.abort() } catch { }
 }
 
 export function closeResponse(res) {
@@ -54,71 +54,90 @@ export function closeResponse(res) {
 }
 
 export function getHeaders(service) {
-    
+
     // Converting all header values to strings
     const baseHeaders = Object.entries({ ...defaultHeaders, ...serviceHeaders[service] })
         .reduce((p, [key, val]) => ({ ...p, [key]: String(val) }), {});
-    
+
     // For YouTube, always try to add authentication cookies
     if (service === 'youtube') {
-        
-        
+
+
         // First try OAuth cookies, then regular cookies
         let cookie = getCookie('youtube_oauth');
         if (!cookie) {
-            
+
             cookie = getCookie('youtube');
         }
-        
+
         if (cookie) {
             const cookieStr = cookie.toString();
             baseHeaders.Cookie = cookieStr;
-            
-        } 
+
+        }
     }
-    
+
     return baseHeaders;
 }
 
 export function pipe(from, to, done) {
     let bytesTransferred = 0;
     let startTime = Date.now();
-    
+    const pipeId = Math.random().toString(36).substring(7);
+
+    console.log(`[pipe ${pipeId}] 开始传输`);
 
     from.on('error', (error) => {
-        
+        console.error(`[pipe ${pipeId}] 源流错误:`, {
+            message: error.message,
+            code: error.code,
+            bytesTransferred,
+            elapsedTime: Date.now() - startTime + 'ms'
+        });
         done(error);
     })
-    .on('close', () => {
-        const duration = Date.now() - startTime;
-        
-        done();
-    })    .on('data', (chunk) => {
-        bytesTransferred += chunk.length;
-        // Log every 8MB (chunk size) or first few chunks
-        // if (bytesTransferred % (8 * 1024 * 1024) < chunk.length || bytesTransferred < 32 * 1024) {
-        //     console.log(`[pipe] Data transferred: ${bytesTransferred} bytes`);
-        // }
-    });
+        .on('close', () => {
+            const duration = Date.now() - startTime;
+            console.log(`[pipe ${pipeId}] 源流关闭`, {
+                bytesTransferred,
+                duration: duration + 'ms',
+                speed: (bytesTransferred / duration * 1000 / 1024).toFixed(2) + ' KB/s'
+            });
+            done();
+        }).on('data', (chunk) => {
+            bytesTransferred += chunk.length;
+            // Log every 8MB (chunk size) or first few chunks
+            // if (bytesTransferred % (8 * 1024 * 1024) < chunk.length || bytesTransferred < 32 * 1024) {
+            //     console.log(`[pipe] Data transferred: ${bytesTransferred} bytes`);
+            // }
+        });
 
     to.on('error', (error) => {
-        
+        console.error(`[pipe ${pipeId}] 目标流错误:`, {
+            message: error.message,
+            code: error.code,
+            bytesTransferred,
+            elapsedTime: Date.now() - startTime + 'ms'
+        });
         done(error);
     })
-    .on('close', () => {
-        const duration = Date.now() - startTime;
-        
-        done();
-    });
+        .on('close', () => {
+            const duration = Date.now() - startTime;
+            console.log(`[pipe ${pipeId}] 目标流关闭`, {
+                bytesTransferred,
+                duration: duration + 'ms'
+            });
+            done();
+        });
 
     from.pipe(to);
-    
+    console.log(`[pipe ${pipeId}] pipe 已连接`);
 }
 
 export async function estimateTunnelLength(streamInfo, multiplier = 1.1) {
     let urls = streamInfo.urls;
     if (!Array.isArray(urls)) {
-        urls = [ urls ];
+        urls = [urls];
     }
 
     const internalTunnels = urls.map(getInternalTunnelFromURL);

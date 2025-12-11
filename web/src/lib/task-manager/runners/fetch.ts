@@ -25,6 +25,11 @@ export const runFetchWorker = async (workerId: UUID, parentId: UUID, url: string
         const eventData = event.data.cobaltFetchWorker;
         if (!eventData) return;
 
+        // 处理调试消息
+        if (eventData.debug) {
+            console.log('[FetchRunner Debug]', eventData.debug.message, eventData.debug.data || '');
+        }
+
         if (eventData.progress) {
             updateWorkerProgress(workerId, {
                 percentage: eventData.progress,

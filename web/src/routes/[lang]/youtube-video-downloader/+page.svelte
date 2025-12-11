@@ -24,28 +24,35 @@
     $: seoDescription = $t("tampermonkey.seo.description");
     $: seoKeywords = $t("tampermonkey.seo.keywords");
     $: siteUrl = env.HOST ? `https://${env.HOST}` : "";
-    $: canonicalUrl = siteUrl ? `${siteUrl}/${currentLocale}/youtube-video-downloader` : "";
-    $: thumbnailUrl = siteUrl ? `${siteUrl}/icons/android-chrome-512x512.png` : "";
+    $: canonicalUrl = siteUrl
+        ? `${siteUrl}/${currentLocale}/youtube-video-downloader`
+        : "";
+    $: thumbnailUrl = siteUrl
+        ? `${siteUrl}/icons/android-chrome-512x512.png`
+        : "";
     $: jsonLd = canonicalUrl
         ? {
-            "@context": "https://schema.org",
-            "@type": "Article",
-            "headline": seoTitle,
-            "description": seoDescription,
-            "inLanguage": currentLocale,
-            "url": canonicalUrl,
-            "mainEntityOfPage": canonicalUrl,
-            "author": { "@type": "Organization", "name": $t("tampermonkey.seo.brand") },
-            "video": {
-                "@type": "VideoObject",
-                "name": $t("tampermonkey.video.title"),
-                "description": $t("tampermonkey.video.description"),
-                "embedUrl": embedUrl,
-                "url": videoUrl,
-                "inLanguage": currentLocale,
-                ...(thumbnailUrl ? { "thumbnailUrl": [thumbnailUrl] } : {})
-            }
-        }
+              "@context": "https://schema.org",
+              "@type": "Article",
+              headline: seoTitle,
+              description: seoDescription,
+              inLanguage: currentLocale,
+              url: canonicalUrl,
+              mainEntityOfPage: canonicalUrl,
+              author: {
+                  "@type": "Organization",
+                  name: $t("tampermonkey.seo.brand"),
+              },
+              video: {
+                  "@type": "VideoObject",
+                  name: $t("tampermonkey.video.title"),
+                  description: $t("tampermonkey.video.description"),
+                  embedUrl: embedUrl,
+                  url: videoUrl,
+                  inLanguage: currentLocale,
+                  ...(thumbnailUrl ? { thumbnailUrl: [thumbnailUrl] } : {}),
+              },
+          }
         : null;
 
     onMount(() => {
@@ -92,7 +99,12 @@
                 <IconDownload size={18} />
                 <span>{$t("tampermonkey.hero.primary_cta")}</span>
             </a>
-            <a class="btn ghost" href={videoUrl} target="_blank" rel="noopener noreferrer">
+            <a
+                class="btn ghost"
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 <IconPlayerPlay size={18} />
                 <span>{$t("tampermonkey.hero.secondary_cta")}</span>
             </a>
@@ -108,23 +120,29 @@
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowfullscreen
                     loading="lazy"
-                    on:load={() => embedFailed = false}
-                    on:error={() => embedFailed = true}
+                    credentialless
+                    on:load={() => (embedFailed = false)}
+                    on:error={() => (embedFailed = true)}
                 ></iframe>
             {/if}
             {#if !showEmbed}
                 <div class="iframe-fallback">
                     <p>{$t("tampermonkey.video.title")}</p>
                     <p class="fallback-copy">
-                        {currentLocale === 'zh'
+                        {currentLocale === "zh"
                             ? disableEmbed
                                 ? "移动端内嵌 B站 播放器不稳定，点击下方按钮在新标签打开。"
                                 : "B站播放器限制了外站内嵌。点击下方按钮在新标签打开。"
                             : disableEmbed
-                                ? "Bilibili embed is unstable on mobile. Open in a new tab instead."
-                                : "The Bilibili player blocked embedding. Open the tutorial in a new tab instead."}
+                              ? "Bilibili embed is unstable on mobile. Open in a new tab instead."
+                              : "The Bilibili player blocked embedding. Open the tutorial in a new tab instead."}
                     </p>
-                    <a class="btn primary" href={videoUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                        class="btn primary"
+                        href={videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <IconPlayerPlay size={18} />
                         <span>{$t("tampermonkey.video.open")}</span>
                     </a>
@@ -139,14 +157,21 @@
             <p>{$t("tampermonkey.video.description")}</p>
             <div class="pill-row">
                 {#each highlightKeys as key}
-                    <span class="pill">{$t(`tampermonkey.highlights.points.${key}`)}</span>
+                    <span class="pill"
+                        >{$t(`tampermonkey.highlights.points.${key}`)}</span
+                    >
                 {/each}
             </div>
-            <a class="text-link" href={videoUrl} target="_blank" rel="noopener noreferrer">
+            <a
+                class="text-link"
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {$t("tampermonkey.video.open")}
             </a>
             <p class="video-note">
-                {currentLocale === 'zh'
+                {currentLocale === "zh"
                     ? "如果 B站 播放器被拦截，请直接点击链接在新标签页打开。"
                     : "If the Bilibili embed is blocked, open the tutorial in a new tab instead."}
             </p>
@@ -197,7 +222,12 @@
                 <IconDownload size={18} />
                 <span>{$t("tampermonkey.cta.primary")}</span>
             </a>
-            <a class="btn ghost" href={videoUrl} target="_blank" rel="noopener noreferrer">
+            <a
+                class="btn ghost"
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 <IconPlayerPlay size={18} />
                 <span>{$t("tampermonkey.cta.secondary")}</span>
             </a>
@@ -210,7 +240,8 @@
         width: 100%;
         max-width: 1120px;
         margin: 0 auto;
-        padding: clamp(16px, 4vw, 36px) clamp(14px, 3vw, 28px) clamp(28px, 5vw, 48px);
+        padding: clamp(16px, 4vw, 36px) clamp(14px, 3vw, 28px)
+            clamp(28px, 5vw, 48px);
         display: flex;
         flex-direction: column;
         gap: clamp(14px, 2vw, 22px);
@@ -267,7 +298,10 @@
         border-radius: 10px;
         font-weight: 600;
         text-decoration: none;
-        transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        transition:
+            transform 0.2s ease,
+            background 0.2s ease,
+            border-color 0.2s ease;
         border: 1px solid transparent;
     }
 
@@ -327,7 +361,11 @@
         gap: 10px;
         padding: 18px;
         text-align: center;
-        background: linear-gradient(135deg, rgba(42, 50, 64, 0.85), rgba(18, 21, 32, 0.92));
+        background: linear-gradient(
+            135deg,
+            rgba(42, 50, 64, 0.85),
+            rgba(18, 21, 32, 0.92)
+        );
         color: var(--primary);
     }
     .fallback-copy {

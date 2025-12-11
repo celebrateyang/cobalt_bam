@@ -4,7 +4,8 @@
     import { defaultNavPage } from "$lib/subnav";
 
     import CobaltLogo from "$components/sidebar/CobaltLogo.svelte";
-    import SidebarTab from "$components/sidebar/SidebarTab.svelte";    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
+    import SidebarTab from "$components/sidebar/SidebarTab.svelte";
+    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
@@ -17,10 +18,10 @@
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
 
     let screenWidth: number;
-    
+
     // Get current language from URL
-    $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
-    
+    $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+
     // Generate language-aware links
     $: homeLink = `/${currentLang}`;
     $: clipboardLink = `/${currentLang}/clipboard`;
@@ -36,7 +37,8 @@
 
 <nav id="sidebar" aria-label={$t("a11y.tabs.tab_panel")}>
     <CobaltLogo />
-    <div id="sidebar-tabs" role="tablist">        <div id="sidebar-actions" class="sidebar-inner-container">
+    <div id="sidebar-tabs" role="tablist">
+        <div id="sidebar-actions" class="sidebar-inner-container">
             <SidebarTab tabName="save" tabLink={homeLink}>
                 <IconDownload />
             </SidebarTab>
@@ -59,7 +61,6 @@
             </SidebarTab>
         </div>
         <div id="sidebar-info" class="sidebar-inner-container">
-
             <!--
             <SidebarTab tabName="donate" tabLink="/donate">
                 <IconHeart />
@@ -123,7 +124,9 @@
         #sidebar {
             width: 100%;
             height: var(--sidebar-height-mobile);
+            min-height: unset;
             position: fixed;
+            top: unset;
             bottom: 0;
             justify-content: center;
             align-items: flex-start;

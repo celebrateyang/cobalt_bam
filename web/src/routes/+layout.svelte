@@ -177,6 +177,7 @@
         height: 100vh;
         overflow: hidden;
         overscroll-behavior-y: none;
+        background: var(--background);
     }
 
     #cobalt {
@@ -213,9 +214,6 @@
         flex-direction: column;
         overflow: scroll;
         background-color: var(--primary);
-
-        border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: var(--border-radius);
     }
 
     @media screen and (max-width: 535px) {

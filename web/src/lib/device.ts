@@ -1,5 +1,7 @@
 import { browser } from "$app/environment";
 
+const PWA_INSTALLED_KEY = "pwa-installed";
+
 const app = {
     is: {
         installed: false,
@@ -45,7 +47,14 @@ if (browser) {
     const iOS = iPhone || iPad;
     const android = ua.includes("android") || ua.includes("diordna");
 
-    const installed = window.matchMedia('(display-mode: standalone)').matches;
+    const installedDisplayMode = window.matchMedia('(display-mode: standalone)').matches;
+    const iosStandalone = (navigator as any).standalone === true;
+    const storedInstall = localStorage.getItem(PWA_INSTALLED_KEY) === "true";
+    const installed = installedDisplayMode || iosStandalone || storedInstall;
+
+    if (installed && !storedInstall) {
+        localStorage.setItem(PWA_INSTALLED_KEY, "true");
+    }
 
     app.is = {
         installed,

@@ -4,32 +4,62 @@
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import IconDeviceDesktop from "@tabler/icons-svelte/IconDeviceDesktop.svelte";
 
+    const INSTALLED_KEY = "pwa-installed";
+
     let deferredPrompt: any;
     let showBanner = false;
 
+    const isInstalled = () =>
+        window.matchMedia('(display-mode: standalone)').matches ||
+        // iOS Safari uses a different flag
+        (navigator as any).standalone === true ||
+        localStorage.getItem(INSTALLED_KEY) === "true";
+
+    const markInstalled = () => {
+        localStorage.setItem(INSTALLED_KEY, "true");
+        deferredPrompt = null;
+        (window as any).deferredPrompt = null;
+        showBanner = false;
+    };
+
     onMount(() => {
+        // Hide the banner outright for users who already installed
+        if (isInstalled()) {
+            markInstalled();
+            return;
+        }
+
         // Check if the event was already fired and captured in app.html
-        if ((window as any).deferredPrompt) {
+        if ((window as any).deferredPrompt && !isInstalled()) {
             deferredPrompt = (window as any).deferredPrompt;
             showBanner = true;
         }
 
-        window.addEventListener('beforeinstallprompt', (e) => {
+        const handleBeforeInstallPrompt = (e: any) => {
+            if (isInstalled()) return;
+
             e.preventDefault();
             deferredPrompt = e;
             showBanner = true;
             (window as any).deferredPrompt = e;
-        });
+        };
+
+        const handleAppInstalled = () => markInstalled();
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
     });
 
     async function installPwa() {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                deferredPrompt = null;
-                showBanner = false;
-            }
+            if (outcome === 'accepted') markInstalled();
         }
     }
 

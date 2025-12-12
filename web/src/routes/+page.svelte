@@ -1,48 +1,10 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-    import { onMount } from 'svelte';
-
-    const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
-    const defaultLanguage = 'en';
-
-    function getCookie(name: string): string | null {
-        if (typeof document === 'undefined') return null;
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-        return null;
-    }
-
-    function detectLanguage(): string {
-        // 1. Check cookie preference
-        const cookieLang = getCookie('preferred-language');
-        if (cookieLang && supportedLanguages.includes(cookieLang)) {
-            return cookieLang;
-        }
-
-        // 2. Check browser languages
-        if (typeof navigator !== 'undefined') {
-            const browserLangs = navigator.languages || [navigator.language];
-            for (const lang of browserLangs) {
-                const langCode = lang.split('-')[0].toLowerCase();
-                if (supportedLanguages.includes(langCode)) {
-                    return langCode;
-                }
-            }
-        }
-
-        // 3. Default language
-        return defaultLanguage;
-    }
-
-    onMount(() => {
-        const targetLang = detectLanguage();
-        goto(`/${targetLang}`, { replaceState: true });
-    });
+    // Client-side fallback just in case, or for visual feedback while redirect happens
 </script>
 
 <svelte:head>
     <title>Redirecting...</title>
+    <meta name="robots" content="noindex" />
 </svelte:head>
 
 <div class="loading">
@@ -63,7 +25,10 @@
         justify-content: center;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
     }
 
     .spinner {
@@ -77,7 +42,9 @@
     }
 
     @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     p {

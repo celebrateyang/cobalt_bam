@@ -1,5 +1,5 @@
 import "dotenv/config";
-import adapter from "@sveltejs/adapter-static";
+import adapter from "@sveltejs/adapter-cloudflare";
 
 import { mdsvex } from "mdsvex";
 import { fileURLToPath } from "node:url";
@@ -39,14 +39,7 @@ const config = {
         })
     ],
     kit: {
-        adapter: adapter({
-            // default options are shown. On some platforms
-            // these options are set automatically — see below
-            pages: 'build',
-            assets: 'build',
-            precompress: false,
-            strict: false
-        }),
+        adapter: adapter(),
         // CSP disabled to allow third-party ad scripts like Adsterra
         // Configure CSP via Firebase hosting headers or server instead
         /* csp: {

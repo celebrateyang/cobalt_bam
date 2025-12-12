@@ -31,7 +31,7 @@
         "@imput/libav.js-encode-cli": "^5.5.6",
         "@imput/libav.js-remux-cli": "^5.5.6",
         "@imput/version-info": "workspace:^",
-        "@sveltejs/adapter-static": "^3.0.2",
+        "@sveltejs/adapter-cloudflare": "^4.4.0",
         "@sveltejs/kit": "^2.0.0",
         "@sveltejs/vite-plugin-svelte": "^3.0.0",
         "@tabler/icons-svelte": "3.6.0",

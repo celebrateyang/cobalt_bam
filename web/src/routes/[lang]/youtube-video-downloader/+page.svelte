@@ -77,6 +77,10 @@
     {/if}
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:image" content="{siteUrl}/og.png" />
     {#if jsonLd}
         <script type="application/ld+json">
             {JSON.stringify(jsonLd)}
@@ -118,7 +122,6 @@
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowfullscreen
                     loading="lazy"
-                    credentialless
                     on:load={() => (embedFailed = false)}
                     on:error={() => (embedFailed = true)}
                 ></iframe>
@@ -211,11 +214,15 @@
         <div class="faq-list">
             {#each faqItems as item}
                 <div class="faq-block">
-                    <h4>{$t(`tampermonkey.guide.faq2.items.${item.key}.title`)}</h4>
+                    <h4>
+                        {$t(`tampermonkey.guide.faq2.items.${item.key}.title`)}
+                    </h4>
                     <ol>
                         {#each item.steps as stepKey}
                             <li>
-                                {$t(`tampermonkey.guide.faq2.items.${item.key}.steps.${stepKey}`)}
+                                {$t(
+                                    `tampermonkey.guide.faq2.items.${item.key}.steps.${stepKey}`,
+                                )}
                             </li>
                         {/each}
                     </ol>

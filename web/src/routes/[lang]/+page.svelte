@@ -1,12 +1,12 @@
 <script lang="ts">
     import { t, INTERNAL_locale } from "$lib/i18n/translations";
-    import { onMount } from 'svelte';
+    import { onMount } from "svelte";
 
     import Omnibox from "$components/save/Omnibox.svelte";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
     import UserGuide from "$components/misc/UseGuide.svelte";
-    
+
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
@@ -19,7 +19,7 @@
 
     /*import Header from "$components/misc/Header.svelte"; // 导航栏组件
     import BlogPreview from "$components/blog/BlogPreview.svelte"; // 博客预览组件*/
-    const donateLinks: Record<'en' | 'th' | 'zh' | 'ru', string> = {
+    const donateLinks: Record<"en" | "th" | "zh" | "ru", string> = {
         en: "https://buy.stripe.com/8wM5o6bHMeoO9oc8wz",
         th: "https://buy.stripe.com/dR6bMu5jobcC57W3ce",
         zh: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
@@ -27,46 +27,84 @@
     };
     let key: string = currentLocale;
     const donateLink = donateLinks[key as keyof typeof donateLinks];
-    
+
     let showMindsou = false;
     let showYumcheck = false;
     let showNotification = false; // ?????????????????
     const fallbackHost = env.HOST || "freesavevideo.online";
     const platformCards = [
-        { slug: "douyin", name: "抖音无水印下载", desc: "支持国内外版抖音/TikTok，一键去水印，保持高清音画。" },
-        { slug: "bilibili", name: "B站视频下载", desc: "支持番剧、UP主投稿及课程视频，保留清晰度和字幕。" },
-        { slug: "kuaishou", name: "快手去水印", desc: "复制快手链接即可解析，批量下载更高效。" },
-        { slug: "xiaohongshu", name: "小红书保存视频", desc: "去除站内水印，保留封面与高清原声。" },
-        { slug: "instagram", name: "Instagram Reels 下载", desc: "支持 Reels、帖子与故事视频，直接保存到本地。" },
-        { slug: "youtube", name: "YouTube 视频下载", desc: "支持 1080P/4K，下载后离线观看，自动匹配最佳格式。" },
-        { slug: "facebook", name: "Facebook 视频下载", desc: "公开/私密分享链接均可解析，多种分辨率可选。" },
-        { slug: "twitter", name: "X(Twitter) 视频保存", desc: "复制推文链接即可提取原视频，保持清晰度。" }
+        {
+            slug: "douyin",
+            name: "抖音无水印下载",
+            desc: "支持国内外版抖音/TikTok，一键去水印，保持高清音画。",
+        },
+        {
+            slug: "bilibili",
+            name: "B站视频下载",
+            desc: "支持番剧、UP主投稿及课程视频，保留清晰度和字幕。",
+        },
+        {
+            slug: "kuaishou",
+            name: "快手去水印",
+            desc: "复制快手链接即可解析，批量下载更高效。",
+        },
+        {
+            slug: "xiaohongshu",
+            name: "小红书保存视频",
+            desc: "去除站内水印，保留封面与高清原声。",
+        },
+        {
+            slug: "instagram",
+            name: "Instagram Reels 下载",
+            desc: "支持 Reels、帖子与故事视频，直接保存到本地。",
+        },
+        {
+            slug: "youtube",
+            name: "YouTube 视频下载",
+            desc: "支持 1080P/4K，下载后离线观看，自动匹配最佳格式。",
+        },
+        {
+            slug: "facebook",
+            name: "Facebook 视频下载",
+            desc: "公开/私密分享链接均可解析，多种分辨率可选。",
+        },
+        {
+            slug: "twitter",
+            name: "X(Twitter) 视频保存",
+            desc: "复制推文链接即可提取原视频，保持清晰度。",
+        },
     ];
     const faqItems = [
         {
-            q: currentLocale === "zh"
-                ? "如何下载抖音、B站、快手、小红书等平台的视频？"
-                : "How to download videos from Douyin, Bilibili, Kuaishou or Xiaohongshu?",
-            a: currentLocale === "zh"
-                ? "复制视频链接，粘贴到输入框，保持“自动”模式，点击“解析链接”即可生成无水印下载地址。"
-                : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link."
+            q:
+                currentLocale === "zh"
+                    ? "如何下载抖音、B站、快手、小红书等平台的视频？"
+                    : "How to download videos from Douyin, Bilibili, Kuaishou or Xiaohongshu?",
+            a:
+                currentLocale === "zh"
+                    ? "复制视频链接，粘贴到输入框，保持“自动”模式，点击“解析链接”即可生成无水印下载地址。"
+                    : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link.",
         },
         {
-            q: currentLocale === "zh"
-                ? "可以批量解析或切换音频/静音吗？"
-                : "Can I batch process or grab audio-only files?",
-            a: currentLocale === "zh"
-                ? "支持批量解析入口，下载模式可在自动、音频、静音间切换。长视频会展示进度和速度。"
-                : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress."
+            q:
+                currentLocale === "zh"
+                    ? "可以批量解析或切换音频/静音吗？"
+                    : "Can I batch process or grab audio-only files?",
+            a:
+                currentLocale === "zh"
+                    ? "支持批量解析入口，下载模式可在自动、音频、静音间切换。长视频会展示进度和速度。"
+                    : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress.",
         },
         {
-            q: currentLocale === "zh"
-                ? "手机也能用吗，会不会有水印？"
-                : "Is it mobile-friendly and watermark-free?",
-            a: currentLocale === "zh"
-                ? "完全网页版，手机/平板/电脑都可直接使用，解析后输出无水印高清文件。"
-                : "It runs in the browser on mobile/desktop and returns watermark-free HD files."
-        }
+            q:
+                currentLocale === "zh"
+                    ? "手机也能用吗，会不会有水印？"
+                    : "Is it mobile-friendly and watermark-free?",
+            a:
+                currentLocale === "zh"
+                    ? "完全网页版，手机/平板/电脑都可直接使用，解析后输出无水印高清文件。"
+                    : "It runs in the browser on mobile/desktop and returns watermark-free HD files.",
+        },
     ];
     $: siteUrl = `https://${fallbackHost}`;
     $: canonicalUrl = `${siteUrl}/${currentLocale}`;
@@ -87,32 +125,53 @@
     $: embedDescription = stripYouTube($t("general.embed.description"));
     $: guideDescription1 = stripYouTube($t("general.guide.description1"));
     $: guideDescription2 = stripYouTube($t("general.guide.description2"));
-    $: jsonLd = canonicalUrl ? {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "url": canonicalUrl,
-        "inLanguage": currentLocale,
-        "name": seoName,
-        "description": seoDescription
-    } : null;
-    $: faqJsonLd = canonicalUrl ? {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": faqItems.map((item) => ({
-            "@type": "Question",
-            "name": item.q,
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": item.a
-            }
-        }))
-    } : null;
-    $: structuredData = [jsonLd, faqJsonLd].filter(Boolean);
+    $: jsonLd = canonicalUrl
+        ? {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: canonicalUrl,
+              inLanguage: currentLocale,
+              name: seoName,
+              description: seoDescription,
+          }
+        : null;
+    $: faqJsonLd = canonicalUrl
+        ? {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faqItems.map((item) => ({
+                  "@type": "Question",
+                  name: item.q,
+                  acceptedAnswer: {
+                      "@type": "Answer",
+                      text: item.a,
+                  },
+              })),
+          }
+        : null;
+    $: appJsonLd = canonicalUrl
+        ? {
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: seoName,
+              description: seoDescription,
+              applicationCategory: "MultimediaApplication",
+              operatingSystem: "Any",
+              offers: {
+                  "@type": "Offer",
+                  price: "0",
+                  priceCurrency: "USD",
+              },
+          }
+        : null;
+    $: structuredData = [jsonLd, faqJsonLd, appJsonLd].filter(Boolean);
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
-        const notificationClosed = localStorage.getItem('notification-finditbuddy-launch-closed');
-        if (notificationClosed === 'true') {
+        const notificationClosed = localStorage.getItem(
+            "notification-finditbuddy-launch-closed",
+        );
+        if (notificationClosed === "true") {
             showNotification = false;
         }
     });
@@ -120,7 +179,7 @@
     // 关闭通知并保存状态到本地存储
     const closeNotification = () => {
         showNotification = false;
-        localStorage.setItem('notification-finditbuddy-launch-closed', 'true');
+        localStorage.setItem("notification-finditbuddy-launch-closed", "true");
     };
 </script>
 
@@ -138,6 +197,10 @@
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:url" content={canonicalUrl} />
     {/if}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={seoTitle} />
+    <meta name="twitter:description" content={seoDescription} />
+    <meta name="twitter:image" content="https://{fallbackHost}/og.png" />
     {#if structuredData.length}
         {#each structuredData as ld}
             <script type="application/ld+json">
@@ -160,8 +223,8 @@
         <!-- 通知信息 -->
         {#if showNotification}
             <div class="notification" role="alert">
-                <button 
-                    class="notification-close" 
+                <button
+                    class="notification-close"
                     aria-label={$t("general.notification.close")}
                     on:click={closeNotification}
                 >
@@ -171,13 +234,18 @@
                     <span class="notification-icon">📢</span>
                     <span class="notification-text">
                         {$t("general.notification.title")}
-                        <br>
-                        {@html $t("general.notification.youtube_restriction").replace('https://www.bilibili.com/video/BV1Bp4EzeEJo', '<a href="https://www.bilibili.com/video/BV1Bp4EzeEJo" target="_blank" rel="noopener noreferrer" class="notification-link">https://www.bilibili.com/video/BV1Bp4EzeEJo</a>')}
+                        <br />
+                        {@html $t(
+                            "general.notification.youtube_restriction",
+                        ).replace(
+                            "https://www.bilibili.com/video/BV1Bp4EzeEJo",
+                            '<a href="https://www.bilibili.com/video/BV1Bp4EzeEJo" target="_blank" rel="noopener noreferrer" class="notification-link">https://www.bilibili.com/video/BV1Bp4EzeEJo</a>',
+                        )}
                     </span>
                 </div>
             </div>
         {/if}
-        
+
         <Meowbalt emotion="smile" />
         <Omnibox />
         <!--<UserGuide/>-->
@@ -196,14 +264,18 @@
             <div class="icon-wrapper"><IconClipboard /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.file_transfer")}</h3>
-                <p class="card-desc">{$t("general.seo.transfer.description")}</p>
+                <p class="card-desc">
+                    {$t("general.seo.transfer.description")}
+                </p>
             </div>
         </a>
         <a href="/{currentLocale}/discover" class="feature-card">
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.discover_trends")}</h3>
-                <p class="card-desc">{$t("general.seo.discover.description")}</p>
+                <p class="card-desc">
+                    {$t("general.seo.discover.description")}
+                </p>
             </div>
         </a>
     </section>
@@ -211,14 +283,19 @@
     <section class="platform-section seo-section" id="platforms">
         <div class="platform-heading">
             <h2>热门平台无水印下载</h2>
-            <p>覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。</p>
+            <p>
+                覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook
+                等 100+ 热门站点，手机和电脑都能直接解析高清文件。
+            </p>
         </div>
         <div class="platform-grid">
             {#each platformCards as card}
                 <a
                     class="platform-card"
                     id={"platform-" + card.slug}
-                    href={canonicalUrl ? `${canonicalUrl}#platform-${card.slug}` : `/${currentLocale}#platform-${card.slug}`}
+                    href={canonicalUrl
+                        ? `${canonicalUrl}#platform-${card.slug}`
+                        : `/${currentLocale}#platform-${card.slug}`}
                 >
                     <div class="platform-name">{card.name}</div>
                     <p>{card.desc}</p>
@@ -267,24 +344,31 @@
                 type="button"
                 class="accordion-header"
                 aria-expanded={showMindsou}
-                on:click={() => showMindsou = !showMindsou}
+                on:click={() => (showMindsou = !showMindsou)}
             >
-                <img src="/popularize/mindsou_logo.png"
-                     alt="Mindsou Logo"
-                     class="section-icon" />
+                <img
+                    src="/popularize/mindsou_logo.png"
+                    alt="Mindsou Logo"
+                    class="section-icon"
+                />
                 <span>{$t("general.promotions.mindsou.title")}</span>
-                <span class="arrow">{showMindsou ? '▲' : '▼'}</span>
+                <span class="arrow">{showMindsou ? "▲" : "▼"}</span>
             </button>
             {#if showMindsou}
                 <div class="details" role="region">
-                    <ul> 
+                    <ul>
                         <li>{$t("general.promotions.mindsou.features.1")}</li>
                         <li>{$t("general.promotions.mindsou.features.2")}</li>
                         <li>{$t("general.promotions.mindsou.features.3")}</li>
                         <li>{$t("general.promotions.mindsou.features.4")}</li>
                         <li>{$t("general.promotions.mindsou.features.5")}</li>
                     </ul>
-                    <a class="button" href="https://mindsou.online" target="_blank" rel="noopener noreferrer">
+                    <a
+                        class="button"
+                        href="https://mindsou.online"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         {$t("general.promotions.mindsou.visit")}
                     </a>
                 </div>
@@ -297,13 +381,15 @@
                 type="button"
                 class="accordion-header"
                 aria-expanded={showYumcheck}
-                on:click={() => showYumcheck = !showYumcheck}
+                on:click={() => (showYumcheck = !showYumcheck)}
             >
-                <img src="/popularize/yumcheck.ico"
-                     alt="YumCheck Logo"
-                     class="section-icon" />
+                <img
+                    src="/popularize/yumcheck.ico"
+                    alt="YumCheck Logo"
+                    class="section-icon"
+                />
                 <span>{$t("general.promotions.yumcheck.title")}</span>
-                <span class="arrow">{showYumcheck ? '▲' : '▼'}</span>
+                <span class="arrow">{showYumcheck ? "▲" : "▼"}</span>
             </button>
             {#if showYumcheck}
                 <div class="details" role="region">
@@ -313,7 +399,12 @@
                         <li>{$t("general.promotions.yumcheck.features.3")}</li>
                         <li>{$t("general.promotions.yumcheck.features.4")}</li>
                     </ul>
-                    <a class="button" href="https://yumcheck.online" target="_blank" rel="noopener noreferrer">
+                    <a
+                        class="button"
+                        href="https://yumcheck.online"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         {$t("general.promotions.yumcheck.visit")}
                     </a>
                 </div>
@@ -410,8 +501,14 @@
     }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-5px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Mindsou 与 YumCheck 模块样式覆盖（默认暗色） */
@@ -424,7 +521,7 @@
     /* Center‑align YumCheck 标题与箭头 */
     #promotions > section#yumcheck .accordion-header {
         justify-content: center;
-        text-align: center;     /* 万一有多行文字也会居中 */
+        text-align: center; /* 万一有多行文字也会居中 */
     }
 
     /* Light 模式：使用深绿背景 + 白字 */
@@ -440,7 +537,7 @@
             color: inherit;
         }
         #promotions .accordion-header:hover {
-            background-color: #FFB02E;
+            background-color: #ffb02e;
         }
         #promotions a.button {
             background-color: #ffffff;
@@ -475,7 +572,7 @@
     /* 确保小屏时不溢出 */
     #promotions > section .section-icon {
         max-width: 100%;
-    }    /* 通知组件样式 */
+    } /* 通知组件样式 */
     .notification {
         display: flex;
         align-items: center;
@@ -505,7 +602,8 @@
     .notification-text {
         flex: 1;
         font-size: 0.9rem;
-    }    .notification-close {
+    }
+    .notification-close {
         background: none;
         border: none;
         color: inherit;
@@ -539,11 +637,11 @@
             color: #81c784;
             border-color: #2e7d32;
         }
-        
+
         .notification-link {
             color: #64b5f6;
         }
-        
+
         .notification-link:hover {
             color: #90caf9;
         }
@@ -560,9 +658,21 @@
         }
     }
     /* overrides for notification layout */
-    .notification { position: relative; }
-    .notification-content { align-items: flex-start; padding-right: 28px; }
-    .notification-close { position: absolute; top:6px; right:8px; margin-left:0; padding:4px; line-height:1; }
+    .notification {
+        position: relative;
+    }
+    .notification-content {
+        align-items: flex-start;
+        padding-right: 28px;
+    }
+    .notification-close {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        margin-left: 0;
+        padding: 4px;
+        line-height: 1;
+    }
 
     .seo-section {
         width: 100%;
@@ -678,7 +788,10 @@
         border: 1px solid var(--surface-2);
         text-decoration: none;
         color: var(--text);
-        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s,
+            border-color 0.2s;
     }
     .platform-card:hover {
         transform: translateY(-2px);
@@ -717,7 +830,9 @@
         border-radius: var(--border-radius);
         text-decoration: none;
         color: var(--text);
-        transition: transform 0.2s, background 0.2s;
+        transition:
+            transform 0.2s,
+            background 0.2s;
         border: 1px solid transparent;
     }
 

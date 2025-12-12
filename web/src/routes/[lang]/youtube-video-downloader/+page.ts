@@ -7,8 +7,9 @@ export const entries = () => {
     return languages.map(lang => ({ lang }));
 };
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ params, url }) => {
     const { loadTranslations } = await import('$lib/i18n/translations');
-    await loadTranslations(params.lang, ['tampermonkey']);
+    // Load the namespace plus the current pathname (mirrors other routes)
+    await loadTranslations(params.lang, ['tampermonkey', url.pathname]);
     return { lang: params.lang };
 };

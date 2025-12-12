@@ -1,0 +1,138 @@
+{
+    "seo": {
+        "title": "Hướng dẫn tải YouTube bằng Tampermonkey (Bilibili) | Hướng dẫn Userscript miễn phí",
+        "description": "Quy trình từng bước sử dụng Tampermonkey để lưu video YouTube. Bao gồm video hướng dẫn trên Bilibili, các bước cài đặt và lưu ý an toàn.",
+        "keywords": "tampermonkey tải youtube, script tải youtube, grease monkey, hướng dẫn bilibili, trình tải userscript, tải video youtube tampermonkey",
+        "brand": "Freesavevideo.online"
+    },
+    "hero": {
+        "badge": "Hướng dẫn Bilibili",
+        "title": "Tải video YouTube bằng script Tampermonkey",
+        "summary": "Làm theo hướng dẫn Bilibili của tôi để cài đặt Tampermonkey và thêm script tải YouTube. Hoạt động cùng với freesavevideo.online khi tải trực tiếp bị chặn.",
+        "primary_cta": "Thử trình tải xuống",
+        "secondary_cta": "Xem trên Bilibili"
+    },
+    "video": {
+        "title": "Xem thiết lập Tampermonkey đầy đủ",
+        "description": "Video hiển thị nơi lấy script, cách kích hoạt và cách kích hoạt tải xuống trên trang xem YouTube.",
+        "runtime": "Khoảng 4 phút",
+        "open": "Mở hướng dẫn"
+    },
+    "highlights": {
+        "title": "Những gì bạn nhận được",
+        "points": {
+            "reliable": "Phương án dự phòng khi các nền tảng chặn tải xuống trực tiếp.",
+            "safe": "Script chỉ chạy trong trình duyệt của bạn; không cần tài khoản.",
+            "multi": "Hoạt động trên Chrome, Edge, Firefox và các trình duyệt dựa trên Chromium khác.",
+            "combo": "Sử dụng script cùng với freesavevideo.online để bao phủ nhiều trang hơn."
+        }
+    },
+    "steps": {
+        "title": "Cách sử dụng script",
+        "install": {
+            "title": "Cài đặt Tampermonkey",
+            "desc": "Thêm tiện ích Tampermonkey từ Cửa hàng Chrome trực tuyến hoặc cửa hàng tiện ích của trình duyệt, sau đó ghim để truy cập nhanh."
+        },
+        "script": {
+            "title": "Thêm script tải YouTube",
+            "desc": "Mở liên kết script từ mô tả video Bilibili hoặc bình luận được ghim, xem lại mã và nhấp vào “Cài đặt” trong Tampermonkey."
+        },
+        "download": {
+            "title": "Mở video YouTube và chọn chất lượng",
+            "desc": "Làm mới trang xem YouTube; script sẽ hiển thị nút tải xuống. Chọn chất lượng MP4, sau đó để script lấy media."
+        },
+        "legal": {
+            "title": "Tuân thủ quy định",
+            "desc": "Chỉ tải xuống nội dung bạn có quyền. Tôn trọng Điều khoản dịch vụ của YouTube và luật bản quyền địa phương."
+        }
+    },
+    "faq": {
+        "title": "Câu hỏi thường gặp",
+        "items": {
+            "quality": {
+                "q": "Script hỗ trợ những chất lượng nào?",
+                "a": "Hầu hết các script cung cấp 720p hoặc 1080p. Độ phân giải rất cao hoặc video giới hạn độ tuổi có thể yêu cầu hợp nhất DASH, một số script bỏ qua bước này."
+            },
+            "broken": {
+                "q": "Nếu script dừng hoạt động thì sao?",
+                "a": "YouTube cập nhật thường xuyên. Kiểm tra mô tả trên Bilibili để cập nhật, cài đặt lại script mới nhất hoặc chuyển sang freesavevideo.online cho các nền tảng khác."
+            },
+            "safe": {
+                "q": "Có an toàn và hợp pháp không?",
+                "a": "Script chạy cục bộ trong trình duyệt của bạn. Tuy nhiên, chỉ tải video bạn sở hữu hoặc được phép lưu, và tránh phân phối lại vì mục đích thương mại."
+            }
+        }
+    },
+    "cta": {
+        "title": "Cần trình tải xuống dự phòng?",
+        "subtitle": "Sử dụng freesavevideo.online cho TikTok, Instagram, Facebook và nhiều hơn nữa trong khi giữ script Tampermonkey cho YouTube.",
+        "primary": "Đến trình tải xuống",
+        "secondary": "Xem lại hướng dẫn"
+    },
+    "guide": {
+        "page_title": "Hướng dẫn tải YouTube bằng Tampermonkey",
+        "page_desc": "Thiết lập 2 bước, tải xuống 3 bước, cùng với cách sửa lỗi dừng và nhắc nhở lưu.",
+        "hero_badge": "Hướng dẫn tải YouTube",
+        "back_home": "Về trang chủ",
+        "plugin_link": "Lấy Tampermonkey",
+        "bilibili_link": "Xem trên Bilibili",
+        "video_points": {
+            "1": "Cài đặt script và nút cho MP4/MP3.",
+            "2": "Phải làm gì khi tiến trình dừng ở khoảng 2%.",
+            "3": "Cách cho phép cửa sổ bật lên để hộp thoại lưu xuất hiện."
+        },
+        "fallback": {
+            "title": "Nhúng bị chặn hoặc không ổn định trên di động",
+            "desc": "Mở hướng dẫn trong tab mới.",
+            "cta": "Xem trên Bilibili"
+        },
+        "prep": {
+            "title": "Thiết lập cốt lõi (2 bước)",
+            "subtitle": "Cài đặt tiện ích, sau đó cài script. Sau đó, nút tải xuống sẽ xuất hiện trên trang YouTube.",
+            "steps": {
+                "1": "Cài đặt tiện ích: tìm kiếm và cài đặt \"Tampermonkey\" từ cửa hàng tiện ích trình duyệt của bạn.",
+                "2": "Cài đặt script: tìm script \"YouTube tools\", nhấp \"Cài đặt script này\" và xác nhận thêm vào Tampermonkey."
+            }
+        },
+        "flow": {
+            "title": "Quy trình tải xuống",
+            "subtitle": "Nhấp vào các nút để hoàn tất tải xuống.",
+            "steps": {
+                "1": "Mở bất kỳ video YouTube nào; các nút mới từ script sẽ xuất hiện dưới video.",
+                "2": "Nhấp vào nút MP4 và chọn độ phân giải (ví dụ: 720p) từ menu thả xuống.",
+                "3": "Nhấp tải xuống để bắt đầu. Tiến trình có thể tạm dừng ở khoảng 2%—hãy đợi và nó sẽ tiếp tục.",
+                "4": "Khi hoàn tất, nếu cửa sổ bật lên bị chặn, nhấp \"Cho phép\" trên thanh địa chỉ, sau đó chọn vị trí lưu."
+            }
+        },
+        "notice": {
+            "title": "Câu hỏi nhanh",
+            "items": {
+                "1": "Tạm dừng ngắn ở ~2% là bình thường—hãy đợi và nó sẽ tiếp tục.",
+                "2": "Nếu không có hộp thoại lưu xuất hiện, hãy cho phép cửa sổ bật lên và thử lại."
+            }
+        },
+        "faq2": {
+            "title": "Khắc phục sự cố",
+            "items": {
+                "no_buttons": {
+                    "title": "Không có nút tải xuống dưới video YouTube",
+                    "steps": {
+                        "1": "Chrome > Tiện ích > Quản lý tiện ích > tìm Tampermonkey > Chi tiết.",
+                        "2": "Bật “Cho phép trang web này chạy script” (hoặc user scripts).",
+                        "3": "Khởi động lại trình duyệt và mở lại trang YouTube."
+                    }
+                },
+                "no_save": {
+                    "title": "Không có hộp thoại lưu sau khi tải xong",
+                    "steps": {
+                        "1": "Khi xong, thanh địa chỉ có thể hiện “Bật cửa sổ bật lên trên YouTube để tự động tải video”. Nhấp Cho phép.",
+                        "2": "Nếu bỏ lỡ, mở Cài đặt trang web > Cửa sổ bật lên và liên kết chuyển hướng, và cho phép youtube.com."
+                    }
+                }
+            },
+            "screenshot_title": "Cho phép cửa sổ bật lên Chrome",
+            "screenshot_note": "Trên thanh địa chỉ, cho phép “Cửa sổ bật lên và liên kết chuyển hướng”.",
+            "screenshot_alt": "Ví dụ Chrome bật cửa sổ bật lên và liên kết chuyển hướng cho YouTube"
+        }
+    }
+}

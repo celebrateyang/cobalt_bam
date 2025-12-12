@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { t, INTERNAL_locale } from "$lib/i18n/translations";
+    import { INTERNAL_locale, t } from "$lib/i18n/translations";
     import env from "$lib/env";
     import { onMount } from "svelte";
     import { browser } from "$app/environment";
@@ -13,44 +13,45 @@
     const videoId = "BV1Bp4EzeEJo";
     const videoUrl = "https://www.bilibili.com/video/BV1Bp4EzeEJo";
     const embedUrl = `https://player.bilibili.com/player.html?bvid=${videoId}&autoplay=0&muted=0&high_quality=1&as_wide=1&danmaku=0`;
-    const stepKeys = ["install", "script", "download", "legal"] as const;
-    const highlightKeys = ["reliable", "safe", "multi", "combo"] as const;
-    const faqKeys = ["quality", "broken", "safe"] as const;
-    let embedFailed = false;
-    let disableEmbed = false;
 
-    $: currentLocale = data.lang || $INTERNAL_locale;
-    $: seoTitle = $t("tampermonkey.seo.title");
-    $: seoDescription = $t("tampermonkey.seo.description");
-    $: seoKeywords = $t("tampermonkey.seo.keywords");
-    $: siteUrl = env.HOST ? `https://${env.HOST}` : "";
-    $: canonicalUrl = siteUrl
+    const videoPointKeys = ["1", "2", "3"];
+    const prepStepKeys = ["1", "2"];
+    const flowStepKeys = ["1", "2", "3", "4"];
+    const noticeKeys = ["1", "2"];
+    const faqItems = [
+        { key: "no_buttons", steps: ["1", "2", "3"] },
+        { key: "no_save", steps: ["1", "2"] },
+    ];
+
+    let disableEmbed = false;
+    let embedFailed = false;
+    $: showEmbed = !disableEmbed && !embedFailed;
+
+    const currentLocale = data.lang || INTERNAL_locale;
+    const siteUrl = env.HOST ? `https://${env.HOST}` : "";
+    const canonicalUrl = siteUrl
         ? `${siteUrl}/${currentLocale}/youtube-video-downloader`
         : "";
-    $: thumbnailUrl = siteUrl
-        ? `${siteUrl}/icons/android-chrome-512x512.png`
-        : "";
-    $: jsonLd = canonicalUrl
+
+    $: pageTitle = $t("tampermonkey.guide.page_title");
+    $: pageDesc = $t("tampermonkey.guide.page_desc");
+
+    const jsonLd = canonicalUrl
         ? {
               "@context": "https://schema.org",
               "@type": "Article",
-              headline: seoTitle,
-              description: seoDescription,
+              headline: pageTitle,
+              description: pageDesc,
               inLanguage: currentLocale,
               url: canonicalUrl,
               mainEntityOfPage: canonicalUrl,
-              author: {
-                  "@type": "Organization",
-                  name: $t("tampermonkey.seo.brand"),
-              },
               video: {
                   "@type": "VideoObject",
                   name: $t("tampermonkey.video.title"),
                   description: $t("tampermonkey.video.description"),
-                  embedUrl: embedUrl,
+                  embedUrl,
                   url: videoUrl,
                   inLanguage: currentLocale,
-                  ...(thumbnailUrl ? { thumbnailUrl: [thumbnailUrl] } : {}),
               },
           }
         : null;
@@ -65,20 +66,17 @@
         mq.addEventListener("change", handler);
         return () => mq.removeEventListener("change", handler);
     });
-
-    $: showEmbed = !disableEmbed && !embedFailed;
 </script>
 
 <svelte:head>
-    <title>{seoTitle}</title>
-    <meta name="description" content={seoDescription} />
-    <meta name="keywords" content={seoKeywords} />
-    <meta property="og:title" content={seoTitle} />
-    <meta property="og:description" content={seoDescription} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
     {#if canonicalUrl}
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:url" content={canonicalUrl} />
     {/if}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
     {#if jsonLd}
         <script type="application/ld+json">
             {JSON.stringify(jsonLd)}
@@ -90,23 +88,23 @@
     <section class="hero card">
         <div class="badge">
             <IconShieldCheck size={16} />
-            <span>{$t("tampermonkey.hero.badge")}</span>
+            <span>{$t("tampermonkey.guide.hero_badge")}</span>
         </div>
-        <h1>{seoTitle}</h1>
-        <p class="lede">{$t("tampermonkey.hero.summary")}</p>
+        <h1>{pageTitle}</h1>
+        <p class="lede">{pageDesc}</p>
         <div class="actions">
             <a class="btn primary" href={`/${currentLocale}`}>
                 <IconDownload size={18} />
-                <span>{$t("tampermonkey.hero.primary_cta")}</span>
+                <span>{$t("tampermonkey.guide.back_home")}</span>
             </a>
             <a
                 class="btn ghost"
-                href={videoUrl}
+                href="https://www.tampermonkey.net/"
                 target="_blank"
                 rel="noopener noreferrer"
             >
                 <IconPlayerPlay size={18} />
-                <span>{$t("tampermonkey.hero.secondary_cta")}</span>
+                <span>{$t("tampermonkey.guide.plugin_link")}</span>
             </a>
         </div>
     </section>
@@ -127,15 +125,11 @@
             {/if}
             {#if !showEmbed}
                 <div class="iframe-fallback">
-                    <p>{$t("tampermonkey.video.title")}</p>
+                    <p class="fallback-title">
+                        {$t("tampermonkey.guide.fallback.title")}
+                    </p>
                     <p class="fallback-copy">
-                        {currentLocale === "zh"
-                            ? disableEmbed
-                                ? "移动端内嵌 B站 播放器不稳定，点击下方按钮在新标签打开。"
-                                : "B站播放器限制了外站内嵌。点击下方按钮在新标签打开。"
-                            : disableEmbed
-                              ? "Bilibili embed is unstable on mobile. Open in a new tab instead."
-                              : "The Bilibili player blocked embedding. Open the tutorial in a new tab instead."}
+                        {$t("tampermonkey.guide.fallback.desc")}
                     </p>
                     <a
                         class="btn primary"
@@ -144,423 +138,423 @@
                         rel="noopener noreferrer"
                     >
                         <IconPlayerPlay size={18} />
-                        <span>{$t("tampermonkey.video.open")}</span>
+                        <span>{$t("tampermonkey.guide.fallback.cta")}</span>
                     </a>
                 </div>
             {/if}
         </div>
         <div class="video-meta">
-            <p class="eyebrow">
-                {$t("tampermonkey.video.runtime")}
-            </p>
+            <p class="eyebrow">{$t("tampermonkey.hero.badge")}</p>
             <h2>{$t("tampermonkey.video.title")}</h2>
             <p>{$t("tampermonkey.video.description")}</p>
-            <div class="pill-row">
-                {#each highlightKeys as key}
-                    <span class="pill"
-                        >{$t(`tampermonkey.highlights.points.${key}`)}</span
-                    >
+            <ul class="dot-list">
+                {#each videoPointKeys as key}
+                    <li>{$t(`tampermonkey.guide.video_points.${key}`)}</li>
                 {/each}
-            </div>
+            </ul>
             <a
                 class="text-link"
                 href={videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
             >
-                {$t("tampermonkey.video.open")}
+                {$t("tampermonkey.guide.bilibili_link")}
             </a>
-            <p class="video-note">
-                {currentLocale === "zh"
-                    ? "如果 B站 播放器被拦截，请直接点击链接在新标签页打开。"
-                    : "If the Bilibili embed is blocked, open the tutorial in a new tab instead."}
-            </p>
         </div>
     </section>
 
-    <section class="steps card">
+    <section class="card">
         <div class="section-head">
-            <h2>{$t("tampermonkey.steps.title")}</h2>
-            <p>{$t("tampermonkey.highlights.title")}</p>
+            <h2>{$t("tampermonkey.guide.prep.title")}</h2>
+            <p>{$t("tampermonkey.guide.prep.subtitle")}</p>
         </div>
-        <div class="step-grid">
-            {#each stepKeys as key, i}
-                <article class="step">
-                    <div class="step-number">
-                        {(i + 1).toString().padStart(2, "0")}
+        <ol class="list">
+            {#each prepStepKeys as key, i}
+                <li>
+                    <span class="list-index">{i + 1}</span>
+                    <div class="list-body">
+                        <p>{$t(`tampermonkey.guide.prep.steps.${key}`)}</p>
                     </div>
-                    <div class="step-body">
-                        <h3>{$t(`tampermonkey.steps.${key}.title`)}</h3>
-                        <p>{$t(`tampermonkey.steps.${key}.desc`)}</p>
-                    </div>
-                </article>
+                </li>
             {/each}
-        </div>
+        </ol>
     </section>
 
-    <section class="faq card">
+    <section class="card">
         <div class="section-head">
-            <h2>{$t("tampermonkey.faq.title")}</h2>
+            <h2>{$t("tampermonkey.guide.flow.title")}</h2>
+            <p>{$t("tampermonkey.guide.flow.subtitle")}</p>
         </div>
-        <div class="faq-items">
-            {#each faqKeys as key}
-                <details>
-                    <summary>{$t(`tampermonkey.faq.items.${key}.q`)}</summary>
-                    <p>{$t(`tampermonkey.faq.items.${key}.a`)}</p>
-                </details>
+        <ol class="list">
+            {#each flowStepKeys as key, i}
+                <li>
+                    <span class="list-index">{i + 1}</span>
+                    <div class="list-body">
+                        <p>{$t(`tampermonkey.guide.flow.steps.${key}`)}</p>
+                    </div>
+                </li>
             {/each}
-        </div>
+        </ol>
     </section>
 
-    <section class="cta card">
-        <div>
-            <h3>{$t("tampermonkey.cta.title")}</h3>
-            <p>{$t("tampermonkey.cta.subtitle")}</p>
-        </div>
-        <div class="actions">
-            <a class="btn primary" href={`/${currentLocale}`}>
-                <IconDownload size={18} />
-                <span>{$t("tampermonkey.cta.primary")}</span>
-            </a>
-            <a
-                class="btn ghost"
-                href={videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <IconPlayerPlay size={18} />
-                <span>{$t("tampermonkey.cta.secondary")}</span>
-            </a>
+    <section class="card notice">
+        <h3>{$t("tampermonkey.guide.notice.title")}</h3>
+        <ul>
+            {#each noticeKeys as key}
+                <li>{$t(`tampermonkey.guide.notice.items.${key}`)}</li>
+            {/each}
+        </ul>
+    </section>
+
+    <section class="card faq">
+        <h3>{$t("tampermonkey.guide.faq2.title")}</h3>
+        <div class="faq-list">
+            {#each faqItems as item}
+                <div class="faq-block">
+                    <h4>{$t(`tampermonkey.guide.faq2.items.${item.key}.title`)}</h4>
+                    <ol>
+                        {#each item.steps as stepKey}
+                            <li>
+                                {$t(`tampermonkey.guide.faq2.items.${item.key}.steps.${stepKey}`)}
+                            </li>
+                        {/each}
+                    </ol>
+                </div>
+            {/each}
+            <div class="faq-block screenshot">
+                <h4>{$t("tampermonkey.guide.faq2.screenshot_title")}</h4>
+                <p class="screenshot-note">
+                    {$t("tampermonkey.guide.faq2.screenshot_note")}
+                </p>
+                <img
+                    src="/download_guide/youtube_download.png"
+                    alt={$t("tampermonkey.guide.faq2.screenshot_alt")}
+                    loading="lazy"
+                />
+            </div>
         </div>
     </section>
 </div>
 
 <style>
     .page {
-        width: 100%;
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: clamp(16px, 4vw, 36px) clamp(14px, 3vw, 28px)
-            clamp(28px, 5vw, 48px);
+        max-width: 1100px;
+        margin: 0 auto 32px;
+        padding: 0 10px;
         display: flex;
         flex-direction: column;
-        gap: clamp(14px, 2vw, 22px);
-        box-sizing: border-box;
+        gap: 18px;
     }
 
     .card {
-        background: var(--surface-1);
-        border: 1px solid var(--surface-2);
+        background: #ffffff;
         border-radius: 18px;
-        padding: clamp(16px, 3vw, 28px);
-        box-shadow: 0 16px 42px rgba(0, 0, 0, 0.06);
+        padding: 22px 24px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
     }
 
-    .hero h1 {
-        margin: 10px 0 8px;
-        font-size: clamp(24px, 3vw, 32px);
-        color: var(--secondary);
-        line-height: 1.25;
-    }
-
-    .lede {
-        margin: 0;
-        color: var(--secondary-600);
-        line-height: 1.6;
-        max-width: 800px;
+    .hero {
+        text-align: center;
+        background: linear-gradient(
+            135deg,
+            rgba(130, 181, 45, 0.12),
+            rgba(130, 181, 45, 0)
+        );
     }
 
     .badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
+        gap: 8px;
+        padding: 8px 12px;
         border-radius: 999px;
-        background: var(--surface-3);
-        color: var(--secondary);
-        font-size: 0.85rem;
-        font-weight: 600;
+        background: rgba(130, 181, 45, 0.12);
+        color: #4a5c28;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .hero h1 {
+        margin: 10px 0 6px;
+        font-size: clamp(26px, 4vw, 34px);
+        color: #2f3c1b;
+    }
+
+    .lede {
+        margin: 0 auto 12px;
+        max-width: 760px;
+        color: #4b6020;
+        line-height: 1.6;
     }
 
     .actions {
         display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 14px;
+        justify-content: center;
+        gap: 12px;
         flex-wrap: wrap;
+        margin-top: 10px;
     }
 
     .btn {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 16px;
-        border-radius: 10px;
+        padding: 11px 16px;
+        border-radius: 12px;
         font-weight: 600;
-        text-decoration: none;
-        transition:
-            transform 0.2s ease,
-            background 0.2s ease,
-            border-color 0.2s ease;
         border: 1px solid transparent;
-    }
-
-    .btn:hover {
-        transform: translateY(-1px);
+        transition:
+            transform 0.12s ease,
+            box-shadow 0.12s ease,
+            background 0.12s ease,
+            border-color 0.12s ease;
     }
 
     .btn.primary {
-        background: var(--accent);
-        color: var(--primary);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-    }
-
-    .btn.primary:hover {
-        background: var(--accent-strong, var(--accent));
+        background: #82b52d;
+        color: #0f1d06;
+        box-shadow: 0 10px 26px rgba(130, 181, 45, 0.25);
     }
 
     .btn.ghost {
-        background: var(--surface-2);
-        color: var(--secondary);
-        border-color: var(--surface-3);
+        background: #f6f7f2;
+        color: #344016;
+        border-color: #e5e9d7;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn.primary:hover {
+        background: #73a426;
+    }
+
+    .btn.ghost:hover {
+        background: #eef1e7;
+        border-color: #d8dcc8;
     }
 
     .video {
         display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: 16px;
+        grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+        gap: 24px;
         align-items: center;
     }
 
     .iframe-wrap {
-        position: relative;
-        aspect-ratio: 16 / 9;
-        border-radius: 14px;
-        overflow: hidden;
-        background: #0f1115;
+        width: 100%;
+        display: flex;
+        justify-content: center;
     }
 
     .iframe-wrap iframe {
-        position: absolute;
-        inset: 0;
         width: 100%;
-        height: 100%;
+        max-width: 940px;
+        aspect-ratio: 16 / 9;
         border: none;
-        border-radius: inherit;
+        border-radius: 16px;
+        background: #000000;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
     }
-    .iframe-wrap iframe.hidden {
-        display: none;
-    }
+
     .iframe-fallback {
-        position: absolute;
-        inset: 0;
+        width: 100%;
+        max-width: 640px;
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px dashed rgba(130, 181, 45, 0.35);
+        background: rgba(130, 181, 45, 0.05);
+        text-align: center;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
         gap: 10px;
-        padding: 18px;
-        text-align: center;
-        background: linear-gradient(
-            135deg,
-            rgba(42, 50, 64, 0.85),
-            rgba(18, 21, 32, 0.92)
-        );
-        color: var(--primary);
+        align-items: center;
     }
+
+    .fallback-title {
+        margin: 0;
+        font-weight: 700;
+        color: #2f3c1b;
+    }
+
     .fallback-copy {
         margin: 0;
-        color: var(--secondary-200);
-        line-height: 1.5;
-        max-width: 420px;
+        color: #4b6020;
     }
 
-    .video-meta h2 {
-        margin: 6px 0;
-        font-size: 20px;
-    }
-
-    .video-meta p {
-        margin: 0 0 10px;
-        color: var(--secondary-600);
-        line-height: 1.6;
+    .video-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: #3b4b21;
     }
 
     .eyebrow {
-        font-size: 0.9rem;
-        color: var(--secondary-500);
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
         margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #82b52d;
+        font-weight: 700;
+        font-size: 0.78rem;
     }
 
-    .pill-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 10px 0 12px;
+    .video-meta h2 {
+        margin: 0;
+        font-size: clamp(22px, 3vw, 26px);
+        color: #2f3c1b;
     }
 
-    .pill {
-        padding: 6px 10px;
-        border-radius: 10px;
-        background: var(--surface-2);
-        color: var(--secondary);
-        font-size: 0.9rem;
-        border: 1px solid var(--surface-3);
+    .video-meta p {
+        margin: 0;
+        line-height: 1.55;
+    }
+
+    .dot-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #3b4b21;
+    }
+
+    .dot-list li {
+        margin: 4px 0;
     }
 
     .text-link {
-        color: var(--blue);
+        color: #82b52d;
         font-weight: 600;
-        text-decoration: none;
-    }
-
-    .text-link:hover {
         text-decoration: underline;
     }
 
-    .video-note {
-        margin: 6px 0 0;
-        color: var(--secondary-500);
-        font-size: 13px;
-        line-height: 1.4;
-    }
-
     .section-head h2 {
-        margin: 0 0 6px;
-        font-size: 20px;
+        margin: 0 0 4px;
+        color: #2f3c1b;
     }
 
     .section-head p {
         margin: 0;
-        color: var(--secondary-600);
+        color: #4a5c28;
     }
 
-    .step-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 12px;
-        margin-top: 14px;
-    }
-
-    .step {
+    .list {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
         display: flex;
+        flex-direction: column;
         gap: 12px;
-        padding: 12px;
+    }
+
+    .list li {
+        display: grid;
+        grid-template-columns: 32px 1fr;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 12px;
         border-radius: 12px;
-        border: 1px solid var(--surface-2);
-        background: var(--surface-1);
+        background: #f6f8f1;
     }
 
-    .step-number {
-        width: 36px;
-        height: 36px;
+    .list-index {
+        width: 32px;
+        height: 32px;
         border-radius: 10px;
-        background: var(--surface-3);
-        color: var(--secondary);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        place-items: center;
+        background: rgba(130, 181, 45, 0.12);
+        color: #2f3c1b;
         font-weight: 700;
-        font-family: "IBM Plex Mono", monospace;
     }
 
-    .step-body h3 {
-        margin: 0 0 6px;
-        font-size: 16px;
-    }
-
-    .step-body p {
+    .list-body p {
         margin: 0;
-        color: var(--secondary-600);
-        line-height: 1.55;
-        font-size: 14px;
+        line-height: 1.6;
+        color: #3b4b21;
     }
 
-    .faq-items {
+    .notice ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: #3b4b21;
+        line-height: 1.6;
+    }
+
+    .faq .faq-list {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .faq-block {
+        padding: 14px;
+        border-radius: 12px;
+        background: #f6f8f1;
+        border: 1px solid rgba(130, 181, 45, 0.08);
+    }
+
+    .faq-block h4 {
+        margin: 0 0 8px;
+        color: #2f3c1b;
+    }
+
+    .faq-block ol {
+        margin: 0;
+        padding-left: 18px;
+        color: #3b4b21;
+        line-height: 1.55;
+    }
+
+    .faq-block.screenshot {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        margin-top: 12px;
+        align-items: flex-start;
     }
 
-    details {
-        border: 1px solid var(--surface-2);
+    .faq-block img {
+        width: 100%;
         border-radius: 10px;
-        padding: 12px 14px;
-        background: var(--surface-1);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
     }
 
-    summary {
-        cursor: pointer;
-        font-weight: 600;
-        color: var(--secondary);
-    }
-
-    details p {
-        margin: 10px 0 0;
-        color: var(--secondary-600);
-        line-height: 1.55;
-    }
-
-    .cta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-    }
-
-    .cta h3 {
-        margin: 0 0 4px;
-        font-size: 18px;
-    }
-
-    .cta p {
+    .screenshot-note {
         margin: 0;
-        color: var(--secondary-600);
+        color: #4a5c28;
     }
 
     @media (max-width: 900px) {
+        .page {
+            padding: 6px 0 26px;
+        }
+
         .video {
             grid-template-columns: 1fr;
         }
 
         .video-meta {
-            order: 2;
-        }
-
-        .iframe-wrap {
-            order: 1;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .page {
-            padding: clamp(16px, 6vw, 24px);
-            gap: 14px;
+            order: -1;
         }
 
         .card {
-            padding: clamp(14px, 5vw, 20px);
+            padding: 20px;
         }
+    }
 
-        .hero {
-            text-align: center;
-        }
-
-        .cta {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
+    @media (max-width: 600px) {
         .actions {
-            width: 100%;
+            flex-direction: column;
         }
 
-        .btn {
-            width: 100%;
-            justify-content: center;
+        .list li {
+            grid-template-columns: 26px 1fr;
+        }
+
+        .list-index {
+            width: 26px;
+            height: 26px;
         }
     }
 </style>

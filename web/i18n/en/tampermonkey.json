@@ -68,5 +68,71 @@
         "subtitle": "Use freesavevideo.online for TikTok, Instagram, Facebook, and more while keeping the Tampermonkey script for YouTube.",
         "primary": "Go to downloader",
         "secondary": "Rewatch the tutorial"
+    },
+    "guide": {
+        "page_title": "Tampermonkey YouTube download guide",
+        "page_desc": "Two-step setup, three-step download, plus fixes for stalls and save prompts.",
+        "hero_badge": "YouTube Download Guide",
+        "back_home": "Back to Home",
+        "plugin_link": "Get Tampermonkey",
+        "bilibili_link": "Watch on Bilibili",
+        "video_points": {
+            "1": "Script install and buttons for MP4/MP3.",
+            "2": "What to do when progress stalls around 2%.",
+            "3": "How to allow pop-ups so the save dialog appears."
+        },
+        "fallback": {
+            "title": "Embed blocked or unstable on mobile",
+            "desc": "Open the tutorial in a new tab.",
+            "cta": "Watch on Bilibili"
+        },
+        "prep": {
+            "title": "Core setup (2 steps)",
+            "subtitle": "Install the extension, then the script. After that, download buttons appear on YouTube pages.",
+            "steps": {
+                "1": "Install the extension: search and install \"Tampermonkey\" from your browser extension store.",
+                "2": "Install the script: find the \"YouTube tools\" script, click \"Install this script,\" and confirm adding it to Tampermonkey."
+            }
+        },
+        "flow": {
+            "title": "Download flow",
+            "subtitle": "Click the buttons to finish the download.",
+            "steps": {
+                "1": "Open any YouTube video; new buttons from the script appear under the video.",
+                "2": "Click the MP4 button and pick a resolution (e.g., 720p) from the dropdown.",
+                "3": "Click download to start. Progress may pause around 2%—wait and it continues.",
+                "4": "When finished, if pop-ups are blocked, click \"Allow\" in the address bar, then choose a save location."
+            }
+        },
+        "notice": {
+            "title": "Quick FAQ",
+            "items": {
+                "1": "A brief stall at ~2% is normal—wait and it resumes.",
+                "2": "If no save dialog appears, allow pop-ups and try again."
+            }
+        },
+        "faq2": {
+            "title": "Troubleshooting",
+            "items": {
+                "no_buttons": {
+                    "title": "No download buttons under the YouTube video",
+                    "steps": {
+                        "1": "Chrome > Extensions > Manage extensions > find Tampermonkey > Details.",
+                        "2": "Enable “Allow this site to run scripts” (or user scripts).",
+                        "3": "Restart the browser and reopen the YouTube page."
+                    }
+                },
+                "no_save": {
+                    "title": "No save dialog after download finishes",
+                    "steps": {
+                        "1": "When done, the address bar may show “Enable pop-ups on YouTube to automatically download the video.” Click Allow.",
+                        "2": "If missed, open Site settings > Pop-ups and redirects, and allow youtube.com."
+                    }
+                }
+            },
+            "screenshot_title": "Chrome pop-up permission",
+            "screenshot_note": "In the address bar, allow “Pop-ups and redirects.”",
+            "screenshot_alt": "Chrome example enabling pop-ups and redirects for YouTube"
+        }
     }
 }

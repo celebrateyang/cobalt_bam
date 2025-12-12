@@ -1,0 +1,138 @@
+{
+    "seo": {
+        "title": "Tutorial Tampermonkey para descargar de YouTube (Bilibili) | Guía gratuita de Userscript",
+        "description": "Guía paso a paso del flujo de trabajo de Tampermonkey para guardar videos de YouTube. Incluye mi video tutorial de Bilibili, pasos de configuración y notas de seguridad.",
+        "keywords": "tampermonkey youtube descargar, script descarga youtube, grease monkey, tutorial bilibili, descargador userscript, descargar video youtube tampermonkey",
+        "brand": "Freesavevideo.online"
+    },
+    "hero": {
+        "badge": "Tutorial de Bilibili",
+        "title": "Descarga videos de YouTube con un script de Tampermonkey",
+        "summary": "Sigue mi tutorial en Bilibili para instalar Tampermonkey y agregar un script de descarga para YouTube. Funciona junto con freesavevideo.online cuando las descargas directas están bloqueadas.",
+        "primary_cta": "Probar el descargador",
+        "secondary_cta": "Ver en Bilibili"
+    },
+    "video": {
+        "title": "Ver la configuración completa de Tampermonkey",
+        "description": "El video muestra dónde obtener el script, cómo habilitarlo y cómo activar las descargas en una página de visualización de YouTube.",
+        "runtime": "Aprox. 4 minutos",
+        "open": "Abrir tutorial"
+    },
+    "highlights": {
+        "title": "Lo que obtienes",
+        "points": {
+            "reliable": "Una alternativa cuando las plataformas bloquean las descargas directas.",
+            "safe": "Los scripts se mantienen en tu navegador; no se necesita cuenta.",
+            "multi": "Funciona en Chrome, Edge, Firefox y otros navegadores basados en Chromium.",
+            "combo": "Usa el script junto con freesavevideo.online para cubrir más sitios."
+        }
+    },
+    "steps": {
+        "title": "Cómo usar el script",
+        "install": {
+            "title": "Instalar Tampermonkey",
+            "desc": "Añade la extensión Tampermonkey desde la Chrome Web Store o la tienda de complementos de tu navegador, luego fíjalo para un acceso rápido."
+        },
+        "script": {
+            "title": "Añadir el script de descarga de YouTube",
+            "desc": "Abre el enlace del script desde la descripción del video de Bilibili o el comentario fijado, revisa el código y haz clic en “Instalar” en Tampermonkey."
+        },
+        "download": {
+            "title": "Abre un video de YouTube y elige la calidad",
+            "desc": "Actualiza la página de visualización de YouTube; el script mostrará un botón de descarga. Elige calidad MP4 y deja que el script obtenga el medio."
+        },
+        "legal": {
+            "title": "Mantente en cumplimiento",
+            "desc": "Descarga solo contenido del que tengas derechos. Respeta los Términos de Servicio de YouTube y las leyes locales de derechos de autor."
+        }
+    },
+    "faq": {
+        "title": "Preguntas frecuentes",
+        "items": {
+            "quality": {
+                "q": "¿Qué calidades soporta el script?",
+                "a": "La mayoría de los scripts ofrecen 720p o 1080p. Resoluciones muy altas o videos con restricción de edad pueden requerir fusión DASH, lo cual algunos scripts omiten."
+            },
+            "broken": {
+                "q": "¿Qué pasa si el script deja de funcionar?",
+                "a": "YouTube se actualiza a menudo. Revisa la descripción en Bilibili para actualizaciones, reinstala el script más reciente o cambia a freesavevideo.online para otras plataformas."
+            },
+            "safe": {
+                "q": "¿Es seguro y legal?",
+                "a": "El script se ejecuta localmente en tu navegador. Aún así, descarga solo videos que poseas o tengas permiso para guardar, y evita la redistribución comercial."
+            }
+        }
+    },
+    "cta": {
+        "title": "¿Necesitas un descargador de respaldo?",
+        "subtitle": "Usa freesavevideo.online para TikTok, Instagram, Facebook y más, mientras mantienes el script de Tampermonkey para YouTube.",
+        "primary": "Ir al descargador",
+        "secondary": "Volver a ver el tutorial"
+    },
+    "guide": {
+        "page_title": "Guía de descarga de YouTube con Tampermonkey",
+        "page_desc": "Configuración en dos pasos, descarga en tres pasos, más soluciones para bloqueos y avisos de guardado.",
+        "hero_badge": "Guía de Descarga de YouTube",
+        "back_home": "Volver al Inicio",
+        "plugin_link": "Obtener Tampermonkey",
+        "bilibili_link": "Ver en Bilibili",
+        "video_points": {
+            "1": "Instalación del script y botones para MP4/MP3.",
+            "2": "Qué hacer si el progreso se detiene alrededor del 2%.",
+            "3": "Cómo permitir ventanas emergentes para que aparezca el diálogo de guardar."
+        },
+        "fallback": {
+            "title": "Inserción bloqueada o inestable en móvil",
+            "desc": "Abre el tutorial en una nueva pestaña.",
+            "cta": "Ver en Bilibili"
+        },
+        "prep": {
+            "title": "Configuración básica (2 pasos)",
+            "subtitle": "Instala la extensión, luego el script. Después, aparecerán los botones de descarga en las páginas de YouTube.",
+            "steps": {
+                "1": "Instalar la extensión: busca e instala \"Tampermonkey\" desde la tienda de extensiones de tu navegador.",
+                "2": "Instalar el script: encuentra el script \"YouTube tools\", haz clic en \"Instalar este script\" y confirma añadirlo a Tampermonkey."
+            }
+        },
+        "flow": {
+            "title": "Flujo de descarga",
+            "subtitle": "Haz clic en los botones para finalizar la descarga.",
+            "steps": {
+                "1": "Abre cualquier video de YouTube; aparecerán nuevos botones del script debajo del video.",
+                "2": "Haz clic en el botón MP4 y elige una resolución (ej. 720p) del menú desplegable.",
+                "3": "Haz clic en descargar para comenzar. El progreso puede pausarse alrededor del 2%—espera y continuará.",
+                "4": "Al terminar, si las ventanas emergentes están bloqueadas, haz clic en \"Permitir\" en la barra de direcciones, luego elige una ubicación de guardado."
+            }
+        },
+        "notice": {
+            "title": "Preguntas rápidas",
+            "items": {
+                "1": "Una breve pausa en ~2% es normal—espera y se reanuda.",
+                "2": "Si no aparece el diálogo de guardar, permite ventanas emergentes e intenta de nuevo."
+            }
+        },
+        "faq2": {
+            "title": "Solución de problemas",
+            "items": {
+                "no_buttons": {
+                    "title": "No hay botones de descarga debajo del video de YouTube",
+                    "steps": {
+                        "1": "Chrome > Extensiones > Gestionar extensiones > buscar Tampermonkey > Detalles.",
+                        "2": "Habilitar “Permitir a este sitio ejecutar scripts” (o user scripts).",
+                        "3": "Reiniciar el navegador y volver a abrir la página de YouTube."
+                    }
+                },
+                "no_save": {
+                    "title": "No hay diálogo de guardar tras finalizar la descarga",
+                    "steps": {
+                        "1": "Al finalizar, la barra de direcciones puede mostrar “Habilitar ventanas emergentes en YouTube para descargar automáticamente el video”. Haz clic en Permitir.",
+                        "2": "Si lo perdiste, abre Configuración del sitio > Ventanas emergentes y redirecciones, y permite youtube.com."
+                    }
+                }
+            },
+            "screenshot_title": "Permiso de pop-up en Chrome",
+            "screenshot_note": "En la barra de direcciones, permite “Ventanas emergentes y redirecciones”.",
+            "screenshot_alt": "Ejemplo en Chrome habilitando ventanas emergentes y redirecciones para YouTube"
+        }
+    }
+}

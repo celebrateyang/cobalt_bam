@@ -1,0 +1,138 @@
+{
+    "seo": {
+        "title": "Tampermonkey YouTube Download-Tutorial (Bilibili) | Kostenlose Userscript-Anleitung",
+        "description": "Schritt-für-Schritt-Anleitung für den Tampermonkey-Workflow zum Speichern von YouTube-Videos. Enthält mein Bilibili-Tutorial-Video, Einrichtungsschritte und Sicherheitshinweise.",
+        "keywords": "tampermonkey youtube download, youtube download script, grease monkey, bilibili tutorial, userscript downloader, youtube video speichern tampermonkey",
+        "brand": "Freesavevideo.online"
+    },
+    "hero": {
+        "badge": "Bilibili Tutorial",
+        "title": "YouTube-Videos mit einem Tampermonkey-Userscript herunterladen",
+        "summary": "Folgen Sie meinem Bilibili-Tutorial, um Tampermonkey zu installieren und ein YouTube-Download-Script hinzuzufügen. Funktioniert zusammen mit freesavevideo.online, wenn direkte Downloads blockiert sind.",
+        "primary_cta": "Downloader ausprobieren",
+        "secondary_cta": "Auf Bilibili ansehen"
+    },
+    "video": {
+        "title": "Die vollständige Tampermonkey-Einrichtung ansehen",
+        "description": "Das Video zeigt, wo man das Script bekommt, wie man es aktiviert und wie man Downloads auf einer YouTube-Wiedergabeseite startet.",
+        "runtime": "Ca. 4 Minuten",
+        "open": "Tutorial öffnen"
+    },
+    "highlights": {
+        "title": "Was Sie erhalten",
+        "points": {
+            "reliable": "Eine Alternative, wenn Plattformen direkte Downloads blockieren.",
+            "safe": "Scripts bleiben in Ihrem Browser; kein Konto erforderlich.",
+            "multi": "Funktioniert auf Chrome, Edge, Firefox und anderen Chromium-basierten Browsern.",
+            "combo": "Verwenden Sie das Script zusammen mit freesavevideo.online, um mehr Seiten abzudecken."
+        }
+    },
+    "steps": {
+        "title": "So verwenden Sie das Script",
+        "install": {
+            "title": "Tampermonkey installieren",
+            "desc": "Fügen Sie die Tampermonkey-Erweiterung aus dem Chrome Web Store oder dem Add-on-Store Ihres Browsers hinzu und pinnen Sie sie für schnellen Zugriff an."
+        },
+        "script": {
+            "title": "YouTube-Download-Script hinzufügen",
+            "desc": "Öffnen Sie den Script-Link aus der Bilibili-Videobeschreibung oder dem angehefteten Kommentar, überprüfen Sie den Code und klicken Sie in Tampermonkey auf „Installieren“."
+        },
+        "download": {
+            "title": "YouTube-Video öffnen und Qualität wählen",
+            "desc": "Aktualisieren Sie die YouTube-Seite; das Script zeigt einen Download-Button. Wählen Sie MP4-Qualität und lassen Sie das Script die Medien abrufen."
+        },
+        "legal": {
+            "title": "Konform bleiben",
+            "desc": "Laden Sie nur Inhalte herunter, an denen Sie Rechte haben. Beachten Sie die Nutzungsbedingungen von YouTube und lokale Urheberrechtsgesetze."
+        }
+    },
+    "faq": {
+        "title": "Häufig gestellte Fragen",
+        "items": {
+            "quality": {
+                "q": "Welche Qualitäten unterstützt das Script?",
+                "a": "Die meisten Scripts bieten 720p oder 1080p. Sehr hohe Auflösungen oder altersbeschränkte Videos erfordern möglicherweise DASH-Merging, was manche Scripts überspringen."
+            },
+            "broken": {
+                "q": "Was, wenn das Script nicht mehr funktioniert?",
+                "a": "YouTube wird oft aktualisiert. Prüfen Sie die Bilibili-Beschreibung auf Updates, installieren Sie das neueste Script neu oder wechseln Sie für andere Plattformen zu freesavevideo.online."
+            },
+            "safe": {
+                "q": "Ist das sicher und legal?",
+                "a": "Das Script läuft lokal in Ihrem Browser. Laden Sie jedoch nur Videos herunter, die Ihnen gehören oder für die Sie eine Speichererlaubnis haben, und vermeiden Sie kommerzielle Weiterverbreitung."
+            }
+        }
+    },
+    "cta": {
+        "title": "Benötigen Sie einen Backup-Downloader?",
+        "subtitle": "Verwenden Sie freesavevideo.online für TikTok, Instagram, Facebook und mehr, während Sie das Tampermonkey-Script für YouTube behalten.",
+        "primary": "Zum Downloader",
+        "secondary": "Tutorial erneut ansehen"
+    },
+    "guide": {
+        "page_title": "Tampermonkey YouTube Download-Anleitung",
+        "page_desc": "Einrichtung in zwei Schritten, Download in drei Schritten sowie Lösungen für Hänger und Speicheraufforderungen.",
+        "hero_badge": "YouTube Download-Anleitung",
+        "back_home": "Zurück zur Startseite",
+        "plugin_link": "Tampermonkey holen",
+        "bilibili_link": "Auf Bilibili ansehen",
+        "video_points": {
+            "1": "Script-Installation und Buttons für MP4/MP3.",
+            "2": "Was tun, wenn der Fortschritt bei ca. 2% stehen bleibt.",
+            "3": "So erlauben Sie Pop-ups, damit der Speichern-Dialog erscheint."
+        },
+        "fallback": {
+            "title": "Einbettung blockiert oder instabil auf Mobilgeräten",
+            "desc": "Öffnen Sie das Tutorial in einem neuen Tab.",
+            "cta": "Auf Bilibili ansehen"
+        },
+        "prep": {
+            "title": "Grundeinrichtung (2 Schritte)",
+            "subtitle": "Installieren Sie die Erweiterung, dann das Script. Danach erscheinen Download-Buttons auf YouTube-Seiten.",
+            "steps": {
+                "1": "Erweiterung installieren: Suchen und installieren Sie „Tampermonkey“ aus dem Erweiterungs-Store Ihres Browsers.",
+                "2": "Script installieren: Finden Sie das „YouTube tools“-Script, klicken Sie auf „Dieses Script installieren“ und bestätigen Sie das Hinzufügen zu Tampermonkey."
+            }
+        },
+        "flow": {
+            "title": "Download-Ablauf",
+            "subtitle": "Klicken Sie auf die Buttons, um den Download abzuschließen.",
+            "steps": {
+                "1": "Öffnen Sie ein beliebiges YouTube-Video; neue Buttons vom Script erscheinen unter dem Video.",
+                "2": "Klicken Sie auf den MP4-Button und wählen Sie eine Auflösung (z.B. 720p) aus dem Dropdown-Menü.",
+                "3": "Klicken Sie auf Download, um zu starten. Der Fortschritt kann bei ca. 2% kurz pausieren – warten Sie, es geht weiter.",
+                "4": "Wenn fertig, falls Pop-ups blockiert sind, klicken Sie in der Adressleiste auf „Zulassen“ und wählen Sie einen Speicherort."
+            }
+        },
+        "notice": {
+            "title": "Schnelle Fragen",
+            "items": {
+                "1": "Eine kurze Pause bei ~2% ist normal – warten Sie und es geht weiter.",
+                "2": "Wenn kein Speichern-Dialog erscheint, erlauben Sie Pop-ups und versuchen Sie es erneut."
+            }
+        },
+        "faq2": {
+            "title": "Fehlerbehebung",
+            "items": {
+                "no_buttons": {
+                    "title": "Keine Download-Buttons unter dem YouTube-Video",
+                    "steps": {
+                        "1": "Chrome > Erweiterungen > Erweiterungen verwalten > Tampermonkey finden > Details.",
+                        "2": "„Zugriff auf alle Websites zulassen“ (oder Userscripts) aktivieren.",
+                        "3": "Browser neu starten und YouTube-Seite erneut öffnen."
+                    }
+                },
+                "no_save": {
+                    "title": "Kein Speichern-Dialog nach Download-Ende",
+                    "steps": {
+                        "1": "Am Ende zeigt die Adressleiste möglicherweise „Pop-ups auf YouTube aktivieren, um das Video automatisch herunterzuladen“. Klicken Sie auf Zulassen.",
+                        "2": "Falls verpasst, öffnen Sie Website-Einstellungen > Pop-ups und Weiterleitungen und erlauben Sie youtube.com."
+                    }
+                }
+            },
+            "screenshot_title": "Chrome Pop-up-Erlaubnis",
+            "screenshot_note": "Erlauben Sie in der Adressleiste „Pop-ups und Weiterleitungen“.",
+            "screenshot_alt": "Chrome-Beispiel für die Aktivierung von Pop-ups und Weiterleitungen für YouTube"
+        }
+    }
+}

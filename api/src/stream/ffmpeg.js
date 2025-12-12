@@ -57,34 +57,17 @@ const getCommand = (args) => {
 const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
     let process;
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
-    const renderId = Math.random().toString(36).substring(7);
-    const startTime = Date.now();
-    let bytesSent = 0;
-
-    console.log(`[ffmpeg.render ${renderId}] 开始渲染`, {
-        service: streamInfo.service,
-        type: streamInfo.type,
-        filename: streamInfo.filename,
-        urlCount: urls.length
-    });
-
-    const shutdown = () => {
-        console.log(`[ffmpeg.render ${renderId}] shutdown 被调用`, {
-            bytesSent,
-            elapsedTime: Date.now() - startTime + 'ms'
-        });
-        killProcess(process);
-        closeResponse(res);
-        urls.map(destroyInternalStream);
-    };
+    const shutdown = () => (
+        killProcess(process),
+        closeResponse(res),
+        urls.map(destroyInternalStream)
+    );
 
     try {
         const args = [
             '-loglevel', '-8',
             ...ffargs,
         ];
-
-        console.log(`[ffmpeg.render ${renderId}] Spawning FFmpeg with args:`, args);
 
         process = spawn(...getCommand(args), {
             windowsHide: true,
@@ -94,8 +77,6 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
             ],
         });
 
-        console.log(`[ffmpeg.render ${renderId}] FFmpeg process spawned, PID:`, process.pid);
-
         const [, , , muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
@@ -104,79 +85,14 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
         const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
-        console.log(`[ffmpeg.render ${renderId}] Estimated length:`, estimatedLength);
-
         res.setHeader('Estimated-Content-Length', estimatedLength);
 
-        // 监控 muxOutput 数据
-        muxOutput.on('data', (chunk) => {
-            bytesSent += chunk.length;
-        });
+        pipe(muxOutput, res, shutdown);
 
-        muxOutput.on('error', (err) => {
-            console.error(`[ffmpeg.render ${renderId}] muxOutput 错误:`, err.message);
-        });
-
-        muxOutput.on('end', () => {
-            console.log(`[ffmpeg.render ${renderId}] muxOutput 结束`, {
-                bytesSent,
-                elapsedTime: Date.now() - startTime + 'ms'
-            });
-        });
-
-        // 监控响应状态
-        res.on('close', () => {
-            console.log(`[ffmpeg.render ${renderId}] 响应关闭`, {
-                bytesSent,
-                elapsedTime: Date.now() - startTime + 'ms',
-                writableEnded: res.writableEnded,
-                writableFinished: res.writableFinished
-            });
-        });
-
-        res.on('error', (err) => {
-            console.error(`[ffmpeg.render ${renderId}] 响应错误:`, err.message);
-        });
-
-        // 每10秒记录一次进度
-        const logInterval = setInterval(() => {
-            console.log(`[ffmpeg.render ${renderId}] 进度`, {
-                bytesSent,
-                elapsedTime: Date.now() - startTime + 'ms',
-                processExitCode: process?.exitCode
-            });
-        }, 10000);
-
-        console.log(`[ffmpeg.render ${renderId}] Setting up pipe to response...`);
-        pipe(muxOutput, res, () => {
-            clearInterval(logInterval);
-            shutdown();
-        });
-
-        process.on('close', (code) => {
-            clearInterval(logInterval);
-            console.log(`[ffmpeg.render ${renderId}] Process closed with code:`, code, {
-                bytesSent,
-                elapsedTime: Date.now() - startTime + 'ms'
-            });
-            shutdown();
-        });
-
-        process.on('error', (err) => {
-            clearInterval(logInterval);
-            console.error(`[ffmpeg.render ${renderId}] Process error:`, err);
-        });
-
-        res.on('finish', () => {
-            clearInterval(logInterval);
-            console.log(`[ffmpeg.render ${renderId}] Response finished`, {
-                bytesSent,
-                elapsedTime: Date.now() - startTime + 'ms'
-            });
-            shutdown();
-        });
+        process.on('close', () => shutdown());
+        process.on('error', () => { });
+        res.on('finish', shutdown);
     } catch (e) {
-        console.error(`[ffmpeg.render ${renderId}] Exception:`, e);
         shutdown();
     }
 }

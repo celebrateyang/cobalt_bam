@@ -260,23 +260,9 @@ async function handleChunkedStream(streamInfo, res) {
 
 async function handleGenericStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
-    const requestId = Math.random().toString(36).substring(7);
-
-    console.log(`[GenericStream ${requestId}] 开始处理`, {
-        service: streamInfo.service,
-        url: streamInfo.url?.substring(0, 100),
-        isHLS: streamInfo.isHLS
-    });
-
-    const cleanup = () => {
-        console.log(`[GenericStream ${requestId}] cleanup 被调用`);
-        res.end();
-    };
+    const cleanup = () => res.end();
 
     try {
-        console.log(`[GenericStream ${requestId}] 发起请求到源服务器...`);
-        const startTime = Date.now();
-
         const fileResponse = await request(streamInfo.url, {
             headers: {
                 ...Object.fromEntries(streamInfo.headers),
@@ -287,17 +273,8 @@ async function handleGenericStream(streamInfo, res) {
             maxRedirections: 16
         });
 
-        console.log(`[GenericStream ${requestId}] 源服务器响应`, {
-            statusCode: fileResponse.statusCode,
-            contentLength: fileResponse.headers['content-length'],
-            contentType: fileResponse.headers['content-type'],
-            requestTime: Date.now() - startTime + 'ms'
-        });
-
         res.status(fileResponse.statusCode);
-        fileResponse.body.on('error', (err) => {
-            console.error(`[GenericStream ${requestId}] 源响应 body 错误:`, err.message);
-        });
+        fileResponse.body.on('error', () => { });
 
         const isHls = isHlsResponse(fileResponse, streamInfo);
 
@@ -308,51 +285,15 @@ async function handleGenericStream(streamInfo, res) {
         }
 
         if (fileResponse.statusCode < 200 || fileResponse.statusCode > 299) {
-            console.log(`[GenericStream ${requestId}] 状态码异常，结束处理`);
             return cleanup();
         }
 
         if (isHls) {
-            console.log(`[GenericStream ${requestId}] 处理 HLS 流...`);
             await handleHlsPlaylist(streamInfo, fileResponse, res);
         } else {
-            console.log(`[GenericStream ${requestId}] 开始 pipe 数据...`);
-            let bytesSent = 0;
-            const logInterval = setInterval(() => {
-                console.log(`[GenericStream ${requestId}] pipe 进度: ${bytesSent} bytes, 已用时间: ${Date.now() - startTime}ms`);
-            }, 10000); // 每10秒记录一次
-
-            fileResponse.body.on('data', (chunk) => {
-                bytesSent += chunk.length;
-            });
-
-            fileResponse.body.on('end', () => {
-                clearInterval(logInterval);
-                console.log(`[GenericStream ${requestId}] 源数据流结束`, {
-                    totalBytes: bytesSent,
-                    totalTime: Date.now() - startTime + 'ms'
-                });
-            });
-
-            res.on('close', () => {
-                clearInterval(logInterval);
-                console.log(`[GenericStream ${requestId}] 客户端连接关闭`, {
-                    bytesSent,
-                    totalTime: Date.now() - startTime + 'ms'
-                });
-            });
-
-            pipe(fileResponse.body, res, () => {
-                clearInterval(logInterval);
-                console.log(`[GenericStream ${requestId}] pipe 完成`, {
-                    totalBytes: bytesSent,
-                    totalTime: Date.now() - startTime + 'ms'
-                });
-                cleanup();
-            });
+            pipe(fileResponse.body, res, cleanup);
         }
-    } catch (err) {
-        console.error(`[GenericStream ${requestId}] 异常:`, err.message, err.stack?.substring(0, 300));
+    } catch {
         closeRequest(streamInfo.controller);
         cleanup();
     }

@@ -34,7 +34,11 @@ export default class LibAVWrapper {
             this.libav = constructor({
                 ...options,
                 variant: undefined,
-                base: '/_libav'
+                base: '/_libav',
+                // 强制禁用 WebAssembly 线程以解决 Cloudflare Pages 兼容问题
+                // 线程版 (.thr.mjs) 在某些托管环境下会卡住
+                nothreads: true,
+                yesthreads: false
             });
         }
     }

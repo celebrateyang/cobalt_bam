@@ -57,7 +57,6 @@ const ffmpeg = async (
             console.error("error from ffmpeg worker @ file_info:");
             if (e instanceof Error && e?.message?.toLowerCase().includes("out of memory")) {
                 console.error(e);
-
                 error("queue.ffmpeg.out_of_memory");
                 return self.close();
             } else {
@@ -131,3 +130,4 @@ self.onmessage = async (event: MessageEvent) => {
         await ffmpeg(ed.variant, ed.files, ed.args, ed.output, ed.yesthreads);
     }
 }
+

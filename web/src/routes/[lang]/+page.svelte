@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { t, INTERNAL_locale } from "$lib/i18n/translations";
+    import { t, INTERNAL_locale, defaultLocale } from "$lib/i18n/translations";
     import { onMount } from "svelte";
+    import { page } from "$app/stores";
 
     import Omnibox from "$components/save/Omnibox.svelte";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
@@ -11,11 +12,25 @@
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import env from "$lib/env";
+    import languages from "$i18n/languages.json";
 
-    export let data;
+    export let data: { lang?: string };
 
-    // Get current locale from data (set by [lang]/+layout.server.ts)
-    $: currentLocale = data.lang || $INTERNAL_locale;
+    // Initialize immediately so downstream constants see a defined value
+    const languageCodes = Object.keys(languages);
+    let currentLocale: string = data?.lang ?? $INTERNAL_locale ?? defaultLocale;
+    // Keep in sync with route changes
+    $: {
+        const pathLocale = $page?.url?.pathname?.split("/")[1];
+        currentLocale =
+            data?.lang ??
+            $page?.params?.lang ??
+            (pathLocale && languageCodes.includes(pathLocale)
+                ? pathLocale
+                : undefined) ??
+            $INTERNAL_locale ??
+            defaultLocale;
+    }
 
     /*import Header from "$components/misc/Header.svelte"; // 导航栏组件
     import BlogPreview from "$components/blog/BlogPreview.svelte"; // 博客预览组件*/
@@ -25,8 +40,9 @@
         zh: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
         ru: "https://buy.stripe.com/5kAeYG7rwgwW43S4gh",
     };
-    let key: string = currentLocale;
-    const donateLink = donateLinks[key as keyof typeof donateLinks];
+    $: donateLink =
+        donateLinks[currentLocale as keyof typeof donateLinks] ??
+        donateLinks.en;
 
     let showMindsou = false;
     let showYumcheck = false;
@@ -74,7 +90,7 @@
             desc: "复制推文链接即可提取原视频，保持清晰度。",
         },
     ];
-    const faqItems = [
+    $: faqItems = [
         {
             q:
                 currentLocale === "zh"
@@ -253,14 +269,14 @@
 
     <!-- Feature Cards -->
     <section class="feature-cards">
-        <a href="/{currentLocale}" class="feature-card active">
+        <a href={`/${currentLocale}`} class="feature-card active">
             <div class="icon-wrapper"><IconDownload size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.media_downloader")}</h3>
                 <p class="card-desc">{seoDescription}</p>
             </div>
         </a>
-        <a href="/{currentLocale}/clipboard" class="feature-card">
+        <a href={`/${currentLocale}/clipboard`} class="feature-card">
             <div class="icon-wrapper"><IconClipboard /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.file_transfer")}</h3>
@@ -269,7 +285,7 @@
                 </p>
             </div>
         </a>
-        <a href="/{currentLocale}/discover" class="feature-card">
+        <a href={`/${currentLocale}/discover`} class="feature-card">
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.feature.discover_trends")}</h3>
@@ -293,9 +309,13 @@
                 <a
                     class="platform-card"
                     id={"platform-" + card.slug}
-                    href={canonicalUrl
-                        ? `${canonicalUrl}#platform-${card.slug}`
-                        : `/${currentLocale}#platform-${card.slug}`}
+                    href={
+                        card.slug === "youtube"
+                            ? `/${currentLocale}/youtube-video-downloader`
+                            : canonicalUrl
+                              ? `${canonicalUrl}#platform-${card.slug}`
+                              : `/${currentLocale}#platform-${card.slug}`
+                    }
                 >
                     <div class="platform-name">{card.name}</div>
                     <p>{card.desc}</p>

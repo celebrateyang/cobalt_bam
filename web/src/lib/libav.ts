@@ -35,10 +35,9 @@ export default class LibAVWrapper {
                 ...options,
                 variant: undefined,
                 base: '/_libav',
-                // 强制禁用 WebAssembly 线程以解决 Cloudflare Pages 兼容问题
-                // 线程版 (.thr.mjs) 在某些托管环境下会卡住
-                nothreads: true,
-                yesthreads: false
+                // 启用 WebAssembly 线程 (需 COOP/COEP headers 支持)
+                nothreads: false,
+                yesthreads: true
             });
         }
     }

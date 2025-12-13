@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",
+        "description": "Hỗ trợ hơn 100 trang web phổ biến bao gồm TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, v.v. Phân tích và tải xuống các tệp HD trực tiếp trên điện thoại di động và PC.",
+        "douyin": {
+            "name": "Trình tải xuống TikTok/Douyin",
+            "desc": "Hỗ trợ các phiên bản TikTok/Douyin trong nước và quốc tế. Xóa hình mờ bằng một cú nhấp chuột, giữ nguyên âm thanh và video HD."
+        },
+        "bilibili": {
+            "name": "Trình tải xuống video Bilibili",
+            "desc": "Hỗ trợ anime, video tải lên của người dùng và video khóa học. Giữ nguyên độ rõ nét và phụ đề."
+        },
+        "kuaishou": {
+            "name": "Xóa hình mờ Kuaishou",
+            "desc": "Sao chép liên kết Kuaishou để phân tích. Tải xuống hàng loạt hiệu quả hơn."
+        },
+        "xiaohongshu": {
+            "name": "Lưu video Xiaohongshu",
+            "desc": "Xóa hình mờ trong ứng dụng, giữ nguyên ảnh bìa và âm thanh gốc HD."
+        },
+        "instagram": {
+            "name": "Trình tải xuống Instagram Reels",
+            "desc": "Hỗ trợ Reels, bài đăng và video tin. Lưu trực tiếp vào thiết bị của bạn."
+        },
+        "youtube": {
+            "name": "Trình tải xuống video YouTube",
+            "desc": "Hỗ trợ 1080P/4K. Xem ngoại tuyến sau khi tải xuống. Tự động khớp định dạng tốt nhất."
+        },
+        "facebook": {
+            "name": "Trình tải xuống video Facebook",
+            "desc": "Phân tích cả liên kết chia sẻ công khai và riêng tư. Có nhiều độ phân giải."
+        },
+        "twitter": {
+            "name": "Lưu video X (Twitter)",
+            "desc": "Sao chép liên kết tweet để trích xuất video gốc trong khi vẫn giữ nguyên độ rõ nét."
+        }
+    }
+}

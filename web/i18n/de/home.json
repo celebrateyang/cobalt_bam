@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "Wasserzeichen-freier Download von beliebten Plattformen",
+        "description": "Unterstützt über 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Handy und PC herunter.",
+        "douyin": {
+            "name": "TikTok/Douyin Downloader",
+            "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
+        },
+        "bilibili": {
+            "name": "Bilibili Video Downloader",
+            "desc": "Unterstützt Anime, Uploader-Beiträge und Kursvideos. Bewahrt Klarheit und Untertitel."
+        },
+        "kuaishou": {
+            "name": "Kuaishou Wasserzeichen-Entferner",
+            "desc": "Kopieren Sie Kuaishou-Links zum Analysieren. Batch-Download ist effizienter."
+        },
+        "xiaohongshu": {
+            "name": "Xiaohongshu Video Saver",
+            "desc": "Entfernt In-App-Wasserzeichen, behält Titelbilder und originalen HD-Ton."
+        },
+        "instagram": {
+            "name": "Instagram Reels Downloader",
+            "desc": "Unterstützt Reels, Beiträge und Story-Videos. Speichern Sie direkt auf Ihrem lokalen Gerät."
+        },
+        "youtube": {
+            "name": "YouTube Video Downloader",
+            "desc": "Unterstützt 1080P/4K. Nach dem Download offline ansehen. Passt automatisch das beste Format an."
+        },
+        "facebook": {
+            "name": "Facebook Video Downloader",
+            "desc": "Analysiert sowohl öffentliche als auch private Freigabelinks. Mehrere Auflösungen verfügbar."
+        },
+        "twitter": {
+            "name": "X (Twitter) Video Saver",
+            "desc": "Kopieren Sie Tweet-Links, um Originalvideos bei gleichbleibender Klarheit zu extrahieren."
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "Descarga sin marca de agua de plataformas populares",
+        "description": "Soporta más de 100 sitios populares, incluidos TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analice y descargue archivos HD directamente en dispositivos móviles y PC.",
+        "douyin": {
+            "name": "Descargador de TikTok/Douyin",
+            "desc": "Soporta versiones nacionales e internacionales de TikTok/Douyin. Eliminación de marca de agua con un clic, manteniendo audio y video en HD."
+        },
+        "bilibili": {
+            "name": "Descargador de videos de Bilibili",
+            "desc": "Soporta anime, envíos de usuarios y videos de cursos. Preserva la claridad y los subtítulos."
+        },
+        "kuaishou": {
+            "name": "Eliminador de marca de agua de Kuaishou",
+            "desc": "Copie enlaces de Kuaishou para analizar. La descarga por lotes es más eficiente."
+        },
+        "xiaohongshu": {
+            "name": "Guardador de videos de Xiaohongshu",
+            "desc": "Elimina marcas de agua en la aplicación, manteniendo portadas y sonido original en HD."
+        },
+        "instagram": {
+            "name": "Descargador de Instagram Reels",
+            "desc": "Soporta Reels, publicaciones y videos de historias. Guarde directamente en su dispositivo local."
+        },
+        "youtube": {
+            "name": "Descargador de videos de YouTube",
+            "desc": "Soporta 1080P/4K. Ver sin conexión después de descargar. Coincide automáticamente con el mejor formato."
+        },
+        "facebook": {
+            "name": "Descargador de videos de Facebook",
+            "desc": "Analiza enlaces compartidos públicos y privados. Múltiples resoluciones disponibles."
+        },
+        "twitter": {
+            "name": "Guardador de videos de X (Twitter)",
+            "desc": "Copie enlaces de tweets para extraer videos originales manteniendo la claridad."
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "Téléchargement sans filigrane depuis des plateformes populaires",
+        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analysez et téléchargez des fichiers HD directement sur mobile et PC.",
+        "douyin": {
+            "name": "Téléchargeur TikTok/Douyin",
+            "desc": "Prend en charge les versions nationales et internationales de TikTok/Douyin. Suppression du filigrane en un clic, conservant l'audio et la vidéo HD."
+        },
+        "bilibili": {
+            "name": "Téléchargeur vidéo Bilibili",
+            "desc": "Prend en charge les animes, les soumissions des utilisateurs et les vidéos de cours. Préserve la clarté et les sous-titres."
+        },
+        "kuaishou": {
+            "name": "Suppresseur de filigrane Kuaishou",
+            "desc": "Copiez les liens Kuaishou pour analyser. Le téléchargement par lots est plus efficace."
+        },
+        "xiaohongshu": {
+            "name": "Sauvegarde vidéo Xiaohongshu",
+            "desc": "Supprime les filigranes dans l'application, conservant les couvertures et le son HD d'origine."
+        },
+        "instagram": {
+            "name": "Téléchargeur Instagram Reels",
+            "desc": "Prend en charge les Reels, les publications et les vidéos de stories. Enregistrez directement sur votre appareil local."
+        },
+        "youtube": {
+            "name": "Téléchargeur vidéo YouTube",
+            "desc": "Prend en charge 1080P/4K. Regarder hors ligne après le téléchargement. Correspond automatiquement au meilleur format."
+        },
+        "facebook": {
+            "name": "Téléchargeur vidéo Facebook",
+            "desc": "Analyse les liens de partage publics et privés. Plusieurs résolutions disponibles."
+        },
+        "twitter": {
+            "name": "Sauvegarde vidéo X (Twitter)",
+            "desc": "Copiez les liens de tweet pour extraire les vidéos originales tout en maintenant la clarté."
+        }
+    }
+}

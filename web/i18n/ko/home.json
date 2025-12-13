@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "인기 플랫폼 워터마크 없는 다운로드",
+        "description": "TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일 및 PC에서 HD 파일을 직접 분석하고 다운로드하세요.",
+        "douyin": {
+            "name": "TikTok/Douyin 다운로더",
+            "desc": "국내외 버전의 TikTok/Douyin을 지원합니다. 원클릭 워터마크 제거, HD 오디오 및 비디오 유지."
+        },
+        "bilibili": {
+            "name": "Bilibili 동영상 다운로더",
+            "desc": "애니메이션, 업로더 투고 및 강의 동영상을 지원합니다. 선명도와 자막 보존."
+        },
+        "kuaishou": {
+            "name": "Kuaishou 워터마크 제거기",
+            "desc": "Kuaishou 링크를 복사하여 분석하세요. 일괄 다운로드가 더 효율적입니다."
+        },
+        "xiaohongshu": {
+            "name": "Xiaohongshu 동영상 저장",
+            "desc": "앱 내 워터마크 제거, 커버 이미지 및 원본 HD 사운드 보존."
+        },
+        "instagram": {
+            "name": "Instagram 릴스 다운로더",
+            "desc": "릴스, 게시물 및 스토리 동영상을 지원합니다. 로컬 장치에 직접 저장하세요."
+        },
+        "youtube": {
+            "name": "YouTube 동영상 다운로더",
+            "desc": "1080P/4K 지원. 다운로드 후 오프라인 시청. 최고의 포맷과 자동으로 매칭합니다."
+        },
+        "facebook": {
+            "name": "Facebook 동영상 다운로더",
+            "desc": "공개 및 비공개 공유 링크를 모두 분석합니다. 다양한 해상도 사용 가능."
+        },
+        "twitter": {
+            "name": "X (Twitter) 동영상 저장",
+            "desc": "트윗 링크를 복사하여 선명도를 유지하면서 원본 동영상을 추출하세요."
+        }
+    }
+}

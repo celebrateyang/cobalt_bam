@@ -48,48 +48,22 @@
     let showYumcheck = false;
     let showNotification = false; // ?????????????????
     const fallbackHost = env.HOST || "freesavevideo.online";
-    const platformCards = [
-        {
-            slug: "douyin",
-            name: "抖音无水印下载",
-            desc: "支持国内外版抖音/TikTok，一键去水印，保持高清音画。",
-        },
-        {
-            slug: "bilibili",
-            name: "B站视频下载",
-            desc: "支持番剧、UP主投稿及课程视频，保留清晰度和字幕。",
-        },
-        {
-            slug: "kuaishou",
-            name: "快手去水印",
-            desc: "复制快手链接即可解析，批量下载更高效。",
-        },
-        {
-            slug: "xiaohongshu",
-            name: "小红书保存视频",
-            desc: "去除站内水印，保留封面与高清原声。",
-        },
-        {
-            slug: "instagram",
-            name: "Instagram Reels 下载",
-            desc: "支持 Reels、帖子与故事视频，直接保存到本地。",
-        },
-        {
-            slug: "youtube",
-            name: "YouTube 视频下载",
-            desc: "支持 1080P/4K，下载后离线观看，自动匹配最佳格式。",
-        },
-        {
-            slug: "facebook",
-            name: "Facebook 视频下载",
-            desc: "公开/私密分享链接均可解析，多种分辨率可选。",
-        },
-        {
-            slug: "twitter",
-            name: "X(Twitter) 视频保存",
-            desc: "复制推文链接即可提取原视频，保持清晰度。",
-        },
+    const platformsList = [
+        "douyin",
+        "bilibili",
+        "kuaishou",
+        "xiaohongshu",
+        "instagram",
+        "youtube",
+        "facebook",
+        "twitter",
     ];
+
+    $: platformCards = platformsList.map((slug) => ({
+        slug,
+        name: $t(`home.platforms.${slug}.name`),
+        desc: $t(`home.platforms.${slug}.desc`),
+    }));
     $: faqItems = [
         {
             q:
@@ -220,7 +194,7 @@
     {#if structuredData.length}
         {#each structuredData as ld}
             <script type="application/ld+json">
-                {JSON.stringify(ld)}
+                {@html JSON.stringify(ld)}
             </script>
         {/each}
     {/if}
@@ -298,10 +272,9 @@
 
     <section class="platform-section seo-section" id="platforms">
         <div class="platform-heading">
-            <h2>热门平台无水印下载</h2>
+            <h2>{$t("home.platforms.title")}</h2>
             <p>
-                覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook
-                等 100+ 热门站点，手机和电脑都能直接解析高清文件。
+                {$t("home.platforms.description")}
             </p>
         </div>
         <div class="platform-grid">
@@ -309,13 +282,11 @@
                 <a
                     class="platform-card"
                     id={"platform-" + card.slug}
-                    href={
-                        card.slug === "youtube"
-                            ? `/${currentLocale}/youtube-video-downloader`
-                            : canonicalUrl
-                              ? `${canonicalUrl}#platform-${card.slug}`
-                              : `/${currentLocale}#platform-${card.slug}`
-                    }
+                    href={card.slug === "youtube"
+                        ? `/${currentLocale}/youtube-video-downloader`
+                        : canonicalUrl
+                          ? `${canonicalUrl}#platform-${card.slug}`
+                          : `/${currentLocale}#platform-${card.slug}`}
                 >
                     <div class="platform-name">{card.name}</div>
                     <p>{card.desc}</p>
@@ -450,8 +421,10 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        flex: 1;
-        gap: 15px;
+        /* flex: 1; removed to allow min-height to work better with specific spacing */
+        min-height: 65vh; /* Occupy significant screen space */
+        gap: 24px; /* Increased gap between logo and input */
+        margin-bottom: 60px; /* Push content below further down */
     }
 
     ul {
@@ -834,11 +807,12 @@
     .feature-cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1rem;
+        gap: 1.5rem;
         width: 100%;
         max-width: 1000px;
-        margin: 2rem auto;
+        margin: 0 auto 3rem; /* Adjusted margin */
         padding: 0 var(--padding);
+        opacity: 0.95; /* Slight deemphasis */
     }
 
     .feature-card {

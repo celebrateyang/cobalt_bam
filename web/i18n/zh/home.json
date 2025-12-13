@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "热门平台无水印下载",
+        "description": "覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",
+        "douyin": {
+            "name": "抖音无水印下载",
+            "desc": "支持国内外版抖音/TikTok，一键去水印，保持高清音画。"
+        },
+        "bilibili": {
+            "name": "B站视频下载",
+            "desc": "支持番剧、UP主投稿及课程视频，保留清晰度和字幕。"
+        },
+        "kuaishou": {
+            "name": "快手去水印",
+            "desc": "复制快手链接即可解析，批量下载更高效。"
+        },
+        "xiaohongshu": {
+            "name": "小红书保存视频",
+            "desc": "去除站内水印，保留封面与高清原声。"
+        },
+        "instagram": {
+            "name": "Instagram Reels 下载",
+            "desc": "支持 Reels、帖子与故事视频，直接保存到本地。"
+        },
+        "youtube": {
+            "name": "YouTube 视频下载",
+            "desc": "支持 1080P/4K，下载后离线观看，自动匹配最佳格式。"
+        },
+        "facebook": {
+            "name": "Facebook 视频下载",
+            "desc": "公开/私密分享链接均可解析，多种分辨率可选。"
+        },
+        "twitter": {
+            "name": "X(Twitter) 视频保存",
+            "desc": "复制推文链接即可提取原视频，保持清晰度。"
+        }
+    }
+}

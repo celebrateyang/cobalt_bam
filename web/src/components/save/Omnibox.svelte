@@ -57,7 +57,8 @@
         }
 
         // clear hash and query to prevent bookmarking unwanted links
-        const currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+        const currentLang =
+            $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
         goto(`/${currentLang}`, { replaceState: true });
     }
 
@@ -223,29 +224,47 @@
     #omnibox {
         display: flex;
         flex-direction: column;
-        max-width: 640px;
+        max-width: 800px; /* Increased from 640px */
         width: 100%;
-        gap: 10px;
+        gap: 16px; /* Increased gap */
+        margin: 0 auto; /* Center alignment */
     }
 
     #input-container {
         display: flex;
-        box-shadow: 0 0 0 1.5px var(--input-border) inset;
-        border-radius: var(--border-radius);
-        padding: 10px;
+        /* Enhanced border and shadow */
+        box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06),
+            0 0 0 1.5px var(--input-border) inset;
+        border-radius: 99px; /* Pill shape for modern feel */
+        padding: 16px 24px; /* Larger padding */
         align-items: center;
-        gap: 10px;
-        font-size: 14px;
+        gap: 14px;
+        font-size: 16px; /* Larger font */
         flex: 1;
+        background: var(--background);
+        transition: all 0.2s ease;
+    }
+
+    #input-container:hover {
+        box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05),
+            0 0 0 1.5px var(--gray) inset;
     }
 
     #input-container.downloadable {
-        padding-right: 0;
+        padding-right: 8px; /* Adjustment for button */
     }
 
     #input-container.focused {
-        box-shadow: 0 0 0 1.5px var(--secondary) inset;
-        outline: var(--secondary) 0.5px solid;
+        /* Stronger focus state */
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            0 0 0 2px var(--secondary) inset;
+        transform: translateY(-1px);
     }
 
     #input-link-icon {
@@ -254,9 +273,10 @@
 
     #input-link-icon :global(svg) {
         stroke: var(--gray);
-        width: 18px;
-        height: 18px;
+        width: 24px; /* Larger icon */
+        height: 24px;
         stroke-width: 2px;
+        transition: stroke 0.2s ease;
     }
 
     #input-link-icon.loading :global(svg) {
@@ -285,7 +305,7 @@
         width: 100%;
         margin: 0;
         padding: 0;
-        height: 18px;
+        height: 24px; /* Increased height */
 
         align-items: center;
 
@@ -298,9 +318,10 @@
         flex: 1;
 
         font-weight: 500;
+        font-size: 18px; /* Larger input text */
 
         /* workaround for safari */
-        font-size: inherit;
+        /* font-size: inherit; removed to enforce size */
     }
 
     #link-area:focus-visible {
@@ -309,8 +330,7 @@
 
     #link-area::placeholder {
         color: var(--gray);
-        /* fix for firefox */
-        opacity: 1;
+        opacity: 0.8;
     }
 
     /* fix for safari */
@@ -321,24 +341,40 @@
     #action-container {
         display: flex;
         flex-direction: row;
-    }
-
-    #action-container {
         justify-content: space-between;
+        padding: 0 10px; /* Indent actions slightly */
     }
 
     #paste-mobile-text {
         display: none;
     }
 
+    @media screen and (max-width: 600px) {
+        #omnibox {
+            max-width: 100%;
+            gap: 12px;
+        }
+
+        #input-container {
+            padding: 12px 16px;
+            font-size: 16px;
+        }
+
+        #link-area {
+            font-size: 16px;
+        }
+    }
+
     @media screen and (max-width: 440px) {
         #action-container {
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
+            padding: 0;
         }
 
         #action-container :global(.button) {
             width: 100%;
+            justify-content: center;
         }
 
         #paste-mobile-text {

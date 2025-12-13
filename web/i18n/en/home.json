@@ -1,0 +1,38 @@
+{
+    "platforms": {
+        "title": "Watermark-Free Download from Popular Platforms",
+        "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
+        "douyin": {
+            "name": "TikTok/Douyin Downloader",
+            "desc": "Supports domestic and international versions of TikTok/Douyin. One-click watermark removal, keeping HD audio and video."
+        },
+        "bilibili": {
+            "name": "Bilibili Video Downloader",
+            "desc": "Supports anime, uploader submissions, and course videos. Preserves clarity and subtitles."
+        },
+        "kuaishou": {
+            "name": "Kuaishou Watermark Remover",
+            "desc": "Copy Kuaishou links to analyze. Batch downloading is more efficient."
+        },
+        "xiaohongshu": {
+            "name": "Xiaohongshu Video Saver",
+            "desc": "Removes in-app watermarks, keeping cover images and original HD sound."
+        },
+        "instagram": {
+            "name": "Instagram Reels Downloader",
+            "desc": "Supports Reels, posts, and story videos. Save directly to your local device."
+        },
+        "youtube": {
+            "name": "YouTube Video Downloader",
+            "desc": "Supports 1080P/4K. Watch offline after download. Automatically matches the best format."
+        },
+        "facebook": {
+            "name": "Facebook Video Downloader",
+            "desc": "Parses both public and private share links. Multiple resolutions available."
+        },
+        "twitter": {
+            "name": "X (Twitter) Video Saver",
+            "desc": "Copy tweet links to extract original videos while maintaining clarity."
+        }
+    }
+}

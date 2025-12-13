@@ -69,9 +69,17 @@ const exposeLibAV: PluginOption = (() => {
 const enableCOEP: PluginOption = {
     name: "isolation",
     configureServer(server) {
-        server.middlewares.use((_req, res, next) => {
-            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-            res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+        server.middlewares.use((req, res, next) => {
+            // Determine if we should apply COOP/COEP headers
+            // We want them generally for libav (SharedArrayBuffer)
+            // BUT we must exclude the Bilibili downloader guide page because it contains
+            // a Bilibili iframe which gets blocked by COOP/COEP.
+            const isGuidePage = req.url?.includes("youtube-video-downloader");
+
+            if (!isGuidePage) {
+                res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+                res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+            }
             next();
         })
     }
@@ -105,10 +113,6 @@ export default defineConfig(({ mode }) => {
         }, server: {
             host: '0.0.0.0', // 允许外部访问
             port: 5173,
-            headers: {
-                "Cross-Origin-Opener-Policy": "same-origin",
-                "Cross-Origin-Embedder-Policy": "require-corp"
-            },
             fs: {
                 allow: [
                     searchForWorkspaceRoot(process.cwd())

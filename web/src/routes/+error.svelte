@@ -3,17 +3,18 @@
     export let error: Error & { message?: string };
 
     const isNotFound = status === 404;
-    const title = isNotFound ? 'Lost in transit' : 'Something went wrong';
+    const title = isNotFound ? "Lost in transit" : "Something went wrong";
     const description = isNotFound
         ? "The page you're looking for doesn’t exist or has moved."
-        : (error?.message || 'An unexpected error occurred.');
+        : error?.message || "An unexpected error occurred.";
 </script>
 
 <svelte:head>
     <title>404 | freesavevideo</title>
 </svelte:head>
 
-<main class="page" aria-labelledby="title">
+<div class="error-container">
+    <main class="page" aria-labelledby="title">
         <section class="card">
             <div class="badge">freesavevideo</div>
             <p class="status">woops!</p>
@@ -24,18 +25,31 @@
                 <a class="cta secondary" href="/en/faq">Visit FAQ</a>
             </div>
         </section>
-</main>
+    </main>
+</div>
 
 <style>
-    :global(body) {
+    .error-container {
         margin: 0;
         min-height: 100vh;
-        background:
-            radial-gradient(circle at 18% 22%, rgba(130, 181, 45, 0.12), transparent 26%),
-            radial-gradient(circle at 78% 12%, rgba(130, 181, 45, 0.08), transparent 24%),
+        background: radial-gradient(
+                circle at 18% 22%,
+                rgba(130, 181, 45, 0.12),
+                transparent 26%
+            ),
+            radial-gradient(
+                circle at 78% 12%,
+                rgba(130, 181, 45, 0.08),
+                transparent 24%
+            ),
             linear-gradient(135deg, #fdfefe, #f6f7f9 45%, #eef1f5);
         color: #1f2937;
-        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        font-family:
+            "Inter",
+            "Segoe UI",
+            system-ui,
+            -apple-system,
+            sans-serif;
         display: grid;
         place-items: center;
         padding: 2.5rem 1.5rem;
@@ -104,7 +118,10 @@
         border-radius: 12px;
         font-weight: 700;
         text-decoration: none;
-        transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+        transition:
+            transform 0.12s ease,
+            box-shadow 0.12s ease,
+            background 0.12s ease;
     }
 
     .primary {

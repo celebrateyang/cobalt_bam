@@ -74,17 +74,18 @@
             var(--button-hover),
             var(--button),
             var(--button-hover)
-        );        --skeleton-gradient-elevated: linear-gradient(
+        );
+        --skeleton-gradient-elevated: linear-gradient(
             90deg,
             var(--button-elevated),
             var(--button-elevated-shimmer),
             var(--button-elevated)
-        );        /* Accent colors for light theme */
+        ); /* Accent colors for light theme */
         --accent: #82b52d;
         --accent-hover: #6fa525;
         --accent-rgb: 130, 181, 45;
         --accent-background: rgba(130, 181, 45, 0.1);
-        
+
         /* Additional colors for components */
         --background: #ffffff;
         --text: #282828;
@@ -142,17 +143,18 @@
             var(--button),
             var(--button-hover),
             var(--button)
-        );        --skeleton-gradient-elevated: linear-gradient(
+        );
+        --skeleton-gradient-elevated: linear-gradient(
             90deg,
             var(--button-elevated),
             var(--button-elevated-hover),
             var(--button-elevated)
-        );        /* Accent colors for dark theme */
+        ); /* Accent colors for dark theme */
         --accent: #82b52d;
         --accent-hover: #9bc53a;
         --accent-rgb: 130, 181, 45;
         --accent-background: rgba(130, 181, 45, 0.1);
-        
+
         /* Additional colors for components */
         --background: #000000;
         --text: #e1e1e1;
@@ -175,61 +177,11 @@
     :global(body) {
         margin: 0;
         height: 100vh;
-        overflow: hidden;
+        /* overflow: hidden; removed to avoid conflict */
         overscroll-behavior-y: none;
         background: var(--background);
     }
-
-    #cobalt {
-        height: 100%;
-        width: 100%;
-        display: grid;
-        grid-template-columns:
-            calc(var(--sidebar-width) + var(--sidebar-inner-padding) * 2)
-            1fr;
-        overflow: hidden;
-        background-color: var(--sidebar-bg);
-        color: var(--secondary);
-        position: fixed;
-    }
-
-    /* add padding for notch / dynamic island in landscape */
-    @media screen and (orientation: landscape) {
-        #cobalt[data-iphone="true"] {
-            grid-template-columns:
-                calc(
-                    var(--sidebar-width) + var(--sidebar-inner-padding) * 2 +
-                        env(safe-area-inset-left)
-                )
-                1fr;
-        }
-
-        #cobalt[data-iphone="true"] #content {
-            padding-right: env(safe-area-inset-right);
-        }
-    }
-
-    #content {
-        display: flex;
-        flex-direction: column;
-        overflow: scroll;
-        background-color: var(--primary);
-    }
-
-    @media screen and (max-width: 535px) {
-        #cobalt {
-            display: grid;
-            grid-template-columns: unset;
-            grid-template-rows: 1fr var(--sidebar-height-mobile);
-        }
-        #content {
-            padding-top: env(safe-area-inset-top);
-            order: -1;
-            border-top-left-radius: 0;
-            border-bottom-left-radius: calc(var(--border-radius) * 2);
-            border-bottom-right-radius: calc(var(--border-radius) * 2);
-        }
-    }
+    /* Removed unused #cobalt and #content styles to fix Cloudflare double-layout issue */
 
     :global(*) {
         font-family: "IBM Plex Mono", "Noto Sans Mono Variable",

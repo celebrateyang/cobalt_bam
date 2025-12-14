@@ -193,9 +193,7 @@
     <meta name="twitter:image" content="https://{fallbackHost}/og.png" />
     {#if structuredData.length}
         {#each structuredData as ld}
-            <script type="application/ld+json">
-                {@html JSON.stringify(ld)}
-            </script>
+            {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`}
         {/each}
     {/if}
 </svelte:head>

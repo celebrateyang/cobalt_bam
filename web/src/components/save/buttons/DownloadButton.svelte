@@ -10,14 +10,23 @@
     export let url: string;
     export let disabled = false;
     export let loading = false;
+    export let onDownload: ((url: string) => void | Promise<void>) | undefined =
+        undefined;
 
     $: buttonText = ">>";
     $: buttonAltText = $t("a11y.save.download");
 
     type DownloadButtonState = "idle" | "think" | "check" | "done" | "error";
 
+    let resetTimeout: ReturnType<typeof setTimeout> | undefined;
+
     const unsubscribe = downloadButtonState.subscribe(
         (state: CobaltDownloadButtonState) => {
+            if (resetTimeout) {
+                clearTimeout(resetTimeout);
+                resetTimeout = undefined;
+            }
+
             disabled = state !== "idle";
             loading = state === "think" || state === "check";
 
@@ -43,12 +52,18 @@
             // transition back to idle after some period of time.
             const final: DownloadButtonState[] = ["done", "error"];
             if (final.includes(state)) {
-                setTimeout(() => downloadButtonState.set("idle"), 1500);
+                resetTimeout = setTimeout(
+                    () => downloadButtonState.set("idle"),
+                    1500
+                );
             }
         }
     );
 
-    onDestroy(() => unsubscribe());
+    onDestroy(() => {
+        if (resetTimeout) clearTimeout(resetTimeout);
+        unsubscribe();
+    });
 </script>
 
 <button
@@ -56,7 +71,11 @@
     {disabled}
     on:click={() => {
         hapticSwitch();
-        savingHandler({ url });
+        if (onDownload) {
+            onDownload(url);
+        } else {
+            savingHandler({ url });
+        }
     }}
     aria-label={buttonAltText}
 >

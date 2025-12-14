@@ -29,6 +29,8 @@ const config: Config<{
     formats?: string;
     limit?: number;
     service?: string;
+    count?: number;
+    title?: string;
 }> = {
     fallbackLocale: defaultLocale,
     translations: Object.keys(parsedLocfiles).reduce((obj, lang) => {

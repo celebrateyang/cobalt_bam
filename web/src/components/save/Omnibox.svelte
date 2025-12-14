@@ -6,16 +6,18 @@
 
     import { t } from "$lib/i18n/translations";
 
-    import dialogs from "$lib/state/dialogs";
+    import dialogs, { createDialog } from "$lib/state/dialogs";
 
     import { link } from "$lib/state/omnibox";
     import cachedInfo from "$lib/state/server-info";
     import { updateSetting } from "$lib/state/settings";
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
+    import API from "$lib/api/api";
 
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
+    import type { DialogBatchItem } from "$lib/types/dialog";
 
     import IconLink from "@tabler/icons-svelte/IconLink.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
@@ -40,19 +42,158 @@
     let isLoading = false;
     let isBotCheckOngoing = false;
 
-    const validLink = (url: string) => {
+    const extractUrls = (text: string) => {
+        const matches = text.match(/https?:\/\/[^\s]+/gi) ?? [];
+        const urls: string[] = [];
+
+        for (const match of matches) {
+            try {
+                const parsed = new URL(match);
+                if (parsed.protocol !== "https:") continue;
+                urls.push(parsed.toString());
+            } catch {
+                // ignore
+            }
+        }
+
+        return [...new Set(urls)];
+    };
+
+    const isBilibiliUrl = (url: string) => {
         try {
-            return /^https:/i.test(new URL(url).protocol);
-        } catch {}
+            const parsed = new URL(url);
+            return (
+                parsed.hostname === "b23.tv" ||
+                parsed.hostname === "bilibili.com" ||
+                parsed.hostname.endsWith(".bilibili.com")
+            );
+        } catch {
+            return false;
+        }
+    };
+
+    const isBilibiliVideoPage = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return (
+                (parsed.hostname === "b23.tv" ||
+                    parsed.hostname === "bilibili.com" ||
+                    parsed.hostname.endsWith(".bilibili.com")) &&
+                parsed.pathname.startsWith("/video/")
+            );
+        } catch {
+            return false;
+        }
+    };
+
+    $: detectedUrls = extractUrls($link);
+    $: isDownloadable = detectedUrls.length > 0;
+    $: isBatchInput = detectedUrls.length > 1;
+
+    const openBatchDialog = (items: DialogBatchItem[], title?: string) => {
+        createDialog({
+            id: "batch-download",
+            type: "batch",
+            title,
+            items,
+        });
+    };
+
+    const submit = async () => {
+        if ($dialogs.length > 0 || isDisabled || isLoading || !isDownloadable) {
+            return;
+        }
+
+        // Multiple links => batch dialog immediately (platform-agnostic).
+        if (isBatchInput) {
+            openBatchDialog(
+                detectedUrls.map((url) => ({ url })),
+                $t("dialog.batch.title")
+            );
+            return;
+        }
+
+        const url = detectedUrls[0];
+        if (!url) return;
+
+        // For non-Bilibili services, keep the current behavior (no extra API call).
+        if (!isBilibiliUrl(url)) {
+            return savingHandler({ url });
+        }
+
+        const expanded = await API.expand(url);
+        if (!expanded || expanded.status === "error") {
+            return savingHandler({ url });
+        }
+
+        const items = expanded.items ?? [];
+        const hasBatch = expanded.kind !== "single" && items.length > 1;
+
+        if (!hasBatch) {
+            return savingHandler({ url });
+        }
+
+        const batchItems: DialogBatchItem[] = items.map((item) => ({
+            url: item.url,
+            title: item.title,
+        }));
+
+        // If user pasted an explicit collection URL, go straight to batch list.
+        if (!isBilibiliVideoPage(url)) {
+            openBatchDialog(batchItems, expanded.title || $t("dialog.batch.title"));
+            return;
+        }
+
+        const promptTitle = $t("dialog.batch.detect.title");
+        const promptBody =
+            expanded.kind === "bilibili-ugc-season"
+                ? $t("dialog.batch.detect.body.collection", {
+                      title: expanded.title ?? url,
+                      count: items.length,
+                  })
+                : $t("dialog.batch.detect.body.parts", {
+                      title: expanded.title ?? url,
+                      count: items.length,
+                  });
+
+        createDialog({
+            id: "batch-detect",
+            type: "small",
+            title: promptTitle,
+            bodyText: promptBody,
+            buttons: [
+                {
+                    text: $t("dialog.batch.detect.download_single"),
+                    main: false,
+                    action: () => {
+                        setTimeout(() => savingHandler({ url }), 200);
+                    },
+                },
+                {
+                    text: $t("dialog.batch.detect.download_batch"),
+                    main: true,
+                    action: () => {
+                        setTimeout(
+                            () =>
+                                openBatchDialog(
+                                    batchItems,
+                                    expanded.title || $t("dialog.batch.title")
+                                ),
+                            200
+                        );
+                    },
+                },
+            ],
+        });
     };
 
     $: linkFromHash = $page.url.hash.replace("#", "") || "";
     $: linkFromQuery = (browser ? $page.url.searchParams.get("u") : 0) || "";
 
     $: if (linkFromHash || linkFromQuery) {
-        if (validLink(linkFromHash)) {
+        if (extractUrls(linkFromHash).length > 0) {
             $link = linkFromHash;
-        } else if (validLink(linkFromQuery)) {
+        } else if (extractUrls(linkFromQuery).length > 0) {
             $link = linkFromQuery;
         }
 
@@ -78,14 +219,14 @@
         }
 
         navigator.clipboard.readText().then(async (text: string) => {
-            let matchLink = text.match(/https:\/\/[^\s]+/g);
-            if (matchLink) {
-                $link = matchLink[0];
+            const matchLinks = text.match(/https?:\/\/[^\s]+/gi);
+            if (!matchLinks?.length) return;
 
-                if (!isBotCheckOngoing) {
-                    await tick(); // wait for button to render
-                    savingHandler({ url: $link });
-                }
+            $link = matchLinks.join(" ");
+
+            if (!isBotCheckOngoing) {
+                await tick(); // wait for button to render
+                submit();
             }
         });
     };
@@ -103,8 +244,8 @@
             linkInput.focus();
         }
 
-        if (e.key === "Enter" && validLink($link) && isFocused) {
-            savingHandler({ url: $link });
+        if (e.key === "Enter" && isDownloadable && isFocused) {
+            submit();
         }
 
         if (["Escape", "Clear"].includes(e.key) && isFocused) {
@@ -140,7 +281,7 @@
     <div
         id="input-container"
         class:focused={isFocused}
-        class:downloadable={validLink($link)}
+        class:downloadable={isDownloadable}
     >
         <div
             id="input-link-icon"
@@ -163,7 +304,7 @@
             spellcheck="false"
             autocomplete="off"
             autocapitalize="off"
-            maxlength="512"
+            maxlength="8192"
             placeholder={$t("save.input.placeholder")}
             aria-label={isBotCheckOngoing
                 ? $t("a11y.save.link_area.turnstile")
@@ -175,14 +316,21 @@
         {#if $link && !isLoading}
             <ClearButton click={() => ($link = "")} />
         {/if}
-        {#if validLink($link)}
+        {#if isDownloadable}
             <DownloadButton
-                url={$link}
+                url={detectedUrls[0]}
+                onDownload={submit}
                 bind:disabled={isDisabled}
                 bind:loading={isLoading}
             />
         {/if}
     </div>
+
+    {#if isBatchInput}
+        <div class="batch-hint" aria-live="polite">
+            {$t("save.batch.detected", { count: detectedUrls.length })}
+        </div>
+    {/if}
 
     <div id="action-container">
         <Switcher>
@@ -228,6 +376,14 @@
         width: 100%;
         gap: 16px; /* Increased gap */
         margin: 0 auto; /* Center alignment */
+    }
+
+    .batch-hint {
+        margin-top: -6px;
+        padding: 0 18px;
+        font-size: 13px;
+        color: var(--secondary-600);
+        opacity: 0.9;
     }
 
     #input-container {

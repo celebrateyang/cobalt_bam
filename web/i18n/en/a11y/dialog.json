@@ -1,4 +1,5 @@
 {
+    "batch.select_item": "select item",
     "picker.item.photo": "photo thumbnail",
     "picker.item.video": "video thumbnail",
     "picker.item.gif": "gif thumbnail"

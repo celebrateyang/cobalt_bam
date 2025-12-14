@@ -4,6 +4,7 @@
     import SmallDialog from "$components/dialog/SmallDialog.svelte";
     import PickerDialog from "$components/dialog/PickerDialog.svelte";
     import SavingDialog from "$components/dialog/SavingDialog.svelte";
+    import BatchDialog from "$components/dialog/BatchDialog.svelte";
 
     $: backdropVisible = $dialogs.length > 0;
 </script>
@@ -20,6 +21,8 @@
             <PickerDialog {...dialog} />
         {:else if dialog.type === "saving"}
             <SavingDialog {...dialog} />
+        {:else if dialog.type === "batch"}
+            <BatchDialog {...dialog} />
         {/if}
     {/each}
     <div id="dialog-backdrop" class:visible={backdropVisible}></div>

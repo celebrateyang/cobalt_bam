@@ -5,6 +5,7 @@
     "audio": "音频",
     "mute": "静音",
     "input.placeholder": "在此粘贴链接",
+    "batch.detected": "已检测到 {{ count }} 个链接，可批量下载",
     "terms.note.agreement": "继续即表示您同意",
     "terms.note.link": "使用条款与伦理",
     "services.title": "支持的网站",

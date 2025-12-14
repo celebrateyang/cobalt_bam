@@ -17,6 +17,11 @@ export type DialogPickerItem = {
     thumb?: string,
 }
 
+export type DialogBatchItem = {
+    url: string,
+    title?: string,
+};
+
 type Dialog = {
     id: string,
     dismissable?: boolean,
@@ -48,4 +53,10 @@ type SavingDialog = Dialog & {
     urlType?: CobaltFileUrlType,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog;
+type BatchDialog = Dialog & {
+    type: "batch",
+    title?: string,
+    items: DialogBatchItem[],
+};
+
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | BatchDialog;

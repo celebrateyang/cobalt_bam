@@ -44,9 +44,21 @@ const loadFromStorage = () => {
 }
 
 export const loadFromString = (settings: string) => {
-    const parsed = JSON.parse(settings) as AllPartialSettingsWithSchema;
-    // 简化版本：不做迁移，直接返回
-    return parsed;
+    try {
+        const parsed = JSON.parse(settings) as AllPartialSettingsWithSchema;
+
+        if (!parsed || typeof parsed !== "object") {
+            return {};
+        }
+
+        return parsed;
+    } catch {
+        if (browser) {
+            localStorage.removeItem("settings");
+        }
+
+        return {};
+    }
 }
 
 let update: (_: Updater<PartialSettings>) => void;

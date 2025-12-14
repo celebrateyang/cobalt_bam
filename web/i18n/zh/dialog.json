@@ -5,6 +5,22 @@
     "picker.description.desktop": "点击项目以保存。图片也可以通过右键菜单保存。",
     "picker.description.phone": "长按项目以保存。图片也可以通过长按保存。",
     "picker.description.ios": "按住项目以通过快捷方式保存。图片也可以通过长按保存。",
+
+    "batch.title": "批量下载",
+    "batch.status.selected": "已选择",
+    "batch.status.running": "进行中",
+    "batch.select_all": "全选",
+    "batch.select_none": "全不选",
+    "batch.copy_selected": "复制已选",
+    "batch.download_selected": "下载已选",
+    "batch.stop": "停止",
+
+    "batch.detect.title": "检测到可批量下载",
+    "batch.detect.body.collection": "检测到该视频属于合集「{{ title }}」（共 {{ count }} 个视频），是否批量下载整个合集？",
+    "batch.detect.body.parts": "检测到该视频包含多个分P「{{ title }}」（共 {{ count }} 个分P），是否批量下载所有分P？",
+    "batch.detect.download_single": "仅下载当前",
+    "batch.detect.download_batch": "批量下载",
+
     "saving.title": "选择保存方式",
     "saving.blocked": "竹子下载尝试在新标签中打开文件，但您的浏览器阻止了它。您可以为竹子下载启用弹出窗口以防止下次发生。",
     "saving.timeout": "竹子下载尝试自动保存文件，但您的浏览器阻止了它。您需要手动选择首选的保存方式。",

@@ -5,6 +5,7 @@
     "audio": "audio",
     "mute": "mute",
     "input.placeholder": "paste the link here",
+    "batch.detected": "detected {{ count }} links — batch mode",
     "terms.note.agreement": "by continuing, you agree to",
     "terms.note.link": "terms and ethics of use",
     "services.title": "supported services",

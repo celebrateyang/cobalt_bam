@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
-            basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
+            // basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
             sveltekit(),
             enableCOEP,
             exposeLibAV

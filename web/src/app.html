@@ -76,8 +76,13 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 let settings = localStorage.getItem('settings'), appearance;
-                if (settings && ({ appearance } = JSON.parse(settings)) && appearance?.theme) {
-                    document.body.id = `body-${appearance.theme}`;
+                if (settings) {
+                    try {
+                        ({ appearance } = JSON.parse(settings));
+                        if (appearance?.theme) {
+                            document.body.id = `body-${appearance.theme}`;
+                        }
+                    } catch { /* ignore */ }
                 }
             });
         </script>

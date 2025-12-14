@@ -7,6 +7,21 @@
     "picker.description.phone": "press an item to save it. images can also be saved with a long press.",
     "picker.description.ios": "press an item to save it with a shortcut. images can also be saved with a long press.",
 
+    "batch.title": "batch download",
+    "batch.status.selected": "selected",
+    "batch.status.running": "running",
+    "batch.select_all": "select all",
+    "batch.select_none": "select none",
+    "batch.copy_selected": "copy selected",
+    "batch.download_selected": "download selected",
+    "batch.stop": "stop",
+
+    "batch.detect.title": "batch download available",
+    "batch.detect.body.collection": "detected a collection: {{ title }} ({{ count }} videos). batch download the whole collection?",
+    "batch.detect.body.parts": "detected multiple parts: {{ title }} ({{ count }} parts). batch download all parts?",
+    "batch.detect.download_single": "download this only",
+    "batch.detect.download_batch": "batch download",
+
     "saving.title": "choose how to save",
     "saving.blocked": "bamboo download tried opening the file in a new tab, but your browser blocked it. you can allow pop-ups for bamboo download to prevent this from happening next time.",
     "saving.timeout": "bamboo download tried saving the file automatically, but your browser stopped it. you have to select a preferred method manually.",

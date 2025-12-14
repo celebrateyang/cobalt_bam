@@ -18,6 +18,7 @@ import { verifyTurnstileToken } from "../security/turnstile.js";
 import { friendlyServiceName } from "../processing/service-alias.js";
 import { verifyStream } from "../stream/manage.js";
 import { createResponse, normalizeRequest, getIP } from "../processing/request.js";
+import { expandURL } from "../processing/expand.js";
 import { setupTunnelHandler } from "./itunnel.js";
 import { setupSignalingServer } from "./signaling.js";
 
@@ -143,7 +144,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     app.use(express.json({ limit: '1mb' }));
     app.use('/social', socialMediaRouter);
 
-    app.post('/', (req, res, next) => {
+    app.post(['/', '/expand'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {
             return fail(res, "error.api.header.accept");
         }
@@ -153,7 +154,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post('/', (req, res, next) => {
+    app.post(['/', '/expand'], (req, res, next) => {
         if (!env.apiKeyURL) {
             return next();
         }
@@ -181,7 +182,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         return next();
     });
 
-    app.post('/', (req, res, next) => {
+    app.post(['/', '/expand'], (req, res, next) => {
         if (!env.sessionEnabled || req.rateLimitKey) {
             return next();
         }
@@ -213,7 +214,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post('/', apiLimiter);
+    app.post(['/', '/expand'], apiLimiter);
     app.use('/', express.json({ limit: 1024 }));
 
     app.use('/', (err, _, res, next) => {
@@ -251,6 +252,35 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             res.json(jwt.generate(getIP(req, 32)));
         } catch {
             return fail(res, "error.api.generic");
+        }
+    });
+
+    app.post('/expand', async (req, res) => {
+        const request = req.body;
+
+        if (!request?.url) {
+            return fail(res, "error.api.link.missing");
+        }
+
+        try {
+            const result = await expandURL(request.url);
+
+            // If expansion failed or didn't return anything useful, fall back to single.
+            const items = result?.items?.length ? result.items : [{ url: request.url }];
+
+            return res.status(200).json({
+                status: "ok",
+                service: result?.service,
+                kind: result?.kind || "single",
+                title: result?.title,
+                items,
+            });
+        } catch {
+            return res.status(200).json({
+                status: "ok",
+                kind: "single",
+                items: [{ url: request.url }],
+            });
         }
     });
 

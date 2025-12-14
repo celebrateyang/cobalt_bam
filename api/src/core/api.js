@@ -296,10 +296,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.invalid_body");
         }
 
-        // Log the requested video URL for tracking user download attempts
-        // console.log(`[DOWNLOAD REQUEST] User attempting to download: ${normalizedRequest.url}`);
-        // console.log(`[DOWNLOAD REQUEST] Client IP: ${getIP(req)}`);
-        // console.log(`[DOWNLOAD REQUEST] Timestamp: ${new Date().toISOString()}`);
+        console.log(`[DOWNLOAD REQUEST] url=${normalizedRequest.url} time=${new Date().toISOString()}`);
 
         const parsed = extract(
             normalizedRequest.url,

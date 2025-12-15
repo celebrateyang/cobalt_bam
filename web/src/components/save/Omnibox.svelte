@@ -109,8 +109,8 @@
         if (isBatchInput) {
             if (!$isSignedIn) {
                 await signIn({
-                    afterSignInUrl: $page.url.href,
-                    afterSignUpUrl: $page.url.href,
+                    fallbackRedirectUrl: $page.url.href,
+                    signUpFallbackRedirectUrl: $page.url.href,
                 });
                 return;
             }

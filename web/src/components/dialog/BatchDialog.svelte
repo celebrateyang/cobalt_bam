@@ -82,8 +82,8 @@
             close?.();
             await new Promise((r) => setTimeout(r, 200));
             await signIn({
-                afterSignInUrl: $page.url.href,
-                afterSignUpUrl: $page.url.href,
+                fallbackRedirectUrl: $page.url.href,
+                signUpFallbackRedirectUrl: $page.url.href,
             });
             return;
         }
@@ -118,8 +118,8 @@
             close?.();
             await new Promise((r) => setTimeout(r, 200));
             await signIn({
-                afterSignInUrl: $page.url.href,
-                afterSignUpUrl: $page.url.href,
+                fallbackRedirectUrl: $page.url.href,
+                signUpFallbackRedirectUrl: $page.url.href,
             });
             return;
         }

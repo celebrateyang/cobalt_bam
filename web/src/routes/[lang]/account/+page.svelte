@@ -26,9 +26,14 @@
         }
     });
 
-    const getReturnTo = () => ({
-        afterSignInUrl: $page.url.href,
-        afterSignUpUrl: $page.url.href,
+    const getRedirectForSignIn = () => ({
+        fallbackRedirectUrl: $page.url.href,
+        signUpFallbackRedirectUrl: $page.url.href,
+    });
+
+    const getRedirectForSignUp = () => ({
+        fallbackRedirectUrl: $page.url.href,
+        signInFallbackRedirectUrl: $page.url.href,
     });
 </script>
 
@@ -88,7 +93,7 @@
             <div class="actions">
                 <button
                     class="button elevated"
-                    on:click={() => openUserProfile(getReturnTo())}
+                    on:click={() => openUserProfile()}
                 >
                     <IconSettings size={18} />
                     {$t("auth.manage")}
@@ -104,14 +109,14 @@
             <div class="actions">
                 <button
                     class="button elevated"
-                    on:click={() => signIn(getReturnTo())}
+                    on:click={() => signIn(getRedirectForSignIn())}
                 >
                     <IconLogin size={18} />
                     {$t("auth.sign_in")}
                 </button>
                 <button
                     class="button elevated active"
-                    on:click={() => signUp(getReturnTo())}
+                    on:click={() => signUp(getRedirectForSignUp())}
                 >
                     <IconUserPlus size={18} />
                     {$t("auth.sign_up")}
@@ -263,4 +268,3 @@
         }
     }
 </style>
-

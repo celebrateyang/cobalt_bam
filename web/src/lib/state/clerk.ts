@@ -1,9 +1,11 @@
 import { browser } from "$app/environment";
-import { derived, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 
 import env from "$lib/env";
+import { INTERNAL_locale } from "$lib/i18n/translations";
 
 import type { Clerk as ClerkInstance } from "@clerk/clerk-js";
+import { deDE, enUS, esES, frFR, jaJP, koKR, ruRU, thTH, viVN, zhCN } from "@clerk/localizations";
 
 type ClerkUser = {
     id: string;
@@ -34,7 +36,61 @@ const clerkAppearance = {
     },
 };
 
+const localeToClerkLocalization = {
+    de: deDE,
+    en: enUS,
+    es: esES,
+    fr: frFR,
+    ja: jaJP,
+    ko: koKR,
+    ru: ruRU,
+    th: thTH,
+    vi: viVN,
+    zh: zhCN,
+} as const;
+
+const getClerkLocaleKey = () => {
+    const fallbackFromPath =
+        (browser && window.location.pathname.match(/^\/([a-z]{2})\b/)?.[1]) || "en";
+
+    const appLocale = (get(INTERNAL_locale) as string | undefined) || fallbackFromPath;
+    const base = appLocale.toLowerCase().split("-")[0] || "en";
+
+    return (base in localeToClerkLocalization ? base : "en") as keyof typeof localeToClerkLocalization;
+};
+
+const getClerkLocalization = () =>
+    localeToClerkLocalization[getClerkLocaleKey()] || enUS;
+
 let initPromise: Promise<ClerkInstance | null> | null = null;
+let loadedLocaleKey: keyof typeof localeToClerkLocalization | null = null;
+let localeSyncPromise: Promise<void> | null = null;
+
+const syncClerkLocale = async (instance: ClerkInstance) => {
+    const desiredKey = getClerkLocaleKey();
+
+    if (loadedLocaleKey === desiredKey) {
+        return;
+    }
+
+    if (localeSyncPromise) {
+        await localeSyncPromise;
+        if (loadedLocaleKey === desiredKey) return;
+    }
+
+    localeSyncPromise = instance
+        .load({
+            localization: getClerkLocalization(),
+        } as any)
+        .then(() => {
+            loadedLocaleKey = desiredKey;
+        })
+        .finally(() => {
+            localeSyncPromise = null;
+        });
+
+    await localeSyncPromise;
+};
 
 export const initClerk = async () => {
     if (!browser) return null;
@@ -48,7 +104,7 @@ export const initClerk = async () => {
         const { Clerk } = await import("@clerk/clerk-js");
         const instance = new Clerk(env.CLERK_PUBLISHABLE_KEY);
 
-        await instance.load();
+        await syncClerkLocale(instance);
 
         clerk.set(instance);
         clerkLoaded.set(true);
@@ -70,6 +126,7 @@ export const initClerk = async () => {
 export const signIn = async (options: Record<string, unknown> = {}) => {
     const instance = await initClerk();
     if (!instance) return;
+    await syncClerkLocale(instance);
 
     instance.openSignIn({
         appearance: clerkAppearance,
@@ -80,6 +137,7 @@ export const signIn = async (options: Record<string, unknown> = {}) => {
 export const signUp = async (options: Record<string, unknown> = {}) => {
     const instance = await initClerk();
     if (!instance) return;
+    await syncClerkLocale(instance);
 
     instance.openSignUp({
         appearance: clerkAppearance,
@@ -92,6 +150,7 @@ export const openUserProfile = async (
 ) => {
     const instance = await initClerk();
     if (!instance) return;
+    await syncClerkLocale(instance);
 
     instance.openUserProfile({
         appearance: clerkAppearance,
@@ -115,4 +174,3 @@ export const isSignedIn = derived(
     [clerkLoaded, clerkUser],
     ([$clerkLoaded, $clerkUser]) => $clerkLoaded && !!$clerkUser,
 );
-

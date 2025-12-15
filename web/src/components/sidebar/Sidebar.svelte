@@ -13,6 +13,8 @@
 
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
+    import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
+
     import IconComet from "@tabler/icons-svelte/IconComet.svelte";
     import IconHeart from "@tabler/icons-svelte/IconHeart.svelte";
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
@@ -30,6 +32,7 @@
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
     $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
+    $: accountLink = `/${currentLang}/account`;
     $: aboutLink = `/${currentLang}${defaultNavPage("about")}`;
 </script>
 
@@ -58,6 +61,9 @@
             -->
             <SidebarTab tabName="settings" tabLink={settingsLink}>
                 <IconSettings />
+            </SidebarTab>
+            <SidebarTab tabName="account" tabLink={accountLink}>
+                <IconUserCircle />
             </SidebarTab>
         </div>
         <div id="sidebar-info" class="sidebar-inner-container">

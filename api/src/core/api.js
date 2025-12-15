@@ -29,6 +29,7 @@ import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
+import userRouter from "../routes/user.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
 const git = {
@@ -143,6 +144,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
     app.use(express.json({ limit: '1mb' }));
     app.use('/social', socialMediaRouter);
+    app.use('/user', userRouter);
 
     app.post(['/', '/expand'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {

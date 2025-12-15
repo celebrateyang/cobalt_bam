@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { page } from "$app/stores";
     import { t } from "$lib/i18n/translations";
     import { savingHandler } from "$lib/api/saving-handler";
+    import { isSignedIn, signIn } from "$lib/state/clerk";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
 
@@ -75,6 +77,17 @@
     const downloadSelected = async () => {
         if (running) return;
 
+        if (!$isSignedIn) {
+            // Close native <dialog> first (it sits in the browser top-layer and can cover Clerk).
+            close?.();
+            await new Promise((r) => setTimeout(r, 200));
+            await signIn({
+                afterSignInUrl: $page.url.href,
+                afterSignUpUrl: $page.url.href,
+            });
+            return;
+        }
+
         const urls = items.filter((_, i) => selected[i]).map((i) => i.url);
         if (!urls.length) return;
 
@@ -97,6 +110,21 @@
 
         running = false;
         cancelRequested = false;
+    };
+
+    const downloadSingle = async (url: string) => {
+        if (running) return;
+        if (!$isSignedIn) {
+            close?.();
+            await new Promise((r) => setTimeout(r, 200));
+            await signIn({
+                afterSignInUrl: $page.url.href,
+                afterSignUpUrl: $page.url.href,
+            });
+            return;
+        }
+
+        await savingHandler({ url });
     };
 </script>
 
@@ -183,7 +211,7 @@
                         <button
                             class="button elevated icon-button"
                             disabled={running}
-                            on:click={() => savingHandler({ url: item.url })}
+                            on:click={() => downloadSingle(item.url)}
                             aria-label={$t("button.download")}
                             title={$t("button.download")}
                         >

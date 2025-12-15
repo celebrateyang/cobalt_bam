@@ -9,6 +9,7 @@
     "remux": "remux",
     "history": "historique",
     "faq": "FAQ",
+    "account": "compte",
     "feature": {
         "media_downloader": "Téléchargeur de Médias",
         "file_transfer": "Transfert de Fichiers",

@@ -15,7 +15,8 @@
         "verify-cookies": "node verify-cookies.js",
         "test": "node src/util/test",
         "token:jwt": "node src/util/generate-jwt-secret",
-        "init-social": "node init-social.js"
+        "init-social": "node init-social.js",
+        "init-users": "node init-users.js"
     },
     "repository": {
         "type": "git",
@@ -27,6 +28,7 @@
     },
     "homepage": "https://github.com/imputnet/cobalt#readme",
     "dependencies": {
+        "@clerk/express": "^1.7.57",
         "@datastructures-js/priority-queue": "^6.3.1",
         "@imput/psl": "^2.0.4",
         "@imput/version-info": "workspace:^",

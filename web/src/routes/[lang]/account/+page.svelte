@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("auth.title")} - Cobalt</title>
+    <title>{$t("auth.title")} - 竹子下载</title>
     <meta name="description" content={$t("auth.subtitle")} />
 </svelte:head>
 

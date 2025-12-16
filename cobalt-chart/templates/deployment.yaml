@@ -89,6 +89,12 @@ spec:
             # JWT Secret
             - name: JWT_SECRET
               value: {{ .Values.jwt.secret | quote }}
+            # Clerk Configuration (created separately as a Kubernetes Secret)
+            - name: CLERK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-secret
+                  key: CLERK_SECRET_KEY
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: additional-container

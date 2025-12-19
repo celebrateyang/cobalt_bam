@@ -33,6 +33,10 @@
 
     const supportedLanguages = Object.keys(languages);
     const fallbackHost = env.HOST || "freesavevideo.online";
+    const normalizePathname = (pathname: string) => {
+        if (pathname !== "/" && pathname.endsWith("/")) return pathname.replace(/\/+$/, "");
+        return pathname;
+    };
     const stripYouTube = (value: string) => {
         if (!value) return value;
         let v = value.replace(/YouTube[??,]?\s*/gi, "");
@@ -49,7 +53,8 @@
     }
 
     // Get current path without language prefix
-    $: currentPath = $page.url.pathname.replace(/^\/[^/]+/, '') || '/';
+    $: canonicalPathname = normalizePathname($page.url.pathname);
+    $: currentPath = canonicalPathname.replace(/^\/[^/]+/, "") || "/";
 
     $: reduceMotion =
         $settings.appearance.reduceMotion || device.prefers.reducedMotion;
@@ -71,7 +76,8 @@
 </script>
 
 <svelte:head>
-    <meta property="og:url" content="https://{fallbackHost}{$page.url.pathname}">
+    <meta property="og:url" content="https://{fallbackHost}{canonicalPathname}">
+    <link rel="canonical" href="https://{fallbackHost}{canonicalPathname}" />
 
     <!-- hreflang tags for SEO -->
     {#each supportedLanguages as lang}

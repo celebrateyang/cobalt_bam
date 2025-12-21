@@ -14,7 +14,7 @@
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
-    import { isSignedIn, signIn } from "$lib/state/clerk";
+    import { checkSignedIn, isSignedIn, signIn } from "$lib/state/clerk";
 
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
@@ -108,11 +108,14 @@
         // Multiple links => batch dialog immediately (platform-agnostic).
         if (isBatchInput) {
             if (!$isSignedIn) {
-                await signIn({
-                    fallbackRedirectUrl: $page.url.href,
-                    signUpFallbackRedirectUrl: $page.url.href,
-                });
-                return;
+                const alreadySignedIn = await checkSignedIn();
+                if (!alreadySignedIn) {
+                    await signIn({
+                        fallbackRedirectUrl: $page.url.href,
+                        signUpFallbackRedirectUrl: $page.url.href,
+                    });
+                    return;
+                }
             }
 
             openBatchDialog(

@@ -2,7 +2,7 @@
     import { page } from "$app/stores";
     import { t } from "$lib/i18n/translations";
     import { savingHandler } from "$lib/api/saving-handler";
-    import { isSignedIn, signIn } from "$lib/state/clerk";
+    import { checkSignedIn, isSignedIn, signIn } from "$lib/state/clerk";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
 
@@ -78,14 +78,17 @@
         if (running) return;
 
         if (!$isSignedIn) {
-            // Close native <dialog> first (it sits in the browser top-layer and can cover Clerk).
-            close?.();
-            await new Promise((r) => setTimeout(r, 200));
-            await signIn({
-                fallbackRedirectUrl: $page.url.href,
-                signUpFallbackRedirectUrl: $page.url.href,
-            });
-            return;
+            const alreadySignedIn = await checkSignedIn();
+            if (!alreadySignedIn) {
+                // Close native <dialog> first (it sits in the browser top-layer and can cover Clerk).
+                close?.();
+                await new Promise((r) => setTimeout(r, 200));
+                await signIn({
+                    fallbackRedirectUrl: $page.url.href,
+                    signUpFallbackRedirectUrl: $page.url.href,
+                });
+                return;
+            }
         }
 
         const urls = items.filter((_, i) => selected[i]).map((i) => i.url);
@@ -115,13 +118,16 @@
     const downloadSingle = async (url: string) => {
         if (running) return;
         if (!$isSignedIn) {
-            close?.();
-            await new Promise((r) => setTimeout(r, 200));
-            await signIn({
-                fallbackRedirectUrl: $page.url.href,
-                signUpFallbackRedirectUrl: $page.url.href,
-            });
-            return;
+            const alreadySignedIn = await checkSignedIn();
+            if (!alreadySignedIn) {
+                close?.();
+                await new Promise((r) => setTimeout(r, 200));
+                await signIn({
+                    fallbackRedirectUrl: $page.url.href,
+                    signUpFallbackRedirectUrl: $page.url.href,
+                });
+                return;
+            }
         }
 
         await savingHandler({ url });

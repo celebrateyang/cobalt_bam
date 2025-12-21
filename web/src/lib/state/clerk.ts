@@ -134,6 +134,23 @@ export const signIn = async (options: Record<string, unknown> = {}) => {
     } as any);
 };
 
+export const checkSignedIn = async (maxWaitMs = 600) => {
+    const instance = await initClerk();
+    if (!instance) return false;
+
+    await syncClerkLocale(instance);
+
+    if (instance.user) return true;
+
+    const start = Date.now();
+    while (Date.now() - start < maxWaitMs) {
+        await new Promise((r) => setTimeout(r, 75));
+        if (instance.user) return true;
+    }
+
+    return false;
+};
+
 export const signUp = async (options: Record<string, unknown> = {}) => {
     const instance = await initClerk();
     if (!instance) return;

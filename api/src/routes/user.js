@@ -1,12 +1,14 @@
 import express from "express";
-import { clerkClient, clerkMiddleware, getAuth, requireAuth } from "@clerk/express";
+import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 
 import { upsertUserFromClerk } from "../db/users.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 const router = express.Router();
 
-const isClerkConfigured = !!process.env.CLERK_SECRET_KEY;
+const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
+const isClerkAuthConfigured =
+    isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
 
 const mapClerkUser = (clerkUser) => {
     const primaryEmail =
@@ -29,13 +31,25 @@ const mapClerkUser = (clerkUser) => {
     };
 };
 
-if (!isClerkConfigured) {
+if (!isClerkApiConfigured) {
     router.get("/me", (_, res) => {
         res.status(501).json({
             status: "error",
             error: {
                 code: "CLERK_NOT_CONFIGURED",
-                message: "Clerk is not configured on this server",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
+    router.post("/admin/sync-all", requireAdminAuth, (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
             },
         });
     });
@@ -66,7 +80,11 @@ if (!isClerkConfigured) {
                         await upsertUserFromClerk(mapClerkUser(clerkUser));
                         synced += 1;
                     } catch (error) {
-                        console.error("Sync clerk user failed:", clerkUser.id, error);
+                        console.error(
+                            "Sync clerk user failed:",
+                            clerkUser.id,
+                            error,
+                        );
                         failures.push(clerkUser.id);
                     }
                 }
@@ -102,41 +120,54 @@ if (!isClerkConfigured) {
         }
     });
 
-    router.use(clerkMiddleware());
+    if (!isClerkAuthConfigured) {
+        router.get("/me", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+    } else {
+        router.use(clerkMiddleware());
 
-    router.get("/me", requireAuth(), async (req, res) => {
-        try {
-            const auth = getAuth(req);
-            if (!auth.userId) {
-                return res.status(401).json({
+        router.get("/me", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return res.status(401).json({
+                        status: "error",
+                        error: {
+                            code: "UNAUTHORIZED",
+                            message: "Unauthenticated",
+                        },
+                    });
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                res.json({
+                    status: "success",
+                    data: {
+                        user,
+                    },
+                });
+            } catch (error) {
+                console.error("GET /user/me error:", error);
+                res.status(500).json({
                     status: "error",
                     error: {
-                        code: "UNAUTHORIZED",
-                        message: "Unauthenticated",
+                        code: "SERVER_ERROR",
+                        message: "Failed to load user profile",
                     },
                 });
             }
-
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
-
-            res.json({
-                status: "success",
-                data: {
-                    user,
-                },
-            });
-        } catch (error) {
-            console.error("GET /user/me error:", error);
-            res.status(500).json({
-                status: "error",
-                error: {
-                    code: "SERVER_ERROR",
-                    message: "Failed to load user profile",
-                },
-            });
-        }
-    });
+        });
+    }
 }
 
 export default router;

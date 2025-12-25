@@ -220,14 +220,23 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     app.use('/', express.json({ limit: 1024 }));
 
     app.use('/', (err, _, res, next) => {
-        if (err) {
-            const { status, body } = createResponse("error", {
-                code: "error.api.invalid_body",
-            });
-            return res.status(status).json(body);
+        if (!err) {
+            return next();
         }
 
-        next();
+        const isBodyParserError =
+            err instanceof SyntaxError ||
+            err.type === 'entity.parse.failed' ||
+            err.type === 'entity.too.large';
+
+        if (!isBodyParserError) {
+            return next(err);
+        }
+
+        const { status, body } = createResponse("error", {
+            code: "error.api.invalid_body",
+        });
+        return res.status(status).json(body);
     });
 
     app.post("/session", sessionLimiter, async (req, res) => {

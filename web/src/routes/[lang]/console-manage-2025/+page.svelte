@@ -1,17 +1,19 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
     import { auth } from "$lib/api/social";
 
     let username = "";
     let password = "";
     let error = "";
     let loading = false;
+    $: lang = $page.params.lang;
 
     onMount(() => {
         // 如果已登录，跳转到管理页面
         if (auth.isLoggedIn()) {
-            goto("/console-manage-2025/accounts");
+            goto(`/${lang}/console-manage-2025/accounts`);
         }
     });
 
@@ -29,7 +31,7 @@
         loading = false;
 
         if (response.status === "success") {
-            goto("/console-manage-2025/accounts");
+            goto(`/${lang}/console-manage-2025/accounts`);
         } else {
             error = response.error?.message || "登录失败";
         }

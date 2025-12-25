@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
     import {
         auth,
         videos,
@@ -15,6 +16,7 @@
     let error = "";
     let showAddModal = false;
     let editingVideo: SocialVideo | null = null;
+    $: lang = $page.params.lang;
 
     // 筛选条件
     let filters = {
@@ -40,7 +42,7 @@
     onMount(async () => {
         const verified = await auth.verify();
         if (verified.status !== "success") {
-            goto("/console-manage-2025");
+            goto(`/${lang}/console-manage-2025`);
             return;
         }
 
@@ -184,7 +186,7 @@
 
     function handleLogout() {
         auth.logout();
-        goto("/console-manage-2025");
+        goto(`/${lang}/console-manage-2025`);
     }
 </script>
 
@@ -197,7 +199,7 @@
             >
             <button
                 class="btn-secondary"
-                on:click={() => goto("/console-manage-2025/accounts")}
+                on:click={() => goto(`/${lang}/console-manage-2025/accounts`)}
                 >账号管理</button
             >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>

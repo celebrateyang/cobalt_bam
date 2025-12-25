@@ -1,13 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
     import { auth, accounts, type SocialAccount } from "$lib/api/social";
+    import { currentApiURL } from "$lib/api/api-url";
 
     let accountList: SocialAccount[] = [];
     let loading = true;
     let error = "";
     let showAddModal = false;
     let editingAccount: SocialAccount | null = null;
+    let syncingUsers = false;
+    let syncMessage = "";
+    $: lang = $page.params.lang;
 
     // 表单数据
     let formData = {
@@ -28,7 +33,7 @@
         // 验证登录状态
         const verified = await auth.verify();
         if (verified.status !== "success") {
-            goto("/console-manage-2025");
+            goto(`/${lang}/console-manage-2025`);
             return;
         }
 
@@ -51,6 +56,40 @@
             error = "网络错误";
         } finally {
             loading = false;
+        }
+    }
+
+    async function syncClerkUsers() {
+        const token = typeof window !== "undefined"
+            ? window.localStorage.getItem("admin_token")
+            : null;
+
+        if (!token) {
+            error = "请先登录";
+            goto(`/${lang}/console-manage-2025`);
+            return;
+        }
+
+        syncingUsers = true;
+        syncMessage = "";
+        try {
+            const res = await fetch(`${currentApiURL()}/user/admin/sync-all`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") {
+                throw new Error(data?.error?.message || "同步失败");
+            }
+
+            syncMessage = `同步成功：${data.data?.synced ?? 0} 条`;
+        } catch (e) {
+            syncMessage = e instanceof Error ? e.message : "同步失败";
+        } finally {
+            syncingUsers = false;
         }
     }
 
@@ -153,7 +192,7 @@
 
     function handleLogout() {
         auth.logout();
-        goto("/console-manage-2025");
+        goto(`/${lang}/console-manage-2025`);
     }
 </script>
 
@@ -166,7 +205,16 @@
             >
             <button
                 class="btn-secondary"
-                on:click={() => goto("/console-manage-2025/videos")}
+                on:click={syncClerkUsers}
+                disabled={syncingUsers}
+                >{syncingUsers ? "同步中..." : "同步 Clerk 用户"}</button
+            >
+            {#if syncMessage}
+                <span class="sync-status">{syncMessage}</span>
+            {/if}
+            <button
+                class="btn-secondary"
+                on:click={() => goto(`/${lang}/console-manage-2025/videos`)}
                 >视频管理</button
             >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
@@ -421,6 +469,13 @@
         display: flex;
         gap: var(--padding);
         flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .sync-status {
+        font-size: 0.9rem;
+        color: var(--secondary);
+        white-space: nowrap;
     }
 
     .accounts-list {

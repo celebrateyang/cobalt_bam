@@ -65,6 +65,8 @@ const getClerkLocalization = () =>
 let initPromise: Promise<ClerkInstance | null> | null = null;
 let loadedLocaleKey: keyof typeof localeToClerkLocalization | null = null;
 let localeSyncPromise: Promise<void> | null = null;
+let lastSyncedUserId: string | null = null;
+let syncPromise: Promise<void> | null = null;
 
 const syncClerkLocale = async (instance: ClerkInstance) => {
     const desiredKey = getClerkLocaleKey();
@@ -92,6 +94,39 @@ const syncClerkLocale = async (instance: ClerkInstance) => {
     await localeSyncPromise;
 };
 
+const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
+    if (!instance?.session || !env.DEFAULT_API) return;
+
+    const userId = instance.user?.id;
+    if (!userId || userId === lastSyncedUserId) return;
+
+    if (syncPromise) {
+        await syncPromise;
+        if (lastSyncedUserId === userId) return;
+    }
+
+    syncPromise = (async () => {
+        try {
+            const token = await instance.session?.getToken();
+            if (!token) return;
+
+            await fetch(`${env.DEFAULT_API}/user/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }).catch(() => null);
+
+            lastSyncedUserId = userId;
+        } catch (error) {
+            console.debug("Clerk syncUserToAPI failed", error);
+        } finally {
+            syncPromise = null;
+        }
+    })();
+
+    await syncPromise;
+};
+
 export const initClerk = async () => {
     if (!browser) return null;
     if (!env.CLERK_PUBLISHABLE_KEY) return null;
@@ -112,9 +147,15 @@ export const initClerk = async () => {
         clerkUser.set(instance.user as unknown as ClerkUser | null);
         clerkSession.set(instance.session as unknown as ClerkSession | null);
 
+        await syncUserToAPI(instance);
+
         instance.addListener((resources) => {
             clerkUser.set(resources.user as unknown as ClerkUser | null);
             clerkSession.set(resources.session as unknown as ClerkSession | null);
+
+            if (resources.user) {
+                void syncUserToAPI(instance);
+            }
         });
 
         return instance;

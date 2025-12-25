@@ -3,6 +3,7 @@ import { derived, get, writable } from "svelte/store";
 
 import env from "$lib/env";
 import { INTERNAL_locale } from "$lib/i18n/translations";
+import { currentApiURL } from "$lib/api/api-url";
 
 import type { Clerk as ClerkInstance } from "@clerk/clerk-js";
 import { deDE, enUS, esES, frFR, jaJP, koKR, ruRU, thTH, viVN, zhCN } from "@clerk/localizations";
@@ -95,7 +96,7 @@ const syncClerkLocale = async (instance: ClerkInstance) => {
 };
 
 const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
-    if (!instance?.session || !env.DEFAULT_API) return;
+    if (!instance?.session) return;
 
     const userId = instance.user?.id;
     if (!userId || userId === lastSyncedUserId) return;
@@ -110,7 +111,8 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
             const token = await instance.session?.getToken();
             if (!token) return;
 
-            await fetch(`${env.DEFAULT_API}/user/me`, {
+            const apiBase = currentApiURL();
+            await fetch(`${apiBase}/user/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

@@ -7,12 +7,14 @@
         clerkEnabled,
         clerkLoaded,
         clerkUser,
+        getClerkToken,
         initClerk,
         openUserProfile,
         signIn,
         signOut,
         signUp,
     } from "$lib/state/clerk";
+    import { currentApiURL } from "$lib/api/api-url";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
     import IconLogin from "@tabler/icons-svelte/IconLogin.svelte";
@@ -35,6 +37,50 @@
         fallbackRedirectUrl: $page.url.href,
         signInFallbackRedirectUrl: $page.url.href,
     });
+
+    let points: number | null = null;
+    let pointsError = "";
+    let pointsLoading = false;
+    let lastPointsUserId: string | null = null;
+
+    const fetchPoints = async () => {
+        const userId = $clerkUser?.id;
+        if (!userId) return;
+        if (lastPointsUserId === userId) return;
+
+        pointsLoading = true;
+        pointsError = "";
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const res = await fetch(`${apiBase}/user/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to load points");
+            }
+
+            points = data.data?.user?.points ?? null;
+            lastPointsUserId = userId;
+        } catch (error) {
+            pointsError = "积分加载失败";
+            console.debug("load points failed", error);
+        } finally {
+            pointsLoading = false;
+        }
+    };
+
+    $: if ($clerkUser) {
+        void fetchPoints();
+    } else {
+        points = null;
+        lastPointsUserId = null;
+    }
 </script>
 
 <svelte:head>
@@ -88,6 +134,19 @@
                             $clerkUser.id}
                     </div>
                 </div>
+            </div>
+
+            <div class="points-row">
+                <div class="points-label">{$t("auth.points_label") || "积分"}</div>
+                {#if pointsLoading}
+                    <div class="points-value loading">...</div>
+                {:else if pointsError}
+                    <div class="points-value error">{pointsError}</div>
+                {:else if points !== null}
+                    <div class="points-value">{points}</div>
+                {:else}
+                    <div class="points-value muted">--</div>
+                {/if}
             </div>
 
             <div class="actions">
@@ -231,6 +290,37 @@
         height: 42px;
         padding: 0 14px;
         gap: 8px;
+    }
+
+    .points-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--surface-1);
+        border: 1px solid var(--surface-2);
+        font-weight: 600;
+    }
+
+    .points-label {
+        color: var(--subtext);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .points-value {
+        color: var(--secondary);
+        font-size: 16px;
+    }
+
+    .points-value.muted {
+        color: var(--gray);
+    }
+
+    .points-value.error {
+        color: var(--red);
     }
 
     .skeleton-line {

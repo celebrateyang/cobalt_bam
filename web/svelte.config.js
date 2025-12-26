@@ -1,10 +1,41 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import adapter from "@sveltejs/adapter-cloudflare";
 
 import { mdsvex } from "mdsvex";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { sveltePreprocess } from "svelte-preprocess";
+
+const webRoot = dirname(fileURLToPath(import.meta.url));
+const inferMode = () => {
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv) return nodeEnv;
+
+    if (process.argv.includes("build")) return "production";
+    if (process.argv.includes("dev") || process.argv.includes("serve")) return "development";
+
+    return "development";
+};
+
+const initialEnvKeys = new Set(Object.keys(process.env));
+const loadEnvFile = (filename) => {
+    const path = join(webRoot, filename);
+    if (!fs.existsSync(path)) return;
+
+    const parsed = dotenv.parse(fs.readFileSync(path, "utf8"));
+    for (const [key, value] of Object.entries(parsed)) {
+        if (initialEnvKeys.has(key)) continue;
+        process.env[key] = value;
+    }
+};
+
+const mode = inferMode();
+
+loadEnvFile(".env");
+loadEnvFile(".env.local");
+loadEnvFile(`.env.${mode}`);
+loadEnvFile(`.env.${mode}.local`);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

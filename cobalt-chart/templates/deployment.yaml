@@ -43,6 +43,11 @@ spec:
             - mountPath: /app/src/cookies.json
               name: cookies-volume
               subPath: cookie/cookies.json
+            {{- if .Values.wechatpay.enabled }}
+            - mountPath: {{ .Values.wechatpay.privateKeyMountPath | quote }}
+              name: wechatpay-secret
+              readOnly: true
+            {{- end }}
           env:
             - name: API_URL
               value: https://api.freesavevideo.online/
@@ -100,6 +105,33 @@ spec:
                 secretKeyRef:
                   name: clerk-secret
                   key: CLERK_PUBLISHABLE_KEY
+            {{- if .Values.wechatpay.enabled }}
+            # WeChat Pay (API v3) - Credits top-up
+            - name: WECHATPAY_MCH_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.wechatpay.secretName | quote }}
+                  key: WECHATPAY_MCH_ID
+            - name: WECHATPAY_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.wechatpay.secretName | quote }}
+                  key: WECHATPAY_APP_ID
+            - name: WECHATPAY_SERIAL_NO
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.wechatpay.secretName | quote }}
+                  key: WECHATPAY_SERIAL_NO
+            - name: WECHATPAY_API_V3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.wechatpay.secretName | quote }}
+                  key: WECHATPAY_API_V3_KEY
+            - name: WECHATPAY_PRIVATE_KEY_PATH
+              value: {{ printf "%s/%s" .Values.wechatpay.privateKeyMountPath .Values.wechatpay.privateKeyFile | quote }}
+            - name: WECHATPAY_NOTIFY_URL
+              value: {{ .Values.wechatpay.notifyUrl | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: additional-container
@@ -120,6 +152,11 @@ spec:
         - name: cookies-volume
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-pvc
+        {{- if .Values.wechatpay.enabled }}
+        - name: wechatpay-secret
+          secret:
+            secretName: {{ .Values.wechatpay.secretName | quote }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -30,6 +30,7 @@ import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
+import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
 const git = {
@@ -142,9 +143,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         ...corsConfig,
     }));
 
-    app.use(express.json({ limit: '1mb' }));
+    app.use(
+        express.json({
+            limit: "1mb",
+            verify: (req, _, buf) => {
+                req.rawBody = buf.toString("utf8");
+            },
+        }),
+    );
     app.use('/social', socialMediaRouter);
     app.use('/user', userRouter);
+    app.use('/payments', paymentsRouter);
 
     app.post(['/', '/expand'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {

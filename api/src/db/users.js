@@ -42,6 +42,46 @@ export const initUserDatabase = async () => {
         `CREATE INDEX IF NOT EXISTS idx_users_last_seen_at ON users(last_seen_at DESC);`,
     );
 
+    // Credit orders (top-ups for points/credits)
+    await query(`
+        CREATE TABLE IF NOT EXISTS credit_orders (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            clerk_user_id TEXT NOT NULL,
+            provider TEXT NOT NULL, -- wechat | polar
+            product_key TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            amount_fen INTEGER NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'CNY',
+            out_trade_no TEXT NOT NULL UNIQUE,
+            status TEXT NOT NULL DEFAULT 'CREATED', -- CREATED | PAID | CLOSED | FAILED
+            provider_transaction_id TEXT,
+            provider_data JSONB,
+            paid_at BIGINT,
+            raw_notify JSONB,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+    `);
+
+    await query(
+        `ALTER TABLE credit_orders ADD COLUMN IF NOT EXISTS provider_data JSONB;`,
+    );
+    await query(
+        `ALTER TABLE credit_orders ADD COLUMN IF NOT EXISTS raw_notify JSONB;`,
+    );
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_credit_orders_user_id ON credit_orders(user_id, created_at DESC);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_credit_orders_out_trade_no ON credit_orders(out_trade_no);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_credit_orders_status ON credit_orders(status);`,
+    );
+
     // Roles (RBAC) - optional, for future admin / internal permissions
     await query(`
         CREATE TABLE IF NOT EXISTS roles (

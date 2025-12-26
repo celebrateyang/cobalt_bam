@@ -115,3 +115,17 @@ affinity:
               operator: In
               values:
                 - autoscale-workers-2  # 确保只在 autoscale-workers-2 节点池中调度
+
+# WeChat Pay (API v3) - Credits top-up
+# Create a Kubernetes Secret containing:
+# - WECHATPAY_MCH_ID
+# - WECHATPAY_APP_ID
+# - WECHATPAY_SERIAL_NO
+# - WECHATPAY_API_V3_KEY
+# - apiclient_key.pem (merchant private key file)
+wechatpay:
+  enabled: false
+  secretName: wechatpay-secret
+  privateKeyMountPath: /app/secrets/wechatpay
+  privateKeyFile: apiclient_key.pem
+  notifyUrl: ""

@@ -217,6 +217,11 @@
                 on:click={() => goto(`/${lang}/console-manage-2025/videos`)}
                 >视频管理</button
             >
+            <button
+                class="btn-secondary"
+                on:click={() => goto(`/${lang}/console-manage-2025/users`)}
+                >用户管理</button
+            >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
     </header>

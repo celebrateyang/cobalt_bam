@@ -1,7 +1,7 @@
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 
-import { upsertUserFromClerk } from "../db/users.js";
+import { listUsers, updateUserPoints, upsertUserFromClerk } from "../db/users.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 const router = express.Router();
@@ -30,6 +30,84 @@ const mapClerkUser = (clerkUser) => {
         avatarUrl: clerkUser.imageUrl,
     };
 };
+
+const jsonError = (res, status, code, message) => {
+    return res.status(status).json({
+        status: "error",
+        error: { code, message },
+    });
+};
+
+// Admin-only: list local users (paginated)
+router.get("/admin/users", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const sort = typeof req.query?.sort === "string" ? req.query.sort : "created_at";
+        const order = typeof req.query?.order === "string" ? req.query.order : "desc";
+
+        const result = await listUsers({
+            page,
+            limit,
+            search,
+            sort,
+            order,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/users error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load users");
+    }
+});
+
+const updatePointsHandler = async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid user id");
+        }
+
+        const rawPoints = req.body?.points;
+        const points =
+            typeof rawPoints === "string"
+                ? Number.parseInt(rawPoints, 10)
+                : rawPoints;
+
+        if (!Number.isFinite(points) || !Number.isInteger(points) || points < 0) {
+            return jsonError(
+                res,
+                400,
+                "INVALID_INPUT",
+                "points must be a non-negative integer",
+            );
+        }
+
+        const user = await updateUserPoints(id, points);
+        if (!user) {
+            return jsonError(res, 404, "USER_NOT_FOUND", "User not found");
+        }
+
+        res.json({
+            status: "success",
+            data: {
+                user,
+            },
+        });
+    } catch (error) {
+        console.error(`${req.method} /user/admin/users/:id/points error:`, error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to update points");
+    }
+};
+
+// Admin-only: update user points (use POST to keep CORS simple)
+router.post("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
+// Optional: allow PATCH as well for REST-style clients.
+router.patch("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
 
 if (!isClerkApiConfigured) {
     router.get("/me", (_, res) => {

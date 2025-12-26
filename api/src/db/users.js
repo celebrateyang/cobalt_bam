@@ -252,3 +252,96 @@ export const getUserByClerkId = async (clerkUserId) => {
     ]);
     return result.rows[0] || null;
 };
+
+export const listUsers = async ({
+    page = 1,
+    limit = 20,
+    search = "",
+    sort = "created_at",
+    order = "desc",
+} = {}) => {
+    const parsedPage = Number.parseInt(String(page), 10);
+    const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+    const parsedLimit = Number.parseInt(String(limit), 10);
+    const safeLimitRaw =
+        Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 20;
+    const safeLimit = Math.min(Math.max(safeLimitRaw, 1), 200);
+
+    const offset = (safePage - 1) * safeLimit;
+
+    const allowedSort = {
+        id: "id",
+        created_at: "created_at",
+        updated_at: "updated_at",
+        last_seen_at: "last_seen_at",
+        points: "points",
+        primary_email: "primary_email",
+        full_name: "full_name",
+    };
+
+    const sortKey = String(sort);
+    const sortColumn = allowedSort[sortKey] || allowedSort.created_at;
+
+    const orderDir = String(order).toLowerCase() === "asc" ? "ASC" : "DESC";
+
+    const where = [];
+    const params = [];
+    let paramIndex = 1;
+
+    const normalizedSearch = String(search || "").trim();
+    if (normalizedSearch) {
+        const term = `%${normalizedSearch}%`;
+        where.push(
+            `(primary_email ILIKE $${paramIndex} OR full_name ILIKE $${paramIndex} OR clerk_user_id ILIKE $${paramIndex})`,
+        );
+        params.push(term);
+        paramIndex += 1;
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const countResult = await query(
+        `SELECT COUNT(*) as total FROM users ${whereSql}`,
+        params,
+    );
+    const total = Number.parseInt(countResult.rows[0]?.total ?? "0", 10) || 0;
+
+    const listResult = await query(
+        `
+        SELECT *
+        FROM users
+        ${whereSql}
+        ORDER BY ${sortColumn} ${orderDir} NULLS LAST, id DESC
+        LIMIT $${paramIndex}
+        OFFSET $${paramIndex + 1};
+        `,
+        [...params, safeLimit, offset],
+    );
+
+    return {
+        users: listResult.rows,
+        pagination: {
+            page: safePage,
+            limit: safeLimit,
+            total,
+            pages: Math.ceil(total / safeLimit),
+        },
+    };
+};
+
+export const updateUserPoints = async (id, points) => {
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE users
+        SET points = $2,
+            updated_at = $3
+        WHERE id = $1
+        RETURNING *;
+        `,
+        [id, points, now],
+    );
+
+    return result.rows[0] || null;
+};

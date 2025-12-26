@@ -59,7 +59,7 @@
     });
 
     let points: number | null = null;
-    let pointsError = "";
+    let pointsErrorKey = "";
     let pointsLoading = false;
     let lastPointsUserId: string | null = null;
 
@@ -69,7 +69,7 @@
         if (lastPointsUserId === userId) return;
 
         pointsLoading = true;
-        pointsError = "";
+        pointsErrorKey = "";
         try {
             const token = await getClerkToken();
             if (!token) throw new Error("missing token");
@@ -88,7 +88,7 @@
             points = data.data?.user?.points ?? null;
             lastPointsUserId = userId;
         } catch (error) {
-            pointsError = "积分加载失败";
+            pointsErrorKey = "auth.points_load_failed";
             console.debug("load points failed", error);
         } finally {
             pointsLoading = false;
@@ -106,11 +106,11 @@
 
     let creditProducts: CreditProduct[] = [];
     let creditProductsLoading = false;
-    let creditProductsError = "";
+    let creditProductsErrorKey = "";
 
     const fetchCreditProducts = async () => {
         creditProductsLoading = true;
-        creditProductsError = "";
+        creditProductsErrorKey = "";
 
         try {
             const apiBase = currentApiURL();
@@ -127,7 +127,7 @@
                 ? data.data.products
                 : [];
         } catch (error) {
-            creditProductsError = "积分商品加载失败";
+            creditProductsErrorKey = "auth.credit_products_load_failed";
             console.debug("load credit products failed", error);
         } finally {
             creditProductsLoading = false;
@@ -135,7 +135,7 @@
     };
 
     let purchaseLoading = false;
-    let purchaseError = "";
+    let purchaseErrorKey = "";
     let activeOrder: CreditOrder | null = null;
     let codeUrl = "";
     let qrDataUrl = "";
@@ -153,7 +153,7 @@
         activeOrder = null;
         codeUrl = "";
         qrDataUrl = "";
-        purchaseError = "";
+        purchaseErrorKey = "";
         orderStatusLoading = false;
     };
 
@@ -216,7 +216,7 @@
         if (activeOrder?.status === "CREATED") return;
 
         purchaseLoading = true;
-        purchaseError = "";
+        purchaseErrorKey = "";
 
         try {
             const token = await getClerkToken();
@@ -252,7 +252,7 @@
 
             startPolling(order.id);
         } catch (error) {
-            purchaseError = "创建支付失败，请稍后重试";
+            purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create wechat pay order failed", error);
         } finally {
             purchaseLoading = false;
@@ -316,12 +316,12 @@
 
                 <div class="points-card">
                     <div class="points-label">
-                        {$t("auth.points_label") || "积分"}
+                        {$t("auth.points_label")}
                     </div>
                     {#if pointsLoading}
                         <div class="points-value loading">...</div>
-                    {:else if pointsError}
-                        <div class="points-value error">{pointsError}</div>
+                    {:else if pointsErrorKey}
+                        <div class="points-value error">{$t(pointsErrorKey)}</div>
                     {:else if points !== null}
                         <div class="points-value">{points}</div>
                     {:else}
@@ -346,19 +346,19 @@
         </section>
 
         <section class="card topup-card">
-            <div class="topup-header">
-                <div class="topup-title">
-                    {$t("auth.topup_title") || "购买积分"}
+                <div class="topup-header">
+                    <div class="topup-title">
+                        {$t("auth.topup_title")}
+                    </div>
+                    <div class="subtext topup-subtitle">
+                        {$t("auth.topup_subtitle")}
+                    </div>
                 </div>
-                <div class="subtext topup-subtitle">
-                    {$t("auth.topup_subtitle") || "选择档位并使用微信支付"}
-                </div>
-            </div>
 
             {#if creditProductsLoading}
-                <div class="subtext">加载中...</div>
-            {:else if creditProductsError}
-                <div class="subtext error">{creditProductsError}</div>
+                <div class="subtext">{$t("auth.loading")}</div>
+            {:else if creditProductsErrorKey}
+                <div class="subtext error">{$t(creditProductsErrorKey)}</div>
             {:else}
                 <div class="products-grid">
                     {#each creditProducts as product (product.key)}
@@ -371,15 +371,15 @@
                             <div class="product-main">
                                 <div class="product-left">
                                     <div class="product-points">
-                                        {product.points} 积分
+                                        {product.points} {$t("auth.points_label")}
                                     </div>
                                     <div class="subtext product-subtitle">
                                         {#if product.unitPriceFen === 2}
-                                            2 分/积分
+                                            {$t("auth.unit_price_2_fen")}
                                         {:else if product.unitPriceFen === 1}
-                                            1 分/积分
+                                            {$t("auth.unit_price_1_fen")}
                                         {:else if product.unitPriceFen === 0.8}
-                                            0.8 分/积分
+                                            {$t("auth.unit_price_0_8_fen")}
                                         {:else}
                                             --
                                         {/if}
@@ -387,11 +387,11 @@
                                 </div>
                                 <div class="product-right">
                                     {#if isTest}
-                                        <span class="badge test">测试</span>
+                                        <span class="badge test">{$t("auth.badge_test")}</span>
                                     {:else if isBest}
-                                        <span class="badge best">最划算</span>
+                                        <span class="badge best">{$t("auth.badge_best")}</span>
                                     {:else if isRecommended}
-                                        <span class="badge rec">推荐</span>
+                                        <span class="badge rec">{$t("auth.badge_recommended")}</span>
                                     {/if}
                                     <div class="product-price">
                                         ¥{formatCny(product.amountFen)}
@@ -406,23 +406,25 @@
                                         activeOrder?.status === "CREATED"}
                                     on:click={() => startWechatPay(product.key)}
                                 >
-                                    微信支付
+                                    {$t("auth.wechat_pay")}
                                 </button>
-                                <button
-                                    class="button elevated ghost"
-                                    disabled
-                                    title="暂未开放"
-                                >
-                                    Polar
-                                </button>
+                                {#if $page.params.lang !== "zh"}
+                                    <button
+                                        class="button elevated ghost"
+                                        disabled
+                                        title={$t("auth.polar_coming_soon")}
+                                    >
+                                        Polar
+                                    </button>
+                                {/if}
                             </div>
                         </div>
                     {/each}
                 </div>
             {/if}
 
-            {#if purchaseError}
-                <div class="subtext error">{purchaseError}</div>
+            {#if purchaseErrorKey}
+                <div class="subtext error">{$t(purchaseErrorKey)}</div>
             {/if}
         </section>
 
@@ -434,32 +436,32 @@
             >
                 <div class="payment-modal" on:click|stopPropagation>
                     <div class="payment-header">
-                        <div class="payment-title">微信扫码支付</div>
+                        <div class="payment-title">{$t("auth.wechat_qr_pay_title")}</div>
                         <button class="button elevated" on:click={clearActiveOrder}>
-                            关闭
+                            {$t("auth.close")}
                         </button>
                     </div>
 
                     <div class="subtext payment-subtitle">
-                        订单号 {activeOrder.id} · ¥{formatCny(activeOrder.amount_fen)} ·
-                        {activeOrder.points} 积分
+                        {$t("auth.order_no")} {activeOrder.id} · ¥{formatCny(activeOrder.amount_fen)} ·
+                        {activeOrder.points} {$t("auth.points_label")}
                     </div>
 
                     <div class="payment-body">
                         <div class="payment-qr">
                             {#if activeOrder.status === "PAID"}
                                 <div class="payment-success">
-                                    支付成功，积分已到账
+                                    {$t("auth.payment_success")}
                                 </div>
                             {:else if qrDataUrl}
                                 <img
                                     class="payment-qr-image"
                                     src={qrDataUrl}
-                                    alt="微信支付二维码"
+                                    alt={$t("auth.wechat_qr_alt")}
                                 />
                             {:else}
                                 <div class="payment-qr-placeholder">
-                                    二维码生成中...
+                                    {$t("auth.qr_generating")}
                                 </div>
                             {/if}
 
@@ -470,7 +472,7 @@
                                     target="_blank"
                                     rel="noreferrer"
                                 >
-                                    打开支付链接
+                                    {$t("auth.open_payment_link")}
                                 </a>
                             {/if}
                         </div>
@@ -478,12 +480,12 @@
                         <div class="payment-status">
                             {#if activeOrder.status === "PAID"}
                                 <div class="subtext payment-hint">
-                                    你可以继续购买或关闭窗口。
+                                    {$t("auth.payment_paid_hint")}
                                 </div>
                             {:else}
-                                <div class="payment-wait">等待支付…</div>
+                                <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
-                                    支付完成后会自动刷新（也可手动查询）。
+                                    {$t("auth.payment_waiting_hint")}
                                 </div>
                             {/if}
 
@@ -494,10 +496,10 @@
                                         void fetchOrderStatus(activeOrder.id, true)}
                                     disabled={orderStatusLoading}
                                 >
-                                    查询状态
+                                    {$t("auth.check_status")}
                                 </button>
                                 <button class="button elevated" on:click={clearActiveOrder}>
-                                    {activeOrder.status === "PAID" ? "完成" : "取消"}
+                                    {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
                                 </button>
                             </div>
                         </div>

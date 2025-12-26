@@ -19,7 +19,7 @@ export const initUserDatabase = async () => {
             full_name TEXT,
             avatar_url TEXT,
             last_seen_at BIGINT,
-            points INTEGER NOT NULL DEFAULT 100,
+            points INTEGER NOT NULL DEFAULT 50,
             is_disabled BOOLEAN DEFAULT false,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL
@@ -29,8 +29,11 @@ export const initUserDatabase = async () => {
     // Migration: ensure points column exists for older databases
     await query(
         `ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 100;`,
+            ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 50;`,
     );
+
+    // Migration: ensure default points for new users is correct
+    await query(`ALTER TABLE users ALTER COLUMN points SET DEFAULT 50;`);
 
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_clerk_user_id ON users(clerk_user_id);`,

@@ -124,8 +124,8 @@ affinity:
 # - WECHATPAY_API_V3_KEY
 # - apiclient_key.pem (merchant private key file)
 wechatpay:
-  enabled: false
+  enabled: true
   secretName: wechatpay-secret
   privateKeyMountPath: /app/secrets/wechatpay
   privateKeyFile: apiclient_key.pem
-  notifyUrl: ""
+  notifyUrl: "https://api.freesavevideo.online/payments/wechat/notify"

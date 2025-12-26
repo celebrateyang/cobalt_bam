@@ -25,3 +25,5 @@ web/.firebase
 Microsoft/
 WindowsPowerShell/
 clerk-secret.yaml
+wechat-secret.yaml
+wechatpay-secret.yaml

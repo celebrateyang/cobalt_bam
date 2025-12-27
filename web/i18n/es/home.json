@@ -24,7 +24,7 @@
         },
         "youtube": {
             "name": "Descargador de videos de YouTube",
-            "desc": "Soporta 1080P/4K. Ver sin conexión después de descargar. Coincide automáticamente con el mejor formato."
+            "desc": "Por favor, vea el tutorial en video: cómo usar Tampermonkey para descargar videos de YouTube."
         },
         "facebook": {
             "name": "Descargador de videos de Facebook",

@@ -27,7 +27,7 @@
         },
         "youtube": {
             "name": "YouTube Video Downloader",
-            "desc": "Supports 1080P/4K. Watch offline after download. Automatically matches the best format."
+            "desc": "Please watch the video tutorial: how to use Tampermonkey to download YouTube videos."
         },
         "facebook": {
             "name": "Facebook Video Downloader",

@@ -11,11 +11,11 @@
         primary_email: string | null;
         full_name: string | null;
         avatar_url: string | null;
-        last_seen_at: number | null;
+        last_seen_at: number | string | null;
         points: number;
         is_disabled: boolean | null;
-        created_at: number;
-        updated_at: number;
+        created_at: number | string;
+        updated_at: number | string;
     };
 
     let users: AdminUser[] = [];
@@ -127,9 +127,16 @@
         await loadUsers();
     }
 
-    function formatDate(ts: number | null | undefined) {
-        if (!ts) return "-";
-        const d = new Date(ts);
+    function formatDate(ts: number | string | null | undefined) {
+        if (ts == null) return "-";
+        const raw =
+            typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
+        if (!Number.isFinite(raw)) return "-";
+
+        // tolerate seconds timestamps (10-digit) just in case
+        const ms = raw < 1e12 ? raw * 1000 : raw;
+
+        const d = new Date(ms);
         if (Number.isNaN(d.getTime())) return "-";
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     }
@@ -365,15 +372,6 @@
 </div>
 
 <style>
-    :global(#cobalt) {
-        display: contents;
-    }
-
-    :global(#content) {
-        width: 100vw;
-        max-width: 100vw;
-    }
-
     .admin-container {
         width: 100%;
         max-width: 1200px;

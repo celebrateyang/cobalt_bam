@@ -7,13 +7,30 @@ const CACHE = `cache-${version}`;
 const ASSETS = [
     ...build, // the app itself
     ...files  // everything in `static`
-];
+].filter((path) => path !== '/404.html');
 
 self.addEventListener('install', (event) => {
     // Create a new cache and add all files to it
     async function addFilesToCache() {
         const cache = await caches.open(CACHE);
-        await cache.addAll(ASSETS);
+
+        // cache.addAll fails the whole install if any single request is not OK (e.g. redirects/404)
+        try {
+            await cache.addAll(ASSETS);
+        } catch (error) {
+            console.warn('[service-worker] precache failed, falling back to best-effort', error);
+
+            await Promise.allSettled(
+                ASSETS.map(async (asset) => {
+                    try {
+                        const res = await fetch(asset, { redirect: 'follow' });
+                        if (res.ok) {
+                            await cache.put(asset, res.clone());
+                        }
+                    } catch {}
+                }),
+            );
+        }
     }
 
     self.skipWaiting();
@@ -47,7 +64,17 @@ self.addEventListener('fetch', (event) => {
 
         // `build`/`files` can always be served from the cache
         if (ASSETS.includes(url.pathname)) {
-            return cache.match(event.request);
+            const cached = await cache.match(event.request);
+            if (cached) {
+                return cached;
+            }
+
+            // If cache was cleared or install didn't fully cache, fall back to network.
+            const response = await fetch(event.request);
+            if (response.status === 200) {
+                cache.put(event.request, response.clone());
+            }
+            return response;
         }
 
         // for everything else, try the network first, but

@@ -97,15 +97,6 @@
 </div>
 
 <style>
-    :global(#cobalt) {
-        display: contents;
-    }
-
-    :global(#content) {
-        width: 100vw;
-        max-width: 100vw;
-    }
-
     .admin-container {
         position: fixed;
         top: 0;

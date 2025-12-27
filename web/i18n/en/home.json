@@ -1,4 +1,7 @@
 {
+    "feedback": {
+        "desc": "Report download issues and suggestions."
+    },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
         "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",

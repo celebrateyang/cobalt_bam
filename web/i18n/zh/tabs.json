@@ -12,6 +12,7 @@
     "account": "账号",
     "feature": {
         "media_downloader": "媒体下载器",
+        "feedback": "问题反馈",
         "file_transfer": "文件传输",
         "discover_trends": "发现趋势"
     }

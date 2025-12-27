@@ -2,17 +2,21 @@
     import { t, INTERNAL_locale, defaultLocale } from "$lib/i18n/translations";
     import { onMount } from "svelte";
     import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
 
     import Omnibox from "$components/save/Omnibox.svelte";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
     import UserGuide from "$components/misc/UseGuide.svelte";
 
-    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
+    import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
+    import { createDialog } from "$lib/state/dialogs";
+    import { checkSignedIn, isSignedIn } from "$lib/state/clerk";
+    import { link as omniboxLink } from "$lib/state/omnibox";
 
     export let data: { lang?: string };
 
@@ -58,6 +62,38 @@
         "facebook",
         "twitter",
     ];
+
+    const accountPath = () => `/${currentLocale}/account`;
+
+    const buildFeedbackRedirectPath = () => {
+        const next = new URL($page.url.toString());
+        next.searchParams.set("feedback", "1");
+        return `${next.pathname}${next.search}`;
+    };
+
+    const openFeedbackDialog = () => {
+        createDialog({
+            id: "feedback",
+            type: "feedback",
+            initialVideoUrl: $omniboxLink,
+        });
+    };
+
+    const openFeedback = async () => {
+        if (!$isSignedIn) {
+            const alreadySignedIn = await checkSignedIn();
+            if (!alreadySignedIn) {
+                const redirectTo = buildFeedbackRedirectPath();
+                await goto(
+                    `${accountPath()}?signin=1&redirect=${encodeURIComponent(redirectTo)}`,
+                );
+                return false;
+            }
+        }
+
+        openFeedbackDialog();
+        return true;
+    };
 
     $: platformCards = platformsList.map((slug) => ({
         slug,
@@ -164,6 +200,22 @@
         if (notificationClosed === "true") {
             showNotification = false;
         }
+
+        if ($page.url.searchParams.get("feedback")) {
+            void (async () => {
+                const opened = await openFeedback();
+                if (!opened) return;
+
+                const cleaned = new URL($page.url.toString());
+                cleaned.searchParams.delete("feedback");
+
+                await goto(`${cleaned.pathname}${cleaned.search}`, {
+                    replaceState: true,
+                    keepfocus: true,
+                    noScroll: true,
+                });
+            })();
+        }
     });
 
     // 关闭通知并保存状态到本地存储
@@ -241,13 +293,13 @@
 
     <!-- Feature Cards -->
     <section class="feature-cards">
-        <a href={`/${currentLocale}`} class="feature-card active">
-            <div class="icon-wrapper"><IconDownload size={28} /></div>
+        <button type="button" class="feature-card" on:click={openFeedback}>
+            <div class="icon-wrapper"><IconAlertTriangle size={28} /></div>
             <div class="card-content">
-                <h3>{$t("tabs.feature.media_downloader")}</h3>
-                <p class="card-desc">{seoDescription}</p>
+                <h3>{$t("tabs.feature.feedback")}</h3>
+                <p class="card-desc">{$t("home.feedback.desc")}</p>
             </div>
-        </a>
+        </button>
         <a href={`/${currentLocale}/clipboard`} class="feature-card">
             <div class="icon-wrapper"><IconClipboard /></div>
             <div class="card-content">
@@ -822,6 +874,10 @@
         border-radius: var(--border-radius);
         text-decoration: none;
         color: var(--text);
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        appearance: none;
         transition:
             transform 0.2s,
             background 0.2s;

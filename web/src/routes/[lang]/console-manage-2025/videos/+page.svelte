@@ -207,6 +207,11 @@
                 on:click={() => goto(`/${lang}/console-manage-2025/users`)}
                 >用户管理</button
             >
+            <button
+                class="btn-secondary"
+                on:click={() => goto(`/${lang}/console-manage-2025/feedback`)}
+                >问题反馈</button
+            >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
     </header>

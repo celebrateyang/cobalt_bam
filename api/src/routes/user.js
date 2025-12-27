@@ -7,6 +7,7 @@ import {
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
+import { createFeedback, listFeedback } from "../db/feedback.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 const router = express.Router();
@@ -70,6 +71,25 @@ router.get("/admin/users", requireAdminAuth, async (req, res) => {
     }
 });
 
+// Admin-only: list user feedback (paginated)
+router.get("/admin/feedback", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+
+        const result = await listFeedback({ page, limit, search });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/feedback error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load feedback");
+    }
+});
+
 const updatePointsHandler = async (req, res) => {
     try {
         const id = Number.parseInt(req.params?.id, 10);
@@ -127,6 +147,17 @@ if (!isClerkApiConfigured) {
     });
 
     router.post("/points/consume", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
+    router.post("/feedback", (_, res) => {
         res.status(501).json({
             status: "error",
             error: {
@@ -236,6 +267,17 @@ if (!isClerkApiConfigured) {
                 },
             });
         });
+
+        router.post("/feedback", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
     } else {
         router.use(clerkMiddleware());
 
@@ -331,6 +373,104 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to deduct points",
+                );
+            }
+        });
+
+        router.post("/feedback", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const videoUrlRaw = req.body?.videoUrl;
+                const phenomenonRaw = req.body?.phenomenon;
+                const suggestionRaw = req.body?.suggestion;
+
+                const videoUrl =
+                    typeof videoUrlRaw === "string" ? videoUrlRaw.trim() : "";
+                const phenomenon =
+                    typeof phenomenonRaw === "string" ? phenomenonRaw.trim() : "";
+                const suggestion =
+                    typeof suggestionRaw === "string"
+                        ? suggestionRaw.trim()
+                        : "";
+
+                if (!videoUrl) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "videoUrl is required",
+                    );
+                }
+
+                if (!phenomenon) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "phenomenon is required",
+                    );
+                }
+
+                if (videoUrl.length > 2048) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "videoUrl is too long",
+                    );
+                }
+
+                if (phenomenon.length > 8000) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "phenomenon is too long",
+                    );
+                }
+
+                if (suggestion.length > 8000) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "suggestion is too long",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const feedback = await createFeedback({
+                    userId: user.id,
+                    clerkUserId: auth.userId,
+                    videoUrl,
+                    phenomenon,
+                    suggestion: suggestion || null,
+                });
+
+                res.json({
+                    status: "success",
+                    data: {
+                        feedback,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/feedback error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to submit feedback",
                 );
             }
         });

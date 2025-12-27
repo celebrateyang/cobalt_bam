@@ -10,6 +10,7 @@
     "account": "บัญชี",
     "feature": {
         "media_downloader": "โปรแกรมดาวน์โหลดสื่อ",
+        "feedback": "รายงานปัญหา",
         "file_transfer": "ถ่ายโอนไฟล์",
         "discover_trends": "ค้นหาเทรนด์"
     }

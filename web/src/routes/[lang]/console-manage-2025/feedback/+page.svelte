@@ -5,32 +5,31 @@
     import { auth } from "$lib/api/social";
     import { currentApiURL } from "$lib/api/api-url";
 
-    type AdminUser = {
+    type FeedbackItem = {
         id: number;
+        user_id: number;
         clerk_user_id: string;
-        primary_email: string | null;
-        full_name: string | null;
-        avatar_url: string | null;
-        last_seen_at: number | string | null;
-        points: number;
-        is_disabled: boolean | null;
+        video_url: string;
+        phenomenon: string;
+        suggestion: string | null;
         created_at: number | string;
         updated_at: number | string;
+        user?: {
+            primary_email: string | null;
+            full_name: string | null;
+            avatar_url: string | null;
+        };
     };
 
-    let users: AdminUser[] = [];
+    let feedback: FeedbackItem[] = [];
     let loading = true;
     let error = "";
-    let info = "";
 
     let search = "";
     let pageNum = 1;
     let limit = 20;
     let total = 0;
     let pages = 0;
-
-    let pointsDraft: Record<number, string> = {};
-    let saving: Record<number, boolean> = {};
 
     $: lang = $page.params.lang;
 
@@ -46,13 +45,12 @@
             return;
         }
 
-        await loadUsers();
+        await loadFeedback();
     });
 
-    async function loadUsers() {
+    async function loadFeedback() {
         loading = true;
         error = "";
-        info = "";
 
         try {
             const token = getToken();
@@ -68,7 +66,7 @@
             if (normalizedSearch) params.set("search", normalizedSearch);
 
             const res = await fetch(
-                `${currentApiURL()}/user/admin/users?${params.toString()}`,
+                `${currentApiURL()}/user/admin/feedback?${params.toString()}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -82,26 +80,20 @@
                 return;
             }
 
-            const data = await res.json();
-            if (!res.ok || data.status !== "success") {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
                 throw new Error(data?.error?.message || "加载失败");
             }
 
-            users = Array.isArray(data?.data?.users) ? data.data.users : [];
+            feedback = Array.isArray(data?.data?.feedback) ? data.data.feedback : [];
 
             const pagination = data?.data?.pagination || {};
             total = pagination.total ?? 0;
             pages = pagination.pages ?? 0;
             pageNum = pagination.page ?? pageNum;
             limit = pagination.limit ?? limit;
-
-            const nextDraft: Record<number, string> = {};
-            for (const u of users) {
-                nextDraft[u.id] = String(u.points);
-            }
-            pointsDraft = nextDraft;
         } catch (e) {
-            users = [];
+            feedback = [];
             error = e instanceof Error ? e.message : "网络错误";
         } finally {
             loading = false;
@@ -113,110 +105,53 @@
         if (next < 1) return;
         if (pages && next > pages) return;
         pageNum = next;
-        await loadUsers();
+        await loadFeedback();
     }
 
     async function handleSearch() {
         pageNum = 1;
-        await loadUsers();
+        await loadFeedback();
     }
 
     async function handleLimitChange(nextLimit: number) {
         limit = nextLimit;
         pageNum = 1;
-        await loadUsers();
+        await loadFeedback();
     }
 
     function formatDate(ts: number | string | null | undefined) {
         if (ts == null) return "-";
-        const raw =
-            typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
+        const raw = typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
         if (!Number.isFinite(raw)) return "-";
 
-        // tolerate seconds timestamps (10-digit) just in case
         const ms = raw < 1e12 ? raw * 1000 : raw;
-
         const d = new Date(ms);
         if (Number.isNaN(d.getTime())) return "-";
+
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     }
+
+    const copyText = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            // ignore
+        }
+    };
 
     function handleLogout() {
         auth.logout();
         goto(`/${lang}/console-manage-2025`);
     }
-
-    const parsePointsDraft = (draft: string | undefined) => {
-        const normalized = String(draft ?? "").trim();
-        if (!/^\d+$/.test(normalized)) return null;
-        const points = Number.parseInt(normalized, 10);
-        if (!Number.isFinite(points) || !Number.isInteger(points)) return null;
-        return points;
-    };
-
-    async function savePoints(userId: number) {
-        const token = getToken();
-        if (!token) {
-            goto(`/${lang}/console-manage-2025`);
-            return;
-        }
-
-        const nextPoints = parsePointsDraft(pointsDraft[userId]);
-        if (nextPoints == null || nextPoints < 0) {
-            error = "积分必须是非负整数";
-            return;
-        }
-
-        saving = { ...saving, [userId]: true };
-        error = "";
-        info = "";
-
-        try {
-            const res = await fetch(
-                `${currentApiURL()}/user/admin/users/${userId}/points`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ points: nextPoints }),
-                },
-            );
-
-            if (res.status === 401) {
-                auth.logout();
-                goto(`/${lang}/console-manage-2025`);
-                return;
-            }
-
-            const data = await res.json();
-            if (!res.ok || data.status !== "success") {
-                throw new Error(data?.error?.message || "更新失败");
-            }
-
-            const updated = data?.data?.user as AdminUser | undefined;
-            if (updated) {
-                users = users.map((u) => (u.id === userId ? updated : u));
-                pointsDraft = { ...pointsDraft, [userId]: String(updated.points) };
-            }
-
-            info = "积分已更新";
-        } catch (e) {
-            error = e instanceof Error ? e.message : "更新失败";
-        } finally {
-            saving = { ...saving, [userId]: false };
-        }
-    }
 </script>
 
 <svelte:head>
-    <title>用户管理 - 管理后台</title>
+    <title>问题反馈 - 管理后台</title>
 </svelte:head>
 
 <div class="admin-container">
     <header class="admin-header">
-        <h1>用户管理</h1>
+        <h1>问题反馈</h1>
         <div class="header-actions">
             <button
                 class="btn-secondary"
@@ -225,13 +160,13 @@
             >
             <button
                 class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/videos`)}
-                >视频管理</button
+                on:click={() => goto(`/${lang}/console-manage-2025/users`)}
+                >用户管理</button
             >
             <button
                 class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/feedback`)}
-                >问题反馈</button
+                on:click={() => goto(`/${lang}/console-manage-2025/videos`)}
+                >视频管理</button
             >
             <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
@@ -241,7 +176,7 @@
         <div class="search">
             <input
                 type="text"
-                placeholder="搜索邮箱 / 姓名 / Clerk ID"
+                placeholder="搜索视频链接 / 现象 / 用户邮箱 / Clerk ID"
                 bind:value={search}
                 on:keydown={(e) => e.key === "Enter" && handleSearch()}
             />
@@ -249,13 +184,10 @@
         </div>
 
         <div class="pager">
-            <span class="meta">共 {total} 用户</span>
+            <span class="meta">共 {total} 条</span>
             <label class="limit">
                 <span>每页</span>
-                <select
-                    bind:value={limit}
-                    on:change={() => handleLimitChange(limit)}
-                >
+                <select bind:value={limit} on:change={() => handleLimitChange(limit)}>
                     <option value={10}>10</option>
                     <option value={20}>20</option>
                     <option value={50}>50</option>
@@ -288,86 +220,85 @@
         <div class="error-message">{error}</div>
     {/if}
 
-    {#if info}
-        <div class="info-message">{info}</div>
-    {/if}
-
     {#if loading}
         <div class="loading">加载中...</div>
-    {:else if users.length === 0}
-        <div class="empty">暂无用户</div>
+    {:else if feedback.length === 0}
+        <div class="empty">暂无反馈</div>
     {:else}
         <div class="table-wrap">
-            <table class="users-table">
+            <table class="feedback-table">
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>时间</th>
                         <th>用户</th>
-                        <th>邮箱</th>
-                        <th>积分</th>
-                        <th>最近活跃</th>
-                        <th>创建时间</th>
+                        <th>视频链接</th>
+                        <th>现象</th>
+                        <th>建议</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {#each users as user (user.id)}
+                    {#each feedback as item (item.id)}
                         <tr>
-                            <td class="mono">{user.id}</td>
+                            <td class="mono">{item.id}</td>
+                            <td class="mono">{formatDate(item.created_at)}</td>
                             <td>
                                 <div class="user-cell">
-                                    {#if user.avatar_url}
+                                    {#if item.user?.avatar_url}
                                         <img
                                             class="avatar"
-                                            src={user.avatar_url}
-                                            alt={user.full_name ||
-                                                user.primary_email ||
-                                                user.clerk_user_id}
+                                            src={item.user.avatar_url}
+                                            alt={item.user.full_name ||
+                                                item.user.primary_email ||
+                                                item.clerk_user_id}
                                         />
                                     {:else}
                                         <div class="avatar placeholder">
-                                            {(user.full_name ||
-                                                user.primary_email ||
-                                                user.clerk_user_id)
+                                            {(item.user?.full_name ||
+                                                item.user?.primary_email ||
+                                                item.clerk_user_id)
                                                 ?.charAt(0)
                                                 ?.toUpperCase() || "U"}
                                         </div>
                                     {/if}
                                     <div class="user-meta">
                                         <div class="name">
-                                            {user.full_name || "-"}
+                                            {item.user?.full_name || "-"}
                                         </div>
                                         <div class="sub mono">
-                                            {user.clerk_user_id}
+                                            {item.user?.primary_email ||
+                                                item.clerk_user_id}
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td>{user.primary_email || "-"}</td>
+                            <td class="url-cell">
+                                <a
+                                    class="mono url"
+                                    href={item.video_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {item.video_url}
+                                </a>
+                                <button
+                                    class="btn-secondary btn-copy"
+                                    type="button"
+                                    on:click={() => copyText(item.video_url)}
+                                >
+                                    复制
+                                </button>
+                            </td>
                             <td>
-                                <div class="points-cell">
-                                    <input
-                                        class="points-input"
-                                        type="number"
-                                        min="0"
-                                        step="1"
-                                        bind:value={pointsDraft[user.id]}
-                                        disabled={saving[user.id]}
-                                    />
-                                    <button
-                                        class="btn-primary btn-save"
-                                        disabled={saving[user.id] ||
-                                            parsePointsDraft(pointsDraft[user.id]) == null ||
-                                            parsePointsDraft(pointsDraft[user.id]) === user.points}
-                                        on:click={() => savePoints(user.id)}
-                                    >
-                                        {saving[user.id]
-                                            ? "保存中..."
-                                            : "保存"}
-                                    </button>
+                                <div class="text clamp">
+                                    {item.phenomenon}
                                 </div>
                             </td>
-                            <td>{formatDate(user.last_seen_at)}</td>
-                            <td>{formatDate(user.created_at)}</td>
+                            <td>
+                                <div class="text clamp">
+                                    {item.suggestion || "-"}
+                                </div>
+                            </td>
                         </tr>
                     {/each}
                 </tbody>
@@ -524,14 +455,6 @@
         margin-bottom: var(--padding);
     }
 
-    .info-message {
-        background: var(--green);
-        color: var(--white);
-        padding: var(--padding);
-        border-radius: var(--border-radius);
-        margin-bottom: var(--padding);
-    }
-
     .loading,
     .empty {
         text-align: center;
@@ -549,7 +472,7 @@
     table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 980px;
+        min-width: 1100px;
     }
 
     thead th {
@@ -570,7 +493,7 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         color: var(--text);
         font-size: 0.9rem;
-        vertical-align: middle;
+        vertical-align: top;
     }
 
     tbody tr:hover td {
@@ -585,7 +508,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 260px;
+        min-width: 240px;
     }
 
     .avatar {
@@ -624,35 +547,43 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 360px;
+        max-width: 340px;
     }
 
-    .points-cell {
+    .url-cell {
         display: flex;
         align-items: center;
         gap: 8px;
+        min-width: 320px;
+        max-width: 420px;
     }
 
-    .points-input {
-        width: 110px;
-        padding: 9px 10px;
-        border: none;
-        border-radius: var(--border-radius);
-        background: var(--button);
-        color: var(--text);
-        box-shadow: var(--button-box-shadow);
-        font-family: "IBM Plex Mono", monospace;
+    .url {
+        color: var(--blue);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 340px;
     }
 
-    .points-input:focus {
-        outline: none;
-        background: var(--button-hover);
-        box-shadow: 0 0 0 2px var(--blue) inset;
-    }
-
-    .btn-save {
-        padding: 9px 12px;
+    .btn-copy {
+        padding: 8px 10px;
         font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .text {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.45;
+    }
+
+    .clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        max-width: 360px;
     }
 
     @media screen and (max-width: 768px) {
@@ -676,9 +607,6 @@
         .search {
             min-width: 100%;
         }
-
-        .pager {
-            justify-content: flex-start;
-        }
     }
 </style>
+

@@ -9,6 +9,7 @@
     "account": "аккаунт",
     "feature": {
         "media_downloader": "Загрузчик Медиа",
+        "feedback": "Обратная связь",
         "file_transfer": "Передача Файлов",
         "discover_trends": "Открыть Тренды"
     }

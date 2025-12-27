@@ -35,5 +35,24 @@
     "api.override.body": "{{ value }} 现在是处理实例。如果您不信任它，请按“取消”，它将被忽略。稍后您可以在处理设置中更改您的选择。",
     "safety.custom_instance.body": "自定义实例可能会带来隐私和安全风险。恶意实例可能会：1. 将您重定向离开竹子下载并试图诈骗您。2. 记录您请求的所有信息，永久存储，并用来跟踪您。3. 向您提供恶意文件（如恶意软件）。4. 强制您观看广告，或让您付费下载。此后，我们无法保护您。请谨慎选择使用哪些实例，并始终相信自己的直觉。如果感觉不对劲，请回到此页面，重置自定义实例，并在GitHub上向我们报告。",
     "processing.ongoing": "竹子下载当前正在此标签页处理媒体。离开将中止处理。您确定要执行此操作吗？",
-    "processing.title.ongoing": "处理将被取消"
+    "processing.title.ongoing": "处理将被取消",
+
+    "feedback.title": "问题反馈",
+    "feedback.subtitle": "请描述你在使用过程中遇到的问题，我们会尽快处理。",
+    "feedback.fields.video_url": "下载遇到问题的视频链接",
+    "feedback.fields.phenomenon": "是什么现象",
+    "feedback.fields.suggestion": "其他建议",
+    "feedback.placeholder.video_url": "请粘贴视频链接（URL）",
+    "feedback.placeholder.phenomenon": "请描述你遇到的问题（例如无法解析、下载失败、速度慢等）",
+    "feedback.placeholder.suggestion": "其他建议或需求（可选）",
+    "feedback.submit": "提交",
+    "feedback.submitting": "提交中...",
+    "feedback.success": "感谢反馈！我们已收到你的问题。",
+    "feedback.error.not_signed_in": "请先登录后再提交反馈。",
+    "feedback.error.submit_failed": "提交失败，请稍后重试。",
+    "feedback.error.video_required": "请输入遇到问题的视频链接。",
+    "feedback.error.phenomenon_required": "请描述你遇到的现象。",
+    "feedback.error.video_too_long": "视频链接过长。",
+    "feedback.error.phenomenon_too_long": "现象描述过长。",
+    "feedback.error.suggestion_too_long": "建议内容过长。"
 }

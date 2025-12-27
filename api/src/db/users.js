@@ -1,5 +1,6 @@
 import { query, initPool } from "./pg-client.js";
 import { env } from "../config.js";
+import { initFeedbackDatabase } from "./feedback.js";
 
 export const initUserDatabase = async () => {
     if (env.dbType && env.dbType !== "postgresql") {
@@ -44,6 +45,8 @@ export const initUserDatabase = async () => {
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_last_seen_at ON users(last_seen_at DESC);`,
     );
+
+    await initFeedbackDatabase();
 
     // Credit orders (top-ups for points/credits)
     await query(`

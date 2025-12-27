@@ -12,6 +12,7 @@
     "account": "アカウント",
     "feature": {
         "media_downloader": "メディアダウンローダー",
+        "feedback": "フィードバック",
         "file_transfer": "ファイル転送",
         "discover_trends": "トレンドを発見"
     }

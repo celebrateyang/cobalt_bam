@@ -60,4 +60,10 @@ type BatchDialog = Dialog & {
     items: DialogBatchItem[],
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | BatchDialog;
+type FeedbackDialog = Dialog & {
+    type: "feedback",
+    title?: string,
+    initialVideoUrl?: string,
+};
+
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | BatchDialog | FeedbackDialog;

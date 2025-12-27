@@ -12,6 +12,7 @@
     "account": "compte",
     "feature": {
         "media_downloader": "Téléchargeur de Médias",
+        "feedback": "Commentaires",
         "file_transfer": "Transfert de Fichiers",
         "discover_trends": "Découvrir les Tendances"
     }

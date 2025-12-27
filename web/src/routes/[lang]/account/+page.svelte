@@ -40,23 +40,57 @@
         out_trade_no: string;
     };
 
+    let autoAuthLaunched = false;
+
     onMount(() => {
         if (clerkEnabled) {
             initClerk();
         }
 
         void fetchCreditProducts();
+
+        const wantsSignIn = $page.url.searchParams.get("signin") === "1";
+        const wantsSignUp = $page.url.searchParams.get("signup") === "1";
+
+        if (!autoAuthLaunched && (wantsSignIn || wantsSignUp)) {
+            autoAuthLaunched = true;
+            if (wantsSignUp) {
+                void signUp(getRedirectForSignUp());
+            } else {
+                void signIn(getRedirectForSignIn());
+            }
+        }
     });
 
-    const getRedirectForSignIn = () => ({
-        fallbackRedirectUrl: $page.url.href,
-        signUpFallbackRedirectUrl: $page.url.href,
-    });
+    const getSafeRedirectUrl = () => {
+        const raw = $page.url.searchParams.get("redirect");
+        if (!raw) return $page.url.href;
+        if (!raw.startsWith("/") || raw.startsWith("//")) return $page.url.href;
 
-    const getRedirectForSignUp = () => ({
-        fallbackRedirectUrl: $page.url.href,
-        signInFallbackRedirectUrl: $page.url.href,
-    });
+        try {
+            const url = new URL(raw, $page.url.origin);
+            if (url.origin !== $page.url.origin) return $page.url.href;
+            return url.toString();
+        } catch {
+            return $page.url.href;
+        }
+    };
+
+    const getRedirectForSignIn = () => {
+        const redirectUrl = getSafeRedirectUrl();
+        return {
+            fallbackRedirectUrl: redirectUrl,
+            signUpFallbackRedirectUrl: redirectUrl,
+        };
+    };
+
+    const getRedirectForSignUp = () => {
+        const redirectUrl = getSafeRedirectUrl();
+        return {
+            fallbackRedirectUrl: redirectUrl,
+            signInFallbackRedirectUrl: redirectUrl,
+        };
+    };
 
     let points: number | null = null;
     let pointsErrorKey = "";

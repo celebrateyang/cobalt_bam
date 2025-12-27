@@ -41,5 +41,24 @@
     "safety.custom_instance.body": "custom instances can potentially pose privacy & safety risks.\n\nbad instances can:\n1. redirect you away from bamboo download and try to scam you.\n2. log all information about your requests, store it forever, and use it to track you.\n3. serve you malicious files (such as malware).\n4. force you to watch ads, or make you pay for downloading.\n\nafter this point, we can't protect you. please be mindful of what instances to use and always trust your gut. if anything feels off, come back to this page, reset the custom instance, and report it to us on github.",
 
     "processing.ongoing": "bamboo download is currently processing media in this tab. going away will abort it. are you sure you want to do this?",
-    "processing.title.ongoing": "processing will be cancelled"
+    "processing.title.ongoing": "processing will be cancelled",
+
+    "feedback.title": "Feedback",
+    "feedback.subtitle": "Tell us what went wrong so we can improve.",
+    "feedback.fields.video_url": "Video link with the problem",
+    "feedback.fields.phenomenon": "What happened",
+    "feedback.fields.suggestion": "Other suggestions",
+    "feedback.placeholder.video_url": "Paste the video URL here",
+    "feedback.placeholder.phenomenon": "Describe the issue you encountered...",
+    "feedback.placeholder.suggestion": "Any additional ideas or requests...",
+    "feedback.submit": "submit",
+    "feedback.submitting": "submitting...",
+    "feedback.success": "Thanks! Your feedback has been submitted.",
+    "feedback.error.not_signed_in": "please sign in first.",
+    "feedback.error.submit_failed": "failed to submit feedback. please try again.",
+    "feedback.error.video_required": "please enter the video link.",
+    "feedback.error.phenomenon_required": "please describe what happened.",
+    "feedback.error.video_too_long": "the video link is too long.",
+    "feedback.error.phenomenon_too_long": "the description is too long.",
+    "feedback.error.suggestion_too_long": "the suggestion is too long."
 }

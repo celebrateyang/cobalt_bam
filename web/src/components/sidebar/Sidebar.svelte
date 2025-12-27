@@ -11,7 +11,6 @@
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
 
-    import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
 

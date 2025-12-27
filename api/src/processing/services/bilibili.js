@@ -17,6 +17,11 @@ function extractBestQuality(dashData) {
     return [ bestVideo, bestAudio ];
 }
 
+const toSeconds = (value) =>
+    typeof value === "number" && Number.isFinite(value)
+        ? Math.round(value / 1000)
+        : undefined;
+
 async function com_download(id, partId) {
     const url = new URL(`https://bilibili.com/video/${id}`);
 
@@ -62,6 +67,7 @@ async function com_download(id, partId) {
         urls: [video.baseUrl, audio.baseUrl],
         audioFilename: `${filenameBase}_audio`,
         filename: `${filenameBase}_${video.width}x${video.height}.mp4`,
+        duration: toSeconds(streamData.data.timelength),
     };
 }
 
@@ -96,7 +102,8 @@ async function tv_download(id) {
     return {
         urls: [video.url, audio.url],
         audioFilename: `bilibili_tv_${id}_audio`,
-        filename: `bilibili_tv_${id}.mp4`
+        filename: `bilibili_tv_${id}.mp4`,
+        duration: toSeconds(video.duration),
     };
 }
 

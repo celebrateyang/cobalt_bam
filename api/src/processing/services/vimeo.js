@@ -224,6 +224,10 @@ export default async function(obj) {
         title: info.name,
         artist: info.user.name,
     };
+    const duration =
+        typeof info.duration === "number" && Number.isFinite(info.duration)
+            ? info.duration
+            : undefined;
 
     if (response.subtitles) {
         fileMetadata.sublanguage = obj.subtitleLang;
@@ -231,6 +235,7 @@ export default async function(obj) {
 
     return merge(
         {
+            duration,
             fileMetadata,
             filenameAttributes: {
                 service: "vimeo",

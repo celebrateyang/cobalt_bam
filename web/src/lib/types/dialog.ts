@@ -20,6 +20,7 @@ export type DialogPickerItem = {
 export type DialogBatchItem = {
     url: string,
     title?: string,
+    duration?: number,
 };
 
 type Dialog = {

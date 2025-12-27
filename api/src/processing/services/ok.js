@@ -49,6 +49,7 @@ export default async function(o) {
 
     if (bestVideo) return {
         urls: bestVideo.url,
+        duration: videoData.movie.duration,
         filenameAttributes: {
             service: "ok",
             id: o.id,

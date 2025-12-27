@@ -15,6 +15,11 @@
     "batch.copy_selected": "copy selected",
     "batch.download_selected": "download selected",
     "batch.stop": "stop",
+    "batch.points_insufficient.title": "not enough points",
+    "batch.points_insufficient.body": "this batch needs {{ required }} points, but you only have {{ current }}. top up your points to continue.",
+    "batch.points_check_failed": "couldn't verify your points. please try again.",
+    "batch.points_preview": "this batch will deduct {{ required }} points",
+    "batch.points_preview.loading": "calculating points...",
 
     "batch.detect.title": "batch download available",
     "batch.detect.body.collection": "detected a collection: {{ title }} ({{ count }} videos). batch download the whole collection?",

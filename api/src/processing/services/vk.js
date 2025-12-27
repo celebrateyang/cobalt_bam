@@ -140,6 +140,7 @@ export default async function ({ ownerId, videoId, accessKey, quality, subtitleL
         urls: url,
         subtitles,
         fileMetadata,
+        duration: video.duration,
         filenameAttributes: {
             service: "vk",
             id: `${ownerId}_${videoId}${accessKey ? `_${accessKey}` : ''}`,

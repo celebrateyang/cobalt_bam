@@ -43,6 +43,10 @@ export default async function(obj) {
     if (play.duration > env.durationLimit * 1000)
         return { error: "content.too_long" };
 
+    const duration = Number.isFinite(play.duration)
+        ? Math.round(play.duration / 1000)
+        : undefined;
+
     let m3u8 = await fetch(play.video_balancer.m3u8)
                      .then(r => r.text())
                      .catch(() => {});
@@ -81,6 +85,7 @@ export default async function(obj) {
         urls: matchingQuality.uri,
         subtitles,
         isHLS: true,
+        duration,
         filenameAttributes: {
             service: "rutube",
             id: obj.id,

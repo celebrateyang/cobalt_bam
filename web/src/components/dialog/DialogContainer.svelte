@@ -13,14 +13,16 @@
     let closing = false;
 
     export const close = () => {
-        if (dialogParent) {
-            closing = true;
-            open = false;
-            setTimeout(() => {
+        if (!dialogParent) return;
+
+        closing = true;
+        open = false;
+        setTimeout(() => {
+            if (dialogParent) {
                 dialogParent.close();
-                killDialog();
-            }, 150);
-        }
+            }
+            killDialog(id);
+        }, 150);
     };
 
     $: if (dialogParent) {

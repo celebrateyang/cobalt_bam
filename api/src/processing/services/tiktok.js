@@ -8,6 +8,11 @@ import { convertLanguageCode } from "../../misc/language-codes.js";
 
 const shortDomain = "https://vt.tiktok.com/";
 
+const toSeconds = (value) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+    return value > 1000 ? Math.round(value / 1000) : Math.round(value);
+};
+
 export default async function(obj) {
     const cookie = new Cookie({});
     let postId = obj.postId;
@@ -76,6 +81,8 @@ export default async function(obj) {
         filenameBase = `tiktok_${detail.author?.uniqueId}_${postId}`,
         bestAudio; // will get defaulted to m4a later on in match-action
 
+    const duration = toSeconds(detail?.video?.duration);
+
     images = detail.imagePost?.images;
 
     let playAddr = detail.video?.playAddr;
@@ -118,7 +125,8 @@ export default async function(obj) {
             subtitles,
             fileMetadata,
             filename: videoFilename,
-            headers: { cookie }
+            headers: { cookie },
+            duration,
         }
     }
 
@@ -128,7 +136,8 @@ export default async function(obj) {
             audioFilename: audioFilename,
             isAudioOnly: true,
             bestAudio,
-            headers: { cookie }
+            headers: { cookie },
+            duration,
         }
     }
 
@@ -155,7 +164,8 @@ export default async function(obj) {
             audioFilename: audioFilename,
             isAudioOnly: true,
             bestAudio,
-            headers: { cookie }
+            headers: { cookie },
+            duration,
         }
     }
 
@@ -165,7 +175,8 @@ export default async function(obj) {
             audioFilename: audioFilename,
             isAudioOnly: true,
             bestAudio,
-            headers: { cookie }
+            headers: { cookie },
+            duration,
         }
     }
 

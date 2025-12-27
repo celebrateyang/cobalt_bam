@@ -1,7 +1,12 @@
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 
-import { listUsers, updateUserPoints, upsertUserFromClerk } from "../db/users.js";
+import {
+    consumeUserPoints,
+    listUsers,
+    updateUserPoints,
+    upsertUserFromClerk,
+} from "../db/users.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 const router = express.Router();
@@ -121,6 +126,17 @@ if (!isClerkApiConfigured) {
         });
     });
 
+    router.post("/points/consume", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
     router.post("/admin/sync-all", requireAdminAuth, (_, res) => {
         res.status(501).json({
             status: "error",
@@ -209,6 +225,17 @@ if (!isClerkApiConfigured) {
                 },
             });
         });
+
+        router.post("/points/consume", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
     } else {
         router.use(clerkMiddleware());
 
@@ -243,6 +270,68 @@ if (!isClerkApiConfigured) {
                         message: "Failed to load user profile",
                     },
                 });
+            }
+        });
+
+        router.post("/points/consume", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawPoints = req.body?.points;
+                const points =
+                    typeof rawPoints === "string"
+                        ? Number.parseInt(rawPoints, 10)
+                        : rawPoints;
+
+                if (
+                    !Number.isFinite(points) ||
+                    !Number.isInteger(points) ||
+                    points <= 0
+                ) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "points must be a positive integer",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const updated = await consumeUserPoints(user.id, points);
+                if (!updated) {
+                    return jsonError(
+                        res,
+                        409,
+                        "INSUFFICIENT_POINTS",
+                        "Not enough points",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        user: updated,
+                        deducted: points,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/points/consume error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to deduct points",
+                );
             }
         });
     }

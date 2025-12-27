@@ -106,6 +106,8 @@ export default async function(obj) {
     if (data.secure_media?.reddit_video?.duration > env.durationLimit)
         return { error: "content.too_long" };
 
+    const duration = data.secure_media?.reddit_video?.duration;
+
     const video = data.secure_media?.reddit_video?.fallback_url?.split('?')[0];
 
     let audio = false,
@@ -134,7 +136,8 @@ export default async function(obj) {
 
     if (!audio) return {
         typeId: "redirect",
-        urls: video
+        urls: video,
+        duration,
     }
 
     return {
@@ -142,6 +145,7 @@ export default async function(obj) {
         type: "merge",
         urls: [video, audioFileLink],
         audioFilename: `reddit_${sourceId}_audio`,
-        filename: `reddit_${sourceId}.mp4`
+        filename: `reddit_${sourceId}.mp4`,
+        duration,
     }
 }

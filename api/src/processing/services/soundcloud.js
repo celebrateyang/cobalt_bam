@@ -161,6 +161,9 @@ export default async function(obj) {
     return {
         urls: file.toString(),
         cover,
+        duration: Number.isFinite(json.duration)
+            ? Math.round(json.duration / 1000)
+            : undefined,
         filenameAttributes: {
             service: "soundcloud",
             id: json.id,

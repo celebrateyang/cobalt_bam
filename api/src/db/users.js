@@ -345,3 +345,19 @@ export const updateUserPoints = async (id, points) => {
 
     return result.rows[0] || null;
 };
+
+export const consumeUserPoints = async (id, points) => {
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE users
+        SET points = points - $2,
+            updated_at = $3
+        WHERE id = $1 AND points >= $2
+        RETURNING *;
+        `,
+        [id, points, now],
+    );
+
+    return result.rows[0] || null;
+};

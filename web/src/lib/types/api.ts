@@ -42,6 +42,10 @@ type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
 } & CobaltPartialURLResponse;
 
+type CobaltDuration = {
+    duration?: number,
+};
+
 export const CobaltFileMetadataKeys = [
     'album',
     'composer',
@@ -91,7 +95,7 @@ export type CobaltSaveRequestBody =
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;
 export type CobaltServerInfoResponse = CobaltServerInfo | CobaltErrorResponse;
 
-export type CobaltAPIResponse = CobaltErrorResponse
+export type CobaltAPIResponse = (CobaltErrorResponse
                               | CobaltPickerResponse
                               | CobaltRedirectResponse
-                              | CobaltTunnelResponse;
+                              | CobaltTunnelResponse) & CobaltDuration;

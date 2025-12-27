@@ -148,6 +148,7 @@
         const batchItems: DialogBatchItem[] = items.map((item) => ({
             url: item.url,
             title: item.title,
+            duration: item.duration,
         }));
 
         // If user pasted an explicit collection URL, go straight to batch list.

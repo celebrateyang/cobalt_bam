@@ -333,6 +333,8 @@ export default async function (o) {
         return { error: "content.too_long" };
     }
 
+    const duration = basicInfo.duration;
+
     // return a critical error if returned video is "Video Not Available"
     // or a similar stub by youtube
     if (basicInfo.id !== o.id) {
@@ -595,6 +597,7 @@ export default async function (o) {
 
             cover,
             cropCover: basicInfo.author.endsWith("- Topic"),
+            duration,
         }
     }
 
@@ -639,7 +642,8 @@ export default async function (o) {
             filenameAttributes,
             fileMetadata,
             isHLS: useHLS,
-            originalRequest
+            originalRequest,
+            duration,
         }
     }
 

@@ -14,6 +14,11 @@
     "batch.copy_selected": "复制已选",
     "batch.download_selected": "下载已选",
     "batch.stop": "停止",
+    "batch.points_insufficient.title": "积分不足",
+    "batch.points_insufficient.body": "本次下载需要 {{ required }} 积分，但你当前只有 {{ current }} 积分。请先充值再继续。",
+    "batch.points_check_failed": "无法验证积分，请稍后重试。",
+    "batch.points_preview": "本次下载将扣除 {{ required }} 积分",
+    "batch.points_preview.loading": "正在计算积分...",
 
     "batch.detect.title": "检测到可批量下载",
     "batch.detect.body.collection": "检测到该视频属于合集「{{ title }}」（共 {{ count }} 个视频），是否批量下载整个合集？",

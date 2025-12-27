@@ -3,6 +3,7 @@ import type { CobaltErrorResponse } from "$lib/types/api";
 export type CobaltExpandItem = {
     url: string;
     title?: string;
+    duration?: number;
 };
 
 export type CobaltExpandOkResponse = {
@@ -14,4 +15,3 @@ export type CobaltExpandOkResponse = {
 };
 
 export type CobaltExpandResponse = CobaltExpandOkResponse | CobaltErrorResponse;
-

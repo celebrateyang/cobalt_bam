@@ -1,10 +1,21 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
     import { t } from "$lib/i18n/translations";
-    import { savingHandler } from "$lib/api/saving-handler";
-    import { checkSignedIn, isSignedIn, signIn } from "$lib/state/clerk";
+    import API from "$lib/api/api";
+    import { currentApiURL } from "$lib/api/api-url";
+    import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
+    import { createDialog } from "$lib/state/dialogs";
+    import {
+        checkSignedIn,
+        clerkEnabled,
+        getClerkToken,
+        isSignedIn,
+        signIn,
+    } from "$lib/state/clerk";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
+    import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
@@ -29,6 +40,18 @@
     let totalToRun = 0;
 
     let itemsKey = "";
+    let pointsPreviewRequired = 0;
+    let pointsPreviewLoading = false;
+    let pointsPreviewTimer: ReturnType<typeof setTimeout> | null = null;
+    let pointsPreviewRequestId = 0;
+
+    let durationCache = new Map<string, number>();
+    let durationRequests = new Map<string, Promise<number | undefined>>();
+
+    type PrefetchedResponse = {
+        request: CobaltSaveRequestBody;
+        response: CobaltAPIResponse;
+    };
 
     const computeItemsKey = (batchItems: DialogBatchItem[]) =>
         batchItems.map((item) => item.url).join("\n");
@@ -39,6 +62,278 @@
         cancelRequested = false;
         progress = 0;
         totalToRun = 0;
+        clearPointsPreviewState();
+    };
+
+    const resetRunState = () => {
+        running = false;
+        cancelRequested = false;
+        progress = 0;
+        totalToRun = 0;
+    };
+
+    const accountPath = () => {
+        const lang = $page.params.lang || "en";
+        return `/${lang}/account`;
+    };
+
+    const pointsFromDuration = (durationSeconds: number) =>
+        durationSeconds > 0 ? Math.ceil(durationSeconds / 60) : 0;
+
+    const readDuration = (item: DialogBatchItem) => {
+        if (typeof item.duration === "number" && Number.isFinite(item.duration)) {
+            return item.duration;
+        }
+
+        const cached = durationCache.get(item.url);
+        if (typeof cached === "number" && Number.isFinite(cached)) {
+            return cached;
+        }
+
+        return undefined;
+    };
+
+    const fetchDuration = async (item: DialogBatchItem) => {
+        const known = readDuration(item);
+        if (typeof known === "number" && Number.isFinite(known)) {
+            return known;
+        }
+
+        const existing = durationRequests.get(item.url);
+        if (existing) {
+            return await existing;
+        }
+
+        const task = (async () => {
+            const request = buildSaveRequest(item.url);
+            const response = await API.request(request);
+
+            if (
+                response &&
+                response.status !== "error" &&
+                typeof response.duration === "number" &&
+                Number.isFinite(response.duration)
+            ) {
+                durationCache.set(item.url, response.duration);
+                return response.duration;
+            }
+
+            return undefined;
+        })();
+
+        durationRequests.set(item.url, task);
+
+        const result = await task;
+        durationRequests.delete(item.url);
+        return result;
+    };
+
+    const clearPointsPreviewState = () => {
+        pointsPreviewRequestId += 1;
+        pointsPreviewRequired = 0;
+        pointsPreviewLoading = false;
+
+        if (pointsPreviewTimer) {
+            clearTimeout(pointsPreviewTimer);
+            pointsPreviewTimer = null;
+        }
+
+        durationCache.clear();
+        durationRequests.clear();
+    };
+
+    const cancelPointsPreview = () => {
+        pointsPreviewRequestId += 1;
+        pointsPreviewLoading = false;
+
+        if (pointsPreviewTimer) {
+            clearTimeout(pointsPreviewTimer);
+            pointsPreviewTimer = null;
+        }
+    };
+
+    const showPointsInsufficient = (currentPoints: number, requiredPoints: number) => {
+        createDialog({
+            id: "batch-points-insufficient",
+            type: "small",
+            meowbalt: "error",
+            title: $t("dialog.batch.points_insufficient.title"),
+            bodyText: $t("dialog.batch.points_insufficient.body", {
+                current: currentPoints,
+                required: requiredPoints,
+            }),
+            buttons: [
+                {
+                    text: $t("button.cancel"),
+                    main: false,
+                    action: () => {},
+                },
+                {
+                    text: $t("button.buy_points"),
+                    main: true,
+                    action: () => {
+                        close?.();
+                        setTimeout(() => {
+                            void goto(accountPath());
+                        }, 200);
+                    },
+                },
+            ],
+        });
+    };
+
+    const showPointsError = () => {
+        createDialog({
+            id: "batch-points-error",
+            type: "small",
+            meowbalt: "error",
+            bodyText: $t("dialog.batch.points_check_failed"),
+            buttons: [
+                {
+                    text: $t("button.gotit"),
+                    main: true,
+                    action: () => {},
+                },
+            ],
+        });
+    };
+
+    const fetchUserPoints = async () => {
+        const token = await getClerkToken();
+        if (!token) throw new Error("missing token");
+
+        const apiBase = currentApiURL();
+        const res = await fetch(`${apiBase}/user/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data?.status !== "success") {
+            throw new Error(data?.error?.message || "failed to load points");
+        }
+
+        const points = data?.data?.user?.points;
+        if (!Number.isFinite(points)) {
+            throw new Error("invalid points");
+        }
+
+        return points as number;
+    };
+
+    const consumePoints = async (points: number) => {
+        const token = await getClerkToken();
+        if (!token) throw new Error("missing token");
+
+        const apiBase = currentApiURL();
+        const res = await fetch(`${apiBase}/user/points/consume`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ points }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data?.status !== "success") {
+            return {
+                ok: false,
+                code: data?.error?.code as string | undefined,
+            };
+        }
+
+        return { ok: true };
+    };
+
+    const prepareBatch = async (selectedItems: DialogBatchItem[]) => {
+        const cache = new Map<string, PrefetchedResponse>();
+        let totalDurationSeconds = 0;
+
+        for (const item of selectedItems) {
+            if (cancelRequested) break;
+
+            let duration = readDuration(item);
+
+            if (!Number.isFinite(duration)) {
+                const request = buildSaveRequest(item.url);
+                const response = await API.request(request);
+
+                if (response) {
+                    cache.set(item.url, { request, response });
+
+                    if (
+                        response.status !== "error" &&
+                        typeof response.duration === "number" &&
+                        Number.isFinite(response.duration)
+                    ) {
+                        duration = response.duration;
+                        durationCache.set(item.url, duration);
+                    }
+                }
+            }
+
+            if (typeof duration === "number" && Number.isFinite(duration)) {
+                totalDurationSeconds += duration;
+            }
+        }
+
+        const requiredPoints = pointsFromDuration(totalDurationSeconds);
+
+        return { requiredPoints, cache };
+    };
+
+    const computePointsPreview = async (requestId: number) => {
+        const selectedItems = items.filter((_, i) => selected[i]);
+        if (!selectedItems.length) {
+            if (requestId !== pointsPreviewRequestId) return;
+            pointsPreviewRequired = 0;
+            pointsPreviewLoading = false;
+            return;
+        }
+
+        pointsPreviewLoading = true;
+        let totalDurationSeconds = 0;
+
+        for (const item of selectedItems) {
+            const duration = await fetchDuration(item);
+            if (requestId !== pointsPreviewRequestId) return;
+            if (typeof duration === "number" && Number.isFinite(duration)) {
+                totalDurationSeconds += duration;
+            }
+        }
+
+        if (requestId !== pointsPreviewRequestId) return;
+        pointsPreviewRequired = pointsFromDuration(totalDurationSeconds);
+        pointsPreviewLoading = false;
+    };
+
+    const schedulePointsPreview = () => {
+        if (!clerkEnabled || running) {
+            cancelPointsPreview();
+            return;
+        }
+
+        if (selectedCount() === 0) {
+            cancelPointsPreview();
+            pointsPreviewRequired = 0;
+            return;
+        }
+
+        pointsPreviewRequestId += 1;
+        const requestId = pointsPreviewRequestId;
+
+        if (pointsPreviewTimer) {
+            clearTimeout(pointsPreviewTimer);
+        }
+
+        pointsPreviewLoading = true;
+
+        pointsPreviewTimer = setTimeout(() => {
+            pointsPreviewTimer = null;
+            void computePointsPreview(requestId);
+        }, 200);
     };
 
     $: {
@@ -46,6 +341,7 @@
         if (nextKey !== itemsKey) {
             itemsKey = nextKey;
             resetStateForItems();
+            schedulePointsPreview();
         }
     }
 
@@ -53,6 +349,7 @@
 
     const setSelectedAt = (index: number, value: boolean) => {
         selected = selected.map((current, i) => (i === index ? value : current));
+        schedulePointsPreview();
     };
 
     const handleItemSelectionChange = (index: number, event: Event) => {
@@ -64,6 +361,7 @@
 
     const setAll = (value: boolean) => {
         selected = selected.map(() => value);
+        schedulePointsPreview();
     };
 
     const copyUrls = async (urls: string[]) => {
@@ -91,28 +389,83 @@
             }
         }
 
-        const urls = items.filter((_, i) => selected[i]).map((i) => i.url);
-        if (!urls.length) return;
+        const selectedItems = items.filter((_, i) => selected[i]);
+        if (!selectedItems.length) return;
 
         running = true;
+        cancelPointsPreview();
         cancelRequested = false;
         progress = 0;
-        totalToRun = urls.length;
+        totalToRun = selectedItems.length;
+
+        const { requiredPoints, cache } = await prepareBatch(selectedItems);
+
+        if (cancelRequested) {
+            resetRunState();
+            return;
+        }
+
+        if (requiredPoints > 0) {
+            let currentPoints;
+            try {
+                currentPoints = await fetchUserPoints();
+            } catch {
+                showPointsError();
+                resetRunState();
+                return;
+            }
+
+            if (cancelRequested) {
+                resetRunState();
+                return;
+            }
+
+            if (currentPoints < requiredPoints) {
+                showPointsInsufficient(currentPoints, requiredPoints);
+                resetRunState();
+                return;
+            }
+
+            try {
+                const result = await consumePoints(requiredPoints);
+                if (!result.ok) {
+                    if (result.code === "INSUFFICIENT_POINTS") {
+                        showPointsInsufficient(currentPoints, requiredPoints);
+                    } else {
+                        showPointsError();
+                    }
+                    resetRunState();
+                    return;
+                }
+            } catch {
+                showPointsError();
+                resetRunState();
+                return;
+            }
+        }
 
         // close dialog immediately; downloads continue in background
         close();
         // allow dialog stack to settle before any subsequent dialogs open
         await new Promise((r) => setTimeout(r, 200));
 
-        for (const url of urls) {
+        for (const item of selectedItems) {
             if (cancelRequested) break;
             progress += 1;
-            await savingHandler({ url });
+            const cached = cache.get(item.url);
+            if (cached) {
+                await savingHandler({
+                    request: cached.request,
+                    response: cached.response,
+                    skipPoints: true,
+                });
+            } else {
+                await savingHandler({ url: item.url, skipPoints: true });
+            }
             await new Promise((r) => setTimeout(r, 250));
         }
 
-        running = false;
-        cancelRequested = false;
+        resetRunState();
     };
 
     const downloadSingle = async (url: string) => {
@@ -130,7 +483,49 @@
             }
         }
 
-        await savingHandler({ url });
+        const item = items.find((entry) => entry.url === url) || { url };
+        const { requiredPoints, cache } = await prepareBatch([item]);
+
+        if (requiredPoints > 0) {
+            let currentPoints;
+            try {
+                currentPoints = await fetchUserPoints();
+            } catch {
+                showPointsError();
+                return;
+            }
+
+            if (currentPoints < requiredPoints) {
+                showPointsInsufficient(currentPoints, requiredPoints);
+                return;
+            }
+
+            try {
+                const result = await consumePoints(requiredPoints);
+                if (!result.ok) {
+                    if (result.code === "INSUFFICIENT_POINTS") {
+                        showPointsInsufficient(currentPoints, requiredPoints);
+                    } else {
+                        showPointsError();
+                    }
+                    return;
+                }
+            } catch {
+                showPointsError();
+                return;
+            }
+        }
+
+        const cached = cache.get(url);
+        if (cached) {
+            await savingHandler({
+                request: cached.request,
+                response: cached.response,
+                skipPoints: true,
+            });
+        } else {
+            await savingHandler({ url, skipPoints: true });
+        }
     };
 </script>
 
@@ -229,6 +624,17 @@
         </div>
 
         <div class="batch-footer">
+            {#if clerkEnabled && selectedCount() > 0}
+                <div class="points-preview" aria-live="polite">
+                    {#if pointsPreviewLoading}
+                        {$t("dialog.batch.points_preview.loading")}
+                    {:else}
+                        {$t("dialog.batch.points_preview", {
+                            required: pointsPreviewRequired,
+                        })}
+                    {/if}
+                </div>
+            {/if}
             <button
                 class="button elevated footer-button"
                 disabled={running}
@@ -403,6 +809,14 @@
         gap: calc(var(--padding) / 2);
         justify-content: flex-end;
         flex-wrap: wrap;
+    }
+
+    .points-preview {
+        margin-right: auto;
+        font-size: 12px;
+        color: var(--gray);
+        display: flex;
+        align-items: center;
     }
 
     .footer-button {

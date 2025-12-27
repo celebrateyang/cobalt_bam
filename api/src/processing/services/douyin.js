@@ -4,6 +4,11 @@ import { genericUserAgent } from "../../config.js";
 // Verified working as of Dec 2025
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
+const toSeconds = (value) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+    return value > 1000 ? Math.round(value / 1000) : Math.round(value);
+};
+
 export default async function(obj) {
     let videoId = obj.id;
 
@@ -86,6 +91,7 @@ export default async function(obj) {
 
         const videoUri = item.video.play_addr.uri;
         const title = item.desc;
+        const duration = toSeconds(item?.video?.duration ?? item?.duration);
         
         // Construct download URL
         // Using aweme.snssdk.com as it reliably redirects to the video file
@@ -109,6 +115,7 @@ export default async function(obj) {
         return {
             filename: `douyin_${videoId}.mp4`,
             urls: directUrl,
+            duration,
             headers: {
                 "User-Agent": MOBILE_UA
             }

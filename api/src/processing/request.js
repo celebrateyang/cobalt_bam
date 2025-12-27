@@ -21,6 +21,11 @@ export function createResponse(responseType, responseData) {
     try {
         let status = 200,
             response = {};
+        const duration =
+            typeof responseData?.duration === "number" &&
+            Number.isFinite(responseData.duration)
+                ? responseData.duration
+                : undefined;
 
         if (responseType === "error") {
             status = 400;
@@ -107,7 +112,8 @@ export function createResponse(responseType, responseData) {
             status,
             body: {
                 status: responseType,
-                ...response
+                ...response,
+                ...(duration != null ? { duration } : {})
             }
         }
     } catch {

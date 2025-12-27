@@ -93,6 +93,7 @@ export default async function({ id }) {
     return {
         urls: bestQuality.uri,
         isHLS: true,
+        duration: media.duration,
         filenameAttributes: {
             service: 'dailymotion',
             id: media.xid,

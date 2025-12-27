@@ -71,6 +71,7 @@ export default async function (obj) {
             sig: req_token[0].data.clip.playbackAccessToken.signature,
             token: req_token[0].data.clip.playbackAccessToken.value
         })}`,
+        duration: clipMetadata.durationSeconds,
         fileMetadata: {
             title: clipMetadata.title.trim(),
             artist: `Twitch Clip by @${clipMetadata.broadcaster.login}, clipped by @${clipMetadata.curator.login}`,

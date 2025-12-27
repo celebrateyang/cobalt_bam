@@ -29,6 +29,11 @@ const uniqBy = (items, keyFn) => {
     return result;
 };
 
+const toSeconds = (value) =>
+    typeof value === "number" && Number.isFinite(value)
+        ? Math.round(value)
+        : undefined;
+
 const resolveFinalURL = async (inputUrl, maxHops = 5) => {
     let current = inputUrl;
 
@@ -78,12 +83,16 @@ const bilibiliUgcSeasonFromView = (data) => {
 
     const episodes = season.sections.flatMap((section) => section?.episodes ?? []);
     const items = episodes
-        .map((ep) => ({
-            url: ep?.bvid
-                ? `https://www.bilibili.com/video/${ep.bvid}`
-                : undefined,
-            title: ep?.title || ep?.arc?.title,
-        }))
+        .map((ep) => {
+            const duration = toSeconds(ep?.duration ?? ep?.arc?.duration);
+            return {
+                url: ep?.bvid
+                    ? `https://www.bilibili.com/video/${ep.bvid}`
+                    : undefined,
+                title: ep?.title || ep?.arc?.title,
+                duration,
+            };
+        })
         .filter((item) => item.url);
 
     if (items.length <= 1) return;
@@ -109,6 +118,7 @@ const bilibiliMultiPageFromView = (data) => {
                     ? `https://www.bilibili.com/video/${bvid}?p=${page.page}`
                     : undefined,
             title: page?.part,
+            duration: toSeconds(page?.duration),
         }))
         .filter((item) => item.url);
 
@@ -160,6 +170,7 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
             allArchives.push({
                 url: `https://www.bilibili.com/video/${a.bvid}`,
                 title: a.title,
+                duration: toSeconds(a?.duration),
             });
         }
 
@@ -232,7 +243,12 @@ const expandBilibili = async (inputUrl) => {
                 service: "bilibili",
                 kind: "single",
                 title: data?.title,
-                items: [{ url: `https://www.bilibili.com/video/${canonicalBvid}` }],
+                items: [
+                    {
+                        url: `https://www.bilibili.com/video/${canonicalBvid}`,
+                        duration: toSeconds(data?.duration),
+                    },
+                ],
             };
         }
 

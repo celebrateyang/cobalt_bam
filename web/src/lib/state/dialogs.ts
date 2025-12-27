@@ -10,14 +10,25 @@ export default readable<DialogInfo[]>(
 
 export function createDialog(newData: DialogInfo) {
     update((popups) => {
-        popups.push(newData);
-        return popups;
+        const next = popups.filter((popup) => popup.id !== newData.id);
+        next.push(newData);
+        return next;
     });
 }
 
-export function killDialog() {
+export function killDialog(id?: string) {
     update((popups) => {
-        popups.pop()
+        if (!id) {
+            popups.pop();
+            return popups;
+        }
+
+        for (let i = popups.length - 1; i >= 0; i--) {
+            if (popups[i]?.id === id) {
+                popups.splice(i, 1);
+                break;
+            }
+        }
         return popups;
     });
 }

@@ -20,7 +20,7 @@ export const initUserDatabase = async () => {
             full_name TEXT,
             avatar_url TEXT,
             last_seen_at BIGINT,
-            points INTEGER NOT NULL DEFAULT 50,
+            points INTEGER NOT NULL DEFAULT 20,
             is_disabled BOOLEAN DEFAULT false,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL
@@ -30,11 +30,11 @@ export const initUserDatabase = async () => {
     // Migration: ensure points column exists for older databases
     await query(
         `ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 50;`,
+            ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 20;`,
     );
 
     // Migration: ensure default points for new users is correct
-    await query(`ALTER TABLE users ALTER COLUMN points SET DEFAULT 50;`);
+    await query(`ALTER TABLE users ALTER COLUMN points SET DEFAULT 20;`);
 
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_clerk_user_id ON users(clerk_user_id);`,
@@ -216,37 +216,91 @@ export const upsertUserFromClerk = async ({
 }) => {
     const now = Date.now();
 
-    const result = await query(
+    const normalizedPrimaryEmail = primaryEmail || null;
+    const normalizedFullName = fullName || null;
+    const normalizedAvatarUrl = avatarUrl || null;
+
+    const updateResult = await query(
         `
-        INSERT INTO users (
-            clerk_user_id,
-            primary_email,
-            full_name,
-            avatar_url,
-            last_seen_at,
-            created_at,
-            updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (clerk_user_id) DO UPDATE
-            SET primary_email = EXCLUDED.primary_email,
-                full_name = EXCLUDED.full_name,
-                avatar_url = EXCLUDED.avatar_url,
-                last_seen_at = EXCLUDED.last_seen_at,
-                updated_at = EXCLUDED.updated_at
-        RETURNING *
+        UPDATE users
+        SET primary_email = $2,
+            full_name = $3,
+            avatar_url = $4,
+            last_seen_at = $5,
+            updated_at = $6
+        WHERE clerk_user_id = $1
+        RETURNING *;
         `,
         [
             clerkUserId,
-            primaryEmail || null,
-            fullName || null,
-            avatarUrl || null,
-            now,
+            normalizedPrimaryEmail,
+            normalizedFullName,
+            normalizedAvatarUrl,
             now,
             now,
         ],
     );
 
-    return result.rows[0];
+    if (updateResult.rows[0]) {
+        return updateResult.rows[0];
+    }
+
+    try {
+        const insertResult = await query(
+            `
+            INSERT INTO users (
+                clerk_user_id,
+                primary_email,
+                full_name,
+                avatar_url,
+                last_seen_at,
+                created_at,
+                updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *;
+            `,
+            [
+                clerkUserId,
+                normalizedPrimaryEmail,
+                normalizedFullName,
+                normalizedAvatarUrl,
+                now,
+                now,
+                now,
+            ],
+        );
+
+        return insertResult.rows[0];
+    } catch (error) {
+        if (error && typeof error === "object" && error.code === "23505") {
+            const retryUpdate = await query(
+                `
+                UPDATE users
+                SET primary_email = $2,
+                    full_name = $3,
+                    avatar_url = $4,
+                    last_seen_at = $5,
+                    updated_at = $6
+                WHERE clerk_user_id = $1
+                RETURNING *;
+                `,
+                [
+                    clerkUserId,
+                    normalizedPrimaryEmail,
+                    normalizedFullName,
+                    normalizedAvatarUrl,
+                    now,
+                    now,
+                ],
+            );
+
+            if (retryUpdate.rows[0]) {
+                return retryUpdate.rows[0];
+            }
+        }
+
+        throw error;
+    }
 };
 
 export const getUserByClerkId = async (clerkUserId) => {

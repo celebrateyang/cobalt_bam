@@ -27,3 +27,5 @@ WindowsPowerShell/
 clerk-secret.yaml
 wechat-secret.yaml
 wechatpay-secret.yaml
+urls.txt
+scripts/indexnow-submit.mjs

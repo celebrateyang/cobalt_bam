@@ -45,12 +45,23 @@
     let pointsPreviewTimer: ReturnType<typeof setTimeout> | null = null;
     let pointsPreviewRequestId = 0;
 
-    let durationCache = new Map<string, number>();
-    let durationRequests = new Map<string, Promise<number | undefined>>();
-
     type PrefetchedResponse = {
         request: CobaltSaveRequestBody;
         response: CobaltAPIResponse;
+    };
+
+    let durationCache = new Map<string, number>();
+    let prefetchedCache = new Map<string, PrefetchedResponse>();
+    let prefetchedRequests = new Map<string, Promise<PrefetchedResponse | undefined>>();
+
+    const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
+        const request = buildSaveRequest(url);
+
+        // Only batch downloads should go through the processing queue.
+        // Keep single-link behavior unchanged.
+        request.localProcessing = "forced";
+
+        return request;
     };
 
     const computeItemsKey = (batchItems: DialogBatchItem[]) =>
@@ -93,39 +104,62 @@
         return undefined;
     };
 
+    const fetchPrefetched = async (item: DialogBatchItem) => {
+        const cached = prefetchedCache.get(item.url);
+        if (cached) {
+            return cached;
+        }
+
+        const existing = prefetchedRequests.get(item.url);
+        if (existing) {
+            return await existing;
+        }
+
+        const task = (async () => {
+            const request = buildBatchRequest(item.url);
+            const response = await API.request(request);
+
+            if (!response) return undefined;
+
+            const prefetched = { request, response };
+
+            if (response.status !== "error") {
+                prefetchedCache.set(item.url, prefetched);
+
+                if (
+                    typeof response.duration === "number" &&
+                    Number.isFinite(response.duration)
+                ) {
+                    durationCache.set(item.url, response.duration);
+                }
+            }
+
+            return prefetched;
+        })();
+
+        prefetchedRequests.set(item.url, task);
+
+        const result = await task;
+        prefetchedRequests.delete(item.url);
+        return result;
+    };
+
     const fetchDuration = async (item: DialogBatchItem) => {
         const known = readDuration(item);
         if (typeof known === "number" && Number.isFinite(known)) {
             return known;
         }
 
-        const existing = durationRequests.get(item.url);
-        if (existing) {
-            return await existing;
-        }
+        const prefetched = await fetchPrefetched(item);
+        const duration =
+            prefetched?.response &&
+            prefetched.response.status !== "error" &&
+            typeof prefetched.response.duration === "number" &&
+            Number.isFinite(prefetched.response.duration)
+                ? prefetched.response.duration
+                : undefined;
 
-        const task = (async () => {
-            const request = buildSaveRequest(item.url);
-            const response = await API.request(request);
-
-            if (
-                response &&
-                response.status !== "error" &&
-                typeof response.duration === "number" &&
-                Number.isFinite(response.duration)
-            ) {
-                durationCache.set(item.url, response.duration);
-                return response.duration;
-            }
-
-            return undefined;
-        })();
-
-        durationRequests.set(item.url, task);
-
-        const result = await task;
-        durationRequests.delete(item.url);
-        return result;
+        return duration;
     };
 
     const clearPointsPreviewState = () => {
@@ -139,7 +173,8 @@
         }
 
         durationCache.clear();
-        durationRequests.clear();
+        prefetchedCache.clear();
+        prefetchedRequests.clear();
     };
 
     const cancelPointsPreview = () => {
@@ -254,26 +289,12 @@
         for (const item of selectedItems) {
             if (cancelRequested) break;
 
-            let duration = readDuration(item);
-
-            if (!Number.isFinite(duration)) {
-                const request = buildSaveRequest(item.url);
-                const response = await API.request(request);
-
-                if (response) {
-                    cache.set(item.url, { request, response });
-
-                    if (
-                        response.status !== "error" &&
-                        typeof response.duration === "number" &&
-                        Number.isFinite(response.duration)
-                    ) {
-                        duration = response.duration;
-                        durationCache.set(item.url, duration);
-                    }
-                }
+            const prefetched = await fetchPrefetched(item);
+            if (prefetched) {
+                cache.set(item.url, prefetched);
             }
 
+            const duration = readDuration(item);
             if (typeof duration === "number" && Number.isFinite(duration)) {
                 totalDurationSeconds += duration;
             }
@@ -460,7 +481,10 @@
                     skipPoints: true,
                 });
             } else {
-                await savingHandler({ url: item.url, skipPoints: true });
+                await savingHandler({
+                    request: buildBatchRequest(item.url),
+                    skipPoints: true,
+                });
             }
             await new Promise((r) => setTimeout(r, 250));
         }
@@ -524,7 +548,10 @@
                 skipPoints: true,
             });
         } else {
-            await savingHandler({ url, skipPoints: true });
+            await savingHandler({
+                request: buildBatchRequest(url),
+                skipPoints: true,
+            });
         }
     };
 </script>

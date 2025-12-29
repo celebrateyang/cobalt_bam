@@ -10,7 +10,8 @@ function aliasURL(url) {
     assert(url instanceof URL);
 
     const host = psl.parse(url.hostname);
-    const parts = url.pathname.split('/');
+    // Treat trailing slashes as optional for short-link style URLs (e.g. https://v.douyin.com/<id>/).
+    const parts = url.pathname.replace(/\/+$/, '').split('/');
 
     switch (host.sld) {
         case "youtube":

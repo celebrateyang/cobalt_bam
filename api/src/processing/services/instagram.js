@@ -4,6 +4,38 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
+const durationFromVideoUrl = (url) => {
+    if (!url || typeof url !== "string") return;
+
+    try {
+        const parsed = new URL(url);
+        const efg = parsed.searchParams.get("efg");
+        if (!efg) return;
+
+        const decode = (value, encoding) => {
+            try {
+                return Buffer.from(value, encoding).toString("utf8");
+            } catch {
+                return;
+            }
+        };
+
+        const decoded =
+            decode(efg, "base64")
+            || decode(efg, "base64url");
+
+        if (!decoded) return;
+
+        const data = JSON.parse(decoded);
+        const duration = data?.duration_s;
+        if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
+            return duration;
+        }
+    } catch {
+        // ignore
+    }
+};
+
 const commonHeaders = {
     "user-agent": genericUserAgent,
     "sec-gpc": "1",
@@ -342,10 +374,16 @@ export default function instagram(obj) {
         }
 
         if (shortcodeMedia?.video_url) {
+            const duration =
+                (typeof shortcodeMedia.video_duration === "number" && Number.isFinite(shortcodeMedia.video_duration))
+                    ? shortcodeMedia.video_duration
+                    : durationFromVideoUrl(shortcodeMedia.video_url);
+
             return {
                 urls: shortcodeMedia.video_url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`
+                audioFilename: `instagram_${id}_audio`,
+                duration,
             }
         }
 
@@ -399,10 +437,15 @@ export default function instagram(obj) {
             if (picker.length) return { picker }
         } else if (data.video_versions) {
             const video = data.video_versions.reduce((a, b) => a.width * a.height < b.width * b.height ? b : a)
+            const duration =
+                (typeof data.video_duration === "number" && Number.isFinite(data.video_duration))
+                    ? data.video_duration
+                    : durationFromVideoUrl(video.url);
             return {
                 urls: video.url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`
+                audioFilename: `instagram_${id}_audio`,
+                duration,
             }
         } else if (data.image_versions2?.candidates) {
             return {

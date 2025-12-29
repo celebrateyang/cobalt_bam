@@ -51,6 +51,45 @@ const normalizeTunnelUrl = (url?: string) => {
     }
 };
 
+const guessMimeTypeFromFilename = (filename: string) => {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    switch (ext) {
+        case "mp4":
+            return "video/mp4";
+        case "webm":
+            return "video/webm";
+        case "mkv":
+            return "video/x-matroska";
+        case "mov":
+            return "video/quicktime";
+        case "mp3":
+            return "audio/mpeg";
+        case "m4a":
+            return "audio/mp4";
+        case "opus":
+            return "audio/opus";
+        case "ogg":
+            return "audio/ogg";
+        case "wav":
+            return "audio/wav";
+        case "flac":
+            return "audio/flac";
+        case "jpg":
+        case "jpeg":
+            return "image/jpeg";
+        case "png":
+            return "image/png";
+        case "gif":
+            return "image/gif";
+        case "vtt":
+            return "text/vtt";
+        case "srt":
+            return "application/x-subrip";
+        default:
+            return "application/octet-stream";
+    }
+};
+
 const showPointsInsufficient = (currentPoints: number, requiredPoints: number) => {
     createDialog({
         id: "points-insufficient",
@@ -325,9 +364,28 @@ export const savingHandler = async ({
     }
 
     if (response.status === "tunnel") {
-        downloadButtonState.set("check");
-
         const tunnelUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        // In forced local-processing mode, even tunnel responses should be queued.
+        // This is especially useful for batch downloads where user activation can expire.
+        if (selectedRequest.localProcessing === "forced") {
+            downloadButtonState.set("done");
+
+            return createSavePipeline(
+                {
+                    type: "proxy",
+                    tunnel: [tunnelUrl],
+                    output: {
+                        type: guessMimeTypeFromFilename(response.filename),
+                        filename: response.filename,
+                    },
+                } as any,
+                selectedRequest,
+                oldTaskId
+            );
+        }
+
+        downloadButtonState.set("check");
         const probeResult = await API.probeCobaltTunnel(tunnelUrl);
 
         if (probeResult === 200) {

@@ -13,18 +13,28 @@ export class MemoryStorage extends AbstractStorage {
 
     static async init(expectedSize: number) {
         const MB = 1024 * 1024;
-        const chunkSize = Math.min(512 * MB, expectedSize);
+
+        const safeExpectedSize =
+            typeof expectedSize === "number" && Number.isFinite(expectedSize) && expectedSize > 0
+                ? expectedSize
+                : 0;
+
+        // A chunk size of 0 would make writes hang forever (expand loop never progresses).
+        // Use a reasonable default when the expected size is unknown (e.g. missing Content-Length).
+        const chunkSize = safeExpectedSize > 0 ? Math.min(512 * MB, safeExpectedSize) : 4 * MB;
 
         const storage = new this(chunkSize);
 
         // since we expect the output file to be roughly the same size
         // as inputs, preallocate its size for the output
-        for (
-            let toAllocate = expectedSize;
-            toAllocate > 0;
-            toAllocate -= chunkSize
-        ) {
-            storage.#chunks.push(new Uint8Array(chunkSize));
+        if (safeExpectedSize > 0) {
+            for (
+                let toAllocate = safeExpectedSize;
+                toAllocate > 0;
+                toAllocate -= chunkSize
+            ) {
+                storage.#chunks.push(new Uint8Array(chunkSize));
+            }
         }
 
         return storage;

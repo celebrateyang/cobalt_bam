@@ -7,10 +7,37 @@ import { createStream } from "../../stream/manage.js";
 import { convertLanguageCode } from "../../misc/language-codes.js";
 
 const shortDomain = "https://vt.tiktok.com/";
+const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
 
 const toSeconds = (value) => {
-    if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
-    return value > 1000 ? Math.round(value / 1000) : Math.round(value);
+    if (value == null) return undefined;
+
+    const numeric = typeof value === "string" ? Number(value) : value;
+
+    if (typeof numeric !== "number" || !Number.isFinite(numeric)) return undefined;
+    return numeric > 1000 ? Math.round(numeric / 1000) : Math.round(numeric);
+};
+
+const extractEmbed = (html, postId) => {
+    if (!html) return;
+
+    const start = html.indexOf(embedMarker);
+    if (start < 0) return;
+
+    const end = html.indexOf("</script>", start);
+    if (end < 0) return;
+
+    const jsonStr = html.slice(start + embedMarker.length, end);
+
+    try {
+        const state = JSON.parse(jsonStr);
+        return (
+            state?.source?.data?.[`/embed/v2/${postId}`]
+            ?? state?.source?.data?.[`/embed/v2/${postId}/`]
+        );
+    } catch {
+        return;
+    }
 };
 
 export default async function(obj) {
@@ -37,59 +64,98 @@ export default async function(obj) {
     }
     if (!postId) return { error: "fetch.short_link" };
 
-    // should always be /video/, even for photos
-    const res = await fetch(`https://www.tiktok.com/@i/video/${postId}`, {
-        headers: {
-            "user-agent": genericUserAgent,
-            cookie,
-        }
-    })
-    updateCookie(cookie, res.headers);
+    // Prefer the embed page for extraction (it is less likely to be blocked by WAF).
+    let embed;
+    try {
+        const embedRes = await fetch(`https://www.tiktok.com/embed/v2/${postId}`, {
+            headers: {
+                "user-agent": genericUserAgent,
+                cookie,
+            }
+        });
 
-    const html = await res.text();
+        updateCookie(cookie, embedRes.headers);
+
+        const embedHtml = await embedRes.text();
+        embed = extractEmbed(embedHtml, postId);
+    } catch {
+        // ignore and fall back to legacy flow below
+    }
+
+    const embedVideoData = embed?.videoData;
+    const legacyNeeded =
+        !embed ||
+        embed?.isError ||
+        !embedVideoData?.itemInfos ||
+        !embedVideoData?.authorInfos;
+    const isEmbed = !legacyNeeded;
 
     let detail;
-    try {
-        const json = html
-            .split('<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">')[1]
-            .split('</script>')[0];
+    if (isEmbed) {
+        detail = embedVideoData;
+    } else {
+        // Legacy flow: should always be /video/, even for photos.
+        const res = await fetch(`https://www.tiktok.com/@i/video/${postId}`, {
+            headers: {
+                "user-agent": genericUserAgent,
+                cookie,
+            }
+        });
+        updateCookie(cookie, res.headers);
 
-        const data = JSON.parse(json);
-        const videoDetail = data["__DEFAULT_SCOPE__"]["webapp.video-detail"];
+        const html = await res.text();
 
-        if (!videoDetail) throw "no video detail found";
+        try {
+            const json = html
+                .split('<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">')[1]
+                .split('</script>')[0];
 
-        // status_deleted or etc
-        if (videoDetail.statusMsg) {
-            return { error: "content.post.unavailable"};
+            const data = JSON.parse(json);
+            const videoDetail = data["__DEFAULT_SCOPE__"]["webapp.video-detail"];
+
+            if (!videoDetail) throw "no video detail found";
+
+            // status_deleted or etc
+            if (videoDetail.statusMsg) {
+                return { error: "content.post.unavailable"};
+            }
+
+            detail = videoDetail?.itemInfo?.itemStruct;
+        } catch {
+            return { error: "fetch.fail" };
         }
 
-        detail = videoDetail?.itemInfo?.itemStruct;
-    } catch {
-        return { error: "fetch.fail" };
-    }
+        if (detail.isContentClassified) {
+            return { error: "content.post.age" };
+        }
 
-    if (detail.isContentClassified) {
-        return { error: "content.post.age" };
-    }
-
-    if (!detail.author) {
-        return { error: "fetch.empty" };
+        if (!detail.author) {
+            return { error: "fetch.empty" };
+        }
     }
 
     let video, videoFilename, audioFilename, audio, images,
-        filenameBase = `tiktok_${detail.author?.uniqueId}_${postId}`,
+        filenameBase = `tiktok_${
+            isEmbed ? detail?.authorInfos?.uniqueId : detail.author?.uniqueId
+        }_${postId}`,
         bestAudio; // will get defaulted to m4a later on in match-action
 
-    const duration = toSeconds(detail?.video?.duration);
+    const duration =
+        isEmbed
+            ? toSeconds(detail?.itemInfos?.video?.videoMeta?.duration)
+            : (toSeconds(detail?.video?.duration) || toSeconds(detail?.music?.duration));
 
-    images = detail.imagePost?.images;
+    images = isEmbed ? detail?.itemInfos?.imagePostInfo?.images : detail.imagePost?.images;
 
-    let playAddr = detail.video?.playAddr;
+    let playAddr = isEmbed
+        ? detail?.itemInfos?.video?.urls?.[0]
+        : detail.video?.playAddr;
 
     if (obj.h265) {
-        const h265PlayAddr = detail?.video?.bitrateInfo?.find(b => b.CodecType.includes("h265"))?.PlayAddr.UrlList[0]
-        playAddr = h265PlayAddr || playAddr
+        if (!isEmbed) {
+            const h265PlayAddr = detail?.video?.bitrateInfo?.find(b => b.CodecType.includes("h265"))?.PlayAddr.UrlList[0]
+            playAddr = h265PlayAddr || playAddr
+        }
     }
 
     if (!obj.isAudioOnly && !images) {
@@ -100,15 +166,18 @@ export default async function(obj) {
         audioFilename = `${filenameBase}_audio`;
 
         if (obj.fullAudio || !audio) {
-            audio = detail.music.playUrl;
+            const musicUrl = isEmbed
+                ? detail?.musicInfos?.playUrl?.[0]
+                : detail.music.playUrl;
+            audio = musicUrl || audio;
             audioFilename += `_original`
         }
-        if (audio.includes("mime_type=audio_mpeg")) bestAudio = 'mp3';
+        if (typeof audio === "string" && audio.includes("mime_type=audio_mpeg")) bestAudio = 'mp3';
     }
 
     if (video) {
         let subtitles, fileMetadata;
-        if (obj.subtitleLang && detail?.video?.subtitleInfos?.length) {
+        if (!isEmbed && obj.subtitleLang && detail?.video?.subtitleInfos?.length) {
             const langCode = convertLanguageCode(obj.subtitleLang);
             const subtitle = detail?.video?.subtitleInfos.find(
                 s => s.LanguageCodeName.startsWith(langCode) && s.Format === "webvtt"
@@ -142,8 +211,28 @@ export default async function(obj) {
     }
 
     if (images) {
+        const pickImageUrl = (image) => {
+            const urlLists = [
+                image?.imageURL?.urlList,
+                image?.displayImage?.urlList,
+                image?.image?.urlList,
+                image?.urlList,
+            ];
+
+            const candidates = urlLists.flatMap((list) => (
+                Array.isArray(list) ? list : []
+            ));
+
+            const preferred = candidates.find((url) => (
+                typeof url === "string" && (url.includes(".jpeg") || url.includes(".jpg"))
+            ));
+
+            return preferred || candidates.find((url) => typeof url === "string");
+        };
+
         let imageLinks = images
-            .map(i => i.imageURL.urlList.find(p => p.includes(".jpeg?")))
+            .map(pickImageUrl)
+            .filter(Boolean)
             .map((url, i) => {
                 if (obj.alwaysProxy) url = createStream({
                     service: "tiktok",

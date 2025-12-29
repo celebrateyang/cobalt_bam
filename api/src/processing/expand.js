@@ -34,6 +34,10 @@ const isDouyinHost = (hostname) => {
     );
 };
 
+const isTikTokHost = (hostname) => {
+    return hostname === "tiktok.com" || hostname.endsWith(".tiktok.com");
+};
+
 const uniqBy = (items, keyFn) => {
     const seen = new Set();
     const result = [];
@@ -80,6 +84,186 @@ const resolveFinalURL = async (inputUrl, maxHops = 5) => {
     }
 
     return current;
+};
+
+const TIKTOK_APP_ID = "1180";
+const TIKTOK_HEADERS = Object.freeze({
+    "user-agent": genericUserAgent,
+    referer: "https://www.tiktok.com/",
+    accept: "application/json, text/plain, */*",
+});
+
+const extractTikTokVideoId = (urlString) => {
+    if (!urlString) return;
+
+    let url;
+    try {
+        url = new URL(urlString);
+    } catch {
+        return;
+    }
+
+    const path = url.pathname;
+
+    const match =
+        path.match(/\/video\/(\d+)/) ||
+        path.match(/\/photo\/(\d+)/) ||
+        path.match(/^\/i18n\/share\/video\/(\d+)/) ||
+        path.match(/^\/v\/(\d+)\.html$/);
+
+    if (match?.[1]) return match[1];
+};
+
+const extractTikTokPlaylistId = (urlString) => {
+    if (!urlString) return;
+
+    let url;
+    try {
+        url = new URL(urlString);
+    } catch {
+        return;
+    }
+
+    const match = url.pathname.match(/\/playlist\/[^/]*?(\d{6,})\/?$/);
+    if (match?.[1]) return match[1];
+};
+
+const resolveTikTokShortLink = async (urlString) => {
+    try {
+        const res = await fetch(urlString, {
+            redirect: "manual",
+            headers: {
+                "user-agent": genericUserAgent.split(" Chrome/1")[0],
+            },
+            signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+        });
+
+        const location = res.headers.get("location");
+        if (location) {
+            try {
+                return new URL(location, urlString).toString();
+            } catch {
+                return location;
+            }
+        }
+
+        const html = await res.text();
+        if (html?.startsWith('<a href=\"https://')) {
+            return html.split('<a href=\"')[1].split('?')[0];
+        }
+    } catch {
+        // ignore
+    }
+};
+
+const extractTikTokUniversalData = (html) => {
+    const marker =
+        '<script id=\"__UNIVERSAL_DATA_FOR_REHYDRATION__\" type=\"application/json\">';
+
+    const start = html.indexOf(marker);
+    if (start < 0) return null;
+
+    const end = html.indexOf("</script>", start);
+    if (end < 0) return null;
+
+    try {
+        const json = html.slice(start + marker.length, end);
+        return JSON.parse(json);
+    } catch {
+        return null;
+    }
+};
+
+const fetchTikTokVideoDetail = async (postId) => {
+    const url = `https://www.tiktok.com/@i/video/${postId}`;
+
+    const html = await fetch(url, {
+        headers: {
+            "user-agent": genericUserAgent,
+        },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    })
+        .then((r) => (r.ok ? r.text() : null))
+        .catch(() => null);
+
+    if (!html) return null;
+
+    const data = extractTikTokUniversalData(html);
+    const videoDetail = data?.__DEFAULT_SCOPE__?.["webapp.video-detail"];
+    if (!videoDetail) return null;
+
+    if (videoDetail.statusMsg) {
+        return { error: "content.post.unavailable" };
+    }
+
+    const item = videoDetail?.itemInfo?.itemStruct;
+    if (item?.isContentClassified) {
+        return { error: "content.post.age" };
+    }
+
+    return { item };
+};
+
+const fetchTikTokPlaylistItems = async (playlistId) => {
+    const items = [];
+    let cursor = 0;
+
+    for (let page = 0; page < 200; page++) {
+        const url = new URL("https://www.tiktok.com/api/reflow/playlist/item_list/");
+        url.searchParams.set("app_id", TIKTOK_APP_ID);
+        url.searchParams.set("playlist_id", String(playlistId));
+        url.searchParams.set("cursor", String(cursor));
+        url.searchParams.set("count", "30");
+
+        const json = await fetch(url, {
+            headers: TIKTOK_HEADERS,
+            signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+        })
+            .then((r) => r.json())
+            .catch(() => null);
+
+        if (!json || json.status_code !== 0) {
+            break;
+        }
+
+        const list = Array.isArray(json.item_list) ? json.item_list : [];
+
+        for (const entry of list) {
+            const basic = entry?.item_basic;
+            const id = basic?.id ? String(basic.id) : null;
+            if (!id) continue;
+
+            const creator = basic?.creator?.base?.unique_id;
+            const isPhoto = !basic?.video?.video_play_info && !!basic?.image_post;
+            const pathType = isPhoto ? "photo" : "video";
+
+            const itemUrl = creator
+                ? `https://www.tiktok.com/@${creator}/${pathType}/${id}`
+                : `https://www.tiktok.com/@i/${pathType}/${id}`;
+
+            items.push({
+                url: itemUrl,
+                title: basic?.desc,
+                duration: toSeconds(basic?.video?.video_play_info?.duration),
+            });
+        }
+
+        const hasMore = json.has_more === true || json.has_more === 1;
+        if (!hasMore) break;
+
+        const nextCursor =
+            typeof json.cursor === "number" && Number.isFinite(json.cursor)
+                ? json.cursor
+                : null;
+
+        if (nextCursor == null || nextCursor === cursor) {
+            break;
+        }
+
+        cursor = nextCursor;
+    }
+
+    return uniqBy(items, (i) => i.url);
 };
 
 const resolveDouyinShortLink = async (shortLink) => {
@@ -595,6 +779,103 @@ const expandDouyin = async (inputUrl) => {
     };
 };
 
+const expandTikTok = async (inputUrl) => {
+    const playlistIdFromUrl = extractTikTokPlaylistId(inputUrl);
+    if (playlistIdFromUrl) {
+        const items = await fetchTikTokPlaylistItems(playlistIdFromUrl);
+        if (items.length > 1) {
+            let title;
+            try {
+                const firstUrl = items[0]?.url ? new URL(items[0].url) : null;
+                const match = firstUrl?.pathname?.match(/^\/@([^/]+)\//);
+                if (match?.[1]) title = `@${match[1]} playlist`;
+            } catch {
+                // ignore
+            }
+
+            return {
+                service: "tiktok",
+                kind: "tiktok-playlist",
+                title,
+                items,
+            };
+        }
+
+        return {
+            service: "tiktok",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    let postId = extractTikTokVideoId(inputUrl);
+
+    if (!postId) {
+        // Attempt resolving short-link style URLs (vt/vm/t) into a canonical video link.
+        const resolved = await resolveTikTokShortLink(inputUrl);
+        if (resolved) {
+            postId = extractTikTokVideoId(resolved);
+        }
+    }
+
+    if (!postId) {
+        return {
+            service: "tiktok",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const detail = await fetchTikTokVideoDetail(postId);
+    if (detail?.error) {
+        return {
+            service: "tiktok",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const item = detail?.item;
+    const authorId = item?.author?.uniqueId;
+    const canonicalUrl = authorId
+        ? `https://www.tiktok.com/@${authorId}/video/${postId}`
+        : `https://www.tiktok.com/@i/video/${postId}`;
+
+    const playlistId = item?.playlistId;
+    if (!playlistId) {
+        return {
+            service: "tiktok",
+            kind: "single",
+            title: item?.desc,
+            items: [
+                {
+                    url: canonicalUrl,
+                    title: item?.desc,
+                    duration: toSeconds(item?.video?.duration ?? item?.music?.duration),
+                },
+            ],
+        };
+    }
+
+    const playlistItems = await fetchTikTokPlaylistItems(playlistId);
+
+    if (playlistItems.length <= 1) {
+        return {
+            service: "tiktok",
+            kind: "single",
+            title: item?.desc,
+            items: [{ url: canonicalUrl }],
+        };
+    }
+
+    return {
+        service: "tiktok",
+        kind: "tiktok-playlist",
+        title: authorId ? `@${authorId} playlist` : undefined,
+        items: playlistItems,
+    };
+};
+
 export const expandURL = async (url) => {
     const input = String(url || "");
     let parsed;
@@ -614,6 +895,10 @@ export const expandURL = async (url) => {
 
     if (isDouyinHost(parsed.hostname)) {
         return expandDouyin(input);
+    }
+
+    if (isTikTokHost(parsed.hostname)) {
+        return expandTikTok(input);
     }
 
     return {

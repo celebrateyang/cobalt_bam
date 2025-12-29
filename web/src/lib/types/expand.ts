@@ -13,7 +13,8 @@ export type CobaltExpandOkResponse = {
         | "single"
         | "bilibili-ugc-season"
         | "bilibili-multi-page"
-        | "douyin-mix";
+        | "douyin-mix"
+        | "tiktok-playlist";
     title?: string;
     items: CobaltExpandItem[];
 };

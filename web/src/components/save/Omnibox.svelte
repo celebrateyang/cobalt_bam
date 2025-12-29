@@ -87,6 +87,15 @@
         }
     };
 
+    const isTikTokUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return parsed.hostname === "tiktok.com" || parsed.hostname.endsWith(".tiktok.com");
+        } catch {
+            return false;
+        }
+    };
+
     const isBilibiliVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -111,6 +120,18 @@
                 (parsed.pathname.startsWith("/video/") ||
                     parsed.pathname.startsWith("/note/"))
             );
+        } catch {
+            return false;
+        }
+    };
+
+    const isTikTokVideoPage = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            if (!(parsed.hostname === "tiktok.com" || parsed.hostname.endsWith(".tiktok.com"))) {
+                return false;
+            }
+            return parsed.pathname.includes("/video/") || parsed.pathname.includes("/photo/");
         } catch {
             return false;
         }
@@ -147,7 +168,7 @@
         if (!url) return;
 
         // Only expand for services that support collection/playlist detection.
-        if (!isBilibiliUrl(url) && !isDouyinUrl(url)) {
+        if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
             return savingHandler({ url });
         }
 
@@ -170,7 +191,7 @@
         }));
 
         // If user pasted an explicit collection URL, go straight to batch list.
-        if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url)) {
+        if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url) && !isTikTokVideoPage(url)) {
             openBatchDialog(batchItems, expanded.title || $t("dialog.batch.title"));
             return;
         }
@@ -178,7 +199,8 @@
         const promptTitle = $t("dialog.batch.detect.title");
         const isCollection =
             expanded.kind === "bilibili-ugc-season" ||
-            expanded.kind === "douyin-mix";
+            expanded.kind === "douyin-mix" ||
+            expanded.kind === "tiktok-playlist";
         const promptBody =
             isCollection
                 ? $t("dialog.batch.detect.body.collection", {

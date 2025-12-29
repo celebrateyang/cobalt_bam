@@ -72,6 +72,21 @@
         }
     };
 
+    const isDouyinUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return (
+                parsed.hostname === "v.douyin.com" ||
+                parsed.hostname === "douyin.com" ||
+                parsed.hostname.endsWith(".douyin.com") ||
+                parsed.hostname === "iesdouyin.com" ||
+                parsed.hostname.endsWith(".iesdouyin.com")
+            );
+        } catch {
+            return false;
+        }
+    };
+
     const isBilibiliVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -80,6 +95,21 @@
                     parsed.hostname === "bilibili.com" ||
                     parsed.hostname.endsWith(".bilibili.com")) &&
                 parsed.pathname.startsWith("/video/")
+            );
+        } catch {
+            return false;
+        }
+    };
+
+    const isDouyinVideoPage = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return (
+                (parsed.hostname === "douyin.com" ||
+                    parsed.hostname === "www.douyin.com" ||
+                    parsed.hostname.endsWith(".douyin.com")) &&
+                (parsed.pathname.startsWith("/video/") ||
+                    parsed.pathname.startsWith("/note/"))
             );
         } catch {
             return false;
@@ -116,8 +146,8 @@
         const url = detectedUrls[0];
         if (!url) return;
 
-        // For non-Bilibili services, keep the current behavior (no extra API call).
-        if (!isBilibiliUrl(url)) {
+        // Only expand for services that support collection/playlist detection.
+        if (!isBilibiliUrl(url) && !isDouyinUrl(url)) {
             return savingHandler({ url });
         }
 
@@ -140,14 +170,17 @@
         }));
 
         // If user pasted an explicit collection URL, go straight to batch list.
-        if (!isBilibiliVideoPage(url)) {
+        if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url)) {
             openBatchDialog(batchItems, expanded.title || $t("dialog.batch.title"));
             return;
         }
 
         const promptTitle = $t("dialog.batch.detect.title");
+        const isCollection =
+            expanded.kind === "bilibili-ugc-season" ||
+            expanded.kind === "douyin-mix";
         const promptBody =
-            expanded.kind === "bilibili-ugc-season"
+            isCollection
                 ? $t("dialog.batch.detect.body.collection", {
                       title: expanded.title ?? url,
                       count: items.length,

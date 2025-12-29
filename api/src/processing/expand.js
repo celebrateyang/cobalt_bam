@@ -1,11 +1,18 @@
 import { genericUserAgent } from "../config.js";
 import { getRedirectingURL } from "../misc/utils.js";
 
+const DEFAULT_TIMEOUT_MS = 15000;
+
 const BILIBILI_HEADERS = Object.freeze({
     "user-agent": genericUserAgent,
     referer: "https://www.bilibili.com/",
     accept: "application/json, text/plain, */*",
 });
+
+// Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.
+// Verified working as of Dec 2025.
+const DOUYIN_MOBILE_UA =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
 const isBilibiliHost = (hostname) => {
     return (
@@ -14,6 +21,16 @@ const isBilibiliHost = (hostname) => {
         hostname === "bilibili.com" ||
         hostname.endsWith(".bilibili.tv") ||
         hostname === "bilibili.tv"
+    );
+};
+
+const isDouyinHost = (hostname) => {
+    return (
+        hostname === "v.douyin.com" ||
+        hostname === "douyin.com" ||
+        hostname.endsWith(".douyin.com") ||
+        hostname === "iesdouyin.com" ||
+        hostname.endsWith(".iesdouyin.com")
     );
 };
 
@@ -32,6 +49,13 @@ const uniqBy = (items, keyFn) => {
 const toSeconds = (value) =>
     typeof value === "number" && Number.isFinite(value)
         ? Math.round(value)
+        : undefined;
+
+const toSecondsMaybeMs = (value) =>
+    typeof value === "number" && Number.isFinite(value)
+        ? value > 1000
+            ? Math.round(value / 1000)
+            : Math.round(value)
         : undefined;
 
 const resolveFinalURL = async (inputUrl, maxHops = 5) => {
@@ -56,6 +80,149 @@ const resolveFinalURL = async (inputUrl, maxHops = 5) => {
     }
 
     return current;
+};
+
+const resolveDouyinShortLink = async (shortLink) => {
+    const url = `https://v.douyin.com/${shortLink}/`;
+
+    const res = await fetch(url, {
+        method: "HEAD",
+        redirect: "follow",
+        headers: {
+            "user-agent": DOUYIN_MOBILE_UA,
+        },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+
+    return res.url;
+};
+
+const extractDouyinVideoId = (urlString) => {
+    if (!urlString) return;
+
+    let url;
+    try {
+        url = new URL(urlString);
+    } catch {
+        return;
+    }
+
+    const path = url.pathname;
+
+    const match =
+        path.match(/^\/(?:video|note)\/(\d+)/) ||
+        path.match(/^\/share\/(?:video|note)\/(\d+)/);
+
+    if (match?.[1]) return match[1];
+
+    const mid = url.searchParams.get("mid");
+    if (mid) return mid;
+};
+
+const parseDouyinShareData = (html) => {
+    try {
+        const router = html.match(
+            /window\._ROUTER_DATA\s*=\s*(.*?)(?=<\/script>)/s,
+        );
+        if (router?.[1]) {
+            return JSON.parse(router[1].trim());
+        }
+
+        const render = html.match(
+            /window\._RENDER_DATA\s*=\s*(.*?)(?=<\/script>)/s,
+        );
+        if (render?.[1]) {
+            return JSON.parse(decodeURIComponent(render[1].trim()));
+        }
+    } catch {
+        // ignore
+    }
+
+    return null;
+};
+
+const fetchDouyinMixItems = async (mixId) => {
+    const items = [];
+    let cursor = 0;
+
+    for (let page = 0; page < 100; page++) {
+        const url = new URL("https://m.douyin.com/aweme/v1/mix/aweme/");
+        url.searchParams.set("mix_id", String(mixId));
+        url.searchParams.set("cursor", String(cursor));
+        url.searchParams.set("count", "20");
+        url.searchParams.set("device_type", "");
+        url.searchParams.set("device_platform", "web");
+        url.searchParams.set("version_code", "280500");
+        url.searchParams.set("version_name", "28.5.0");
+        url.searchParams.set("aid", "1128");
+
+        const json = await fetch(url, {
+            headers: {
+                "user-agent": DOUYIN_MOBILE_UA,
+                referer: "https://m.douyin.com/",
+                accept: "application/json, text/plain, */*",
+            },
+            signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+        })
+            .then((r) => r.json())
+            .catch(() => null);
+
+        if (!json || json.status_code !== 0) {
+            break;
+        }
+
+        const list = Array.isArray(json.aweme_list) ? json.aweme_list : [];
+        for (const aweme of list) {
+            const awemeId = aweme?.aweme_id ? String(aweme.aweme_id) : null;
+            if (!awemeId) continue;
+
+            items.push({
+                url: `https://www.douyin.com/video/${awemeId}`,
+                title: aweme?.desc,
+                duration: toSecondsMaybeMs(aweme?.video?.duration ?? aweme?.duration),
+            });
+        }
+
+        if (json.has_more !== 1) {
+            break;
+        }
+
+        const nextCursor =
+            typeof json.cursor === "number" && Number.isFinite(json.cursor)
+                ? json.cursor
+                : null;
+
+        if (nextCursor == null || nextCursor === cursor) {
+            break;
+        }
+
+        cursor = nextCursor;
+    }
+
+    return uniqBy(items, (i) => i.url);
+};
+
+const fetchDouyinMixTitle = async (mixId) => {
+    const url = new URL("https://m.douyin.com/aweme/v1/mix/detail/");
+    url.searchParams.set("mix_id", String(mixId));
+    url.searchParams.set("aid", "1128");
+    url.searchParams.set("device_platform", "web");
+    url.searchParams.set("version_code", "280500");
+    url.searchParams.set("version_name", "28.5.0");
+
+    const json = await fetch(url, {
+        headers: {
+            "user-agent": DOUYIN_MOBILE_UA,
+            referer: "https://m.douyin.com/",
+            accept: "application/json, text/plain, */*",
+        },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    })
+        .then((r) => r.json())
+        .catch(() => null);
+
+    if (!json || json.status_code !== 0) return;
+    return json?.mix_info?.mix_name;
 };
 
 const bilibiliView = async ({ id }) => {
@@ -282,6 +449,152 @@ const expandBilibili = async (inputUrl) => {
     };
 };
 
+const expandDouyin = async (inputUrl) => {
+    let url;
+    try {
+        url = new URL(inputUrl);
+    } catch {
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    // Explicit mix detail URLs can be expanded directly.
+    const mixMatch = url.pathname.match(/^\/share\/mix\/detail\/(\d+)\/?$/);
+    if (mixMatch?.[1]) {
+        const mixId = mixMatch[1];
+        const [title, items] = await Promise.all([
+            fetchDouyinMixTitle(mixId),
+            fetchDouyinMixItems(mixId),
+        ]);
+
+        if (items.length > 1) {
+            return {
+                service: "douyin",
+                kind: "douyin-mix",
+                title,
+                items,
+            };
+        }
+
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    let videoId = extractDouyinVideoId(inputUrl);
+
+    if (!videoId && url.hostname === "v.douyin.com") {
+        const parts = url.pathname.split("/").filter(Boolean);
+        const shortLink = parts?.[0];
+        if (shortLink) {
+            const finalUrl = await resolveDouyinShortLink(shortLink);
+            videoId = extractDouyinVideoId(finalUrl);
+        }
+    } else if (!videoId && url.pathname.startsWith("/_shortLink/")) {
+        const parts = url.pathname.split("/").filter(Boolean);
+        const shortLink = parts?.[1];
+        if (shortLink) {
+            const finalUrl = await resolveDouyinShortLink(shortLink);
+            videoId = extractDouyinVideoId(finalUrl);
+        }
+    }
+
+    if (!videoId) {
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const shareUrl = `https://www.iesdouyin.com/share/video/${videoId}`;
+    const html = await fetch(shareUrl, {
+        headers: { "user-agent": DOUYIN_MOBILE_UA },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    })
+        .then((r) => (r.ok ? r.text() : null))
+        .catch(() => null);
+
+    if (!html) {
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const data = parseDouyinShareData(html);
+    const loaderData = data?.loaderData;
+
+    if (!loaderData) {
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const videoPageKey = Object.keys(loaderData).find(
+        (k) => k.includes("video_") && k.includes("/page"),
+    );
+
+    const item =
+        videoPageKey && loaderData[videoPageKey]?.videoInfoRes?.item_list
+            ? loaderData[videoPageKey].videoInfoRes.item_list[0]
+            : null;
+
+    const canonicalUrl = `https://www.douyin.com/video/${videoId}`;
+
+    if (!item) {
+        return {
+            service: "douyin",
+            kind: "single",
+            items: [{ url: canonicalUrl }],
+        };
+    }
+
+    const mixId = item?.mix_info?.mix_id;
+    if (!mixId) {
+        return {
+            service: "douyin",
+            kind: "single",
+            title: item?.desc,
+            items: [
+                {
+                    url: canonicalUrl,
+                    title: item?.desc,
+                    duration: toSecondsMaybeMs(
+                        item?.video?.duration ?? item?.duration,
+                    ),
+                },
+            ],
+        };
+    }
+
+    const expandedItems = await fetchDouyinMixItems(mixId);
+
+    if (expandedItems.length <= 1) {
+        return {
+            service: "douyin",
+            kind: "single",
+            title: item?.desc,
+            items: [{ url: canonicalUrl }],
+        };
+    }
+
+    return {
+        service: "douyin",
+        kind: "douyin-mix",
+        title: item?.mix_info?.mix_name,
+        items: expandedItems,
+    };
+};
+
 export const expandURL = async (url) => {
     const input = String(url || "");
     let parsed;
@@ -295,13 +608,17 @@ export const expandURL = async (url) => {
         };
     }
 
-    if (!isBilibiliHost(parsed.hostname)) {
-        return {
-            service: undefined,
-            kind: "single",
-            items: [{ url: input }],
-        };
+    if (isBilibiliHost(parsed.hostname)) {
+        return expandBilibili(input);
     }
 
-    return expandBilibili(input);
+    if (isDouyinHost(parsed.hostname)) {
+        return expandDouyin(input);
+    }
+
+    return {
+        service: undefined,
+        kind: "single",
+        items: [{ url: input }],
+    };
 };

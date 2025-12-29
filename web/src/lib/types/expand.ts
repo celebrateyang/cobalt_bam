@@ -9,7 +9,11 @@ export type CobaltExpandItem = {
 export type CobaltExpandOkResponse = {
     status: "ok";
     service?: string;
-    kind: "single" | "bilibili-ugc-season" | "bilibili-multi-page";
+    kind:
+        | "single"
+        | "bilibili-ugc-season"
+        | "bilibili-multi-page"
+        | "douyin-mix";
     title?: string;
     items: CobaltExpandItem[];
 };

@@ -6,6 +6,10 @@ export default async function(obj) {
     let videoId = obj.id;
     let targetUrl = obj.url;
 
+    if (!targetUrl && obj.shareToken) {
+        targetUrl = `https://www.kuaishou.com/f/${obj.shareToken}`;
+    }
+
     // 1. Handle Short Links
     if (obj.shortLink) {
         try {

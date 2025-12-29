@@ -70,6 +70,7 @@ export const services = {
         patterns: [
             "short-video/:id",
             "video/:id",
+            "f/:shareToken",
             "_shortLink/:shortLink"
         ],
         subdomains: ["v", "www"],

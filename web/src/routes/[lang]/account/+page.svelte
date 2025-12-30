@@ -477,8 +477,8 @@
                     </div>
 
                     <div class="subtext payment-subtitle">
-                        {$t("auth.order_no")} {activeOrder.id} · ¥{formatCny(activeOrder.amount_fen)} ·
-                        {activeOrder.points} {$t("auth.points_label")}
+                        {$t("auth.order_total")}: ¥{formatCny(activeOrder.amount_fen)} · {activeOrder.points}
+                        {$t("auth.points_label")}
                     </div>
 
                     <div class="payment-body">

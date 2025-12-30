@@ -12,6 +12,8 @@
     import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+    import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
+    import IconListCheck from "@tabler/icons-svelte/IconListCheck.svelte";
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
     import { createDialog } from "$lib/state/dialogs";
@@ -62,6 +64,30 @@
         "facebook",
         "twitter",
     ];
+
+    const platformLabels = {
+        bilibili: { zh: "B站", default: "Bilibili" },
+        douyin: { zh: "抖音", default: "Douyin" },
+        tiktok: { zh: "TikTok", default: "TikTok" },
+        kuaishou: { zh: "快手", default: "Kuaishou" },
+        instagram: { zh: "Instagram", default: "Instagram" },
+    } as const;
+
+    type CapabilityPlatform = keyof typeof platformLabels;
+
+    const collectionPlatforms: CapabilityPlatform[] = ["bilibili", "douyin", "tiktok"];
+    const batchPlatforms: CapabilityPlatform[] = [
+        "douyin",
+        "tiktok",
+        "kuaishou",
+        "instagram",
+        "bilibili",
+    ];
+
+    const getPlatformLabel = (platform: CapabilityPlatform) =>
+        currentLocale === "zh"
+            ? platformLabels[platform].zh
+            : platformLabels[platform].default;
 
     const accountPath = () => `/${currentLocale}/account`;
 
@@ -288,6 +314,55 @@
 
         <Meowbalt emotion="smile" />
         <Omnibox />
+        <section class="capabilities" aria-label={$t("home.capabilities.aria")}>
+            <div class="cap-card cap-card--collection">
+                <div class="cap-card-inner">
+                    <div class="cap-head">
+                        <div class="cap-icon"><IconStack2 size={20} /></div>
+                        <div class="cap-title">
+                            {$t("home.capabilities.collection.title")}
+                        </div>
+                    </div>
+
+                    <p class="cap-desc">{$t("home.capabilities.collection.desc")}</p>
+
+                    <div
+                        class="cap-chips"
+                        aria-label={$t("home.capabilities.platforms")}
+                    >
+                        {#each collectionPlatforms as platform}
+                            <span class="cap-chip">
+                                {getPlatformLabel(platform)}
+                            </span>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+
+            <div class="cap-card cap-card--batch">
+                <div class="cap-card-inner">
+                    <div class="cap-head">
+                        <div class="cap-icon"><IconListCheck size={20} /></div>
+                        <div class="cap-title">
+                            {$t("home.capabilities.batch.title")}
+                        </div>
+                    </div>
+
+                    <p class="cap-desc">{$t("home.capabilities.batch.desc")}</p>
+
+                    <div
+                        class="cap-chips"
+                        aria-label={$t("home.capabilities.platforms")}
+                    >
+                        {#each batchPlatforms as platform}
+                            <span class="cap-chip">
+                                {getPlatformLabel(platform)}
+                            </span>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        </section>
         <!--<UserGuide/>-->
     </main>
 
@@ -471,10 +546,251 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        /* flex: 1; removed to allow min-height to work better with specific spacing */
-        min-height: 65vh; /* Occupy significant screen space */
-        gap: 24px; /* Increased gap between logo and input */
-        margin-bottom: 60px; /* Push content below further down */
+         /* flex: 1; removed to allow min-height to work better with specific spacing */
+         min-height: 65vh; /* Occupy significant screen space */
+         gap: 24px; /* Increased gap between logo and input */
+         margin-bottom: 60px; /* Push content below further down */
+     }
+
+    .capabilities {
+        width: 100%;
+        max-width: 860px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        position: relative;
+        padding: 2px;
+    }
+
+    .capabilities::before {
+        content: "";
+        position: absolute;
+        inset: -18px -14px -22px;
+        background:
+            radial-gradient(
+                560px circle at 20% 5%,
+                rgba(var(--accent-rgb), 0.16),
+                transparent 62%
+            ),
+            radial-gradient(
+                520px circle at 80% 70%,
+                rgba(47, 138, 249, 0.1),
+                transparent 62%
+            );
+        filter: blur(18px);
+        opacity: 0.35;
+        pointer-events: none;
+    }
+
+    :global(#cobalt[data-reduce-transparency="true"]) .capabilities::before {
+        filter: none;
+        opacity: 0.18;
+    }
+
+    .cap-card {
+        position: relative;
+        z-index: 1;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
+        transition:
+            transform 0.18s ease,
+            box-shadow 0.18s ease;
+        --cap-a-x: 18%;
+        --cap-b-x: 82%;
+        --cap-line: linear-gradient(
+            90deg,
+            rgba(var(--accent-rgb), 0.85),
+            rgba(47, 138, 249, 0.65),
+            rgba(var(--accent-rgb), 0.35)
+        );
+    }
+
+    .cap-card--batch {
+        --cap-a-x: 82%;
+        --cap-b-x: 18%;
+        --cap-line: linear-gradient(
+            90deg,
+            rgba(47, 138, 249, 0.7),
+            rgba(var(--accent-rgb), 0.78),
+            rgba(47, 138, 249, 0.35)
+        );
+    }
+
+    .cap-card::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: 10px;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--cap-line);
+        opacity: 0.9;
+        pointer-events: none;
+        transform: translateZ(0);
+    }
+
+    @media (hover: hover) {
+        .cap-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.12);
+        }
+    }
+
+    :global(#cobalt[data-reduce-motion="true"]) .cap-card {
+        transition: none;
+    }
+
+    :global(#cobalt[data-reduce-motion="true"]) .cap-card:hover {
+        transform: none;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
+    }
+
+    .cap-card-inner {
+        height: 100%;
+        border-radius: 18px;
+        padding: 16px 16px 14px;
+        background: var(--button);
+        border: 1px solid var(--button-stroke);
+        color: var(--text);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cap-card-inner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+        background-size: 28px 28px;
+        opacity: 0.55;
+        mask-image: radial-gradient(circle at 30% 18%, #000 0%, transparent 72%);
+        pointer-events: none;
+    }
+
+    :global([data-theme="dark"]) .cap-card-inner::before {
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+        opacity: 0.4;
+    }
+
+    .cap-card-inner::after {
+        content: "";
+        position: absolute;
+        inset: -60px;
+        background:
+            radial-gradient(
+                circle at var(--cap-a-x) 18%,
+                rgba(var(--accent-rgb), 0.18),
+                transparent 60%
+            ),
+            radial-gradient(
+                circle at var(--cap-b-x) 85%,
+                rgba(47, 138, 249, 0.12),
+                transparent 60%
+            );
+        opacity: 0.85;
+        pointer-events: none;
+        transform: translateZ(0);
+    }
+
+    .cap-head {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .cap-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent-background);
+        border: 1px solid rgba(var(--accent-rgb), 0.22);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+
+    .cap-title {
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.2px;
+        font-size: 14.5px;
+        line-height: 1.2;
+    }
+
+    .cap-desc {
+        position: relative;
+        z-index: 1;
+        margin: 0 0 10px 0;
+        color: var(--subtext);
+        line-height: 1.55;
+        font-size: 13.8px;
+    }
+
+    .cap-chips {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .cap-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text);
+        background: rgba(var(--accent-rgb), 0.1);
+        border: 1px solid rgba(var(--accent-rgb), 0.2);
+        box-shadow: none;
+        user-select: none;
+    }
+
+    @media (hover: hover) {
+        .cap-chip:hover {
+            background: rgba(var(--accent-rgb), 0.14);
+            border-color: rgba(var(--accent-rgb), 0.28);
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        :global(#cobalt[data-reduce-motion="false"]) .cap-card::before {
+            background-size: 240% 240%;
+            animation: capGlow 10s ease infinite;
+        }
+    }
+
+    @keyframes capGlow {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .capabilities {
+            grid-template-columns: 1fr;
+            max-width: 560px;
+        }
     }
 
     ul {

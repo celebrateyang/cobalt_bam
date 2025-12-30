@@ -2,6 +2,18 @@
     "feedback": {
         "desc": "遇到下载问题？点这里反馈，我们会尽快处理。"
     },
+    "capabilities": {
+        "aria": "下载能力",
+        "platforms": "支持平台",
+        "collection": {
+            "title": "合集下载",
+            "desc": "自动识别合集/分P/Playlist，一键批量下载。"
+        },
+        "batch": {
+            "title": "批次下载",
+            "desc": "一次粘贴多条链接，批量处理更省时。"
+        }
+    },
     "platforms": {
         "title": "热门平台无水印下载",
         "description": "覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",

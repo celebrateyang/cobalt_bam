@@ -2,6 +2,18 @@
     "feedback": {
         "desc": "Report download issues and suggestions."
     },
+    "capabilities": {
+        "aria": "Download capabilities",
+        "platforms": "Platforms",
+        "collection": {
+            "title": "Collection / playlist download",
+            "desc": "Auto-detect and download mixes, seasons, and playlists."
+        },
+        "batch": {
+            "title": "Batch download",
+            "desc": "Paste multiple links at once and download in one go."
+        }
+    },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
         "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",

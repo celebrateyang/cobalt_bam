@@ -10,6 +10,9 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# Batch download hard cap (0 = unlimited)
+batchMaxItems: 40
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

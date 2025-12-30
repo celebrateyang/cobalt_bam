@@ -75,6 +75,7 @@ export type CobaltServerInfo = {
         version: string,
         url: string,
         startTime: string,
+        batchMaxItems?: number,
         durationLimit: number,
         turnstileSitekey?: string,
         services: string[]

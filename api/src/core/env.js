@@ -74,6 +74,16 @@ export const loadEnvs = (env = process.env) => {
 
         rateLimitWindow: (env.RATELIMIT_WINDOW && parseInt(env.RATELIMIT_WINDOW)) || 60,
         rateLimitMax: (env.RATELIMIT_MAX && parseInt(env.RATELIMIT_MAX)) || 20,
+        // Maximum number of URLs allowed in a single batch download (0 = unlimited).
+        batchMaxItems: (() => {
+            const raw = env.BATCH_MAX_ITEMS;
+            if (raw == null) return 50;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed < 0) return 20;
+
+            return parsed;
+        })(),
 
         tunnelRateLimitWindow: (env.TUNNEL_RATELIMIT_WINDOW && parseInt(env.TUNNEL_RATELIMIT_WINDOW)) || 60,
         tunnelRateLimitMax: (env.TUNNEL_RATELIMIT_MAX && parseInt(env.TUNNEL_RATELIMIT_MAX)) || 40,

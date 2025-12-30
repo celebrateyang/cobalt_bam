@@ -42,6 +42,22 @@
     let isLoading = false;
     let isBotCheckOngoing = false;
 
+    const DEFAULT_BATCH_MAX_ITEMS = 20;
+
+    const resolveBatchMaxItems = (value: unknown) => {
+        if (typeof value === "number" && Number.isFinite(value)) {
+            const normalized = Math.floor(value);
+            if (normalized === 0) return Number.POSITIVE_INFINITY;
+            if (normalized > 0) return normalized;
+        }
+
+        return DEFAULT_BATCH_MAX_ITEMS;
+    };
+
+    let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
+    let batchLimitEnabled = true;
+    let batchLimitExceeded = false;
+
     const extractUrls = (text: string) => {
         const matches = text.match(/https?:\/\/[^\s]+/gi) ?? [];
         const urls: string[] = [];
@@ -140,8 +156,38 @@
     $: detectedUrls = extractUrls($link);
     $: isDownloadable = detectedUrls.length > 0;
     $: isBatchInput = detectedUrls.length > 1;
+    $: batchMaxItems = resolveBatchMaxItems($cachedInfo?.info?.cobalt?.batchMaxItems);
+    $: batchLimitEnabled = Number.isFinite(batchMaxItems) && batchMaxItems > 0;
+    $: batchLimitExceeded = batchLimitEnabled && detectedUrls.length > batchMaxItems;
+
+    const showBatchLimitDialog = (count: number) => {
+        if (!batchLimitEnabled) return;
+
+        createDialog({
+            id: "batch-limit",
+            type: "small",
+            meowbalt: "error",
+            title: $t("dialog.batch.limit.title"),
+            bodyText: $t("dialog.batch.limit.body", {
+                count,
+                max: batchMaxItems,
+            }),
+            buttons: [
+                {
+                    text: $t("button.gotit"),
+                    main: true,
+                    action: () => {},
+                },
+            ],
+        });
+    };
 
     const openBatchDialog = (items: DialogBatchItem[], title?: string) => {
+        if (batchLimitEnabled && items.length > batchMaxItems) {
+            showBatchLimitDialog(items.length);
+            return;
+        }
+
         createDialog({
             id: "batch-download",
             type: "batch",
@@ -157,6 +203,11 @@
 
         // Multiple links => batch dialog immediately (platform-agnostic).
         if (isBatchInput) {
+            if (batchLimitExceeded) {
+                showBatchLimitDialog(detectedUrls.length);
+                return;
+            }
+
             openBatchDialog(
                 detectedUrls.map((url) => ({ url })),
                 $t("dialog.batch.title")
@@ -189,6 +240,75 @@
             title: item.title,
             duration: item.duration,
         }));
+
+        if (batchLimitEnabled && batchItems.length > batchMaxItems) {
+            const canFallbackToSingle =
+                isBilibiliVideoPage(url) || isDouyinVideoPage(url) || isTikTokVideoPage(url);
+
+            const subsetCounts = (() => {
+                const limit = batchMaxItems;
+                const candidates = [limit, 50, 20, 10, 5];
+                const unique = new Set<number>();
+
+                for (const candidate of candidates) {
+                    if (
+                        typeof candidate === "number" &&
+                        Number.isFinite(candidate) &&
+                        candidate > 1 &&
+                        candidate <= limit
+                    ) {
+                        unique.add(candidate);
+                    }
+                }
+
+                return [...unique].sort((a, b) => b - a).slice(0, 3);
+            })();
+
+            const batchTitle = expanded.title || $t("dialog.batch.title");
+            const openSubset = (count: number) => {
+                const subset = batchItems.slice(0, count);
+                const title =
+                    subset.length < batchItems.length
+                        ? `${batchTitle} (${subset.length}/${batchItems.length})`
+                        : batchTitle;
+                openBatchDialog(subset, title);
+            };
+
+            createDialog({
+                id: "batch-limit-expanded",
+                type: "small",
+                meowbalt: "error",
+                title: $t("dialog.batch.limit.title"),
+                bodyText: $t("dialog.batch.limit.body", {
+                    count: batchItems.length,
+                    max: batchMaxItems,
+                }),
+                buttons: [
+                    ...subsetCounts.map((count, index) => ({
+                        text: $t("dialog.batch.limit.download_first", { count }),
+                        main: index === 0,
+                        action: () => openSubset(count),
+                    })),
+                    ...(canFallbackToSingle
+                        ? [
+                              {
+                                  text: $t("dialog.batch.detect.download_single"),
+                                  main: subsetCounts.length === 0,
+                                  action: () => {
+                                      setTimeout(() => savingHandler({ url }), 200);
+                                  },
+                              },
+                          ]
+                        : []),
+                    {
+                        text: $t("button.gotit"),
+                        main: subsetCounts.length === 0 && !canFallbackToSingle,
+                        action: () => {},
+                    },
+                ],
+            });
+            return;
+        }
 
         // If user pasted an explicit collection URL, go straight to batch list.
         if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url) && !isTikTokVideoPage(url)) {
@@ -282,7 +402,9 @@
 
             if (!isBotCheckOngoing) {
                 await tick(); // wait for button to render
-                submit();
+                if (!batchLimitExceeded) {
+                    submit();
+                }
             }
         });
     };
@@ -376,6 +498,7 @@
             <DownloadButton
                 url={detectedUrls[0]}
                 onDownload={submit}
+                blocked={isBatchInput && batchLimitExceeded}
                 bind:disabled={isDisabled}
                 bind:loading={isLoading}
             />
@@ -383,8 +506,15 @@
     </div>
 
     {#if isBatchInput}
-        <div class="batch-hint" aria-live="polite">
-            {$t("save.batch.detected", { count: detectedUrls.length })}
+        <div class="batch-hint" class:error={batchLimitExceeded} aria-live="polite">
+            {#if batchLimitExceeded}
+                {$t("save.batch.too_many", {
+                    count: detectedUrls.length,
+                    max: batchMaxItems,
+                })}
+            {:else}
+                {$t("save.batch.detected", { count: detectedUrls.length })}
+            {/if}
         </div>
     {/if}
 
@@ -440,6 +570,11 @@
         font-size: 13px;
         color: var(--secondary-600);
         opacity: 0.9;
+    }
+
+    .batch-hint.error {
+        color: var(--red);
+        opacity: 1;
     }
 
     #input-container {

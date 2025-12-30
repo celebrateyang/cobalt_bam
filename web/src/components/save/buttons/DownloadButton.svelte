@@ -10,6 +10,7 @@
     export let url: string;
     export let disabled = false;
     export let loading = false;
+    export let blocked = false;
     export let onDownload: ((url: string) => void | Promise<void>) | undefined =
         undefined;
 
@@ -68,7 +69,7 @@
 
 <button
     id="download-button"
-    {disabled}
+    disabled={disabled || blocked}
     on:click={() => {
         hapticSwitch();
         if (onDownload) {

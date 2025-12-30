@@ -63,6 +63,8 @@ spec:
               value: '60'
             - name: RATELIMIT_MAX
               value: '30'
+            - name: BATCH_MAX_ITEMS
+              value: {{ .Values.batchMaxItems | default 20 | quote }}
             - name: TUNNEL_RATELIMIT_WINDOW
               value: '60'
             - name: TUNNEL_RATELIMIT_MAX

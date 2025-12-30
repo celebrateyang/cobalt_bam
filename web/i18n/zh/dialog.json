@@ -19,6 +19,9 @@
     "batch.points_check_failed": "无法验证积分，请稍后重试。",
     "batch.points_preview": "本次下载将扣除 {{ required }} 积分",
     "batch.points_preview.loading": "正在计算积分...",
+    "batch.limit.title": "链接过多",
+    "batch.limit.body": "当前批次包含 {{ count }} 个链接，但上限是 {{ max }}。请分批下载。",
+    "batch.limit.download_first": "下载前 {{ count }} 个",
 
     "batch.detect.title": "检测到可批量下载",
     "batch.detect.body.collection": "检测到该视频属于合集「{{ title }}」（共 {{ count }} 个视频），是否批量下载整个合集？",

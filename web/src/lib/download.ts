@@ -108,6 +108,10 @@ export const downloadFile = ({ url, file, urlType, preOpenedWindow }: DownloadFi
     if (url && pref === "download" && device.supports.directDownload
         && !(device.is.iOS && urlType === "redirect")
         && openURLInPreOpenedWindow(url, preOpenedWindow)) {
+        // Best-effort: close the helper tab after the download likely started.
+        // We can't reliably detect "download finished" in browsers.
+        const closeDelayMs = urlType === "redirect" ? 4500 : 2500;
+        setTimeout(() => closePreOpenedWindow(preOpenedWindow), closeDelayMs);
         return;
     }
 

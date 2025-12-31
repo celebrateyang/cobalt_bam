@@ -13,6 +13,7 @@ type DownloadFileParams = {
     url?: string,
     file?: File,
     urlType?: CobaltFileUrlType,
+    preOpenedWindow?: Window | null,
 }
 
 type SavingDialogParams = {
@@ -33,6 +34,25 @@ const openSavingDialog = ({ url, file, body, urlType }: SavingDialogParams) => {
     if (body) dialogData.bodyText = body;
 
     createDialog(dialogData)
+}
+
+const closePreOpenedWindow = (preOpenedWindow?: Window | null) => {
+    try {
+        if (preOpenedWindow && !preOpenedWindow.closed) {
+            preOpenedWindow.close();
+        }
+    } catch { /* ignore */ }
+}
+
+const openURLInPreOpenedWindow = (url: string, preOpenedWindow?: Window | null) => {
+    if (!preOpenedWindow || preOpenedWindow.closed) return false;
+
+    try {
+        preOpenedWindow.location.href = url;
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export const openFile = (file: File) => {
@@ -75,13 +95,20 @@ export const copyURL = async (url: string) => {
     return await navigator?.clipboard?.writeText(url);
 }
 
-export const downloadFile = ({ url, file, urlType }: DownloadFileParams) => {
+export const downloadFile = ({ url, file, urlType, preOpenedWindow }: DownloadFileParams) => {
     if (!url && !file) throw new Error("attempted to download void");
 
     const pref = get(settings).save.savingMethod;
 
     if (pref === "ask") {
+        closePreOpenedWindow(preOpenedWindow);
         return openSavingDialog({ url, file, urlType });
+    }
+
+    if (url && pref === "download" && device.supports.directDownload
+        && !(device.is.iOS && urlType === "redirect")
+        && openURLInPreOpenedWindow(url, preOpenedWindow)) {
+        return;
     }
 
     /*
@@ -96,6 +123,7 @@ export const downloadFile = ({ url, file, urlType }: DownloadFileParams) => {
         if browser is old or doesn't support this API, we just assume that it expired.
     */
     if (!navigator?.userActivation?.isActive) {
+        closePreOpenedWindow(preOpenedWindow);
         return openSavingDialog({
             url,
             file,
@@ -107,23 +135,29 @@ export const downloadFile = ({ url, file, urlType }: DownloadFileParams) => {
     try {
         if (file) {
             if (pref === "share" && device.supports.share) {
+                closePreOpenedWindow(preOpenedWindow);
                 return shareFile(file);
             } else if (pref === "download" && device.supports.directDownload) {
+                closePreOpenedWindow(preOpenedWindow);
                 return openFile(file);
             }
         }
 
         if (url) {
             if (pref === "share" && device.supports.share) {
+                closePreOpenedWindow(preOpenedWindow);
                 return shareURL(url);
             } else if (pref === "download" && device.supports.directDownload
                     && !(device.is.iOS && urlType === "redirect")) {
+                closePreOpenedWindow(preOpenedWindow);
                 return openURL(url);
             } else if (pref === "copy" && !file) {
+                closePreOpenedWindow(preOpenedWindow);
                 return copyURL(url);
             }
         }
     } catch { /* catch & ignore */ }
 
+    closePreOpenedWindow(preOpenedWindow);
     return openSavingDialog({ url, file, urlType });
 }

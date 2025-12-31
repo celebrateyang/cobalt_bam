@@ -265,9 +265,26 @@
                                         <div class="name">
                                             {item.user?.full_name || "-"}
                                         </div>
-                                        <div class="sub mono">
-                                            {item.user?.primary_email ||
-                                                item.clerk_user_id}
+                                        <div class="sub-row">
+                                            <span
+                                                class="sub mono selectable"
+                                                title={item.user?.primary_email ||
+                                                    item.clerk_user_id}
+                                            >
+                                                {item.user?.primary_email ||
+                                                    item.clerk_user_id}
+                                            </span>
+                                            <button
+                                                class="btn-secondary btn-copy btn-copy-small"
+                                                type="button"
+                                                on:click={() =>
+                                                    copyText(
+                                                        item.user?.primary_email ||
+                                                            item.clerk_user_id,
+                                                    )}
+                                            >
+                                                复制
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -550,6 +567,24 @@
         max-width: 340px;
     }
 
+    .sub-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .sub-row .sub {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .selectable {
+        user-select: text;
+        -webkit-user-select: text;
+        cursor: text;
+    }
+
     .url-cell {
         display: flex;
         align-items: center;
@@ -570,6 +605,11 @@
         padding: 8px 10px;
         font-size: 0.8rem;
         white-space: nowrap;
+    }
+
+    .btn-copy-small {
+        padding: 6px 8px;
+        font-size: 0.75rem;
     }
 
     .text {
@@ -609,4 +649,3 @@
         }
     }
 </style>
-

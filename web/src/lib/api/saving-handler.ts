@@ -7,6 +7,7 @@ import settings from "$lib/state/settings";
 import lazySettingGetter from "$lib/settings/lazy-get";
 
 import { get } from "svelte/store";
+import { device } from "$lib/device";
 import { t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
@@ -277,9 +278,32 @@ export const savingHandler = async ({
 
     const selectedRequest = request || buildSaveRequest(url!);
 
+    let preOpenedWindow: Window | null = null;
+    const closePreOpenedWindow = () => {
+        try {
+            if (preOpenedWindow && !preOpenedWindow.closed) {
+                preOpenedWindow.close();
+            }
+        } catch { /* ignore */ }
+        preOpenedWindow = null;
+    };
+
+    // Keep a user-initiated tab open so downloads can start even after long processing.
+    if (typeof window !== "undefined"
+        && get(settings).save.savingMethod === "download"
+        && device.supports.directDownload
+        && navigator?.userActivation?.isActive) {
+        try {
+            preOpenedWindow = window.open("", "_blank");
+        } catch {
+            preOpenedWindow = null;
+        }
+    }
+
     const response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
+        closePreOpenedWindow();
         downloadButtonState.set("error");
         return error(get(t)("error.api.unreachable"));
     }
@@ -297,6 +321,7 @@ export const savingHandler = async ({
             const signedIn = await ensureSignedIn();
             if (!signedIn) {
                 downloadButtonState.set("idle");
+                closePreOpenedWindow();
                 return;
             }
 
@@ -306,12 +331,14 @@ export const savingHandler = async ({
             } catch {
                 downloadButtonState.set("idle");
                 showPointsError();
+                closePreOpenedWindow();
                 return;
             }
 
             if (currentPoints < requiredPoints) {
                 downloadButtonState.set("idle");
                 showPointsInsufficient(currentPoints, requiredPoints);
+                closePreOpenedWindow();
                 return;
             }
 
@@ -324,11 +351,13 @@ export const savingHandler = async ({
                     } else {
                         showPointsError();
                     }
+                    closePreOpenedWindow();
                     return;
                 }
             } catch {
                 downloadButtonState.set("idle");
                 showPointsError();
+                closePreOpenedWindow();
                 return;
             }
         }
@@ -347,6 +376,7 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        closePreOpenedWindow();
         downloadButtonState.set("error");
 
         return error(
@@ -360,6 +390,7 @@ export const savingHandler = async ({
         return downloadFile({
             url: response.url,
             urlType: "redirect",
+            preOpenedWindow,
         });
     }
 
@@ -370,6 +401,7 @@ export const savingHandler = async ({
         // This is especially useful for batch downloads where user activation can expire.
         if (selectedRequest.localProcessing === "forced") {
             downloadButtonState.set("done");
+            closePreOpenedWindow();
 
             return createSavePipeline(
                 {
@@ -393,15 +425,18 @@ export const savingHandler = async ({
 
             return downloadFile({
                 url: tunnelUrl,
+                preOpenedWindow,
             });
         } else {
             downloadButtonState.set("error");
+            closePreOpenedWindow();
             return error(get(t)("error.tunnel.probe"));
         }
     }
 
     if (response.status === "local-processing") {
         downloadButtonState.set("done");
+        closePreOpenedWindow();
         const normalizedResponse = {
             ...response,
             tunnel: Array.isArray(response.tunnel)
@@ -413,6 +448,7 @@ export const savingHandler = async ({
 
     if (response.status === "picker") {
         downloadButtonState.set("done");
+        closePreOpenedWindow();
         const buttons = [
             {
                 text: get(t)("button.done"),
@@ -443,5 +479,6 @@ export const savingHandler = async ({
     }
 
     downloadButtonState.set("error");
+    closePreOpenedWindow();
     return error(get(t)("error.api.unknown_response"));
 }

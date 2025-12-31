@@ -29,6 +29,12 @@
     let total = 0;
     let pages = 0;
 
+    type SortKey = "created_at" | "last_seen_at" | "points";
+    type SortOrder = "asc" | "desc";
+
+    let sort: SortKey = "created_at";
+    let order: SortOrder = "desc";
+
     let pointsDraft: Record<number, string> = {};
     let saving: Record<number, boolean> = {};
 
@@ -66,6 +72,8 @@
             params.set("limit", String(limit));
             const normalizedSearch = search.trim();
             if (normalizedSearch) params.set("search", normalizedSearch);
+            params.set("sort", sort);
+            params.set("order", order);
 
             const res = await fetch(
                 `${currentApiURL()}/user/admin/users?${params.toString()}`,
@@ -123,6 +131,29 @@
 
     async function handleLimitChange(nextLimit: number) {
         limit = nextLimit;
+        pageNum = 1;
+        await loadUsers();
+    }
+
+    const getAriaSort = (key: SortKey) => {
+        if (sort !== key) return "none";
+        return order === "asc" ? "ascending" : "descending";
+    };
+
+    const getSortIcon = (key: SortKey) => {
+        if (sort !== key) return "⇅";
+        return order === "asc" ? "↑" : "↓";
+    };
+
+    async function handleSort(nextSort: SortKey) {
+        if (loading) return;
+        if (sort === nextSort) {
+            order = order === "asc" ? "desc" : "asc";
+        } else {
+            sort = nextSort;
+            order = "desc";
+        }
+
         pageNum = 1;
         await loadUsers();
     }
@@ -304,9 +335,60 @@
                         <th>ID</th>
                         <th>用户</th>
                         <th>邮箱</th>
-                        <th>积分</th>
-                        <th>最近活跃</th>
-                        <th>创建时间</th>
+                        <th aria-sort={getAriaSort("points")} class="sortable">
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按积分排序"
+                                disabled={loading}
+                                on:click={() => handleSort("points")}
+                            >
+                                积分
+                                <span
+                                    class="sort-indicator"
+                                    aria-hidden="true"
+                                    >{getSortIcon("points")}</span
+                                >
+                            </button>
+                        </th>
+                        <th
+                            aria-sort={getAriaSort("last_seen_at")}
+                            class="sortable"
+                        >
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按最近活跃排序"
+                                disabled={loading}
+                                on:click={() => handleSort("last_seen_at")}
+                            >
+                                最近活跃
+                                <span
+                                    class="sort-indicator"
+                                    aria-hidden="true"
+                                    >{getSortIcon("last_seen_at")}</span
+                                >
+                            </button>
+                        </th>
+                        <th
+                            aria-sort={getAriaSort("created_at")}
+                            class="sortable"
+                        >
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按创建时间排序"
+                                disabled={loading}
+                                on:click={() => handleSort("created_at")}
+                            >
+                                创建时间
+                                <span
+                                    class="sort-indicator"
+                                    aria-hidden="true"
+                                    >{getSortIcon("created_at")}</span
+                                >
+                            </button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -563,6 +645,51 @@
         position: sticky;
         top: 0;
         z-index: 1;
+    }
+
+    th.sortable {
+        white-space: nowrap;
+    }
+
+    th[aria-sort="ascending"],
+    th[aria-sort="descending"] {
+        color: var(--text);
+    }
+
+    .sort-trigger {
+        all: unset;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        color: inherit;
+        font: inherit;
+    }
+
+    .sort-trigger:hover:not(:disabled) {
+        color: var(--text);
+    }
+
+    .sort-trigger:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+
+    .sort-trigger:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .sort-indicator {
+        width: 1.2em;
+        text-align: center;
+        font-size: 0.85em;
+        opacity: 0.9;
+    }
+
+    th[aria-sort="none"] .sort-indicator {
+        opacity: 0.5;
     }
 
     tbody td {

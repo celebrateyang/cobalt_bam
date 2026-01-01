@@ -4,36 +4,43 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
-const durationFromVideoUrl = (url) => {
-    if (!url || typeof url !== "string") return;
+const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 
+const truncate = (value, max = 250) => {
+    const s = String(value ?? "");
+    return s.length > max ? s.slice(0, max) + "..." : s;
+};
+
+const urlForLog = (value) => {
     try {
-        const parsed = new URL(url);
-        const efg = parsed.searchParams.get("efg");
-        if (!efg) return;
-
-        const decode = (value, encoding) => {
-            try {
-                return Buffer.from(value, encoding).toString("utf8");
-            } catch {
-                return;
-            }
-        };
-
-        const decoded =
-            decode(efg, "base64")
-            || decode(efg, "base64url");
-
-        if (!decoded) return;
-
-        const data = JSON.parse(decoded);
-        const duration = data?.duration_s;
-        if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
-            return duration;
-        }
+        const url = value instanceof URL ? value : new URL(String(value));
+        url.username = url.password = url.hash = '';
+        return truncate(url.toString());
     } catch {
-        // ignore
+        return truncate(value);
     }
+};
+
+const errorCauseForLog = (cause) => {
+    if (!cause) return "";
+
+    if (typeof cause === "string") {
+        return truncate(cause, 200);
+    }
+
+    if (cause instanceof Error) {
+        const code = cause.code || cause.name;
+        const message = cause.message || String(cause);
+        return truncate([code, message].filter(Boolean).join(" "), 200);
+    }
+
+    if (typeof cause === "object") {
+        const code = cause.code || cause.name;
+        const message = cause.message;
+        return truncate([code, message].filter(Boolean).join(" "), 200);
+    }
+
+    return truncate(String(cause), 200);
 };
 
 const commonHeaders = {
@@ -83,27 +90,56 @@ const getNumberFromQuery = (name, data) => {
 }
 
 const getObjectFromEntries = (name, data) => {
-    const obj = data?.match(
-        new RegExp(`\\["${name}",\\[\\],({[\\s\\S]*?}),\\d+\\]`)
-    )?.[1];
-
-    if (!obj) return;
-
-    try {
-        return JSON.parse(obj);
-    } catch {
-        return;
-    }
+    const obj = data?.match(new RegExp('\\["' + name + '",.*?,({.*?}),\\d+\\]'))?.[1];
+    return obj && JSON.parse(obj);
 }
 
 export default function instagram(obj) {
     const dispatcher = obj.dispatcher;
+    const trace = INSTAGRAM_DEBUG ? randomBytes(2).toString("hex") : "";
+
+    const log = (...args) => {
+        if (!INSTAGRAM_DEBUG) return;
+        console.log(`[instagram:${trace}]`, ...args);
+    };
+
+    const logError = (...args) => {
+        if (!INSTAGRAM_DEBUG) return;
+        console.error(`[instagram:${trace}]`, ...args);
+    };
+
+    const fetchLogged = async (label, url, options = {}) => {
+        const start = Date.now();
+        const method = options.method || "GET";
+        log(`-> ${label}`, method, urlForLog(url));
+
+        try {
+            const res = await fetch(url, options);
+            const durationMs = Date.now() - start;
+            log(
+                `<- ${label}`,
+                `status=${res.status}`,
+                `type=${res.headers.get("content-type") || ""}`,
+                `time=${durationMs}ms`
+            );
+            return res;
+        } catch (e) {
+            const durationMs = Date.now() - start;
+            const cause = errorCauseForLog(e?.cause);
+            logError(
+                `!! ${label}`,
+                `time=${durationMs}ms`,
+                cause ? `${String(e)}; cause=${cause}` : String(e)
+            );
+            throw e;
+        }
+    };
 
     async function findDtsgId(cookie) {
         try {
             if (cachedDtsg.expiry > Date.now()) return cachedDtsg.value;
 
-            const data = await fetch('https://www.instagram.com/', {
+            const data = await fetchLogged('homepage', 'https://www.instagram.com/', {
                 headers: {
                     ...commonHeaders,
                     cookie
@@ -112,6 +148,7 @@ export default function instagram(obj) {
             }).then(r => r.text());
 
             const token = data.match(/"dtsg":{"token":"(.*?)"/)[1];
+            log("dtsg token", token ? "found" : "missing");
 
             cachedDtsg.value = token;
             cachedDtsg.expiry = Date.now() + 86390000;
@@ -133,7 +170,7 @@ export default function instagram(obj) {
             headers['content-type'] = 'application/x-www-form-urlencoded';
         }
 
-        const data = await fetch(url, {
+        const data = await fetchLogged('web api', url, {
             method,
             headers,
             body: requestData && new URLSearchParams(requestData),
@@ -148,31 +185,11 @@ export default function instagram(obj) {
     }
 
     async function getMediaId(id, { cookie, token } = {}) {
-        const paths = ['p', 'reel', 'tv'];
+        const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
+        oembedURL.searchParams.set('url', `https://www.instagram.com/p/${id}/`);
+        const label = token ? "oembed bearer" : cookie ? "oembed cookie" : "oembed anon";
 
-        for (const path of paths) {
-            const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
-            oembedURL.searchParams.set('url', `https://www.instagram.com/${path}/${id}/`);
-
-            const res = await fetch(oembedURL, {
-                headers: {
-                    ...mobileHeaders,
-                    ...(token && { authorization: `Bearer ${token}` }),
-                    cookie
-                },
-                dispatcher
-            }).catch(() => null);
-
-            if (!res || !res.ok) continue;
-
-            const oembed = await res.json().catch(() => null);
-            const mediaId = oembed?.media_id;
-            if (mediaId) return mediaId;
-        }
-    }
-
-    async function requestMobileApi(mediaId, { cookie, token } = {}) {
-        const res = await fetch(`https://i.instagram.com/api/v1/media/${mediaId}/info/`, {
+        const res = await fetchLogged(label, oembedURL, {
             headers: {
                 ...mobileHeaders,
                 ...( token && { authorization: `Bearer ${token}` } ),
@@ -181,72 +198,112 @@ export default function instagram(obj) {
             dispatcher
         }).catch(() => null);
 
-        if (!res || !res.ok) return;
+        if (!res) {
+            log("oembed result", "request_failed");
+            return;
+        }
 
-        const mediaInfo = await res.json().catch(() => null);
+        const oembed = await res.json().catch(() => ({}));
+        log("oembed result", `status=${res.status}`, `media_id=${oembed?.media_id ? "yes" : "no"}`);
+
+        return oembed?.media_id;
+    }
+
+    async function requestMobileApi(mediaId, { cookie, token } = {}) {
+        const label = token ? "mobile api bearer" : cookie ? "mobile api cookie" : "mobile api anon";
+        const res = await fetchLogged(label, `https://i.instagram.com/api/v1/media/${mediaId}/info/`, {
+            headers: {
+                ...mobileHeaders,
+                ...( token && { authorization: `Bearer ${token}` } ),
+                cookie
+            },
+            dispatcher
+        }).catch(() => null);
+
+        if (!res) {
+            log("mobile api result", "request_failed");
+            return;
+        }
+
+        const mediaInfo = await res.json().catch(() => ({}));
+        log(
+            "mobile api result",
+            `status=${res.status}`,
+            `has_item=${mediaInfo?.items?.[0] ? "yes" : "no"}`
+        );
 
         return mediaInfo?.items?.[0];
     }
 
     async function requestHTML(id, cookie) {
-        const paths = ['p', 'reel', 'tv'];
+        const label = cookie ? "embed html cookie" : "embed html anon";
+        const res = await fetchLogged(label, `https://www.instagram.com/p/${id}/embed/captioned/`, {
+            headers: {
+                ...embedHeaders,
+                cookie
+            },
+            dispatcher
+        }).catch(() => null);
 
-        for (const path of paths) {
-            const data = await fetch(`https://www.instagram.com/${path}/${id}/embed/captioned/`, {
-                headers: {
-                    ...embedHeaders,
-                    cookie
-                },
-                dispatcher
-            }).then(r => r.text()).catch(() => {});
+        const data = await res?.text().catch(() => null);
 
-            if (!data) continue;
-
-            try {
-                const match = data.match(/"init",\[\],\[(.*?)\]\],/);
-                if (!match?.[1]) continue;
-
-                let embedData = JSON.parse(match[1]);
-
-                if (!embedData?.contextJSON) continue;
-
-                embedData = JSON.parse(embedData.contextJSON);
-
-                if (embedData) return embedData;
-            } catch {
-                // ignore and try next path
-            }
+        if (!data) {
+            log("embed parse", "no_html");
+            return false;
         }
+
+        const initMatch = data?.match(/"init",\[\],\[(.*?)\]\],/);
+        if (!initMatch?.[1]) {
+            log("embed parse", "init_match_failed");
+            return false;
+        }
+
+        let embedData;
+        try {
+            embedData = JSON.parse(initMatch[1]);
+        } catch (e) {
+            logError("embed parse", "init_json_parse_failed", String(e));
+            return false;
+        }
+
+        if (!embedData || !embedData?.contextJSON) return false;
+
+        try {
+            embedData = JSON.parse(embedData.contextJSON);
+        } catch (e) {
+            logError("embed parse", "context_json_parse_failed", String(e));
+            return false;
+        }
+
+        log("embed parse", `has_gql_data=${embedData?.gql_data != null ? "yes" : "no"}`);
+
+        return embedData;
     }
 
     async function getGQLParams(id, cookie) {
-        const paths = ['p', 'reel', 'tv'];
-        let html;
+        const label = cookie ? "post page cookie" : "post page anon";
+        const req = await fetchLogged(label, `https://www.instagram.com/p/${id}/`, {
+            headers: {
+                ...embedHeaders,
+                cookie
+            },
+            dispatcher
+        });
 
-        for (const path of paths) {
-            const req = await fetch(`https://www.instagram.com/${path}/${id}/`, {
-                headers: {
-                    ...embedHeaders,
-                    cookie
-                },
-                dispatcher
-            }).catch(() => null);
-
-            if (!req || !req.ok) continue;
-            html = await req.text();
-            if (html) break;
-        }
-
-        if (!html) {
-            throw new Error('failed fetching instagram page html');
-        }
-
+        const html = await req.text();
+        log("post page html", `len=${html?.length || 0}`);
         const siteData = getObjectFromEntries('SiteData', html);
         const polarisSiteData = getObjectFromEntries('PolarisSiteData', html);
         const webConfig = getObjectFromEntries('DGWWebConfig', html);
         const pushInfo = getObjectFromEntries('InstagramWebPushInfo', html);
         const lsd = getObjectFromEntries('LSD', html)?.token || randomBytes(8).toString('base64url');
         const csrf = getObjectFromEntries('InstagramSecurityConfig', html)?.csrf_token;
+        log(
+            "post page tokens",
+            `lsd=${lsd ? "yes" : "no"}`,
+            `csrf=${csrf ? "yes" : "no"}`,
+            `appId=${webConfig?.appId ? "yes" : "no"}`
+        );
 
         const anon_cookie = [
             csrf && "csrftoken=" + csrf,
@@ -292,15 +349,15 @@ export default function instagram(obj) {
 
     async function requestGQL(id, cookie) {
         const { headers, body } = await getGQLParams(id, cookie);
-        const resolvedCookie = cookie || headers?.cookie;
+        const label = cookie ? "graphql cookie" : "graphql anon";
 
-        const req = await fetch('https://www.instagram.com/graphql/query', {
+        const req = await fetchLogged(label, 'https://www.instagram.com/graphql/query', {
             method: 'POST',
             dispatcher,
             headers: {
                 ...embedHeaders,
                 ...headers,
-                ...(resolvedCookie && { cookie: resolvedCookie }),
+                cookie,
                 'content-type': 'application/x-www-form-urlencoded',
                 'X-FB-Friendly-Name': 'PolarisPostActionLoadPostQueryQuery',
             },
@@ -319,10 +376,19 @@ export default function instagram(obj) {
             }).toString()
         });
 
+        const gql_data = await req.json()
+            .then(r => r.data)
+            .catch(() => null);
+
+        log(
+            "graphql data",
+            `has_data=${gql_data ? "yes" : "no"}`,
+            `has_xdt=${gql_data?.xdt_shortcode_media ? "yes" : "no"}`,
+            `has_shortcode=${gql_data?.shortcode_media ? "yes" : "no"}`
+        );
+
         return {
-            gql_data: await req.json()
-                        .then(r => r.data)
-                        .catch(() => null)
+            gql_data
         };
     }
 
@@ -330,7 +396,7 @@ export default function instagram(obj) {
         try {
             const { headers, body } = await getGQLParams(id);
 
-            const req = await fetch('https://www.instagram.com/ajax/bulk-route-definitions/', {
+            const req = await fetchLogged('bulk-route-definitions', 'https://www.instagram.com/ajax/bulk-route-definitions/', {
                 method: 'POST',
                 dispatcher,
                 headers: {
@@ -347,12 +413,19 @@ export default function instagram(obj) {
             });
 
             const response = await req.text();
+            log("bulk-route-definitions body", `len=${response?.length || 0}`);
             if (response.includes('"tracePolicy":"polaris.privatePostPage"'))
                 return { error: 'content.post.private' };
 
             const [, mediaId, mediaOwnerId] = response.match(
                 /"media_id":\s*?"(\d+)","media_owner_id":\s*?"(\d+)"/
             ) || [];
+
+            log(
+                "bulk-route-definitions match",
+                `media_id=${mediaId ? "yes" : "no"}`,
+                `owner_id=${mediaOwnerId ? "yes" : "no"}`,
+            );
 
             if (mediaId && mediaOwnerId) {
                 const rulingURL = new URL('https://www.instagram.com/api/v1/web/get_ruling_for_media_content_logged_out');
@@ -367,13 +440,21 @@ export default function instagram(obj) {
                     dispatcher,
                 }).then(a => a.json()).catch(() => ({}));
 
+                log(
+                    "ruling response",
+                    `has_title=${rulingResponse?.title ? "yes" : "no"}`,
+                    truncate(rulingResponse?.title || "", 80)
+                );
+
                 if (rulingResponse?.title?.includes('Restricted'))
                     return { error: "content.post.age" };
             }
         } catch {
+            logError("error context", "failed");
             return { error: "fetch.fail" };
         }
 
+        log("error context", "empty");
         return { error: "fetch.empty" };
     }
 
@@ -421,16 +502,10 @@ export default function instagram(obj) {
         }
 
         if (shortcodeMedia?.video_url) {
-            const duration =
-                (typeof shortcodeMedia.video_duration === "number" && Number.isFinite(shortcodeMedia.video_duration))
-                    ? shortcodeMedia.video_duration
-                    : durationFromVideoUrl(shortcodeMedia.video_url);
-
             return {
                 urls: shortcodeMedia.video_url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`,
-                duration,
+                audioFilename: `instagram_${id}_audio`
             }
         }
 
@@ -484,15 +559,10 @@ export default function instagram(obj) {
             if (picker.length) return { picker }
         } else if (data.video_versions) {
             const video = data.video_versions.reduce((a, b) => a.width * a.height < b.width * b.height ? b : a)
-            const duration =
-                (typeof data.video_duration === "number" && Number.isFinite(data.video_duration))
-                    ? data.video_duration
-                    : durationFromVideoUrl(video.url);
             return {
                 urls: video.url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`,
-                duration,
+                audioFilename: `instagram_${id}_audio`
             }
         } else if (data.image_versions2?.candidates) {
             return {
@@ -505,61 +575,70 @@ export default function instagram(obj) {
 
     async function getPost(id, alwaysProxy) {
         const hasData = (data) => {
-            if (!data || typeof data !== "object") return false;
+            if (!data) return false;
 
-            if (data.gql_data) {
-                const shortcodeMedia = data.gql_data.shortcode_media || data.gql_data.xdt_shortcode_media;
-                if (!shortcodeMedia) return false;
-
-                if (shortcodeMedia.edge_sidecar_to_children?.edges?.some(e => e?.node?.display_url)) {
-                    return true;
-                }
-
-                return Boolean(shortcodeMedia.video_url || shortcodeMedia.display_url);
+            if ('gql_data' in data) {
+                if (data.gql_data == null) return false;
+                return (
+                    data.gql_data.xdt_shortcode_media != null
+                    || data.gql_data.shortcode_media != null
+                );
             }
 
-            if (Array.isArray(data.carousel_media) && data.carousel_media.length) return true;
-            if (Array.isArray(data.video_versions) && data.video_versions.length) return true;
-            if (data.image_versions2?.candidates?.length) return true;
-
-            return false;
-        };
-
-        const safe = async (fn) => {
-            try {
-                return await fn();
-            } catch {
-                return;
-            }
+            return Boolean(
+                data.carousel_media
+                || data.video_versions
+                || data.image_versions2?.candidates
+            );
         };
         let data, result;
+        log(
+            "getPost start",
+            id,
+            `alwaysProxy=${!!alwaysProxy}`,
+            `dispatcher=${dispatcher ? "yes" : "no"}`
+        );
+        try {
+            const cookie = getCookie('instagram');
 
-        const cookie = getCookie('instagram');
+            const bearer = getCookie('instagram_bearer');
+            const token = bearer?.values()?.token;
 
-        const bearer = getCookie('instagram_bearer');
-        const token = bearer?.values()?.token;
+            log(
+                "auth",
+                `cookie=${cookie ? "yes" : "no"}`,
+                `cookie_idx=${cookie?.meta?.idx ?? "n/a"}`,
+                `bearer=${token ? "yes" : "no"}`,
+                `bearer_idx=${bearer?.meta?.idx ?? "n/a"}`,
+            );
 
-        // get media_id for mobile api, three methods
-        let media_id = await safe(() => getMediaId(id));
-        if (!media_id && token) media_id = await safe(() => getMediaId(id, { token }));
-        if (!media_id && cookie) media_id = await safe(() => getMediaId(id, { cookie }));
+            // web app graphql api first (no cookie, cookie)
+            if (!hasData(data)) data = await requestGQL(id).catch(() => null);
+            if (!hasData(data) && cookie) data = await requestGQL(id, cookie).catch(() => null);
 
-        // mobile api (bearer)
-        if (media_id && token) data = await safe(() => requestMobileApi(media_id, { token }));
+            // mobile api (requires media_id)
+            if (!hasData(data)) {
+                // get media_id for mobile api, three methods
+                let media_id = await getMediaId(id);
+                if (!media_id && token) media_id = await getMediaId(id, { token });
+                if (!media_id && cookie) media_id = await getMediaId(id, { cookie });
+                log("media_id", media_id ? "found" : "missing");
 
-        // mobile api (no cookie, cookie)
-        if (media_id && !hasData(data)) data = await safe(() => requestMobileApi(media_id));
-        if (media_id && cookie && !hasData(data)) data = await safe(() => requestMobileApi(media_id, { cookie }));
+                // mobile api (bearer)
+                if (media_id && token) data = await requestMobileApi(media_id, { token });
 
-        // html embed (no cookie, cookie)
-        if (!hasData(data)) data = await safe(() => requestHTML(id));
-        if (!hasData(data) && cookie) data = await safe(() => requestHTML(id, cookie));
+                // mobile api (no cookie, cookie)
+                if (media_id && !hasData(data)) data = await requestMobileApi(media_id);
+                if (media_id && cookie && !hasData(data)) data = await requestMobileApi(media_id, { cookie });
+            }
 
-        // web app graphql api (no cookie, cookie)
-        if (!hasData(data)) data = await safe(() => requestGQL(id));
-        if (!hasData(data) && cookie) data = await safe(() => requestGQL(id, cookie));
+            // html embed last (no cookie, cookie)
+            if (!hasData(data)) data = await requestHTML(id);
+            if (!hasData(data) && cookie) data = await requestHTML(id, cookie);
+        } catch {}
 
         if (!hasData(data)) {
+            log("getPost", "no data, entering error context");
             return getErrorContext(id);
         }
 
@@ -569,7 +648,12 @@ export default function instagram(obj) {
             result = extractNewPost(data, id, alwaysProxy)
         }
 
-        if (result) return result;
+        if (result) {
+            log("getPost done", result?.picker ? "picker" : (result?.isPhoto ? "photo" : "video"));
+            return result;
+        }
+
+        log("getPost done", "no result");
         return { error: "fetch.empty" }
     }
 

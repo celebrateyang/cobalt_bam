@@ -4,7 +4,7 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
-// const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(procetruess.env.DEBUG_INSTAGRAM || "");
+// const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 const INSTAGRAM_DEBUG = true;
 const truncate = (value, max = 250) => {
     const s = String(value ?? "");
@@ -360,14 +360,58 @@ export default function instagram(obj) {
     }
 
     async function requestGQL(id, cookie) {
-        const { headers, body } = await getGQLParams(id, cookie);
         const label = cookie ? "graphql cookie" : "graphql anon";
+        const variables = {
+            shortcode: id,
+            fetch_tagged_user_count: null,
+            hoisted_comment_id: null,
+            hoisted_reply_id: null
+        };
+        const hasMedia = (gql_data) => (
+            gql_data?.xdt_shortcode_media != null
+            || gql_data?.shortcode_media != null
+        );
+
+        // Prefer a lightweight GET request; this avoids CSRF/LSD plumbing and is often
+        // less likely to be blocked than the full POST form.
+        try {
+            const getURL = new URL('https://www.instagram.com/graphql/query');
+            getURL.searchParams.set('doc_id', '8845758582119845');
+            getURL.searchParams.set('variables', JSON.stringify(variables));
+
+            const getReq = await fetchLogged(label, getURL, {
+                dispatcher,
+                headers: {
+                    ...commonHeaders,
+                    ...(cookie ? { cookie: String(cookie) } : {}),
+                    accept: "application/json,text/plain,*/*",
+                }
+            });
+
+            const gql_data = await getReq.json()
+                .then(r => r.data)
+                .catch(() => null);
+
+            log(
+                "graphql data",
+                `method=GET`,
+                `has_data=${gql_data ? "yes" : "no"}`,
+                `has_xdt=${gql_data?.xdt_shortcode_media ? "yes" : "no"}`,
+                `has_shortcode=${gql_data?.shortcode_media ? "yes" : "no"}`
+            );
+
+            if (hasMedia(gql_data)) return { gql_data };
+            if (!cookie) return { gql_data };
+        } catch {}
+
+        // Fallback to the original POST request.
+        const { headers, body } = await getGQLParams(id, cookie);
         const combinedCookie = [
             headers.cookie,
             cookie ? stripCookieKey(String(cookie), "csrftoken") : "",
         ].filter(Boolean).join("; ");
 
-        const req = await fetchLogged(label, 'https://www.instagram.com/graphql/query', {
+        const postReq = await fetchLogged(label, 'https://www.instagram.com/graphql/query', {
             method: 'POST',
             dispatcher,
             headers: {
@@ -381,31 +425,25 @@ export default function instagram(obj) {
                 ...body,
                 fb_api_caller_class: 'RelayModern',
                 fb_api_req_friendly_name: 'PolarisPostActionLoadPostQueryQuery',
-                variables: JSON.stringify({
-                    shortcode: id,
-                    fetch_tagged_user_count: null,
-                    hoisted_comment_id: null,
-                    hoisted_reply_id: null
-                }),
+                variables: JSON.stringify(variables),
                 server_timestamps: true,
                 doc_id: '8845758582119845'
             }).toString()
         });
 
-        const gql_data = await req.json()
+        const gql_data = await postReq.json()
             .then(r => r.data)
             .catch(() => null);
 
         log(
             "graphql data",
+            `method=POST`,
             `has_data=${gql_data ? "yes" : "no"}`,
             `has_xdt=${gql_data?.xdt_shortcode_media ? "yes" : "no"}`,
             `has_shortcode=${gql_data?.shortcode_media ? "yes" : "no"}`
         );
 
-        return {
-            gql_data
-        };
+        return { gql_data };
     }
 
     async function getErrorContext(id) {

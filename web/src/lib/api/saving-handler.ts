@@ -7,7 +7,6 @@ import settings from "$lib/state/settings";
 import lazySettingGetter from "$lib/settings/lazy-get";
 
 import { get } from "svelte/store";
-import { device } from "$lib/device";
 import { t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
@@ -50,144 +49,6 @@ const normalizeTunnelUrl = (url?: string) => {
     } catch {
         return url;
     }
-};
-
-const escapeHtml = (value: string) => {
-    return value.replace(/[&<>"']/g, (c) => {
-        switch (c) {
-            case "&":
-                return "&amp;";
-            case "<":
-                return "&lt;";
-            case ">":
-                return "&gt;";
-            case '"':
-                return "&quot;";
-            case "'":
-                return "&#39;";
-            default:
-                return c;
-        }
-    });
-};
-
-const showPreOpenedWindowLoading = (preOpenedWindow: Window, requestedUrl: string) => {
-    const lang = get(page)?.params?.lang || "en";
-    const title = get(t)("dialog.saving.preparing.title");
-    const body = get(t)("dialog.saving.preparing.body");
-    const appName = get(t)("general.meowbalt");
-
-    const safeTitle = escapeHtml(title);
-    const safeBody = escapeHtml(body);
-    const safeAppName = escapeHtml(appName);
-    const safeRequestedUrl = escapeHtml(requestedUrl);
-
-    try {
-        const doc = preOpenedWindow.document;
-        doc.open();
-        doc.write(`<!doctype html>
-<html lang="${escapeHtml(lang)}">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${safeAppName} · ${safeTitle}</title>
-    <style>
-      :root { color-scheme: light dark; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        background: #ffffff;
-        color: #111111;
-      }
-      .card {
-        width: min(420px, calc(100vw - 32px));
-        border-radius: 16px;
-        border: 1px solid rgba(0, 0, 0, 0.12);
-        background: rgba(0, 0, 0, 0.03);
-        padding: 22px 20px;
-        box-sizing: border-box;
-      }
-      .spinner {
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        border: 3px solid rgba(0, 0, 0, 0.14);
-        border-top-color: rgba(0, 0, 0, 0.7);
-        animation: spin 1s linear infinite;
-        margin-bottom: 14px;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      h1 {
-        font-size: 18px;
-        margin: 0 0 10px;
-        letter-spacing: 0.2px;
-      }
-      p {
-        margin: 0;
-        line-height: 1.55;
-        font-size: 14px;
-        opacity: 0.9;
-      }
-      code {
-        display: block;
-        margin-top: 10px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        background: rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.10);
-        word-break: break-all;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        font-size: 12px;
-        opacity: 0.9;
-      }
-      .brand {
-        margin-top: 14px;
-        font-size: 12px;
-        opacity: 0.6;
-      }
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #0b0f19;
-          color: #e6e6e6;
-        }
-        .card {
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: rgba(255, 255, 255, 0.06);
-        }
-        .spinner {
-          border: 3px solid rgba(255, 255, 255, 0.16);
-          border-top-color: rgba(255, 255, 255, 0.75);
-        }
-        code {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="card" role="status" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <h1>${safeTitle}</h1>
-      <p>${safeBody}</p>
-      <code>${safeRequestedUrl}</code>
-      <div class="brand">${safeAppName}</div>
-    </div>
-  </body>
-</html>`);
-        doc.close();
-    } catch { /* ignore */ }
-
-    // Try to keep focus on the original tab (best-effort; browser-dependent).
-    try {
-        preOpenedWindow.blur();
-    } catch { /* ignore */ }
-    try {
-        window.focus();
-    } catch { /* ignore */ }
 };
 
 const guessMimeTypeFromFilename = (filename: string) => {
@@ -416,35 +277,9 @@ export const savingHandler = async ({
 
     const selectedRequest = request || buildSaveRequest(url!);
 
-    let preOpenedWindow: Window | null = null;
-    const closePreOpenedWindow = () => {
-        try {
-            if (preOpenedWindow && !preOpenedWindow.closed) {
-                preOpenedWindow.close();
-            }
-        } catch { /* ignore */ }
-        preOpenedWindow = null;
-    };
-
-    // Keep a user-initiated tab open so downloads can start even after long processing.
-    if (typeof window !== "undefined"
-        && get(settings).save.savingMethod === "download"
-        && device.supports.directDownload
-        && navigator?.userActivation?.isActive) {
-        try {
-            preOpenedWindow = window.open("", "_blank");
-            if (preOpenedWindow) {
-                showPreOpenedWindowLoading(preOpenedWindow, selectedRequest.url);
-            }
-        } catch {
-            preOpenedWindow = null;
-        }
-    }
-
     const response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
-        closePreOpenedWindow();
         downloadButtonState.set("error");
         return error(get(t)("error.api.unreachable"));
     }
@@ -462,7 +297,6 @@ export const savingHandler = async ({
             const signedIn = await ensureSignedIn();
             if (!signedIn) {
                 downloadButtonState.set("idle");
-                closePreOpenedWindow();
                 return;
             }
 
@@ -472,14 +306,12 @@ export const savingHandler = async ({
             } catch {
                 downloadButtonState.set("idle");
                 showPointsError();
-                closePreOpenedWindow();
                 return;
             }
 
             if (currentPoints < requiredPoints) {
                 downloadButtonState.set("idle");
                 showPointsInsufficient(currentPoints, requiredPoints);
-                closePreOpenedWindow();
                 return;
             }
 
@@ -492,13 +324,11 @@ export const savingHandler = async ({
                     } else {
                         showPointsError();
                     }
-                    closePreOpenedWindow();
                     return;
                 }
             } catch {
                 downloadButtonState.set("idle");
                 showPointsError();
-                closePreOpenedWindow();
                 return;
             }
         }
@@ -517,7 +347,6 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
-        closePreOpenedWindow();
         downloadButtonState.set("error");
 
         return error(
@@ -531,7 +360,6 @@ export const savingHandler = async ({
         return downloadFile({
             url: response.url,
             urlType: "redirect",
-            preOpenedWindow,
         });
     }
 
@@ -542,7 +370,6 @@ export const savingHandler = async ({
         // This is especially useful for batch downloads where user activation can expire.
         if (selectedRequest.localProcessing === "forced") {
             downloadButtonState.set("done");
-            closePreOpenedWindow();
 
             return createSavePipeline(
                 {
@@ -566,19 +393,15 @@ export const savingHandler = async ({
 
             return downloadFile({
                 url: tunnelUrl,
-                urlType: "tunnel",
-                preOpenedWindow,
             });
         } else {
             downloadButtonState.set("error");
-            closePreOpenedWindow();
             return error(get(t)("error.tunnel.probe"));
         }
     }
 
     if (response.status === "local-processing") {
         downloadButtonState.set("done");
-        closePreOpenedWindow();
         const normalizedResponse = {
             ...response,
             tunnel: Array.isArray(response.tunnel)
@@ -590,7 +413,6 @@ export const savingHandler = async ({
 
     if (response.status === "picker") {
         downloadButtonState.set("done");
-        closePreOpenedWindow();
         const buttons = [
             {
                 text: get(t)("button.done"),
@@ -621,6 +443,5 @@ export const savingHandler = async ({
     }
 
     downloadButtonState.set("error");
-    closePreOpenedWindow();
     return error(get(t)("error.api.unknown_response"));
 }

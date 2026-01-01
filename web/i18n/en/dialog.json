@@ -33,8 +33,6 @@
     "saving.title": "choose how to save",
     "saving.blocked": "bamboo download tried opening the file in a new tab, but your browser blocked it. you can allow pop-ups for bamboo download to prevent this from happening next time.",
     "saving.timeout": "bamboo download tried saving the file automatically, but your browser stopped it. you have to select a preferred method manually.",
-    "saving.preparing.title": "downloading",
-    "saving.preparing.body": "starting your download. generating the download link may take up to ~10 seconds depending on the site and your network. this tab may close automatically.",
 
     "safety.title": "important safety notice",
 

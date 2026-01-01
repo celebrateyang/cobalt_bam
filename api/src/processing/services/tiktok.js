@@ -40,6 +40,83 @@ const extractEmbed = (html, postId) => {
     }
 };
 
+const fetchLegacyDetail = async (postId, cookie) => {
+    try {
+        // Legacy flow: should always be /video/, even for photos.
+        const res = await fetch(`https://www.tiktok.com/@i/video/${postId}`, {
+            headers: {
+                "user-agent": genericUserAgent,
+                cookie,
+            }
+        });
+        updateCookie(cookie, res.headers);
+
+        const html = await res.text();
+
+        const json = html
+            .split('<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">')[1]
+            ?.split('</script>')[0];
+
+        if (!json) return { ok: false, error: "fetch.fail" };
+
+        const data = JSON.parse(json);
+        const videoDetail = data?.["__DEFAULT_SCOPE__"]?.["webapp.video-detail"];
+
+        if (!videoDetail) return { ok: false, error: "fetch.fail" };
+
+        // status_deleted or etc
+        if (videoDetail.statusMsg) {
+            return { ok: false, error: "content.post.unavailable" };
+        }
+
+        const detail = videoDetail?.itemInfo?.itemStruct;
+        if (!detail) return { ok: false, error: "fetch.fail" };
+
+        if (detail.isContentClassified) {
+            return { ok: false, error: "content.post.age" };
+        }
+
+        if (!detail.author) {
+            return { ok: false, error: "fetch.empty" };
+        }
+
+        return { ok: true, detail };
+    } catch {
+        return { ok: false, error: "fetch.fail" };
+    }
+};
+
+const fetchEmbedDetail = async (postId, cookie) => {
+    try {
+        const embedRes = await fetch(`https://www.tiktok.com/embed/v2/${postId}`, {
+            headers: {
+                "user-agent": genericUserAgent,
+                cookie,
+            }
+        });
+
+        updateCookie(cookie, embedRes.headers);
+
+        const embedHtml = await embedRes.text();
+        const embed = extractEmbed(embedHtml, postId);
+        const embedVideoData = embed?.videoData;
+
+        const legacyNeeded =
+            !embed ||
+            embed?.isError ||
+            !embedVideoData?.itemInfos ||
+            !embedVideoData?.authorInfos;
+
+        if (legacyNeeded) {
+            return { ok: false };
+        }
+
+        return { ok: true, detail: embedVideoData };
+    } catch {
+        return { ok: false };
+    }
+};
+
 export default async function(obj) {
     const cookie = new Cookie({});
     let postId = obj.postId;
@@ -64,73 +141,32 @@ export default async function(obj) {
     }
     if (!postId) return { error: "fetch.short_link" };
 
-    // Prefer the embed page for extraction (it is less likely to be blocked by WAF).
-    let embed;
-    try {
-        const embedRes = await fetch(`https://www.tiktok.com/embed/v2/${postId}`, {
-            headers: {
-                "user-agent": genericUserAgent,
-                cookie,
-            }
-        });
-
-        updateCookie(cookie, embedRes.headers);
-
-        const embedHtml = await embedRes.text();
-        embed = extractEmbed(embedHtml, postId);
-    } catch {
-        // ignore and fall back to legacy flow below
-    }
-
-    const embedVideoData = embed?.videoData;
-    const legacyNeeded =
-        !embed ||
-        embed?.isError ||
-        !embedVideoData?.itemInfos ||
-        !embedVideoData?.authorInfos;
-    const isEmbed = !legacyNeeded;
-
+    // Prefer legacy extraction for no-watermark video URLs.
+    // If legacy fails (e.g. WAF), fall back to embed extraction and retry legacy once using refreshed cookies.
+    const legacy = await fetchLegacyDetail(postId, cookie);
     let detail;
-    if (isEmbed) {
-        detail = embedVideoData;
+    let isEmbed = false;
+
+    if (legacy.ok) {
+        detail = legacy.detail;
+        isEmbed = false;
     } else {
-        // Legacy flow: should always be /video/, even for photos.
-        const res = await fetch(`https://www.tiktok.com/@i/video/${postId}`, {
-            headers: {
-                "user-agent": genericUserAgent,
-                cookie,
-            }
-        });
-        updateCookie(cookie, res.headers);
-
-        const html = await res.text();
-
-        try {
-            const json = html
-                .split('<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">')[1]
-                .split('</script>')[0];
-
-            const data = JSON.parse(json);
-            const videoDetail = data["__DEFAULT_SCOPE__"]["webapp.video-detail"];
-
-            if (!videoDetail) throw "no video detail found";
-
-            // status_deleted or etc
-            if (videoDetail.statusMsg) {
-                return { error: "content.post.unavailable"};
-            }
-
-            detail = videoDetail?.itemInfo?.itemStruct;
-        } catch {
-            return { error: "fetch.fail" };
+        if (legacy.error && ["content.post.unavailable", "content.post.age"].includes(legacy.error)) {
+            return { error: legacy.error };
         }
 
-        if (detail.isContentClassified) {
-            return { error: "content.post.age" };
-        }
-
-        if (!detail.author) {
-            return { error: "fetch.empty" };
+        const embed = await fetchEmbedDetail(postId, cookie);
+        if (embed.ok) {
+            const retryLegacy = await fetchLegacyDetail(postId, cookie);
+            if (retryLegacy.ok) {
+                detail = retryLegacy.detail;
+                isEmbed = false;
+            } else {
+                detail = embed.detail;
+                isEmbed = true;
+            }
+        } else {
+            return { error: legacy.error || "fetch.fail" };
         }
     }
 

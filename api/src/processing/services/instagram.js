@@ -4,7 +4,8 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
-const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
+// const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(procetruess.env.DEBUG_INSTAGRAM || "");
+const INSTAGRAM_DEBUG = true;
 const truncate = (value, max = 250) => {
     const s = String(value ?? "");
     return s.length > max ? s.slice(0, max) + "..." : s;

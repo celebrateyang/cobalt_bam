@@ -27,6 +27,15 @@
         }
     },
     {
+        "name": "reel (regression)",
+        "url": "https://www.instagram.com/reel/DH3kw2nxkl2/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    },
+    {
         "name": "regular video",
         "url": "https://www.instagram.com/p/CmCVWoIr9OH/",
         "params": {},

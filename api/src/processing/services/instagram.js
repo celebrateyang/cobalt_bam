@@ -83,8 +83,17 @@ const getNumberFromQuery = (name, data) => {
 }
 
 const getObjectFromEntries = (name, data) => {
-    const obj = data?.match(new RegExp('\\["' + name + '",.*?,({.*?}),\\d+\\]'))?.[1];
-    return obj && JSON.parse(obj);
+    const obj = data?.match(
+        new RegExp(`\\["${name}",\\[\\],({[\\s\\S]*?}),\\d+\\]`)
+    )?.[1];
+
+    if (!obj) return;
+
+    try {
+        return JSON.parse(obj);
+    } catch {
+        return;
+    }
 }
 
 export default function instagram(obj) {
@@ -139,62 +148,99 @@ export default function instagram(obj) {
     }
 
     async function getMediaId(id, { cookie, token } = {}) {
-        const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
-        oembedURL.searchParams.set('url', `https://www.instagram.com/p/${id}/`);
+        const paths = ['p', 'reel', 'tv'];
 
-        const oembed = await fetch(oembedURL, {
-            headers: {
-                ...mobileHeaders,
-                ...( token && { authorization: `Bearer ${token}` } ),
-                cookie
-            },
-            dispatcher
-        }).then(r => r.json()).catch(() => {});
+        for (const path of paths) {
+            const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
+            oembedURL.searchParams.set('url', `https://www.instagram.com/${path}/${id}/`);
 
-        return oembed?.media_id;
+            const res = await fetch(oembedURL, {
+                headers: {
+                    ...mobileHeaders,
+                    ...(token && { authorization: `Bearer ${token}` }),
+                    cookie
+                },
+                dispatcher
+            }).catch(() => null);
+
+            if (!res || !res.ok) continue;
+
+            const oembed = await res.json().catch(() => null);
+            const mediaId = oembed?.media_id;
+            if (mediaId) return mediaId;
+        }
     }
 
     async function requestMobileApi(mediaId, { cookie, token } = {}) {
-        const mediaInfo = await fetch(`https://i.instagram.com/api/v1/media/${mediaId}/info/`, {
+        const res = await fetch(`https://i.instagram.com/api/v1/media/${mediaId}/info/`, {
             headers: {
                 ...mobileHeaders,
                 ...( token && { authorization: `Bearer ${token}` } ),
                 cookie
             },
             dispatcher
-        }).then(r => r.json()).catch(() => {});
+        }).catch(() => null);
+
+        if (!res || !res.ok) return;
+
+        const mediaInfo = await res.json().catch(() => null);
 
         return mediaInfo?.items?.[0];
     }
 
     async function requestHTML(id, cookie) {
-        const data = await fetch(`https://www.instagram.com/p/${id}/embed/captioned/`, {
-            headers: {
-                ...embedHeaders,
-                cookie
-            },
-            dispatcher
-        }).then(r => r.text()).catch(() => {});
+        const paths = ['p', 'reel', 'tv'];
 
-        let embedData = JSON.parse(data?.match(/"init",\[\],\[(.*?)\]\],/)[1]);
+        for (const path of paths) {
+            const data = await fetch(`https://www.instagram.com/${path}/${id}/embed/captioned/`, {
+                headers: {
+                    ...embedHeaders,
+                    cookie
+                },
+                dispatcher
+            }).then(r => r.text()).catch(() => {});
 
-        if (!embedData || !embedData?.contextJSON) return false;
+            if (!data) continue;
 
-        embedData = JSON.parse(embedData.contextJSON);
+            try {
+                const match = data.match(/"init",\[\],\[(.*?)\]\],/);
+                if (!match?.[1]) continue;
 
-        return embedData;
+                let embedData = JSON.parse(match[1]);
+
+                if (!embedData?.contextJSON) continue;
+
+                embedData = JSON.parse(embedData.contextJSON);
+
+                if (embedData) return embedData;
+            } catch {
+                // ignore and try next path
+            }
+        }
     }
 
     async function getGQLParams(id, cookie) {
-        const req = await fetch(`https://www.instagram.com/p/${id}/`, {
-            headers: {
-                ...embedHeaders,
-                cookie
-            },
-            dispatcher
-        });
+        const paths = ['p', 'reel', 'tv'];
+        let html;
 
-        const html = await req.text();
+        for (const path of paths) {
+            const req = await fetch(`https://www.instagram.com/${path}/${id}/`, {
+                headers: {
+                    ...embedHeaders,
+                    cookie
+                },
+                dispatcher
+            }).catch(() => null);
+
+            if (!req || !req.ok) continue;
+            html = await req.text();
+            if (html) break;
+        }
+
+        if (!html) {
+            throw new Error('failed fetching instagram page html');
+        }
+
         const siteData = getObjectFromEntries('SiteData', html);
         const polarisSiteData = getObjectFromEntries('PolarisSiteData', html);
         const webConfig = getObjectFromEntries('DGWWebConfig', html);
@@ -246,6 +292,7 @@ export default function instagram(obj) {
 
     async function requestGQL(id, cookie) {
         const { headers, body } = await getGQLParams(id, cookie);
+        const resolvedCookie = cookie || headers?.cookie;
 
         const req = await fetch('https://www.instagram.com/graphql/query', {
             method: 'POST',
@@ -253,7 +300,7 @@ export default function instagram(obj) {
             headers: {
                 ...embedHeaders,
                 ...headers,
-                cookie,
+                ...(resolvedCookie && { cookie: resolvedCookie }),
                 'content-type': 'application/x-www-form-urlencoded',
                 'X-FB-Friendly-Name': 'PolarisPostActionLoadPostQueryQuery',
             },
@@ -457,36 +504,60 @@ export default function instagram(obj) {
     }
 
     async function getPost(id, alwaysProxy) {
-        const hasData = (data) => data
-                                    && data.gql_data !== null
-                                    && data?.gql_data?.xdt_shortcode_media !== null;
+        const hasData = (data) => {
+            if (!data || typeof data !== "object") return false;
+
+            if (data.gql_data) {
+                const shortcodeMedia = data.gql_data.shortcode_media || data.gql_data.xdt_shortcode_media;
+                if (!shortcodeMedia) return false;
+
+                if (shortcodeMedia.edge_sidecar_to_children?.edges?.some(e => e?.node?.display_url)) {
+                    return true;
+                }
+
+                return Boolean(shortcodeMedia.video_url || shortcodeMedia.display_url);
+            }
+
+            if (Array.isArray(data.carousel_media) && data.carousel_media.length) return true;
+            if (Array.isArray(data.video_versions) && data.video_versions.length) return true;
+            if (data.image_versions2?.candidates?.length) return true;
+
+            return false;
+        };
+
+        const safe = async (fn) => {
+            try {
+                return await fn();
+            } catch {
+                return;
+            }
+        };
         let data, result;
-        try {
-            const cookie = getCookie('instagram');
 
-            const bearer = getCookie('instagram_bearer');
-            const token = bearer?.values()?.token;
+        const cookie = getCookie('instagram');
 
-            // get media_id for mobile api, three methods
-            let media_id = await getMediaId(id);
-            if (!media_id && token) media_id = await getMediaId(id, { token });
-            if (!media_id && cookie) media_id = await getMediaId(id, { cookie });
+        const bearer = getCookie('instagram_bearer');
+        const token = bearer?.values()?.token;
 
-            // mobile api (bearer)
-            if (media_id && token) data = await requestMobileApi(media_id, { token });
+        // get media_id for mobile api, three methods
+        let media_id = await safe(() => getMediaId(id));
+        if (!media_id && token) media_id = await safe(() => getMediaId(id, { token }));
+        if (!media_id && cookie) media_id = await safe(() => getMediaId(id, { cookie }));
 
-            // mobile api (no cookie, cookie)
-            if (media_id && !hasData(data)) data = await requestMobileApi(media_id);
-            if (media_id && cookie && !hasData(data)) data = await requestMobileApi(media_id, { cookie });
+        // mobile api (bearer)
+        if (media_id && token) data = await safe(() => requestMobileApi(media_id, { token }));
 
-            // html embed (no cookie, cookie)
-            if (!hasData(data)) data = await requestHTML(id);
-            if (!hasData(data) && cookie) data = await requestHTML(id, cookie);
+        // mobile api (no cookie, cookie)
+        if (media_id && !hasData(data)) data = await safe(() => requestMobileApi(media_id));
+        if (media_id && cookie && !hasData(data)) data = await safe(() => requestMobileApi(media_id, { cookie }));
 
-            // web app graphql api (no cookie, cookie)
-            if (!hasData(data)) data = await requestGQL(id);
-            if (!hasData(data) && cookie) data = await requestGQL(id, cookie);
-        } catch {}
+        // html embed (no cookie, cookie)
+        if (!hasData(data)) data = await safe(() => requestHTML(id));
+        if (!hasData(data) && cookie) data = await safe(() => requestHTML(id, cookie));
+
+        // web app graphql api (no cookie, cookie)
+        if (!hasData(data)) data = await safe(() => requestGQL(id));
+        if (!hasData(data) && cookie) data = await safe(() => requestGQL(id, cookie));
 
         if (!hasData(data)) {
             return getErrorContext(id);

@@ -1,6 +1,17 @@
 import { query, getClient, initPool } from "./pg-client.js";
 import { env } from "../config.js";
 
+const normalizeOrderDirection = (value, fallback = "DESC") => {
+    if (typeof value !== "string") return fallback;
+    const normalized = value.toUpperCase();
+    return normalized === "ASC" || normalized === "DESC" ? normalized : fallback;
+};
+
+const normalizeSortField = (value, allowed, fallback) => {
+    if (typeof value !== "string") return fallback;
+    return allowed.includes(value) ? value : fallback;
+};
+
 // 初始化数据库
 export const initDatabase = async () => {
     // 初始化连接池
@@ -28,10 +39,25 @@ export const initDatabase = async () => {
     `);
 
     // 创建账号表索引
+    // 迁移：白名单同步字段
+    await query(
+        `ALTER TABLE social_accounts
+            ADD COLUMN IF NOT EXISTS sync_enabled BOOLEAN DEFAULT false;`,
+    );
+    await query(
+        `ALTER TABLE social_accounts
+            ADD COLUMN IF NOT EXISTS sync_last_run_at BIGINT;`,
+    );
+    await query(
+        `ALTER TABLE social_accounts
+            ADD COLUMN IF NOT EXISTS sync_error TEXT;`,
+    );
+
     await query(`CREATE INDEX IF NOT EXISTS idx_accounts_platform ON social_accounts(platform);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_accounts_category ON social_accounts(category);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_accounts_priority ON social_accounts(priority DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_accounts_active ON social_accounts(is_active);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_accounts_sync_enabled ON social_accounts(sync_enabled);`);
 
     // 创建社交媒体视频表
     await query(`
@@ -59,12 +85,48 @@ export const initDatabase = async () => {
     `);
 
     // 创建视频表索引
+    // 迁移：视频同步 + 置顶字段
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS pinned_order INTEGER DEFAULT 0;`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS synced_at BIGINT;`,
+    );
+
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_account ON social_videos(account_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_platform ON social_videos(platform);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_featured ON social_videos(is_featured);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_active ON social_videos(is_active);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_display_order ON social_videos(display_order DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_created_at ON social_videos(created_at DESC);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_videos_pinned ON social_videos(is_pinned, pinned_order DESC);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_videos_source ON social_videos(source);`);
+
+    // ==================== 站内行为统计（热榜） ====================
+    await query(`
+        CREATE TABLE IF NOT EXISTS social_video_events_daily (
+            video_id INTEGER NOT NULL,
+            event_date DATE NOT NULL,
+            event_type TEXT NOT NULL,
+            event_count INTEGER NOT NULL DEFAULT 0,
+            updated_at BIGINT NOT NULL,
+            PRIMARY KEY (video_id, event_date, event_type),
+            FOREIGN KEY (video_id) REFERENCES social_videos(id) ON DELETE CASCADE
+        );
+    `);
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_video_events_type_date ON social_video_events_daily(event_type, event_date DESC);`,
+    );
 
     // 创建管理员用户表
     await query(`
@@ -95,8 +157,8 @@ export const createAccount = async (accountData) => {
         INSERT INTO social_accounts (
             platform, username, display_name, avatar_url, profile_url,
             description, follower_count, category, tags, priority,
-            is_active, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            is_active, sync_enabled, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id
     `, [
         accountData.platform,
@@ -110,6 +172,7 @@ export const createAccount = async (accountData) => {
         tags,
         accountData.priority || 0,
         accountData.is_active !== false,
+        accountData.sync_enabled ? true : false,
         now,
         now
     ]);
@@ -160,8 +223,13 @@ export const getAccounts = async (filters = {}) => {
     sql += ' GROUP BY a.id';
 
     // 排序
-    const sortField = filters.sort || 'priority';
-    const sortOrder = filters.order || 'DESC';
+    // 排序（白名单，避免 SQL 注入）
+    const sortField = normalizeSortField(
+        filters.sort,
+        ["priority", "created_at", "updated_at", "follower_count", "username", "platform", "category"],
+        "priority",
+    );
+    const sortOrder = normalizeOrderDirection(filters.order, "DESC");
     sql += ` ORDER BY a.${sortField} ${sortOrder}, a.created_at DESC`;
 
     // 分页
@@ -252,7 +320,8 @@ export const updateAccount = async (id, updates) => {
 
     const allowedFields = [
         'platform', 'username', 'display_name', 'avatar_url', 'profile_url',
-        'description', 'follower_count', 'category', 'priority', 'is_active'
+        'description', 'follower_count', 'category', 'priority', 'is_active',
+        'sync_enabled', 'sync_last_run_at', 'sync_error',
     ];
 
     allowedFields.forEach(field => {
@@ -306,8 +375,9 @@ export const createVideo = async (videoData) => {
             account_id, platform, video_id, title, description,
             video_url, thumbnail_url, duration, view_count, like_count,
             publish_date, tags, is_featured, is_active, display_order,
+            source, is_pinned, pinned_order, synced_at,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING id
     `, [
         videoData.account_id,
@@ -325,11 +395,95 @@ export const createVideo = async (videoData) => {
         videoData.is_featured ? true : false,
         videoData.is_active !== false,
         videoData.display_order || 0,
+        videoData.source || 'manual',
+        videoData.is_pinned ? true : false,
+        videoData.pinned_order || 0,
+        videoData.synced_at || null,
         now,
         now
     ]);
 
     return await getVideoById(result.rows[0].id);
+};
+
+export const upsertVideoFromSync = async (videoData) => {
+    const now = Date.now();
+
+    const platform = videoData?.platform;
+    const videoId = videoData?.video_id;
+    const videoUrl = videoData?.video_url;
+
+    if (!platform || !videoUrl) {
+        throw new Error("upsertVideoFromSync requires platform and video_url");
+    }
+
+    let existingId = null;
+
+    if (videoId) {
+        const existing = await query(
+            `SELECT id FROM social_videos WHERE platform = $1 AND video_id = $2 LIMIT 1`,
+            [platform, videoId],
+        );
+        existingId = existing.rows?.[0]?.id ?? null;
+    }
+
+    if (!existingId) {
+        const existing = await query(
+            `SELECT id FROM social_videos WHERE video_url = $1 LIMIT 1`,
+            [videoUrl],
+        );
+        existingId = existing.rows?.[0]?.id ?? null;
+    }
+
+    if (!existingId) {
+        const created = await createVideo({
+            ...videoData,
+            source: videoData.source || "sync",
+            synced_at: videoData.synced_at || now,
+        });
+        return { video: created, action: "created" };
+    }
+
+    const tags = JSON.stringify(videoData.tags || []);
+
+    await query(
+        `
+        UPDATE social_videos
+        SET video_id = COALESCE(NULLIF($1, ''), video_id),
+            title = $2,
+            description = $3,
+            video_url = $4,
+            thumbnail_url = $5,
+            duration = $6,
+            publish_date = COALESCE($7, publish_date),
+            tags = $8,
+            source = $9,
+            is_pinned = $10,
+            pinned_order = $11,
+            synced_at = $12,
+            updated_at = $13
+        WHERE id = $14
+        `,
+        [
+            videoData.video_id || "",
+            videoData.title || "",
+            videoData.description || "",
+            videoUrl,
+            videoData.thumbnail_url || "",
+            videoData.duration ?? null,
+            videoData.publish_date ?? null,
+            tags,
+            videoData.source || "sync",
+            videoData.is_pinned ? true : false,
+            videoData.pinned_order || 0,
+            videoData.synced_at || now,
+            now,
+            existingId,
+        ],
+    );
+
+    const updated = await getVideoById(existingId);
+    return { video: updated, action: "updated" };
 };
 
 /**
@@ -367,6 +521,12 @@ export const getVideos = async (filters = {}) => {
         paramIndex++;
     }
 
+    if (filters.is_pinned !== undefined) {
+        sql += ` AND v.is_pinned = $${paramIndex}`;
+        params.push(filters.is_pinned);
+        paramIndex++;
+    }
+
     if (filters.is_active !== undefined) {
         sql += ` AND v.is_active = $${paramIndex}`;
         params.push(filters.is_active);
@@ -381,8 +541,21 @@ export const getVideos = async (filters = {}) => {
     }
 
     // 排序
-    const sortField = filters.sort || 'display_order';
-    const sortOrder = filters.order || 'DESC';
+    // 排序（白名单，避免 SQL 注入）
+    const sortField = normalizeSortField(
+        filters.sort,
+        [
+            "display_order",
+            "pinned_order",
+            "created_at",
+            "updated_at",
+            "publish_date",
+            "view_count",
+            "like_count",
+        ],
+        "display_order",
+    );
+    const sortOrder = normalizeOrderDirection(filters.order, "DESC");
 
     if (sortField === 'display_order') {
         sql += ` ORDER BY v.display_order DESC, v.created_at DESC`;
@@ -439,6 +612,11 @@ export const getVideos = async (filters = {}) => {
     if (filters.is_featured !== undefined) {
         countSql += ` AND v.is_featured = $${countParamIndex}`;
         countParams.push(filters.is_featured);
+        countParamIndex++;
+    }
+    if (filters.is_pinned !== undefined) {
+        countSql += ` AND v.is_pinned = $${countParamIndex}`;
+        countParams.push(filters.is_pinned);
         countParamIndex++;
     }
     if (filters.is_active !== undefined) {
@@ -506,7 +684,8 @@ export const updateVideo = async (id, updates) => {
     const allowedFields = [
         'video_id', 'title', 'description', 'video_url', 'thumbnail_url',
         'duration', 'view_count', 'like_count', 'publish_date',
-        'is_featured', 'is_active', 'display_order'
+        'is_featured', 'is_active', 'display_order',
+        'source', 'is_pinned', 'pinned_order', 'synced_at',
     ];
 
     allowedFields.forEach(field => {
@@ -645,4 +824,95 @@ export const getAdminByUsername = async (username) => {
  */
 export const updateLastLogin = async (userId) => {
     await query('UPDATE admin_users SET last_login_at = $1 WHERE id = $2', [Date.now(), userId]);
+};
+
+// ==================== Discover 热榜（站内行为） ====================
+
+/**
+ * 记录站内行为事件（按天聚合）。
+ * 返回最新 event_count；若 video 不存在/不可用则返回 null。
+ */
+export const recordVideoEvent = async (videoId, eventType, occurredAt = Date.now()) => {
+    const eventDate = new Date(occurredAt).toISOString().slice(0, 10);
+    const now = Date.now();
+
+    const result = await query(
+        `
+            INSERT INTO social_video_events_daily (video_id, event_date, event_type, event_count, updated_at)
+            SELECT v.id, $2, $3, 1, $4
+            FROM social_videos v
+            WHERE v.id = $1 AND v.is_active = true
+            ON CONFLICT (video_id, event_date, event_type)
+            DO UPDATE SET
+                event_count = social_video_events_daily.event_count + 1,
+                updated_at = EXCLUDED.updated_at
+            RETURNING event_count
+        `,
+        [videoId, eventDate, eventType, now],
+    );
+
+    if (!result.rows.length) return null;
+    return parseInt(result.rows[0].event_count);
+};
+
+/**
+ * 获取热榜视频：按 days 内 event_type 的 event_count 求和降序。
+ */
+export const getTrendingVideos = async ({
+    platform,
+    days = 7,
+    limit = 20,
+    event_type = "download_click",
+} = {}) => {
+    const safeDays = Math.min(30, Math.max(1, parseInt(days) || 7));
+    const safeLimit = Math.min(60, Math.max(1, parseInt(limit) || 20));
+
+    const startDate = new Date();
+    startDate.setUTCDate(startDate.getUTCDate() - (safeDays - 1));
+    const startDateString = startDate.toISOString().slice(0, 10);
+
+    const result = await query(
+        `
+            WITH scores AS (
+                SELECT video_id, SUM(event_count) AS trend_score
+                FROM social_video_events_daily
+                WHERE event_type = $1 AND event_date >= $2
+                GROUP BY video_id
+            )
+            SELECT v.*,
+                   a.username as account_username,
+                   a.display_name as account_display_name,
+                   a.avatar_url as account_avatar_url,
+                   a.platform as account_platform,
+                   COALESCE(s.trend_score, 0) as trend_score
+            FROM social_videos v
+            INNER JOIN social_accounts a ON v.account_id = a.id
+            LEFT JOIN scores s ON s.video_id = v.id
+            WHERE v.is_active = true
+              AND COALESCE(s.trend_score, 0) > 0
+              AND ($3::text IS NULL OR v.platform = $3)
+            ORDER BY COALESCE(s.trend_score, 0) DESC, v.created_at DESC
+            LIMIT $4
+        `,
+        [event_type, startDateString, platform || null, safeLimit],
+    );
+
+    const videos = result.rows;
+
+    videos.forEach((video) => {
+        video.tags = JSON.parse(video.tags || "[]");
+        video.trend_score = parseInt(video.trend_score);
+        video.account = {
+            username: video.account_username,
+            display_name: video.account_display_name,
+            avatar_url: video.account_avatar_url,
+            platform: video.account_platform,
+        };
+        delete video.account_username;
+        delete video.account_display_name;
+        delete video.account_avatar_url;
+        delete video.account_platform;
+    });
+
+    return videos;
 };

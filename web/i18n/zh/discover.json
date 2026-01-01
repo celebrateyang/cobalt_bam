@@ -4,6 +4,12 @@
   "filter": {
     "all": "全部平台"
   },
+  "section": {
+    "trending": "热榜",
+    "pinned": "置顶",
+    "featured": "精选",
+    "latest": "最新"
+  },
   "status": {
     "loading": "加载中...",
     "error": "加载失败",
@@ -21,6 +27,9 @@
     "copyTitle": "复制视频地址",
     "copyFailed": "复制失败:",
     "manualCopy": "无法自动复制，请手动复制:\n{{url}}",
-    "closeDialog": "点击\"确定\"关闭此消息"
+    "closeDialog": "点击\"确定\"关闭此消息",
+    "creator_batch": "更多来自作者",
+    "creator_batch_title": "{{name}} · 批量下载",
+    "load_more": "加载更多"
   }
 }

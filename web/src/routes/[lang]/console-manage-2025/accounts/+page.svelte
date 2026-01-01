@@ -12,6 +12,8 @@
     let editingAccount: SocialAccount | null = null;
     let syncingUsers = false;
     let syncMessage = "";
+    let syncingAccountId: number | null = null;
+    let socialSyncMessage = "";
     $: lang = $page.params.lang;
 
     // 表单数据
@@ -27,6 +29,7 @@
         tags: "",
         priority: 5,
         is_active: true,
+        sync_enabled: false,
     };
 
     onMount(async () => {
@@ -107,6 +110,7 @@
             tags: "",
             priority: 5,
             is_active: true,
+            sync_enabled: false,
         };
         showAddModal = true;
     }
@@ -125,8 +129,38 @@
             tags: account.tags.join(", "),
             priority: account.priority,
             is_active: account.is_active,
+            sync_enabled: Boolean(account.sync_enabled),
         };
         showAddModal = true;
+    }
+
+    const formatDateTime = (value?: number | null) => {
+        if (!value) return "";
+        try {
+            return new Date(value).toLocaleString();
+        } catch {
+            return "";
+        }
+    };
+
+    async function syncSocialAccount(id: number) {
+        syncingAccountId = id;
+        socialSyncMessage = "";
+
+        try {
+            const response = await accounts.sync(id);
+            if (response.status !== "success" || !response.data) {
+                throw new Error(response.error?.message || "同步失败");
+            }
+
+            const { total, created, updated } = response.data;
+            socialSyncMessage = `同步成功：${total}（新增 ${created}，更新 ${updated}）`;
+            await loadAccounts();
+        } catch (e) {
+            socialSyncMessage = e instanceof Error ? e.message : "同步失败";
+        } finally {
+            syncingAccountId = null;
+        }
     }
 
     async function handleSubmit() {
@@ -152,6 +186,15 @@
             if (response.status === "success") {
                 showAddModal = false;
                 await loadAccounts();
+
+                const accountId = editingAccount ? editingAccount.id : response.data?.id;
+                const shouldAutoSync =
+                    Boolean(formData.sync_enabled) &&
+                    (!editingAccount || !editingAccount.sync_enabled);
+
+                if (shouldAutoSync && typeof accountId === "number") {
+                    await syncSocialAccount(accountId);
+                }
             } else {
                 console.error("Account operation failed:", response);
                 error = response.error?.message || "操作失败";
@@ -211,6 +254,9 @@
             >
             {#if syncMessage}
                 <span class="sync-status">{syncMessage}</span>
+            {/if}
+            {#if socialSyncMessage}
+                <span class="sync-status">{socialSyncMessage}</span>
             {/if}
             <button
                 class="btn-secondary"
@@ -300,10 +346,35 @@
                                         {/each}
                                     </div>
                                 {/if}
+                                {#if account.sync_enabled || account.sync_last_run_at || account.sync_error}
+                                    <div class="sync-inline">
+                                        {#if account.sync_enabled}
+                                            <span class="sync-badge">AUTO SYNC</span>
+                                        {/if}
+                                        {#if account.sync_last_run_at}
+                                            <span class="sync-meta"
+                                                >上次同步：{formatDateTime(account.sync_last_run_at)}</span
+                                            >
+                                        {/if}
+                                        {#if account.sync_error}
+                                            <span class="sync-error" title={account.sync_error}
+                                                >同步失败</span
+                                            >
+                                        {/if}
+                                    </div>
+                                {/if}
                             </div>
                         </div>
 
                         <div class="account-actions">
+                            <button
+                                class="btn-icon btn-sync"
+                                disabled={syncingAccountId === account.id}
+                                on:click={() => syncSocialAccount(account.id)}
+                                title="同步最近内容"
+                            >
+                                🔄
+                            </button>
                             <button
                                 class="toggle-btn-small"
                                 class:active={account.is_active}
@@ -433,6 +504,16 @@
                     </label>
                 </div>
 
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.sync_enabled}
+                        />
+                        自动同步（最近 5 条 + 置顶）
+                    </label>
+                </div>
+
                 <div class="modal-actions">
                     <button
                         type="button"
@@ -486,6 +567,34 @@
         font-size: 0.9rem;
         color: var(--secondary);
         white-space: nowrap;
+    }
+
+    .sync-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--subtext);
+    }
+
+    .sync-badge {
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    .sync-meta {
+        opacity: 0.85;
+    }
+
+    .sync-error {
+        color: var(--red);
+        font-weight: 600;
     }
 
     .accounts-list {
@@ -677,6 +786,20 @@
 
     .btn-icon:active {
         transform: scale(0.95);
+    }
+
+    .btn-icon:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-sync {
+        background: var(--accent);
+        color: var(--white);
+    }
+
+    .btn-sync:hover:not(:disabled) {
+        background: var(--accent-hover);
     }
 
     .accounts-grid {

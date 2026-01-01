@@ -46,6 +46,13 @@ requirements:
     - if you don't know what api url to use for local development, use `http://localhost:9000/`.
 6. run cobalt: `pnpm start`.
 
+### optional: discover/social module
+if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):
+
+```sh
+pnpm -C api init-social
+```
+
 ### ubuntu 22.04 workaround
 `nscd` needs to be installed and running so that the `ffmpeg-static` binary can resolve DNS ([#101](https://github.com/imputnet/cobalt/issues/101#issuecomment-1494822258)):
 

@@ -1,6 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
+import { syncAccountVideos } from '../processing/social/sync.js';
 import {
     createAccount,
     getAccounts,
@@ -14,7 +15,9 @@ import {
     deleteVideo,
     getFeaturedVideos,
     toggleFeatured,
-    getStats
+    getStats,
+    recordVideoEvent,
+    getTrendingVideos
 } from '../db/social-media.js';
 
 const router = express.Router();
@@ -33,6 +36,19 @@ const publicLimiter = rateLimit({
 });
 
 // 管理员 API 限流
+// Discover 热榜事件上报限流（更宽松，避免影响下载）
+const eventLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 400,
+    message: {
+        status: 'error',
+        error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many requests, please try again later'
+        }
+    }
+});
+
 const adminLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 1000,
@@ -368,6 +384,59 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/social/accounts/:id/sync
+ * 同步白名单创作者（需要认证）
+ */
+router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) => {
+    const now = Date.now();
+
+    try {
+        const id = parseInt(req.params.id);
+        const account = await getAccountById(id);
+
+        if (!account) {
+            return res.status(404).json({
+                status: 'error',
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Account not found'
+                }
+            });
+        }
+
+        const result = await syncAccountVideos(account, {
+            recentLimit: req.body?.recentLimit,
+            pinnedLimit: req.body?.pinnedLimit,
+        });
+
+        res.json({
+            status: 'success',
+            data: result
+        });
+    } catch (error) {
+        console.error('Sync account error:', error);
+
+        try {
+            const id = parseInt(req.params.id);
+            await updateAccount(id, {
+                sync_last_run_at: now,
+                sync_error: error instanceof Error ? error.message : String(error),
+            });
+        } catch {
+            // ignore secondary failures
+        }
+
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to sync account'
+            }
+        });
+    }
+});
+
 // ==================== 视频路由 ====================
 
 /**
@@ -380,6 +449,7 @@ router.get('/videos', publicLimiter, async (req, res) => {
             account_id: req.query.account_id,
             platform: req.query.platform,
             is_featured: req.query.is_featured !== undefined ? req.query.is_featured === 'true' : undefined,
+            is_pinned: req.query.is_pinned !== undefined ? req.query.is_pinned === 'true' : undefined,
             is_active: req.query.is_active !== undefined ? req.query.is_active === 'true' : undefined,
             search: req.query.search,
             page: req.query.page,
@@ -499,6 +569,110 @@ router.get('/videos/featured', publicLimiter, async (req, res) => {
  * GET /api/social/videos/:id
  * 获取视频详情（公开）
  */
+/**
+ * GET /api/social/videos/trending
+ * 获取站内热榜（按 download_click 聚合）
+ */
+router.get('/videos/trending', publicLimiter, async (req, res) => {
+    try {
+        const allowedPlatforms = new Set(['tiktok', 'instagram']);
+        const platform = typeof req.query.platform === 'string' && allowedPlatforms.has(req.query.platform)
+            ? req.query.platform
+            : undefined;
+
+        const daysRaw = parseInt(req.query.days);
+        const limitRaw = parseInt(req.query.limit);
+        const days = Math.min(30, Math.max(1, Number.isFinite(daysRaw) ? daysRaw : 7));
+        const limit = Math.min(60, Math.max(1, Number.isFinite(limitRaw) ? limitRaw : 20));
+
+        const videos = await getTrendingVideos({
+            platform,
+            days,
+            limit,
+            event_type: 'download_click',
+        });
+
+        res.json({
+            status: 'success',
+            data: {
+                videos,
+                meta: {
+                    days,
+                    event_type: 'download_click',
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Get trending videos error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to retrieve trending videos'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/social/videos/:id/event
+ * 上报站内行为事件（用于热榜）
+ */
+router.post('/videos/:id/event', eventLimiter, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'Invalid video id'
+                }
+            });
+        }
+
+        const allowedTypes = new Set(['download_click', 'creator_batch_open']);
+        const type = req.body?.type;
+
+        if (typeof type !== 'string' || !allowedTypes.has(type)) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'Invalid event type'
+                }
+            });
+        }
+
+        const eventCount = await recordVideoEvent(id, type);
+        if (eventCount === null) {
+            return res.status(404).json({
+                status: 'error',
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Video not found'
+                }
+            });
+        }
+
+        res.json({
+            status: 'success',
+            data: {
+                event_count: eventCount
+            }
+        });
+    } catch (error) {
+        console.error('Record video event error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to record event'
+            }
+        });
+    }
+});
+
 router.get('/videos/:id', publicLimiter, async (req, res) => {
     try {
         const video = await getVideoById(parseInt(req.params.id));

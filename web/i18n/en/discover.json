@@ -4,6 +4,12 @@
   "filter": {
     "all": "All Platforms"
   },
+  "section": {
+    "trending": "Trending",
+    "pinned": "Pinned",
+    "featured": "Featured",
+    "latest": "Latest"
+  },
   "status": {
     "loading": "Loading...",
     "error": "Load failed",
@@ -21,6 +27,9 @@
     "copyTitle": "Copy video address",
     "copyFailed": "Copy failed:",
     "manualCopy": "Cannot copy automatically, please copy manually:\n{{url}}",
-    "closeDialog": "Click \"OK\" to close this message"
+    "closeDialog": "Click \"OK\" to close this message",
+    "creator_batch": "More from creator",
+    "creator_batch_title": "{{name}} · Batch",
+    "load_more": "Load more"
   }
 }

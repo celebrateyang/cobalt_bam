@@ -1,84 +1,318 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/translations';
-    import { onMount } from 'svelte';
-    import { videos, type GroupedVideos } from '$lib/api/social';
-    
-    let groupedVideos: GroupedVideos[] = [];
-    let loading = true;
-    let error = '';
-    let selectedPlatform = 'tiktok';
-    let copiedId: number | null = null;
+    import { onMount } from "svelte";
 
-    $: translate = (key: string, vars?: any) => $t(key, vars);
-    
+    import { t } from "$lib/i18n/translations";
+    import { videos, type SocialVideo } from "$lib/api/social";
+    import { savingHandler } from "$lib/api/saving-handler";
+    import { createDialog } from "$lib/state/dialogs";
+
+    type PlatformFilter = "all" | "tiktok" | "instagram";
+    type DiscoverSectionKey = "trending" | "pinned" | "featured" | "latest";
+
+    const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
+    const LATEST_PAGE_SIZE = 24;
+
+    let selectedPlatform: PlatformFilter = "all";
+
+    let trendingVideos: SocialVideo[] = [];
+    let pinnedVideos: SocialVideo[] = [];
+    let featuredVideos: SocialVideo[] = [];
+    let latestVideos: SocialVideo[] = [];
+
+    let loading = true;
+    let loadingMore = false;
+    let error = "";
+
+    let latestPage = 1;
+    let latestHasMore = false;
+
+    let runningDownloadId: number | null = null;
+
+    $: platformParam = selectedPlatform === "all" ? undefined : selectedPlatform;
+
     $: platforms = [
-        { value: 'all', label: $t('discover.filter.all'), icon: '🌐' },
-        { value: 'tiktok', label: 'TikTok', icon: '🎵' },
-        { value: 'instagram', label: 'Instagram', icon: '📷' },
-        { value: 'youtube', label: 'YouTube', icon: '▶️' },
-    ];
-    
+        { value: "all", label: $t("discover.filter.all") },
+        { value: "tiktok", label: "TikTok" },
+        { value: "instagram", label: "Instagram" },
+    ] as const;
+
+    const normalize = (list: SocialVideo[]) =>
+        list.filter((video) => SUPPORTED_PLATFORMS.has(video.platform));
+
+    const pageHasMore = (pagination: any) =>
+        Boolean(pagination && typeof pagination.page === "number" && pagination.page < pagination.pages);
+
+    const setListOrThrow = (
+        response: Awaited<ReturnType<typeof videos.list>>,
+        setter: (items: SocialVideo[]) => void
+    ) => {
+        if (response.status !== "success" || !response.data) {
+            throw new Error(response.error?.message || $t("discover.status.error"));
+        }
+
+        setter(normalize(response.data.videos || []));
+
+        return response.data.pagination;
+    };
+
+    const openBatchDialog = (
+        items: { url: string; title?: string; duration?: number }[],
+        title?: string
+    ) => {
+        createDialog({
+            id: `discover-batch-${Date.now()}`,
+            type: "batch",
+            title,
+            items: items.map((item) => ({
+                url: item.url,
+                title: item.title,
+                duration: item.duration,
+            })),
+        });
+    };
+
+    const getCreatorName = (video: SocialVideo) =>
+        video.account?.display_name || video.account?.username || "";
+
+    const getCreatorHandle = (video: SocialVideo) =>
+        video.account?.username ? `@${video.account.username}` : "";
+
+    const getPlatformLabel = (platform: string) => {
+        if (platform === "tiktok") return "TikTok";
+        if (platform === "instagram") return "Instagram";
+        return platform;
+    };
+
+    const getTitle = (video: SocialVideo) => video.title || video.video_url;
+
     onMount(() => {
-        loadVideos();
+        void loadAll();
     });
-    
-    async function loadVideos() {
+
+    async function loadAll() {
         loading = true;
-        error = '';
-        
-        const platform = selectedPlatform === 'all' ? undefined : selectedPlatform;
-        const response = await videos.grouped(platform);
-        
-        loading = false;
-        
-        if (response.status === 'success' && response.data) {
-            groupedVideos = response.data;
-        } else {
-            error = response.error?.message || $t('discover.status.error');
-        }
-    }
-    
-    function handlePlatformChange(platform: string) {
-        selectedPlatform = platform;
-        loadVideos();
-    }
-    
-    async function copyUrl(url: string, videoId: number) {
+        loadingMore = false;
+        error = "";
+        latestPage = 1;
+        latestHasMore = false;
+
         try {
-            // 尝试使用现代 Clipboard API
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(url);
+            const [trendingRes, pinnedRes, featuredRes, latestRes] = await Promise.all([
+                videos.trending({
+                    platform: platformParam,
+                    days: 7,
+                    limit: 12,
+                }),
+                videos.list({
+                    platform: platformParam,
+                    is_active: true,
+                    is_pinned: true,
+                    limit: 12,
+                    sort: "pinned_order",
+                    order: "DESC",
+                }),
+                videos.list({
+                    platform: platformParam,
+                    is_active: true,
+                    is_featured: true,
+                    limit: 12,
+                    sort: "display_order",
+                    order: "DESC",
+                }),
+                videos.list({
+                    platform: platformParam,
+                    is_active: true,
+                    page: 1,
+                    limit: LATEST_PAGE_SIZE,
+                    sort: "created_at",
+                    order: "DESC",
+                }),
+            ]);
+
+            if (trendingRes.status === "success" && trendingRes.data) {
+                trendingVideos = normalize(trendingRes.data.videos || []);
             } else {
-                // 备用方案：使用 execCommand (适用于 HTTP 或旧浏览器)
-                const textArea = document.createElement('textarea');
-                textArea.value = url;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                const successful = document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                if (!successful) {
-                    throw new Error('execCommand failed');
-                }
+                trendingVideos = [];
             }
-            
-            copiedId = videoId;
-            setTimeout(() => {
-                copiedId = null;
-            }, 2000);
-        } catch (err) {
-            console.error('复制失败:', err);
-            // 提供更友好的错误提示
-            const message = $t('discover.action.manualCopy', { url } as any);
-            if (confirm(message + '\n\n' + $t('discover.action.closeDialog'))) {
-                // 用户关闭了对话框
+
+            try {
+                setListOrThrow(pinnedRes, (items) => (pinnedVideos = items));
+            } catch {
+                pinnedVideos = [];
+                error = $t("discover.status.error");
             }
+
+            try {
+                setListOrThrow(featuredRes, (items) => (featuredVideos = items));
+            } catch {
+                featuredVideos = [];
+                error = $t("discover.status.error");
+            }
+
+            try {
+                const pagination = setListOrThrow(latestRes, (items) => (latestVideos = items));
+                latestHasMore = pageHasMore(pagination);
+            } catch {
+                latestVideos = [];
+                latestHasMore = false;
+                error = $t("discover.status.error");
+            }
+        } catch (e) {
+            trendingVideos = [];
+            pinnedVideos = [];
+            featuredVideos = [];
+            latestVideos = [];
+            latestHasMore = false;
+            error = e instanceof Error ? e.message : $t("discover.status.error");
+        } finally {
+            loading = false;
         }
     }
+
+    async function loadMore() {
+        if (loadingMore || !latestHasMore) return;
+
+        loadingMore = true;
+        error = "";
+
+        try {
+            const nextPage = latestPage + 1;
+
+            const res = await videos.list({
+                platform: platformParam,
+                is_active: true,
+                page: nextPage,
+                limit: LATEST_PAGE_SIZE,
+                sort: "created_at",
+                order: "DESC",
+            });
+
+            if (res.status !== "success" || !res.data) {
+                throw new Error(res.error?.message || $t("discover.status.error"));
+            }
+
+            latestVideos = [...latestVideos, ...normalize(res.data.videos || [])];
+            latestPage = res.data.pagination.page;
+            latestHasMore = pageHasMore(res.data.pagination);
+        } catch (e) {
+            error = e instanceof Error ? e.message : $t("discover.status.error");
+        } finally {
+            loadingMore = false;
+        }
+    }
+
+    async function handleDownload(video: SocialVideo) {
+        if (!video?.video_url) return;
+
+        void videos.trackEvent(video.id, "download_click").catch(() => {});
+
+        runningDownloadId = video.id;
+        try {
+            await savingHandler({ url: video.video_url });
+        } finally {
+            runningDownloadId = null;
+        }
+    }
+
+    async function handleCreatorBatch(video: SocialVideo) {
+        const accountId = video.account_id;
+        const creatorName = getCreatorName(video) || getCreatorHandle(video) || String(accountId);
+
+        void videos.trackEvent(video.id, "creator_batch_open").catch(() => {});
+
+        try {
+            const [pinnedRes, recentRes] = await Promise.all([
+                videos.list({
+                    account_id: accountId,
+                    is_active: true,
+                    is_pinned: true,
+                    limit: 10,
+                    sort: "pinned_order",
+                    order: "DESC",
+                }),
+                videos.list({
+                    account_id: accountId,
+                    is_active: true,
+                    limit: 10,
+                    sort: "created_at",
+                    order: "DESC",
+                }),
+            ]);
+
+            if (pinnedRes.status !== "success" || !pinnedRes.data) {
+                throw new Error(pinnedRes.error?.message || $t("discover.status.error"));
+            }
+            if (recentRes.status !== "success" || !recentRes.data) {
+                throw new Error(recentRes.error?.message || $t("discover.status.error"));
+            }
+
+            const merged = normalize([
+                ...(pinnedRes.data.videos || []),
+                ...(recentRes.data.videos || []),
+            ]);
+
+            const seen = new Set<string>();
+            const items = merged
+                .filter((v) => {
+                    if (!v.video_url) return false;
+                    if (seen.has(v.video_url)) return false;
+                    seen.add(v.video_url);
+                    return true;
+                })
+                .map((v) => ({
+                    url: v.video_url,
+                    title: v.title || undefined,
+                    duration: typeof v.duration === "number" ? v.duration : undefined,
+                }))
+                .slice(0, 20);
+
+            if (!items.length) {
+                throw new Error($t("discover.status.empty.description"));
+            }
+
+            openBatchDialog(
+                items,
+                $t("discover.action.creator_batch_title", { name: creatorName } as any)
+            );
+        } catch (e) {
+            createDialog({
+                id: "discover-creator-batch-error",
+                type: "small",
+                meowbalt: "error",
+                bodyText: e instanceof Error ? e.message : $t("discover.status.error"),
+                buttons: [
+                    {
+                        text: $t("button.gotit"),
+                        main: true,
+                        action: () => {},
+                    },
+                ],
+            });
+        }
+    }
+
+    $: sections = [
+        {
+            key: "trending" as const,
+            title: $t("discover.section.trending"),
+            videos: trendingVideos,
+        },
+        {
+            key: "pinned" as const,
+            title: $t("discover.section.pinned"),
+            videos: pinnedVideos,
+        },
+        {
+            key: "featured" as const,
+            title: $t("discover.section.featured"),
+            videos: featuredVideos,
+        },
+        {
+            key: "latest" as const,
+            title: $t("discover.section.latest"),
+            videos: latestVideos,
+        },
+    ] satisfies { key: DiscoverSectionKey; title: string; videos: SocialVideo[] }[];
 </script>
 
 <svelte:head>
@@ -89,102 +323,114 @@
     <meta property="og:description" content={$t("general.seo.discover.description")} />
 </svelte:head>
 
-
-
 <div class="discover-container">
     <header class="header">
         <div class="header-content">
-            <h1 class="title">{$t('discover.title')}</h1>
-            <p class="subtitle">{$t('discover.subtitle')}</p>
+            <h1 class="title">{$t("discover.title")}</h1>
+            <p class="subtitle">{$t("discover.subtitle")}</p>
         </div>
     </header>
-    
+
     <div class="filter-bar">
         <div class="select-wrapper">
-            <select 
-                bind:value={selectedPlatform} 
-                on:change={() => loadVideos()}
-                class="platform-select"
-            >
+            <select bind:value={selectedPlatform} on:change={loadAll} class="platform-select">
                 {#each platforms as platform}
-                    <option value={platform.value}>
-                        {platform.icon} {platform.label}
-                    </option>
+                    <option value={platform.value}>{platform.label}</option>
                 {/each}
             </select>
             <div class="select-arrow">▼</div>
         </div>
     </div>
-    
+
     {#if error}
-        <div class="error-banner">
-            ⚠️ {error}
-        </div>
+        <div class="error-banner">{error}</div>
     {/if}
-    
+
     {#if loading}
         <div class="loading-container">
             <div class="spinner"></div>
-            <p>{$t('discover.status.loading')}</p>
+            <p>{$t("discover.status.loading")}</p>
         </div>
-    {:else if groupedVideos.length === 0}
+    {:else if trendingVideos.length === 0 && pinnedVideos.length === 0 && featuredVideos.length === 0 && latestVideos.length === 0}
         <div class="empty-state">
-            <div class="empty-icon">📹</div>
-            <h3>{$t('discover.status.empty.title')}</h3>
-            <p>{$t('discover.status.empty.description')}</p>
+            <h3>{$t("discover.status.empty.title")}</h3>
+            <p>{$t("discover.status.empty.description")}</p>
         </div>
     {:else}
-        <div class="content">
-            {#each groupedVideos as group (group.account.id)}
-                <div class="account-section">
-                    <div class="account-header">
-                        {#if group.account.avatar_url}
-                            <img class="avatar" src={group.account.avatar_url} alt={group.account.name} />
-                        {:else}
-                            <div class="avatar-placeholder">
-                                {group.account.name.charAt(0).toUpperCase()}
-                            </div>
-                        {/if}
-                        <div class="account-info">
-                            <h2 class="account-name">{group.account.name}</h2>
-                            <p class="account-meta">
-                                <span class="platform-badge">
-                                    {#if group.account.platform === 'tiktok'}🎵
-                                    {:else if group.account.platform === 'instagram'}📷
-                                    {:else if group.account.platform === 'youtube'}▶️
-                                    {:else}🌐{/if}
-                                    {group.account.platform}
-                                </span>
-                                <span class="username">@{group.account.username}</span>
-                                <span class="video-count">{translate('discover.account.videoCount', { count: group.videos.length })}</span>
-                            </p>
-                        </div>
+        {#each sections as section (section.key)}
+            {#if section.videos.length > 0}
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">{section.title}</h2>
                     </div>
-                    
-                    <div class="video-list">
-                        {#each group.videos as video (video.id)}
-                            <div class="video-item">
-                                <div class="video-url">
-                                    <span class="url-text">{video.url}</span>
-                                </div>
-                                <button
-                                    class="copy-btn"
-                                    class:copied={copiedId === video.id}
-                                    on:click={() => copyUrl(video.url, video.id)}
-                                    title={$t('discover.action.copyTitle')}
-                                >
-                                    {#if copiedId === video.id}
-                                        {$t('discover.action.copied')}
+
+                    <div class="video-grid">
+                        {#each section.videos as video (video.id)}
+                            <article class="video-card">
+                                <button class="thumb" type="button" on:click={() => handleDownload(video)}>
+                                    {#if video.thumbnail_url}
+                                        <img class="thumb-img" src={video.thumbnail_url} alt={getTitle(video)} loading="lazy" />
                                     {:else}
-                                        {$t('discover.action.copy')}
+                                        <div class="thumb-placeholder"></div>
                                     {/if}
                                 </button>
-                            </div>
+
+                                <div class="card-body">
+                                    <div class="card-title" title={getTitle(video)}>
+                                        {getTitle(video)}
+                                    </div>
+
+                                    <div class="card-meta">
+                                        <span class={`badge badge-${video.platform}`}>{getPlatformLabel(video.platform)}</span>
+
+                                        {#if getCreatorName(video)}
+                                            <span class="creator">{getCreatorName(video)}</span>
+                                        {/if}
+
+                                        {#if getCreatorHandle(video)}
+                                            <span class="creator-handle">{getCreatorHandle(video)}</span>
+                                        {/if}
+                                    </div>
+
+                                    <div class="card-actions">
+                                        <button
+                                            class="btn-primary"
+                                            type="button"
+                                            disabled={runningDownloadId === video.id}
+                                            on:click={() => handleDownload(video)}
+                                        >
+                                            {$t("button.download")}
+                                        </button>
+                                        <button
+                                            class="btn-secondary"
+                                            type="button"
+                                            on:click={() => handleCreatorBatch(video)}
+                                        >
+                                            {$t("discover.action.creator_batch")}
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
                         {/each}
                     </div>
-                </div>
-            {/each}
-        </div>
+
+                    {#if section.key === "latest" && latestHasMore}
+                        <div class="load-more">
+                            <button
+                                class="btn-secondary"
+                                type="button"
+                                disabled={loadingMore}
+                                on:click={loadMore}
+                            >
+                                {loadingMore
+                                    ? $t("discover.status.loading")
+                                    : $t("discover.action.load_more")}
+                            </button>
+                        </div>
+                    {/if}
+                </section>
+            {/if}
+        {/each}
     {/if}
 </div>
 
@@ -196,17 +442,14 @@
         flex-direction: column;
         align-items: center;
     }
-    
+
     .header {
         text-align: center;
         margin-bottom: calc(var(--padding) * 2);
         width: 100%;
+        max-width: 1100px;
     }
-    
-    .header-content {
-        display: block;
-    }
-    
+
     .title {
         font-size: 2rem;
         font-weight: 700;
@@ -214,40 +457,38 @@
         margin: 0 0 0.5rem 0;
         line-height: 1.3;
     }
-    
+
     .subtitle {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: var(--gray);
         margin: 0;
         line-height: 1.5;
     }
-    
+
     .filter-bar {
-        display: flex;
-        justify-content: center;
-        margin-bottom: calc(var(--padding) * 2);
         width: 100%;
+        max-width: 1100px;
+        margin-bottom: calc(var(--padding) * 2);
+        display: flex;
+        justify-content: flex-end;
     }
-    
+
     .select-wrapper {
         position: relative;
-        display: inline-block;
-        width: 200px;
+        min-width: 200px;
     }
 
     .platform-select {
+        appearance: none;
         width: 100%;
         padding: 12px 40px 12px 16px;
-        appearance: none;
-        -webkit-appearance: none;
-        background: var(--button);
-        color: var(--button-text);
         border: none;
         border-radius: var(--border-radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
+        font-size: 0.95rem;
+        background: var(--button);
+        color: var(--button-text);
         box-shadow: var(--button-box-shadow);
+        cursor: pointer;
         transition: all 0.2s;
     }
 
@@ -257,298 +498,260 @@
 
     .platform-select:focus {
         outline: none;
-        box-shadow: 0 0 0 2px var(--secondary);
+        box-shadow: 0 0 0 2px var(--blue) inset;
     }
 
     .select-arrow {
         position: absolute;
-        right: 16px;
+        right: 14px;
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;
         color: var(--gray);
         font-size: 0.8rem;
     }
-    
+
     .error-banner {
-        background: var(--red);
-        color: var(--white);
-        padding: var(--padding);
-        border-radius: var(--border-radius);
-        margin-bottom: var(--padding);
-        text-align: center;
-        font-weight: 500;
-        max-width: 640px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .loading-container, .empty-state {
-        text-align: center;
-        padding: calc(var(--padding) * 4) var(--padding);
-        color: var(--gray);
-    }
-    
-    .spinner {
-        width: 48px;
-        height: 48px;
-        border: 3px solid var(--button-stroke);
-        border-top-color: var(--secondary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto var(--padding);
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .empty-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-    }
-    
-    .content {
-        max-width: 900px;
         width: 100%;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: calc(var(--padding) * 1.5);
-    }
-    
-    .account-section {
-        background: var(--popup-bg);
+        max-width: 1100px;
+        padding: 12px 16px;
         border-radius: var(--border-radius);
-        overflow: hidden;
+        background: rgba(255, 0, 0, 0.12);
+        color: var(--button-text);
+        box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.2) inset;
+        margin-bottom: calc(var(--padding) * 2);
+    }
+
+    .loading-container,
+    .empty-state {
+        width: 100%;
+        max-width: 1100px;
+        padding: calc(var(--padding) * 3);
+        text-align: center;
+        border-radius: calc(var(--border-radius) * 1.5);
+        background: var(--popup-bg);
         box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
     }
-    
-    .account-header {
-        display: flex;
-        align-items: center;
-        gap: var(--padding);
-        padding: calc(var(--padding) * 1.5);
-        background: var(--button);
-        border-bottom: 1px solid var(--popup-stroke);
-    }
-    
-    .avatar, .avatar-placeholder {
-        width: 48px;
-        height: 48px;
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--button);
+        border-top: 4px solid var(--blue);
         border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
+        animation: spin 1s linear infinite;
+        margin: 0 auto calc(var(--padding) * 1.5);
     }
-    
-    .avatar-placeholder {
-        background: var(--secondary);
-        color: var(--primary);
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .section {
+        width: 100%;
+        max-width: 1100px;
+        margin-bottom: calc(var(--padding) * 3);
+    }
+
+    .section-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        font-weight: 600;
+        justify-content: space-between;
+        margin-bottom: calc(var(--padding) * 1.25);
     }
-    
-    .account-info {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .account-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--secondary);
-        margin: 0 0 4px 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .account-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        font-size: 0.85rem;
-        color: var(--gray);
+
+    .section-title {
         margin: 0;
-    }
-    
-    .platform-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 2px 8px;
-        background: var(--button-elevated);
-        color: var(--secondary);
-        border-radius: 6px;
-        font-weight: 600;
-        text-transform: capitalize;
-        font-size: 0.8rem;
-    }
-    
-    .username {
-        color: var(--gray);
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .video-count {
-        color: var(--gray);
-        font-weight: 400;
-    }
-    
-    .video-list {
-        padding: calc(var(--padding) * 1.5);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .video-item {
-        display: flex;
-        align-items: center;
-        gap: var(--padding);
-        padding: var(--padding);
-        background: var(--button);
-        border-radius: var(--border-radius);
-        transition: all 0.2s ease;
-        box-shadow: var(--button-box-shadow);
-    }
-    
-    .video-item:hover {
-        background: var(--button-hover);
-    }
-    
-    .video-url {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .url-text {
-        display: block;
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 0.85rem;
-        color: var(--secondary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .copy-btn {
-        padding: 8px 16px;
-        background: var(--button-elevated);
+        font-size: 1.25rem;
+        font-weight: 700;
         color: var(--button-text);
-        border: none;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 600;
-        white-space: nowrap;
-        transition: all 0.2s ease;
-        flex-shrink: 0;
-        box-shadow: var(--button-box-shadow);
+        letter-spacing: -0.2px;
     }
-    
-    .copy-btn:hover {
-        background: var(--button-hover);
+
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: calc(var(--padding) * 1.25);
     }
-    
-    .copy-btn:active {
-        transform: scale(0.98);
+
+    @media (max-width: 1100px) {
+        .video-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
-    
-    .copy-btn.copied {
-        background: var(--green);
-        color: var(--white);
-        box-shadow: none;
+
+    @media (max-width: 860px) {
+        .video-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
-    
-    @media screen and (max-width: 535px) {
+
+    @media (max-width: 520px) {
         .discover-container {
-            padding: var(--padding);
-            padding-top: calc(var(--padding) * 2);
-        }
-        
-        .header {
-            padding: var(--padding) 0;
-            margin-bottom: var(--padding);
-        }
-        
-        .title {
-            font-size: 1.5rem;
-        }
-        
-        .subtitle {
-            font-size: 0.85rem;
-        }
-        
-        .filter-bar {
-            margin-bottom: var(--padding);
-        }
-        
-        .content {
-            gap: var(--padding);
-        }
-        
-        .account-header {
-            padding: var(--padding);
-        }
-        
-        .avatar, .avatar-placeholder {
-            width: 40px;
-            height: 40px;
-        }
-        
-        .account-name {
-            font-size: 1rem;
-        }
-        
-        .account-meta {
-            font-size: 0.75rem;
-            gap: 6px;
-        }
-        
-        .platform-badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-        }
-        
-        .video-list {
-            padding: var(--padding);
-        }
-        
-        .video-item {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 8px;
-            padding: 10px;
-        }
-        
-        .url-text {
-            font-size: 0.75rem;
-        }
-        
-        .copy-btn {
-            width: 100%;
-            padding: 10px;
-        }
-        
-        .loading-container, .empty-state {
             padding: calc(var(--padding) * 2) var(--padding);
         }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
+
+        .filter-bar {
+            justify-content: stretch;
         }
-        
-        .empty-icon {
-            font-size: 3rem;
+
+        .select-wrapper {
+            width: 100%;
         }
+
+        .video-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .video-card {
+        background: var(--popup-bg);
+        border-radius: calc(var(--border-radius) * 1.5);
+        overflow: hidden;
+        box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .video-card:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 0 0 1.5px var(--popup-stroke) inset,
+            0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .thumb {
+        all: unset;
+        display: block;
+        cursor: pointer;
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        background: rgba(0, 0, 0, 0.06);
+        position: relative;
+    }
+
+    .thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .thumb-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    }
+
+    .card-body {
+        padding: calc(var(--padding) * 1.25);
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--padding) * 0.8);
+    }
+
+    .card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--button-text);
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: calc(0.95rem * 1.35 * 2);
+    }
+
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--gray);
+        font-size: 0.85rem;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--button-text);
+        text-transform: uppercase;
+    }
+
+    .badge-tiktok {
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    .badge-instagram {
+        background: rgba(255, 0, 128, 0.12);
+    }
+
+    .creator {
+        font-weight: 600;
+        color: var(--button-text);
+        opacity: 0.9;
+    }
+
+    .creator-handle {
+        font-family: "IBM Plex Mono", monospace;
+        opacity: 0.75;
+    }
+
+    .card-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        box-shadow: var(--button-box-shadow);
+        background: var(--button);
+        color: var(--button-text);
+    }
+
+    .btn-primary {
+        background: var(--blue);
+        color: var(--white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        filter: brightness(1.04);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+        background: var(--button-hover);
+    }
+
+    .btn-primary:disabled,
+    .btn-secondary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .load-more {
+        display: flex;
+        justify-content: center;
+        margin-top: calc(var(--padding) * 1.5);
     }
 </style>

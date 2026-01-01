@@ -20,6 +20,9 @@ export interface SocialAccount {
     video_count?: number;
     created_at: number;
     updated_at: number;
+    sync_enabled?: boolean;
+    sync_last_run_at?: number | null;
+    sync_error?: string | null;
 }
 
 export interface SocialVideo {
@@ -45,9 +48,16 @@ export interface SocialVideo {
     is_featured: boolean;
     is_active: boolean;
     display_order: number;
+    source?: string;
+    is_pinned?: boolean;
+    pinned_order?: number;
+    synced_at?: number | null;
+    trend_score?: number;
     created_at: number;
     updated_at: number;
 }
+
+export type SocialVideoEventType = "download_click" | "creator_batch_open";
 
 export interface ApiResponse<T> {
     status: 'success' | 'error';
@@ -82,6 +92,14 @@ export interface Stats {
     total_videos: number;
     by_platform: Record<string, number>;
     by_category: Record<string, number>;
+}
+
+export interface SyncResult {
+    total: number;
+    created: number;
+    updated: number;
+    started_at: number;
+    finished_at: number;
 }
 
 export interface GroupedVideos {
@@ -277,6 +295,19 @@ export const accounts = {
     stats: async (): Promise<ApiResponse<Stats>> => {
         return request('/accounts/stats');
     },
+
+    /**
+     * 同步白名单创作者（管理员）
+     */
+    sync: async (
+        id: number,
+        options?: { recentLimit?: number; pinnedLimit?: number }
+    ): Promise<ApiResponse<SyncResult>> => {
+        return request(`/accounts/${id}/sync`, {
+            method: 'POST',
+            body: JSON.stringify(options || {}),
+        });
+    },
 };
 
 // ==================== 视频 API ====================
@@ -289,6 +320,7 @@ export const videos = {
         account_id?: number;
         platform?: string;
         is_featured?: boolean;
+        is_pinned?: boolean;
         is_active?: boolean;
         search?: string;
         page?: number;
@@ -307,6 +339,39 @@ export const videos = {
 
         const query = queryParams.toString();
         return request(`/videos${query ? `?${query}` : ''}`);
+    },
+
+    /**
+     * 获取站内热榜（Discover）
+     */
+    trending: async (params?: {
+        platform?: string;
+        days?: number;
+        limit?: number;
+    }): Promise<ApiResponse<{ videos: SocialVideo[]; meta?: { days: number; event_type: string } }>> => {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, String(value));
+                }
+            });
+        }
+        const query = queryParams.toString();
+        return request(`/videos/trending${query ? `?${query}` : ''}`);
+    },
+
+    /**
+     * 上报站内行为事件（用于热榜）
+     */
+    trackEvent: async (
+        id: number,
+        type: SocialVideoEventType
+    ): Promise<ApiResponse<{ event_count: number }>> => {
+        return request(`/videos/${id}/event`, {
+            method: 'POST',
+            body: JSON.stringify({ type }),
+        });
     },
 
     /**

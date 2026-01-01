@@ -4,8 +4,7 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
-//const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
-const INSTAGRAM_DEBUG =true;
+const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 const truncate = (value, max = 250) => {
     const s = String(value ?? "");
     return s.length > max ? s.slice(0, max) + "..." : s;
@@ -41,6 +40,18 @@ const errorCauseForLog = (cause) => {
     }
 
     return truncate(String(cause), 200);
+};
+
+const stripCookieKey = (cookieHeader, key) => {
+    if (!cookieHeader) return "";
+    const needle = String(key).toLowerCase() + "=";
+
+    return String(cookieHeader)
+        .split(";")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .filter((part) => !part.toLowerCase().startsWith(needle))
+        .join("; ");
 };
 
 const commonHeaders = {
@@ -350,6 +361,10 @@ export default function instagram(obj) {
     async function requestGQL(id, cookie) {
         const { headers, body } = await getGQLParams(id, cookie);
         const label = cookie ? "graphql cookie" : "graphql anon";
+        const combinedCookie = [
+            headers.cookie,
+            cookie ? stripCookieKey(String(cookie), "csrftoken") : "",
+        ].filter(Boolean).join("; ");
 
         const req = await fetchLogged(label, 'https://www.instagram.com/graphql/query', {
             method: 'POST',
@@ -357,7 +372,7 @@ export default function instagram(obj) {
             headers: {
                 ...embedHeaders,
                 ...headers,
-                cookie,
+                ...(combinedCookie ? { cookie: combinedCookie } : {}),
                 'content-type': 'application/x-www-form-urlencoded',
                 'X-FB-Friendly-Name': 'PolarisPostActionLoadPostQueryQuery',
             },

@@ -13,6 +13,7 @@ import {
     getVideoById,
     updateVideo,
     deleteVideo,
+    deleteVideos,
     getFeaturedVideos,
     toggleFeatured,
     getStats,
@@ -838,6 +839,71 @@ router.delete('/videos/:id', requireAuth, adminLimiter, async (req, res) => {
             error: {
                 code: 'SERVER_ERROR',
                 message: 'Failed to delete video'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/social/videos/batch-delete
+ * 批量删除视频（需要认证）
+ */
+router.post('/videos/batch-delete', requireAuth, adminLimiter, async (req, res) => {
+    try {
+        const ids = req.body?.ids;
+        if (!Array.isArray(ids)) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'ids must be an array'
+                }
+            });
+        }
+
+        const normalized = Array.from(
+            new Set(
+                ids
+                    .map((value) => Number(value))
+                    .filter((value) => Number.isInteger(value) && value > 0),
+            ),
+        );
+
+        if (!normalized.length) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'ids array is empty'
+                }
+            });
+        }
+
+        if (normalized.length > 200) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'too many ids (max 200)'
+                }
+            });
+        }
+
+        const deleted = await deleteVideos(normalized);
+
+        res.json({
+            status: 'success',
+            data: {
+                deleted
+            }
+        });
+    } catch (error) {
+        console.error('Batch delete videos error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to batch delete videos'
             }
         });
     }

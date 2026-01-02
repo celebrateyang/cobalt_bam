@@ -726,6 +726,31 @@ export const deleteVideo = async (id) => {
 };
 
 /**
+ * 批量删除视频
+ * @param {number[]} ids
+ * @returns {number} deleted count
+ */
+export const deleteVideos = async (ids = []) => {
+    if (!Array.isArray(ids)) return 0;
+
+    const normalized = Array.from(
+        new Set(
+            ids
+                .map((value) => Number(value))
+                .filter((value) => Number.isInteger(value) && value > 0),
+        ),
+    );
+
+    if (!normalized.length) return 0;
+
+    const result = await query(
+        'DELETE FROM social_videos WHERE id = ANY($1::int[])',
+        [normalized],
+    );
+    return result.rowCount;
+};
+
+/**
  * 获取精选视频
  */
 export const getFeaturedVideos = async (limit = 20) => {

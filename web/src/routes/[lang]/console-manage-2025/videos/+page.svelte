@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
+    import { currentApiURL } from "$lib/api/api-url";
     import {
         auth,
         videos,
@@ -14,9 +15,17 @@
     let accountList: SocialAccount[] = [];
     let loading = true;
     let error = "";
+    let message = "";
     let showAddModal = false;
     let editingVideo: SocialVideo | null = null;
     $: lang = $page.params.lang;
+
+    let selectedVideoIds = new Set<number>();
+    let deletingSelected = false;
+    $: selectedCount = selectedVideoIds.size;
+    $: allSelected =
+        videoList.length > 0 &&
+        videoList.every((video) => selectedVideoIds.has(video.id));
 
     // 筛选条件
     let filters = {
@@ -52,6 +61,8 @@
     async function loadVideos() {
         loading = true;
         error = "";
+        message = "";
+        selectedVideoIds = new Set();
         try {
             const params: any = {};
             if (filters.platform) params.platform = filters.platform;
@@ -63,8 +74,8 @@
             console.log("Loading videos with params:", params);
             const response = await videos.list(params);
             console.log("Videos response:", response);
-            if (response.status === "success") {
-                videoList = response.data.videos;
+            if (response.status === "success" && response.data) {
+                videoList = response.data.videos || [];
                 console.log("Loaded videos:", videoList.length);
             } else {
                 console.error("Failed to load videos:", response);
@@ -80,8 +91,8 @@
 
     async function loadAccounts() {
         const response = await accounts.list();
-        if (response.status === "success") {
-            accountList = response.data.accounts;
+        if (response.status === "success" && response.data) {
+            accountList = response.data.accounts || [];
         }
     }
 
@@ -106,11 +117,11 @@
         editingVideo = video;
         formData = {
             account_id: video.account_id,
-            title: video.title,
+            title: video.title || "",
             description: video.description || "",
             video_url: video.video_url,
             thumbnail_url: video.thumbnail_url || "",
-            duration: video.duration,
+            duration: video.duration || 0,
             view_count: video.view_count,
             like_count: video.like_count,
             is_featured: video.is_featured,
@@ -162,6 +173,76 @@
         }
     }
 
+    function toggleSelected(id: number) {
+        selectedVideoIds = new Set(selectedVideoIds);
+        if (selectedVideoIds.has(id)) {
+            selectedVideoIds.delete(id);
+        } else {
+            selectedVideoIds.add(id);
+        }
+    }
+
+    function toggleSelectAll() {
+        if (allSelected) {
+            selectedVideoIds = new Set();
+        } else {
+            selectedVideoIds = new Set(videoList.map((video) => video.id));
+        }
+    }
+
+    function clearSelection() {
+        selectedVideoIds = new Set();
+    }
+
+    async function handleBatchDelete() {
+        const ids = Array.from(selectedVideoIds);
+        if (!ids.length) return;
+
+        if (!confirm(`确认删除选中的 ${ids.length} 条视频吗？此操作不可撤销。`)) return;
+
+        const token =
+            typeof window !== "undefined"
+                ? window.localStorage.getItem("admin_token")
+                : null;
+
+        if (!token) {
+            error = "请先登录";
+            goto(`/${lang}/console-manage-2025`);
+            return;
+        }
+
+        deletingSelected = true;
+        error = "";
+        message = "";
+
+        try {
+            const res = await fetch(`${currentApiURL()}/social/videos/batch-delete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ ids }),
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "批量删除失败");
+            }
+
+            const deleted = data?.data?.deleted ?? 0;
+            message = `已删除 ${deleted} 条`;
+            clearSelection();
+            await loadVideos();
+            message = `已删除 ${deleted} 条`;
+        } catch (e) {
+            error = e instanceof Error ? e.message : "网络错误";
+        } finally {
+            deletingSelected = false;
+        }
+    }
+
     async function handleToggleFeatured(video: SocialVideo) {
         try {
             const response = await videos.toggleFeatured(video.id);
@@ -178,9 +259,10 @@
         return account ? account.display_name || account.username : "未知";
     }
 
-    function formatDuration(seconds: number): string {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
+    function formatDuration(seconds?: number): string {
+        const safeSeconds = typeof seconds === "number" && seconds > 0 ? Math.floor(seconds) : 0;
+        const mins = Math.floor(safeSeconds / 60);
+        const secs = safeSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     }
 
@@ -240,8 +322,45 @@
         </select>
     </div>
 
+    {#if videoList.length > 0}
+        <div class="bulk-bar">
+            <label class="bulk-checkbox">
+                <input
+                    type="checkbox"
+                    checked={allSelected}
+                    on:change={toggleSelectAll}
+                />
+                全选本页
+            </label>
+
+            <div class="bulk-right">
+                <span class="bulk-count">已选 {selectedCount} 条</span>
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={selectedCount === 0 || deletingSelected}
+                    on:click={clearSelection}
+                >
+                    清空
+                </button>
+                <button
+                    class="btn-bulk-delete"
+                    type="button"
+                    disabled={selectedCount === 0 || deletingSelected}
+                    on:click={handleBatchDelete}
+                >
+                    {deletingSelected ? "删除中..." : `删除已选 (${selectedCount})`}
+                </button>
+            </div>
+        </div>
+    {/if}
+
     {#if error}
         <div class="error-message">{error}</div>
+    {/if}
+
+    {#if message}
+        <div class="message">{message}</div>
     {/if}
 
     {#if loading}
@@ -249,9 +368,16 @@
     {:else}
         <div class="videos-list">
             {#each videoList as video}
-                <div class="video-item">
+                <div class="video-item" class:selected={selectedVideoIds.has(video.id)}>
                     <div class="video-main">
                         <div class="video-left">
+                            <div class="video-select">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedVideoIds.has(video.id)}
+                                    on:change={() => toggleSelected(video.id)}
+                                />
+                            </div>
                             <div class="thumbnail-small">
                                 {#if video.thumbnail_url}
                                     <img
@@ -489,6 +615,63 @@
         background: var(--button-hover);
     }
 
+    .bulk-bar {
+        max-width: 1100px;
+        margin: 0 auto var(--padding) auto;
+        padding: var(--padding);
+        border-radius: var(--border-radius);
+        background: var(--popup-bg);
+        box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--padding);
+        flex-wrap: wrap;
+    }
+
+    .bulk-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--text);
+        user-select: none;
+    }
+
+    .bulk-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .bulk-count {
+        color: var(--subtext);
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .btn-bulk-delete {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: var(--red);
+        color: var(--white);
+    }
+
+    .btn-bulk-delete:hover:not(:disabled) {
+        opacity: 0.92;
+    }
+
+    .btn-bulk-delete:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     .videos-list {
         display: flex;
         flex-direction: column;
@@ -509,6 +692,10 @@
         box-shadow: 0 0 0 2px var(--popup-stroke) inset;
     }
 
+    .video-item.selected {
+        box-shadow: 0 0 0 2px var(--blue) inset;
+    }
+
     .video-main {
         display: flex;
         align-items: center;
@@ -523,6 +710,19 @@
         gap: var(--padding);
         flex: 1;
         min-width: 0;
+    }
+
+    .video-select {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .video-select input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
     }
 
     .thumbnail-small {
@@ -883,6 +1083,17 @@
         padding: var(--padding);
         border-radius: var(--border-radius);
         margin-bottom: var(--padding);
+    }
+
+    .message {
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--text);
+        padding: var(--padding);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--padding);
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .loading {

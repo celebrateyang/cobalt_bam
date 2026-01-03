@@ -14,6 +14,11 @@
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
+    import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
+    import {
+        clearCollectionMemory,
+        getCollectionDownloadedItemKeys,
+    } from "$lib/api/collection-memory";
 
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
@@ -182,7 +187,12 @@
         });
     };
 
-    const openBatchDialog = (items: DialogBatchItem[], title?: string) => {
+    const openBatchDialog = (
+        items: DialogBatchItem[],
+        title?: string,
+        collectionKey?: string,
+        collectionSourceUrl?: string,
+    ) => {
         if (batchLimitEnabled && items.length > batchMaxItems) {
             showBatchLimitDialog(items.length);
             return;
@@ -193,6 +203,8 @@
             type: "batch",
             title,
             items,
+            collectionKey,
+            collectionSourceUrl,
         });
     };
 
@@ -239,9 +251,49 @@
             url: item.url,
             title: item.title,
             duration: item.duration,
+            itemKey: item.itemKey,
         }));
 
-        if (batchLimitEnabled && batchItems.length > batchMaxItems) {
+        const collectionKey =
+            expanded.status === "ok" ? expanded.collectionKey : undefined;
+
+        let visibleBatchItems = batchItems;
+        if (collectionKey && clerkEnabled && $isSignedIn) {
+            const downloadedItemKeys =
+                await getCollectionDownloadedItemKeys(collectionKey);
+            if (downloadedItemKeys.length > 0) {
+                const downloadedSet = new Set(downloadedItemKeys);
+                visibleBatchItems = batchItems.filter(
+                    (item) => !item.itemKey || !downloadedSet.has(item.itemKey),
+                );
+            }
+
+            if (visibleBatchItems.length === 0) {
+                createDialog({
+                    id: "batch-memory-empty",
+                    type: "small",
+                    title: $t("dialog.batch.memory.empty.title"),
+                    bodyText: $t("dialog.batch.memory.empty.body"),
+                    buttons: [
+                        {
+                            text: $t("button.gotit"),
+                            main: true,
+                            action: () => {},
+                        },
+                        {
+                            text: $t("dialog.batch.memory.clear"),
+                            main: false,
+                            action: async () => {
+                                await clearCollectionMemory(collectionKey);
+                            },
+                        },
+                    ],
+                });
+                return;
+            }
+        }
+
+        if (batchLimitEnabled && visibleBatchItems.length > batchMaxItems) {
             const canFallbackToSingle =
                 isBilibiliVideoPage(url) || isDouyinVideoPage(url) || isTikTokVideoPage(url);
 
@@ -266,12 +318,12 @@
 
             const batchTitle = expanded.title || $t("dialog.batch.title");
             const openSubset = (count: number) => {
-                const subset = batchItems.slice(0, count);
+                const subset = visibleBatchItems.slice(0, count);
                 const title =
-                    subset.length < batchItems.length
-                        ? `${batchTitle} (${subset.length}/${batchItems.length})`
+                    subset.length < visibleBatchItems.length
+                        ? `${batchTitle} (${subset.length}/${visibleBatchItems.length})`
                         : batchTitle;
-                openBatchDialog(subset, title);
+                openBatchDialog(subset, title, collectionKey, url);
             };
 
             createDialog({
@@ -280,7 +332,7 @@
                 meowbalt: "error",
                 title: $t("dialog.batch.limit.title"),
                 bodyText: $t("dialog.batch.limit.body", {
-                    count: batchItems.length,
+                    count: visibleBatchItems.length,
                     max: batchMaxItems,
                 }),
                 buttons: [
@@ -312,7 +364,12 @@
 
         // If user pasted an explicit collection URL, go straight to batch list.
         if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url) && !isTikTokVideoPage(url)) {
-            openBatchDialog(batchItems, expanded.title || $t("dialog.batch.title"));
+            openBatchDialog(
+                visibleBatchItems,
+                expanded.title || $t("dialog.batch.title"),
+                collectionKey,
+                url,
+            );
             return;
         }
 
@@ -352,8 +409,10 @@
                         setTimeout(
                             () =>
                                 openBatchDialog(
-                                    batchItems,
-                                    expanded.title || $t("dialog.batch.title")
+                                    visibleBatchItems,
+                                    expanded.title || $t("dialog.batch.title"),
+                                    collectionKey,
+                                    url,
                                 ),
                             200
                         );

@@ -294,6 +294,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 service: result?.service,
                 kind: result?.kind || "single",
                 title: result?.title,
+                collectionKey: result?.collectionKey,
                 items,
             });
         } catch {

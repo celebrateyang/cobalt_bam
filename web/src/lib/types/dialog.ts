@@ -21,6 +21,7 @@ export type DialogBatchItem = {
     url: string,
     title?: string,
     duration?: number,
+    itemKey?: string,
 };
 
 type Dialog = {
@@ -58,6 +59,8 @@ type BatchDialog = Dialog & {
     type: "batch",
     title?: string,
     items: DialogBatchItem[],
+    collectionKey?: string,
+    collectionSourceUrl?: string,
 };
 
 type FeedbackDialog = Dialog & {

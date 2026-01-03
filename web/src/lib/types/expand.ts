@@ -4,6 +4,7 @@ export type CobaltExpandItem = {
     url: string;
     title?: string;
     duration?: number;
+    itemKey?: string;
 };
 
 export type CobaltExpandOkResponse = {
@@ -16,6 +17,7 @@ export type CobaltExpandOkResponse = {
         | "douyin-mix"
         | "tiktok-playlist";
     title?: string;
+    collectionKey?: string;
     items: CobaltExpandItem[];
 };
 

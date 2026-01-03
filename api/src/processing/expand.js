@@ -50,6 +50,17 @@ const uniqBy = (items, keyFn) => {
     return result;
 };
 
+const buildCollectionKey = (service, kind, id) => {
+    if (!service || !kind || !id) return;
+    return `${service}:${kind}:${id}`;
+};
+
+const toStringId = (value) => {
+    if (value == null) return;
+    const id = String(value);
+    return id ? id : undefined;
+};
+
 const toSeconds = (value) =>
     typeof value === "number" && Number.isFinite(value)
         ? Math.round(value)
@@ -242,6 +253,7 @@ const fetchTikTokPlaylistItems = async (playlistId) => {
                 : `https://www.tiktok.com/@i/${pathType}/${id}`;
 
             items.push({
+                itemKey: `tiktok:post:${id}`,
                 url: itemUrl,
                 title: basic?.desc,
                 duration: toSeconds(basic?.video?.video_play_info?.duration),
@@ -361,6 +373,7 @@ const fetchDouyinMixItems = async (mixId) => {
             if (!awemeId) continue;
 
             items.push({
+                itemKey: `douyin:video:${awemeId}`,
                 url: `https://www.douyin.com/video/${awemeId}`,
                 title: aweme?.desc,
                 duration: toSecondsMaybeMs(aweme?.video?.duration ?? aweme?.duration),
@@ -432,11 +445,18 @@ const bilibiliUgcSeasonFromView = (data) => {
     const season = data?.ugc_season;
     if (!season?.sections?.length) return;
 
+    const seasonId = toStringId(season?.id);
     const episodes = season.sections.flatMap((section) => section?.episodes ?? []);
     const items = episodes
         .map((ep) => {
-            const duration = toSeconds(ep?.duration ?? ep?.arc?.duration);
+            // Bilibili can return arc.duration for the entire multi-page video, while the
+            // actual /video/:bvid download without ?p= will fetch the first page only.
+            // Prefer the first page duration when available.
+            const duration = toSeconds(
+                ep?.page?.duration ?? ep?.duration ?? ep?.arc?.duration,
+            );
             return {
+                itemKey: ep?.bvid ? `bilibili:video:${ep.bvid}` : undefined,
                 url: ep?.bvid
                     ? `https://www.bilibili.com/video/${ep.bvid}`
                     : undefined,
@@ -451,6 +471,9 @@ const bilibiliUgcSeasonFromView = (data) => {
     return {
         service: "bilibili",
         kind: "bilibili-ugc-season",
+        collectionKey: seasonId
+            ? buildCollectionKey("bilibili", "ugc-season", seasonId)
+            : undefined,
         title: season.title,
         items: uniqBy(items, (i) => i.url),
     };
@@ -462,8 +485,13 @@ const bilibiliMultiPageFromView = (data) => {
 
     if (!bvid || !Array.isArray(pages) || pages.length <= 1) return;
 
+    const bvidString = toStringId(bvid);
     const items = pages
         .map((page) => ({
+            itemKey:
+                typeof page?.page === "number" && bvidString
+                    ? `bilibili:video:${bvidString}:p=${page.page}`
+                    : undefined,
             url:
                 typeof page?.page === "number"
                     ? `https://www.bilibili.com/video/${bvid}?p=${page.page}`
@@ -478,6 +506,9 @@ const bilibiliMultiPageFromView = (data) => {
     return {
         service: "bilibili",
         kind: "bilibili-multi-page",
+        collectionKey: bvidString
+            ? buildCollectionKey("bilibili", "multi-page", bvidString)
+            : undefined,
         title: data?.title,
         items: uniqBy(items, (i) => i.url),
     };
@@ -519,6 +550,7 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
         for (const a of archives) {
             if (!a?.bvid) continue;
             allArchives.push({
+                itemKey: `bilibili:video:${a.bvid}`,
                 url: `https://www.bilibili.com/video/${a.bvid}`,
                 title: a.title,
                 duration: toSeconds(a?.duration),
@@ -556,6 +588,9 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
     return {
         service: "bilibili",
         kind: "bilibili-ugc-season",
+        collectionKey: seasonId
+            ? buildCollectionKey("bilibili", "ugc-season", String(seasonId))
+            : undefined,
         title,
         items,
     };
@@ -658,6 +693,7 @@ const expandDouyin = async (inputUrl) => {
             return {
                 service: "douyin",
                 kind: "douyin-mix",
+                collectionKey: buildCollectionKey("douyin", "mix", mixId),
                 title,
                 items,
             };
@@ -774,6 +810,7 @@ const expandDouyin = async (inputUrl) => {
     return {
         service: "douyin",
         kind: "douyin-mix",
+        collectionKey: buildCollectionKey("douyin", "mix", String(mixId)),
         title: item?.mix_info?.mix_name,
         items: expandedItems,
     };
@@ -796,6 +833,11 @@ const expandTikTok = async (inputUrl) => {
             return {
                 service: "tiktok",
                 kind: "tiktok-playlist",
+                collectionKey: buildCollectionKey(
+                    "tiktok",
+                    "playlist",
+                    String(playlistIdFromUrl),
+                ),
                 title,
                 items,
             };
@@ -871,6 +913,7 @@ const expandTikTok = async (inputUrl) => {
     return {
         service: "tiktok",
         kind: "tiktok-playlist",
+        collectionKey: buildCollectionKey("tiktok", "playlist", String(playlistId)),
         title: authorId ? `@${authorId} playlist` : undefined,
         items: playlistItems,
     };

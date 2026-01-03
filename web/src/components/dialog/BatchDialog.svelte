@@ -5,6 +5,11 @@
     import API from "$lib/api/api";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
+    import {
+        clearCollectionMemory,
+        markCollectionDownloadedItems,
+        type CollectionMemoryMarkItem,
+    } from "$lib/api/collection-memory";
     import { createDialog } from "$lib/state/dialogs";
     import {
         checkSignedIn,
@@ -24,12 +29,15 @@
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconSquareCheck from "@tabler/icons-svelte/IconSquareCheck.svelte";
     import IconSquare from "@tabler/icons-svelte/IconSquare.svelte";
+    import IconTrash from "@tabler/icons-svelte/IconTrash.svelte";
     import IconPlayerStop from "@tabler/icons-svelte/IconPlayerStop.svelte";
 
     export let id: string;
     export let title = "";
     export let items: DialogBatchItem[] = [];
     export let dismissable = true;
+    export let collectionKey: string | undefined = undefined;
+    export let collectionSourceUrl: string | undefined = undefined;
 
     let close: () => void;
 
@@ -396,6 +404,29 @@
         }
     };
 
+    const clearMemory = async () => {
+        if (!collectionKey || running || pointsCheckLoading) return;
+        if (!clerkEnabled || !$isSignedIn) return;
+
+        const ok = await clearCollectionMemory(collectionKey);
+        if (!ok) return;
+
+        createDialog({
+            id: "batch-memory-cleared",
+            type: "small",
+            meowbalt: "smile",
+            title: $t("dialog.batch.memory.cleared.title"),
+            bodyText: $t("dialog.batch.memory.cleared.body"),
+            buttons: [
+                {
+                    text: $t("button.gotit"),
+                    main: true,
+                    action: () => {},
+                },
+            ],
+        });
+    };
+
     const downloadSelected = async () => {
         if (running || pointsCheckLoading) return;
         if (clerkEnabled && pointsPreviewLoading) return;
@@ -476,6 +507,19 @@
         // allow dialog stack to settle before any subsequent dialogs open
         await new Promise((r) => setTimeout(r, 200));
 
+        const memoryQueue: CollectionMemoryMarkItem[] = [];
+        const canMarkMemory = clerkEnabled && !!collectionKey;
+        const flushMemoryQueue = async () => {
+            if (!canMarkMemory || memoryQueue.length === 0) return;
+            const chunk = memoryQueue.splice(0, memoryQueue.length);
+            await markCollectionDownloadedItems({
+                collectionKey: collectionKey!,
+                title: title || undefined,
+                sourceUrl: collectionSourceUrl,
+                items: chunk,
+            }).catch(() => false);
+        };
+
         for (const item of selectedItems) {
             if (cancelRequested) break;
             progress += 1;
@@ -486,6 +530,21 @@
                     response: cached.response,
                     skipPoints: true,
                 });
+
+                if (
+                    canMarkMemory &&
+                    cached.response.status !== "error" &&
+                    item.itemKey
+                ) {
+                    memoryQueue.push({
+                        itemKey: item.itemKey,
+                        url: item.url,
+                        title: item.title,
+                    });
+                    if (memoryQueue.length >= 10) {
+                        await flushMemoryQueue();
+                    }
+                }
             } else {
                 await savingHandler({
                     request: buildBatchRequest(item.url),
@@ -495,6 +554,7 @@
             await new Promise((r) => setTimeout(r, 250));
         }
 
+        await flushMemoryQueue();
         resetRunState();
     };
 
@@ -553,6 +613,27 @@
                 response: cached.response,
                 skipPoints: true,
             });
+
+            const itemKey = item?.itemKey;
+            if (
+                clerkEnabled &&
+                collectionKey &&
+                cached.response.status !== "error" &&
+                itemKey
+            ) {
+                void markCollectionDownloadedItems({
+                    collectionKey,
+                    title: title || undefined,
+                    sourceUrl: collectionSourceUrl,
+                    items: [
+                        {
+                            itemKey,
+                            url,
+                            title: item?.title,
+                        },
+                    ],
+                });
+            }
         } else {
             await savingHandler({
                 request: buildBatchRequest(url),
@@ -606,6 +687,16 @@
                 <IconCopy />
                 {$t("dialog.batch.copy_selected")}
             </button>
+            {#if clerkEnabled && collectionKey && $isSignedIn}
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={clearMemory}
+                >
+                    <IconTrash />
+                    {$t("dialog.batch.memory.clear")}
+                </button>
+            {/if}
         </div>
 
         <div class="batch-list" role="list">

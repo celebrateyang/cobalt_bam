@@ -48,6 +48,60 @@ export const initUserDatabase = async () => {
 
     await initFeedbackDatabase();
 
+    // ==================== Collection download memory ====================
+    await query(`
+        CREATE TABLE IF NOT EXISTS user_collection_memories (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            collection_key TEXT NOT NULL,
+            service TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            title TEXT,
+            source_url TEXT,
+            first_seen_at BIGINT NOT NULL,
+            last_opened_at BIGINT NOT NULL,
+            last_marked_at BIGINT,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE (user_id, collection_key)
+        );
+    `);
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_collection_memories_user_last_opened
+         ON user_collection_memories(user_id, last_opened_at DESC);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_collection_memories_user_collection
+         ON user_collection_memories(user_id, service, kind, collection_id);`,
+    );
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS user_collection_memory_items (
+            id SERIAL PRIMARY KEY,
+            memory_id INTEGER NOT NULL,
+            item_key TEXT NOT NULL,
+            item_url TEXT,
+            item_title TEXT,
+            downloaded_at BIGINT NOT NULL,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (memory_id) REFERENCES user_collection_memories(id) ON DELETE CASCADE,
+            UNIQUE (memory_id, item_key)
+        );
+    `);
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_collection_memory_items_memory_downloaded
+         ON user_collection_memory_items(memory_id, downloaded_at DESC);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_collection_memory_items_memory_item_key
+         ON user_collection_memory_items(memory_id, item_key);`,
+    );
+
     // Credit orders (top-ups for points/credits)
     await query(`
         CREATE TABLE IF NOT EXISTS credit_orders (

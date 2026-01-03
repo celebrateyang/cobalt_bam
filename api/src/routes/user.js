@@ -7,6 +7,11 @@ import {
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
+import {
+    clearCollectionMemoryForUser,
+    getDownloadedItemKeysForCollection,
+    markDownloadedItemsForCollection,
+} from "../db/collection-memory.js";
 import { createFeedback, listFeedback } from "../db/feedback.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
@@ -373,6 +378,208 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to deduct points",
+                );
+            }
+        });
+
+        router.get("/collection-memory", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const collectionKey =
+                    typeof req.query?.collectionKey === "string"
+                        ? req.query.collectionKey.trim()
+                        : "";
+
+                if (!collectionKey) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "collectionKey is required",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const { memory, itemKeys } =
+                    await getDownloadedItemKeysForCollection({
+                        userId: user.id,
+                        collectionKey,
+                    });
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        collection: memory
+                            ? {
+                                  collectionKey: memory.collection_key,
+                                  service: memory.service,
+                                  kind: memory.kind,
+                                  collectionId: memory.collection_id,
+                                  title: memory.title,
+                                  sourceUrl: memory.source_url,
+                                  lastMarkedAt: memory.last_marked_at,
+                              }
+                            : null,
+                        downloadedItemKeys: itemKeys,
+                    },
+                });
+            } catch (error) {
+                console.error("GET /user/collection-memory error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load collection memory",
+                );
+            }
+        });
+
+        router.post("/collection-memory/mark", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const collectionKeyRaw = req.body?.collectionKey;
+                const collectionKey =
+                    typeof collectionKeyRaw === "string"
+                        ? collectionKeyRaw.trim()
+                        : "";
+
+                if (!collectionKey) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "collectionKey is required",
+                    );
+                }
+
+                const items = Array.isArray(req.body?.items) ? req.body.items : [];
+                if (!items.length) {
+                    return res.json({
+                        status: "success",
+                        data: { added: 0, updated: 0 },
+                    });
+                }
+
+                const title =
+                    typeof req.body?.title === "string" ? req.body.title : undefined;
+                const sourceUrl =
+                    typeof req.body?.sourceUrl === "string"
+                        ? req.body.sourceUrl
+                        : undefined;
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await markDownloadedItemsForCollection({
+                    userId: user.id,
+                    collectionKey,
+                    title,
+                    sourceUrl,
+                    items,
+                });
+
+                if (!result.ok) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "Invalid collection memory payload",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        added: result.added ?? 0,
+                        updated: result.updated ?? 0,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/collection-memory/mark error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to mark collection memory",
+                );
+            }
+        });
+
+        router.post("/collection-memory/clear", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const collectionKeyRaw = req.body?.collectionKey;
+                const collectionKey =
+                    typeof collectionKeyRaw === "string"
+                        ? collectionKeyRaw.trim()
+                        : "";
+
+                if (!collectionKey) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "collectionKey is required",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await clearCollectionMemoryForUser({
+                    userId: user.id,
+                    collectionKey,
+                });
+
+                if (!result.ok) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "Invalid collectionKey",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: { deleted: result.deleted ?? 0 },
+                });
+            } catch (error) {
+                console.error("POST /user/collection-memory/clear error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to clear collection memory",
                 );
             }
         });

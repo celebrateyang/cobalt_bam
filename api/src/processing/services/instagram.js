@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { resolveRedirectingURL } from "../url.js";
-import { genericUserAgent } from "../../config.js";
+import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
@@ -118,6 +118,71 @@ export default function instagram(obj) {
     const logError = (...args) => {
         if (!INSTAGRAM_DEBUG) return;
         console.error(`[instagram:${trace}]`, ...args);
+    };
+
+    const requestUpstreamCobalt = async (postUrl) => {
+        if (!env.instagramUpstreamURL) return null;
+
+        const endpoint = new URL(env.instagramUpstreamURL);
+        endpoint.pathname = "/";
+        endpoint.search = "";
+        endpoint.hash = "";
+
+        const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+        };
+
+        if (env.instagramUpstreamApiKey) {
+            headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+        }
+
+        const timeoutMs =
+            typeof env.instagramUpstreamTimeoutMs === "number" &&
+            Number.isFinite(env.instagramUpstreamTimeoutMs) &&
+            env.instagramUpstreamTimeoutMs > 0
+                ? env.instagramUpstreamTimeoutMs
+                : 12000;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const res = await fetchLogged("upstream cobalt", endpoint, {
+                method: "POST",
+                signal: controller.signal,
+                headers,
+                body: JSON.stringify({ url: String(postUrl) }),
+            });
+
+            const payload = await res.json().catch(() => null);
+            log(
+                "upstream result",
+                `http=${res.status}`,
+                `status=${payload?.status || "?"}`,
+                `has_url=${payload?.url ? "yes" : "no"}`
+            );
+
+            if (!res.ok) return null;
+            if (!payload || typeof payload !== "object") return null;
+            if (payload.status !== "redirect") return null;
+            if (!payload.url) return null;
+
+            return {
+                url: payload.url,
+                filename: payload.filename,
+            };
+        } catch (e) {
+            const cause = errorCauseForLog(e?.cause);
+            logError(
+                "upstream request failed",
+                cause ? `${String(e)}; cause=${cause}` : String(e)
+            );
+            return null;
+        } finally {
+            clearTimeout(timeout);
+        }
     };
 
     const fetchLogged = async (label, url, options = {}) => {
@@ -692,6 +757,23 @@ export default function instagram(obj) {
         } catch {}
 
         if (!hasData(data)) {
+            if (env.instagramUpstreamURL) {
+                const upstreamUrl = `https://www.instagram.com/p/${id}/`;
+                log("getPost", "no data, trying upstream", urlForLog(upstreamUrl));
+
+                const upstream = await requestUpstreamCobalt(upstreamUrl);
+                if (upstream?.url) {
+                    log("getPost", "upstream ok");
+                    return {
+                        urls: upstream.url,
+                        filename: upstream.filename || `instagram_${id}.mp4`,
+                        audioFilename: `instagram_${id}_audio`,
+                    };
+                }
+
+                log("getPost", "upstream failed");
+            }
+
             log("getPost", "no data, entering error context");
             return getErrorContext(id);
         }

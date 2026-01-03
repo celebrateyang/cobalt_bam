@@ -71,6 +71,16 @@ export const loadEnvs = (env = process.env) => {
         corsURL: env.CORS_URL,
 
         cookiePath: env.COOKIE_PATH,
+        instagramUpstreamURL: env.INSTAGRAM_UPSTREAM_URL,
+        instagramUpstreamApiKey: env.INSTAGRAM_UPSTREAM_API_KEY,
+        instagramUpstreamTimeoutMs: (() => {
+            const raw = env.INSTAGRAM_UPSTREAM_TIMEOUT_MS;
+            if (raw == null || raw === '') return 12000;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 12000;
+            return parsed;
+        })(),
 
         rateLimitWindow: (env.RATELIMIT_WINDOW && parseInt(env.RATELIMIT_WINDOW)) || 60,
         rateLimitMax: (env.RATELIMIT_MAX && parseInt(env.RATELIMIT_MAX)) || 20,
@@ -182,6 +192,19 @@ export const validateEnvs = async (env) => {
 
     if (env.externalProxy && env.freebindCIDR) {
         throw new Error('freebind is not available when external proxy is enabled')
+    }
+
+    if (env.instagramUpstreamURL) {
+        let upstream;
+        try {
+            upstream = new URL(env.instagramUpstreamURL);
+        } catch {
+            throw new Error('INSTAGRAM_UPSTREAM_URL is invalid (must be a valid http(s) URL)');
+        }
+
+        if (!['http:', 'https:'].includes(upstream.protocol)) {
+            throw new Error('INSTAGRAM_UPSTREAM_URL is invalid (must be a valid http(s) URL)');
+        }
     }
 
     if (env.externalProxy && !loggedProxyWarning) {

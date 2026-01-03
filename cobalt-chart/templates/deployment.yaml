@@ -73,6 +73,18 @@ spec:
               value: 0x4AAAAAAAw8jRb9G7cWXnbd
             - name: COOKIE_PATH
               value: src/cookies.json
+            {{- with .Values.instagram }}
+            {{- if .upstreamUrl }}
+            - name: INSTAGRAM_UPSTREAM_URL
+              value: {{ .upstreamUrl | quote }}
+            {{- if .upstreamApiKey }}
+            - name: INSTAGRAM_UPSTREAM_API_KEY
+              value: {{ .upstreamApiKey | quote }}
+            {{- end }}
+            - name: INSTAGRAM_UPSTREAM_TIMEOUT_MS
+              value: {{ .upstreamTimeoutMs | default 12000 | quote }}
+            {{- end }}
+            {{- end }}
             # Database Configuration
             - name: DB_TYPE
               value: {{ .Values.database.type | quote }}

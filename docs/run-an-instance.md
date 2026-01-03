@@ -73,6 +73,9 @@ sudo service nscd start
 | `CORS_WILDCARD`       | `1`       | `0`                     | toggles cross-origin resource sharing. <br> `0`: disabled. `1`: enabled. |
 | `CORS_URL`            | not used  | `https://cobalt.tools`  | cross-origin resource sharing url. api will be available only from this url if `CORS_WILDCARD` is set to `0`. |
 | `COOKIE_PATH`         | not used  | `/cookies.json`         | path for cookie file relative to main folder. |
+| `INSTAGRAM_UPSTREAM_URL` | not used | `https://example.ngrok-free.app/` | fallback cobalt instance used only when instagram extraction fails locally. |
+| `INSTAGRAM_UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value (sent as `Authorization: Api-Key ...`) for `INSTAGRAM_UPSTREAM_URL`. |
+| `INSTAGRAM_UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream instagram fallback. |
 | `PROCESSING_PRIORITY` | not used  | `10`                    | changes `nice` value* for ffmpeg subprocess. available only on unix systems. |
 | `FREEBIND_CIDR`       | ➖        | `2001:db8::/32`         | IPv6 prefix used for randomly assigning addresses to cobalt requests. only supported on linux systems. see below for more info. |
 | `RATELIMIT_WINDOW`    | `60`      | `120`                   | rate limit time window in **seconds**. |

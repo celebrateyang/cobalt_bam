@@ -13,6 +13,11 @@ image:
 # Batch download hard cap (0 = unlimited)
 batchMaxItems: 40
 
+instagram:
+  upstreamUrl: "https://df663675fa27.ngrok-free.app/"
+  upstreamApiKey: ""
+  upstreamTimeoutMs: 12000
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

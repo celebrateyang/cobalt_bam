@@ -40,7 +40,9 @@
 <style>
     .popup-button {
         width: 100%;
-        height: 40px;
+        height: auto;
+        min-height: 40px;
+        line-height: 1.25;
         transition: 0.2s opacity;
     }
 

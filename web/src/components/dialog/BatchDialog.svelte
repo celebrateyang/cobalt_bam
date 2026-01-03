@@ -42,6 +42,7 @@
     let itemsKey = "";
     let pointsPreviewRequired = 0;
     let pointsPreviewLoading = false;
+    let pointsCheckLoading = false;
     let pointsPreviewTimer: ReturnType<typeof setTimeout> | null = null;
     let pointsPreviewRequestId = 0;
 
@@ -70,6 +71,7 @@
     const resetStateForItems = () => {
         selected = items.map(() => true);
         running = false;
+        pointsCheckLoading = false;
         cancelRequested = false;
         progress = 0;
         totalToRun = 0;
@@ -78,6 +80,7 @@
 
     const resetRunState = () => {
         running = false;
+        pointsCheckLoading = false;
         cancelRequested = false;
         progress = 0;
         totalToRun = 0;
@@ -394,7 +397,8 @@
     };
 
     const downloadSelected = async () => {
-        if (running) return;
+        if (running || pointsCheckLoading) return;
+        if (clerkEnabled && pointsPreviewLoading) return;
 
         if (!$isSignedIn) {
             const alreadySignedIn = await checkSignedIn();
@@ -413,13 +417,35 @@
         const selectedItems = items.filter((_, i) => selected[i]);
         if (!selectedItems.length) return;
 
+        const requiredPoints = clerkEnabled ? pointsPreviewRequired : 0;
+
+        let currentPoints = 0;
+        if (requiredPoints > 0) {
+            pointsCheckLoading = true;
+            try {
+                currentPoints = await fetchUserPoints();
+            } catch {
+                pointsCheckLoading = false;
+                showPointsError();
+                return;
+            }
+
+            if (currentPoints < requiredPoints) {
+                pointsCheckLoading = false;
+                showPointsInsufficient(currentPoints, requiredPoints);
+                return;
+            }
+
+            pointsCheckLoading = false;
+        }
+
         running = true;
         cancelPointsPreview();
         cancelRequested = false;
         progress = 0;
         totalToRun = selectedItems.length;
 
-        const { requiredPoints, cache } = await prepareBatch(selectedItems);
+        const { cache } = await prepareBatch(selectedItems);
 
         if (cancelRequested) {
             resetRunState();
@@ -427,26 +453,6 @@
         }
 
         if (requiredPoints > 0) {
-            let currentPoints;
-            try {
-                currentPoints = await fetchUserPoints();
-            } catch {
-                showPointsError();
-                resetRunState();
-                return;
-            }
-
-            if (cancelRequested) {
-                resetRunState();
-                return;
-            }
-
-            if (currentPoints < requiredPoints) {
-                showPointsInsufficient(currentPoints, requiredPoints);
-                resetRunState();
-                return;
-            }
-
             try {
                 const result = await consumePoints(requiredPoints);
                 if (!result.ok) {
@@ -577,7 +583,7 @@
         <div class="batch-toolbar">
             <button
                 class="button elevated toolbar-button"
-                disabled={running}
+                disabled={running || pointsCheckLoading}
                 on:click={() => setAll(true)}
             >
                 <IconSquareCheck />
@@ -585,7 +591,7 @@
             </button>
             <button
                 class="button elevated toolbar-button"
-                disabled={running}
+                disabled={running || pointsCheckLoading}
                 on:click={() => setAll(false)}
             >
                 <IconSquare />
@@ -593,7 +599,7 @@
             </button>
             <button
                 class="button elevated toolbar-button"
-                disabled={running || selectedCount() === 0}
+                disabled={running || pointsCheckLoading || selectedCount() === 0}
                 on:click={() =>
                     copyUrls(items.filter((_, i) => selected[i]).map((i) => i.url))}
             >
@@ -610,7 +616,7 @@
                             type="checkbox"
                             checked={selected[i]}
                             on:change={(e) => handleItemSelectionChange(i, e)}
-                            disabled={running}
+                            disabled={running || pointsCheckLoading}
                             aria-label={$t("a11y.dialog.batch.select_item")}
                         />
                     </label>
@@ -629,7 +635,7 @@
                     <div class="batch-actions">
                         <button
                             class="button elevated icon-button"
-                            disabled={running}
+                            disabled={running || pointsCheckLoading}
                             on:click={() => copyUrls([item.url])}
                             aria-label={$t("button.copy")}
                             title={$t("button.copy")}
@@ -638,7 +644,7 @@
                         </button>
                         <button
                             class="button elevated icon-button"
-                            disabled={running}
+                            disabled={running || pointsCheckLoading}
                             on:click={() => downloadSingle(item.url)}
                             aria-label={$t("button.download")}
                             title={$t("button.download")}
@@ -664,7 +670,7 @@
             {/if}
             <button
                 class="button elevated footer-button"
-                disabled={running}
+                disabled={running || pointsCheckLoading}
                 on:click={() => close()}
             >
                 {$t("button.cancel")}
@@ -681,7 +687,11 @@
             {:else}
                 <button
                     class="button elevated footer-button active"
-                    disabled={selectedCount() === 0}
+                    disabled={
+                        selectedCount() === 0 ||
+                        pointsCheckLoading ||
+                        (clerkEnabled && pointsPreviewLoading)
+                    }
                     on:click={downloadSelected}
                 >
                     <IconDownload />

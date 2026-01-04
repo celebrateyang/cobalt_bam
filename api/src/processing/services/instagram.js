@@ -4,8 +4,7 @@ import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
-// const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
-const INSTAGRAM_DEBUG = true;
+const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 const truncate = (value, max = 250) => {
     const s = String(value ?? "");
     return s.length > max ? s.slice(0, max) + "..." : s;
@@ -108,7 +107,7 @@ const getObjectFromEntries = (name, data) => {
 
 export default function instagram(obj) {
     const dispatcher = obj.dispatcher;
-    const trace = INSTAGRAM_DEBUG ? randomBytes(2).toString("hex") : "";
+    const trace = randomBytes(2).toString("hex");
 
     const log = (...args) => {
         if (!INSTAGRAM_DEBUG) return;
@@ -118,6 +117,14 @@ export default function instagram(obj) {
     const logError = (...args) => {
         if (!INSTAGRAM_DEBUG) return;
         console.error(`[instagram:${trace}]`, ...args);
+    };
+
+    const logUpstream = (...args) => {
+        console.log(`[instagram:${trace}] upstream`, ...args);
+    };
+
+    const logUpstreamError = (...args) => {
+        console.error(`[instagram:${trace}] upstream`, ...args);
     };
 
     const requestUpstreamCobalt = async (postUrl) => {
@@ -155,7 +162,10 @@ export default function instagram(obj) {
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-            const res = await fetchLogged("upstream cobalt", endpoint, {
+            const start = Date.now();
+            logUpstream("-> request", "POST", urlForLog(endpoint), `target=${urlForLog(postUrl)}`);
+
+            const res = await fetch(endpoint, {
                 method: "POST",
                 signal: controller.signal,
                 headers,
@@ -163,9 +173,10 @@ export default function instagram(obj) {
             });
 
             const payload = await res.json().catch(() => null);
-            log(
-                "upstream result",
+            logUpstream(
+                "<- response",
                 `http=${res.status}`,
+                `time=${Date.now() - start}ms`,
                 `status=${payload?.status || "?"}`,
                 `has_url=${payload?.url ? "yes" : "no"}`
             );
@@ -181,8 +192,8 @@ export default function instagram(obj) {
             };
         } catch (e) {
             const cause = errorCauseForLog(e?.cause);
-            logError(
-                "upstream request failed",
+            logUpstreamError(
+                "request failed",
                 cause ? `${String(e)}; cause=${cause}` : String(e)
             );
             return null;

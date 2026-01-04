@@ -59,6 +59,8 @@ type BatchDialog = Dialog & {
     type: "batch",
     title?: string,
     items: DialogBatchItem[],
+    downloadedItems?: DialogBatchItem[],
+    collectionTotalCount?: number,
     collectionKey?: string,
     collectionSourceUrl?: string,
 };

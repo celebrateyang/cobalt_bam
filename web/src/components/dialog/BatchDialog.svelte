@@ -27,6 +27,7 @@
     import IconBoxMultiple from "@tabler/icons-svelte/IconBoxMultiple.svelte";
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
+    import IconCircleCheck from "@tabler/icons-svelte/IconCircleCheck.svelte";
     import IconSquareCheck from "@tabler/icons-svelte/IconSquareCheck.svelte";
     import IconSquare from "@tabler/icons-svelte/IconSquare.svelte";
     import IconTrash from "@tabler/icons-svelte/IconTrash.svelte";
@@ -35,6 +36,8 @@
     export let id: string;
     export let title = "";
     export let items: DialogBatchItem[] = [];
+    export let downloadedItems: DialogBatchItem[] = [];
+    export let collectionTotalCount: number | undefined = undefined;
     export let dismissable = true;
     export let collectionKey: string | undefined = undefined;
     export let collectionSourceUrl: string | undefined = undefined;
@@ -53,6 +56,8 @@
     let pointsCheckLoading = false;
     let pointsPreviewTimer: ReturnType<typeof setTimeout> | null = null;
     let pointsPreviewRequestId = 0;
+
+    let viewingDownloaded = false;
 
     type PrefetchedResponse = {
         request: CobaltSaveRequestBody;
@@ -373,9 +378,19 @@
         if (nextKey !== itemsKey) {
             itemsKey = nextKey;
             resetStateForItems();
+            viewingDownloaded = items.length === 0 && downloadedItems.length > 0;
             schedulePointsPreview();
         }
     }
+
+    const toggleDownloadedView = () => {
+        viewingDownloaded = !viewingDownloaded;
+        if (viewingDownloaded) {
+            cancelPointsPreview();
+        } else {
+            schedulePointsPreview();
+        }
+    };
 
     const selectedCount = () => selected.filter(Boolean).length;
 
@@ -573,7 +588,10 @@
             }
         }
 
-        const item = items.find((entry) => entry.url === url) || { url };
+        const item =
+            items.find((entry) => entry.url === url) ||
+            downloadedItems.find((entry) => entry.url === url) ||
+            { url };
         const { requiredPoints, cache } = await prepareBatch([item]);
 
         if (requiredPoints > 0) {
@@ -656,37 +674,55 @@
                 {#if running}
                     {$t("dialog.batch.status.running")}: {progress}/{totalToRun}
                 {:else}
-                    {$t("dialog.batch.status.selected")}: {selectedCount()}/{items.length}
+                    {#if !viewingDownloaded}
+                        <div>
+                            {$t("dialog.batch.status.selected")}: {selectedCount()}/{items.length}
+                        </div>
+                    {/if}
+                    {#if clerkEnabled && collectionKey && $isSignedIn && downloadedItems.length > 0}
+                        <div>
+                            {$t("dialog.batch.status.downloaded")}: {downloadedItems.length}
+                            {#if collectionTotalCount}
+                                /{collectionTotalCount}
+                            {/if}
+                        </div>
+                    {/if}
                 {/if}
             </div>
         </div>
 
         <div class="batch-toolbar">
-            <button
-                class="button elevated toolbar-button"
-                disabled={running || pointsCheckLoading}
-                on:click={() => setAll(true)}
-            >
-                <IconSquareCheck />
-                {$t("dialog.batch.select_all")}
-            </button>
-            <button
-                class="button elevated toolbar-button"
-                disabled={running || pointsCheckLoading}
-                on:click={() => setAll(false)}
-            >
-                <IconSquare />
-                {$t("dialog.batch.select_none")}
-            </button>
-            <button
-                class="button elevated toolbar-button"
-                disabled={running || pointsCheckLoading || selectedCount() === 0}
-                on:click={() =>
-                    copyUrls(items.filter((_, i) => selected[i]).map((i) => i.url))}
-            >
-                <IconCopy />
-                {$t("dialog.batch.copy_selected")}
-            </button>
+            {#if !viewingDownloaded}
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={() => setAll(true)}
+                >
+                    <IconSquareCheck />
+                    {$t("dialog.batch.select_all")}
+                </button>
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={() => setAll(false)}
+                >
+                    <IconSquare />
+                    {$t("dialog.batch.select_none")}
+                </button>
+            {/if}
+
+            {#if clerkEnabled && collectionKey && $isSignedIn && downloadedItems.length > 0}
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={toggleDownloadedView}
+                >
+                    <IconCircleCheck />
+                    {viewingDownloaded
+                        ? $t("dialog.batch.view_pending")
+                        : $t("dialog.batch.view_downloaded")}
+                </button>
+            {/if}
             {#if clerkEnabled && collectionKey && $isSignedIn}
                 <button
                     class="button elevated toolbar-button"
@@ -700,17 +736,23 @@
         </div>
 
         <div class="batch-list" role="list">
-            {#each items as item, i (item.url)}
-                <div class="batch-item" role="listitem">
-                    <label class="batch-check">
-                        <input
-                            type="checkbox"
-                            checked={selected[i]}
-                            on:change={(e) => handleItemSelectionChange(i, e)}
-                            disabled={running || pointsCheckLoading}
-                            aria-label={$t("a11y.dialog.batch.select_item")}
-                        />
-                    </label>
+            {#each viewingDownloaded ? downloadedItems : items as item, i (item.url)}
+                <div class="batch-item" class:downloaded={viewingDownloaded} role="listitem">
+                    {#if viewingDownloaded}
+                        <div class="batch-check downloaded-indicator" aria-hidden="true">
+                            <IconCircleCheck />
+                        </div>
+                    {:else}
+                        <label class="batch-check">
+                            <input
+                                type="checkbox"
+                                checked={selected[i]}
+                                on:change={(e) => handleItemSelectionChange(i, e)}
+                                disabled={running || pointsCheckLoading}
+                                aria-label={$t("a11y.dialog.batch.select_item")}
+                            />
+                        </label>
+                    {/if}
 
                     <div class="batch-text">
                         <div class="batch-title" title={item.title || item.url}>
@@ -748,7 +790,7 @@
         </div>
 
         <div class="batch-footer">
-            {#if clerkEnabled && selectedCount() > 0}
+            {#if !viewingDownloaded && clerkEnabled && selectedCount() > 0}
                 <div class="points-preview" aria-live="polite">
                     {#if pointsPreviewLoading}
                         {$t("dialog.batch.points_preview.loading")}
@@ -776,18 +818,28 @@
                     {$t("dialog.batch.stop")}
                 </button>
             {:else}
-                <button
-                    class="button elevated footer-button active"
-                    disabled={
-                        selectedCount() === 0 ||
-                        pointsCheckLoading ||
-                        (clerkEnabled && pointsPreviewLoading)
-                    }
-                    on:click={downloadSelected}
-                >
-                    <IconDownload />
-                    {$t("dialog.batch.download_selected")}
-                </button>
+                {#if viewingDownloaded}
+                    <button
+                        class="button elevated footer-button active"
+                        disabled={running || pointsCheckLoading}
+                        on:click={toggleDownloadedView}
+                    >
+                        {$t("dialog.batch.view_pending")}
+                    </button>
+                {:else}
+                    <button
+                        class="button elevated footer-button active"
+                        disabled={
+                            selectedCount() === 0 ||
+                            pointsCheckLoading ||
+                            (clerkEnabled && pointsPreviewLoading)
+                        }
+                        on:click={downloadSelected}
+                    >
+                        <IconDownload />
+                        {$t("dialog.batch.download_selected")}
+                    </button>
+                {/if}
             {/if}
         </div>
     </div>
@@ -885,6 +937,20 @@
     .batch-check input {
         width: 16px;
         height: 16px;
+    }
+
+    .downloaded-indicator {
+        color: var(--primary);
+    }
+
+    .downloaded-indicator :global(svg) {
+        width: 18px;
+        height: 18px;
+    }
+
+    .batch-item.downloaded .batch-title {
+        color: var(--gray);
+        font-weight: 500;
     }
 
     .batch-text {

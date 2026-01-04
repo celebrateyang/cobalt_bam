@@ -14,7 +14,7 @@
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
-    import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
+    import { clerkEnabled } from "$lib/state/clerk";
     import {
         clearCollectionMemory,
         getCollectionDownloadedItemKeys,
@@ -187,11 +187,17 @@
         });
     };
 
+    type BatchDialogMemoryInfo = {
+        downloadedItems: DialogBatchItem[];
+        collectionTotalCount: number;
+    };
+
     const openBatchDialog = (
         items: DialogBatchItem[],
         title?: string,
         collectionKey?: string,
         collectionSourceUrl?: string,
+        memoryInfo?: BatchDialogMemoryInfo,
     ) => {
         if (batchLimitEnabled && items.length > batchMaxItems) {
             showBatchLimitDialog(items.length);
@@ -203,6 +209,8 @@
             type: "batch",
             title,
             items,
+            downloadedItems: memoryInfo?.downloadedItems,
+            collectionTotalCount: memoryInfo?.collectionTotalCount,
             collectionKey,
             collectionSourceUrl,
         });
@@ -258,11 +266,19 @@
             expanded.status === "ok" ? expanded.collectionKey : undefined;
 
         let visibleBatchItems = batchItems;
-        if (collectionKey && clerkEnabled && $isSignedIn) {
+        let memoryInfo: BatchDialogMemoryInfo | undefined = undefined;
+        if (collectionKey && clerkEnabled) {
             const downloadedItemKeys =
                 await getCollectionDownloadedItemKeys(collectionKey);
             if (downloadedItemKeys.length > 0) {
                 const downloadedSet = new Set(downloadedItemKeys);
+                const downloadedItems = batchItems.filter(
+                    (item) => item.itemKey && downloadedSet.has(item.itemKey),
+                );
+                memoryInfo = {
+                    downloadedItems,
+                    collectionTotalCount: batchItems.length,
+                };
                 visibleBatchItems = batchItems.filter(
                     (item) => !item.itemKey || !downloadedSet.has(item.itemKey),
                 );
@@ -280,6 +296,22 @@
                             main: true,
                             action: () => {},
                         },
+                        ...(memoryInfo?.downloadedItems?.length
+                            ? [
+                                  {
+                                      text: $t("dialog.batch.view_downloaded"),
+                                      main: false,
+                                      action: () =>
+                                          openBatchDialog(
+                                              [],
+                                              expanded.title || $t("dialog.batch.title"),
+                                              collectionKey,
+                                              url,
+                                              memoryInfo,
+                                          ),
+                                  },
+                              ]
+                            : []),
                         {
                             text: $t("dialog.batch.memory.clear"),
                             main: false,
@@ -321,9 +353,9 @@
                 const subset = visibleBatchItems.slice(0, count);
                 const title =
                     subset.length < visibleBatchItems.length
-                        ? `${batchTitle} (${subset.length}/${visibleBatchItems.length})`
+                        ? `${batchTitle} (${subset.length}/${memoryInfo?.collectionTotalCount || visibleBatchItems.length})`
                         : batchTitle;
-                openBatchDialog(subset, title, collectionKey, url);
+                openBatchDialog(subset, title, collectionKey, url, memoryInfo);
             };
 
             createDialog({
@@ -369,6 +401,7 @@
                 expanded.title || $t("dialog.batch.title"),
                 collectionKey,
                 url,
+                memoryInfo,
             );
             return;
         }
@@ -413,6 +446,7 @@
                                     expanded.title || $t("dialog.batch.title"),
                                     collectionKey,
                                     url,
+                                    memoryInfo,
                                 ),
                             200
                         );

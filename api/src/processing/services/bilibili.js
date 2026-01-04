@@ -3,6 +3,116 @@ import { resolveRedirectingURL } from "../url.js";
 
 // TO-DO: higher quality downloads (currently requires an account)
 
+const shouldUseUpstream = () => {
+    if (!env.instagramUpstreamURL) return false;
+
+    try {
+        // avoid accidental recursion if upstream points to self
+        const upstream = new URL(env.instagramUpstreamURL).origin;
+
+        try {
+            const self = new URL(env.apiURL).origin;
+            return upstream !== self;
+        } catch {
+            return true;
+        }
+    } catch {
+        return false;
+    }
+};
+
+const rewriteUpstreamTunnelUrl = (rawUrl) => {
+    try {
+        const upstreamBase = new URL(env.instagramUpstreamURL);
+        const url = new URL(String(rawUrl));
+        url.protocol = upstreamBase.protocol;
+        url.host = upstreamBase.host;
+        url.username = upstreamBase.username;
+        url.password = upstreamBase.password;
+        return url.toString();
+    } catch {
+        return String(rawUrl);
+    }
+};
+
+const fetchUpstream = async (url) => {
+    if (!shouldUseUpstream()) return null;
+
+    const endpoint = new URL(env.instagramUpstreamURL);
+    endpoint.pathname = "/";
+    endpoint.search = "";
+    endpoint.hash = "";
+
+    let upstreamOrigin;
+    try {
+        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
+    } catch {}
+
+    const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    };
+
+    if (env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    const timeoutMs =
+        typeof env.instagramUpstreamTimeoutMs === "number" &&
+        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
+        env.instagramUpstreamTimeoutMs > 0
+            ? env.instagramUpstreamTimeoutMs
+            : 12000;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        if (upstreamOrigin) {
+            console.log(`[bilibili] upstream fallback -> ${upstreamOrigin}`);
+        } else {
+            console.log(`[bilibili] upstream fallback`);
+        }
+
+        const res = await fetch(endpoint, {
+            method: "POST",
+            signal: controller.signal,
+            headers,
+            body: JSON.stringify({
+                url: String(url),
+                localProcessing: "forced",
+            }),
+        });
+
+        const payload = await res.json().catch(() => null);
+        if (!res.ok) {
+            console.log(`[bilibili] upstream response status=${res.status}`);
+            return null;
+        }
+        if (!payload || typeof payload !== "object") return null;
+
+        if (
+            payload.status !== "local-processing" ||
+            !Array.isArray(payload.tunnel) ||
+            payload.tunnel.length < 2
+        ) {
+            return null;
+        }
+
+        return {
+            tunnels: payload.tunnel.map(rewriteUpstreamTunnelUrl),
+            filename: payload.output?.filename || payload.filename,
+            duration: payload.duration,
+        };
+    } catch {
+        console.log(`[bilibili] upstream request failed`);
+        return null;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
 function getBest(content) {
     return content?.filter(v => v.baseUrl || v.url)
                 .map(v => (v.baseUrl = v.baseUrl || v.url, v))
@@ -113,11 +223,52 @@ export default async function({ comId, tvId, comShortLink, partId }) {
         comId = patternMatch?.comId;
     }
 
+    let result;
+
     if (comId) {
-        return com_download(comId, partId);
+        result = await com_download(comId, partId);
     } else if (tvId) {
-        return tv_download(tvId);
+        result = await tv_download(tvId);
+    } else {
+        return { error: "fetch.fail" };
     }
 
-    return { error: "fetch.fail" };
+    if (!result?.error || !['fetch.empty', 'fetch.fail'].includes(result.error)) {
+        return result;
+    }
+
+    let upstreamUrl;
+    let audioFilename;
+
+    if (comId) {
+        upstreamUrl = new URL(`https://www.bilibili.com/video/${comId}`);
+        if (partId) upstreamUrl.searchParams.set('p', partId);
+        audioFilename = `bilibili_${comId}${partId ? `_${partId}` : ''}_audio`;
+    } else if (tvId) {
+        upstreamUrl = `https://www.bilibili.tv/video/${tvId}`;
+        audioFilename = `bilibili_tv_${tvId}_audio`;
+    }
+
+    if (!upstreamUrl) return result;
+
+    const upstream = await fetchUpstream(upstreamUrl);
+    if (!upstream?.tunnels?.length) return result;
+
+    if (
+        typeof upstream.duration === "number" &&
+        Number.isFinite(upstream.duration) &&
+        upstream.duration > env.durationLimit
+    ) {
+        return { error: "content.too_long" };
+    }
+
+    return {
+        urls: upstream.tunnels.slice(0, 2),
+        filename: upstream.filename || `bilibili_${comId || tvId}.mp4`,
+        audioFilename,
+        duration: upstream.duration,
+        headers: {
+            "ngrok-skip-browser-warning": "true",
+        },
+    };
 }

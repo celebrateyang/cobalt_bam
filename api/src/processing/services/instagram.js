@@ -123,6 +123,12 @@ export default function instagram(obj) {
     const requestUpstreamCobalt = async (postUrl) => {
         if (!env.instagramUpstreamURL) return null;
 
+        try {
+            if (new URL(env.instagramUpstreamURL).origin === new URL(env.apiURL).origin) {
+                return null;
+            }
+        } catch {}
+
         const endpoint = new URL(env.instagramUpstreamURL);
         endpoint.pathname = "/";
         endpoint.search = "";

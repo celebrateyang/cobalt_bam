@@ -3,6 +3,23 @@ import { genericUserAgent } from "../../config.js";
 // Mobile UA is required for the share page logic to work without X-Bogus
 // Verified working as of Dec 2025
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+const PAGE_TIMEOUT_MS = 15000;
+const SHARE_PAGE_RETRIES = 1;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const looksLikeWafChallenge = (html) => {
+    if (!html) return false;
+
+    // ByteDance WAF JS challenge pages return HTML (often 2-5KB) without router data.
+    return (
+        html.includes("waf-jschallenge") ||
+        html.includes("lf-waf-jschallenge") ||
+        html.includes("_wafchallengeid") ||
+        html.includes("WAFJS") ||
+        html.includes("Please wait")
+    );
+};
 
 const toSeconds = (value) => {
     if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
@@ -19,7 +36,8 @@ export default async function(obj) {
                 redirect: "follow",
                 headers: {
                     "user-agent": MOBILE_UA
-                }
+                },
+                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
             });
             
             const finalUrl = res.url;
@@ -39,18 +57,88 @@ export default async function(obj) {
     if (!videoId) return { error: "fetch.short_link" };
 
     // Fetch share page
-    const shareUrl = `https://www.iesdouyin.com/share/video/${videoId}`;
+    const shareUrls = [
+        `https://www.iesdouyin.com/share/video/${videoId}`,
+        `https://m.douyin.com/share/video/${videoId}`,
+    ];
     let html;
-    try {
-        const res = await fetch(shareUrl, {
-            headers: {
-                "user-agent": MOBILE_UA
+    let shareUrl;
+    let wafDetected = false;
+
+    let lastFetchError;
+    for (const candidateUrl of shareUrls) {
+        shareUrl = candidateUrl;
+
+        for (let attempt = 0; attempt <= SHARE_PAGE_RETRIES; attempt++) {
+            try {
+                const res = await fetch(candidateUrl, {
+                    headers: {
+                        "user-agent": MOBILE_UA,
+                    },
+                    signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+                });
+
+                const body = await res.text();
+
+                if (!res.ok) {
+                    // Douyin may return anti-bot blocks as HTTP errors.
+                    if ([403, 412, 429].includes(res.status)) {
+                        wafDetected = true;
+                        console.warn(
+                            `Douyin share page blocked (status ${res.status}, attempt ${attempt + 1})`,
+                            { shareUrl: candidateUrl, bytes: body.length },
+                        );
+
+                        if (attempt < SHARE_PAGE_RETRIES) {
+                            await sleep(800 + Math.floor(Math.random() * 800));
+                            continue;
+                        }
+
+                        break;
+                    }
+
+                    lastFetchError = new Error(`Status ${res.status}`);
+                    break;
+                }
+
+                if (looksLikeWafChallenge(body)) {
+                    wafDetected = true;
+                    console.warn(
+                        `Douyin WAF challenge detected while fetching share page (attempt ${attempt + 1})`,
+                        { shareUrl: candidateUrl, bytes: body.length },
+                    );
+
+                    if (attempt < SHARE_PAGE_RETRIES) {
+                        // Backoff to avoid repeatedly hitting WAF on bursty traffic.
+                        await sleep(800 + Math.floor(Math.random() * 800));
+                        continue;
+                    }
+
+                    break;
+                }
+
+                html = body;
+                break;
+            } catch (e) {
+                lastFetchError = e;
+
+                if (attempt < SHARE_PAGE_RETRIES) {
+                    await sleep(400 + Math.floor(Math.random() * 400));
+                    continue;
+                }
+
+                break;
             }
-        });
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        html = await res.text();
-    } catch (e) {
-        console.error("Douyin share page fetch failed:", e);
+        }
+
+        if (html) break;
+    }
+
+    if (!html) {
+        if (wafDetected) return { error: "fetch.rate" };
+        if (lastFetchError) {
+            console.error("Douyin share page fetch failed:", lastFetchError);
+        }
         return { error: "fetch.fail" };
     }
 
@@ -70,6 +158,13 @@ export default async function(obj) {
         
         if (!data) throw new Error("no router data found in html");
     } catch (e) {
+        if (looksLikeWafChallenge(html)) {
+            console.warn("Douyin WAF challenge detected while parsing share page", {
+                shareUrl,
+                bytes: html.length,
+            });
+            return { error: "fetch.rate" };
+        }
         console.error("Douyin data parse failed:", e);
         return { error: "fetch.fail" };
     }
@@ -105,7 +200,8 @@ export default async function(obj) {
                 redirect: "follow",
                 headers: {
                     "User-Agent": MOBILE_UA
-                }
+                },
+                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
             });
             directUrl = headRes.url;
         } catch (e) {

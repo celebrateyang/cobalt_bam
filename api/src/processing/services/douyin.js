@@ -1,10 +1,11 @@
-import { genericUserAgent } from "../../config.js";
+import { env } from "../../config.js";
 
 // Mobile UA is required for the share page logic to work without X-Bogus
 // Verified working as of Dec 2025
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 const PAGE_TIMEOUT_MS = 15000;
 const SHARE_PAGE_RETRIES = 1;
+const WAF_RETRY_AFTER_SECONDS = 60;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,6 +22,121 @@ const looksLikeWafChallenge = (html) => {
     );
 };
 
+const getUpstreamTargetUrl = ({ videoId, shortLink }) => {
+    if (videoId) return `https://www.douyin.com/video/${videoId}`;
+    if (shortLink) return `https://douyin.com/_shortLink/${shortLink}`;
+    return null;
+};
+
+const requestUpstreamCobalt = async (targetUrl) => {
+    // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
+    if (!env.instagramUpstreamURL) return null;
+
+    try {
+        if (new URL(env.instagramUpstreamURL).origin === new URL(env.apiURL).origin) {
+            return null;
+        }
+    } catch {
+        // ignore
+    }
+
+    const endpoint = new URL(env.instagramUpstreamURL);
+    endpoint.pathname = "/";
+    endpoint.search = "";
+    endpoint.hash = "";
+
+    const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    };
+
+    if (env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    const timeoutMs =
+        typeof env.instagramUpstreamTimeoutMs === "number" &&
+        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
+        env.instagramUpstreamTimeoutMs > 0
+            ? env.instagramUpstreamTimeoutMs
+            : 12000;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const res = await fetch(endpoint, {
+            method: "POST",
+            signal: controller.signal,
+            headers,
+            body: JSON.stringify({ url: String(targetUrl) }),
+        });
+
+        const payload = await res.json().catch(() => null);
+
+        if (!res.ok) return null;
+        if (!payload || typeof payload !== "object") return null;
+        if (!["redirect", "tunnel"].includes(payload.status)) return null;
+        if (!payload.url) return null;
+
+        return {
+            url: payload.url,
+            filename: payload.filename,
+        };
+    } catch (e) {
+        console.warn("Douyin upstream request failed:", e);
+        return null;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+const resolveShortLinkFinalUrl = async (shortLink) => {
+    const baseUrl = `https://v.douyin.com/${shortLink}/`;
+
+    const headers = {
+        "user-agent": MOBILE_UA,
+    };
+
+    try {
+        const res = await fetch(baseUrl, {
+            method: "HEAD",
+            redirect: "manual",
+            headers,
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+
+        const location = res.headers.get("location");
+        if (location) return new URL(location, baseUrl).href;
+    } catch {
+        // ignore and try GET
+    }
+
+    try {
+        const res = await fetch(baseUrl, {
+            method: "GET",
+            redirect: "manual",
+            headers,
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+
+        const location = res.headers.get("location");
+        if (location) return new URL(location, baseUrl).href;
+    } catch {
+        // ignore
+    }
+
+    const res = await fetch(baseUrl, {
+        method: "HEAD",
+        redirect: "follow",
+        headers,
+        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+    });
+
+    return res.url;
+};
+
 const toSeconds = (value) => {
     if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
     return value > 1000 ? Math.round(value / 1000) : Math.round(value);
@@ -31,16 +147,7 @@ export default async function(obj) {
 
     if (!videoId && obj.shortLink) {
         try {
-            const res = await fetch(`https://v.douyin.com/${obj.shortLink}/`, {
-                method: "HEAD",
-                redirect: "follow",
-                headers: {
-                    "user-agent": MOBILE_UA
-                },
-                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-            });
-            
-            const finalUrl = res.url;
+            const finalUrl = await resolveShortLinkFinalUrl(obj.shortLink);
             // https://www.douyin.com/video/73123456789...
             // or https://www.iesdouyin.com/share/video/73123456789...
             
@@ -50,6 +157,21 @@ export default async function(obj) {
             }
         } catch (e) {
             console.error("Douyin shortlink fetch failed:", e);
+
+            const upstreamTargetUrl = getUpstreamTargetUrl({ shortLink: obj.shortLink });
+            if (upstreamTargetUrl) {
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    return {
+                        filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
+                        urls: upstream.url,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
             return { error: "fetch.short_link" };
         }
     }
@@ -135,7 +257,28 @@ export default async function(obj) {
     }
 
     if (!html) {
-        if (wafDetected) return { error: "fetch.rate" };
+        if (wafDetected) {
+            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            if (upstreamTargetUrl) {
+                console.warn("Douyin WAF challenge detected, trying upstream cobalt", {
+                    targetUrl: upstreamTargetUrl,
+                });
+
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    console.log("Douyin upstream succeeded after WAF challenge");
+                    return {
+                        filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        urls: upstream.url,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
+            return { error: "fetch.rate", limit: WAF_RETRY_AFTER_SECONDS };
+        }
         if (lastFetchError) {
             console.error("Douyin share page fetch failed:", lastFetchError);
         }
@@ -163,7 +306,27 @@ export default async function(obj) {
                 shareUrl,
                 bytes: html.length,
             });
-            return { error: "fetch.rate" };
+
+            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            if (upstreamTargetUrl) {
+                console.warn("Douyin WAF challenge detected, trying upstream cobalt", {
+                    targetUrl: upstreamTargetUrl,
+                });
+
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    console.log("Douyin upstream succeeded after WAF challenge");
+                    return {
+                        filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        urls: upstream.url,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
+            return { error: "fetch.rate", limit: WAF_RETRY_AFTER_SECONDS };
         }
         console.error("Douyin data parse failed:", e);
         return { error: "fetch.fail" };

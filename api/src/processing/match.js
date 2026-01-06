@@ -305,6 +305,13 @@ export default async function({ host, patternMatch, params, authType }) {
 
         if (r.error) {
             let context;
+            const retryAfterSeconds =
+                typeof r?.limit === "number" &&
+                Number.isFinite(r.limit) &&
+                r.limit > 0
+                    ? Math.round(r.limit)
+                    : 60;
+
             switch(r.error) {
                 case "content.too_long":
                     context = {
@@ -313,12 +320,18 @@ export default async function({ host, patternMatch, params, authType }) {
                     break;
 
                 case "fetch.fail":
-                case "fetch.rate":
                 case "fetch.critical":
                 case "link.unsupported":
                 case "content.video.unavailable":
                     context = {
                         service: friendlyServiceName(host),
+                    }
+                    break;
+
+                case "fetch.rate":
+                    context = {
+                        service: friendlyServiceName(host),
+                        limit: retryAfterSeconds,
                     }
                     break;
             }

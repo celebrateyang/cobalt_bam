@@ -28,6 +28,24 @@ const getUpstreamTargetUrl = ({ videoId, shortLink }) => {
     return null;
 };
 
+const logUpstreamUsed = (reason, { videoId, shortLink, targetUrl, status }) => {
+    let upstreamOrigin;
+    try {
+        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
+    } catch {
+        upstreamOrigin = "unknown";
+    }
+
+    console.log("[douyin] resolved via upstream", {
+        reason,
+        upstream: upstreamOrigin,
+        status,
+        videoId,
+        shortLink,
+        targetUrl,
+    });
+};
+
 const requestUpstreamCobalt = async (targetUrl) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
@@ -81,6 +99,7 @@ const requestUpstreamCobalt = async (targetUrl) => {
         if (!payload.url) return null;
 
         return {
+            status: payload.status,
             url: payload.url,
             filename: payload.filename,
         };
@@ -162,6 +181,12 @@ export default async function(obj) {
             if (upstreamTargetUrl) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
+                    logUpstreamUsed("shortlink_fetch_failed", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
                     return {
                         filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
                         urls: upstream.url,
@@ -266,7 +291,12 @@ export default async function(obj) {
 
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
-                    console.log("Douyin upstream succeeded after WAF challenge");
+                    logUpstreamUsed("waf_fetch", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         urls: upstream.url,
@@ -315,7 +345,12 @@ export default async function(obj) {
 
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
-                    console.log("Douyin upstream succeeded after WAF challenge");
+                    logUpstreamUsed("waf_parse", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         urls: upstream.url,

@@ -56,7 +56,19 @@ export const shareFile = async (file: File) => {
 }
 
 export const openURL = (url: string) => {
-    const open = window.open(url, "_blank");
+    // video.twimg.com (and other *.twimg.com hosts) return 403 when a foreign Referer is present.
+    // Use noreferrer so the download works when opened from our UI.
+    let open: Window | null = null;
+    try {
+        const { hostname } = new URL(url, window.location.href);
+        if (hostname.endsWith("twimg.com")) {
+            open = window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+            open = window.open(url, "_blank");
+        }
+    } catch {
+        open = window.open(url, "_blank");
+    }
 
     /* if new tab got blocked by user agent, show a saving dialog */
     if (!open) {

@@ -1,22 +1,104 @@
 {
-    "title": "Frequently Asked Questions",
-    "description": "Common answers about using the downloader safely and for free.",
+    "title": "Frequently Asked Questions (FAQ)",
+    "description": "Answers about watermark-free downloads, formats, points, and troubleshooting.",
+    "seo": {
+        "title": "FAQ | Bamboo Download - Watermark-free video downloader",
+        "description": "Bamboo Download FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about watermark-free files, batch mode, formats, points, and common fixes.",
+        "keywords": "video downloader FAQ,Douyin downloader,Bilibili downloader,Kuaishou downloader,Xiaohongshu downloader,TikTok downloader,watermark-free download,batch download,points billing"
+    },
+    "toc": {
+        "title": "Quick links"
+    },
+    "search": {
+        "placeholder": "Search FAQ (watermark, batch, points, failed…)",
+        "clear": "Clear",
+        "no_results": "No matching questions found."
+    },
+    "actions": {
+        "home": "Back to downloader",
+        "feedback": "Report an issue",
+        "youtube": "YouTube guide",
+        "account": "Account & points"
+    },
+    "sections": {
+        "basics": "Getting started",
+        "features": "Features & formats",
+        "points": "Account & points",
+        "troubleshooting": "Troubleshooting",
+        "privacy": "Policy & privacy"
+    },
     "items": {
-        "usage": {
-            "q": "How do I use the downloader?",
-            "a": "Paste the video link into the input box and click download. We will fetch a clean link for you automatically."
+        "what_is": {
+            "q": "What is Bamboo Download?",
+            "a": "Bamboo Download is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook, and more."
         },
-        "platforms": {
-            "q": "Which platforms are supported?",
-            "a": "YouTube, Facebook, Instagram, Twitter (X), Douyin, Kuaishou, Bilibili and other popular platforms are supported."
+        "how_to_use": {
+            "q": "How do I download a video (watermark-free)?",
+            "a": "1) Copy the share link\n2) Paste it on the home page\n3) Choose Auto / Audio / Muted\n4) Click Parse/Download and save it."
         },
-        "free": {
-            "q": "Is it free to use?",
-            "a": "Yes. All downloads are free to use."
+        "supported_platforms": {
+            "q": "Which platforms and link types are supported?",
+            "a": "This site covers 100+ services. Common ones include Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), and Facebook.\nAvailable quality, audio, and extra files depend on the platform and the original post."
         },
-        "contact": {
-            "q": "How can I send new requirements?",
-            "a": "Email celebrateyang@gmail.com and we will review your request."
+        "youtube_supported": {
+            "q": "Does it support YouTube downloads?",
+            "a": "Direct YouTube parsing is disabled on this site.\nIf you need YouTube downloads, use the on-site guide for a browser script/plugin workflow."
+        },
+        "mobile_ios": {
+            "q": "Does it work on mobile? How do I save on iOS?",
+            "a": "Yes, it works on mobile/tablet/desktop.\nOn iOS, if you can preview but cannot save, follow the built-in Siri Shortcuts instructions to save to Photos/Files from the share sheet."
+        },
+        "watermark_free": {
+            "q": "Will the downloaded video have a watermark?",
+            "a": "For platforms that provide a watermark-free source, we try to return a clean file by default.\nIf the watermark is burned into the video or a platform changed its rules, it may not be removable."
+        },
+        "quality_options": {
+            "q": "Can I download HD/original quality? Why does quality vary?",
+            "a": "Quality depends on what the original post provides and platform limitations.\nIf multiple options are available, pick a higher one. If not, the source may not offer alternatives."
+        },
+        "audio_only": {
+            "q": "Can I download audio-only or muted videos?",
+            "a": "Yes. Choose Audio for audio-only files, or Muted to remove the audio track.\nSupported formats vary by platform (for example MP3/M4A/MP4)."
+        },
+        "batch_download": {
+            "q": "How do I batch download multiple links?",
+            "a": "Paste multiple links at once (separated by spaces or new lines).\nWhen batch mode is detected, you can process them together and track progress."
+        },
+        "playlist_collection": {
+            "q": "Do you support playlists/collections/series downloads?",
+            "a": "Yes. For supported links, the app will try to detect collections/episodes/playlists and offer a batch entry.\nIf it fails to detect, paste each item link into batch mode."
+        },
+        "need_login": {
+            "q": "Why does it sometimes ask me to sign in?",
+            "a": "Basic downloads usually don't require an account.\nTo reduce abuse and spam, features like issue reports, batch tasks, or points billing may require sign-in."
+        },
+        "points_how": {
+            "q": "What are points and how are they charged?",
+            "a": "If points are enabled on this site, downloads may consume points based on media duration: about 1 point per minute (rounded up).\nWe check your balance before starting. If it's insufficient, you'll be prompted to purchase more."
+        },
+        "points_buy": {
+            "q": "Where can I check or buy points?",
+            "a": "Open the Account page to view your current balance and purchase options.\nAfter payment, the balance usually refreshes automatically."
+        },
+        "failed_parse": {
+            "q": "Parse failed or shows unsupported. What should I do?",
+            "a": "Make sure the link is publicly accessible (not private, paid, or login-required).\nTry re-copying the share link, refreshing the page, switching networks, or trying again later (platform rules change frequently).\nIf it still fails, use “Report an issue” on the home page and include the link and error message."
+        },
+        "slow_download": {
+            "q": "Downloads are slow or keep failing. Any tips?",
+            "a": "Speed depends on your network and platform throttling.\nTry Wi‑Fi for long videos, switch networks, or retry later. If the issue persists, report it with the link and timestamp."
+        },
+        "private_paid": {
+            "q": "Can it download private/paid/login-required content?",
+            "a": "No. Bamboo Download only handles publicly accessible content.\nPlease respect copyright and creators' rights."
+        },
+        "privacy_logs": {
+            "q": "Do you store my links or files? Is it safe?",
+            "a": "We never ask for your platform passwords.\nLinks and media data are used temporarily during processing. Different deployments may keep minimal access logs for abuse prevention and debugging.\nThis site may run third-party analytics/ads for operation and improvement."
+        },
+        "feedback_contact": {
+            "q": "How do I report issues or request new features?",
+            "a": "Use the in-app feedback entry for the fastest troubleshooting.\nYou can also email: celebrateyang@gmail.com"
         }
     }
 }

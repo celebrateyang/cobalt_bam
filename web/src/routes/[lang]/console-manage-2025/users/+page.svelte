@@ -37,6 +37,8 @@
 
     let pointsDraft: Record<number, string> = {};
     let saving: Record<number, boolean> = {};
+    let copiedUserId: number | null = null;
+    let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
 
     $: lang = $page.params.lang;
 
@@ -175,6 +177,49 @@
     function handleLogout() {
         auth.logout();
         goto(`/${lang}/console-manage-2025`);
+    }
+
+    const copyText = async (text: string) => {
+        const normalized = String(text ?? "").trim();
+        if (!normalized) return false;
+
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(normalized);
+                return true;
+            }
+        } catch {
+            // fall back
+        }
+
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = normalized;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.top = "-1000px";
+            textarea.style.left = "-1000px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+            const ok = document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return ok;
+        } catch {
+            return false;
+        }
+    };
+
+    async function handleCopyEmail(userId: number, email: string) {
+        const ok = await copyText(email);
+        if (!ok) return;
+
+        copiedUserId = userId;
+        if (copiedTimeout) clearTimeout(copiedTimeout);
+        copiedTimeout = setTimeout(() => {
+            copiedUserId = null;
+            copiedTimeout = null;
+        }, 1500);
     }
 
     const parsePointsDraft = (draft: string | undefined) => {
@@ -424,7 +469,32 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{user.primary_email || "-"}</td>
+                            <td>
+                                {#if user.primary_email}
+                                    <div class="email-cell">
+                                        <span
+                                            class="mono selectable email-text"
+                                            title={user.primary_email}
+                                            >{user.primary_email}</span
+                                        >
+                                        <button
+                                            class="btn-secondary btn-copy"
+                                            type="button"
+                                            on:click={() =>
+                                                handleCopyEmail(
+                                                    user.id,
+                                                    user.primary_email,
+                                                )}
+                                        >
+                                            {copiedUserId === user.id
+                                                ? "已复制"
+                                                : "复制"}
+                                        </button>
+                                    </div>
+                                {:else}
+                                    -
+                                {/if}
+                            </td>
                             <td>
                                 <div class="points-cell">
                                     <input
@@ -752,6 +822,34 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         max-width: 360px;
+    }
+
+    .selectable {
+        user-select: text;
+        -webkit-user-select: text;
+        cursor: text;
+    }
+
+    .email-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 280px;
+        max-width: 380px;
+    }
+
+    .email-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .btn-copy {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
     }
 
     .points-cell {

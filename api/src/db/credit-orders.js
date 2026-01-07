@@ -115,7 +115,13 @@ export const listCreditOrdersForUser = async ({
         paid_at: "paid_at",
         amount_fen: "amount_fen",
         points: "points",
-        status: "status",
+        status: `CASE status
+            WHEN 'CREATED' THEN 1
+            WHEN 'PAID' THEN 2
+            WHEN 'FAILED' THEN 3
+            WHEN 'CLOSED' THEN 4
+            ELSE 99
+        END`,
     };
 
     const sortKey = String(sort);
@@ -235,7 +241,13 @@ export const listCreditOrders = async ({
         paid_at: "o.paid_at",
         amount_fen: "o.amount_fen",
         points: "o.points",
-        status: "o.status",
+        status: `CASE o.status
+            WHEN 'CREATED' THEN 1
+            WHEN 'PAID' THEN 2
+            WHEN 'FAILED' THEN 3
+            WHEN 'CLOSED' THEN 4
+            ELSE 99
+        END`,
     };
 
     const sortKey = String(sort);

@@ -41,6 +41,12 @@
     let total = 0;
     let pages = 0;
 
+    type SortKey = "created_at" | "paid_at" | "status";
+    type SortOrder = "asc" | "desc";
+
+    let sort: SortKey = "created_at";
+    let order: SortOrder = "desc";
+
     let copiedOrderId: number | null = null;
     let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -141,6 +147,8 @@
             if (normalizedSearch) params.set("search", normalizedSearch);
             if (status) params.set("status", status);
             if (provider) params.set("provider", provider);
+            params.set("sort", sort);
+            params.set("order", order);
 
             const res = await fetch(
                 `${currentApiURL()}/user/admin/orders?${params.toString()}`,
@@ -204,6 +212,29 @@
 
     async function handleProviderChange(nextProvider: string) {
         provider = nextProvider;
+        pageNum = 1;
+        await loadOrders();
+    }
+
+    const getAriaSort = (key: SortKey) => {
+        if (sort !== key) return "none";
+        return order === "asc" ? "ascending" : "descending";
+    };
+
+    const getSortIcon = (key: SortKey) => {
+        if (sort !== key) return "⇅";
+        return order === "asc" ? "↑" : "↓";
+    };
+
+    async function handleSort(nextSort: SortKey) {
+        if (loading) return;
+        if (sort === nextSort) {
+            order = order === "asc" ? "desc" : "asc";
+        } else {
+            sort = nextSort;
+            order = nextSort === "status" ? "asc" : "desc";
+        }
+
         pageNum = 1;
         await loadOrders();
     }
@@ -306,13 +337,52 @@
                         <th>ID</th>
                         <th>用户</th>
                         <th>商品</th>
-                        <th>状态</th>
+                        <th aria-sort={getAriaSort("status")} class="sortable">
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按状态排序"
+                                disabled={loading}
+                                on:click={() => handleSort("status")}
+                            >
+                                状态
+                                <span class="sort-indicator" aria-hidden="true"
+                                    >{getSortIcon("status")}</span
+                                >
+                            </button>
+                        </th>
                         <th>积分</th>
                         <th>金额</th>
                         <th>渠道</th>
                         <th>订单号</th>
-                        <th>支付时间</th>
-                        <th>创建时间</th>
+                        <th aria-sort={getAriaSort("paid_at")} class="sortable">
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按支付时间排序"
+                                disabled={loading}
+                                on:click={() => handleSort("paid_at")}
+                            >
+                                支付时间
+                                <span class="sort-indicator" aria-hidden="true"
+                                    >{getSortIcon("paid_at")}</span
+                                >
+                            </button>
+                        </th>
+                        <th aria-sort={getAriaSort("created_at")} class="sortable">
+                            <button
+                                type="button"
+                                class="sort-trigger"
+                                aria-label="按创建时间排序"
+                                disabled={loading}
+                                on:click={() => handleSort("created_at")}
+                            >
+                                创建时间
+                                <span class="sort-indicator" aria-hidden="true"
+                                    >{getSortIcon("created_at")}</span
+                                >
+                            </button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -576,6 +646,51 @@
         z-index: 1;
     }
 
+    th.sortable {
+        white-space: nowrap;
+    }
+
+    th[aria-sort="ascending"],
+    th[aria-sort="descending"] {
+        color: var(--text);
+    }
+
+    .sort-trigger {
+        all: unset;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        color: inherit;
+        font: inherit;
+    }
+
+    .sort-trigger:hover:not(:disabled) {
+        color: var(--text);
+    }
+
+    .sort-trigger:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+
+    .sort-trigger:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .sort-indicator {
+        width: 1.2em;
+        text-align: center;
+        font-size: 0.85em;
+        opacity: 0.9;
+    }
+
+    th[aria-sort="none"] .sort-indicator {
+        opacity: 0.5;
+    }
+
     tbody td {
         padding: 12px 14px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -654,36 +769,33 @@
         justify-content: center;
         padding: 4px 10px;
         border-radius: 999px;
-        font-size: 0.76rem;
-        font-weight: 800;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--text);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--white);
         white-space: nowrap;
     }
 
     .status-created {
-        border-color: rgba(59, 130, 246, 0.35);
-        background: rgba(59, 130, 246, 0.16);
-        color: #93c5fd;
+        border-color: #1d4ed8;
+        background: #2563eb;
     }
 
     .status-paid {
-        border-color: rgba(34, 197, 94, 0.35);
-        background: rgba(34, 197, 94, 0.16);
-        color: #86efac;
+        border-color: #15803d;
+        background: #16a34a;
     }
 
     .status-failed {
-        border-color: rgba(239, 68, 68, 0.35);
-        background: rgba(239, 68, 68, 0.16);
-        color: #fca5a5;
+        border-color: #b91c1c;
+        background: #dc2626;
     }
 
     .status-closed {
-        border-color: rgba(148, 163, 184, 0.35);
-        background: rgba(148, 163, 184, 0.16);
-        color: #e2e8f0;
+        border-color: #475569;
+        background: #64748b;
     }
 
     .order-no-cell {
@@ -722,4 +834,3 @@
         }
     }
 </style>
-

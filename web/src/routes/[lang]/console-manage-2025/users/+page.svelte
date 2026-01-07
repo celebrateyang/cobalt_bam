@@ -1257,36 +1257,33 @@
         justify-content: center;
         padding: 4px 10px;
         border-radius: 999px;
-        font-size: 0.76rem;
-        font-weight: 800;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--text);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--white);
         white-space: nowrap;
     }
 
     .status-created {
-        border-color: rgba(59, 130, 246, 0.35);
-        background: rgba(59, 130, 246, 0.16);
-        color: #93c5fd;
+        border-color: #1d4ed8;
+        background: #2563eb;
     }
 
     .status-paid {
-        border-color: rgba(34, 197, 94, 0.35);
-        background: rgba(34, 197, 94, 0.16);
-        color: #86efac;
+        border-color: #15803d;
+        background: #16a34a;
     }
 
     .status-failed {
-        border-color: rgba(239, 68, 68, 0.35);
-        background: rgba(239, 68, 68, 0.16);
-        color: #fca5a5;
+        border-color: #b91c1c;
+        background: #dc2626;
     }
 
     .status-closed {
-        border-color: rgba(148, 163, 184, 0.35);
-        background: rgba(148, 163, 184, 0.16);
-        color: #e2e8f0;
+        border-color: #475569;
+        background: #64748b;
     }
 
     .order-no-cell {

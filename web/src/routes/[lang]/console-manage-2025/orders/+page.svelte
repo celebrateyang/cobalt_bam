@@ -5,31 +5,44 @@
     import { auth } from "$lib/api/social";
     import { currentApiURL } from "$lib/api/api-url";
 
-    type FeedbackItem = {
+    type OrderUser = {
+        primary_email: string | null;
+        full_name: string | null;
+        avatar_url: string | null;
+    };
+
+    type CreditOrder = {
         id: number;
         user_id: number;
         clerk_user_id: string;
-        video_url: string;
-        phenomenon: string;
-        suggestion: string | null;
+        provider: string;
+        product_key: string;
+        points: number;
+        amount_fen: number;
+        currency: string;
+        out_trade_no: string;
+        status: string;
+        provider_transaction_id: string | null;
+        paid_at: number | string | null;
         created_at: number | string;
         updated_at: number | string;
-        user?: {
-            primary_email: string | null;
-            full_name: string | null;
-            avatar_url: string | null;
-        };
+        user?: OrderUser;
     };
 
-    let feedback: FeedbackItem[] = [];
+    let orders: CreditOrder[] = [];
     let loading = true;
     let error = "";
 
     let search = "";
+    let status = "";
+    let provider = "";
     let pageNum = 1;
     let limit = 20;
     let total = 0;
     let pages = 0;
+
+    let copiedOrderId: number | null = null;
+    let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
 
     $: lang = $page.params.lang;
 
@@ -45,10 +58,72 @@
             return;
         }
 
-        await loadFeedback();
+        await loadOrders();
     });
 
-    async function loadFeedback() {
+    function formatDate(ts: number | string | null | undefined) {
+        if (ts == null) return "-";
+        const raw = typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
+        if (!Number.isFinite(raw)) return "-";
+
+        const ms = raw < 1e12 ? raw * 1000 : raw;
+        const d = new Date(ms);
+        if (Number.isNaN(d.getTime())) return "-";
+
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+
+    const formatAmount = (amountFen: number | null | undefined, currency?: string) => {
+        if (amountFen == null || !Number.isFinite(amountFen)) return "-";
+        const amount = (amountFen / 100).toFixed(2);
+        if (!currency || currency === "CNY") return `¥${amount}`;
+        return `${amount} ${currency}`;
+    };
+
+    const copyText = async (text: string) => {
+        const normalized = String(text ?? "").trim();
+        if (!normalized) return false;
+
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(normalized);
+                return true;
+            }
+        } catch {
+            // fall back
+        }
+
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = normalized;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.top = "-1000px";
+            textarea.style.left = "-1000px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+            const ok = document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return ok;
+        } catch {
+            return false;
+        }
+    };
+
+    async function handleCopyOutTradeNo(orderId: number, outTradeNo: string) {
+        const ok = await copyText(outTradeNo);
+        if (!ok) return;
+
+        copiedOrderId = orderId;
+        if (copiedTimeout) clearTimeout(copiedTimeout);
+        copiedTimeout = setTimeout(() => {
+            copiedOrderId = null;
+            copiedTimeout = null;
+        }, 1500);
+    }
+
+    async function loadOrders() {
         loading = true;
         error = "";
 
@@ -64,9 +139,11 @@
             params.set("limit", String(limit));
             const normalizedSearch = search.trim();
             if (normalizedSearch) params.set("search", normalizedSearch);
+            if (status) params.set("status", status);
+            if (provider) params.set("provider", provider);
 
             const res = await fetch(
-                `${currentApiURL()}/user/admin/feedback?${params.toString()}`,
+                `${currentApiURL()}/user/admin/orders?${params.toString()}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -85,7 +162,7 @@
                 throw new Error(data?.error?.message || "加载失败");
             }
 
-            feedback = Array.isArray(data?.data?.feedback) ? data.data.feedback : [];
+            orders = Array.isArray(data?.data?.orders) ? data.data.orders : [];
 
             const pagination = data?.data?.pagination || {};
             total = pagination.total ?? 0;
@@ -93,7 +170,7 @@
             pageNum = pagination.page ?? pageNum;
             limit = pagination.limit ?? limit;
         } catch (e) {
-            feedback = [];
+            orders = [];
             error = e instanceof Error ? e.message : "网络错误";
         } finally {
             loading = false;
@@ -105,63 +182,83 @@
         if (next < 1) return;
         if (pages && next > pages) return;
         pageNum = next;
-        await loadFeedback();
+        await loadOrders();
     }
 
     async function handleSearch() {
         pageNum = 1;
-        await loadFeedback();
+        await loadOrders();
     }
 
     async function handleLimitChange(nextLimit: number) {
         limit = nextLimit;
         pageNum = 1;
-        await loadFeedback();
+        await loadOrders();
     }
 
-    function formatDate(ts: number | string | null | undefined) {
-        if (ts == null) return "-";
-        const raw = typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
-        if (!Number.isFinite(raw)) return "-";
-
-        const ms = raw < 1e12 ? raw * 1000 : raw;
-        const d = new Date(ms);
-        if (Number.isNaN(d.getTime())) return "-";
-
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    async function handleStatusChange(nextStatus: string) {
+        status = nextStatus;
+        pageNum = 1;
+        await loadOrders();
     }
 
-    const copyText = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch {
-            // ignore
-        }
-    };
+    async function handleProviderChange(nextProvider: string) {
+        provider = nextProvider;
+        pageNum = 1;
+        await loadOrders();
+    }
 </script>
 
 <svelte:head>
-    <title>问题反馈 - 管理后台</title>
+    <title>订单管理 - 管理后台</title>
 </svelte:head>
 
 <div class="admin-container">
     <header class="admin-header">
-        <h1>问题反馈</h1>
+        <h1>订单管理</h1>
     </header>
 
     <div class="toolbar">
         <div class="search">
             <input
                 type="text"
-                placeholder="搜索视频链接 / 现象 / 用户邮箱 / Clerk ID"
+                placeholder="搜索订单号 / 邮箱 / 姓名 / Clerk ID"
                 bind:value={search}
                 on:keydown={(e) => e.key === "Enter" && handleSearch()}
             />
             <button class="btn-primary" on:click={handleSearch}>搜索</button>
+
+            <label class="filter">
+                <span>状态</span>
+                <select
+                    bind:value={status}
+                    on:change={() => void handleStatusChange(status)}
+                    disabled={loading}
+                >
+                    <option value="">全部</option>
+                    <option value="CREATED">CREATED</option>
+                    <option value="PAID">PAID</option>
+                    <option value="FAILED">FAILED</option>
+                    <option value="CLOSED">CLOSED</option>
+                </select>
+            </label>
+
+            <label class="filter">
+                <span>渠道</span>
+                <select
+                    bind:value={provider}
+                    on:change={() => void handleProviderChange(provider)}
+                    disabled={loading}
+                >
+                    <option value="">全部</option>
+                    <option value="wechat">wechat</option>
+                    <option value="polar">polar</option>
+                </select>
+            </label>
         </div>
 
         <div class="pager">
-            <span class="meta">共 {total} 条</span>
+            <span class="meta">共 {total} 单</span>
             <label class="limit">
                 <span>每页</span>
                 <select bind:value={limit} on:change={() => handleLimitChange(limit)}>
@@ -199,100 +296,94 @@
 
     {#if loading}
         <div class="loading">加载中...</div>
-    {:else if feedback.length === 0}
-        <div class="empty">暂无反馈</div>
+    {:else if orders.length === 0}
+        <div class="empty">暂无订单</div>
     {:else}
         <div class="table-wrap">
-            <table class="feedback-table">
+            <table class="orders-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>时间</th>
                         <th>用户</th>
-                        <th>视频链接</th>
-                        <th>现象</th>
-                        <th>建议</th>
+                        <th>商品</th>
+                        <th>状态</th>
+                        <th>积分</th>
+                        <th>金额</th>
+                        <th>渠道</th>
+                        <th>订单号</th>
+                        <th>支付时间</th>
+                        <th>创建时间</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {#each feedback as item (item.id)}
+                    {#each orders as o (o.id)}
                         <tr>
-                            <td class="mono">{item.id}</td>
-                            <td class="mono">{formatDate(item.created_at)}</td>
+                            <td class="mono">{o.id}</td>
                             <td>
                                 <div class="user-cell">
-                                    {#if item.user?.avatar_url}
+                                    {#if o.user?.avatar_url}
                                         <img
                                             class="avatar"
-                                            src={item.user.avatar_url}
-                                            alt={item.user.full_name ||
-                                                item.user.primary_email ||
-                                                item.clerk_user_id}
+                                            src={o.user.avatar_url}
+                                            alt={o.user?.full_name ||
+                                                o.user?.primary_email ||
+                                                o.clerk_user_id}
                                         />
                                     {:else}
                                         <div class="avatar placeholder">
-                                            {(item.user?.full_name ||
-                                                item.user?.primary_email ||
-                                                item.clerk_user_id)
+                                            {(o.user?.full_name ||
+                                                o.user?.primary_email ||
+                                                o.clerk_user_id)
                                                 ?.charAt(0)
                                                 ?.toUpperCase() || "U"}
                                         </div>
                                     {/if}
                                     <div class="user-meta">
                                         <div class="name">
-                                            {item.user?.full_name || "-"}
+                                            {o.user?.full_name ||
+                                                o.user?.primary_email ||
+                                                "-"}
                                         </div>
-                                        <div class="sub-row">
-                                            <span
-                                                class="sub mono selectable"
-                                                title={item.user?.primary_email ||
-                                                    item.clerk_user_id}
-                                            >
-                                                {item.user?.primary_email ||
-                                                    item.clerk_user_id}
-                                            </span>
-                                            <button
-                                                class="btn-secondary btn-copy btn-copy-small"
-                                                type="button"
-                                                on:click={() =>
-                                                    copyText(
-                                                        item.user?.primary_email ||
-                                                            item.clerk_user_id,
-                                                    )}
-                                            >
-                                                复制
-                                            </button>
+                                        <div class="sub mono">
+                                            #{o.user_id} · {o.clerk_user_id}
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="url-cell">
-                                <a
-                                    class="mono url"
-                                    href={item.video_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    {item.video_url}
-                                </a>
-                                <button
-                                    class="btn-secondary btn-copy"
-                                    type="button"
-                                    on:click={() => copyText(item.video_url)}
-                                >
-                                    复制
-                                </button>
-                            </td>
+                            <td class="mono">{o.product_key}</td>
                             <td>
-                                <div class="text clamp">
-                                    {item.phenomenon}
+                                <span
+                                    class={`status-badge status-${String(
+                                        o.status || "",
+                                    ).toLowerCase()}`}
+                                    >{o.status}</span
+                                >
+                            </td>
+                            <td class="mono">{o.points}</td>
+                            <td class="mono">{formatAmount(o.amount_fen, o.currency)}</td>
+                            <td class="mono">{o.provider}</td>
+                            <td>
+                                <div class="order-no-cell">
+                                    <span
+                                        class="mono selectable order-no"
+                                        title={o.out_trade_no}
+                                        >{o.out_trade_no}</span
+                                    >
+                                    <button
+                                        class="btn-secondary btn-copy"
+                                        type="button"
+                                        on:click={() =>
+                                            void handleCopyOutTradeNo(
+                                                o.id,
+                                                o.out_trade_no,
+                                            )}
+                                    >
+                                        {copiedOrderId === o.id ? "已复制" : "复制"}
+                                    </button>
                                 </div>
                             </td>
-                            <td>
-                                <div class="text clamp">
-                                    {item.suggestion || "-"}
-                                </div>
-                            </td>
+                            <td class="mono">{formatDate(o.paid_at)}</td>
+                            <td class="mono">{formatDate(o.created_at)}</td>
                         </tr>
                     {/each}
                 </tbody>
@@ -304,7 +395,7 @@
 <style>
     .admin-container {
         width: 100%;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0;
         padding: calc(var(--padding) * 2);
     }
@@ -372,11 +463,13 @@
         gap: calc(var(--padding) / 2);
         align-items: center;
         flex: 1;
-        min-width: 260px;
+        min-width: 320px;
+        flex-wrap: wrap;
     }
 
     .search input {
         flex: 1;
+        min-width: 240px;
         padding: 10px 12px;
         border: none;
         border-radius: var(--border-radius);
@@ -385,13 +478,30 @@
         box-shadow: var(--button-box-shadow);
         font-family: "IBM Plex Mono", monospace;
         font-size: 0.9rem;
-        min-width: 220px;
     }
 
     .search input:focus {
         outline: none;
         background: var(--button-hover);
         box-shadow: 0 0 0 2px var(--blue) inset;
+    }
+
+    .filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--subtext);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .filter select {
+        padding: 8px 10px;
+        border: none;
+        border-radius: var(--border-radius);
+        background: var(--button);
+        color: var(--text);
+        box-shadow: var(--button-box-shadow);
     }
 
     .pager {
@@ -450,7 +560,7 @@
     table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 1100px;
+        min-width: 1200px;
     }
 
     thead th {
@@ -471,7 +581,7 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         color: var(--text);
         font-size: 0.9rem;
-        vertical-align: top;
+        vertical-align: middle;
     }
 
     tbody tr:hover td {
@@ -482,11 +592,17 @@
         font-family: "IBM Plex Mono", monospace;
     }
 
+    .selectable {
+        user-select: text;
+        -webkit-user-select: text;
+        cursor: text;
+    }
+
     .user-cell {
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 240px;
+        min-width: 260px;
     }
 
     .avatar {
@@ -517,6 +633,10 @@
         font-weight: 700;
         color: var(--text);
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 360px;
     }
 
     .sub {
@@ -525,28 +645,48 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 340px;
+        max-width: 360px;
     }
 
-    .sub-row {
-        display: flex;
+    .status-badge {
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
-        min-width: 0;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        white-space: nowrap;
     }
 
-    .sub-row .sub {
-        flex: 1;
-        min-width: 0;
+    .status-created {
+        border-color: rgba(59, 130, 246, 0.35);
+        background: rgba(59, 130, 246, 0.16);
+        color: #93c5fd;
     }
 
-    .selectable {
-        user-select: text;
-        -webkit-user-select: text;
-        cursor: text;
+    .status-paid {
+        border-color: rgba(34, 197, 94, 0.35);
+        background: rgba(34, 197, 94, 0.16);
+        color: #86efac;
     }
 
-    .url-cell {
+    .status-failed {
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.16);
+        color: #fca5a5;
+    }
+
+    .status-closed {
+        border-color: rgba(148, 163, 184, 0.35);
+        background: rgba(148, 163, 184, 0.16);
+        color: #e2e8f0;
+    }
+
+    .order-no-cell {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -554,12 +694,12 @@
         max-width: 420px;
     }
 
-    .url {
-        color: var(--blue);
+    .order-no {
+        flex: 1;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 340px;
     }
 
     .btn-copy {
@@ -568,45 +708,18 @@
         white-space: nowrap;
     }
 
-    .btn-copy-small {
-        padding: 6px 8px;
-        font-size: 0.75rem;
-    }
-
-    .text {
-        white-space: pre-wrap;
-        word-break: break-word;
-        line-height: 1.45;
-    }
-
-    .clamp {
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        max-width: 360px;
-    }
-
     @media screen and (max-width: 768px) {
         .admin-container {
             padding: var(--padding);
-        }
-
-        .admin-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .admin-header h1 {
-            font-size: 1.4rem;
         }
 
         .toolbar {
             align-items: stretch;
         }
 
-        .search {
-            min-width: 100%;
+        .pager {
+            justify-content: flex-start;
         }
     }
 </style>
+

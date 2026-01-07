@@ -265,11 +265,6 @@
         const secs = safeSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     }
-
-    function handleLogout() {
-        auth.logout();
-        goto(`/${lang}/console-manage-2025`);
-    }
 </script>
 
 <div class="admin-container">
@@ -279,22 +274,6 @@
             <button class="btn-primary" on:click={openAddModal}
                 >+ 添加视频</button
             >
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/accounts`)}
-                >账号管理</button
-            >
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/users`)}
-                >用户管理</button
-            >
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/feedback`)}
-                >问题反馈</button
-            >
-            <button class="btn-logout" on:click={handleLogout}>退出登录</button>
         </div>
     </header>
 
@@ -565,7 +544,7 @@
 <style>
     .admin-container {
         max-width: 1280px;
-        margin: 0 auto;
+        margin: 0;
         padding: calc(var(--padding) * 2);
         min-height: 100vh;
         background: var(--background);
@@ -1014,7 +993,6 @@
 
     .btn-primary,
     .btn-secondary,
-    .btn-logout,
     .btn-edit,
     .btn-delete,
     .btn-featured {
@@ -1044,11 +1022,6 @@
 
     .btn-secondary:hover {
         background: var(--button-hover);
-    }
-
-    .btn-logout {
-        background: var(--red);
-        color: var(--white);
     }
 
     .btn-featured {

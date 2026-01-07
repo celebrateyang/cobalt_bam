@@ -7,7 +7,7 @@ import {
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
-import { listCreditOrdersForUser } from "../db/credit-orders.js";
+import { listCreditOrders, listCreditOrdersForUser } from "../db/credit-orders.js";
 import {
     clearCollectionMemoryForUser,
     getDownloadedItemKeysForCollection,
@@ -74,6 +74,40 @@ router.get("/admin/users", requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error("GET /user/admin/users error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load users");
+    }
+});
+
+// Admin-only: list credit orders (paginated)
+router.get("/admin/orders", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const userId = req.query?.userId;
+        const status = typeof req.query?.status === "string" ? req.query.status : "";
+        const provider =
+            typeof req.query?.provider === "string" ? req.query.provider : "";
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const sort = typeof req.query?.sort === "string" ? req.query.sort : "created_at";
+        const order = typeof req.query?.order === "string" ? req.query.order : "desc";
+
+        const result = await listCreditOrders({
+            page,
+            limit,
+            userId,
+            status,
+            provider,
+            search,
+            sort,
+            order,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/orders error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load orders");
     }
 });
 

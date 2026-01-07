@@ -204,11 +204,6 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     }
 
-    function handleLogout() {
-        auth.logout();
-        goto(`/${lang}/console-manage-2025`);
-    }
-
     const copyText = async (text: string) => {
         const normalized = String(text ?? "").trim();
         if (!normalized) return false;
@@ -441,24 +436,6 @@
 <div class="admin-container">
     <header class="admin-header">
         <h1>用户管理</h1>
-        <div class="header-actions">
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/accounts`)}
-                >账号管理</button
-            >
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/videos`)}
-                >视频管理</button
-            >
-            <button
-                class="btn-secondary"
-                on:click={() => goto(`/${lang}/console-manage-2025/feedback`)}
-                >问题反馈</button
-            >
-            <button class="btn-logout" on:click={handleLogout}>退出登录</button>
-        </div>
     </header>
 
     <div class="toolbar">
@@ -851,7 +828,7 @@
     .admin-container {
         width: 100%;
         max-width: 1200px;
-        margin: 0 auto;
+        margin: 0;
         padding: calc(var(--padding) * 2);
     }
 
@@ -868,13 +845,6 @@
         font-weight: 800;
         margin: 0;
         color: var(--text);
-    }
-
-    .header-actions {
-        display: flex;
-        gap: calc(var(--padding) / 2);
-        flex-wrap: wrap;
-        align-items: center;
     }
 
     button {
@@ -904,15 +874,6 @@
 
     .btn-secondary:hover:not(:disabled) {
         background: var(--button-hover);
-    }
-
-    .btn-logout {
-        background: var(--red);
-        color: var(--white);
-    }
-
-    .btn-logout:hover:not(:disabled) {
-        opacity: 0.9;
     }
 
     button:disabled {

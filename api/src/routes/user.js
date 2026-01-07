@@ -7,6 +7,7 @@ import {
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
+import { listCreditOrdersForUser } from "../db/credit-orders.js";
 import {
     clearCollectionMemoryForUser,
     getDownloadedItemKeysForCollection,
@@ -138,6 +139,44 @@ const updatePointsHandler = async (req, res) => {
 router.post("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
 // Optional: allow PATCH as well for REST-style clients.
 router.patch("/admin/users/:id/points", requireAdminAuth, updatePointsHandler);
+
+// Admin-only: list credit orders for a user (paginated)
+router.get("/admin/users/:id/orders", requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid user id");
+        }
+
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const status = typeof req.query?.status === "string" ? req.query.status : "";
+        const provider =
+            typeof req.query?.provider === "string" ? req.query.provider : "";
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const sort = typeof req.query?.sort === "string" ? req.query.sort : "created_at";
+        const order = typeof req.query?.order === "string" ? req.query.order : "desc";
+
+        const result = await listCreditOrdersForUser({
+            userId: id,
+            page,
+            limit,
+            status,
+            provider,
+            search,
+            sort,
+            order,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/users/:id/orders error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load user orders");
+    }
+});
 
 if (!isClerkApiConfigured) {
     router.get("/me", (_, res) => {

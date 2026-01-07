@@ -87,6 +87,126 @@ export const updateCreditOrderProviderData = async (id, providerData) => {
     return result.rows[0] || null;
 };
 
+export const listCreditOrdersForUser = async ({
+    userId,
+    page = 1,
+    limit = 20,
+    status,
+    provider,
+    search = "",
+    sort = "created_at",
+    order = "desc",
+} = {}) => {
+    const parsedPage = Number.parseInt(String(page), 10);
+    const safePage =
+        Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+    const parsedLimit = Number.parseInt(String(limit), 10);
+    const safeLimitRaw =
+        Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 20;
+    const safeLimit = Math.min(Math.max(safeLimitRaw, 1), 200);
+
+    const offset = (safePage - 1) * safeLimit;
+
+    const allowedSort = {
+        id: "id",
+        created_at: "created_at",
+        updated_at: "updated_at",
+        paid_at: "paid_at",
+        amount_fen: "amount_fen",
+        points: "points",
+        status: "status",
+    };
+
+    const sortKey = String(sort);
+    const sortColumn = allowedSort[sortKey] || allowedSort.created_at;
+    const orderDir = String(order).toLowerCase() === "asc" ? "ASC" : "DESC";
+
+    const where = ["user_id = $1"];
+    const params = [userId];
+    let paramIndex = 2;
+
+    const normalizedStatus = typeof status === "string" ? status.trim() : "";
+    if (normalizedStatus) {
+        const statuses = normalizedStatus
+            .split(",")
+            .map((s) => s.trim().toUpperCase())
+            .filter(Boolean);
+
+        if (statuses.length === 1) {
+            where.push(`status = $${paramIndex}`);
+            params.push(statuses[0]);
+            paramIndex += 1;
+        } else if (statuses.length > 1) {
+            where.push(`status = ANY($${paramIndex}::text[])`);
+            params.push(statuses);
+            paramIndex += 1;
+        }
+    }
+
+    const normalizedProvider =
+        typeof provider === "string" ? provider.trim() : "";
+    if (normalizedProvider) {
+        where.push(`provider = $${paramIndex}`);
+        params.push(normalizedProvider);
+        paramIndex += 1;
+    }
+
+    const normalizedSearch = String(search || "").trim();
+    if (normalizedSearch) {
+        const term = `%${normalizedSearch}%`;
+        where.push(
+            `(out_trade_no ILIKE $${paramIndex} OR provider_transaction_id ILIKE $${paramIndex} OR product_key ILIKE $${paramIndex})`,
+        );
+        params.push(term);
+        paramIndex += 1;
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const countResult = await query(
+        `SELECT COUNT(*) as total FROM credit_orders ${whereSql}`,
+        params,
+    );
+    const total = Number.parseInt(countResult.rows[0]?.total ?? "0", 10) || 0;
+
+    const listResult = await query(
+        `
+        SELECT
+            id,
+            user_id,
+            clerk_user_id,
+            provider,
+            product_key,
+            points,
+            amount_fen,
+            currency,
+            out_trade_no,
+            status,
+            provider_transaction_id,
+            paid_at,
+            created_at,
+            updated_at
+        FROM credit_orders
+        ${whereSql}
+        ORDER BY ${sortColumn} ${orderDir} NULLS LAST, id DESC
+        LIMIT $${paramIndex}
+        OFFSET $${paramIndex + 1};
+        `,
+        [...params, safeLimit, offset],
+    );
+
+    return {
+        orders: listResult.rows,
+        pagination: {
+            page: safePage,
+            limit: safeLimit,
+            total,
+            pages: Math.ceil(total / safeLimit),
+        },
+    };
+};
+
 export const markCreditOrderPaid = async ({
     outTradeNo,
     providerTransactionId,

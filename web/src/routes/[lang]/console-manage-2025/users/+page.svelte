@@ -18,6 +18,23 @@
         updated_at: number | string;
     };
 
+    type CreditOrder = {
+        id: number;
+        user_id: number;
+        clerk_user_id: string;
+        provider: string;
+        product_key: string;
+        points: number;
+        amount_fen: number;
+        currency: string;
+        out_trade_no: string;
+        status: string;
+        provider_transaction_id: string | null;
+        paid_at: number | string | null;
+        created_at: number | string;
+        updated_at: number | string;
+    };
+
     let users: AdminUser[] = [];
     let loading = true;
     let error = "";
@@ -39,6 +56,19 @@
     let saving: Record<number, boolean> = {};
     let copiedUserId: number | null = null;
     let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    let showOrdersModal = false;
+    let activeUser: AdminUser | null = null;
+    let orders: CreditOrder[] = [];
+    let ordersLoading = false;
+    let ordersError = "";
+    let ordersStatus = "";
+    let ordersPageNum = 1;
+    let ordersLimit = 20;
+    let ordersTotal = 0;
+    let ordersPages = 0;
+    let copiedOrderId: number | null = null;
+    let copiedOrderTimeout: ReturnType<typeof setTimeout> | null = null;
 
     $: lang = $page.params.lang;
 
@@ -222,6 +252,124 @@
         }, 1500);
     }
 
+    const formatAmount = (amountFen: number | null | undefined, currency?: string) => {
+        if (amountFen == null || !Number.isFinite(amountFen)) return "-";
+        const amount = (amountFen / 100).toFixed(2);
+        if (!currency || currency === "CNY") return `¥${amount}`;
+        return `${amount} ${currency}`;
+    };
+
+    const closeOrders = () => {
+        showOrdersModal = false;
+        activeUser = null;
+        orders = [];
+        ordersError = "";
+        ordersLoading = false;
+        ordersStatus = "";
+        ordersPageNum = 1;
+        ordersTotal = 0;
+        ordersPages = 0;
+        copiedOrderId = null;
+        if (copiedOrderTimeout) clearTimeout(copiedOrderTimeout);
+        copiedOrderTimeout = null;
+    };
+
+    async function loadOrders() {
+        if (!activeUser) return;
+
+        ordersLoading = true;
+        ordersError = "";
+
+        try {
+            const token = getToken();
+            if (!token) {
+                goto(`/${lang}/console-manage-2025`);
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set("page", String(ordersPageNum));
+            params.set("limit", String(ordersLimit));
+            if (ordersStatus) params.set("status", ordersStatus);
+
+            const res = await fetch(
+                `${currentApiURL()}/user/admin/users/${activeUser.id}/orders?${params.toString()}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            if (res.status === 401) {
+                auth.logout();
+                goto(`/${lang}/console-manage-2025`);
+                return;
+            }
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "加载失败");
+            }
+
+            orders = Array.isArray(data?.data?.orders) ? data.data.orders : [];
+
+            const pagination = data?.data?.pagination || {};
+            ordersTotal = pagination.total ?? 0;
+            ordersPages = pagination.pages ?? 0;
+            ordersPageNum = pagination.page ?? ordersPageNum;
+            ordersLimit = pagination.limit ?? ordersLimit;
+        } catch (e) {
+            orders = [];
+            ordersError = e instanceof Error ? e.message : "网络错误";
+        } finally {
+            ordersLoading = false;
+        }
+    }
+
+    async function openOrders(user: AdminUser) {
+        activeUser = user;
+        showOrdersModal = true;
+        orders = [];
+        ordersError = "";
+        ordersStatus = "";
+        ordersPageNum = 1;
+        ordersLimit = 20;
+        await loadOrders();
+    }
+
+    async function goToOrdersPage(next: number) {
+        if (ordersLoading) return;
+        if (next < 1) return;
+        if (ordersPages && next > ordersPages) return;
+        ordersPageNum = next;
+        await loadOrders();
+    }
+
+    async function handleOrdersStatusChange(nextStatus: string) {
+        ordersStatus = nextStatus;
+        ordersPageNum = 1;
+        await loadOrders();
+    }
+
+    async function handleOrdersLimitChange(nextLimit: number) {
+        ordersLimit = nextLimit;
+        ordersPageNum = 1;
+        await loadOrders();
+    }
+
+    async function handleCopyOutTradeNo(orderId: number, outTradeNo: string) {
+        const ok = await copyText(outTradeNo);
+        if (!ok) return;
+
+        copiedOrderId = orderId;
+        if (copiedOrderTimeout) clearTimeout(copiedOrderTimeout);
+        copiedOrderTimeout = setTimeout(() => {
+            copiedOrderId = null;
+            copiedOrderTimeout = null;
+        }, 1500);
+    }
+
     const parsePointsDraft = (draft: string | undefined) => {
         const normalized = String(draft ?? "").trim();
         if (!/^\d+$/.test(normalized)) return null;
@@ -396,6 +544,7 @@
                                 >
                             </button>
                         </th>
+                        <th>订单</th>
                         <th
                             aria-sort={getAriaSort("last_seen_at")}
                             class="sortable"
@@ -518,6 +667,15 @@
                                     </button>
                                 </div>
                             </td>
+                            <td>
+                                <button
+                                    class="btn-secondary btn-orders"
+                                    type="button"
+                                    on:click={() => void openOrders(user)}
+                                >
+                                    查看
+                                </button>
+                            </td>
                             <td>{formatDate(user.last_seen_at)}</td>
                             <td>{formatDate(user.created_at)}</td>
                         </tr>
@@ -527,6 +685,167 @@
         </div>
     {/if}
 </div>
+
+{#if showOrdersModal && activeUser}
+    <div class="modal-overlay" on:click={closeOrders}>
+        <div class="modal modal-orders" on:click|stopPropagation>
+            <header class="modal-header">
+                <div class="modal-title">
+                    <h2>订单信息</h2>
+                    <div class="modal-subtitle mono selectable">
+                        用户 #{activeUser.id}
+                        {#if activeUser.primary_email}
+                            · {activeUser.primary_email}
+                        {:else if activeUser.full_name}
+                            · {activeUser.full_name}
+                        {:else}
+                            · {activeUser.clerk_user_id}
+                        {/if}
+                    </div>
+                </div>
+                <button class="btn-secondary btn-close" type="button" on:click={closeOrders}>
+                    关闭
+                </button>
+            </header>
+
+            <div class="modal-toolbar">
+                <label class="filter">
+                    <span>状态</span>
+                    <select
+                        bind:value={ordersStatus}
+                        on:change={() => void handleOrdersStatusChange(ordersStatus)}
+                        disabled={ordersLoading}
+                    >
+                        <option value="">全部</option>
+                        <option value="CREATED">CREATED</option>
+                        <option value="PAID">PAID</option>
+                        <option value="FAILED">FAILED</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </label>
+
+                <label class="filter">
+                    <span>每页</span>
+                    <select
+                        bind:value={ordersLimit}
+                        on:change={() => void handleOrdersLimitChange(ordersLimit)}
+                        disabled={ordersLoading}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={ordersLoading}
+                    on:click={() => void loadOrders()}
+                >
+                    刷新
+                </button>
+            </div>
+
+            {#if ordersError}
+                <div class="error-message">{ordersError}</div>
+            {/if}
+
+            {#if ordersLoading}
+                <div class="loading">加载中...</div>
+            {:else if orders.length === 0}
+                <div class="empty">暂无订单</div>
+            {:else}
+                <div class="table-wrap modal-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>状态</th>
+                                <th>积分</th>
+                                <th>金额</th>
+                                <th>渠道</th>
+                                <th>订单号</th>
+                                <th>支付时间</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each orders as o (o.id)}
+                                <tr>
+                                    <td class="mono">{o.id}</td>
+                                    <td>
+                                        <span
+                                            class={`status-badge status-${String(
+                                                o.status || "",
+                                            ).toLowerCase()}`}
+                                            >{o.status}</span
+                                        >
+                                    </td>
+                                    <td class="mono">{o.points}</td>
+                                    <td class="mono">
+                                        {formatAmount(o.amount_fen, o.currency)}
+                                    </td>
+                                    <td class="mono">{o.provider}</td>
+                                    <td>
+                                        <div class="order-no-cell">
+                                            <span
+                                                class="mono selectable order-no"
+                                                title={o.out_trade_no}
+                                                >{o.out_trade_no}</span
+                                            >
+                                            <button
+                                                class="btn-secondary btn-copy"
+                                                type="button"
+                                                on:click={() =>
+                                                    void handleCopyOutTradeNo(
+                                                        o.id,
+                                                        o.out_trade_no,
+                                                    )}
+                                            >
+                                                {copiedOrderId === o.id
+                                                    ? "已复制"
+                                                    : "复制"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="mono">{formatDate(o.paid_at)}</td>
+                                    <td class="mono">
+                                        {formatDate(o.created_at)}
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pager modal-pager">
+                    <span class="meta">共 {ordersTotal} 单</span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading || ordersPageNum <= 1}
+                        on:click={() => void goToOrdersPage(ordersPageNum - 1)}
+                        >上一页</button
+                    >
+                    <span class="meta">
+                        {#if ordersTotal === 0}
+                            0 / 0
+                        {:else}
+                            {ordersPageNum} / {ordersPages}
+                        {/if}
+                    </span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading ||
+                            (ordersPages ? ordersPageNum >= ordersPages : true)}
+                        on:click={() => void goToOrdersPage(ordersPageNum + 1)}
+                        >下一页</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
+{/if}
 
 <style>
     .admin-container {
@@ -880,6 +1199,156 @@
         font-size: 0.8rem;
     }
 
+    .btn-orders {
+        padding: 9px 12px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: calc(var(--padding) * 2);
+        z-index: 3000;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 1100px;
+        max-height: 90vh;
+        overflow: auto;
+        background: var(--popup-bg);
+        border-radius: calc(var(--border-radius) * 1.5);
+        padding: calc(var(--padding) * 2);
+        box-shadow:
+            0 0 0 1.5px var(--popup-stroke) inset,
+            0 16px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--padding);
+        margin-bottom: var(--padding);
+    }
+
+    .modal-title h2 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .modal-subtitle {
+        margin-top: 6px;
+        color: var(--subtext);
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+
+    .btn-close {
+        white-space: nowrap;
+    }
+
+    .modal-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: calc(var(--padding) / 2);
+        flex-wrap: wrap;
+        margin-bottom: var(--padding);
+    }
+
+    .filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--subtext);
+        font-size: 0.85rem;
+    }
+
+    .filter select {
+        padding: 8px 10px;
+        border: none;
+        border-radius: var(--border-radius);
+        background: var(--button);
+        color: var(--text);
+        box-shadow: var(--button-box-shadow);
+    }
+
+    .modal-table-wrap {
+        max-height: 55vh;
+        overflow: auto;
+    }
+
+    .orders-table {
+        min-width: 920px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        white-space: nowrap;
+    }
+
+    .status-created {
+        border-color: rgba(59, 130, 246, 0.35);
+        background: rgba(59, 130, 246, 0.16);
+        color: #93c5fd;
+    }
+
+    .status-paid {
+        border-color: rgba(34, 197, 94, 0.35);
+        background: rgba(34, 197, 94, 0.16);
+        color: #86efac;
+    }
+
+    .status-failed {
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.16);
+        color: #fca5a5;
+    }
+
+    .status-closed {
+        border-color: rgba(148, 163, 184, 0.35);
+        background: rgba(148, 163, 184, 0.16);
+        color: #e2e8f0;
+    }
+
+    .order-no-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 320px;
+        max-width: 420px;
+    }
+
+    .order-no {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .modal-pager {
+        justify-content: space-between;
+        margin-top: var(--padding);
+    }
+
     @media screen and (max-width: 768px) {
         .admin-container {
             padding: var(--padding);
@@ -903,6 +1372,18 @@
         }
 
         .pager {
+            justify-content: flex-start;
+        }
+
+        .modal-overlay {
+            padding: var(--padding);
+        }
+
+        .modal {
+            padding: calc(var(--padding) * 1.5);
+        }
+
+        .modal-toolbar {
             justify-content: flex-start;
         }
     }

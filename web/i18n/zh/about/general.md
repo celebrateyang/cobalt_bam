@@ -31,7 +31,7 @@ when a request needs additional processing, bamboo download processes files on-t
 it's done by tunneling processed parts directly to the client, without ever saving anything to disk.
 for example, this method is used when the source service provides video and audio channels as separate files.
 
-additionally, you can [enable forced tunneling](../settings/privacy#tunnel) to protect your privacy.
+additionally, you can [enable forced tunneling](../../settings/privacy#tunnel) to protect your privacy.
 when enabled, bamboo download will tunnel all downloaded files.
 no one will know where you download something from, even your network provider.
 all they'll see is that you're using a bamboo download instance.
@@ -45,7 +45,7 @@ all they'll see is that you're using a bamboo download instance.
     sectionId="local"
 />
 
-newest features, such as [remuxing](../remux), work locally on your device.
+newest features, such as [remuxing](../../remux), work locally on your device.
 on-device processing is efficient and never sends anything over the internet.
 it perfectly aligns with our future goal of moving as much processing as possible to the client.
 </section>

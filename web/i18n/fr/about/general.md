@@ -31,7 +31,7 @@ lorsqu'une requ锚te n茅cessite un traitement suppl茅mentaire, bamboo download
 cela se fait en tunnelisant les parties trait茅es directement au client, sans jamais rien enregistrer sur le disque.
 par exemple, cette m茅thode est utilis茅e lorsque le service source fournit les canaux vid茅o et audio sous forme de fichiers s茅par茅s.
 
-de plus, vous pouvez [activer la tunnelisation forc茅e](../settings/privacy#tunnel) pour prot茅ger votre confidentialit茅.
+de plus, vous pouvez [activer la tunnelisation forc茅e](../../settings/privacy#tunnel) pour prot茅ger votre confidentialit茅.
 lorsqu'elle est activ茅e, bamboo download tunnelisera tous les fichiers t茅l茅charg茅s.
 personne ne saura d'o霉 vous t茅l茅chargez quelque chose, m锚me pas votre fournisseur d'acc猫s.
 tout ce qu'ils verront, c'est que vous utilisez une instance bamboo download.
@@ -44,7 +44,7 @@ tout ce qu'ils verront, c'est que vous utilisez une instance bamboo download.
     sectionId="local"
 />
 
-les nouvelles fonctionnalit茅s, telles que le [remuxage](../remux), fonctionnent localement sur votre appareil.
+les nouvelles fonctionnalit茅s, telles que le [remuxage](../../remux), fonctionnent localement sur votre appareil.
 le traitement sur l'appareil est efficace et n'envoie jamais rien sur internet.
 cela s'aligne parfaitement avec notre objectif futur de d茅placer autant de traitement que possible vers le client.
 </section>

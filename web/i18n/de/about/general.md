@@ -31,7 +31,7 @@ Wenn eine Anfrage zus盲tzliche Verarbeitung ben枚tigt, verarbeitet bamboo down
 Dies geschieht durch Tunneln der verarbeiteten Teile direkt zum Client, ohne jemals etwas auf der Festplatte zu speichern.
 Zum Beispiel wird diese Methode verwendet, wenn der Quelldienst Video- und Audiokan盲le als separate Dateien bereitstellt.
 
-Zus盲tzlich k枚nnen Sie [erzwungenes Tunneling aktivieren](../settings/privacy#tunnel), um Ihre Privatsph盲re zu sch眉tzen.
+Zus盲tzlich k枚nnen Sie [erzwungenes Tunneling aktivieren](../../settings/privacy#tunnel), um Ihre Privatsph盲re zu sch眉tzen.
 Wenn aktiviert, wird bamboo download alle heruntergeladenen Dateien tunneln.
 Niemand wird wissen, woher Sie etwas herunterladen, nicht einmal Ihr Netzwerkanbieter.
 Alles, was sie sehen werden, ist, dass Sie eine bamboo download-Instanz verwenden.
@@ -44,7 +44,7 @@ Alles, was sie sehen werden, ist, dass Sie eine bamboo download-Instanz verwende
     sectionId="local"
 />
 
-Neueste Funktionen, wie [Remuxing](../remux), arbeiten lokal auf Ihrem Ger盲t.
+Neueste Funktionen, wie [Remuxing](../../remux), arbeiten lokal auf Ihrem Ger盲t.
 Die ger盲teinterne Verarbeitung ist effizient und sendet niemals etwas 眉ber das Internet.
 Es passt perfekt zu unserem zuk眉nftigen Ziel, so viel Verarbeitung wie m枚glich auf den Client zu verlagern.
 </section>

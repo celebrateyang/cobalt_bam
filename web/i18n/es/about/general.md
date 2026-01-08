@@ -31,7 +31,7 @@ cuando una solicitud necesita procesamiento adicional, bamboo download procesa a
 se hace canalizando partes procesadas directamente al cliente, sin guardar nunca nada en el disco.
 por ejemplo, este m茅todo se usa cuando el servicio de origen proporciona canales de video y audio como archivos separados.
 
-adicionalmente, puedes [habilitar la canalizaci贸n forzada](../settings/privacy#tunnel) para proteger tu privacidad.
+adicionalmente, puedes [habilitar la canalizaci贸n forzada](../../settings/privacy#tunnel) para proteger tu privacidad.
 cuando est谩 habilitado, bamboo download canalizar谩 todos los archivos descargados.
 nadie sabr谩 desde d贸nde descargas algo, ni siquiera tu proveedor de red.
 todo lo que ver谩n es que est谩s usando una instancia de bamboo download.
@@ -44,7 +44,7 @@ todo lo que ver谩n es que est谩s usando una instancia de bamboo download.
     sectionId="local"
 />
 
-las caracter铆sticas m谩s nuevas, como [remezclar](../remux), funcionan localmente en tu dispositivo.
+las caracter铆sticas m谩s nuevas, como [remezclar](../../remux), funcionan localmente en tu dispositivo.
 el procesamiento en el dispositivo es eficiente y nunca env铆a nada por internet.
 se alinea perfectamente con nuestro objetivo futuro de mover tanto procesamiento como sea posible al cliente.
 </section>

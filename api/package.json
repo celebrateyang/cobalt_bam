@@ -14,6 +14,8 @@
         "setup-youtube": "node setup-youtube-auth.js",
         "verify-cookies": "node verify-cookies.js",
         "test": "node src/util/test",
+        "social:sync-enabled": "node src/util/sync-enabled-accounts.js",
+        "social:thumb-expiry": "node src/util/analyze-thumbnail-expiry.js",
         "token:jwt": "node src/util/generate-jwt-secret",
         "init-social": "node init-social.js",
         "init-users": "node init-users.js"

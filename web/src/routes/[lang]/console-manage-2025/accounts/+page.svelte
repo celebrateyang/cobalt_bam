@@ -29,7 +29,7 @@
         tags: "",
         priority: 5,
         is_active: true,
-        sync_enabled: false,
+        sync_enabled: true,
     };
 
     onMount(async () => {
@@ -110,7 +110,7 @@
             tags: "",
             priority: 5,
             is_active: true,
-            sync_enabled: false,
+            sync_enabled: true,
         };
         showAddModal = true;
     }

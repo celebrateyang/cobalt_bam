@@ -250,7 +250,7 @@ router.post('/accounts', requireAuth, adminLimiter, async (req, res) => {
         console.log('User:', req.user);
 
         const { platform, username, display_name, avatar_url, profile_url,
-            description, follower_count, category, tags, priority, is_active } = req.body;
+            description, follower_count, category, tags, priority, is_active, sync_enabled } = req.body;
 
         console.log('Extracted fields:', { platform, username, display_name, follower_count, category });
 
@@ -278,7 +278,8 @@ router.post('/accounts', requireAuth, adminLimiter, async (req, res) => {
             category,
             tags,
             priority,
-            is_active
+            is_active,
+            sync_enabled,
         };
 
         console.log('Creating account with data:', JSON.stringify(accountData, null, 2));

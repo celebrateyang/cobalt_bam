@@ -152,6 +152,7 @@ export const initDatabase = async () => {
 export const createAccount = async (accountData) => {
     const now = Date.now();
     const tags = JSON.stringify(accountData.tags || []);
+    const syncEnabled = accountData?.sync_enabled === false ? false : true;
 
     const result = await query(`
         INSERT INTO social_accounts (
@@ -172,7 +173,7 @@ export const createAccount = async (accountData) => {
         tags,
         accountData.priority || 0,
         accountData.is_active !== false,
-        accountData.sync_enabled ? true : false,
+        syncEnabled,
         now,
         now
     ]);

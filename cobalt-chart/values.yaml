@@ -137,3 +137,18 @@ wechatpay:
   privateKeyMountPath: /app/secrets/wechatpay
   privateKeyFile: apiclient_key.pem
   notifyUrl: "https://api.freesavevideo.online/payments/wechat/notify"
+
+# Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
+socialSync:
+  enabled: true
+  # Runs daily by default (TikTok thumbnail URLs commonly expire ~2 days)
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  suspend: false
+  # Script args
+  concurrency: 2
+  recentLimit: 5
+  pinnedLimit: 3

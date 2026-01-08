@@ -115,6 +115,13 @@ Discover 目前展示 4 个区块（仅优先 TikTok / Instagram）：
 ### Q4：为什么运营不建议大量人工导入？
 - 人工导入成本高、更新慢；系统设计就是“白名单自动化 + 热榜自动化”为主，人工只做高价值干预（精选位/关键作者兜底）。
 
+### Q5：为什么 Discover 的封面过一段时间会显示不了？
+- 封面 `thumbnail_url` 多数来自 TikTok/Instagram 的 CDN 签名临时链接，会带过期参数（例如 TikTok 的 `x-expires`、Instagram 的 `oe`），到期后图片会 403/404。
+- 解决方式：
+  1) 运营侧：后台对关键创作者点一次「Sync now」可立即刷新封面；
+  2) 系统侧：对已开启「自动同步」的白名单账号配置定时任务，周期性跑 `pnpm -C api social:sync-enabled`（建议 12–24 小时一次），让封面长期可用。
+- 排查/验证：用 `pnpm -C api social:thumb-expiry` 可以统计当前库里封面 URL 的 TTL 与是否已过期。
+
 ## 7. 需要研发配合时，你该怎么提需求
 
 为了更快落地，建议按下面模板提：

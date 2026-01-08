@@ -235,7 +235,7 @@ const getItemsForAccount = async (account, options) => {
     throw new Error(`unsupported platform: ${account.platform}`);
 };
 
-const fetchOembedForAccount = async (account, url) => {
+export const fetchOembedForAccount = async (account, url) => {
     if (account.platform === "tiktok") {
         return await fetchTikTokOembed(url);
     }

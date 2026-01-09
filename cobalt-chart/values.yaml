@@ -141,8 +141,8 @@ wechatpay:
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:
   enabled: true
-  # Runs daily by default (TikTok thumbnail URLs commonly expire ~2 days)
-  schedule: "0 0 * * *"
+  # Runs twice per day by default (TikTok thumbnail URLs commonly expire ~2 days)
+  schedule: "0 */12 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3

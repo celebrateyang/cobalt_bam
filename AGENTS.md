@@ -19,7 +19,7 @@
 ### API (GKE)
 - **Trigger**: push to GitHub `main` auto-deploys via CircleCI (`.circleci/config.yml`)
 - **Pipeline**: build & push image `gcr.io/ebay-mag/kubein/cobalt:<tag>` then `helm upgrade --install cobalt ./cobalt-chart -n infra ...`
-- **Social sync CronJob**: `infra/cluster-metrics` runs daily (`0 0 * * *`) and executes `node src/util/sync-enabled-accounts.js` inside the same image
+- **Social sync CronJob**: `infra/cluster-metrics` runs every 12 hours (`0 */12 * * *`) and executes `node src/util/sync-enabled-accounts.js` inside the same image
 
 ### Web (Cloudflare Pages)
 - Build: `pnpm -C web build`

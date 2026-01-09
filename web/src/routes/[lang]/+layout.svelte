@@ -55,6 +55,7 @@
     // Get current path without language prefix
     $: canonicalPathname = normalizePathname($page.url.pathname);
     $: currentPath = canonicalPathname.replace(/^\/[^/]+/, "") || "/";
+    $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
 
     $: reduceMotion =
         $settings.appearance.reduceMotion || device.prefers.reducedMotion;
@@ -76,14 +77,22 @@
 </script>
 
 <svelte:head>
-    <meta property="og:url" content="https://{fallbackHost}{canonicalPathname}">
-    <link rel="canonical" href="https://{fallbackHost}{canonicalPathname}" />
+    <meta property="og:url" content={canonicalUrl} />
+    <link rel="canonical" href={canonicalUrl} />
 
     <!-- hreflang tags for SEO -->
     {#each supportedLanguages as lang}
-        <link rel="alternate" hreflang={lang} href="https://{fallbackHost}/{lang}{currentPath}" />
+        <link
+            rel="alternate"
+            hreflang={lang}
+            href={`https://${fallbackHost}/${lang}${currentPath}`}
+        />
     {/each}
-    <link rel="alternate" hreflang="x-default" href="https://{fallbackHost}/en{currentPath}" />
+    <link
+        rel="alternate"
+        hreflang="x-default"
+        href={`https://${fallbackHost}/en${currentPath}`}
+    />
 
     {#if device.is.mobile}
         <meta name="theme-color" content={statusBarColors[$currentTheme]} />
@@ -93,7 +102,7 @@
         <script
             defer
             data-domain={env.HOST}
-            src="https://{env.PLAUSIBLE_HOST}/js/script.js"
+            src={`https://${env.PLAUSIBLE_HOST}/js/script.js`}
         >
         </script>
     {/if}

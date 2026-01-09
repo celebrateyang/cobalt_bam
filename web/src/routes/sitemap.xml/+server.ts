@@ -1,5 +1,7 @@
 import type { RequestHandler } from './$types';
 
+import { seoLandingSlugs } from '$lib/seo/landing-pages';
+
 const site = 'https://freesavevideo.online';
 const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 
@@ -9,6 +11,7 @@ const pages = [
     'clipboard',
     'discover',
     'youtube-video-downloader',
+    ...seoLandingSlugs.map((slug) => `download/${slug}`),
     'about/general',
     'remux',
     'faq',

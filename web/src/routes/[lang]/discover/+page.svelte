@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
 
     import { t } from "$lib/i18n/translations";
+    import { currentApiURL } from "$lib/api/api-url";
     import { videos, type SocialVideo } from "$lib/api/social";
     import { savingHandler } from "$lib/api/saving-handler";
     import { createDialog } from "$lib/state/dialogs";
@@ -84,6 +85,16 @@
     };
 
     const getTitle = (video: SocialVideo) => video.title || video.video_url;
+
+    const getThumbnailSrc = (video: SocialVideo) => {
+        if (!video.thumbnail_url) return "";
+        if (video.platform === "instagram") {
+            return `${currentApiURL()}/social/media/proxy?url=${encodeURIComponent(
+                video.thumbnail_url
+            )}`;
+        }
+        return video.thumbnail_url;
+    };
 
     onMount(() => {
         void loadAll();
@@ -369,7 +380,7 @@
                             <article class="video-card">
                                 <button class="thumb" type="button" on:click={() => handleDownload(video)}>
                                     {#if video.thumbnail_url}
-                                        <img class="thumb-img" src={video.thumbnail_url} alt={getTitle(video)} loading="lazy" />
+                                        <img class="thumb-img" src={getThumbnailSrc(video)} alt={getTitle(video)} loading="lazy" />
                                     {:else}
                                         <div class="thumb-placeholder"></div>
                                     {/if}

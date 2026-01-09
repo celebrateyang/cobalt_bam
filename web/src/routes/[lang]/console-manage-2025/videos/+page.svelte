@@ -259,6 +259,16 @@
         return account ? account.display_name || account.username : "未知";
     }
 
+    function getThumbnailSrc(video: SocialVideo): string {
+        if (!video.thumbnail_url) return "";
+        if (video.platform === "instagram") {
+            return `${currentApiURL()}/social/media/proxy?url=${encodeURIComponent(
+                video.thumbnail_url
+            )}`;
+        }
+        return video.thumbnail_url;
+    }
+
     function formatDuration(seconds?: number): string {
         const safeSeconds = typeof seconds === "number" && seconds > 0 ? Math.floor(seconds) : 0;
         const mins = Math.floor(safeSeconds / 60);
@@ -360,7 +370,7 @@
                             <div class="thumbnail-small">
                                 {#if video.thumbnail_url}
                                     <img
-                                        src={video.thumbnail_url}
+                                        src={getThumbnailSrc(video)}
                                         alt={video.title}
                                     />
                                 {:else}

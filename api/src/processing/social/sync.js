@@ -171,9 +171,32 @@ const parseInstagramProfileVideos = (profileJson, options) => {
             const isPinned =
                 Array.isArray(pinnedForUsers) && pinnedForUsers.length > 0;
 
+            const thumbnailUrl =
+                typeof node?.thumbnail_src === "string"
+                    ? node.thumbnail_src
+                    : typeof node?.display_url === "string"
+                        ? node.display_url
+                        : "";
+
+            const caption =
+                node?.edge_media_to_caption?.edges?.[0]?.node?.text ?? null;
+            const title =
+                typeof caption === "string" ? caption.trim() : "";
+
+            const takenAtSeconds =
+                typeof node?.taken_at_timestamp === "number"
+                    ? node.taken_at_timestamp
+                    : Number.NaN;
+            const publishDate = Number.isFinite(takenAtSeconds)
+                ? takenAtSeconds * 1000
+                : null;
+
             return {
                 url: `https://www.instagram.com/${path}/${shortcode}/`,
                 video_id: shortcode,
+                thumbnail_url: thumbnailUrl,
+                title,
+                publish_date: publishDate,
                 is_pinned: isPinned,
                 pinned_order: 0,
             };
@@ -240,7 +263,9 @@ export const fetchOembedForAccount = async (account, url) => {
         return await fetchTikTokOembed(url);
     }
     if (account.platform === "instagram") {
-        return await fetchInstagramOembed(url);
+        // Instagram's oembed endpoints frequently return 403 ("Private media")
+        // even for public content. We rely on profile JSON for thumbnails.
+        return null;
     }
     return null;
 };
@@ -258,8 +283,9 @@ export const syncAccountVideos = async (account, options) => {
     for (const item of items) {
         const meta = await fetchOembedForAccount(account, item.url).catch(() => null);
 
-        const title = meta?.title ?? "";
-        const thumbnailUrl = meta?.thumbnail_url ?? "";
+        const title = meta?.title ?? item?.title ?? "";
+        const thumbnailUrl = meta?.thumbnail_url ?? item?.thumbnail_url ?? "";
+        const publishDate = item?.publish_date ?? null;
 
         const result = await upsertVideoFromSync({
             account_id: account.id,
@@ -272,7 +298,7 @@ export const syncAccountVideos = async (account, options) => {
             duration: null,
             view_count: 0,
             like_count: 0,
-            publish_date: null,
+            publish_date: publishDate,
             tags: [],
             is_featured: false,
             is_active: true,

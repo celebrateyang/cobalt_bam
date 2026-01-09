@@ -1,5 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import { Readable, Transform } from 'node:stream';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
 import { syncAccountVideos } from '../processing/social/sync.js';
 import {
@@ -22,6 +23,22 @@ import {
 } from '../db/social-media.js';
 
 const router = express.Router();
+
+const MEDIA_PROXY_MAX_BYTES = 10 * 1024 * 1024;
+const MEDIA_PROXY_TIMEOUT_MS = 10 * 1000;
+const MEDIA_PROXY_ALLOWED_HOSTS = ['fbcdn.net', 'cdninstagram.com'];
+
+const isAllowedMediaHost = (hostname) => {
+    const host = String(hostname || '').toLowerCase();
+    return MEDIA_PROXY_ALLOWED_HOSTS.some(
+        (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+    );
+};
+
+const safeSingleQueryValue = (value) => {
+    if (Array.isArray(value)) return value[0];
+    return value;
+};
 
 // 公开 API 限流
 const publicLimiter = rateLimit({
@@ -81,6 +98,199 @@ const loginLimiter = rateLimit({
  * POST /api/social/auth/login
  * 管理员登录
  */
+const mediaProxyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 600,
+    message: {
+        status: 'error',
+        error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many requests, please try again later'
+        }
+    }
+});
+
+const fetchImageWithRedirects = async (url, signal) => {
+    let current = url;
+
+    for (let i = 0; i < 3; i++) {
+        const res = await fetch(current, {
+            redirect: 'manual',
+            signal,
+            headers: {
+                accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+                'accept-language': 'en-US',
+                'user-agent': 'Mozilla/5.0'
+            }
+        });
+
+        if (res.status >= 300 && res.status < 400) {
+            const location = res.headers.get('location');
+            if (!location) return res;
+
+            const next = new URL(location, current);
+            if (next.protocol !== 'https:' || next.username || next.password || next.port) {
+                throw new Error('Media proxy blocked redirect');
+            }
+            if (!isAllowedMediaHost(next.hostname)) {
+                throw new Error('Media proxy blocked redirect host');
+            }
+
+            current = next.toString();
+            continue;
+        }
+
+        return res;
+    }
+
+    throw new Error('Media proxy too many redirects');
+};
+
+router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
+    const raw = safeSingleQueryValue(req.query.url);
+
+    if (typeof raw !== 'string' || raw.length === 0) {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_INPUT',
+                message: 'url is required'
+            }
+        });
+    }
+
+    if (raw.length > 2048) {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_INPUT',
+                message: 'url is too long'
+            }
+        });
+    }
+
+    let target;
+    try {
+        target = new URL(raw);
+    } catch {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_INPUT',
+                message: 'url is invalid'
+            }
+        });
+    }
+
+    if (
+        target.protocol !== 'https:' ||
+        target.username ||
+        target.password ||
+        target.port
+    ) {
+        return res.status(400).json({
+            status: 'error',
+            error: {
+                code: 'INVALID_INPUT',
+                message: 'url is not allowed'
+            }
+        });
+    }
+
+    if (!isAllowedMediaHost(target.hostname)) {
+        return res.status(403).json({
+            status: 'error',
+            error: {
+                code: 'FORBIDDEN',
+                message: 'host is not allowed'
+            }
+        });
+    }
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(
+        () => abortController.abort(),
+        MEDIA_PROXY_TIMEOUT_MS,
+    );
+
+    res.on('close', () => abortController.abort());
+
+    try {
+        const upstream = await fetchImageWithRedirects(
+            target.toString(),
+            abortController.signal,
+        );
+
+        if (!upstream.ok || !upstream.body) {
+            upstream.body?.cancel().catch(() => undefined);
+            return res.status(404).end();
+        }
+
+        const contentType = upstream.headers.get('content-type') || '';
+        if (!contentType.toLowerCase().startsWith('image/')) {
+            upstream.body.cancel().catch(() => undefined);
+            return res.status(415).end();
+        }
+
+        const contentLength = upstream.headers.get('content-length');
+        if (contentLength) {
+            const length = Number(contentLength);
+            if (Number.isFinite(length) && length > MEDIA_PROXY_MAX_BYTES) {
+                upstream.body.cancel().catch(() => undefined);
+                return res.status(413).end();
+            }
+        }
+
+        res.setHeader('Content-Type', contentType);
+        if (contentLength) {
+            res.setHeader('Content-Length', contentLength);
+        }
+        res.setHeader(
+            'Cache-Control',
+            'public, max-age=86400, stale-while-revalidate=604800',
+        );
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+
+        let bytesSeen = 0;
+        const limiter = new Transform({
+            transform(chunk, _encoding, callback) {
+                bytesSeen += chunk.length;
+                if (bytesSeen > MEDIA_PROXY_MAX_BYTES) {
+                    callback(new Error('Media proxy response too large'));
+                    return;
+                }
+                callback(null, chunk);
+            },
+        });
+
+        const upstreamStream = Readable.fromWeb(upstream.body);
+
+        upstreamStream.on('error', () => {
+            abortController.abort();
+            res.end();
+        });
+
+        limiter.on('error', () => {
+            abortController.abort();
+            upstreamStream.destroy();
+            if (!res.headersSent) res.status(413);
+            res.end();
+        });
+
+        upstreamStream.pipe(limiter).pipe(res);
+    } catch (error) {
+        console.error('Media proxy error:', error);
+        if (!res.headersSent) {
+            res.status(502).end();
+        } else {
+            res.end();
+        }
+    } finally {
+        clearTimeout(timeout);
+    }
+});
+
 router.post('/auth/login', loginLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;

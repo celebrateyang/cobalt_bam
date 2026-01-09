@@ -64,4 +64,4 @@
 
 ## Product constraints & response format
 - No paid 3rd-party APIs; prefer free oEmbed; scraping as fallback; allow graceful degradation.
-- Responses use fixed format: `PM:` + `Dev:`; every `Dev` message asks 3 clarifying questions first, then provides方案与任务拆分.
+- Responses use fixed format: `PM:` + `Dev:`; every `Dev` message asks 0~3 clarifying questions first, then provides方案与任务拆分.

@@ -134,13 +134,17 @@
         showAddModal = true;
     }
 
-    const formatDateTime = (value?: number | null) => {
-        if (!value) return "";
-        try {
-            return new Date(value).toLocaleString();
-        } catch {
-            return "";
-        }
+    const formatDateTime = (value?: number | string | null) => {
+        if (value == null) return "";
+
+        const raw = typeof value === "string" ? Number.parseInt(value, 10) : value;
+        if (!Number.isFinite(raw)) return "";
+
+        const ms = raw < 1e12 ? raw * 1000 : raw;
+        const d = new Date(ms);
+        if (Number.isNaN(d.getTime())) return "";
+
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     };
 
     async function syncSocialAccount(id: number) {

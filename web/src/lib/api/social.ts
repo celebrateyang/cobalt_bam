@@ -21,7 +21,7 @@ export interface SocialAccount {
     created_at: number;
     updated_at: number;
     sync_enabled?: boolean;
-    sync_last_run_at?: number | null;
+    sync_last_run_at?: number | string | null;
     sync_error?: string | null;
 }
 

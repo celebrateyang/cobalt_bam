@@ -7,6 +7,10 @@ import {
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
+import {
+    claimReferralReward,
+    getReferrerProfileByReferralCode,
+} from "../db/referrals.js";
 import { listCreditOrders, listCreditOrdersForUser } from "../db/credit-orders.js";
 import {
     clearCollectionMemoryForUser,
@@ -21,6 +25,8 @@ const router = express.Router();
 const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
     isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
+
+const REFERRAL_CLAIM_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const mapClerkUser = (clerkUser) => {
     const primaryEmail =
@@ -49,6 +55,61 @@ const jsonError = (res, status, code, message) => {
         error: { code, message },
     });
 };
+
+// Public: lookup the inviter's display info for the invite landing page
+router.get("/referrals/lookup", async (req, res) => {
+    try {
+        const rawCode = Array.isArray(req.query?.code)
+            ? req.query.code[0]
+            : req.query?.code;
+
+        const referralCode =
+            typeof rawCode === "string" ? rawCode.trim() : "";
+
+        if (!referralCode) {
+            return jsonError(
+                res,
+                400,
+                "INVALID_INPUT",
+                "referral code is required",
+            );
+        }
+
+        if (referralCode.length > 64) {
+            return jsonError(
+                res,
+                400,
+                "INVALID_INPUT",
+                "referral code is too long",
+            );
+        }
+
+        const referrer = await getReferrerProfileByReferralCode(referralCode);
+        if (!referrer) {
+            return jsonError(
+                res,
+                404,
+                "INVALID_CODE",
+                "Referral code not found",
+            );
+        }
+
+        return res.json({
+            status: "success",
+            data: {
+                referrer,
+            },
+        });
+    } catch (error) {
+        console.error("GET /user/referrals/lookup error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to load referrer profile",
+        );
+    }
+});
 
 // Admin-only: list local users (paginated)
 router.get("/admin/users", requireAdminAuth, async (req, res) => {
@@ -390,6 +451,117 @@ if (!isClerkApiConfigured) {
                         message: "Failed to load user profile",
                     },
                 });
+            }
+        });
+
+        router.post("/referrals/claim", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawCode =
+                    req.body?.code ??
+                    req.body?.referralCode ??
+                    req.body?.referral_code ??
+                    "";
+
+                const referralCode =
+                    typeof rawCode === "string" ? rawCode.trim() : "";
+
+                if (!referralCode) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "referral code is required",
+                    );
+                }
+
+                if (referralCode.length > 64) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "referral code is too long",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const clerkCreatedAt =
+                    typeof clerkUser?.createdAt === "number"
+                        ? clerkUser.createdAt
+                        : null;
+
+                if (
+                    clerkCreatedAt != null &&
+                    Date.now() - clerkCreatedAt > REFERRAL_CLAIM_MAX_AGE_MS
+                ) {
+                    return jsonError(
+                        res,
+                        400,
+                        "REFERRAL_TOO_OLD",
+                        "Referral claim window expired",
+                    );
+                }
+
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await claimReferralReward({
+                    referralCode,
+                    referredUserId: user.id,
+                });
+
+                if (!result.ok) {
+                    if (result.code === "INVALID_CODE") {
+                        return jsonError(
+                            res,
+                            404,
+                            "INVALID_CODE",
+                            "Referral code not found",
+                        );
+                    }
+
+                    if (result.code === "SELF_REFERRAL") {
+                        return jsonError(
+                            res,
+                            400,
+                            "SELF_REFERRAL",
+                            "Cannot refer yourself",
+                        );
+                    }
+
+                    return jsonError(
+                        res,
+                        500,
+                        "SERVER_ERROR",
+                        "Failed to claim referral reward",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        claimed: !!result.claimed,
+                        rewardedPoints: result.claimed
+                            ? result.rewardedPoints ?? 0
+                            : 0,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/referrals/claim error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to claim referral reward",
+                );
             }
         });
 

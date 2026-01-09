@@ -1,6 +1,12 @@
 import { query, initPool } from "./pg-client.js";
 import { env } from "../config.js";
 import { initFeedbackDatabase } from "./feedback.js";
+import { initReferralDatabase } from "./referrals.js";
+import { nanoid } from "nanoid";
+
+const generateReferralCode = () => nanoid(10);
+const isUniqueViolation = (error) =>
+    error && typeof error === "object" && error.code === "23505";
 
 export const initUserDatabase = async () => {
     if (env.dbType && env.dbType !== "postgresql") {
@@ -21,6 +27,7 @@ export const initUserDatabase = async () => {
             avatar_url TEXT,
             last_seen_at BIGINT,
             points INTEGER NOT NULL DEFAULT 20,
+            referral_code TEXT,
             is_disabled BOOLEAN DEFAULT false,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL
@@ -36,6 +43,15 @@ export const initUserDatabase = async () => {
     // Migration: ensure default points for new users is correct
     await query(`ALTER TABLE users ALTER COLUMN points SET DEFAULT 20;`);
 
+    // Migration: referral codes (invite links)
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS referral_code TEXT;`,
+    );
+    await query(
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);`,
+    );
+
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_clerk_user_id ON users(clerk_user_id);`,
     );
@@ -47,6 +63,7 @@ export const initUserDatabase = async () => {
     );
 
     await initFeedbackDatabase();
+    await initReferralDatabase();
 
     // ==================== Collection download memory ====================
     await query(`
@@ -269,92 +286,98 @@ export const upsertUserFromClerk = async ({
     avatarUrl,
 }) => {
     const now = Date.now();
+    const referralCode = generateReferralCode();
 
     const normalizedPrimaryEmail = primaryEmail || null;
     const normalizedFullName = fullName || null;
     const normalizedAvatarUrl = avatarUrl || null;
 
-    const updateResult = await query(
-        `
+    const updateSql = `
         UPDATE users
         SET primary_email = $2,
             full_name = $3,
             avatar_url = $4,
             last_seen_at = $5,
-            updated_at = $6
+            referral_code = COALESCE(referral_code, $6),
+            updated_at = $7
         WHERE clerk_user_id = $1
         RETURNING *;
-        `,
-        [
-            clerkUserId,
-            normalizedPrimaryEmail,
-            normalizedFullName,
-            normalizedAvatarUrl,
+    `;
+
+    const updateParamsBase = [
+        clerkUserId,
+        normalizedPrimaryEmail,
+        normalizedFullName,
+        normalizedAvatarUrl,
+        now,
+    ];
+
+    let updateResult;
+    try {
+        updateResult = await query(updateSql, [...updateParamsBase, referralCode, now]);
+    } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        updateResult = await query(updateSql, [
+            ...updateParamsBase,
+            generateReferralCode(),
             now,
-            now,
-        ],
-    );
+        ]);
+    }
 
     if (updateResult.rows[0]) {
         return updateResult.rows[0];
     }
 
-    try {
-        const insertResult = await query(
-            `
-            INSERT INTO users (
-                clerk_user_id,
-                primary_email,
-                full_name,
-                avatar_url,
-                last_seen_at,
-                created_at,
-                updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *;
-            `,
-            [
+    const insertSql = `
+        INSERT INTO users (
+            clerk_user_id,
+            primary_email,
+            full_name,
+            avatar_url,
+            last_seen_at,
+            referral_code,
+            created_at,
+            updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *;
+    `;
+
+    let lastError;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        const attemptReferralCode = attempt === 0 ? referralCode : generateReferralCode();
+
+        try {
+            const insertResult = await query(insertSql, [
                 clerkUserId,
                 normalizedPrimaryEmail,
                 normalizedFullName,
                 normalizedAvatarUrl,
                 now,
+                attemptReferralCode,
                 now,
                 now,
-            ],
-        );
+            ]);
 
-        return insertResult.rows[0];
-    } catch (error) {
-        if (error && typeof error === "object" && error.code === "23505") {
-            const retryUpdate = await query(
-                `
-                UPDATE users
-                SET primary_email = $2,
-                    full_name = $3,
-                    avatar_url = $4,
-                    last_seen_at = $5,
-                    updated_at = $6
-                WHERE clerk_user_id = $1
-                RETURNING *;
-                `,
-                [
-                    clerkUserId,
-                    normalizedPrimaryEmail,
-                    normalizedFullName,
-                    normalizedAvatarUrl,
-                    now,
-                    now,
-                ],
-            );
+            return insertResult.rows[0];
+        } catch (error) {
+            lastError = error;
+            if (!isUniqueViolation(error)) throw error;
 
-            if (retryUpdate.rows[0]) {
-                return retryUpdate.rows[0];
+            // Either: a race on clerk_user_id, or an extremely rare referral_code collision.
+            try {
+                const retryUpdate = await query(updateSql, [
+                    ...updateParamsBase,
+                    generateReferralCode(),
+                    now,
+                ]);
+                if (retryUpdate.rows[0]) return retryUpdate.rows[0];
+            } catch (retryError) {
+                if (!isUniqueViolation(retryError)) throw retryError;
             }
         }
-
-        throw error;
     }
+
+    throw lastError;
 };
 
 export const getUserByClerkId = async (clerkUserId) => {

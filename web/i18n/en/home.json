@@ -14,6 +14,14 @@
             "desc": "Paste multiple links at once and download in one go."
         }
     },
+    "points_balloon": {
+        "aria": "Low points reminder",
+        "title": "Points running low",
+        "text": "Click to learn how to earn more points.",
+        "cta": "Go to account",
+        "points_label": "points",
+        "close": "dismiss"
+    },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
         "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",

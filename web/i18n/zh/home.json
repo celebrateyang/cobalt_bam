@@ -14,6 +14,14 @@
             "desc": "一次粘贴多条链接，批量处理更省时。"
         }
     },
+    "points_balloon": {
+        "aria": "积分不足提醒",
+        "title": "积分快用完了",
+        "text": "点击了解如何获得更多积分。",
+        "cta": "去账号页",
+        "points_label": "积分",
+        "close": "不再提醒"
+    },
     "platforms": {
         "title": "热门平台无水印下载",
         "description": "覆盖抖音、B站、快手、小红书、YouTube、Instagram、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",

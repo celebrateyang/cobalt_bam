@@ -96,6 +96,10 @@
     let pointsErrorKey = "";
     let pointsLoading = false;
     let lastPointsUserId: string | null = null;
+    let referralCode: string | null = null;
+    let referralLink = "";
+    let referralCopyState: "idle" | "copied" | "failed" = "idle";
+    let referralCopyTimer: ReturnType<typeof setTimeout> | null = null;
 
     const fetchPoints = async () => {
         const userId = $clerkUser?.id;
@@ -120,6 +124,7 @@
             }
 
             points = data.data?.user?.points ?? null;
+            referralCode = data.data?.user?.referral_code ?? null;
             lastPointsUserId = userId;
         } catch (error) {
             pointsErrorKey = "auth.points_load_failed";
@@ -133,8 +138,44 @@
         void fetchPoints();
     } else {
         points = null;
+        referralCode = null;
         lastPointsUserId = null;
     }
+
+    $: referralLink =
+        referralCode && $page.params.lang
+            ? `${$page.url.origin}/${$page.params.lang}/invite/${encodeURIComponent(referralCode)}`
+            : "";
+
+    const selectReferralLinkOnFocus = (event: FocusEvent) => {
+        const input = event.currentTarget as HTMLInputElement | null;
+        input?.select();
+    };
+
+    const copyReferralLink = async () => {
+        if (!referralLink) return;
+
+        if (referralCopyTimer) {
+            clearTimeout(referralCopyTimer);
+            referralCopyTimer = null;
+        }
+
+        try {
+            if (!navigator.clipboard?.writeText) {
+                throw new Error("clipboard API unavailable");
+            }
+            await navigator.clipboard.writeText(referralLink);
+            referralCopyState = "copied";
+        } catch (error) {
+            referralCopyState = "failed";
+            console.debug("copy referral link failed", error);
+        } finally {
+            referralCopyTimer = setTimeout(() => {
+                referralCopyState = "idle";
+                referralCopyTimer = null;
+            }, 1800);
+        }
+    };
 
     const formatCny = (fen: number) => (fen / 100).toFixed(2);
 
@@ -193,6 +234,9 @@
 
     onDestroy(() => {
         stopPolling();
+        if (referralCopyTimer) {
+            clearTimeout(referralCopyTimer);
+        }
     });
 
     const fetchOrderStatus = async (orderId: number, sync = false) => {
@@ -376,6 +420,51 @@
                     <IconLogout size={18} />
                     {$t("auth.sign_out")}
                 </button>
+            </div>
+        </section>
+
+        <section class="card referral-card">
+            <h2 class="card-title">{$t("auth.referral_title")}</h2>
+            <div class="subtext card-subtitle">{$t("auth.referral_subtitle")}</div>
+
+            <div class="referral-link-row">
+                <div class="referral-link-label">
+                    {$t("auth.referral_link_label")}
+                </div>
+                {#if referralLink}
+                    <div class="referral-link-controls">
+                        <input
+                            class="referral-link-input"
+                            readonly
+                            value={referralLink}
+                            on:focus={selectReferralLinkOnFocus}
+                        />
+                        <button
+                            class="button elevated"
+                            on:click={() => void copyReferralLink()}
+                            disabled={!referralLink}
+                        >
+                            {#if referralCopyState === "copied"}
+                                {$t("auth.referral_copied")}
+                            {:else if referralCopyState === "failed"}
+                                {$t("auth.referral_copy_failed")}
+                            {:else}
+                                {$t("auth.referral_copy")}
+                            {/if}
+                        </button>
+                    </div>
+                {:else}
+                    <div class="subtext">{$t("auth.loading")}</div>
+                {/if}
+            </div>
+
+            <div class="subtext referral-rules">
+                <div class="rules-title">{$t("auth.referral_rules_title")}</div>
+                <div class="rules-list">
+                    <div>{$t("auth.referral_rule_1")}</div>
+                    <div>{$t("auth.referral_rule_2")}</div>
+                    <div>{$t("auth.referral_rule_3")}</div>
+                </div>
             </div>
         </section>
 
@@ -674,6 +763,64 @@
     .topup-card {
         gap: 18px;
         overflow: hidden;
+    }
+
+    .referral-card {
+        gap: 14px;
+    }
+
+    .referral-link-row {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .referral-link-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--subtext);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .referral-link-controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .referral-link-input {
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+        color: var(--text);
+        padding: 0 12px;
+        font-weight: 600;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .referral-rules {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .rules-title {
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.01em;
+    }
+
+    .rules-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        color: var(--subtext);
+        line-height: 1.5;
     }
 
     .account-summary {

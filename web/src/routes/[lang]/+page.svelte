@@ -3,6 +3,7 @@
     import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
+    import { browser } from "$app/environment";
 
     import Omnibox from "$components/save/Omnibox.svelte";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
@@ -17,8 +18,18 @@
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
     import { createDialog } from "$lib/state/dialogs";
-    import { checkSignedIn, isSignedIn } from "$lib/state/clerk";
+    import {
+        checkSignedIn,
+        clerkEnabled,
+        clerkUser,
+        getClerkToken,
+        initClerk,
+        isSignedIn,
+    } from "$lib/state/clerk";
     import { link as omniboxLink } from "$lib/state/omnibox";
+    import { currentApiURL } from "$lib/api/api-url";
+    import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
+    import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let data: { lang?: string };
 
@@ -121,6 +132,91 @@
         return true;
     };
 
+    const LOW_POINTS_THRESHOLD = 10;
+    const lowPointsBalloonKeyForUser = (userId: string) =>
+        `low-points-balloon-dismissed:${userId}`;
+
+    let userPoints: number | null = null;
+    let pointsLoading = false;
+    let lastPointsUserId: string | null = null;
+
+    let lowPointsBalloonDismissed = false;
+    let lowPointsBalloonDismissKey: string | null = null;
+    let lastDismissUserId: string | null = null;
+    let showLowPointsBalloon = false;
+
+    const dismissLowPointsBalloon = () => {
+        lowPointsBalloonDismissed = true;
+        if (browser && lowPointsBalloonDismissKey) {
+            localStorage.setItem(lowPointsBalloonDismissKey, "1");
+        }
+    };
+
+    const fetchUserPoints = async () => {
+        const userId = $clerkUser?.id;
+        if (!userId) return;
+        if (lastPointsUserId === userId) return;
+
+        pointsLoading = true;
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const res = await fetch(`${apiBase}/user/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to load points");
+            }
+
+            userPoints = data.data?.user?.points ?? null;
+            lastPointsUserId = userId;
+        } catch (error) {
+            userPoints = null;
+            console.debug("load points failed", error);
+        } finally {
+            pointsLoading = false;
+        }
+    };
+
+    const goToAccountForPoints = async () => {
+        dismissLowPointsBalloon();
+        await goto(accountPath());
+    };
+
+    $: if (browser && $clerkUser?.id) {
+        const userId = $clerkUser.id;
+        if (lastDismissUserId !== userId) {
+            lastDismissUserId = userId;
+            const key = lowPointsBalloonKeyForUser(userId);
+            lowPointsBalloonDismissKey = key;
+            lowPointsBalloonDismissed = localStorage.getItem(key) === "1";
+        }
+    }
+
+    $: if ($clerkUser) {
+        void fetchUserPoints();
+    } else {
+        userPoints = null;
+        lastPointsUserId = null;
+        lowPointsBalloonDismissed = false;
+        lowPointsBalloonDismissKey = null;
+        lastDismissUserId = null;
+    }
+
+    $: showLowPointsBalloon =
+        browser &&
+        $isSignedIn &&
+        !pointsLoading &&
+        userPoints !== null &&
+        userPoints < LOW_POINTS_THRESHOLD &&
+        !lowPointsBalloonDismissed;
+
     $: platformCards = platformsList.map((slug) => ({
         slug,
         name: $t(`home.platforms.${slug}.name`),
@@ -220,6 +316,10 @@
 
     // 检查本地存储中是否已关闭通知
     onMount(() => {
+        if (clerkEnabled) {
+            initClerk();
+        }
+
         const notificationClosed = localStorage.getItem(
             "notification-finditbuddy-launch-closed",
         );
@@ -314,7 +414,11 @@
 
         <Meowbalt emotion="smile" />
         <Omnibox />
-        <section class="capabilities" aria-label={$t("home.capabilities.aria")}>
+        <section
+            id="capabilities"
+            class="capabilities"
+            aria-label={$t("home.capabilities.aria")}
+        >
             <div class="cap-card cap-card--collection">
                 <div class="cap-card-inner">
                     <div class="cap-head">
@@ -527,6 +631,51 @@
             {/if}
         </section>
     </section>
+
+    {#if showLowPointsBalloon}
+        <div class="low-points-balloon-wrapper" aria-label={$t("home.points_balloon.aria")}>
+            <button
+                type="button"
+                class="low-points-balloon"
+                on:click={() => void goToAccountForPoints()}
+                aria-label={$t("home.points_balloon.aria")}
+            >
+                <div class="low-points-balloon-icon" aria-hidden="true">
+                    <IconCoin size={18} />
+                </div>
+
+                <div class="low-points-balloon-content">
+                    <div class="low-points-balloon-title">
+                        {$t("home.points_balloon.title")}
+                    </div>
+                    <div class="low-points-balloon-text">
+                        <span class="low-points-balloon-text-main">
+                            {$t("home.points_balloon.text")}
+                        </span>
+                        <span
+                            class="low-points-balloon-points"
+                            aria-label={`${userPoints} ${$t("home.points_balloon.points_label")}`}
+                        >
+                            <span class="low-points-balloon-points-number">
+                                {userPoints}
+                            </span>
+                            <span class="low-points-balloon-points-label">
+                                {$t("home.points_balloon.points_label")}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </button>
+            <button
+                type="button"
+                class="low-points-balloon-close"
+                aria-label={$t("home.points_balloon.close")}
+                on:click|stopPropagation={dismissLowPointsBalloon}
+            >
+                <IconX size={16} />
+            </button>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -1267,6 +1416,235 @@
         }
         .platform-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    .low-points-balloon-wrapper {
+        position: fixed;
+        left: calc(var(--sidebar-width) + 18px);
+        top: calc(var(--padding) + env(safe-area-inset-top, 0px) + 12px);
+        z-index: 60;
+        max-width: 320px;
+        width: min(
+            320px,
+            calc(100vw - var(--sidebar-width) - (var(--padding) * 2) - 18px)
+        );
+        pointer-events: none;
+        animation: low-points-balloon-float 3.5s ease-in-out infinite;
+    }
+
+    .low-points-balloon {
+        width: 100%;
+        border: 1px solid var(--surface-2);
+        background: radial-gradient(
+                120px 80px at top right,
+                rgba(0, 0, 0, 0.08),
+                transparent
+            ),
+            var(--surface-1);
+        border-radius: 20px;
+        padding: 12px 14px;
+        box-shadow: var(--button-box-shadow);
+        text-align: left;
+        cursor: pointer;
+        position: relative;
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-right: 40px;
+        transition:
+            transform 0.15s ease,
+            border-color 0.15s ease;
+        animation: low-points-balloon-enter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)
+            both;
+    }
+
+    .low-points-balloon:hover {
+        transform: translateY(-1px);
+        border-color: var(--popup-stroke);
+    }
+
+    .low-points-balloon-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--accent-background);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        position: relative;
+        animation: low-points-balloon-pulse 1.8s ease-in-out infinite;
+    }
+
+    .low-points-balloon-icon::after {
+        content: "";
+        position: absolute;
+        inset: -6px;
+        border-radius: 18px;
+        border: 2px solid currentColor;
+        opacity: 0;
+        transform: scale(0.75);
+        animation: low-points-balloon-ring 2.2s ease-out infinite;
+    }
+
+    .low-points-balloon-title {
+        font-weight: 900;
+        color: var(--text);
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+
+    .low-points-balloon-text {
+        color: var(--subtext);
+        font-size: 13.5px;
+        line-height: 1.35;
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .low-points-balloon-text-main {
+        min-width: 0;
+    }
+
+    .low-points-balloon-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .low-points-balloon-points {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+        color: var(--text);
+        flex: 0 0 auto;
+    }
+
+    .low-points-balloon-points-number {
+        font-weight: 900;
+        color: var(--text);
+        font-size: 16px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    .low-points-balloon-points-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--subtext);
+    }
+
+    .low-points-balloon-close {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        pointer-events: auto;
+        box-shadow: var(--button-box-shadow);
+        transition:
+            transform 0.15s ease,
+            background 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    .low-points-balloon-close:hover {
+        transform: scale(1.02);
+        background: var(--button-hover);
+        border-color: var(--popup-stroke);
+    }
+
+    @media (max-width: 600px) {
+        .low-points-balloon-wrapper {
+            left: 14px;
+            top: calc(var(--padding) + env(safe-area-inset-top, 0px) + 10px);
+            width: calc(100vw - 28px);
+        }
+
+        .low-points-balloon-close {
+            right: -8px;
+            top: -8px;
+        }
+    }
+
+    @keyframes low-points-balloon-enter {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.98);
+        }
+        60% {
+            opacity: 1;
+            transform: translateY(0) scale(1.02);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes low-points-balloon-float {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(5px);
+        }
+    }
+
+    @keyframes low-points-balloon-pulse {
+        0%,
+        100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.08);
+        }
+    }
+
+    @keyframes low-points-balloon-ring {
+        0% {
+            opacity: 0;
+            transform: scale(0.75);
+        }
+        20% {
+            opacity: 1;
+        }
+        60% {
+            opacity: 0;
+            transform: scale(1.1);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(1.1);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .low-points-balloon-wrapper,
+        .low-points-balloon,
+        .low-points-balloon-icon,
+        .low-points-balloon-icon::after {
+            animation: none !important;
         }
     }
 </style>

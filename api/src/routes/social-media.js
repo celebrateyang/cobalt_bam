@@ -137,7 +137,10 @@ router.post('/internal/instagram/items', adminLimiter, requireInstagramUpstreamK
         const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
         console.log(`[ig-upstream:${logId}] request username=${username.trim()}`);
 
-        const items = await fetchInstagramCreatorItemsDirect(username.trim(), options);
+        const items = await fetchInstagramCreatorItemsDirect(username.trim(), {
+            ...options,
+            logPrefix: `[ig-upstream:${logId}]`,
+        });
 
         console.log(`[ig-upstream:${logId}] response items=${items.length}`);
 

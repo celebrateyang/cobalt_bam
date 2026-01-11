@@ -32,6 +32,14 @@ const maybeUpdateCookie = (cookie, headers) => {
     updateCookie(cookie, headers);
 };
 
+const maybeUpdateWwwClaim = (cookie, headers) => {
+    if (!cookie || typeof cookie !== "object") return;
+    if (!headers?.get) return;
+
+    const claim = headers.get("x-ig-set-www-claim") || headers.get("X-Ig-Set-Www-Claim");
+    if (claim) cookie._wwwClaim = claim;
+};
+
 const uniqBy = (items, keyFn) => {
     const seen = new Set();
     const result = [];
@@ -138,11 +146,22 @@ const fetchInstagramProfileInfo = async (username, { cookie } = {}) => {
     const apiUrl = new URL("https://www.instagram.com/api/v1/users/web_profile_info/");
     apiUrl.searchParams.set("username", username);
 
+    const csrfToken =
+        cookie && typeof cookie === "object" && typeof cookie?.values === "function"
+            ? cookie.values()?.csrftoken
+            : undefined;
+    const wwwClaim =
+        cookie && typeof cookie === "object" && typeof cookie?._wwwClaim === "string"
+            ? cookie._wwwClaim
+            : undefined;
+
     const res = await fetch(apiUrl, {
         headers: {
             "user-agent": genericUserAgent,
             accept: "application/json",
             "x-ig-app-id": IG_APP_ID,
+            ...(csrfToken ? { "x-csrftoken": csrfToken } : {}),
+            ...(wwwClaim ? { "x-ig-www-claim": wwwClaim } : {}),
             referer: `https://www.instagram.com/${username}/`,
             "sec-fetch-site": "same-origin",
             "sec-fetch-mode": "cors",
@@ -162,6 +181,7 @@ const fetchInstagramProfileInfo = async (username, { cookie } = {}) => {
         throw new Error("instagram profile fetch returned invalid json");
     }
 
+    maybeUpdateWwwClaim(cookie, res.headers);
     maybeUpdateCookie(cookie, res.headers);
     return json;
 };
@@ -173,6 +193,15 @@ const fetchInstagramUserFeed = async (userId, { cookie, count } = {}) => {
     const apiUrl = new URL(`https://i.instagram.com/api/v1/feed/user/${userId}/`);
     if (count) apiUrl.searchParams.set("count", String(count));
 
+    const csrfToken =
+        cookie && typeof cookie === "object" && typeof cookie?.values === "function"
+            ? cookie.values()?.csrftoken
+            : undefined;
+    const wwwClaim =
+        cookie && typeof cookie === "object" && typeof cookie?._wwwClaim === "string"
+            ? cookie._wwwClaim
+            : undefined;
+
     const res = await fetch(apiUrl, {
         headers: {
             "x-ig-app-locale": "en_US",
@@ -182,6 +211,12 @@ const fetchInstagramUserFeed = async (userId, { cookie, count } = {}) => {
             "accept-language": "en-US",
             accept: "application/json",
             "x-ig-app-id": IG_APP_ID,
+            "x-fb-http-engine": "Liger",
+            "x-fb-client-ip": "True",
+            "x-fb-server-cluster": "True",
+            "content-length": "0",
+            ...(csrfToken ? { "x-csrftoken": csrfToken } : {}),
+            ...(wwwClaim ? { "x-ig-www-claim": wwwClaim } : {}),
             // Instagram blocks this endpoint without Sec-Fetch headers in some environments.
             "sec-fetch-site": "none",
             "sec-fetch-mode": "cors",
@@ -200,6 +235,7 @@ const fetchInstagramUserFeed = async (userId, { cookie, count } = {}) => {
         throw new Error("instagram feed fetch returned invalid json");
     }
 
+    maybeUpdateWwwClaim(cookie, res.headers);
     maybeUpdateCookie(cookie, res.headers);
     return json;
 };
@@ -348,6 +384,13 @@ const parseInstagramProfileVideos = (profileJson, options) => {
 };
 
 export const fetchInstagramCreatorItemsDirect = async (username, options) => {
+    const logPrefix =
+        typeof options?.logPrefix === "string" && options.logPrefix.length > 0
+            ? options.logPrefix
+            : options?.logId !== undefined && options?.logId !== null
+                ? `[social-sync:${String(options.logId)}]`
+                : "[social-sync]";
+
     const profile = await fetchInstagramProfileInfo(username);
     const profileItems = parseInstagramProfileVideos(profile, options);
 
@@ -356,12 +399,23 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
     const timelineCount = typeof timeline?.count === "number" ? timeline.count : null;
     const hasUser = Boolean(profile?.data?.user);
 
+    if (profileItems.length === 0) {
+        console.log(
+            `${logPrefix} instagram direct profile hasUser=${hasUser ? "yes" : "no"} timelineCount=${timelineCount ?? "?"} edges=${timelineEdgesLen} profileItems=0`,
+        );
+    }
+
     const needsFallback =
         !hasUser || (timelineCount && timelineCount > 0 && timelineEdgesLen === 0);
 
     if (!needsFallback) return profileItems;
 
     const cookie = getCookie("instagram");
+    if (profileItems.length === 0) {
+        console.log(
+            `${logPrefix} instagram direct needsFallback=yes cookie=${cookie ? "yes" : "no"}`,
+        );
+    }
     if (!cookie) return profileItems;
 
     const authedProfile = hasUser
@@ -369,6 +423,11 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
         : await fetchInstagramProfileInfo(username, { cookie });
 
     const userId = authedProfile?.data?.user?.id;
+    if (profileItems.length === 0) {
+        console.log(
+            `${logPrefix} instagram direct authed hasUser=${authedProfile?.data?.user ? "yes" : "no"} userId=${userId ? "yes" : "no"}`,
+        );
+    }
     if (!userId) return profileItems;
 
     const recentLimit =
@@ -386,6 +445,11 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
     });
 
     const feedItems = parseInstagramUserFeedVideos(feed, options);
+    if (profileItems.length === 0) {
+        console.log(
+            `${logPrefix} instagram direct feed items=${feedItems.length}`,
+        );
+    }
     return feedItems.length > 0 ? feedItems : profileItems;
 };
 

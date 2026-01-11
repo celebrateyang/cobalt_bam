@@ -1,8 +1,9 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { Readable, Transform } from 'node:stream';
+import { env } from '../config.js';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
-import { syncAccountVideos } from '../processing/social/sync.js';
+import { fetchInstagramCreatorItemsDirect, syncAccountVideos } from '../processing/social/sync.js';
 import {
     createAccount,
     getAccounts,
@@ -89,6 +90,65 @@ const loginLimiter = rateLimit({
             code: 'RATE_LIMIT_EXCEEDED',
             message: 'Too many login attempts, please try again later'
         }
+    }
+});
+
+const requireInstagramUpstreamKey = (req, res, next) => {
+    const expectedKey = env.instagramUpstreamApiKey;
+    if (!expectedKey) return next();
+
+    const auth = String(req.headers.authorization || "");
+    if (auth === `Api-Key ${expectedKey}`) return next();
+
+    return res.status(401).json({
+        status: 'error',
+        error: {
+            code: 'UNAUTHORIZED',
+            message: 'invalid upstream api key'
+        }
+    });
+};
+
+/**
+ * POST /social/internal/instagram/items
+ * Internal helper for upstream sync: fetch recent + pinned items for a creator.
+ */
+router.post('/internal/instagram/items', adminLimiter, requireInstagramUpstreamKey, async (req, res) => {
+    try {
+        const username = req.body?.username;
+        if (typeof username !== 'string' || username.trim().length === 0) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'username is required'
+                }
+            });
+        }
+
+        const recentLimit = req.body?.recentLimit;
+        const pinnedLimit = req.body?.pinnedLimit;
+
+        const options = {
+            recentLimit: typeof recentLimit === 'number' ? recentLimit : undefined,
+            pinnedLimit: typeof pinnedLimit === 'number' ? pinnedLimit : undefined,
+        };
+
+        const items = await fetchInstagramCreatorItemsDirect(username.trim(), options);
+
+        return res.json({
+            status: 'success',
+            data: { items }
+        });
+    } catch (error) {
+        console.error('Upstream instagram items error:', error);
+        return res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to fetch instagram items'
+            }
+        });
     }
 });
 

@@ -105,8 +105,14 @@
         return `/${lang}/account`;
     };
 
-    const pointsFromDuration = (durationSeconds: number) =>
-        durationSeconds > 0 ? Math.ceil(durationSeconds / 60) : 0;
+    const pointsForDuration = (durationSeconds: number | undefined) => {
+        if (typeof durationSeconds !== "number" || !Number.isFinite(durationSeconds)) {
+            return 1;
+        }
+
+        if (durationSeconds <= 60) return 1;
+        return Math.ceil(durationSeconds / 60);
+    };
 
     const readDuration = (item: DialogBatchItem) => {
         if (typeof item.duration === "number" && Number.isFinite(item.duration)) {
@@ -302,7 +308,7 @@
 
     const prepareBatch = async (selectedItems: DialogBatchItem[]) => {
         const cache = new Map<string, PrefetchedResponse>();
-        let totalDurationSeconds = 0;
+        let requiredPoints = 0;
 
         for (const item of selectedItems) {
             if (cancelRequested) break;
@@ -313,12 +319,8 @@
             }
 
             const duration = readDuration(item);
-            if (typeof duration === "number" && Number.isFinite(duration)) {
-                totalDurationSeconds += duration;
-            }
+            requiredPoints += pointsForDuration(duration);
         }
-
-        const requiredPoints = pointsFromDuration(totalDurationSeconds);
 
         return { requiredPoints, cache };
     };
@@ -334,18 +336,16 @@
         }
 
         pointsPreviewLoading = true;
-        let totalDurationSeconds = 0;
+        let requiredPoints = 0;
 
         for (const item of selectedItems) {
             const duration = await fetchDuration(item);
             if (requestId !== pointsPreviewRequestId) return;
-            if (typeof duration === "number" && Number.isFinite(duration)) {
-                totalDurationSeconds += duration;
-            }
+            requiredPoints += pointsForDuration(duration);
         }
 
         if (requestId !== pointsPreviewRequestId) return;
-        pointsPreviewRequired = pointsFromDuration(totalDurationSeconds);
+        pointsPreviewRequired = requiredPoints;
         pointsPreviewLoading = false;
         pointsPreviewReady = true;
     };

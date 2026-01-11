@@ -53,6 +53,7 @@
     let itemsKey = "";
     let pointsPreviewRequired = 0;
     let pointsPreviewLoading = false;
+    let pointsPreviewReady = false;
     let pointsCheckLoading = false;
     let pointsPreviewTimer: ReturnType<typeof setTimeout> | null = null;
     let pointsPreviewRequestId = 0;
@@ -182,6 +183,7 @@
         pointsPreviewRequestId += 1;
         pointsPreviewRequired = 0;
         pointsPreviewLoading = false;
+        pointsPreviewReady = false;
 
         if (pointsPreviewTimer) {
             clearTimeout(pointsPreviewTimer);
@@ -327,6 +329,7 @@
             if (requestId !== pointsPreviewRequestId) return;
             pointsPreviewRequired = 0;
             pointsPreviewLoading = false;
+            pointsPreviewReady = true;
             return;
         }
 
@@ -344,6 +347,7 @@
         if (requestId !== pointsPreviewRequestId) return;
         pointsPreviewRequired = pointsFromDuration(totalDurationSeconds);
         pointsPreviewLoading = false;
+        pointsPreviewReady = true;
     };
 
     const schedulePointsPreview = () => {
@@ -355,6 +359,7 @@
         if (selectedCount() === 0) {
             cancelPointsPreview();
             pointsPreviewRequired = 0;
+            pointsPreviewReady = true;
             return;
         }
 
@@ -444,7 +449,7 @@
 
     const downloadSelected = async () => {
         if (running || pointsCheckLoading) return;
-        if (clerkEnabled && pointsPreviewLoading) return;
+        if (clerkEnabled && (!pointsPreviewReady || pointsPreviewLoading)) return;
 
         if (!$isSignedIn) {
             const alreadySignedIn = await checkSignedIn();
@@ -792,7 +797,7 @@
         <div class="batch-footer">
             {#if !viewingDownloaded && clerkEnabled && selectedCount() > 0}
                 <div class="points-preview" aria-live="polite">
-                    {#if pointsPreviewLoading}
+                    {#if pointsPreviewLoading || !pointsPreviewReady}
                         {$t("dialog.batch.points_preview.loading")}
                     {:else}
                         {$t("dialog.batch.points_preview", {
@@ -832,7 +837,8 @@
                         disabled={
                             selectedCount() === 0 ||
                             pointsCheckLoading ||
-                            (clerkEnabled && pointsPreviewLoading)
+                            (clerkEnabled &&
+                                (!pointsPreviewReady || pointsPreviewLoading))
                         }
                         on:click={downloadSelected}
                     >

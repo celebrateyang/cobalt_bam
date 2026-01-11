@@ -105,6 +105,15 @@ const getObjectFromEntries = (name, data) => {
     return obj && JSON.parse(obj);
 }
 
+    const toSecondsMaybeMs = (value) => {
+        if (value == null) return;
+
+        const n = typeof value === "string" ? Number(value) : value;
+        if (typeof n !== "number" || !Number.isFinite(n) || n <= 0) return;
+
+        return n > 1000 ? n / 1000 : n;
+    };
+
 export default function instagram(obj) {
     const dispatcher = obj.dispatcher;
     const trace = randomBytes(2).toString("hex");
@@ -191,6 +200,7 @@ export default function instagram(obj) {
             return {
                 url: payload.url,
                 filename: payload.filename,
+                duration: toSecondsMaybeMs(payload.duration),
             };
         } catch (e) {
             const cause = errorCauseForLog(e?.cause);
@@ -671,14 +681,23 @@ export default function instagram(obj) {
                     }
                 });
 
-            if (picker.length) return { picker }
+            if (picker.length) {
+                const duration = sidecar.edges.reduce((acc, edge) => {
+                    const seconds = toSecondsMaybeMs(edge?.node?.video_duration);
+                    if (!seconds) return acc;
+                    return acc + seconds;
+                }, 0);
+
+                return { picker, duration: duration > 0 ? duration : undefined };
+            }
         }
 
         if (shortcodeMedia?.video_url) {
             return {
                 urls: shortcodeMedia.video_url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`
+                audioFilename: `instagram_${id}_audio`,
+                duration: toSecondsMaybeMs(shortcodeMedia?.video_duration),
             }
         }
 
@@ -729,13 +748,22 @@ export default function instagram(obj) {
                     }
                 });
 
-            if (picker.length) return { picker }
+            if (picker.length) {
+                const duration = carousel.reduce((acc, entry) => {
+                    const seconds = toSecondsMaybeMs(entry?.video_duration);
+                    if (!seconds) return acc;
+                    return acc + seconds;
+                }, 0);
+
+                return { picker, duration: duration > 0 ? duration : undefined };
+            }
         } else if (data.video_versions) {
             const video = data.video_versions.reduce((a, b) => a.width * a.height < b.width * b.height ? b : a)
             return {
                 urls: video.url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`
+                audioFilename: `instagram_${id}_audio`,
+                duration: toSecondsMaybeMs(data?.video_duration),
             }
         } else if (data.image_versions2?.candidates) {
             return {
@@ -840,6 +868,7 @@ export default function instagram(obj) {
                         urls: upstream.url,
                         filename: upstream.filename || `instagram_${id}.mp4`,
                         audioFilename: `instagram_${id}_audio`,
+                        duration: upstream.duration,
                     };
                 }
 
@@ -913,7 +942,8 @@ export default function instagram(obj) {
             return {
                 urls: video.url,
                 filename: `instagram_${id}.mp4`,
-                audioFilename: `instagram_${id}_audio`
+                audioFilename: `instagram_${id}_audio`,
+                duration: toSecondsMaybeMs(item?.video_duration),
             }
         }
 

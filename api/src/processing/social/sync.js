@@ -1,5 +1,6 @@
 import { genericUserAgent } from "../../config.js";
 import { upsertVideoFromSync, updateAccount } from "../../db/social-media.js";
+import { getCookie } from "../cookie/manager.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_RECENT_LIMIT = 5;
@@ -119,7 +120,7 @@ const fetchTikTokOembed = async (videoUrl) => {
     };
 };
 
-const fetchInstagramProfileInfo = async (username) => {
+const fetchInstagramProfileInfo = async (username, { cookie } = {}) => {
     const apiUrl = new URL("https://www.instagram.com/api/v1/users/web_profile_info/");
     apiUrl.searchParams.set("username", username);
 
@@ -133,6 +134,7 @@ const fetchInstagramProfileInfo = async (username) => {
             "sec-fetch-mode": "cors",
             "sec-fetch-dest": "empty",
             "x-requested-with": "XMLHttpRequest",
+            ...(cookie ? { cookie } : {}),
         },
         signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     });
@@ -147,6 +149,117 @@ const fetchInstagramProfileInfo = async (username) => {
     }
 
     return json;
+};
+
+const fetchInstagramUserFeed = async (userId, { cookie, count } = {}) => {
+    if (!userId) throw new Error("instagram feed fetch requires a user id");
+    if (!cookie) throw new Error("instagram feed fetch requires cookies");
+
+    const apiUrl = new URL(`https://i.instagram.com/api/v1/feed/user/${userId}/`);
+    if (count) apiUrl.searchParams.set("count", String(count));
+
+    const res = await fetch(apiUrl, {
+        headers: {
+            "x-ig-app-locale": "en_US",
+            "x-ig-device-locale": "en_US",
+            "x-ig-mapped-locale": "en_US",
+            "user-agent": IG_MOBILE_UA,
+            "accept-language": "en-US",
+            accept: "application/json",
+            "x-ig-app-id": IG_APP_ID,
+            // Instagram blocks this endpoint without Sec-Fetch headers in some environments.
+            "sec-fetch-site": "none",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            cookie,
+        },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+
+    if (!res.ok) {
+        throw new Error(`instagram feed fetch failed (status ${res.status})`);
+    }
+
+    const json = await safeJson(res);
+    if (!json) {
+        throw new Error("instagram feed fetch returned invalid json");
+    }
+
+    return json;
+};
+
+const parseInstagramUserFeedVideos = (feedJson, options) => {
+    const recentLimit =
+        typeof options?.recentLimit === "number" && options.recentLimit > 0
+            ? Math.floor(options.recentLimit)
+            : DEFAULT_RECENT_LIMIT;
+    const pinnedLimit =
+        typeof options?.pinnedLimit === "number" && options.pinnedLimit > 0
+            ? Math.floor(options.pinnedLimit)
+            : DEFAULT_PINNED_LIMIT;
+
+    const pinnedIds = Array.isArray(feedJson?.pinned_profile_grid_items_ids)
+        ? feedJson.pinned_profile_grid_items_ids.map((id) => String(id))
+        : [];
+    const pinnedSet = new Set(pinnedIds);
+
+    const items = Array.isArray(feedJson?.items) ? feedJson.items : [];
+
+    const candidates = items
+        .filter((item) => item?.code)
+        .filter((item) => {
+            if (item?.media_type === 2) return true;
+            if (item?.product_type === "clips") return true;
+            if (Array.isArray(item?.video_versions) && item.video_versions.length > 0) return true;
+            return false;
+        })
+        .map((item) => {
+            const shortcode = String(item.code);
+            const productType = item?.product_type;
+            const isReel = productType === "clips";
+            const path = isReel ? "reel" : "p";
+
+            const thumbnailUrl =
+                typeof item?.image_versions2?.candidates?.[0]?.url === "string"
+                    ? item.image_versions2.candidates[0].url
+                    : "";
+
+            const caption = item?.caption?.text ?? null;
+            const title = typeof caption === "string" ? caption.trim() : "";
+
+            const takenAtSeconds =
+                typeof item?.taken_at === "number" ? item.taken_at : Number.NaN;
+            const publishDate = Number.isFinite(takenAtSeconds)
+                ? takenAtSeconds * 1000
+                : null;
+
+            const pk = item?.pk != null ? String(item.pk) : "";
+            const isPinned = pk && pinnedSet.has(pk);
+
+            return {
+                url: `https://www.instagram.com/${path}/${shortcode}/`,
+                video_id: shortcode,
+                thumbnail_url: thumbnailUrl,
+                title,
+                publish_date: publishDate,
+                is_pinned: isPinned,
+                pinned_order: 0,
+            };
+        });
+
+    const pinned = candidates.filter((c) => c.is_pinned).slice(0, pinnedLimit);
+    const pinnedUrls = new Set(pinned.map((p) => p.url));
+
+    const recent = candidates
+        .filter((c) => !pinnedUrls.has(c.url))
+        .slice(0, recentLimit);
+
+    const orderedPinned = pinned.map((item, index) => ({
+        ...item,
+        pinned_order: pinned.length - index,
+    }));
+
+    return uniqBy([...orderedPinned, ...recent], (i) => i.url);
 };
 
 const parseInstagramProfileVideos = (profileJson, options) => {
@@ -252,7 +365,44 @@ const getItemsForAccount = async (account, options) => {
 
     if (account.platform === "instagram") {
         const profile = await fetchInstagramProfileInfo(account.username);
-        return parseInstagramProfileVideos(profile, options);
+        const profileItems = parseInstagramProfileVideos(profile, options);
+
+        const timeline = profile?.data?.user?.edge_owner_to_timeline_media;
+        const timelineEdgesLen = Array.isArray(timeline?.edges) ? timeline.edges.length : 0;
+        const timelineCount = typeof timeline?.count === "number" ? timeline.count : null;
+        const hasUser = Boolean(profile?.data?.user);
+
+        const needsFallback =
+            !hasUser || (timelineCount && timelineCount > 0 && timelineEdgesLen === 0);
+
+        if (!needsFallback) return profileItems;
+
+        const cookie = getCookie("instagram")?.toString();
+        if (!cookie) return profileItems;
+
+        const authedProfile = hasUser
+            ? profile
+            : await fetchInstagramProfileInfo(account.username, { cookie });
+
+        const userId = authedProfile?.data?.user?.id;
+        if (!userId) return profileItems;
+
+        const recentLimit =
+            typeof options?.recentLimit === "number" && options.recentLimit > 0
+                ? Math.floor(options.recentLimit)
+                : DEFAULT_RECENT_LIMIT;
+        const pinnedLimit =
+            typeof options?.pinnedLimit === "number" && options.pinnedLimit > 0
+                ? Math.floor(options.pinnedLimit)
+                : DEFAULT_PINNED_LIMIT;
+
+        const feed = await fetchInstagramUserFeed(userId, {
+            cookie,
+            count: pinnedLimit + recentLimit,
+        });
+
+        const feedItems = parseInstagramUserFeedVideos(feed, options);
+        return feedItems.length > 0 ? feedItems : profileItems;
     }
 
     throw new Error(`unsupported platform: ${account.platform}`);

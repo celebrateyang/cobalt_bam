@@ -108,6 +108,8 @@ const getObjectFromEntries = (name, data) => {
 export default function instagram(obj) {
     const dispatcher = obj.dispatcher;
     const trace = randomBytes(2).toString("hex");
+    const mediaIdCache = new Map();
+    const postPageMediaIdCache = new Map();
 
     const log = (...args) => {
         if (!INSTAGRAM_DEBUG) return;
@@ -278,7 +280,31 @@ export default function instagram(obj) {
         return data.json();
     }
 
+    const getPostPageMediaId = async (id, cookie) => {
+        const cacheKey = `${cookie ? "cookie" : "anon"}:${id}`;
+        if (postPageMediaIdCache.has(cacheKey)) {
+            return postPageMediaIdCache.get(cacheKey) || undefined;
+        }
+
+        const label = cookie ? "post page media_id cookie" : "post page media_id anon";
+        const res = await fetchLogged(label, `https://www.instagram.com/p/${id}/`, {
+            headers: {
+                ...embedHeaders,
+                ...(cookie ? { cookie } : {}),
+            },
+            dispatcher,
+        }).catch(() => null);
+
+        const html = await res?.text().catch(() => null);
+        const mediaId = html?.match(/"media_id"\s*:\s*"(\d+)"/)?.[1];
+
+        postPageMediaIdCache.set(cacheKey, mediaId || null);
+        return mediaId;
+    };
+
     async function getMediaId(id, { cookie, token } = {}) {
+        if (mediaIdCache.has(id)) return mediaIdCache.get(id);
+
         const oembedURL = new URL('https://i.instagram.com/api/v1/oembed/');
         oembedURL.searchParams.set('url', `https://www.instagram.com/p/${id}/`);
         const label = token ? "oembed bearer" : cookie ? "oembed cookie" : "oembed anon";
@@ -300,7 +326,18 @@ export default function instagram(obj) {
         const oembed = await res.json().catch(() => ({}));
         log("oembed result", `status=${res.status}`, `media_id=${oembed?.media_id ? "yes" : "no"}`);
 
-        return oembed?.media_id;
+        const oembedMediaId = oembed?.media_id;
+        if (oembedMediaId) {
+            mediaIdCache.set(id, oembedMediaId);
+            return oembedMediaId;
+        }
+
+        // Fallback: parse media_id from the post page HTML (oembed often returns 403/404).
+        let mediaId = await getPostPageMediaId(id);
+        if (!mediaId && cookie) mediaId = await getPostPageMediaId(id, cookie);
+
+        if (mediaId) mediaIdCache.set(id, mediaId);
+        return mediaId;
     }
 
     async function requestMobileApi(mediaId, { cookie, token } = {}) {
@@ -727,7 +764,17 @@ export default function instagram(obj) {
                 || data.image_versions2?.candidates
             );
         };
+        const isUnavailableFromGql = (gqlData) => {
+            if (!gqlData || typeof gqlData !== "object") return false;
+
+            const hasKnownKeys =
+                "xdt_shortcode_media" in gqlData || "shortcode_media" in gqlData;
+            if (!hasKnownKeys) return false;
+
+            return gqlData.xdt_shortcode_media == null && gqlData.shortcode_media == null;
+        };
         let data, result;
+        let gqlUnavailable = false;
         log(
             "getPost start",
             id,
@@ -749,8 +796,16 @@ export default function instagram(obj) {
             );
 
             // web app graphql api first (no cookie, cookie)
-            if (!hasData(data)) data = await requestGQL(id).catch(() => null);
-            if (!hasData(data) && cookie) data = await requestGQL(id, cookie).catch(() => null);
+            if (!hasData(data)) {
+                const gqlAnon = await requestGQL(id).catch(() => null);
+                if (isUnavailableFromGql(gqlAnon?.gql_data)) gqlUnavailable = true;
+                data = gqlAnon ?? data;
+            }
+            if (!hasData(data) && cookie) {
+                const gqlCookie = await requestGQL(id, cookie).catch(() => null);
+                if (isUnavailableFromGql(gqlCookie?.gql_data)) gqlUnavailable = true;
+                data = gqlCookie ?? data;
+            }
 
             // mobile api (requires media_id)
             if (!hasData(data)) {
@@ -792,7 +847,11 @@ export default function instagram(obj) {
             }
 
             log("getPost", "no data, entering error context");
-            return getErrorContext(id);
+            const ctx = await getErrorContext(id);
+            if (gqlUnavailable && ctx?.error === "fetch.empty") {
+                return { error: "content.post.unavailable" };
+            }
+            return ctx;
         }
 
         if (data?.gql_data) {

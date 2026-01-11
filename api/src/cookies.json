@@ -1,6 +1,6 @@
 {
   "instagram": [
-    "mid=<replace>; ig_did=<with>; csrftoken=<your>; ds_user_id=<own>; sessionid=<cookies>"
+    "mid=aR1ouwALAAEJ8uUbfOpHT4Kw-sAi; ig_did=488A3072-3C0A-4B6A-879A-6E0976FDFE7D; csrftoken=k9oDwX4fqtmDwkiEi1zO_q; ds_user_id=69580209620; sessionid=69580209620%3ARAZUeSVr828fcP%3A11%3AAYhp_MBFsCEluIQ06CK57ZeIT3tJLn8ds3SieVW_nZE"
   ],
   "instagram_bearer": [
     "token=<token_with_no_bearer_in_front>", "token=IGT:2:<looks_like_this>"

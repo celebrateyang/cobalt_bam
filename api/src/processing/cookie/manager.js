@@ -19,6 +19,51 @@ const VALID_SERVICES = new Set([
 const invalidCookies = {};
 let cookies = {}, dirty = false, intervalId;
 
+const warnSuspiciousInstagramCookies = (cookiePath = "") => {
+    const warnCookieLengths = (service, idx, details) => {
+        const parts = Object.entries(details)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(', ');
+        console.warn(`${Yellow('[!]')} ${service}[${idx}] looks suspicious (${parts}).`);
+        if (cookiePath) console.warn(`${Yellow('[!]')} cookie file: ${cookiePath}`);
+        console.warn(`${Yellow('[!]')} re-copy the full Cookie header from your browser DevTools (Network -> request headers -> cookie).`);
+    };
+
+    if (Array.isArray(cookies.instagram)) {
+        cookies.instagram.forEach((cookie, idx) => {
+            if (typeof cookie !== 'string') return;
+
+            try {
+                const parsed = Cookie.fromString(cookie);
+                const values = parsed.values();
+
+                const sessionidLen = typeof values.sessionid === 'string' ? values.sessionid.length : 0;
+                const csrftokenLen = typeof values.csrftoken === 'string' ? values.csrftoken.length : 0;
+
+                if ((sessionidLen && sessionidLen < 20) || (csrftokenLen && csrftokenLen < 20)) {
+                    warnCookieLengths('instagram', idx, { sessionidLen, csrftokenLen });
+                }
+            } catch {}
+        });
+    }
+
+    if (Array.isArray(cookies.instagram_bearer)) {
+        cookies.instagram_bearer.forEach((cookie, idx) => {
+            if (typeof cookie !== 'string') return;
+
+            try {
+                const parsed = Cookie.fromString(cookie);
+                const values = parsed.values();
+                const tokenLen = typeof values.token === 'string' ? values.token.length : 0;
+
+                if (tokenLen && tokenLen < 60) {
+                    warnCookieLengths('instagram_bearer', idx, { tokenLen });
+                }
+            } catch {}
+        });
+    }
+};
+
 function writeChanges(cookiePath) {
     if (!dirty) return;
     dirty = false;
@@ -55,7 +100,9 @@ const setupMain = async (cookiePath) => {
 
         cluster.broadcast({ cookies });
 
-        console.log(`${Green('[✓]')} cookies loaded successfully!`);
+        warnSuspiciousInstagramCookies(cookiePath);
+
+        console.log(`${Green('[✓]')} cookies loaded successfully from ${cookiePath}`);
     } catch (e) {
         console.error(`${Yellow('[!]')} failed to load cookies.`);
         console.error('error:', e);

@@ -134,7 +134,12 @@ router.post('/internal/instagram/items', adminLimiter, requireInstagramUpstreamK
             pinnedLimit: typeof pinnedLimit === 'number' ? pinnedLimit : undefined,
         };
 
+        const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
+        console.log(`[ig-upstream:${logId}] request username=${username.trim()}`);
+
         const items = await fetchInstagramCreatorItemsDirect(username.trim(), options);
+
+        console.log(`[ig-upstream:${logId}] response items=${items.length}`);
 
         return res.json({
             status: 'success',
@@ -662,6 +667,7 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, async (req, res) => {
  */
 router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) => {
     const now = Date.now();
+    const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
 
     try {
         const id = parseInt(req.params.id);
@@ -677,17 +683,33 @@ router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) =>
             });
         }
 
+        let instagramUpstream = '';
+        try {
+            instagramUpstream = env.instagramUpstreamURL ? new URL(env.instagramUpstreamURL).origin : '';
+        } catch {
+            instagramUpstream = '';
+        }
+
+        console.log(
+            `[social-sync:${logId}] start account_id=${account.id} platform=${account.platform} username=${account.username} instagramUpstream=${instagramUpstream || 'off'}`,
+        );
+
         const result = await syncAccountVideos(account, {
             recentLimit: req.body?.recentLimit,
             pinnedLimit: req.body?.pinnedLimit,
+            logId,
         });
+
+        console.log(
+            `[social-sync:${logId}] done total=${result.total} created=${result.created} updated=${result.updated} time=${Date.now() - now}ms`,
+        );
 
         res.json({
             status: 'success',
             data: result
         });
     } catch (error) {
-        console.error('Sync account error:', error);
+        console.error(`[social-sync:${logId}] Sync account error:`, error);
 
         try {
             const id = parseInt(req.params.id);

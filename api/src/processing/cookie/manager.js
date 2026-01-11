@@ -201,13 +201,40 @@ export function updateCookieValues(cookie, values) {
 export function updateCookie(cookie, headers) {
     if (!cookie) return;
 
-    const parsed = parseSetCookie(
-        splitCookiesString(headers.get('set-cookie')),
-        { decodeValues: false }
-    ), values = {}
+    const setCookie = headers?.get?.('set-cookie');
+    if (!setCookie) return;
 
-    cookie.unset(parsed.filter(c => c.expires < new Date()).map(c => c.name));
-    parsed.filter(c => !c.expires || c.expires > new Date()).forEach(c => values[c.name] = c.value);
+    const parsed = parseSetCookie(splitCookiesString(setCookie), { decodeValues: false });
+    const values = {};
+    const now = new Date();
+
+    const service = cookie?.meta?.service;
+    const protectedKeys =
+        service === 'instagram'
+            ? new Set([ 'sessionid', 'csrftoken' ])
+            : null;
+
+    const expiredNames = parsed
+        .filter(c => c.expires && c.expires < now)
+        .map(c => c.name)
+        .filter(Boolean)
+        .filter(name => !protectedKeys?.has?.(name));
+
+    cookie.unset(expiredNames);
+
+    for (const c of parsed) {
+        if (!c?.name) continue;
+        if (c.expires && c.expires < now) continue;
+
+        if (protectedKeys?.has?.(c.name)) {
+            const len = typeof c.value === 'string' ? c.value.length : 0;
+            if (len < 20) {
+                continue;
+            }
+        }
+
+        values[c.name] = c.value;
+    }
 
     updateCookieValues(cookie, values);
 }

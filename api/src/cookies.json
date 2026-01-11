@@ -1,15 +1,15 @@
 {
-  "instagram": [
-    "mid=<replace>; ig_did=<with>; csrftoken=<your>; ds_user_id=<own>; sessionid=<cookies>"
-  ],
-  "instagram_bearer": [
-    "token=<token_with_no_bearer_in_front>",
-    "token=IGT:2:<looks_like_this>"
-  ],
-  "reddit": [
-    "client_id=<replace_this>; client_secret=<replace_this>; refresh_token=<replace_this>"
-  ],
-  "twitter": [
-    "auth_token=<replace_this>; ct0=<replace_this>"
-  ]
+    "instagram": [
+        "mid=aWN48QALAAGv0nyJKlYxNpCrs2NU; ig_did=651418EA-3721-465D-BEA8-67A4D687E460; csrftoken=k9oDwX4fqtmDwkiEi1zO_q; ds_user_id=<own>"
+    ],
+    "instagram_bearer": [
+        "token=<token_with_no_bearer_in_front>",
+        "token=IGT:2:<looks_like_this>"
+    ],
+    "reddit": [
+        "client_id=<replace_this>; client_secret=<replace_this>; refresh_token=<replace_this>"
+    ],
+    "twitter": [
+        "auth_token=<replace_this>; ct0=<replace_this>"
+    ]
 }

@@ -392,8 +392,19 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
 const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
     if (!env.instagramUpstreamURL) return null;
 
+    const logId =
+        options?.logId !== undefined && options?.logId !== null
+            ? String(options.logId)
+            : "";
+    const logPrefix = logId ? `[social-sync:${logId}]` : "[social-sync]";
+
     try {
-        if (new URL(env.instagramUpstreamURL).origin === new URL(env.apiURL).origin) {
+        const upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
+        const apiOrigin = new URL(env.apiURL).origin;
+        if (upstreamOrigin === apiOrigin) {
+            console.log(
+                `${logPrefix} instagram upstream skipped (same origin) url=${upstreamOrigin}`,
+            );
             return null;
         }
     } catch {}
@@ -414,6 +425,11 @@ const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+        const startedAt = Date.now();
+        console.log(
+            `${logPrefix} instagram upstream -> items username=${username} url=${endpoint.origin}`,
+        );
+
         const headers = {
             accept: "application/json",
             "content-type": "application/json",
@@ -437,14 +453,30 @@ const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
             body: JSON.stringify(body),
         });
 
-        if (!res.ok) return null;
+        if (!res.ok) {
+            console.log(
+                `${logPrefix} instagram upstream <- items status=${res.status} time=${Date.now() - startedAt}ms`,
+            );
+            return null;
+        }
 
         const json = await safeJson(res);
         const items = json?.data?.items;
-        if (!Array.isArray(items)) return null;
+        if (!Array.isArray(items)) {
+            console.log(
+                `${logPrefix} instagram upstream <- items status=200 but invalid body time=${Date.now() - startedAt}ms`,
+            );
+            return null;
+        }
+
+        console.log(
+            `${logPrefix} instagram upstream <- items status=200 items=${items.length} time=${Date.now() - startedAt}ms`,
+        );
 
         return items;
-    } catch {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`${logPrefix} instagram upstream !! items error=${message}`);
         return null;
     } finally {
         clearTimeout(timeout);

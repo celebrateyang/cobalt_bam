@@ -384,13 +384,6 @@ const parseInstagramProfileVideos = (profileJson, options) => {
 };
 
 export const fetchInstagramCreatorItemsDirect = async (username, options) => {
-    const logPrefix =
-        typeof options?.logPrefix === "string" && options.logPrefix.length > 0
-            ? options.logPrefix
-            : options?.logId !== undefined && options?.logId !== null
-                ? `[social-sync:${String(options.logId)}]`
-                : "[social-sync]";
-
     const profile = await fetchInstagramProfileInfo(username);
     const profileItems = parseInstagramProfileVideos(profile, options);
 
@@ -399,23 +392,12 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
     const timelineCount = typeof timeline?.count === "number" ? timeline.count : null;
     const hasUser = Boolean(profile?.data?.user);
 
-    if (profileItems.length === 0) {
-        console.log(
-            `${logPrefix} instagram direct profile hasUser=${hasUser ? "yes" : "no"} timelineCount=${timelineCount ?? "?"} edges=${timelineEdgesLen} profileItems=0`,
-        );
-    }
-
     const needsFallback =
         !hasUser || (timelineCount && timelineCount > 0 && timelineEdgesLen === 0);
 
     if (!needsFallback) return profileItems;
 
     const cookie = getCookie("instagram");
-    if (profileItems.length === 0) {
-        console.log(
-            `${logPrefix} instagram direct needsFallback=yes cookie=${cookie ? "yes" : "no"}`,
-        );
-    }
     if (!cookie) return profileItems;
 
     const authedProfile = hasUser
@@ -423,11 +405,6 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
         : await fetchInstagramProfileInfo(username, { cookie });
 
     const userId = authedProfile?.data?.user?.id;
-    if (profileItems.length === 0) {
-        console.log(
-            `${logPrefix} instagram direct authed hasUser=${authedProfile?.data?.user ? "yes" : "no"} userId=${userId ? "yes" : "no"}`,
-        );
-    }
     if (!userId) return profileItems;
 
     const recentLimit =
@@ -445,11 +422,6 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
     });
 
     const feedItems = parseInstagramUserFeedVideos(feed, options);
-    if (profileItems.length === 0) {
-        console.log(
-            `${logPrefix} instagram direct feed items=${feedItems.length}`,
-        );
-    }
     return feedItems.length > 0 ? feedItems : profileItems;
 };
 

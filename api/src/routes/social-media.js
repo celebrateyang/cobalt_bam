@@ -137,10 +137,7 @@ router.post('/internal/instagram/items', adminLimiter, requireInstagramUpstreamK
         const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
         console.log(`[ig-upstream:${logId}] request username=${username.trim()}`);
 
-        const items = await fetchInstagramCreatorItemsDirect(username.trim(), {
-            ...options,
-            logPrefix: `[ig-upstream:${logId}]`,
-        });
+        const items = await fetchInstagramCreatorItemsDirect(username.trim(), options);
 
         console.log(`[ig-upstream:${logId}] response items=${items.length}`);
 
@@ -424,8 +421,6 @@ router.get('/auth/verify', requireAuth, (req, res) => {
  */
 router.get('/accounts', publicLimiter, async (req, res) => {
     try {
-        console.log('========== GET ACCOUNTS REQUEST ==========');
-        console.log('Query params:', req.query);
         const filters = {
             platform: req.query.platform,
             category: req.query.category,
@@ -436,17 +431,12 @@ router.get('/accounts', publicLimiter, async (req, res) => {
             sort: req.query.sort,
             order: req.query.order
         };
-
-        console.log('Filters:', filters);
         const result = await getAccounts(filters);  // ← 添加了 await！
-        console.log('Accounts count:', result.accounts ? result.accounts.length : 0);
-
         res.json({
             status: 'success',
             data: result
         });
-        console.log('✅ Response sent successfully');
-        console.log('========== END GET ACCOUNTS ==========');
+        
     } catch (error) {
         console.error('Get accounts error:', error);
         res.status(500).json({
@@ -686,26 +676,11 @@ router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) =>
             });
         }
 
-        let instagramUpstream = '';
-        try {
-            instagramUpstream = env.instagramUpstreamURL ? new URL(env.instagramUpstreamURL).origin : '';
-        } catch {
-            instagramUpstream = '';
-        }
-
-        console.log(
-            `[social-sync:${logId}] start account_id=${account.id} platform=${account.platform} username=${account.username} instagramUpstream=${instagramUpstream || 'off'}`,
-        );
-
         const result = await syncAccountVideos(account, {
             recentLimit: req.body?.recentLimit,
             pinnedLimit: req.body?.pinnedLimit,
             logId,
         });
-
-        console.log(
-            `[social-sync:${logId}] done total=${result.total} created=${result.created} updated=${result.updated} time=${Date.now() - now}ms`,
-        );
 
         res.json({
             status: 'success',

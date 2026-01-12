@@ -98,7 +98,7 @@
 
 <style>
     .admin-shell {
-        --admin-nav-width: 250px;
+        --admin-nav-width: 190px;
         --admin-padding: 30px;
         display: grid;
         grid-template-columns: var(--admin-nav-width) 1fr;

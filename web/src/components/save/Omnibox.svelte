@@ -8,7 +8,7 @@
 
     import dialogs, { createDialog } from "$lib/state/dialogs";
 
-    import { link } from "$lib/state/omnibox";
+    import { link, downloadButtonState } from "$lib/state/omnibox";
     import cachedInfo from "$lib/state/server-info";
     import { updateSetting } from "$lib/state/settings";
     import { turnstileSolved } from "$lib/state/turnstile";
@@ -23,6 +23,7 @@
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
     import type { DialogBatchItem } from "$lib/types/dialog";
+    import type { CobaltExpandResponse } from "$lib/types/expand";
 
     import IconLink from "@tabler/icons-svelte/IconLink.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
@@ -46,6 +47,7 @@
     let isDisabled = false;
     let isLoading = false;
     let isBotCheckOngoing = false;
+    let submitInFlight = false;
 
     const DEFAULT_BATCH_MAX_ITEMS = 20;
 
@@ -217,10 +219,15 @@
     };
 
     const submit = async () => {
-        if ($dialogs.length > 0 || isDisabled || isLoading || !isDownloadable) {
+        if (submitInFlight || $dialogs.length > 0 || isDisabled || isLoading || !isDownloadable) {
             return;
         }
 
+        submitInFlight = true;
+        let handedOffToSavingHandler = false;
+        downloadButtonState.set("think");
+
+        try {
         // Multiple links => batch dialog immediately (platform-agnostic).
         if (isBatchInput) {
             if (batchLimitExceeded) {
@@ -240,11 +247,19 @@
 
         // Only expand for services that support collection/playlist detection.
         if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
+            handedOffToSavingHandler = true;
             return savingHandler({ url });
         }
 
-        const expanded = await API.expand(url);
+        let expanded: Optional<CobaltExpandResponse>;
+        try {
+            expanded = await API.expand(url);
+        } catch {
+            handedOffToSavingHandler = true;
+            return savingHandler({ url });
+        }
         if (!expanded || expanded.status === "error") {
+            handedOffToSavingHandler = true;
             return savingHandler({ url });
         }
 
@@ -252,6 +267,7 @@
         const hasBatch = expanded.kind !== "single" && items.length > 1;
 
         if (!hasBatch) {
+            handedOffToSavingHandler = true;
             return savingHandler({ url });
         }
 
@@ -454,6 +470,12 @@
                 },
             ],
         });
+        } finally {
+            submitInFlight = false;
+            if (!handedOffToSavingHandler) {
+                downloadButtonState.set("idle");
+            }
+        }
     };
 
     $: linkFromHash = $page.url.hash.replace("#", "") || "";

@@ -47,9 +47,6 @@
     let sort: SortKey = "created_at";
     let order: SortOrder = "desc";
 
-    let copiedOrderId: number | null = null;
-    let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
-
     $: lang = $page.params.lang;
 
     const getToken = () =>
@@ -86,48 +83,6 @@
         return `${amount} ${currency}`;
     };
 
-    const copyText = async (text: string) => {
-        const normalized = String(text ?? "").trim();
-        if (!normalized) return false;
-
-        try {
-            if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(normalized);
-                return true;
-            }
-        } catch {
-            // fall back
-        }
-
-        try {
-            const textarea = document.createElement("textarea");
-            textarea.value = normalized;
-            textarea.setAttribute("readonly", "");
-            textarea.style.position = "fixed";
-            textarea.style.top = "-1000px";
-            textarea.style.left = "-1000px";
-            document.body.appendChild(textarea);
-            textarea.select();
-            textarea.setSelectionRange(0, textarea.value.length);
-            const ok = document.execCommand("copy");
-            document.body.removeChild(textarea);
-            return ok;
-        } catch {
-            return false;
-        }
-    };
-
-    async function handleCopyOutTradeNo(orderId: number, outTradeNo: string) {
-        const ok = await copyText(outTradeNo);
-        if (!ok) return;
-
-        copiedOrderId = orderId;
-        if (copiedTimeout) clearTimeout(copiedTimeout);
-        copiedTimeout = setTimeout(() => {
-            copiedOrderId = null;
-            copiedTimeout = null;
-        }, 1500);
-    }
 
     async function loadOrders() {
         loading = true;
@@ -434,24 +389,13 @@
                             <td class="mono">{o.provider}</td>
                             <td>
                                 <div class="order-no-cell">
-                                    <span
-                                        class="mono selectable order-no"
-                                        title={o.out_trade_no}
-                                        >{o.out_trade_no}</span
-                                    >
-                                    <button
-                                        class="btn-secondary btn-copy"
-                                        type="button"
-                                        on:click={() =>
-                                            void handleCopyOutTradeNo(
-                                                o.id,
-                                                o.out_trade_no,
-                                            )}
-                                    >
-                                        {copiedOrderId === o.id ? "已复制" : "复制"}
-                                    </button>
-                                </div>
-                            </td>
+                                     <span
+                                         class="mono selectable order-no"
+                                         title={o.out_trade_no}
+                                         >{o.out_trade_no}</span
+                                     >
+                                 </div>
+                             </td>
                             <td class="mono">{formatDate(o.paid_at)}</td>
                             <td class="mono">{formatDate(o.created_at)}</td>
                         </tr>
@@ -801,9 +745,8 @@
     .order-no-cell {
         display: flex;
         align-items: center;
-        gap: 8px;
-        min-width: 320px;
-        max-width: 420px;
+        min-width: 240px;
+        max-width: 360px;
     }
 
     .order-no {
@@ -811,12 +754,6 @@
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .btn-copy {
-        padding: 8px 10px;
-        font-size: 0.8rem;
         white-space: nowrap;
     }
 

@@ -50,8 +50,16 @@ const requestUpstreamCobalt = async (targetUrl) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
 
+    let upstreamOrigin;
     try {
-        if (new URL(env.instagramUpstreamURL).origin === new URL(env.apiURL).origin) {
+        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
+    } catch {
+        upstreamOrigin = "invalid";
+    }
+
+    try {
+        if (upstreamOrigin !== "invalid" && upstreamOrigin === new URL(env.apiURL).origin) {
+            console.warn("[douyin] upstream skipped (same origin)", { upstream: upstreamOrigin });
             return null;
         }
     } catch {
@@ -84,6 +92,7 @@ const requestUpstreamCobalt = async (targetUrl) => {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+        console.log("[douyin] upstream request", { upstream: upstreamOrigin, targetUrl });
         const res = await fetch(endpoint, {
             method: "POST",
             signal: controller.signal,
@@ -92,6 +101,14 @@ const requestUpstreamCobalt = async (targetUrl) => {
         });
 
         const payload = await res.json().catch(() => null);
+        console.log("[douyin] upstream response", {
+            upstream: upstreamOrigin,
+            http: res.status,
+            ok: res.ok,
+            status: payload?.status,
+            error: payload?.error?.code,
+            hasUrl: Boolean(payload?.url),
+        });
 
         if (!res.ok) return null;
         if (!payload || typeof payload !== "object") return null;

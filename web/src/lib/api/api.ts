@@ -7,6 +7,7 @@ import { currentApiURL } from "$lib/api/api-url";
 import { turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
 import cachedInfo from "$lib/state/server-info";
 import { getServerInfo } from "$lib/api/server-info";
+import { clerkUser } from "$lib/state/clerk";
 
 import type { Optional } from "$lib/types/generic";
 import type { CobaltAPIResponse, CobaltErrorResponse, CobaltSaveRequestBody } from "$lib/types/api";
@@ -76,6 +77,12 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
 
     const api = currentApiURL();
     const authorization = await getAuthorization();
+    const user = get(clerkUser);
+    const clerkEmail =
+        typeof user?.primaryEmailAddress?.emailAddress === "string" &&
+        user.primaryEmailAddress.emailAddress.length > 0
+            ? user.primaryEmailAddress.emailAddress
+            : null;
 
     if (authorization && typeof authorization !== "string") {
         return authorization;
@@ -98,6 +105,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
             "Accept": "application/json",
             "Content-Type": "application/json",
             ...extraHeaders,
+            ...(clerkEmail ? { "X-Clerk-Email": clerkEmail } : {}),
         },
     })
     .then(r => r.json())
@@ -141,6 +149,12 @@ const expand = async (url: string, justRetried = false) => {
 
     const api = currentApiURL();
     const authorization = await getAuthorization();
+    const user = get(clerkUser);
+    const clerkEmail =
+        typeof user?.primaryEmailAddress?.emailAddress === "string" &&
+        user.primaryEmailAddress.emailAddress.length > 0
+            ? user.primaryEmailAddress.emailAddress
+            : null;
 
     if (authorization && typeof authorization !== "string") {
         return authorization as CobaltExpandResponse;
@@ -163,6 +177,7 @@ const expand = async (url: string, justRetried = false) => {
             "Accept": "application/json",
             "Content-Type": "application/json",
             ...extraHeaders,
+            ...(clerkEmail ? { "X-Clerk-Email": clerkEmail } : {}),
         },
     })
     .then(r => r.json())

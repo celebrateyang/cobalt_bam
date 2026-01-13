@@ -53,6 +53,14 @@ const fail = (res, code, context) => {
     res.status(status).json(body);
 }
 
+const sanitizeLogHeaderValue = (value, maxLength) => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.length > maxLength) return null;
+    return trimmed;
+};
+
 export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     const startTime = new Date();
     const startTimestamp = startTime.getTime();
@@ -318,7 +326,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.invalid_body");
         }
 
-        console.log(`[DOWNLOAD REQUEST] url=${normalizedRequest.url} time=${new Date().toISOString()}`);
+        const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
+        const email = clientEmail ?? "unknown";
+        const requestTime = new Date().toISOString();
+        console.log(`[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} time=${requestTime}`);
 
         const parsed = extract(
             normalizedRequest.url,

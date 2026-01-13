@@ -25,6 +25,8 @@ import { setupSignalingServer } from "./signaling.js";
 import * as APIKeys from "../security/api-keys.js";
 import * as Cookies from "../processing/cookie/manager.js";
 import * as YouTubeSession from "../processing/helpers/youtube-session.js";
+import { verifyToken } from "@clerk/express";
+import { consumeUserPoints, getUserByClerkId, upsertUserFromClerk } from "../db/users.js";
 
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
@@ -59,6 +61,43 @@ const sanitizeLogHeaderValue = (value, maxLength) => {
     if (!trimmed) return null;
     if (trimmed.length > maxLength) return null;
     return trimmed;
+};
+
+const isClerkAuthConfigured =
+    !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
+
+const durationToPoints = (durationSeconds) => {
+    if (
+        typeof durationSeconds !== "number" ||
+        !Number.isFinite(durationSeconds) ||
+        durationSeconds <= 0
+    ) {
+        return 1;
+    }
+
+    return Math.ceil(durationSeconds / 60);
+};
+
+const getClerkUserIdFromTokenHeader = async (req) => {
+    const token = sanitizeLogHeaderValue(req.header("X-Clerk-Token"), 8192);
+    if (!token) {
+        return { ok: false, reason: "missing" };
+    }
+
+    try {
+        const payload = await verifyToken(token, {
+            secretKey: process.env.CLERK_SECRET_KEY,
+        });
+
+        const clerkUserId = typeof payload?.sub === "string" ? payload.sub : null;
+        if (!clerkUserId) {
+            return { ok: false, reason: "invalid" };
+        }
+
+        return { ok: true, clerkUserId };
+    } catch {
+        return { ok: false, reason: "invalid" };
+    }
 };
 
 export const runAPI = async (express, app, __dirname, isPrimary = true) => {
@@ -326,10 +365,53 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.invalid_body");
         }
 
+        const isBypassRequest = req.authType === "key";
+        let pointsUser = null;
+        let clerkUserId = null;
+        if (isClerkAuthConfigured && !isBypassRequest) {
+            const auth = await getClerkUserIdFromTokenHeader(req);
+            if (!auth.ok) {
+                return fail(
+                    res,
+                    auth.reason === "missing"
+                        ? "error.api.auth.clerk.missing"
+                        : "error.api.auth.clerk.invalid",
+                );
+            }
+
+            clerkUserId = auth.clerkUserId;
+
+            try {
+                if (!req.rateLimitKey) {
+                    req.rateLimitKey = hashHmac(auth.clerkUserId, "rate");
+                }
+                req.authType ??= "clerk";
+
+                pointsUser = await getUserByClerkId(auth.clerkUserId);
+                if (!pointsUser) {
+                    pointsUser = await upsertUserFromClerk({
+                        clerkUserId: auth.clerkUserId,
+                        primaryEmail: null,
+                        fullName: null,
+                        avatarUrl: null,
+                    });
+                }
+
+                if (pointsUser?.is_disabled) {
+                    return fail(res, "error.api.user.disabled");
+                }
+            } catch (error) {
+                console.error("Failed to load user for points enforcement:", error);
+                return fail(res, "error.api.points.unavailable");
+            }
+        }
+
         const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
         const email = clientEmail ?? "unknown";
         const requestTime = new Date().toISOString();
-        console.log(`[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} time=${requestTime}`);
+        console.log(
+            `[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} clerk_user_id=${clerkUserId ?? "unknown"} time=${requestTime}`,
+        );
 
         const parsed = extract(
             normalizedRequest.url,
@@ -359,6 +441,25 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 params: normalizedRequest,
                 authType: req.authType ?? "none",
             });
+
+            if (pointsUser && result?.body?.status !== "error") {
+                const requiredPoints = durationToPoints(result?.body?.duration);
+                try {
+                    const updated = await consumeUserPoints(
+                        pointsUser.id,
+                        requiredPoints,
+                    );
+                    if (!updated) {
+                        return fail(res, "error.api.points.insufficient", {
+                            current: pointsUser.points,
+                            required: requiredPoints,
+                        });
+                    }
+                } catch (error) {
+                    console.error("Failed to consume points:", error);
+                    return fail(res, "error.api.points.unavailable");
+                }
+            }
 
             // console.log(`[DOWNLOAD REQUEST] Processing completed for URL: ${normalizedRequest.url}, Status: ${result.status}`);
             res.status(result.status).json(result.body);

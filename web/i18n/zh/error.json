@@ -33,6 +33,12 @@
     "api.auth.jwt.invalid": "无法确认您是否是人类，因为您的访问令牌已过期且未续期。请稍后重试或刷新页面！",
     "api.auth.turnstile.missing": "无法确认您是否是人类，因为处理服务器没有收到人类访问令牌。请稍后重试或刷新页面！",
     "api.auth.turnstile.invalid": "无法确认您是否是人类，因为您的访问令牌已过期且未续期。请稍后重试或刷新页面！",
+    "api.auth.clerk.missing": "请先登录后再下载。",
+    "api.auth.clerk.invalid": "登录状态已失效，请重新登录后再试。",
+
+    "api.user.disabled": "您的账号已被禁用，如有疑问请联系支持。",
+    "api.points.insufficient": "积分不足：当前 {{ current }}，需要 {{ required }}。",
+    "api.points.unavailable": "服务器未配置积分系统，请联系站点管理员。",
     "api.unreachable": "无法连接到处理服务器。请检查您的网络连接并重试。",
     "api.timed_out": "处理服务器响应时间过长。可能当前服务器负载较大，请稍后重试！",
     "api.rate_exceeded": "请求频率过高。请稍后再试！",

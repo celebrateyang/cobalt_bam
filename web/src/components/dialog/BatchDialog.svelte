@@ -2,7 +2,6 @@
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
     import { t } from "$lib/i18n/translations";
-    import API from "$lib/api/api";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import {
@@ -20,7 +19,7 @@
     } from "$lib/state/clerk";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
-    import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
+    import type { CobaltSaveRequestBody } from "$lib/types/api";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
@@ -59,15 +58,6 @@
     let pointsPreviewRequestId = 0;
 
     let viewingDownloaded = false;
-
-    type PrefetchedResponse = {
-        request: CobaltSaveRequestBody;
-        response: CobaltAPIResponse;
-    };
-
-    let durationCache = new Map<string, number>();
-    let prefetchedCache = new Map<string, PrefetchedResponse>();
-    let prefetchedRequests = new Map<string, Promise<PrefetchedResponse | undefined>>();
 
     const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
         const request = buildSaveRequest(url);
@@ -119,70 +109,11 @@
             return item.duration;
         }
 
-        const cached = durationCache.get(item.url);
-        if (typeof cached === "number" && Number.isFinite(cached)) {
-            return cached;
-        }
-
         return undefined;
     };
 
-    const fetchPrefetched = async (item: DialogBatchItem) => {
-        const cached = prefetchedCache.get(item.url);
-        if (cached) {
-            return cached;
-        }
-
-        const existing = prefetchedRequests.get(item.url);
-        if (existing) {
-            return await existing;
-        }
-
-        const task = (async () => {
-            const request = buildBatchRequest(item.url);
-            const response = await API.request(request);
-
-            if (!response) return undefined;
-
-            const prefetched = { request, response };
-
-            if (response.status !== "error") {
-                prefetchedCache.set(item.url, prefetched);
-
-                if (
-                    typeof response.duration === "number" &&
-                    Number.isFinite(response.duration)
-                ) {
-                    durationCache.set(item.url, response.duration);
-                }
-            }
-
-            return prefetched;
-        })();
-
-        prefetchedRequests.set(item.url, task);
-
-        const result = await task;
-        prefetchedRequests.delete(item.url);
-        return result;
-    };
-
     const fetchDuration = async (item: DialogBatchItem) => {
-        const known = readDuration(item);
-        if (typeof known === "number" && Number.isFinite(known)) {
-            return known;
-        }
-
-        const prefetched = await fetchPrefetched(item);
-        const duration =
-            prefetched?.response &&
-            prefetched.response.status !== "error" &&
-            typeof prefetched.response.duration === "number" &&
-            Number.isFinite(prefetched.response.duration)
-                ? prefetched.response.duration
-                : undefined;
-
-        return duration;
+        return readDuration(item);
     };
 
     const clearPointsPreviewState = () => {
@@ -196,9 +127,6 @@
             pointsPreviewTimer = null;
         }
 
-        durationCache.clear();
-        prefetchedCache.clear();
-        prefetchedRequests.clear();
     };
 
     const cancelPointsPreview = () => {
@@ -281,48 +209,17 @@
         return points as number;
     };
 
-    const consumePoints = async (points: number) => {
-        const token = await getClerkToken();
-        if (!token) throw new Error("missing token");
-
-        const apiBase = currentApiURL();
-        const res = await fetch(`${apiBase}/user/points/consume`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ points }),
-        });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || data?.status !== "success") {
-            return {
-                ok: false,
-                code: data?.error?.code as string | undefined,
-            };
-        }
-
-        return { ok: true };
-    };
-
     const prepareBatch = async (selectedItems: DialogBatchItem[]) => {
-        const cache = new Map<string, PrefetchedResponse>();
         let requiredPoints = 0;
 
         for (const item of selectedItems) {
             if (cancelRequested) break;
 
-            const prefetched = await fetchPrefetched(item);
-            if (prefetched) {
-                cache.set(item.url, prefetched);
-            }
-
             const duration = readDuration(item);
             requiredPoints += pointsForDuration(duration);
         }
 
-        return { requiredPoints, cache };
+        return { requiredPoints };
     };
 
     const computePointsPreview = async (requestId: number) => {
@@ -496,30 +393,9 @@
         progress = 0;
         totalToRun = selectedItems.length;
 
-        const { cache } = await prepareBatch(selectedItems);
-
         if (cancelRequested) {
             resetRunState();
             return;
-        }
-
-        if (requiredPoints > 0) {
-            try {
-                const result = await consumePoints(requiredPoints);
-                if (!result.ok) {
-                    if (result.code === "INSUFFICIENT_POINTS") {
-                        showPointsInsufficient(currentPoints, requiredPoints);
-                    } else {
-                        showPointsError();
-                    }
-                    resetRunState();
-                    return;
-                }
-            } catch {
-                showPointsError();
-                resetRunState();
-                return;
-            }
         }
 
         // close dialog immediately; downloads continue in background
@@ -543,33 +419,33 @@
         for (const item of selectedItems) {
             if (cancelRequested) break;
             progress += 1;
-            const cached = cache.get(item.url);
-            if (cached) {
-                await savingHandler({
-                    request: cached.request,
-                    response: cached.response,
-                    skipPoints: true,
-                });
+            const response = await savingHandler({
+                request: buildBatchRequest(item.url),
+            });
 
+            if (response?.status === "error") {
+                const code = response.error.code;
                 if (
-                    canMarkMemory &&
-                    cached.response.status !== "error" &&
-                    item.itemKey
+                    code === "error.api.points.insufficient" ||
+                    code === "error.api.points.unavailable" ||
+                    code === "error.api.user.disabled" ||
+                    code === "error.api.auth.clerk.missing" ||
+                    code === "error.api.auth.clerk.invalid"
                 ) {
-                    memoryQueue.push({
-                        itemKey: item.itemKey,
-                        url: item.url,
-                        title: item.title,
-                    });
-                    if (memoryQueue.length >= 10) {
-                        await flushMemoryQueue();
-                    }
+                    cancelRequested = true;
+                    break;
                 }
-            } else {
-                await savingHandler({
-                    request: buildBatchRequest(item.url),
-                    skipPoints: true,
+            }
+
+            if (canMarkMemory && response && response.status !== "error" && item.itemKey) {
+                memoryQueue.push({
+                    itemKey: item.itemKey,
+                    url: item.url,
+                    title: item.title,
                 });
+                if (memoryQueue.length >= 10) {
+                    await flushMemoryQueue();
+                }
             }
             await new Promise((r) => setTimeout(r, 250));
         }
@@ -597,7 +473,7 @@
             items.find((entry) => entry.url === url) ||
             downloadedItems.find((entry) => entry.url === url) ||
             { url };
-        const { requiredPoints, cache } = await prepareBatch([item]);
+        const { requiredPoints } = await prepareBatch([item]);
 
         if (requiredPoints > 0) {
             let currentPoints;
@@ -612,55 +488,31 @@
                 showPointsInsufficient(currentPoints, requiredPoints);
                 return;
             }
-
-            try {
-                const result = await consumePoints(requiredPoints);
-                if (!result.ok) {
-                    if (result.code === "INSUFFICIENT_POINTS") {
-                        showPointsInsufficient(currentPoints, requiredPoints);
-                    } else {
-                        showPointsError();
-                    }
-                    return;
-                }
-            } catch {
-                showPointsError();
-                return;
-            }
         }
 
-        const cached = cache.get(url);
-        if (cached) {
-            await savingHandler({
-                request: cached.request,
-                response: cached.response,
-                skipPoints: true,
-            });
+        const response = await savingHandler({
+            request: buildBatchRequest(url),
+        });
 
-            const itemKey = item?.itemKey;
-            if (
-                clerkEnabled &&
-                collectionKey &&
-                cached.response.status !== "error" &&
-                itemKey
-            ) {
-                void markCollectionDownloadedItems({
-                    collectionKey,
-                    title: title || undefined,
-                    sourceUrl: collectionSourceUrl,
-                    items: [
-                        {
-                            itemKey,
-                            url,
-                            title: item?.title,
-                        },
-                    ],
-                });
-            }
-        } else {
-            await savingHandler({
-                request: buildBatchRequest(url),
-                skipPoints: true,
+        const itemKey = item?.itemKey;
+        if (
+            clerkEnabled &&
+            collectionKey &&
+            response &&
+            response.status !== "error" &&
+            itemKey
+        ) {
+            void markCollectionDownloadedItems({
+                collectionKey,
+                title: title || undefined,
+                sourceUrl: collectionSourceUrl,
+                items: [
+                    {
+                        itemKey,
+                        url,
+                        title: item?.title,
+                    },
+                ],
             });
         }
     };

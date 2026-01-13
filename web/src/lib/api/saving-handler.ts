@@ -17,7 +17,6 @@ import { currentApiURL } from "$lib/api/api-url";
 import {
     checkSignedIn,
     clerkEnabled,
-    getClerkToken,
     isSignedIn,
     signIn,
 } from "$lib/state/clerk";
@@ -117,22 +116,6 @@ const showPointsInsufficient = (currentPoints: number, requiredPoints: number) =
     });
 };
 
-const showPointsError = () => {
-    createDialog({
-        id: "points-error",
-        type: "small",
-        meowbalt: "error",
-        bodyText: get(t)("dialog.batch.points_check_failed"),
-        buttons: [
-            {
-                text: get(t)("button.gotit"),
-                main: true,
-                action: () => {},
-            },
-        ],
-    });
-};
-
 const ensureSignedIn = async () => {
     if (get(isSignedIn)) return true;
 
@@ -145,55 +128,6 @@ const ensureSignedIn = async () => {
         signUpFallbackRedirectUrl: currentUrl,
     });
     return false;
-};
-
-const fetchUserPoints = async () => {
-    const token = await getClerkToken();
-    if (!token) throw new Error("missing token");
-
-    const apiBase = currentApiURL();
-    const res = await fetch(`${apiBase}/user/me`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok || data?.status !== "success") {
-        throw new Error(data?.error?.message || "failed to load points");
-    }
-
-    const points = data?.data?.user?.points;
-    if (!Number.isFinite(points)) {
-        throw new Error("invalid points");
-    }
-
-    return points as number;
-};
-
-const consumePoints = async (points: number) => {
-    const token = await getClerkToken();
-    if (!token) throw new Error("missing token");
-
-    const apiBase = currentApiURL();
-    const res = await fetch(`${apiBase}/user/points/consume`, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ points }),
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok || data?.status !== "success") {
-        return {
-            ok: false,
-            code: data?.error?.code as string | undefined,
-        };
-    }
-
-    return { ok: true };
 };
 
 export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
@@ -235,14 +169,13 @@ export const savingHandler = async ({
     request,
     oldTaskId,
     response: preFetchedResponse,
-    skipPoints,
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
     const targetUrl = (url || request?.url)?.toLowerCase();
     if (targetUrl && (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be"))) {
         downloadButtonState.set("idle");
-        return createDialog({
+        createDialog({
             id: "youtube-disabled",
             type: "small",
             meowbalt: "error",
@@ -255,10 +188,11 @@ export const savingHandler = async ({
                 },
             ],
         });
+        return null;
     }
 
-    const error = (errorText: string) => {
-        return createDialog({
+    const showError = (errorText: string) => {
+        createDialog({
             id: "save-error",
             type: "small",
             meowbalt: "error",
@@ -273,65 +207,24 @@ export const savingHandler = async ({
         });
     }
 
-    if (!request && !url) return;
+    if (!request && !url) return null;
 
     const selectedRequest = request || buildSaveRequest(url!);
+
+    if (clerkEnabled) {
+        const signedIn = await ensureSignedIn();
+        if (!signedIn) {
+            downloadButtonState.set("idle");
+            return null;
+        }
+    }
 
     const response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
         downloadButtonState.set("error");
-        return error(get(t)("error.api.unreachable"));
-    }
-
-    const shouldChargePoints = clerkEnabled && !skipPoints && !oldTaskId;
-
-    if (response.status !== "error" && shouldChargePoints) {
-        const duration =
-            typeof response.duration === "number" && Number.isFinite(response.duration)
-                ? response.duration
-                : 0;
-        const requiredPoints = duration > 0 ? Math.ceil(duration / 60) : 0;
-
-        if (requiredPoints > 0) {
-            const signedIn = await ensureSignedIn();
-            if (!signedIn) {
-                downloadButtonState.set("idle");
-                return;
-            }
-
-            let currentPoints;
-            try {
-                currentPoints = await fetchUserPoints();
-            } catch {
-                downloadButtonState.set("idle");
-                showPointsError();
-                return;
-            }
-
-            if (currentPoints < requiredPoints) {
-                downloadButtonState.set("idle");
-                showPointsInsufficient(currentPoints, requiredPoints);
-                return;
-            }
-
-            try {
-                const result = await consumePoints(requiredPoints);
-                if (!result.ok) {
-                    downloadButtonState.set("idle");
-                    if (result.code === "INSUFFICIENT_POINTS") {
-                        showPointsInsufficient(currentPoints, requiredPoints);
-                    } else {
-                        showPointsError();
-                    }
-                    return;
-                }
-            } catch {
-                downloadButtonState.set("idle");
-                showPointsError();
-                return;
-            }
-        }
+        showError(get(t)("error.api.unreachable"));
+        return null;
     }
 
     if (response.status !== "error") {
@@ -347,20 +240,32 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        if (response.error.code === "error.api.points.insufficient") {
+            downloadButtonState.set("idle");
+            const current = Number(response.error?.context?.current);
+            const required = Number(response.error?.context?.required);
+            if (Number.isFinite(current) && Number.isFinite(required)) {
+                showPointsInsufficient(current, required);
+                return response;
+            }
+        }
+
         downloadButtonState.set("error");
 
-        return error(
+        showError(
             get(t)(response.error.code, response?.error?.context)
         );
+        return response;
     }
 
     if (response.status === "redirect") {
         downloadButtonState.set("done");
 
-        return downloadFile({
+        downloadFile({
             url: response.url,
             urlType: "redirect",
         });
+        return response;
     }
 
     if (response.status === "tunnel") {
@@ -371,7 +276,7 @@ export const savingHandler = async ({
         if (selectedRequest.localProcessing === "forced") {
             downloadButtonState.set("done");
 
-            return createSavePipeline(
+            createSavePipeline(
                 {
                     type: "proxy",
                     tunnel: [tunnelUrl],
@@ -383,6 +288,7 @@ export const savingHandler = async ({
                 selectedRequest,
                 oldTaskId
             );
+            return response;
         }
 
         downloadButtonState.set("check");
@@ -391,12 +297,14 @@ export const savingHandler = async ({
         if (probeResult === 200) {
             downloadButtonState.set("done");
 
-            return downloadFile({
+            downloadFile({
                 url: tunnelUrl,
             });
+            return response;
         } else {
             downloadButtonState.set("error");
-            return error(get(t)("error.tunnel.probe"));
+            showError(get(t)("error.tunnel.probe"));
+            return response;
         }
     }
 
@@ -408,7 +316,8 @@ export const savingHandler = async ({
                 ? response.tunnel.map((url) => normalizeTunnelUrl(url) || url)
                 : response.tunnel,
         };
-        return createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
+        createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
+        return response;
     }
 
     if (response.status === "picker") {
@@ -434,14 +343,16 @@ export const savingHandler = async ({
             });
         }
 
-        return createDialog({
+        createDialog({
             id: "download-picker",
             type: "picker",
             items: response.picker,
             buttons,
         });
+        return response;
     }
 
     downloadButtonState.set("error");
-    return error(get(t)("error.api.unknown_response"));
+    showError(get(t)("error.api.unknown_response"));
+    return response;
 }

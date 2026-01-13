@@ -8,14 +8,13 @@
     import { createDialog } from "$lib/state/dialogs";
 
     type PlatformFilter = "all" | "tiktok" | "instagram";
-    type DiscoverSectionKey = "trending" | "pinned" | "featured" | "latest";
+    type DiscoverSectionKey = "pinned" | "featured" | "latest";
 
     const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
     const LATEST_PAGE_SIZE = 24;
 
     let selectedPlatform: PlatformFilter = "all";
 
-    let trendingVideos: SocialVideo[] = [];
     let pinnedVideos: SocialVideo[] = [];
     let featuredVideos: SocialVideo[] = [];
     let latestVideos: SocialVideo[] = [];
@@ -108,12 +107,7 @@
         latestHasMore = false;
 
         try {
-            const [trendingRes, pinnedRes, featuredRes, latestRes] = await Promise.all([
-                videos.trending({
-                    platform: platformParam,
-                    days: 7,
-                    limit: 12,
-                }),
+            const [pinnedRes, featuredRes, latestRes] = await Promise.all([
                 videos.list({
                     platform: platformParam,
                     is_active: true,
@@ -140,12 +134,6 @@
                 }),
             ]);
 
-            if (trendingRes.status === "success" && trendingRes.data) {
-                trendingVideos = normalize(trendingRes.data.videos || []);
-            } else {
-                trendingVideos = [];
-            }
-
             try {
                 setListOrThrow(pinnedRes, (items) => (pinnedVideos = items));
             } catch {
@@ -169,7 +157,6 @@
                 error = $t("discover.status.error");
             }
         } catch (e) {
-            trendingVideos = [];
             pinnedVideos = [];
             featuredVideos = [];
             latestVideos = [];
@@ -304,11 +291,6 @@
 
     $: sections = [
         {
-            key: "trending" as const,
-            title: $t("discover.section.trending"),
-            videos: trendingVideos,
-        },
-        {
             key: "pinned" as const,
             title: $t("discover.section.pinned"),
             videos: pinnedVideos,
@@ -362,7 +344,7 @@
             <div class="spinner"></div>
             <p>{$t("discover.status.loading")}</p>
         </div>
-    {:else if trendingVideos.length === 0 && pinnedVideos.length === 0 && featuredVideos.length === 0 && latestVideos.length === 0}
+    {:else if pinnedVideos.length === 0 && featuredVideos.length === 0 && latestVideos.length === 0}
         <div class="empty-state">
             <h3>{$t("discover.status.empty.title")}</h3>
             <p>{$t("discover.status.empty.description")}</p>

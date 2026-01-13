@@ -7,7 +7,7 @@ import { currentApiURL } from "$lib/api/api-url";
 import { turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
 import cachedInfo from "$lib/state/server-info";
 import { getServerInfo } from "$lib/api/server-info";
-import { clerkUser } from "$lib/state/clerk";
+import { clerkUser, getClerkToken } from "$lib/state/clerk";
 
 import type { Optional } from "$lib/types/generic";
 import type { CobaltAPIResponse, CobaltErrorResponse, CobaltSaveRequestBody } from "$lib/types/api";
@@ -114,6 +114,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
     const api = currentApiURL();
     const authorization = await getAuthorization();
     const clerkEmail = getClerkEmailHeaderValue();
+    const clerkToken = await getClerkToken();
 
     if (authorization && typeof authorization !== "string") {
         return authorization;
@@ -137,6 +138,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
             "Content-Type": "application/json",
             ...extraHeaders,
             ...(clerkEmail ? { "X-Clerk-Email": clerkEmail } : {}),
+            ...(clerkToken ? { "X-Clerk-Token": clerkToken } : {}),
         },
     })
     .then(r => r.json())
@@ -181,6 +183,7 @@ const expand = async (url: string, justRetried = false) => {
     const api = currentApiURL();
     const authorization = await getAuthorization();
     const clerkEmail = getClerkEmailHeaderValue();
+    const clerkToken = await getClerkToken();
 
     if (authorization && typeof authorization !== "string") {
         return authorization as CobaltExpandResponse;
@@ -204,6 +207,7 @@ const expand = async (url: string, justRetried = false) => {
             "Content-Type": "application/json",
             ...extraHeaders,
             ...(clerkEmail ? { "X-Clerk-Email": clerkEmail } : {}),
+            ...(clerkToken ? { "X-Clerk-Token": clerkToken } : {}),
         },
     })
     .then(r => r.json())

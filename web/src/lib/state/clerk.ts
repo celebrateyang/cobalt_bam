@@ -15,7 +15,9 @@ type ClerkUser = {
     username?: string | null;
     firstName?: string | null;
     lastName?: string | null;
+    primaryEmailAddressId?: string | null;
     primaryEmailAddress?: { emailAddress: string } | null;
+    emailAddresses?: { id: string; emailAddress: string }[];
 };
 
 type ClerkSession = {

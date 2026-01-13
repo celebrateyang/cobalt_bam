@@ -35,6 +35,11 @@ spec:
                 - "--concurrency={{ .Values.socialSync.concurrency | default 2 }}"
                 - "--recent={{ .Values.socialSync.recentLimit | default 5 }}"
                 - "--pinned={{ .Values.socialSync.pinnedLimit | default 3 }}"
+                - "--thumbnailLimit={{ .Values.socialSync.thumbnailLimit | default 0 }}"
+                - "--tiktokIntervalMinutes={{ .Values.socialSync.tiktokIntervalMinutes | default 240 }}"
+                - "--instagramIntervalMinutes={{ .Values.socialSync.instagramIntervalMinutes | default 720 }}"
+                - "--otherIntervalMinutes={{ .Values.socialSync.otherIntervalMinutes | default 720 }}"
+                - "--intervalSlackMinutes={{ .Values.socialSync.intervalSlackMinutes | default 5 }}"
               env:
                 # Database Configuration
                 - name: DB_TYPE

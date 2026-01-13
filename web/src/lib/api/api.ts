@@ -13,6 +13,42 @@ import type { Optional } from "$lib/types/generic";
 import type { CobaltAPIResponse, CobaltErrorResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltExpandResponse } from "$lib/types/expand";
 
+const sanitizeLogHeaderValue = (value: unknown, maxLength: number) => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.length > maxLength) return null;
+    return trimmed;
+};
+
+const getClerkEmailHeaderValue = () => {
+    const user = get(clerkUser);
+
+    const directEmail = sanitizeLogHeaderValue(
+        user?.primaryEmailAddress?.emailAddress,
+        256,
+    );
+    if (directEmail) return directEmail;
+
+    const primaryEmailId = user?.primaryEmailAddressId;
+    const emailAddresses = user?.emailAddresses;
+
+    if (primaryEmailId && Array.isArray(emailAddresses)) {
+        const primary = emailAddresses.find((email) => email?.id === primaryEmailId);
+        const email = sanitizeLogHeaderValue(primary?.emailAddress, 256);
+        if (email) return email;
+    }
+
+    if (Array.isArray(emailAddresses)) {
+        for (const emailAddress of emailAddresses) {
+            const email = sanitizeLogHeaderValue(emailAddress?.emailAddress, 256);
+            if (email) return email;
+        }
+    }
+
+    return null;
+};
+
 const waitForTurnstile = async () => {
     return await new Promise((resolve, reject) => {
         const unsub = turnstileSolved.subscribe((solved) => {
@@ -77,12 +113,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
 
     const api = currentApiURL();
     const authorization = await getAuthorization();
-    const user = get(clerkUser);
-    const clerkEmail =
-        typeof user?.primaryEmailAddress?.emailAddress === "string" &&
-        user.primaryEmailAddress.emailAddress.length > 0
-            ? user.primaryEmailAddress.emailAddress
-            : null;
+    const clerkEmail = getClerkEmailHeaderValue();
 
     if (authorization && typeof authorization !== "string") {
         return authorization;
@@ -149,12 +180,7 @@ const expand = async (url: string, justRetried = false) => {
 
     const api = currentApiURL();
     const authorization = await getAuthorization();
-    const user = get(clerkUser);
-    const clerkEmail =
-        typeof user?.primaryEmailAddress?.emailAddress === "string" &&
-        user.primaryEmailAddress.emailAddress.length > 0
-            ? user.primaryEmailAddress.emailAddress
-            : null;
+    const clerkEmail = getClerkEmailHeaderValue();
 
     if (authorization && typeof authorization !== "string") {
         return authorization as CobaltExpandResponse;

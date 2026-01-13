@@ -141,8 +141,8 @@ wechatpay:
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:
   enabled: true
-  # Runs twice per day by default (TikTok thumbnail URLs commonly expire ~2 days)
-  schedule: "0 */12 * * *"
+  # Runs every 4 hours by default (TikTok thumbnail URLs expire quickly; Instagram is internally throttled)
+  schedule: "0 */4 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
@@ -152,3 +152,12 @@ socialSync:
   concurrency: 2
   recentLimit: 5
   pinnedLimit: 3
+  # Refresh existing TikTok thumbnails for the latest N videos per account.
+  # 0 = use (recentLimit + pinnedLimit)
+  thumbnailLimit: 0
+  # Per-platform throttling (CronJob can run frequently; script decides what to skip)
+  tiktokIntervalMinutes: 240
+  instagramIntervalMinutes: 720
+  otherIntervalMinutes: 720
+  # Allow small scheduling jitter without skipping a run
+  intervalSlackMinutes: 5

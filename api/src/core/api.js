@@ -408,9 +408,12 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
         const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
         const email = clientEmail ?? "unknown";
+        const requestId = Math.random().toString(36).slice(2, 10);
         const requestTime = new Date().toISOString();
+        const authType = req.authType ?? "none";
+        const startedAtMs = Date.now();
         console.log(
-            `[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} clerk_user_id=${clerkUserId ?? "unknown"} time=${requestTime}`,
+            `[DOWNLOAD REQUEST] id=${requestId} url=${normalizedRequest.url} auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email} time=${requestTime}`,
         );
 
         const parsed = extract(
@@ -439,32 +442,61 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 host: parsed.host,
                 patternMatch: parsed.patternMatch,
                 params: normalizedRequest,
-                authType: req.authType ?? "none",
+                authType,
             });
 
-            if (pointsUser && result?.body?.status !== "error") {
-                const requiredPoints = durationToPoints(result?.body?.duration);
+            const resultBodyStatus = result?.body?.status ?? "unknown";
+            let pointsOutcome = "skipped";
+            let pointsRequired = null;
+            let pointsBefore = null;
+            let pointsAfter = null;
+
+            if (pointsUser && resultBodyStatus !== "error") {
+                pointsOutcome = "attempt";
+                pointsRequired = durationToPoints(result?.body?.duration);
+                pointsBefore = pointsUser.points;
                 try {
                     const updated = await consumeUserPoints(
                         pointsUser.id,
-                        requiredPoints,
+                        pointsRequired,
                     );
                     if (!updated) {
+                        pointsOutcome = "insufficient";
+                        console.log(
+                            `[DOWNLOAD POINTS] id=${requestId} url=${normalizedRequest.url} result=insufficient current=${pointsBefore} required=${pointsRequired} auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email}`,
+                        );
                         return fail(res, "error.api.points.insufficient", {
                             current: pointsUser.points,
-                            required: requiredPoints,
+                            required: pointsRequired,
                         });
                     }
+
+                    pointsOutcome = "consumed";
+                    pointsAfter = updated.points;
+                    console.log(
+                        `[DOWNLOAD POINTS] id=${requestId} url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email}`,
+                    );
                 } catch (error) {
                     console.error("Failed to consume points:", error);
+                    pointsOutcome = "error";
+                    console.log(
+                        `[DOWNLOAD POINTS] id=${requestId} url=${normalizedRequest.url} result=error auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email}`,
+                    );
                     return fail(res, "error.api.points.unavailable");
                 }
             }
+
+            console.log(
+                `[DOWNLOAD RESULT] id=${requestId} url=${normalizedRequest.url} http_status=${result.status} body_status=${resultBodyStatus} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email} elapsed_ms=${Date.now() - startedAtMs}`,
+            );
 
             // console.log(`[DOWNLOAD REQUEST] Processing completed for URL: ${normalizedRequest.url}, Status: ${result.status}`);
             res.status(result.status).json(result.body);
         } catch (error) {
             // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);
+            console.log(
+                `[DOWNLOAD RESULT] id=${requestId} url=${normalizedRequest.url} result=exception auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email} elapsed_ms=${Date.now() - startedAtMs}`,
+            );
             fail(res, "error.api.generic");
         }
     });

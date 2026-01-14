@@ -8,14 +8,13 @@
     import { createDialog } from "$lib/state/dialogs";
 
     type PlatformFilter = "all" | "tiktok" | "instagram";
-    type DiscoverSectionKey = "pinned" | "featured" | "latest";
+    type DiscoverSectionKey = "featured" | "latest";
 
     const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
     const LATEST_PAGE_SIZE = 24;
 
     let selectedPlatform: PlatformFilter = "all";
 
-    let pinnedVideos: SocialVideo[] = [];
     let featuredVideos: SocialVideo[] = [];
     let latestVideos: SocialVideo[] = [];
 
@@ -37,7 +36,7 @@
     ] as const;
 
     const normalize = (list: SocialVideo[]) =>
-        list.filter((video) => SUPPORTED_PLATFORMS.has(video.platform));
+        list.filter((video) => SUPPORTED_PLATFORMS.has(video.platform) && !video.is_pinned);
 
     const pageHasMore = (pagination: any) =>
         Boolean(pagination && typeof pagination.page === "number" && pagination.page < pagination.pages);
@@ -107,15 +106,7 @@
         latestHasMore = false;
 
         try {
-            const [pinnedRes, featuredRes, latestRes] = await Promise.all([
-                videos.list({
-                    platform: platformParam,
-                    is_active: true,
-                    is_pinned: true,
-                    limit: 12,
-                    sort: "pinned_order",
-                    order: "DESC",
-                }),
+            const [featuredRes, latestRes] = await Promise.all([
                 videos.list({
                     platform: platformParam,
                     is_active: true,
@@ -135,13 +126,6 @@
             ]);
 
             try {
-                setListOrThrow(pinnedRes, (items) => (pinnedVideos = items));
-            } catch {
-                pinnedVideos = [];
-                error = $t("discover.status.error");
-            }
-
-            try {
                 setListOrThrow(featuredRes, (items) => (featuredVideos = items));
             } catch {
                 featuredVideos = [];
@@ -157,7 +141,6 @@
                 error = $t("discover.status.error");
             }
         } catch (e) {
-            pinnedVideos = [];
             featuredVideos = [];
             latestVideos = [];
             latestHasMore = false;
@@ -219,35 +202,19 @@
         void videos.trackEvent(video.id, "creator_batch_open").catch(() => {});
 
         try {
-            const [pinnedRes, recentRes] = await Promise.all([
-                videos.list({
-                    account_id: accountId,
-                    is_active: true,
-                    is_pinned: true,
-                    limit: 10,
-                    sort: "pinned_order",
-                    order: "DESC",
-                }),
-                videos.list({
-                    account_id: accountId,
-                    is_active: true,
-                    limit: 10,
-                    sort: "created_at",
-                    order: "DESC",
-                }),
-            ]);
+            const recentRes = await videos.list({
+                account_id: accountId,
+                is_active: true,
+                limit: 20,
+                sort: "created_at",
+                order: "DESC",
+            });
 
-            if (pinnedRes.status !== "success" || !pinnedRes.data) {
-                throw new Error(pinnedRes.error?.message || $t("discover.status.error"));
-            }
             if (recentRes.status !== "success" || !recentRes.data) {
                 throw new Error(recentRes.error?.message || $t("discover.status.error"));
             }
 
-            const merged = normalize([
-                ...(pinnedRes.data.videos || []),
-                ...(recentRes.data.videos || []),
-            ]);
+            const merged = normalize(recentRes.data.videos || []);
 
             const seen = new Set<string>();
             const items = merged
@@ -290,11 +257,6 @@
     }
 
     $: sections = [
-        {
-            key: "pinned" as const,
-            title: $t("discover.section.pinned"),
-            videos: pinnedVideos,
-        },
         {
             key: "featured" as const,
             title: $t("discover.section.featured"),
@@ -344,7 +306,7 @@
             <div class="spinner"></div>
             <p>{$t("discover.status.loading")}</p>
         </div>
-    {:else if pinnedVideos.length === 0 && featuredVideos.length === 0 && latestVideos.length === 0}
+    {:else if featuredVideos.length === 0 && latestVideos.length === 0}
         <div class="empty-state">
             <h3>{$t("discover.status.empty.title")}</h3>
             <p>{$t("discover.status.empty.description")}</p>

@@ -869,11 +869,11 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-         /* flex: 1; removed to allow min-height to work better with specific spacing */
-         min-height: 65vh; /* Occupy significant screen space */
-         gap: 24px; /* Increased gap between logo and input */
-         margin-bottom: 60px; /* Push content below further down */
-      }
+        /* Optimized spacing - reduced from 65vh */
+        min-height: 50vh;
+        gap: 20px;
+        margin-bottom: 32px;
+    }
 
     @media (min-width: 900px) {
         #cobalt-save {
@@ -980,7 +980,7 @@
     .cap-card-inner {
         height: 100%;
         border-radius: 18px;
-        padding: 16px 16px 14px;
+        padding: 14px 14px 12px;
         background: var(--button);
         border: 1px solid var(--button-stroke);
         color: var(--text);
@@ -1503,12 +1503,12 @@
     .feature-cards {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1.5rem;
+        gap: 1rem;
         width: 100%;
         max-width: 1120px;
-        margin: 0 auto 3rem; /* Adjusted margin */
+        margin: 0 auto 2rem;
         padding: 0 var(--padding);
-        opacity: 0.95; /* Slight deemphasis */
+        opacity: 0.95;
     }
 
     .feature-card {
@@ -1624,36 +1624,89 @@
     }
 
     @media (max-width: 600px) {
+        #cobalt-save {
+            min-height: auto;
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 70px);
+            margin-bottom: 16px;
+            gap: 16px;
+        }
+
+        .capabilities {
+            gap: 10px;
+        }
+
+        .cap-card-inner {
+            padding: 12px 12px 10px;
+        }
+
+        .cap-desc {
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .cap-title {
+            font-size: 14px;
+        }
+
         .feature-cards {
             grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card {
+            padding: 1rem;
         }
 
         .discover-preview {
-            height: 160px;
+            height: 140px;
         }
 
         .seo-section {
             padding: 0 14px;
-            margin: 20px auto;
+            margin: 16px auto;
         }
 
         .seo-hero {
-            padding: 18px;
+            padding: 16px;
         }
 
         .seo-hero h1 {
-            font-size: clamp(20px, 6vw, 26px);
+            font-size: clamp(18px, 5vw, 24px);
+        }
+
+        .seo-hero p {
+            font-size: 14px;
         }
 
         .seo-grid {
             grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .seo-card {
+            padding: 14px;
         }
 
         .seo-text p {
             font-size: 14px;
         }
+
+        .platform-section {
+            margin-bottom: 8px;
+        }
+
         .platform-grid {
             grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .platform-card {
+            padding: 12px;
+        }
+
+        #promotions {
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
         }
     }
 

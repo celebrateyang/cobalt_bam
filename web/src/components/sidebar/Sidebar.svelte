@@ -5,12 +5,12 @@
 
     import CobaltLogo from "$components/sidebar/CobaltLogo.svelte";
     import SidebarTab from "$components/sidebar/SidebarTab.svelte";
+    import MobileMoreMenu from "$components/sidebar/MobileMoreMenu.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
-
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
 
@@ -33,6 +33,9 @@
     $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
     $: accountLink = `/${currentLang}/account`;
     $: aboutLink = `/${currentLang}${defaultNavPage("about")}`;
+
+    // Mobile breakpoint - matches CSS
+    $: isMobile = screenWidth <= 535;
 </script>
 
 <svelte:window bind:innerWidth={screenWidth} />
@@ -40,47 +43,72 @@
 <nav id="sidebar" aria-label={$t("a11y.tabs.tab_panel")}>
     <CobaltLogo />
     <div id="sidebar-tabs" role="tablist">
-        <div id="sidebar-actions" class="sidebar-inner-container">
-            <SidebarTab tabName="save" tabLink={homeLink}>
-                <IconDownload />
-            </SidebarTab>
-            <SidebarTab tabName="clipboard" tabLink={clipboardLink}>
-                <IconClipboard />
-            </SidebarTab>
-            <SidebarTab tabName="discover" tabLink={discoverLink}>
-                <IconVideo />
-            </SidebarTab>
-            <SidebarTab tabName="history" tabLink={historyLink}>
-                <IconHistory />
-            </SidebarTab>
-            <!-- Remux page doesn't exist yet
-            <SidebarTab tabName="remux" tabLink={remuxLink} beta>
-                <IconRepeat />
-            </SidebarTab>
-            -->
-            <SidebarTab tabName="settings" tabLink={settingsLink}>
-                <IconSettings />
-            </SidebarTab>
-            <SidebarTab tabName="account" tabLink={accountLink}>
-                <IconUserCircle />
-            </SidebarTab>
-        </div>
-        <div id="sidebar-info" class="sidebar-inner-container">
-            <!--
-            <SidebarTab tabName="donate" tabLink="/donate">
-                <IconHeart />
-            </SidebarTab>
-            <SidebarTab tabName="updates" tabLink="/updates">
-                <IconComet />
-            </SidebarTab>
-            -->
-            <SidebarTab tabName="faq" tabLink={faqLink}>
-                <IconComet />
-            </SidebarTab>
-            <SidebarTab tabName="about" tabLink={aboutLink}>
-                <IconInfoCircle />
-            </SidebarTab>
-        </div>
+        {#if isMobile}
+            <!-- Mobile Layout: 发现 | 更多 | 首页 (center) | 设置 | 帐号 -->
+            <div
+                id="sidebar-actions"
+                class="sidebar-inner-container mobile-nav"
+            >
+                <SidebarTab tabName="discover" tabLink={discoverLink}>
+                    <IconVideo />
+                </SidebarTab>
+                <MobileMoreMenu />
+                <div class="mobile-home-wrapper">
+                    <SidebarTab tabName="save" tabLink={homeLink}>
+                        <IconDownload />
+                    </SidebarTab>
+                </div>
+                <SidebarTab tabName="settings" tabLink={settingsLink}>
+                    <IconSettings />
+                </SidebarTab>
+                <SidebarTab tabName="account" tabLink={accountLink}>
+                    <IconUserCircle />
+                </SidebarTab>
+            </div>
+        {:else}
+            <!-- Desktop Layout: Full tabs -->
+            <div id="sidebar-actions" class="sidebar-inner-container">
+                <SidebarTab tabName="save" tabLink={homeLink}>
+                    <IconDownload />
+                </SidebarTab>
+                <SidebarTab tabName="clipboard" tabLink={clipboardLink}>
+                    <IconClipboard />
+                </SidebarTab>
+                <SidebarTab tabName="discover" tabLink={discoverLink}>
+                    <IconVideo />
+                </SidebarTab>
+                <SidebarTab tabName="history" tabLink={historyLink}>
+                    <IconHistory />
+                </SidebarTab>
+                <!-- Remux page doesn't exist yet
+                <SidebarTab tabName="remux" tabLink={remuxLink} beta>
+                    <IconRepeat />
+                </SidebarTab>
+                -->
+                <SidebarTab tabName="settings" tabLink={settingsLink}>
+                    <IconSettings />
+                </SidebarTab>
+                <SidebarTab tabName="account" tabLink={accountLink}>
+                    <IconUserCircle />
+                </SidebarTab>
+            </div>
+            <div id="sidebar-info" class="sidebar-inner-container">
+                <!--
+                <SidebarTab tabName="donate" tabLink="/donate">
+                    <IconHeart />
+                </SidebarTab>
+                <SidebarTab tabName="updates" tabLink="/updates">
+                    <IconComet />
+                </SidebarTab>
+                -->
+                <SidebarTab tabName="faq" tabLink={faqLink}>
+                    <IconComet />
+                </SidebarTab>
+                <SidebarTab tabName="about" tabLink={aboutLink}>
+                    <IconInfoCircle />
+                </SidebarTab>
+            </div>
+        {/if}
     </div>
 </nav>
 
@@ -152,19 +180,50 @@
 
         #sidebar-tabs {
             overflow-y: visible;
-            overflow-x: scroll;
+            overflow-x: visible;
             padding-bottom: 0;
             padding: var(--sidebar-inner-padding) 0;
             height: fit-content;
             gap: var(--sidebar-inner-padding);
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Mobile nav specific styling */
+        .mobile-nav {
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 16px;
+            gap: 0;
+        }
+
+        .mobile-home-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Make home button more prominent */
+        .mobile-home-wrapper :global(.sidebar-tab) {
+            transform: scale(1.1);
+            background: var(--sidebar-highlight);
+            color: var(--sidebar-bg);
+            opacity: 0.9;
+            border-radius: 16px;
+            padding: 8px 16px;
+        }
+
+        .mobile-home-wrapper :global(.sidebar-tab.active) {
+            transform: scale(1.15);
+            opacity: 1;
         }
 
         #sidebar :global(.sidebar-inner-container:first-child) {
-            padding-left: calc(var(--border-radius) * 2);
+            padding-left: 0;
         }
 
         #sidebar :global(.sidebar-inner-container:last-child) {
-            padding-right: calc(var(--border-radius) * 2);
+            padding-right: 0;
         }
     }
 

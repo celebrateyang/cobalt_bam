@@ -413,7 +413,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         const authType = req.authType ?? "none";
         const startedAtMs = Date.now();
         console.log(
-            `[DOWNLOAD REQUEST] id=${requestId} url=${normalizedRequest.url} auth=${authType} clerk_user_id=${clerkUserId ?? "unknown"} email=${email} time=${requestTime}`,
+            `[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} time=${requestTime}`,
         );
 
         const parsed = extract(

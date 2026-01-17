@@ -13,6 +13,7 @@ import { extract } from "../processing/url.js";
 import { Bright, Cyan } from "../misc/console-text.js";
 import { hashHmac } from "../security/secrets.js";
 import { createStore } from "../store/redis-ratelimit.js";
+import Store from "../store/store.js";
 import { randomizeCiphers } from "../misc/randomize-ciphers.js";
 import { verifyTurnstileToken } from "../security/turnstile.js";
 import { friendlyServiceName } from "../processing/service-alias.js";
@@ -68,6 +69,8 @@ const isUpstreamServer = !!process.env.IS_UPSTREAM_SERVER;
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
 
+const downloadDedupe = new Store("download_dedupe");
+
 const durationToPoints = (durationSeconds) => {
     if (
         typeof durationSeconds !== "number" ||
@@ -100,6 +103,27 @@ const getClerkUserIdFromTokenHeader = async (req) => {
     } catch {
         return { ok: false, reason: "invalid" };
     }
+};
+
+const resolveDedupeIdentity = (req, clerkUserId) => {
+    if (clerkUserId) {
+        return `clerk:${clerkUserId}`;
+    }
+
+    if (req.authType === "key") {
+        const authHeader = sanitizeLogHeaderValue(req.header("Authorization"), 256);
+        if (authHeader) return `key:${authHeader}`;
+    }
+
+    if (req.rateLimitKey) {
+        const rateKey =
+            Buffer.isBuffer(req.rateLimitKey)
+                ? req.rateLimitKey.toString("base64url")
+                : String(req.rateLimitKey);
+        return `session:${rateKey}`;
+    }
+
+    return `ip:${getIP(req)}`;
 };
 
 export const runAPI = async (express, app, __dirname, isPrimary = true) => {
@@ -410,6 +434,23 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
         const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
         const email = clientEmail ?? "unknown";
+        if (env.downloadDedupeTTL > 0) {
+            try {
+                const dedupeIdentity = resolveDedupeIdentity(req, clerkUserId);
+                const dedupePayload = `${dedupeIdentity}|${JSON.stringify(normalizedRequest)}`;
+                const dedupeKey = hashHmac(dedupePayload, "rate").toString("base64url");
+                const seen = await downloadDedupe.get(dedupeKey);
+                if (seen) {
+                    const { body } = createResponse("error", {
+                        code: "error.api.rate_exceeded",
+                    });
+                    return res.status(429).json(body);
+                }
+                await downloadDedupe.set(dedupeKey, "1", env.downloadDedupeTTL);
+            } catch {
+                // fail open if dedupe storage is unavailable
+            }
+        }
         const requestId = Math.random().toString(36).slice(2, 10);
         const requestTime = new Date().toISOString();
         const authType = req.authType ?? "none";

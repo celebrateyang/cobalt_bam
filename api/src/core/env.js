@@ -84,6 +84,14 @@ export const loadEnvs = (env = process.env) => {
 
         rateLimitWindow: (env.RATELIMIT_WINDOW && parseInt(env.RATELIMIT_WINDOW)) || 60,
         rateLimitMax: (env.RATELIMIT_MAX && parseInt(env.RATELIMIT_MAX)) || 20,
+        downloadDedupeTTL: (() => {
+            const raw = env.DOWNLOAD_DEDUPE_TTL;
+            if (raw == null || raw === '') return 2;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed < 0) return 2;
+            return parsed;
+        })(),
         // Maximum number of URLs allowed in a single batch download (0 = unlimited).
         batchMaxItems: (() => {
             const raw = env.BATCH_MAX_ITEMS;

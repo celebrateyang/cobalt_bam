@@ -80,6 +80,20 @@ const getAccountVideos = async (accountId, limit) => {
     return res.rows ?? [];
 };
 
+const getAccountVideoIdsToKeep = async (accountId, limit) => {
+    const res = await query(
+        `
+        SELECT id
+        FROM social_videos
+        WHERE account_id = $1
+        ORDER BY is_pinned DESC, pinned_order DESC, updated_at DESC
+        LIMIT $2
+        `,
+        [accountId, limit],
+    );
+    return (res.rows ?? []).map((row) => row.id);
+};
+
 const refreshAccountThumbnails = async (account, options) => {
     const startedAt = Date.now();
     const limit =
@@ -110,12 +124,38 @@ const refreshAccountThumbnails = async (account, options) => {
     return { refreshed, total: videos.length };
 };
 
+const pruneAccountVideos = async (account, options) => {
+    const limit =
+        typeof options?.pruneLimit === "number" && options.pruneLimit > 0
+            ? Math.floor(options.pruneLimit)
+            : options.pinnedLimit + options.recentLimit;
+    const keepIds = await getAccountVideoIdsToKeep(account.id, limit);
+    if (!keepIds.length) return { deleted: 0, kept: 0 };
+
+    const params = [account.id, keepIds];
+    let sql = `
+        DELETE FROM social_videos
+        WHERE account_id = $1
+          AND source = 'sync'
+          AND NOT (id = ANY($2::int[]))
+    `;
+
+    if (options?.keepFeatured !== false) {
+        sql += " AND is_featured = false";
+    }
+
+    const result = await query(sql, params);
+    return { deleted: result.rowCount ?? 0, kept: keepIds.length };
+};
+
 const run = async () => {
     const args = process.argv.slice(2);
     const concurrency = parseIntArg(args, "concurrency", 2, { min: 1 });
     const recentLimit = parseIntArg(args, "recent", 5, { min: 1 });
     const pinnedLimit = parseIntArg(args, "pinned", 3, { min: 0 });
     const thumbnailLimit = parseIntArg(args, "thumbnailLimit", 0, { min: 0 });
+    const pruneLimit = parseIntArg(args, "pruneLimit", 0, { min: 0 });
+    const keepFeatured = parseIntArg(args, "keepFeatured", 1, { min: 0 }) !== 0;
 
     // TikTok thumbnails expire quickly; refresh frequently.
     // Instagram thumbnails are fairly stable; avoid needless requests.
@@ -132,7 +172,7 @@ const run = async () => {
     };
 
     console.log(
-        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m)`,
+        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, pruneLimit=${pruneLimit || "auto"}, keepFeatured=${keepFeatured ? "yes" : "no"}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m)`,
     );
 
     const accounts = await getEnabledAccounts();
@@ -184,6 +224,16 @@ const run = async () => {
                     `sync-enabled-accounts: tiktok thumbs refreshed ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
                 );
             }
+
+            const pruned = await pruneAccountVideos(account, {
+                recentLimit,
+                pinnedLimit,
+                pruneLimit,
+                keepFeatured,
+            });
+            console.log(
+                `sync-enabled-accounts: pruned ${label} deleted=${pruned.deleted} kept=${pruned.kept}`,
+            );
 
             okCount += 1;
             return { ok: true, label, summary };

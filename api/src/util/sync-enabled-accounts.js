@@ -129,8 +129,14 @@ const pruneAccountVideos = async (account, options) => {
         typeof options?.pruneLimit === "number" && options.pruneLimit > 0
             ? Math.floor(options.pruneLimit)
             : options.pinnedLimit + options.recentLimit;
+    const label = `${account.platform}:${account.username} (#${account.id})`;
     const keepIds = await getAccountVideoIdsToKeep(account.id, limit);
-    if (!keepIds.length) return { deleted: 0, kept: 0 };
+    if (!keepIds.length) {
+        console.log(
+            `sync-enabled-accounts: prune skipped ${label} reason=no_keep_ids limit=${limit}`,
+        );
+        return { deleted: 0, kept: 0 };
+    }
 
     const params = [account.id, keepIds];
     let sql = `
@@ -144,8 +150,15 @@ const pruneAccountVideos = async (account, options) => {
         sql += " AND is_featured = false";
     }
 
+    console.log(
+        `sync-enabled-accounts: prune start ${label} limit=${limit} keep=${keepIds.length} keepFeatured=${options?.keepFeatured !== false}`,
+    );
     const result = await query(sql, params);
-    return { deleted: result.rowCount ?? 0, kept: keepIds.length };
+    const deleted = result.rowCount ?? 0;
+    console.log(
+        `sync-enabled-accounts: prune done ${label} deleted=${deleted} kept=${keepIds.length}`,
+    );
+    return { deleted, kept: keepIds.length };
 };
 
 const run = async () => {
@@ -203,6 +216,9 @@ const run = async () => {
         const due = shouldRunByInterval(account.sync_last_run_at, nowMs, intervalMs, intervals.slack);
 
         if (!due) {
+            console.log(
+                `sync-enabled-accounts: skipped ${label} lastRunAt=${account.sync_last_run_at ?? "none"} intervalMs=${intervalMs}`,
+            );
             skippedCount += 1;
             return { ok: true, label, skipped: true };
         }
@@ -231,9 +247,6 @@ const run = async () => {
                 pruneLimit,
                 keepFeatured,
             });
-            console.log(
-                `sync-enabled-accounts: pruned ${label} deleted=${pruned.deleted} kept=${pruned.kept}`,
-            );
 
             okCount += 1;
             return { ok: true, label, summary };

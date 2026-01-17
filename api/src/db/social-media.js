@@ -771,13 +771,20 @@ export const toggleFeatured = async (id) => {
     const video = await getVideoById(id);
     if (!video) return null;
 
+    console.log(
+        `[toggle-featured] db before id=${id} is_featured=${video.is_featured}`,
+    );
     await query(`
         UPDATE social_videos
         SET is_featured = $1, updated_at = $2
         WHERE id = $3
     `, [!video.is_featured, Date.now(), id]);
 
-    return await getVideoById(id);
+    const updated = await getVideoById(id);
+    console.log(
+        `[toggle-featured] db after id=${id} is_featured=${updated?.is_featured ?? "unknown"}`,
+    );
+    return updated;
 };
 
 // ==================== 统计函数 ====================

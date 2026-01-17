@@ -95,7 +95,10 @@ const getAccountVideoIdsToKeep = async (accountId, limit) => {
 };
 
 const refreshAccountThumbnails = async (account, options) => {
-    const startedAt = Date.now();
+    const startedAt =
+        typeof options?.startedAt === "number" && Number.isFinite(options.startedAt)
+            ? options.startedAt
+            : Date.now();
     const limit =
         typeof options?.thumbnailLimit === "number" && options.thumbnailLimit > 0
             ? Math.floor(options.thumbnailLimit)
@@ -121,7 +124,7 @@ const refreshAccountThumbnails = async (account, options) => {
         sync_error: null,
     });
 
-    return { refreshed, total: videos.length };
+    return { refreshed, total: videos.length, started_at: startedAt };
 };
 
 const pruneAccountVideos = async (account, options) => {
@@ -129,6 +132,10 @@ const pruneAccountVideos = async (account, options) => {
         typeof options?.pruneLimit === "number" && options.pruneLimit > 0
             ? Math.floor(options.pruneLimit)
             : options.pinnedLimit + options.recentLimit;
+    const refreshCutoff =
+        typeof options?.refreshCutoff === "number" && Number.isFinite(options.refreshCutoff)
+            ? options.refreshCutoff
+            : null;
     const label = `${account.platform}:${account.username} (#${account.id})`;
     const keepIds = await getAccountVideoIdsToKeep(account.id, limit);
     if (!keepIds.length) {
@@ -138,20 +145,32 @@ const pruneAccountVideos = async (account, options) => {
         return { deleted: 0, kept: 0 };
     }
 
-    const params = [account.id, keepIds];
+    const params = [account.id];
+    let paramIndex = 2;
     let sql = `
         DELETE FROM social_videos
         WHERE account_id = $1
           AND source = 'sync'
-          AND NOT (id = ANY($2::int[]))
     `;
 
-    if (options?.keepFeatured !== false) {
-        sql += " AND is_featured = false";
+    if (refreshCutoff !== null) {
+        sql += ` AND (synced_at IS NULL OR synced_at < $${paramIndex + 1} OR NOT (id = ANY($${paramIndex}::int[])))`;
+        if (options?.keepFeatured !== false) {
+            sql += ` AND NOT (is_featured = true AND synced_at IS NOT NULL AND synced_at >= $${paramIndex + 1})`;
+        }
+        params.push(keepIds, refreshCutoff);
+        paramIndex += 2;
+    } else {
+        sql += ` AND NOT (id = ANY($${paramIndex}::int[]))`;
+        if (options?.keepFeatured !== false) {
+            sql += " AND is_featured = false";
+        }
+        params.push(keepIds);
+        paramIndex += 1;
     }
 
     console.log(
-        `sync-enabled-accounts: prune start ${label} limit=${limit} keep=${keepIds.length} keepFeatured=${options?.keepFeatured !== false}`,
+        `sync-enabled-accounts: prune start ${label} limit=${limit} keep=${keepIds.length} keepFeatured=${options?.keepFeatured !== false} refreshCutoff=${refreshCutoff ?? "none"}`,
     );
     const result = await query(sql, params);
     const deleted = result.rowCount ?? 0;
@@ -234,6 +253,7 @@ const run = async () => {
                     recentLimit,
                     pinnedLimit,
                     thumbnailLimit,
+                    startedAt: summary.started_at,
                 });
                 refreshedAccounts += 1;
                 console.log(
@@ -246,6 +266,7 @@ const run = async () => {
                 pinnedLimit,
                 pruneLimit,
                 keepFeatured,
+                refreshCutoff: summary.started_at,
             });
 
             okCount += 1;
@@ -261,28 +282,50 @@ const run = async () => {
             }).catch(() => null);
 
             // Fallback: refresh thumbnails for existing videos using oEmbed.
+            let fallbackResult = null;
+            let fallbackMessage = null;
             try {
                 const refreshed = await refreshAccountThumbnails(account, {
                     recentLimit,
                     pinnedLimit,
                     thumbnailLimit,
+                    startedAt,
                 });
                 console.log(
                     `sync-enabled-accounts: fallback ok ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
                 );
-                okCount += 1;
-                return { ok: true, label, fallback: true, refreshed };
+                fallbackResult = refreshed;
             } catch (fallbackError) {
-                const fallbackMessage =
+                fallbackMessage =
                     fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
                 console.warn(`sync-enabled-accounts: fallback failed ${label}: ${fallbackMessage}`);
-                failedCount += 1;
-                await updateAccount(account.id, {
-                    sync_last_run_at: Date.now(),
-                    sync_error: `sync failed: ${message}; fallback failed: ${fallbackMessage}`.slice(0, 500),
-                }).catch(() => null);
-                return { ok: false, label, error: message, fallbackError: fallbackMessage };
             }
+
+            try {
+                await pruneAccountVideos(account, {
+                    recentLimit,
+                    pinnedLimit,
+                    pruneLimit,
+                    keepFeatured,
+                    refreshCutoff: startedAt,
+                });
+            } catch (pruneError) {
+                const pruneMessage =
+                    pruneError instanceof Error ? pruneError.message : String(pruneError);
+                console.warn(`sync-enabled-accounts: prune failed ${label}: ${pruneMessage}`);
+            }
+
+            if (fallbackResult) {
+                okCount += 1;
+                return { ok: true, label, fallback: true, refreshed: fallbackResult };
+            }
+
+            failedCount += 1;
+            await updateAccount(account.id, {
+                sync_last_run_at: Date.now(),
+                sync_error: `sync failed: ${message}; fallback failed: ${fallbackMessage ?? "unknown"}`.slice(0, 500),
+            }).catch(() => null);
+            return { ok: false, label, error: message, fallbackError: fallbackMessage };
         }
     });
 

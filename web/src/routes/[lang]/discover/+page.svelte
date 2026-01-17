@@ -113,7 +113,7 @@
                     platform: platformParam,
                     is_active: true,
                     is_featured: true,
-                    limit: 12,
+                    limit: 20,
                     sort: "display_order",
                     order: "DESC",
                 }),

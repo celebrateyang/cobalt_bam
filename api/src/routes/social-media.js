@@ -1187,6 +1187,9 @@ router.post('/videos/batch-delete', requireAuth, adminLimiter, async (req, res) 
 router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
+        console.log(
+            `[toggle-featured] request id=${id} user=${req.user?.id ?? "unknown"} host=${req.headers.host}`,
+        );
         const video = await toggleFeatured(id);
 
         if (!video) {
@@ -1199,6 +1202,9 @@ router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, async (req
             });
         }
 
+        console.log(
+            `[toggle-featured] response id=${video.id} is_featured=${video.is_featured}`,
+        );
         res.json({
             status: 'success',
             data: video

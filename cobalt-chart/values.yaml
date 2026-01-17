@@ -14,7 +14,7 @@ image:
 batchMaxItems: 40
 
 instagram:
-  upstreamUrl: "https://1ba273c1d4ad.ngrok-free.app/"
+  upstreamUrl: "https://6964b3b7e194.ngrok-free.app/"
   upstreamApiKey: "miaohu2f4%ddxg3v3qf8vwf8e5y7k1z8c9"
   upstreamTimeoutMs: 12000
 

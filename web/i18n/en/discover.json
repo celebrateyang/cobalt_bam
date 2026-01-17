@@ -12,6 +12,8 @@
   },
   "status": {
     "loading": "Loading...",
+    "parsing": "Parsing/Queued",
+    "still_parsing": "Still parsing, please wait a moment",
     "error": "Load failed",
     "empty": {
       "title": "No videos",

@@ -26,6 +26,8 @@
     let latestHasMore = false;
 
     let runningDownloadId: number | null = null;
+    let showSlowHint = false;
+    let slowHintTimer: ReturnType<typeof setTimeout> | null = null;
 
     $: platformParam = selectedPlatform === "all" ? undefined : selectedPlatform;
 
@@ -188,10 +190,22 @@
         void videos.trackEvent(video.id, "download_click").catch(() => {});
 
         runningDownloadId = video.id;
+        showSlowHint = false;
+        if (slowHintTimer) {
+            clearTimeout(slowHintTimer);
+        }
+        slowHintTimer = setTimeout(() => {
+            showSlowHint = true;
+        }, 4000);
         try {
             await savingHandler({ url: video.video_url });
         } finally {
             runningDownloadId = null;
+            showSlowHint = false;
+            if (slowHintTimer) {
+                clearTimeout(slowHintTimer);
+                slowHintTimer = null;
+            }
         }
     }
 
@@ -322,11 +336,28 @@
                     <div class="video-grid">
                         {#each section.videos as video (video.id)}
                             <article class="video-card">
-                                <button class="thumb" type="button" on:click={() => handleDownload(video)}>
+                                <button
+                                    class="thumb"
+                                    type="button"
+                                    disabled={runningDownloadId === video.id}
+                                    aria-busy={runningDownloadId === video.id}
+                                    on:click={() => handleDownload(video)}
+                                >
                                     {#if video.thumbnail_url}
                                         <img class="thumb-img" src={getThumbnailSrc(video)} alt={getTitle(video)} loading="lazy" />
                                     {:else}
                                         <div class="thumb-placeholder"></div>
+                                    {/if}
+                                    {#if runningDownloadId === video.id}
+                                        <div class="thumb-loading">
+                                            <div class="thumb-spinner"></div>
+                                            <span>{$t("discover.status.parsing")}</span>
+                                            {#if showSlowHint}
+                                                <span class="thumb-hint">
+                                                    {$t("discover.status.still_parsing")}
+                                                </span>
+                                            {/if}
+                                        </div>
                                     {/if}
                                 </button>
 
@@ -354,7 +385,9 @@
                                             disabled={runningDownloadId === video.id}
                                             on:click={() => handleDownload(video)}
                                         >
-                                            {$t("button.download")}
+                                            {runningDownloadId === video.id
+                                                ? $t("discover.status.parsing")
+                                                : $t("button.download")}
                                         </button>
                                         <button
                                             class="btn-secondary"
@@ -591,6 +624,10 @@
         position: relative;
     }
 
+    .thumb:disabled {
+        cursor: not-allowed;
+    }
+
     .thumb-img {
         width: 100%;
         height: 100%;
@@ -602,6 +639,37 @@
         width: 100%;
         height: 100%;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    }
+
+    .thumb-loading {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        color: var(--white);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        padding: 12px;
+    }
+
+    .thumb-hint {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.85;
+    }
+
+    .thumb-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(255, 255, 255, 0.35);
+        border-top-color: var(--white);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
     }
 
     .card-body {

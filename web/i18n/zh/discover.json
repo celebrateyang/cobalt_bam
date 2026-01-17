@@ -12,6 +12,8 @@
   },
   "status": {
     "loading": "加载中...",
+    "parsing": "解析中/排队中",
+    "still_parsing": "仍在解析，请稍候",
     "error": "加载失败",
     "empty": {
       "title": "暂无视频",

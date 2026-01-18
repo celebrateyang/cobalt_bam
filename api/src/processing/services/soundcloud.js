@@ -22,14 +22,14 @@ async function findClientID() {
             const url = script[1];
 
             if (!url?.startsWith('https://a-v2.sndcdn.com/')) {
-                return;
+                continue;
             }
 
             const scrf = await fetch(url).then(r => r.text()).catch(() => {});
-            const id = scrf.match(/\("client_id=[A-Za-z0-9]{32}"\)/);
+            const id = scrf.match(/client_id["']?\s*[:=]\s*["']([A-Za-z0-9]{32})["']/);
 
-            if (id && typeof id[0] === 'string') {
-                clientid = id[0].match(/[A-Za-z0-9]{32}/)[0];
+            if (id && typeof id[1] === 'string') {
+                clientid = id[1];
                 break;
             }
         }

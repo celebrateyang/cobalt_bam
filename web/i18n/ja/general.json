@@ -38,14 +38,14 @@
         }
     },
     "pwa": {
-            "install_prompt": "このウェブサイトはデスクトップへのインストールをサポートしています",
-            "install": "インストール",
-            "close": "閉じる"
+        "install_prompt": "このウェブサイトはデスクトップへのインストールをサポートしています",
+        "install": "インストール",
+        "close": "閉じる"
     },
     "seo": {
         "home": {
-            "title": "Bamboo downloader、無料オンライン動画ダウンローダー - YouTube、TikTok、Instagram、Twitterをサポート | 動画を保存 | HD品質",
-            "description": "最高の無料オンライン動画ダウンローダー。YouTube、TikTok、Instagram、Twitterなどから動画をダウンロード。透かしなし、HD品質、高速ダウンロード。",
+            "title": "Bamboo downloader，Free Online Video Downloader - Support TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou | Save Videos | HD Quality",
+            "description": "The best online video downloader. Download videos from TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou, and more. No watermark, HD quality, fast download.",
             "keywords": "動画ダウンローダー、オンライン動画ダウンローダー、YouTubeダウンローダー、TikTokダウンローダー透かしなし、Instagram動画セーバー、無料動画ダウンローダー"
         },
         "transfer": {

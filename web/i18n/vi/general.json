@@ -38,14 +38,14 @@
         }
     },
     "pwa": {
-            "install_prompt": "Trang web này hỗ trợ cài đặt lên máy tính",
-            "install": "Cài đặt",
-            "close": "Đóng"
+        "install_prompt": "Trang web này hỗ trợ cài đặt lên máy tính",
+        "install": "Cài đặt",
+        "close": "Đóng"
     },
     "seo": {
         "home": {
-            "title": "Bamboo downloader，Trình Tải Video Online Miễn Phí - Hỗ trợ YouTube, TikTok, Instagram, Twitter | Lưu Video | Chất Lượng HD",
-            "description": "Công cụ tải video online miễn phí tốt nhất. Tải video từ YouTube, TikTok, Instagram, Twitter và nhiều hơn nữa. Không có watermark, chất lượng HD, tải xuống nhanh.",
+            "title": "Bamboo downloader，Free Online Video Downloader - Support TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou | Save Videos | HD Quality",
+            "description": "The best online video downloader. Download videos from TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou, and more. No watermark, HD quality, fast download.",
             "keywords": "tải video, tải video online, tải youtube, tải tiktok không có watermark, lưu video instagram, tải video miễn phí"
         },
         "transfer": {

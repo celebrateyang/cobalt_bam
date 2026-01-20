@@ -216,6 +216,7 @@
     let qrDataUrl = "";
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
+    $: isChinese = $page.params.lang === "zh";
 
     const stopPolling = () => {
         if (!pollTimer) return;
@@ -423,49 +424,114 @@
             </div>
         </section>
 
-        <section class="card referral-card">
-            <h2 class="card-title">{$t("auth.referral_title")}</h2>
-            <div class="subtext card-subtitle">{$t("auth.referral_subtitle")}</div>
-
-            <div class="referral-link-row">
-                <div class="referral-link-label">
-                    {$t("auth.referral_link_label")}
-                </div>
-                {#if referralLink}
-                    <div class="referral-link-controls">
-                        <input
-                            class="referral-link-input"
-                            readonly
-                            value={referralLink}
-                            on:focus={selectReferralLinkOnFocus}
-                        />
-                        <button
-                            class="button elevated"
-                            on:click={() => void copyReferralLink()}
-                            disabled={!referralLink}
-                        >
-                            {#if referralCopyState === "copied"}
-                                {$t("auth.referral_copied")}
-                            {:else if referralCopyState === "failed"}
-                                {$t("auth.referral_copy_failed")}
-                            {:else}
-                                {$t("auth.referral_copy")}
-                            {/if}
-                        </button>
+        <section class="card contact-card">
+            <details class="accordion">
+                <summary class="accordion-summary">
+                    <div>
+                        <div class="card-title">{$t("auth.contact_points_title")}</div>
+                        <div class="subtext card-subtitle">
+                            {$t("auth.contact_points_subtitle")}
+                        </div>
                     </div>
-                {:else}
-                    <div class="subtext">{$t("auth.loading")}</div>
-                {/if}
-            </div>
+                </summary>
 
-            <div class="subtext referral-rules">
-                <div class="rules-title">{$t("auth.referral_rules_title")}</div>
-                <div class="rules-list">
-                    <div>{$t("auth.referral_rule_1")}</div>
-                    <div>{$t("auth.referral_rule_2")}</div>
-                    <div>{$t("auth.referral_rule_3")}</div>
+                <div class="accordion-body">
+                    <div class="contact-grid">
+                        {#if isChinese}
+                            <div class="contact-item">
+                                <div class="contact-label">
+                                    {$t("auth.contact_points_wechat")}
+                                </div>
+                                <img
+                                    class="contact-qr"
+                                    src="/account/wechat.png"
+                                    alt={$t("auth.contact_points_wechat_alt")}
+                                />
+                            </div>
+                        {:else}
+                            <div class="contact-item">
+                                <div class="contact-label">
+                                    {$t("auth.contact_points_line")}
+                                </div>
+                                <img
+                                    class="contact-qr"
+                                    src="/account/line.png"
+                                    alt={$t("auth.contact_points_line_alt")}
+                                />
+                            </div>
+                            <div class="contact-item">
+                                <div class="contact-label">
+                                    {$t("auth.contact_points_whatsapp")}
+                                </div>
+                                <img
+                                    class="contact-qr"
+                                    src="/account/whatsapp.png"
+                                    alt={$t("auth.contact_points_whatsapp_alt")}
+                                />
+                            </div>
+                        {/if}
+                    </div>
+
+                    <div class="subtext contact-note">
+                        {$t("auth.contact_points_note")}
+                    </div>
                 </div>
-            </div>
+            </details>
+        </section>
+
+        <section class="card referral-card">
+            <details class="accordion">
+                <summary class="accordion-summary">
+                    <div>
+                        <div class="card-title">{$t("auth.referral_title")}</div>
+                        <div class="subtext card-subtitle">
+                            {$t("auth.referral_subtitle")}
+                        </div>
+                    </div>
+                </summary>
+
+                <div class="accordion-body">
+                    <div class="referral-link-row">
+                        <div class="referral-link-label">
+                            {$t("auth.referral_link_label")}
+                        </div>
+                        {#if referralLink}
+                            <div class="referral-link-controls">
+                                <input
+                                    class="referral-link-input"
+                                    readonly
+                                    value={referralLink}
+                                    on:focus={selectReferralLinkOnFocus}
+                                />
+                                <button
+                                    class="button elevated"
+                                    on:click={() => void copyReferralLink()}
+                                    disabled={!referralLink}
+                                >
+                                    {#if referralCopyState === "copied"}
+                                        {$t("auth.referral_copied")}
+                                    {:else if referralCopyState === "failed"}
+                                        {$t("auth.referral_copy_failed")}
+                                    {:else}
+                                        {$t("auth.referral_copy")}
+                                    {/if}
+                                </button>
+                            </div>
+                        {:else}
+                            <div class="subtext">{$t("auth.loading")}</div>
+                        {/if}
+                    </div>
+
+                    <div class="subtext referral-rules">
+                        <div class="rules-title">{$t("auth.referral_rules_title")}</div>
+                        <div class="rules-list">
+                            <div>{$t("auth.referral_rule_1")}</div>
+                            <div>{$t("auth.referral_rule_2")}</div>
+                            <div>{$t("auth.referral_rule_3")}</div>
+                        </div>
+                    </div>
+                </div>
+            </details>
         </section>
 
         <section class="card topup-card">
@@ -767,6 +833,92 @@
 
     .referral-card {
         gap: 14px;
+    }
+
+    .accordion {
+        border: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .accordion-summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .accordion-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .accordion-summary::after {
+        content: "+";
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        color: var(--text);
+        font-weight: 800;
+        flex: 0 0 auto;
+    }
+
+    .accordion[open] > .accordion-summary::after {
+        content: "–";
+    }
+
+    .accordion-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .contact-card {
+        gap: 12px;
+    }
+
+    .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+    }
+
+    .contact-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 16px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+    }
+
+    .contact-label {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .contact-qr {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 0 0 1px var(--surface-2) inset;
+    }
+
+    .contact-note {
+        padding: 0;
     }
 
     .referral-link-row {

@@ -33,5 +33,28 @@
     "creator_batch": "More from creator",
     "creator_batch_title": "{{name}} · Batch",
     "load_more": "Load more"
+  },
+  "menu": {
+    "resources": "Discover Resources",
+    "beauty": "Discover Beauty"
+  },
+  "resources": {
+    "title": "Discover Resources",
+    "subtitle": "Browse categories and download from available links",
+    "empty": {
+      "title": "No resources yet",
+      "description": "No categories or links have been added"
+    },
+    "empty_links": {
+      "title": "No links",
+      "description": "This category has no downloadable links yet"
+    },
+    "select": {
+      "title": "Select a category",
+      "description": "Choose a category on the left to view links"
+    },
+    "action": {
+      "downloading": "Downloading..."
+    }
   }
 }

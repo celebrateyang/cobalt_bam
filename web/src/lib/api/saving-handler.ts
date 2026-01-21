@@ -164,11 +164,71 @@ export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
     };
 };
 
+const pointsForDuration = (durationSeconds: number | undefined) => {
+    if (typeof durationSeconds !== "number" || !Number.isFinite(durationSeconds)) {
+        return null;
+    }
+
+    if (durationSeconds <= 60) return 1;
+    return Math.ceil(durationSeconds / 60);
+};
+
+const estimatePointsForUrl = async (url: string) => {
+    try {
+        const expanded = await API.expand(url);
+        if (!expanded || expanded.status === "error") {
+            return { points: null, hasEstimate: false };
+        }
+
+        const items = expanded.items ?? [];
+        if (items.length !== 1) {
+            return { points: null, hasEstimate: false };
+        }
+
+        const points = pointsForDuration(items[0]?.duration);
+        if (!Number.isFinite(points)) {
+            return { points: null, hasEstimate: false };
+        }
+
+        return { points, hasEstimate: true };
+    } catch {
+        return { points: null, hasEstimate: false };
+    }
+};
+
+const confirmPointsPreview = async (url: string) => {
+    const { points, hasEstimate } = await estimatePointsForUrl(url);
+
+    return new Promise<boolean>((resolve) => {
+        createDialog({
+            id: `points-preview-${Date.now()}`,
+            type: "small",
+            title: get(t)("dialog.points_preview.title"),
+            bodyText: hasEstimate
+                ? get(t)("dialog.points_preview.body", { required: points })
+                : get(t)("dialog.points_preview.unknown"),
+            buttons: [
+                {
+                    text: get(t)("button.cancel"),
+                    main: false,
+                    action: () => resolve(false),
+                },
+                {
+                    text: get(t)("button.download"),
+                    main: true,
+                    action: () => resolve(true),
+                },
+            ],
+        });
+    });
+};
+
 export const savingHandler = async ({
     url,
     request,
     oldTaskId,
     response: preFetchedResponse,
+    skipPoints,
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
@@ -214,6 +274,14 @@ export const savingHandler = async ({
     if (clerkEnabled) {
         const signedIn = await ensureSignedIn();
         if (!signedIn) {
+            downloadButtonState.set("idle");
+            return null;
+        }
+    }
+
+    if (!preFetchedResponse && !skipPoints && clerkEnabled && selectedRequest?.url) {
+        const approved = await confirmPointsPreview(selectedRequest.url);
+        if (!approved) {
             downloadButtonState.set("idle");
             return null;
         }

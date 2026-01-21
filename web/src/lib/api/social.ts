@@ -57,6 +57,40 @@ export interface SocialVideo {
     updated_at: number;
 }
 
+
+export interface ResourceCategory {
+    id: number;
+    parent_id?: number | null;
+    slug?: string;
+    sort_order: number;
+    is_active: boolean;
+    names: Record<string, string>;
+    created_at?: number;
+    updated_at?: number;
+}
+
+export interface ResourceLink {
+    id: number;
+    category_id: number;
+    title: string;
+    url: string;
+    description?: string;
+    sort_order: number;
+    is_active: boolean;
+    created_at?: number;
+    updated_at?: number;
+}
+
+export interface ResourceCategoryNode {
+    id: number;
+    parent_id?: number | null;
+    slug?: string;
+    sort_order: number;
+    name: string;
+    children: ResourceCategoryNode[];
+    links: ResourceLink[];
+}
+
 export type SocialVideoEventType = "download_click" | "creator_batch_open";
 
 export interface ApiResponse<T> {
@@ -440,8 +474,76 @@ export const videos = {
 };
 
 // 默认导出
+
+// ==================== Resource API ====================
+
+export const resources = {
+    tree: async (locale?: string): Promise<ApiResponse<{ categories: ResourceCategoryNode[] }>> => {
+        const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
+        return request(`/resources/tree${query}`);
+    },
+    categories: {
+        list: async (params?: { include_inactive?: boolean }): Promise<ApiResponse<{ categories: ResourceCategory[] }>> => {
+            const queryParams = new URLSearchParams();
+            if (params?.include_inactive !== undefined) {
+                queryParams.append('include_inactive', String(params.include_inactive));
+            }
+            const query = queryParams.toString();
+            return request(`/admin/resources/categories${query ? `?${query}` : ''}`);
+        },
+        create: async (data: Partial<ResourceCategory> & { names: Record<string, string> }) => {
+            return request('/admin/resources/categories', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+        update: async (id: number, data: Partial<ResourceCategory> & { names?: Record<string, string> }) => {
+            return request(`/admin/resources/categories/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            });
+        },
+        delete: async (id: number) => {
+            return request(`/admin/resources/categories/${id}`, {
+                method: 'DELETE',
+            });
+        },
+    },
+    links: {
+        list: async (params?: { category_id?: number; include_inactive?: boolean }): Promise<ApiResponse<{ links: ResourceLink[] }>> => {
+            const queryParams = new URLSearchParams();
+            if (params?.category_id !== undefined) {
+                queryParams.append('category_id', String(params.category_id));
+            }
+            if (params?.include_inactive !== undefined) {
+                queryParams.append('include_inactive', String(params.include_inactive));
+            }
+            const query = queryParams.toString();
+            return request(`/admin/resources/links${query ? `?${query}` : ''}`);
+        },
+        create: async (data: Partial<ResourceLink>) => {
+            return request('/admin/resources/links', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+        update: async (id: number, data: Partial<ResourceLink>) => {
+            return request(`/admin/resources/links/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            });
+        },
+        delete: async (id: number) => {
+            return request(`/admin/resources/links/${id}`, {
+                method: 'DELETE',
+            });
+        },
+    },
+};
+
 export default {
     auth,
     accounts,
     videos,
+    resources,
 };

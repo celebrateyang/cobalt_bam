@@ -12,6 +12,7 @@
     import IconUsersGroup from "@tabler/icons-svelte/IconUsersGroup.svelte";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconBug from "@tabler/icons-svelte/IconBug.svelte";
+    import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
     import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
 
     $: lang = $page.params.lang;
@@ -51,6 +52,14 @@
                         iconColor="blue"
                     >
                         <IconVideo />
+                    </PageNavTab>
+
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/resources"
+                        tabTitle="资源管理"
+                        iconColor="purple"
+                    >
+                        <IconFolder />
                     </PageNavTab>
                 </PageNavSection>
 

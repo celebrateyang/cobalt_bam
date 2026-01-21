@@ -112,6 +112,50 @@ export const initDatabase = async () => {
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_pinned ON social_videos(is_pinned, pinned_order DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_source ON social_videos(source);`);
 
+    // ==================== 资源分类/链接 ====================
+    await query(`
+        CREATE TABLE IF NOT EXISTS resource_categories (
+            id SERIAL PRIMARY KEY,
+            parent_id INTEGER,
+            slug TEXT,
+            sort_order INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT true,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (parent_id) REFERENCES resource_categories(id) ON DELETE CASCADE
+        );
+    `);
+    await query(`
+        CREATE TABLE IF NOT EXISTS resource_category_i18n (
+            category_id INTEGER NOT NULL,
+            locale TEXT NOT NULL,
+            name TEXT NOT NULL,
+            PRIMARY KEY (category_id, locale),
+            FOREIGN KEY (category_id) REFERENCES resource_categories(id) ON DELETE CASCADE
+        );
+    `);
+    await query(`
+        CREATE TABLE IF NOT EXISTS resource_links (
+            id SERIAL PRIMARY KEY,
+            category_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            sort_order INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT true,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (category_id) REFERENCES resource_categories(id) ON DELETE CASCADE
+        );
+    `);
+
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_categories_parent ON resource_categories(parent_id);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_categories_active ON resource_categories(is_active);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_categories_sort ON resource_categories(sort_order DESC);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_links_category ON resource_links(category_id);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_links_active ON resource_links(is_active);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_resource_links_sort ON resource_links(sort_order DESC);`);
+
     // ==================== 站内行为统计（热榜） ====================
     await query(`
         CREATE TABLE IF NOT EXISTS social_video_events_daily (
@@ -834,6 +878,260 @@ export const getStats = async () => {
 /**
  * 创建管理员用户
  */
+
+// ==================== Resource categories/links ====================
+
+const mapCategoryNames = async (categories = []) => {
+    const ids = categories.map((c) => c.id);
+    if (!ids.length) {
+        return categories.map((c) => ({ ...c, names: {} }));
+    }
+
+    const namesResult = await query(
+        `SELECT category_id, locale, name FROM resource_category_i18n WHERE category_id = ANY($1::int[])`,
+        [ids],
+    );
+
+    const namesById = {};
+    namesResult.rows.forEach((row) => {
+        if (!namesById[row.category_id]) {
+            namesById[row.category_id] = {};
+        }
+        namesById[row.category_id][row.locale] = row.name;
+    });
+
+    return categories.map((c) => ({
+        ...c,
+        names: namesById[c.id] || {},
+    }));
+};
+
+export const getResourceCategories = async ({ includeInactive = false } = {}) => {
+    let sql = `SELECT * FROM resource_categories WHERE 1=1`;
+    const params = [];
+    let paramIndex = 1;
+
+    if (!includeInactive) {
+        sql += ` AND is_active = $${paramIndex}`;
+        params.push(true);
+        paramIndex++;
+    }
+
+    sql += ` ORDER BY sort_order DESC, id ASC`;
+
+    const result = await query(sql, params);
+    return await mapCategoryNames(result.rows);
+};
+
+export const getResourceCategoryById = async (id) => {
+    const result = await query(`SELECT * FROM resource_categories WHERE id = $1`, [id]);
+    if (!result.rows.length) return null;
+    const [withNames] = await mapCategoryNames(result.rows);
+    return withNames || null;
+};
+
+export const createResourceCategory = async (categoryData) => {
+    const now = Date.now();
+    const parentId =
+        categoryData.parent_id === null || categoryData.parent_id === undefined
+            ? null
+            : Number(categoryData.parent_id);
+
+    const result = await query(
+        `
+        INSERT INTO resource_categories (
+            parent_id, slug, sort_order, is_active, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+        `,
+        [
+            parentId,
+            categoryData.slug || '',
+            categoryData.sort_order || 0,
+            categoryData.is_active !== false,
+            now,
+            now,
+        ],
+    );
+
+    const created = result.rows[0];
+
+    const names = categoryData.names || {};
+    for (const [locale, name] of Object.entries(names)) {
+        if (typeof name !== "string") continue;
+        const trimmed = name.trim();
+        if (!trimmed) continue;
+        await query(
+            `
+            INSERT INTO resource_category_i18n (category_id, locale, name)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (category_id, locale)
+            DO UPDATE SET name = EXCLUDED.name
+            `,
+            [created.id, locale, trimmed],
+        );
+    }
+
+    return await getResourceCategoryById(created.id);
+};
+
+export const updateResourceCategory = async (id, updates = {}) => {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    const allowedFields = ["parent_id", "slug", "sort_order", "is_active"];
+    allowedFields.forEach((field) => {
+        if (updates[field] !== undefined) {
+            fields.push(`${field} = $${paramIndex}`);
+            values.push(updates[field]);
+            paramIndex++;
+        }
+    });
+
+    fields.push(`updated_at = $${paramIndex}`);
+    values.push(Date.now());
+    paramIndex++;
+
+    values.push(id);
+
+    await query(
+        `
+        UPDATE resource_categories
+        SET ${fields.join(", ")}
+        WHERE id = $${paramIndex}
+        `,
+        values,
+    );
+
+    const names = updates.names || {};
+    for (const [locale, name] of Object.entries(names)) {
+        if (typeof name !== "string") continue;
+        const trimmed = name.trim();
+        if (!trimmed) {
+            await query(
+                `DELETE FROM resource_category_i18n WHERE category_id = $1 AND locale = $2`,
+                [id, locale],
+            );
+            continue;
+        }
+        await query(
+            `
+            INSERT INTO resource_category_i18n (category_id, locale, name)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (category_id, locale)
+            DO UPDATE SET name = EXCLUDED.name
+            `,
+            [id, locale, trimmed],
+        );
+    }
+
+    return await getResourceCategoryById(id);
+};
+
+export const deleteResourceCategory = async (id) => {
+    const result = await query(`DELETE FROM resource_categories WHERE id = $1`, [id]);
+    return result.rowCount > 0;
+};
+
+export const getResourceLinks = async ({ category_id, includeInactive = false } = {}) => {
+    let sql = `SELECT * FROM resource_links WHERE 1=1`;
+    const params = [];
+    let paramIndex = 1;
+
+    if (category_id !== undefined) {
+        sql += ` AND category_id = $${paramIndex}`;
+        params.push(Number(category_id));
+        paramIndex++;
+    }
+
+    if (!includeInactive) {
+        sql += ` AND is_active = $${paramIndex}`;
+        params.push(true);
+        paramIndex++;
+    }
+
+    sql += ` ORDER BY sort_order DESC, id ASC`;
+
+    const result = await query(sql, params);
+    return result.rows;
+};
+
+export const getResourceLinkById = async (id) => {
+    const result = await query(`SELECT * FROM resource_links WHERE id = $1`, [id]);
+    return result.rows[0] || null;
+};
+
+export const createResourceLink = async (linkData) => {
+    const now = Date.now();
+
+    const result = await query(
+        `
+        INSERT INTO resource_links (
+            category_id, title, url, description, sort_order, is_active, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+        `,
+        [
+            linkData.category_id,
+            linkData.title || '',
+            linkData.url || '',
+            linkData.description || '',
+            linkData.sort_order || 0,
+            linkData.is_active !== false,
+            now,
+            now,
+        ],
+    );
+
+    return result.rows[0];
+};
+
+export const updateResourceLink = async (id, updates = {}) => {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    const allowedFields = [
+        "category_id",
+        "title",
+        "url",
+        "description",
+        "sort_order",
+        "is_active",
+    ];
+
+    allowedFields.forEach((field) => {
+        if (updates[field] !== undefined) {
+            fields.push(`${field} = $${paramIndex}`);
+            values.push(updates[field]);
+            paramIndex++;
+        }
+    });
+
+    fields.push(`updated_at = $${paramIndex}`);
+    values.push(Date.now());
+    paramIndex++;
+
+    values.push(id);
+
+    await query(
+        `
+        UPDATE resource_links
+        SET ${fields.join(", ")}
+        WHERE id = $${paramIndex}
+        `,
+        values,
+    );
+
+    return await getResourceLinkById(id);
+};
+
+export const deleteResourceLink = async (id) => {
+    const result = await query(`DELETE FROM resource_links WHERE id = $1`, [id]);
+    return result.rowCount > 0;
+};
+
 export const createAdminUser = async (username, passwordHash, email = '') => {
     const result = await query(`
         INSERT INTO admin_users (username, password_hash, email, created_at)

@@ -45,6 +45,7 @@
 
 ## Data/storage notes
 - DB is PostgreSQL in prod (`DB_TYPE=postgresql` + `DB_*`); user + social modules require Postgres (`api/src/db/*`)
+- Social/resource tables are created manually; dev: from `api/` run `pnpm run init-social`; prod (no pnpm): run `node api/src/setup-social.js` (calls `src/setup-social.js` / `initDatabase`).
 - Some services may need cookies for reliable extraction; cookie file is configured via `COOKIE_PATH` and mounted in Helm (`cobalt-chart/templates/deployment.yaml`)
 - Instagram extraction may use an upstream fallback (`INSTAGRAM_UPSTREAM_URL`) to bypass WAF/rate-limits (see `docs/run-an-instance.md`)
 

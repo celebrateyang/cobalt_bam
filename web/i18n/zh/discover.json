@@ -33,5 +33,28 @@
     "creator_batch": "更多来自作者",
     "creator_batch_title": "{{name}} · 批量下载",
     "load_more": "加载更多"
+  },
+  "menu": {
+    "resources": "发现资源",
+    "beauty": "发现美女"
+  },
+  "resources": {
+    "title": "发现资源",
+    "subtitle": "按类目浏览并一键下载可用的解析资源",
+    "empty": {
+      "title": "暂无资源",
+      "description": "还没有添加资源类目或链接"
+    },
+    "empty_links": {
+      "title": "暂无链接",
+      "description": "暂无链接，请点击打开下一级类目"
+    },
+    "select": {
+      "title": "选择一个类目",
+      "description": "在左侧选择类目查看可下载链接"
+    },
+    "action": {
+      "downloading": "下载中..."
+    }
   }
 }

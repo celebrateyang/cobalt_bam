@@ -421,6 +421,7 @@
             progress += 1;
             const response = await savingHandler({
                 request: buildBatchRequest(item.url),
+                skipPoints: true,
             });
 
             if (response?.status === "error") {
@@ -492,6 +493,7 @@
 
         const response = await savingHandler({
             request: buildBatchRequest(url),
+            skipPoints: true,
         });
 
         const itemKey = item?.itemKey;

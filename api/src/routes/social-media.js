@@ -38,7 +38,13 @@ const router = express.Router();
 
 const MEDIA_PROXY_MAX_BYTES = 10 * 1024 * 1024;
 const MEDIA_PROXY_TIMEOUT_MS = 10 * 1000;
-const MEDIA_PROXY_ALLOWED_HOSTS = ['fbcdn.net', 'cdninstagram.com'];
+const MEDIA_PROXY_ALLOWED_HOSTS = [
+    'fbcdn.net',
+    'cdninstagram.com',
+    'tiktokcdn.com',
+    'tiktokcdn-us.com',
+    'tiktokcdn-eu.com',
+];
 
 const isAllowedMediaHost = (hostname) => {
     const host = String(hostname || '').toLowerCase();

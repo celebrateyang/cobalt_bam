@@ -53,6 +53,13 @@ const uniqBy = (items, keyFn) => {
     return result;
 };
 
+const normalizeThumbnailUrl = (value) => {
+    if (typeof value !== "string") return "";
+    if (value.startsWith("https://")) return value;
+    if (value.startsWith("http://")) return `https://${value.slice(7)}`;
+    return value;
+};
+
 const parseTikTokEmbedItems = (html, username) => {
     const items = [];
     const matcher = /https:\/\/www\.tiktok\.com\/@([^/"\s]+)\/(video|photo)\/(\d+)/g;
@@ -580,6 +587,8 @@ export const fetchOembedForAccount = async (account, url) => {
 
 export const syncAccountVideos = async (account, options) => {
     const startedAt = Date.now();
+    const logId = options?.logId ? String(options.logId) : "";
+    const logPrefix = logId ? `[social-sync:${logId}]` : "[social-sync]";
 
     if (!account?.id || !account?.platform || !account?.username) {
         throw new Error("syncAccountVideos requires a social_accounts row");
@@ -592,8 +601,14 @@ export const syncAccountVideos = async (account, options) => {
         const meta = await fetchOembedForAccount(account, item.url).catch(() => null);
 
         const title = meta?.title ?? item?.title ?? "";
-        const thumbnailUrl = meta?.thumbnail_url ?? item?.thumbnail_url ?? "";
+        const thumbnailUrl = normalizeThumbnailUrl(
+            meta?.thumbnail_url ?? item?.thumbnail_url ?? "",
+        );
         const publishDate = item?.publish_date ?? null;
+
+        if (!thumbnailUrl && account.platform === "instagram") {
+            console.log(`${logPrefix} instagram missing thumbnail url=${item.url}`);
+        }
 
         const result = await upsertVideoFromSync({
             account_id: account.id,

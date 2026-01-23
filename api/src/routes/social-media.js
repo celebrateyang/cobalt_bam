@@ -232,7 +232,11 @@ router.post('/internal/instagram/items', adminLimiter, requireInstagramUpstreamK
 
         const items = await fetchInstagramCreatorItemsDirect(username.trim(), options);
 
-        console.log(`[ig-upstream:${logId}] response items=${items.length}`);
+        const withThumb = items.filter((item) => typeof item?.thumbnail_url === "string" && item.thumbnail_url.length > 0);
+        const sampleThumb = withThumb[0]?.thumbnail_url || "";
+        console.log(
+            `[ig-upstream:${logId}] response items=${items.length} withThumb=${withThumb.length} sampleThumb=${sampleThumb ? new URL(sampleThumb).hostname : "none"}`,
+        );
 
         return res.json({
             status: 'success',
@@ -291,6 +295,7 @@ const fetchImageWithRedirects = async (url, signal) => {
                 throw new Error('Media proxy blocked redirect');
             }
             if (!isAllowedMediaHost(next.hostname)) {
+                console.warn(`Media proxy blocked redirect host=${next.hostname}`);
                 throw new Error('Media proxy blocked redirect host');
             }
 
@@ -356,6 +361,7 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
     }
 
     if (!isAllowedMediaHost(target.hostname)) {
+        console.warn(`Media proxy blocked host=${target.hostname}`);
         return res.status(403).json({
             status: 'error',
             error: {

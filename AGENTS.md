@@ -45,7 +45,7 @@
 
 ## Data/storage notes
 - DB is PostgreSQL in prod (`DB_TYPE=postgresql` + `DB_*`); user + social modules require Postgres (`api/src/db/*`)
-- Social/resource tables are created manually; dev: from `api/` run `pnpm run init-social`; prod (no pnpm): run `node api/src/setup-social.js` (calls `src/setup-social.js` / `initDatabase`).
+- Social/resource tables are created manually; dev: from `api/` run `pnpm run init-social`; prod (no pnpm): run `node init-social.js` (calls `src/setup-social.js` / `initDatabase`).
 - Some services may need cookies for reliable extraction; cookie file is configured via `COOKIE_PATH` and mounted in Helm (`cobalt-chart/templates/deployment.yaml`)
 - Instagram extraction may use an upstream fallback (`INSTAGRAM_UPSTREAM_URL`) to bypass WAF/rate-limits (see `docs/run-an-instance.md`)
 
@@ -66,3 +66,9 @@
 ## Product constraints & response format
 - No paid 3rd-party APIs; prefer free oEmbed; scraping as fallback; allow graceful degradation.
 - Responses use fixed format: `PM:` + `Dev:`; every `Dev` message asks 0~3 clarifying questions first, then provides方案与任务拆分.
+
+## Encoding hygiene (must-follow)
+- When editing files with non-ASCII text (e.g., Chinese), always read/write as UTF-8.
+- Avoid PowerShell defaults that can introduce mojibake; prefer `python` with `encoding='utf-8'` or `apply_patch` to preserve Unicode.
+- If you add new UI strings, keep them ASCII unless you can guarantee UTF-8 encoding and the file already contains Unicode.
+

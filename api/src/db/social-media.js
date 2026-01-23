@@ -697,7 +697,8 @@ export const getVideoById = async (id) => {
         SELECT v.*,
                a.username as account_username,
                a.display_name as account_display_name,
-               a.avatar_url as account_avatar_url
+               a.avatar_url as account_avatar_url,
+               a.platform as account_platform
         FROM social_videos v
         INNER JOIN social_accounts a ON v.account_id = a.id
         WHERE v.id = $1
@@ -709,13 +710,60 @@ export const getVideoById = async (id) => {
         video.account = {
             username: video.account_username,
             display_name: video.account_display_name,
-            avatar_url: video.account_avatar_url
+            avatar_url: video.account_avatar_url,
+            platform: video.account_platform
         };
         delete video.account_username;
         delete video.account_display_name;
         delete video.account_avatar_url;
+        delete video.account_platform;
     }
     return video;
+};
+
+export const getVideosByIds = async (ids = []) => {
+    if (!Array.isArray(ids)) return [];
+
+    const normalized = Array.from(
+        new Set(
+            ids
+                .map((value) => Number(value))
+                .filter((value) => Number.isInteger(value) && value > 0),
+        ),
+    );
+
+    if (!normalized.length) return [];
+
+    const result = await query(
+        `
+        SELECT v.*,
+               a.username as account_username,
+               a.display_name as account_display_name,
+               a.avatar_url as account_avatar_url,
+               a.platform as account_platform
+        FROM social_videos v
+        INNER JOIN social_accounts a ON v.account_id = a.id
+        WHERE v.id = ANY($1::int[])
+        `,
+        [normalized],
+    );
+
+    const videos = result.rows ?? [];
+    videos.forEach((video) => {
+        video.tags = JSON.parse(video.tags || '[]');
+        video.account = {
+            username: video.account_username,
+            display_name: video.account_display_name,
+            avatar_url: video.account_avatar_url,
+            platform: video.account_platform,
+        };
+        delete video.account_username;
+        delete video.account_display_name;
+        delete video.account_avatar_url;
+        delete video.account_platform;
+    });
+
+    return videos;
 };
 
 /**

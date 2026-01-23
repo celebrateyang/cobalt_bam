@@ -464,6 +464,18 @@ export const videos = {
     },
 
     /**
+     * Refresh thumbnails for selected videos (admin).
+     */
+    refreshThumbnails: async (
+        ids: number[]
+    ): Promise<ApiResponse<{ refreshed: number; skipped: number; unsupported?: number; total: number }>> => {
+        return request('/videos/refresh-thumbnails', {
+            method: 'POST',
+            body: JSON.stringify({ ids }),
+        });
+    },
+
+    /**
      * 切换精选状态
      */
     toggleFeatured: async (id: number): Promise<ApiResponse<SocialVideo>> => {

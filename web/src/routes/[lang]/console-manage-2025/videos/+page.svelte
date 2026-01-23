@@ -22,6 +22,8 @@
 
     let selectedVideoIds = new Set<number>();
     let deletingSelected = false;
+    let syncingThumbnails = false;
+    let syncingIgAccounts = false;
     $: selectedCount = selectedVideoIds.size;
     $: allSelected =
         videoList.length > 0 &&
@@ -33,6 +35,10 @@
         account_id: "",
         is_featured: "",
     };
+
+    $: filteredAccounts = filters.platform
+        ? accountList.filter((account) => account.platform === filters.platform)
+        : accountList;
 
     // 表单数据
     let formData = {
@@ -93,7 +99,36 @@
         const response = await accounts.list();
         if (response.status === "success" && response.data) {
             accountList = response.data.accounts || [];
+            if (
+                filters.account_id &&
+                !accountList.some(
+                    (account) =>
+                        account.id === Number(filters.account_id) &&
+                        (!filters.platform || account.platform === filters.platform)
+                )
+            ) {
+                filters.account_id = "";
+            }
         }
+    }
+
+    function handlePlatformChange() {
+        if (
+            filters.platform &&
+            filters.account_id &&
+            !accountList.some(
+                (account) =>
+                    account.id === Number(filters.account_id) &&
+                    account.platform === filters.platform
+            )
+        ) {
+            filters.account_id = "";
+        }
+        loadVideos();
+    }
+
+    function handleAccountChange() {
+        loadVideos();
     }
 
     function openAddModal() {
@@ -243,6 +278,93 @@
         }
     }
 
+    async function handleResyncInstagramAccounts() {
+        const selectedIds = Array.from(selectedVideoIds);
+        const selectedAccountIds = selectedIds.length
+            ? Array.from(new Set(
+                videoList
+                    .filter((video) => selectedVideoIds.has(video.id))
+                    .map((video) => video.account_id)
+            ))
+            : [];
+
+        const fallbackIds = filters.account_id
+            ? [Number(filters.account_id)]
+            : filters.platform === "instagram"
+                ? filteredAccounts.map((account) => account.id)
+                : [];
+
+        const candidateIds = selectedAccountIds.length > 0 ? selectedAccountIds : fallbackIds;
+        const instagramIds = candidateIds.filter((id) =>
+            accountList.some((account) => account.id === id && account.platform === "instagram")
+        );
+
+        if (!instagramIds.length) {
+            error = "Please select Instagram accounts/videos first.";
+            return;
+        }
+
+        const label = instagramIds.length === 1 ? "1 account" : `${instagramIds.length} accounts`;
+        if (!confirm(`Re-sync recent+pinned for ${label}?`)) return;
+
+        syncingIgAccounts = true;
+        error = "";
+        message = "";
+
+        let ok = 0;
+        let failed = 0;
+
+        try {
+            for (const id of instagramIds) {
+                try {
+                    const response = await accounts.sync(id);
+                    if (response.status === "success") {
+                        ok += 1;
+                    } else {
+                        failed += 1;
+                    }
+                } catch (e) {
+                    failed += 1;
+                }
+            }
+
+            message = `IG re-sync done: ${ok} ok, ${failed} failed`;
+            await loadVideos();
+        } finally {
+            syncingIgAccounts = false;
+        }
+    }
+
+    async function handleRefreshThumbnails() {
+        const ids =
+            selectedCount > 0
+                ? Array.from(selectedVideoIds)
+                : videoList.map((video) => video.id);
+        if (!ids.length) return;
+
+        const label =
+            selectedCount > 0 ? `${selectedCount} æ¡` : "æœ¬é¡µè§†é¢‘";
+        if (!confirm(`ç¡®è®¤åŒæ­¥${label}çš„ç¼©ç•¥å›¾å—ï¼Ÿ`)) return;
+
+        syncingThumbnails = true;
+        error = "";
+        message = "";
+        try {
+            const response = await videos.refreshThumbnails(ids);
+            if (response.status === "success" && response.data) {
+                const { refreshed, skipped, total, unsupported = 0 } = response.data;
+                message = `å·²æ›´æ–°${refreshed}/${total}ï¼Œè·³è¿‡${skipped}`;
+                await loadVideos();
+            } else {
+                error = response.error?.message || "åŒæ­¥å¤±è´¥";
+            }
+        } catch (e) {
+            error = "ç½‘ç»œé”™è¯¯";
+        } finally {
+            syncingThumbnails = false;
+        }
+    }
+
     async function handleToggleFeatured(video: SocialVideo) {
         try {
             const response = await videos.toggleFeatured(video.id);
@@ -288,16 +410,16 @@
     </header>
 
     <div class="filters">
-        <select bind:value={filters.platform} on:change={loadVideos}>
+        <select bind:value={filters.platform} on:change={handlePlatformChange}>
             <option value="">所有平台</option>
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
             <option value="youtube">YouTube</option>
         </select>
 
-        <select bind:value={filters.account_id} on:change={loadVideos}>
+        <select bind:value={filters.account_id} on:change={handleAccountChange}>
             <option value="">所有账号</option>
-            {#each accountList as account}
+            {#each filteredAccounts as account}
                 <option value={account.id}
                     >{account.display_name || account.username}</option
                 >
@@ -331,6 +453,26 @@
                     on:click={clearSelection}
                 >
                     清空
+                </button>
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={syncingThumbnails || videoList.length === 0}
+                    on:click={handleRefreshThumbnails}
+                >
+                    {syncingThumbnails
+                        ? "Refreshing..."
+                        : selectedCount > 0
+                            ? `Refresh thumbnails (${selectedCount})`
+                            : "Refresh thumbnails (page)"}
+                </button>
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={syncingIgAccounts}
+                    on:click={handleResyncInstagramAccounts}
+                >
+                    {syncingIgAccounts ? "IG re-sync..." : "IG re-sync (recent+pinned)"}
                 </button>
                 <button
                     class="btn-bulk-delete"

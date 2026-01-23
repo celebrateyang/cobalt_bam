@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { Readable, Transform } from 'node:stream';
 import { env } from '../config.js';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
-import { fetchInstagramCreatorItemsDirect, syncAccountVideos } from '../processing/social/sync.js';
+import { fetchInstagramCreatorItemsDirect, fetchOembedForAccount, syncAccountVideos } from '../processing/social/sync.js';
 import {
     createAccount,
     getAccounts,
@@ -16,6 +16,7 @@ import {
     updateVideo,
     deleteVideo,
     deleteVideos,
+    getVideosByIds,
     getFeaturedVideos,
     toggleFeatured,
     getStats,
@@ -762,11 +763,17 @@ router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) =>
             });
         }
 
+        console.log(
+            `[social-sync:${logId}] start account=${account.id} platform=${account.platform} username=${account.username}`,
+        );
         const result = await syncAccountVideos(account, {
             recentLimit: req.body?.recentLimit,
             pinnedLimit: req.body?.pinnedLimit,
             logId,
         });
+        console.log(
+            `[social-sync:${logId}] done account=${account.id} created=${result.created} updated=${result.updated} total=${result.total}`,
+        );
 
         res.json({
             status: 'success',
@@ -1574,6 +1581,125 @@ router.post('/videos/batch-delete', requireAuth, adminLimiter, async (req, res) 
             error: {
                 code: 'SERVER_ERROR',
                 message: 'Failed to batch delete videos'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/social/videos/refresh-thumbnails
+ * Refresh thumbnails for selected videos (admin only).
+ */
+router.post('/videos/refresh-thumbnails', requireAuth, adminLimiter, async (req, res) => {
+    try {
+        const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
+        console.log(`[refresh-thumbs:${logId}] request count=${Array.isArray(req.body?.ids) ? req.body.ids.length : 0} user=${req.user?.id ?? "unknown"}`);
+        const ids = req.body?.ids;
+        if (!Array.isArray(ids)) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'ids must be an array'
+                }
+            });
+        }
+
+        const normalized = Array.from(
+            new Set(
+                ids
+                    .map((value) => Number(value))
+                    .filter((value) => Number.isInteger(value) && value > 0),
+            ),
+        );
+
+        if (!normalized.length) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'ids array is empty'
+                }
+            });
+        }
+
+        if (normalized.length > 200) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'too many ids (max 200)'
+                }
+            });
+        }
+
+        const videos = await getVideosByIds(normalized);
+        if (!videos.length) {
+            return res.status(404).json({
+                status: 'error',
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'No videos found for ids'
+                }
+            });
+        }
+
+        const startedAt = Date.now();
+        let refreshed = 0;
+        let skipped = 0;
+        let unsupported = 0;
+
+        for (const video of videos) {
+            if (!video.video_url) {
+                skipped += 1;
+                console.log(`[refresh-thumbs:${logId}] skip id=${video.id} reason=no_url`);
+                continue;
+            }
+
+            const account = {
+                platform: video.account?.platform || video.platform,
+                username: video.account?.username,
+            };
+
+            if (!account.platform || (account.platform !== "tiktok" && account.platform !== "instagram")) {
+                unsupported += 1;
+                console.log(`[refresh-thumbs:${logId}] skip id=${video.id} reason=unsupported_platform platform=${account.platform}`);
+                continue;
+            }
+
+            const meta = await fetchOembedForAccount(account, video.video_url).catch(() => null);
+            const thumbnailUrl = meta?.thumbnail_url;
+            if (!thumbnailUrl) {
+                skipped += 1;
+                console.log(`[refresh-thumbs:${logId}] skip id=${video.id} platform=${account.platform} reason=no_thumbnail`);
+                continue;
+            }
+
+            await updateVideo(video.id, {
+                thumbnail_url: thumbnailUrl,
+                synced_at: startedAt,
+            });
+            refreshed += 1;
+            console.log(`[refresh-thumbs:${logId}] updated id=${video.id} platform=${account.platform}`);
+        }
+
+        console.log(`[refresh-thumbs:${logId}] done refreshed=${refreshed} skipped=${skipped} unsupported=${unsupported} total=${videos.length}`);
+        res.json({
+            status: 'success',
+            data: {
+                refreshed,
+                skipped,
+                unsupported,
+                total: videos.length
+            }
+        });
+    } catch (error) {
+        console.error('Refresh thumbnails error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to refresh thumbnails'
             }
         });
     }

@@ -386,12 +386,18 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
         );
 
         if (!upstream.ok || !upstream.body) {
+            console.warn(
+                `Media proxy upstream not ok status=${upstream.status} host=${target.hostname}`,
+            );
             upstream.body?.cancel().catch(() => undefined);
             return res.status(404).end();
         }
 
         const contentType = upstream.headers.get('content-type') || '';
         if (!contentType.toLowerCase().startsWith('image/')) {
+            console.warn(
+                `Media proxy upstream not image contentType=${contentType} host=${target.hostname}`,
+            );
             upstream.body.cancel().catch(() => undefined);
             return res.status(415).end();
         }

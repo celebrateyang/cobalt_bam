@@ -203,19 +203,14 @@
             z-index: 2;
         }
 
-        /* Make home button more prominent */
-        .mobile-home-wrapper :global(.sidebar-tab) {
-            transform: scale(1.1);
-            background: var(--sidebar-highlight);
-            color: var(--sidebar-bg);
-            opacity: 0.9;
-            border-radius: 16px;
-            padding: 8px 16px;
-        }
-
+        /* Make home button more prominent only when active */
         .mobile-home-wrapper :global(.sidebar-tab.active) {
             transform: scale(1.15);
             opacity: 1;
+            background: var(--sidebar-highlight);
+            color: var(--sidebar-bg);
+            border-radius: 16px;
+            padding: 8px 16px;
         }
 
         #sidebar :global(.sidebar-inner-container:first-child) {

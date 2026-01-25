@@ -137,7 +137,7 @@ const showPointsInsufficient = (currentPoints: number, requiredPoints: number) =
             {
                 text: get(t)("button.cancel"),
                 main: false,
-                action: () => {},
+                action: () => { },
             },
             {
                 text: get(t)("button.buy_points"),
@@ -280,7 +280,7 @@ export const savingHandler = async ({
                 {
                     text: get(t)("button.gotit"),
                     main: true,
-                    action: () => {},
+                    action: () => { },
                 },
             ],
         });
@@ -296,7 +296,7 @@ export const savingHandler = async ({
                 {
                     text: get(t)("button.gotit"),
                     main: true,
-                    action: () => {},
+                    action: () => { },
                 },
             ],
             bodyText: errorText,
@@ -442,8 +442,25 @@ export const savingHandler = async ({
                 ? response.tunnel.map((url) => normalizeTunnelUrl(url) || url)
                 : response.tunnel,
         };
-        createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
-        applyQueueMeta(oldTaskId, response, queueMeta);
+
+        try {
+            createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
+            applyQueueMeta(oldTaskId, response, queueMeta);
+        } catch (error) {
+            console.error("Failed to create save pipeline:", error);
+
+            // Release hold if pipeline creation fails
+            const holdId = response?.points?.holdId;
+            if (holdId) {
+                import("$lib/api/points").then(({ releasePointsHold }) => {
+                    releasePointsHold(holdId, "pipeline_creation_failed").catch(() => { });
+                });
+            }
+
+            downloadButtonState.set("error");
+            showError(get(t)("error.api.generic"));
+        }
+
         return response;
     }
 

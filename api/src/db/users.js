@@ -512,7 +512,7 @@ const expireUserPointsHolds = async (client, userId, now) => {
     await client.query(
         `
         UPDATE user_points_holds
-        SET status = 'expired',
+        SET status = 'released',
             updated_at = $3,
             released_at = $3
         WHERE user_id = $1
@@ -657,16 +657,16 @@ export const finalizePointsHold = async ({
             await client.query(
                 `
                 UPDATE user_points_holds
-                SET status = 'expired',
+                SET status = 'released',
                     updated_at = $2,
                     released_at = $2,
                     reason = COALESCE(reason, $3)
                 WHERE id = $1;
                 `,
-                [hold.id, now, reason],
+                [hold.id, now, reason || 'hold_expired'],
             );
             await client.query("COMMIT");
-            return { ok: false, code: "HOLD_EXPIRED", status: "expired" };
+            return { ok: false, code: "HOLD_EXPIRED", status: "released" };
         }
 
         const userRes = await client.query(
@@ -772,7 +772,7 @@ export const releasePointsHold = async ({
             };
         }
 
-        const nextStatus = hold.expires_at <= now ? "expired" : "released";
+        const nextStatus = "released";
         await client.query(
             `
             UPDATE user_points_holds

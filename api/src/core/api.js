@@ -623,7 +623,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     });
 
     app.use('/tunnel', cors({
-        methods: ['GET'],
+        methods: ['GET', 'OPTIONS'],
         exposedHeaders: [
             'Estimated-Content-Length',
             'Content-Disposition'

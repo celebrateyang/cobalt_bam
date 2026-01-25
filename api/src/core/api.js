@@ -448,6 +448,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 return fail(res, "error.api.points.unavailable");
             }
         }
+        const hasClerkTokenHeader = !!req.header("X-Clerk-Token");
         console.log(
             `[DOWNLOAD AUTH] url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
         );

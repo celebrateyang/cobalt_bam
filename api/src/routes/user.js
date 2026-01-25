@@ -747,6 +747,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
+                console.log(`[hold-release] Request: userId=${auth.userId} holdId=${holdId} reason=${req.body?.reason ?? 'none'}`);
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
@@ -756,6 +757,8 @@ if (!isClerkApiConfigured) {
                     holdId,
                     reason: req.body?.reason ?? null,
                 });
+
+                console.log(`[hold-release] Result: userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? 'none'} code=${result.code ?? 'none'}`);
 
                 if (!result.ok) {
                     if (result.code === "HOLD_NOT_FOUND") {
@@ -834,14 +837,14 @@ if (!isClerkApiConfigured) {
                     data: {
                         collection: memory
                             ? {
-                                  collectionKey: memory.collection_key,
-                                  service: memory.service,
-                                  kind: memory.kind,
-                                  collectionId: memory.collection_id,
-                                  title: memory.title,
-                                  sourceUrl: memory.source_url,
-                                  lastMarkedAt: memory.last_marked_at,
-                              }
+                                collectionKey: memory.collection_key,
+                                service: memory.service,
+                                kind: memory.kind,
+                                collectionId: memory.collection_id,
+                                title: memory.title,
+                                sourceUrl: memory.source_url,
+                                lastMarkedAt: memory.last_marked_at,
+                            }
                             : null,
                         downloadedItemKeys: itemKeys,
                     },

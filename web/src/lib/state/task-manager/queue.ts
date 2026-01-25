@@ -10,7 +10,7 @@ import type { CobaltQueue, CobaltQueueItem, CobaltQueueItemRunning, UUID } from 
 
 const clearPipelineCache = (queueItem: CobaltQueueItem) => {
     if (queueItem.state === "running") {
-        for (const [ workerId, item ] of Object.entries(queueItem.pipelineResults)) {
+        for (const [workerId, item] of Object.entries(queueItem.pipelineResults)) {
             removeFromFileStorage(item.name);
             delete queueItem.pipelineResults[workerId];
         }
@@ -118,18 +118,31 @@ const finalizeQueueHold = async (id: UUID) => {
 
 const releaseQueueHold = async (id: UUID, reason: string) => {
     const item = get(queue)[id];
-    if (!item) return;
+    if (!item) {
+        console.log(`[queue] releaseQueueHold: item not found id=${id}`);
+        return;
+    }
 
     const holdId = item.points?.holdId;
-    if (!holdId) return;
+    if (!holdId) {
+        console.log(`[queue] releaseQueueHold: no holdId for item id=${id}`);
+        return;
+    }
 
-    const result = await releasePointsHold(holdId, reason).catch(() => null);
+    console.log(`[queue] releaseQueueHold: calling API holdId=${holdId} reason=${reason} itemId=${id}`);
+    const result = await releasePointsHold(holdId, reason).catch((error) => {
+        console.error(`[queue] releaseQueueHold: API call failed holdId=${holdId} error=`, error);
+        return null;
+    });
+
     if (result?.ok) {
+        console.log(`[queue] releaseQueueHold: success holdId=${holdId} status=${result.status}`);
         updateItemPoints(id, {
             holdId,
             status: result.status ?? "released",
         });
     } else {
+        console.error(`[queue] releaseQueueHold: failed holdId=${holdId} result=`, result);
         updateItemPoints(id, {
             holdId,
             status: "error",
@@ -159,8 +172,13 @@ export function addItem(item: CobaltQueueItem) {
 }
 
 export function itemError(id: UUID, workerId: UUID, error: string) {
+    console.log(`[queue] itemError: id=${id} workerId=${workerId} error=${error}`);
+
     update(queueData => {
         if (queueData[id]) {
+            const holdId = queueData[id].points?.holdId;
+            console.log(`[queue] itemError: item found, holdId=${holdId ?? 'none'}`);
+
             queueData[id] = clearPipelineCache(queueData[id]);
 
             queueData[id] = {
@@ -168,12 +186,15 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
                 state: "error",
                 errorCode: error,
             }
+        } else {
+            console.log(`[queue] itemError: item NOT found in queue id=${id}`);
         }
         return queueData;
     });
 
     removeWorkerFromQueue(workerId);
     schedule();
+    console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
     void releaseQueueHold(id, "queue_error");
 }
 

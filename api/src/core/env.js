@@ -68,7 +68,17 @@ export const loadEnvs = (env = process.env) => {
         freebindCIDR: process.platform === 'linux' && env.FREEBIND_CIDR,
 
         corsWildcard: env.CORS_WILDCARD !== '0',
-        corsURL: env.CORS_URL,
+        corsURL: (() => {
+            const raw = env.CORS_URL;
+            if (!raw) return undefined;
+            const parts = String(raw)
+                .split(',')
+                .map((part) => part.trim())
+                .filter(Boolean);
+            if (parts.length === 0) return undefined;
+            if (parts.length === 1) return parts[0];
+            return parts;
+        })(),
 
         cookiePath: env.COOKIE_PATH,
         instagramUpstreamURL: env.INSTAGRAM_UPSTREAM_URL,

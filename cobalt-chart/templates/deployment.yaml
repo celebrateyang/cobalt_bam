@@ -58,7 +58,7 @@ spec:
             - name: CORS_WILDCARD
               value: '0'
             - name: CORS_URL
-              value: https://freesavevideo.online
+              value: https://freesavevideo.online,https://www.freesavevideo.online
             - name: RATELIMIT_WINDOW
               value: '60'
             - name: RATELIMIT_MAX

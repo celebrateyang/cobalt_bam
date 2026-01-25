@@ -203,8 +203,16 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     app.set('trust proxy', ['loopback', 'uniquelocal']);
 
     // 社交媒体 API 路由 - 支持 GET/POST/PUT/DELETE
+    const corsAllowedHeaders = [
+        "Content-Type",
+        "Authorization",
+        "X-Clerk-Token",
+        "X-Clerk-Email",
+    ];
+
     app.use('/social', cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
             'Ratelimit-Policy',
@@ -215,7 +223,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     }));
 
     app.use('/', cors({
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
             'Ratelimit-Policy',

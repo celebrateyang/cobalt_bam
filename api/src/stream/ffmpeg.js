@@ -82,6 +82,7 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
         // 添加 CORS 相关头以支持跨域请求
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
         const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);

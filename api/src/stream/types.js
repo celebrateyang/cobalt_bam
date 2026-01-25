@@ -27,7 +27,7 @@ const metadataTags = [
 const convertMetadataToFFmpeg = (metadata) => {
     let args = [];
 
-    for (const [ name, value ] of Object.entries(metadata)) {
+    for (const [name, value] of Object.entries(metadata)) {
         if (metadataTags.includes(name)) {
             args.push('-metadata', `${name}=${value.replace(/[\u0000-\u0009]/g, "")}`); // skipcq: JS-0004
         } else {
@@ -40,8 +40,8 @@ const convertMetadataToFFmpeg = (metadata) => {
 
 const toRawHeaders = (headers) => {
     return Object.entries(headers)
-                 .map(([key, value]) => `${key}: ${value}\r\n`)
-                 .join('');
+        .map(([key, value]) => `${key}: ${value}\r\n`)
+        .join('');
 }
 
 const killProcess = (p) => {
@@ -71,6 +71,7 @@ const proxy = async (streamInfo, res) => {
     );
 
     try {
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Content-disposition', contentDisposition(streamInfo.filename));
 
@@ -101,7 +102,7 @@ const proxy = async (streamInfo, res) => {
 const merge = async (streamInfo, res) => {
     console.log('[merge] Starting merge process for service:', streamInfo.service);
     console.log('[merge] URLs count:', streamInfo.urls?.length);
-    
+
     let process;
     const shutdown = () => (
         killProcess(process),
@@ -165,7 +166,7 @@ const merge = async (streamInfo, res) => {
 
         console.log('[merge] Process spawned with PID:', process.pid);
 
-        const [,,, muxOutput] = process.stdio;
+        const [, , , muxOutput] = process.stdio;
 
         console.log('[merge] Estimating tunnel length...');
         const estimatedLength = await estimateTunnelLength(streamInfo);
@@ -173,7 +174,7 @@ const merge = async (streamInfo, res) => {
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
-        
+
         console.log('[merge] Setting response headers...');
         if (estimatedLength > 0) {
             res.setHeader('Content-Length', estimatedLength);
@@ -188,7 +189,7 @@ const merge = async (streamInfo, res) => {
         console.log('[merge] Setting up event handlers...');
         process.on('close', shutdown);
         res.on('finish', shutdown);
-        
+
         console.log('[merge] Merge setup complete, streaming...');
     } catch (e) {
         console.error('[merge] Exception caught:', e);
@@ -245,7 +246,7 @@ const remux = async (streamInfo, res) => {
             ],
         });
 
-        const [,,, muxOutput] = process.stdio;
+        const [, , , muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
@@ -315,7 +316,7 @@ const convertAudio = async (streamInfo, res) => {
             ],
         });
 
-        const [,,, muxOutput] = process.stdio;
+        const [, , , muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
@@ -359,7 +360,7 @@ const convertGif = async (streamInfo, res) => {
             ],
         });
 
-        const [,,, muxOutput] = process.stdio;
+        const [, , , muxOutput] = process.stdio;
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));

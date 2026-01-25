@@ -1,4 +1,4 @@
-import { query, initPool } from "./pg-client.js";
+import { getClient, query, initPool } from "./pg-client.js";
 import { env } from "../config.js";
 import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
@@ -117,6 +117,34 @@ export const initUserDatabase = async () => {
     await query(
         `CREATE INDEX IF NOT EXISTS idx_user_collection_memory_items_memory_item_key
          ON user_collection_memory_items(memory_id, item_key);`,
+    );
+
+    // ==================== Points holds (batch downloads) ====================
+    await query(`
+        CREATE TABLE IF NOT EXISTS user_points_holds (
+            id SERIAL PRIMARY KEY,
+            hold_id TEXT NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL,
+            points INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'held', -- held | finalized | released | expired
+            reason TEXT,
+            source_url TEXT,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            expires_at BIGINT NOT NULL,
+            finalized_at BIGINT,
+            released_at BIGINT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+    `);
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_points_holds_user_status
+         ON user_points_holds(user_id, status);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_points_holds_expires_at
+         ON user_points_holds(expires_at);`,
     );
 
     // Credit orders (top-ups for points/credits)
@@ -480,18 +508,348 @@ export const updateUserPoints = async (id, points) => {
     return result.rows[0] || null;
 };
 
-export const consumeUserPoints = async (id, points) => {
-    const now = Date.now();
-    const result = await query(
+const expireUserPointsHolds = async (client, userId, now) => {
+    await client.query(
         `
-        UPDATE users
-        SET points = points - $2,
-            updated_at = $3
-        WHERE id = $1 AND points >= $2
-        RETURNING *;
+        UPDATE user_points_holds
+        SET status = 'expired',
+            updated_at = $3,
+            released_at = $3
+        WHERE user_id = $1
+          AND status = 'held'
+          AND expires_at <= $2;
         `,
-        [id, points, now],
+        [userId, now, now],
+    );
+};
+
+const getActiveHoldPoints = async (client, userId, now) => {
+    const result = await client.query(
+        `
+        SELECT COALESCE(SUM(points), 0) AS held
+        FROM user_points_holds
+        WHERE user_id = $1
+          AND status = 'held'
+          AND expires_at > $2;
+        `,
+        [userId, now],
     );
 
-    return result.rows[0] || null;
+    const held = Number.parseInt(result.rows?.[0]?.held ?? "0", 10);
+    return Number.isFinite(held) ? held : 0;
+};
+
+export const createPointsHold = async ({
+    userId,
+    points,
+    expiresAt,
+    reason = null,
+    sourceUrl = null,
+} = {}) => {
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+        await expireUserPointsHolds(client, userId, now);
+
+        const userRes = await client.query(
+            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            [userId],
+        );
+        if (!userRes.rowCount) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "USER_NOT_FOUND" };
+        }
+
+        const userPoints = Number(userRes.rows[0]?.points ?? 0);
+        const heldPoints = await getActiveHoldPoints(client, userId, now);
+        const available = userPoints - heldPoints;
+
+        if (!Number.isFinite(available) || available < points) {
+            await client.query("ROLLBACK");
+            return {
+                ok: false,
+                code: "INSUFFICIENT_POINTS",
+                current: Number.isFinite(available) ? available : userPoints,
+                required: points,
+            };
+        }
+
+        const holdId = nanoid(16);
+        await client.query(
+            `
+            INSERT INTO user_points_holds (
+                hold_id,
+                user_id,
+                points,
+                status,
+                reason,
+                source_url,
+                created_at,
+                updated_at,
+                expires_at
+            ) VALUES ($1, $2, $3, 'held', $4, $5, $6, $6, $7);
+            `,
+            [holdId, userId, points, reason, sourceUrl, now, expiresAt],
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            ok: true,
+            holdId,
+            pointsBefore: userPoints,
+            pointsHeld: points,
+            expiresAt,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const finalizePointsHold = async ({
+    userId,
+    holdId,
+    reason = null,
+} = {}) => {
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+        await expireUserPointsHolds(client, userId, now);
+
+        const holdRes = await client.query(
+            `
+            SELECT *
+            FROM user_points_holds
+            WHERE hold_id = $1 AND user_id = $2
+            FOR UPDATE;
+            `,
+            [holdId, userId],
+        );
+
+        if (!holdRes.rowCount) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "HOLD_NOT_FOUND" };
+        }
+
+        const hold = holdRes.rows[0];
+
+        if (hold.status !== "held") {
+            await client.query("COMMIT");
+            return {
+                ok: true,
+                status: hold.status,
+                charged: 0,
+            };
+        }
+
+        if (hold.expires_at <= now) {
+            await client.query(
+                `
+                UPDATE user_points_holds
+                SET status = 'expired',
+                    updated_at = $2,
+                    released_at = $2,
+                    reason = COALESCE(reason, $3)
+                WHERE id = $1;
+                `,
+                [hold.id, now, reason],
+            );
+            await client.query("COMMIT");
+            return { ok: false, code: "HOLD_EXPIRED", status: "expired" };
+        }
+
+        const userRes = await client.query(
+            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            [userId],
+        );
+        const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
+
+        if (!Number.isFinite(userPoints) || userPoints < hold.points) {
+            await client.query(
+                `
+                UPDATE user_points_holds
+                SET status = 'released',
+                    updated_at = $2,
+                    released_at = $2,
+                    reason = COALESCE(reason, $3)
+                WHERE id = $1;
+                `,
+                [hold.id, now, reason || "insufficient_points"],
+            );
+            await client.query("COMMIT");
+            return { ok: false, code: "INSUFFICIENT_POINTS", status: "released" };
+        }
+
+        const updated = await client.query(
+            `
+            UPDATE users
+            SET points = points - $2,
+                updated_at = $3
+            WHERE id = $1
+            RETURNING *;
+            `,
+            [userId, hold.points, now],
+        );
+
+        await client.query(
+            `
+            UPDATE user_points_holds
+            SET status = 'finalized',
+                updated_at = $2,
+                finalized_at = $2,
+                reason = COALESCE(reason, $3)
+            WHERE id = $1;
+            `,
+            [hold.id, now, reason],
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            ok: true,
+            status: "finalized",
+            charged: hold.points,
+            pointsBefore: userPoints,
+            pointsAfter: updated.rows?.[0]?.points ?? null,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const releasePointsHold = async ({
+    userId,
+    holdId,
+    reason = null,
+} = {}) => {
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+        await expireUserPointsHolds(client, userId, now);
+
+        const holdRes = await client.query(
+            `
+            SELECT *
+            FROM user_points_holds
+            WHERE hold_id = $1 AND user_id = $2
+            FOR UPDATE;
+            `,
+            [holdId, userId],
+        );
+
+        if (!holdRes.rowCount) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "HOLD_NOT_FOUND" };
+        }
+
+        const hold = holdRes.rows[0];
+
+        if (hold.status !== "held") {
+            await client.query("COMMIT");
+            return {
+                ok: true,
+                status: hold.status,
+            };
+        }
+
+        const nextStatus = hold.expires_at <= now ? "expired" : "released";
+        await client.query(
+            `
+            UPDATE user_points_holds
+            SET status = $2,
+                updated_at = $3,
+                released_at = $3,
+                reason = COALESCE(reason, $4)
+            WHERE id = $1;
+            `,
+            [hold.id, nextStatus, now, reason],
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            ok: true,
+            status: nextStatus,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const consumeUserPoints = async (id, points) => {
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+        await expireUserPointsHolds(client, id, now);
+
+        const userRes = await client.query(
+            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            [id],
+        );
+        if (!userRes.rowCount) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
+        const heldPoints = await getActiveHoldPoints(client, id, now);
+        const available = userPoints - heldPoints;
+
+        if (!Number.isFinite(available) || available < points) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        const result = await client.query(
+            `
+            UPDATE users
+            SET points = points - $2,
+                updated_at = $3
+            WHERE id = $1
+            RETURNING *;
+            `,
+            [id, points, now],
+        );
+
+        await client.query("COMMIT");
+        return result.rows[0] || null;
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
 };

@@ -102,6 +102,14 @@ export const loadEnvs = (env = process.env) => {
 
             return parsed;
         })(),
+        pointsHoldTtlSeconds: (() => {
+            const raw = env.POINTS_HOLD_TTL_SECONDS;
+            if (raw == null || raw === "") return 7200;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 7200;
+            return parsed;
+        })(),
 
         tunnelRateLimitWindow: (env.TUNNEL_RATELIMIT_WINDOW && parseInt(env.TUNNEL_RATELIMIT_WINDOW)) || 60,
         tunnelRateLimitMax: (env.TUNNEL_RATELIMIT_MAX && parseInt(env.TUNNEL_RATELIMIT_MAX)) || 40,

@@ -183,6 +183,21 @@
     });
 
     $: MediaTypeIcon = itemIcons[info.mediaType];
+
+    const getPointsSummary = (points?: CobaltQueueItem["points"]) => {
+        const charged = points?.charged;
+        if (!Number.isFinite(charged)) return null;
+
+        const before = points?.before;
+        const after = points?.after;
+        if (Number.isFinite(before) && Number.isFinite(after)) {
+            return `charged ${charged} points (${before} -> ${after})`;
+        }
+
+        return `charged ${charged} points`;
+    };
+
+    $: pointsSummary = info.state === "done" ? getPointsSummary(info.points) : null;
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -233,6 +248,11 @@
                 {statusText}
             </div>
         </div>
+        {#if pointsSummary}
+            <div class="points-status">
+                {pointsSummary}
+            </div>
+        {/if}
     </div>
 
     <div class="file-actions">
@@ -343,6 +363,12 @@
         line-break: anywhere;
         display: flex;
         align-items: center;
+    }
+
+    .points-status {
+        font-size: 12px;
+        color: var(--gray);
+        line-break: anywhere;
     }
 
     .file-status.error:not(.retrying) {

@@ -12,6 +12,7 @@ import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
 import { createSavePipeline } from "$lib/task-manager/queue";
+import { updateItem } from "$lib/state/task-manager/queue";
 import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
 import {
@@ -22,6 +23,7 @@ import {
 } from "$lib/state/clerk";
 
 import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
+import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
 
 type SavingHandlerArgs = {
     url?: string,
@@ -29,6 +31,10 @@ type SavingHandlerArgs = {
     oldTaskId?: string,
     response?: CobaltAPIResponse,
     skipPoints?: boolean,
+    queueMeta?: {
+        collectionMemory?: CobaltQueueItemCollectionMemory;
+    },
+    suppressErrors?: string[],
 }
 
 const accountPath = () => {
@@ -48,6 +54,34 @@ const normalizeTunnelUrl = (url?: string) => {
     } catch {
         return url;
     }
+};
+
+const applyQueueMeta = (
+    taskId: string | undefined,
+    response: CobaltAPIResponse | null,
+    queueMeta?: SavingHandlerArgs["queueMeta"],
+) => {
+    if (!taskId) return;
+
+    const points = response && "points" in response ? response.points : undefined;
+    const holdId = points?.holdId ?? null;
+    const required = points?.required ?? null;
+    const status = points?.outcome ?? (holdId ? "held" : undefined);
+
+
+
+    if (!holdId && !required && !queueMeta?.collectionMemory) return;
+
+    updateItem(taskId, (current) => ({
+        ...current,
+        points: {
+            ...current.points,
+            holdId: holdId ?? current.points?.holdId ?? null,
+            required: required ?? current.points?.required ?? null,
+            status: status ?? current.points?.status ?? null,
+        },
+        collectionMemory: queueMeta?.collectionMemory ?? current.collectionMemory,
+    }));
 };
 
 const guessMimeTypeFromFilename = (filename: string) => {
@@ -229,6 +263,8 @@ export const savingHandler = async ({
     oldTaskId,
     response: preFetchedResponse,
     skipPoints,
+    queueMeta,
+    suppressErrors,
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
@@ -319,14 +355,35 @@ export const savingHandler = async ({
         }
 
         downloadButtonState.set("error");
-
-        showError(
-            get(t)(response.error.code, response?.error?.context)
-        );
+        if (!suppressErrors?.includes(response.error.code)) {
+            showError(
+                get(t)(response.error.code, response?.error?.context)
+            );
+        }
         return response;
     }
 
     if (response.status === "redirect") {
+        // For batch requests forced into the queue, treat redirects as queue items.
+        if (selectedRequest.localProcessing === "forced" && selectedRequest.batch) {
+            downloadButtonState.set("done");
+
+            createSavePipeline(
+                {
+                    type: "proxy",
+                    tunnel: [response.url],
+                    output: {
+                        type: guessMimeTypeFromFilename(response.filename),
+                        filename: response.filename,
+                    },
+                } as any,
+                selectedRequest,
+                oldTaskId
+            );
+            applyQueueMeta(oldTaskId, response, queueMeta);
+            return response;
+        }
+
         downloadButtonState.set("done");
 
         downloadFile({
@@ -356,6 +413,7 @@ export const savingHandler = async ({
                 selectedRequest,
                 oldTaskId
             );
+            applyQueueMeta(oldTaskId, response, queueMeta);
             return response;
         }
 
@@ -385,6 +443,7 @@ export const savingHandler = async ({
                 : response.tunnel,
         };
         createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
+        applyQueueMeta(oldTaskId, response, queueMeta);
         return response;
     }
 

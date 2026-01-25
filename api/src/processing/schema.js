@@ -38,6 +38,8 @@ export const apiSchema = z.object({
         ["disabled", "preferred", "forced"]
     ).default("disabled"),
 
+    batch: z.boolean().default(false),
+
     youtubeDubLang: z.string()
                      .min(2)
                      .max(8)

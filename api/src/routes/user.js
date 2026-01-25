@@ -3,7 +3,9 @@ import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 
 import {
     consumeUserPoints,
+    finalizePointsHold,
     listUsers,
+    releasePointsHold,
     updateUserPoints,
     upsertUserFromClerk,
 } from "../db/users.js";
@@ -623,6 +625,171 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to deduct points",
+                );
+            }
+        });
+
+        router.post("/points/hold/finalize", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawHoldId = req.body?.holdId ?? req.body?.hold_id ?? "";
+                const holdId =
+                    typeof rawHoldId === "string" ? rawHoldId.trim() : "";
+
+                if (!holdId) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "holdId is required",
+                    );
+                }
+
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await finalizePointsHold({
+                    userId: user.id,
+                    holdId,
+                    reason: req.body?.reason ?? null,
+                });
+
+                if (!result.ok) {
+                    if (result.code === "HOLD_NOT_FOUND") {
+                        return jsonError(
+                            res,
+                            404,
+                            "HOLD_NOT_FOUND",
+                            "Hold not found",
+                        );
+                    }
+
+                    if (result.code === "HOLD_EXPIRED") {
+                        return jsonError(
+                            res,
+                            410,
+                            "HOLD_EXPIRED",
+                            "Hold expired",
+                        );
+                    }
+
+                    if (result.code === "INSUFFICIENT_POINTS") {
+                        return jsonError(
+                            res,
+                            409,
+                            "INSUFFICIENT_POINTS",
+                            "Not enough points",
+                        );
+                    }
+
+                    return jsonError(
+                        res,
+                        500,
+                        "SERVER_ERROR",
+                        "Failed to finalize points hold",
+                    );
+                }
+
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        holdId,
+                        status: result.status,
+                        charged: result.charged ?? 0,
+                        before: result.pointsBefore ?? null,
+                        after: result.pointsAfter ?? null,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/points/hold/finalize error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to finalize points hold",
+                );
+            }
+        });
+
+        router.post("/points/hold/release", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawHoldId = req.body?.holdId ?? req.body?.hold_id ?? "";
+                const holdId =
+                    typeof rawHoldId === "string" ? rawHoldId.trim() : "";
+
+                if (!holdId) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "holdId is required",
+                    );
+                }
+
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await releasePointsHold({
+                    userId: user.id,
+                    holdId,
+                    reason: req.body?.reason ?? null,
+                });
+
+                if (!result.ok) {
+                    if (result.code === "HOLD_NOT_FOUND") {
+                        return jsonError(
+                            res,
+                            404,
+                            "HOLD_NOT_FOUND",
+                            "Hold not found",
+                        );
+                    }
+
+                    return jsonError(
+                        res,
+                        500,
+                        "SERVER_ERROR",
+                        "Failed to release points hold",
+                    );
+                }
+
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        holdId,
+                        status: result.status,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/points/hold/release error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to release points hold",
                 );
             }
         });

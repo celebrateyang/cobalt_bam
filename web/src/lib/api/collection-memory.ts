@@ -7,8 +7,21 @@ export type CollectionMemoryMarkItem = {
     title?: string;
 };
 
+const getTokenWithRetry = async (attempts = 6, delayMs = 250) => {
+    let token = await getClerkToken();
+    if (token) return token;
+
+    for (let i = 0; i < attempts; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        token = await getClerkToken();
+        if (token) return token;
+    }
+
+    return null;
+};
+
 export const getCollectionDownloadedItemKeys = async (collectionKey: string) => {
-    const token = await getClerkToken();
+    const token = await getTokenWithRetry();
     if (!token) return [];
 
     const apiBase = currentApiURL();
@@ -45,7 +58,7 @@ export const markCollectionDownloadedItems = async ({
     sourceUrl?: string;
     items: CollectionMemoryMarkItem[];
 }) => {
-    const token = await getClerkToken();
+    const token = await getTokenWithRetry();
     if (!token) return false;
 
     const apiBase = currentApiURL();
@@ -68,7 +81,7 @@ export const markCollectionDownloadedItems = async ({
 };
 
 export const clearCollectionMemory = async (collectionKey: string) => {
-    const token = await getClerkToken();
+    const token = await getTokenWithRetry();
     if (!token) return false;
 
     const apiBase = currentApiURL();

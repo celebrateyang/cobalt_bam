@@ -91,12 +91,25 @@ export type CobaltServerInfo = {
 // this allows for extra properties, which is not ideal,
 // but i couldn't figure out how to make a strict partial :(
 export type CobaltSaveRequestBody =
-    { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>>;
+    { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>> & {
+        batch?: boolean;
+    };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;
 export type CobaltServerInfoResponse = CobaltServerInfo | CobaltErrorResponse;
 
+export type CobaltPointsInfo = {
+    outcome?: string;
+    required?: number | null;
+    before?: number | null;
+    after?: number | null;
+    holdId?: string | null;
+    holdExpiresAt?: number | null;
+};
+
 export type CobaltAPIResponse = (CobaltErrorResponse
                               | CobaltPickerResponse
                               | CobaltRedirectResponse
-                              | CobaltTunnelResponse) & CobaltDuration;
+                              | CobaltTunnelResponse) & CobaltDuration & {
+                                  points?: CobaltPointsInfo;
+                              };

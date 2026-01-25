@@ -4,11 +4,7 @@
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
-    import {
-        clearCollectionMemory,
-        markCollectionDownloadedItems,
-        type CollectionMemoryMarkItem,
-    } from "$lib/api/collection-memory";
+    import { clearCollectionMemory } from "$lib/api/collection-memory";
     import { createDialog } from "$lib/state/dialogs";
     import {
         checkSignedIn,
@@ -17,6 +13,7 @@
         isSignedIn,
         signIn,
     } from "$lib/state/clerk";
+    import { uuid } from "$lib/util";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
     import type { CobaltSaveRequestBody } from "$lib/types/api";
@@ -35,7 +32,7 @@
     export let id: string;
     export let title = "";
     export let items: DialogBatchItem[] = [];
-    export let downloadedItems: DialogBatchItem[] = [];
+    export let downloadedItems: DialogBatchItem[] | null = [];
     export let collectionTotalCount: number | undefined = undefined;
     export let dismissable = true;
     export let collectionKey: string | undefined = undefined;
@@ -58,6 +55,13 @@
     let pointsPreviewRequestId = 0;
 
     let viewingDownloaded = false;
+    $: safeDownloadedItems = Array.isArray(downloadedItems) ? downloadedItems : [];
+    const rateLimitErrorCode = "error.api.rate_exceeded";
+    const baseBatchDelayMs = 1200;
+    const rateLimitBackoffMs = 4000;
+    const maxRateLimitRetries = 2;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    let rateLimitSkipNotified = false;
 
     const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
         const request = buildSaveRequest(url);
@@ -65,6 +69,7 @@
         // Only batch downloads should go through the processing queue.
         // Keep single-link behavior unchanged.
         request.localProcessing = "forced";
+        request.batch = true;
 
         return request;
     };
@@ -280,7 +285,7 @@
         if (nextKey !== itemsKey) {
             itemsKey = nextKey;
             resetStateForItems();
-            viewingDownloaded = items.length === 0 && downloadedItems.length > 0;
+            viewingDownloaded = items.length === 0 && safeDownloadedItems.length > 0;
             schedulePointsPreview();
         }
     }
@@ -403,26 +408,66 @@
         // allow dialog stack to settle before any subsequent dialogs open
         await new Promise((r) => setTimeout(r, 200));
 
-        const memoryQueue: CollectionMemoryMarkItem[] = [];
-        const canMarkMemory = clerkEnabled && !!collectionKey;
-        const flushMemoryQueue = async () => {
-            if (!canMarkMemory || memoryQueue.length === 0) return;
-            const chunk = memoryQueue.splice(0, memoryQueue.length);
-            await markCollectionDownloadedItems({
-                collectionKey: collectionKey!,
-                title: title || undefined,
-                sourceUrl: collectionSourceUrl,
-                items: chunk,
-            }).catch(() => false);
-        };
-
         for (const item of selectedItems) {
             if (cancelRequested) break;
+            const taskId = uuid();
+            let response = null;
+            let rateLimitRetries = 0;
+
+            while (!cancelRequested) {
+                response = await savingHandler({
+                    request: buildBatchRequest(item.url),
+                    skipPoints: true,
+                    oldTaskId: taskId,
+                    suppressErrors: [rateLimitErrorCode],
+                    queueMeta:
+                        clerkEnabled &&
+                        collectionKey &&
+                        $isSignedIn &&
+                        item.itemKey
+                            ? {
+                                  collectionMemory: {
+                                      collectionKey,
+                                      title: title || undefined,
+                                      sourceUrl: collectionSourceUrl,
+                                      itemKey: item.itemKey,
+                                      itemUrl: item.url,
+                                      itemTitle: item.title,
+                                  },
+                              }
+                            : undefined,
+                });
+
+                if (response?.status === "error" && response.error.code === rateLimitErrorCode) {
+                    rateLimitRetries += 1;
+                    if (rateLimitRetries > maxRateLimitRetries) {
+                        if (!rateLimitSkipNotified) {
+                            rateLimitSkipNotified = true;
+                            createDialog({
+                                id: "batch-rate-limit-skipped",
+                                type: "small",
+                                meowbalt: "error",
+                                title: $t("dialog.batch.points_check_failed"),
+                                bodyText: "rate limit hit; some items were skipped. batch will continue.",
+                                buttons: [
+                                    {
+                                        text: $t("button.gotit"),
+                                        main: true,
+                                        action: () => {},
+                                    },
+                                ],
+                            });
+                        }
+                        break;
+                    }
+                    await sleep(rateLimitBackoffMs * rateLimitRetries);
+                    continue;
+                }
+
+                break;
+            }
+
             progress += 1;
-            const response = await savingHandler({
-                request: buildBatchRequest(item.url),
-                skipPoints: true,
-            });
 
             if (response?.status === "error") {
                 const code = response.error.code;
@@ -438,20 +483,9 @@
                 }
             }
 
-            if (canMarkMemory && response && response.status !== "error" && item.itemKey) {
-                memoryQueue.push({
-                    itemKey: item.itemKey,
-                    url: item.url,
-                    title: item.title,
-                });
-                if (memoryQueue.length >= 10) {
-                    await flushMemoryQueue();
-                }
-            }
-            await new Promise((r) => setTimeout(r, 250));
+            await sleep(baseBatchDelayMs);
         }
 
-        await flushMemoryQueue();
         resetRunState();
     };
 
@@ -472,7 +506,7 @@
 
         const item =
             items.find((entry) => entry.url === url) ||
-            downloadedItems.find((entry) => entry.url === url) ||
+            safeDownloadedItems.find((entry) => entry.url === url) ||
             { url };
         const { requiredPoints } = await prepareBatch([item]);
 
@@ -491,32 +525,28 @@
             }
         }
 
-        const response = await savingHandler({
+        const taskId = uuid();
+        await savingHandler({
             request: buildBatchRequest(url),
             skipPoints: true,
+            oldTaskId: taskId,
+            queueMeta:
+                clerkEnabled &&
+                collectionKey &&
+                $isSignedIn &&
+                item?.itemKey
+                    ? {
+                          collectionMemory: {
+                              collectionKey,
+                              title: title || undefined,
+                              sourceUrl: collectionSourceUrl,
+                              itemKey: item.itemKey,
+                              itemUrl: item.url,
+                              itemTitle: item.title,
+                          },
+                      }
+                    : undefined,
         });
-
-        const itemKey = item?.itemKey;
-        if (
-            clerkEnabled &&
-            collectionKey &&
-            response &&
-            response.status !== "error" &&
-            itemKey
-        ) {
-            void markCollectionDownloadedItems({
-                collectionKey,
-                title: title || undefined,
-                sourceUrl: collectionSourceUrl,
-                items: [
-                    {
-                        itemKey,
-                        url,
-                        title: item?.title,
-                    },
-                ],
-            });
-        }
     };
 </script>
 
@@ -538,9 +568,9 @@
                             {$t("dialog.batch.status.selected")}: {selectedCount()}/{items.length}
                         </div>
                     {/if}
-                    {#if clerkEnabled && collectionKey && $isSignedIn && downloadedItems.length > 0}
+                    {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
                         <div>
-                            {$t("dialog.batch.status.downloaded")}: {downloadedItems.length}
+                            {$t("dialog.batch.status.downloaded")}: {safeDownloadedItems.length}
                             {#if collectionTotalCount}
                                 /{collectionTotalCount}
                             {/if}
@@ -570,7 +600,7 @@
                 </button>
             {/if}
 
-            {#if clerkEnabled && collectionKey && $isSignedIn && downloadedItems.length > 0}
+            {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
                 <button
                     class="button elevated toolbar-button"
                     disabled={running || pointsCheckLoading}
@@ -595,7 +625,7 @@
         </div>
 
         <div class="batch-list" role="list">
-            {#each viewingDownloaded ? downloadedItems : items as item, i (item.url)}
+            {#each viewingDownloaded ? safeDownloadedItems : items as item, i (item.url)}
                 <div class="batch-item" class:downloaded={viewingDownloaded} role="listitem">
                     {#if viewingDownloaded}
                         <div class="batch-check downloaded-indicator" aria-hidden="true">

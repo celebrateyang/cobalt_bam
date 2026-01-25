@@ -27,7 +27,12 @@ import * as APIKeys from "../security/api-keys.js";
 import * as Cookies from "../processing/cookie/manager.js";
 import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 import { verifyToken } from "@clerk/express";
-import { consumeUserPoints, getUserByClerkId, upsertUserFromClerk } from "../db/users.js";
+import {
+    consumeUserPoints,
+    createPointsHold,
+    getUserByClerkId,
+    upsertUserFromClerk,
+} from "../db/users.js";
 
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
@@ -64,7 +69,10 @@ const sanitizeLogHeaderValue = (value, maxLength) => {
     return trimmed;
 };
 
-const isUpstreamServer = !!process.env.IS_UPSTREAM_SERVER;
+const isUpstreamServer = (() => {
+    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+    return raw === "true" || raw === "1";
+})();
 
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -431,6 +439,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 return fail(res, "error.api.points.unavailable");
             }
         }
+        console.log(
+            `[DOWNLOAD AUTH] url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
+        );
 
         const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
         const email = clientEmail ?? "unknown";
@@ -489,43 +500,90 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             });
 
             const resultBodyStatus = result?.body?.status ?? "unknown";
+            const isBatchRequest = normalizedRequest?.batch === true;
             let pointsOutcome = "skipped";
             let pointsRequired = null;
             let pointsBefore = null;
             let pointsAfter = null;
+            let pointsHoldId = null;
+            let pointsHoldExpiresAt = null;
 
             if (pointsUser && resultBodyStatus !== "error") {
-                pointsOutcome = "attempt";
                 pointsRequired = durationToPoints(result?.body?.duration);
                 pointsBefore = pointsUser.points;
-                try {
-                    const updated = await consumeUserPoints(
-                        pointsUser.id,
-                        pointsRequired,
-                    );
-                    if (!updated) {
-                        pointsOutcome = "insufficient";
-                        console.log(
-                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=insufficient current=${pointsBefore} required=${pointsRequired} email=${email}`,
-                        );
-                        return fail(res, "error.api.points.insufficient", {
-                            current: pointsUser.points,
-                            required: pointsRequired,
-                        });
-                    }
 
-                    pointsOutcome = "consumed";
-                    pointsAfter = updated.points;
-                    console.log(
-                        `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} email=${email}`,
-                    );
-                } catch (error) {
-                    console.error("Failed to consume points:", error);
-                    pointsOutcome = "error";
-                    console.log(
-                        `[DOWNLOAD POINTS]  url=${normalizedRequest.url} result=error  email=${email}`,
-                    );
-                    return fail(res, "error.api.points.unavailable");
+                if (isBatchRequest) {
+                    pointsOutcome = "hold";
+                    const holdExpiresAt =
+                        Date.now() + env.pointsHoldTtlSeconds * 1000;
+                    try {
+                        const hold = await createPointsHold({
+                            userId: pointsUser.id,
+                            points: pointsRequired,
+                            expiresAt: holdExpiresAt,
+                            reason: "batch_download",
+                            sourceUrl: normalizedRequest.url,
+                        });
+
+                        if (!hold.ok) {
+                            pointsOutcome = "insufficient";
+                            console.log(
+                                `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=insufficient current=${hold.current ?? pointsBefore} required=${pointsRequired} email=${email}`,
+                            );
+                            return fail(res, "error.api.points.insufficient", {
+                                current: hold.current ?? pointsUser.points,
+                                required: pointsRequired,
+                            });
+                        }
+
+                        pointsOutcome = "held";
+                        pointsHoldId = hold.holdId;
+                        pointsHoldExpiresAt = hold.expiresAt;
+                        pointsBefore = hold.pointsBefore ?? pointsBefore;
+                        pointsAfter = pointsBefore;
+
+                        console.log(
+                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=held before=${pointsBefore} required=${pointsRequired} hold_id=${pointsHoldId} email=${email}`,
+                        );
+                    } catch (error) {
+                        console.error("Failed to hold points:", error);
+                        pointsOutcome = "error";
+                        console.log(
+                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=error email=${email}`,
+                        );
+                        return fail(res, "error.api.points.unavailable");
+                    }
+                } else {
+                    pointsOutcome = "attempt";
+                    try {
+                        const updated = await consumeUserPoints(
+                            pointsUser.id,
+                            pointsRequired,
+                        );
+                        if (!updated) {
+                            pointsOutcome = "insufficient";
+                            console.log(
+                                `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=insufficient current=${pointsBefore} required=${pointsRequired} email=${email}`,
+                            );
+                            return fail(res, "error.api.points.insufficient", {
+                                current: pointsUser.points,
+                                required: pointsRequired,
+                            });
+                        }
+
+                        pointsOutcome = "consumed";
+                        pointsAfter = updated.points;
+                        console.log(
+                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} email=${email}`,
+                        );
+                    } catch (error) {
+                        console.error("Failed to consume points:", error);
+                        pointsOutcome = "error";
+                        console.log(
+                            `[DOWNLOAD POINTS]  url=${normalizedRequest.url} result=error  email=${email}`,
+                        );
+                        return fail(res, "error.api.points.unavailable");
+                    }
                 }
             }
 
@@ -534,6 +592,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             );
 
             console.log();
+            if (isBatchRequest && result?.body && pointsOutcome !== "skipped") {
+                result.body.points = {
+                    outcome: pointsOutcome,
+                    required: pointsRequired,
+                    before: pointsBefore,
+                    after: pointsAfter,
+                    holdId: pointsHoldId,
+                    holdExpiresAt: pointsHoldExpiresAt,
+                };
+            }
+
             res.status(result.status).json(result.body);
         } catch (error) {
             // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);

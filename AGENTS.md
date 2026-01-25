@@ -42,6 +42,9 @@
 - Downloader endpoint auth is optional (supports API keys + sessions; see envs in `docs/run-an-instance.md` + code in `api/src/core/env.js`)
 - Turnstile + JWT sessions exist (when configured): `api/src/security/turnstile.js`, `api/src/security/jwt.js`
 - Multi-instance requires Redis (`API_INSTANCE_COUNT>=2` ⇒ `API_REDIS_URL`): `api/src/core/env.js`
+- API envs already include `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY` in `api/.env`; do not ask again.
+- For project details, read the code or add logs to verify; avoid asking the user for information that can be derived from the repo.
+- Local testing: set `IS_UPSTREAM_SERVER=false` in `api/.env` so Clerk points/memory flows are enabled (the user often runs local API as upstream otherwise).
 
 ## Data/storage notes
 - DB is PostgreSQL in prod (`DB_TYPE=postgresql` + `DB_*`); user + social modules require Postgres (`api/src/db/*`)

@@ -654,6 +654,9 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
+                console.log(
+                    `[hold-finalize] Request: userId=${auth.userId} holdId=${holdId} reason=${req.body?.reason ?? "none"}`,
+                );
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
@@ -663,6 +666,10 @@ if (!isClerkApiConfigured) {
                     holdId,
                     reason: req.body?.reason ?? null,
                 });
+
+                console.log(
+                    `[hold-finalize] Result: userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? "none"} charged=${result.charged ?? "none"} code=${result.code ?? "none"}`,
+                );
 
                 if (!result.ok) {
                     if (result.code === "HOLD_NOT_FOUND") {

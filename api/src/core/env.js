@@ -114,10 +114,10 @@ export const loadEnvs = (env = process.env) => {
         })(),
         pointsHoldTtlSeconds: (() => {
             const raw = env.POINTS_HOLD_TTL_SECONDS;
-            if (raw == null || raw === "") return 30;
+            if (raw == null || raw === "") return 3600;
 
             const parsed = parseInt(raw);
-            if (!Number.isFinite(parsed) || parsed <= 0) return 30;
+            if (!Number.isFinite(parsed) || parsed <= 0) return 3600;
             return parsed;
         })(),
 

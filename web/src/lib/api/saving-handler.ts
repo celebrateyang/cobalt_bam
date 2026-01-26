@@ -68,7 +68,13 @@ const applyQueueMeta = (
     const required = points?.required ?? null;
     const status = points?.outcome ?? (holdId ? "held" : undefined);
 
-
+    console.log("[queue] applyQueueMeta", {
+        taskId,
+        holdId,
+        required,
+        status,
+        hasCollectionMemory: Boolean(queueMeta?.collectionMemory),
+    });
 
     if (!holdId && !required && !queueMeta?.collectionMemory) return;
 

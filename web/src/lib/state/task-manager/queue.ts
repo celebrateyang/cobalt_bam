@@ -85,6 +85,9 @@ const finalizeQueueHold = async (id: UUID) => {
     }
 
 
+    console.log(
+        `[queue] finalizeQueueHold: start id=${id} holdId=${holdId ?? "none"} required=${required ?? "none"} status=${currentStatus ?? "none"}`
+    );
     let result = holdId
         ? await finalizePointsHold(holdId, "queue_done")
         : { ok: true, status: "skipped" };
@@ -95,6 +98,9 @@ const finalizeQueueHold = async (id: UUID) => {
     }
 
     if (result?.ok) {
+        console.log(
+            `[queue] finalizeQueueHold: success id=${id} holdId=${holdId ?? "none"} status=${result.status ?? "none"}`
+        );
         updateItemPoints(id, {
             holdId,
             required,
@@ -105,6 +111,10 @@ const finalizeQueueHold = async (id: UUID) => {
         });
         await markQueueItemMemory(item);
     } else {
+        console.error(
+            `[queue] finalizeQueueHold: failed id=${id} holdId=${holdId ?? "none"} result=`,
+            result
+        );
         updateItemPoints(id, {
             holdId,
             required,
@@ -213,6 +223,7 @@ export function itemDone(id: UUID, file: File) {
     });
 
     schedule();
+    void finalizeQueueHold(id);
 }
 
 export function pipelineTaskDone(id: UUID, workerId: UUID, file: File) {
@@ -262,7 +273,6 @@ export function removeItem(id: UUID) {
     });
 
     schedule();
-    void finalizeQueueHold(id);
 }
 
 export function updateItem(id: UUID, updater: (item: CobaltQueueItem) => CobaltQueueItem) {
@@ -275,7 +285,6 @@ export function updateItem(id: UUID, updater: (item: CobaltQueueItem) => CobaltQ
     });
 
     schedule();
-    void finalizeQueueHold(id);
 }
 
 export function clearQueue() {

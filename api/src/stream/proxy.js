@@ -59,6 +59,21 @@ export default async function (streamInfo, res) {
 
         res.once("finish", () => logEnd("finish"));
         res.once("close", () => logEnd("close"));
+        stream.once("end", () => {
+            console.log(
+                `[TUNNEL] service=${streamInfo.service} type=proxy reason=upstream_end elapsed_ms=${Date.now() - startedAt}`,
+            );
+        });
+        stream.once("close", () => {
+            console.log(
+                `[TUNNEL] service=${streamInfo.service} type=proxy reason=upstream_close elapsed_ms=${Date.now() - startedAt}`,
+            );
+        });
+        stream.once("error", (error) => {
+            console.warn(
+                `[TUNNEL] service=${streamInfo.service} type=proxy reason=upstream_error elapsed_ms=${Date.now() - startedAt} message=${error?.message ?? "unknown"}`,
+            );
+        });
         console.log(
             `[TUNNEL] service=${streamInfo.service} type=proxy reason=start status=${statusCode} range=${streamInfo.range ?? "none"} upstream_len=${upstreamContentLength ?? "n/a"}`,
         );

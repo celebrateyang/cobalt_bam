@@ -8,7 +8,24 @@ const defaultAgent = new Agent();
 
 export default async function (streamInfo, res) {
     const abortController = new AbortController();
+    const startedAt = Date.now();
+    let upstreamStatusCode;
+    let upstreamContentLength;
+    let endLogged = false;
+    const logEnd = (reason, extra = "") => {
+        if (endLogged) return;
+        endLogged = true;
+        const range = streamInfo.range ? ` range=${streamInfo.range}` : "";
+        const upstream =
+            upstreamStatusCode || upstreamContentLength
+                ? ` upstream_status=${upstreamStatusCode ?? "n/a"} upstream_len=${upstreamContentLength ?? "n/a"}`
+                : "";
+        console.log(
+            `[TUNNEL] service=${streamInfo.service} type=proxy reason=${reason} status=${res.statusCode ?? "n/a"} elapsed_ms=${Date.now() - startedAt}${range}${upstream}${extra}`,
+        );
+    };
     const shutdown = () => (
+        logEnd("shutdown"),
         closeRequest(abortController),
         closeResponse(res),
         destroyInternalStream(streamInfo.urls)
@@ -30,6 +47,8 @@ export default async function (streamInfo, res) {
             dispatcher: defaultAgent,
         });
 
+        upstreamStatusCode = statusCode;
+        upstreamContentLength = headers["content-length"];
         res.status(statusCode);
 
         for (const headerName of ['accept-ranges', 'content-type', 'content-length']) {
@@ -38,8 +57,16 @@ export default async function (streamInfo, res) {
             }
         }
 
+        res.once("finish", () => logEnd("finish"));
+        res.once("close", () => logEnd("close"));
+        console.log(
+            `[TUNNEL] service=${streamInfo.service} type=proxy reason=start status=${statusCode} range=${streamInfo.range ?? "none"} upstream_len=${upstreamContentLength ?? "n/a"}`,
+        );
         pipe(stream, res, shutdown);
-    } catch {
+    } catch (error) {
+        console.warn(
+            `[TUNNEL] service=${streamInfo.service} type=proxy reason=error elapsed_ms=${Date.now() - startedAt} message=${error?.message ?? "unknown"}`,
+        );
         shutdown();
     }
 }

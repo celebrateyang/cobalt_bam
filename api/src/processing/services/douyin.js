@@ -204,13 +204,14 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
-                    return {
-                        filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
-                        urls: upstream.url,
-                        headers: {
-                            "User-Agent": MOBILE_UA,
-                        },
-                    };
+        return {
+            filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
+            audioFilename: `douyin_${obj.shortLink}_audio`,
+            urls: upstream.url,
+            headers: {
+                "User-Agent": MOBILE_UA,
+            },
+        };
                 }
             }
 
@@ -316,6 +317,7 @@ export default async function(obj) {
                     });
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
                         headers: {
                             "User-Agent": MOBILE_UA,
@@ -425,6 +427,7 @@ export default async function(obj) {
 
         return {
             filename: `douyin_${videoId}.mp4`,
+            audioFilename: `douyin_${videoId}_audio`,
             urls: directUrl,
             duration,
             headers: {

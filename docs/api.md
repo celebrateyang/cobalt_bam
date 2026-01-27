@@ -83,6 +83,49 @@ the response will always be a JSON object containing the `status` key, which wil
 | `service`    | `string` | **optional**, stating which service was being downloaded from                                                  |
 | `limit`      | `number` | **optional** number providing the ratelimit maximum number of requests, or maximum downloadable video duration |
 
+## points hold flow (batch downloads)
+when `batch=true`, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
+
+### success path (hold -> finalize)
+1) client sends `POST /` with `batch=true`
+2) server calculates required points and creates a hold (`status=held`, `expires_at = now + POINTS_HOLD_TTL_SECONDS`)
+3) client stores `holdId` on the queue item
+4) when the item finishes, client calls `POST /user/points/hold/finalize`
+5) server deducts points and marks the hold `finalized`
+
+sequence (success):
+```
+client -> api POST / (batch=true)
+api -> db createPointsHold (status=held, expires_at=now+TTL)
+api -> client { points: { holdId, required, outcome:"held" } }
+client -> queue itemDone -> finalizeQueueHold
+client -> api POST /user/points/hold/finalize
+api -> db finalizePointsHold (users.points -= hold.points, status=finalized)
+```
+
+### failure path (no charge)
+1) client sends `POST /` with `batch=true` (same hold creation)
+2) queue worker fails (`fetch/ffmpeg` error)
+3) client calls `POST /user/points/hold/release`
+4) server marks the hold `released` (no points deducted)
+
+sequence (failure):
+```
+queue worker -> itemError
+client -> api POST /user/points/hold/release
+api -> db releasePointsHold (status=released, no users.points change)
+```
+
+### hold expiry
+holds are not released by a scheduled job. instead, any points operation calls `expireUserPointsHolds` first:
+```
+expireUserPointsHolds:
+  UPDATE user_points_holds
+  SET status='released'
+  WHERE status='held' AND expires_at <= now
+```
+if finalize happens after TTL, the hold will already be released and the response will show `charged=0`.(因为finalize执行时第一步，会把expired即create+TTL< Nowtime 的hold直接设置为release)
+
 ## GET: `/`
 returns current basic server info.
 response body type: `application/json`

@@ -55,6 +55,7 @@
     },
     "action": {
       "downloading": "下载中..."
-    }
+    },
+    "batch_limit_hint": "批量上限：{{max}}"
   }
 }

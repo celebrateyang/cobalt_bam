@@ -55,6 +55,7 @@
     },
     "action": {
       "downloading": "Downloading..."
-    }
+    },
+    "batch_limit_hint": "Batch limit: {{max}}"
   }
 }

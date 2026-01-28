@@ -1,7 +1,7 @@
 import cors from "cors";
 import http from "node:http";
 import rateLimit from "express-rate-limit";
-import { setGlobalDispatcher, EnvHttpProxyAgent } from "undici";
+import { setGlobalDispatcher, EnvHttpProxyAgent, request as undiciRequest } from "undici";
 import { getCommit, getBranch, getRemote, getVersion } from "@imput/version-info";
 
 import jwt from "../security/jwt.js";
@@ -19,6 +19,7 @@ import { verifyTurnstileToken } from "../security/turnstile.js";
 import { friendlyServiceName } from "../processing/service-alias.js";
 import { verifyStream } from "../stream/manage.js";
 import { createResponse, normalizeRequest, getIP } from "../processing/request.js";
+import { getHeaders } from "../stream/shared.js";
 import { expandURL } from "../processing/expand.js";
 import { setupTunnelHandler } from "./itunnel.js";
 import { setupSignalingServer } from "./signaling.js";
@@ -631,6 +632,65 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         ],
         ...corsConfig,
     }));
+
+    app.get('/relay', async (req, res) => {
+        if (!isUpstreamServer) {
+            return res.sendStatus(404);
+        }
+
+        if (env.instagramUpstreamApiKey) {
+            const authHeader = req.header("Authorization") || "";
+            if (authHeader !== `Api-Key ${env.instagramUpstreamApiKey}`) {
+                return res.sendStatus(401);
+            }
+        }
+
+        const url = req.query.url;
+        const service = req.query.service;
+        if (!url || typeof url !== "string" || !service || typeof service !== "string") {
+            return res.sendStatus(400);
+        }
+
+        if (service !== "douyin") {
+            return res.sendStatus(400);
+        }
+
+        let target;
+        try {
+            target = new URL(url);
+        } catch {
+            return res.sendStatus(400);
+        }
+
+        if (!["http:", "https:"].includes(target.protocol)) {
+            return res.sendStatus(400);
+        }
+
+        const range = req.headers["range"];
+
+        try {
+            const { body: stream, headers, statusCode } = await undiciRequest(target.toString(), {
+                headers: {
+                    ...getHeaders(service),
+                    ...(range ? { Range: range } : {}),
+                },
+                maxRedirections: 8,
+            });
+
+            res.status(statusCode);
+            for (const headerName of ["accept-ranges", "content-type", "content-length"]) {
+                if (headers[headerName]) {
+                    res.setHeader(headerName, headers[headerName]);
+                }
+            }
+
+            stream.on("error", () => res.end());
+            stream.on("close", () => res.end());
+            stream.pipe(res);
+        } catch {
+            return res.sendStatus(502);
+        }
+    });
 
     app.get('/tunnel', apiTunnelLimiter, async (req, res) => {
         const id = String(req.query.id);

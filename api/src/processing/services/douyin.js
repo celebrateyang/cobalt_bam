@@ -46,6 +46,18 @@ const logUpstreamUsed = (reason, { videoId, shortLink, targetUrl, status }) => {
     });
 };
 
+const buildUpstreamRelayUrl = (upstreamOrigin, service, url) => {
+    if (!upstreamOrigin || upstreamOrigin === "invalid") return null;
+    try {
+        const relay = new URL("/relay", upstreamOrigin);
+        relay.searchParams.set("service", service);
+        relay.searchParams.set("url", url);
+        return relay.toString();
+    } catch {
+        return null;
+    }
+};
+
 const requestUpstreamCobalt = async (targetUrl) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
@@ -115,10 +127,16 @@ const requestUpstreamCobalt = async (targetUrl) => {
         if (!["redirect", "tunnel"].includes(payload.status)) return null;
         if (!payload.url) return null;
 
+        const relayUrl =
+            payload.status === "redirect"
+                ? buildUpstreamRelayUrl(upstreamOrigin, "douyin", payload.url)
+                : null;
+
         return {
             status: payload.status,
             url: payload.url,
             filename: payload.filename,
+            relayUrl,
         };
     } catch (e) {
         console.warn("Douyin upstream request failed:", e);
@@ -213,6 +231,18 @@ const getContentLengthBytes = async (url) => {
     }
 };
 
+const buildRelayHeaders = () => {
+    const headers = {
+        "ngrok-skip-browser-warning": "true",
+    };
+
+    if (env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    return headers;
+};
+
 export default async function(obj) {
     let videoId = obj.id;
 
@@ -239,6 +269,14 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
+                            audioFilename: `douyin_${obj.shortLink}_audio`,
+                            urls: upstream.relayUrl,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
                     return {
                         filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
                         audioFilename: `douyin_${obj.shortLink}_audio`,
@@ -351,6 +389,14 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: `douyin_${videoId}_audio`,
+                            urls: upstream.relayUrl,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
@@ -407,6 +453,14 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: `douyin_${videoId}_audio`,
+                            urls: upstream.relayUrl,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
@@ -490,6 +544,14 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: `douyin_${videoId}_audio`,
+                            urls: upstream.relayUrl,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,

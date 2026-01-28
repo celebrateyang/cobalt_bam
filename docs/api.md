@@ -50,6 +50,24 @@ the response will always be a JSON object containing the `status` key, which wil
 | `url`        | `string` | url for the cobalt tunnel, or redirect to an external link  |
 | `filename`   | `string` | cobalt-generated filename for the file being downloaded     |
 
+### douyin upstream relay (large files)
+for large douyin files, the main server can use an upstream instance as a relay so the cdn sees the upstream IP, while the browser still downloads from the main domain.
+
+flow (simplified):
+```
+client -> main api
+main api -> upstream (resolve)
+upstream -> main api (cdn url)
+main api -> upstream /relay (server-side)
+upstream -> cdn (with referer/ua)
+upstream -> main api -> client (stream)
+```
+
+notes:
+- direct browser downloads from douyin cdn can return 403 without proper referer/user-agent.
+- the relay path keeps the cdn request server-side and adds the required headers.
+- in our production setup, douyin cdn may detect the api server IP on large files and close the connection around ~8MB; routing large files through the upstream relay avoids that.
+
 ### picker response
 | key             | type     | values                                                                                           |
 |:----------------|:---------|:-------------------------------------------------------------------------------------------------|

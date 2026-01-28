@@ -76,6 +76,7 @@ sudo service nscd start
 | `INSTAGRAM_UPSTREAM_URL` | not used | `https://example.ngrok-free.app/` | fallback cobalt instance used when instagram/bilibili/douyin extraction fails locally (e.g. WAF/rate-limits), and optionally for Instagram creator sync (Discover/admin). |
 | `INSTAGRAM_UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value (sent as `Authorization: Api-Key ...`) for `INSTAGRAM_UPSTREAM_URL`. |
 | `INSTAGRAM_UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. |
+| `DOUYIN_UPSTREAM_MIN_BYTES` | `8388608` | `16777216` | route large Douyin files (bytes) through upstream fallback (default 8 MB). |
 | `PROCESSING_PRIORITY` | not used  | `10`                    | changes `nice` value* for ffmpeg subprocess. available only on unix systems. |
 | `FREEBIND_CIDR`       | ➖        | `2001:db8::/32`         | IPv6 prefix used for randomly assigning addresses to cobalt requests. only supported on linux systems. see below for more info. |
 | `RATELIMIT_WINDOW`    | `60`      | `120`                   | rate limit time window in **seconds**. |
@@ -84,6 +85,20 @@ sudo service nscd start
 | `TUNNEL_LIFESPAN`     | `90`      | `120`                   | the duration for which tunnel info is stored in ram, **in seconds**. |
 
 \* the higher the nice value, the lower the priority. [read more here](https://en.wikipedia.org/wiki/Nice_(Unix)).
+
+#### Douyin upstream relay (large files)
+When a Douyin file is larger than `DOUYIN_UPSTREAM_MIN_BYTES`, the main server can use the upstream instance as a relay so the CDN sees the upstream IP while the browser downloads from the main domain.
+
+Flow (high level):
+- main server detects a large Douyin file.
+- main server calls upstream (via `INSTAGRAM_UPSTREAM_URL`) to resolve the media.
+- upstream returns a direct CDN URL.
+- main server uses upstream `/relay` to fetch the CDN media with proper headers and streams it back to the user.
+
+Notes:
+- `/relay` is available only on upstream instances (`IS_UPSTREAM_SERVER=true`).
+- if `INSTAGRAM_UPSTREAM_API_KEY` is set, `/relay` requires `Authorization: Api-Key ...`.
+- direct browser downloads from Douyin CDN can return 403 without proper Referer/UA, so the relay path keeps the request server-side.
 
 #### FREEBIND_CIDR
 setting a `FREEBIND_CIDR` allows cobalt to pick a random IP for every download and use it for all

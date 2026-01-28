@@ -58,6 +58,45 @@ const jsonError = (res, status, code, message) => {
     });
 };
 
+const sanitizeLogValue = (value, maxLength = 200) => {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    const text = typeof value === "string" ? value : String(value);
+    if (text.length <= maxLength) {
+        return text;
+    }
+
+    return `${text.slice(0, maxLength)}…`;
+};
+
+const getHeaderValue = (headers, name) => {
+    const value = headers?.[name];
+    if (Array.isArray(value)) {
+        return value.join(", ");
+    }
+    return value ?? null;
+};
+
+const buildHoldReleaseLogContext = (req) => {
+    const rawUrl = req.body?.url ?? req.body?.targetUrl ?? null;
+
+    return {
+        ip: sanitizeLogValue(req.ip, 80),
+        forwarded: sanitizeLogValue(getHeaderValue(req.headers, "x-forwarded-for"), 200),
+        cfConnectingIp: sanitizeLogValue(getHeaderValue(req.headers, "cf-connecting-ip"), 80),
+        userAgent: sanitizeLogValue(getHeaderValue(req.headers, "user-agent"), 200),
+        referer: sanitizeLogValue(getHeaderValue(req.headers, "referer"), 200),
+        origin: sanitizeLogValue(getHeaderValue(req.headers, "origin"), 120),
+        reason: sanitizeLogValue(req.body?.reason ?? null, 120),
+        queueId: sanitizeLogValue(req.body?.queueId ?? req.body?.queue_id ?? null, 120),
+        itemId: sanitizeLogValue(req.body?.itemId ?? req.body?.item_id ?? null, 120),
+        errorCode: sanitizeLogValue(req.body?.errorCode ?? req.body?.error_code ?? null, 120),
+        url: sanitizeLogValue(rawUrl, 200),
+    };
+};
+
 // Public: lookup the inviter's display info for the invite landing page
 router.get("/referrals/lookup", async (req, res) => {
     try {
@@ -754,7 +793,8 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                console.log(`[hold-release] Request: userId=${auth.userId} holdId=${holdId} reason=${req.body?.reason ?? 'none'}`);
+                const logContext = buildHoldReleaseLogContext(req);
+                console.log(`[hold-release] Request: userId=${auth.userId} holdId=${holdId} context=${JSON.stringify(logContext)}`);
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));

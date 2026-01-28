@@ -85,6 +85,12 @@ spec:
               value: {{ .upstreamTimeoutMs | default 12000 | quote }}
             {{- end }}
             {{- end }}
+            {{- with .Values.douyin }}
+            {{- if .upstreamMinBytes }}
+            - name: DOUYIN_UPSTREAM_MIN_BYTES
+              value: {{ .upstreamMinBytes | quote }}
+            {{- end }}
+            {{- end }}
             # Database Configuration
             - name: DB_TYPE
               value: {{ .Values.database.type | quote }}

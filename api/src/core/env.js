@@ -91,6 +91,15 @@ export const loadEnvs = (env = process.env) => {
             if (!Number.isFinite(parsed) || parsed <= 0) return 12000;
             return parsed;
         })(),
+        // Minimum Douyin file size (bytes) to route through upstream fallback.
+        douyinUpstreamMinBytes: (() => {
+            const raw = env.DOUYIN_UPSTREAM_MIN_BYTES;
+            if (raw == null || raw === "") return 8 * 1024 * 1024;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 8 * 1024 * 1024;
+            return parsed;
+        })(),
 
         rateLimitWindow: (env.RATELIMIT_WINDOW && parseInt(env.RATELIMIT_WINDOW)) || 60,
         rateLimitMax: (env.RATELIMIT_MAX && parseInt(env.RATELIMIT_MAX)) || 20,

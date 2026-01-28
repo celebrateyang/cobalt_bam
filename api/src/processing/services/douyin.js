@@ -178,6 +178,41 @@ const toSeconds = (value) => {
     return value > 1000 ? Math.round(value / 1000) : Math.round(value);
 };
 
+const parseTotalLength = (headers) => {
+    const contentRange = headers.get("content-range");
+    if (contentRange) {
+        const match = contentRange.match(/\/(\d+)$/);
+        if (match) {
+            const total = parseInt(match[1]);
+            if (Number.isFinite(total) && total > 0) return total;
+        }
+    }
+
+    const contentLength = headers.get("content-length");
+    if (!contentLength) return undefined;
+    const parsed = parseInt(contentLength);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+};
+
+const getContentLengthBytes = async (url) => {
+    try {
+        const res = await fetch(url, {
+            method: "GET",
+            redirect: "follow",
+            headers: {
+                "User-Agent": MOBILE_UA,
+                // Request a single byte so we can read total length from Content-Range.
+                Range: "bytes=0-0",
+            },
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+
+        return parseTotalLength(res.headers);
+    } catch {
+        return undefined;
+    }
+};
+
 export default async function(obj) {
     let videoId = obj.id;
 
@@ -204,14 +239,15 @@ export default async function(obj) {
                         targetUrl: upstreamTargetUrl,
                         status: upstream.status,
                     });
-        return {
-            filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
-            audioFilename: `douyin_${obj.shortLink}_audio`,
-            urls: upstream.url,
-            headers: {
-                "User-Agent": MOBILE_UA,
-            },
-        };
+                    return {
+                        filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
+                        audioFilename: `douyin_${obj.shortLink}_audio`,
+                        urls: upstream.url,
+                        forceRedirect: upstream.status === "redirect",
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
                 }
             }
 
@@ -319,6 +355,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
+                        forceRedirect: upstream.status === "redirect",
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -372,7 +409,9 @@ export default async function(obj) {
                     });
                     return {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
+                        forceRedirect: upstream.status === "redirect",
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -423,6 +462,45 @@ export default async function(obj) {
             directUrl = headRes.url;
         } catch (e) {
             console.error("Failed to resolve direct URL", e);
+        }
+
+        // Douyin CDN often closes long downloads mid-stream on some egress IPs.
+        // When the file looks large, prefer the upstream fallback if configured.
+        const contentLengthBytes = await getContentLengthBytes(directUrl);
+        if (
+            env.instagramUpstreamURL &&
+            contentLengthBytes &&
+            contentLengthBytes >= env.douyinUpstreamMinBytes
+        ) {
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+            });
+            if (upstreamTargetUrl) {
+                console.warn("[douyin] large file detected, trying upstream cobalt", {
+                    videoId,
+                    bytes: contentLengthBytes,
+                    threshold: env.douyinUpstreamMinBytes,
+                });
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    logUpstreamUsed("large_file", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
+                    return {
+                        filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
+                        urls: upstream.url,
+                        forceRedirect: upstream.status === "redirect",
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
         }
 
         return {

@@ -18,6 +18,10 @@ instagram:
   upstreamApiKey: "miaohu2f4%ddxg3v3qf8vwf8e5y7k1z8c9"
   upstreamTimeoutMs: 12000
 
+douyin:
+  # Route large files through upstream fallback to avoid CDN mid-stream closes.
+  upstreamMinBytes: "8388608"
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

@@ -11,7 +11,7 @@ image:
   tag: ""
 
 # Batch download hard cap (0 = unlimited)
-batchMaxItems: 40
+batchMaxItems: 20
 
 instagram:
   upstreamUrl: "http://api1.freesavevideo.online:9000/"

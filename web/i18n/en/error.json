@@ -57,6 +57,15 @@
 
         "api.youtube.codec": "youtube didn't return anything with your preferred video codec. try another one in settings!",
 
+    "queue.fetch.bad_response": "download server returned a bad response. try again in a few seconds.",
+    "queue.fetch.no_file_reader": "couldn't read the download stream. try again in a few seconds.",
+    "queue.fetch.empty_tunnel": "download returned an empty file. try again in a few seconds.",
+    "queue.fetch.corrupted_file": "downloaded file size doesn't match the expected size. try again.",
+    "queue.fetch.network_error": "network error while downloading. try again in a few seconds.",
+    "queue.fetch.crashed": "download worker crashed. try again in a few seconds.",
+    "queue.fetch.timeout": "download took too long and timed out. try again.",
+    "queue.fetch.stalled": "download stalled with no data received. try again.",
+
     "queue.ffmpeg.probe_failed": "failed to probe the file. it might be corrupted or incompatible.",
     "queue.ffmpeg.no_args": "ffmpeg worker started without arguments.",
     "queue.ffmpeg.out_of_memory": "ffmpeg ran out of memory.",

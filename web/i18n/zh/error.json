@@ -44,6 +44,15 @@
     "api.rate_exceeded": "请求频率过高。请稍后再试！",
     "api.fetch.rate": "从 {{ service }} 获取信息时触发平台限流，请等待约 {{ limit }} 秒后再试。",
 
+    "queue.fetch.bad_response": "下载服务器返回异常响应，请稍后重试。",
+    "queue.fetch.no_file_reader": "无法读取下载流，请稍后重试。",
+    "queue.fetch.empty_tunnel": "下载结果为空文件，请稍后重试。",
+    "queue.fetch.corrupted_file": "下载文件大小与预期不符，请重试。",
+    "queue.fetch.network_error": "下载时发生网络错误，请稍后重试。",
+    "queue.fetch.crashed": "下载工作进程异常退出，请稍后重试。",
+    "queue.fetch.timeout": "下载时间过长已超时，请重试。",
+    "queue.fetch.stalled": "下载长时间无数据，请重试。",
+
     "queue.ffmpeg.probe_failed": "无法探测文件。它可能已损坏或不兼容。",
     "queue.ffmpeg.no_args": "FFmpeg 工作进程启动时没有参数。",
     "queue.ffmpeg.out_of_memory": "FFmpeg 内存不足。",

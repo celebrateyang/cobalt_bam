@@ -5,6 +5,9 @@ import { itemDone, itemError, itemRunning, queue } from "$lib/state/task-manager
 
 import type { CobaltPipelineItem } from "$lib/types/workers";
 
+const MAX_CONCURRENT_TASKS = 2;
+const MAX_CONCURRENT_WORKERS = 2;
+
 const startPipeline = (pipelineItem: CobaltPipelineItem) => {
     addWorkerToQueue(pipelineItem.workerId, {
         type: pipelineItem.worker,
@@ -20,6 +23,8 @@ const startPipeline = (pipelineItem: CobaltPipelineItem) => {
 export const schedule = () => {
     const queueItems = get(queue);
     const ongoingTasks = get(currentTasks);
+    const ongoingCount = Object.keys(ongoingTasks).length;
+    const runningCount = Object.values(queueItems).filter((t) => t.state === "running").length;
 
     for (const task of Object.values(queueItems)) {
         if (task.state === "running") {
@@ -54,6 +59,10 @@ export const schedule = () => {
                     break;
                 }
 
+                if (Object.keys(get(currentTasks)).length >= MAX_CONCURRENT_WORKERS) {
+                    break;
+                }
+
                 startPipeline(worker);
             }
 
@@ -63,11 +72,13 @@ export const schedule = () => {
         }
 
         // start the nearest waiting task and wait to be called again
-        else if (task.state === "waiting" && task.pipeline.length > 0 && Object.keys(ongoingTasks).length === 0) {
-            // this is really bad but idk how to prevent tasks from running simultaneously
-            // on retry if a later task is running & user restarts an old task
-            for (const task of Object.values(queueItems)) {
-                if (task.state === "running") return;
+        else if (task.state === "waiting" && task.pipeline.length > 0) {
+            if (runningCount >= MAX_CONCURRENT_TASKS) {
+                continue;
+            }
+
+            if (ongoingCount >= MAX_CONCURRENT_WORKERS) {
+                continue;
             }
 
             startPipeline(task.pipeline[0]);

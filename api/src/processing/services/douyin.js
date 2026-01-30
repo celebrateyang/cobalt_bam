@@ -113,6 +113,11 @@ const requestUpstreamCobalt = async (targetUrl) => {
         });
 
         const payload = await res.json().catch(() => null);
+        const duration =
+            typeof payload?.duration === "number" &&
+            Number.isFinite(payload.duration)
+                ? payload.duration
+                : undefined;
         console.log("[douyin] upstream response", {
             upstream: upstreamOrigin,
             http: res.status,
@@ -137,6 +142,7 @@ const requestUpstreamCobalt = async (targetUrl) => {
             url: payload.url,
             filename: payload.filename,
             relayUrl,
+            duration,
         };
     } catch (e) {
         console.warn("Douyin upstream request failed:", e);
@@ -274,6 +280,7 @@ export default async function(obj) {
                             filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
                             audioFilename: `douyin_${obj.shortLink}_audio`,
                             urls: upstream.relayUrl,
+                            duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
@@ -282,6 +289,7 @@ export default async function(obj) {
                         audioFilename: `douyin_${obj.shortLink}_audio`,
                         urls: upstream.url,
                         forceRedirect: upstream.status === "redirect",
+                        duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -394,6 +402,7 @@ export default async function(obj) {
                             filename: upstream.filename || `douyin_${videoId}.mp4`,
                             audioFilename: `douyin_${videoId}_audio`,
                             urls: upstream.relayUrl,
+                            duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
@@ -402,6 +411,7 @@ export default async function(obj) {
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
                         forceRedirect: upstream.status === "redirect",
+                        duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -458,6 +468,7 @@ export default async function(obj) {
                             filename: upstream.filename || `douyin_${videoId}.mp4`,
                             audioFilename: `douyin_${videoId}_audio`,
                             urls: upstream.relayUrl,
+                            duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
@@ -466,6 +477,7 @@ export default async function(obj) {
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
                         forceRedirect: upstream.status === "redirect",
+                        duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -549,6 +561,7 @@ export default async function(obj) {
                             filename: upstream.filename || `douyin_${videoId}.mp4`,
                             audioFilename: `douyin_${videoId}_audio`,
                             urls: upstream.relayUrl,
+                            duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
@@ -557,6 +570,7 @@ export default async function(obj) {
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
                         forceRedirect: upstream.status === "redirect",
+                        duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },

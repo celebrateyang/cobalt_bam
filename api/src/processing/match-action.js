@@ -59,6 +59,7 @@ export default function({
             return createResponse("redirect", {
                 url,
                 filename: defaultParams.filename,
+                duration: defaultParams.duration,
             });
         }
     }
@@ -69,6 +70,7 @@ export default function({
             return createResponse("redirect", {
                 url,
                 filename: defaultParams.filename,
+                duration: defaultParams.duration,
             });
         }
     }

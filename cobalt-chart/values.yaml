@@ -12,6 +12,8 @@ image:
 
 # Batch download hard cap (0 = unlimited)
 batchMaxItems: 20
+# Tunnel info lifespan in seconds (default 90).
+tunnelLifespanSeconds: 1800
 
 instagram:
   upstreamUrl: "http://api1.freesavevideo.online:9000/"

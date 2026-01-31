@@ -40,6 +40,7 @@ export interface SocialVideo {
     description?: string;
     video_url: string;
     thumbnail_url?: string;
+    thumbnail_proxy_path?: string;
     duration?: number;
     view_count: number;
     like_count: number;

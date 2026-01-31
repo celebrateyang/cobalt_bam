@@ -208,6 +208,9 @@
     const getThumbnailSrc = (video: SocialVideo) => {
         if (!video.thumbnail_url) return "";
         if (video.platform === "instagram") {
+            if (video.thumbnail_proxy_path) {
+                return `${currentApiURL()}${video.thumbnail_proxy_path}`;
+            }
             return `${currentApiURL()}/social/media/proxy?url=${encodeURIComponent(
                 video.thumbnail_url
             )}`;

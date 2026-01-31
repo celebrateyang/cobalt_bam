@@ -383,14 +383,19 @@
 
     function getThumbnailSrc(video: SocialVideo): string {
         if (!video.thumbnail_url) return "";
+        if ((video.platform === "instagram" || video.platform === "tiktok") && video.thumbnail_proxy_path) {
+            return `${currentApiURL()}${video.thumbnail_proxy_path}`;
+        }
         const shouldBust = video.platform === "tiktok";
         const cacheBust =
             typeof video.synced_at === "number" && video.synced_at > 0
                 ? video.synced_at
-                : typeof video.updated_at === "number"
+                : typeof video.updated_at === "number" && video.updated_at > 0
                     ? video.updated_at
-                    : Date.now();
-        const raw = shouldBust
+                    : typeof video.created_at === "number" && video.created_at > 0
+                        ? video.created_at
+                        : null;
+        const raw = shouldBust && cacheBust
             ? (video.thumbnail_url.includes("?")
                 ? `${video.thumbnail_url}&cb=${cacheBust}`
                 : `${video.thumbnail_url}?cb=${cacheBust}`)

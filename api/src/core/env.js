@@ -162,6 +162,15 @@ export const loadEnvs = (env = process.env) => {
             && env.TURNSTILE_SECRET
             && env.JWT_SECRET,
 
+        mediaProxySigningSecret: env.MEDIA_PROXY_SIGNING_SECRET,
+        mediaProxyTokenTtlSeconds: (() => {
+            const raw = env.MEDIA_PROXY_TOKEN_TTL_SECONDS;
+            if (raw == null || raw === '') return 3600;
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 3600;
+            return parsed;
+        })(),
+
         apiKeyURL: env.API_KEY_URL && new URL(env.API_KEY_URL),
         authRequired: env.API_AUTH_REQUIRED === '1',
         redisURL: env.API_REDIS_URL,

@@ -1,7 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { Readable, Transform } from 'node:stream';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '../config.js';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
 import { fetchInstagramCreatorItemsDirect, fetchOembedForAccount, syncAccountVideos } from '../processing/social/sync.js';
@@ -47,6 +47,10 @@ const MEDIA_PROXY_ALLOWED_HOSTS = [
     'tiktokcdn-us.com',
     'tiktokcdn-eu.com',
 ];
+
+const MEDIA_PROXY_SIGNING_SECRET = env.mediaProxySigningSecret || '';
+const MEDIA_PROXY_TOKEN_TTL_SECONDS = env.mediaProxyTokenTtlSeconds || 3600;
+const MEDIA_PROXY_TOKEN_FUTURE_SKEW_SECONDS = 30;
 
 const isAllowedMediaHost = (hostname) => {
     const host = String(hostname || '').toLowerCase();
@@ -107,6 +111,86 @@ const getMediaProxyRequestDetails = (req, rawUrl) => {
     if (filename) parts.push(`file=${filename}`);
     if (hash) parts.push(`hash=${hash}`);
     return parts.join(" ");
+};
+
+const signMediaProxyUrl = (rawUrl, ts) => {
+    if (!MEDIA_PROXY_SIGNING_SECRET) return "";
+    return createHmac("sha256", MEDIA_PROXY_SIGNING_SECRET)
+        .update(`${ts}.${rawUrl}`)
+        .digest("hex");
+};
+
+const safeEqualHex = (a, b) => {
+    if (typeof a !== "string" || typeof b !== "string") return false;
+    if (a.length !== b.length) return false;
+    try {
+        return timingSafeEqual(Buffer.from(a, "hex"), Buffer.from(b, "hex"));
+    } catch {
+        return false;
+    }
+};
+
+const verifyMediaProxySignature = (rawUrl, tsRaw, sigRaw) => {
+    if (!MEDIA_PROXY_SIGNING_SECRET) return { ok: true, reason: "disabled" };
+
+    const ts = typeof tsRaw === "string" ? Number(tsRaw) : Number(tsRaw ?? NaN);
+    const sig = typeof sigRaw === "string" ? sigRaw : "";
+
+    if (!Number.isFinite(ts) || ts <= 0) return { ok: false, reason: "invalid_ts" };
+    if (!sig) return { ok: false, reason: "missing_sig" };
+
+    const now = Math.floor(Date.now() / 1000);
+    if (ts < now - MEDIA_PROXY_TOKEN_TTL_SECONDS) return { ok: false, reason: "expired" };
+    if (ts > now + MEDIA_PROXY_TOKEN_FUTURE_SKEW_SECONDS) return { ok: false, reason: "future" };
+
+    const expected = signMediaProxyUrl(rawUrl, ts);
+    if (!expected || !safeEqualHex(sig, expected)) return { ok: false, reason: "mismatch" };
+
+    return { ok: true };
+};
+
+const appendCacheBust = (url, value) => {
+    if (!value) return url;
+    return url.includes("?") ? `${url}&cb=${value}` : `${url}?cb=${value}`;
+};
+
+const buildMediaProxyRawUrl = (video) => {
+    if (!video?.thumbnail_url) return "";
+    let raw = video.thumbnail_url;
+    if (video.platform === "tiktok") {
+        const cacheBust =
+            typeof video.synced_at === "number" && video.synced_at > 0
+                ? video.synced_at
+                : typeof video.updated_at === "number" && video.updated_at > 0
+                    ? video.updated_at
+                    : typeof video.created_at === "number" && video.created_at > 0
+                        ? video.created_at
+                        : null;
+        raw = appendCacheBust(raw, cacheBust);
+    }
+    return raw;
+};
+
+const attachMediaProxyPath = (video) => {
+    if (!MEDIA_PROXY_SIGNING_SECRET) return video;
+    if (!video?.thumbnail_url) return video;
+    if (video.platform !== "instagram" && video.platform !== "tiktok") return video;
+
+    const rawUrl = buildMediaProxyRawUrl(video);
+    if (!rawUrl) return video;
+
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = signMediaProxyUrl(rawUrl, ts);
+    if (!sig) return video;
+
+    video.thumbnail_proxy_path = `/social/media/proxy?url=${encodeURIComponent(rawUrl)}&ts=${ts}&sig=${sig}`;
+    return video;
+};
+
+const attachMediaProxyPathToList = (videos) => {
+    if (!Array.isArray(videos)) return videos;
+    videos.forEach(attachMediaProxyPath);
+    return videos;
 };
 
 const normalizeThumbnailLookupUrl = (value) => {
@@ -467,6 +551,23 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
             error: {
                 code: 'FORBIDDEN',
                 message: 'host is not allowed'
+            }
+        });
+    }
+
+    const sig = safeSingleQueryValue(req.query.sig);
+    const ts = safeSingleQueryValue(req.query.ts);
+    const verification = verifyMediaProxySignature(raw, ts, sig);
+    if (!verification.ok) {
+        const requestDetails = getMediaProxyRequestDetails(req, raw);
+        console.warn(
+            `Media proxy invalid signature reason=${verification.reason}${requestDetails ? ` ${requestDetails}` : ""}`
+        );
+        return res.status(403).json({
+            status: 'error',
+            error: {
+                code: 'FORBIDDEN',
+                message: 'invalid signature'
             }
         });
     }
@@ -1263,6 +1364,7 @@ router.get('/videos', publicLimiter, async (req, res) => {
         };
 
         const result = await getVideos(filters);
+        attachMediaProxyPathToList(result.videos);
 
         res.json({
             status: 'success',
@@ -1352,6 +1454,7 @@ router.get('/videos/featured', publicLimiter, async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
         const result = await getFeaturedVideos(limit);
+        attachMediaProxyPathToList(result.videos);
 
         res.json({
             status: 'success',
@@ -1395,6 +1498,7 @@ router.get('/videos/trending', publicLimiter, async (req, res) => {
             limit,
             event_type: 'download_click',
         });
+        attachMediaProxyPathToList(videos);
 
         res.json({
             status: 'success',
@@ -1491,6 +1595,8 @@ router.get('/videos/:id', publicLimiter, async (req, res) => {
             });
         }
 
+        attachMediaProxyPath(video);
+
         res.json({
             status: 'success',
             data: video
@@ -1558,6 +1664,7 @@ router.post('/videos', requireAuth, adminLimiter, async (req, res) => {
         };
 
         const video = await createVideo(videoData);
+        attachMediaProxyPath(video);
 
         res.status(201).json({
             status: 'success',
@@ -1595,6 +1702,8 @@ router.put('/videos/:id', requireAuth, adminLimiter, async (req, res) => {
                 }
             });
         }
+
+        attachMediaProxyPath(video);
 
         res.json({
             status: 'success',
@@ -1856,6 +1965,7 @@ router.post('/videos/:id/toggle-featured', requireAuth, adminLimiter, async (req
         console.log(
             `[toggle-featured] response id=${video.id} is_featured=${video.is_featured}`,
         );
+        attachMediaProxyPath(video);
         res.json({
             status: 'success',
             data: video

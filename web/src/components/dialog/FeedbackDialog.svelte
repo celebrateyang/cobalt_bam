@@ -135,15 +135,18 @@
                 />
             </label>
 
-            <label class="field">
-                <span class="label">{$t("dialog.feedback.fields.suggestion")}</span>
-                <textarea
-                    rows="3"
-                    bind:value={suggestion}
-                    placeholder={$t("dialog.feedback.placeholder.suggestion")}
-                    disabled={loading}
-                />
-            </label>
+            <div class="field wechat-contact">
+                <span class="label">{$t("dialog.feedback.wechat.title")}</span>
+                <div class="wechat-card">
+                    <img
+                        class="wechat-qr"
+                        src="/account/wechat.png"
+                        alt={$t("dialog.feedback.wechat.alt")}
+                        loading="lazy"
+                    />
+                </div>
+                <p class="wechat-hint">{$t("dialog.feedback.wechat.hint")}</p>
+            </div>
 
             {#if error}
                 <div class="message error" role="alert">{error}</div>
@@ -249,6 +252,32 @@
     textarea {
         resize: vertical;
         min-height: 96px;
+    }
+
+    .wechat-contact {
+        gap: 10px;
+    }
+
+    .wechat-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border-radius: var(--border-radius);
+        background: var(--button);
+        box-shadow: var(--button-box-shadow);
+    }
+
+    .wechat-qr {
+        width: 168px;
+        height: 168px;
+        object-fit: contain;
+    }
+
+    .wechat-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--gray);
     }
 
     input:focus,

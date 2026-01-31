@@ -721,6 +721,49 @@ export const getVideoById = async (id) => {
     return video;
 };
 
+export const getVideoByThumbnailUrls = async (urls = []) => {
+    if (!Array.isArray(urls)) return null;
+
+    const normalized = Array.from(
+        new Set(
+            urls
+                .map((value) => (typeof value === "string" ? value.trim() : ""))
+                .filter((value) => value.length > 0),
+        ),
+    );
+
+    if (!normalized.length) return null;
+
+    const result = await query(`
+        SELECT v.id, v.platform, v.video_id, v.title, v.video_url, v.thumbnail_url,
+               a.username as account_username,
+               a.display_name as account_display_name,
+               a.avatar_url as account_avatar_url,
+               a.platform as account_platform
+        FROM social_videos v
+        INNER JOIN social_accounts a ON v.account_id = a.id
+        WHERE v.thumbnail_url = ANY($1::text[])
+        ORDER BY v.updated_at DESC
+        LIMIT 1
+    `, [normalized]);
+
+    const video = result.rows[0];
+    if (video) {
+        video.account = {
+            username: video.account_username,
+            display_name: video.account_display_name,
+            avatar_url: video.account_avatar_url,
+            platform: video.account_platform,
+        };
+        delete video.account_username;
+        delete video.account_display_name;
+        delete video.account_avatar_url;
+        delete video.account_platform;
+    }
+
+    return video || null;
+};
+
 export const getVideosByIds = async (ids = []) => {
     if (!Array.isArray(ids)) return [];
 

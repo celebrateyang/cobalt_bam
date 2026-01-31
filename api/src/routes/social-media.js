@@ -1,6 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { Readable, Transform } from 'node:stream';
+import { createHash } from 'node:crypto';
 import { env } from '../config.js';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
 import { fetchInstagramCreatorItemsDirect, fetchOembedForAccount, syncAccountVideos } from '../processing/social/sync.js';
@@ -59,6 +60,55 @@ const safeSingleQueryValue = (value) => {
     return value;
 };
 
+const sanitizeLogValue = (value, maxLength) => {
+    if (typeof value !== "string") return "";
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length > maxLength) return "";
+    return trimmed;
+};
+
+const normalizeLogToken = (value, maxLength) => {
+    const sanitized = sanitizeLogValue(value, maxLength);
+    if (!sanitized) return "";
+    return sanitized.replace(/\s+/g, "_");
+};
+
+const hashMediaProxyUrl = (rawUrl) => {
+    if (typeof rawUrl !== "string" || rawUrl.length === 0) return "";
+    return createHash("sha256").update(rawUrl).digest("hex").slice(0, 12);
+};
+
+const getMediaProxyFilename = (rawUrl) => {
+    if (typeof rawUrl !== "string" || rawUrl.length === 0) return "";
+    try {
+        const parsed = new URL(rawUrl);
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        return parts.length ? parts[parts.length - 1] : "";
+    } catch {
+        return "";
+    }
+};
+
+const getMediaProxyRequestDetails = (req, rawUrl) => {
+    const cfIp = normalizeLogToken(req.get("cf-connecting-ip"), 64);
+    const xffRaw = sanitizeLogValue(req.get("x-forwarded-for"), 128);
+    const xff = normalizeLogToken(xffRaw ? xffRaw.split(",")[0].trim() : "", 64);
+    const ip = normalizeLogToken(req.ip, 64);
+    const clientIp = cfIp || xff || ip;
+    const referer = normalizeLogToken(req.get("referer"), 256);
+    const ua = normalizeLogToken(req.get("user-agent"), 256);
+    const filename = normalizeLogToken(getMediaProxyFilename(rawUrl), 128);
+    const hash = hashMediaProxyUrl(rawUrl);
+
+    const parts = [];
+    if (clientIp) parts.push(`ip=${clientIp}`);
+    if (referer) parts.push(`referer=${referer}`);
+    if (ua) parts.push(`ua=${ua}`);
+    if (filename) parts.push(`file=${filename}`);
+    if (hash) parts.push(`hash=${hash}`);
+    return parts.join(" ");
+};
+
 const normalizeThumbnailLookupUrl = (value) => {
     if (typeof value !== "string") return value;
     try {
@@ -99,10 +149,11 @@ const getMediaProxyVideoDetails = async (rawUrl) => {
         const accountLabel = video.account?.username || video.account?.display_name || "";
         const accountInfo = accountLabel ? ` account=${accountLabel}` : "";
         const platformVideoId = video.video_id ? ` platform_video_id=${video.video_id}` : "";
-        return ` video_id=${video.id} platform=${video.platform}${platformVideoId}${accountInfo}`;
+        return `video_id=${video.id} platform=${video.platform}${platformVideoId}${accountInfo}`;
     } catch (error) {
         const message = error instanceof Error ? error.message : "unknown";
-        console.warn(`Media proxy lookup failed error=${message}`);
+        const hash = hashMediaProxyUrl(rawUrl);
+        console.warn(`Media proxy lookup failed${hash ? ` hash=${hash}` : ""} error=${message}`);
         return "";
     }
 };
@@ -436,8 +487,11 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
 
         if (!upstream.ok || !upstream.body) {
             const details = await getMediaProxyVideoDetails(raw);
+            const requestDetails = getMediaProxyRequestDetails(req, raw);
+            const lookup = details ? "" : "lookup=not_found";
+            const suffix = [details, lookup, requestDetails].filter(Boolean).join(" ");
             console.warn(
-                `Media proxy upstream not ok status=${upstream.status} host=${target.hostname}${details}`,
+                `Media proxy upstream not ok status=${upstream.status} host=${target.hostname}${suffix ? ` ${suffix}` : ""}`
             );
             upstream.body?.cancel().catch(() => undefined);
             return res.status(404).end();
@@ -446,8 +500,11 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
         const contentType = upstream.headers.get('content-type') || '';
         if (!contentType.toLowerCase().startsWith('image/')) {
             const details = await getMediaProxyVideoDetails(raw);
+            const requestDetails = getMediaProxyRequestDetails(req, raw);
+            const lookup = details ? "" : "lookup=not_found";
+            const suffix = [details, lookup, requestDetails].filter(Boolean).join(" ");
             console.warn(
-                `Media proxy upstream not image contentType=${contentType} host=${target.hostname}${details}`,
+                `Media proxy upstream not image contentType=${contentType} host=${target.hostname}${suffix ? ` ${suffix}` : ""}`
             );
             upstream.body.cancel().catch(() => undefined);
             return res.status(415).end();

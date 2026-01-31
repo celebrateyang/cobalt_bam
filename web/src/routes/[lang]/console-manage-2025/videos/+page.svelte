@@ -404,6 +404,21 @@
         return raw;
     }
 
+    async function copyValue(label: string, value: string | number | undefined) {
+        if (value === undefined || value === null || value === "") return;
+        if (typeof navigator === "undefined" || !navigator.clipboard) {
+            message = "Clipboard not available";
+            return;
+        }
+        const text = String(value);
+        try {
+            await navigator.clipboard.writeText(text);
+            message = `Copied ${label}: ${text}`;
+        } catch {
+            message = "Copy failed";
+        }
+    }
+
     function formatDuration(seconds?: number): string {
         const safeSeconds = typeof seconds === "number" && seconds > 0 ? Math.floor(seconds) : 0;
         const mins = Math.floor(safeSeconds / 60);
@@ -549,6 +564,22 @@
                                             video.account_id,
                                         )}</span
                                     >
+                                    <button
+                                        class="stat-item copyable"
+                                        type="button"
+                                        title="Copy id"
+                                        on:click={() => copyValue("id", video.id)}
+                                    >
+                                        id: {video.id}
+                                    </button>
+                                    <button
+                                        class="stat-item copyable"
+                                        type="button"
+                                        title="Copy video_id"
+                                        on:click={() => copyValue("video_id", video.video_id || "")}
+                                    >
+                                        video_id: {video.video_id || "-"}
+                                    </button>
                                     <span class="stat-item"
                                         >👁 {video.view_count.toLocaleString()}</span
                                     >
@@ -965,6 +996,25 @@
         color: var(--gray);
         font-size: 0.8rem;
         white-space: nowrap;
+    }
+
+    .copyable {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .copyable:hover {
+        text-decoration: underline;
+    }
+
+    .copyable:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+        border-radius: 4px;
     }
 
     .tags-inline {

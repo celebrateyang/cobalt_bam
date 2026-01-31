@@ -764,6 +764,65 @@ export const getVideoByThumbnailUrls = async (urls = []) => {
     return video || null;
 };
 
+export const getVideoByThumbnailLookup = async ({
+    urls = [],
+    host = "",
+    pathname = "",
+    filename = "",
+} = {}) => {
+    const exact = await getVideoByThumbnailUrls(urls);
+    if (exact) return exact;
+
+    const patterns = [];
+    const normalizedHost = typeof host === "string" ? host.trim().toLowerCase() : "";
+    const normalizedPath = typeof pathname === "string" ? pathname.trim() : "";
+    const normalizedFilename = typeof filename === "string" ? filename.trim() : "";
+
+    if (normalizedPath) {
+        if (normalizedHost) {
+            patterns.push(`${normalizedHost}${normalizedPath}`);
+        }
+        patterns.push(normalizedPath);
+    }
+
+    if (normalizedFilename) {
+        patterns.push(`/${normalizedFilename}`);
+    }
+
+    const deduped = Array.from(new Set(patterns.filter((value) => value.length > 0)));
+    for (const pattern of deduped) {
+        const result = await query(`
+            SELECT v.id, v.platform, v.video_id, v.title, v.video_url, v.thumbnail_url,
+                   a.username as account_username,
+                   a.display_name as account_display_name,
+                   a.avatar_url as account_avatar_url,
+                   a.platform as account_platform
+            FROM social_videos v
+            INNER JOIN social_accounts a ON v.account_id = a.id
+            WHERE v.thumbnail_url ILIKE $1
+            ORDER BY v.updated_at DESC
+            LIMIT 1
+        `, [`%${pattern}%`]);
+
+        const video = result.rows[0];
+        if (video) {
+            video.account = {
+                username: video.account_username,
+                display_name: video.account_display_name,
+                avatar_url: video.account_avatar_url,
+                platform: video.account_platform,
+            };
+            delete video.account_username;
+            delete video.account_display_name;
+            delete video.account_avatar_url;
+            delete video.account_platform;
+            return video;
+        }
+    }
+
+    return null;
+};
+
 export const getVideosByIds = async (ids = []) => {
     if (!Array.isArray(ids)) return [];
 

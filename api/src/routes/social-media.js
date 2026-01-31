@@ -13,7 +13,7 @@ import {
     createVideo,
     getVideos,
     getVideoById,
-    getVideoByThumbnailUrls,
+    getVideoByThumbnailLookup,
     updateVideo,
     deleteVideo,
     deleteVideos,
@@ -77,14 +77,32 @@ const getMediaProxyVideoDetails = async (rawUrl) => {
     try {
         const normalized = normalizeThumbnailLookupUrl(rawUrl);
         const candidates = normalized && normalized !== rawUrl ? [rawUrl, normalized] : [rawUrl];
-        const video = await getVideoByThumbnailUrls(candidates);
+        let host = "";
+        let pathname = "";
+        let filename = "";
+        try {
+            const parsed = new URL(normalized || rawUrl);
+            host = parsed.hostname || "";
+            pathname = parsed.pathname || "";
+            const parts = pathname.split("/").filter(Boolean);
+            filename = parts.length ? parts[parts.length - 1] : "";
+        } catch {
+            // ignore invalid URL
+        }
+        const video = await getVideoByThumbnailLookup({
+            urls: candidates,
+            host,
+            pathname,
+            filename,
+        });
         if (!video) return "";
         const accountLabel = video.account?.username || video.account?.display_name || "";
         const accountInfo = accountLabel ? ` account=${accountLabel}` : "";
-        return ` video_id=${video.id} platform=${video.platform}${accountInfo} video_url=${video.video_url} thumbnail_url=${video.thumbnail_url}`;
+        const platformVideoId = video.video_id ? ` platform_video_id=${video.video_id}` : "";
+        return ` video_id=${video.id} platform=${video.platform}${platformVideoId}${accountInfo}`;
     } catch (error) {
         const message = error instanceof Error ? error.message : "unknown";
-        console.warn(`Media proxy lookup failed url=${rawUrl} error=${message}`);
+        console.warn(`Media proxy lookup failed error=${message}`);
         return "";
     }
 };
@@ -419,7 +437,7 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
         if (!upstream.ok || !upstream.body) {
             const details = await getMediaProxyVideoDetails(raw);
             console.warn(
-                `Media proxy upstream not ok status=${upstream.status} host=${target.hostname} url=${raw}${details}`,
+                `Media proxy upstream not ok status=${upstream.status} host=${target.hostname}${details}`,
             );
             upstream.body?.cancel().catch(() => undefined);
             return res.status(404).end();
@@ -429,7 +447,7 @@ router.get('/media/proxy', mediaProxyLimiter, async (req, res) => {
         if (!contentType.toLowerCase().startsWith('image/')) {
             const details = await getMediaProxyVideoDetails(raw);
             console.warn(
-                `Media proxy upstream not image contentType=${contentType} host=${target.hostname} url=${raw}${details}`,
+                `Media proxy upstream not image contentType=${contentType} host=${target.hostname}${details}`,
             );
             upstream.body.cancel().catch(() => undefined);
             return res.status(415).end();

@@ -589,9 +589,6 @@
                                         <div class="name">
                                             {user.full_name || "-"}
                                         </div>
-                                        <div class="sub mono">
-                                            {user.clerk_user_id}
-                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -1043,7 +1040,7 @@
     }
 
     tbody td {
-        padding: 12px 14px;
+        padding: 10px 12px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         color: var(--text);
         font-size: 0.9rem;
@@ -1061,8 +1058,8 @@
     .user-cell {
         display: flex;
         align-items: center;
-        gap: 10px;
-        min-width: 260px;
+        gap: 8px;
+        min-width: 200px;
     }
 
     .avatar {
@@ -1093,6 +1090,9 @@
         font-weight: 700;
         color: var(--text);
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .sub {
@@ -1114,8 +1114,8 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 280px;
-        max-width: 380px;
+        min-width: 200px;
+        max-width: 260px;
     }
 
     .email-text {
@@ -1127,7 +1127,7 @@
     }
 
     .btn-copy {
-        padding: 8px 10px;
+        padding: 6px 8px;
         font-size: 0.8rem;
         white-space: nowrap;
     }
@@ -1135,12 +1135,12 @@
     .points-cell {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     .points-input {
-        width: 110px;
-        padding: 9px 10px;
+        width: 80px;
+        padding: 8px 9px;
         border: none;
         border-radius: var(--border-radius);
         background: var(--button);
@@ -1156,14 +1156,21 @@
     }
 
     .btn-save {
-        padding: 9px 12px;
+        padding: 7px 9px;
         font-size: 0.8rem;
     }
 
     .btn-orders {
-        padding: 9px 12px;
+        padding: 7px 10px;
         font-size: 0.8rem;
         white-space: nowrap;
+    }
+
+    .users-table tbody td:nth-child(6),
+    .users-table tbody td:nth-child(7) {
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 0.82rem;
     }
 
     .modal-overlay {

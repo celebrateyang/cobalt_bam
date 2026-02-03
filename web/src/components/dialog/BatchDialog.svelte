@@ -17,6 +17,7 @@
 
     import type { DialogBatchItem } from "$lib/types/dialog";
     import type { CobaltSaveRequestBody } from "$lib/types/api";
+    import type { DownloadModeOption } from "$lib/types/settings";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
@@ -37,6 +38,7 @@
     export let dismissable = true;
     export let collectionKey: string | undefined = undefined;
     export let collectionSourceUrl: string | undefined = undefined;
+    export let downloadMode: DownloadModeOption | undefined = undefined;
 
     let close: () => void;
 
@@ -68,6 +70,9 @@
 
         // Only batch downloads should go through the processing queue.
         // Keep single-link behavior unchanged.
+        if (downloadMode) {
+            request.downloadMode = downloadMode;
+        }
         request.localProcessing = "forced";
         request.batch = true;
 

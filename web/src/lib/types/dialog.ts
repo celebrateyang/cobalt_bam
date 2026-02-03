@@ -1,4 +1,5 @@
 import type { CobaltFileUrlType } from "$lib/types/api";
+import type { DownloadModeOption } from "$lib/types/settings";
 import type { MeowbaltEmotions } from "$lib/types/meowbalt";
 
 export type DialogButton = {
@@ -63,6 +64,7 @@ type BatchDialog = Dialog & {
     collectionTotalCount?: number,
     collectionKey?: string,
     collectionSourceUrl?: string,
+    downloadMode?: DownloadModeOption,
 };
 
 type FeedbackDialog = Dialog & {

@@ -10,7 +10,7 @@
         type ResourceCategoryNode,
         type ResourceLink
     } from "$lib/api/social";
-    import { savingHandler } from "$lib/api/saving-handler";
+    import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
     import { createDialog } from "$lib/state/dialogs";
     import cachedInfo from "$lib/state/server-info";
@@ -19,6 +19,7 @@
     type PlatformFilter = "all" | "tiktok" | "instagram";
     type DiscoverSectionKey = "featured" | "latest";
     type DiscoverTab = "resources" | "beauty";
+    type ResourceDownloadMode = "audio" | "video";
 
     type ResourceListItem = {
         node: ResourceCategoryNode;
@@ -64,6 +65,7 @@
     let resourceExpanded = new Set<number>();
     let resourceSelectedId: number | null = null;
     let resourceDownloadingId: number | null = null;
+    let resourceDownloadingMode: ResourceDownloadMode | null = null;
     let resourceLoadedLocale = "";
     let resourceList: ResourceListItem[] = [];
     let selectedResource: ResourceCategoryNode | null = null;
@@ -158,6 +160,7 @@
         title?: string,
         collectionKey?: string,
         collectionSourceUrl?: string,
+        downloadMode?: "auto" | "audio",
     ) => {
         createDialog({
             id: `discover-batch-${Date.now()}`,
@@ -166,6 +169,7 @@
             items,
             collectionKey,
             collectionSourceUrl,
+            downloadMode,
         });
     };
 
@@ -174,6 +178,7 @@
         title?: string,
         collectionKey?: string,
         collectionSourceUrl?: string,
+        downloadMode?: "auto" | "audio",
     ) => {
         if (batchLimitEnabled && items.length > batchMaxItems) {
             const batchTitle = title || $t("dialog.batch.title");
@@ -183,12 +188,12 @@
                     subset.length < items.length
                         ? `${batchTitle} (${subset.length}/${items.length})`
                         : batchTitle;
-                spawnBatchDialog(subset, nextTitle, collectionKey, collectionSourceUrl);
+                spawnBatchDialog(subset, nextTitle, collectionKey, collectionSourceUrl, downloadMode);
             });
             return;
         }
 
-        spawnBatchDialog(items, title, collectionKey, collectionSourceUrl);
+        spawnBatchDialog(items, title, collectionKey, collectionSourceUrl, downloadMode);
     };
 
     const getCreatorName = (video: SocialVideo) =>
@@ -256,6 +261,12 @@
         } catch {
             return false;
         }
+    };
+
+    const buildResourceRequest = (url: string, mode: ResourceDownloadMode) => {
+        const request = buildSaveRequest(url);
+        request.downloadMode = mode === "audio" ? "audio" : "auto";
+        return request;
     };
 
     const flattenResourceTree = (
@@ -479,14 +490,16 @@
         }
     }
 
-    async function handleResourceDownload(link: ResourceLink) {
+    async function handleResourceDownload(link: ResourceLink, mode: ResourceDownloadMode) {
         if (!link?.url) return;
         resourceDownloadingId = link.id;
+        resourceDownloadingMode = mode;
         try {
             const url = link.url;
+            const downloadMode = mode === "audio" ? "audio" : "auto";
 
             if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
-                await savingHandler({ url });
+                await savingHandler({ request: buildResourceRequest(url, mode) });
                 return;
             }
 
@@ -494,12 +507,12 @@
             try {
                 expanded = await API.expand(url);
             } catch {
-                await savingHandler({ url });
+                await savingHandler({ request: buildResourceRequest(url, mode) });
                 return;
             }
 
             if (!expanded || expanded.status === "error") {
-                await savingHandler({ url });
+                await savingHandler({ request: buildResourceRequest(url, mode) });
                 return;
             }
 
@@ -507,7 +520,7 @@
             const hasBatch = expanded.kind !== "single" && items.length > 1;
 
             if (!hasBatch) {
-                await savingHandler({ url });
+                await savingHandler({ request: buildResourceRequest(url, mode) });
                 return;
             }
 
@@ -522,9 +535,11 @@
                 expanded.title || link.title || $t("dialog.batch.title"),
                 expanded.collectionKey,
                 url,
+                downloadMode,
             );
         } finally {
             resourceDownloadingId = null;
+            resourceDownloadingMode = null;
         }
     }
 
@@ -712,23 +727,37 @@
                                     <div class="resource-links">
                                         {#each selectedLinks as link (link.id)}
                                             <div class="resource-link">
-                                            <div class="resource-link-body">
-                                                <div class="resource-link-title">{link.title}</div>
-                                                <div class="resource-link-url">{link.url}</div>
-                                                {#if link.description}
-                                                    <div class="resource-link-desc">{link.description}</div>
-                                                {/if}
-                                            </div>
-                                                <button
-                                                    class="btn-primary"
-                                                    type="button"
-                                                    disabled={resourceDownloadingId === link.id}
-                                                    on:click={() => handleResourceDownload(link)}
-                                                >
-                                                    {resourceDownloadingId === link.id
-                                                        ? $t("discover.resources.action.downloading")
-                                                        : $t("button.download")}
-                                                </button>
+                                                <div class="resource-link-body">
+                                                    <div class="resource-link-title">{link.title}</div>
+                                                    <div class="resource-link-url">{link.url}</div>
+                                                    {#if link.description}
+                                                        <div class="resource-link-desc">{link.description}</div>
+                                                    {/if}
+                                                </div>
+                                                <div class="resource-link-actions">
+                                                    <button
+                                                        class="btn-secondary"
+                                                        type="button"
+                                                        disabled={resourceDownloadingId === link.id}
+                                                        on:click={() => handleResourceDownload(link, "audio")}
+                                                    >
+                                                        {resourceDownloadingId === link.id &&
+                                                        resourceDownloadingMode === "audio"
+                                                            ? $t("discover.resources.action.downloading")
+                                                            : $t("button.download.audio")}
+                                                    </button>
+                                                    <button
+                                                        class="btn-primary"
+                                                        type="button"
+                                                        disabled={resourceDownloadingId === link.id}
+                                                        on:click={() => handleResourceDownload(link, "video")}
+                                                    >
+                                                        {resourceDownloadingId === link.id &&
+                                                        resourceDownloadingMode === "video"
+                                                            ? $t("discover.resources.action.downloading")
+                                                            : $t("button.download.video")}
+                                                    </button>
+                                                </div>
                                             </div>
                                         {/each}
                                     </div>
@@ -1069,6 +1098,18 @@
         background: var(--button-hover-transparent);
     }
 
+    .resource-link-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .resource-link-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        align-items: center;
+    }
+
     .resource-link-title {
         font-size: 0.92rem;
         font-weight: 700;
@@ -1231,6 +1272,15 @@
 
         .video-grid {
             grid-template-columns: 1fr;
+        }
+
+        .resource-link {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .resource-link-actions {
+            width: 100%;
         }
     }
 

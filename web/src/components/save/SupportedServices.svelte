@@ -70,30 +70,42 @@
         max-width: 400px;
         flex-direction: column;
         align-items: center;
-        height: 35px;
+        width: 100%;
+        margin: 0 auto;
     }
 
     #services-popover {
         display: flex;
         flex-direction: column;
-        transition: transform 0.2s cubic-bezier(0.53, 0.05, 0.23, 0.99);
+        transition:
+            max-height 0.25s ease,
+            opacity 0.2s ease,
+            transform 0.2s cubic-bezier(0.53, 0.05, 0.23, 0.99);
         border-radius: 18px;
         background: var(--button);
         box-shadow:
             var(--button-box-shadow),
             0 0 10px 10px var(--button-stroke);
 
-        transform: scale(0);
+        transform: translateY(-6px) scale(0.98);
         transform-origin: top center;
         position: relative;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
 
         padding: 12px;
         gap: 6px;
-        top: 6px;
+        margin-top: 6px;
     }
 
     #services-popover.expanded {
-        transform: scale(1);
+        transform: translateY(0) scale(1);
+        max-height: min(70vh, 520px);
+        opacity: 1;
+        overflow: auto;
+        pointer-events: auto;
     }
 
     #services-button {

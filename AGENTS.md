@@ -6,6 +6,18 @@
 - `cobalt-chart/`: Helm chart for API (GKE)
 - `docs/`: API docs + ops docs (`docs/api.md`, `docs/discover-ops.md`, websocket docs)
 
+## Supported languages
+- `de` (German)
+- `en` (English)
+- `es` (Spanish)
+- `fr` (French)
+- `ja` (Japanese)
+- `ko` (Korean)
+- `ru` (Russian)
+- `th` (Thai)
+- `vi` (Vietnamese)
+- `zh` (Chinese)
+
 ## Production architecture
 - **Frontend**: Cloudflare Pages (project: `freesavevideo-online`)
 - **Backend**: GKE (namespace: `infra`), exposed as `https://api.freesavevideo.online/`

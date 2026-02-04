@@ -40,12 +40,9 @@
     <meta name="keywords" content={pageKeywords} />
     <meta name="applicable-device" content="pc,mobile" />
     <meta http-equiv="Cache-Control" content="no-transform" />
-    <meta name="robots" content="index,follow" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonicalUrl} />
-    <link rel="canonical" href={canonicalUrl} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
@@ -216,4 +213,3 @@
         }
     }
 </style>
-

@@ -1,8 +1,9 @@
 import type { RequestHandler } from './$types';
 
+import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
 
-const site = 'https://freesavevideo.online';
+const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 
 // paths to include in sitemap

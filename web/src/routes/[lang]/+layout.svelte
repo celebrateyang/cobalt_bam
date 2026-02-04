@@ -54,8 +54,31 @@
 
     // Get current path without language prefix
     $: canonicalPathname = normalizePathname($page.url.pathname);
-    $: currentPath = canonicalPathname.replace(/^\/[^/]+/, "") || "/";
+    $: currentPath = canonicalPathname.replace(/^\/[^/]+/, "");
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
+
+    const buildLangPath = (lang: string) =>
+        currentPath ? `/${lang}${currentPath}` : `/${lang}`;
+
+    const noindexPathPatterns = [
+        /^\/account(?:\/|$)/,
+        /^\/settings(?:\/|$)/,
+        /^\/history(?:\/|$)/,
+        /^\/invite(?:\/|$)/,
+        /^\/donate(?:\/|$)/,
+        /^\/updates(?:\/|$)/,
+        /^\/console-manage-2025(?:\/|$)/,
+    ];
+
+    const nofollowPathPatterns = [
+        /^\/console-manage-2025(?:\/|$)/,
+    ];
+
+    $: isNoindexPath = noindexPathPatterns.some((pattern) => pattern.test(currentPath));
+    $: isNofollowPath = nofollowPathPatterns.some((pattern) => pattern.test(currentPath));
+    $: robotsContent = isNoindexPath
+        ? (isNofollowPath ? "noindex,nofollow" : "noindex,follow")
+        : "index,follow";
 
     $: reduceMotion =
         $settings.appearance.reduceMotion || device.prefers.reducedMotion;
@@ -77,6 +100,7 @@
 </script>
 
 <svelte:head>
+    <meta name="robots" content={robotsContent} />
     <meta property="og:url" content={canonicalUrl} />
     <link rel="canonical" href={canonicalUrl} />
 
@@ -85,13 +109,13 @@
         <link
             rel="alternate"
             hreflang={lang}
-            href={`https://${fallbackHost}/${lang}${currentPath}`}
+            href={`https://${fallbackHost}${buildLangPath(lang)}`}
         />
     {/each}
     <link
         rel="alternate"
         hreflang="x-default"
-        href={`https://${fallbackHost}/en${currentPath}`}
+        href={`https://${fallbackHost}${buildLangPath("en")}`}
     />
 
     {#if device.is.mobile}

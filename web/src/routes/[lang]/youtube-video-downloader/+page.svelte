@@ -28,10 +28,9 @@
     $: showEmbed = !disableEmbed && !embedFailed;
 
     const currentLocale = data.lang || INTERNAL_locale;
-    const siteUrl = env.HOST ? `https://${env.HOST}` : "";
-    const canonicalUrl = siteUrl
-        ? `${siteUrl}/${currentLocale}/youtube-video-downloader`
-        : "";
+    const fallbackHost = env.HOST || "freesavevideo.online";
+    const siteUrl = `https://${fallbackHost}`;
+    const canonicalUrl = `${siteUrl}/${currentLocale}/youtube-video-downloader`;
 
     $: pageTitle = $t("tampermonkey.guide.page_title");
     $: pageDesc = $t("tampermonkey.guide.page_desc");
@@ -71,16 +70,12 @@
 <svelte:head>
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
-    {#if canonicalUrl}
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:url" content={canonicalUrl} />
-    {/if}
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
-    <meta name="twitter:image" content="{siteUrl}/og.png" />
+    <meta name="twitter:image" content={`${siteUrl}/og.png`} />
     {#if jsonLd}
         <script type="application/ld+json">
             {JSON.stringify(jsonLd)}

@@ -508,18 +508,13 @@
     <meta name="keywords" content={seoKeywords} />
     <meta name="applicable-device" content="pc,mobile" />
     <meta http-equiv="Cache-Control" content="no-transform" />
-    <meta name="robots" content="index,follow" />
     <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={seoDescription} />
     <meta property="og:type" content="website" />
-    {#if canonicalUrl}
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:url" content={canonicalUrl} />
-    {/if}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
-    <meta name="twitter:image" content="https://{fallbackHost}/og.png" />
+    <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`}

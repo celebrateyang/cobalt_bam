@@ -66,7 +66,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     const response = await resolve(event);
 
     // Apply COOP/COEP headers to enable SharedArrayBuffer for libav
-    // Exclude the guide page which contains a Bilibili iframe that would be blocked
+    // Exclude the youtube-video-downloader page which contains a Bilibili iframe that would be blocked
     if (!pathname.includes('youtube-video-downloader')) {
         response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
         response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');

@@ -23,65 +23,309 @@ export type SeoLandingPage = {
     locales: Record<string, SeoLandingLocaleContent>;
 };
 
-const EN_BRAND = 'bamboo download';
-const ZH_BRAND = '竹子下载';
+export const EN_BRAND = 'bamboo download';
+export const ZH_BRAND = '竹子下载';
+
+const fallbackFaqs: Record<string, SeoLandingFaqItem[]> = {
+    en: [
+        {
+            q: 'Do I need to install an app?',
+            a: 'No. It works directly in your browser.',
+        },
+        {
+            q: 'Can I download private content?',
+            a: 'No. Only publicly accessible content can be downloaded.',
+        },
+        {
+            q: 'Why is the download slow?',
+            a: 'Network conditions and source limits can affect speed. Try again later or switch networks.',
+        },
+        {
+            q: 'Is audio-only supported?',
+            a: 'If the source provides audio-only options, they will appear in the results.',
+        },
+        {
+            q: 'Is there a batch limit?',
+            a: 'Batch limits may apply depending on the server settings.',
+        },
+    ],
+    zh: [
+        {
+            q: '需要安装 App 吗？',
+            a: '不需要，直接在浏览器内解析与下载。',
+        },
+        {
+            q: '私密内容可以下载吗？',
+            a: '不可以，仅支持公开可访问内容。',
+        },
+        {
+            q: '下载速度慢怎么办？',
+            a: '可能是网络或源站限制导致，可换网络或稍后再试。',
+        },
+        {
+            q: '支持仅音频下载吗？',
+            a: '如源站提供音频资源，解析结果中会显示音频选项。',
+        },
+        {
+            q: '有批量下载限制吗？',
+            a: '批量限制以页面提示/服务器配置为准。',
+        },
+    ],
+    es: [
+        {
+            q: '¿Necesito instalar una app?',
+            a: 'No. Funciona directamente en el navegador.',
+        },
+        {
+            q: '¿Puedo descargar contenido privado?',
+            a: 'No. Solo se puede descargar contenido público.',
+        },
+        {
+            q: '¿Por qué va lento?',
+            a: 'La red o el origen pueden limitar la velocidad. Prueba más tarde o cambia de red.',
+        },
+        {
+            q: '¿Hay opción solo audio?',
+            a: 'Si el origen la ofrece, aparecerá en los resultados.',
+        },
+        {
+            q: '¿Hay límite de descarga?',
+            a: 'Puede haber límites según la configuración del servidor.',
+        },
+    ],
+    fr: [
+        {
+            q: 'Dois-je installer une appli ?',
+            a: 'Non. Cela fonctionne directement dans le navigateur.',
+        },
+        {
+            q: 'Puis-je télécharger du contenu privé ?',
+            a: 'Non. Seul le contenu public est pris en charge.',
+        },
+        {
+            q: 'Pourquoi c’est lent ?',
+            a: 'Le réseau ou la source peut limiter la vitesse. Réessayez plus tard.',
+        },
+        {
+            q: 'Audio seul disponible ?',
+            a: 'Si la source le propose, l’option apparaît.',
+        },
+        {
+            q: 'Y a-t-il une limite ?',
+            a: 'Des limites peuvent s’appliquer selon le serveur.',
+        },
+    ],
+    de: [
+        {
+            q: 'Muss ich eine App installieren?',
+            a: 'Nein. Es funktioniert direkt im Browser.',
+        },
+        {
+            q: 'Kann ich private Inhalte herunterladen?',
+            a: 'Nein. Nur öffentliche Inhalte werden unterstützt.',
+        },
+        {
+            q: 'Warum ist es langsam?',
+            a: 'Netzwerk oder Quelle können die Geschwindigkeit begrenzen. Versuche es später erneut.',
+        },
+        {
+            q: 'Gibt es nur Audio?',
+            a: 'Wenn die Quelle Audio anbietet, erscheint die Option.',
+        },
+        {
+            q: 'Gibt es ein Limit?',
+            a: 'Je nach Servereinstellungen kann es Limits geben.',
+        },
+    ],
+    ja: [
+        {
+            q: 'アプリのインストールは必要？',
+            a: '不要です。ブラウザで利用できます。',
+        },
+        {
+            q: '非公開コンテンツはダウンロードできますか？',
+            a: 'いいえ。公開コンテンツのみ対応です。',
+        },
+        {
+            q: '遅い場合は？',
+            a: '回線や提供元の制限が原因のことがあります。時間をおいてください。',
+        },
+        {
+            q: '音声のみは対応？',
+            a: '提供元に音声があれば、選択肢に表示されます。',
+        },
+        {
+            q: '制限はありますか？',
+            a: 'サーバー設定により制限がある場合があります。',
+        },
+    ],
+    ko: [
+        {
+            q: '앱 설치가 필요한가요?',
+            a: '아니요. 브라우저에서 바로 사용할 수 있습니다.',
+        },
+        {
+            q: '비공개 콘텐츠도 가능한가요?',
+            a: '아니요. 공개된 콘텐츠만 지원합니다.',
+        },
+        {
+            q: '속도가 느린 이유는?',
+            a: '네트워크 또는 원본 제한일 수 있습니다. 나중에 다시 시도하세요.',
+        },
+        {
+            q: '오디오 전용도 지원하나요?',
+            a: '원본에 오디오가 있으면 옵션으로 표시됩니다.',
+        },
+        {
+            q: '다운로드 제한이 있나요?',
+            a: '서버 설정에 따라 제한이 있을 수 있습니다.',
+        },
+    ],
+    ru: [
+        {
+            q: 'Нужно ли устанавливать приложение?',
+            a: 'Нет. Работает прямо в браузере.',
+        },
+        {
+            q: 'Можно скачать приватный контент?',
+            a: 'Нет. Поддерживается только публичный контент.',
+        },
+        {
+            q: 'Почему загрузка медленная?',
+            a: 'Сеть или источник могут ограничивать скорость. Попробуйте позже.',
+        },
+        {
+            q: 'Есть только аудио?',
+            a: 'Если источник предоставляет аудио, опция появится.',
+        },
+        {
+            q: 'Есть ли лимиты?',
+            a: 'Возможны ограничения в зависимости от настроек сервера.',
+        },
+    ],
+    th: [
+        {
+            q: 'ต้องติดตั้งแอปไหม?',
+            a: 'ไม่ต้อง ใช้ผ่านเบราว์เซอร์ได้เลย',
+        },
+        {
+            q: 'ดาวน์โหลดเนื้อหาส่วนตัวได้ไหม?',
+            a: 'ไม่ได้ รองรับเฉพาะเนื้อหาสาธารณะ',
+        },
+        {
+            q: 'ทำไมถึงช้า?',
+            a: 'อาจมีข้อจำกัดจากเครือข่ายหรือแหล่งที่มา ลองใหม่ภายหลัง',
+        },
+        {
+            q: 'มีโหมดเฉพาะเสียงไหม?',
+            a: 'ถ้าแหล่งที่มามีเสียง จะมีตัวเลือกให้',
+        },
+        {
+            q: 'มีข้อจำกัดการดาวน์โหลดไหม?',
+            a: 'อาจมีข้อจำกัดตามการตั้งค่าเซิร์ฟเวอร์',
+        },
+    ],
+    vi: [
+        {
+            q: 'Có cần cài ứng dụng không?',
+            a: 'Không. Dùng trực tiếp trên trình duyệt.',
+        },
+        {
+            q: 'Có tải được nội dung riêng tư không?',
+            a: 'Không. Chỉ hỗ trợ nội dung công khai.',
+        },
+        {
+            q: 'Vì sao tải chậm?',
+            a: 'Mạng hoặc nguồn có thể giới hạn tốc độ. Hãy thử lại sau.',
+        },
+        {
+            q: 'Có chế độ chỉ âm thanh không?',
+            a: 'Nếu nguồn có âm thanh, tùy chọn sẽ xuất hiện.',
+        },
+        {
+            q: 'Có giới hạn tải xuống không?',
+            a: 'Có thể có giới hạn tùy cấu hình máy chủ.',
+        },
+    ],
+};
+
+const ensureFaqs = (faqs: SeoLandingFaqItem[], lang: string): SeoLandingFaqItem[] => {
+    if (faqs.length >= 5) return faqs;
+    const pool = fallbackFaqs[lang] ?? fallbackFaqs.en;
+    const next = [...faqs];
+    for (const item of pool) {
+        if (next.length >= 5) break;
+        if (!next.some((faq) => faq.q === item.q)) {
+            next.push(item);
+        }
+    }
+    return next;
+};
+
+const withFaqs = (
+    page: Omit<SeoLandingLocaleContent, 'disclaimer'>,
+    lang: string,
+): Omit<SeoLandingLocaleContent, 'disclaimer'> => ({
+    ...page,
+    faqs: ensureFaqs(page.faqs, lang),
+});
 
 const en = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'en'),
     disclaimer:
         'Only download publicly accessible content. Respect copyrights and give credit to creators.',
 });
 
 const zh = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'zh'),
     disclaimer:
         '仅支持下载公开可访问内容；请尊重版权与平台规则，二次创作请注明来源并获得授权。',
 });
 
 const es = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'es'),
     disclaimer:
         'Descarga solo contenido público. Respeta los derechos de autor y da crédito a los creadores.',
 });
 
 const fr = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'fr'),
     disclaimer:
         'Ne télécharge que du contenu public. Respecte les droits d’auteur et crédite les créateurs.',
 });
 
 const de = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'de'),
     disclaimer:
         'Lade nur öffentlich zugängliche Inhalte herunter. Respektiere Urheberrechte und nenne die Quelle.',
 });
 
 const ja = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'ja'),
     disclaimer:
         '公開されているコンテンツのみダウンロードしてください。著作権を尊重し、作成者をクレジットしてください。',
 });
 
 const ko = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'ko'),
     disclaimer:
         '공개된 콘텐츠만 다운로드하세요. 저작권을 존중하고 제작자에게 크레딧을 남기세요.',
 });
 
 const ru = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'ru'),
     disclaimer:
         'Скачивайте только общедоступный контент. Соблюдайте авторские права и указывайте автора.',
 });
 
 const th = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'th'),
     disclaimer:
         'ดาวน์โหลดเฉพาะเนื้อหาที่เป็นสาธารณะ เคารพลิขสิทธิ์และให้เครดิตผู้สร้าง',
 });
 
 const vi = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
-    ...page,
+    ...withFaqs(page, 'vi'),
     disclaimer:
         'Chỉ tải nội dung công khai. Tôn trọng bản quyền và ghi nguồn cho tác giả.',
 });

@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 
 import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
+import { guideSlugs } from '$lib/seo/guide-pages';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
@@ -11,7 +12,9 @@ const pages = [
     '',
     'clipboard',
     'discover',
+    'guide',
     'youtube-video-downloader',
+    ...guideSlugs.map((slug) => `guide/${slug}`),
     ...seoLandingSlugs.map((slug) => `download/${slug}`),
     'about/general',
     'remux',

@@ -1,0 +1,104 @@
+{
+    "title": "Häufige Fragen (FAQ)",
+    "description": "Antworten zu wasserzeichenfreien Downloads, Formaten, Punkten und Fehlerbehebung.",
+    "seo": {
+        "title": "FAQ | Bamboo Download - Wasserzeichenfreier Video-Downloader",
+        "description": "Bamboo Download FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
+        "keywords": "FAQ Video-Downloader,Douyin Downloader,Bilibili Downloader,Kuaishou Downloader,Xiaohongshu Downloader,TikTok Downloader,wasserzeichenfrei herunterladen,Batch-Download,Punkte-Abrechnung"
+    },
+    "toc": {
+        "title": "Schnellzugriffe"
+    },
+    "search": {
+        "placeholder": "FAQ durchsuchen (Wasserzeichen, Batch, Punkte, Fehler…)",
+        "clear": "Zurücksetzen",
+        "no_results": "Keine passenden Fragen gefunden."
+    },
+    "actions": {
+        "home": "Zurück zum Downloader",
+        "feedback": "Problem melden",
+        "youtube": "YouTube-Leitfaden",
+        "account": "Konto & Punkte"
+    },
+    "sections": {
+        "basics": "Erste Schritte",
+        "features": "Funktionen & Formate",
+        "points": "Konto & Punkte",
+        "troubleshooting": "Fehlerbehebung",
+        "privacy": "Richtlinien & Datenschutz"
+    },
+    "items": {
+        "what_is": {
+            "q": "Was ist Bamboo Download?",
+            "a": "Bamboo Download ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook und mehr."
+        },
+        "how_to_use": {
+            "q": "Wie lade ich ein Video (ohne Wasserzeichen) herunter?",
+            "a": "1) Teilen-Link kopieren\n2) Auf der Startseite einfügen\n3) Auto / Audio / Stumm wählen\n4) Analysieren/Download klicken und speichern."
+        },
+        "supported_platforms": {
+            "q": "Welche Plattformen und Linktypen werden unterstützt?",
+            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter) und Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab."
+        },
+        "youtube_supported": {
+            "q": "Wird YouTube unterstützt?",
+            "a": "Direktes YouTube-Parsing ist auf dieser Seite deaktiviert.\nFür YouTube nutze bitte den internen Leitfaden mit Skript/Plugin."
+        },
+        "mobile_ios": {
+            "q": "Funktioniert es auf dem Handy? Wie speichere ich auf iOS?",
+            "a": "Ja, auf Handy/Tablet/Desktop.\nUnter iOS: Wenn Vorschau möglich ist, aber Speichern nicht, folge den Siri-Shortcuts-Anweisungen und speichere über das Teilen-Menü in Fotos/Dateien."
+        },
+        "watermark_free": {
+            "q": "Hat das Download-Video ein Wasserzeichen?",
+            "a": "Bei Plattformen mit wasserzeichenfreier Quelle liefern wir standardmäßig eine saubere Datei.\nWenn das Wasserzeichen eingebrannt ist oder Regeln geändert wurden, kann es nicht entfernt werden."
+        },
+        "quality_options": {
+            "q": "Kann ich in HD/Originalqualität herunterladen? Warum variiert die Qualität?",
+            "a": "Die Qualität hängt vom Originalpost und von Plattformlimits ab.\nWenn mehrere Optionen verfügbar sind, wähle die höhere. Wenn nicht, bietet die Quelle keine Alternativen."
+        },
+        "audio_only": {
+            "q": "Kann ich nur Audio oder stumme Videos herunterladen?",
+            "a": "Ja. Wähle Audio für reines Audio oder Stumm, um die Tonspur zu entfernen.\nUnterstützte Formate variieren je nach Plattform (z. B. MP3/M4A/MP4)."
+        },
+        "batch_download": {
+            "q": "Wie lade ich mehrere Links im Batch herunter?",
+            "a": "Mehrere Links gleichzeitig einfügen (durch Leerzeichen oder Zeilenumbrüche getrennt).\nWenn Batch erkannt wird, kannst du sie gemeinsam verarbeiten und den Fortschritt sehen."
+        },
+        "playlist_collection": {
+            "q": "Werden Playlists/Sammlungen/Serien unterstützt?",
+            "a": "Ja. Für unterstützte Links erkennt die App Sammlungen/Episoden/Playlists und bietet einen Batch-Einstieg.\nWenn nicht erkannt, füge jeden Link im Batch-Modus ein."
+        },
+        "need_login": {
+            "q": "Warum muss ich mich manchmal anmelden?",
+            "a": "Grundlegende Downloads benötigen normalerweise kein Konto.\nZur Missbrauchs- und Spamvermeidung können Funktionen wie Meldungen, Batch oder Punkte eine Anmeldung erfordern."
+        },
+        "points_how": {
+            "q": "Was sind Punkte und wie werden sie berechnet?",
+            "a": "Wenn Punkte aktiviert sind, verbrauchen Downloads Punkte nach Dauer: ca. 1 Punkt pro Minute (aufgerundet).\nWir prüfen das Guthaben vor dem Start. Bei zu wenig Guthaben wirst du zum Kauf aufgefordert."
+        },
+        "points_buy": {
+            "q": "Wo sehe oder kaufe ich Punkte?",
+            "a": "Öffne die Konto-Seite, um Guthaben und Kaufoptionen zu sehen.\nNach der Zahlung wird das Guthaben meist automatisch aktualisiert."
+        },
+        "failed_parse": {
+            "q": "Analyse fehlgeschlagen oder nicht unterstützt. Was tun?",
+            "a": "Stelle sicher, dass der Link öffentlich zugänglich ist (nicht privat, bezahlt oder loginpflichtig).\nVersuche erneut: Link neu kopieren, Seite aktualisieren, Netzwerk wechseln oder später erneut (Regeln ändern sich oft).\nWenn es weiterhin fehlschlägt, nutze „Problem melden“ und sende Link + Fehlermeldung."
+        },
+        "slow_download": {
+            "q": "Downloads sind langsam oder schlagen fehl. Tipps?",
+            "a": "Geschwindigkeit hängt von deinem Netzwerk und Plattform-Drosselung ab.\nNutze WLAN für lange Videos, wechsle Netzwerke oder probiere später erneut. Wenn es bleibt, melde es mit Link und Zeit."
+        },
+        "private_paid": {
+            "q": "Kann man private/bezahlte/loginpflichtige Inhalte herunterladen?",
+            "a": "Nein. Bamboo Download verarbeitet nur öffentlich zugängliche Inhalte.\nBitte Urheberrecht respektieren."
+        },
+        "privacy_logs": {
+            "q": "Speichert ihr meine Links oder Dateien? Ist es sicher?",
+            "a": "Wir fragen nie nach deinen Plattform-Passwörtern.\nLinks und Mediendaten werden nur temporär verarbeitet. Manche Deployments können minimale Zugriff-Logs für Missbrauchsschutz und Debugging führen.\nDiese Seite kann Drittanbieter-Analytics/Ads nutzen, um Betrieb und Verbesserung zu ermöglichen."
+        },
+        "feedback_contact": {
+            "q": "Wie melde ich Probleme oder wünsche Funktionen?",
+            "a": "Nutze das Feedback im App-Interface für schnellere Hilfe.\nOder per E-Mail: celebrateyang@gmail.com"
+        }
+    }
+}

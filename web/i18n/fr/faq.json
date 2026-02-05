@@ -1,0 +1,104 @@
+{
+    "title": "Questions fréquentes (FAQ)",
+    "description": "Réponses sur les téléchargements sans filigrane, formats, points et dépannage.",
+    "seo": {
+        "title": "FAQ | Bamboo Download - Téléchargeur de vidéos sans filigrane",
+        "description": "FAQ Bamboo Download : téléchargements Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Filigrane, mode lot, formats, points et solutions.",
+        "keywords": "FAQ téléchargeur vidéo,téléchargeur Douyin,téléchargeur Bilibili,téléchargeur Kuaishou,téléchargeur Xiaohongshu,téléchargeur TikTok,téléchargement sans filigrane,téléchargement en lot,facturation par points"
+    },
+    "toc": {
+        "title": "Liens rapides"
+    },
+    "search": {
+        "placeholder": "Rechercher dans la FAQ (filigrane, lot, points, échec…)",
+        "clear": "Effacer",
+        "no_results": "Aucune question correspondante."
+    },
+    "actions": {
+        "home": "Retour au téléchargeur",
+        "feedback": "Signaler un problème",
+        "youtube": "Guide YouTube",
+        "account": "Compte et points"
+    },
+    "sections": {
+        "basics": "Bien démarrer",
+        "features": "Fonctions et formats",
+        "points": "Compte et points",
+        "troubleshooting": "Dépannage",
+        "privacy": "Politique et confidentialité"
+    },
+    "items": {
+        "what_is": {
+            "q": "Qu'est‑ce que Bamboo Download ?",
+            "a": "Bamboo Download est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook et plus."
+        },
+        "how_to_use": {
+            "q": "Comment télécharger une vidéo (sans filigrane) ?",
+            "a": "1) Copiez le lien de partage\n2) Collez-le sur la page d'accueil\n3) Choisissez Auto / Audio / Muet\n4) Cliquez sur Analyser/Télécharger et enregistrez."
+        },
+        "supported_platforms": {
+            "q": "Quelles plateformes et quels liens sont pris en charge ?",
+            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter) et Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original."
+        },
+        "youtube_supported": {
+            "q": "YouTube est-il pris en charge ?",
+            "a": "Le téléchargement direct YouTube est désactivé sur ce site.\nSi vous en avez besoin, utilisez le guide interne avec un script/extension de navigateur."
+        },
+        "mobile_ios": {
+            "q": "Fonctionne-t-il sur mobile ? Comment enregistrer sur iOS ?",
+            "a": "Oui, sur mobile/tablette/ordinateur.\nSur iOS, si vous pouvez prévisualiser mais pas enregistrer, suivez les instructions Siri Shortcuts pour enregistrer dans Photos/Fichiers depuis le menu de partage."
+        },
+        "watermark_free": {
+            "q": "La vidéo téléchargée aura-t-elle un filigrane ?",
+            "a": "Pour les plateformes qui fournissent une source sans filigrane, nous essayons de renvoyer un fichier propre par défaut.\nSi le filigrane est intégré ou si la plateforme change ses règles, il peut être impossible de l'enlever."
+        },
+        "quality_options": {
+            "q": "Puis-je télécharger en HD/original ? Pourquoi la qualité varie ?",
+            "a": "La qualité dépend de ce que fournit la publication et des limites de la plateforme.\nS'il y a plusieurs options, choisissez la plus haute. Sinon, la source ne propose peut‑être pas d'alternatives."
+        },
+        "audio_only": {
+            "q": "Puis-je télécharger l'audio seul ou une vidéo muette ?",
+            "a": "Oui. Choisissez Audio pour l'audio seul, ou Muet pour retirer la piste audio.\nLes formats disponibles varient selon la plateforme (par ex. MP3/M4A/MP4)."
+        },
+        "batch_download": {
+            "q": "Comment télécharger plusieurs liens en lot ?",
+            "a": "Collez plusieurs liens à la fois (séparés par des espaces ou des lignes).\nQuand le mode lot est détecté, vous pouvez les traiter ensemble et suivre la progression."
+        },
+        "playlist_collection": {
+            "q": "Les playlists/collections/séries sont‑elles prises en charge ?",
+            "a": "Oui. Pour les liens compatibles, l'app détecte les collections/épisodes/playlists et propose une entrée en lot.\nSi elle ne détecte pas, collez chaque lien en mode lot."
+        },
+        "need_login": {
+            "q": "Pourquoi dois-je parfois me connecter ?",
+            "a": "Les téléchargements basiques ne nécessitent généralement pas de compte.\nPour limiter les abus et le spam, des fonctions comme les rapports, les lots ou la facturation en points peuvent nécessiter une connexion."
+        },
+        "points_how": {
+            "q": "Que sont les points et comment sont-ils facturés ?",
+            "a": "Si les points sont activés, les téléchargements peuvent consommer des points selon la durée : env. 1 point par minute (arrondi au supérieur).\nNous vérifions le solde avant de commencer. S'il est insuffisant, un achat sera proposé."
+        },
+        "points_buy": {
+            "q": "Où voir ou acheter des points ?",
+            "a": "Ouvrez la page Compte pour voir votre solde et les options d'achat.\nAprès paiement, le solde se met généralement à jour automatiquement."
+        },
+        "failed_parse": {
+            "q": "Analyse échouée ou non pris en charge. Que faire ?",
+            "a": "Assurez-vous que le lien est public (pas privé, payant ou nécessitant une connexion).\nRéessayez : recopie du lien, rafraîchissement, changement de réseau ou essai plus tard (les règles changent souvent).\nSi ça échoue toujours, utilisez “Signaler un problème” et incluez le lien et l'erreur."
+        },
+        "slow_download": {
+            "q": "Téléchargements lents ou qui échouent. Des conseils ?",
+            "a": "La vitesse dépend de votre réseau et du bridage de la plateforme.\nEssayez le Wi‑Fi pour les longues vidéos, changez de réseau ou réessayez plus tard. Si le problème persiste, signalez avec le lien et l'heure."
+        },
+        "private_paid": {
+            "q": "Peut‑on télécharger du contenu privé/payant/avec connexion ?",
+            "a": "Non. Bamboo Download ne gère que le contenu public.\nRespectez les droits d'auteur."
+        },
+        "privacy_logs": {
+            "q": "Stockez-vous mes liens ou fichiers ? Est-ce sûr ?",
+            "a": "Nous ne demandons jamais vos mots de passe.\nLes liens et données sont utilisés temporairement pendant le traitement. Certains déploiements peuvent garder des logs minimaux pour la prévention d'abus et le débogage.\nCe site peut utiliser des analytics/publicités tiers pour fonctionner et s'améliorer."
+        },
+        "feedback_contact": {
+            "q": "Comment signaler un problème ou demander une fonctionnalité ?",
+            "a": "Utilisez l'entrée de feedback dans l'app pour un diagnostic plus rapide.\nVous pouvez aussi écrire à : celebrateyang@gmail.com"
+        }
+    }
+}

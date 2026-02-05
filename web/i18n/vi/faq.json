@@ -1,0 +1,104 @@
+{
+    "title": "Câu hỏi thường gặp (FAQ)",
+    "description": "Giải đáp về tải không logo, định dạng, điểm và khắc phục lỗi.",
+    "seo": {
+        "title": "FAQ | Bamboo Download - Trình tải video không logo",
+        "description": "FAQ Bamboo Download: tải Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
+        "keywords": "FAQ tải video,trình tải Douyin,trình tải Bilibili,trình tải Kuaishou,trình tải Xiaohongshu,trình tải TikTok,tải không logo,tải hàng loạt,tính điểm"
+    },
+    "toc": {
+        "title": "Liên kết nhanh"
+    },
+    "search": {
+        "placeholder": "Tìm trong FAQ (logo, batch, điểm, lỗi…)",
+        "clear": "Xóa",
+        "no_results": "Không tìm thấy câu hỏi phù hợp."
+    },
+    "actions": {
+        "home": "Quay lại trang tải",
+        "feedback": "Báo lỗi",
+        "youtube": "Hướng dẫn YouTube",
+        "account": "Tài khoản & điểm"
+    },
+    "sections": {
+        "basics": "Bắt đầu",
+        "features": "Tính năng & định dạng",
+        "points": "Tài khoản & điểm",
+        "troubleshooting": "Khắc phục lỗi",
+        "privacy": "Chính sách & quyền riêng tư"
+    },
+    "items": {
+        "what_is": {
+            "q": "Bamboo Download là gì?",
+            "a": "Bamboo Download là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook và nhiều nền tảng khác."
+        },
+        "how_to_use": {
+            "q": "Cách tải video (không logo)?",
+            "a": "1) Sao chép liên kết chia sẻ\n2) Dán vào trang chủ\n3) Chọn Tự động / Âm thanh / Tắt tiếng\n4) Bấm Phân tích/Tải xuống và lưu."
+        },
+        "supported_platforms": {
+            "q": "Hỗ trợ nền tảng và loại link nào?",
+            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc."
+        },
+        "youtube_supported": {
+            "q": "Có hỗ trợ YouTube không?",
+            "a": "Tải trực tiếp YouTube đã bị tắt trên trang này.\nNếu cần, hãy dùng hướng dẫn trong trang với script/extension trình duyệt."
+        },
+        "mobile_ios": {
+            "q": "Dùng trên điện thoại được không? Lưu trên iOS thế nào?",
+            "a": "Có, dùng được trên điện thoại/máy tính bảng/desktop.\nTrên iOS, nếu chỉ xem được nhưng không lưu được, hãy làm theo hướng dẫn Siri Shortcuts để lưu vào Ảnh/Tệp từ menu chia sẻ."
+        },
+        "watermark_free": {
+            "q": "Video tải về có logo không?",
+            "a": "Với nền tảng cung cấp nguồn không logo, chúng tôi cố gắng trả về file sạch.\nNếu logo bị gắn cứng hoặc nền tảng đổi quy tắc, có thể không gỡ được."
+        },
+        "quality_options": {
+            "q": "Tải HD/chất lượng gốc được không? Vì sao chất lượng khác nhau?",
+            "a": "Chất lượng phụ thuộc bài đăng gốc và giới hạn nền tảng.\nNếu có nhiều lựa chọn, hãy chọn mức cao hơn."
+        },
+        "audio_only": {
+            "q": "Có tải chỉ âm thanh hoặc video không tiếng không?",
+            "a": "Có. Chọn Âm thanh để tải audio, hoặc Tắt tiếng để loại bỏ âm thanh.\nĐịnh dạng hỗ trợ tùy nền tảng (ví dụ MP3/M4A/MP4)."
+        },
+        "batch_download": {
+            "q": "Cách tải hàng loạt nhiều link?",
+            "a": "Dán nhiều liên kết cùng lúc (cách nhau bằng khoảng trắng hoặc xuống dòng).\nKhi phát hiện chế độ batch, bạn có thể xử lý cùng lúc và theo dõi tiến độ."
+        },
+        "playlist_collection": {
+            "q": "Có hỗ trợ playlist/bộ sưu tập/series không?",
+            "a": "Có. Với link hỗ trợ, ứng dụng sẽ cố gắng nhận diện bộ sưu tập/tập/playlist và cung cấp chế độ batch.\nNếu không nhận diện, hãy dán từng link vào chế độ batch."
+        },
+        "need_login": {
+            "q": "Vì sao đôi khi cần đăng nhập?",
+            "a": "Tải cơ bản thường không cần tài khoản.\nĐể giảm spam/lạm dụng, các chức năng như báo lỗi, batch hoặc tính điểm có thể yêu cầu đăng nhập."
+        },
+        "points_how": {
+            "q": "Điểm là gì và tính như thế nào?",
+            "a": "Nếu bật điểm, tải xuống có thể tiêu tốn điểm theo thời lượng: khoảng 1 điểm/phút (làm tròn lên).\nHệ thống kiểm tra số dư trước khi bắt đầu, nếu không đủ sẽ gợi ý mua thêm."
+        },
+        "points_buy": {
+            "q": "Xem/mua điểm ở đâu?",
+            "a": "Mở trang Tài khoản để xem số dư và tùy chọn mua.\nSau thanh toán, số dư thường cập nhật tự động."
+        },
+        "failed_parse": {
+            "q": "Phân tích thất bại hoặc báo không hỗ trợ, phải làm gì?",
+            "a": "Đảm bảo link là công khai (không riêng tư/trả phí/đòi đăng nhập).\nThử lại: sao chép lại link, làm mới trang, đổi mạng hoặc thử sau (quy tắc nền tảng thay đổi thường xuyên).\nNếu vẫn lỗi, dùng “Báo lỗi” và gửi kèm link + thông báo lỗi."
+        },
+        "slow_download": {
+            "q": "Tải chậm hoặc bị lỗi giữa chừng. Có mẹo không?",
+            "a": "Tốc độ phụ thuộc mạng và việc giới hạn từ nền tảng.\nDùng Wi‑Fi cho video dài, đổi mạng hoặc thử lại sau. Nếu vẫn bị, báo lỗi kèm link và thời gian."
+        },
+        "private_paid": {
+            "q": "Có tải nội dung riêng tư/trả phí/đòi đăng nhập không?",
+            "a": "Không. Bamboo Download chỉ xử lý nội dung công khai.\nHãy tôn trọng bản quyền."
+        },
+        "privacy_logs": {
+            "q": "Bạn có lưu link hoặc file của tôi không? Có an toàn không?",
+            "a": "Chúng tôi không yêu cầu mật khẩu nền tảng.\nLink và dữ liệu chỉ được dùng tạm thời trong quá trình xử lý. Một số triển khai có thể lưu log tối thiểu để chống lạm dụng và debug.\nTrang này có thể dùng phân tích/quảng cáo bên thứ ba để vận hành và cải thiện."
+        },
+        "feedback_contact": {
+            "q": "Báo lỗi hoặc yêu cầu tính năng như thế nào?",
+            "a": "Dùng mục phản hồi trong ứng dụng để xử lý nhanh hơn.\nBạn cũng có thể email: celebrateyang@gmail.com"
+        }
+    }
+}

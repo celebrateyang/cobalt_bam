@@ -21,12 +21,19 @@ const pages = [
     'faq',
 ];
 
-// sub-pages under /about
-const aboutPages = [
-    'about/privacy',
-    'about/terms',
-    'about/credits',
-];
+// sub-pages under /about (only include if source markdown exists)
+const aboutFiles = import.meta.glob('$i18n/*/about/*.md');
+const aboutPages = ['general', 'privacy', 'terms'];
+const aboutPagesByLang = new Map<string, Set<string>>();
+
+for (const file of Object.keys(aboutFiles)) {
+    const match = file.match(/\/([^/]+)\/about\/([^/]+)\.md$/);
+    if (!match) continue;
+    const [, lang, page] = match;
+    const set = aboutPagesByLang.get(lang) ?? new Set<string>();
+    set.add(page);
+    aboutPagesByLang.set(lang, set);
+}
 
 function generateSitemap(): string {
     const urls: string[] = [];
@@ -50,9 +57,11 @@ function generateSitemap(): string {
 
         // about sub-pages
         for (const aboutPage of aboutPages) {
+            const available = aboutPagesByLang.get(lang);
+            if (!available || !available.has(aboutPage)) continue;
             urls.push(`
     <url>
-        <loc>${site}/${lang}/${aboutPage}</loc>
+        <loc>${site}/${lang}/about/${aboutPage}</loc>
         <lastmod>${now}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>

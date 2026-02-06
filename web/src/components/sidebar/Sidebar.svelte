@@ -42,7 +42,7 @@
 
 <nav id="sidebar" aria-label={$t("a11y.tabs.tab_panel")}>
     <CobaltLogo />
-    <div id="sidebar-tabs" role="tablist">
+    <div id="sidebar-tabs">
         {#if isMobile}
             <!-- Mobile Layout: 发现 | 更多 | 首页 (center) | 设置 | 帐号 -->
             <div

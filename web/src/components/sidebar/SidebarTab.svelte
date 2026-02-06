@@ -39,8 +39,7 @@
     href={tabLink}
     bind:this={tab}
     on:focus={() => showTab(tab)}
-    role="tab"
-    aria-selected={isTabActive}
+    aria-current={isTabActive ? "page" : undefined}
 >
     {#if beta}
         <div class="beta-sign" aria-label={$t("general.beta")}>β</div>

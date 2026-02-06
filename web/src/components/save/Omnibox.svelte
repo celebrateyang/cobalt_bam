@@ -774,7 +774,7 @@
         border: none;
         outline: none;
         background-color: transparent;
-        color: var(--secondary);
+        color: var(--text);
 
         -webkit-tap-highlight-color: transparent;
         flex: 1;
@@ -791,8 +791,8 @@
     }
 
     #link-area::placeholder {
-        color: var(--gray);
-        opacity: 0.8;
+        color: var(--muted-strong);
+        opacity: 1;
     }
 
     /* fix for safari */

@@ -480,10 +480,31 @@
         discoverPreviewObserver.observe(discoverPreviewTarget);
     };
 
+    const runOnIdle = (callback: () => void, timeout = 2500) => {
+        if (!browser) return () => {};
+
+        if ("requestIdleCallback" in window) {
+            const handle = window.requestIdleCallback(callback, { timeout });
+            return () => window.cancelIdleCallback?.(handle);
+        }
+
+        const handle = window.setTimeout(callback, Math.min(timeout, 1200));
+        return () => window.clearTimeout(handle);
+    };
+
     // 检查本地存储中是否已关闭通知
     onMount(() => {
+        const needsImmediateClerk = Boolean($page.url.searchParams.get("feedback"));
+        let cancelClerkInit = () => {};
+
         if (clerkEnabled) {
-            initClerk();
+            if (needsImmediateClerk) {
+                void initClerk();
+            } else {
+                cancelClerkInit = runOnIdle(() => {
+                    void initClerk();
+                }, 3800);
+            }
         }
 
         const notificationClosed = localStorage.getItem(
@@ -523,6 +544,7 @@
         }
 
         return () => {
+            cancelClerkInit();
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             discoverPreviewObserver?.disconnect();
             discoverPreviewObserver = null;
@@ -1253,7 +1275,7 @@
     @media (prefers-color-scheme: light) {
         #promotions > section#mindsou,
         #promotions > section#yumcheck {
-            background-color: var(--secondary);
+            background-color: var(--sidebar-bg);
             color: #ffffff;
         }
         #promotions .accordion-header,
@@ -1262,11 +1284,11 @@
             color: inherit;
         }
         #promotions .accordion-header:hover {
-            background-color: #ffb02e;
+            background-color: #5c8f24;
         }
         #promotions a.button {
             background-color: #ffffff;
-            color: var(--secondary);
+            color: var(--sidebar-bg);
         }
     }
 
@@ -1493,7 +1515,7 @@
     .platform-heading h2 {
         margin: 0;
         font-size: clamp(19px, 2.4vw, 24px);
-        color: var(--secondary);
+        color: var(--accent-strong);
     }
     .platform-heading p {
         margin: 6px 0 0;
@@ -1526,7 +1548,7 @@
     .platform-name {
         font-weight: 600;
         margin-bottom: 6px;
-        color: var(--secondary);
+        color: var(--accent-strong);
     }
     .platform-card p {
         margin: 0;

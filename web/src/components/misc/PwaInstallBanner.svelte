@@ -125,8 +125,8 @@
     }
 
     .install-btn {
-        background-color: var(--accent);
-        color: #ffffff;
+        background-color: var(--button-active-bg);
+        color: var(--button-active-text);
         border: none;
         padding: 6px 14px;
         border-radius: 20px;

@@ -88,6 +88,10 @@
         --accent-hover: #6fa525;
         --accent-rgb: 130, 181, 45;
         --accent-background: rgba(130, 181, 45, 0.1);
+        --accent-strong: #4f7f1c;
+        --muted-strong: #5f5f69;
+        --button-active-bg: #4a7a1c;
+        --button-active-text: #ffffff;
 
         /* Additional colors for components */
         --background: #ffffff;
@@ -160,6 +164,10 @@
         --accent-hover: #9bc53a;
         --accent-rgb: 130, 181, 45;
         --accent-background: rgba(130, 181, 45, 0.1);
+        --accent-strong: #9bc53a;
+        --muted-strong: #9a9aa3;
+        --button-active-bg: #f2f2f2;
+        --button-active-text: #101010;
 
         /* Additional colors for components */
         --background: #000000;
@@ -260,8 +268,8 @@
     }
 
     :global(.button.active) {
-        color: var(--primary);
-        background-color: var(--secondary);
+        color: var(--button-active-text);
+        background-color: var(--button-active-bg);
     }
 
     :global(.button.active:not(.color):active) {

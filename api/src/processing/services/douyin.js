@@ -504,7 +504,47 @@ export default async function(obj) {
         if (!videoInfoRes) throw new Error("no videoInfoRes");
 
         const item = videoInfoRes.item_list ? videoInfoRes.item_list[0] : null;
-        if (!item) throw new Error("no item list");
+        if (!item) {
+            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            if (upstreamTargetUrl) {
+                console.warn("[douyin] no item list after local retries, trying upstream cobalt", {
+                    videoId,
+                    targetUrl: upstreamTargetUrl,
+                    localAttempts: SHARE_PAGE_RETRIES + 1,
+                });
+
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    logUpstreamUsed("no_item_list", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: `douyin_${videoId}_audio`,
+                            urls: upstream.relayUrl,
+                            duration: upstream.duration,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
+                    return {
+                        filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
+                        urls: upstream.url,
+                        forceRedirect: upstream.status === "redirect",
+                        duration: upstream.duration,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
+            throw new Error("no item list");
+        }
 
         const videoUri = item.video.play_addr.uri;
         const title = item.desc;

@@ -1,10 +1,11 @@
 <script lang="ts">
     export let big: boolean = false;
     export let description: string = "";
+    export let ariaLabel: string = "";
 </script>
 
 <div class="switcher-parent">
-    <div class="switcher" class:big={big} role="listbox">
+    <div class="switcher" class:big={big} role="group" aria-label={ariaLabel || undefined}>
         <slot></slot>
     </div>
     {#if description}

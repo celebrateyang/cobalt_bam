@@ -52,6 +52,10 @@
         setLocale(data.lang);
     }
 
+    $: if (browser) {
+        document.documentElement.lang = data.lang || $INTERNAL_locale || "en";
+    }
+
     // Get current path without language prefix
     $: canonicalPathname = normalizePathname($page.url.pathname);
     $: currentPath = canonicalPathname.replace(/^\/[^/]+/, "");

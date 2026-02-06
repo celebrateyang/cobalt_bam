@@ -1,0 +1,29 @@
+# FreeSaveVideo (cobalt_bam)
+
+> FreeSaveVideo is a web-based media downloader and toolkit. It supports link parsing, downloadable media extraction, transfer, and FAQ/help pages in multiple languages.
+
+## Canonical Site
+- https://freesavevideo.online/
+
+## Main Pages
+- Home: https://freesavevideo.online/en
+- Chinese Home: https://freesavevideo.online/zh
+- FAQ: https://freesavevideo.online/en/faq
+- Guide Index: https://freesavevideo.online/en/guide
+- Discover: https://freesavevideo.online/en/discover
+
+## Machine-Readable Discovery
+- Sitemap: https://freesavevideo.online/sitemap.xml
+- Robots: https://freesavevideo.online/robots.txt
+
+## API
+- Base URL: https://api.freesavevideo.online/
+- Health: https://api.freesavevideo.online/health
+- API Docs: https://github.com/imputnet/cobalt/blob/main/docs/api.md
+
+## Supported Languages
+- de, en, es, fr, ja, ko, ru, th, vi, zh
+
+## Notes
+- Some media extraction capabilities depend on source platform limits and availability.
+- Public pages should be indexed; private/admin pages are not intended for search indexing.

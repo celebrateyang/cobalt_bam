@@ -621,10 +621,10 @@
         <a
             href={`/${currentLocale}/discover`}
             class="feature-card feature-card--discover"
-            aria-label={$t("tabs.feature.discover_trends")}
         >
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
+                <span class="sr-only">{$t("tabs.feature.discover_trends")}</span>
                 {#if discoverPreviewTiles.length}
                     <div class="discover-preview" aria-hidden="true">
                         {#key discoverPreviewKey}
@@ -1613,6 +1613,18 @@
 
     .feature-card--discover:hover .discover-preview-img {
         transform: scale(1.08);
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 
     @media (prefers-reduced-motion: reduce) {

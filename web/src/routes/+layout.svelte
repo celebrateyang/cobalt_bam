@@ -34,9 +34,12 @@
 
         --dialog-backdrop: rgba(255, 255, 255, 0.3);
 
-        --sidebar-bg: #82b52d;
+        --sidebar-bg: #4a7a1c;
         --sidebar-highlight: #ffffff;
         --sidebar-hover: rgba(255, 255, 255, 0.1);
+        --sidebar-tab-text: #ffffff;
+        --sidebar-tab-active-bg: #ffffff;
+        --sidebar-tab-active-text: #355812;
 
         --input-border: #adadb7;
 
@@ -123,6 +126,9 @@
 
         --sidebar-bg: #101010;
         --sidebar-highlight: #f2f2f2;
+        --sidebar-tab-text: #f2f2f2;
+        --sidebar-tab-active-bg: #f2f2f2;
+        --sidebar-tab-active-text: #101010;
 
         --input-border: #383838;
 

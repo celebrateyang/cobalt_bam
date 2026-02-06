@@ -207,8 +207,8 @@
         .mobile-home-wrapper :global(.sidebar-tab.active) {
             transform: scale(1.15);
             opacity: 1;
-            background: var(--sidebar-highlight);
-            color: var(--sidebar-bg);
+            background: var(--sidebar-tab-active-bg);
+            color: var(--sidebar-tab-active-text);
             border-radius: 16px;
             padding: 8px 16px;
         }

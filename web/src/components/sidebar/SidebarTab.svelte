@@ -57,9 +57,9 @@
         text-align: center;
         gap: 3px;
         padding: var(--padding) 3px;
-        color: var(--sidebar-highlight);
+        color: var(--sidebar-tab-text);
         font-size: var(--sidebar-font-size);
-        opacity: 0.75;
+        opacity: 1;
         height: fit-content;
         border-radius: var(--border-radius);
         transition: transform 0.2s;
@@ -83,8 +83,8 @@
     }
 
     .sidebar-tab.active {
-        color: var(--sidebar-bg);
-        background: var(--sidebar-highlight);
+        color: var(--sidebar-tab-active-text);
+        background: var(--sidebar-tab-active-bg);
         opacity: 1;
         transform: none;
         transition: none;

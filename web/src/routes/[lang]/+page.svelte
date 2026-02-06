@@ -9,7 +9,6 @@
     import Omnibox from "$components/save/Omnibox.svelte";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
-    import UserGuide from "$components/misc/UseGuide.svelte";
 
     import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
@@ -29,7 +28,7 @@
     } from "$lib/state/clerk";
     import { link as omniboxLink } from "$lib/state/omnibox";
     import { currentApiURL } from "$lib/api/api-url";
-    import { videos, type SocialVideo } from "$lib/api/social";
+    import type { SocialVideo } from "$lib/api/social";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
@@ -324,6 +323,9 @@
     let discoverPreviewTiles: SocialVideo[] = [];
     let discoverPreviewKey = 0;
     let discoverPreviewTimer: ReturnType<typeof setInterval> | null = null;
+    let discoverPreviewTarget: HTMLAnchorElement | null = null;
+    let discoverPreviewObserver: IntersectionObserver | null = null;
+    let discoverPreviewInitialized = false;
 
     const prefersReducedMotion = () =>
         typeof window !== "undefined" &&
@@ -417,11 +419,14 @@
     };
 
     const initDiscoverPreview = async () => {
+        if (discoverPreviewInitialized) return;
+        discoverPreviewInitialized = true;
         try {
+            const { videos } = await import("$lib/api/social");
             const res = await videos.list({
                 is_active: true,
                 is_featured: true,
-                limit: 40,
+                limit: 24,
                 sort: "display_order",
                 order: "DESC",
             });
@@ -447,6 +452,34 @@
         }
     };
 
+    const startDiscoverPreviewWhenVisible = () => {
+        if (discoverPreviewInitialized) return;
+
+        if (
+            !browser ||
+            !discoverPreviewTarget ||
+            typeof window.IntersectionObserver === "undefined"
+        ) {
+            void initDiscoverPreview();
+            return;
+        }
+
+        discoverPreviewObserver = new IntersectionObserver(
+            (entries) => {
+                if (!entries.some((entry) => entry.isIntersecting)) return;
+                discoverPreviewObserver?.disconnect();
+                discoverPreviewObserver = null;
+                void initDiscoverPreview();
+            },
+            {
+                rootMargin: "220px 0px",
+                threshold: 0.01,
+            },
+        );
+
+        discoverPreviewObserver.observe(discoverPreviewTarget);
+    };
+
     // 检查本地存储中是否已关闭通知
     onMount(() => {
         if (clerkEnabled) {
@@ -460,7 +493,7 @@
             showNotification = false;
         }
 
-        void initDiscoverPreview();
+        startDiscoverPreviewWhenVisible();
 
         const handleVisibilityChange = () => {
             if (document.hidden) {
@@ -491,6 +524,8 @@
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            discoverPreviewObserver?.disconnect();
+            discoverPreviewObserver = null;
             stopDiscoverPreviewRotation();
         };
     });
@@ -621,6 +656,7 @@
         <a
             href={`/${currentLocale}/discover`}
             class="feature-card feature-card--discover"
+            bind:this={discoverPreviewTarget}
         >
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
@@ -639,6 +675,8 @@
                                             src={getDiscoverPreviewThumbnailSrc(video)}
                                             alt=""
                                             loading="lazy"
+                                            fetchpriority="low"
+                                            decoding="async"
                                         />
                                     </div>
                                 {/each}
@@ -1507,6 +1545,14 @@
         margin: 0 auto 2rem;
         padding: 0 var(--padding);
         opacity: 0.95;
+    }
+
+    .feature-cards,
+    .platform-section,
+    .seo-section,
+    #promotions {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 680px;
     }
 
     .feature-card {

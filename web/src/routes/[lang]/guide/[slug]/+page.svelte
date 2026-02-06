@@ -43,6 +43,33 @@
               })),
           }
         : null;
+    $: breadcrumbJsonLd = canonicalUrl
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                  {
+                      '@type': 'ListItem',
+                      position: 1,
+                      name: isZh ? '首页' : 'Home',
+                      item: `https://${fallbackHost}/${data.lang}`,
+                  },
+                  {
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: isZh ? '指南' : 'Guide',
+                      item: `https://${fallbackHost}/${data.lang}/guide`,
+                  },
+                  {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: guideTitle,
+                      item: canonicalUrl,
+                  },
+              ],
+          }
+        : null;
+    $: structuredData = [faqJsonLd, breadcrumbJsonLd].filter(Boolean);
 </script>
 
 <svelte:head>
@@ -56,8 +83,10 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
-    {#if faqJsonLd}
-        {@html `<script type="application/ld+json">${JSON.stringify(faqJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {#if structuredData.length}
+        {#each structuredData as ld}
+            {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
+        {/each}
     {/if}
 </svelte:head>
 

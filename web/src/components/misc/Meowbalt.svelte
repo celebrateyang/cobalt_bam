@@ -9,7 +9,10 @@
 <img
     class="meowbalt {emotion}"
     src="/meowbalt/{emotion}.png"
+    width="152"
     height="152"
+    decoding="async"
+    fetchpriority="high"
     alt={$t('general.meowbalt')}
     aria-hidden="true"
 />

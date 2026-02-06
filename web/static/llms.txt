@@ -1,29 +1,54 @@
-# FreeSaveVideo (cobalt_bam)
+# FreeSaveVideo
 
-> FreeSaveVideo is a web-based media downloader and toolkit. It supports link parsing, downloadable media extraction, transfer, and FAQ/help pages in multiple languages.
+> FreeSaveVideo is a browser-based media downloader and toolkit with localized pages, platform-specific landing pages, guides, and FAQs.
 
 ## Canonical Site
 - https://freesavevideo.online/
 
-## Main Pages
-- Home: https://freesavevideo.online/en
-- Chinese Home: https://freesavevideo.online/zh
-- FAQ: https://freesavevideo.online/en/faq
-- Guide Index: https://freesavevideo.online/en/guide
-- Discover: https://freesavevideo.online/en/discover
-
-## Machine-Readable Discovery
-- Sitemap: https://freesavevideo.online/sitemap.xml
+## Discovery
 - Robots: https://freesavevideo.online/robots.txt
+- Sitemap: https://freesavevideo.online/sitemap.xml
+- LLM file: https://freesavevideo.online/llms.txt
+- LLM alias: https://freesavevideo.online/llm.txt
+- Well-known alias: https://freesavevideo.online/.well-known/llms.txt
+
+## Language Entry Points
+- de: https://freesavevideo.online/de
+- en: https://freesavevideo.online/en
+- es: https://freesavevideo.online/es
+- fr: https://freesavevideo.online/fr
+- ja: https://freesavevideo.online/ja
+- ko: https://freesavevideo.online/ko
+- ru: https://freesavevideo.online/ru
+- th: https://freesavevideo.online/th
+- vi: https://freesavevideo.online/vi
+- zh: https://freesavevideo.online/zh
+
+## Key Public Pages
+- FAQ (en): https://freesavevideo.online/en/faq
+- FAQ (zh): https://freesavevideo.online/zh/faq
+- Guide index (en): https://freesavevideo.online/en/guide
+- Guide index (zh): https://freesavevideo.online/zh/guide
+- Discover (en): https://freesavevideo.online/en/discover
+- Discover (zh): https://freesavevideo.online/zh/discover
+
+## Core Download Landing Pages
+- https://freesavevideo.online/en/download/tiktok-no-watermark
+- https://freesavevideo.online/en/download/douyin-no-watermark
+- https://freesavevideo.online/en/download/kuaishou-no-watermark
+- https://freesavevideo.online/en/download/xiaohongshu-video-download
+- https://freesavevideo.online/en/download/bilibili-video-download
+- https://freesavevideo.online/en/download/instagram-video-download
+- https://freesavevideo.online/en/download/facebook-video-download
+- https://freesavevideo.online/en/download/twitter-x-video-download
+- https://freesavevideo.online/en/download/pinterest-video-download
+- https://freesavevideo.online/en/download/snapchat-video-download
 
 ## API
 - Base URL: https://api.freesavevideo.online/
 - Health: https://api.freesavevideo.online/health
-- API Docs: https://github.com/imputnet/cobalt/blob/main/docs/api.md
+- WebSocket health: https://api.freesavevideo.online/ws/health
 
-## Supported Languages
-- de, en, es, fr, ja, ko, ru, th, vi, zh
-
-## Notes
-- Some media extraction capabilities depend on source platform limits and availability.
-- Public pages should be indexed; private/admin pages are not intended for search indexing.
+## Policy Notes
+- Public informational pages are intended to be indexed and retrieved.
+- Private or admin-only pages are not intended for search indexing.

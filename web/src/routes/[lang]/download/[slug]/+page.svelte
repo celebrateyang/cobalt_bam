@@ -9,12 +9,18 @@
         lang: string;
         slug: string;
         landing: import('$lib/seo/landing-pages').SeoLandingPage;
+        guideSlug: string | null;
+        relatedPages: import('$lib/seo/landing-pages').SeoLandingPage[];
     };
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
     $: localeContent = getSeoLandingLocale(data.landing, data.lang);
+    $: isZh = data.lang === 'zh';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download/${data.slug}`;
+    $: guideUrl = data.guideSlug ? `/${data.lang}/guide/${data.guideSlug}` : null;
+    $: faqUrl = `/${data.lang}/faq`;
+    $: guideIndexUrl = `/${data.lang}/guide`;
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -32,6 +38,27 @@
               })),
           }
         : null;
+    $: breadcrumbJsonLd = canonicalUrl
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                  {
+                      '@type': 'ListItem',
+                      position: 1,
+                      name: isZh ? '首页' : 'Home',
+                      item: `https://${fallbackHost}/${data.lang}`,
+                  },
+                  {
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: isZh ? '下载' : 'Download',
+                      item: canonicalUrl,
+                  },
+              ],
+          }
+        : null;
+    $: structuredData = [faqJsonLd, breadcrumbJsonLd].filter(Boolean);
 </script>
 
 <svelte:head>
@@ -47,8 +74,10 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
-    {#if faqJsonLd}
-        {@html `<script type="application/ld+json">${JSON.stringify(faqJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {#if structuredData.length}
+        {#each structuredData as ld}
+            {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
+        {/each}
     {/if}
 </svelte:head>
 
@@ -96,6 +125,29 @@
                         <summary>{item.q}</summary>
                         <p>{item.a}</p>
                     </details>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card related">
+            <h2>{isZh ? '延伸阅读' : 'Related links'}</h2>
+            <div class="related-links">
+                {#if guideUrl}
+                    <a class="related-link" href={guideUrl}>
+                        {isZh ? '查看该平台下载指南' : 'Read the platform guide'}
+                    </a>
+                {/if}
+                <a class="related-link" href={faqUrl}>
+                    {isZh ? '查看常见问题' : 'Open FAQ'}
+                </a>
+                <a class="related-link" href={guideIndexUrl}>
+                    {isZh ? '浏览全部下载指南' : 'Browse all guides'}
+                </a>
+                {#each data.relatedPages.slice(0, 3) as related}
+                    {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
+                    <a class="related-link" href={`/${data.lang}/download/${related.slug}`}>
+                        {relatedLocale.h1}
+                    </a>
                 {/each}
             </div>
         </section>
@@ -291,6 +343,29 @@
         color: var(--secondary);
         opacity: 0.85;
         line-height: 1.6;
+    }
+
+    .related-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+    }
+
+    .related-link {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--button-stroke);
+        background: var(--button-elevated);
+        color: var(--secondary);
+        text-decoration: none;
+        line-height: 1.45;
+    }
+
+    .related-link:hover {
+        background: var(--button-hover);
     }
 
     .disclaimer {

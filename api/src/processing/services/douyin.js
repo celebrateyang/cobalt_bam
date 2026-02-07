@@ -6,6 +6,10 @@ const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleW
 const PAGE_TIMEOUT_MS = 15000;
 const SHARE_PAGE_RETRIES = 1;
 const WAF_RETRY_AFTER_SECONDS = 60;
+const isUpstreamServer = (() => {
+    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+    return raw === "true" || raw === "1";
+})();
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -503,10 +507,26 @@ export default async function(obj) {
         const videoInfoRes = loaderData[videoPageKey].videoInfoRes;
         if (!videoInfoRes) throw new Error("no videoInfoRes");
 
+        const filterReasons = Array.isArray(videoInfoRes.filter_list)
+            ? videoInfoRes.filter_list
+                .map((entry) => String(entry?.filter_reason || "").trim())
+                .filter(Boolean)
+            : [];
+
         const item = videoInfoRes.item_list ? videoInfoRes.item_list[0] : null;
         if (!item) {
+            if (filterReasons.length) {
+                console.warn("[douyin] video unavailable from share payload", {
+                    videoId,
+                    statusCode: videoInfoRes.status_code,
+                    isOversea: videoInfoRes.is_oversea,
+                    filterReasons,
+                    upstream: isUpstreamServer,
+                });
+            }
+
             const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
-            if (upstreamTargetUrl) {
+            if (upstreamTargetUrl && !isUpstreamServer) {
                 console.warn("[douyin] no item list after local retries, trying upstream cobalt", {
                     videoId,
                     targetUrl: upstreamTargetUrl,
@@ -541,6 +561,10 @@ export default async function(obj) {
                         },
                     };
                 }
+            }
+
+            if (filterReasons.length) {
+                return { error: "fetch.empty" };
             }
 
             throw new Error("no item list");

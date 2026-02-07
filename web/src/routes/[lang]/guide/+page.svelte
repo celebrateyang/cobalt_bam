@@ -1,6 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
     import SupportedServices from '$components/save/SupportedServices.svelte';
+    import { featuredDownloadLinks } from '$lib/seo/internal-links';
 
     export let data: {
         lang: string;
@@ -65,6 +66,26 @@
                     </div>
                 </article>
             {/each}
+        </section>
+
+        <section class="card link-hub">
+            <h2>{isZh ? '延伸链接' : 'Related links'}</h2>
+            <div class="link-grid">
+                <a class="link-item link-item--primary" href={`/${data.lang}/download`}>
+                    Download directory
+                </a>
+                <a class="link-item link-item--primary" href={`/${data.lang}/faq`}>
+                    {isZh ? '常见问题（FAQ）' : 'Frequently asked questions'}
+                </a>
+                <a class="link-item link-item--primary" href={`/${data.lang}`}>
+                    {isZh ? '返回首页下载' : 'Back to home downloader'}
+                </a>
+                {#each featuredDownloadLinks.slice(0, 6) as item}
+                    <a class="link-item" href={`/${data.lang}/download/${item.slug}`}>
+                        {item.platform} {isZh ? '下载页' : 'download page'}
+                    </a>
+                {/each}
+            </div>
         </section>
     </main>
 </div>
@@ -175,6 +196,41 @@
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+    }
+
+    .link-hub h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        color: var(--secondary);
+    }
+
+    .link-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+    }
+
+    .link-item {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--button-stroke);
+        background: var(--button-elevated);
+        color: var(--secondary);
+        text-decoration: none;
+        line-height: 1.4;
+    }
+
+    .link-item:hover {
+        background: var(--button-hover);
+    }
+
+    .link-item--primary {
+        border-color: rgba(var(--accent-rgb), 0.3);
+        background: rgba(var(--accent-rgb), 0.1);
+        font-weight: 600;
     }
 
     .btn {

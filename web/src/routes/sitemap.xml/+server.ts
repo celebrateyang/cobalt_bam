@@ -13,6 +13,7 @@ const pages = [
     'clipboard',
     'discover',
     'guide',
+    'download',
     'youtube-video-downloader',
     ...guideSlugs.map((slug) => `guide/${slug}`),
     ...seoLandingSlugs.map((slug) => `download/${slug}`),

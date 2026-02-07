@@ -21,6 +21,7 @@
     $: guideUrl = data.guideSlug ? `/${data.lang}/guide/${data.guideSlug}` : null;
     $: faqUrl = `/${data.lang}/faq`;
     $: guideIndexUrl = `/${data.lang}/guide`;
+    $: downloadIndexUrl = `/${data.lang}/download`;
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -53,7 +54,7 @@
                       '@type': 'ListItem',
                       position: 2,
                       name: isZh ? '下载' : 'Download',
-                      item: canonicalUrl,
+                      item: `https://${fallbackHost}/${data.lang}/download`,
                   },
               ],
           }
@@ -132,6 +133,9 @@
         <section class="card related">
             <h2>{isZh ? '延伸阅读' : 'Related links'}</h2>
             <div class="related-links">
+                <a class="related-link related-link--primary" href={downloadIndexUrl}>
+                    Download directory
+                </a>
                 {#if guideUrl}
                     <a class="related-link" href={guideUrl}>
                         {isZh ? '查看该平台下载指南' : 'Read the platform guide'}

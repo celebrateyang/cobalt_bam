@@ -32,6 +32,9 @@
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
+    type HomeDeferredSectionsComponent =
+        typeof import("$components/home/HomeDeferredSections.svelte").default;
+
     export let data: { lang?: string };
 
     // Initialize immediately so downstream constants see a defined value
@@ -62,8 +65,6 @@
         donateLinks[currentLocale as keyof typeof donateLinks] ??
         donateLinks.en;
 
-    let showMindsou = false;
-    let showYumcheck = false;
     let showNotification = false; // ?????????????????
     const fallbackHost = env.HOST || "freesavevideo.online";
     const platformsList = [
@@ -200,7 +201,7 @@
         }
     }
 
-    $: if ($clerkUser) {
+    $: if ($clerkUser && pointsFetchArmed) {
         void fetchUserPoints();
     } else {
         userPoints = null;
@@ -326,6 +327,13 @@
     let discoverPreviewTarget: HTMLAnchorElement | null = null;
     let discoverPreviewObserver: IntersectionObserver | null = null;
     let discoverPreviewInitialized = false;
+    let pointsFetchArmed = false;
+
+    let HomeDeferredSections: HomeDeferredSectionsComponent | null = null;
+    let deferredSectionsTarget: HTMLElement | null = null;
+    let deferredSectionsObserver: IntersectionObserver | null = null;
+    let deferredSectionsLoading = false;
+    let deferredWorkArmed = false;
 
     const prefersReducedMotion = () =>
         typeof window !== "undefined" &&
@@ -480,6 +488,46 @@
         discoverPreviewObserver.observe(discoverPreviewTarget);
     };
 
+    const loadDeferredSections = async () => {
+        if (deferredSectionsLoading || HomeDeferredSections) return;
+        deferredSectionsLoading = true;
+
+        try {
+            const module = await import("$components/home/HomeDeferredSections.svelte");
+            HomeDeferredSections = module.default;
+        } finally {
+            deferredSectionsLoading = false;
+        }
+    };
+
+    const startDeferredSectionsWhenVisible = () => {
+        if (HomeDeferredSections || deferredSectionsLoading) return;
+
+        if (
+            !browser ||
+            !deferredSectionsTarget ||
+            typeof window.IntersectionObserver === "undefined"
+        ) {
+            void loadDeferredSections();
+            return;
+        }
+
+        deferredSectionsObserver = new IntersectionObserver(
+            (entries) => {
+                if (!entries.some((entry) => entry.isIntersecting)) return;
+                deferredSectionsObserver?.disconnect();
+                deferredSectionsObserver = null;
+                void loadDeferredSections();
+            },
+            {
+                rootMargin: "420px 0px",
+                threshold: 0.01,
+            },
+        );
+
+        deferredSectionsObserver.observe(deferredSectionsTarget);
+    };
+
     const runOnIdle = (callback: () => void, timeout = 2500) => {
         if (!browser) return () => {};
 
@@ -493,9 +541,21 @@
     };
 
     // 检查本地存储中是否已关闭通知
+    const armDeferredHomeTasks = () => {
+        if (deferredWorkArmed) return;
+        deferredWorkArmed = true;
+        pointsFetchArmed = true;
+        startDiscoverPreviewWhenVisible();
+        startDeferredSectionsWhenVisible();
+    };
+
     onMount(() => {
         const needsImmediateClerk = Boolean($page.url.searchParams.get("feedback"));
+        const feedbackRequested = Boolean($page.url.searchParams.get("feedback"));
         let cancelClerkInit = () => {};
+        let cancelHomeArm = () => {};
+        let cancelDeferredLoad = () => {};
+        let cancelNotificationInit = () => {};
 
         if (clerkEnabled) {
             if (needsImmediateClerk) {
@@ -507,14 +567,36 @@
             }
         }
 
-        const notificationClosed = localStorage.getItem(
-            "notification-finditbuddy-launch-closed",
-        );
-        if (notificationClosed === "true") {
-            showNotification = false;
-        }
+        cancelNotificationInit = runOnIdle(() => {
+            const notificationClosed = localStorage.getItem(
+                "notification-finditbuddy-launch-closed",
+            );
+            if (notificationClosed === "true") {
+                showNotification = false;
+            }
+        }, 1200);
 
-        startDiscoverPreviewWhenVisible();
+        cancelHomeArm = runOnIdle(() => {
+            armDeferredHomeTasks();
+        }, 2600);
+
+        cancelDeferredLoad = runOnIdle(() => {
+            void loadDeferredSections();
+        }, 7200);
+
+        const armOnInteraction = () => {
+            armDeferredHomeTasks();
+        };
+
+        window.addEventListener("pointerdown", armOnInteraction, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener("keydown", armOnInteraction, { once: true });
+        window.addEventListener("scroll", armOnInteraction, {
+            once: true,
+            passive: true,
+        });
 
         const handleVisibilityChange = () => {
             if (document.hidden) {
@@ -527,7 +609,8 @@
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
 
-        if ($page.url.searchParams.get("feedback")) {
+        if (feedbackRequested) {
+            armDeferredHomeTasks();
             void (async () => {
                 const opened = await openFeedback();
                 if (!opened) return;
@@ -545,9 +628,17 @@
 
         return () => {
             cancelClerkInit();
+            cancelHomeArm();
+            cancelDeferredLoad();
+            cancelNotificationInit();
+            window.removeEventListener("pointerdown", armOnInteraction);
+            window.removeEventListener("keydown", armOnInteraction);
+            window.removeEventListener("scroll", armOnInteraction);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             discoverPreviewObserver?.disconnect();
             discoverPreviewObserver = null;
+            deferredSectionsObserver?.disconnect();
+            deferredSectionsObserver = null;
             stopDiscoverPreviewRotation();
         };
     });
@@ -731,139 +822,23 @@
         </a>
     </section>
 
-    <section class="platform-section seo-section" id="platforms">
-        <div class="platform-heading">
-            <h2>{$t("home.platforms.title")}</h2>
-            <p>
-                {$t("home.platforms.description")}
-            </p>
-        </div>
-        <div class="platform-grid">
-            {#each platformCards as card}
-                <a
-                    class="platform-card"
-                    id={"platform-" + card.slug}
-                    href={card.slug === "youtube"
-                        ? `/${currentLocale}/youtube-video-downloader`
-                        : canonicalUrl
-                          ? `${canonicalUrl}#platform-${card.slug}`
-                          : `/${currentLocale}#platform-${card.slug}`}
-                >
-                    <div class="platform-name">{card.name}</div>
-                    <p>{card.desc}</p>
-                </a>
-            {/each}
-        </div>
-    </section>
-
-    <section class="seo-hero seo-section">
-        <h1>{seoTitle}</h1>
-        <p>{seoDescription}</p>
-    </section>
-
-    <section class="seo-body seo-section">
-        <div class="seo-text">
-            <h2>{$t("general.guide.title")}</h2>
-            <p>{guideDescription1}</p>
-            <p>{guideDescription2}</p>
-        </div>
-
-        <div class="seo-grid">
-            <article class="seo-card">
-                <h3>{$t("tabs.feature.media_downloader")}</h3>
-                <p>{seoDescription}</p>
-            </article>
-            <article class="seo-card">
-                <h3>{$t("tabs.feature.file_transfer")}</h3>
-                <p>{$t("general.seo.transfer.description")}</p>
-            </article>
-            <article class="seo-card">
-                <h3>{$t("tabs.feature.discover_trends")}</h3>
-                <p>{$t("general.seo.discover.description")}</p>
-            </article>
-            <article class="seo-card">
-                <h3>{embedDescription}</h3>
-                <p>{seoKeywords}</p>
-            </article>
-        </div>
-    </section>
-
-    <!-- 引流推广模块 -->
-    <section id="promotions">
-        <!-- Mindsou Accordion -->
-        <section id="mindsou">
-            <button
-                type="button"
-                class="accordion-header"
-                aria-expanded={showMindsou}
-                on:click={() => (showMindsou = !showMindsou)}
-            >
-                <img
-                    src="/popularize/mindsou_logo.png"
-                    alt="Mindsou Logo"
-                    class="section-icon"
-                />
-                <span>{$t("general.promotions.mindsou.title")}</span>
-                <span class="arrow">{showMindsou ? "▲" : "▼"}</span>
-            </button>
-            {#if showMindsou}
-                <div class="details" role="region">
-                    <ul>
-                        <li>{$t("general.promotions.mindsou.features.1")}</li>
-                        <li>{$t("general.promotions.mindsou.features.2")}</li>
-                        <li>{$t("general.promotions.mindsou.features.3")}</li>
-                        <li>{$t("general.promotions.mindsou.features.4")}</li>
-                        <li>{$t("general.promotions.mindsou.features.5")}</li>
-                    </ul>
-                    <a
-                        class="button"
-                        href="https://mindsou.online"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {$t("general.promotions.mindsou.visit")}
-                    </a>
-                </div>
-            {/if}
-        </section>
-
-        <!-- YumCheck Accordion -->
-        <section id="yumcheck">
-            <button
-                type="button"
-                class="accordion-header"
-                aria-expanded={showYumcheck}
-                on:click={() => (showYumcheck = !showYumcheck)}
-            >
-                <img
-                    src="/popularize/yumcheck.ico"
-                    alt="YumCheck Logo"
-                    class="section-icon"
-                />
-                <span>{$t("general.promotions.yumcheck.title")}</span>
-                <span class="arrow">{showYumcheck ? "▲" : "▼"}</span>
-            </button>
-            {#if showYumcheck}
-                <div class="details" role="region">
-                    <ul>
-                        <li>{$t("general.promotions.yumcheck.features.1")}</li>
-                        <li>{$t("general.promotions.yumcheck.features.2")}</li>
-                        <li>{$t("general.promotions.yumcheck.features.3")}</li>
-                        <li>{$t("general.promotions.yumcheck.features.4")}</li>
-                    </ul>
-                    <a
-                        class="button"
-                        href="https://yumcheck.online"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {$t("general.promotions.yumcheck.visit")}
-                    </a>
-                </div>
-            {/if}
-        </section>
-    </section>
-
+    <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
+    {#if HomeDeferredSections}
+        <svelte:component
+            this={HomeDeferredSections}
+            {currentLocale}
+            {canonicalUrl}
+            {platformCards}
+            {seoTitle}
+            {seoDescription}
+            {guideDescription1}
+            {guideDescription2}
+            {embedDescription}
+            {seoKeywords}
+        />
+    {:else}
+        <div class="deferred-sections-placeholder" aria-hidden="true"></div>
+    {/if}
     {#if showLowPointsBalloon}
         <div class="low-points-balloon-wrapper" aria-label={$t("home.points_balloon.aria")}>
             <button
@@ -956,23 +931,21 @@
         inset: -18px -14px -22px;
         background:
             radial-gradient(
-                560px circle at 20% 5%,
-                rgba(var(--accent-rgb), 0.16),
-                transparent 62%
+                480px circle at 24% 8%,
+                rgba(var(--accent-rgb), 0.11),
+                transparent 66%
             ),
             radial-gradient(
-                520px circle at 80% 70%,
-                rgba(47, 138, 249, 0.1),
-                transparent 62%
+                440px circle at 78% 72%,
+                rgba(47, 138, 249, 0.07),
+                transparent 66%
             );
-        filter: blur(18px);
-        opacity: 0.35;
+        opacity: 0.24;
         pointer-events: none;
     }
 
     :global(#cobalt[data-reduce-transparency="true"]) .capabilities::before {
-        filter: none;
-        opacity: 0.18;
+        opacity: 0.12;
     }
 
     .cap-card {
@@ -980,7 +953,7 @@
         z-index: 1;
         border-radius: 18px;
         overflow: hidden;
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
         transition:
             transform 0.18s ease,
             box-shadow 0.18s ease;
@@ -1021,8 +994,8 @@
 
     @media (hover: hover) {
         .cap-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
         }
     }
 
@@ -1032,7 +1005,7 @@
 
     :global(#cobalt[data-reduce-motion="true"]) .cap-card:hover {
         transform: none;
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
     }
 
     .cap-card-inner {
@@ -1050,20 +1023,18 @@
         content: "";
         position: absolute;
         inset: 0;
-        background-image:
-            linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-        background-size: 28px 28px;
-        opacity: 0.55;
-        mask-image: radial-gradient(circle at 30% 18%, #000 0%, transparent 72%);
+        background: linear-gradient(
+            140deg,
+            rgba(var(--accent-rgb), 0.05),
+            transparent 60%
+        );
+        opacity: 0.7;
         pointer-events: none;
     }
 
     :global([data-theme="dark"]) .cap-card-inner::before {
-        background-image:
-            linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
-        opacity: 0.4;
+        background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 60%);
+        opacity: 0.45;
     }
 
     .cap-card-inner::after {
@@ -1081,7 +1052,7 @@
                 rgba(47, 138, 249, 0.12),
                 transparent 60%
             );
-        opacity: 0.85;
+        opacity: 0.65;
         pointer-events: none;
         transform: translateZ(0);
     }
@@ -1104,7 +1075,7 @@
         justify-content: center;
         background: var(--accent-background);
         border: 1px solid rgba(var(--accent-rgb), 0.22);
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         color: var(--accent);
         flex-shrink: 0;
     }
@@ -1181,145 +1152,13 @@
         }
     }
 
-    ul {
-        list-style: disc;
-        padding-left: var(--padding);
-    }
-
-    a {
-        text-decoration: none;
-        color: var(--blue);
-    }
-
-    .button {
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: var(--secondary);
-        color: var(--primary);
-        border-radius: var(--border-radius);
-        text-align: center;
-    }
-
-    /* 推广模块样式 */
-    #promotions {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--padding);
-        padding: var(--padding) 0;
-    }
-    #promotions > section {
-        display: flex;
-        flex-direction: column;
-        padding: var(--padding);
-        background-color: var(--popup-bg);
-        border-radius: var(--border-radius);
-        width: 100%;
-        max-width: 640px;
-        box-sizing: border-box;
-        gap: 12px;
-        transition: all 0.3s ease;
-    }
-
-    .accordion-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        padding: var(--padding);
-        background: var(--popup-bg);
-        border-radius: var(--border-radius);
-        transition: background 0.2s;
-        gap: 8px;
-    }
-    .accordion-header:hover {
-        background: var(--secondary-bg);
-    }
-    .arrow {
-        font-size: 0.9rem;
-    }
-    .details {
-        padding: calc(var(--padding) / 2) var(--padding);
-        background: var(--popup-bg);
-        border-bottom-left-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
-        margin-bottom: var(--padding);
-        animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Mindsou 与 YumCheck 模块样式覆盖（默认暗色） */
-    #promotions > section#mindsou,
-    #promotions > section#yumcheck {
-        background-color: var(--popup-bg);
-        color: var(--primary);
-    }
-
-    /* Center‑align YumCheck 标题与箭头 */
-    #promotions > section#yumcheck .accordion-header {
-        justify-content: center;
-        text-align: center; /* 万一有多行文字也会居中 */
-    }
-
-    /* Light 模式：使用深绿背景 + 白字 */
-    @media (prefers-color-scheme: light) {
-        #promotions > section#mindsou,
-        #promotions > section#yumcheck {
-            background-color: var(--sidebar-bg);
-            color: #ffffff;
-        }
-        #promotions .accordion-header,
-        #promotions .details {
-            background: transparent;
-            color: inherit;
-        }
-        #promotions .accordion-header:hover {
-            background-color: #5c8f24;
-        }
-        #promotions a.button {
-            background-color: #ffffff;
-            color: var(--sidebar-bg);
-        }
-    }
-
-    /* Dark 模式：文字白色 */
-    @media (prefers-color-scheme: dark) {
-        #promotions > section#mindsou,
-        #promotions > section#yumcheck {
-            color: #ffffff;
-        }
-        #promotions a.button {
-            color: #ffffff;
-        }
-    }
-
     @media screen and (max-width: 535px) {
         #cobalt-save-container {
             padding-top: calc(var(--padding) / 2);
         }
     }
 
-    /* 图标尺寸 & 间距 */
-    .section-icon {
-        width: 24px;
-        height: 24px;
-        margin: 0; /* 左右间距由 gap 控制 */
-    }
-
-    /* 确保小屏时不溢出 */
-    #promotions > section .section-icon {
-        max-width: 100%;
-    } /* 通知组件样式 */
+    /* 通知组件样式 */
     .notification {
         display: flex;
         align-items: center;
@@ -1421,142 +1260,6 @@
         line-height: 1;
     }
 
-    .seo-section {
-        width: 100%;
-        max-width: 1100px;
-        margin: 28px auto;
-        padding: 0 var(--padding);
-        box-sizing: border-box;
-    }
-
-    .seo-hero {
-        padding: 22px 20px;
-        border-radius: 16px;
-        background: var(--surface-1);
-        border: 1px solid var(--surface-2);
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.06);
-    }
-
-    .seo-hero h1 {
-        margin: 0 0 10px;
-        font-size: clamp(22px, 3vw, 30px);
-        line-height: 1.25;
-        color: var(--secondary);
-    }
-
-    .seo-hero p {
-        margin: 0;
-        font-size: 15px;
-        color: var(--secondary-600);
-        line-height: 1.55;
-        max-width: 900px;
-    }
-
-    .seo-body {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    .seo-text h2 {
-        margin: 0;
-        font-size: clamp(19px, 2.4vw, 24px);
-        color: var(--secondary);
-    }
-
-    .seo-text p {
-        margin: 6px 0 0;
-        color: var(--secondary-600);
-        line-height: 1.65;
-        max-width: 960px;
-    }
-
-    .seo-grid {
-        display: grid;
-        gap: 14px;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        width: 100%;
-    }
-
-    .seo-card {
-        padding: 16px;
-        border-radius: 14px;
-        background: var(--surface-1);
-        border: 1px solid var(--surface-2);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
-    }
-
-    .seo-card h3 {
-        margin: 0;
-        font-size: 15px;
-        color: var(--secondary);
-    }
-
-    .seo-card p {
-        margin: 0;
-        color: var(--secondary-600);
-        line-height: 1.5;
-        font-size: 14px;
-    }
-
-    .platform-section {
-        width: 100%;
-        max-width: 1100px;
-        margin: 0 auto 12px;
-        padding: 0 var(--padding);
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .platform-heading h2 {
-        margin: 0;
-        font-size: clamp(19px, 2.4vw, 24px);
-        color: var(--accent-strong);
-    }
-    .platform-heading p {
-        margin: 6px 0 0;
-        color: var(--secondary-600);
-        line-height: 1.55;
-    }
-    .platform-grid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-    .platform-card {
-        display: block;
-        padding: 14px;
-        border-radius: 12px;
-        background: var(--surface-1);
-        border: 1px solid var(--surface-2);
-        text-decoration: none;
-        color: var(--text);
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s,
-            border-color 0.2s;
-    }
-    .platform-card:hover {
-        transform: translateY(-2px);
-        border-color: var(--accent);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
-    }
-    .platform-name {
-        font-weight: 600;
-        margin-bottom: 6px;
-        color: var(--accent-strong);
-    }
-    .platform-card p {
-        margin: 0;
-        color: var(--secondary-600);
-        line-height: 1.45;
-        font-size: 14px;
-    }
-
     /* Feature Cards */
     .feature-cards {
         display: grid;
@@ -1569,10 +1272,7 @@
         opacity: 0.95;
     }
 
-    .feature-cards,
-    .platform-section,
-    .seo-section,
-    #promotions {
+    .feature-cards {
         content-visibility: auto;
         contain-intrinsic-size: 1px 680px;
     }
@@ -1591,13 +1291,13 @@
         font: inherit;
         appearance: none;
         transition:
-            transform 0.2s,
-            background 0.2s;
+            background 0.2s,
+            border-color 0.2s;
         border: 1px solid transparent;
+        contain: layout paint style;
     }
 
     .feature-card:hover {
-        transform: translateY(-2px);
         background: var(--surface-2);
         border-color: var(--accent);
     }
@@ -1674,13 +1374,11 @@
         height: 100%;
         object-fit: cover;
         display: block;
-        transform: scale(1.04);
-        transition: transform 0.5s ease;
-        filter: saturate(1.05) contrast(1.02);
+        transition: opacity 0.2s ease;
     }
 
     .feature-card--discover:hover .discover-preview-img {
-        transform: scale(1.08);
+        opacity: 0.95;
     }
 
     .sr-only {
@@ -1699,6 +1397,20 @@
         .discover-preview-img {
             transition: none;
         }
+    }
+
+    .deferred-sections-anchor {
+        width: 100%;
+        height: 1px;
+    }
+
+    .deferred-sections-placeholder {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto 8px;
+        min-height: 160px;
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 360px;
     }
 
     @media (max-width: 600px) {
@@ -1740,51 +1452,8 @@
             height: 140px;
         }
 
-        .seo-section {
-            padding: 0 14px;
-            margin: 16px auto;
-        }
-
-        .seo-hero {
-            padding: 16px;
-        }
-
-        .seo-hero h1 {
-            font-size: clamp(18px, 5vw, 24px);
-        }
-
-        .seo-hero p {
-            font-size: 14px;
-        }
-
-        .seo-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .seo-card {
-            padding: 14px;
-        }
-
-        .seo-text p {
-            font-size: 14px;
-        }
-
-        .platform-section {
-            margin-bottom: 8px;
-        }
-
-        .platform-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .platform-card {
-            padding: 12px;
-        }
-
-        #promotions {
-            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
+        .deferred-sections-placeholder {
+            min-height: 120px;
         }
     }
 
@@ -1799,7 +1468,6 @@
             calc(100vw - var(--sidebar-width) - (var(--padding) * 2) - 18px)
         );
         pointer-events: none;
-        animation: low-points-balloon-float 3.5s ease-in-out infinite;
     }
 
     .low-points-balloon {
@@ -1846,7 +1514,6 @@
         justify-content: center;
         flex: 0 0 auto;
         position: relative;
-        animation: low-points-balloon-pulse 1.8s ease-in-out infinite;
     }
 
     .low-points-balloon-icon::after {
@@ -1857,7 +1524,6 @@
         border: 2px solid currentColor;
         opacity: 0;
         transform: scale(0.75);
-        animation: low-points-balloon-ring 2.2s ease-out infinite;
     }
 
     .low-points-balloon-title {
@@ -1967,44 +1633,6 @@
         100% {
             opacity: 1;
             transform: translateY(0) scale(1);
-        }
-    }
-
-    @keyframes low-points-balloon-float {
-        0%,
-        100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(5px);
-        }
-    }
-
-    @keyframes low-points-balloon-pulse {
-        0%,
-        100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.08);
-        }
-    }
-
-    @keyframes low-points-balloon-ring {
-        0% {
-            opacity: 0;
-            transform: scale(0.75);
-        }
-        20% {
-            opacity: 1;
-        }
-        60% {
-            opacity: 0;
-            transform: scale(1.1);
-        }
-        100% {
-            opacity: 0;
-            transform: scale(1.1);
         }
     }
 

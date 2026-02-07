@@ -7,6 +7,7 @@
     import { updated } from "$app/stores";
     import { browser } from "$app/environment";
     import { afterNavigate } from "$app/navigation";
+    import { onMount } from "svelte";
     import { getServerInfo } from "$lib/api/server-info";
     import cachedInfo from "$lib/state/server-info";
 
@@ -24,8 +25,6 @@
     import Sidebar from "$components/sidebar/Sidebar.svelte";
     import Turnstile from "$components/misc/Turnstile.svelte";
     import NotchSticker from "$components/misc/NotchSticker.svelte";
-    import DialogHolder from "$components/dialog/DialogHolder.svelte";
-    import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
     import PwaInstallBanner from "$components/misc/PwaInstallBanner.svelte";
 
@@ -91,6 +90,41 @@
         device.prefers.reducedTransparency;
 
     $: spawnTurnstile = !!$cachedInfo?.info?.cobalt?.turnstileSitekey;
+    $: isHomePath =
+        $page.url.pathname === `/${data.lang}` ||
+        $page.url.pathname === `/${data.lang}/`;
+
+    let DialogHolderComponent: any = null;
+    let ProcessingQueueComponent: any = null;
+    let deferredShellLoaded = false;
+    let turnstileArmed = false;
+    $: shouldRenderTurnstile =
+        (spawnTurnstile && isHomePath && turnstileArmed) || $turnstileCreated;
+
+    const loadDeferredShell = async () => {
+        if (deferredShellLoaded) return;
+        deferredShellLoaded = true;
+
+        const [dialogModule, queueModule] = await Promise.all([
+            import("$components/dialog/DialogHolder.svelte"),
+            import("$components/queue/ProcessingQueue.svelte"),
+        ]);
+
+        DialogHolderComponent = dialogModule.default;
+        ProcessingQueueComponent = queueModule.default;
+    };
+
+    const runOnIdle = (callback: () => void, timeout = 2200) => {
+        if (!browser) return () => {};
+
+        if ("requestIdleCallback" in window) {
+            const handle = window.requestIdleCallback(callback, { timeout });
+            return () => window.cancelIdleCallback?.(handle);
+        }
+
+        const handle = window.setTimeout(callback, Math.min(timeout, 1200));
+        return () => window.clearTimeout(handle);
+    };
 
     afterNavigate(async() => {
         const to_focus: HTMLElement | null =
@@ -100,6 +134,39 @@
         if ($page.url.pathname.endsWith("/") || $page.url.pathname.match(/\/[^/]+\/$/)) {
             await getServerInfo();
         }
+    });
+
+    onMount(() => {
+        const bootDeferredShell = () => {
+            void loadDeferredShell();
+        };
+        const bootTurnstile = () => {
+            if (!spawnTurnstile || !isHomePath) return;
+            turnstileArmed = true;
+        };
+
+        const cancelIdle = runOnIdle(bootDeferredShell, 2800);
+        const cancelTurnstileIdle = runOnIdle(bootTurnstile, 7000);
+
+        window.addEventListener("pointerdown", bootDeferredShell, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener("keydown", bootDeferredShell, { once: true });
+        window.addEventListener("pointerdown", bootTurnstile, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener("keydown", bootTurnstile, { once: true });
+
+        return () => {
+            cancelIdle();
+            cancelTurnstileIdle();
+            window.removeEventListener("pointerdown", bootDeferredShell);
+            window.removeEventListener("keydown", bootDeferredShell);
+            window.removeEventListener("pointerdown", bootTurnstile);
+            window.removeEventListener("keydown", bootTurnstile);
+        };
     });
 </script>
 
@@ -150,12 +217,16 @@
         {#if device.is.iPhone && app.is.installed}
             <NotchSticker />
         {/if}
-        <DialogHolder />
+        {#if DialogHolderComponent}
+            <svelte:component this={DialogHolderComponent} />
+        {/if}
         <Sidebar />
-        <ProcessingQueue />
+        {#if ProcessingQueueComponent}
+            <svelte:component this={ProcessingQueueComponent} />
+        {/if}
         <div id="content">
             <PwaInstallBanner />
-            {#if (spawnTurnstile && ($page.url.pathname === `/${data.lang}` || $page.url.pathname === `/${data.lang}/`)) || $turnstileCreated}
+            {#if shouldRenderTurnstile}
                 <Turnstile />
             {/if}
             <slot></slot>

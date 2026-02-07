@@ -6,7 +6,8 @@ import { INTERNAL_locale } from "$lib/i18n/translations";
 import { currentApiURL } from "$lib/api/api-url";
 
 import type { Clerk as ClerkInstance } from "@clerk/clerk-js";
-import { deDE, enUS, esES, frFR, jaJP, koKR, ruRU, thTH, viVN, zhCN } from "@clerk/localizations";
+
+type ClerkLocalization = unknown;
 
 type ClerkUser = {
     id: string;
@@ -39,18 +40,21 @@ const clerkAppearance = {
     },
 };
 
-const localeToClerkLocalization = {
-    de: deDE,
-    en: enUS,
-    es: esES,
-    fr: frFR,
-    ja: jaJP,
-    ko: koKR,
-    ru: ruRU,
-    th: thTH,
-    vi: viVN,
-    zh: zhCN,
-} as const;
+const supportedClerkLocales = [
+    "de",
+    "en",
+    "es",
+    "fr",
+    "ja",
+    "ko",
+    "ru",
+    "th",
+    "vi",
+    "zh",
+] as const;
+
+type ClerkLocaleKey = (typeof supportedClerkLocales)[number];
+type ClerkLocalizationMap = Record<ClerkLocaleKey, ClerkLocalization>;
 
 const getClerkLocaleKey = () => {
     const fallbackFromPath =
@@ -59,14 +63,37 @@ const getClerkLocaleKey = () => {
     const appLocale = (get(INTERNAL_locale) as string | undefined) || fallbackFromPath;
     const base = appLocale.toLowerCase().split("-")[0] || "en";
 
-    return (base in localeToClerkLocalization ? base : "en") as keyof typeof localeToClerkLocalization;
+    return (supportedClerkLocales.includes(base as ClerkLocaleKey) ? base : "en") as ClerkLocaleKey;
 };
 
-const getClerkLocalization = () =>
-    localeToClerkLocalization[getClerkLocaleKey()] || enUS;
+let clerkLocalizationsPromise: Promise<ClerkLocalizationMap> | null = null;
+
+const loadClerkLocalizations = async (): Promise<ClerkLocalizationMap> => {
+    if (!clerkLocalizationsPromise) {
+        clerkLocalizationsPromise = import("@clerk/localizations").then((module) => ({
+            de: module.deDE,
+            en: module.enUS,
+            es: module.esES,
+            fr: module.frFR,
+            ja: module.jaJP,
+            ko: module.koKR,
+            ru: module.ruRU,
+            th: module.thTH,
+            vi: module.viVN,
+            zh: module.zhCN,
+        }));
+    }
+
+    return clerkLocalizationsPromise;
+};
+
+const getClerkLocalization = async () => {
+    const localizations = await loadClerkLocalizations();
+    return localizations[getClerkLocaleKey()] || localizations.en;
+};
 
 let initPromise: Promise<ClerkInstance | null> | null = null;
-let loadedLocaleKey: keyof typeof localeToClerkLocalization | null = null;
+let loadedLocaleKey: ClerkLocaleKey | null = null;
 let localeSyncPromise: Promise<void> | null = null;
 let lastSyncedUserId: string | null = null;
 let syncPromise: Promise<void> | null = null;
@@ -85,7 +112,7 @@ const syncClerkLocale = async (instance: ClerkInstance) => {
 
     localeSyncPromise = instance
         .load({
-            localization: getClerkLocalization(),
+            localization: await getClerkLocalization(),
         } as any)
         .then(() => {
             loadedLocaleKey = desiredKey;

@@ -7,8 +7,6 @@
         <meta name="og:type" content="article">
         <meta name="twitter:card" content="summary">
         <link rel="preconnect" href="https://api.freesavevideo.online" crossorigin>
-        <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
 
         <script>
             window.deferredPrompt = null;
@@ -67,7 +65,11 @@
                 );
             };
 
-            const scheduleLateScripts = () => runWhenIdle(bootLateThirdPartyScripts, 4000);
+            const scheduleLateScripts = () => {
+                window.setTimeout(() => {
+                    runWhenIdle(bootLateThirdPartyScripts, 12000);
+                }, 10000);
+            };
             window.addEventListener("load", scheduleLateScripts, { once: true });
             window.addEventListener("pointerdown", bootLateThirdPartyScripts, { once: true, passive: true });
             window.addEventListener("keydown", bootLateThirdPartyScripts, { once: true });

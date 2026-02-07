@@ -8,6 +8,7 @@
     :global(:root) {
         --primary: #ffffff;
         --secondary: #82b52d;
+        --secondary-600: #4f7f1c;
 
         --white: #ffffff;
         --gray: #75757e;
@@ -106,6 +107,7 @@
     :global([data-theme="dark"]) {
         --primary: #000000;
         --secondary: #e1e1e1;
+        --secondary-600: #cfd2cb;
 
         --gray: #818181;
 

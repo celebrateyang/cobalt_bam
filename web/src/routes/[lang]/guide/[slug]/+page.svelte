@@ -1,6 +1,8 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getSeoLandingLocale, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
+    import { guidePages } from '$lib/seo/guide-pages';
+    import { featuredDownloadLinks } from '$lib/seo/internal-links';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
@@ -25,6 +27,15 @@
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/guide/${data.slug}`;
     $: downloadUrl = `https://${fallbackHost}/${data.lang}/download/${data.guide.landingSlug}`;
+    $: guideIndexUrl = `/${data.lang}/guide`;
+    $: faqUrl = `/${data.lang}/faq`;
+    $: downloadHubUrl = `/${data.lang}/download`;
+    $: relatedGuides = guidePages
+        .filter((item) => item.slug !== data.slug)
+        .slice(0, 4);
+    $: relatedDownloads = featuredDownloadLinks
+        .filter((item) => item.slug !== data.guide.landingSlug)
+        .slice(0, 4);
 
     const ctaLabel = isZh ? '去下载' : 'Download Now';
     const ctaHint = isZh ? '跳转到下载页面' : 'Open the downloader';
@@ -148,6 +159,34 @@
                         <summary>{item.q}</summary>
                         <p>{item.a}</p>
                     </details>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card related">
+            <h2>{isZh ? '延伸链接' : 'Related links'}</h2>
+            <div class="related-links">
+                <a class="related-link related-link--primary" href={downloadHubUrl}>
+                    Download directory
+                </a>
+                <a class="related-link related-link--primary" href={downloadUrl}>
+                    {isZh ? '打开对应下载页' : 'Open downloader page'}
+                </a>
+                <a class="related-link related-link--primary" href={guideIndexUrl}>
+                    {isZh ? '浏览全部下载指南' : 'Browse all guides'}
+                </a>
+                <a class="related-link related-link--primary" href={faqUrl}>
+                    {isZh ? '查看常见问题' : 'Open FAQ'}
+                </a>
+                {#each relatedGuides as guide}
+                    <a class="related-link" href={`/${data.lang}/guide/${guide.slug}`}>
+                        {guide.platform} {isZh ? '指南' : 'guide'}
+                    </a>
+                {/each}
+                {#each relatedDownloads as item}
+                    <a class="related-link" href={`/${data.lang}/download/${item.slug}`}>
+                        {item.platform} {isZh ? '下载页' : 'download page'}
+                    </a>
                 {/each}
             </div>
         </section>
@@ -409,6 +448,41 @@
         color: var(--secondary);
         opacity: 0.85;
         line-height: 1.6;
+    }
+
+    .related h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        color: var(--secondary);
+    }
+
+    .related-links {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .related-link {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--button-stroke);
+        background: var(--button-elevated);
+        color: var(--secondary);
+        text-decoration: none;
+        line-height: 1.45;
+    }
+
+    .related-link:hover {
+        background: var(--button-hover);
+    }
+
+    .related-link--primary {
+        border-color: rgba(var(--accent-rgb), 0.3);
+        background: rgba(var(--accent-rgb), 0.1);
+        font-weight: 600;
     }
 
     .disclaimer {

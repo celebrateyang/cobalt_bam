@@ -2,6 +2,7 @@
     import { page } from "$app/stores";
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
+    import { featuredDownloadLinks, featuredGuideLinks } from "$lib/seo/internal-links";
 
     const fallbackHost = env.HOST || "freesavevideo.online";
     const normalizePathname = (pathname: string) => {
@@ -63,6 +64,8 @@
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: siteUrl = `https://${fallbackHost}`;
     $: youtubeGuideUrl = `${siteUrl}/${lang}/youtube-video-downloader`;
+    $: featuredDownloads = featuredDownloadLinks.slice(0, 6);
+    $: featuredGuides = featuredGuideLinks.slice(0, 4);
 
     $: title = $t("faq.title");
     $: description = $t("faq.description");
@@ -249,6 +252,31 @@
             </section>
         {/each}
     {/if}
+
+    <section class="card related">
+        <h2>{lang === "zh" ? "猜你还要找" : "More to explore"}</h2>
+        <div class="related-links">
+            <a class="related-link related-link--primary" href={`/${lang}/download`}>
+                Download directory
+            </a>
+            <a class="related-link related-link--primary" href={`/${lang}`}>
+                {lang === "zh" ? "返回首页下载" : "Back to home downloader"}
+            </a>
+            <a class="related-link related-link--primary" href={`/${lang}/guide`}>
+                {lang === "zh" ? "查看全部下载指南" : "Browse all download guides"}
+            </a>
+            {#each featuredGuides as item}
+                <a class="related-link" href={`/${lang}/guide/${item.slug}`}>
+                    {item.platform} {lang === "zh" ? "指南" : "guide"}
+                </a>
+            {/each}
+            {#each featuredDownloads as item}
+                <a class="related-link" href={`/${lang}/download/${item.slug}`}>
+                    {item.platform} {lang === "zh" ? "下载页" : "download page"}
+                </a>
+            {/each}
+        </div>
+    </section>
 </main>
 
 <style>
@@ -512,6 +540,42 @@
 
     .answer-link {
         word-break: break-all;
+    }
+
+    .related h2 {
+        margin: 0 0 10px;
+        font-size: 1rem;
+        color: var(--text);
+    }
+
+    .related-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+    }
+
+    .related-link {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--surface-2, var(--popup-stroke));
+        background: var(--button);
+        box-shadow: var(--button-box-shadow);
+        color: var(--text);
+        text-decoration: none;
+        line-height: 1.4;
+    }
+
+    .related-link:hover {
+        background: var(--button-hover);
+    }
+
+    .related-link--primary {
+        border-color: rgba(var(--accent-rgb), 0.34);
+        background: rgba(var(--accent-rgb), 0.12);
+        font-weight: 700;
     }
 
     @media (max-width: 600px) {

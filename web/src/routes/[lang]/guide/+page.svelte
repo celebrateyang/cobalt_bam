@@ -1,7 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
     import SupportedServices from '$components/save/SupportedServices.svelte';
-    import { featuredDownloadLinks } from '$lib/seo/internal-links';
+    import { getHubDownloadLinks } from '$lib/seo/internal-links';
 
     export let data: {
         lang: string;
@@ -20,6 +20,7 @@
     const pageDesc = isZh
         ? '为常见平台提供下载步骤与常见问题，一步一步完成。'
         : 'Step-by-step download guides for popular platforms.';
+    const featuredDownloads = getHubDownloadLinks(6);
 </script>
 
 <svelte:head>
@@ -80,7 +81,7 @@
                 <a class="link-item link-item--primary" href={`/${data.lang}`}>
                     {isZh ? '返回首页下载' : 'Back to home downloader'}
                 </a>
-                {#each featuredDownloadLinks.slice(0, 6) as item}
+                {#each featuredDownloads as item}
                     <a class="link-item" href={`/${data.lang}/download/${item.slug}`}>
                         {item.platform} {isZh ? '下载页' : 'download page'}
                     </a>

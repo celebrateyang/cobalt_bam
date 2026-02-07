@@ -1,8 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getSeoLandingLocale, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
-    import { guidePages } from '$lib/seo/guide-pages';
-    import { featuredDownloadLinks } from '$lib/seo/internal-links';
+    import { getRelatedDownloadLinks, getRelatedGuideLinks } from '$lib/seo/internal-links';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
@@ -30,12 +29,8 @@
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: faqUrl = `/${data.lang}/faq`;
     $: downloadHubUrl = `/${data.lang}/download`;
-    $: relatedGuides = guidePages
-        .filter((item) => item.slug !== data.slug)
-        .slice(0, 4);
-    $: relatedDownloads = featuredDownloadLinks
-        .filter((item) => item.slug !== data.guide.landingSlug)
-        .slice(0, 4);
+    $: relatedGuides = getRelatedGuideLinks(data.slug, 4);
+    $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 4);
 
     const ctaLabel = isZh ? '去下载' : 'Download Now';
     const ctaHint = isZh ? '跳转到下载页面' : 'Open the downloader';

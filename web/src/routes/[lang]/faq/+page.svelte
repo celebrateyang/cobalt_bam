@@ -2,7 +2,7 @@
     import { page } from "$app/stores";
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
-    import { featuredDownloadLinks, featuredGuideLinks } from "$lib/seo/internal-links";
+    import { getHubDownloadLinks, getHubGuideLinks } from "$lib/seo/internal-links";
 
     const fallbackHost = env.HOST || "freesavevideo.online";
     const normalizePathname = (pathname: string) => {
@@ -64,8 +64,8 @@
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: siteUrl = `https://${fallbackHost}`;
     $: youtubeGuideUrl = `${siteUrl}/${lang}/youtube-video-downloader`;
-    $: featuredDownloads = featuredDownloadLinks.slice(0, 6);
-    $: featuredGuides = featuredGuideLinks.slice(0, 4);
+    const featuredDownloads = getHubDownloadLinks(6);
+    const featuredGuides = getHubGuideLinks(4);
 
     $: title = $t("faq.title");
     $: description = $t("faq.description");

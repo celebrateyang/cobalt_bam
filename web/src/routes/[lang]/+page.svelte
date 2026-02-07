@@ -1,7 +1,6 @@
 <script lang="ts">
     import { t, INTERNAL_locale, defaultLocale } from "$lib/i18n/translations";
     import { onMount } from "svelte";
-    import { fade } from "svelte/transition";
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
     import { browser } from "$app/environment";
@@ -18,22 +17,14 @@
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
     import { createDialog } from "$lib/state/dialogs";
-    import {
-        checkSignedIn,
-        clerkEnabled,
-        clerkUser,
-        getClerkToken,
-        initClerk,
-        isSignedIn,
-    } from "$lib/state/clerk";
     import { link as omniboxLink } from "$lib/state/omnibox";
     import { currentApiURL } from "$lib/api/api-url";
-    import type { SocialVideo } from "$lib/api/social";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     type HomeDeferredSectionsComponent =
         typeof import("$components/home/HomeDeferredSections.svelte").default;
+    type ClerkRuntimeModule = typeof import("$lib/state/clerk");
 
     export let data: { lang?: string };
 
@@ -67,6 +58,45 @@
 
     let showNotification = false; // ?????????????????
     const fallbackHost = env.HOST || "freesavevideo.online";
+    const clerkRuntimeEnabled = Boolean(env.CLERK_PUBLISHABLE_KEY);
+    let clerkRuntimePromise: Promise<ClerkRuntimeModule> | null = null;
+    let clerkRuntime: ClerkRuntimeModule | null = null;
+    let clerkStoreBindingsReady = false;
+    let cleanupClerkStoreBindings = () => {};
+    let clerkUserState: { id: string } | null = null;
+    let signedInState = false;
+
+    const ensureClerkRuntime = async (): Promise<ClerkRuntimeModule | null> => {
+        if (!browser || !clerkRuntimeEnabled) return null;
+
+        if (!clerkRuntimePromise) {
+            clerkRuntimePromise = import("$lib/state/clerk");
+        }
+        if (!clerkRuntime) {
+            clerkRuntime = await clerkRuntimePromise;
+        }
+        if (!clerkRuntime || clerkStoreBindingsReady) {
+            return clerkRuntime;
+        }
+
+        const unsubscribeUser = clerkRuntime.clerkUser.subscribe((value) => {
+            clerkUserState = (value as { id: string } | null) ?? null;
+        });
+        const unsubscribeSignedIn = clerkRuntime.isSignedIn.subscribe((value) => {
+            signedInState = Boolean(value);
+        });
+
+        clerkStoreBindingsReady = true;
+        cleanupClerkStoreBindings = () => {
+            unsubscribeUser();
+            unsubscribeSignedIn();
+            clerkStoreBindingsReady = false;
+            cleanupClerkStoreBindings = () => {};
+        };
+
+        return clerkRuntime;
+    };
+
     const platformsList = [
         "douyin",
         "bilibili",
@@ -119,8 +149,19 @@
     };
 
     const openFeedback = async () => {
-        if (!$isSignedIn) {
-            const alreadySignedIn = await checkSignedIn();
+        if (!clerkRuntimeEnabled) {
+            openFeedbackDialog();
+            return true;
+        }
+
+        const runtime = await ensureClerkRuntime();
+        if (!runtime) {
+            openFeedbackDialog();
+            return true;
+        }
+
+        if (!signedInState) {
+            const alreadySignedIn = await runtime.checkSignedIn();
             if (!alreadySignedIn) {
                 const redirectTo = buildFeedbackRedirectPath();
                 await goto(
@@ -155,13 +196,16 @@
     };
 
     const fetchUserPoints = async () => {
-        const userId = $clerkUser?.id;
+        const userId = clerkUserState?.id;
         if (!userId) return;
         if (lastPointsUserId === userId) return;
 
         pointsLoading = true;
         try {
-            const token = await getClerkToken();
+            const runtime = await ensureClerkRuntime();
+            if (!runtime) throw new Error("clerk not ready");
+
+            const token = await runtime.getClerkToken();
             if (!token) throw new Error("missing token");
 
             const apiBase = currentApiURL();
@@ -191,8 +235,8 @@
         await goto(accountPath());
     };
 
-    $: if (browser && $clerkUser?.id) {
-        const userId = $clerkUser.id;
+    $: if (browser && clerkUserState?.id) {
+        const userId = clerkUserState.id;
         if (lastDismissUserId !== userId) {
             lastDismissUserId = userId;
             const key = lowPointsBalloonKeyForUser(userId);
@@ -201,7 +245,7 @@
         }
     }
 
-    $: if ($clerkUser && pointsFetchArmed) {
+    $: if (clerkUserState && pointsFetchArmed) {
         void fetchUserPoints();
     } else {
         userPoints = null;
@@ -213,7 +257,7 @@
 
     $: showLowPointsBalloon =
         browser &&
-        $isSignedIn &&
+        signedInState &&
         !pointsLoading &&
         userPoints !== null &&
         userPoints < LOW_POINTS_THRESHOLD &&
@@ -316,177 +360,12 @@
         : null;
     $: structuredData = [jsonLd, faqJsonLd, appJsonLd].filter(Boolean);
 
-    const DISCOVER_PREVIEW_PLATFORMS = new Set(["tiktok", "instagram"]);
-    const DISCOVER_PREVIEW_ROTATE_MS = 5600;
-    const DISCOVER_PREVIEW_TILE_COUNT = 8;
-
-    let discoverPreviewPool: SocialVideo[] = [];
-    let discoverPreviewTiles: SocialVideo[] = [];
-    let discoverPreviewKey = 0;
-    let discoverPreviewTimer: ReturnType<typeof setInterval> | null = null;
-    let discoverPreviewTarget: HTMLAnchorElement | null = null;
-    let discoverPreviewObserver: IntersectionObserver | null = null;
-    let discoverPreviewInitialized = false;
-    let pointsFetchArmed = false;
-
     let HomeDeferredSections: HomeDeferredSectionsComponent | null = null;
     let deferredSectionsTarget: HTMLElement | null = null;
     let deferredSectionsObserver: IntersectionObserver | null = null;
     let deferredSectionsLoading = false;
     let deferredWorkArmed = false;
-
-    const prefersReducedMotion = () =>
-        typeof window !== "undefined" &&
-        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ===
-            true;
-
-    const normalizeDiscoverPreviewPool = (list: SocialVideo[]) =>
-        list.filter(
-            (video) =>
-                Boolean(video.thumbnail_url) &&
-                DISCOVER_PREVIEW_PLATFORMS.has(video.platform) &&
-                !video.is_pinned,
-        );
-
-    const getDiscoverPreviewThumbnailSrc = (video: SocialVideo) => {
-        if (!video.thumbnail_url) return "";
-        if (video.platform === "instagram") {
-            if (video.thumbnail_proxy_path) {
-                return `${currentApiURL()}${video.thumbnail_proxy_path}`;
-            }
-            return `${currentApiURL()}/social/media/proxy?url=${encodeURIComponent(
-                video.thumbnail_url,
-            )}`;
-        }
-        return video.thumbnail_url;
-    };
-
-    const pickRandomUnique = (items: SocialVideo[], count: number): SocialVideo[] => {
-        if (count <= 0 || !items.length) return [];
-        if (items.length <= count) return items.slice(0, count);
-
-        const selected: SocialVideo[] = [];
-        const usedIndices = new Set<number>();
-
-        while (selected.length < count && usedIndices.size < items.length) {
-            const idx = Math.floor(Math.random() * items.length);
-            if (usedIndices.has(idx)) continue;
-            usedIndices.add(idx);
-            selected.push(items[idx]);
-        }
-
-        return selected;
-    };
-
-    const sameVideoSet = (a: SocialVideo[], b: SocialVideo[]) => {
-        if (a.length !== b.length) return false;
-        const normalizeIds = (list: SocialVideo[]) =>
-            list
-                .map((video) => video.id)
-                .sort((x, y) => x - y)
-                .join(",");
-        return normalizeIds(a) === normalizeIds(b);
-    };
-
-    const stopDiscoverPreviewRotation = () => {
-        if (!discoverPreviewTimer) return;
-        clearInterval(discoverPreviewTimer);
-        discoverPreviewTimer = null;
-    };
-
-    const setDiscoverPreviewTiles = () => {
-        if (!discoverPreviewPool.length) return;
-
-        const tileCount = Math.min(
-            DISCOVER_PREVIEW_TILE_COUNT,
-            discoverPreviewPool.length,
-        );
-        const next = pickRandomUnique(discoverPreviewPool, tileCount);
-
-        if (
-            !sameVideoSet(next, discoverPreviewTiles) ||
-            discoverPreviewPool.length <= tileCount
-        ) {
-            discoverPreviewTiles = next;
-            discoverPreviewKey += 1;
-            return;
-        }
-
-        const fallback = pickRandomUnique(discoverPreviewPool, tileCount);
-        discoverPreviewTiles = fallback.length ? fallback : next;
-        discoverPreviewKey += 1;
-    };
-
-    const startDiscoverPreviewRotation = () => {
-        stopDiscoverPreviewRotation();
-        if (!discoverPreviewPool.length || prefersReducedMotion()) return;
-        discoverPreviewTimer = setInterval(
-            setDiscoverPreviewTiles,
-            DISCOVER_PREVIEW_ROTATE_MS,
-        );
-    };
-
-    const initDiscoverPreview = async () => {
-        if (discoverPreviewInitialized) return;
-        discoverPreviewInitialized = true;
-        try {
-            const { videos } = await import("$lib/api/social");
-            const res = await videos.list({
-                is_active: true,
-                is_featured: true,
-                limit: 24,
-                sort: "display_order",
-                order: "DESC",
-            });
-
-            if (res.status !== "success" || !res.data) {
-                throw new Error(
-                    res.error?.message || "Discover preview request failed",
-                );
-            }
-
-            const pool = normalizeDiscoverPreviewPool(res.data.videos || []);
-            if (!pool.length) {
-                throw new Error("Discover preview is empty");
-            }
-
-            discoverPreviewPool = pool;
-            setDiscoverPreviewTiles();
-            startDiscoverPreviewRotation();
-        } catch {
-            discoverPreviewPool = [];
-            discoverPreviewTiles = [];
-            stopDiscoverPreviewRotation();
-        }
-    };
-
-    const startDiscoverPreviewWhenVisible = () => {
-        if (discoverPreviewInitialized) return;
-
-        if (
-            !browser ||
-            !discoverPreviewTarget ||
-            typeof window.IntersectionObserver === "undefined"
-        ) {
-            void initDiscoverPreview();
-            return;
-        }
-
-        discoverPreviewObserver = new IntersectionObserver(
-            (entries) => {
-                if (!entries.some((entry) => entry.isIntersecting)) return;
-                discoverPreviewObserver?.disconnect();
-                discoverPreviewObserver = null;
-                void initDiscoverPreview();
-            },
-            {
-                rootMargin: "220px 0px",
-                threshold: 0.01,
-            },
-        );
-
-        discoverPreviewObserver.observe(discoverPreviewTarget);
-    };
+    let pointsFetchArmed = false;
 
     const loadDeferredSections = async () => {
         if (deferredSectionsLoading || HomeDeferredSections) return;
@@ -545,7 +424,6 @@
         if (deferredWorkArmed) return;
         deferredWorkArmed = true;
         pointsFetchArmed = true;
-        startDiscoverPreviewWhenVisible();
         startDeferredSectionsWhenVisible();
     };
 
@@ -557,12 +435,12 @@
         let cancelDeferredLoad = () => {};
         let cancelNotificationInit = () => {};
 
-        if (clerkEnabled) {
+        if (clerkRuntimeEnabled) {
             if (needsImmediateClerk) {
-                void initClerk();
+                void ensureClerkRuntime().then((runtime) => runtime?.initClerk());
             } else {
                 cancelClerkInit = runOnIdle(() => {
-                    void initClerk();
+                    void ensureClerkRuntime().then((runtime) => runtime?.initClerk());
                 }, 3800);
             }
         }
@@ -597,18 +475,6 @@
             once: true,
             passive: true,
         });
-
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                stopDiscoverPreviewRotation();
-                return;
-            }
-            setDiscoverPreviewTiles();
-            startDiscoverPreviewRotation();
-        };
-
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-
         if (feedbackRequested) {
             armDeferredHomeTasks();
             void (async () => {
@@ -634,12 +500,9 @@
             window.removeEventListener("pointerdown", armOnInteraction);
             window.removeEventListener("keydown", armOnInteraction);
             window.removeEventListener("scroll", armOnInteraction);
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
-            discoverPreviewObserver?.disconnect();
-            discoverPreviewObserver = null;
             deferredSectionsObserver?.disconnect();
             deferredSectionsObserver = null;
-            stopDiscoverPreviewRotation();
+            cleanupClerkStoreBindings();
         };
     });
 
@@ -769,39 +632,13 @@
         <a
             href={`/${currentLocale}/discover`}
             class="feature-card feature-card--discover"
-            bind:this={discoverPreviewTarget}
         >
             <div class="icon-wrapper"><IconVideo size={28} /></div>
             <div class="card-content">
-                <span class="sr-only">{$t("tabs.feature.discover_trends")}</span>
-                {#if discoverPreviewTiles.length}
-                    <div class="discover-preview" aria-hidden="true">
-                        {#key discoverPreviewKey}
-                            <div
-                                class="discover-preview-grid"
-                                transition:fade={{ duration: 320 }}
-                            >
-                                {#each discoverPreviewTiles as video (video.id)}
-                                    <div class="discover-preview-tile">
-                                        <img
-                                            class="discover-preview-img"
-                                            src={getDiscoverPreviewThumbnailSrc(video)}
-                                            alt=""
-                                            loading="lazy"
-                                            fetchpriority="low"
-                                            decoding="async"
-                                        />
-                                    </div>
-                                {/each}
-                            </div>
-                        {/key}
-                    </div>
-                {:else}
-                    <h3>{$t("tabs.feature.discover_trends")}</h3>
-                    <p class="card-desc">
-                        {$t("general.seo.discover.description")}
-                    </p>
-                {/if}
+                <h3>{$t("tabs.feature.discover_trends")}</h3>
+                <p class="card-desc">
+                    {$t("general.seo.discover.description")}
+                </p>
             </div>
         </a>
         <button type="button" class="feature-card" on:click={openFeedback}>
@@ -1126,25 +963,6 @@
         }
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-        :global(#cobalt[data-reduce-motion="false"]) .cap-card::before {
-            background-size: 240% 240%;
-            animation: capGlow 10s ease infinite;
-        }
-    }
-
-    @keyframes capGlow {
-        0% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0% 50%;
-        }
-    }
-
     @media (max-width: 720px) {
         .capabilities {
             grid-template-columns: 1fr;
@@ -1345,60 +1163,6 @@
         align-items: center;
         grid-column: 1 / -1;
     }
-
-    .discover-preview {
-        width: 100%;
-        height: clamp(160px, 16vw, 220px);
-        border-radius: calc(var(--border-radius) * 1.1);
-        overflow: hidden;
-    }
-
-    .discover-preview-grid {
-        width: 100%;
-        height: 100%;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        grid-template-rows: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .discover-preview-tile {
-        border-radius: calc(var(--border-radius) * 0.9);
-        overflow: hidden;
-        background: var(--surface-2);
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06) inset;
-    }
-
-    .discover-preview-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: opacity 0.2s ease;
-    }
-
-    .feature-card--discover:hover .discover-preview-img {
-        opacity: 0.95;
-    }
-
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .discover-preview-img {
-            transition: none;
-        }
-    }
-
     .deferred-sections-anchor {
         width: 100%;
         height: 1px;
@@ -1446,10 +1210,6 @@
 
         .feature-card {
             padding: 1rem;
-        }
-
-        .discover-preview {
-            height: 140px;
         }
 
         .deferred-sections-placeholder {

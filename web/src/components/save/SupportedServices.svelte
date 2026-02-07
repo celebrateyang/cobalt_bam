@@ -8,8 +8,8 @@
 
     let services: string[] = [];
 
-    $: expanded = false;
-    $: loaded = false;
+    let expanded = false;
+    let loaded = false;
 
     const loadInfo = async () => {
         await getServerInfo();

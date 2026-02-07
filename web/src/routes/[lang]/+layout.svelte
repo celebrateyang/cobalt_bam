@@ -271,10 +271,6 @@
         transition: opacity 0.15s;
     }
 
-    :global(#cobalt:not(.loaded) #content) {
-        opacity: 0;
-    }
-
     :global(body[data-reduce-motion="true"]),
     :global(body[data-reduce-motion="true"] *) {
         animation-duration: 0.001s !important;

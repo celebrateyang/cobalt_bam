@@ -22,6 +22,7 @@
     $: faqUrl = `/${data.lang}/faq`;
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: downloadIndexUrl = `/${data.lang}/download`;
+    $: homeUrl = `/${data.lang}`;
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -98,6 +99,14 @@
             </div>
         </section>
 
+        <nav class="crumb-links" aria-label="Breadcrumb">
+            <a href={homeUrl}>{isZh ? '首页' : 'Home'}</a>
+            <span>/</span>
+            <a href={downloadIndexUrl}>{isZh ? '下载' : 'Download'}</a>
+            <span>/</span>
+            <span class="crumb-current">{localeContent.h1}</span>
+        </nav>
+
         <section class="section-grid">
             <section class="card steps">
                 <h2>{localeContent.stepsTitle}</h2>
@@ -131,28 +140,44 @@
         </section>
 
         <section class="card related">
-            <h2>{isZh ? '延伸阅读' : 'Related links'}</h2>
-            <div class="related-links">
-                <a class="related-link related-link--primary" href={downloadIndexUrl}>
-                    Download directory
-                </a>
-                {#if guideUrl}
-                    <a class="related-link" href={guideUrl}>
-                        {isZh ? '查看该平台下载指南' : 'Read the platform guide'}
-                    </a>
-                {/if}
-                <a class="related-link" href={faqUrl}>
-                    {isZh ? '查看常见问题' : 'Open FAQ'}
-                </a>
-                <a class="related-link" href={guideIndexUrl}>
-                    {isZh ? '浏览全部下载指南' : 'Browse all guides'}
-                </a>
-                {#each data.relatedPages.slice(0, 3) as related}
-                    {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
-                    <a class="related-link" href={`/${data.lang}/download/${related.slug}`}>
-                        {relatedLocale.h1}
-                    </a>
-                {/each}
+            <h2>{isZh ? '相关页面' : 'Related links'}</h2>
+            <div class="related-grid">
+                <section class="related-column">
+                    <h3>{isZh ? '核心入口' : 'Core pages'}</h3>
+                    <div class="related-links">
+                        <a class="related-link related-link--primary" href={downloadIndexUrl}>
+                            {isZh ? '下载目录' : 'Download directory'}
+                        </a>
+                        {#if guideUrl}
+                            <a class="related-link" href={guideUrl}>
+                                {isZh ? '查看该平台指南' : 'Read the platform guide'}
+                            </a>
+                        {/if}
+                        <a class="related-link" href={guideIndexUrl}>
+                            {isZh ? '浏览全部指南' : 'Browse all guides'}
+                        </a>
+                        <a class="related-link" href={faqUrl}>
+                            {isZh ? '打开 FAQ' : 'Open FAQ'}
+                        </a>
+                    </div>
+                </section>
+
+                <section class="related-column">
+                    <h3>{isZh ? '同类下载页' : 'Similar downloads'}</h3>
+                    <div class="related-links">
+                        {#each data.relatedPages.slice(0, 4) as related}
+                            {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
+                            <a
+                                class="related-link related-link--download"
+                                href={`/${data.lang}/download/${related.slug}`}
+                                title={relatedLocale.h1}
+                            >
+                                <span class="related-link-title">{relatedLocale.h1}</span>
+                                <span class="related-link-desc">{relatedLocale.lede}</span>
+                            </a>
+                        {/each}
+                    </div>
+                </section>
             </div>
         </section>
 
@@ -233,6 +258,28 @@
         box-shadow:
             var(--button-box-shadow),
             0 0 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .crumb-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.86rem;
+        color: var(--subtext);
+    }
+
+    .crumb-links a {
+        color: var(--secondary);
+        text-decoration: none;
+    }
+
+    .crumb-links a:hover {
+        text-decoration: underline;
+    }
+
+    .crumb-current {
+        opacity: 0.82;
     }
 
     .card {
@@ -349,15 +396,37 @@
         line-height: 1.6;
     }
 
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .related-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .related-column h3 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: rgba(var(--accent-rgb), 0.9);
+    }
+
     .related-links {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: 1fr;
         gap: 10px;
     }
 
     .related-link {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
         min-height: 40px;
         padding: 10px 12px;
         border-radius: 12px;
@@ -370,6 +439,25 @@
 
     .related-link:hover {
         background: var(--button-hover);
+    }
+
+    .related-link--primary {
+        border-color: rgba(var(--accent-rgb), 0.35);
+        background: rgba(var(--accent-rgb), 0.14);
+        color: var(--secondary);
+    }
+
+    .related-link--download {
+        min-height: 56px;
+    }
+
+    .related-link-title {
+        font-weight: 600;
+    }
+
+    .related-link-desc {
+        font-size: 0.83rem;
+        opacity: 0.82;
     }
 
     .disclaimer {
@@ -394,6 +482,10 @@
 
         .hero-omnibox {
             padding: 12px;
+        }
+
+        .crumb-links {
+            font-size: 0.8rem;
         }
 
         .step-list li {

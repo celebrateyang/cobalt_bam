@@ -67,11 +67,13 @@
 
             const scheduleLateScripts = () => {
                 window.setTimeout(() => {
+                    if (document.hidden) return;
                     runWhenIdle(bootLateThirdPartyScripts, 12000);
-                }, 10000);
+                }, 45000);
             };
             window.addEventListener("load", scheduleLateScripts, { once: true });
             window.addEventListener("pointerdown", bootLateThirdPartyScripts, { once: true, passive: true });
+            window.addEventListener("touchstart", bootLateThirdPartyScripts, { once: true, passive: true });
             window.addEventListener("keydown", bootLateThirdPartyScripts, { once: true });
         </script>
         <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/apple-touch-icon.png">
@@ -99,12 +101,7 @@
             }
 
             #cobalt {
-                opacity: 0;
-            }
-
-            #cobalt.loaded {
                 opacity: 1;
-                transition: opacity .2s ease-out;
             }
         </style>
         <script>

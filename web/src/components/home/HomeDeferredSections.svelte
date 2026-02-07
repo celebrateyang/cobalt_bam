@@ -1,7 +1,7 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
     import {
-        featuredDownloadLinks,
+        getHubDownloadLinks,
         homePlatformToDownloadSlug,
     } from "$lib/seo/internal-links";
 
@@ -21,6 +21,7 @@
 
     let showMindsou = false;
     let showYumcheck = false;
+    const hubDownloadLinks = getHubDownloadLinks(8);
 
     const platformHref = (slug: string) =>
         homePlatformToDownloadSlug[slug]
@@ -70,7 +71,7 @@
         <a class="hub-link hub-link--primary" href={`/${currentLocale}/faq`}>
             FAQ
         </a>
-        {#each featuredDownloadLinks.slice(0, 8) as item}
+        {#each hubDownloadLinks as item}
             <a class="hub-link" href={`/${currentLocale}/download/${item.slug}`}>
                 {linkLabel(item.platform)}
             </a>
@@ -493,7 +494,7 @@
     }
 
     .section-icon {
-        width: 24px;
+        width: auto;
         height: 24px;
         margin: 0;
     }

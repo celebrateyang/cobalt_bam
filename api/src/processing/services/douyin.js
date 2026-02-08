@@ -50,18 +50,6 @@ const logUpstreamUsed = (reason, { videoId, shortLink, targetUrl, status }) => {
     });
 };
 
-const buildUpstreamRelayUrl = (upstreamOrigin, service, url) => {
-    if (!upstreamOrigin || upstreamOrigin === "invalid") return null;
-    try {
-        const relay = new URL("/relay", upstreamOrigin);
-        relay.searchParams.set("service", service);
-        relay.searchParams.set("url", url);
-        return relay.toString();
-    } catch {
-        return null;
-    }
-};
-
 const requestUpstreamCobalt = async (targetUrl) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
@@ -136,10 +124,10 @@ const requestUpstreamCobalt = async (targetUrl) => {
         if (!["redirect", "tunnel"].includes(payload.status)) return null;
         if (!payload.url) return null;
 
-        const relayUrl =
-            payload.status === "redirect"
-                ? buildUpstreamRelayUrl(upstreamOrigin, "douyin", payload.url)
-                : null;
+        // Prefer returning upstream redirect URL directly to the client.
+        // Some edge proxies reject relay requests that carry encoded upstream
+        // URLs in query params, which causes false 400s on otherwise valid links.
+        const relayUrl = null;
 
         return {
             status: payload.status,
@@ -627,7 +615,25 @@ export default async function(obj) {
                 videoId,
                 directStatusCode: directProbeStatusCode,
                 directUrl,
+                upstream: isUpstreamServer,
             });
+
+            // Upstream node cannot chain to another upstream by design.
+            // Return a client-side redirect fallback so users can attempt
+            // direct fetch from their own network egress.
+            if (isUpstreamServer) {
+                return {
+                    filename: `douyin_${videoId}.mp4`,
+                    audioFilename: `douyin_${videoId}_audio`,
+                    urls: directUrl,
+                    forceRedirect: true,
+                    duration,
+                    headers: {
+                        "User-Agent": MOBILE_UA,
+                    },
+                };
+            }
+
             return { error: "fetch.fail" };
         }
 

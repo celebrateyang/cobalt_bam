@@ -6,11 +6,6 @@ import { createStream } from "../stream/manage.js";
 import { splitFilenameExtension } from "../misc/utils.js";
 import { convertLanguageCode } from "../misc/language-codes.js";
 
-const isUpstreamServer = (() => {
-    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
-    return raw === "true" || raw === "1";
-})();
-
 const extraProcessingTypes = new Set(["merge", "remux", "mute", "audio", "gif"]);
 
 export default function({
@@ -54,17 +49,6 @@ export default function({
     else action = "video";
 
     if (r.forceRedirect && r.urls) {
-        const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
-        if (url) {
-            return createResponse("redirect", {
-                url,
-                filename: defaultParams.filename,
-                duration: defaultParams.duration,
-            });
-        }
-    }
-
-    if (isUpstreamServer && host === "douyin" && action === "video" && r.urls) {
         const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
         if (url) {
             return createResponse("redirect", {

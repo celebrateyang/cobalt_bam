@@ -1,9 +1,6 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import {
-        getHubDownloadLinks,
-        homePlatformToDownloadSlug,
-    } from "$lib/seo/internal-links";
+    import { homePlatformToDownloadSlug } from "$lib/seo/internal-links";
 
     export let currentLocale: string;
     export let canonicalUrl: string;
@@ -21,7 +18,6 @@
 
     let showMindsou = false;
     let showYumcheck = false;
-    const hubDownloadLinks = getHubDownloadLinks(8);
 
     const platformHref = (slug: string) =>
         homePlatformToDownloadSlug[slug]
@@ -31,11 +27,6 @@
             : canonicalUrl
               ? `${canonicalUrl}#platform-${slug}`
               : `/${currentLocale}#platform-${slug}`;
-
-    const linkLabel = (platform: string) =>
-        currentLocale === "zh"
-            ? `${platform} 下载`
-            : `${platform} downloader`;
 </script>
 
 <section class="platform-section seo-section" id="platforms">
@@ -54,26 +45,6 @@
             >
                 <div class="platform-name">{card.name}</div>
                 <p>{card.desc}</p>
-            </a>
-        {/each}
-    </div>
-</section>
-
-<section class="internal-hub seo-section" aria-label="Internal links">
-    <h2>{currentLocale === "zh" ? "快速入口" : "Quick links"}</h2>
-    <div class="internal-links">
-        <a class="hub-link hub-link--primary" href={`/${currentLocale}/download`}>
-            Download directory
-        </a>
-        <a class="hub-link hub-link--primary" href={`/${currentLocale}/guide`}>
-            {currentLocale === "zh" ? "下载指南中心" : "Guide hub"}
-        </a>
-        <a class="hub-link hub-link--primary" href={`/${currentLocale}/faq`}>
-            FAQ
-        </a>
-        {#each hubDownloadLinks as item}
-            <a class="hub-link" href={`/${currentLocale}/download/${item.slug}`}>
-                {linkLabel(item.platform)}
             </a>
         {/each}
     </div>
@@ -216,54 +187,6 @@
         color: var(--secondary-600);
         line-height: 1.55;
         max-width: 900px;
-    }
-
-    .internal-hub {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .internal-hub h2 {
-        margin: 0;
-        font-size: clamp(18px, 2.2vw, 22px);
-        color: var(--secondary);
-    }
-
-    .internal-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .hub-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 38px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--surface-2);
-        background: var(--surface-1);
-        color: var(--text);
-        text-decoration: none;
-        font-size: 0.88rem;
-        line-height: 1.2;
-        transition:
-            background-color 0.2s,
-            border-color 0.2s;
-    }
-
-    .hub-link:hover {
-        background: var(--surface-2);
-        border-color: var(--accent);
-    }
-
-    .hub-link--primary {
-        border-color: rgba(var(--accent-rgb), 0.32);
-        background: rgba(var(--accent-rgb), 0.12);
-        color: var(--secondary);
-        font-weight: 600;
     }
 
     .seo-body {

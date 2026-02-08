@@ -21,6 +21,7 @@
     import { currentApiURL } from "$lib/api/api-url";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
+    import { getHubDownloadLinks, getHubGuideLinks } from "$lib/seo/internal-links";
 
     type HomeDeferredSectionsComponent =
         typeof import("$components/home/HomeDeferredSections.svelte").default;
@@ -268,6 +269,12 @@
         name: $t(`home.platforms.${slug}.name`),
         desc: $t(`home.platforms.${slug}.desc`),
     }));
+    const homeInternalLinks = getHubDownloadLinks(8);
+    const homeGuideLinks = getHubGuideLinks(4);
+    const homeLinkLabel = (platform: string) =>
+        currentLocale === "zh" ? `${platform} 下载` : `${platform} downloader`;
+    const homeGuideLabel = (platform: string) =>
+        currentLocale === "zh" ? `${platform} 指南` : `${platform} guide`;
     $: faqItems = [
         {
             q:
@@ -657,6 +664,31 @@
                 </p>
             </div>
         </a>
+    </section>
+
+    <section class="home-internal-hub" aria-label="Internal links">
+        <h2>{currentLocale === "zh" ? "快速入口" : "Quick links"}</h2>
+        <div class="home-internal-links">
+            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
+                {currentLocale === "zh" ? "下载目录" : "Download directory"}
+            </a>
+            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
+                {currentLocale === "zh" ? "下载指南中心" : "Guide hub"}
+            </a>
+            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
+                FAQ
+            </a>
+            {#each homeInternalLinks as item}
+                <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
+                    {homeLinkLabel(item.platform)}
+                </a>
+            {/each}
+            {#each homeGuideLinks as item}
+                <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
+                    {homeGuideLabel(item.platform)}
+                </a>
+            {/each}
+        </div>
     </section>
 
     <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
@@ -1163,6 +1195,60 @@
         align-items: center;
         grid-column: 1 / -1;
     }
+
+    .home-internal-hub {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto 1.4rem;
+        padding: 0 var(--padding);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .home-internal-hub h2 {
+        margin: 0;
+        font-size: clamp(18px, 2.2vw, 22px);
+        color: var(--secondary);
+    }
+
+    .home-internal-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .home-hub-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.88rem;
+        line-height: 1.2;
+        transition:
+            background-color 0.2s,
+            border-color 0.2s;
+    }
+
+    .home-hub-link:hover {
+        background: var(--surface-2);
+        border-color: var(--accent);
+    }
+
+    .home-hub-link--primary {
+        border-color: rgba(var(--accent-rgb), 0.32);
+        background: rgba(var(--accent-rgb), 0.12);
+        color: var(--secondary);
+        font-weight: 600;
+    }
+
     .deferred-sections-anchor {
         width: 100%;
         height: 1px;
@@ -1210,6 +1296,10 @@
 
         .feature-card {
             padding: 1rem;
+        }
+
+        .home-internal-hub {
+            margin-bottom: 1rem;
         }
 
         .deferred-sections-placeholder {

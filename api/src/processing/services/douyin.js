@@ -222,7 +222,7 @@ const parseTotalLength = (headers) => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-const getContentLengthBytes = async (url) => {
+const probeContentLength = async (url) => {
     try {
         const res = await fetch(url, {
             method: "GET",
@@ -235,9 +235,15 @@ const getContentLengthBytes = async (url) => {
             signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
         });
 
-        return parseTotalLength(res.headers);
+        return {
+            statusCode: res.status,
+            bytes: parseTotalLength(res.headers),
+        };
     } catch {
-        return undefined;
+        return {
+            statusCode: undefined,
+            bytes: undefined,
+        };
     }
 };
 
@@ -580,6 +586,7 @@ export default async function(obj) {
         
         // Resolve the redirect to get the direct CDN URL
         let directUrl = apiUrl;
+        let directHeadStatusCode;
         try {
             const headRes = await fetch(apiUrl, {
                 method: "HEAD",
@@ -589,32 +596,60 @@ export default async function(obj) {
                 },
                 signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
             });
+            directHeadStatusCode = headRes.status;
             directUrl = headRes.url;
         } catch (e) {
             console.error("Failed to resolve direct URL", e);
         }
 
-        // Douyin CDN often closes long downloads mid-stream on some egress IPs.
-        // When the file looks large, prefer the upstream fallback if configured.
-        const contentLengthBytes = await getContentLengthBytes(directUrl);
-        if (
-            env.instagramUpstreamURL &&
-            contentLengthBytes &&
-            contentLengthBytes >= env.douyinUpstreamMinBytes
-        ) {
+        // Probe media URL with a 1-byte range request:
+        // 1) estimate file size for large-file upstream routing
+        // 2) detect broken direct media endpoints (4xx/5xx) early
+        const {
+            statusCode: directRangeStatusCode,
+            bytes: contentLengthBytes,
+        } = await probeContentLength(directUrl);
+
+        const directProbeStatusCode =
+            typeof directHeadStatusCode === "number" && directHeadStatusCode >= 400
+                ? directHeadStatusCode
+                : directRangeStatusCode;
+
+        const shouldFallbackByLargeFile =
+            typeof contentLengthBytes === "number" &&
+            contentLengthBytes >= env.douyinUpstreamMinBytes;
+        const shouldFallbackByDirectStatus =
+            typeof directProbeStatusCode === "number" &&
+            directProbeStatusCode >= 400;
+
+        if (!env.instagramUpstreamURL && shouldFallbackByDirectStatus) {
+            console.warn("[douyin] direct media probe failed and upstream is not configured", {
+                videoId,
+                directStatusCode: directProbeStatusCode,
+                directUrl,
+            });
+            return { error: "fetch.fail" };
+        }
+
+        if (env.instagramUpstreamURL && (shouldFallbackByLargeFile || shouldFallbackByDirectStatus)) {
             const upstreamTargetUrl = getUpstreamTargetUrl({
                 videoId,
                 shortLink: obj.shortLink,
             });
             if (upstreamTargetUrl) {
-                console.warn("[douyin] large file detected, trying upstream cobalt", {
+                console.warn("[douyin] direct media fallback condition met, trying upstream cobalt", {
                     videoId,
-                    bytes: contentLengthBytes,
+                    bytes: contentLengthBytes ?? "n/a",
                     threshold: env.douyinUpstreamMinBytes,
+                    directStatusCode: directProbeStatusCode ?? "n/a",
+                    directUrl,
                 });
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
-                    logUpstreamUsed("large_file", {
+                    const upstreamReason = shouldFallbackByLargeFile
+                        ? "large_file"
+                        : "direct_probe_status";
+                    logUpstreamUsed(upstreamReason, {
                         videoId,
                         shortLink: obj.shortLink,
                         targetUrl: upstreamTargetUrl,
@@ -640,6 +675,12 @@ export default async function(obj) {
                         },
                     };
                 }
+            }
+
+            // If direct media endpoint is already 4xx/5xx and upstream is unavailable,
+            // return a hard failure instead of a tunnel that will certainly 404.
+            if (shouldFallbackByDirectStatus) {
+                return { error: "fetch.fail" };
             }
         }
 

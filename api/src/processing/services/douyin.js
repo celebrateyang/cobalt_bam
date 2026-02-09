@@ -441,6 +441,51 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
     return [];
 };
 
+const tryResolveViaDiscover = async (videoId, reason = "generic") => {
+    const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
+    if (discoverCandidates.length === 0) return null;
+
+    const {
+        selectedUrl,
+        directUrl,
+        directHeadStatusCode,
+    } = await resolveDirectUrlFromCandidates(discoverCandidates);
+
+    const {
+        statusCode: directRangeStatusCode,
+        bytes,
+    } = await probeContentLength(directUrl);
+
+    const directProbeStatusCode =
+        typeof directHeadStatusCode === "number" && directHeadStatusCode >= 400
+            ? directHeadStatusCode
+            : directRangeStatusCode;
+
+    console.log("[douyin] discover fallback media probe", {
+        reason,
+        videoId,
+        selected: selectedUrl,
+        resolved: directUrl,
+        directProbeStatusCode: directProbeStatusCode ?? "n/a",
+        bytes: bytes ?? "n/a",
+    });
+
+    if (
+        typeof directProbeStatusCode === "number" &&
+        directProbeStatusCode >= 400
+    ) {
+        return null;
+    }
+
+    return {
+        selectedUrl,
+        directUrl,
+        directHeadStatusCode,
+        directProbeStatusCode,
+        bytes,
+    };
+};
+
 const buildRelayHeaders = () => {
     const headers = {
         "ngrok-skip-browser-warning": "true",
@@ -646,6 +691,19 @@ export default async function(obj) {
 
     if (!html) {
         if (wafDetected) {
+            const discover = await tryResolveViaDiscover(videoId, "waf_fetch");
+            if (discover?.directUrl) {
+                return {
+                    filename: `douyin_${videoId}.mp4`,
+                    audioFilename: `douyin_${videoId}_audio`,
+                    urls: discover.directUrl,
+                    forceRedirect: isUpstreamServer,
+                    headers: {
+                        "User-Agent": MOBILE_UA,
+                    },
+                };
+            }
+
             const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
             if (upstreamTargetUrl) {
                 console.warn("Douyin WAF challenge detected, trying upstream cobalt", {
@@ -711,6 +769,19 @@ export default async function(obj) {
                 shareUrl,
                 bytes: html.length,
             });
+
+            const discover = await tryResolveViaDiscover(videoId, "waf_parse");
+            if (discover?.directUrl) {
+                return {
+                    filename: `douyin_${videoId}.mp4`,
+                    audioFilename: `douyin_${videoId}_audio`,
+                    urls: discover.directUrl,
+                    forceRedirect: isUpstreamServer,
+                    headers: {
+                        "User-Agent": MOBILE_UA,
+                    },
+                };
+            }
 
             const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
             if (upstreamTargetUrl) {
@@ -784,45 +855,17 @@ export default async function(obj) {
                 });
             }
 
-            const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
-            if (discoverCandidates.length > 0) {
-                const {
-                    selectedUrl: discoverSelectedUrl,
-                    directUrl: discoverDirectUrl,
-                    directHeadStatusCode: discoverDirectHeadStatusCode,
-                } = await resolveDirectUrlFromCandidates(discoverCandidates);
-
-                const {
-                    statusCode: discoverRangeStatusCode,
-                    bytes: discoverBytes,
-                } = await probeContentLength(discoverDirectUrl);
-                const discoverProbeStatusCode =
-                    typeof discoverDirectHeadStatusCode === "number" &&
-                    discoverDirectHeadStatusCode >= 400
-                        ? discoverDirectHeadStatusCode
-                        : discoverRangeStatusCode;
-
-                console.log("[douyin] discover fallback media url selected", {
-                    videoId,
-                    selected: discoverSelectedUrl,
-                    resolved: discoverDirectUrl,
-                    directProbeStatusCode: discoverProbeStatusCode ?? "n/a",
-                    bytes: discoverBytes ?? "n/a",
-                });
-
-                if (
-                    typeof discoverProbeStatusCode !== "number" ||
-                    discoverProbeStatusCode < 400
-                ) {
-                    return {
-                        filename: `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}_audio`,
-                        urls: discoverDirectUrl,
-                        headers: {
-                            "User-Agent": MOBILE_UA,
-                        },
-                    };
-                }
+            const discover = await tryResolveViaDiscover(videoId, "no_item_list");
+            if (discover?.directUrl) {
+                return {
+                    filename: `douyin_${videoId}.mp4`,
+                    audioFilename: `douyin_${videoId}_audio`,
+                    urls: discover.directUrl,
+                    forceRedirect: isUpstreamServer,
+                    headers: {
+                        "User-Agent": MOBILE_UA,
+                    },
+                };
             }
 
             const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
@@ -875,6 +918,7 @@ export default async function(obj) {
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
         
         const preferredMediaUrl = pickPreferredMediaUrl(item);
+        let usedDiscoverFallback = false;
         const apiUrl =
             preferredMediaUrl ||
             // Fallback: synthesize play URL from URI for older payload variants.
@@ -918,45 +962,19 @@ export default async function(obj) {
                 : directRangeStatusCode;
 
         if (typeof directProbeStatusCode === "number" && directProbeStatusCode >= 400) {
-            const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
-            if (discoverCandidates.length > 0) {
-                const {
-                    selectedUrl: discoverSelectedUrl,
-                    directUrl: discoverDirectUrl,
-                    directHeadStatusCode: discoverDirectHeadStatusCode,
-                } = await resolveDirectUrlFromCandidates(discoverCandidates);
-                const {
-                    statusCode: discoverRangeStatusCode,
-                    bytes: discoverContentLengthBytes,
-                } = await probeContentLength(discoverDirectUrl);
-                const discoverProbeStatusCode =
-                    typeof discoverDirectHeadStatusCode === "number" &&
-                    discoverDirectHeadStatusCode >= 400
-                        ? discoverDirectHeadStatusCode
-                        : discoverRangeStatusCode;
-
-                console.log("[douyin] discover fallback media probe", {
-                    videoId,
-                    selected: discoverSelectedUrl,
-                    resolved: discoverDirectUrl,
-                    directProbeStatusCode: discoverProbeStatusCode ?? "n/a",
-                    bytes: discoverContentLengthBytes ?? "n/a",
-                });
-
-                if (
-                    typeof discoverProbeStatusCode !== "number" ||
-                    discoverProbeStatusCode < 400
-                ) {
-                    selectedMediaUrl = discoverSelectedUrl;
-                    directUrl = discoverDirectUrl;
-                    directHeadStatusCode = discoverDirectHeadStatusCode;
-                    directProbeStatusCode = discoverProbeStatusCode;
-                    contentLengthBytes = discoverContentLengthBytes;
-                }
+            const discover = await tryResolveViaDiscover(videoId, "direct_probe_status");
+            if (discover?.directUrl) {
+                selectedMediaUrl = discover.selectedUrl;
+                directUrl = discover.directUrl;
+                directHeadStatusCode = discover.directHeadStatusCode;
+                directProbeStatusCode = discover.directProbeStatusCode;
+                contentLengthBytes = discover.bytes;
+                usedDiscoverFallback = true;
             }
         }
 
         const shouldFallbackByLargeFile =
+            !usedDiscoverFallback &&
             typeof contentLengthBytes === "number" &&
             contentLengthBytes >= env.douyinUpstreamMinBytes;
         const shouldFallbackByDirectStatus =
@@ -1047,6 +1065,7 @@ export default async function(obj) {
             filename: `douyin_${videoId}.mp4`,
             audioFilename: `douyin_${videoId}_audio`,
             urls: directUrl,
+            forceRedirect: isUpstreamServer && usedDiscoverFallback,
             duration,
             headers: {
                 "User-Agent": MOBILE_UA

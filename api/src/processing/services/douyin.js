@@ -697,7 +697,7 @@ export default async function(obj) {
                     filename: `douyin_${videoId}.mp4`,
                     audioFilename: `douyin_${videoId}_audio`,
                     urls: discover.directUrl,
-                    forceRedirect: isUpstreamServer,
+                    forceRedirect: true,
                     headers: {
                         "User-Agent": MOBILE_UA,
                     },
@@ -776,7 +776,7 @@ export default async function(obj) {
                     filename: `douyin_${videoId}.mp4`,
                     audioFilename: `douyin_${videoId}_audio`,
                     urls: discover.directUrl,
-                    forceRedirect: isUpstreamServer,
+                    forceRedirect: true,
                     headers: {
                         "User-Agent": MOBILE_UA,
                     },
@@ -861,7 +861,7 @@ export default async function(obj) {
                     filename: `douyin_${videoId}.mp4`,
                     audioFilename: `douyin_${videoId}_audio`,
                     urls: discover.directUrl,
-                    forceRedirect: isUpstreamServer,
+                    forceRedirect: true,
                     headers: {
                         "User-Agent": MOBILE_UA,
                     },
@@ -1065,7 +1065,7 @@ export default async function(obj) {
             filename: `douyin_${videoId}.mp4`,
             audioFilename: `douyin_${videoId}_audio`,
             urls: directUrl,
-            forceRedirect: isUpstreamServer && usedDiscoverFallback,
+            forceRedirect: usedDiscoverFallback,
             duration,
             headers: {
                 "User-Agent": MOBILE_UA

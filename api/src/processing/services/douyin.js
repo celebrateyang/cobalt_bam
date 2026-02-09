@@ -53,6 +53,46 @@ const logUpstreamUsed = (reason, { videoId, shortLink, targetUrl, status }) => {
     });
 };
 
+const isPrivateHostname = (hostname) => {
+    if (!hostname || typeof hostname !== "string") return false;
+    const host = hostname.toLowerCase();
+
+    if (host === "localhost" || host === "::1") return true;
+    if (host.endsWith(".local")) return true;
+    if (/^127\./.test(host)) return true;
+    if (/^10\./.test(host)) return true;
+    if (/^192\.168\./.test(host)) return true;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true;
+
+    return false;
+};
+
+const normalizeUpstreamTunnelUrl = (url, endpointOrigin) => {
+    if (typeof url !== "string" || !url) return null;
+
+    const endpoint = new URL(endpointOrigin);
+
+    try {
+        const parsed = new URL(url);
+        if (parsed.pathname !== "/tunnel") return parsed.toString();
+
+        // Always force tunnel URLs to the configured upstream public origin.
+        // This avoids leaking upstream internal API_URL values (e.g. 192.168.x.x:9000).
+        if (parsed.origin !== endpoint.origin || isPrivateHostname(parsed.hostname)) {
+            const normalized = new URL(parsed.pathname + parsed.search + parsed.hash, endpoint.origin);
+            return normalized.toString();
+        }
+
+        return parsed.toString();
+    } catch {
+        // Handle relative tunnel URLs.
+        if (url.startsWith("/tunnel?")) {
+            return new URL(url, endpoint.origin).toString();
+        }
+        return null;
+    }
+};
+
 const requestUpstreamCobalt = async (targetUrl) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
@@ -127,6 +167,20 @@ const requestUpstreamCobalt = async (targetUrl) => {
         if (!["redirect", "tunnel"].includes(payload.status)) return null;
         if (!payload.url) return null;
 
+        let normalizedUrl = payload.url;
+        if (payload.status === "tunnel") {
+            const rewritten = normalizeUpstreamTunnelUrl(payload.url, endpoint.origin);
+            if (rewritten) {
+                normalizedUrl = rewritten;
+                if (rewritten !== payload.url) {
+                    console.log("[douyin] upstream tunnel url rewritten", {
+                        from: payload.url,
+                        to: rewritten,
+                    });
+                }
+            }
+        }
+
         // Prefer returning upstream redirect URL directly to the client.
         // Some edge proxies reject relay requests that carry encoded upstream
         // URLs in query params, which causes false 400s on otherwise valid links.
@@ -134,7 +188,7 @@ const requestUpstreamCobalt = async (targetUrl) => {
 
         return {
             status: payload.status,
-            url: payload.url,
+            url: normalizedUrl,
             filename: payload.filename,
             relayUrl,
             duration,

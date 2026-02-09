@@ -3,8 +3,11 @@ import { env } from "../../config.js";
 // Mobile UA is required for the share page logic to work without X-Bogus
 // Verified working as of Dec 2025
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+const DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
 const PAGE_TIMEOUT_MS = 15000;
 const SHARE_PAGE_RETRIES = 1;
+const DISCOVER_PAGE_RETRIES = 1;
+const MAX_DISCOVER_PLAY_URL_CANDIDATES = 12;
 const WAF_RETRY_AFTER_SECONDS = 60;
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
@@ -235,6 +238,170 @@ const probeContentLength = async (url) => {
     }
 };
 
+const appendUniqueCandidate = (list, seen, raw) => {
+    const url = normalizeMediaUrlCandidate(raw);
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    list.push(url);
+};
+
+const resolveDirectUrlFromCandidates = async (probeCandidates) => {
+    let selectedUrl = probeCandidates[0];
+    let directUrl = probeCandidates[0];
+    let directHeadStatusCode;
+
+    for (const candidate of probeCandidates) {
+        try {
+            const headRes = await fetch(candidate, {
+                method: "HEAD",
+                redirect: "follow",
+                headers: {
+                    "User-Agent": MOBILE_UA,
+                },
+                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+            });
+
+            selectedUrl = candidate;
+            directHeadStatusCode = headRes.status;
+            directUrl = headRes.url;
+            if (headRes.ok) break;
+        } catch (e) {
+            console.error("Failed to resolve direct URL", e);
+        }
+    }
+
+    return {
+        selectedUrl,
+        directUrl,
+        directHeadStatusCode,
+    };
+};
+
+const decodeDiscoverPlayUrl = (raw) => {
+    if (typeof raw !== "string") return null;
+
+    let url = raw.trim();
+    if (!url) return null;
+
+    // Some discover payloads embed escaped JSON URL fragments.
+    for (let i = 0; i < 3; i++) {
+        url = url
+            .replace(/\\u0026/gi, "&")
+            .replace(/\\x26/gi, "&")
+            .replace(/\\\//g, "/");
+    }
+
+    url = url
+        .replace(/&amp;/gi, "&")
+        .replace(/\\+$/g, "");
+
+    return normalizeMediaUrlCandidate(url);
+};
+
+const extractDiscoverPlayApiCandidates = (html) => {
+    if (typeof html !== "string" || !html) return [];
+
+    const candidates = [];
+    const seen = new Set();
+    const markers = [
+        "https://www.douyin.com/aweme/v1/play/?",
+        "https:\\/\\/www.douyin.com\\/aweme\\/v1\\/play\\/?",
+    ];
+
+    for (const marker of markers) {
+        let position = 0;
+        while (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+            const start = html.indexOf(marker, position);
+            if (start < 0) break;
+
+            let end = start;
+            while (end < html.length) {
+                const ch = html[end];
+                if (
+                    ch === `"` ||
+                    ch === `'` ||
+                    ch === "<" ||
+                    ch === ">" ||
+                    ch === "\r" ||
+                    ch === "\n" ||
+                    ch === " " ||
+                    ch === ")" ||
+                    ch === "]"
+                ) {
+                    break;
+                }
+                end++;
+            }
+
+            const decoded = decodeDiscoverPlayUrl(html.slice(start, end));
+            if (decoded?.includes("/aweme/v1/play/")) {
+                appendUniqueCandidate(candidates, seen, decoded);
+            }
+
+            position = start + marker.length;
+        }
+    }
+
+    return candidates;
+};
+
+const fetchDiscoverPlayApiCandidates = async (videoId) => {
+    const discoverUrl = `https://www.douyin.com/discover?modal_id=${videoId}`;
+    let lastStatus;
+
+    for (let attempt = 0; attempt <= DISCOVER_PAGE_RETRIES; attempt++) {
+        try {
+            const res = await fetch(discoverUrl, {
+                headers: {
+                    "user-agent": DESKTOP_UA,
+                    referer: "https://www.douyin.com/",
+                },
+                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+            });
+
+            lastStatus = res.status;
+            const html = await res.text();
+            if (!res.ok || looksLikeWafChallenge(html)) {
+                if (attempt < DISCOVER_PAGE_RETRIES) {
+                    await sleep(500 + Math.floor(Math.random() * 500));
+                    continue;
+                }
+                break;
+            }
+
+            const candidates = extractDiscoverPlayApiCandidates(html);
+            if (candidates.length > 0) {
+                console.log("[douyin] discover play fallback extracted", {
+                    videoId,
+                    candidates: candidates.length,
+                });
+                return candidates;
+            }
+
+            if (attempt < DISCOVER_PAGE_RETRIES) {
+                await sleep(300 + Math.floor(Math.random() * 300));
+                continue;
+            }
+        } catch (e) {
+            if (attempt < DISCOVER_PAGE_RETRIES) {
+                await sleep(300 + Math.floor(Math.random() * 300));
+                continue;
+            }
+            console.warn("[douyin] discover play fallback fetch failed", {
+                videoId,
+                message: e?.message || "unknown",
+            });
+            break;
+        }
+    }
+
+    console.warn("[douyin] discover play fallback unavailable", {
+        videoId,
+        status: lastStatus ?? "n/a",
+    });
+    return [];
+};
+
 const buildRelayHeaders = () => {
     const headers = {
         "ngrok-skip-browser-warning": "true",
@@ -245,6 +412,65 @@ const buildRelayHeaders = () => {
     }
 
     return headers;
+};
+
+const normalizeMediaUrlCandidate = (raw) => {
+    if (typeof raw !== "string") return null;
+
+    let url = raw.trim();
+    if (!url) return null;
+
+    if (url.startsWith("//")) {
+        url = `https:${url}`;
+    } else if (/^[a-z0-9.-]+\.[a-z]{2,}(?:\/|$)/i.test(url)) {
+        url = `https://${url}`;
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+    }
+
+    return null;
+};
+
+const pickPreferredMediaUrl = (item) => {
+    const candidates = [];
+    const seen = new Set();
+
+    const pushUrls = (value) => {
+        if (!Array.isArray(value)) return;
+        for (const raw of value) {
+            const url = normalizeMediaUrlCandidate(raw);
+            if (!url) continue;
+            if (seen.has(url)) continue;
+            seen.add(url);
+            candidates.push(url);
+        }
+    };
+
+    pushUrls(item?.video?.download_addr?.url_list);
+    pushUrls(item?.video?.play_addr?.url_list);
+
+    if (Array.isArray(item?.video?.bit_rate)) {
+        for (const bitrate of item.video.bit_rate) {
+            pushUrls(bitrate?.play_addr?.url_list);
+        }
+    }
+
+    // Prefer direct VOD/CDN links over aweme API links when available.
+    const directVod = candidates.find((url) =>
+        /douyinvod\.com|bytevod|tos-cn-ve-/i.test(url),
+    );
+    if (directVod) return directVod;
+
+    // Prefer non-watermarked play API when available.
+    const nonWm = candidates.find((url) => /\/aweme\/v1\/play\//i.test(url));
+    if (nonWm) return nonWm;
+
+    const wm = candidates.find((url) => /\/aweme\/v1\/playwm\//i.test(url));
+    if (wm) return wm;
+
+    return candidates[0];
 };
 
 export default async function(obj) {
@@ -519,6 +745,47 @@ export default async function(obj) {
                 });
             }
 
+            const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
+            if (discoverCandidates.length > 0) {
+                const {
+                    selectedUrl: discoverSelectedUrl,
+                    directUrl: discoverDirectUrl,
+                    directHeadStatusCode: discoverDirectHeadStatusCode,
+                } = await resolveDirectUrlFromCandidates(discoverCandidates);
+
+                const {
+                    statusCode: discoverRangeStatusCode,
+                    bytes: discoverBytes,
+                } = await probeContentLength(discoverDirectUrl);
+                const discoverProbeStatusCode =
+                    typeof discoverDirectHeadStatusCode === "number" &&
+                    discoverDirectHeadStatusCode >= 400
+                        ? discoverDirectHeadStatusCode
+                        : discoverRangeStatusCode;
+
+                console.log("[douyin] discover fallback media url selected", {
+                    videoId,
+                    selected: discoverSelectedUrl,
+                    resolved: discoverDirectUrl,
+                    directProbeStatusCode: discoverProbeStatusCode ?? "n/a",
+                    bytes: discoverBytes ?? "n/a",
+                });
+
+                if (
+                    typeof discoverProbeStatusCode !== "number" ||
+                    discoverProbeStatusCode < 400
+                ) {
+                    return {
+                        filename: `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
+                        urls: discoverDirectUrl,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
             const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
             if (upstreamTargetUrl && !isUpstreamServer) {
                 console.warn("[douyin] no item list after local retries, trying upstream cobalt", {
@@ -568,40 +835,87 @@ export default async function(obj) {
         const title = item.desc;
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
         
-        // Construct download URL
-        // Using aweme.snssdk.com as it reliably redirects to the video file
-        const apiUrl = `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`;
-        
-        // Resolve the redirect to get the direct CDN URL
-        let directUrl = apiUrl;
-        let directHeadStatusCode;
-        try {
-            const headRes = await fetch(apiUrl, {
-                method: "HEAD",
-                redirect: "follow",
-                headers: {
-                    "User-Agent": MOBILE_UA
-                },
-                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-            });
-            directHeadStatusCode = headRes.status;
-            directUrl = headRes.url;
-        } catch (e) {
-            console.error("Failed to resolve direct URL", e);
+        const preferredMediaUrl = pickPreferredMediaUrl(item);
+        const apiUrl =
+            preferredMediaUrl ||
+            // Fallback: synthesize play URL from URI for older payload variants.
+            `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`;
+        const probeCandidates = [];
+        const probeSeen = new Set();
+        appendUniqueCandidate(probeCandidates, probeSeen, apiUrl);
+        if (/\/aweme\/v1\/playwm\//i.test(apiUrl)) {
+            appendUniqueCandidate(
+                probeCandidates,
+                probeSeen,
+                apiUrl.replace(/\/aweme\/v1\/playwm\//i, "/aweme/v1/play/"),
+            );
         }
+
+        // Resolve the redirect to get the direct CDN URL.
+        let {
+            selectedUrl: selectedMediaUrl,
+            directUrl,
+            directHeadStatusCode,
+        } = await resolveDirectUrlFromCandidates(probeCandidates);
+
+        console.log("[douyin] media url selected", {
+            videoId,
+            selected: selectedMediaUrl,
+            resolved: directUrl,
+            directHeadStatusCode: directHeadStatusCode ?? "n/a",
+        });
 
         // Probe media URL with a 1-byte range request:
         // 1) estimate file size for large-file upstream routing
         // 2) detect broken direct media endpoints (4xx/5xx) early
-        const {
+        let {
             statusCode: directRangeStatusCode,
             bytes: contentLengthBytes,
         } = await probeContentLength(directUrl);
 
-        const directProbeStatusCode =
+        let directProbeStatusCode =
             typeof directHeadStatusCode === "number" && directHeadStatusCode >= 400
                 ? directHeadStatusCode
                 : directRangeStatusCode;
+
+        if (typeof directProbeStatusCode === "number" && directProbeStatusCode >= 400) {
+            const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
+            if (discoverCandidates.length > 0) {
+                const {
+                    selectedUrl: discoverSelectedUrl,
+                    directUrl: discoverDirectUrl,
+                    directHeadStatusCode: discoverDirectHeadStatusCode,
+                } = await resolveDirectUrlFromCandidates(discoverCandidates);
+                const {
+                    statusCode: discoverRangeStatusCode,
+                    bytes: discoverContentLengthBytes,
+                } = await probeContentLength(discoverDirectUrl);
+                const discoverProbeStatusCode =
+                    typeof discoverDirectHeadStatusCode === "number" &&
+                    discoverDirectHeadStatusCode >= 400
+                        ? discoverDirectHeadStatusCode
+                        : discoverRangeStatusCode;
+
+                console.log("[douyin] discover fallback media probe", {
+                    videoId,
+                    selected: discoverSelectedUrl,
+                    resolved: discoverDirectUrl,
+                    directProbeStatusCode: discoverProbeStatusCode ?? "n/a",
+                    bytes: discoverContentLengthBytes ?? "n/a",
+                });
+
+                if (
+                    typeof discoverProbeStatusCode !== "number" ||
+                    discoverProbeStatusCode < 400
+                ) {
+                    selectedMediaUrl = discoverSelectedUrl;
+                    directUrl = discoverDirectUrl;
+                    directHeadStatusCode = discoverDirectHeadStatusCode;
+                    directProbeStatusCode = discoverProbeStatusCode;
+                    contentLengthBytes = discoverContentLengthBytes;
+                }
+            }
+        }
 
         const shouldFallbackByLargeFile =
             typeof contentLengthBytes === "number" &&

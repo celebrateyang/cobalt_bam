@@ -11,6 +11,7 @@ const extraProcessingTypes = new Set(["merge", "remux", "mute", "audio", "gif"])
 export default function({
     r,
     host,
+    isBatchRequest,
     audioFormat,
     isAudioOnly,
     isAudioMuted,
@@ -48,7 +49,10 @@ export default function({
     else if (r.isHLS) action = "hls";
     else action = "video";
 
-    if (r.forceRedirect && r.urls) {
+    const shouldKeepDouyinLegacyBatchFlow =
+        host === "douyin" && isBatchRequest === true;
+
+    if (!shouldKeepDouyinLegacyBatchFlow && r.forceRedirect && r.urls) {
         const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
         if (url) {
             return createResponse("redirect", {
@@ -61,7 +65,7 @@ export default function({
 
     // Douyin upstream can sometimes return an already-signed external tunnel URL.
     // Wrapping it into another local tunnel causes fragile tunnel-in-tunnel behavior.
-    if (host === "douyin" && typeof r.urls === "string") {
+    if (host === "douyin" && typeof r.urls === "string" && !shouldKeepDouyinLegacyBatchFlow) {
         const url = r.urls;
         const isExternalTunnel = /^https?:\/\/[^/]+\/tunnel\?/i.test(url);
         const isDirectMedia =

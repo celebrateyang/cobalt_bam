@@ -354,6 +354,7 @@ export default async function({ host, patternMatch, params, authType }) {
         return matchAction({
             r,
             host,
+            isBatchRequest: params.batch === true,
             audioFormat: params.audioFormat,
             isAudioOnly,
             isAudioMuted,

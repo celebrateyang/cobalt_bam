@@ -15,6 +15,8 @@ import { createSavePipeline } from "$lib/task-manager/queue";
 import { updateItem } from "$lib/state/task-manager/queue";
 import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
+import { finalizePointsHold } from "$lib/api/points";
+import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import {
     checkSignedIn,
     clerkEnabled,
@@ -53,6 +55,16 @@ const normalizeTunnelUrl = (url?: string) => {
         return `${window.location.origin}${apiBase}${parsed.pathname}${parsed.search}${parsed.hash}`;
     } catch {
         return url;
+    }
+};
+
+const isTunnelUrl = (url?: string) => {
+    if (!url || typeof window === "undefined") return false;
+    try {
+        const parsed = new URL(url, window.location.origin);
+        return parsed.pathname === "/tunnel";
+    } catch {
+        return false;
     }
 };
 
@@ -370,14 +382,50 @@ export const savingHandler = async ({
     }
 
     if (response.status === "redirect") {
+        const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
         // For batch requests forced into the queue, treat redirects as queue items.
         if (selectedRequest.localProcessing === "forced" && selectedRequest.batch) {
+            // Only tunnel links should be queued for fetch workers.
+            // Direct CDN redirects usually fail in fetch worker due cross-origin restrictions.
+            if (!isTunnelUrl(redirectUrl)) {
+                downloadButtonState.set("done");
+
+                downloadFile({
+                    url: redirectUrl,
+                    urlType: "redirect",
+                });
+
+                const holdId = response?.points?.holdId;
+                if (holdId) {
+                    void finalizePointsHold(holdId, "redirect_download_started").catch(() => false);
+                }
+
+                const memory = queueMeta?.collectionMemory;
+                if (memory?.collectionKey && memory?.itemKey) {
+                    void markCollectionDownloadedItems({
+                        collectionKey: memory.collectionKey,
+                        title: memory.title,
+                        sourceUrl: memory.sourceUrl,
+                        items: [
+                            {
+                                itemKey: memory.itemKey,
+                                url: memory.itemUrl,
+                                title: memory.itemTitle,
+                            },
+                        ],
+                    }).catch(() => false);
+                }
+
+                return response;
+            }
+
             downloadButtonState.set("done");
 
             createSavePipeline(
                 {
                     type: "proxy",
-                    tunnel: [response.url],
+                    tunnel: [redirectUrl],
                     output: {
                         type: guessMimeTypeFromFilename(response.filename),
                         filename: response.filename,
@@ -393,7 +441,7 @@ export const savingHandler = async ({
         downloadButtonState.set("done");
 
         downloadFile({
-            url: response.url,
+            url: redirectUrl,
             urlType: "redirect",
         });
         return response;

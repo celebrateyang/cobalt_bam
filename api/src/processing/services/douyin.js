@@ -295,7 +295,40 @@ const decodeDiscoverPlayUrl = (raw) => {
         .replace(/&amp;/gi, "&")
         .replace(/\\+$/g, "");
 
+    // Some responses embed URL-encoded payload fragments.
+    for (let i = 0; i < 3; i++) {
+        if (!/%[0-9a-f]{2}/i.test(url)) break;
+        try {
+            const decoded = decodeURIComponent(url);
+            if (decoded === url) break;
+            url = decoded;
+        } catch {
+            break;
+        }
+    }
+
     return normalizeMediaUrlCandidate(url);
+};
+
+const extractPercentEncodedPlayApiCandidates = (html, candidates, seen) => {
+    const playApiKey = "%22playApi%22%3A%22";
+    let position = 0;
+
+    while (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+        const keyStart = html.indexOf(playApiKey, position);
+        if (keyStart < 0) break;
+
+        const valueStart = keyStart + playApiKey.length;
+        const valueEnd = html.indexOf("%22", valueStart);
+        if (valueEnd < 0) break;
+
+        const decoded = decodeDiscoverPlayUrl(html.slice(valueStart, valueEnd));
+        if (decoded?.includes("/aweme/v1/play/")) {
+            appendUniqueCandidate(candidates, seen, decoded);
+        }
+
+        position = valueEnd + 3;
+    }
 };
 
 const extractDiscoverPlayApiCandidates = (html) => {
@@ -340,6 +373,12 @@ const extractDiscoverPlayApiCandidates = (html) => {
 
             position = start + marker.length;
         }
+    }
+
+    // Some SSR payloads are URL-encoded blobs that contain playApi values.
+    // Parse `%22playApi%22%3A%22https%3A%2F%2F...%22` style snippets.
+    if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+        extractPercentEncodedPlayApiCandidates(html, candidates, seen);
     }
 
     return candidates;

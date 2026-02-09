@@ -596,7 +596,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
                         audioFilename: `douyin_${obj.shortLink}_audio`,
                         urls: upstream.url,
-                        forceRedirect: upstream.status === "redirect",
+                        forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
@@ -731,7 +731,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
-                        forceRedirect: upstream.status === "redirect",
+                        forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
@@ -810,7 +810,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
-                        forceRedirect: upstream.status === "redirect",
+                        forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
@@ -897,7 +897,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
-                        forceRedirect: upstream.status === "redirect",
+                        forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,
@@ -1045,7 +1045,7 @@ export default async function(obj) {
                         filename: upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: `douyin_${videoId}_audio`,
                         urls: upstream.url,
-                        forceRedirect: upstream.status === "redirect",
+                        forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
                             "User-Agent": MOBILE_UA,

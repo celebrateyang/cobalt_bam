@@ -59,6 +59,23 @@ export default function({
         }
     }
 
+    // Douyin upstream can sometimes return an already-signed external tunnel URL.
+    // Wrapping it into another local tunnel causes fragile tunnel-in-tunnel behavior.
+    if (host === "douyin" && typeof r.urls === "string") {
+        const url = r.urls;
+        const isExternalTunnel = /^https?:\/\/[^/]+\/tunnel\?/i.test(url);
+        const isDirectMedia =
+            /douyinvod\.com|zjcdn\.com|bytevod|tos-cn-ve-|\/aweme\/v1\/play\//i.test(url);
+
+        if (isExternalTunnel || isDirectMedia) {
+            return createResponse("redirect", {
+                url,
+                filename: defaultParams.filename,
+                duration: defaultParams.duration,
+            });
+        }
+    }
+
     if (action === "picker" || action === "audio") {
         if (!r.filenameAttributes) defaultParams.filename = r.audioFilename;
         defaultParams.audioFormat = audioFormat;

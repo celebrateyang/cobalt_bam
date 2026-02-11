@@ -182,7 +182,7 @@ const requestUpstreamCobalt = async (targetUrl) => {
         Number.isFinite(env.instagramUpstreamTimeoutMs) &&
         env.instagramUpstreamTimeoutMs > 0
             ? env.instagramUpstreamTimeoutMs
-            : 12000;
+            : 22000;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -770,6 +770,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
     let lastStatus;
     let lastSource = "n/a";
     let lastUA = "n/a";
+    let sawWafChallenge = false;
 
     // Warm up cookie hints (ttwid/msToken), which improves discover SSR hit-rate
     // on some upstream regions where anonymous requests return reduced HTML.
@@ -828,6 +829,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
                     mergeCookieFromResponse(discoverCookieMap, res.headers);
                     const html = await res.text();
                     if (!res.ok || looksLikeWafChallenge(html)) {
+                        if (looksLikeWafChallenge(html)) sawWafChallenge = true;
                         if (attempt < retries) {
                             await sleep(500 + Math.floor(Math.random() * 500));
                             continue;
@@ -873,6 +875,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
         source: lastSource,
         ua: lastUA,
         status: lastStatus ?? "n/a",
+        waf: sawWafChallenge,
     });
     return [];
 };
@@ -1401,6 +1404,51 @@ export default async function(obj) {
                 cappedAttempts = 1;
                 usedDiscoverFallback = true;
             }
+        }
+
+        if (awemeOnlyPayload && !directUrl) {
+            console.warn("[douyin] aweme-only payload unresolved via discover, skipping aweme probe", {
+                videoId,
+                upstreamConfigured: Boolean(env.instagramUpstreamURL),
+                upstream: isUpstreamServer,
+            });
+
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+            });
+            if (env.instagramUpstreamURL && upstreamTargetUrl) {
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                if (upstream?.url) {
+                    logUpstreamUsed("aweme_only_discover_unavailable", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: `douyin_${videoId}_audio`,
+                            urls: upstream.relayUrl,
+                            duration: upstream.duration,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
+                    return {
+                        filename: upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: `douyin_${videoId}_audio`,
+                        urls: upstream.url,
+                        forceRedirect: true,
+                        duration: upstream.duration,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
+            return { error: "fetch.fail" };
         }
 
         if (!directUrl) {

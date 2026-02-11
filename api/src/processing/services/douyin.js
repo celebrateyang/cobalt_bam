@@ -270,6 +270,51 @@ const parseTotalLength = (headers) => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
+const classifyMediaUrl = (url) => {
+    if (typeof url !== "string" || !url) return "unknown";
+
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        const path = parsed.pathname.toLowerCase();
+
+        if (host.endsWith("douyinvod.com")) return "douyinvod";
+        if (host.includes("bytevod")) return "bytevod";
+        if (host.endsWith("zjcdn.com")) return "zjcdn";
+        if (path.includes("/aweme/v1/play")) return "aweme-api";
+
+        return "other";
+    } catch {
+        return "unknown";
+    }
+};
+
+const mediaClassScore = (mediaClass) => {
+    switch (mediaClass) {
+        case "douyinvod":
+            return 40;
+        case "bytevod":
+            return 35;
+        case "other":
+            return 20;
+        case "zjcdn":
+            return 10;
+        case "aweme-api":
+            return 5;
+        default:
+            return 0;
+    }
+};
+
+const shouldPreferRedirectForMediaClass = (mediaClass) =>
+    mediaClass === "douyinvod" || mediaClass === "bytevod";
+
+const shouldAllowZjcdnRedirect = ({ mediaClass, bytes }) =>
+    mediaClass === "zjcdn" &&
+    typeof bytes === "number" &&
+    Number.isFinite(bytes) &&
+    bytes >= env.douyinUpstreamMinBytes;
+
 const probeContentLength = async (url, timeoutMs = PAGE_TIMEOUT_MS) => {
     try {
         const res = await fetch(url, {
@@ -326,7 +371,12 @@ const resolveDirectUrlFromCandidates = async (
     }
 
     const cappedAttempts = Math.max(1, Math.min(maxAttempts, candidates.length));
+    const targetProbeDepth =
+        reason.startsWith("discover:")
+            ? Math.min(cappedAttempts, 6)
+            : Math.min(cappedAttempts, 4);
     const failures = [];
+    let bestSuccess = null;
     let lastResult = {
         selectedUrl: candidates[0],
         directUrl: candidates[0],
@@ -363,24 +413,28 @@ const resolveDirectUrlFromCandidates = async (
             bytes,
             attempts: index + 1,
             cappedAttempts,
+            mediaClass: classifyMediaUrl(directUrl),
         };
 
         lastResult = result;
 
         if (typeof directProbeStatusCode === "number" && directProbeStatusCode < 400) {
-            if (failures.length > 0) {
-                console.log("[douyin] media candidate retry success", {
-                    reason,
-                    videoId,
-                    attempts: index + 1,
-                    selected: candidate,
-                    resolved: directUrl,
-                    probeStatus: directProbeStatusCode,
-                    bytes: bytes ?? "n/a",
-                    failedStatuses: failures,
-                });
+            const score = mediaClassScore(result.mediaClass);
+            if (!bestSuccess || score > bestSuccess.score) {
+                bestSuccess = { ...result, score };
             }
-            return result;
+
+            // Stop early if we already have a strong/stable CDN result.
+            if (score >= 35) break;
+
+            // Keep probing a bit longer when best result is weak (e.g. zjcdn),
+            // so we have a chance to find a better equivalent candidate.
+            const scannedAttempts = index + 1;
+            if (bestSuccess?.score >= 20 && scannedAttempts >= targetProbeDepth) {
+                break;
+            }
+
+            continue;
         }
 
         failures.push({
@@ -388,6 +442,24 @@ const resolveDirectUrlFromCandidates = async (
             head: directHeadStatusCode ?? "n/a",
             probe: directProbeStatusCode ?? "n/a",
         });
+    }
+
+    if (bestSuccess) {
+        if (failures.length > 0 || bestSuccess.attempts > 1) {
+            console.log("[douyin] media candidate retry success", {
+                reason,
+                videoId,
+                attempts: bestSuccess.attempts,
+                selected: bestSuccess.selectedUrl,
+                resolved: bestSuccess.directUrl,
+                probeStatus: bestSuccess.directProbeStatusCode,
+                bytes: bestSuccess.bytes ?? "n/a",
+                mediaClass: bestSuccess.mediaClass,
+                failedStatuses: failures,
+            });
+        }
+        const { score, ...resolved } = bestSuccess;
+        return resolved;
     }
 
     if (candidates.length > 0) {
@@ -399,6 +471,7 @@ const resolveDirectUrlFromCandidates = async (
             selected: lastResult.selectedUrl,
             resolved: lastResult.directUrl,
             probeStatus: lastResult.directProbeStatusCode ?? "n/a",
+            mediaClass: lastResult.mediaClass,
             failedStatuses: failures,
         });
     }
@@ -460,6 +533,19 @@ const extractPercentEncodedPlayApiCandidates = (html, candidates, seen) => {
     }
 };
 
+const extractDirectVodCandidates = (html, candidates, seen) => {
+    if (typeof html !== "string" || !html) return;
+
+    const directVodRegex = /https?:\\?\/\\?\/[^"'<>\\\s]*(douyinvod\.com|zjcdn\.com|bytevod)[^"'<>\\\s]*/gi;
+    let match;
+
+    while ((match = directVodRegex.exec(html)) !== null) {
+        if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
+        const decoded = decodeDiscoverPlayUrl(match[0]);
+        appendUniqueCandidate(candidates, seen, decoded);
+    }
+};
+
 const extractDiscoverPlayApiCandidates = (html) => {
     if (typeof html !== "string" || !html) return [];
 
@@ -508,6 +594,10 @@ const extractDiscoverPlayApiCandidates = (html) => {
     // Parse `%22playApi%22%3A%22https%3A%2F%2F...%22` style snippets.
     if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
         extractPercentEncodedPlayApiCandidates(html, candidates, seen);
+    }
+
+    if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+        extractDirectVodCandidates(html, candidates, seen);
     }
 
     return candidates;
@@ -582,6 +672,7 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         bytes,
         attempts,
         cappedAttempts,
+        mediaClass,
     } = await resolveDirectUrlFromCandidates(discoverCandidates, {
         reason: `discover:${reason}`,
         videoId,
@@ -596,6 +687,7 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         directProbeStatusCode: directProbeStatusCode ?? "n/a",
         bytes: bytes ?? "n/a",
         attempts: `${attempts}/${cappedAttempts}`,
+        mediaClass,
     });
 
     if (
@@ -611,6 +703,7 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         directHeadStatusCode,
         directProbeStatusCode,
         bytes,
+        mediaClass,
     };
 };
 
@@ -1077,6 +1170,7 @@ export default async function(obj) {
             bytes: contentLengthBytes,
             attempts,
             cappedAttempts,
+            mediaClass,
         } = await resolveDirectUrlFromCandidates(probeCandidates, {
             reason: "primary",
             videoId,
@@ -1091,6 +1185,7 @@ export default async function(obj) {
             directProbeStatusCode: directProbeStatusCode ?? "n/a",
             bytes: contentLengthBytes ?? "n/a",
             attempts: `${attempts}/${cappedAttempts}`,
+            mediaClass,
         });
 
         // Treat undefined probe status as a failed candidate so we can continue
@@ -1107,14 +1202,11 @@ export default async function(obj) {
                 directHeadStatusCode = discover.directHeadStatusCode;
                 directProbeStatusCode = discover.directProbeStatusCode;
                 contentLengthBytes = discover.bytes;
+                mediaClass = discover.mediaClass;
                 usedDiscoverFallback = true;
             }
         }
 
-        const shouldFallbackByLargeFile =
-            !usedDiscoverFallback &&
-            typeof contentLengthBytes === "number" &&
-            contentLengthBytes >= env.douyinUpstreamMinBytes;
         const shouldFallbackByDirectStatus =
             typeof directProbeStatusCode === "number" &&
             directProbeStatusCode >= 400;
@@ -1146,7 +1238,7 @@ export default async function(obj) {
             return { error: "fetch.fail" };
         }
 
-        if (env.instagramUpstreamURL && (shouldFallbackByLargeFile || shouldFallbackByDirectStatus)) {
+        if (env.instagramUpstreamURL && shouldFallbackByDirectStatus) {
             const upstreamTargetUrl = getUpstreamTargetUrl({
                 videoId,
                 shortLink: obj.shortLink,
@@ -1155,15 +1247,13 @@ export default async function(obj) {
                 console.warn("[douyin] direct media fallback condition met, trying upstream cobalt", {
                     videoId,
                     bytes: contentLengthBytes ?? "n/a",
-                    threshold: env.douyinUpstreamMinBytes,
                     directStatusCode: directProbeStatusCode ?? "n/a",
                     directUrl,
+                    mediaClass,
                 });
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
-                    const upstreamReason = shouldFallbackByLargeFile
-                        ? "large_file"
-                        : "direct_probe_status";
+                    const upstreamReason = "direct_probe_status";
                     logUpstreamUsed(upstreamReason, {
                         videoId,
                         shortLink: obj.shortLink,
@@ -1199,11 +1289,19 @@ export default async function(obj) {
             }
         }
 
+        const allowZjcdnRedirect = shouldAllowZjcdnRedirect({
+            mediaClass,
+            bytes: contentLengthBytes,
+        });
+        const preferRedirect =
+            shouldPreferRedirectForMediaClass(mediaClass) || allowZjcdnRedirect;
+
         return {
             filename: `douyin_${videoId}.mp4`,
             audioFilename: `douyin_${videoId}_audio`,
             urls: directUrl,
-            forceRedirect: usedDiscoverFallback,
+            forceRedirect: usedDiscoverFallback || preferRedirect,
+            allowZjcdnRedirect,
             duration,
             headers: {
                 "User-Agent": MOBILE_UA

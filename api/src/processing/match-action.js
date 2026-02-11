@@ -23,7 +23,7 @@ export default function({
     alwaysProxy,
     localProcessing,
 }) {
-    const shouldRedirectDouyinUrl = (url) => {
+    const shouldRedirectDouyinUrl = (url, options = {}) => {
         if (typeof url !== "string" || !url) return false;
 
         if (/^https?:\/\/[^/]+\/tunnel\?/i.test(url)) return true;
@@ -34,7 +34,9 @@ export default function({
 
             // zjcdn/aweme links are often geo/header sensitive on client egress.
             // Keep them on server-side proxy path for better success rate.
-            if (hostname.endsWith("zjcdn.com")) return false;
+            if (hostname.endsWith("zjcdn.com")) {
+                return options.allowZjcdnRedirect === true;
+            }
             if (/\/aweme\/v1\/play/i.test(parsed.pathname)) return false;
 
             // Signed douyinvod links are usually safe for direct redirect.
@@ -80,7 +82,10 @@ export default function({
     if (!shouldKeepDouyinLegacyBatchFlow && r.forceRedirect && r.urls) {
         const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
         const allowDouyinRedirect =
-            host !== "douyin" || shouldRedirectDouyinUrl(url);
+            host !== "douyin" ||
+            shouldRedirectDouyinUrl(url, {
+                allowZjcdnRedirect: r.allowZjcdnRedirect === true,
+            });
 
         if (url && allowDouyinRedirect) {
             return createResponse("redirect", {

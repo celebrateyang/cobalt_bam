@@ -23,6 +23,31 @@ export default function({
     alwaysProxy,
     localProcessing,
 }) {
+    const shouldRedirectDouyinUrl = (url) => {
+        if (typeof url !== "string" || !url) return false;
+
+        if (/^https?:\/\/[^/]+\/tunnel\?/i.test(url)) return true;
+
+        try {
+            const parsed = new URL(url);
+            const hostname = parsed.hostname.toLowerCase();
+
+            // zjcdn/aweme links are often geo/header sensitive on client egress.
+            // Keep them on server-side proxy path for better success rate.
+            if (hostname.endsWith("zjcdn.com")) return false;
+            if (/\/aweme\/v1\/play/i.test(parsed.pathname)) return false;
+
+            // Signed douyinvod links are usually safe for direct redirect.
+            if (hostname.endsWith("douyinvod.com")) return true;
+            if (hostname.includes("bytevod")) return true;
+
+            // For unknown domains, prefer legacy proxy/tunnel behavior.
+            return false;
+        } catch {
+            return false;
+        }
+    };
+
     let action,
         responseType = "tunnel",
         defaultParams = {
@@ -54,7 +79,10 @@ export default function({
 
     if (!shouldKeepDouyinLegacyBatchFlow && r.forceRedirect && r.urls) {
         const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
-        if (url) {
+        const allowDouyinRedirect =
+            host !== "douyin" || shouldRedirectDouyinUrl(url);
+
+        if (url && allowDouyinRedirect) {
             return createResponse("redirect", {
                 url,
                 filename: defaultParams.filename,
@@ -65,13 +93,13 @@ export default function({
 
     // Douyin upstream can sometimes return an already-signed external tunnel URL.
     // Wrapping it into another local tunnel causes fragile tunnel-in-tunnel behavior.
+    // Keep redirect only for that case; for ordinary direct media links we keep
+    // legacy proxy/tunnel flow to avoid client-side CDN 403 variance.
     if (host === "douyin" && typeof r.urls === "string" && !shouldKeepDouyinLegacyBatchFlow) {
         const url = r.urls;
         const isExternalTunnel = /^https?:\/\/[^/]+\/tunnel\?/i.test(url);
-        const isDirectMedia =
-            /douyinvod\.com|zjcdn\.com|bytevod|tos-cn-ve-|\/aweme\/v1\/play\//i.test(url);
 
-        if (isExternalTunnel || isDirectMedia) {
+        if (isExternalTunnel) {
             return createResponse("redirect", {
                 url,
                 filename: defaultParams.filename,

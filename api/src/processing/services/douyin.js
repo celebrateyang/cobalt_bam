@@ -5,9 +5,12 @@ import { env } from "../../config.js";
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 const DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
 const PAGE_TIMEOUT_MS = 15000;
+const CANDIDATE_PROBE_TIMEOUT_MS = 4500;
 const SHARE_PAGE_RETRIES = 1;
 const DISCOVER_PAGE_RETRIES = 1;
 const MAX_DISCOVER_PLAY_URL_CANDIDATES = 12;
+const MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS = 5;
+const MAX_DISCOVER_MEDIA_CANDIDATE_ATTEMPTS = 8;
 const WAF_RETRY_AFTER_SECONDS = 60;
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
@@ -267,7 +270,7 @@ const parseTotalLength = (headers) => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-const probeContentLength = async (url) => {
+const probeContentLength = async (url, timeoutMs = PAGE_TIMEOUT_MS) => {
     try {
         const res = await fetch(url, {
             method: "GET",
@@ -277,17 +280,19 @@ const probeContentLength = async (url) => {
                 // Request a single byte so we can read total length from Content-Range.
                 Range: "bytes=0-0",
             },
-            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+            signal: AbortSignal.timeout(timeoutMs),
         });
 
         return {
             statusCode: res.status,
             bytes: parseTotalLength(res.headers),
+            finalUrl: res.url,
         };
     } catch {
         return {
             statusCode: undefined,
             bytes: undefined,
+            finalUrl: undefined,
         };
     }
 };
@@ -299,36 +304,106 @@ const appendUniqueCandidate = (list, seen, raw) => {
     list.push(url);
 };
 
-const resolveDirectUrlFromCandidates = async (probeCandidates) => {
-    let selectedUrl = probeCandidates[0];
-    let directUrl = probeCandidates[0];
-    let directHeadStatusCode;
-
-    for (const candidate of probeCandidates) {
-        try {
-            const headRes = await fetch(candidate, {
-                method: "HEAD",
-                redirect: "follow",
-                headers: {
-                    "User-Agent": MOBILE_UA,
-                },
-                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-            });
-
-            selectedUrl = candidate;
-            directHeadStatusCode = headRes.status;
-            directUrl = headRes.url;
-            if (headRes.ok) break;
-        } catch (e) {
-            console.error("Failed to resolve direct URL", e);
-        }
+const resolveDirectUrlFromCandidates = async (
+    probeCandidates,
+    {
+        reason = "primary",
+        videoId,
+        maxAttempts = probeCandidates.length,
+    } = {},
+) => {
+    const candidates = Array.isArray(probeCandidates) ? probeCandidates : [];
+    if (candidates.length === 0) {
+        return {
+            selectedUrl: undefined,
+            directUrl: undefined,
+            directHeadStatusCode: undefined,
+            directProbeStatusCode: undefined,
+            bytes: undefined,
+            attempts: 0,
+            cappedAttempts: 0,
+        };
     }
 
-    return {
-        selectedUrl,
-        directUrl,
-        directHeadStatusCode,
+    const cappedAttempts = Math.max(1, Math.min(maxAttempts, candidates.length));
+    const failures = [];
+    let lastResult = {
+        selectedUrl: candidates[0],
+        directUrl: candidates[0],
+        directHeadStatusCode: undefined,
+        directProbeStatusCode: undefined,
+        bytes: undefined,
+        attempts: 0,
+        cappedAttempts,
     };
+
+    for (let index = 0; index < cappedAttempts; index++) {
+        const candidate = candidates[index];
+        let directUrl = candidate;
+        let directHeadStatusCode;
+
+        const {
+            statusCode: directRangeStatusCode,
+            bytes,
+            finalUrl,
+        } = await probeContentLength(directUrl, CANDIDATE_PROBE_TIMEOUT_MS);
+
+        if (finalUrl) directUrl = finalUrl;
+
+        const directProbeStatusCode =
+            typeof directRangeStatusCode === "number"
+                ? directRangeStatusCode
+                : directHeadStatusCode;
+
+        const result = {
+            selectedUrl: candidate,
+            directUrl,
+            directHeadStatusCode,
+            directProbeStatusCode,
+            bytes,
+            attempts: index + 1,
+            cappedAttempts,
+        };
+
+        lastResult = result;
+
+        if (typeof directProbeStatusCode === "number" && directProbeStatusCode < 400) {
+            if (failures.length > 0) {
+                console.log("[douyin] media candidate retry success", {
+                    reason,
+                    videoId,
+                    attempts: index + 1,
+                    selected: candidate,
+                    resolved: directUrl,
+                    probeStatus: directProbeStatusCode,
+                    bytes: bytes ?? "n/a",
+                    failedStatuses: failures,
+                });
+            }
+            return result;
+        }
+
+        failures.push({
+            attempt: index + 1,
+            head: directHeadStatusCode ?? "n/a",
+            probe: directProbeStatusCode ?? "n/a",
+        });
+    }
+
+    if (candidates.length > 0) {
+        console.warn("[douyin] media candidates exhausted", {
+            reason,
+            videoId,
+            attempts: lastResult.attempts,
+            cappedAttempts: lastResult.cappedAttempts,
+            selected: lastResult.selectedUrl,
+            resolved: lastResult.directUrl,
+            probeStatus: lastResult.directProbeStatusCode ?? "n/a",
+            failedStatuses: failures,
+        });
+    }
+
+    return lastResult;
 };
 
 const decodeDiscoverPlayUrl = (raw) => {
@@ -503,17 +578,15 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         selectedUrl,
         directUrl,
         directHeadStatusCode,
-    } = await resolveDirectUrlFromCandidates(discoverCandidates);
-
-    const {
-        statusCode: directRangeStatusCode,
+        directProbeStatusCode,
         bytes,
-    } = await probeContentLength(directUrl);
-
-    const directProbeStatusCode =
-        typeof directHeadStatusCode === "number" && directHeadStatusCode >= 400
-            ? directHeadStatusCode
-            : directRangeStatusCode;
+        attempts,
+        cappedAttempts,
+    } = await resolveDirectUrlFromCandidates(discoverCandidates, {
+        reason: `discover:${reason}`,
+        videoId,
+        maxAttempts: MAX_DISCOVER_MEDIA_CANDIDATE_ATTEMPTS,
+    });
 
     console.log("[douyin] discover fallback media probe", {
         reason,
@@ -522,10 +595,11 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         resolved: directUrl,
         directProbeStatusCode: directProbeStatusCode ?? "n/a",
         bytes: bytes ?? "n/a",
+        attempts: `${attempts}/${cappedAttempts}`,
     });
 
     if (
-        typeof directProbeStatusCode === "number" &&
+        typeof directProbeStatusCode !== "number" ||
         directProbeStatusCode >= 400
     ) {
         return null;
@@ -571,18 +645,40 @@ const normalizeMediaUrlCandidate = (raw) => {
     return null;
 };
 
-const pickPreferredMediaUrl = (item) => {
-    const candidates = [];
+const buildOrderedMediaCandidates = (item, videoUri) => {
+    const directVod = [];
+    const nonWatermarkedApi = [];
+    const watermarkedApi = [];
+    const others = [];
     const seen = new Set();
+
+    const pushIntoBucket = (raw) => {
+        const url = normalizeMediaUrlCandidate(raw);
+        if (!url || seen.has(url)) return;
+        seen.add(url);
+
+        if (/douyinvod\.com|bytevod|tos-cn-ve-/i.test(url)) {
+            directVod.push(url);
+            return;
+        }
+        if (/\/aweme\/v1\/play\//i.test(url)) {
+            nonWatermarkedApi.push(url);
+            return;
+        }
+        if (/\/aweme\/v1\/playwm\//i.test(url)) {
+            watermarkedApi.push(url);
+            // Also enqueue a de-watermarked variant right away.
+            pushIntoBucket(url.replace(/\/aweme\/v1\/playwm\//i, "/aweme/v1/play/"));
+            return;
+        }
+
+        others.push(url);
+    };
 
     const pushUrls = (value) => {
         if (!Array.isArray(value)) return;
         for (const raw of value) {
-            const url = normalizeMediaUrlCandidate(raw);
-            if (!url) continue;
-            if (seen.has(url)) continue;
-            seen.add(url);
-            candidates.push(url);
+            pushIntoBucket(raw);
         }
     };
 
@@ -595,20 +691,18 @@ const pickPreferredMediaUrl = (item) => {
         }
     }
 
-    // Prefer direct VOD/CDN links over aweme API links when available.
-    const directVod = candidates.find((url) =>
-        /douyinvod\.com|bytevod|tos-cn-ve-/i.test(url),
-    );
-    if (directVod) return directVod;
+    if (videoUri) {
+        pushIntoBucket(
+            `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`,
+        );
+    }
 
-    // Prefer non-watermarked play API when available.
-    const nonWm = candidates.find((url) => /\/aweme\/v1\/play\//i.test(url));
-    if (nonWm) return nonWm;
-
-    const wm = candidates.find((url) => /\/aweme\/v1\/playwm\//i.test(url));
-    if (wm) return wm;
-
-    return candidates[0];
+    return [
+        ...directVod,
+        ...nonWatermarkedApi,
+        ...watermarkedApi,
+        ...others,
+    ];
 };
 
 export default async function(obj) {
@@ -970,50 +1064,40 @@ export default async function(obj) {
         const videoUri = item.video.play_addr.uri;
         const title = item.desc;
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
-        
-        const preferredMediaUrl = pickPreferredMediaUrl(item);
+
         let usedDiscoverFallback = false;
-        const apiUrl =
-            preferredMediaUrl ||
-            // Fallback: synthesize play URL from URI for older payload variants.
-            `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`;
-        const probeCandidates = [];
-        const probeSeen = new Set();
-        appendUniqueCandidate(probeCandidates, probeSeen, apiUrl);
-        if (/\/aweme\/v1\/playwm\//i.test(apiUrl)) {
-            appendUniqueCandidate(
-                probeCandidates,
-                probeSeen,
-                apiUrl.replace(/\/aweme\/v1\/playwm\//i, "/aweme/v1/play/"),
-            );
-        }
+        const probeCandidates = buildOrderedMediaCandidates(item, videoUri);
 
         // Resolve the redirect to get the direct CDN URL.
         let {
             selectedUrl: selectedMediaUrl,
             directUrl,
             directHeadStatusCode,
-        } = await resolveDirectUrlFromCandidates(probeCandidates);
+            directProbeStatusCode,
+            bytes: contentLengthBytes,
+            attempts,
+            cappedAttempts,
+        } = await resolveDirectUrlFromCandidates(probeCandidates, {
+            reason: "primary",
+            videoId,
+            maxAttempts: MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS,
+        });
 
         console.log("[douyin] media url selected", {
             videoId,
             selected: selectedMediaUrl,
             resolved: directUrl,
             directHeadStatusCode: directHeadStatusCode ?? "n/a",
+            directProbeStatusCode: directProbeStatusCode ?? "n/a",
+            bytes: contentLengthBytes ?? "n/a",
+            attempts: `${attempts}/${cappedAttempts}`,
         });
 
-        // Probe media URL with a 1-byte range request:
-        // 1) estimate file size for large-file upstream routing
-        // 2) detect broken direct media endpoints (4xx/5xx) early
-        let {
-            statusCode: directRangeStatusCode,
-            bytes: contentLengthBytes,
-        } = await probeContentLength(directUrl);
-
-        let directProbeStatusCode =
-            typeof directHeadStatusCode === "number" && directHeadStatusCode >= 400
-                ? directHeadStatusCode
-                : directRangeStatusCode;
+        // Treat undefined probe status as a failed candidate so we can continue
+        // with discover/upstream fallback instead of returning an unknown-bad URL.
+        if (typeof directProbeStatusCode !== "number") {
+            directProbeStatusCode = 599;
+        }
 
         if (typeof directProbeStatusCode === "number" && directProbeStatusCode >= 400) {
             const discover = await tryResolveViaDiscover(videoId, "direct_probe_status");

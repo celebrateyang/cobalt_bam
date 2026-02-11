@@ -1406,57 +1406,23 @@ export default async function(obj) {
             }
         }
 
-        if (awemeOnlyPayload && !directUrl) {
-            console.warn("[douyin] aweme-only payload unresolved via discover, skipping aweme probe", {
-                videoId,
-                upstreamConfigured: Boolean(env.instagramUpstreamURL),
-                upstream: isUpstreamServer,
-            });
+        if (!directUrl) {
+            const primaryProbeAttempts = awemeOnlyPayload
+                ? Math.min(2, MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS)
+                : MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS;
 
-            const upstreamTargetUrl = getUpstreamTargetUrl({
-                videoId,
-                shortLink: obj.shortLink,
-            });
-            if (env.instagramUpstreamURL && upstreamTargetUrl) {
-                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
-                if (upstream?.url) {
-                    logUpstreamUsed("aweme_only_discover_unavailable", {
-                        videoId,
-                        shortLink: obj.shortLink,
-                        targetUrl: upstreamTargetUrl,
-                        status: upstream.status,
-                    });
-                    if (upstream.relayUrl) {
-                        return {
-                            filename: upstream.filename || `douyin_${videoId}.mp4`,
-                            audioFilename: `douyin_${videoId}_audio`,
-                            urls: upstream.relayUrl,
-                            duration: upstream.duration,
-                            headers: buildRelayHeaders(),
-                        };
-                    }
-                    return {
-                        filename: upstream.filename || `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}_audio`,
-                        urls: upstream.url,
-                        forceRedirect: true,
-                        duration: upstream.duration,
-                        headers: {
-                            "User-Agent": MOBILE_UA,
-                        },
-                    };
-                }
+            if (awemeOnlyPayload) {
+                console.warn("[douyin] aweme-only discover unresolved, probing primary candidates", {
+                    videoId,
+                    attempts: primaryProbeAttempts,
+                });
             }
 
-            return { error: "fetch.fail" };
-        }
-
-        if (!directUrl) {
             // Resolve the redirect to get the direct CDN URL.
             const resolved = await resolveDirectUrlFromCandidates(probeCandidates, {
                 reason: "primary",
                 videoId,
-                maxAttempts: MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS,
+                maxAttempts: primaryProbeAttempts,
             });
             selectedMediaUrl = resolved.selectedUrl;
             directUrl = resolved.directUrl;

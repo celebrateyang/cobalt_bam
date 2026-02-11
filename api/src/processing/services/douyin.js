@@ -19,6 +19,52 @@ const isUpstreamServer = (() => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const parseSetCookiePairs = (setCookieHeader) => {
+    if (typeof setCookieHeader !== "string" || !setCookieHeader) return [];
+
+    const pairs = [];
+    const regex = /(?:^|,\s*)([A-Za-z0-9_]+)=([^;,\r\n]+)/g;
+    let match;
+
+    while ((match = regex.exec(setCookieHeader)) !== null) {
+        const [, name, value] = match;
+        if (!name || !value) continue;
+        pairs.push([name, value]);
+    }
+
+    return pairs;
+};
+
+const mergeCookieFromResponse = (cookieMap, headers) => {
+    if (!cookieMap || !(cookieMap instanceof Map) || !headers?.get) return;
+
+    const setCookie = headers.get("set-cookie");
+    if (!setCookie) return;
+
+    for (const [name, value] of parseSetCookiePairs(setCookie)) {
+        // Keep only the high-value cookies used by Douyin anti-bot layers.
+        if (
+            name === "ttwid" ||
+            name === "msToken" ||
+            name === "__ac_nonce" ||
+            name === "__ac_signature" ||
+            name === "odin_tt"
+        ) {
+            cookieMap.set(name, value);
+        }
+    }
+};
+
+const cookieMapToHeader = (cookieMap) => {
+    if (!cookieMap || !(cookieMap instanceof Map) || cookieMap.size === 0) {
+        return "";
+    }
+
+    return [...cookieMap.entries()]
+        .map(([name, value]) => `${name}=${value}`)
+        .join("; ");
+};
+
 const looksLikeWafChallenge = (html) => {
     if (!html) return false;
 
@@ -171,7 +217,19 @@ const requestUpstreamCobalt = async (targetUrl) => {
         if (!payload.url) return null;
 
         let normalizedUrl = payload.url;
-        if (payload.status === "tunnel") {
+        let relayUrl = null;
+        let isTunnelLikeUrl = false;
+
+        try {
+            const parsedPayloadUrl = new URL(payload.url);
+            isTunnelLikeUrl = parsedPayloadUrl.pathname === "/tunnel";
+        } catch {
+            isTunnelLikeUrl = typeof payload.url === "string" && payload.url.startsWith("/tunnel?");
+        }
+
+        // Some upstreams incorrectly label tunnel URLs as `status=redirect`.
+        // Detect by URL shape and force relay-mode handling.
+        if (payload.status === "tunnel" || isTunnelLikeUrl) {
             const rewritten = normalizeUpstreamTunnelUrl(payload.url, endpoint.origin);
             if (rewritten) {
                 normalizedUrl = rewritten;
@@ -182,12 +240,23 @@ const requestUpstreamCobalt = async (targetUrl) => {
                     });
                 }
             }
-        }
 
-        // Prefer returning upstream redirect URL directly to the client.
-        // Some edge proxies reject relay requests that carry encoded upstream
-        // URLs in query params, which causes false 400s on otherwise valid links.
-        const relayUrl = null;
+            try {
+                const relay = new URL("/relay", endpoint.origin);
+                relay.searchParams.set("service", "douyin");
+                relay.searchParams.set("url", normalizedUrl);
+                relayUrl = relay.toString();
+
+                console.log("[douyin] upstream tunnel relay prepared", {
+                    upstream: upstreamOrigin,
+                    relay: relayUrl,
+                    originalStatus: payload.status,
+                    tunnelLike: isTunnelLikeUrl,
+                });
+            } catch {
+                relayUrl = null;
+            }
+        }
 
         return {
             status: payload.status,
@@ -486,19 +555,30 @@ const decodeDiscoverPlayUrl = (raw) => {
     if (!url) return null;
 
     // Some discover payloads embed escaped JSON URL fragments.
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
         url = url
             .replace(/\\u0026/gi, "&")
+            .replace(/\\u002f/gi, "/")
+            .replace(/\\u003a/gi, ":")
             .replace(/\\x26/gi, "&")
             .replace(/\\\//g, "/");
     }
+
+    // Decode generic unicode escapes such as \u003d / \u0025 if present.
+    url = url.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => {
+        try {
+            return String.fromCharCode(parseInt(hex, 16));
+        } catch {
+            return _;
+        }
+    });
 
     url = url
         .replace(/&amp;/gi, "&")
         .replace(/\\+$/g, "");
 
     // Some responses embed URL-encoded payload fragments.
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
         if (!/%[0-9a-f]{2}/i.test(url)) break;
         try {
             const decoded = decodeURIComponent(url);
@@ -533,6 +613,18 @@ const extractPercentEncodedPlayApiCandidates = (html, candidates, seen) => {
     }
 };
 
+const extractPlayApiValueCandidates = (html, candidates, seen) => {
+    if (typeof html !== "string" || !html) return;
+
+    const valueRegex = /(?:\"|')playApi(?:\"|')\s*:\s*(?:\"|')([^\"']+)(?:\"|')/gi;
+    let match;
+    while ((match = valueRegex.exec(html)) !== null) {
+        if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
+        const decoded = decodeDiscoverPlayUrl(match[1]);
+        appendUniqueCandidate(candidates, seen, decoded);
+    }
+};
+
 const extractDirectVodCandidates = (html, candidates, seen) => {
     if (typeof html !== "string" || !html) return;
 
@@ -562,6 +654,14 @@ const extractGenericMediaCandidates = (html, candidates, seen) => {
     const percentEncodedRegex =
         /https%3A%2F%2F[^"'<>\\\s]*(?:%2Faweme%2Fv1%2Fplay%2F%3F|douyinvod\.com|zjcdn\.com|bytevod)[^"'<>\\\s]*/gi;
     while ((match = percentEncodedRegex.exec(html)) !== null) {
+        if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
+        const decoded = decodeDiscoverPlayUrl(match[0]);
+        appendUniqueCandidate(candidates, seen, decoded);
+    }
+
+    const unicodeEscapedRegex =
+        /https?:\\u002[fF]\\u002[fF][^"'<>\\\s]*(?:aweme\\u002[fF]v1\\u002[fF]play\\u002[fF]\\u003[fF]|douyinvod\.com|zjcdn\.com|bytevod)[^"'<>\\\s]*/gi;
+    while ((match = unicodeEscapedRegex.exec(html)) !== null) {
         if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
         const decoded = decodeDiscoverPlayUrl(match[0]);
         appendUniqueCandidate(candidates, seen, decoded);
@@ -619,6 +719,10 @@ const extractDiscoverPlayApiCandidates = (html) => {
     }
 
     if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+        extractPlayApiValueCandidates(html, candidates, seen);
+    }
+
+    if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
         extractDirectVodCandidates(html, candidates, seen);
     }
 
@@ -630,61 +734,114 @@ const extractDiscoverPlayApiCandidates = (html) => {
 };
 
 const fetchDiscoverPlayApiCandidates = async (videoId) => {
+    const discoverCookieMap = new Map();
+    const discoverWarmupUrls = [
+        `https://www.iesdouyin.com/share/video/${videoId}`,
+        `https://www.douyin.com/video/${videoId}`,
+    ];
     const discoverUrls = [
         `https://www.douyin.com/discover?modal_id=${videoId}`,
         `https://www.iesdouyin.com/discover?modal_id=${videoId}`,
     ];
+    const discoverUAs = [DESKTOP_UA, MOBILE_UA];
+    const retries = isUpstreamServer ? DISCOVER_PAGE_RETRIES + 1 : DISCOVER_PAGE_RETRIES;
     let lastStatus;
     let lastSource = "n/a";
+    let lastUA = "n/a";
+
+    // Warm up cookie hints (ttwid/msToken), which improves discover SSR hit-rate
+    // on some upstream regions where anonymous requests return reduced HTML.
+    for (const warmupUrl of discoverWarmupUrls) {
+        try {
+            const warmupRes = await fetch(warmupUrl, {
+                method: "GET",
+                redirect: "manual",
+                headers: {
+                    "user-agent": DESKTOP_UA,
+                    referer: "https://www.douyin.com/",
+                },
+                signal: AbortSignal.timeout(8000),
+            });
+            mergeCookieFromResponse(discoverCookieMap, warmupRes.headers);
+        } catch {
+            // non-fatal
+        }
+    }
 
     for (const discoverUrl of discoverUrls) {
-        for (let attempt = 0; attempt <= DISCOVER_PAGE_RETRIES; attempt++) {
-            try {
-                const res = await fetch(discoverUrl, {
-                    headers: {
-                        "user-agent": DESKTOP_UA,
-                        referer: "https://www.douyin.com/",
-                        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-                    },
-                    signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-                });
+        for (const discoverUA of discoverUAs) {
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    const isDesktop = !discoverUA.includes("iPhone");
+                    const cookieHeader = cookieMapToHeader(discoverCookieMap);
+                    const res = await fetch(discoverUrl, {
+                        headers: {
+                            "user-agent": discoverUA,
+                            referer: "https://www.douyin.com/",
+                            accept: isDesktop
+                                ? "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+                                : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+                            ...(isDesktop
+                                ? {
+                                    "cache-control": "no-cache",
+                                    pragma: "no-cache",
+                                    "sec-ch-ua": "\"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\", \"Not_A Brand\";v=\"99\"",
+                                    "sec-ch-ua-mobile": "?0",
+                                    "sec-ch-ua-platform": "\"Windows\"",
+                                    "sec-fetch-dest": "document",
+                                    "sec-fetch-mode": "navigate",
+                                    "sec-fetch-site": "same-origin",
+                                    "upgrade-insecure-requests": "1",
+                                }
+                                : {}),
+                            ...(cookieHeader ? { cookie: cookieHeader } : {}),
+                        },
+                        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+                    });
 
-                lastStatus = res.status;
-                lastSource = discoverUrl;
-                const html = await res.text();
-                if (!res.ok || looksLikeWafChallenge(html)) {
-                    if (attempt < DISCOVER_PAGE_RETRIES) {
-                        await sleep(500 + Math.floor(Math.random() * 500));
+                    lastStatus = res.status;
+                    lastSource = discoverUrl;
+                    lastUA = discoverUA.includes("iPhone") ? "mobile" : "desktop";
+                    mergeCookieFromResponse(discoverCookieMap, res.headers);
+                    const html = await res.text();
+                    if (!res.ok || looksLikeWafChallenge(html)) {
+                        if (attempt < retries) {
+                            await sleep(500 + Math.floor(Math.random() * 500));
+                            continue;
+                        }
+                        break;
+                    }
+
+                    const candidates = extractDiscoverPlayApiCandidates(html);
+                    if (candidates.length > 0) {
+                        console.log("[douyin] discover play fallback extracted", {
+                            videoId,
+                            source: discoverUrl,
+                            ua: lastUA,
+                            candidates: candidates.length,
+                            cookieKeys: [...discoverCookieMap.keys()],
+                        });
+                        return candidates;
+                    }
+
+                    if (attempt < retries) {
+                        await sleep(300 + Math.floor(Math.random() * 300));
                         continue;
                     }
-                    break;
-                }
-
-                const candidates = extractDiscoverPlayApiCandidates(html);
-                if (candidates.length > 0) {
-                    console.log("[douyin] discover play fallback extracted", {
+                } catch (e) {
+                    if (attempt < retries) {
+                        await sleep(300 + Math.floor(Math.random() * 300));
+                        continue;
+                    }
+                    console.warn("[douyin] discover play fallback fetch failed", {
                         videoId,
                         source: discoverUrl,
-                        candidates: candidates.length,
+                        ua: discoverUA.includes("iPhone") ? "mobile" : "desktop",
+                        message: e?.message || "unknown",
                     });
-                    return candidates;
+                    break;
                 }
-
-                if (attempt < DISCOVER_PAGE_RETRIES) {
-                    await sleep(300 + Math.floor(Math.random() * 300));
-                    continue;
-                }
-            } catch (e) {
-                if (attempt < DISCOVER_PAGE_RETRIES) {
-                    await sleep(300 + Math.floor(Math.random() * 300));
-                    continue;
-                }
-                console.warn("[douyin] discover play fallback fetch failed", {
-                    videoId,
-                    source: discoverUrl,
-                    message: e?.message || "unknown",
-                });
-                break;
             }
         }
     }
@@ -692,6 +849,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
     console.warn("[douyin] discover play fallback unavailable", {
         videoId,
         source: lastSource,
+        ua: lastUA,
         status: lastStatus ?? "n/a",
     });
     return [];

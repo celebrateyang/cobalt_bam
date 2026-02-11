@@ -22,6 +22,7 @@
 - **Frontend**: Cloudflare Pages (project: `freesavevideo-online`)
 - **Backend**: GKE (namespace: `infra`), exposed as `https://api.freesavevideo.online/`
 - **WebSocket**: `wss://api.freesavevideo.online/ws` (see `docs/websocket-troubleshooting.md`)
+- **Network ACL note**: `api1.freesavevideo.online` is protected by a Cloudflare rule and only allows the API server egress IP. External/manual checks to `api1` are expected to fail and should not be treated as downtime.
 
 ## Supported download services
 - List is in `README.md` / `api/README.md` (core logic + patterns live in `api/src/processing/service-config.js`)

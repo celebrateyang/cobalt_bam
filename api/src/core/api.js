@@ -666,10 +666,21 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return res.sendStatus(400);
         }
 
+        // Upstream relay often receives signed tunnel URLs whose host points to
+        // a public/protected domain (e.g. api1:9000). Fetching that externally
+        // may fail due ACL/port restrictions, so re-enter local tunnel handler.
+        let relayTarget = target;
+        if (target.pathname === "/tunnel") {
+            const localPort = Number.isFinite(Number(env.apiPort))
+                ? String(env.apiPort)
+                : "9000";
+            relayTarget = new URL(target.pathname + target.search + target.hash, `http://127.0.0.1:${localPort}`);
+        }
+
         const range = req.headers["range"];
 
         try {
-            const { body: stream, headers, statusCode } = await undiciRequest(target.toString(), {
+            const { body: stream, headers, statusCode } = await undiciRequest(relayTarget.toString(), {
                 headers: {
                     ...getHeaders(service),
                     ...(range ? { Range: range } : {}),

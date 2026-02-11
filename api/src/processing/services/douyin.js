@@ -384,6 +384,28 @@ const shouldAllowZjcdnRedirect = ({ mediaClass, bytes }) =>
     Number.isFinite(bytes) &&
     bytes >= env.douyinUpstreamMinBytes;
 
+const isAwemeOnlyPayload = (item) => {
+    const playUrls = item?.video?.play_addr?.url_list;
+    const hasPlayUrls = Array.isArray(playUrls) && playUrls.length > 0;
+    const allPlayAreAweme = hasPlayUrls
+        ? playUrls.every((url) => /\/aweme\/v1\/play(?:wm)?\//i.test(String(url)))
+        : false;
+
+    const hasDownloadAddr =
+        Array.isArray(item?.video?.download_addr?.url_list) &&
+        item.video.download_addr.url_list.length > 0;
+
+    const hasBitrate =
+        Array.isArray(item?.video?.bit_rate) &&
+        item.video.bit_rate.some(
+            (entry) =>
+                Array.isArray(entry?.play_addr?.url_list) &&
+                entry.play_addr.url_list.length > 0,
+        );
+
+    return hasPlayUrls && allPlayAreAweme && !hasDownloadAddr && !hasBitrate;
+};
+
 const probeContentLength = async (url, timeoutMs = PAGE_TIMEOUT_MS) => {
     try {
         const res = await fetch(url, {
@@ -1354,23 +1376,49 @@ export default async function(obj) {
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
 
         let usedDiscoverFallback = false;
+        const awemeOnlyPayload = isAwemeOnlyPayload(item);
         const probeCandidates = buildOrderedMediaCandidates(item, videoUri);
 
-        // Resolve the redirect to get the direct CDN URL.
-        let {
-            selectedUrl: selectedMediaUrl,
-            directUrl,
-            directHeadStatusCode,
-            directProbeStatusCode,
-            bytes: contentLengthBytes,
-            attempts,
-            cappedAttempts,
-            mediaClass,
-        } = await resolveDirectUrlFromCandidates(probeCandidates, {
-            reason: "primary",
-            videoId,
-            maxAttempts: MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS,
-        });
+        let selectedMediaUrl;
+        let directUrl;
+        let directHeadStatusCode;
+        let directProbeStatusCode;
+        let contentLengthBytes;
+        let attempts = 0;
+        let cappedAttempts = 0;
+        let mediaClass = "unknown";
+
+        if (awemeOnlyPayload) {
+            const discoverFirst = await tryResolveViaDiscover(videoId, "aweme_only_payload");
+            if (discoverFirst?.directUrl) {
+                selectedMediaUrl = discoverFirst.selectedUrl;
+                directUrl = discoverFirst.directUrl;
+                directHeadStatusCode = discoverFirst.directHeadStatusCode;
+                directProbeStatusCode = discoverFirst.directProbeStatusCode;
+                contentLengthBytes = discoverFirst.bytes;
+                mediaClass = discoverFirst.mediaClass;
+                attempts = 1;
+                cappedAttempts = 1;
+                usedDiscoverFallback = true;
+            }
+        }
+
+        if (!directUrl) {
+            // Resolve the redirect to get the direct CDN URL.
+            const resolved = await resolveDirectUrlFromCandidates(probeCandidates, {
+                reason: "primary",
+                videoId,
+                maxAttempts: MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS,
+            });
+            selectedMediaUrl = resolved.selectedUrl;
+            directUrl = resolved.directUrl;
+            directHeadStatusCode = resolved.directHeadStatusCode;
+            directProbeStatusCode = resolved.directProbeStatusCode;
+            contentLengthBytes = resolved.bytes;
+            attempts = resolved.attempts;
+            cappedAttempts = resolved.cappedAttempts;
+            mediaClass = resolved.mediaClass;
+        }
 
         console.log("[douyin] media url selected", {
             videoId,
@@ -1415,21 +1463,7 @@ export default async function(obj) {
             });
 
             // Upstream node cannot chain to another upstream by design.
-            // Return a client-side redirect fallback so users can attempt
-            // direct fetch from their own network egress.
-            if (isUpstreamServer) {
-                return {
-                    filename: `douyin_${videoId}.mp4`,
-                    audioFilename: `douyin_${videoId}_audio`,
-                    urls: directUrl,
-                    forceRedirect: true,
-                    duration,
-                    headers: {
-                        "User-Agent": MOBILE_UA,
-                    },
-                };
-            }
-
+            // Returning a known-bad aweme URL causes dead tunnel loops.
             return { error: "fetch.fail" };
         }
 

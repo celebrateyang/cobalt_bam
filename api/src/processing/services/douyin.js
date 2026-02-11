@@ -546,6 +546,28 @@ const extractDirectVodCandidates = (html, candidates, seen) => {
     }
 };
 
+const extractGenericMediaCandidates = (html, candidates, seen) => {
+    if (typeof html !== "string" || !html) return;
+
+    const genericRegex =
+        /https?:\\?\/\\?\/[^"'<>\\\s]*(?:aweme\/v1\/play\/\?|douyinvod\.com|zjcdn\.com|bytevod)[^"'<>\\\s]*/gi;
+    let match;
+
+    while ((match = genericRegex.exec(html)) !== null) {
+        if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
+        const decoded = decodeDiscoverPlayUrl(match[0]);
+        appendUniqueCandidate(candidates, seen, decoded);
+    }
+
+    const percentEncodedRegex =
+        /https%3A%2F%2F[^"'<>\\\s]*(?:%2Faweme%2Fv1%2Fplay%2F%3F|douyinvod\.com|zjcdn\.com|bytevod)[^"'<>\\\s]*/gi;
+    while ((match = percentEncodedRegex.exec(html)) !== null) {
+        if (candidates.length >= MAX_DISCOVER_PLAY_URL_CANDIDATES) break;
+        const decoded = decodeDiscoverPlayUrl(match[0]);
+        appendUniqueCandidate(candidates, seen, decoded);
+    }
+};
+
 const extractDiscoverPlayApiCandidates = (html) => {
     if (typeof html !== "string" || !html) return [];
 
@@ -600,61 +622,76 @@ const extractDiscoverPlayApiCandidates = (html) => {
         extractDirectVodCandidates(html, candidates, seen);
     }
 
+    if (candidates.length < MAX_DISCOVER_PLAY_URL_CANDIDATES) {
+        extractGenericMediaCandidates(html, candidates, seen);
+    }
+
     return candidates;
 };
 
 const fetchDiscoverPlayApiCandidates = async (videoId) => {
-    const discoverUrl = `https://www.douyin.com/discover?modal_id=${videoId}`;
+    const discoverUrls = [
+        `https://www.douyin.com/discover?modal_id=${videoId}`,
+        `https://www.iesdouyin.com/discover?modal_id=${videoId}`,
+    ];
     let lastStatus;
+    let lastSource = "n/a";
 
-    for (let attempt = 0; attempt <= DISCOVER_PAGE_RETRIES; attempt++) {
-        try {
-            const res = await fetch(discoverUrl, {
-                headers: {
-                    "user-agent": DESKTOP_UA,
-                    referer: "https://www.douyin.com/",
-                },
-                signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-            });
+    for (const discoverUrl of discoverUrls) {
+        for (let attempt = 0; attempt <= DISCOVER_PAGE_RETRIES; attempt++) {
+            try {
+                const res = await fetch(discoverUrl, {
+                    headers: {
+                        "user-agent": DESKTOP_UA,
+                        referer: "https://www.douyin.com/",
+                        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+                    },
+                    signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+                });
 
-            lastStatus = res.status;
-            const html = await res.text();
-            if (!res.ok || looksLikeWafChallenge(html)) {
+                lastStatus = res.status;
+                lastSource = discoverUrl;
+                const html = await res.text();
+                if (!res.ok || looksLikeWafChallenge(html)) {
+                    if (attempt < DISCOVER_PAGE_RETRIES) {
+                        await sleep(500 + Math.floor(Math.random() * 500));
+                        continue;
+                    }
+                    break;
+                }
+
+                const candidates = extractDiscoverPlayApiCandidates(html);
+                if (candidates.length > 0) {
+                    console.log("[douyin] discover play fallback extracted", {
+                        videoId,
+                        source: discoverUrl,
+                        candidates: candidates.length,
+                    });
+                    return candidates;
+                }
+
                 if (attempt < DISCOVER_PAGE_RETRIES) {
-                    await sleep(500 + Math.floor(Math.random() * 500));
+                    await sleep(300 + Math.floor(Math.random() * 300));
                     continue;
                 }
+            } catch (e) {
+                if (attempt < DISCOVER_PAGE_RETRIES) {
+                    await sleep(300 + Math.floor(Math.random() * 300));
+                    continue;
+                }
+                console.warn("[douyin] discover play fallback fetch failed", {
+                    videoId,
+                    source: discoverUrl,
+                    message: e?.message || "unknown",
+                });
                 break;
             }
-
-            const candidates = extractDiscoverPlayApiCandidates(html);
-            if (candidates.length > 0) {
-                console.log("[douyin] discover play fallback extracted", {
-                    videoId,
-                    candidates: candidates.length,
-                });
-                return candidates;
-            }
-
-            if (attempt < DISCOVER_PAGE_RETRIES) {
-                await sleep(300 + Math.floor(Math.random() * 300));
-                continue;
-            }
-        } catch (e) {
-            if (attempt < DISCOVER_PAGE_RETRIES) {
-                await sleep(300 + Math.floor(Math.random() * 300));
-                continue;
-            }
-            console.warn("[douyin] discover play fallback fetch failed", {
-                videoId,
-                message: e?.message || "unknown",
-            });
-            break;
         }
     }
 
     console.warn("[douyin] discover play fallback unavailable", {
         videoId,
+        source: lastSource,
         status: lastStatus ?? "n/a",
     });
     return [];

@@ -44,15 +44,39 @@ const accountPath = () => {
     return `/${lang}/account`;
 };
 
+const isPrivateHostname = (hostname: string) => {
+    const host = hostname.toLowerCase();
+    if (host === "localhost" || host === "::1") return true;
+    if (host.endsWith(".local")) return true;
+    if (/^127\./.test(host)) return true;
+    if (/^10\./.test(host)) return true;
+    if (/^192\.168\./.test(host)) return true;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true;
+    return false;
+};
+
 const normalizeTunnelUrl = (url?: string) => {
     if (!url || typeof window === "undefined") return url;
 
     const apiBase = currentApiURL();
-    if (apiBase !== "/api") return url;
-
     try {
-        const parsed = new URL(url);
-        return `${window.location.origin}${apiBase}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.pathname !== "/tunnel") return parsed.toString();
+
+        if (apiBase === "/api") {
+            return `${window.location.origin}${apiBase}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+
+        const apiOrigin = new URL(apiBase, window.location.origin).origin;
+        const shouldRewrite =
+            parsed.origin !== apiOrigin ||
+            parsed.port === "9000" ||
+            isPrivateHostname(parsed.hostname);
+        if (shouldRewrite) {
+            return new URL(parsed.pathname + parsed.search + parsed.hash, apiOrigin).toString();
+        }
+
+        return parsed.toString();
     } catch {
         return url;
     }

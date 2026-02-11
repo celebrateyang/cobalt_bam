@@ -16,7 +16,8 @@ batchMaxItems: 20
 tunnelLifespanSeconds: 1800
 
 instagram:
-  upstreamUrl: "http://api1.freesavevideo.online:9000"
+  # upstreamUrl: "http://api1.freesavevideo.online:9000"
+  upstreamUrl: "https://api2.freesavevideo.online"
   upstreamApiKey: "miaohu2f4%ddxg3v3qf8vwf8e5y7k1z8c9"
   upstreamTimeoutMs: 12000
 

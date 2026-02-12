@@ -142,7 +142,7 @@ const normalizeUpstreamTunnelUrl = (url, endpointOrigin) => {
     }
 };
 
-const requestUpstreamCobalt = async (targetUrl) => {
+const requestUpstreamCobalt = async (targetUrl, options = {}) => {
     // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
     if (!env.instagramUpstreamURL) return null;
 
@@ -177,100 +177,141 @@ const requestUpstreamCobalt = async (targetUrl) => {
         headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
     }
 
-    const timeoutMs =
+    const configuredTimeoutMs =
         typeof env.instagramUpstreamTimeoutMs === "number" &&
         Number.isFinite(env.instagramUpstreamTimeoutMs) &&
         env.instagramUpstreamTimeoutMs > 0
             ? env.instagramUpstreamTimeoutMs
-            : 22000;
+            : 15000;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const fastAttempt =
+        options?.quickMode === true
+            ? Math.max(6000, Math.min(9000, configuredTimeoutMs))
+            : null;
+    const timeoutPlan = [fastAttempt, configuredTimeoutMs]
+        .filter((v) => typeof v === "number" && Number.isFinite(v) && v > 0)
+        .filter((v, idx, arr) => arr.indexOf(v) === idx);
 
-    try {
-        console.log("[douyin] upstream request", { upstream: upstreamOrigin, targetUrl });
-        const res = await fetch(endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers,
-            body: JSON.stringify({ url: String(targetUrl) }),
-        });
-
-        const payload = await res.json().catch(() => null);
-        const duration =
-            typeof payload?.duration === "number" &&
-            Number.isFinite(payload.duration)
-                ? payload.duration
-                : undefined;
-        console.log("[douyin] upstream response", {
-            upstream: upstreamOrigin,
-            http: res.status,
-            ok: res.ok,
-            status: payload?.status,
-            error: payload?.error?.code,
-            hasUrl: Boolean(payload?.url),
-        });
-
-        if (!res.ok) return null;
-        if (!payload || typeof payload !== "object") return null;
-        if (!["redirect", "tunnel"].includes(payload.status)) return null;
-        if (!payload.url) return null;
-
-        let normalizedUrl = payload.url;
-        let relayUrl = null;
-        let isTunnelLikeUrl = false;
+    for (let attempt = 0; attempt < timeoutPlan.length; attempt++) {
+        const timeoutMs = timeoutPlan[attempt];
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-            const parsedPayloadUrl = new URL(payload.url);
-            isTunnelLikeUrl = parsedPayloadUrl.pathname === "/tunnel";
-        } catch {
-            isTunnelLikeUrl = typeof payload.url === "string" && payload.url.startsWith("/tunnel?");
-        }
+            console.log("[douyin] upstream request", {
+                upstream: upstreamOrigin,
+                targetUrl,
+                attempt: `${attempt + 1}/${timeoutPlan.length}`,
+                timeoutMs,
+                mode: options?.quickMode ? "quick" : "normal",
+            });
 
-        // Some upstreams incorrectly label tunnel URLs as `status=redirect`.
-        // Detect by URL shape and force relay-mode handling.
-        if (payload.status === "tunnel" || isTunnelLikeUrl) {
-            const rewritten = normalizeUpstreamTunnelUrl(payload.url, endpoint.origin);
-            if (rewritten) {
-                normalizedUrl = rewritten;
-                if (rewritten !== payload.url) {
-                    console.log("[douyin] upstream tunnel url rewritten", {
-                        from: payload.url,
-                        to: rewritten,
+            const res = await fetch(endpoint, {
+                method: "POST",
+                signal: controller.signal,
+                headers,
+                body: JSON.stringify({ url: String(targetUrl) }),
+            });
+
+            const payload = await res.json().catch(() => null);
+            const duration =
+                typeof payload?.duration === "number" &&
+                Number.isFinite(payload.duration)
+                    ? payload.duration
+                    : undefined;
+
+            console.log("[douyin] upstream response", {
+                upstream: upstreamOrigin,
+                http: res.status,
+                ok: res.ok,
+                status: payload?.status,
+                error: payload?.error?.code,
+                hasUrl: Boolean(payload?.url),
+                attempt: `${attempt + 1}/${timeoutPlan.length}`,
+            });
+
+            if (!res.ok || !payload || typeof payload !== "object") {
+                if (attempt < timeoutPlan.length - 1) {
+                    await sleep(250 + attempt * 200);
+                    continue;
+                }
+                return null;
+            }
+            if (!["redirect", "tunnel"].includes(payload.status) || !payload.url) {
+                if (attempt < timeoutPlan.length - 1) {
+                    await sleep(250 + attempt * 200);
+                    continue;
+                }
+                return null;
+            }
+
+            let normalizedUrl = payload.url;
+            let relayUrl = null;
+            let isTunnelLikeUrl = false;
+
+            try {
+                const parsedPayloadUrl = new URL(payload.url);
+                isTunnelLikeUrl = parsedPayloadUrl.pathname === "/tunnel";
+            } catch {
+                isTunnelLikeUrl = typeof payload.url === "string" && payload.url.startsWith("/tunnel?");
+            }
+
+            // Some upstreams incorrectly label tunnel URLs as `status=redirect`.
+            // Detect by URL shape and force relay-mode handling.
+            if (payload.status === "tunnel" || isTunnelLikeUrl) {
+                const rewritten = normalizeUpstreamTunnelUrl(payload.url, endpoint.origin);
+                if (rewritten) {
+                    normalizedUrl = rewritten;
+                    if (rewritten !== payload.url) {
+                        console.log("[douyin] upstream tunnel url rewritten", {
+                            from: payload.url,
+                            to: rewritten,
+                        });
+                    }
+                }
+
+                try {
+                    const relay = new URL("/relay", endpoint.origin);
+                    relay.searchParams.set("service", "douyin");
+                    relay.searchParams.set("url", normalizedUrl);
+                    relayUrl = relay.toString();
+
+                    console.log("[douyin] upstream tunnel relay prepared", {
+                        upstream: upstreamOrigin,
+                        relay: relayUrl,
+                        originalStatus: payload.status,
+                        tunnelLike: isTunnelLikeUrl,
                     });
+                } catch {
+                    relayUrl = null;
                 }
             }
 
-            try {
-                const relay = new URL("/relay", endpoint.origin);
-                relay.searchParams.set("service", "douyin");
-                relay.searchParams.set("url", normalizedUrl);
-                relayUrl = relay.toString();
-
-                console.log("[douyin] upstream tunnel relay prepared", {
-                    upstream: upstreamOrigin,
-                    relay: relayUrl,
-                    originalStatus: payload.status,
-                    tunnelLike: isTunnelLikeUrl,
-                });
-            } catch {
-                relayUrl = null;
+            return {
+                status: payload.status,
+                url: normalizedUrl,
+                filename: payload.filename,
+                relayUrl,
+                duration,
+            };
+        } catch (e) {
+            console.warn("Douyin upstream request failed:", {
+                message: e?.message || "unknown",
+                attempt: `${attempt + 1}/${timeoutPlan.length}`,
+                timeoutMs,
+                mode: options?.quickMode ? "quick" : "normal",
+            });
+            if (attempt < timeoutPlan.length - 1) {
+                await sleep(250 + attempt * 200);
+                continue;
             }
+            return null;
+        } finally {
+            clearTimeout(timeout);
         }
-
-        return {
-            status: payload.status,
-            url: normalizedUrl,
-            filename: payload.filename,
-            relayUrl,
-            duration,
-        };
-    } catch (e) {
-        console.warn("Douyin upstream request failed:", e);
-        return null;
-    } finally {
-        clearTimeout(timeout);
     }
+
+    return null;
 };
 
 const resolveShortLinkFinalUrl = async (shortLink) => {
@@ -755,7 +796,7 @@ const extractDiscoverPlayApiCandidates = (html) => {
     return candidates;
 };
 
-const fetchDiscoverPlayApiCandidates = async (videoId) => {
+const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
     const discoverCookieMap = new Map();
     const discoverWarmupUrls = [
         `https://www.iesdouyin.com/share/video/${videoId}`,
@@ -765,11 +806,18 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
         `https://www.douyin.com/discover?modal_id=${videoId}`,
         `https://www.iesdouyin.com/discover?modal_id=${videoId}`,
     ];
-    const discoverUAs = [DESKTOP_UA, MOBILE_UA];
-    const retries = isUpstreamServer ? DISCOVER_PAGE_RETRIES + 1 : DISCOVER_PAGE_RETRIES;
+    const discoverPlans = isUpstreamServer
+        ? [
+            { label: "desktop-priority", uas: [DESKTOP_UA], retries: DISCOVER_PAGE_RETRIES + 2 },
+            { label: "mobile-fallback", uas: [MOBILE_UA], retries: 0 },
+        ]
+        : [
+            { label: "default", uas: [DESKTOP_UA, MOBILE_UA], retries: DISCOVER_PAGE_RETRIES },
+        ];
     let lastStatus;
     let lastSource = "n/a";
     let lastUA = "n/a";
+    let lastPlan = "n/a";
     let sawWafChallenge = false;
 
     // Warm up cookie hints (ttwid/msToken), which improves discover SSR hit-rate
@@ -791,98 +839,128 @@ const fetchDiscoverPlayApiCandidates = async (videoId) => {
         }
     }
 
-    for (const discoverUrl of discoverUrls) {
-        for (const discoverUA of discoverUAs) {
-            for (let attempt = 0; attempt <= retries; attempt++) {
-                try {
-                    const isDesktop = !discoverUA.includes("iPhone");
-                    const cookieHeader = cookieMapToHeader(discoverCookieMap);
-                    const res = await fetch(discoverUrl, {
-                        headers: {
-                            "user-agent": discoverUA,
-                            referer: "https://www.douyin.com/",
-                            accept: isDesktop
-                                ? "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
-                                : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-                            ...(isDesktop
-                                ? {
-                                    "cache-control": "no-cache",
-                                    pragma: "no-cache",
-                                    "sec-ch-ua": "\"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\", \"Not_A Brand\";v=\"99\"",
-                                    "sec-ch-ua-mobile": "?0",
-                                    "sec-ch-ua-platform": "\"Windows\"",
-                                    "sec-fetch-dest": "document",
-                                    "sec-fetch-mode": "navigate",
-                                    "sec-fetch-site": "same-origin",
-                                    "upgrade-insecure-requests": "1",
-                                }
-                                : {}),
-                            ...(cookieHeader ? { cookie: cookieHeader } : {}),
-                        },
-                        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
-                    });
+    for (const plan of discoverPlans) {
+        for (const discoverUrl of discoverUrls) {
+            for (const discoverUA of plan.uas) {
+                for (let attempt = 0; attempt <= plan.retries; attempt++) {
+                    try {
+                        const isDesktop = !discoverUA.includes("iPhone");
+                        const cookieHeader = cookieMapToHeader(discoverCookieMap);
+                        const res = await fetch(discoverUrl, {
+                            headers: {
+                                "user-agent": discoverUA,
+                                referer: "https://www.douyin.com/",
+                                accept: isDesktop
+                                    ? "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+                                    : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                                "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+                                ...(isDesktop
+                                    ? {
+                                        "cache-control": "no-cache",
+                                        pragma: "no-cache",
+                                        "sec-ch-ua": "\"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\", \"Not_A Brand\";v=\"99\"",
+                                        "sec-ch-ua-mobile": "?0",
+                                        "sec-ch-ua-platform": "\"Windows\"",
+                                        "sec-fetch-dest": "document",
+                                        "sec-fetch-mode": "navigate",
+                                        "sec-fetch-site": "same-origin",
+                                        "upgrade-insecure-requests": "1",
+                                    }
+                                    : {}),
+                                ...(cookieHeader ? { cookie: cookieHeader } : {}),
+                            },
+                            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+                        });
 
-                    lastStatus = res.status;
-                    lastSource = discoverUrl;
-                    lastUA = discoverUA.includes("iPhone") ? "mobile" : "desktop";
-                    mergeCookieFromResponse(discoverCookieMap, res.headers);
-                    const html = await res.text();
-                    if (!res.ok || looksLikeWafChallenge(html)) {
-                        if (looksLikeWafChallenge(html)) sawWafChallenge = true;
-                        if (attempt < retries) {
-                            await sleep(500 + Math.floor(Math.random() * 500));
+                        lastStatus = res.status;
+                        lastSource = discoverUrl;
+                        lastUA = discoverUA.includes("iPhone") ? "mobile" : "desktop";
+                        lastPlan = plan.label;
+                        mergeCookieFromResponse(discoverCookieMap, res.headers);
+                        const html = await res.text();
+                        if (!res.ok || looksLikeWafChallenge(html)) {
+                            if (looksLikeWafChallenge(html)) sawWafChallenge = true;
+                            if (attempt < plan.retries) {
+                                await sleep(500 + Math.floor(Math.random() * 500));
+                                continue;
+                            }
+                            break;
+                        }
+
+                        const candidates = extractDiscoverPlayApiCandidates(html);
+                        if (candidates.length > 0) {
+                            if (meta && typeof meta === "object") {
+                                meta.sawWaf = sawWafChallenge;
+                                meta.status = res.status;
+                                meta.source = discoverUrl;
+                                meta.ua = lastUA;
+                                meta.plan = plan.label;
+                            }
+                            console.log("[douyin] discover play fallback extracted", {
+                                videoId,
+                                source: discoverUrl,
+                                ua: lastUA,
+                                plan: plan.label,
+                                candidates: candidates.length,
+                                cookieKeys: [...discoverCookieMap.keys()],
+                            });
+                            return candidates;
+                        }
+
+                        if (attempt < plan.retries) {
+                            await sleep(300 + Math.floor(Math.random() * 300));
                             continue;
                         }
-                        break;
-                    }
-
-                    const candidates = extractDiscoverPlayApiCandidates(html);
-                    if (candidates.length > 0) {
-                        console.log("[douyin] discover play fallback extracted", {
+                    } catch (e) {
+                        if (attempt < plan.retries) {
+                            await sleep(300 + Math.floor(Math.random() * 300));
+                            continue;
+                        }
+                        console.warn("[douyin] discover play fallback fetch failed", {
                             videoId,
                             source: discoverUrl,
-                            ua: lastUA,
-                            candidates: candidates.length,
-                            cookieKeys: [...discoverCookieMap.keys()],
+                            ua: discoverUA.includes("iPhone") ? "mobile" : "desktop",
+                            plan: plan.label,
+                            message: e?.message || "unknown",
                         });
-                        return candidates;
+                        break;
                     }
-
-                    if (attempt < retries) {
-                        await sleep(300 + Math.floor(Math.random() * 300));
-                        continue;
-                    }
-                } catch (e) {
-                    if (attempt < retries) {
-                        await sleep(300 + Math.floor(Math.random() * 300));
-                        continue;
-                    }
-                    console.warn("[douyin] discover play fallback fetch failed", {
-                        videoId,
-                        source: discoverUrl,
-                        ua: discoverUA.includes("iPhone") ? "mobile" : "desktop",
-                        message: e?.message || "unknown",
-                    });
-                    break;
                 }
             }
         }
+    }
+
+    if (meta && typeof meta === "object") {
+        meta.sawWaf = sawWafChallenge;
+        meta.status = lastStatus;
+        meta.source = lastSource;
+        meta.ua = lastUA;
+        meta.plan = lastPlan;
     }
 
     console.warn("[douyin] discover play fallback unavailable", {
         videoId,
         source: lastSource,
         ua: lastUA,
+        plan: lastPlan,
         status: lastStatus ?? "n/a",
         waf: sawWafChallenge,
     });
     return [];
 };
 
-const tryResolveViaDiscover = async (videoId, reason = "generic") => {
-    const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId);
-    if (discoverCandidates.length === 0) return null;
+const tryResolveViaDiscover = async (videoId, reason = "generic", options = {}) => {
+    const meta = {};
+    const discoverCandidates = await fetchDiscoverPlayApiCandidates(videoId, meta);
+    if (discoverCandidates.length === 0) {
+        if (options.withMeta) {
+            return {
+                resolved: null,
+                meta,
+            };
+        }
+        return null;
+    }
 
     const {
         selectedUrl,
@@ -914,10 +992,16 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         typeof directProbeStatusCode !== "number" ||
         directProbeStatusCode >= 400
     ) {
+        if (options.withMeta) {
+            return {
+                resolved: null,
+                meta,
+            };
+        }
         return null;
     }
 
-    return {
+    const resolved = {
         selectedUrl,
         directUrl,
         directHeadStatusCode,
@@ -925,6 +1009,13 @@ const tryResolveViaDiscover = async (videoId, reason = "generic") => {
         bytes,
         mediaClass,
     };
+    if (options.withMeta) {
+        return {
+            resolved,
+            meta,
+        };
+    }
+    return resolved;
 };
 
 const buildRelayHeaders = () => {
@@ -1337,7 +1428,9 @@ export default async function(obj) {
                     localAttempts: SHARE_PAGE_RETRIES + 1,
                 });
 
-                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
+                    quickMode: true,
+                });
                 if (upstream?.url) {
                     logUpstreamUsed("no_item_list", {
                         videoId,
@@ -1390,16 +1483,18 @@ export default async function(obj) {
         let attempts = 0;
         let cappedAttempts = 0;
         let mediaClass = "unknown";
+        let discoverMeta = null;
 
         if (awemeOnlyPayload) {
-            const discoverFirst = await tryResolveViaDiscover(videoId, "aweme_only_payload");
-            if (discoverFirst?.directUrl) {
-                selectedMediaUrl = discoverFirst.selectedUrl;
-                directUrl = discoverFirst.directUrl;
-                directHeadStatusCode = discoverFirst.directHeadStatusCode;
-                directProbeStatusCode = discoverFirst.directProbeStatusCode;
-                contentLengthBytes = discoverFirst.bytes;
-                mediaClass = discoverFirst.mediaClass;
+            const discoverFirst = await tryResolveViaDiscover(videoId, "aweme_only_payload", { withMeta: true });
+            discoverMeta = discoverFirst?.meta || null;
+            if (discoverFirst?.resolved?.directUrl) {
+                selectedMediaUrl = discoverFirst.resolved.selectedUrl;
+                directUrl = discoverFirst.resolved.directUrl;
+                directHeadStatusCode = discoverFirst.resolved.directHeadStatusCode;
+                directProbeStatusCode = discoverFirst.resolved.directProbeStatusCode;
+                contentLengthBytes = discoverFirst.resolved.bytes;
+                mediaClass = discoverFirst.resolved.mediaClass;
                 attempts = 1;
                 cappedAttempts = 1;
                 usedDiscoverFallback = true;
@@ -1411,27 +1506,113 @@ export default async function(obj) {
                 ? Math.min(2, MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS)
                 : MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS;
 
-            if (awemeOnlyPayload) {
-                console.warn("[douyin] aweme-only discover unresolved, probing primary candidates", {
+            if (!awemeOnlyPayload) {
+                // Resolve the redirect to get the direct CDN URL.
+                const resolved = await resolveDirectUrlFromCandidates(probeCandidates, {
+                    reason: "primary",
                     videoId,
-                    attempts: primaryProbeAttempts,
+                    maxAttempts: primaryProbeAttempts,
                 });
-            }
+                selectedMediaUrl = resolved.selectedUrl;
+                directUrl = resolved.directUrl;
+                directHeadStatusCode = resolved.directHeadStatusCode;
+                directProbeStatusCode = resolved.directProbeStatusCode;
+                contentLengthBytes = resolved.bytes;
+                attempts = resolved.attempts;
+                cappedAttempts = resolved.cappedAttempts;
+                mediaClass = resolved.mediaClass;
+            } else {
+                // For aweme-only payloads, probe one candidate quickly first.
+                const quickResolved = await resolveDirectUrlFromCandidates(probeCandidates, {
+                    reason: "primary_quick",
+                    videoId,
+                    maxAttempts: 1,
+                });
+                selectedMediaUrl = quickResolved.selectedUrl;
+                directUrl = quickResolved.directUrl;
+                directHeadStatusCode = quickResolved.directHeadStatusCode;
+                directProbeStatusCode = quickResolved.directProbeStatusCode;
+                contentLengthBytes = quickResolved.bytes;
+                attempts = quickResolved.attempts;
+                cappedAttempts = quickResolved.cappedAttempts;
+                mediaClass = quickResolved.mediaClass;
 
-            // Resolve the redirect to get the direct CDN URL.
-            const resolved = await resolveDirectUrlFromCandidates(probeCandidates, {
-                reason: "primary",
-                videoId,
-                maxAttempts: primaryProbeAttempts,
-            });
-            selectedMediaUrl = resolved.selectedUrl;
-            directUrl = resolved.directUrl;
-            directHeadStatusCode = resolved.directHeadStatusCode;
-            directProbeStatusCode = resolved.directProbeStatusCode;
-            contentLengthBytes = resolved.bytes;
-            attempts = resolved.attempts;
-            cappedAttempts = resolved.cappedAttempts;
-            mediaClass = resolved.mediaClass;
+                const quickProbeUnresolved =
+                    typeof directProbeStatusCode !== "number" ||
+                    directProbeStatusCode >= 400;
+                const shouldPrioritizeUpstream =
+                    quickProbeUnresolved &&
+                    !isUpstreamServer &&
+                    Boolean(env.instagramUpstreamURL) &&
+                    discoverMeta?.sawWaf === true;
+
+                if (shouldPrioritizeUpstream) {
+                    const upstreamTargetUrl = getUpstreamTargetUrl({
+                        videoId,
+                        shortLink: obj.shortLink,
+                    });
+
+                    if (upstreamTargetUrl) {
+                        console.warn("[douyin] aweme-only quick probe failed under discover waf, prioritizing upstream", {
+                            videoId,
+                            directStatusCode: directProbeStatusCode,
+                            upstreamTargetUrl,
+                        });
+
+                        const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
+                            quickMode: true,
+                        });
+                        if (upstream?.url) {
+                            logUpstreamUsed("aweme_only_waf_probe_status", {
+                                videoId,
+                                shortLink: obj.shortLink,
+                                targetUrl: upstreamTargetUrl,
+                                status: upstream.status,
+                            });
+                            if (upstream.relayUrl) {
+                                return {
+                                    filename: upstream.filename || `douyin_${videoId}.mp4`,
+                                    audioFilename: `douyin_${videoId}_audio`,
+                                    urls: upstream.relayUrl,
+                                    duration: upstream.duration,
+                                    headers: buildRelayHeaders(),
+                                };
+                            }
+                            return {
+                                filename: upstream.filename || `douyin_${videoId}.mp4`,
+                                audioFilename: `douyin_${videoId}_audio`,
+                                urls: upstream.url,
+                                forceRedirect: true,
+                                duration: upstream.duration,
+                                headers: {
+                                    "User-Agent": MOBILE_UA,
+                                },
+                            };
+                        }
+                    }
+                }
+
+                if (quickProbeUnresolved && primaryProbeAttempts > 1) {
+                    console.warn("[douyin] aweme-only quick probe unresolved, probing extended primary candidates", {
+                        videoId,
+                        attempts: primaryProbeAttempts,
+                    });
+
+                    const resolved = await resolveDirectUrlFromCandidates(probeCandidates, {
+                        reason: "primary",
+                        videoId,
+                        maxAttempts: primaryProbeAttempts,
+                    });
+                    selectedMediaUrl = resolved.selectedUrl;
+                    directUrl = resolved.directUrl;
+                    directHeadStatusCode = resolved.directHeadStatusCode;
+                    directProbeStatusCode = resolved.directProbeStatusCode;
+                    contentLengthBytes = resolved.bytes;
+                    attempts = resolved.attempts;
+                    cappedAttempts = resolved.cappedAttempts;
+                    mediaClass = resolved.mediaClass;
+                }
+            }
         }
 
         console.log("[douyin] media url selected", {
@@ -1494,7 +1675,9 @@ export default async function(obj) {
                     directUrl,
                     mediaClass,
                 });
-                const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
+                    quickMode: awemeOnlyPayload,
+                });
                 if (upstream?.url) {
                     const upstreamReason = "direct_probe_status";
                     logUpstreamUsed(upstreamReason, {

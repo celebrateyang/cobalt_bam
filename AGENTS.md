@@ -23,6 +23,9 @@
 - **Backend**: GKE (namespace: `infra`), exposed as `https://api.freesavevideo.online/`
 - **WebSocket**: `wss://api.freesavevideo.online/ws` (see `docs/websocket-troubleshooting.md`)
 - **Network ACL note**: `api1.freesavevideo.online` is protected by a Cloudflare rule and only allows the API server egress IP. External/manual checks to `api1` are expected to fail and should not be treated as downtime.
+- **Upstream server (api2) note**: `upstreamUrl=https://api2.freesavevideo.online`. In this setup, the agent can inspect upstream logs directly from local runtime (for example, `docker logs -f cobalt-upstream`).
+- **Local upstream runtime note**: when switching upstream to the home-IP container, run it from `D:\code\cobalt_bam\api` with `pnpm start`.
+- **Cloudflared exposure note**: to expose the local upstream service for end-to-end verification, run `cloudflared tunnel run freesave`.
 - **Kubernetes ops note**: the agent has `kubectl` access. When debugging API production issues, first run `kubectl get pod -n infra` to locate API pods, then run `kubectl logs -n infra <pod-name> --since=30m` (or `-f`) to inspect API logs.
 
 ## Supported download services

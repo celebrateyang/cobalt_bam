@@ -184,9 +184,10 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
             ? env.instagramUpstreamTimeoutMs
             : 15000;
 
+    const quickAttemptCap = Math.min(11000, Math.max(8000, configuredTimeoutMs - 1000));
     const fastAttempt =
         options?.quickMode === true
-            ? Math.max(6000, Math.min(9000, configuredTimeoutMs))
+            ? Math.min(configuredTimeoutMs, quickAttemptCap)
             : null;
     const timeoutPlan = [fastAttempt, configuredTimeoutMs]
         .filter((v) => typeof v === "number" && Number.isFinite(v) && v > 0)
@@ -808,12 +809,15 @@ const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
     ];
     const discoverPlans = isUpstreamServer
         ? [
-            { label: "desktop-priority", uas: [DESKTOP_UA], retries: DISCOVER_PAGE_RETRIES + 2 },
+            // Upstream should prioritize first-byte speed: one desktop retry + one mobile fallback pass.
+            { label: "desktop-priority", uas: [DESKTOP_UA], retries: 1 },
             { label: "mobile-fallback", uas: [MOBILE_UA], retries: 0 },
         ]
         : [
             { label: "default", uas: [DESKTOP_UA, MOBILE_UA], retries: DISCOVER_PAGE_RETRIES },
         ];
+    const discoverWarmupTimeoutMs = isUpstreamServer ? 1800 : 8000;
+    const discoverPageTimeoutMs = isUpstreamServer ? 9000 : PAGE_TIMEOUT_MS;
     let lastStatus;
     let lastSource = "n/a";
     let lastUA = "n/a";
@@ -822,22 +826,24 @@ const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
 
     // Warm up cookie hints (ttwid/msToken), which improves discover SSR hit-rate
     // on some upstream regions where anonymous requests return reduced HTML.
-    for (const warmupUrl of discoverWarmupUrls) {
-        try {
-            const warmupRes = await fetch(warmupUrl, {
-                method: "GET",
-                redirect: "manual",
-                headers: {
-                    "user-agent": DESKTOP_UA,
-                    referer: "https://www.douyin.com/",
-                },
-                signal: AbortSignal.timeout(8000),
-            });
-            mergeCookieFromResponse(discoverCookieMap, warmupRes.headers);
-        } catch {
-            // non-fatal
-        }
-    }
+    await Promise.allSettled(
+        discoverWarmupUrls.map(async (warmupUrl) => {
+            try {
+                const warmupRes = await fetch(warmupUrl, {
+                    method: "GET",
+                    redirect: "manual",
+                    headers: {
+                        "user-agent": DESKTOP_UA,
+                        referer: "https://www.douyin.com/",
+                    },
+                    signal: AbortSignal.timeout(discoverWarmupTimeoutMs),
+                });
+                mergeCookieFromResponse(discoverCookieMap, warmupRes.headers);
+            } catch {
+                // non-fatal
+            }
+        }),
+    );
 
     for (const plan of discoverPlans) {
         for (const discoverUrl of discoverUrls) {
@@ -869,7 +875,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
                                     : {}),
                                 ...(cookieHeader ? { cookie: cookieHeader } : {}),
                             },
-                            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+                            signal: AbortSignal.timeout(discoverPageTimeoutMs),
                         });
 
                         lastStatus = res.status;

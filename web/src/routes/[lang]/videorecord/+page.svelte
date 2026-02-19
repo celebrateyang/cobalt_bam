@@ -10,7 +10,7 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" | "text" = "pen";
+    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -20,6 +20,11 @@
     let textInputValue = "";
     let textAreaEl: HTMLTextAreaElement | null = null;
     let imageInputEl: HTMLInputElement | null = null;
+
+    // shape tools
+    let shapeStartX = 0;
+    let shapeStartY = 0;
+    let shapeSnapshot: ImageData | null = null;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -456,6 +461,45 @@
         cursorY = p.y;
     };
 
+    const drawShapePreview = (x1: number, y1: number, x2: number, y2: number) => {
+        if (!ctx || !shapeSnapshot) return;
+
+        ctx.putImageData(shapeSnapshot, 0, 0);
+        ctx.save();
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        if (tool === "line") {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        } else if (tool === "rect") {
+            const x = Math.min(x1, x2);
+            const y = Math.min(y1, y2);
+            const w = Math.abs(x2 - x1);
+            const h = Math.abs(y2 - y1);
+            ctx.strokeRect(x, y, w, h);
+        } else if (tool === "circle") {
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2;
+            const rx = Math.abs(x2 - x1) / 2;
+            const ry = Math.abs(y2 - y1) / 2;
+            ctx.beginPath();
+            if (typeof ctx.ellipse === "function") {
+                ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            } else {
+                const r = Math.min(rx, ry);
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            }
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    };
+
     const beginDraw = (e: PointerEvent) => {
         if (!ctx) return;
 
@@ -475,6 +519,14 @@
         lastX = p.x;
         lastY = p.y;
 
+        if (tool === "line" || tool === "rect" || tool === "circle") {
+            shapeStartX = p.x;
+            shapeStartY = p.y;
+            shapeSnapshot = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+        } else {
+            shapeSnapshot = null;
+        }
+
         canvasEl.setPointerCapture(e.pointerId);
     };
 
@@ -483,6 +535,13 @@
         if (!drawing || !ctx || tool === "text") return;
 
         const p = getPoint(e);
+
+        if (tool === "line" || tool === "rect" || tool === "circle") {
+            drawShapePreview(shapeStartX, shapeStartY, p.x, p.y);
+            lastX = p.x;
+            lastY = p.y;
+            return;
+        }
 
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
@@ -508,6 +567,7 @@
     const endDraw = (e: PointerEvent) => {
         drawing = false;
         saveCurrentSlide();
+        shapeSnapshot = null;
         try {
             canvasEl.releasePointerCapture(e.pointerId);
         } catch {
@@ -758,6 +818,9 @@
             <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
             <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
             <button class:active={tool === "text"} on:click={() => (tool = "text")}>文本</button>
+            <button class:active={tool === "line"} on:click={() => (tool = "line")}>直线</button>
+            <button class:active={tool === "rect"} on:click={() => (tool = "rect")}>矩形</button>
+            <button class:active={tool === "circle"} on:click={() => (tool = "circle")}>圆形</button>
             <button on:click={onPickImage}>插图</button>
             <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
             <button on:click={redo} disabled={redoStack.length === 0}>重做</button>

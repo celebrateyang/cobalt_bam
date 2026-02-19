@@ -378,24 +378,24 @@
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >
                 <div class="teleprompter-dragbar" on:pointerdown={startDragTeleprompter}>
-                    <span>📝 提词器</span>
-                    <small>拖动这里移动面板</small>
+                    <div class="drag-title">📝 提词器</div>
+                    <button class="icon-btn close" on:pointerdown|stopPropagation on:click|stopPropagation={() => (showTeleprompter = false)} aria-label="关闭提词器">✕</button>
                 </div>
 
                 <div class="teleprompter-controls compact">
-                    <button on:click={startTeleprompter} disabled={isTeleprompterRunning}>播放</button>
-                    <button on:click={stopTeleprompter} disabled={!isTeleprompterRunning}>暂停</button>
-                    <button on:click={resetTeleprompterPosition}>重置</button>
+                    <button class="icon-btn" on:click={startTeleprompter} disabled={isTeleprompterRunning} title="播放">▶</button>
+                    <button class="icon-btn" on:click={stopTeleprompter} disabled={!isTeleprompterRunning} title="暂停">⏸</button>
+                    <button class="icon-btn" on:click={resetTeleprompterPosition} title="重置">↺</button>
 
-                    <label class="mini">
-                        速度
+                    <div class="mini slider-inline">
+                        <span>速度</span>
                         <input type="range" min="10" max="180" step="5" bind:value={teleprompterSpeed} />
-                    </label>
+                    </div>
 
-                    <label class="mini">
-                        透明
+                    <div class="mini slider-inline">
+                        <span>透明</span>
                         <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
-                    </label>
+                    </div>
                 </div>
 
                 <textarea
@@ -589,22 +589,18 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        margin-bottom: 8px;
-        padding: 6px 8px;
+        margin-bottom: 6px;
+        padding: 4px 6px;
         border-radius: 8px;
-        background: rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.06);
         cursor: move;
         user-select: none;
     }
 
-    .teleprompter-dragbar span {
+    .drag-title {
         font-weight: 700;
-        font-size: 13px;
-    }
-
-    .teleprompter-dragbar small {
-        font-size: 11px;
-        opacity: 0.75;
+        font-size: 12px;
+        opacity: 0.92;
     }
 
     .teleprompter-controls {
@@ -625,6 +621,25 @@
     .teleprompter-controls.compact {
         gap: 6px;
         margin-bottom: 6px;
+        align-items: center;
+    }
+
+    .icon-btn {
+        min-width: 30px;
+        height: 30px;
+        padding: 0;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    .icon-btn.close {
+        min-width: 26px;
+        height: 26px;
+        font-size: 12px;
     }
 
     .teleprompter-controls .mini {
@@ -632,11 +647,17 @@
         align-items: center;
         gap: 6px;
         font-size: 11px;
-        padding: 0 6px;
+        padding: 0 4px;
+        opacity: 0.9;
     }
 
     .teleprompter-controls .mini input {
-        width: 88px;
+        width: 72px;
+    }
+
+    .slider-inline span {
+        min-width: 28px;
+        text-align: right;
     }
 
     .teleprompter-editor {

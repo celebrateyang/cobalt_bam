@@ -94,6 +94,11 @@
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
 
+    let includeMicAudio = false;
+    let micDevices: MediaDeviceInfo[] = [];
+    let selectedMicDeviceId = "";
+    let micStream: MediaStream | null = null;
+
     // cursor highlight
     let showCursorHighlight = true;
     let cursorHighlightColor = "#ff4d4f";
@@ -149,6 +154,25 @@
         }
         cameraStream = null;
         cameraVideoEl = null;
+    };
+
+    const stopMicStream = () => {
+        if (micStream) {
+            for (const track of micStream.getTracks()) track.stop();
+        }
+        micStream = null;
+    };
+
+    const refreshMicDevices = async () => {
+        try {
+            const all = await navigator.mediaDevices.enumerateDevices();
+            micDevices = all.filter(d => d.kind === "audioinput");
+            if (!selectedMicDeviceId && micDevices[0]) {
+                selectedMicDeviceId = micDevices[0].deviceId;
+            }
+        } catch (e) {
+            console.warn("enumerate mic devices failed", e);
+        }
     };
 
     const drawRoundRectPath = (x: number, y: number, w: number, h: number, r: number) => {
@@ -465,14 +489,18 @@
 
         window.addEventListener("resize", resizeCanvas);
         window.addEventListener("resize", clampAndSnapTeleprompter);
+        window.addEventListener("devicechange", refreshMicDevices);
+        void refreshMicDevices();
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
             window.removeEventListener("resize", clampAndSnapTeleprompter);
+            window.removeEventListener("devicechange", refreshMicDevices);
             if (timer) clearInterval(timer);
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             stopCameraStream();
+            stopMicStream();
             recorder?.stop();
         };
     });
@@ -773,6 +801,20 @@
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
         const stream = canvasEl.captureStream(60);
+
+        if (includeMicAudio) {
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({
+                    audio: selectedMicDeviceId
+                        ? { deviceId: { ideal: selectedMicDeviceId } }
+                        : true,
+                    video: false,
+                });
+                for (const t of micStream.getAudioTracks()) stream.addTrack(t);
+            } catch (e) {
+                console.warn("mic capture failed", e);
+            }
+        }
         const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
             ? "video/webm;codecs=vp9"
             : "video/webm";
@@ -794,6 +836,7 @@
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             cameraRenderRaf = 0;
             stopCameraStream();
+            stopMicStream();
 
             if (!chunks.length) return;
             const blob = new Blob(chunks, { type: "video/webm" });
@@ -825,6 +868,7 @@
         recorder.stop();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
+        stopMicStream();
     };
 
     const formatDuration = (sec: number) => {
@@ -1209,6 +1253,25 @@
                     <button class:active={cameraCorner === "bl"} on:click={() => (cameraCorner = "bl")} disabled={!showCameraInRecord}>左下</button>
                     <button class:active={cameraCorner === "br"} on:click={() => (cameraCorner = "br")} disabled={!showCameraInRecord}>右下</button>
                 </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">麦克风</div>
+            <label class="switch-row">
+                <input type="checkbox" bind:checked={includeMicAudio} />
+                <span>录制时包含麦克风声音</span>
+            </label>
+            <div class="mic-row">
+                <select bind:value={selectedMicDeviceId} disabled={!includeMicAudio}>
+                    {#if micDevices.length === 0}
+                        <option value="">未检测到麦克风</option>
+                    {/if}
+                    {#each micDevices as dev}
+                        <option value={dev.deviceId}>{dev.label || `麦克风 ${dev.deviceId.slice(0, 6)}`}</option>
+                    {/each}
+                </select>
+                <button on:click={() => void refreshMicDevices()}>刷新设备</button>
             </div>
         </section>
 
@@ -1832,6 +1895,22 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+    }
+
+    .mic-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .mic-row select {
+        min-width: 280px;
+        max-width: 100%;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 7px 10px;
     }
 
     .camera-corner-grid {

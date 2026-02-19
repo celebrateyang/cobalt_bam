@@ -70,8 +70,15 @@
     let teleprompterRaf = 0;
 
     let teleprompterTextEl: HTMLTextAreaElement;
+    let teleprompterPanelEl: HTMLDivElement;
+    let boardWrapEl: HTMLDivElement;
+
+    let teleprompterHydrated = false;
 
     // draggable teleprompter panel
+    const teleprompterBaseTop = 64;
+    const teleprompterBaseRight = 12;
+
     let teleprompterOffsetX = 0;
     let teleprompterOffsetY = 0;
     let draggingTeleprompter = false;
@@ -191,15 +198,72 @@
         });
     };
 
+    const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+    const clampAndSnapTeleprompter = () => {
+        if (!boardWrapEl || !teleprompterPanelEl) return;
+
+        const boardRect = boardWrapEl.getBoundingClientRect();
+        const panelRect = teleprompterPanelEl.getBoundingClientRect();
+
+        const minX = panelRect.width - boardRect.width + teleprompterBaseRight * 2;
+        const maxX = 0;
+
+        const minY = -teleprompterBaseTop + 8;
+        const maxY = Math.max(minY, boardRect.height - panelRect.height - teleprompterBaseTop - 8);
+
+        teleprompterOffsetX = clamp(teleprompterOffsetX, minX, maxX);
+        teleprompterOffsetY = clamp(teleprompterOffsetY, minY, maxY);
+
+        const snapThreshold = 42;
+        if (Math.abs(teleprompterOffsetX - maxX) <= snapThreshold) teleprompterOffsetX = maxX;
+        if (Math.abs(teleprompterOffsetX - minX) <= snapThreshold) teleprompterOffsetX = minX;
+    };
+
+    const persistTeleprompterPrefs = () => {
+        if (!teleprompterHydrated || typeof window === "undefined") return;
+        const payload = {
+            x: teleprompterOffsetX,
+            y: teleprompterOffsetY,
+            speed: teleprompterSpeed,
+            opacity: teleprompterOpacity,
+            fontSize: teleprompterFontSize,
+        };
+        window.localStorage.setItem("videorecord.teleprompter", JSON.stringify(payload));
+    };
+
     onMount(() => {
         ctx = canvasEl.getContext("2d");
         if (!ctx) return;
 
         resizeCanvas();
+
+        try {
+            const raw = window.localStorage.getItem("videorecord.teleprompter");
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (typeof saved.x === "number") teleprompterOffsetX = saved.x;
+                if (typeof saved.y === "number") teleprompterOffsetY = saved.y;
+                if (typeof saved.speed === "number") teleprompterSpeed = saved.speed;
+                if (typeof saved.opacity === "number") teleprompterOpacity = saved.opacity;
+                if (typeof saved.fontSize === "number") teleprompterFontSize = saved.fontSize;
+            }
+        } catch {
+            // ignore storage parse errors
+        }
+
+        requestAnimationFrame(() => {
+            clampAndSnapTeleprompter();
+            teleprompterHydrated = true;
+            persistTeleprompterPrefs();
+        });
+
         window.addEventListener("resize", resizeCanvas);
+        window.addEventListener("resize", clampAndSnapTeleprompter);
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
+            window.removeEventListener("resize", clampAndSnapTeleprompter);
             if (timer) clearInterval(timer);
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
@@ -402,8 +466,16 @@
     };
 
     const onWindowPointerUp = () => {
-        draggingTeleprompter = false;
+        if (draggingTeleprompter) {
+            draggingTeleprompter = false;
+            clampAndSnapTeleprompter();
+            persistTeleprompterPrefs();
+        }
     };
+
+    $: if (teleprompterHydrated) {
+        persistTeleprompterPrefs();
+    }
 </script>
 
 <svelte:window on:pointermove={onWindowPointerMove} on:pointerup={onWindowPointerUp} />
@@ -431,7 +503,7 @@
         </div>
     </div>
 
-    <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor};`}>
+    <div bind:this={boardWrapEl} class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor};`}>
         <canvas
             bind:this={canvasEl}
             class="board"
@@ -462,6 +534,7 @@
 
         {#if showTeleprompter}
             <div
+                bind:this={teleprompterPanelEl}
                 class="teleprompter-panel"
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >

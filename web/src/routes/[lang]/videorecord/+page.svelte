@@ -18,6 +18,10 @@
     let recordDuration = 0;
     let timer: ReturnType<typeof setInterval> | null = null;
 
+    // slides (basic multi-page)
+    let slides: string[] = [""];
+    let activeSlide = 0;
+
     // recording settings
     let showSettings = false;
     const aspectOptions = [
@@ -168,6 +172,37 @@
         ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
+    const saveCurrentSlide = () => {
+        if (!canvasEl || activeSlide < 0 || activeSlide >= slides.length) return;
+        const next = [ ...slides ];
+        next[activeSlide] = canvasEl.toDataURL("image/png");
+        slides = next;
+    };
+
+    const loadSlide = (index: number) => {
+        if (!ctx || !canvasEl || index < 0 || index >= slides.length) return;
+        activeSlide = index;
+        const data = slides[index];
+        if (!data) {
+            fillCanvasBg();
+            return;
+        }
+        const img = new Image();
+        img.onload = () => {
+            const rect = canvasEl.getBoundingClientRect();
+            fillCanvasBg();
+            ctx?.drawImage(img, 0, 0, rect.width, rect.height);
+        };
+        img.src = data;
+    };
+
+    const addSlide = () => {
+        saveCurrentSlide();
+        slides = [ ...slides, "" ];
+        activeSlide = slides.length - 1;
+        requestAnimationFrame(() => fillCanvasBg());
+    };
+
     const resizeCanvas = () => {
         if (!canvasEl || !ctx) return;
 
@@ -191,6 +226,8 @@
         if (snapshot.width > 0 && snapshot.height > 0) {
             ctx.drawImage(snapshot, 0, 0, rect.width, rect.height);
         }
+
+        saveCurrentSlide();
     };
 
     const triggerResizeNextFrame = () => {
@@ -322,6 +359,7 @@
 
     const endDraw = (e: PointerEvent) => {
         drawing = false;
+        saveCurrentSlide();
         try {
             canvasEl.releasePointerCapture(e.pointerId);
         } catch {
@@ -331,6 +369,7 @@
 
     const clearCanvas = () => {
         fillCanvasBg();
+        saveCurrentSlide();
     };
 
     const randomBackground = () => {
@@ -523,6 +562,25 @@
             {:else}
                 <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
             {/if}
+        </div>
+
+        <div class="slides-panel">
+            <div class="slides-title">📋 幻灯片</div>
+            <div class="slides-list">
+                {#each slides as _, i}
+                    <button
+                        class="slide-item"
+                        class:active={i === activeSlide}
+                        on:click={() => {
+                            saveCurrentSlide();
+                            loadSlide(i);
+                        }}
+                    >
+                        {i + 1}
+                    </button>
+                {/each}
+            </div>
+            <button class="slide-add" on:click={addSlide}>＋</button>
         </div>
 
         {#if showTeleprompter}
@@ -1051,6 +1109,66 @@
         z-index: 7;
     }
 
+    .slides-panel {
+        position: absolute;
+        right: 12px;
+        top: 74px;
+        z-index: 6;
+        width: 74px;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(0,0,0,0.12);
+        border-radius: 14px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .slides-title {
+        font-size: 11px;
+        color: #555;
+    }
+
+    .slides-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 180px;
+        overflow: auto;
+        width: 100%;
+        align-items: center;
+    }
+
+    .slide-item {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #ececec;
+        color: #222;
+        border: 1px solid #ddd;
+        padding: 0;
+        font-weight: 700;
+    }
+
+    .slide-item.active {
+        background: #232323;
+        color: #fff;
+        border-color: #232323;
+    }
+
+    .slide-add {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #fff;
+        color: #222;
+        border: 1px dashed #bbb;
+        padding: 0;
+        font-size: 22px;
+        line-height: 1;
+    }
+
     .floating-btn {
         background: rgba(255,255,255,0.92);
         color: #222;
@@ -1094,6 +1212,12 @@
         .floating-controls {
             right: 12px;
             top: 12px;
+        }
+
+        .slides-panel {
+            right: 12px;
+            top: 70px;
+            width: 64px;
         }
 
         .teleprompter-panel {

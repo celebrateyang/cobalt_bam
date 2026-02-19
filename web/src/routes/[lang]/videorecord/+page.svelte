@@ -396,6 +396,11 @@
                         <span>透明</span>
                         <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
                     </div>
+
+                    <div class="mini slider-inline">
+                        <span>字号</span>
+                        <input type="range" min="14" max="52" step="1" bind:value={teleprompterFontSize} />
+                    </div>
                 </div>
 
                 <textarea

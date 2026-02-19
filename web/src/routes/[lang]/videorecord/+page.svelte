@@ -19,6 +19,7 @@
     let textInputY = 0;
     let textInputValue = "";
     let textAreaEl: HTMLTextAreaElement | null = null;
+    let imageInputEl: HTMLInputElement | null = null;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -562,6 +563,48 @@
         }
     };
 
+    const insertImageFromFile = (file: File) => {
+        if (!ctx || !canvasEl || !file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const src = reader.result;
+            if (typeof src !== "string") return;
+
+            const img = new Image();
+            img.onload = () => {
+                if (!ctx || !canvasEl) return;
+                pushHistorySnapshot();
+
+                const rect = canvasEl.getBoundingClientRect();
+                const maxW = rect.width * 0.78;
+                const maxH = rect.height * 0.78;
+                const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+
+                const drawW = img.width * scale;
+                const drawH = img.height * scale;
+                const x = (rect.width - drawW) / 2;
+                const y = (rect.height - drawH) / 2;
+
+                ctx.drawImage(img, x, y, drawW, drawH);
+                saveCurrentSlide();
+            };
+            img.src = src;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const onPickImage = () => {
+        imageInputEl?.click();
+    };
+
+    const onImageSelected = (e: Event) => {
+        const target = e.currentTarget as HTMLInputElement;
+        const file = target.files?.[0];
+        if (file) insertImageFromFile(file);
+        target.value = "";
+    };
+
     const randomBackground = () => {
         const next = bgColors[Math.floor(Math.random() * bgColors.length)];
         backgroundColor = next;
@@ -715,6 +758,7 @@
             <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
             <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
             <button class:active={tool === "text"} on:click={() => (tool = "text")}>文本</button>
+            <button on:click={onPickImage}>插图</button>
             <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
             <button on:click={redo} disabled={redoStack.length === 0}>重做</button>
 
@@ -730,6 +774,8 @@
             <button on:click={clearCanvas}>清空</button>
         </div>
     </div>
+
+    <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
 
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
@@ -1184,6 +1230,10 @@
         margin-top: 8px;
         font-size: 12px;
         opacity: 0.75;
+    }
+
+     .hidden-file-input {
+        display: none;
     }
 
     .hint {

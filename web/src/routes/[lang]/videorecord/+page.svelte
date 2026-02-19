@@ -41,6 +41,14 @@
     ];
     let backgroundColor = bgColors[0];
 
+    // cursor highlight
+    let showCursorHighlight = true;
+    let cursorHighlightColor = "#ff4d4f";
+    let cursorHighlightSize = 20;
+    let cursorInside = false;
+    let cursorX = 0;
+    let cursorY = 0;
+
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText = "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
     let showTeleprompter = true;
@@ -124,6 +132,12 @@
         };
     };
 
+    const updateCursorPosition = (e: PointerEvent) => {
+        const p = getPoint(e);
+        cursorX = p.x;
+        cursorY = p.y;
+    };
+
     const beginDraw = (e: PointerEvent) => {
         if (!ctx) return;
 
@@ -136,6 +150,7 @@
     };
 
     const draw = (e: PointerEvent) => {
+        updateCursorPosition(e);
         if (!drawing || !ctx) return;
 
         const p = getPoint(e);
@@ -151,6 +166,14 @@
 
         lastX = p.x;
         lastY = p.y;
+    };
+
+    const enterBoard = () => {
+        cursorInside = true;
+    };
+
+    const leaveBoard = () => {
+        cursorInside = false;
     };
 
     const endDraw = (e: PointerEvent) => {
@@ -286,17 +309,9 @@
 
         <div class="right">
             <button on:click={clearCanvas}>清空</button>
-            <button on:click={() => (showSettings = true)}>录制设置</button>
-
             <button class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>
                 {showTeleprompter ? "隐藏提词器" : "显示提词器"}
             </button>
-
-            {#if !isRecording}
-                <button class="record" on:click={startRecord}>开始录制</button>
-            {:else}
-                <button class="stop" on:click={stopRecord}>停止录制 ({formatDuration(recordDuration)})</button>
-            {/if}
         </div>
     </div>
 
@@ -304,12 +319,30 @@
         <canvas
             bind:this={canvasEl}
             class="board"
+            on:pointerenter={enterBoard}
             on:pointerdown={beginDraw}
             on:pointermove={draw}
             on:pointerup={endDraw}
             on:pointercancel={endDraw}
-            on:pointerleave={endDraw}
+            on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
         />
+
+        {#if showCursorHighlight && cursorInside && isRecording}
+            <div
+                class="cursor-highlight"
+                style={`left:${cursorX}px; top:${cursorY}px; width:${cursorHighlightSize}px; height:${cursorHighlightSize}px; background:${cursorHighlightColor};`}
+            ></div>
+        {/if}
+
+        <div class="floating-controls">
+            <button class="floating-btn" on:click={() => (showSettings = true)}>⚙</button>
+            <button class="floating-btn" class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>📝</button>
+            {#if !isRecording}
+                <button class="floating-record" on:click={startRecord}>● 录制</button>
+            {:else}
+                <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
+            {/if}
+        </div>
 
         {#if showTeleprompter}
             <div class="teleprompter-panel" style={`opacity:${teleprompterOpacity / 100};`}>
@@ -421,6 +454,21 @@
                 <span>{teleprompterOpacity}%</span>
             </label>
         </section>
+
+        <section>
+            <div class="section-title">鼠标光标效果</div>
+            <label class="switch-row">
+                <input type="checkbox" bind:checked={showCursorHighlight} />
+                <span>录制时显示光标高亮</span>
+            </label>
+            <div class="cursor-settings">
+                <input type="color" bind:value={cursorHighlightColor} disabled={!showCursorHighlight} />
+                <label class="slider-row">
+                    <input type="range" min="8" max="60" step="2" bind:value={cursorHighlightSize} disabled={!showCursorHighlight} />
+                    <span>{cursorHighlightSize}px</span>
+                </label>
+            </div>
+        </section>
     </div>
 {/if}
 
@@ -503,7 +551,7 @@
 
     .teleprompter-panel {
         position: absolute;
-        top: 12px;
+        top: 64px;
         right: 12px;
         width: min(44%, 520px);
         min-width: 320px;
@@ -698,6 +746,58 @@
 
     .slider-row input {
         flex: 1;
+    }
+
+    .cursor-highlight {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        pointer-events: none;
+        opacity: 0.45;
+        mix-blend-mode: screen;
+        z-index: 3;
+    }
+
+    .floating-controls {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 8px;
+        z-index: 4;
+    }
+
+    .floating-btn {
+        background: rgba(255,255,255,0.92);
+        color: #222;
+        min-width: 40px;
+        padding: 8px 10px;
+    }
+
+    .floating-record {
+        background: #df2f35;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .floating-stop {
+        background: #2d9d67;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .switch-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .cursor-settings {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 10px;
     }
 
     @media (max-width: 900px) {

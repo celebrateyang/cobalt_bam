@@ -63,6 +63,15 @@
     let teleprompterViewportEl: HTMLDivElement;
     let teleprompterContentEl: HTMLDivElement;
 
+    // draggable teleprompter panel
+    let teleprompterOffsetX = 0;
+    let teleprompterOffsetY = 0;
+    let draggingTeleprompter = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragBaseX = 0;
+    let dragBaseY = 0;
+
     const ratioToNumber = (ratio: string) => {
         const [w, h] = ratio.split(":").map(Number);
         if (!w || !h) return 16 / 9;
@@ -290,7 +299,27 @@
         teleprompterLastTs = 0;
         teleprompterRaf = requestAnimationFrame(runTeleprompter);
     };
+
+    const startDragTeleprompter = (e: PointerEvent) => {
+        draggingTeleprompter = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        dragBaseX = teleprompterOffsetX;
+        dragBaseY = teleprompterOffsetY;
+    };
+
+    const onWindowPointerMove = (e: PointerEvent) => {
+        if (!draggingTeleprompter) return;
+        teleprompterOffsetX = dragBaseX + (e.clientX - dragStartX);
+        teleprompterOffsetY = dragBaseY + (e.clientY - dragStartY);
+    };
+
+    const onWindowPointerUp = () => {
+        draggingTeleprompter = false;
+    };
 </script>
+
+<svelte:window on:pointermove={onWindowPointerMove} on:pointerup={onWindowPointerUp} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
@@ -345,7 +374,15 @@
         </div>
 
         {#if showTeleprompter}
-            <div class="teleprompter-panel" style={`opacity:${teleprompterOpacity / 100};`}>
+            <div
+                class="teleprompter-panel"
+                style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
+            >
+                <div class="teleprompter-dragbar" on:pointerdown={startDragTeleprompter}>
+                    <span>📝 提词器</span>
+                    <small>拖动这里移动面板</small>
+                </div>
+
                 <div class="teleprompter-controls">
                     <button on:click={startTeleprompter} disabled={isTeleprompterRunning}>开始滚动</button>
                     <button on:click={stopTeleprompter} disabled={!isTeleprompterRunning}>暂停</button>
@@ -563,6 +600,29 @@
         padding: 10px;
         backdrop-filter: blur(6px);
         z-index: 2;
+    }
+
+    .teleprompter-dragbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.08);
+        cursor: move;
+        user-select: none;
+    }
+
+    .teleprompter-dragbar span {
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .teleprompter-dragbar small {
+        font-size: 11px;
+        opacity: 0.75;
     }
 
     .teleprompter-controls {

@@ -40,6 +40,8 @@
         "#263238",
     ];
     let backgroundColor = bgColors[0];
+    let canvasCornerRadius = 16;
+    let canvasInnerPadding = 0;
 
     // camera overlay in recording
     let showCameraInRecord = false;
@@ -503,7 +505,7 @@
         </div>
     </div>
 
-    <div bind:this={boardWrapEl} class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor};`}>
+    <div bind:this={boardWrapEl} class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
             bind:this={canvasEl}
             class="board"
@@ -633,6 +635,33 @@
         </section>
 
         <section>
+            <div class="section-title">画布样式</div>
+            <label class="slider-row">
+                <span>圆角</span>
+                <input type="range" min="0" max="64" step="2" bind:value={canvasCornerRadius} />
+                <span>{canvasCornerRadius}px</span>
+            </label>
+            <label class="slider-row">
+                <span>画布边距</span>
+                <input type="range" min="0" max="120" step="2" bind:value={canvasInnerPadding} />
+                <span>{canvasInnerPadding}px</span>
+            </label>
+        </section>
+
+        <section>
+            <div class="section-title">预览</div>
+            <div class="settings-preview-wrap">
+                <div
+                    class="settings-preview"
+                    style={`aspect-ratio:${boardAspectRatio}; border-radius:${canvasCornerRadius}px; padding:${Math.max(2, Math.floor(canvasInnerPadding/3))}px; background:${backgroundColor};`}
+                >
+                    <div class="settings-preview-inner"></div>
+                    <div class="settings-preview-dot"></div>
+                </div>
+            </div>
+        </section>
+
+        <section>
             <div class="section-title">提词器透明度</div>
             <label class="slider-row">
                 <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
@@ -757,6 +786,8 @@
         touch-action: none;
         display: block;
         cursor: crosshair;
+        border-radius: inherit;
+        background: transparent;
     }
 
     .teleprompter-panel {
@@ -995,6 +1026,36 @@
 
     .slider-row input {
         flex: 1;
+    }
+
+    .settings-preview-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 8px 0 2px;
+    }
+
+    .settings-preview {
+        position: relative;
+        width: min(360px, 100%);
+        border: 1px solid rgba(0,0,0,0.2);
+        box-sizing: border-box;
+    }
+
+    .settings-preview-inner {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        background: rgba(255,255,255,0.85);
+    }
+
+    .settings-preview-dot {
+        position: absolute;
+        right: 14px;
+        bottom: 10px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: rgba(0,0,0,0.25);
     }
 
     .cursor-highlight {

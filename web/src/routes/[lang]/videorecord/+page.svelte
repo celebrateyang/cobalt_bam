@@ -1045,7 +1045,7 @@
     .floating-controls {
         position: absolute;
         top: 14px;
-        right: 150px;
+        right: 12px;
         display: flex;
         gap: 8px;
         z-index: 7;

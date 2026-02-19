@@ -10,7 +10,7 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" = "pen";
+    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" | "webembed" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -30,6 +30,19 @@
     let laserPressed = false;
     let laserColor = "#ff3b30";
     let laserSize = 22;
+
+    type WebEmbedItem = {
+        id: string;
+        url: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    };
+    let webEmbeds: WebEmbedItem[] = [];
+    let draggingEmbedId: string | null = null;
+    let embedDragOffsetX = 0;
+    let embedDragOffsetY = 0;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -535,6 +548,11 @@
             return;
         }
 
+        if (tool === "webembed") {
+            beginCreateWebEmbed(e.clientX, e.clientY);
+            return;
+        }
+
         pushHistorySnapshot();
         drawing = true;
         lastX = p.x;
@@ -694,6 +712,45 @@
         target.value = "";
     };
 
+    const beginCreateWebEmbed = (x: number, y: number) => {
+        const raw = window.prompt("输入要嵌入的网址（https://...）");
+        if (!raw) return;
+        const url = raw.trim();
+        if (!/^https?:\/\//i.test(url)) {
+            window.alert("请输入 http(s) 开头的链接");
+            return;
+        }
+
+        const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+        webEmbeds = [
+            ...webEmbeds,
+            { id, url, x, y, w: 360, h: 220 },
+        ];
+    };
+
+    const removeWebEmbed = (id: string) => {
+        webEmbeds = webEmbeds.filter(e => e.id !== id);
+    };
+
+    const startDragWebEmbed = (id: string, e: PointerEvent) => {
+        const item = webEmbeds.find(x => x.id === id);
+        if (!item) return;
+        draggingEmbedId = id;
+        embedDragOffsetX = e.clientX - item.x;
+        embedDragOffsetY = e.clientY - item.y;
+    };
+
+    const onWindowPointerMoveEmbed = (e: PointerEvent) => {
+        if (!draggingEmbedId) return;
+        webEmbeds = webEmbeds.map(item => item.id === draggingEmbedId
+            ? { ...item, x: e.clientX - embedDragOffsetX, y: e.clientY - embedDragOffsetY }
+            : item);
+    };
+
+    const onWindowPointerUpEmbed = () => {
+        draggingEmbedId = null;
+    };
+
     const randomBackground = () => {
         const next = bgColors[Math.floor(Math.random() * bgColors.length)];
         backgroundColor = next;
@@ -835,7 +892,7 @@
     }
 </script>
 
-<svelte:window on:pointermove={onWindowPointerMove} on:pointerup={onWindowPointerUp} />
+<svelte:window on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); }} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
@@ -873,7 +930,7 @@
             <div class="more-tools-grid">
                 <button class:active={tool === "laser"} on:click={() => { tool = "laser"; showMoreTools = false; }}>Laser point</button>
                 <button class:active={tool === "frame"} on:click={() => { tool = "frame"; showMoreTools = false; }}>Frame tool</button>
-                <button disabled title="coming soon">Web embed</button>
+                <button class:active={tool === "webembed"} on:click={() => { tool = "webembed"; showMoreTools = false; }}>Web embed</button>
             </div>
             <div class="laser-settings">
                 <label>颜色 <input type="color" bind:value={laserColor} /></label>
@@ -926,6 +983,16 @@
                 <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
             {/if}
         </div>
+
+        {#each webEmbeds as embed (embed.id)}
+            <div class="web-embed" style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}>
+                <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
+                    <span>🌐 Web</span>
+                    <button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button>
+                </div>
+                <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
+            </div>
+        {/each}
 
         <div class="slides-panel">
             <div class="slides-title">📋 幻灯片</div>
@@ -1380,6 +1447,46 @@
         opacity: 0.45;
         pointer-events: none;
         z-index: 6;
+    }
+
+
+    .web-embed {
+        position: fixed;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.18);
+        border-radius: 10px;
+        overflow: hidden;
+        z-index: 5;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+    }
+
+    .web-embed-head {
+        height: 30px;
+        background: #f2f2f2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px;
+        cursor: move;
+        font-size: 12px;
+        color: #333;
+    }
+
+    .web-embed-head button.web-embed-close {
+        min-width: 24px;
+        height: 22px;
+        border-radius: 6px;
+        padding: 0;
+        background: #fff;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .web-embed iframe {
+        width: 100%;
+        height: calc(100% - 30px);
+        border: 0;
+        background: #fff;
     }
 
     .hint {

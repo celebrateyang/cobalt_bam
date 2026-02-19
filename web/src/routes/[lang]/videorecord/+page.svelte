@@ -584,8 +584,7 @@
     const commitTextToCanvas = () => {
         if (!ctx || !canvasEl || !textEditing) return;
 
-        const lines = textInputValue.split("
-").filter(line => line.trim().length > 0);
+        const lines = textInputValue.split("\n").filter(line => line.trim().length > 0);
         textEditing = false;
         if (!lines.length) {
             textInputValue = "";

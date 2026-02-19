@@ -499,9 +499,6 @@
 
         <div class="right">
             <button on:click={clearCanvas}>清空</button>
-            <button class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>
-                {showTeleprompter ? "隐藏提词器" : "显示提词器"}
-            </button>
         </div>
     </div>
 

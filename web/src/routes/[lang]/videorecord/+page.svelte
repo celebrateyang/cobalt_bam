@@ -88,6 +88,8 @@
     let cameraSize = 180;
     let cameraRadius = 16;
     let cameraMargin = 24;
+    let cameraCorner: "br" | "bl" | "tr" | "tl" = "br";
+    let cameraMirror = true;
     let cameraStream: MediaStream | null = null;
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
@@ -165,15 +167,25 @@
         if (!ctx || !canvasEl || !cameraVideoEl || !isRecording || !showCameraInRecord) return;
         const rect = canvasEl.getBoundingClientRect();
         const size = Math.min(cameraSize, rect.width * 0.5, rect.height * 0.5);
-        const x = rect.width - cameraMargin - size;
-        const y = rect.height - cameraMargin - size;
+        const x = (cameraCorner === "br" || cameraCorner === "tr")
+            ? rect.width - cameraMargin - size
+            : cameraMargin;
+        const y = (cameraCorner === "br" || cameraCorner === "bl")
+            ? rect.height - cameraMargin - size
+            : cameraMargin;
 
         ctx.save();
         drawRoundRectPath(x, y, size, size, cameraRadius);
         ctx.clip();
         ctx.fillStyle = "#000";
         ctx.fillRect(x, y, size, size);
-        ctx.drawImage(cameraVideoEl, x, y, size, size);
+        if (cameraMirror) {
+            ctx.translate(x + size, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(cameraVideoEl, 0, 0, size, size);
+        } else {
+            ctx.drawImage(cameraVideoEl, x, y, size, size);
+        }
         ctx.restore();
 
         ctx.save();
@@ -1185,6 +1197,18 @@
                     <input type="range" min="0" max="120" step="2" bind:value={cameraMargin} disabled={!showCameraInRecord} />
                     <span>{cameraMargin}px</span>
                 </label>
+
+                <label class="switch-row">
+                    <input type="checkbox" bind:checked={cameraMirror} disabled={!showCameraInRecord} />
+                    <span>镜像摄像头</span>
+                </label>
+
+                <div class="camera-corner-grid">
+                    <button class:active={cameraCorner === "tl"} on:click={() => (cameraCorner = "tl")} disabled={!showCameraInRecord}>左上</button>
+                    <button class:active={cameraCorner === "tr"} on:click={() => (cameraCorner = "tr")} disabled={!showCameraInRecord}>右上</button>
+                    <button class:active={cameraCorner === "bl"} on:click={() => (cameraCorner = "bl")} disabled={!showCameraInRecord}>左下</button>
+                    <button class:active={cameraCorner === "br"} on:click={() => (cameraCorner = "br")} disabled={!showCameraInRecord}>右下</button>
+                </div>
             </div>
         </section>
 
@@ -1808,6 +1832,25 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+    }
+
+    .camera-corner-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .camera-corner-grid button {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
+        padding: 6px 8px;
+    }
+
+    .camera-corner-grid button.active {
+        background: #232323;
+        color: #fff;
+        border-color: #232323;
     }
 
     @media (max-width: 900px) {

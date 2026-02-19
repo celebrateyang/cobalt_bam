@@ -41,6 +41,15 @@
     ];
     let backgroundColor = bgColors[0];
 
+    // camera overlay in recording
+    let showCameraInRecord = false;
+    let cameraSize = 180;
+    let cameraRadius = 16;
+    let cameraMargin = 24;
+    let cameraStream: MediaStream | null = null;
+    let cameraVideoEl: HTMLVideoElement | null = null;
+    let cameraRenderRaf = 0;
+
     // cursor highlight
     let showCursorHighlight = true;
     let cursorHighlightColor = "#ff4d4f";
@@ -70,6 +79,71 @@
     let dragStartY = 0;
     let dragBaseX = 0;
     let dragBaseY = 0;
+
+    const ensureCameraStream = async () => {
+        if (cameraStream && cameraVideoEl) return;
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const v = document.createElement("video");
+        v.srcObject = cameraStream;
+        v.muted = true;
+        v.playsInline = true;
+        await v.play();
+        cameraVideoEl = v;
+    };
+
+    const stopCameraStream = () => {
+        if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
+        cameraRenderRaf = 0;
+        if (cameraStream) {
+            for (const track of cameraStream.getTracks()) track.stop();
+        }
+        cameraStream = null;
+        cameraVideoEl = null;
+    };
+
+    const drawRoundRectPath = (x: number, y: number, w: number, h: number, r: number) => {
+        if (!ctx) return;
+        const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+    };
+
+    const drawCameraFrame = () => {
+        if (!ctx || !canvasEl || !cameraVideoEl || !isRecording || !showCameraInRecord) return;
+        const rect = canvasEl.getBoundingClientRect();
+        const size = Math.min(cameraSize, rect.width * 0.5, rect.height * 0.5);
+        const x = rect.width - cameraMargin - size;
+        const y = rect.height - cameraMargin - size;
+
+        ctx.save();
+        drawRoundRectPath(x, y, size, size, cameraRadius);
+        ctx.clip();
+        ctx.fillStyle = "#000";
+        ctx.fillRect(x, y, size, size);
+        ctx.drawImage(cameraVideoEl, x, y, size, size);
+        ctx.restore();
+
+        ctx.save();
+        drawRoundRectPath(x, y, size, size, cameraRadius);
+        ctx.strokeStyle = "rgba(255,255,255,0.8)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        cameraRenderRaf = requestAnimationFrame(drawCameraFrame);
+    };
+
+    const startCameraRenderLoop = async () => {
+        if (!showCameraInRecord || !isRecording) return;
+        await ensureCameraStream();
+        if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
+        cameraRenderRaf = requestAnimationFrame(drawCameraFrame);
+    };
 
     const ratioToNumber = (ratio: string) => {
         const [w, h] = ratio.split(":").map(Number);
@@ -128,6 +202,8 @@
             window.removeEventListener("resize", resizeCanvas);
             if (timer) clearInterval(timer);
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
+            if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
+            stopCameraStream();
             recorder?.stop();
         };
     });
@@ -225,6 +301,9 @@
             }
 
             isRecording = false;
+            if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
+            cameraRenderRaf = 0;
+            stopCameraStream();
 
             if (!chunks.length) return;
             const blob = new Blob(chunks, { type: "video/webm" });
@@ -238,6 +317,13 @@
 
         recorder.start(300);
         isRecording = true;
+        if (showCameraInRecord) {
+            try {
+                await startCameraRenderLoop();
+            } catch (e) {
+                console.error("camera start failed", e);
+            }
+        }
         recordDuration = 0;
         timer = setInterval(() => {
             recordDuration += 1;
@@ -247,6 +333,8 @@
     const stopRecord = () => {
         if (!recorder || recorder.state === "inactive") return;
         recorder.stop();
+        if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
+        cameraRenderRaf = 0;
     };
 
     const formatDuration = (sec: number) => {
@@ -477,6 +565,31 @@
                 <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
                 <span>{teleprompterOpacity}%</span>
             </label>
+        </section>
+
+        <section>
+            <div class="section-title">摄像头（录制画中画）</div>
+            <label class="switch-row">
+                <input type="checkbox" bind:checked={showCameraInRecord} />
+                <span>录制时显示摄像头画面</span>
+            </label>
+            <div class="camera-settings">
+                <label class="slider-row">
+                    <span>大小</span>
+                    <input type="range" min="100" max="320" step="4" bind:value={cameraSize} disabled={!showCameraInRecord} />
+                    <span>{cameraSize}px</span>
+                </label>
+                <label class="slider-row">
+                    <span>圆角</span>
+                    <input type="range" min="0" max="80" step="2" bind:value={cameraRadius} disabled={!showCameraInRecord} />
+                    <span>{cameraRadius}px</span>
+                </label>
+                <label class="slider-row">
+                    <span>边距</span>
+                    <input type="range" min="0" max="120" step="2" bind:value={cameraMargin} disabled={!showCameraInRecord} />
+                    <span>{cameraMargin}px</span>
+                </label>
+            </div>
         </section>
 
         <section>
@@ -861,6 +974,12 @@
         grid-template-columns: auto 1fr;
         align-items: center;
         gap: 10px;
+    }
+
+    .camera-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
     @media (max-width: 900px) {

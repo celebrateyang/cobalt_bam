@@ -21,6 +21,7 @@
     // slides (basic multi-page)
     let slides: string[] = [""];
     let activeSlide = 0;
+    let draggingSlideIndex: number | null = null;
 
     // recording settings
     let showSettings = false;
@@ -240,6 +241,37 @@
         next.splice(to, 0, item);
         slides = next;
         activeSlide = to;
+    };
+
+    const onSlideDragStart = (index: number) => {
+        saveCurrentSlide();
+        draggingSlideIndex = index;
+    };
+
+    const onSlideDrop = (targetIndex: number) => {
+        if (draggingSlideIndex === null || draggingSlideIndex === targetIndex) {
+            draggingSlideIndex = null;
+            return;
+        }
+
+        const next = [ ...slides ];
+        const [item] = next.splice(draggingSlideIndex, 1);
+        next.splice(targetIndex, 0, item);
+
+        const oldActive = activeSlide;
+        let newActive = oldActive;
+
+        if (oldActive === draggingSlideIndex) {
+            newActive = targetIndex;
+        } else if (draggingSlideIndex < oldActive && targetIndex >= oldActive) {
+            newActive = oldActive - 1;
+        } else if (draggingSlideIndex > oldActive && targetIndex <= oldActive) {
+            newActive = oldActive + 1;
+        }
+
+        slides = next;
+        activeSlide = newActive;
+        draggingSlideIndex = null;
     };
 
     const resizeCanvas = () => {
@@ -618,6 +650,12 @@
                     <button
                         class="slide-item"
                         class:active={i === activeSlide}
+                        class:dragging={draggingSlideIndex === i}
+                        draggable="true"
+                        on:dragstart={() => onSlideDragStart(i)}
+                        on:dragover|preventDefault
+                        on:drop={() => onSlideDrop(i)}
+                        on:dragend={() => (draggingSlideIndex = null)}
                         on:click={() => {
                             saveCurrentSlide();
                             loadSlide(i);
@@ -633,7 +671,7 @@
                 {/each}
             </div>
 
-            <button class="slide-add" on:click={addSlide}>＋</button>
+            <button class="slide-add" on:click={addSlide} on:dragover|preventDefault on:drop={() => onSlideDrop(slides.length - 1)}>＋</button>
         </div>
 
         {#if showTeleprompter}
@@ -1252,6 +1290,10 @@
     .slide-item.active {
         outline: 2px solid #232323;
         outline-offset: 0;
+    }
+
+    .slide-item.dragging {
+        opacity: 0.45;
     }
 
     .slide-add {

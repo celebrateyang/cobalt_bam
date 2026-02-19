@@ -540,12 +540,7 @@
                 class="teleprompter-panel"
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >
-                <div class="teleprompter-dragbar" on:pointerdown={startDragTeleprompter}>
-                    <div class="drag-title">📝 提词器</div>
-                    <button class="icon-btn close" on:pointerdown|stopPropagation on:click|stopPropagation={() => (showTeleprompter = false)} aria-label="关闭提词器">✕</button>
-                </div>
-
-                <div class="teleprompter-controls compact">
+                <div class="teleprompter-controls compact teleprompter-dragbar" on:pointerdown={startDragTeleprompter}>
                     <button class="icon-btn" on:click={startTeleprompter} disabled={isTeleprompterRunning} title="播放">▶</button>
                     <button class="icon-btn" on:click={stopTeleprompter} disabled={!isTeleprompterRunning} title="暂停">⏸</button>
                     <button class="icon-btn" on:click={resetTeleprompterPosition} title="重置">↺</button>
@@ -812,17 +807,11 @@
         justify-content: space-between;
         gap: 8px;
         margin-bottom: 6px;
-        padding: 4px 6px;
+        padding: 6px 8px;
         border-radius: 8px;
         background: rgba(255,255,255,0.06);
         cursor: move;
         user-select: none;
-    }
-
-    .drag-title {
-        font-weight: 700;
-        font-size: 12px;
-        opacity: 0.92;
     }
 
     .teleprompter-controls {
@@ -856,12 +845,6 @@
         color: #fff;
         font-size: 14px;
         line-height: 1;
-    }
-
-    .icon-btn.close {
-        min-width: 26px;
-        height: 26px;
-        font-size: 12px;
     }
 
     .teleprompter-controls .mini {

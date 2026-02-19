@@ -10,7 +10,7 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" = "pen";
+    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -25,6 +25,11 @@
     let shapeStartX = 0;
     let shapeStartY = 0;
     let shapeSnapshot: ImageData | null = null;
+
+    let showMoreTools = false;
+    let laserPressed = false;
+    let laserColor = "#ff3b30";
+    let laserSize = 22;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -514,6 +519,11 @@
             return;
         }
 
+        if (tool === "laser") {
+            laserPressed = true;
+            return;
+        }
+
         pushHistorySnapshot();
         drawing = true;
         lastX = p.x;
@@ -532,6 +542,7 @@
 
     const draw = (e: PointerEvent) => {
         updateCursorPosition(e);
+        if (tool === "laser") return;
         if (!drawing || !ctx || tool === "text") return;
 
         const p = getPoint(e);
@@ -565,6 +576,14 @@
     };
 
     const endDraw = (e: PointerEvent) => {
+        if (tool === "laser") {
+            laserPressed = false;
+            try {
+                canvasEl.releasePointerCapture(e.pointerId);
+            } catch {}
+            return;
+        }
+
         drawing = false;
         saveCurrentSlide();
         shapeSnapshot = null;
@@ -821,6 +840,7 @@
             <button class:active={tool === "rect"} on:click={() => (tool = "rect")}>矩形</button>
             <button class:active={tool === "circle"} on:click={() => (tool = "circle")}>圆形</button>
             <button on:click={onPickImage}>插图</button>
+            <button class:active={showMoreTools} on:click={() => (showMoreTools = !showMoreTools)}>更多工具</button>
             <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
             <button on:click={redo} disabled={redoStack.length === 0}>重做</button>
 
@@ -838,6 +858,21 @@
     </div>
 
     <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
+
+    {#if showMoreTools}
+        <div class="more-tools-panel">
+            <div class="more-tools-title">More tools</div>
+            <div class="more-tools-grid">
+                <button class:active={tool === "laser"} on:click={() => { tool = "laser"; showMoreTools = false; }}>Laser point</button>
+                <button disabled title="coming soon">Frame tool</button>
+                <button disabled title="coming soon">Web embed</button>
+            </div>
+            <div class="laser-settings">
+                <label>颜色 <input type="color" bind:value={laserColor} /></label>
+                <label>大小 <input type="range" min="8" max="48" step="1" bind:value={laserSize} /></label>
+            </div>
+        </div>
+    {/if}
 
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
@@ -861,6 +896,10 @@
                 on:keydown={onTextInputKeydown}
                 on:blur={commitTextToCanvas}
             />
+        {/if}
+
+        {#if tool === "laser" && cursorInside && laserPressed}
+            <div class="laser-dot" style={`left:${cursorX}px; top:${cursorY}px; width:${laserSize}px; height:${laserSize}px; background:${laserColor};`}></div>
         {/if}
 
         {#if showCursorHighlight && cursorInside && isRecording}
@@ -1296,6 +1335,43 @@
 
      .hidden-file-input {
         display: none;
+    }
+
+    .more-tools-panel {
+        background: var(--button);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .more-tools-title {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    .more-tools-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0,1fr));
+        gap: 8px;
+    }
+
+    .laser-settings {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 12px;
+    }
+
+    .laser-dot {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        opacity: 0.45;
+        pointer-events: none;
+        z-index: 6;
     }
 
     .hint {

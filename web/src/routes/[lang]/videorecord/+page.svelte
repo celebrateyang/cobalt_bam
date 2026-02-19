@@ -39,10 +39,39 @@
         w: number;
         h: number;
     };
+
+    type FrameItem = {
+        id: string;
+        title: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    };
     let webEmbeds: WebEmbedItem[] = [];
     let draggingEmbedId: string | null = null;
+    let resizingEmbedId: string | null = null;
     let embedDragOffsetX = 0;
     let embedDragOffsetY = 0;
+    let embedResizeStartX = 0;
+    let embedResizeStartY = 0;
+    let embedResizeStartW = 0;
+    let embedResizeStartH = 0;
+
+    let frames: FrameItem[] = [];
+    let draftingFrame = false;
+    let draftFrameX = 0;
+    let draftFrameY = 0;
+    let draftFrameW = 0;
+    let draftFrameH = 0;
+    let draggingFrameId: string | null = null;
+    let resizingFrameId: string | null = null;
+    let frameDragOffsetX = 0;
+    let frameDragOffsetY = 0;
+    let frameResizeStartX = 0;
+    let frameResizeStartY = 0;
+    let frameResizeStartW = 0;
+    let frameResizeStartH = 0;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -553,17 +582,6 @@
                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
             }
             ctx.stroke();
-        } else if (tool === "frame") {
-            const x = Math.min(x1, x2);
-            const y = Math.min(y1, y2);
-            const w = Math.abs(x2 - x1);
-            const h = Math.abs(y2 - y1);
-            ctx.setLineDash([10, 6]);
-            ctx.strokeRect(x, y, w, h);
-            ctx.setLineDash([]);
-            ctx.fillStyle = strokeColor;
-            ctx.font = '600 14px sans-serif';
-            ctx.fillText('Frame', x + 8, y + 8);
         }
 
         ctx.restore();
@@ -598,7 +616,7 @@
         lastX = p.x;
         lastY = p.y;
 
-        if (tool === "line" || tool === "rect" || tool === "circle" || tool === "frame") {
+        if (tool === "line" || tool === "rect" || tool === "circle") {
             shapeStartX = p.x;
             shapeStartY = p.y;
             shapeSnapshot = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
@@ -612,11 +630,22 @@
     const draw = (e: PointerEvent) => {
         updateCursorPosition(e);
         if (tool === "laser") return;
+        if (tool === "frame" && draftingFrame) {
+            const x1 = Math.min(draftFrameX, e.clientX);
+            const y1 = Math.min(draftFrameY, e.clientY);
+            const x2 = Math.max(draftFrameX, e.clientX);
+            const y2 = Math.max(draftFrameY, e.clientY);
+            draftFrameX = x1;
+            draftFrameY = y1;
+            draftFrameW = x2 - x1;
+            draftFrameH = y2 - y1;
+            return;
+        }
         if (!drawing || !ctx || tool === "text") return;
 
         const p = getPoint(e);
 
-        if (tool === "line" || tool === "rect" || tool === "circle" || tool === "frame") {
+        if (tool === "line" || tool === "rect" || tool === "circle") {
             drawShapePreview(shapeStartX, shapeStartY, p.x, p.y);
             lastX = p.x;
             lastY = p.y;
@@ -780,15 +809,95 @@
         embedDragOffsetY = e.clientY - item.y;
     };
 
+    const startResizeWebEmbed = (id: string, e: PointerEvent) => {
+        const item = webEmbeds.find(x => x.id === id);
+        if (!item) return;
+        resizingEmbedId = id;
+        embedResizeStartX = e.clientX;
+        embedResizeStartY = e.clientY;
+        embedResizeStartW = item.w;
+        embedResizeStartH = item.h;
+    };
+
+    const editWebEmbedUrl = (id: string) => {
+        const item = webEmbeds.find(x => x.id === id);
+        if (!item) return;
+        const next = window.prompt("编辑嵌入网址", item.url);
+        if (!next) return;
+        const url = next.trim();
+        if (!/^https?:\/\//i.test(url)) return;
+        webEmbeds = webEmbeds.map(e => e.id === id ? { ...e, url } : e);
+    };
+
     const onWindowPointerMoveEmbed = (e: PointerEvent) => {
-        if (!draggingEmbedId) return;
-        webEmbeds = webEmbeds.map(item => item.id === draggingEmbedId
-            ? { ...item, x: e.clientX - embedDragOffsetX, y: e.clientY - embedDragOffsetY }
-            : item);
+        if (draggingEmbedId) {
+            webEmbeds = webEmbeds.map(item => item.id === draggingEmbedId
+                ? { ...item, x: e.clientX - embedDragOffsetX, y: e.clientY - embedDragOffsetY }
+                : item);
+        }
+
+        if (resizingEmbedId) {
+            const dx = e.clientX - embedResizeStartX;
+            const dy = e.clientY - embedResizeStartY;
+            webEmbeds = webEmbeds.map(item => item.id === resizingEmbedId
+                ? { ...item, w: Math.max(220, embedResizeStartW + dx), h: Math.max(140, embedResizeStartH + dy) }
+                : item);
+        }
     };
 
     const onWindowPointerUpEmbed = () => {
         draggingEmbedId = null;
+        resizingEmbedId = null;
+    };
+
+    const startDragFrame = (id: string, e: PointerEvent) => {
+        const f = frames.find(x => x.id === id);
+        if (!f) return;
+        draggingFrameId = id;
+        frameDragOffsetX = e.clientX - f.x;
+        frameDragOffsetY = e.clientY - f.y;
+    };
+
+    const startResizeFrame = (id: string, e: PointerEvent) => {
+        const f = frames.find(x => x.id === id);
+        if (!f) return;
+        resizingFrameId = id;
+        frameResizeStartX = e.clientX;
+        frameResizeStartY = e.clientY;
+        frameResizeStartW = f.w;
+        frameResizeStartH = f.h;
+    };
+
+    const removeFrame = (id: string) => {
+        frames = frames.filter(f => f.id !== id);
+    };
+
+    const onWindowPointerMoveFrame = (e: PointerEvent) => {
+        if (draggingFrameId) {
+            frames = frames.map(f => f.id === draggingFrameId
+                ? { ...f, x: e.clientX - frameDragOffsetX, y: e.clientY - frameDragOffsetY }
+                : f);
+        }
+        if (resizingFrameId) {
+            const dx = e.clientX - frameResizeStartX;
+            const dy = e.clientY - frameResizeStartY;
+            frames = frames.map(f => f.id === resizingFrameId
+                ? { ...f, w: Math.max(120, frameResizeStartW + dx), h: Math.max(80, frameResizeStartH + dy) }
+                : f);
+        }
+    };
+
+    const onWindowPointerUpFrame = () => {
+        draggingFrameId = null;
+        resizingFrameId = null;
+
+        if (draftingFrame) {
+            draftingFrame = false;
+            if (draftFrameW > 20 && draftFrameH > 20) {
+                const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH } ];
+            }
+        }
     };
 
     const randomBackground = () => {
@@ -948,7 +1057,7 @@
     }
 </script>
 
-<svelte:window on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); }} />
+<svelte:window on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
@@ -1040,13 +1149,30 @@
             {/if}
         </div>
 
+        {#if draftingFrame}
+            <div class="frame-item draft" style={`left:${draftFrameX}px; top:${draftFrameY}px; width:${draftFrameW}px; height:${draftFrameH}px;`}>
+                <div class="frame-head"><span>Frame</span></div>
+            </div>
+        {/if}
+
+        {#each frames as frame (frame.id)}
+            <div class="frame-item" style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`}>
+                <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
+                    <span>{frame.title}</span>
+                    <button on:click={() => removeFrame(frame.id)}>✕</button>
+                </div>
+                <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
+            </div>
+        {/each}
+
         {#each webEmbeds as embed (embed.id)}
             <div class="web-embed" style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
-                    <button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button>
+                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
                 </div>
                 <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
+                <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
             </div>
         {/each}
 
@@ -1518,6 +1644,54 @@
     }
 
 
+    .frame-item {
+        position: fixed;
+        border: 2px dashed rgba(255,255,255,0.85);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
+        z-index: 5;
+        min-width: 40px;
+        min-height: 30px;
+    }
+
+    .frame-item.draft {
+        pointer-events: none;
+        border-color: rgba(255,255,255,0.55);
+    }
+
+    .frame-head {
+        height: 24px;
+        background: rgba(0,0,0,0.45);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 0 6px;
+        font-size: 11px;
+        cursor: move;
+    }
+
+    .frame-head button {
+        min-width: 22px;
+        height: 20px;
+        padding: 0;
+        border-radius: 5px;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+    .frame-resize {
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background: rgba(255,255,255,0.5);
+        cursor: nwse-resize;
+    }
+
     .web-embed {
         position: fixed;
         background: #fff;
@@ -1540,6 +1714,13 @@
         color: #333;
     }
 
+    .web-embed-actions {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .web-embed-head button.web-embed-mini,
     .web-embed-head button.web-embed-close {
         min-width: 24px;
         height: 22px;
@@ -1548,6 +1729,17 @@
         background: #fff;
         color: #333;
         border: 1px solid #ddd;
+    }
+
+    .web-embed-resize {
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        background: rgba(0,0,0,0.2);
+        cursor: nwse-resize;
     }
 
     .web-embed iframe {

@@ -73,7 +73,6 @@
 
     let teleprompterTextEl: HTMLTextAreaElement;
     let teleprompterPanelEl: HTMLDivElement;
-    let boardWrapEl: HTMLDivElement;
 
     let teleprompterHydrated = false;
 
@@ -203,23 +202,18 @@
     const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
     const clampAndSnapTeleprompter = () => {
-        if (!boardWrapEl || !teleprompterPanelEl) return;
+        if (!teleprompterPanelEl || typeof window === "undefined") return;
 
-        const boardRect = boardWrapEl.getBoundingClientRect();
         const panelRect = teleprompterPanelEl.getBoundingClientRect();
 
-        const minX = panelRect.width - boardRect.width + teleprompterBaseRight * 2;
-        const maxX = 0;
+        const minX = -(window.innerWidth - panelRect.width - teleprompterBaseRight);
+        const maxX = teleprompterBaseRight;
 
         const minY = -teleprompterBaseTop + 8;
-        const maxY = Math.max(minY, boardRect.height - panelRect.height - teleprompterBaseTop - 8);
+        const maxY = window.innerHeight - panelRect.height - teleprompterBaseTop - 8;
 
         teleprompterOffsetX = clamp(teleprompterOffsetX, minX, maxX);
         teleprompterOffsetY = clamp(teleprompterOffsetY, minY, maxY);
-
-        const snapThreshold = 42;
-        if (Math.abs(teleprompterOffsetX - maxX) <= snapThreshold) teleprompterOffsetX = maxX;
-        if (Math.abs(teleprompterOffsetX - minX) <= snapThreshold) teleprompterOffsetX = minX;
     };
 
     const persistTeleprompterPrefs = () => {
@@ -502,7 +496,7 @@
         </div>
     </div>
 
-    <div bind:this={boardWrapEl} class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
+    <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
             bind:this={canvasEl}
             class="board"
@@ -783,7 +777,7 @@
     }
 
     .teleprompter-panel {
-        position: absolute;
+        position: fixed;
         top: 64px;
         right: 12px;
         width: min(44%, 520px);

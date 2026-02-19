@@ -1050,11 +1050,11 @@
 
     .floating-controls {
         position: absolute;
-        top: 12px;
-        right: 12px;
+        top: 14px;
+        right: 150px;
         display: flex;
         gap: 8px;
-        z-index: 4;
+        z-index: 7;
     }
 
     .floating-btn {
@@ -1097,6 +1097,11 @@
     }
 
     @media (max-width: 900px) {
+        .floating-controls {
+            right: 12px;
+            top: 12px;
+        }
+
         .teleprompter-panel {
             width: calc(100% - 24px);
             min-width: 0;

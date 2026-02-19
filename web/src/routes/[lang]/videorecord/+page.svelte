@@ -10,7 +10,7 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" = "pen";
+    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -500,6 +500,17 @@
                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
             }
             ctx.stroke();
+        } else if (tool === "frame") {
+            const x = Math.min(x1, x2);
+            const y = Math.min(y1, y2);
+            const w = Math.abs(x2 - x1);
+            const h = Math.abs(y2 - y1);
+            ctx.setLineDash([10, 6]);
+            ctx.strokeRect(x, y, w, h);
+            ctx.setLineDash([]);
+            ctx.fillStyle = strokeColor;
+            ctx.font = '600 14px sans-serif';
+            ctx.fillText('Frame', x + 8, y + 8);
         }
 
         ctx.restore();
@@ -529,7 +540,7 @@
         lastX = p.x;
         lastY = p.y;
 
-        if (tool === "line" || tool === "rect" || tool === "circle") {
+        if (tool === "line" || tool === "rect" || tool === "circle" || tool === "frame") {
             shapeStartX = p.x;
             shapeStartY = p.y;
             shapeSnapshot = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
@@ -547,7 +558,7 @@
 
         const p = getPoint(e);
 
-        if (tool === "line" || tool === "rect" || tool === "circle") {
+        if (tool === "line" || tool === "rect" || tool === "circle" || tool === "frame") {
             drawShapePreview(shapeStartX, shapeStartY, p.x, p.y);
             lastX = p.x;
             lastY = p.y;
@@ -852,9 +863,6 @@
             {/if}
         </div>
 
-        <div class="right">
-            <button on:click={clearCanvas}>清空</button>
-        </div>
     </div>
 
     <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
@@ -864,7 +872,7 @@
             <div class="more-tools-title">More tools</div>
             <div class="more-tools-grid">
                 <button class:active={tool === "laser"} on:click={() => { tool = "laser"; showMoreTools = false; }}>Laser point</button>
-                <button disabled title="coming soon">Frame tool</button>
+                <button class:active={tool === "frame"} on:click={() => { tool = "frame"; showMoreTools = false; }}>Frame tool</button>
                 <button disabled title="coming soon">Web embed</button>
             </div>
             <div class="laser-settings">

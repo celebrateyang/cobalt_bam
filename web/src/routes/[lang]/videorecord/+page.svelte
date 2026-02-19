@@ -203,6 +203,45 @@
         requestAnimationFrame(() => fillCanvasBg());
     };
 
+    const duplicateSlide = () => {
+        saveCurrentSlide();
+        const clone = slides[activeSlide] || "";
+        const next = [ ...slides ];
+        next.splice(activeSlide + 1, 0, clone);
+        slides = next;
+        activeSlide = activeSlide + 1;
+        requestAnimationFrame(() => loadSlide(activeSlide));
+    };
+
+    const deleteSlide = () => {
+        if (slides.length <= 1) {
+            slides = [""];
+            activeSlide = 0;
+            requestAnimationFrame(() => fillCanvasBg());
+            return;
+        }
+
+        const next = [ ...slides ];
+        next.splice(activeSlide, 1);
+        const target = Math.min(activeSlide, next.length - 1);
+        slides = next;
+        activeSlide = target;
+        requestAnimationFrame(() => loadSlide(target));
+    };
+
+    const moveSlide = (dir: -1 | 1) => {
+        saveCurrentSlide();
+        const from = activeSlide;
+        const to = from + dir;
+        if (to < 0 || to >= slides.length) return;
+
+        const next = [ ...slides ];
+        const [item] = next.splice(from, 1);
+        next.splice(to, 0, item);
+        slides = next;
+        activeSlide = to;
+    };
+
     const resizeCanvas = () => {
         if (!canvasEl || !ctx) return;
 
@@ -566,8 +605,16 @@
 
         <div class="slides-panel">
             <div class="slides-title">📋 幻灯片</div>
+
+            <div class="slides-actions">
+                <button class="slide-icon" title="上移" on:click={() => moveSlide(-1)}>↑</button>
+                <button class="slide-icon" title="下移" on:click={() => moveSlide(1)}>↓</button>
+                <button class="slide-icon" title="复制" on:click={duplicateSlide}>⎘</button>
+                <button class="slide-icon" title="删除" on:click={deleteSlide}>✕</button>
+            </div>
+
             <div class="slides-list">
-                {#each slides as _, i}
+                {#each slides as thumb, i}
                     <button
                         class="slide-item"
                         class:active={i === activeSlide}
@@ -576,10 +623,16 @@
                             loadSlide(i);
                         }}
                     >
-                        {i + 1}
+                        <span class="slide-no">{i + 1}</span>
+                        {#if thumb}
+                            <img src={thumb} alt={`slide-${i + 1}`} />
+                        {:else}
+                            <span class="slide-empty">空</span>
+                        {/if}
                     </button>
                 {/each}
             </div>
+
             <button class="slide-add" on:click={addSlide}>＋</button>
         </div>
 
@@ -1130,31 +1183,75 @@
         color: #555;
     }
 
+    .slides-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        width: 100%;
+    }
+
+    .slide-icon {
+        height: 26px;
+        border-radius: 8px;
+        border: 1px solid #d8d8d8;
+        background: #fff;
+        color: #333;
+        padding: 0;
+        font-size: 13px;
+    }
+
     .slides-list {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        max-height: 180px;
+        max-height: 230px;
         overflow: auto;
         width: 100%;
         align-items: center;
     }
 
     .slide-item {
-        width: 36px;
-        height: 36px;
+        width: 54px;
+        height: 42px;
         border-radius: 10px;
         background: #ececec;
         color: #222;
         border: 1px solid #ddd;
         padding: 0;
         font-weight: 700;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .slide-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .slide-no {
+        position: absolute;
+        left: 4px;
+        top: 3px;
+        z-index: 1;
+        font-size: 10px;
+        background: rgba(0,0,0,0.55);
+        color: #fff;
+        border-radius: 6px;
+        padding: 1px 4px;
+    }
+
+    .slide-empty {
+        font-size: 11px;
+        color: #666;
     }
 
     .slide-item.active {
-        background: #232323;
-        color: #fff;
-        border-color: #232323;
+        outline: 2px solid #232323;
+        outline-offset: 0;
     }
 
     .slide-add {

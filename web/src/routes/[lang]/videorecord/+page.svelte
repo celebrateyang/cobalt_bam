@@ -60,8 +60,7 @@
     let teleprompterLastTs = 0;
     let teleprompterRaf = 0;
 
-    let teleprompterViewportEl: HTMLDivElement;
-    let teleprompterContentEl: HTMLDivElement;
+    let teleprompterTextEl: HTMLTextAreaElement;
 
     // draggable teleprompter panel
     let teleprompterOffsetX = 0;
@@ -258,7 +257,7 @@
 
     const resetTeleprompterPosition = () => {
         teleprompterScrollTop = 0;
-        if (teleprompterViewportEl) teleprompterViewportEl.scrollTop = 0;
+        if (teleprompterTextEl) teleprompterTextEl.scrollTop = 0;
     };
 
     const stopTeleprompter = () => {
@@ -269,7 +268,7 @@
     };
 
     const runTeleprompter = (ts: number) => {
-        if (!isTeleprompterRunning || !teleprompterViewportEl || !teleprompterContentEl) return;
+        if (!isTeleprompterRunning || !teleprompterTextEl) return;
 
         if (!teleprompterLastTs) teleprompterLastTs = ts;
         const dt = (ts - teleprompterLastTs) / 1000;
@@ -279,17 +278,17 @@
 
         const maxScroll = Math.max(
             0,
-            teleprompterContentEl.scrollHeight - teleprompterViewportEl.clientHeight,
+            teleprompterTextEl.scrollHeight - teleprompterTextEl.clientHeight,
         );
 
         if (teleprompterScrollTop >= maxScroll) {
             teleprompterScrollTop = maxScroll;
-            teleprompterViewportEl.scrollTop = teleprompterScrollTop;
+            teleprompterTextEl.scrollTop = teleprompterScrollTop;
             stopTeleprompter();
             return;
         }
 
-        teleprompterViewportEl.scrollTop = teleprompterScrollTop;
+        teleprompterTextEl.scrollTop = teleprompterScrollTop;
         teleprompterRaf = requestAnimationFrame(runTeleprompter);
     };
 
@@ -383,52 +382,35 @@
                     <small>拖动这里移动面板</small>
                 </div>
 
-                <div class="teleprompter-controls">
-                    <button on:click={startTeleprompter} disabled={isTeleprompterRunning}>开始滚动</button>
+                <div class="teleprompter-controls compact">
+                    <button on:click={startTeleprompter} disabled={isTeleprompterRunning}>播放</button>
                     <button on:click={stopTeleprompter} disabled={!isTeleprompterRunning}>暂停</button>
                     <button on:click={resetTeleprompterPosition}>重置</button>
 
-                    <label>
+                    <label class="mini">
                         速度
                         <input type="range" min="10" max="180" step="5" bind:value={teleprompterSpeed} />
-                        <span>{teleprompterSpeed}px/s</span>
                     </label>
 
-                    <label>
-                        透明度
+                    <label class="mini">
+                        透明
                         <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
-                        <span>{teleprompterOpacity}%</span>
-                    </label>
-
-                    <label>
-                        字号
-                        <input type="range" min="16" max="52" step="2" bind:value={teleprompterFontSize} />
-                        <span>{teleprompterFontSize}px</span>
                     </label>
                 </div>
 
-                <div class="teleprompter-layout">
-                    <textarea
-                        bind:value={teleprompterText}
-                        placeholder="在这里输入提词内容..."
-                        on:input={() => {
-                            stopTeleprompter();
-                            resetTeleprompterPosition();
-                        }}
-                    />
+                <textarea
+                    class="teleprompter-editor"
+                    bind:this={teleprompterTextEl}
+                    bind:value={teleprompterText}
+                    style={`font-size:${teleprompterFontSize}px`}
+                    placeholder="在此粘贴你的脚本..."
+                    on:input={() => {
+                        stopTeleprompter();
+                        resetTeleprompterPosition();
+                    }}
+                />
 
-                    <div class="teleprompter-preview" bind:this={teleprompterViewportEl}>
-                        <div
-                            bind:this={teleprompterContentEl}
-                            class="teleprompter-content"
-                            style={`font-size:${teleprompterFontSize}px`}
-                        >
-                            {teleprompterText}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="teleprompter-note">提词器是页面浮层，不在录制的 canvas 里，因此不会出现在导出视频中。</div>
+                <div class="teleprompter-note">仅你可见，不会出现在录制内容中。</div>
             </div>
         {/if}
     </div>
@@ -640,41 +622,36 @@
         font-size: 12px;
         color: var(--subtext);
     }
-
-    .teleprompter-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        min-height: 260px;
+    .teleprompter-controls.compact {
+        gap: 6px;
+        margin-bottom: 6px;
     }
 
-    textarea {
+    .teleprompter-controls .mini {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        padding: 0 6px;
+    }
+
+    .teleprompter-controls .mini input {
+        width: 88px;
+    }
+
+    .teleprompter-editor {
         width: 100%;
-        min-height: 260px;
+        min-height: 320px;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.16);
         background: rgba(255, 255, 255, 0.04);
         color: var(--text);
         padding: 10px;
-        resize: vertical;
-        box-sizing: border-box;
-        outline: none;
-    }
-
-    .teleprompter-preview {
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(0, 0, 0, 0.45);
-        overflow: auto;
-        padding: 14px 12px;
-        box-sizing: border-box;
-    }
-
-    .teleprompter-content {
-        white-space: pre-wrap;
+        resize: none;
         line-height: 1.7;
         font-weight: 700;
-        color: #f3f7ff;
+        box-sizing: border-box;
+        outline: none;
     }
 
     .teleprompter-note {
@@ -866,9 +843,6 @@
             min-width: 0;
         }
 
-        .teleprompter-layout {
-            grid-template-columns: 1fr;
-        }
 
         .ratio-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));

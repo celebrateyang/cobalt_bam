@@ -18,7 +18,28 @@
     let recordDuration = 0;
     let timer: ReturnType<typeof setInterval> | null = null;
 
-    const backgroundColor = "#111318";
+    // recording settings
+    let showSettings = false;
+    const aspectOptions = [
+        { key: "16:9", label: "YouTube" },
+        { key: "4:3", label: "经典" },
+        { key: "3:4", label: "小红书" },
+        { key: "9:16", label: "抖音" },
+        { key: "1:1", label: "正方形" },
+    ];
+    let aspectRatio = "16:9";
+
+    const bgColors = [
+        "#111318",
+        "#1b2430",
+        "#2a1f36",
+        "#123129",
+        "#2b2d42",
+        "#0b2f4b",
+        "#2f1b1b",
+        "#263238",
+    ];
+    let backgroundColor = bgColors[0];
 
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText = "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
@@ -26,12 +47,28 @@
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
     let teleprompterFontSize = 28;
+    let teleprompterOpacity = 92;
     let teleprompterScrollTop = 0;
     let teleprompterLastTs = 0;
     let teleprompterRaf = 0;
 
     let teleprompterViewportEl: HTMLDivElement;
     let teleprompterContentEl: HTMLDivElement;
+
+    const ratioToNumber = (ratio: string) => {
+        const [w, h] = ratio.split(":").map(Number);
+        if (!w || !h) return 16 / 9;
+        return w / h;
+    };
+
+    $: boardAspectRatio = ratioToNumber(aspectRatio);
+
+    const fillCanvasBg = () => {
+        if (!ctx || !canvasEl) return;
+        const rect = canvasEl.getBoundingClientRect();
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+    };
 
     const resizeCanvas = () => {
         if (!canvasEl || !ctx) return;
@@ -51,12 +88,17 @@
         canvasEl.height = Math.max(1, Math.floor(rect.height * dpr));
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, rect.width, rect.height);
+        fillCanvasBg();
 
         if (snapshot.width > 0 && snapshot.height > 0) {
             ctx.drawImage(snapshot, 0, 0, rect.width, rect.height);
         }
+    };
+
+    const triggerResizeNextFrame = () => {
+        requestAnimationFrame(() => {
+            resizeCanvas();
+        });
     };
 
     onMount(() => {
@@ -121,10 +163,12 @@
     };
 
     const clearCanvas = () => {
-        if (!ctx || !canvasEl) return;
-        const rect = canvasEl.getBoundingClientRect();
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, rect.width, rect.height);
+        fillCanvasBg();
+    };
+
+    const randomBackground = () => {
+        const next = bgColors[Math.floor(Math.random() * bgColors.length)];
+        backgroundColor = next;
     };
 
     const startRecord = async () => {
@@ -242,6 +286,7 @@
 
         <div class="right">
             <button on:click={clearCanvas}>清空</button>
+            <button on:click={() => (showSettings = true)}>录制设置</button>
 
             <button class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>
                 {showTeleprompter ? "隐藏提词器" : "显示提词器"}
@@ -255,7 +300,7 @@
         </div>
     </div>
 
-    <div class="board-wrap">
+    <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor};`}>
         <canvas
             bind:this={canvasEl}
             class="board"
@@ -267,7 +312,7 @@
         />
 
         {#if showTeleprompter}
-            <div class="teleprompter-panel">
+            <div class="teleprompter-panel" style={`opacity:${teleprompterOpacity / 100};`}>
                 <div class="teleprompter-controls">
                     <button on:click={startTeleprompter} disabled={isTeleprompterRunning}>开始滚动</button>
                     <button on:click={stopTeleprompter} disabled={!isTeleprompterRunning}>暂停</button>
@@ -277,6 +322,12 @@
                         速度
                         <input type="range" min="10" max="180" step="5" bind:value={teleprompterSpeed} />
                         <span>{teleprompterSpeed}px/s</span>
+                    </label>
+
+                    <label>
+                        透明度
+                        <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
+                        <span>{teleprompterOpacity}%</span>
                     </label>
 
                     <label>
@@ -315,13 +366,71 @@
     <p class="hint">提示：停止录制后会自动下载 webm 视频。</p>
 </div>
 
+{#if showSettings}
+    <button class="modal-backdrop" aria-label="关闭录制设置" on:click={() => (showSettings = false)}></button>
+
+    <div class="settings-modal" role="dialog" aria-label="录制设置">
+        <div class="settings-header">
+            <h3>录制设置</h3>
+            <button on:click={() => (showSettings = false)}>✕</button>
+        </div>
+
+        <section>
+            <div class="section-title">画面比例</div>
+            <div class="ratio-grid">
+                {#each aspectOptions as item}
+                    <button
+                        class:active={aspectRatio === item.key}
+                        on:click={() => {
+                            aspectRatio = item.key;
+                            triggerResizeNextFrame();
+                        }}
+                    >
+                        <strong>{item.key}</strong>
+                        <small>{item.label}</small>
+                    </button>
+                {/each}
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">背景</div>
+            <div class="bg-actions">
+                <button on:click={randomBackground}>随机选择背景</button>
+            </div>
+            <div class="bg-grid">
+                {#each bgColors as color}
+                    <button
+                        class="bg-swatch"
+                        class:selected={backgroundColor === color}
+                        style={`background:${color}`}
+                        on:click={() => {
+                            backgroundColor = color;
+                            clearCanvas();
+                        }}
+                        aria-label={`背景 ${color}`}
+                    ></button>
+                {/each}
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">提词器透明度</div>
+            <label class="slider-row">
+                <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
+                <span>{teleprompterOpacity}%</span>
+            </label>
+        </section>
+    </div>
+{/if}
+
 <style>
     .page {
         display: flex;
         flex-direction: column;
         gap: 12px;
         width: 100%;
-        max-width: 1100px;
+        max-width: 1240px;
         margin: 0 auto;
         padding: 10px;
         box-sizing: border-box;
@@ -377,11 +486,11 @@
     .board-wrap {
         position: relative;
         width: 100%;
-        height: min(72vh, 760px);
+        height: auto;
+        max-height: 78vh;
         border-radius: 14px;
         overflow: hidden;
         border: 1px solid var(--button);
-        background: #111318;
     }
 
     .board {
@@ -472,6 +581,125 @@
         text-align: center;
     }
 
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        border: 0;
+        z-index: 8;
+        border-radius: 0;
+    }
+
+    .settings-modal {
+        position: fixed;
+        z-index: 9;
+        inset: 7vh auto auto 50%;
+        transform: translateX(-50%);
+        width: min(900px, calc(100vw - 28px));
+        max-height: 84vh;
+        overflow: auto;
+        background: #f7f7f7;
+        color: #1f1f1f;
+        border-radius: 20px;
+        padding: 16px;
+        box-sizing: border-box;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .settings-header h3 {
+        margin: 0;
+        font-size: 26px;
+    }
+
+    .settings-header button {
+        background: #ececec;
+        color: #333;
+    }
+
+    section {
+        margin-top: 16px;
+        padding-top: 8px;
+        border-top: 1px solid #ddd;
+    }
+
+    .section-title {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .ratio-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .ratio-grid button {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
+        min-height: 64px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .ratio-grid button.active {
+        background: #232323;
+        color: #fff;
+        border-color: #232323;
+    }
+
+    .ratio-grid strong {
+        font-size: 24px;
+        line-height: 1;
+    }
+
+    .ratio-grid small {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    .bg-actions {
+        margin-bottom: 10px;
+    }
+
+    .bg-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 8px;
+    }
+
+    .bg-swatch {
+        border: 2px solid transparent;
+        height: 44px;
+        border-radius: 10px;
+        padding: 0;
+    }
+
+    .bg-swatch.selected {
+        border-color: #111;
+    }
+
+    .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .slider-row input {
+        flex: 1;
+    }
+
     @media (max-width: 900px) {
         .teleprompter-panel {
             width: calc(100% - 24px);
@@ -480,6 +708,14 @@
 
         .teleprompter-layout {
             grid-template-columns: 1fr;
+        }
+
+        .ratio-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .bg-grid {
+            grid-template-columns: repeat(4, 1fr);
         }
     }
 </style>

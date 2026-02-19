@@ -10,7 +10,15 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" = "pen";
+    let tool: "pen" | "eraser" | "text" = "pen";
+
+    // text tool
+    let textFontSize = 28;
+    let textEditing = false;
+    let textInputX = 0;
+    let textInputY = 0;
+    let textInputValue = "";
+    let textAreaEl: HTMLTextAreaElement | null = null;
 
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
@@ -450,9 +458,19 @@
     const beginDraw = (e: PointerEvent) => {
         if (!ctx) return;
 
+        const p = getPoint(e);
+
+        if (tool === "text") {
+            textInputX = p.x;
+            textInputY = p.y;
+            textInputValue = "";
+            textEditing = true;
+            requestAnimationFrame(() => textAreaEl?.focus());
+            return;
+        }
+
         pushHistorySnapshot();
         drawing = true;
-        const p = getPoint(e);
         lastX = p.x;
         lastY = p.y;
 
@@ -461,7 +479,7 @@
 
     const draw = (e: PointerEvent) => {
         updateCursorPosition(e);
-        if (!drawing || !ctx) return;
+        if (!drawing || !ctx || tool === "text") return;
 
         const p = getPoint(e);
 
@@ -500,6 +518,48 @@
         pushHistorySnapshot();
         fillCanvasBg();
         saveCurrentSlide();
+    };
+
+    const commitTextToCanvas = () => {
+        if (!ctx || !canvasEl || !textEditing) return;
+
+        const lines = textInputValue.split("
+").filter(line => line.trim().length > 0);
+        textEditing = false;
+        if (!lines.length) {
+            textInputValue = "";
+            return;
+        }
+
+        pushHistorySnapshot();
+        ctx.save();
+        ctx.fillStyle = strokeColor;
+        ctx.font = `700 ${textFontSize}px sans-serif`;
+        ctx.textBaseline = "top";
+        const lineHeight = Math.round(textFontSize * 1.35);
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], textInputX, textInputY + i * lineHeight);
+        }
+        ctx.restore();
+
+        saveCurrentSlide();
+        textInputValue = "";
+    };
+
+    const cancelTextInput = () => {
+        textEditing = false;
+        textInputValue = "";
+    };
+
+    const onTextInputKeydown = (e: KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            e.preventDefault();
+            commitTextToCanvas();
+        }
+        if (e.key === "Escape") {
+            e.preventDefault();
+            cancelTextInput();
+        }
     };
 
     const randomBackground = () => {
@@ -654,12 +714,16 @@
         <div class="left">
             <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
             <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
+            <button class:active={tool === "text"} on:click={() => (tool = "text")}>文本</button>
             <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
             <button on:click={redo} disabled={redoStack.length === 0}>重做</button>
 
             <input type="color" bind:value={strokeColor} disabled={tool === "eraser"} />
             <input type="range" min="1" max="24" bind:value={strokeWidth} />
             <span>{strokeWidth}px</span>
+            {#if tool === "text"}
+                <label class="text-size">字号 <input type="range" min="14" max="64" step="1" bind:value={textFontSize} /> <span>{textFontSize}px</span></label>
+            {/if}
         </div>
 
         <div class="right">
@@ -678,6 +742,18 @@
             on:pointercancel={endDraw}
             on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
         />
+
+        {#if textEditing}
+            <textarea
+                bind:this={textAreaEl}
+                class="canvas-text-input"
+                style={`left:${textInputX}px; top:${textInputY}px; font-size:${textFontSize}px; color:${strokeColor};`}
+                bind:value={textInputValue}
+                placeholder="输入文字，Ctrl/Cmd+Enter 确认"
+                on:keydown={onTextInputKeydown}
+                on:blur={commitTextToCanvas}
+            />
+        {/if}
 
         {#if showCursorHighlight && cursorInside && isRecording}
             <div
@@ -937,6 +1013,13 @@
         flex-wrap: wrap;
     }
 
+    .text-size {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+    }
+
     button {
         border: 0;
         border-radius: 10px;
@@ -984,6 +1067,22 @@
         cursor: crosshair;
         border-radius: inherit;
         background: transparent;
+    }
+
+    .canvas-text-input {
+        position: absolute;
+        min-width: 180px;
+        min-height: 48px;
+        max-width: 60%;
+        border: 1px dashed rgba(255,255,255,0.5);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.35);
+        padding: 8px 10px;
+        line-height: 1.35;
+        font-weight: 700;
+        outline: none;
+        z-index: 6;
+        resize: both;
     }
 
     .teleprompter-panel {

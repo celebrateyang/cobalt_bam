@@ -23,6 +23,9 @@
     let activeSlide = 0;
     let draggingSlideIndex: number | null = null;
 
+    let undoStack: string[] = [];
+    let redoStack: string[] = [];
+
     // recording settings
     let showSettings = false;
     const aspectOptions = [
@@ -186,6 +189,9 @@
         const data = slides[index];
         if (!data) {
             fillCanvasBg();
+            undoStack = [];
+            redoStack = [];
+            pushHistorySnapshot();
             return;
         }
         const img = new Image();
@@ -193,14 +199,64 @@
             const rect = canvasEl.getBoundingClientRect();
             fillCanvasBg();
             ctx?.drawImage(img, 0, 0, rect.width, rect.height);
+            undoStack = [];
+            redoStack = [];
+            pushHistorySnapshot();
         };
         img.src = data;
+    };
+
+    const pushHistorySnapshot = () => {
+        if (!canvasEl) return;
+        const snap = canvasEl.toDataURL("image/png");
+        if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
+            undoStack = [ ...undoStack, snap ].slice(-80);
+            redoStack = [];
+        }
+    };
+
+    const applySnapshotToCanvas = (data: string) => {
+        if (!ctx || !canvasEl) return;
+        if (!data) {
+            fillCanvasBg();
+            saveCurrentSlide();
+            return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            const rect = canvasEl.getBoundingClientRect();
+            fillCanvasBg();
+            ctx?.drawImage(img, 0, 0, rect.width, rect.height);
+            saveCurrentSlide();
+        };
+        img.src = data;
+    };
+
+    const undo = () => {
+        if (!canvasEl || undoStack.length === 0) return;
+        const current = canvasEl.toDataURL("image/png");
+        const prev = undoStack[undoStack.length - 1];
+        undoStack = undoStack.slice(0, -1);
+        redoStack = [ ...redoStack, current ].slice(-80);
+        applySnapshotToCanvas(prev);
+    };
+
+    const redo = () => {
+        if (!canvasEl || redoStack.length === 0) return;
+        const current = canvasEl.toDataURL("image/png");
+        const next = redoStack[redoStack.length - 1];
+        redoStack = redoStack.slice(0, -1);
+        undoStack = [ ...undoStack, current ].slice(-80);
+        applySnapshotToCanvas(next);
     };
 
     const addSlide = () => {
         saveCurrentSlide();
         slides = [ ...slides, "" ];
         activeSlide = slides.length - 1;
+        undoStack = [];
+        redoStack = [];
         requestAnimationFrame(() => fillCanvasBg());
     };
 
@@ -341,6 +397,7 @@
         if (!ctx) return;
 
         resizeCanvas();
+        pushHistorySnapshot();
 
         try {
             const raw = window.localStorage.getItem("videorecord.teleprompter");
@@ -393,6 +450,7 @@
     const beginDraw = (e: PointerEvent) => {
         if (!ctx) return;
 
+        pushHistorySnapshot();
         drawing = true;
         const p = getPoint(e);
         lastX = p.x;
@@ -439,6 +497,7 @@
     };
 
     const clearCanvas = () => {
+        pushHistorySnapshot();
         fillCanvasBg();
         saveCurrentSlide();
     };
@@ -595,6 +654,8 @@
         <div class="left">
             <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
             <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
+            <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
+            <button on:click={redo} disabled={redoStack.length === 0}>重做</button>
 
             <input type="color" bind:value={strokeColor} disabled={tool === "eraser"} />
             <input type="range" min="1" max="24" bind:value={strokeWidth} />

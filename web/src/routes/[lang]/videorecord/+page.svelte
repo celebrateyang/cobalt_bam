@@ -1055,9 +1055,32 @@
     $: if (teleprompterHydrated) {
         persistTeleprompterPrefs();
     }
+
+    const onGlobalKeydown = (e: KeyboardEvent) => {
+        if (textEditing) return;
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            if (e.shiftKey) redo(); else undo();
+            return;
+        }
+
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
+            return;
+        }
+
+        const key = e.key.toLowerCase();
+        if (key === "v") tool = "pen";
+        if (key === "e") tool = "eraser";
+        if (key === "t") tool = "text";
+        if (key === "l") tool = "line";
+        if (key === "r") tool = "rect";
+        if (key === "c") tool = "circle";
+        if (key === "f") tool = "frame";
+    };
+
 </script>
 
-<svelte:window on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
+<svelte:window on:keydown={onGlobalKeydown} on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
@@ -1259,7 +1282,7 @@
         {/if}
     </div>
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V画笔 E橡皮 T文本 L线 R矩形 C圆 F框架，Ctrl/Cmd+Z 撤销。</p>
 </div>
 
 {#if showSettings}

@@ -1314,8 +1314,7 @@
         padding: 10px;
     }
 
-    .left,
-    .right {
+    .left {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -1345,16 +1344,6 @@
 
     button.active {
         background: var(--accent);
-        color: #fff;
-    }
-
-    button.record {
-        background: #d94343;
-        color: #fff;
-    }
-
-    button.stop {
-        background: #3a8f62;
         color: #fff;
     }
 
@@ -1429,14 +1418,6 @@
         gap: 8px;
         align-items: center;
         margin-bottom: 8px;
-    }
-
-    .teleprompter-controls label {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--subtext);
     }
     .teleprompter-controls.compact {
         gap: 6px;

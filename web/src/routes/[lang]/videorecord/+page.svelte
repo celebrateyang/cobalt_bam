@@ -73,6 +73,20 @@
     let frameResizeStartW = 0;
     let frameResizeStartH = 0;
 
+    const clampToViewport = (x: number, y: number, w: number, h: number) => {
+        if (typeof window === "undefined") return { x, y };
+        const pad = 8;
+        const maxX = Math.max(pad, window.innerWidth - w - pad);
+        const maxY = Math.max(pad, window.innerHeight - h - pad);
+        return {
+            x: Math.min(maxX, Math.max(pad, x)),
+            y: Math.min(maxY, Math.max(pad, y)),
+        };
+    };
+
+    const snapValue = (value: number, target: number, threshold = 12) =>
+        Math.abs(value - target) <= threshold ? target : value;
+
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
     let isRecording = false;
@@ -842,21 +856,42 @@
 
     const onWindowPointerMoveEmbed = (e: PointerEvent) => {
         if (draggingEmbedId) {
-            webEmbeds = webEmbeds.map(item => item.id === draggingEmbedId
-                ? { ...item, x: e.clientX - embedDragOffsetX, y: e.clientY - embedDragOffsetY }
-                : item);
+            webEmbeds = webEmbeds.map(item => {
+                if (item.id !== draggingEmbedId) return item;
+                const nx = e.clientX - embedDragOffsetX;
+                const ny = e.clientY - embedDragOffsetY;
+                const clamped = clampToViewport(nx, ny, item.w, item.h);
+                return { ...item, x: clamped.x, y: clamped.y };
+            });
         }
 
         if (resizingEmbedId) {
             const dx = e.clientX - embedResizeStartX;
             const dy = e.clientY - embedResizeStartY;
-            webEmbeds = webEmbeds.map(item => item.id === resizingEmbedId
-                ? { ...item, w: Math.max(220, embedResizeStartW + dx), h: Math.max(140, embedResizeStartH + dy) }
-                : item);
+            webEmbeds = webEmbeds.map(item => {
+                if (item.id !== resizingEmbedId) return item;
+                const nextW = Math.max(220, embedResizeStartW + dx);
+                const nextH = Math.max(140, embedResizeStartH + dy);
+                const maxW = Math.max(220, window.innerWidth - item.x - 8);
+                const maxH = Math.max(140, window.innerHeight - item.y - 8);
+                return { ...item, w: Math.min(maxW, nextW), h: Math.min(maxH, nextH) };
+            });
         }
     };
 
     const onWindowPointerUpEmbed = () => {
+        webEmbeds = webEmbeds.map(item => {
+            const maxX = Math.max(8, window.innerWidth - item.w - 8);
+            const maxY = Math.max(8, window.innerHeight - item.h - 8);
+            let x = item.x;
+            let y = item.y;
+            x = snapValue(x, 8);
+            y = snapValue(y, 8);
+            x = snapValue(x, maxX);
+            y = snapValue(y, maxY);
+            const c = clampToViewport(x, y, item.w, item.h);
+            return { ...item, x: c.x, y: c.y };
+        });
         draggingEmbedId = null;
         resizingEmbedId = null;
     };
@@ -896,20 +931,42 @@
 
     const onWindowPointerMoveFrame = (e: PointerEvent) => {
         if (draggingFrameId) {
-            frames = frames.map(f => f.id === draggingFrameId
-                ? { ...f, x: e.clientX - frameDragOffsetX, y: e.clientY - frameDragOffsetY }
-                : f);
+            frames = frames.map(f => {
+                if (f.id !== draggingFrameId) return f;
+                const nx = e.clientX - frameDragOffsetX;
+                const ny = e.clientY - frameDragOffsetY;
+                const c = clampToViewport(nx, ny, f.w, f.h);
+                return { ...f, x: c.x, y: c.y };
+            });
         }
         if (resizingFrameId) {
             const dx = e.clientX - frameResizeStartX;
             const dy = e.clientY - frameResizeStartY;
-            frames = frames.map(f => f.id === resizingFrameId
-                ? { ...f, w: Math.max(120, frameResizeStartW + dx), h: Math.max(80, frameResizeStartH + dy) }
-                : f);
+            frames = frames.map(f => {
+                if (f.id !== resizingFrameId) return f;
+                const nextW = Math.max(120, frameResizeStartW + dx);
+                const nextH = Math.max(80, frameResizeStartH + dy);
+                const maxW = Math.max(120, window.innerWidth - f.x - 8);
+                const maxH = Math.max(80, window.innerHeight - f.y - 8);
+                return { ...f, w: Math.min(maxW, nextW), h: Math.min(maxH, nextH) };
+            });
         }
     };
 
     const onWindowPointerUpFrame = () => {
+        frames = frames.map(f => {
+            const maxX = Math.max(8, window.innerWidth - f.w - 8);
+            const maxY = Math.max(8, window.innerHeight - f.h - 8);
+            let x = f.x;
+            let y = f.y;
+            x = snapValue(x, 8);
+            y = snapValue(y, 8);
+            x = snapValue(x, maxX);
+            y = snapValue(y, maxY);
+            const c = clampToViewport(x, y, f.w, f.h);
+            return { ...f, x: c.x, y: c.y };
+        });
+
         draggingFrameId = null;
         resizingFrameId = null;
 

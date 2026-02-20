@@ -143,6 +143,7 @@
     let lastProjectSaveAt = 0;
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
+    let showShortcutsHelp = false;
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
         { key: "4:3", label: "经典" },
@@ -1656,6 +1657,14 @@
         ? `${Math.max(0, Math.floor((Date.now() - lastProjectSaveAt) / 1000))}s`
         : "--";
 
+    $: boardCursor = tool === "text"
+        ? "text"
+        : tool === "select"
+            ? "default"
+            : tool === "laser"
+                ? "crosshair"
+                : "crosshair";
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1795,7 +1804,7 @@
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
             bind:this={canvasEl}
-            class="board"
+            class="board" style={`cursor:${boardCursor};`}
             on:pointerenter={enterBoard}
             on:pointerdown={beginDraw}
             on:pointermove={draw}
@@ -1841,8 +1850,9 @@
         <div class="floating-controls">
             <button class="floating-btn" on:click={() => (showSettings = true)}>⚙</button>
             <button class="floating-btn" class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>📝</button>
-            <button class="floating-btn" on:click={saveProjectSnapshot}>💾</button>
-            <button class="floating-btn" on:click={loadProjectSnapshot}>⟲</button>
+            <button class="floating-btn" on:click={saveProjectSnapshot} title="保存项目">💾</button>
+            <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
+            <button class="floating-btn" on:click={() => (showShortcutsHelp = !showShortcutsHelp)} title="快捷键帮助">⌨</button>
             {#if !isRecording}
                 <button class="floating-record" on:click={startRecord}>● 录制</button>
             {:else}
@@ -2058,6 +2068,14 @@
 
     {#if exportNotice}
         <div class={`export-notice ${exportNoticeLevel}`}>{exportNotice}</div>
+    {/if}
+
+    {#if showShortcutsHelp}
+        <div class="shortcut-panel">
+            <div><strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形 · C 圆 · F 框架</div>
+            <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z 重做 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
+            <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
+        </div>
     {/if}
 
     <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象。</p>
@@ -2622,6 +2640,18 @@
         padding: 8px 10px;
         font-size: 12px;
         color: var(--subtext);
+    }
+
+    .shortcut-panel {
+        margin-top: 6px;
+        background: var(--button);
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 12px;
+        color: var(--subtext);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .export-notice {

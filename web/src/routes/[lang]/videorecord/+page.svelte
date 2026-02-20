@@ -130,6 +130,7 @@
     let chunks: Blob[] = [];
     let isRecording = false;
     let recordDuration = 0;
+    let isRecordPaused = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 
     // slides (basic multi-page)
@@ -1311,6 +1312,7 @@
             }
 
             isRecording = false;
+            isRecordPaused = false;
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             cameraRenderRaf = 0;
             stopCameraStream();
@@ -1332,6 +1334,7 @@
 
         recorder.start(300);
         isRecording = true;
+        isRecordPaused = false;
         if (showCameraInRecord) {
             try {
                 await startCameraRenderLoop();
@@ -1341,7 +1344,7 @@
         }
         recordDuration = 0;
         timer = setInterval(() => {
-            recordDuration += 1;
+            if (!isRecordPaused) recordDuration += 1;
         }, 1000);
     };
 
@@ -1351,6 +1354,19 @@
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
         stopMicStream();
+    };
+
+    const togglePauseRecord = () => {
+        if (!recorder || recorder.state === "inactive") return;
+        if (recorder.state === "recording") {
+            recorder.pause();
+            isRecordPaused = true;
+            return;
+        }
+        if (recorder.state === "paused") {
+            recorder.resume();
+            isRecordPaused = false;
+        }
     };
 
     const formatDuration = (sec: number) => {
@@ -1922,6 +1938,12 @@
             return;
         }
 
+        if (e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            if (isRecording) togglePauseRecord();
+            return;
+        }
+
         const key = e.key.toLowerCase();
         if (key === "v") tool = "pen";
         if (key === "e") tool = "eraser";
@@ -2037,6 +2059,7 @@
             {#if !isRecording}
                 <button class="floating-record" on:click={triggerRecordStart}>● 录制</button>
             {:else}
+                <button class="floating-pause" on:click={togglePauseRecord}>{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button>
                 <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
             {/if}
         </div>
@@ -2252,7 +2275,7 @@
         <span>工具：{toolLabel}</span>
         <span>选中：{selectionCount}</span>
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
-        <span>录制：{isRecording ? `进行中 ${formatDuration(recordDuration)}` : "未录制"}</span>
+        <span>录制：{isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>
         <span>快捷录制：Space / P</span>
         {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>
@@ -2269,11 +2292,11 @@
             <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
             <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
             <div><strong>幻灯片:</strong> Ctrl/Cmd+Shift+D 复制当前页 · Alt+←/→ 调整当前页顺序</div>
-            <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）</div>
+            <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时） · K 暂停/继续</div>
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时）。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。</p>
 </div>
 
 {#if showSettings}

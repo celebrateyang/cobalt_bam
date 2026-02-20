@@ -1573,6 +1573,38 @@
         }
     };
 
+    const setSelectedLock = (locked: boolean) => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => selectedFrameIds.includes(f.id) ? { ...f, locked } : f);
+        }
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(e => selectedEmbedIds.includes(e.id) ? { ...e, locked } : e);
+        }
+    };
+
+    const normalizeSelectedSize = () => {
+        const selectedFrames = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked);
+        const selectedEmbeds = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked);
+
+        if (selectedFrames.length > 1) {
+            const base = selectedFrames[0];
+            frames = frames.map(f => {
+                if (!selectedFrameIds.includes(f.id) || f.locked) return f;
+                const c = clampToViewport(f.x, f.y, base.w, base.h);
+                return { ...f, w: base.w, h: base.h, x: c.x, y: c.y };
+            });
+        }
+
+        if (selectedEmbeds.length > 1) {
+            const base = selectedEmbeds[0];
+            webEmbeds = webEmbeds.map(e => {
+                if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
+                const c = clampToViewport(e.x, e.y, base.w, base.h);
+                return { ...e, w: base.w, h: base.h, x: c.x, y: c.y };
+            });
+        }
+    };
+
     const toggleFrameLock = (id: string) => {
         frames = frames.map(f => f.id === id ? { ...f, locked: !f.locked } : f);
     };
@@ -1851,6 +1883,9 @@
                     <button on:click={copySelection}>复制</button>
                     <button on:click={() => resizeSelectedBy(0.9)}>缩小</button>
                     <button on:click={() => resizeSelectedBy(1.1)}>放大</button>
+                    <button on:click={normalizeSelectedSize}>同尺寸</button>
+                    <button on:click={() => setSelectedLock(true)}>锁定</button>
+                    <button on:click={() => setSelectedLock(false)}>解锁</button>
                     <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
                 </div>
             </div>

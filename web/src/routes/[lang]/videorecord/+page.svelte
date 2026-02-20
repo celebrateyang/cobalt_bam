@@ -152,6 +152,7 @@
     let lastProjectSaveAt = 0;
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
+    let lastPreflightAt = 0;
     let showShortcutsHelp = false;
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
@@ -1214,6 +1215,34 @@
         backgroundColor = next;
     };
 
+    const runRecordPreflight = () => {
+        lastPreflightAt = Date.now();
+        if (!canvasEl) {
+            exportNotice = "录制预检失败：画布尚未就绪。";
+            exportNoticeLevel = "error";
+            return false;
+        }
+
+        if (typeof MediaRecorder === "undefined") {
+            exportNotice = "录制预检失败：当前浏览器不支持 MediaRecorder。";
+            exportNoticeLevel = "error";
+            return false;
+        }
+
+        if (typeof canvasEl.captureStream !== "function") {
+            exportNotice = "录制预检失败：当前浏览器不支持 canvas.captureStream。";
+            exportNoticeLevel = "error";
+            return false;
+        }
+
+        const mime = pickRecorderMime();
+        if (!mime) return false;
+
+        exportNotice = `录制预检通过：${mime}${includeMicAudio ? " + 麦克风" : ""}`;
+        exportNoticeLevel = "info";
+        return true;
+    };
+
 
     const pickRecorderMime = () => {
         const webmCandidates = [
@@ -1259,6 +1288,7 @@
 
     const triggerRecordStart = async () => {
         if (isRecording) return;
+        if (!runRecordPreflight()) return;
         if (!enableRecordCountdown || recordCountdownSeconds <= 0) {
             await startRecord();
             return;
@@ -1278,6 +1308,11 @@
         if (isRecording) return;
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
+        if (!canvasEl || typeof canvasEl.captureStream !== "function") {
+            exportNotice = "录制启动失败：画布流不可用。";
+            exportNoticeLevel = "error";
+            return;
+        }
         const stream = canvasEl.captureStream(60);
 
         if (includeMicAudio) {
@@ -1307,6 +1342,12 @@
 
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size > 0) chunks.push(event.data);
+        };
+
+        recorder.onerror = () => {
+            exportNotice = "录制器发生错误，已自动停止。";
+            exportNoticeLevel = "error";
+            try { recorder?.stop(); } catch {}
         };
 
         recorder.onstop = () => {
@@ -1363,13 +1404,23 @@
     const togglePauseRecord = () => {
         if (!recorder || recorder.state === "inactive") return;
         if (recorder.state === "recording") {
-            recorder.pause();
-            isRecordPaused = true;
+            try {
+                recorder.pause();
+                isRecordPaused = true;
+            } catch {
+                exportNotice = "当前浏览器不支持暂停录制。";
+                exportNoticeLevel = "warn";
+            }
             return;
         }
         if (recorder.state === "paused") {
-            recorder.resume();
-            isRecordPaused = false;
+            try {
+                recorder.resume();
+                isRecordPaused = false;
+            } catch {
+                exportNotice = "当前浏览器不支持恢复录制。";
+                exportNoticeLevel = "warn";
+            }
         }
     };
 
@@ -2481,6 +2532,14 @@
                 <div class="camera-reset-row">
                     <button on:click={() => { cameraOffsetX = 0; cameraOffsetY = 0; }} disabled={!showCameraInRecord}>重置摄像头偏移</button>
                 </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">录制链路预检</div>
+            <div class="mic-row">
+                <button on:click={runRecordPreflight}>运行预检</button>
+                <span class="subnote">最近预检：{lastPreflightAt ? new Date(lastPreflightAt).toLocaleTimeString() : "未运行"}</span>
             </div>
         </section>
 

@@ -41,6 +41,8 @@
         locked?: boolean;
         hidden?: boolean;
         opacity?: number;
+        flipX?: boolean;
+        flipY?: boolean;
     };
 
     type FrameItem = {
@@ -53,6 +55,8 @@
         locked?: boolean;
         hidden?: boolean;
         opacity?: number;
+        flipX?: boolean;
+        flipY?: boolean;
     };
 
     type ProjectSnapshot = {
@@ -932,7 +936,7 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
         webEmbeds = [
             ...webEmbeds,
-            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false, opacity: 1 },
+            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false, opacity: 1, flipX: false, flipY: false },
         ];
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1196,7 +1200,7 @@
             draftingFrame = false;
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false, opacity: 1 } ];
+                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false, opacity: 1, flipX: false, flipY: false } ];
                 selectedFrameId = id;
                 selectedFrameIds = [id];
                 selectedEmbedId = null;
@@ -1699,6 +1703,21 @@
         webEmbeds = webEmbeds.map(e => ({ ...e, hidden: false }));
     };
 
+    const flipSelected = (axis: "x" | "y") => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => {
+                if (!selectedFrameIds.includes(f.id) || f.locked) return f;
+                return axis === "x" ? { ...f, flipX: !(f.flipX ?? false) } : { ...f, flipY: !(f.flipY ?? false) };
+            });
+        }
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(e => {
+                if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
+                return axis === "x" ? { ...e, flipX: !(e.flipX ?? false) } : { ...e, flipY: !(e.flipY ?? false) };
+            });
+        }
+    };
+
     const normalizeSelectedSize = () => {
         const selectedFrames = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked);
         const selectedEmbeds = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked);
@@ -2106,6 +2125,8 @@
                     <button on:click={() => setSelectedLock(false)}>解锁</button>
                     <button on:click={() => setSelectedVisibility(true)}>隐藏</button>
                     <button on:click={() => setSelectedVisibility(false)}>显示</button>
+                    <button on:click={() => flipSelected("x")}>水平翻转</button>
+                    <button on:click={() => flipSelected("y")}>垂直翻转</button>
                     <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
                     <button on:click={selectAllVisibleObjects}>全选可见</button>
                 </div>
@@ -2157,6 +2178,10 @@
                     </div>
                     <label class="prop-full">标题<input type="text" value={f.title} on:change={(e) => updateFrameProps(f.id, { title: inputValue(e) || f.title })} /></label>
                     <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={f.opacity ?? 1} on:input={(e) => updateFrameProps(f.id, { opacity: inputNumber(e, 1) })} /></label>
+                    <div class="edit-grid small-grid">
+                        <button on:click={() => updateFrameProps(f.id, { flipX: !(f.flipX ?? false) })}>水平翻转</button>
+                        <button on:click={() => updateFrameProps(f.id, { flipY: !(f.flipY ?? false) })}>垂直翻转</button>
+                    </div>
                 </div>
             {/each}
         {/if}
@@ -2173,6 +2198,10 @@
                     </div>
                     <label class="prop-full">URL<input type="text" value={em.url} on:change={(e) => updateEmbedProps(em.id, { url: inputValue(e) || em.url })} /></label>
                     <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={em.opacity ?? 1} on:input={(e) => updateEmbedProps(em.id, { opacity: inputNumber(e, 1) })} /></label>
+                    <div class="edit-grid small-grid">
+                        <button on:click={() => updateEmbedProps(em.id, { flipX: !(em.flipX ?? false) })}>水平翻转</button>
+                        <button on:click={() => updateEmbedProps(em.id, { flipY: !(em.flipY ?? false) })}>垂直翻转</button>
+                    </div>
                 </div>
             {/each}
         {/if}
@@ -2296,7 +2325,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；支持对象翻转；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。</p>
 </div>
 
 {#if showSettings}

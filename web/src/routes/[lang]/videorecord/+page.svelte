@@ -941,6 +941,23 @@
         frames = next;
     };
 
+    const alignSelectedFrame = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+        if (!selectedFrameId) return;
+        frames = frames.map(f => {
+            if (f.id !== selectedFrameId) return f;
+            let x = f.x;
+            let y = f.y;
+            if (mode === "left") x = 8;
+            if (mode === "center") x = Math.round((window.innerWidth - f.w) / 2);
+            if (mode === "right") x = Math.round(window.innerWidth - f.w - 8);
+            if (mode === "top") y = 8;
+            if (mode === "middle") y = Math.round((window.innerHeight - f.h) / 2);
+            if (mode === "bottom") y = Math.round(window.innerHeight - f.h - 8);
+            const c = clampToViewport(x, y, f.w, f.h);
+            return { ...f, x: c.x, y: c.y };
+        });
+    };
+
     const onWindowPointerMoveFrame = (e: PointerEvent) => {
         if (draggingFrameId) {
             frames = frames.map(f => {
@@ -1381,6 +1398,20 @@
                 <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
             </div>
         {/each}
+
+        {#if selectedFrameId}
+            <div class="floating-edit-panel">
+                <div class="edit-title">Frame 编辑</div>
+                <div class="edit-grid">
+                    <button on:click={() => alignSelectedFrame("left")}>左</button>
+                    <button on:click={() => alignSelectedFrame("center")}>中</button>
+                    <button on:click={() => alignSelectedFrame("right")}>右</button>
+                    <button on:click={() => alignSelectedFrame("top")}>上</button>
+                    <button on:click={() => alignSelectedFrame("middle")}>中</button>
+                    <button on:click={() => alignSelectedFrame("bottom")}>下</button>
+                </div>
+            </div>
+        {/if}
 
         {#each webEmbeds as embed (embed.id)}
             <div class="web-embed" class:selected={selectedEmbedId === embed.id} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={() => { selectedEmbedId = embed.id; selectedFrameId = null; }}>
@@ -2161,6 +2192,40 @@
         display: flex;
         gap: 8px;
         z-index: 7;
+    }
+
+    .floating-edit-panel {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        z-index: 7;
+        background: rgba(255,255,255,0.95);
+        border: 1px solid rgba(0,0,0,0.12);
+        border-radius: 12px;
+        padding: 8px;
+        width: 180px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+    }
+
+    .edit-title {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 6px;
+    }
+
+    .edit-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .edit-grid button {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
+        padding: 6px 4px;
+        border-radius: 8px;
+        font-size: 12px;
     }
 
     .slides-panel {

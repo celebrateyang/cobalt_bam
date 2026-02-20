@@ -1551,6 +1551,28 @@
         }
     };
 
+    const resizeSelectedBy = (ratio: number) => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => {
+                if (!selectedFrameIds.includes(f.id) || f.locked) return f;
+                const w = Math.max(120, Math.round(f.w * ratio));
+                const h = Math.max(80, Math.round(f.h * ratio));
+                const c = clampToViewport(f.x, f.y, w, h);
+                return { ...f, w, h, x: c.x, y: c.y };
+            });
+        }
+
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(e => {
+                if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
+                const w = Math.max(220, Math.round(e.w * ratio));
+                const h = Math.max(140, Math.round(e.h * ratio));
+                const c = clampToViewport(e.x, e.y, w, h);
+                return { ...e, w, h, x: c.x, y: c.y };
+            });
+        }
+    };
+
     const toggleFrameLock = (id: string) => {
         frames = frames.map(f => f.id === id ? { ...f, locked: !f.locked } : f);
     };
@@ -1827,6 +1849,9 @@
                     <button on:click={() => moveSelectionLayer("back")}>置底</button>
                     <button on:click={() => moveSelectionLayer("front")}>置顶</button>
                     <button on:click={copySelection}>复制</button>
+                    <button on:click={() => resizeSelectedBy(0.9)}>缩小</button>
+                    <button on:click={() => resizeSelectedBy(1.1)}>放大</button>
+                    <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
                 </div>
             </div>
         {/if}

@@ -67,6 +67,8 @@
     let resizingEmbedId: string | null = null;
     let selectedEmbedId: string | null = null;
     let selectedEmbedIds: string[] = [];
+    let copiedFrames: FrameItem[] = [];
+    let copiedEmbeds: WebEmbedItem[] = [];
     let embedDragOffsetX = 0;
     let embedDragOffsetY = 0;
     let embedResizeStartX = 0;
@@ -1468,6 +1470,60 @@
         }
     };
 
+    const copySelection = () => {
+        copiedFrames = frames
+            .filter(f => selectedFrameIds.includes(f.id))
+            .map(f => ({ ...f }));
+        copiedEmbeds = webEmbeds
+            .filter(e => selectedEmbedIds.includes(e.id))
+            .map(e => ({ ...e }));
+    };
+
+    const pasteSelection = () => {
+        const now = Date.now();
+        const newFrameIds: string[] = [];
+        const newEmbedIds: string[] = [];
+
+        if (copiedFrames.length) {
+            const created = copiedFrames.map((f, i) => {
+                const id = `${now}-f-${i}-${Math.random().toString(16).slice(2, 6)}`;
+                newFrameIds.push(id);
+                return { ...f, id, x: f.x + 24, y: f.y + 24, title: `${f.title} copy` };
+            });
+            frames = [ ...frames, ...created ];
+        }
+
+        if (copiedEmbeds.length) {
+            const created = copiedEmbeds.map((e, i) => {
+                const id = `${now}-e-${i}-${Math.random().toString(16).slice(2, 6)}`;
+                newEmbedIds.push(id);
+                return { ...e, id, x: e.x + 24, y: e.y + 24 };
+            });
+            webEmbeds = [ ...webEmbeds, ...created ];
+        }
+
+        if (newFrameIds.length || newEmbedIds.length) {
+            selectedFrameIds = newFrameIds;
+            selectedEmbedIds = newEmbedIds;
+            selectedFrameId = newFrameIds[0] || null;
+            selectedEmbedId = newEmbedIds[0] || null;
+        }
+    };
+
+    const moveSelectionLayer = (dir: "front" | "back") => {
+        if (selectedFrameIds.length) {
+            const selected = frames.filter(f => selectedFrameIds.includes(f.id));
+            const others = frames.filter(f => !selectedFrameIds.includes(f.id));
+            frames = dir === "front" ? [ ...others, ...selected ] : [ ...selected, ...others ];
+        }
+
+        if (selectedEmbedIds.length) {
+            const selected = webEmbeds.filter(e => selectedEmbedIds.includes(e.id));
+            const others = webEmbeds.filter(e => !selectedEmbedIds.includes(e.id));
+            webEmbeds = dir === "front" ? [ ...others, ...selected ] : [ ...selected, ...others ];
+        }
+    };
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1495,36 +1551,32 @@
             }
         }
 
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c") {
+            e.preventDefault();
+            copySelection();
+            return;
+        }
+
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") {
+            e.preventDefault();
+            pasteSelection();
+            return;
+        }
+
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
             e.preventDefault();
-            if (selectedFrameIds.length) {
-                const created: string[] = [];
-                for (const sid of selectedFrameIds) {
-                    const f = frames.find(x => x.id === sid);
-                    if (!f) continue;
-                    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                    const copy = { ...f, id, title: `${f.title} copy`, x: f.x + 24, y: f.y + 24 };
-                    frames = [ ...frames, copy ];
-                    created.push(id);
-                }
-                selectedFrameIds = created;
-                selectedFrameId = created[0] || null;
-                return;
-            }
-            if (selectedEmbedIds.length) {
-                const created: string[] = [];
-                for (const sid of selectedEmbedIds) {
-                    const em = webEmbeds.find(x => x.id === sid);
-                    if (!em) continue;
-                    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                    const copy = { ...em, id, x: em.x + 24, y: em.y + 24 };
-                    webEmbeds = [ ...webEmbeds, copy ];
-                    created.push(id);
-                }
-                selectedEmbedIds = created;
-                selectedEmbedId = created[0] || null;
-                return;
-            }
+            copySelection();
+            pasteSelection();
+            return;
+        }
+
+        if (e.key === "]") {
+            moveSelectionLayer("front");
+            return;
+        }
+        if (e.key === "[") {
+            moveSelectionLayer("back");
+            return;
         }
 
         if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
@@ -1693,6 +1745,11 @@
                     <button on:click={() => alignSelectedGroup("middle")}>中</button>
                     <button on:click={() => alignSelectedGroup("bottom")}>下</button>
                 </div>
+                <div class="edit-grid small-grid">
+                    <button on:click={() => moveSelectionLayer("back")}>置底</button>
+                    <button on:click={() => moveSelectionLayer("front")}>置顶</button>
+                    <button on:click={copySelection}>复制</button>
+                </div>
             </div>
         {/if}
 
@@ -1823,7 +1880,7 @@
         {/if}
     </div>
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px）。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级。</p>
 </div>
 
 {#if showSettings}

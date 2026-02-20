@@ -833,6 +833,33 @@
         webEmbeds = next;
     };
 
+    const alignSelectedEmbed = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+        if (!selectedEmbedId) return;
+        webEmbeds = webEmbeds.map(em => {
+            if (em.id !== selectedEmbedId) return em;
+            let x = em.x;
+            let y = em.y;
+            if (mode === "left") x = 8;
+            if (mode === "center") x = Math.round((window.innerWidth - em.w) / 2);
+            if (mode === "right") x = Math.round(window.innerWidth - em.w - 8);
+            if (mode === "top") y = 8;
+            if (mode === "middle") y = Math.round((window.innerHeight - em.h) / 2);
+            if (mode === "bottom") y = Math.round(window.innerHeight - em.h - 8);
+            const c = clampToViewport(x, y, em.w, em.h);
+            return { ...em, x: c.x, y: c.y };
+        });
+    };
+
+    const resizeSelectedEmbedPreset = (preset: "small" | "medium" | "large") => {
+        if (!selectedEmbedId) return;
+        webEmbeds = webEmbeds.map(em => {
+            if (em.id !== selectedEmbedId) return em;
+            const size = preset === "small" ? { w: 300, h: 180 } : preset === "medium" ? { w: 420, h: 252 } : { w: 560, h: 336 };
+            const c = clampToViewport(em.x, em.y, size.w, size.h);
+            return { ...em, ...size, x: c.x, y: c.y };
+        });
+    };
+
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
         if (!item) return;
@@ -1409,6 +1436,25 @@
                     <button on:click={() => alignSelectedFrame("top")}>上</button>
                     <button on:click={() => alignSelectedFrame("middle")}>中</button>
                     <button on:click={() => alignSelectedFrame("bottom")}>下</button>
+                </div>
+            </div>
+        {/if}
+
+        {#if selectedEmbedId}
+            <div class="floating-edit-panel embed-panel">
+                <div class="edit-title">Embed 编辑</div>
+                <div class="edit-grid">
+                    <button on:click={() => alignSelectedEmbed("left")}>左</button>
+                    <button on:click={() => alignSelectedEmbed("center")}>中</button>
+                    <button on:click={() => alignSelectedEmbed("right")}>右</button>
+                    <button on:click={() => alignSelectedEmbed("top")}>上</button>
+                    <button on:click={() => alignSelectedEmbed("middle")}>中</button>
+                    <button on:click={() => alignSelectedEmbed("bottom")}>下</button>
+                </div>
+                <div class="edit-grid small-grid">
+                    <button on:click={() => resizeSelectedEmbedPreset("small")}>S</button>
+                    <button on:click={() => resizeSelectedEmbedPreset("medium")}>M</button>
+                    <button on:click={() => resizeSelectedEmbedPreset("large")}>L</button>
                 </div>
             </div>
         {/if}
@@ -2217,6 +2263,14 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;
+    }
+
+    .small-grid {
+        margin-top: 6px;
+    }
+
+    .embed-panel {
+        top: 122px;
     }
 
     .edit-grid button {

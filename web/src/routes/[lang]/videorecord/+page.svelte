@@ -113,6 +113,11 @@
     const snapValue = (value: number, target: number, threshold = 12) =>
         Math.abs(value - target) <= threshold ? target : value;
 
+    let showGuideV = false;
+    let showGuideH = false;
+    let guideVX = 0;
+    let guideHY = 0;
+
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
     let isRecording = false;
@@ -956,6 +961,41 @@
         });
     };
 
+    const updateGuidesForRect = (x: number, y: number, w: number, h: number) => {
+        const centerX = Math.round((window.innerWidth - w) / 2);
+        const centerY = Math.round((window.innerHeight - h) / 2);
+
+        const leftEdge = 8;
+        const topEdge = 8;
+        const rightEdge = Math.round(window.innerWidth - w - 8);
+        const bottomEdge = Math.round(window.innerHeight - h - 8);
+
+        showGuideV = false;
+        showGuideH = false;
+
+        if (Math.abs(x - centerX) <= 10) {
+            showGuideV = true;
+            guideVX = Math.round(window.innerWidth / 2);
+        } else if (Math.abs(x - leftEdge) <= 10) {
+            showGuideV = true;
+            guideVX = leftEdge;
+        } else if (Math.abs(x - rightEdge) <= 10) {
+            showGuideV = true;
+            guideVX = Math.round(window.innerWidth - 8);
+        }
+
+        if (Math.abs(y - centerY) <= 10) {
+            showGuideH = true;
+            guideHY = Math.round(window.innerHeight / 2);
+        } else if (Math.abs(y - topEdge) <= 10) {
+            showGuideH = true;
+            guideHY = topEdge;
+        } else if (Math.abs(y - bottomEdge) <= 10) {
+            showGuideH = true;
+            guideHY = Math.round(window.innerHeight - 8);
+        }
+    };
+
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
         if (!item) return;
@@ -995,6 +1035,7 @@
                 const nx = e.clientX - embedDragOffsetX;
                 const ny = e.clientY - embedDragOffsetY;
                 const clamped = clampToViewport(nx, ny, item.w, item.h);
+                updateGuidesForRect(clamped.x, clamped.y, item.w, item.h);
                 return { ...item, x: clamped.x, y: clamped.y };
             });
         }
@@ -1014,6 +1055,8 @@
     };
 
     const onWindowPointerUpEmbed = () => {
+        showGuideV = false;
+        showGuideH = false;
         webEmbeds = webEmbeds.map(item => {
             const maxX = Math.max(8, window.innerWidth - item.w - 8);
             const maxY = Math.max(8, window.innerHeight - item.h - 8);
@@ -1090,6 +1133,7 @@
                 const nx = e.clientX - frameDragOffsetX;
                 const ny = e.clientY - frameDragOffsetY;
                 const c = clampToViewport(nx, ny, f.w, f.h);
+                updateGuidesForRect(c.x, c.y, f.w, f.h);
                 return { ...f, x: c.x, y: c.y };
             });
         }
@@ -1108,6 +1152,8 @@
     };
 
     const onWindowPointerUpFrame = () => {
+        showGuideV = false;
+        showGuideH = false;
         frames = frames.map(f => {
             const maxX = Math.max(8, window.innerWidth - f.w - 8);
             const maxY = Math.max(8, window.innerHeight - f.h - 8);
@@ -1574,6 +1620,13 @@
             on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
         />
 
+        {#if showGuideV}
+            <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>
+        {/if}
+        {#if showGuideH}
+            <div class="snap-guide-h" style={`top:${guideHY}px;`}></div>
+        {/if}
+
         {#if marqueeSelecting && marqueeW > 0 && marqueeH > 0}
             <div class="marquee-box" style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}></div>
         {/if}
@@ -2011,6 +2064,26 @@
         cursor: crosshair;
         border-radius: inherit;
         background: transparent;
+    }
+
+    .snap-guide-v {
+        position: fixed;
+        top: 0;
+        width: 1px;
+        height: 100vh;
+        background: rgba(110,168,255,0.85);
+        z-index: 7;
+        pointer-events: none;
+    }
+
+    .snap-guide-h {
+        position: fixed;
+        left: 0;
+        width: 100vw;
+        height: 1px;
+        background: rgba(110,168,255,0.85);
+        z-index: 7;
+        pointer-events: none;
     }
 
     .marquee-box {

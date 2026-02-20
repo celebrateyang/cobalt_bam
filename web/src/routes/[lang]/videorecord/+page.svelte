@@ -1455,6 +1455,13 @@
         selectedEmbedIds = [];
     };
 
+    const selectAllVisibleObjects = () => {
+        selectedFrameIds = frames.filter(f => !f.hidden).map(f => f.id);
+        selectedEmbedIds = webEmbeds.filter(e => !e.hidden).map(e => e.id);
+        selectedFrameId = selectedFrameIds[0] || null;
+        selectedEmbedId = selectedEmbedIds[0] || null;
+    };
+
     const nudgeSelected = (dx: number, dy: number) => {
         if (selectedFrameIds.length) {
             frames = frames.map(f => {
@@ -1798,6 +1805,12 @@
             }
         }
 
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            selectAllVisibleObjects();
+            return;
+        }
+
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c") {
             e.preventDefault();
             copySelection();
@@ -2026,6 +2039,7 @@
                     <button on:click={() => setSelectedVisibility(true)}>隐藏</button>
                     <button on:click={() => setSelectedVisibility(false)}>显示</button>
                     <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
+                    <button on:click={selectAllVisibleObjects}>全选可见</button>
                 </div>
             </div>
         {/if}
@@ -2204,12 +2218,12 @@
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
             <div><strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形 · C 圆 · F 框架</div>
-            <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z 重做 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
+            <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
             <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分。</p>
 </div>
 
 {#if showSettings}

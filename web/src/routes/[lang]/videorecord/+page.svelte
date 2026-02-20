@@ -174,6 +174,8 @@
     let cameraMargin = 24;
     let cameraCorner: "br" | "bl" | "tr" | "tl" = "br";
     let cameraMirror = true;
+    let cameraOffsetX = 0;
+    let cameraOffsetY = 0;
     let cameraStream: MediaStream | null = null;
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
@@ -275,12 +277,15 @@
         if (!ctx || !canvasEl || !cameraVideoEl || !isRecording || !showCameraInRecord) return;
         const rect = canvasEl.getBoundingClientRect();
         const size = Math.min(cameraSize, rect.width * 0.5, rect.height * 0.5);
-        const x = (cameraCorner === "br" || cameraCorner === "tr")
+        const baseX = (cameraCorner === "br" || cameraCorner === "tr")
             ? rect.width - cameraMargin - size
             : cameraMargin;
-        const y = (cameraCorner === "br" || cameraCorner === "bl")
+        const baseY = (cameraCorner === "br" || cameraCorner === "bl")
             ? rect.height - cameraMargin - size
             : cameraMargin;
+
+        const x = Math.max(0, Math.min(rect.width - size, baseX + cameraOffsetX));
+        const y = Math.max(0, Math.min(rect.height - size, baseY + cameraOffsetY));
 
         ctx.save();
         drawRoundRectPath(x, y, size, size, cameraRadius);
@@ -2207,6 +2212,20 @@
                     <button class:active={cameraCorner === "bl"} on:click={() => (cameraCorner = "bl")} disabled={!showCameraInRecord}>左下</button>
                     <button class:active={cameraCorner === "br"} on:click={() => (cameraCorner = "br")} disabled={!showCameraInRecord}>右下</button>
                 </div>
+
+                <label class="slider-row">
+                    <span>X偏移</span>
+                    <input type="range" min="-320" max="320" step="2" bind:value={cameraOffsetX} disabled={!showCameraInRecord} />
+                    <span>{cameraOffsetX}px</span>
+                </label>
+                <label class="slider-row">
+                    <span>Y偏移</span>
+                    <input type="range" min="-320" max="320" step="2" bind:value={cameraOffsetY} disabled={!showCameraInRecord} />
+                    <span>{cameraOffsetY}px</span>
+                </label>
+                <div class="camera-reset-row">
+                    <button on:click={() => { cameraOffsetX = 0; cameraOffsetY = 0; }} disabled={!showCameraInRecord}>重置摄像头偏移</button>
+                </div>
             </div>
         </section>
 
@@ -3145,6 +3164,17 @@
         background: #232323;
         color: #fff;
         border-color: #232323;
+    }
+
+    .camera-reset-row {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .camera-reset-row button {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
     }
 
     @media (max-width: 900px) {

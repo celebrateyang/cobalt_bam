@@ -10,7 +10,7 @@
 
     let strokeColor = "#ffffff";
     let strokeWidth = 4;
-    let tool: "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" | "webembed" = "pen";
+    let tool: "select" | "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" | "webembed" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -84,6 +84,14 @@
     let resizingFrameId: string | null = null;
     let selectedFrameId: string | null = null;
     let selectedFrameIds: string[] = [];
+    let marqueeSelecting = false;
+    let marqueeAdditive = false;
+    let marqueeX = 0;
+    let marqueeY = 0;
+    let marqueeW = 0;
+    let marqueeH = 0;
+    let marqueeStartX = 0;
+    let marqueeStartY = 0;
     let frameDragOffsetX = 0;
     let frameDragOffsetY = 0;
     let frameResizeStartX = 0;
@@ -679,6 +687,21 @@
             return;
         }
 
+        if (tool === "select") {
+            marqueeSelecting = true;
+            marqueeAdditive = e.shiftKey;
+            marqueeStartX = e.clientX;
+            marqueeStartY = e.clientY;
+            marqueeX = e.clientX;
+            marqueeY = e.clientY;
+            marqueeW = 0;
+            marqueeH = 0;
+            if (!marqueeAdditive) {
+                clearAllSelections();
+            }
+            return;
+        }
+
         if (tool === "laser") {
             laserPressed = true;
             return;
@@ -708,6 +731,17 @@
     const draw = (e: PointerEvent) => {
         updateCursorPosition(e);
         if (tool === "laser") return;
+        if (tool === "select" && marqueeSelecting) {
+            const x1 = Math.min(marqueeStartX, e.clientX);
+            const y1 = Math.min(marqueeStartY, e.clientY);
+            const x2 = Math.max(marqueeStartX, e.clientX);
+            const y2 = Math.max(marqueeStartY, e.clientY);
+            marqueeX = x1;
+            marqueeY = y1;
+            marqueeW = x2 - x1;
+            marqueeH = y2 - y1;
+            return;
+        }
         if (tool === "frame" && draftingFrame) {
             const x1 = Math.min(draftFrameX, e.clientX);
             const y1 = Math.min(draftFrameY, e.clientY);
@@ -1489,6 +1523,7 @@
 <div class="page">
     <div class="toolbar">
         <div class="left">
+            <button class:active={tool === "select"} on:click={() => (tool = "select")}>选择</button>
             <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
             <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
             <button class:active={tool === "text"} on:click={() => (tool = "text")}>文本</button>
@@ -1538,6 +1573,10 @@
             on:pointercancel={endDraw}
             on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
         />
+
+        {#if marqueeSelecting && marqueeW > 0 && marqueeH > 0}
+            <div class="marquee-box" style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}></div>
+        {/if}
 
         {#if textEditing}
             <textarea
@@ -1972,6 +2011,14 @@
         cursor: crosshair;
         border-radius: inherit;
         background: transparent;
+    }
+
+    .marquee-box {
+        position: fixed;
+        border: 1px dashed rgba(110,168,255,0.95);
+        background: rgba(110,168,255,0.18);
+        z-index: 8;
+        pointer-events: none;
     }
 
     .canvas-text-input {

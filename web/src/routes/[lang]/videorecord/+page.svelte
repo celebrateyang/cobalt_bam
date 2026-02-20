@@ -141,6 +141,8 @@
     let exportFormat: "webm" | "mp4" = "webm";
     let selectedMimeType = "video/webm;codecs=vp9";
     let lastProjectSaveAt = 0;
+    let exportNotice = "";
+    let exportNoticeLevel: "info" | "warn" | "error" = "info";
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
         { key: "4:3", label: "经典" },
@@ -1209,6 +1211,9 @@
         const preferred = exportFormat === "mp4" ? mp4Candidates : webmCandidates;
         const fallback = exportFormat === "mp4" ? webmCandidates : mp4Candidates;
 
+        exportNotice = "";
+        exportNoticeLevel = "info";
+
         for (const m of preferred) {
             if (MediaRecorder.isTypeSupported(m)) {
                 selectedMimeType = m;
@@ -1218,10 +1223,19 @@
         for (const m of fallback) {
             if (MediaRecorder.isTypeSupported(m)) {
                 selectedMimeType = m;
+                if (exportFormat === "mp4" && m.includes("webm")) {
+                    exportNotice = "当前浏览器不支持 MP4 录制，已回退为 WebM。";
+                    exportNoticeLevel = "warn";
+                } else if (exportFormat === "webm" && m.includes("mp4")) {
+                    exportNotice = "当前浏览器不支持 WebM 录制，已回退为 MP4。";
+                    exportNoticeLevel = "warn";
+                }
                 return m;
             }
         }
         selectedMimeType = "";
+        exportNotice = "当前浏览器不支持可用录制编码，可能无法开始录制。";
+        exportNoticeLevel = "error";
         return "";
     };
 
@@ -1247,7 +1261,14 @@
         const mime = pickRecorderMime();
 
         chunks = [];
-        recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        try {
+            recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        } catch (err) {
+            exportNotice = "录制器初始化失败，请切换导出格式或更换浏览器。";
+            exportNoticeLevel = "error";
+            stopMicStream();
+            return;
+        }
 
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size > 0) chunks.push(event.data);
@@ -1275,6 +1296,8 @@
             a.download = `videorecord-${Date.now()}.${ext}`;
             a.click();
             URL.revokeObjectURL(url);
+            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB)`;
+            exportNoticeLevel = "info";
         };
 
         recorder.start(300);
@@ -1973,6 +1996,10 @@
         <span>最近保存：{saveAgeText}</span>
     </div>
 
+    {#if exportNotice}
+        <div class={`export-notice ${exportNoticeLevel}`}>{exportNotice}</div>
+    {/if}
+
     <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象。</p>
 </div>
 
@@ -2535,6 +2562,29 @@
         padding: 8px 10px;
         font-size: 12px;
         color: var(--subtext);
+    }
+
+    .export-notice {
+        margin-top: 6px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .export-notice.info {
+        background: rgba(90, 180, 120, 0.15);
+        color: #2f7a44;
+    }
+
+    .export-notice.warn {
+        background: rgba(255, 193, 7, 0.15);
+        color: #9c6a00;
+    }
+
+    .export-notice.error {
+        background: rgba(220, 53, 69, 0.15);
+        color: #a1122a;
     }
 
     .hint {

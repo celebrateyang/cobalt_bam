@@ -48,6 +48,20 @@
         w: number;
         h: number;
     };
+
+    type ProjectSnapshot = {
+        version: 1;
+        slides: string[];
+        activeSlide: number;
+        frames: FrameItem[];
+        webEmbeds: WebEmbedItem[];
+        settings: {
+            aspectRatio: string;
+            backgroundColor: string;
+            canvasCornerRadius: number;
+            canvasInnerPadding: number;
+        };
+    };
     let webEmbeds: WebEmbedItem[] = [];
     let draggingEmbedId: string | null = null;
     let resizingEmbedId: string | null = null;
@@ -274,6 +288,49 @@
         await ensureCameraStream();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = requestAnimationFrame(drawCameraFrame);
+    };
+
+    const saveProjectSnapshot = () => {
+        if (typeof window === "undefined") return;
+        const payload: ProjectSnapshot = {
+            version: 1,
+            slides,
+            activeSlide,
+            frames,
+            webEmbeds,
+            settings: {
+                aspectRatio,
+                backgroundColor,
+                canvasCornerRadius,
+                canvasInnerPadding,
+            },
+        };
+        window.localStorage.setItem("videorecord.project", JSON.stringify(payload));
+    };
+
+    const loadProjectSnapshot = () => {
+        if (typeof window === "undefined") return;
+        const raw = window.localStorage.getItem("videorecord.project");
+        if (!raw) return;
+        try {
+            const data = JSON.parse(raw) as ProjectSnapshot;
+            if (!data || data.version !== 1) return;
+            slides = Array.isArray(data.slides) && data.slides.length ? data.slides : [""];
+            activeSlide = Math.max(0, Math.min(data.activeSlide || 0, slides.length - 1));
+            frames = Array.isArray(data.frames) ? data.frames : [];
+            webEmbeds = Array.isArray(data.webEmbeds) ? data.webEmbeds : [];
+            aspectRatio = data.settings?.aspectRatio || aspectRatio;
+            backgroundColor = data.settings?.backgroundColor || backgroundColor;
+            canvasCornerRadius = Number.isFinite(data.settings?.canvasCornerRadius)
+                ? data.settings.canvasCornerRadius
+                : canvasCornerRadius;
+            canvasInnerPadding = Number.isFinite(data.settings?.canvasInnerPadding)
+                ? data.settings.canvasInnerPadding
+                : canvasInnerPadding;
+            requestAnimationFrame(() => loadSlide(activeSlide));
+        } catch {
+            // ignore broken snapshot
+        }
     };
 
     const ratioToNumber = (ratio: string) => {
@@ -512,6 +569,7 @@
         if (!ctx) return;
 
         resizeCanvas();
+        loadProjectSnapshot();
         pushHistorySnapshot();
 
         try {
@@ -1224,6 +1282,11 @@
         persistTeleprompterPrefs();
     }
 
+    $: if (typeof window !== "undefined") {
+        // lightweight autosave
+        saveProjectSnapshot();
+    }
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1403,6 +1466,8 @@
         <div class="floating-controls">
             <button class="floating-btn" on:click={() => (showSettings = true)}>⚙</button>
             <button class="floating-btn" class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>📝</button>
+            <button class="floating-btn" on:click={saveProjectSnapshot}>💾</button>
+            <button class="floating-btn" on:click={loadProjectSnapshot}>⟲</button>
             {#if !isRecording}
                 <button class="floating-record" on:click={startRecord}>● 录制</button>
             {:else}

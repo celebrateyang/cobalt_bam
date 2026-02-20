@@ -39,6 +39,7 @@
         w: number;
         h: number;
         locked?: boolean;
+        hidden?: boolean;
     };
 
     type FrameItem = {
@@ -49,6 +50,7 @@
         w: number;
         h: number;
         locked?: boolean;
+        hidden?: boolean;
     };
 
     type ProjectSnapshot = {
@@ -924,7 +926,7 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
         webEmbeds = [
             ...webEmbeds,
-            { id, url, x, y, w: 360, h: 220, locked: false },
+            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false },
         ];
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1012,7 +1014,7 @@
 
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
-        if (!item || item.locked) return;
+        if (!item || item.locked || item.hidden) return;
         draggingEmbedId = id;
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1024,7 +1026,7 @@
 
     const startResizeWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
-        if (!item || item.locked) return;
+        if (!item || item.locked || item.hidden) return;
         resizingEmbedId = id;
         embedResizeStartX = e.clientX;
         embedResizeStartY = e.clientY;
@@ -1089,7 +1091,7 @@
 
     const startDragFrame = (id: string, e: PointerEvent) => {
         const f = frames.find(x => x.id === id);
-        if (!f || f.locked) return;
+        if (!f || f.locked || f.hidden) return;
         draggingFrameId = id;
         selectedFrameId = id;
         selectedEmbedId = null;
@@ -1099,7 +1101,7 @@
 
     const startResizeFrame = (id: string, e: PointerEvent) => {
         const f = frames.find(x => x.id === id);
-        if (!f || f.locked) return;
+        if (!f || f.locked || f.hidden) return;
         resizingFrameId = id;
         frameResizeStartX = e.clientX;
         frameResizeStartY = e.clientY;
@@ -1188,7 +1190,7 @@
             draftingFrame = false;
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false } ];
+                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false } ];
                 selectedFrameId = id;
                 selectedFrameIds = [id];
                 selectedEmbedId = null;
@@ -1588,6 +1590,15 @@
         }
     };
 
+    const setSelectedVisibility = (hidden: boolean) => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => selectedFrameIds.includes(f.id) ? { ...f, hidden } : f);
+        }
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(e => selectedEmbedIds.includes(e.id) ? { ...e, hidden } : e);
+        }
+    };
+
     const normalizeSelectedSize = () => {
         const selectedFrames = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked);
         const selectedEmbeds = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked);
@@ -1746,6 +1757,15 @@
             return;
         }
 
+        if (e.key.toLowerCase() === "h") {
+            if (selectedFrameIds.length || selectedEmbedIds.length) {
+                const anyVisible = frames.some(f => selectedFrameIds.includes(f.id) && !f.hidden)
+                    || webEmbeds.some(e => selectedEmbedIds.includes(e.id) && !e.hidden);
+                setSelectedVisibility(anyVisible);
+                return;
+            }
+        }
+
         const key = e.key.toLowerCase();
         if (key === "v") tool = "pen";
         if (key === "e") tool = "eraser";
@@ -1871,11 +1891,11 @@
             </div>
         {/if}
 
-        {#each frames as frame (frame.id)}
+        {#each frames.filter(f => !f.hidden) as frame (frame.id)}
             <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} class:locked={!!frame.locked} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
-                    <div class="frame-actions"><button on:click={() => toggleFrameLock(frame.id)}>{frame.locked ? "🔒" : "🔓"}</button><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
+                    <div class="frame-actions"><button on:click={() => toggleFrameLock(frame.id)}>{frame.locked ? "🔒" : "🔓"}</button><button on:click={() => updateFrameProps(frame.id, { hidden: !frame.hidden })}>{frame.hidden ? "🙈" : "👁"}</button><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
                 </div>
                 <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
             </div>
@@ -1901,6 +1921,8 @@
                     <button on:click={normalizeSelectedSize}>同尺寸</button>
                     <button on:click={() => setSelectedLock(true)}>锁定</button>
                     <button on:click={() => setSelectedLock(false)}>解锁</button>
+                    <button on:click={() => setSelectedVisibility(true)}>隐藏</button>
+                    <button on:click={() => setSelectedVisibility(false)}>显示</button>
                     <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
                 </div>
             </div>
@@ -1969,11 +1991,11 @@
             {/each}
         {/if}
 
-        {#each webEmbeds as embed (embed.id)}
+        {#each webEmbeds.filter(e => !e.hidden) as embed (embed.id)}
             <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} class:locked={!!embed.locked} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
-                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => updateEmbedProps(embed.id, { hidden: !embed.hidden })}>{embed.hidden ? "🙈" : "👁"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
                 </div>
                 <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
                 <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
@@ -2083,7 +2105,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象，H可快速隐藏/显示选中对象。</p>
 </div>
 
 {#if showSettings}

@@ -1354,6 +1354,40 @@
         }
     };
 
+    const alignSelectedGroup = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => {
+                if (!selectedFrameIds.includes(f.id)) return f;
+                let x = f.x;
+                let y = f.y;
+                if (mode === "left") x = 8;
+                if (mode === "center") x = Math.round((window.innerWidth - f.w) / 2);
+                if (mode === "right") x = Math.round(window.innerWidth - f.w - 8);
+                if (mode === "top") y = 8;
+                if (mode === "middle") y = Math.round((window.innerHeight - f.h) / 2);
+                if (mode === "bottom") y = Math.round(window.innerHeight - f.h - 8);
+                const c = clampToViewport(x, y, f.w, f.h);
+                return { ...f, x: c.x, y: c.y };
+            });
+        }
+
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(em => {
+                if (!selectedEmbedIds.includes(em.id)) return em;
+                let x = em.x;
+                let y = em.y;
+                if (mode === "left") x = 8;
+                if (mode === "center") x = Math.round((window.innerWidth - em.w) / 2);
+                if (mode === "right") x = Math.round(window.innerWidth - em.w - 8);
+                if (mode === "top") y = 8;
+                if (mode === "middle") y = Math.round((window.innerHeight - em.h) / 2);
+                if (mode === "bottom") y = Math.round(window.innerHeight - em.h - 8);
+                const c = clampToViewport(x, y, em.w, em.h);
+                return { ...em, x: c.x, y: c.y };
+            });
+        }
+    };
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1556,7 +1590,21 @@
             </div>
         {/each}
 
-        {#if selectedFrameId}
+        {#if selectedFrameIds.length + selectedEmbedIds.length > 1}
+            <div class="floating-edit-panel group-panel">
+                <div class="edit-title">批量编辑（{selectedFrameIds.length + selectedEmbedIds.length}）</div>
+                <div class="edit-grid">
+                    <button on:click={() => alignSelectedGroup("left")}>左</button>
+                    <button on:click={() => alignSelectedGroup("center")}>中</button>
+                    <button on:click={() => alignSelectedGroup("right")}>右</button>
+                    <button on:click={() => alignSelectedGroup("top")}>上</button>
+                    <button on:click={() => alignSelectedGroup("middle")}>中</button>
+                    <button on:click={() => alignSelectedGroup("bottom")}>下</button>
+                </div>
+            </div>
+        {/if}
+
+        {#if selectedFrameId && selectedFrameIds.length <= 1}
             <div class="floating-edit-panel">
                 <div class="edit-title">Frame 编辑</div>
                 <div class="edit-grid">
@@ -1570,7 +1618,7 @@
             </div>
         {/if}
 
-        {#if selectedEmbedId}
+        {#if selectedEmbedId && selectedEmbedIds.length <= 1}
             <div class="floating-edit-panel embed-panel">
                 <div class="edit-title">Embed 编辑</div>
                 <div class="edit-grid">
@@ -2399,6 +2447,12 @@
         margin-top: 6px;
     }
 
+    .group-panel {
+        top: 12px;
+        left: 206px;
+        width: 210px;
+    }
+
     .embed-panel {
         top: 122px;
     }
@@ -2628,6 +2682,12 @@
             right: 12px;
             top: 70px;
             width: 64px;
+        }
+
+        .group-panel {
+            top: 86px;
+            left: 12px;
+            width: 180px;
         }
 
         .teleprompter-panel {

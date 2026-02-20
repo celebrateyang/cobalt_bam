@@ -801,6 +801,17 @@
         webEmbeds = webEmbeds.filter(e => e.id !== id);
     };
 
+    const moveWebEmbedLayer = (id: string, dir: -1 | 1) => {
+        const idx = webEmbeds.findIndex(e => e.id === id);
+        if (idx < 0) return;
+        const to = idx + dir;
+        if (to < 0 || to >= webEmbeds.length) return;
+        const next = [ ...webEmbeds ];
+        const [item] = next.splice(idx, 1);
+        next.splice(to, 0, item);
+        webEmbeds = next;
+    };
+
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
         if (!item) return;
@@ -870,6 +881,17 @@
 
     const removeFrame = (id: string) => {
         frames = frames.filter(f => f.id !== id);
+    };
+
+    const moveFrameLayer = (id: string, dir: -1 | 1) => {
+        const idx = frames.findIndex(f => f.id === id);
+        if (idx < 0) return;
+        const to = idx + dir;
+        if (to < 0 || to >= frames.length) return;
+        const next = [ ...frames ];
+        const [item] = next.splice(idx, 1);
+        next.splice(to, 0, item);
+        frames = next;
     };
 
     const onWindowPointerMoveFrame = (e: PointerEvent) => {
@@ -1182,7 +1204,7 @@
             <div class="frame-item" style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
-                    <button on:click={() => removeFrame(frame.id)}>✕</button>
+                    <div class="frame-actions"><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
                 </div>
                 <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
             </div>
@@ -1192,7 +1214,7 @@
             <div class="web-embed" style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
-                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
                 </div>
                 <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
                 <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
@@ -1693,6 +1715,11 @@
         padding: 0 6px;
         font-size: 11px;
         cursor: move;
+    }
+
+    .frame-actions {
+        display: flex;
+        gap: 3px;
     }
 
     .frame-head button {

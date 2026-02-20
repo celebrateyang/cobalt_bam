@@ -1534,6 +1534,30 @@
         webEmbeds = webEmbeds.map(e => e.id === id ? { ...e, locked: !e.locked } : e);
     };
 
+    const updateFrameProps = (id: string, patch: Partial<FrameItem>) => {
+        frames = frames.map(f => {
+            if (f.id !== id) return f;
+            const next = { ...f, ...patch };
+            const c = clampToViewport(next.x, next.y, next.w, next.h);
+            return { ...next, x: c.x, y: c.y };
+        });
+    };
+
+    const updateEmbedProps = (id: string, patch: Partial<WebEmbedItem>) => {
+        webEmbeds = webEmbeds.map(e => {
+            if (e.id !== id) return e;
+            const next = { ...e, ...patch };
+            const c = clampToViewport(next.x, next.y, next.w, next.h);
+            return { ...next, x: c.x, y: c.y };
+        });
+    };
+
+    const inputValue = (e: Event) => (e.currentTarget as HTMLInputElement).value;
+    const inputNumber = (e: Event, fallback = 0) => {
+        const n = Number(inputValue(e));
+        return Number.isFinite(n) ? n : fallback;
+    };
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1794,6 +1818,36 @@
                     <button on:click={() => resizeSelectedEmbedPreset("large")}>L</button>
                 </div>
             </div>
+        {/if}
+
+        {#if selectedFrameId && selectedFrameIds.length <= 1}
+            {#each frames.filter(f => f.id === selectedFrameId) as f}
+                <div class="floating-edit-panel props-panel frame-props">
+                    <div class="edit-title">Frame 属性</div>
+                    <div class="prop-grid">
+                        <label>X<input type="number" value={Math.round(f.x)} on:change={(e) => updateFrameProps(f.id, { x: inputNumber(e, 0) })} /></label>
+                        <label>Y<input type="number" value={Math.round(f.y)} on:change={(e) => updateFrameProps(f.id, { y: inputNumber(e, 0) })} /></label>
+                        <label>W<input type="number" value={Math.round(f.w)} on:change={(e) => updateFrameProps(f.id, { w: Math.max(120, inputNumber(e, 120)) })} /></label>
+                        <label>H<input type="number" value={Math.round(f.h)} on:change={(e) => updateFrameProps(f.id, { h: Math.max(80, inputNumber(e, 80)) })} /></label>
+                    </div>
+                    <label class="prop-full">标题<input type="text" value={f.title} on:change={(e) => updateFrameProps(f.id, { title: inputValue(e) || f.title })} /></label>
+                </div>
+            {/each}
+        {/if}
+
+        {#if selectedEmbedId && selectedEmbedIds.length <= 1}
+            {#each webEmbeds.filter(e => e.id === selectedEmbedId) as em}
+                <div class="floating-edit-panel props-panel embed-props">
+                    <div class="edit-title">Embed 属性</div>
+                    <div class="prop-grid">
+                        <label>X<input type="number" value={Math.round(em.x)} on:change={(e) => updateEmbedProps(em.id, { x: inputNumber(e, 0) })} /></label>
+                        <label>Y<input type="number" value={Math.round(em.y)} on:change={(e) => updateEmbedProps(em.id, { y: inputNumber(e, 0) })} /></label>
+                        <label>W<input type="number" value={Math.round(em.w)} on:change={(e) => updateEmbedProps(em.id, { w: Math.max(220, inputNumber(e, 220)) })} /></label>
+                        <label>H<input type="number" value={Math.round(em.h)} on:change={(e) => updateEmbedProps(em.id, { h: Math.max(140, inputNumber(e, 140)) })} /></label>
+                    </div>
+                    <label class="prop-full">URL<input type="text" value={em.url} on:change={(e) => updateEmbedProps(em.id, { url: inputValue(e) || em.url })} /></label>
+                </div>
+            {/each}
         {/if}
 
         {#each webEmbeds as embed (embed.id)}
@@ -2650,6 +2704,48 @@
         width: 210px;
     }
 
+    .props-panel {
+        left: 12px;
+        width: 250px;
+    }
+
+    .frame-props {
+        top: 210px;
+    }
+
+    .embed-props {
+        top: 330px;
+    }
+
+    .prop-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .prop-grid label,
+    .prop-full {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 11px;
+        color: #555;
+    }
+
+    .prop-grid input,
+    .prop-full input {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: #fff;
+        font-size: 12px;
+        color: #222;
+    }
+
+    .prop-full {
+        margin-top: 6px;
+    }
+
     .embed-panel {
         top: 122px;
     }
@@ -2885,6 +2981,18 @@
             top: 86px;
             left: 12px;
             width: 180px;
+        }
+
+        .props-panel {
+            width: 180px;
+        }
+
+        .frame-props {
+            top: 196px;
+        }
+
+        .embed-props {
+            top: 306px;
         }
 
         .teleprompter-panel {

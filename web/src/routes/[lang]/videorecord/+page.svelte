@@ -1326,6 +1326,10 @@
                 for (const t of micStream.getAudioTracks()) stream.addTrack(t);
             } catch (e) {
                 console.warn("mic capture failed", e);
+                exportNotice = "麦克风不可用：将仅录制画面。";
+                exportNoticeLevel = "warn";
+                exportNotice = "麦克风不可用：将仅录制画面。";
+                exportNoticeLevel = "warn";
             }
         }
         const mime = pickRecorderMime();
@@ -1891,6 +1895,20 @@
                 ? "crosshair"
                 : "crosshair";
 
+
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (!isRecording) return;
+        e.preventDefault();
+        e.returnValue = "录制进行中，离开页面会中断并可能丢失导出。";
+    };
+
+    const onPageHide = () => {
+        if (!isRecording) return;
+        exportNotice = "页面进入后台，已自动停止录制以保护文件完整性。";
+        exportNoticeLevel = "warn";
+        stopRecord();
+    };
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -2026,7 +2044,7 @@
 
 </script>
 
-<svelte:window on:keydown={onGlobalKeydown} on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
+<svelte:window on:keydown={onGlobalKeydown} on:beforeunload={onBeforeUnload} on:pagehide={onPageHide} on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
@@ -2360,6 +2378,8 @@
         {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>
         <span>历史：{undoStack.length}/{redoStack.length}</span>
+        <span>链路保护：离开页中断保护已启用</span>
+        <span>链路保护：离开页中断保护已启用</span>
     </div>
 
     {#if exportNotice}

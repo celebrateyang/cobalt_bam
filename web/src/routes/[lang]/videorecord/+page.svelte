@@ -1658,6 +1658,11 @@
         }
     };
 
+    const unhideAllObjects = () => {
+        frames = frames.map(f => ({ ...f, hidden: false }));
+        webEmbeds = webEmbeds.map(e => ({ ...e, hidden: false }));
+    };
+
     const normalizeSelectedSize = () => {
         const selectedFrames = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked);
         const selectedEmbeds = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked);
@@ -1769,6 +1774,8 @@
     $: saveAgeText = lastProjectSaveAt
         ? `${Math.max(0, Math.floor((Date.now() - lastProjectSaveAt) / 1000))}s`
         : "--";
+    $: hiddenFrames = frames.filter(f => f.hidden);
+    $: hiddenEmbeds = webEmbeds.filter(e => e.hidden);
 
     $: boardCursor = tool === "text"
         ? "text"
@@ -3045,6 +3052,36 @@
         width: 210px;
     }
 
+    .hidden-panel {
+        top: 12px;
+        left: 428px;
+        width: 240px;
+    }
+
+    .hidden-list {
+        max-height: 160px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .hidden-item,
+    .hidden-unhide-all {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 12px;
+        text-align: left;
+    }
+
+    .hidden-unhide-all {
+        margin-top: 8px;
+        text-align: center;
+    }
+
     .props-panel {
         left: 12px;
         width: 250px;
@@ -3333,6 +3370,12 @@
             top: 86px;
             left: 12px;
             width: 180px;
+        }
+
+        .hidden-panel {
+            top: 86px;
+            left: 198px;
+            width: 170px;
         }
 
         .props-panel {

@@ -1170,6 +1170,59 @@
             }
         }
 
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
+            e.preventDefault();
+            if (selectedFrameId) {
+                const f = frames.find(x => x.id === selectedFrameId);
+                if (f) {
+                    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+                    const copy = { ...f, id, title: `${f.title} copy`, x: f.x + 24, y: f.y + 24 };
+                    frames = [ ...frames, copy ];
+                    selectedFrameId = id;
+                }
+                return;
+            }
+            if (selectedEmbedId) {
+                const em = webEmbeds.find(x => x.id === selectedEmbedId);
+                if (em) {
+                    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+                    const copy = { ...em, id, x: em.x + 24, y: em.y + 24 };
+                    webEmbeds = [ ...webEmbeds, copy ];
+                    selectedEmbedId = id;
+                }
+                return;
+            }
+        }
+
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+            const step = e.shiftKey ? 10 : 1;
+            let dx = 0;
+            let dy = 0;
+            if (e.key === "ArrowUp") dy = -step;
+            if (e.key === "ArrowDown") dy = step;
+            if (e.key === "ArrowLeft") dx = -step;
+            if (e.key === "ArrowRight") dx = step;
+
+            if (selectedFrameId) {
+                e.preventDefault();
+                frames = frames.map(f => {
+                    if (f.id !== selectedFrameId) return f;
+                    const c = clampToViewport(f.x + dx, f.y + dy, f.w, f.h);
+                    return { ...f, x: c.x, y: c.y };
+                });
+                return;
+            }
+            if (selectedEmbedId) {
+                e.preventDefault();
+                webEmbeds = webEmbeds.map(em => {
+                    if (em.id !== selectedEmbedId) return em;
+                    const c = clampToViewport(em.x + dx, em.y + dy, em.w, em.h);
+                    return { ...em, x: c.x, y: c.y };
+                });
+                return;
+            }
+        }
+
         if (e.key === "Escape") {
             selectedFrameId = null;
             selectedEmbedId = null;
@@ -1287,7 +1340,7 @@
         {/if}
 
         {#each frames as frame (frame.id)}
-            <div class="frame-item" class:selected={selectedFrameId === frame.id} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} on:mousedown={() => { selectedFrameId = frame.id; selectedEmbedId = null; }}>
+            <div class="frame-item" class:selected={selectedFrameId === frame.id} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={() => { selectedFrameId = frame.id; selectedEmbedId = null; }}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
                     <div class="frame-actions"><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
@@ -1297,7 +1350,7 @@
         {/each}
 
         {#each webEmbeds as embed (embed.id)}
-            <div class="web-embed" class:selected={selectedEmbedId === embed.id} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} on:mousedown={() => { selectedEmbedId = embed.id; selectedFrameId = null; }}>
+            <div class="web-embed" class:selected={selectedEmbedId === embed.id} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={() => { selectedEmbedId = embed.id; selectedFrameId = null; }}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
                     <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
@@ -1390,7 +1443,7 @@
         {/if}
     </div>
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V画笔 E橡皮 T文本 L线 R矩形 C圆 F框架，Ctrl/Cmd+Z 撤销。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px）。</p>
 </div>
 
 {#if showSettings}

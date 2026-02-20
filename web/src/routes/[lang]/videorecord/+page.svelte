@@ -51,6 +51,7 @@
     let webEmbeds: WebEmbedItem[] = [];
     let draggingEmbedId: string | null = null;
     let resizingEmbedId: string | null = null;
+    let selectedEmbedId: string | null = null;
     let embedDragOffsetX = 0;
     let embedDragOffsetY = 0;
     let embedResizeStartX = 0;
@@ -66,6 +67,7 @@
     let draftFrameH = 0;
     let draggingFrameId: string | null = null;
     let resizingFrameId: string | null = null;
+    let selectedFrameId: string | null = null;
     let frameDragOffsetX = 0;
     let frameDragOffsetY = 0;
     let frameResizeStartX = 0;
@@ -809,10 +811,13 @@
             ...webEmbeds,
             { id, url, x, y, w: 360, h: 220 },
         ];
+        selectedEmbedId = id;
+        selectedFrameId = null;
     };
 
     const removeWebEmbed = (id: string) => {
         webEmbeds = webEmbeds.filter(e => e.id !== id);
+        if (selectedEmbedId === id) selectedEmbedId = null;
     };
 
     const moveWebEmbedLayer = (id: string, dir: -1 | 1) => {
@@ -830,6 +835,8 @@
         const item = webEmbeds.find(x => x.id === id);
         if (!item) return;
         draggingEmbedId = id;
+        selectedEmbedId = id;
+        selectedFrameId = null;
         embedDragOffsetX = e.clientX - item.x;
         embedDragOffsetY = e.clientY - item.y;
     };
@@ -900,6 +907,8 @@
         const f = frames.find(x => x.id === id);
         if (!f) return;
         draggingFrameId = id;
+        selectedFrameId = id;
+        selectedEmbedId = null;
         frameDragOffsetX = e.clientX - f.x;
         frameDragOffsetY = e.clientY - f.y;
     };
@@ -916,6 +925,7 @@
 
     const removeFrame = (id: string) => {
         frames = frames.filter(f => f.id !== id);
+        if (selectedFrameId === id) selectedFrameId = null;
     };
 
     const moveFrameLayer = (id: string, dir: -1 | 1) => {
@@ -975,6 +985,8 @@
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
                 frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH } ];
+                selectedFrameId = id;
+                selectedEmbedId = null;
             }
         }
     };
@@ -1147,6 +1159,23 @@
             return;
         }
 
+        if (e.key === "Delete" || e.key === "Backspace") {
+            if (selectedFrameId) {
+                removeFrame(selectedFrameId);
+                return;
+            }
+            if (selectedEmbedId) {
+                removeWebEmbed(selectedEmbedId);
+                return;
+            }
+        }
+
+        if (e.key === "Escape") {
+            selectedFrameId = null;
+            selectedEmbedId = null;
+            return;
+        }
+
         const key = e.key.toLowerCase();
         if (key === "v") tool = "pen";
         if (key === "e") tool = "eraser";
@@ -1258,7 +1287,7 @@
         {/if}
 
         {#each frames as frame (frame.id)}
-            <div class="frame-item" style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`}>
+            <div class="frame-item" class:selected={selectedFrameId === frame.id} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} on:mousedown={() => { selectedFrameId = frame.id; selectedEmbedId = null; }}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
                     <div class="frame-actions"><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
@@ -1268,7 +1297,7 @@
         {/each}
 
         {#each webEmbeds as embed (embed.id)}
-            <div class="web-embed" style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}>
+            <div class="web-embed" class:selected={selectedEmbedId === embed.id} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} on:mousedown={() => { selectedEmbedId = embed.id; selectedFrameId = null; }}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
                     <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
@@ -1761,6 +1790,11 @@
         border-color: rgba(255,255,255,0.55);
     }
 
+    .frame-item.selected {
+        border-color: #6ea8ff;
+        box-shadow: 0 0 0 2px rgba(110,168,255,0.35);
+    }
+
     .frame-head {
         height: 24px;
         background: rgba(0,0,0,0.45);
@@ -1847,6 +1881,10 @@
         border-radius: 3px;
         background: rgba(0,0,0,0.2);
         cursor: nwse-resize;
+    }
+
+    .web-embed.selected {
+        box-shadow: 0 0 0 2px rgba(110,168,255,0.45), 0 8px 28px rgba(0,0,0,0.2);
     }
 
     .web-embed iframe {

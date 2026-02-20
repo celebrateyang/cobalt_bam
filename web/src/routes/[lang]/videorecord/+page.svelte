@@ -140,6 +140,7 @@
     let showSettings = false;
     let exportFormat: "webm" | "mp4" = "webm";
     let selectedMimeType = "video/webm;codecs=vp9";
+    let lastProjectSaveAt = 0;
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
         { key: "4:3", label: "经典" },
@@ -325,6 +326,7 @@
             },
         };
         window.localStorage.setItem("videorecord.project", JSON.stringify(payload));
+        lastProjectSaveAt = Date.now();
     };
 
     const loadProjectSnapshot = () => {
@@ -1558,6 +1560,25 @@
         return Number.isFinite(n) ? n : fallback;
     };
 
+
+    $: selectionCount = selectedFrameIds.length + selectedEmbedIds.length;
+    $: toolLabel = ({
+        select: "选择",
+        pen: "画笔",
+        eraser: "橡皮",
+        text: "文本",
+        line: "直线",
+        rect: "矩形",
+        circle: "圆形",
+        laser: "激光笔",
+        frame: "框架",
+        webembed: "网页嵌入",
+    } as Record<string, string>)[tool] || tool;
+
+    $: saveAgeText = lastProjectSaveAt
+        ? `${Math.max(0, Math.floor((Date.now() - lastProjectSaveAt) / 1000))}s`
+        : "--";
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1942,6 +1963,14 @@
                 <div class="teleprompter-note">仅你可见，不会出现在录制内容中。</div>
             </div>
         {/if}
+    </div>
+
+    <div class="status-bar">
+        <span>工具：{toolLabel}</span>
+        <span>选中：{selectionCount}</span>
+        <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
+        <span>录制：{isRecording ? `进行中 ${formatDuration(recordDuration)}` : "未录制"}</span>
+        <span>最近保存：{saveAgeText}</span>
     </div>
 
     <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象。</p>
@@ -2493,6 +2522,19 @@
         height: calc(100% - 30px);
         border: 0;
         background: #fff;
+    }
+
+    .status-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        align-items: center;
+        justify-content: center;
+        background: var(--button);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        color: var(--subtext);
     }
 
     .hint {

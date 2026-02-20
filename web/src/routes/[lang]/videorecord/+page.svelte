@@ -1793,6 +1793,12 @@
             return;
         }
 
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
+            e.preventDefault();
+            redo();
+            return;
+        }
+
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
             return;
         }
@@ -1914,8 +1920,8 @@
             <button class:active={tool === "circle"} on:click={() => (tool = "circle")}>圆形</button>
             <button on:click={onPickImage}>插图</button>
             <button class:active={showMoreTools} on:click={() => (showMoreTools = !showMoreTools)}>更多工具</button>
-            <button on:click={undo} disabled={undoStack.length === 0}>撤销</button>
-            <button on:click={redo} disabled={redoStack.length === 0}>重做</button>
+            <button on:click={undo} disabled={undoStack.length === 0} title="撤销 (Ctrl/Cmd+Z)">撤销</button>
+            <button on:click={redo} disabled={redoStack.length === 0} title="重做 (Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y)">重做</button>
 
             <input type="color" bind:value={strokeColor} disabled={tool === "eraser"} />
             <input type="range" min="1" max="24" bind:value={strokeWidth} />
@@ -2216,6 +2222,7 @@
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
         <span>录制：{isRecording ? `进行中 ${formatDuration(recordDuration)}` : "未录制"}</span>
         <span>最近保存：{saveAgeText}</span>
+        <span>历史：{undoStack.length}/{redoStack.length}</span>
     </div>
 
     {#if exportNotice}
@@ -2225,7 +2232,7 @@
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
             <div><strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形 · C 圆 · F 框架</div>
-            <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
+            <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
             <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
         </div>
     {/if}

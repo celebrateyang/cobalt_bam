@@ -2601,6 +2601,12 @@
 
 <style>
     .page {
+        --text: #111111;
+        --subtext: #555555;
+        --accent: #111111;
+        --button: #f3f3f3;
+        --sidebar-bg: #ffffff;
+
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -2609,6 +2615,9 @@
         margin: 0 auto;
         padding: 10px;
         box-sizing: border-box;
+        background: #ffffff;
+        color: #111111;
+        border-radius: 14px;
     }
 
     .toolbar {
@@ -2616,9 +2625,10 @@
         justify-content: space-between;
         gap: 8px;
         flex-wrap: wrap;
-        background: var(--button);
+        background: #f6f6f6;
         border-radius: 12px;
         padding: 10px;
+        border: 1px solid #ebebeb;
     }
 
     .left {
@@ -2636,11 +2646,11 @@
     }
 
     button {
-        border: 0;
+        border: 1px solid #e5e5e5;
         border-radius: 10px;
         padding: 8px 12px;
-        background: var(--sidebar-bg);
-        color: var(--text);
+        background: #ffffff;
+        color: #111111;
         cursor: pointer;
     }
 
@@ -2650,8 +2660,9 @@
     }
 
     button.active {
-        background: var(--accent);
-        color: #fff;
+        background: #111111;
+        color: #ffffff;
+        border-color: #111111;
     }
 
     .board-wrap {

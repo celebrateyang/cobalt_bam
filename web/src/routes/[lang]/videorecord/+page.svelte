@@ -66,6 +66,7 @@
     let draggingEmbedId: string | null = null;
     let resizingEmbedId: string | null = null;
     let selectedEmbedId: string | null = null;
+    let selectedEmbedIds: string[] = [];
     let embedDragOffsetX = 0;
     let embedDragOffsetY = 0;
     let embedResizeStartX = 0;
@@ -82,6 +83,7 @@
     let draggingFrameId: string | null = null;
     let resizingFrameId: string | null = null;
     let selectedFrameId: string | null = null;
+    let selectedFrameIds: string[] = [];
     let frameDragOffsetX = 0;
     let frameDragOffsetY = 0;
     let frameResizeStartX = 0;
@@ -872,7 +874,9 @@
             { id, url, x, y, w: 360, h: 220 },
         ];
         selectedEmbedId = id;
+        selectedEmbedIds = [id];
         selectedFrameId = null;
+        selectedFrameIds = [];
     };
 
     const removeWebEmbed = (id: string) => {
@@ -923,7 +927,9 @@
         if (!item) return;
         draggingEmbedId = id;
         selectedEmbedId = id;
+        selectedEmbedIds = [id];
         selectedFrameId = null;
+        selectedFrameIds = [];
         embedDragOffsetX = e.clientX - item.x;
         embedDragOffsetY = e.clientY - item.y;
     };
@@ -1090,7 +1096,9 @@
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
                 frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH } ];
                 selectedFrameId = id;
+                selectedFrameIds = [id];
                 selectedEmbedId = null;
+                selectedEmbedIds = [];
             }
         }
     };
@@ -1287,6 +1295,65 @@
         saveProjectSnapshot();
     }
 
+    const toggleFrameSelection = (id: string, additive: boolean) => {
+        if (!additive) {
+            selectedFrameIds = [id];
+            selectedFrameId = id;
+            selectedEmbedIds = [];
+            selectedEmbedId = null;
+            return;
+        }
+
+        if (selectedFrameIds.includes(id)) {
+            selectedFrameIds = selectedFrameIds.filter(x => x !== id);
+        } else {
+            selectedFrameIds = [ ...selectedFrameIds, id ];
+        }
+        selectedFrameId = selectedFrameIds[0] || null;
+    };
+
+    const toggleEmbedSelection = (id: string, additive: boolean) => {
+        if (!additive) {
+            selectedEmbedIds = [id];
+            selectedEmbedId = id;
+            selectedFrameIds = [];
+            selectedFrameId = null;
+            return;
+        }
+
+        if (selectedEmbedIds.includes(id)) {
+            selectedEmbedIds = selectedEmbedIds.filter(x => x !== id);
+        } else {
+            selectedEmbedIds = [ ...selectedEmbedIds, id ];
+        }
+        selectedEmbedId = selectedEmbedIds[0] || null;
+    };
+
+    const clearAllSelections = () => {
+        selectedFrameId = null;
+        selectedEmbedId = null;
+        selectedFrameIds = [];
+        selectedEmbedIds = [];
+    };
+
+    const nudgeSelected = (dx: number, dy: number) => {
+        if (selectedFrameIds.length) {
+            frames = frames.map(f => {
+                if (!selectedFrameIds.includes(f.id)) return f;
+                const c = clampToViewport(f.x + dx, f.y + dy, f.w, f.h);
+                return { ...f, x: c.x, y: c.y };
+            });
+        }
+
+        if (selectedEmbedIds.length) {
+            webEmbeds = webEmbeds.map(em => {
+                if (!selectedEmbedIds.includes(em.id)) return em;
+                const c = clampToViewport(em.x + dx, em.y + dy, em.w, em.h);
+                return { ...em, x: c.x, y: c.y };
+            });
+        }
+    };
+
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
@@ -1300,36 +1367,48 @@
         }
 
         if (e.key === "Delete" || e.key === "Backspace") {
-            if (selectedFrameId) {
-                removeFrame(selectedFrameId);
+            if (selectedFrameIds.length) {
+                for (const id of [ ...selectedFrameIds ]) removeFrame(id);
+                selectedFrameIds = [];
+                selectedFrameId = null;
                 return;
             }
-            if (selectedEmbedId) {
-                removeWebEmbed(selectedEmbedId);
+            if (selectedEmbedIds.length) {
+                for (const id of [ ...selectedEmbedIds ]) removeWebEmbed(id);
+                selectedEmbedIds = [];
+                selectedEmbedId = null;
                 return;
             }
         }
 
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
             e.preventDefault();
-            if (selectedFrameId) {
-                const f = frames.find(x => x.id === selectedFrameId);
-                if (f) {
+            if (selectedFrameIds.length) {
+                const created: string[] = [];
+                for (const sid of selectedFrameIds) {
+                    const f = frames.find(x => x.id === sid);
+                    if (!f) continue;
                     const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
                     const copy = { ...f, id, title: `${f.title} copy`, x: f.x + 24, y: f.y + 24 };
                     frames = [ ...frames, copy ];
-                    selectedFrameId = id;
+                    created.push(id);
                 }
+                selectedFrameIds = created;
+                selectedFrameId = created[0] || null;
                 return;
             }
-            if (selectedEmbedId) {
-                const em = webEmbeds.find(x => x.id === selectedEmbedId);
-                if (em) {
+            if (selectedEmbedIds.length) {
+                const created: string[] = [];
+                for (const sid of selectedEmbedIds) {
+                    const em = webEmbeds.find(x => x.id === sid);
+                    if (!em) continue;
                     const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
                     const copy = { ...em, id, x: em.x + 24, y: em.y + 24 };
                     webEmbeds = [ ...webEmbeds, copy ];
-                    selectedEmbedId = id;
+                    created.push(id);
                 }
+                selectedEmbedIds = created;
+                selectedEmbedId = created[0] || null;
                 return;
             }
         }
@@ -1343,29 +1422,15 @@
             if (e.key === "ArrowLeft") dx = -step;
             if (e.key === "ArrowRight") dx = step;
 
-            if (selectedFrameId) {
+            if (selectedFrameIds.length || selectedEmbedIds.length) {
                 e.preventDefault();
-                frames = frames.map(f => {
-                    if (f.id !== selectedFrameId) return f;
-                    const c = clampToViewport(f.x + dx, f.y + dy, f.w, f.h);
-                    return { ...f, x: c.x, y: c.y };
-                });
-                return;
-            }
-            if (selectedEmbedId) {
-                e.preventDefault();
-                webEmbeds = webEmbeds.map(em => {
-                    if (em.id !== selectedEmbedId) return em;
-                    const c = clampToViewport(em.x + dx, em.y + dy, em.w, em.h);
-                    return { ...em, x: c.x, y: c.y };
-                });
+                nudgeSelected(dx, dy);
                 return;
             }
         }
 
         if (e.key === "Escape") {
-            selectedFrameId = null;
-            selectedEmbedId = null;
+            clearAllSelections();
             return;
         }
 
@@ -1482,7 +1547,7 @@
         {/if}
 
         {#each frames as frame (frame.id)}
-            <div class="frame-item" class:selected={selectedFrameId === frame.id} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={() => { selectedFrameId = frame.id; selectedEmbedId = null; }}>
+            <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
                     <div class="frame-actions"><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
@@ -1525,7 +1590,7 @@
         {/if}
 
         {#each webEmbeds as embed (embed.id)}
-            <div class="web-embed" class:selected={selectedEmbedId === embed.id} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={() => { selectedEmbedId = embed.id; selectedFrameId = null; }}>
+            <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
                     <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>

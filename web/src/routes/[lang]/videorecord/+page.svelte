@@ -185,6 +185,9 @@
     let cameraRenderRaf = 0;
 
     let includeMicAudio = false;
+    let enableRecordCountdown = true;
+    let recordCountdownSeconds = 3;
+    let recordCountdownLeft = 0;
     let micDevices: MediaDeviceInfo[] = [];
     let selectedMicDeviceId = "";
     let micStream: MediaStream | null = null;
@@ -1249,6 +1252,23 @@
         return "";
     };
 
+    const triggerRecordStart = async () => {
+        if (isRecording) return;
+        if (!enableRecordCountdown || recordCountdownSeconds <= 0) {
+            await startRecord();
+            return;
+        }
+        recordCountdownLeft = recordCountdownSeconds;
+        const t = window.setInterval(async () => {
+            recordCountdownLeft -= 1;
+            if (recordCountdownLeft <= 0) {
+                clearInterval(t);
+                recordCountdownLeft = 0;
+                await startRecord();
+            }
+        }, 1000);
+    };
+
     const startRecord = async () => {
         if (isRecording) return;
 
@@ -1898,7 +1918,7 @@
 
         if (e.code === "Space" || e.key.toLowerCase() === "p") {
             e.preventDefault();
-            if (isRecording) stopRecord(); else startRecord();
+            if (isRecording) stopRecord(); else triggerRecordStart();
             return;
         }
 
@@ -2015,7 +2035,7 @@
             <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
             <button class="floating-btn" on:click={() => (showShortcutsHelp = !showShortcutsHelp)} title="快捷键帮助">⌨</button>
             {#if !isRecording}
-                <button class="floating-record" on:click={startRecord}>● 录制</button>
+                <button class="floating-record" on:click={triggerRecordStart}>● 录制</button>
             {:else}
                 <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
             {/if}
@@ -2234,6 +2254,7 @@
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
         <span>录制：{isRecording ? `进行中 ${formatDuration(recordDuration)}` : "未录制"}</span>
         <span>快捷录制：Space / P</span>
+        {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>
         <span>历史：{undoStack.length}/{redoStack.length}</span>
     </div>
@@ -2248,11 +2269,11 @@
             <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
             <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
             <div><strong>幻灯片:</strong> Ctrl/Cmd+Shift+D 复制当前页 · Alt+←/→ 调整当前页顺序</div>
-            <div><strong>录制:</strong> Space / P 开始或停止录制</div>
+            <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）</div>
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时）。</p>
 </div>
 
 {#if showSettings}
@@ -2345,6 +2366,19 @@
                 <button class:active={exportFormat === "mp4"} on:click={() => (exportFormat = "mp4")}>MP4（实验）</button>
             </div>
             <div class="subnote">说明：浏览器不支持 MP4 录制时会自动回退到 WebM。</div>
+        </section>
+
+        <section>
+            <div class="section-title">开始录制倒计时</div>
+            <label class="switch-row">
+                <input type="checkbox" bind:checked={enableRecordCountdown} />
+                <span>启用倒计时</span>
+            </label>
+            <label class="slider-row">
+                <span>秒数</span>
+                <input type="range" min="1" max="8" step="1" bind:value={recordCountdownSeconds} disabled={!enableRecordCountdown} />
+                <span>{recordCountdownSeconds}s</span>
+            </label>
         </section>
 
         <section>

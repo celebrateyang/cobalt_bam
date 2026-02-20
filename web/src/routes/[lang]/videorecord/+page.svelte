@@ -1559,6 +1559,56 @@
         }
     };
 
+    const moveSelectionLayerStep = (delta: -1 | 1) => {
+        if (selectedFrameIds.length) {
+            const arr = [ ...frames ];
+            if (delta > 0) {
+                for (let i = arr.length - 2; i >= 0; i--) {
+                    const a = arr[i];
+                    const b = arr[i + 1];
+                    if (selectedFrameIds.includes(a.id) && !selectedFrameIds.includes(b.id)) {
+                        arr[i] = b;
+                        arr[i + 1] = a;
+                    }
+                }
+            } else {
+                for (let i = 1; i < arr.length; i++) {
+                    const a = arr[i - 1];
+                    const b = arr[i];
+                    if (!selectedFrameIds.includes(a.id) && selectedFrameIds.includes(b.id)) {
+                        arr[i - 1] = b;
+                        arr[i] = a;
+                    }
+                }
+            }
+            frames = arr;
+        }
+
+        if (selectedEmbedIds.length) {
+            const arr = [ ...webEmbeds ];
+            if (delta > 0) {
+                for (let i = arr.length - 2; i >= 0; i--) {
+                    const a = arr[i];
+                    const b = arr[i + 1];
+                    if (selectedEmbedIds.includes(a.id) && !selectedEmbedIds.includes(b.id)) {
+                        arr[i] = b;
+                        arr[i + 1] = a;
+                    }
+                }
+            } else {
+                for (let i = 1; i < arr.length; i++) {
+                    const a = arr[i - 1];
+                    const b = arr[i];
+                    if (!selectedEmbedIds.includes(a.id) && selectedEmbedIds.includes(b.id)) {
+                        arr[i - 1] = b;
+                        arr[i] = a;
+                    }
+                }
+            }
+            webEmbeds = arr;
+        }
+    };
+
     const resizeSelectedBy = (ratio: number) => {
         if (selectedFrameIds.length) {
             frames = frames.map(f => {
@@ -1728,11 +1778,19 @@
         }
 
         if (e.key === "]") {
-            moveSelectionLayer("front");
+            if (e.metaKey || e.ctrlKey) {
+                moveSelectionLayerStep(1);
+            } else {
+                moveSelectionLayer("front");
+            }
             return;
         }
         if (e.key === "[") {
-            moveSelectionLayer("back");
+            if (e.metaKey || e.ctrlKey) {
+                moveSelectionLayerStep(-1);
+            } else {
+                moveSelectionLayer("back");
+            }
             return;
         }
 
@@ -1915,6 +1973,8 @@
                 <div class="edit-grid small-grid">
                     <button on:click={() => moveSelectionLayer("back")}>置底</button>
                     <button on:click={() => moveSelectionLayer("front")}>置顶</button>
+                    <button on:click={() => moveSelectionLayerStep(-1)}>下移一层</button>
+                    <button on:click={() => moveSelectionLayerStep(1)}>上移一层</button>
                     <button on:click={copySelection}>复制</button>
                     <button on:click={() => resizeSelectedBy(0.9)}>缩小</button>
                     <button on:click={() => resizeSelectedBy(1.1)}>放大</button>
@@ -2105,7 +2165,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象，H可快速隐藏/显示选中对象。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象。</p>
 </div>
 
 {#if showSettings}

@@ -40,6 +40,7 @@
         h: number;
         locked?: boolean;
         hidden?: boolean;
+        opacity?: number;
     };
 
     type FrameItem = {
@@ -51,6 +52,7 @@
         h: number;
         locked?: boolean;
         hidden?: boolean;
+        opacity?: number;
     };
 
     type ProjectSnapshot = {
@@ -926,7 +928,7 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
         webEmbeds = [
             ...webEmbeds,
-            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false },
+            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false, opacity: 1 },
         ];
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1190,7 +1192,7 @@
             draftingFrame = false;
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false } ];
+                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false, opacity: 1 } ];
                 selectedFrameId = id;
                 selectedFrameIds = [id];
                 selectedEmbedId = null;
@@ -1721,7 +1723,8 @@
             if (f.id !== id) return f;
             const next = { ...f, ...patch };
             const c = clampToViewport(next.x, next.y, next.w, next.h);
-            return { ...next, x: c.x, y: c.y };
+            const opacity = Math.max(0.05, Math.min(1, next.opacity ?? 1));
+            return { ...next, x: c.x, y: c.y, opacity };
         });
     };
 
@@ -1730,7 +1733,8 @@
             if (e.id !== id) return e;
             const next = { ...e, ...patch };
             const c = clampToViewport(next.x, next.y, next.w, next.h);
-            return { ...next, x: c.x, y: c.y };
+            const opacity = Math.max(0.05, Math.min(1, next.opacity ?? 1));
+            return { ...next, x: c.x, y: c.y, opacity };
         });
     };
 
@@ -1831,7 +1835,7 @@
         }
 
         if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-            const step = e.shiftKey ? 10 : 1;
+            const step = (e.metaKey || e.ctrlKey) ? 50 : (e.shiftKey ? 10 : 1);
             let dx = 0;
             let dy = 0;
             if (e.key === "ArrowUp") dy = -step;
@@ -2070,6 +2074,7 @@
                         <label>H<input type="number" value={Math.round(f.h)} on:change={(e) => updateFrameProps(f.id, { h: Math.max(80, inputNumber(e, 80)) })} /></label>
                     </div>
                     <label class="prop-full">标题<input type="text" value={f.title} on:change={(e) => updateFrameProps(f.id, { title: inputValue(e) || f.title })} /></label>
+                    <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={f.opacity ?? 1} on:input={(e) => updateFrameProps(f.id, { opacity: inputNumber(e, 1) })} /></label>
                 </div>
             {/each}
         {/if}
@@ -2085,6 +2090,7 @@
                         <label>H<input type="number" value={Math.round(em.h)} on:change={(e) => updateEmbedProps(em.id, { h: Math.max(140, inputNumber(e, 140)) })} /></label>
                     </div>
                     <label class="prop-full">URL<input type="text" value={em.url} on:change={(e) => updateEmbedProps(em.id, { url: inputValue(e) || em.url })} /></label>
+                    <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={em.opacity ?? 1} on:input={(e) => updateEmbedProps(em.id, { opacity: inputNumber(e, 1) })} /></label>
                 </div>
             {/each}
         {/if}
@@ -2203,7 +2209,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分。</p>
 </div>
 
 {#if showSettings}

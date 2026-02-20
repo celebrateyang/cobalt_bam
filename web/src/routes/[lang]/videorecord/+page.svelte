@@ -38,6 +38,7 @@
         y: number;
         w: number;
         h: number;
+        locked?: boolean;
     };
 
     type FrameItem = {
@@ -47,6 +48,7 @@
         y: number;
         w: number;
         h: number;
+        locked?: boolean;
     };
 
     type ProjectSnapshot = {
@@ -912,7 +914,7 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
         webEmbeds = [
             ...webEmbeds,
-            { id, url, x, y, w: 360, h: 220 },
+            { id, url, x, y, w: 360, h: 220, locked: false },
         ];
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1000,7 +1002,7 @@
 
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
-        if (!item) return;
+        if (!item || item.locked) return;
         draggingEmbedId = id;
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1012,7 +1014,7 @@
 
     const startResizeWebEmbed = (id: string, e: PointerEvent) => {
         const item = webEmbeds.find(x => x.id === id);
-        if (!item) return;
+        if (!item || item.locked) return;
         resizingEmbedId = id;
         embedResizeStartX = e.clientX;
         embedResizeStartY = e.clientY;
@@ -1077,7 +1079,7 @@
 
     const startDragFrame = (id: string, e: PointerEvent) => {
         const f = frames.find(x => x.id === id);
-        if (!f) return;
+        if (!f || f.locked) return;
         draggingFrameId = id;
         selectedFrameId = id;
         selectedEmbedId = null;
@@ -1087,7 +1089,7 @@
 
     const startResizeFrame = (id: string, e: PointerEvent) => {
         const f = frames.find(x => x.id === id);
-        if (!f) return;
+        if (!f || f.locked) return;
         resizingFrameId = id;
         frameResizeStartX = e.clientX;
         frameResizeStartY = e.clientY;
@@ -1176,7 +1178,7 @@
             draftingFrame = false;
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH } ];
+                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false } ];
                 selectedFrameId = id;
                 selectedFrameIds = [id];
                 selectedEmbedId = null;
@@ -1421,7 +1423,7 @@
     const nudgeSelected = (dx: number, dy: number) => {
         if (selectedFrameIds.length) {
             frames = frames.map(f => {
-                if (!selectedFrameIds.includes(f.id)) return f;
+                if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 const c = clampToViewport(f.x + dx, f.y + dy, f.w, f.h);
                 return { ...f, x: c.x, y: c.y };
             });
@@ -1429,7 +1431,7 @@
 
         if (selectedEmbedIds.length) {
             webEmbeds = webEmbeds.map(em => {
-                if (!selectedEmbedIds.includes(em.id)) return em;
+                if (!selectedEmbedIds.includes(em.id) || em.locked) return em;
                 const c = clampToViewport(em.x + dx, em.y + dy, em.w, em.h);
                 return { ...em, x: c.x, y: c.y };
             });
@@ -1439,7 +1441,7 @@
     const alignSelectedGroup = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
         if (selectedFrameIds.length) {
             frames = frames.map(f => {
-                if (!selectedFrameIds.includes(f.id)) return f;
+                if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 let x = f.x;
                 let y = f.y;
                 if (mode === "left") x = 8;
@@ -1455,7 +1457,7 @@
 
         if (selectedEmbedIds.length) {
             webEmbeds = webEmbeds.map(em => {
-                if (!selectedEmbedIds.includes(em.id)) return em;
+                if (!selectedEmbedIds.includes(em.id) || em.locked) return em;
                 let x = em.x;
                 let y = em.y;
                 if (mode === "left") x = 8;
@@ -1522,6 +1524,14 @@
             const others = webEmbeds.filter(e => !selectedEmbedIds.includes(e.id));
             webEmbeds = dir === "front" ? [ ...others, ...selected ] : [ ...selected, ...others ];
         }
+    };
+
+    const toggleFrameLock = (id: string) => {
+        frames = frames.map(f => f.id === id ? { ...f, locked: !f.locked } : f);
+    };
+
+    const toggleEmbedLock = (id: string) => {
+        webEmbeds = webEmbeds.map(e => e.id === id ? { ...e, locked: !e.locked } : e);
     };
 
     const onGlobalKeydown = (e: KeyboardEvent) => {
@@ -1725,10 +1735,10 @@
         {/if}
 
         {#each frames as frame (frame.id)}
-            <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
+            <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} class:locked={!!frame.locked} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
-                    <div class="frame-actions"><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
+                    <div class="frame-actions"><button on:click={() => toggleFrameLock(frame.id)}>{frame.locked ? "🔒" : "🔓"}</button><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
                 </div>
                 <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
             </div>
@@ -1787,10 +1797,10 @@
         {/if}
 
         {#each webEmbeds as embed (embed.id)}
-            <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
+            <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} class:locked={!!embed.locked} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
                 <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
                     <span>🌐 Web</span>
-                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
                 </div>
                 <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
                 <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
@@ -1880,7 +1890,7 @@
         {/if}
     </div>
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级，可用🔒锁定对象。</p>
 </div>
 
 {#if showSettings}
@@ -2322,6 +2332,11 @@
         box-shadow: 0 0 0 2px rgba(110,168,255,0.35);
     }
 
+    .frame-item.locked {
+        border-style: solid;
+        border-color: rgba(255,200,100,0.9);
+    }
+
     .frame-head {
         height: 24px;
         background: rgba(0,0,0,0.45);
@@ -2412,6 +2427,11 @@
 
     .web-embed.selected {
         box-shadow: 0 0 0 2px rgba(110,168,255,0.45), 0 8px 28px rgba(0,0,0,0.2);
+    }
+
+    .web-embed.locked {
+        outline: 2px solid rgba(255,200,100,0.85);
+        outline-offset: 0;
     }
 
     .web-embed iframe {

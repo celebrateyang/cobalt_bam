@@ -1672,6 +1672,42 @@
         }
     };
 
+    const distributeSelected = (axis: "x" | "y") => {
+        const selectedF = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked && !f.hidden);
+        if (selectedF.length >= 3) {
+            const sorted = [ ...selectedF ].sort((a, b) => axis === "x" ? a.x - b.x : a.y - b.y);
+            const first = sorted[0];
+            const last = sorted[sorted.length - 1];
+            const span = axis === "x" ? (last.x - first.x) : (last.y - first.y);
+            const step = span / (sorted.length - 1);
+            const posMap = new Map<string, number>();
+            sorted.forEach((item, idx) => posMap.set(item.id, Math.round((axis === "x" ? first.x : first.y) + step * idx)));
+            frames = frames.map(f => {
+                const v = posMap.get(f.id);
+                if (v == null) return f;
+                const c = axis === "x" ? clampToViewport(v, f.y, f.w, f.h) : clampToViewport(f.x, v, f.w, f.h);
+                return { ...f, x: c.x, y: c.y };
+            });
+        }
+
+        const selectedE = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked && !e.hidden);
+        if (selectedE.length >= 3) {
+            const sorted = [ ...selectedE ].sort((a, b) => axis === "x" ? a.x - b.x : a.y - b.y);
+            const first = sorted[0];
+            const last = sorted[sorted.length - 1];
+            const span = axis === "x" ? (last.x - first.x) : (last.y - first.y);
+            const step = span / (sorted.length - 1);
+            const posMap = new Map<string, number>();
+            sorted.forEach((item, idx) => posMap.set(item.id, Math.round((axis === "x" ? first.x : first.y) + step * idx)));
+            webEmbeds = webEmbeds.map(e => {
+                const v = posMap.get(e.id);
+                if (v == null) return e;
+                const c = axis === "x" ? clampToViewport(v, e.y, e.w, e.h) : clampToViewport(e.x, v, e.w, e.h);
+                return { ...e, x: c.x, y: c.y };
+            });
+        }
+    };
+
     const toggleFrameLock = (id: string) => {
         frames = frames.map(f => f.id === id ? { ...f, locked: !f.locked } : f);
     };
@@ -1969,6 +2005,8 @@
                     <button on:click={() => alignSelectedGroup("top")}>上</button>
                     <button on:click={() => alignSelectedGroup("middle")}>中</button>
                     <button on:click={() => alignSelectedGroup("bottom")}>下</button>
+                    <button on:click={() => distributeSelected("x")}>横向均分</button>
+                    <button on:click={() => distributeSelected("y")}>纵向均分</button>
                 </div>
                 <div class="edit-grid small-grid">
                     <button on:click={() => moveSelectionLayer("back")}>置底</button>
@@ -2165,7 +2203,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；多选支持横纵均分。</p>
 </div>
 
 {#if showSettings}

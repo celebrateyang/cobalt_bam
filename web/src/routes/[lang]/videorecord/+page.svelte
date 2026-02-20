@@ -105,6 +105,8 @@
 
     // recording settings
     let showSettings = false;
+    let exportFormat: "webm" | "mp4" = "webm";
+    let selectedMimeType = "video/webm;codecs=vp9";
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
         { key: "4:3", label: "经典" },
@@ -996,6 +998,37 @@
         backgroundColor = next;
     };
 
+
+    const pickRecorderMime = () => {
+        const webmCandidates = [
+            "video/webm;codecs=vp9",
+            "video/webm;codecs=vp8",
+            "video/webm",
+        ];
+        const mp4Candidates = [
+            "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+            "video/mp4",
+        ];
+
+        const preferred = exportFormat === "mp4" ? mp4Candidates : webmCandidates;
+        const fallback = exportFormat === "mp4" ? webmCandidates : mp4Candidates;
+
+        for (const m of preferred) {
+            if (MediaRecorder.isTypeSupported(m)) {
+                selectedMimeType = m;
+                return m;
+            }
+        }
+        for (const m of fallback) {
+            if (MediaRecorder.isTypeSupported(m)) {
+                selectedMimeType = m;
+                return m;
+            }
+        }
+        selectedMimeType = "";
+        return "";
+    };
+
     const startRecord = async () => {
         if (isRecording) return;
 
@@ -1015,12 +1048,10 @@
                 console.warn("mic capture failed", e);
             }
         }
-        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-            ? "video/webm;codecs=vp9"
-            : "video/webm";
+        const mime = pickRecorderMime();
 
         chunks = [];
-        recorder = new MediaRecorder(stream, { mimeType: mime });
+        recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
 
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size > 0) chunks.push(event.data);
@@ -1039,11 +1070,13 @@
             stopMicStream();
 
             if (!chunks.length) return;
-            const blob = new Blob(chunks, { type: "video/webm" });
+            const actualType = recorder?.mimeType || selectedMimeType || "video/webm";
+            const ext = actualType.includes("mp4") ? "mp4" : "webm";
+            const blob = new Blob(chunks, { type: actualType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `videorecord-${Date.now()}.webm`;
+            a.download = `videorecord-${Date.now()}.${ext}`;
             a.click();
             URL.revokeObjectURL(url);
         };
@@ -1527,6 +1560,15 @@
                 <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
                 <span>{teleprompterOpacity}%</span>
             </label>
+        </section>
+
+        <section>
+            <div class="section-title">导出格式</div>
+            <div class="export-format-row">
+                <button class:active={exportFormat === "webm"} on:click={() => (exportFormat = "webm")}>WebM（兼容好）</button>
+                <button class:active={exportFormat === "mp4"} on:click={() => (exportFormat = "mp4")}>MP4（实验）</button>
+            </div>
+            <div class="subnote">说明：浏览器不支持 MP4 录制时会自动回退到 WebM。</div>
         </section>
 
         <section>
@@ -2266,6 +2308,30 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+    }
+
+    .export-format-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .export-format-row button {
+        background: #fff;
+        color: #222;
+        border: 1px solid #ddd;
+    }
+
+    .export-format-row button.active {
+        background: #232323;
+        color: #fff;
+        border-color: #232323;
+    }
+
+    .subnote {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #666;
     }
 
     .mic-row {

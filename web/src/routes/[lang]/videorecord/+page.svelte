@@ -133,6 +133,8 @@
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
     let isRecording = false;
+    let isRecordingStarting = false;
+    let isRecordingStopping = false;
     let recordDuration = 0;
     let isRecordPaused = false;
     let timer: ReturnType<typeof setInterval> | null = null;
@@ -1292,7 +1294,7 @@
     };
 
     const triggerRecordStart = async () => {
-        if (isRecording) return;
+        if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
         if (!enableRecordCountdown || recordCountdownSeconds <= 0) {
             await startRecord();
@@ -1310,12 +1312,14 @@
     };
 
     const startRecord = async () => {
-        if (isRecording) return;
+        if (isRecording || isRecordingStarting || isRecordingStopping) return;
+        isRecordingStarting = true;
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
         if (!canvasEl || typeof canvasEl.captureStream !== "function") {
             exportNotice = "录制启动失败：画布流不可用。";
             exportNoticeLevel = "error";
+            isRecordingStarting = false;
             return;
         }
         const stream = canvasEl.captureStream(60);
@@ -1346,6 +1350,7 @@
             exportNotice = "录制器初始化失败，请切换导出格式或更换浏览器。";
             exportNoticeLevel = "error";
             stopMicStream();
+            isRecordingStarting = false;
             return;
         }
 
@@ -1367,15 +1372,24 @@
 
             isRecording = false;
             isRecordPaused = false;
+            isRecordingStopping = false;
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             cameraRenderRaf = 0;
             stopCameraStream();
             stopMicStream();
 
-            if (!chunks.length) return;
+            if (!chunks.length) {
+                exportNotice = "未生成可导出片段，请重试录制。";
+                exportNoticeLevel = "error";
+                return;
+            }
             const actualType = recorder?.mimeType || selectedMimeType || "video/webm";
             const ext = actualType.includes("mp4") ? "mp4" : "webm";
             const blob = new Blob(chunks, { type: actualType });
+            if (blob.size < 32 * 1024) {
+                exportNotice = "录制文件过小，可能录制时长过短或被中断。";
+                exportNoticeLevel = "warn";
+            }
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -1386,9 +1400,19 @@
             exportNoticeLevel = "info";
         };
 
-        recorder.start(300);
-        isRecording = true;
-        isRecordPaused = false;
+        try {
+            recorder.start(300);
+            isRecording = true;
+            isRecordPaused = false;
+            exportNotice = "录制已开始。";
+            exportNoticeLevel = "info";
+        } catch {
+            exportNotice = "录制启动失败，请检查浏览器权限与编码支持。";
+            exportNoticeLevel = "error";
+            stopMicStream();
+            isRecordingStarting = false;
+            return;
+        }
         if (showCameraInRecord) {
             try {
                 await startCameraRenderLoop();
@@ -1400,14 +1424,24 @@
         timer = setInterval(() => {
             if (!isRecordPaused) recordDuration += 1;
         }, 1000);
+        isRecordingStarting = false;
     };
 
     const stopRecord = () => {
-        if (!recorder || recorder.state === "inactive") return;
+        if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
+        isRecordingStopping = true;
         recorder.stop();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
         stopMicStream();
+        window.setTimeout(() => {
+            if (isRecordingStopping) {
+                isRecordingStopping = false;
+                isRecording = false;
+                exportNotice = "停止录制超时，已重置状态。";
+                exportNoticeLevel = "warn";
+            }
+        }, 1800);
     };
 
     const togglePauseRecord = () => {
@@ -2152,10 +2186,10 @@
             <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
             <button class="floating-btn" on:click={() => (showShortcutsHelp = !showShortcutsHelp)} title="快捷键帮助">⌨</button>
             {#if !isRecording}
-                <button class="floating-record" on:click={triggerRecordStart}>● 录制</button>
+                <button class="floating-record" on:click={triggerRecordStart} disabled={isRecordingStarting || isRecordingStopping}>{isRecordingStarting ? "… 启动中" : "● 录制"}</button>
             {:else}
-                <button class="floating-pause" on:click={togglePauseRecord}>{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button>
-                <button class="floating-stop" on:click={stopRecord}>■ 停止 {formatDuration(recordDuration)}</button>
+                <button class="floating-pause" on:click={togglePauseRecord} disabled={isRecordingStopping}>{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button>
+                <button class="floating-stop" on:click={stopRecord} disabled={isRecordingStopping}>{isRecordingStopping ? "… 停止中" : `■ 停止 ${formatDuration(recordDuration)}`}</button>
             {/if}
         </div>
 
@@ -2380,7 +2414,7 @@
         <span class="tool-chip" title="当前工具">{toolLabel}</span>
         <span>选中：{selectionCount}</span>
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
-        <span>录制：{isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>
+        <span>录制：{isRecordingStarting ? "启动中" : isRecordingStopping ? "停止中" : isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>
         <span>快捷录制：Space / P</span>
         {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>

@@ -2938,7 +2938,7 @@
     .web-embed {
         position: fixed;
         background: #fff;
-        border: 1px solid rgba(0,0,0,0.18);
+        border: 1px solid rgba(17,17,17,0.16);
         border-radius: 10px;
         overflow: hidden;
         z-index: 5;
@@ -2981,7 +2981,7 @@
         width: 14px;
         height: 14px;
         border-radius: 3px;
-        background: rgba(0,0,0,0.2);
+        background: rgba(17,17,17,0.2);
         cursor: nwse-resize;
     }
 
@@ -3078,7 +3078,7 @@
         border-radius: 20px;
         padding: 16px;
         box-sizing: border-box;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(17, 17, 17, 0.08);
     }
 
     .settings-header {
@@ -3184,7 +3184,7 @@
     .settings-preview {
         position: relative;
         width: min(360px, 100%);
-        border: 1px solid rgba(0,0,0,0.2);
+        border: 1px solid rgba(17,17,17,0.16);
         box-sizing: border-box;
     }
 
@@ -3202,7 +3202,7 @@
         width: 16px;
         height: 16px;
         border-radius: 999px;
-        background: rgba(0,0,0,0.25);
+        background: rgba(17,17,17,0.2);
     }
 
     .cursor-highlight {
@@ -3230,7 +3230,7 @@
         top: 12px;
         z-index: 7;
         background: rgba(255,255,255,0.95);
-        border: 1px solid rgba(0,0,0,0.12);
+        border: 1px solid rgba(17,17,17,0.12);
         border-radius: 12px;
         padding: 8px;
         width: 180px;
@@ -3351,7 +3351,7 @@
         z-index: 6;
         width: 74px;
         background: rgba(255,255,255,0.92);
-        border: 1px solid rgba(0,0,0,0.12);
+        border: 1px solid rgba(17,17,17,0.12);
         border-radius: 14px;
         padding: 8px;
         display: flex;

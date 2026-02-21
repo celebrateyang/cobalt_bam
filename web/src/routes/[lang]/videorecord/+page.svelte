@@ -1874,16 +1874,16 @@
 
     $: selectionCount = selectedFrameIds.length + selectedEmbedIds.length;
     $: toolLabel = ({
-        select: "选择",
-        pen: "画笔",
-        eraser: "橡皮",
-        text: "文本",
-        line: "直线",
-        rect: "矩形",
-        circle: "圆形",
-        laser: "激光笔",
-        frame: "框架",
-        webembed: "网页嵌入",
+        select: "🖱️",
+        pen: "✏️",
+        eraser: "🧽",
+        text: "T",
+        line: "／",
+        rect: "▭",
+        circle: "◯",
+        laser: "🔦",
+        frame: "▣",
+        webembed: "🌐",
     } as Record<string, string>)[tool] || tool;
 
     $: saveAgeText = lastProjectSaveAt
@@ -2360,7 +2360,7 @@
     </div>
 
     <div class="status-bar">
-        <span>工具：{toolLabel}</span>
+        <span title="当前工具">工具：{toolLabel}</span>
         <span>选中：{selectionCount}</span>
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
         <span>录制：{isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>

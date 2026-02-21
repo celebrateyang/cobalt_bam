@@ -2743,11 +2743,12 @@
         min-width: 320px;
         max-height: calc(100% - 24px);
         overflow: auto;
-        background: rgba(8, 9, 12, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 10px;
-        backdrop-filter: blur(6px);
+        backdrop-filter: blur(4px);
+        color: #111111;
         z-index: 2;
     }
 
@@ -2759,7 +2760,7 @@
         margin-bottom: 6px;
         padding: 6px 8px;
         border-radius: 8px;
-        background: rgba(255,255,255,0.06);
+        background: #f3f4f6;
         cursor: move;
         user-select: none;
     }
@@ -2782,9 +2783,9 @@
         height: 30px;
         padding: 0;
         border-radius: 8px;
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.15);
-        color: #fff;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        color: #111111;
         font-size: 14px;
         line-height: 1;
     }
@@ -2811,9 +2812,9 @@
         width: 100%;
         min-height: 320px;
         border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.04);
-        color: var(--text);
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #111111;
         padding: 10px;
         resize: none;
         line-height: 1.7;
@@ -2825,7 +2826,8 @@
     .teleprompter-note {
         margin-top: 8px;
         font-size: 12px;
-        opacity: 0.75;
+        opacity: 0.9;
+        color: #4b5563;
     }
 
      .hidden-file-input {
@@ -3049,7 +3051,8 @@
 
     .hint {
         font-size: 13px;
-        opacity: 0.75;
+        opacity: 0.9;
+        color: #4b5563;
         text-align: center;
     }
 

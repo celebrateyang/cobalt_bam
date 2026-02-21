@@ -2086,9 +2086,9 @@
         <div class="more-tools-panel">
             <div class="more-tools-title">More tools</div>
             <div class="more-tools-grid">
-                <button class:active={tool === "laser"} on:click={() => { tool = "laser"; showMoreTools = false; }}>Laser point</button>
-                <button class:active={tool === "frame"} on:click={() => { tool = "frame"; showMoreTools = false; }}>Frame tool</button>
-                <button class:active={tool === "webembed"} on:click={() => { tool = "webembed"; showMoreTools = false; }}>Web embed</button>
+                <button class="tool-btn" class:active={tool === "laser"} title="Laser point" on:click={() => { tool = "laser"; showMoreTools = false; }}>🔦</button>
+                <button class="tool-btn" class:active={tool === "frame"} title="Frame tool" on:click={() => { tool = "frame"; showMoreTools = false; }}>▣</button>
+                <button class="tool-btn" class:active={tool === "webembed"} title="Web embed" on:click={() => { tool = "webembed"; showMoreTools = false; }}>🌐</button>
             </div>
             <div class="laser-settings">
                 <label>颜色 <input type="color" bind:value={laserColor} /></label>
@@ -2642,6 +2642,19 @@
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
+    }
+
+
+    .tool-btn {
+        min-width: 36px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        line-height: 1;
     }
 
     .text-size {

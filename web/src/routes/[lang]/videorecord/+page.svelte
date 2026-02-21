@@ -2377,7 +2377,7 @@
     </div>
 
     <div class="status-bar">
-        <span title="当前工具">工具：{toolLabel}</span>
+        <span class="tool-chip" title="当前工具">{toolLabel}</span>
         <span>选中：{selectionCount}</span>
         <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
         <span>录制：{isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>
@@ -3038,6 +3038,21 @@
         padding: 8px 10px;
         font-size: 12px;
         color: var(--subtext);
+    }
+
+    .tool-chip {
+        min-width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        color: #111;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 4px;
     }
 
     .shortcut-panel {

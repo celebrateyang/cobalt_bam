@@ -180,7 +180,7 @@
     let canvasInnerPadding = 0;
 
     // camera overlay in recording
-    let showCameraInRecord = false;
+    let showCameraInRecord = true;
     let cameraSize = 180;
     let cameraRadius = 16;
     let cameraMargin = 24;
@@ -1245,7 +1245,7 @@
         const mime = pickRecorderMime();
         if (!mime) return false;
 
-        exportNotice = `录制预检通过：${mime}${includeMicAudio ? " + 麦克风" : ""}`;
+        exportNotice = `录制预检通过：${mime}${showCameraInRecord ? " + 摄像头" : ""}${includeMicAudio ? " + 麦克风" : ""}`;
         exportNoticeLevel = "info";
         return true;
     };
@@ -1390,12 +1390,7 @@
                 exportNotice = "录制文件过小，可能录制时长过短或被中断。";
                 exportNoticeLevel = "warn";
             }
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `videorecord-${Date.now()}.${ext}`;
-            a.click();
-            URL.revokeObjectURL(url);
+            downloadRecordingBlob(blob, ext);
             exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB)`;
             exportNoticeLevel = "info";
         };
@@ -1418,6 +1413,8 @@
                 await startCameraRenderLoop();
             } catch (e) {
                 console.error("camera start failed", e);
+                exportNotice = "摄像头开启失败：将仅录制白板内容。";
+                exportNoticeLevel = "warn";
             }
         }
         recordDuration = 0;
@@ -1430,6 +1427,7 @@
     const stopRecord = () => {
         if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
         isRecordingStopping = true;
+        try { recorder.requestData(); } catch {}
         recorder.stop();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
@@ -1465,6 +1463,17 @@
                 exportNoticeLevel = "warn";
             }
         }
+    };
+
+    const downloadRecordingBlob = (blob: Blob, ext: "webm" | "mp4") => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `videorecord-${Date.now()}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
     };
 
     const formatDuration = (sec: number) => {

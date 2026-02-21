@@ -204,6 +204,8 @@
     let micDevices: MediaDeviceInfo[] = [];
     let selectedMicDeviceId = "";
     let micStream: MediaStream | null = null;
+    let micAudioCtx: AudioContext | null = null;
+    let micDest: MediaStreamAudioDestinationNode | null = null;
 
     // cursor highlight
     let showCursorHighlight = true;
@@ -267,6 +269,14 @@
             for (const track of micStream.getTracks()) track.stop();
         }
         micStream = null;
+        if (micDest) {
+            for (const track of micDest.stream.getTracks()) track.stop();
+        }
+        micDest = null;
+        if (micAudioCtx) {
+            void micAudioCtx.close();
+        }
+        micAudioCtx = null;
     };
 
     const refreshMicDevices = async () => {
@@ -1369,21 +1379,31 @@
             isRecordingStarting = false;
             return;
         }
-        const stream = canvasEl.captureStream(60);
+        const canvasStream = canvasEl.captureStream(60);
+        const stream = new MediaStream();
+        for (const t of canvasStream.getVideoTracks()) stream.addTrack(t);
 
         if (includeMicAudio) {
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({
                     audio: selectedMicDeviceId
                         ? { deviceId: { ideal: selectedMicDeviceId } }
-                        : true,
+                        : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
                     video: false,
                 });
-                for (const t of micStream.getAudioTracks()) stream.addTrack(t);
+
+                const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+                if (AC) {
+                    micAudioCtx = new AC();
+                    const source = micAudioCtx.createMediaStreamSource(micStream);
+                    micDest = micAudioCtx.createMediaStreamDestination();
+                    source.connect(micDest);
+                    for (const t of micDest.stream.getAudioTracks()) stream.addTrack(t);
+                } else {
+                    for (const t of micStream.getAudioTracks()) stream.addTrack(t);
+                }
             } catch (e) {
                 console.warn("mic capture failed", e);
-                exportNotice = "麦克风不可用：将仅录制画面。";
-                exportNoticeLevel = "warn";
                 exportNotice = "麦克风不可用：将仅录制画面。";
                 exportNoticeLevel = "warn";
             }
@@ -1446,8 +1466,9 @@
             recorder.start(300);
             isRecording = true;
             isRecordPaused = false;
-            exportNotice = "录制已开始。";
-            exportNoticeLevel = "info";
+            const hasAudioTrack = stream.getAudioTracks().length > 0;
+            exportNotice = hasAudioTrack ? "录制已开始（含麦克风）。" : "录制已开始（当前无音轨）。";
+            exportNoticeLevel = hasAudioTrack ? "info" : "warn";
         } catch {
             exportNotice = "录制启动失败，请检查浏览器权限与编码支持。";
             exportNoticeLevel = "error";

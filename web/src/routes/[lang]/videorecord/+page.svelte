@@ -211,7 +211,7 @@
     let showTeleprompter = true;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
-    let teleprompterFontSize = 28;
+    let teleprompterFontSize = 14;
     let teleprompterOpacity = 92;
     let teleprompterScrollTop = 0;
     let teleprompterLastTs = 0;
@@ -2740,9 +2740,13 @@
         top: 64px;
         right: 12px;
         width: min(44%, 520px);
+        height: min(56vh, 560px);
         min-width: 320px;
-        max-height: calc(100% - 24px);
+        min-height: 260px;
+        max-width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
         overflow: auto;
+        resize: both;
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 12px;

@@ -192,7 +192,7 @@
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
 
-    let includeMicAudio = false;
+    let includeMicAudio = true;
     let enableRecordCountdown = true;
     let recordCountdownSeconds = 3;
     let recordCountdownLeft = 0;
@@ -1296,6 +1296,10 @@
     const triggerRecordStart = async () => {
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
+        if (includeMicAudio) {
+            exportNotice = "将录制麦克风声音，请确认浏览器已授权麦克风。";
+            exportNoticeLevel = "info";
+        }
         if (!enableRecordCountdown || recordCountdownSeconds <= 0) {
             await startRecord();
             return;
@@ -1431,7 +1435,6 @@
         recorder.stop();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
-        stopMicStream();
         window.setTimeout(() => {
             if (isRecordingStopping) {
                 isRecordingStopping = false;

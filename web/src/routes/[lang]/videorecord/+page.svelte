@@ -2082,21 +2082,6 @@
 
     <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
 
-    {#if showMoreTools}
-        <div class="more-tools-panel">
-            <div class="more-tools-title">More tools</div>
-            <div class="more-tools-grid">
-                <button class="tool-btn" class:active={tool === "laser"} title="Laser point" on:click={() => { tool = "laser"; showMoreTools = false; }}>🔦</button>
-                <button class="tool-btn" class:active={tool === "frame"} title="Frame tool" on:click={() => { tool = "frame"; showMoreTools = false; }}>▣</button>
-                <button class="tool-btn" class:active={tool === "webembed"} title="Web embed" on:click={() => { tool = "webembed"; showMoreTools = false; }}>🌐</button>
-            </div>
-            <div class="laser-settings">
-                <label>颜色 <input type="color" bind:value={laserColor} /></label>
-                <label>大小 <input type="range" min="8" max="48" step="1" bind:value={laserSize} /></label>
-            </div>
-        </div>
-    {/if}
-
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
             bind:this={canvasEl}
@@ -2851,18 +2836,25 @@
         display: none;
     }
 
-    .more-tools-panel {
-        background: var(--button);
-        border-radius: 12px;
-        padding: 10px;
+
+    .more-tools-wrap {
+        position: relative;
+    }
+
+    .more-tools-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        z-index: 20;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 8px;
+        min-width: 170px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         display: flex;
         flex-direction: column;
         gap: 8px;
-    }
-
-    .more-tools-title {
-        font-size: 12px;
-        opacity: 0.8;
     }
 
     .more-tools-grid {

@@ -98,6 +98,11 @@
     let selectedFrameIds: string[] = [];
     let marqueeSelecting = false;
     let marqueeAdditive = false;
+    let slideDragCandidate = false;
+    let slideDragging = false;
+    let slideDragStartX = 0;
+    let slideDragStartY = 0;
+    let slideDragCurrentX = 0;
     let marqueeX = 0;
     let marqueeY = 0;
     let marqueeW = 0;
@@ -722,8 +727,13 @@
         }
 
         if (tool === "select") {
-            marqueeSelecting = true;
             marqueeAdditive = e.shiftKey;
+            slideDragCandidate = true;
+            slideDragging = false;
+            slideDragStartX = e.clientX;
+            slideDragStartY = e.clientY;
+            slideDragCurrentX = e.clientX;
+            marqueeSelecting = false;
             marqueeStartX = e.clientX;
             marqueeStartY = e.clientY;
             marqueeX = e.clientX;
@@ -765,16 +775,34 @@
     const draw = (e: PointerEvent) => {
         updateCursorPosition(e);
         if (tool === "laser") return;
-        if (tool === "select" && marqueeSelecting) {
-            const x1 = Math.min(marqueeStartX, e.clientX);
-            const y1 = Math.min(marqueeStartY, e.clientY);
-            const x2 = Math.max(marqueeStartX, e.clientX);
-            const y2 = Math.max(marqueeStartY, e.clientY);
-            marqueeX = x1;
-            marqueeY = y1;
-            marqueeW = x2 - x1;
-            marqueeH = y2 - y1;
-            return;
+        if (tool === "select") {
+            const dx = e.clientX - slideDragStartX;
+            const dy = e.clientY - slideDragStartY;
+            if (slideDragCandidate && !marqueeSelecting && !slideDragging) {
+                if (Math.abs(dx) > 22 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                    slideDragging = true;
+                    slideDragCurrentX = e.clientX;
+                } else if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    marqueeSelecting = true;
+                }
+            }
+
+            if (slideDragging) {
+                slideDragCurrentX = e.clientX;
+                return;
+            }
+
+            if (marqueeSelecting) {
+                const x1 = Math.min(marqueeStartX, e.clientX);
+                const y1 = Math.min(marqueeStartY, e.clientY);
+                const x2 = Math.max(marqueeStartX, e.clientX);
+                const y2 = Math.max(marqueeStartY, e.clientY);
+                marqueeX = x1;
+                marqueeY = y1;
+                marqueeW = x2 - x1;
+                marqueeH = y2 - y1;
+                return;
+            }
         }
         if (tool === "frame" && draftingFrame) {
             const x1 = Math.min(draftFrameX, e.clientX);
@@ -825,6 +853,21 @@
             try {
                 canvasEl.releasePointerCapture(e.pointerId);
             } catch {}
+            return;
+        }
+
+        if (tool === "select") {
+            if (slideDragging) {
+                const dx = slideDragCurrentX - slideDragStartX;
+                if (Math.abs(dx) > 80) {
+                    moveSlide(dx < 0 ? 1 : -1);
+                }
+            }
+            slideDragCandidate = false;
+            slideDragging = false;
+            marqueeSelecting = false;
+            marqueeW = 0;
+            marqueeH = 0;
             return;
         }
 
@@ -1941,7 +1984,7 @@
     $: boardCursor = tool === "text"
         ? "text"
         : tool === "select"
-            ? "default"
+            ? (slideDragging ? "grabbing" : "grab")
             : tool === "laser"
                 ? "crosshair"
                 : "crosshair";
@@ -2104,7 +2147,7 @@
 <div class="page">
     <div class="toolbar">
         <div class="left">
-            <button class="tool-btn" class:active={tool === "select"} on:click={() => (tool = "select")} title="选择">🖱️</button>
+            <button class="tool-btn" class:active={tool === "select"} on:click={() => (tool = "select")} title="选择">✋</button>
             <button class="tool-btn" class:active={tool === "pen"} on:click={() => (tool = "pen")} title="画笔">✏️</button>
             <button class="tool-btn" class:active={tool === "eraser"} on:click={() => (tool = "eraser")} title="橡皮">🧽</button>
             <button class="tool-btn" class:active={tool === "text"} on:click={() => (tool = "text")} title="文本">T</button>
@@ -2449,7 +2492,7 @@
         </div>
     {/if}
 
-    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；支持对象翻转；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。</p>
+    <p class="hint">提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；支持对象翻转；手型工具可左右拖动切换幻灯片；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。</p>
 </div>
 
 {#if showSettings}

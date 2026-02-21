@@ -2724,9 +2724,9 @@
         min-width: 180px;
         min-height: 48px;
         max-width: 60%;
-        border: 1px dashed rgba(255,255,255,0.5);
+        border: 1px dashed #9ca3af;
         border-radius: 8px;
-        background: rgba(0, 0, 0, 0.35);
+        background: rgba(255, 255, 255, 0.92);
         padding: 8px 10px;
         line-height: 1.35;
         font-weight: 700;
@@ -2874,9 +2874,9 @@
 
     .frame-item {
         position: fixed;
-        border: 2px dashed rgba(255,255,255,0.85);
+        border: 2px dashed rgba(17,17,17,0.45);
         border-radius: 10px;
-        background: rgba(255,255,255,0.02);
+        background: rgba(255,255,255,0.88);
         z-index: 5;
         min-width: 40px;
         min-height: 30px;
@@ -2884,7 +2884,7 @@
 
     .frame-item.draft {
         pointer-events: none;
-        border-color: rgba(255,255,255,0.55);
+        border-color: rgba(17,17,17,0.28);
     }
 
     .frame-item.selected {
@@ -2899,8 +2899,8 @@
 
     .frame-head {
         height: 24px;
-        background: rgba(0,0,0,0.45);
-        color: #fff;
+        background: rgba(243,244,246,0.96);
+        color: #111111;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -2920,8 +2920,8 @@
         height: 20px;
         padding: 0;
         border-radius: 5px;
-        background: rgba(255,255,255,0.15);
-        color: #fff;
+        background: #ffffff;
+        color: #111111;
     }
 
     .frame-resize {
@@ -2931,7 +2931,7 @@
         width: 12px;
         height: 12px;
         border-radius: 3px;
-        background: rgba(255,255,255,0.5);
+        background: rgba(17,17,17,0.22);
         cursor: nwse-resize;
     }
 
@@ -3059,7 +3059,7 @@
     .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(17, 24, 39, 0.18);
         border: 0;
         z-index: 8;
         border-radius: 0;
@@ -3129,9 +3129,9 @@
     }
 
     .ratio-grid button.active {
-        background: #232323;
+        background: #111111;
         color: #fff;
-        border-color: #232323;
+        border-color: #111111;
     }
 
     .ratio-grid strong {
@@ -3420,8 +3420,9 @@
         top: 3px;
         z-index: 1;
         font-size: 10px;
-        background: rgba(0,0,0,0.55);
-        color: #fff;
+        background: rgba(255,255,255,0.95);
+        color: #111111;
+        border: 1px solid #d1d5db;
         border-radius: 6px;
         padding: 1px 4px;
     }
@@ -3432,7 +3433,7 @@
     }
 
     .slide-item.active {
-        outline: 2px solid #232323;
+        outline: 2px solid #111111;
         outline-offset: 0;
     }
 
@@ -3504,9 +3505,9 @@
     }
 
     .export-format-row button.active {
-        background: #232323;
+        background: #111111;
         color: #fff;
-        border-color: #232323;
+        border-color: #111111;
     }
 
     .subnote {
@@ -3545,9 +3546,9 @@
     }
 
     .camera-corner-grid button.active {
-        background: #232323;
+        background: #111111;
         color: #fff;
-        border-color: #232323;
+        border-color: #111111;
     }
 
     .camera-reset-row {

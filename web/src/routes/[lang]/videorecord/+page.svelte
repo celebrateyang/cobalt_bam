@@ -2058,23 +2058,40 @@
 <div class="page">
     <div class="toolbar">
         <div class="left">
-            <button class:active={tool === "select"} on:click={() => (tool = "select")}>选择</button>
-            <button class:active={tool === "pen"} on:click={() => (tool = "pen")}>画笔</button>
-            <button class:active={tool === "eraser"} on:click={() => (tool = "eraser")}>橡皮</button>
-            <button class:active={tool === "text"} on:click={() => (tool = "text")}>文本</button>
-            <button class:active={tool === "line"} on:click={() => (tool = "line")}>直线</button>
-            <button class:active={tool === "rect"} on:click={() => (tool = "rect")}>矩形</button>
-            <button class:active={tool === "circle"} on:click={() => (tool = "circle")}>圆形</button>
-            <button on:click={onPickImage}>插图</button>
-            <button class:active={showMoreTools} on:click={() => (showMoreTools = !showMoreTools)}>更多工具</button>
-            <button on:click={undo} disabled={undoStack.length === 0} title="撤销 (Ctrl/Cmd+Z)">撤销</button>
-            <button on:click={redo} disabled={redoStack.length === 0} title="重做 (Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y)">重做</button>
+            <button class="tool-btn" class:active={tool === "select"} on:click={() => (tool = "select")} title="选择">🖱️</button>
+            <button class="tool-btn" class:active={tool === "pen"} on:click={() => (tool = "pen")} title="画笔">✏️</button>
+            <button class="tool-btn" class:active={tool === "eraser"} on:click={() => (tool = "eraser")} title="橡皮">🧽</button>
+            <button class="tool-btn" class:active={tool === "text"} on:click={() => (tool = "text")} title="文本">T</button>
+            <button class="tool-btn" class:active={tool === "line"} on:click={() => (tool = "line")} title="直线">／</button>
+            <button class="tool-btn" class:active={tool === "rect"} on:click={() => (tool = "rect")} title="矩形">▭</button>
+            <button class="tool-btn" class:active={tool === "circle"} on:click={() => (tool = "circle")} title="圆形">◯</button>
+            <button class="tool-btn" on:click={onPickImage} title="插图">🖼️</button>
+
+            <div class="more-tools-wrap">
+                <button class="tool-btn" class:active={showMoreTools} on:click={() => (showMoreTools = !showMoreTools)} title="更多工具">⋯</button>
+                {#if showMoreTools}
+                    <div class="more-tools-dropdown">
+                        <div class="more-tools-grid">
+                            <button class="tool-btn" class:active={tool === "laser"} title="激光笔" on:click={() => { tool = "laser"; showMoreTools = false; }}>🔦</button>
+                            <button class="tool-btn" class:active={tool === "frame"} title="框架" on:click={() => { tool = "frame"; showMoreTools = false; }}>▣</button>
+                            <button class="tool-btn" class:active={tool === "webembed"} title="网页嵌入" on:click={() => { tool = "webembed"; showMoreTools = false; }}>🌐</button>
+                        </div>
+                        <div class="laser-settings">
+                            <label>颜色 <input type="color" bind:value={laserColor} /></label>
+                            <label>大小 <input type="range" min="8" max="48" step="1" bind:value={laserSize} /></label>
+                        </div>
+                    </div>
+                {/if}
+            </div>
+
+            <button class="tool-btn" on:click={undo} disabled={undoStack.length === 0} title="撤销 (Ctrl/Cmd+Z)">↶</button>
+            <button class="tool-btn" on:click={redo} disabled={redoStack.length === 0} title="重做 (Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y)">↷</button>
 
             <input type="color" bind:value={strokeColor} disabled={tool === "eraser"} />
             <input type="range" min="1" max="24" bind:value={strokeWidth} />
             <span>{strokeWidth}px</span>
             {#if tool === "text"}
-                <label class="text-size">字号 <input type="range" min="14" max="64" step="1" bind:value={textFontSize} /> <span>{textFontSize}px</span></label>
+                <label class="text-size"><input type="range" min="14" max="64" step="1" bind:value={textFontSize} /> <span>{textFontSize}px</span></label>
             {/if}
         </div>
 

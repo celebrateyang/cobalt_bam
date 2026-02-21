@@ -147,8 +147,8 @@
 
     // recording settings
     let showSettings = false;
-    let exportFormat: "webm" | "mp4" = "webm";
-    let selectedMimeType = "video/webm;codecs=vp9";
+    let exportFormat: "webm" | "mp4" = "mp4";
+    let selectedMimeType = "video/mp4;codecs=avc1.42E01E,mp4a.40.2";
     let lastProjectSaveAt = 0;
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
@@ -2494,9 +2494,9 @@
             <div class="section-title">导出格式</div>
             <div class="export-format-row">
                 <button class:active={exportFormat === "webm"} on:click={() => (exportFormat = "webm")}>WebM（兼容好）</button>
-                <button class:active={exportFormat === "mp4"} on:click={() => (exportFormat = "mp4")}>MP4（实验）</button>
+                <button class:active={exportFormat === "mp4"} on:click={() => (exportFormat = "mp4")}>MP4（默认）</button>
             </div>
-            <div class="subnote">说明：浏览器不支持 MP4 录制时会自动回退到 WebM。</div>
+            <div class="subnote">说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退到 WebM。</div>
         </section>
 
         <section>

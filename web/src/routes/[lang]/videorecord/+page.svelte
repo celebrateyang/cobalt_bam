@@ -8,7 +8,7 @@
     let lastX = 0;
     let lastY = 0;
 
-    let strokeColor = "#ffffff";
+    let strokeColor = "#111111";
     let strokeWidth = 4;
     let tool: "select" | "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" | "webembed" = "pen";
 
@@ -164,14 +164,14 @@
     let aspectRatio = "16:9";
 
     const bgColors = [
-        "#111318",
-        "#1b2430",
-        "#2a1f36",
-        "#123129",
-        "#2b2d42",
-        "#0b2f4b",
-        "#2f1b1b",
-        "#263238",
+        "#ffffff",
+        "#f8fafc",
+        "#f5f5f4",
+        "#fff7ed",
+        "#fefce8",
+        "#ecfeff",
+        "#f0f9ff",
+        "#f5f3ff",
     ];
     let backgroundColor = bgColors[0];
     let canvasCornerRadius = 16;
@@ -1213,6 +1213,11 @@
     const randomBackground = () => {
         const next = bgColors[Math.floor(Math.random() * bgColors.length)];
         backgroundColor = next;
+    };
+
+    const applyLightCanvasPreset = () => {
+        backgroundColor = "#ffffff";
+        strokeColor = "#111111";
     };
 
     const runRecordPreflight = () => {
@@ -2430,6 +2435,7 @@
             <div class="section-title">背景</div>
             <div class="bg-actions">
                 <button on:click={randomBackground}>随机选择背景</button>
+                <button on:click={applyLightCanvasPreset}>一键白底黑字</button>
             </div>
             <div class="bg-grid">
                 {#each bgColors as color}

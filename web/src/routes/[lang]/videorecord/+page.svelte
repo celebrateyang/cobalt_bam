@@ -2743,7 +2743,7 @@
         min-width: 320px;
         max-height: calc(100% - 24px);
         overflow: auto;
-        background: rgba(255, 255, 255, 0.96);
+        background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 10px;
@@ -2942,7 +2942,7 @@
         border-radius: 10px;
         overflow: hidden;
         z-index: 5;
-        box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     }
 
     .web-embed-head {
@@ -3229,12 +3229,12 @@
         left: 12px;
         top: 12px;
         z-index: 7;
-        background: rgba(255,255,255,0.95);
+        background: #ffffff;
         border: 1px solid rgba(17,17,17,0.12);
         border-radius: 12px;
         padding: 8px;
         width: 180px;
-        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     }
 
     .edit-title {
@@ -3350,7 +3350,7 @@
         top: 74px;
         z-index: 6;
         width: 74px;
-        background: rgba(255,255,255,0.92);
+        background: #ffffff;
         border: 1px solid rgba(17,17,17,0.12);
         border-radius: 14px;
         padding: 8px;
@@ -3420,7 +3420,7 @@
         top: 3px;
         z-index: 1;
         font-size: 10px;
-        background: rgba(255,255,255,0.95);
+        background: #ffffff;
         color: #111111;
         border: 1px solid #d1d5db;
         border-radius: 6px;
@@ -3454,7 +3454,7 @@
     }
 
     .floating-btn {
-        background: rgba(255,255,255,0.92);
+        background: #ffffff;
         color: #222;
         min-width: 40px;
         padding: 8px 10px;

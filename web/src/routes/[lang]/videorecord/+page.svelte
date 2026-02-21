@@ -210,7 +210,7 @@
 
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText = "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
-    let showTeleprompter = true;
+    let showTeleprompter = false;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
     let teleprompterFontSize = 14;

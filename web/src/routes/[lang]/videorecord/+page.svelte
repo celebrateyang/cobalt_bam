@@ -206,6 +206,9 @@
     let micStream: MediaStream | null = null;
     let micAudioCtx: AudioContext | null = null;
     let micDest: MediaStreamAudioDestinationNode | null = null;
+    let micLevel = 0;
+    let micTestRunning = false;
+    let micLevelRaf = 0;
 
     // cursor highlight
     let showCursorHighlight = true;
@@ -288,6 +291,75 @@
             }
         } catch (e) {
             console.warn("enumerate mic devices failed", e);
+        }
+    };
+
+    const stopMicLevelTest = () => {
+        micTestRunning = false;
+        micLevel = 0;
+        if (micLevelRaf) cancelAnimationFrame(micLevelRaf);
+        micLevelRaf = 0;
+    };
+
+    const runMicLevelTest = async () => {
+        if (micTestRunning) {
+            stopMicLevelTest();
+            return;
+        }
+        try {
+            const testStream = await navigator.mediaDevices.getUserMedia({
+                audio: selectedMicDeviceId
+                    ? { deviceId: { ideal: selectedMicDeviceId } }
+                    : true,
+                video: false,
+            });
+            const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            if (!AC) {
+                exportNotice = "当前浏览器不支持麦克风电平检测。";
+                exportNoticeLevel = "warn";
+                for (const t of testStream.getTracks()) t.stop();
+                return;
+            }
+
+            const testCtx = new AC();
+            const src = testCtx.createMediaStreamSource(testStream);
+            const analyser = testCtx.createAnalyser();
+            analyser.fftSize = 1024;
+            src.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            let peak = 0;
+            micTestRunning = true;
+
+            const tick = () => {
+                if (!micTestRunning) return;
+                analyser.getByteTimeDomainData(data);
+                let sum = 0;
+                for (let i = 0; i < data.length; i++) {
+                    const v = (data[i] - 128) / 128;
+                    sum += Math.abs(v);
+                }
+                micLevel = Math.min(1, (sum / data.length) * 3.2);
+                if (micLevel > peak) peak = micLevel;
+                micLevelRaf = requestAnimationFrame(tick);
+            };
+            tick();
+
+            window.setTimeout(() => {
+                const finalPeak = peak;
+                stopMicLevelTest();
+                for (const t of testStream.getTracks()) t.stop();
+                void testCtx.close();
+                if (finalPeak < 0.02) {
+                    exportNotice = "麦克风输入过低：请检查系统输入设备或权限。";
+                    exportNoticeLevel = "warn";
+                } else {
+                    exportNotice = "麦克风检测通过。";
+                    exportNoticeLevel = "info";
+                }
+            }, 3500);
+        } catch (e) {
+            exportNotice = "麦克风检测失败：请允许浏览器麦克风权限。";
+            exportNoticeLevel = "error";
         }
     };
 
@@ -1297,6 +1369,12 @@
 
         const mime = pickRecorderMime();
         if (!mime) return false;
+
+        if (includeMicAudio && micDevices.length === 0) {
+            exportNotice = "录制预检失败：未检测到麦克风设备。";
+            exportNoticeLevel = "error";
+            return false;
+        }
 
         exportNotice = `录制预检通过：${mime}${showCameraInRecord ? " + 摄像头" : ""}${includeMicAudio ? " + 麦克风" : ""}`;
         exportNoticeLevel = "info";
@@ -2697,6 +2775,13 @@
                     {/each}
                 </select>
                 <button on:click={() => void refreshMicDevices()}>刷新设备</button>
+                <button on:click={runMicLevelTest}>{micTestRunning ? "检测中..." : "测试麦克风"}</button>
+            </div>
+            <div class="mic-level-wrap">
+                <div class="mic-level-bar">
+                    <div class="mic-level-fill" style={`width:${Math.round(micLevel * 100)}%`}></div>
+                </div>
+                <span>{Math.round(micLevel * 100)}%</span>
             </div>
         </section>
 
@@ -3681,6 +3766,29 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         padding: 7px 10px;
+    }
+
+    .mic-level-wrap {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mic-level-bar {
+        height: 8px;
+        width: 180px;
+        border-radius: 999px;
+        background: #eceff3;
+        overflow: hidden;
+        border: 1px solid #d7dce3;
+    }
+
+    .mic-level-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2d9d67, #8bc34a);
+        width: 0%;
+        transition: width .08s linear;
     }
 
     .camera-corner-grid {

@@ -11,6 +11,7 @@
     let excalidrawMountToken = 0;
     let excalidrawMounted = false;
     let excalidrawApi: any = null;
+    let bridgeAppStateGuard = false;
 
     let drawing = false;
     let lastX = 0;
@@ -966,13 +967,27 @@
                         excalidrawApi = api;
                         const scene = bridgeSlides[activeSlide] ?? { elements: [], appState: {}, files: {} };
                         requestAnimationFrame(() => applyBridgeScene(scene));
+                        window.setTimeout(() => {
+                            if (!excalidrawApi) return;
+                            bridgeAppStateGuard = true;
+                            excalidrawApi.updateScene?.({ appState: normalizeBridgeAppState(excalidrawApi.getAppState?.() ?? {}) });
+                            bridgeAppStateGuard = false;
+                        }, 240);
                     },
                     onChange: (elements: any[], appState: Record<string, unknown>, files: Record<string, unknown>) => {
                         if (!useExcalidrawBridge || activeSlide < 0 || activeSlide >= slides.length) return;
+
+                        const normalized = normalizeBridgeAppState(appState);
+                        if (!bridgeAppStateGuard && (appState.zenModeEnabled !== false || appState.viewModeEnabled !== false)) {
+                            bridgeAppStateGuard = true;
+                            excalidrawApi?.updateScene?.({ appState: normalized });
+                            bridgeAppStateGuard = false;
+                        }
+
                         const bridgeNext = [ ...bridgeSlides ];
                         bridgeNext[activeSlide] = cloneBridgeScene({
                             elements,
-                            appState: normalizeBridgeAppState(appState),
+                            appState: normalized,
                             files,
                         });
                         bridgeSlides = bridgeNext;

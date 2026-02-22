@@ -8,6 +8,7 @@
     let excalidrawHostEl: HTMLDivElement | null = null;
     let cleanupExcalidraw: (() => void) | null = null;
     let excalidrawMountToken = 0;
+    let excalidrawMounted = false;
 
     let drawing = false;
     let lastX = 0;
@@ -789,10 +790,11 @@
     const unmountExcalidrawBridge = () => {
         if (cleanupExcalidraw) cleanupExcalidraw();
         cleanupExcalidraw = null;
+        excalidrawMounted = false;
     };
 
     const mountExcalidrawBridge = async () => {
-        if (!useExcalidrawBridge || !excalidrawHostEl) return;
+        if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted) return;
         const token = ++excalidrawMountToken;
 
         const React = await import("react");
@@ -825,6 +827,7 @@
         cleanupExcalidraw = () => {
             root.unmount();
         };
+        excalidrawMounted = true;
     };
 
     onMount(() => {

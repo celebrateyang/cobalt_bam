@@ -934,11 +934,28 @@
         excalidrawApi = null;
     };
 
+    const clearExcalidrawPersistedUiState = () => {
+        if (typeof window === "undefined") return;
+        try {
+            const keys: string[] = [];
+            for (let i = 0; i < window.localStorage.length; i += 1) {
+                const k = window.localStorage.key(i);
+                if (!k) continue;
+                const name = k.toLowerCase();
+                if (name.includes("excalidraw") || name.includes("excalidraw-state")) keys.push(k);
+            }
+            for (const k of keys) window.localStorage.removeItem(k);
+        } catch {
+            // ignore storage cleanup errors
+        }
+    };
+
     const mountExcalidrawBridge = async () => {
         if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted) return;
         const token = ++excalidrawMountToken;
 
         try {
+            clearExcalidrawPersistedUiState();
             const React = await import("react");
             const ReactDOMClient = await import("react-dom/client");
             const pkg = await import("@excalidraw/excalidraw");

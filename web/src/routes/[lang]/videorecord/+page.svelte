@@ -20,7 +20,17 @@
 
     let strokeColor = "#111111";
     let strokeWidth = 4;
-    let tool: "select" | "pen" | "eraser" | "text" | "line" | "rect" | "circle" | "laser" | "frame" | "webembed" = "pen";
+    let tool:
+        | "select"
+        | "pen"
+        | "eraser"
+        | "text"
+        | "line"
+        | "rect"
+        | "circle"
+        | "laser"
+        | "frame"
+        | "webembed" = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -69,7 +79,11 @@
         flipY?: boolean;
     };
 
-    type BridgeSlideScene = { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> };
+    type BridgeSlideScene = {
+        elements: any[];
+        appState: Record<string, unknown>;
+        files: Record<string, unknown>;
+    };
 
     type ProjectSnapshot = {
         version: 2;
@@ -157,13 +171,21 @@
     let recorderStopTimer: ReturnType<typeof setTimeout> | null = null;
     let stopHandled = false;
     let lastChunkAt = 0;
-    let recordingStopCause: "user" | "pagehide" | "video-ended" | "recorder-error" | "timeout" | "unknown" = "unknown";
+    let recordingStopCause:
+        | "user"
+        | "pagehide"
+        | "video-ended"
+        | "recorder-error"
+        | "timeout"
+        | "unknown" = "unknown";
     let isRecordPaused = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 
     // slides (basic multi-page)
     let slides: string[] = [""];
-    let bridgeSlides: BridgeSlideScene[] = [{ elements: [], appState: {}, files: {} }];
+    let bridgeSlides: BridgeSlideScene[] = [
+        { elements: [], appState: {}, files: {} },
+    ];
     let activeSlide = 0;
     let draggingSlideIndex: number | null = null;
 
@@ -216,6 +238,8 @@
     let cameraStream: MediaStream | null = null;
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
+    let cameraPreviewEl: HTMLVideoElement | null = null;
+    let showCameraPreview = false;
     let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
     let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
     let bridgeCompositeRaf = 0;
@@ -242,7 +266,8 @@
     let cursorY = 0;
 
     // teleprompter (DOM overlay only; not part of canvas stream)
-    let teleprompterText = "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
+    let teleprompterText =
+        "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
     let showTeleprompter = false;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
@@ -269,9 +294,29 @@
     let dragBaseX = 0;
     let dragBaseY = 0;
 
+    // draggable floating controls
+    let floatingControlsX = 0;
+    let floatingControlsY = 0;
+    let draggingFloatingControls = false;
+    let fcDragStartX = 0;
+    let fcDragStartY = 0;
+    let fcDragBaseX = 0;
+    let fcDragBaseY = 0;
+
+    const startDragFloatingControls = (e: PointerEvent) => {
+        draggingFloatingControls = true;
+        fcDragStartX = e.clientX;
+        fcDragStartY = e.clientY;
+        fcDragBaseX = floatingControlsX;
+        fcDragBaseY = floatingControlsY;
+    };
+
     const ensureCameraStream = async () => {
         if (cameraStream && cameraVideoEl) return;
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+        });
         const v = document.createElement("video");
         v.srcObject = cameraStream;
         v.muted = true;
@@ -309,7 +354,7 @@
     const refreshMicDevices = async () => {
         try {
             const all = await navigator.mediaDevices.enumerateDevices();
-            micDevices = all.filter(d => d.kind === "audioinput");
+            micDevices = all.filter((d) => d.kind === "audioinput");
             if (!selectedMicDeviceId && micDevices[0]) {
                 selectedMicDeviceId = micDevices[0].deviceId;
             }
@@ -337,7 +382,13 @@
                     : true,
                 video: false,
             });
-            const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            const AC =
+                window.AudioContext ||
+                (
+                    window as unknown as {
+                        webkitAudioContext?: typeof AudioContext;
+                    }
+                ).webkitAudioContext;
             if (!AC) {
                 exportNotice = "当前浏览器不支持麦克风电平检测。";
                 exportNoticeLevel = "warn";
@@ -387,7 +438,13 @@
         }
     };
 
-    const drawRoundRectPath = (x: number, y: number, w: number, h: number, r: number) => {
+    const drawRoundRectPath = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        r: number,
+    ) => {
         if (!ctx) return;
         const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
         ctx.beginPath();
@@ -400,18 +457,33 @@
     };
 
     const drawCameraFrame = () => {
-        if (!ctx || !canvasEl || !cameraVideoEl || !isRecording || !showCameraInRecord) return;
+        if (
+            !ctx ||
+            !canvasEl ||
+            !cameraVideoEl ||
+            !isRecording ||
+            !showCameraInRecord
+        )
+            return;
         const rect = canvasEl.getBoundingClientRect();
         const size = Math.min(cameraSize, rect.width * 0.5, rect.height * 0.5);
-        const baseX = (cameraCorner === "br" || cameraCorner === "tr")
-            ? rect.width - cameraMargin - size
-            : cameraMargin;
-        const baseY = (cameraCorner === "br" || cameraCorner === "bl")
-            ? rect.height - cameraMargin - size
-            : cameraMargin;
+        const baseX =
+            cameraCorner === "br" || cameraCorner === "tr"
+                ? rect.width - cameraMargin - size
+                : cameraMargin;
+        const baseY =
+            cameraCorner === "br" || cameraCorner === "bl"
+                ? rect.height - cameraMargin - size
+                : cameraMargin;
 
-        const x = Math.max(0, Math.min(rect.width - size, baseX + cameraOffsetX));
-        const y = Math.max(0, Math.min(rect.height - size, baseY + cameraOffsetY));
+        const x = Math.max(
+            0,
+            Math.min(rect.width - size, baseX + cameraOffsetX),
+        );
+        const y = Math.max(
+            0,
+            Math.min(rect.height - size, baseY + cameraOffsetY),
+        );
 
         ctx.save();
         drawRoundRectPath(x, y, size, size, cameraRadius);
@@ -451,7 +523,14 @@
         bridgeCompositeCanvas = null;
     };
 
-    const drawRoundRectPathOn = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+    const drawRoundRectPathOn = (
+        c: CanvasRenderingContext2D,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        r: number,
+    ) => {
         const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
         c.beginPath();
         c.moveTo(x + rr, y);
@@ -462,12 +541,15 @@
         c.closePath();
     };
 
-    const startBridgeCompositeLoop = async (sourceCanvas: HTMLCanvasElement) => {
+    const startBridgeCompositeLoop = async (
+        sourceCanvas: HTMLCanvasElement,
+    ) => {
         await ensureCameraStream();
 
         const out = document.createElement("canvas");
         out.width = sourceCanvas.width || Math.max(2, sourceCanvas.clientWidth);
-        out.height = sourceCanvas.height || Math.max(2, sourceCanvas.clientHeight);
+        out.height =
+            sourceCanvas.height || Math.max(2, sourceCanvas.clientHeight);
         const outCtx = out.getContext("2d");
         if (!outCtx) throw new Error("composite ctx unavailable");
 
@@ -481,7 +563,10 @@
             const srcW = liveSource.width || bridgeCompositeCanvas.width;
             const srcH = liveSource.height || bridgeCompositeCanvas.height;
 
-            if (bridgeCompositeCanvas.width !== srcW || bridgeCompositeCanvas.height !== srcH) {
+            if (
+                bridgeCompositeCanvas.width !== srcW ||
+                bridgeCompositeCanvas.height !== srcH
+            ) {
                 bridgeCompositeCanvas.width = srcW;
                 bridgeCompositeCanvas.height = srcH;
             }
@@ -503,27 +588,65 @@
 
             if (cameraVideoEl && showCameraInRecord) {
                 const size = Math.min(cameraSize, w * 0.5, h * 0.5);
-                const baseX = (cameraCorner === "br" || cameraCorner === "tr") ? (w - cameraMargin - size) : cameraMargin;
-                const baseY = (cameraCorner === "br" || cameraCorner === "bl") ? (h - cameraMargin - size) : cameraMargin;
-                const x = Math.max(0, Math.min(w - size, baseX + cameraOffsetX));
-                const y = Math.max(0, Math.min(h - size, baseY + cameraOffsetY));
+                const baseX =
+                    cameraCorner === "br" || cameraCorner === "tr"
+                        ? w - cameraMargin - size
+                        : cameraMargin;
+                const baseY =
+                    cameraCorner === "br" || cameraCorner === "bl"
+                        ? h - cameraMargin - size
+                        : cameraMargin;
+                const x = Math.max(
+                    0,
+                    Math.min(w - size, baseX + cameraOffsetX),
+                );
+                const y = Math.max(
+                    0,
+                    Math.min(h - size, baseY + cameraOffsetY),
+                );
 
                 bridgeCompositeCtx.save();
-                drawRoundRectPathOn(bridgeCompositeCtx, x, y, size, size, cameraRadius);
+                drawRoundRectPathOn(
+                    bridgeCompositeCtx,
+                    x,
+                    y,
+                    size,
+                    size,
+                    cameraRadius,
+                );
                 bridgeCompositeCtx.clip();
                 bridgeCompositeCtx.fillStyle = "#000";
                 bridgeCompositeCtx.fillRect(x, y, size, size);
                 if (cameraMirror) {
                     bridgeCompositeCtx.translate(x + size, y);
                     bridgeCompositeCtx.scale(-1, 1);
-                    bridgeCompositeCtx.drawImage(cameraVideoEl, 0, 0, size, size);
+                    bridgeCompositeCtx.drawImage(
+                        cameraVideoEl,
+                        0,
+                        0,
+                        size,
+                        size,
+                    );
                 } else {
-                    bridgeCompositeCtx.drawImage(cameraVideoEl, x, y, size, size);
+                    bridgeCompositeCtx.drawImage(
+                        cameraVideoEl,
+                        x,
+                        y,
+                        size,
+                        size,
+                    );
                 }
                 bridgeCompositeCtx.restore();
 
                 bridgeCompositeCtx.save();
-                drawRoundRectPathOn(bridgeCompositeCtx, x, y, size, size, cameraRadius);
+                drawRoundRectPathOn(
+                    bridgeCompositeCtx,
+                    x,
+                    y,
+                    size,
+                    size,
+                    cameraRadius,
+                );
                 bridgeCompositeCtx.strokeStyle = "rgba(255,255,255,0.8)";
                 bridgeCompositeCtx.lineWidth = 2;
                 bridgeCompositeCtx.stroke();
@@ -563,7 +686,10 @@
                 canvasInnerPadding,
             },
         };
-        window.localStorage.setItem("videorecord.project", JSON.stringify(payload));
+        window.localStorage.setItem(
+            "videorecord.project",
+            JSON.stringify(payload),
+        );
         lastProjectSaveAt = Date.now();
     };
 
@@ -572,35 +698,62 @@
         const raw = window.localStorage.getItem("videorecord.project");
         if (!raw) return;
         try {
-            const data = JSON.parse(raw) as Partial<ProjectSnapshot> & { version?: number };
+            const data = JSON.parse(raw) as Partial<ProjectSnapshot> & {
+                version?: number;
+            };
             if (!data || (data.version !== 1 && data.version !== 2)) return;
-            slides = Array.isArray(data.slides) && data.slides.length ? data.slides : [""];
+            slides =
+                Array.isArray(data.slides) && data.slides.length
+                    ? data.slides
+                    : [""];
 
             if (Array.isArray(data.bridgeSlides) && data.bridgeSlides.length) {
                 bridgeSlides = data.bridgeSlides.map((scene) => ({
-                    elements: Array.isArray(scene?.elements) ? scene.elements : [],
-                    appState: scene?.appState && typeof scene.appState === "object" ? scene.appState : {},
-                    files: scene?.files && typeof scene.files === "object" ? scene.files : {},
+                    elements: Array.isArray(scene?.elements)
+                        ? scene.elements
+                        : [],
+                    appState:
+                        scene?.appState && typeof scene.appState === "object"
+                            ? scene.appState
+                            : {},
+                    files:
+                        scene?.files && typeof scene.files === "object"
+                            ? scene.files
+                            : {},
                 }));
             } else {
-                bridgeSlides = slides.map(() => ({ elements: [], appState: {}, files: {} }));
+                bridgeSlides = slides.map(() => ({
+                    elements: [],
+                    appState: {},
+                    files: {},
+                }));
             }
             if (bridgeSlides.length < slides.length) {
                 bridgeSlides = [
                     ...bridgeSlides,
-                    ...Array.from({ length: slides.length - bridgeSlides.length }, () => ({ elements: [], appState: {}, files: {} })),
+                    ...Array.from(
+                        { length: slides.length - bridgeSlides.length },
+                        () => ({ elements: [], appState: {}, files: {} }),
+                    ),
                 ];
             }
 
-            activeSlide = Math.max(0, Math.min(data.activeSlide || 0, slides.length - 1));
+            activeSlide = Math.max(
+                0,
+                Math.min(data.activeSlide || 0, slides.length - 1),
+            );
             frames = Array.isArray(data.frames) ? data.frames : [];
             webEmbeds = Array.isArray(data.webEmbeds) ? data.webEmbeds : [];
             aspectRatio = data.settings?.aspectRatio || aspectRatio;
             backgroundColor = data.settings?.backgroundColor || backgroundColor;
-            canvasCornerRadius = Number.isFinite(data.settings?.canvasCornerRadius)
+            canvasCornerRadius = Number.isFinite(
+                data.settings?.canvasCornerRadius,
+            )
                 ? data.settings.canvasCornerRadius
                 : canvasCornerRadius;
-            canvasInnerPadding = Number.isFinite(data.settings?.canvasInnerPadding)
+            canvasInnerPadding = Number.isFinite(
+                data.settings?.canvasInnerPadding,
+            )
                 ? data.settings.canvasInnerPadding
                 : canvasInnerPadding;
             requestAnimationFrame(() => loadSlide(activeSlide));
@@ -625,18 +778,24 @@
     };
 
     const cloneBridgeScene = (scene: BridgeSlideScene) => {
-        if (typeof structuredClone === "function") return structuredClone(scene);
+        if (typeof structuredClone === "function")
+            return structuredClone(scene);
         return JSON.parse(JSON.stringify(scene));
     };
 
-    const toPersistedBridgeAppState = (appState: Record<string, unknown> | undefined) => ({
-        viewBackgroundColor: (appState?.viewBackgroundColor as string) || backgroundColor,
+    const toPersistedBridgeAppState = (
+        appState: Record<string, unknown> | undefined,
+    ) => ({
+        viewBackgroundColor:
+            (appState?.viewBackgroundColor as string) || backgroundColor,
         theme: "light",
         zenModeEnabled: false,
         viewModeEnabled: false,
     });
 
-    const normalizeBridgeAppState = (appState: Record<string, unknown> | undefined) => {
+    const normalizeBridgeAppState = (
+        appState: Record<string, unknown> | undefined,
+    ) => {
         const next = { ...(appState ?? {}) } as Record<string, unknown>;
         next.theme = "light";
         next.viewBackgroundColor = backgroundColor;
@@ -645,9 +804,15 @@
         next.openSidebar = null;
         next.openDialog = null;
         next.showHelpDialog = false;
-        const collaborators = (next as { collaborators?: unknown }).collaborators;
-        if (!collaborators || typeof (collaborators as { forEach?: unknown }).forEach !== "function") {
-            (next as { collaborators: Map<string, unknown> }).collaborators = new Map();
+        const collaborators = (next as { collaborators?: unknown })
+            .collaborators;
+        if (
+            !collaborators ||
+            typeof (collaborators as { forEach?: unknown }).forEach !==
+                "function"
+        ) {
+            (next as { collaborators: Map<string, unknown> }).collaborators =
+                new Map();
         }
         return next;
     };
@@ -656,7 +821,9 @@
         if (!excalidrawApi) return { elements: [], appState: {}, files: {} };
         return {
             elements: excalidrawApi.getSceneElements?.() ?? [],
-            appState: toPersistedBridgeAppState(excalidrawApi.getAppState?.() ?? {}),
+            appState: toPersistedBridgeAppState(
+                excalidrawApi.getAppState?.() ?? {},
+            ),
             files: excalidrawApi.getFiles?.() ?? {},
         };
     };
@@ -674,7 +841,7 @@
     const saveCurrentSlide = () => {
         if (activeSlide < 0 || activeSlide >= slides.length) return;
 
-        const next = [ ...slides ];
+        const next = [...slides];
         const source = getRecordingCanvas() || canvasEl;
         if (source) {
             next[activeSlide] = source.toDataURL("image/png");
@@ -682,7 +849,7 @@
         }
 
         if (useExcalidrawBridge) {
-            const bridgeNext = [ ...bridgeSlides ];
+            const bridgeNext = [...bridgeSlides];
             bridgeNext[activeSlide] = cloneBridgeScene(captureBridgeScene());
             bridgeSlides = bridgeNext;
             return;
@@ -694,7 +861,11 @@
         activeSlide = index;
 
         if (useExcalidrawBridge) {
-            const scene = bridgeSlides[index] ?? { elements: [], appState: {}, files: {} };
+            const scene = bridgeSlides[index] ?? {
+                elements: [],
+                appState: {},
+                files: {},
+            };
             requestAnimationFrame(() => applyBridgeScene(scene));
             return;
         }
@@ -723,8 +894,11 @@
     const pushHistorySnapshot = () => {
         if (!canvasEl) return;
         const snap = canvasEl.toDataURL("image/png");
-        if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
-            undoStack = [ ...undoStack, snap ].slice(-80);
+        if (
+            undoStack.length === 0 ||
+            undoStack[undoStack.length - 1] !== snap
+        ) {
+            undoStack = [...undoStack, snap].slice(-80);
             redoStack = [];
         }
     };
@@ -752,7 +926,7 @@
         const current = canvasEl.toDataURL("image/png");
         const prev = undoStack[undoStack.length - 1];
         undoStack = undoStack.slice(0, -1);
-        redoStack = [ ...redoStack, current ].slice(-80);
+        redoStack = [...redoStack, current].slice(-80);
         applySnapshotToCanvas(prev);
     };
 
@@ -761,14 +935,17 @@
         const current = canvasEl.toDataURL("image/png");
         const next = redoStack[redoStack.length - 1];
         redoStack = redoStack.slice(0, -1);
-        undoStack = [ ...undoStack, current ].slice(-80);
+        undoStack = [...undoStack, current].slice(-80);
         applySnapshotToCanvas(next);
     };
 
     const addSlide = () => {
         saveCurrentSlide();
-        slides = [ ...slides, "" ];
-        bridgeSlides = [ ...bridgeSlides, { elements: [], appState: {}, files: {} } ];
+        slides = [...slides, ""];
+        bridgeSlides = [
+            ...bridgeSlides,
+            { elements: [], appState: {}, files: {} },
+        ];
         activeSlide = slides.length - 1;
         undoStack = [];
         redoStack = [];
@@ -782,12 +959,18 @@
     const duplicateSlide = () => {
         saveCurrentSlide();
         const clone = slides[activeSlide] || "";
-        const next = [ ...slides ];
+        const next = [...slides];
         next.splice(activeSlide + 1, 0, clone);
         slides = next;
 
-        const bridgeNext = [ ...bridgeSlides ];
-        const sceneClone = cloneBridgeScene(bridgeSlides[activeSlide] ?? { elements: [], appState: {}, files: {} });
+        const bridgeNext = [...bridgeSlides];
+        const sceneClone = cloneBridgeScene(
+            bridgeSlides[activeSlide] ?? {
+                elements: [],
+                appState: {},
+                files: {},
+            },
+        );
         bridgeNext.splice(activeSlide + 1, 0, sceneClone);
         bridgeSlides = bridgeNext;
 
@@ -808,15 +991,17 @@
             return;
         }
 
-        const next = [ ...slides ];
+        const next = [...slides];
         next.splice(activeSlide, 1);
 
-        const bridgeNext = [ ...bridgeSlides ];
+        const bridgeNext = [...bridgeSlides];
         bridgeNext.splice(activeSlide, 1);
 
         const target = Math.min(activeSlide, next.length - 1);
         slides = next;
-        bridgeSlides = bridgeNext.length ? bridgeNext : [{ elements: [], appState: {}, files: {} }];
+        bridgeSlides = bridgeNext.length
+            ? bridgeNext
+            : [{ elements: [], appState: {}, files: {} }];
         activeSlide = target;
         requestAnimationFrame(() => loadSlide(target));
     };
@@ -827,14 +1012,18 @@
         const to = from + dir;
         if (to < 0 || to >= slides.length) return;
 
-        const next = [ ...slides ];
+        const next = [...slides];
         const [item] = next.splice(from, 1);
         next.splice(to, 0, item);
         slides = next;
 
-        const bridgeNext = [ ...bridgeSlides ];
+        const bridgeNext = [...bridgeSlides];
         const [sceneItem] = bridgeNext.splice(from, 1);
-        bridgeNext.splice(to, 0, sceneItem ?? { elements: [], appState: {}, files: {} });
+        bridgeNext.splice(
+            to,
+            0,
+            sceneItem ?? { elements: [], appState: {}, files: {} },
+        );
         bridgeSlides = bridgeNext;
 
         activeSlide = to;
@@ -851,13 +1040,17 @@
             return;
         }
 
-        const next = [ ...slides ];
+        const next = [...slides];
         const [item] = next.splice(draggingSlideIndex, 1);
         next.splice(targetIndex, 0, item);
 
-        const bridgeNext = [ ...bridgeSlides ];
+        const bridgeNext = [...bridgeSlides];
         const [sceneItem] = bridgeNext.splice(draggingSlideIndex, 1);
-        bridgeNext.splice(targetIndex, 0, sceneItem ?? { elements: [], appState: {}, files: {} });
+        bridgeNext.splice(
+            targetIndex,
+            0,
+            sceneItem ?? { elements: [], appState: {}, files: {} },
+        );
 
         const oldActive = activeSlide;
         let newActive = oldActive;
@@ -909,18 +1102,24 @@
         });
     };
 
-    const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+    const clamp = (v: number, min: number, max: number) =>
+        Math.min(max, Math.max(min, v));
 
     const clampAndSnapTeleprompter = () => {
         if (!teleprompterPanelEl || typeof window === "undefined") return;
 
         const panelRect = teleprompterPanelEl.getBoundingClientRect();
 
-        const minX = -(window.innerWidth - panelRect.width - teleprompterBaseRight);
+        const minX = -(
+            window.innerWidth -
+            panelRect.width -
+            teleprompterBaseRight
+        );
         const maxX = teleprompterBaseRight;
 
         const minY = -teleprompterBaseTop + 8;
-        const maxY = window.innerHeight - panelRect.height - teleprompterBaseTop - 8;
+        const maxY =
+            window.innerHeight - panelRect.height - teleprompterBaseTop - 8;
 
         teleprompterOffsetX = clamp(teleprompterOffsetX, minX, maxX);
         teleprompterOffsetY = clamp(teleprompterOffsetY, minY, maxY);
@@ -935,7 +1134,10 @@
             opacity: teleprompterOpacity,
             fontSize: teleprompterFontSize,
         };
-        window.localStorage.setItem("videorecord.teleprompter", JSON.stringify(payload));
+        window.localStorage.setItem(
+            "videorecord.teleprompter",
+            JSON.stringify(payload),
+        );
     };
 
     const unmountExcalidrawBridge = () => {
@@ -953,7 +1155,11 @@
                 const k = window.localStorage.key(i);
                 if (!k) continue;
                 const name = k.toLowerCase();
-                if (name.includes("excalidraw") || name.includes("excalidraw-state")) keys.push(k);
+                if (
+                    name.includes("excalidraw") ||
+                    name.includes("excalidraw-state")
+                )
+                    keys.push(k);
             }
             for (const k of keys) window.localStorage.removeItem(k);
         } catch {
@@ -962,7 +1168,8 @@
     };
 
     const mountExcalidrawBridge = async () => {
-        if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted) return;
+        if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted)
+            return;
         const token = ++excalidrawMountToken;
 
         try {
@@ -971,10 +1178,16 @@
             const ReactDOMClient = await import("react-dom/client");
             const pkg = await import("@excalidraw/excalidraw");
 
-            if (token !== excalidrawMountToken || !useExcalidrawBridge || !excalidrawHostEl) return;
+            if (
+                token !== excalidrawMountToken ||
+                !useExcalidrawBridge ||
+                !excalidrawHostEl
+            )
+                return;
 
             const root = ReactDOMClient.createRoot(excalidrawHostEl);
-            const ExcalidrawComp = (pkg as { Excalidraw: unknown }).Excalidraw as unknown as any;
+            const ExcalidrawComp = (pkg as { Excalidraw: unknown })
+                .Excalidraw as unknown as any;
 
             root.render(
                 React.createElement(ExcalidrawComp, {
@@ -995,26 +1208,49 @@
                     },
                     excalidrawAPI: (api: any) => {
                         excalidrawApi = api;
-                        const scene = bridgeSlides[activeSlide] ?? { elements: [], appState: {}, files: {} };
+                        const scene = bridgeSlides[activeSlide] ?? {
+                            elements: [],
+                            appState: {},
+                            files: {},
+                        };
                         requestAnimationFrame(() => applyBridgeScene(scene));
                         window.setTimeout(() => {
                             if (!excalidrawApi) return;
                             bridgeAppStateGuard = true;
-                            excalidrawApi.updateScene?.({ appState: normalizeBridgeAppState(excalidrawApi.getAppState?.() ?? {}) });
+                            excalidrawApi.updateScene?.({
+                                appState: normalizeBridgeAppState(
+                                    excalidrawApi.getAppState?.() ?? {},
+                                ),
+                            });
                             bridgeAppStateGuard = false;
                         }, 240);
                     },
-                    onChange: (elements: any[], appState: Record<string, unknown>, files: Record<string, unknown>) => {
-                        if (!useExcalidrawBridge || activeSlide < 0 || activeSlide >= slides.length) return;
+                    onChange: (
+                        elements: any[],
+                        appState: Record<string, unknown>,
+                        files: Record<string, unknown>,
+                    ) => {
+                        if (
+                            !useExcalidrawBridge ||
+                            activeSlide < 0 ||
+                            activeSlide >= slides.length
+                        )
+                            return;
 
                         const normalized = normalizeBridgeAppState(appState);
-                        if (!bridgeAppStateGuard && (appState.zenModeEnabled !== false || appState.viewModeEnabled !== false)) {
+                        if (
+                            !bridgeAppStateGuard &&
+                            (appState.zenModeEnabled !== false ||
+                                appState.viewModeEnabled !== false)
+                        ) {
                             bridgeAppStateGuard = true;
-                            excalidrawApi?.updateScene?.({ appState: normalized });
+                            excalidrawApi?.updateScene?.({
+                                appState: normalized,
+                            });
                             bridgeAppStateGuard = false;
                         }
 
-                        const bridgeNext = [ ...bridgeSlides ];
+                        const bridgeNext = [...bridgeSlides];
                         bridgeNext[activeSlide] = cloneBridgeScene({
                             elements,
                             appState: toPersistedBridgeAppState(normalized),
@@ -1024,7 +1260,7 @@
                         const source = getRecordingCanvas();
                         if (!source) return;
                         requestAnimationFrame(() => {
-                            const thumbs = [ ...slides ];
+                            const thumbs = [...slides];
                             thumbs[activeSlide] = source.toDataURL("image/png");
                             slides = thumbs;
                         });
@@ -1059,9 +1295,12 @@
                 const saved = JSON.parse(raw);
                 if (typeof saved.x === "number") teleprompterOffsetX = saved.x;
                 if (typeof saved.y === "number") teleprompterOffsetY = saved.y;
-                if (typeof saved.speed === "number") teleprompterSpeed = saved.speed;
-                if (typeof saved.opacity === "number") teleprompterOpacity = saved.opacity;
-                if (typeof saved.fontSize === "number") teleprompterFontSize = saved.fontSize;
+                if (typeof saved.speed === "number")
+                    teleprompterSpeed = saved.speed;
+                if (typeof saved.opacity === "number")
+                    teleprompterOpacity = saved.opacity;
+                if (typeof saved.fontSize === "number")
+                    teleprompterFontSize = saved.fontSize;
             }
         } catch {
             // ignore storage parse errors
@@ -1112,7 +1351,12 @@
         cursorY = p.y;
     };
 
-    const drawShapePreview = (x1: number, y1: number, x2: number, y2: number) => {
+    const drawShapePreview = (
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+    ) => {
         if (!ctx || !shapeSnapshot) return;
 
         ctx.putImageData(shapeSnapshot, 0, 0);
@@ -1204,7 +1448,12 @@
         if (tool === "line" || tool === "rect" || tool === "circle") {
             shapeStartX = p.x;
             shapeStartY = p.y;
-            shapeSnapshot = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+            shapeSnapshot = ctx.getImageData(
+                0,
+                0,
+                canvasEl.width,
+                canvasEl.height,
+            );
         } else {
             shapeSnapshot = null;
         }
@@ -1332,7 +1581,9 @@
     const commitTextToCanvas = () => {
         if (!ctx || !canvasEl || !textEditing) return;
 
-        const lines = textInputValue.split("\n").filter(line => line.trim().length > 0);
+        const lines = textInputValue
+            .split("\n")
+            .filter((line) => line.trim().length > 0);
         textEditing = false;
         if (!lines.length) {
             textInputValue = "";
@@ -1424,7 +1675,19 @@
         const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
         webEmbeds = [
             ...webEmbeds,
-            { id, url, x, y, w: 360, h: 220, locked: false, hidden: false, opacity: 1, flipX: false, flipY: false },
+            {
+                id,
+                url,
+                x,
+                y,
+                w: 360,
+                h: 220,
+                locked: false,
+                hidden: false,
+                opacity: 1,
+                flipX: false,
+                flipY: false,
+            },
         ];
         selectedEmbedId = id;
         selectedEmbedIds = [id];
@@ -1433,49 +1696,66 @@
     };
 
     const removeWebEmbed = (id: string) => {
-        webEmbeds = webEmbeds.filter(e => e.id !== id);
+        webEmbeds = webEmbeds.filter((e) => e.id !== id);
         if (selectedEmbedId === id) selectedEmbedId = null;
     };
 
     const moveWebEmbedLayer = (id: string, dir: -1 | 1) => {
-        const idx = webEmbeds.findIndex(e => e.id === id);
+        const idx = webEmbeds.findIndex((e) => e.id === id);
         if (idx < 0) return;
         const to = idx + dir;
         if (to < 0 || to >= webEmbeds.length) return;
-        const next = [ ...webEmbeds ];
+        const next = [...webEmbeds];
         const [item] = next.splice(idx, 1);
         next.splice(to, 0, item);
         webEmbeds = next;
     };
 
-    const alignSelectedEmbed = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+    const alignSelectedEmbed = (
+        mode: "left" | "center" | "right" | "top" | "middle" | "bottom",
+    ) => {
         if (!selectedEmbedId) return;
-        webEmbeds = webEmbeds.map(em => {
+        webEmbeds = webEmbeds.map((em) => {
             if (em.id !== selectedEmbedId) return em;
             let x = em.x;
             let y = em.y;
             if (mode === "left") x = 8;
-            if (mode === "center") x = Math.round((window.innerWidth - em.w) / 2);
+            if (mode === "center")
+                x = Math.round((window.innerWidth - em.w) / 2);
             if (mode === "right") x = Math.round(window.innerWidth - em.w - 8);
             if (mode === "top") y = 8;
-            if (mode === "middle") y = Math.round((window.innerHeight - em.h) / 2);
-            if (mode === "bottom") y = Math.round(window.innerHeight - em.h - 8);
+            if (mode === "middle")
+                y = Math.round((window.innerHeight - em.h) / 2);
+            if (mode === "bottom")
+                y = Math.round(window.innerHeight - em.h - 8);
             const c = clampToViewport(x, y, em.w, em.h);
             return { ...em, x: c.x, y: c.y };
         });
     };
 
-    const resizeSelectedEmbedPreset = (preset: "small" | "medium" | "large") => {
+    const resizeSelectedEmbedPreset = (
+        preset: "small" | "medium" | "large",
+    ) => {
         if (!selectedEmbedId) return;
-        webEmbeds = webEmbeds.map(em => {
+        webEmbeds = webEmbeds.map((em) => {
             if (em.id !== selectedEmbedId) return em;
-            const size = preset === "small" ? { w: 300, h: 180 } : preset === "medium" ? { w: 420, h: 252 } : { w: 560, h: 336 };
+            const size =
+                preset === "small"
+                    ? { w: 300, h: 180 }
+                    : preset === "medium"
+                      ? { w: 420, h: 252 }
+                      : { w: 560, h: 336 };
             const c = clampToViewport(em.x, em.y, size.w, size.h);
             return { ...em, ...size, x: c.x, y: c.y };
         });
     };
 
-    const updateGuidesForRect = (x: number, y: number, w: number, h: number) => {
+    const updateGuidesForRect = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+    ) => {
         const centerX = Math.round((window.innerWidth - w) / 2);
         const centerY = Math.round((window.innerHeight - h) / 2);
 
@@ -1511,7 +1791,7 @@
     };
 
     const startDragWebEmbed = (id: string, e: PointerEvent) => {
-        const item = webEmbeds.find(x => x.id === id);
+        const item = webEmbeds.find((x) => x.id === id);
         if (!item || item.locked || item.hidden) return;
         draggingEmbedId = id;
         selectedEmbedId = id;
@@ -1523,7 +1803,7 @@
     };
 
     const startResizeWebEmbed = (id: string, e: PointerEvent) => {
-        const item = webEmbeds.find(x => x.id === id);
+        const item = webEmbeds.find((x) => x.id === id);
         if (!item || item.locked || item.hidden) return;
         resizingEmbedId = id;
         embedResizeStartX = e.clientX;
@@ -1533,18 +1813,18 @@
     };
 
     const editWebEmbedUrl = (id: string) => {
-        const item = webEmbeds.find(x => x.id === id);
+        const item = webEmbeds.find((x) => x.id === id);
         if (!item) return;
         const next = window.prompt("编辑嵌入网址", item.url);
         if (!next) return;
         const url = next.trim();
         if (!/^https?:\/\//i.test(url)) return;
-        webEmbeds = webEmbeds.map(e => e.id === id ? { ...e, url } : e);
+        webEmbeds = webEmbeds.map((e) => (e.id === id ? { ...e, url } : e));
     };
 
     const onWindowPointerMoveEmbed = (e: PointerEvent) => {
         if (draggingEmbedId) {
-            webEmbeds = webEmbeds.map(item => {
+            webEmbeds = webEmbeds.map((item) => {
                 if (item.id !== draggingEmbedId) return item;
                 const nx = e.clientX - embedDragOffsetX;
                 const ny = e.clientY - embedDragOffsetY;
@@ -1557,13 +1837,17 @@
         if (resizingEmbedId) {
             const dx = e.clientX - embedResizeStartX;
             const dy = e.clientY - embedResizeStartY;
-            webEmbeds = webEmbeds.map(item => {
+            webEmbeds = webEmbeds.map((item) => {
                 if (item.id !== resizingEmbedId) return item;
                 const nextW = Math.max(220, embedResizeStartW + dx);
                 const nextH = Math.max(140, embedResizeStartH + dy);
                 const maxW = Math.max(220, window.innerWidth - item.x - 8);
                 const maxH = Math.max(140, window.innerHeight - item.y - 8);
-                return { ...item, w: Math.min(maxW, nextW), h: Math.min(maxH, nextH) };
+                return {
+                    ...item,
+                    w: Math.min(maxW, nextW),
+                    h: Math.min(maxH, nextH),
+                };
             });
         }
     };
@@ -1571,7 +1855,7 @@
     const onWindowPointerUpEmbed = () => {
         showGuideV = false;
         showGuideH = false;
-        webEmbeds = webEmbeds.map(item => {
+        webEmbeds = webEmbeds.map((item) => {
             const maxX = Math.max(8, window.innerWidth - item.w - 8);
             const maxY = Math.max(8, window.innerHeight - item.h - 8);
             let x = item.x;
@@ -1588,7 +1872,7 @@
     };
 
     const startDragFrame = (id: string, e: PointerEvent) => {
-        const f = frames.find(x => x.id === id);
+        const f = frames.find((x) => x.id === id);
         if (!f || f.locked || f.hidden) return;
         draggingFrameId = id;
         selectedFrameId = id;
@@ -1598,7 +1882,7 @@
     };
 
     const startResizeFrame = (id: string, e: PointerEvent) => {
-        const f = frames.find(x => x.id === id);
+        const f = frames.find((x) => x.id === id);
         if (!f || f.locked || f.hidden) return;
         resizingFrameId = id;
         frameResizeStartX = e.clientX;
@@ -1608,32 +1892,36 @@
     };
 
     const removeFrame = (id: string) => {
-        frames = frames.filter(f => f.id !== id);
+        frames = frames.filter((f) => f.id !== id);
         if (selectedFrameId === id) selectedFrameId = null;
     };
 
     const moveFrameLayer = (id: string, dir: -1 | 1) => {
-        const idx = frames.findIndex(f => f.id === id);
+        const idx = frames.findIndex((f) => f.id === id);
         if (idx < 0) return;
         const to = idx + dir;
         if (to < 0 || to >= frames.length) return;
-        const next = [ ...frames ];
+        const next = [...frames];
         const [item] = next.splice(idx, 1);
         next.splice(to, 0, item);
         frames = next;
     };
 
-    const alignSelectedFrame = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+    const alignSelectedFrame = (
+        mode: "left" | "center" | "right" | "top" | "middle" | "bottom",
+    ) => {
         if (!selectedFrameId) return;
-        frames = frames.map(f => {
+        frames = frames.map((f) => {
             if (f.id !== selectedFrameId) return f;
             let x = f.x;
             let y = f.y;
             if (mode === "left") x = 8;
-            if (mode === "center") x = Math.round((window.innerWidth - f.w) / 2);
+            if (mode === "center")
+                x = Math.round((window.innerWidth - f.w) / 2);
             if (mode === "right") x = Math.round(window.innerWidth - f.w - 8);
             if (mode === "top") y = 8;
-            if (mode === "middle") y = Math.round((window.innerHeight - f.h) / 2);
+            if (mode === "middle")
+                y = Math.round((window.innerHeight - f.h) / 2);
             if (mode === "bottom") y = Math.round(window.innerHeight - f.h - 8);
             const c = clampToViewport(x, y, f.w, f.h);
             return { ...f, x: c.x, y: c.y };
@@ -1642,7 +1930,7 @@
 
     const onWindowPointerMoveFrame = (e: PointerEvent) => {
         if (draggingFrameId) {
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (f.id !== draggingFrameId) return f;
                 const nx = e.clientX - frameDragOffsetX;
                 const ny = e.clientY - frameDragOffsetY;
@@ -1654,13 +1942,17 @@
         if (resizingFrameId) {
             const dx = e.clientX - frameResizeStartX;
             const dy = e.clientY - frameResizeStartY;
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (f.id !== resizingFrameId) return f;
                 const nextW = Math.max(120, frameResizeStartW + dx);
                 const nextH = Math.max(80, frameResizeStartH + dy);
                 const maxW = Math.max(120, window.innerWidth - f.x - 8);
                 const maxH = Math.max(80, window.innerHeight - f.y - 8);
-                return { ...f, w: Math.min(maxW, nextW), h: Math.min(maxH, nextH) };
+                return {
+                    ...f,
+                    w: Math.min(maxW, nextW),
+                    h: Math.min(maxH, nextH),
+                };
             });
         }
     };
@@ -1668,7 +1960,7 @@
     const onWindowPointerUpFrame = () => {
         showGuideV = false;
         showGuideH = false;
-        frames = frames.map(f => {
+        frames = frames.map((f) => {
             const maxX = Math.max(8, window.innerWidth - f.w - 8);
             const maxY = Math.max(8, window.innerHeight - f.h - 8);
             let x = f.x;
@@ -1688,7 +1980,22 @@
             draftingFrame = false;
             if (draftFrameW > 20 && draftFrameH > 20) {
                 const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-                frames = [ ...frames, { id, title: `Frame ${frames.length + 1}`, x: draftFrameX, y: draftFrameY, w: draftFrameW, h: draftFrameH, locked: false, hidden: false, opacity: 1, flipX: false, flipY: false } ];
+                frames = [
+                    ...frames,
+                    {
+                        id,
+                        title: `Frame ${frames.length + 1}`,
+                        x: draftFrameX,
+                        y: draftFrameY,
+                        w: draftFrameW,
+                        h: draftFrameH,
+                        locked: false,
+                        hidden: false,
+                        opacity: 1,
+                        flipX: false,
+                        flipY: false,
+                    },
+                ];
                 selectedFrameId = id;
                 selectedFrameIds = [id];
                 selectedEmbedId = null;
@@ -1709,9 +2016,13 @@
 
     const getRecordingCanvas = () => {
         if (useExcalidrawBridge && excalidrawHostEl) {
-            const canvases = Array.from(excalidrawHostEl.querySelectorAll("canvas")) as HTMLCanvasElement[];
+            const canvases = Array.from(
+                excalidrawHostEl.querySelectorAll("canvas"),
+            ) as HTMLCanvasElement[];
             if (canvases.length) {
-                canvases.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+                canvases.sort(
+                    (a, b) => b.width * b.height - a.width * a.height,
+                );
                 return canvases[0];
             }
         }
@@ -1734,7 +2045,8 @@
         }
 
         if (typeof recordingCanvas.captureStream !== "function") {
-            exportNotice = "录制预检失败：当前浏览器不支持 canvas.captureStream。";
+            exportNotice =
+                "录制预检失败：当前浏览器不支持 canvas.captureStream。";
             exportNoticeLevel = "error";
             return false;
         }
@@ -1753,7 +2065,6 @@
         return true;
     };
 
-
     const pickRecorderMime = () => {
         const webmCandidates = [
             "video/webm;codecs=vp9",
@@ -1765,8 +2076,10 @@
             "video/mp4",
         ];
 
-        const preferred = exportFormat === "mp4" ? mp4Candidates : webmCandidates;
-        const fallback = exportFormat === "mp4" ? webmCandidates : mp4Candidates;
+        const preferred =
+            exportFormat === "mp4" ? mp4Candidates : webmCandidates;
+        const fallback =
+            exportFormat === "mp4" ? webmCandidates : mp4Candidates;
 
         exportNotice = "";
         exportNoticeLevel = "info";
@@ -1799,6 +2112,12 @@
     const triggerRecordStart = async () => {
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
+        // 倒计时期间预先请求摄像头权限，避免录制开始时权限弹窗导致画面缺失
+        if (showCameraInRecord) {
+            try {
+                await ensureCameraStream();
+            } catch {}
+        }
         if (includeMicAudio) {
             exportNotice = "将录制麦克风声音，请确认浏览器已授权麦克风。";
             exportNoticeLevel = "info";
@@ -1833,7 +2152,10 @@
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
         const recordingCanvas = getRecordingCanvas();
-        if (!recordingCanvas || typeof recordingCanvas.captureStream !== "function") {
+        if (
+            !recordingCanvas ||
+            typeof recordingCanvas.captureStream !== "function"
+        ) {
             exportNotice = "录制启动失败：画布流不可用。";
             exportNoticeLevel = "error";
             isRecordingStarting = false;
@@ -1842,7 +2164,8 @@
         let recordingSurface: HTMLCanvasElement = recordingCanvas;
         if (useExcalidrawBridge && showCameraInRecord) {
             try {
-                recordingSurface = await startBridgeCompositeLoop(recordingCanvas);
+                recordingSurface =
+                    await startBridgeCompositeLoop(recordingCanvas);
             } catch (e) {
                 console.warn("bridge camera composite failed", e);
                 exportNotice = "摄像头叠加失败：将仅录制白板内容。";
@@ -1866,20 +2189,32 @@
                 micStream = await navigator.mediaDevices.getUserMedia({
                     audio: selectedMicDeviceId
                         ? { deviceId: { ideal: selectedMicDeviceId } }
-                        : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                        : {
+                              echoCancellation: true,
+                              noiseSuppression: true,
+                              autoGainControl: true,
+                          },
                     video: false,
                 });
 
-                const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+                const AC =
+                    window.AudioContext ||
+                    (
+                        window as unknown as {
+                            webkitAudioContext?: typeof AudioContext;
+                        }
+                    ).webkitAudioContext;
                 if (AC) {
                     micAudioCtx = new AC();
-                    const source = micAudioCtx.createMediaStreamSource(micStream);
+                    const source =
+                        micAudioCtx.createMediaStreamSource(micStream);
                     micDest = micAudioCtx.createMediaStreamDestination();
                     source.connect(micDest);
                     for (const t of micDest.stream.getAudioTracks()) {
                         t.onended = () => {
                             if (!isRecording) return;
-                            exportNotice = "麦克风轨道已中断，后续录制将无音频。";
+                            exportNotice =
+                                "麦克风轨道已中断，后续录制将无音频。";
                             exportNoticeLevel = "warn";
                         };
                         stream.addTrack(t);
@@ -1888,7 +2223,8 @@
                     for (const t of micStream.getAudioTracks()) {
                         t.onended = () => {
                             if (!isRecording) return;
-                            exportNotice = "麦克风轨道已中断，后续录制将无音频。";
+                            exportNotice =
+                                "麦克风轨道已中断，后续录制将无音频。";
                             exportNoticeLevel = "warn";
                         };
                         stream.addTrack(t);
@@ -1904,7 +2240,9 @@
 
         chunks = [];
         try {
-            recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+            recorder = mime
+                ? new MediaRecorder(stream, { mimeType: mime })
+                : new MediaRecorder(stream);
         } catch (err) {
             exportNotice = "录制器初始化失败，请切换导出格式或更换浏览器。";
             exportNoticeLevel = "error";
@@ -1924,9 +2262,13 @@
             recordingStopCause = "recorder-error";
             exportNotice = "录制器发生错误，正在尝试安全停止并导出。";
             exportNoticeLevel = "error";
-            try { recorder?.requestData(); } catch {}
+            try {
+                recorder?.requestData();
+            } catch {}
             window.setTimeout(() => {
-                try { recorder?.stop(); } catch {}
+                try {
+                    recorder?.stop();
+                } catch {}
             }, 80);
         };
 
@@ -1954,7 +2296,8 @@
                 exportNoticeLevel = "error";
                 return;
             }
-            const actualType = recorder?.mimeType || selectedMimeType || "video/webm";
+            const actualType =
+                recorder?.mimeType || selectedMimeType || "video/webm";
             const ext = actualType.includes("mp4") ? "mp4" : "webm";
             const blob = new Blob(chunks, { type: actualType });
             if (blob.size < 32 * 1024) {
@@ -1962,21 +2305,23 @@
                 exportNoticeLevel = "warn";
             }
             downloadRecordingBlob(blob, ext);
-            const staleChunkMs = lastChunkAt ? (Date.now() - lastChunkAt) : 0;
+            const staleChunkMs = lastChunkAt ? Date.now() - lastChunkAt : 0;
             const staleChunk = lastChunkMs > 3000;
-            const causeLabel = recordingStopCause === "user"
-                ? "手动停止"
-                : recordingStopCause === "pagehide"
-                    ? "页面切后台"
-                    : recordingStopCause === "video-ended"
+            const causeLabel =
+                recordingStopCause === "user"
+                    ? "手动停止"
+                    : recordingStopCause === "pagehide"
+                      ? "页面切后台"
+                      : recordingStopCause === "video-ended"
                         ? "画面轨道中断"
                         : recordingStopCause === "recorder-error"
-                            ? "录制器错误"
-                            : recordingStopCause === "timeout"
-                                ? "停止超时收尾"
-                                : "未知原因";
+                          ? "录制器错误"
+                          : recordingStopCause === "timeout"
+                            ? "停止超时收尾"
+                            : "未知原因";
             exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB) · 停止原因：${causeLabel}${staleChunk ? `，末段数据可能不完整（${Math.round(staleChunkMs / 1000)}s 无新片段）` : ""}`;
-            exportNoticeLevel = staleChunk || recordingStopCause !== "user" ? "warn" : "info";
+            exportNoticeLevel =
+                staleChunk || recordingStopCause !== "user" ? "warn" : "info";
         };
 
         try {
@@ -1985,7 +2330,9 @@
             isRecording = true;
             isRecordPaused = false;
             const hasAudioTrack = stream.getAudioTracks().length > 0;
-            exportNotice = hasAudioTrack ? "录制已开始（含麦克风）。" : "录制已开始（当前无音轨）。";
+            exportNotice = hasAudioTrack
+                ? "录制已开始（含麦克风）。"
+                : "录制已开始（当前无音轨）。";
             exportNoticeLevel = hasAudioTrack ? "info" : "warn";
         } catch {
             exportNotice = "录制启动失败，请检查浏览器权限与编码支持。";
@@ -2010,15 +2357,28 @@
         isRecordingStarting = false;
     };
 
-    const stopRecord = (cause: "user" | "pagehide" | "video-ended" | "recorder-error" | "unknown" = "user") => {
-        if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
-        if (recorder.state !== "recording" && recorder.state !== "paused") return;
+    const stopRecord = (
+        cause:
+            | "user"
+            | "pagehide"
+            | "video-ended"
+            | "recorder-error"
+            | "unknown" = "user",
+    ) => {
+        if (!recorder || recorder.state === "inactive" || isRecordingStopping)
+            return;
+        if (recorder.state !== "recording" && recorder.state !== "paused")
+            return;
         recordingStopCause = cause;
         isRecordingStopping = true;
 
-        try { recorder.requestData(); } catch {}
+        try {
+            recorder.requestData();
+        } catch {}
         window.setTimeout(() => {
-            try { recorder?.requestData(); } catch {}
+            try {
+                recorder?.requestData();
+            } catch {}
         }, 120);
 
         try {
@@ -2141,9 +2501,14 @@
     };
 
     const onWindowPointerMove = (e: PointerEvent) => {
-        if (!draggingTeleprompter) return;
-        teleprompterOffsetX = dragBaseX + (e.clientX - dragStartX);
-        teleprompterOffsetY = dragBaseY + (e.clientY - dragStartY);
+        if (draggingTeleprompter) {
+            teleprompterOffsetX = dragBaseX + (e.clientX - dragStartX);
+            teleprompterOffsetY = dragBaseY + (e.clientY - dragStartY);
+        }
+        if (draggingFloatingControls) {
+            floatingControlsX = fcDragBaseX + (e.clientX - fcDragStartX);
+            floatingControlsY = fcDragBaseY + (e.clientY - fcDragStartY);
+        }
     };
 
     const onWindowPointerUp = () => {
@@ -2152,13 +2517,16 @@
             clampAndSnapTeleprompter();
             persistTeleprompterPrefs();
         }
+        if (draggingFloatingControls) {
+            draggingFloatingControls = false;
+        }
     };
 
     $: if (teleprompterHydrated) {
         persistTeleprompterPrefs();
     }
 
-    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${(bridgeSlides[activeSlide]?.elements?.length ?? 0)}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}`;
+    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}`;
 
     $: if (typeof window !== "undefined" && autosaveSignature) {
         // throttled autosave for both whiteboard runtimes
@@ -2175,9 +2543,9 @@
         }
 
         if (selectedFrameIds.includes(id)) {
-            selectedFrameIds = selectedFrameIds.filter(x => x !== id);
+            selectedFrameIds = selectedFrameIds.filter((x) => x !== id);
         } else {
-            selectedFrameIds = [ ...selectedFrameIds, id ];
+            selectedFrameIds = [...selectedFrameIds, id];
         }
         selectedFrameId = selectedFrameIds[0] || null;
     };
@@ -2192,9 +2560,9 @@
         }
 
         if (selectedEmbedIds.includes(id)) {
-            selectedEmbedIds = selectedEmbedIds.filter(x => x !== id);
+            selectedEmbedIds = selectedEmbedIds.filter((x) => x !== id);
         } else {
-            selectedEmbedIds = [ ...selectedEmbedIds, id ];
+            selectedEmbedIds = [...selectedEmbedIds, id];
         }
         selectedEmbedId = selectedEmbedIds[0] || null;
     };
@@ -2207,15 +2575,15 @@
     };
 
     const selectAllVisibleObjects = () => {
-        selectedFrameIds = frames.filter(f => !f.hidden).map(f => f.id);
-        selectedEmbedIds = webEmbeds.filter(e => !e.hidden).map(e => e.id);
+        selectedFrameIds = frames.filter((f) => !f.hidden).map((f) => f.id);
+        selectedEmbedIds = webEmbeds.filter((e) => !e.hidden).map((e) => e.id);
         selectedFrameId = selectedFrameIds[0] || null;
         selectedEmbedId = selectedEmbedIds[0] || null;
     };
 
     const nudgeSelected = (dx: number, dy: number) => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 const c = clampToViewport(f.x + dx, f.y + dy, f.w, f.h);
                 return { ...f, x: c.x, y: c.y };
@@ -2223,7 +2591,7 @@
         }
 
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(em => {
+            webEmbeds = webEmbeds.map((em) => {
                 if (!selectedEmbedIds.includes(em.id) || em.locked) return em;
                 const c = clampToViewport(em.x + dx, em.y + dy, em.w, em.h);
                 return { ...em, x: c.x, y: c.y };
@@ -2231,34 +2599,44 @@
         }
     };
 
-    const alignSelectedGroup = (mode: "left" | "center" | "right" | "top" | "middle" | "bottom") => {
+    const alignSelectedGroup = (
+        mode: "left" | "center" | "right" | "top" | "middle" | "bottom",
+    ) => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 let x = f.x;
                 let y = f.y;
                 if (mode === "left") x = 8;
-                if (mode === "center") x = Math.round((window.innerWidth - f.w) / 2);
-                if (mode === "right") x = Math.round(window.innerWidth - f.w - 8);
+                if (mode === "center")
+                    x = Math.round((window.innerWidth - f.w) / 2);
+                if (mode === "right")
+                    x = Math.round(window.innerWidth - f.w - 8);
                 if (mode === "top") y = 8;
-                if (mode === "middle") y = Math.round((window.innerHeight - f.h) / 2);
-                if (mode === "bottom") y = Math.round(window.innerHeight - f.h - 8);
+                if (mode === "middle")
+                    y = Math.round((window.innerHeight - f.h) / 2);
+                if (mode === "bottom")
+                    y = Math.round(window.innerHeight - f.h - 8);
                 const c = clampToViewport(x, y, f.w, f.h);
                 return { ...f, x: c.x, y: c.y };
             });
         }
 
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(em => {
+            webEmbeds = webEmbeds.map((em) => {
                 if (!selectedEmbedIds.includes(em.id) || em.locked) return em;
                 let x = em.x;
                 let y = em.y;
                 if (mode === "left") x = 8;
-                if (mode === "center") x = Math.round((window.innerWidth - em.w) / 2);
-                if (mode === "right") x = Math.round(window.innerWidth - em.w - 8);
+                if (mode === "center")
+                    x = Math.round((window.innerWidth - em.w) / 2);
+                if (mode === "right")
+                    x = Math.round(window.innerWidth - em.w - 8);
                 if (mode === "top") y = 8;
-                if (mode === "middle") y = Math.round((window.innerHeight - em.h) / 2);
-                if (mode === "bottom") y = Math.round(window.innerHeight - em.h - 8);
+                if (mode === "middle")
+                    y = Math.round((window.innerHeight - em.h) / 2);
+                if (mode === "bottom")
+                    y = Math.round(window.innerHeight - em.h - 8);
                 const c = clampToViewport(x, y, em.w, em.h);
                 return { ...em, x: c.x, y: c.y };
             });
@@ -2267,11 +2645,11 @@
 
     const copySelection = () => {
         copiedFrames = frames
-            .filter(f => selectedFrameIds.includes(f.id))
-            .map(f => ({ ...f }));
+            .filter((f) => selectedFrameIds.includes(f.id))
+            .map((f) => ({ ...f }));
         copiedEmbeds = webEmbeds
-            .filter(e => selectedEmbedIds.includes(e.id))
-            .map(e => ({ ...e }));
+            .filter((e) => selectedEmbedIds.includes(e.id))
+            .map((e) => ({ ...e }));
     };
 
     const pasteSelection = () => {
@@ -2283,9 +2661,15 @@
             const created = copiedFrames.map((f, i) => {
                 const id = `${now}-f-${i}-${Math.random().toString(16).slice(2, 6)}`;
                 newFrameIds.push(id);
-                return { ...f, id, x: f.x + 24, y: f.y + 24, title: `${f.title} copy` };
+                return {
+                    ...f,
+                    id,
+                    x: f.x + 24,
+                    y: f.y + 24,
+                    title: `${f.title} copy`,
+                };
             });
-            frames = [ ...frames, ...created ];
+            frames = [...frames, ...created];
         }
 
         if (copiedEmbeds.length) {
@@ -2294,7 +2678,7 @@
                 newEmbedIds.push(id);
                 return { ...e, id, x: e.x + 24, y: e.y + 24 };
             });
-            webEmbeds = [ ...webEmbeds, ...created ];
+            webEmbeds = [...webEmbeds, ...created];
         }
 
         if (newFrameIds.length || newEmbedIds.length) {
@@ -2307,26 +2691,43 @@
 
     const moveSelectionLayer = (dir: "front" | "back") => {
         if (selectedFrameIds.length) {
-            const selected = frames.filter(f => selectedFrameIds.includes(f.id));
-            const others = frames.filter(f => !selectedFrameIds.includes(f.id));
-            frames = dir === "front" ? [ ...others, ...selected ] : [ ...selected, ...others ];
+            const selected = frames.filter((f) =>
+                selectedFrameIds.includes(f.id),
+            );
+            const others = frames.filter(
+                (f) => !selectedFrameIds.includes(f.id),
+            );
+            frames =
+                dir === "front"
+                    ? [...others, ...selected]
+                    : [...selected, ...others];
         }
 
         if (selectedEmbedIds.length) {
-            const selected = webEmbeds.filter(e => selectedEmbedIds.includes(e.id));
-            const others = webEmbeds.filter(e => !selectedEmbedIds.includes(e.id));
-            webEmbeds = dir === "front" ? [ ...others, ...selected ] : [ ...selected, ...others ];
+            const selected = webEmbeds.filter((e) =>
+                selectedEmbedIds.includes(e.id),
+            );
+            const others = webEmbeds.filter(
+                (e) => !selectedEmbedIds.includes(e.id),
+            );
+            webEmbeds =
+                dir === "front"
+                    ? [...others, ...selected]
+                    : [...selected, ...others];
         }
     };
 
     const moveSelectionLayerStep = (delta: -1 | 1) => {
         if (selectedFrameIds.length) {
-            const arr = [ ...frames ];
+            const arr = [...frames];
             if (delta > 0) {
                 for (let i = arr.length - 2; i >= 0; i--) {
                     const a = arr[i];
                     const b = arr[i + 1];
-                    if (selectedFrameIds.includes(a.id) && !selectedFrameIds.includes(b.id)) {
+                    if (
+                        selectedFrameIds.includes(a.id) &&
+                        !selectedFrameIds.includes(b.id)
+                    ) {
                         arr[i] = b;
                         arr[i + 1] = a;
                     }
@@ -2335,7 +2736,10 @@
                 for (let i = 1; i < arr.length; i++) {
                     const a = arr[i - 1];
                     const b = arr[i];
-                    if (!selectedFrameIds.includes(a.id) && selectedFrameIds.includes(b.id)) {
+                    if (
+                        !selectedFrameIds.includes(a.id) &&
+                        selectedFrameIds.includes(b.id)
+                    ) {
                         arr[i - 1] = b;
                         arr[i] = a;
                     }
@@ -2345,12 +2749,15 @@
         }
 
         if (selectedEmbedIds.length) {
-            const arr = [ ...webEmbeds ];
+            const arr = [...webEmbeds];
             if (delta > 0) {
                 for (let i = arr.length - 2; i >= 0; i--) {
                     const a = arr[i];
                     const b = arr[i + 1];
-                    if (selectedEmbedIds.includes(a.id) && !selectedEmbedIds.includes(b.id)) {
+                    if (
+                        selectedEmbedIds.includes(a.id) &&
+                        !selectedEmbedIds.includes(b.id)
+                    ) {
                         arr[i] = b;
                         arr[i + 1] = a;
                     }
@@ -2359,7 +2766,10 @@
                 for (let i = 1; i < arr.length; i++) {
                     const a = arr[i - 1];
                     const b = arr[i];
-                    if (!selectedEmbedIds.includes(a.id) && selectedEmbedIds.includes(b.id)) {
+                    if (
+                        !selectedEmbedIds.includes(a.id) &&
+                        selectedEmbedIds.includes(b.id)
+                    ) {
                         arr[i - 1] = b;
                         arr[i] = a;
                     }
@@ -2371,7 +2781,7 @@
 
     const resizeSelectedBy = (ratio: number) => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 const w = Math.max(120, Math.round(f.w * ratio));
                 const h = Math.max(80, Math.round(f.h * ratio));
@@ -2381,7 +2791,7 @@
         }
 
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(e => {
+            webEmbeds = webEmbeds.map((e) => {
                 if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
                 const w = Math.max(220, Math.round(e.w * ratio));
                 const h = Math.max(140, Math.round(e.h * ratio));
@@ -2393,49 +2803,65 @@
 
     const setSelectedLock = (locked: boolean) => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => selectedFrameIds.includes(f.id) ? { ...f, locked } : f);
+            frames = frames.map((f) =>
+                selectedFrameIds.includes(f.id) ? { ...f, locked } : f,
+            );
         }
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(e => selectedEmbedIds.includes(e.id) ? { ...e, locked } : e);
+            webEmbeds = webEmbeds.map((e) =>
+                selectedEmbedIds.includes(e.id) ? { ...e, locked } : e,
+            );
         }
     };
 
     const setSelectedVisibility = (hidden: boolean) => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => selectedFrameIds.includes(f.id) ? { ...f, hidden } : f);
+            frames = frames.map((f) =>
+                selectedFrameIds.includes(f.id) ? { ...f, hidden } : f,
+            );
         }
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(e => selectedEmbedIds.includes(e.id) ? { ...e, hidden } : e);
+            webEmbeds = webEmbeds.map((e) =>
+                selectedEmbedIds.includes(e.id) ? { ...e, hidden } : e,
+            );
         }
     };
 
     const unhideAllObjects = () => {
-        frames = frames.map(f => ({ ...f, hidden: false }));
-        webEmbeds = webEmbeds.map(e => ({ ...e, hidden: false }));
+        frames = frames.map((f) => ({ ...f, hidden: false }));
+        webEmbeds = webEmbeds.map((e) => ({ ...e, hidden: false }));
     };
 
     const flipSelected = (axis: "x" | "y") => {
         if (selectedFrameIds.length) {
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (!selectedFrameIds.includes(f.id) || f.locked) return f;
-                return axis === "x" ? { ...f, flipX: !(f.flipX ?? false) } : { ...f, flipY: !(f.flipY ?? false) };
+                return axis === "x"
+                    ? { ...f, flipX: !(f.flipX ?? false) }
+                    : { ...f, flipY: !(f.flipY ?? false) };
             });
         }
         if (selectedEmbedIds.length) {
-            webEmbeds = webEmbeds.map(e => {
+            webEmbeds = webEmbeds.map((e) => {
                 if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
-                return axis === "x" ? { ...e, flipX: !(e.flipX ?? false) } : { ...e, flipY: !(e.flipY ?? false) };
+                return axis === "x"
+                    ? { ...e, flipX: !(e.flipX ?? false) }
+                    : { ...e, flipY: !(e.flipY ?? false) };
             });
         }
     };
 
     const normalizeSelectedSize = () => {
-        const selectedFrames = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked);
-        const selectedEmbeds = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked);
+        const selectedFrames = frames.filter(
+            (f) => selectedFrameIds.includes(f.id) && !f.locked,
+        );
+        const selectedEmbeds = webEmbeds.filter(
+            (e) => selectedEmbedIds.includes(e.id) && !e.locked,
+        );
 
         if (selectedFrames.length > 1) {
             const base = selectedFrames[0];
-            frames = frames.map(f => {
+            frames = frames.map((f) => {
                 if (!selectedFrameIds.includes(f.id) || f.locked) return f;
                 const c = clampToViewport(f.x, f.y, base.w, base.h);
                 return { ...f, w: base.w, h: base.h, x: c.x, y: c.y };
@@ -2444,7 +2870,7 @@
 
         if (selectedEmbeds.length > 1) {
             const base = selectedEmbeds[0];
-            webEmbeds = webEmbeds.map(e => {
+            webEmbeds = webEmbeds.map((e) => {
                 if (!selectedEmbedIds.includes(e.id) || e.locked) return e;
                 const c = clampToViewport(e.x, e.y, base.w, base.h);
                 return { ...e, w: base.w, h: base.h, x: c.x, y: c.y };
@@ -2453,51 +2879,79 @@
     };
 
     const distributeSelected = (axis: "x" | "y") => {
-        const selectedF = frames.filter(f => selectedFrameIds.includes(f.id) && !f.locked && !f.hidden);
+        const selectedF = frames.filter(
+            (f) => selectedFrameIds.includes(f.id) && !f.locked && !f.hidden,
+        );
         if (selectedF.length >= 3) {
-            const sorted = [ ...selectedF ].sort((a, b) => axis === "x" ? a.x - b.x : a.y - b.y);
+            const sorted = [...selectedF].sort((a, b) =>
+                axis === "x" ? a.x - b.x : a.y - b.y,
+            );
             const first = sorted[0];
             const last = sorted[sorted.length - 1];
-            const span = axis === "x" ? (last.x - first.x) : (last.y - first.y);
+            const span = axis === "x" ? last.x - first.x : last.y - first.y;
             const step = span / (sorted.length - 1);
             const posMap = new Map<string, number>();
-            sorted.forEach((item, idx) => posMap.set(item.id, Math.round((axis === "x" ? first.x : first.y) + step * idx)));
-            frames = frames.map(f => {
+            sorted.forEach((item, idx) =>
+                posMap.set(
+                    item.id,
+                    Math.round((axis === "x" ? first.x : first.y) + step * idx),
+                ),
+            );
+            frames = frames.map((f) => {
                 const v = posMap.get(f.id);
                 if (v == null) return f;
-                const c = axis === "x" ? clampToViewport(v, f.y, f.w, f.h) : clampToViewport(f.x, v, f.w, f.h);
+                const c =
+                    axis === "x"
+                        ? clampToViewport(v, f.y, f.w, f.h)
+                        : clampToViewport(f.x, v, f.w, f.h);
                 return { ...f, x: c.x, y: c.y };
             });
         }
 
-        const selectedE = webEmbeds.filter(e => selectedEmbedIds.includes(e.id) && !e.locked && !e.hidden);
+        const selectedE = webEmbeds.filter(
+            (e) => selectedEmbedIds.includes(e.id) && !e.locked && !e.hidden,
+        );
         if (selectedE.length >= 3) {
-            const sorted = [ ...selectedE ].sort((a, b) => axis === "x" ? a.x - b.x : a.y - b.y);
+            const sorted = [...selectedE].sort((a, b) =>
+                axis === "x" ? a.x - b.x : a.y - b.y,
+            );
             const first = sorted[0];
             const last = sorted[sorted.length - 1];
-            const span = axis === "x" ? (last.x - first.x) : (last.y - first.y);
+            const span = axis === "x" ? last.x - first.x : last.y - first.y;
             const step = span / (sorted.length - 1);
             const posMap = new Map<string, number>();
-            sorted.forEach((item, idx) => posMap.set(item.id, Math.round((axis === "x" ? first.x : first.y) + step * idx)));
-            webEmbeds = webEmbeds.map(e => {
+            sorted.forEach((item, idx) =>
+                posMap.set(
+                    item.id,
+                    Math.round((axis === "x" ? first.x : first.y) + step * idx),
+                ),
+            );
+            webEmbeds = webEmbeds.map((e) => {
                 const v = posMap.get(e.id);
                 if (v == null) return e;
-                const c = axis === "x" ? clampToViewport(v, e.y, e.w, e.h) : clampToViewport(e.x, v, e.w, e.h);
+                const c =
+                    axis === "x"
+                        ? clampToViewport(v, e.y, e.w, e.h)
+                        : clampToViewport(e.x, v, e.w, e.h);
                 return { ...e, x: c.x, y: c.y };
             });
         }
     };
 
     const toggleFrameLock = (id: string) => {
-        frames = frames.map(f => f.id === id ? { ...f, locked: !f.locked } : f);
+        frames = frames.map((f) =>
+            f.id === id ? { ...f, locked: !f.locked } : f,
+        );
     };
 
     const toggleEmbedLock = (id: string) => {
-        webEmbeds = webEmbeds.map(e => e.id === id ? { ...e, locked: !e.locked } : e);
+        webEmbeds = webEmbeds.map((e) =>
+            e.id === id ? { ...e, locked: !e.locked } : e,
+        );
     };
 
     const updateFrameProps = (id: string, patch: Partial<FrameItem>) => {
-        frames = frames.map(f => {
+        frames = frames.map((f) => {
             if (f.id !== id) return f;
             const next = { ...f, ...patch };
             const c = clampToViewport(next.x, next.y, next.w, next.h);
@@ -2507,7 +2961,7 @@
     };
 
     const updateEmbedProps = (id: string, patch: Partial<WebEmbedItem>) => {
-        webEmbeds = webEmbeds.map(e => {
+        webEmbeds = webEmbeds.map((e) => {
             if (e.id !== id) return e;
             const next = { ...e, ...patch };
             const c = clampToViewport(next.x, next.y, next.w, next.h);
@@ -2516,40 +2970,47 @@
         });
     };
 
-    const inputValue = (e: Event) => (e.currentTarget as HTMLInputElement).value;
+    const inputValue = (e: Event) =>
+        (e.currentTarget as HTMLInputElement).value;
     const inputNumber = (e: Event, fallback = 0) => {
         const n = Number(inputValue(e));
         return Number.isFinite(n) ? n : fallback;
     };
 
-
-    $: selectionCount = useExcalidrawBridge ? 0 : (selectedFrameIds.length + selectedEmbedIds.length);
+    $: selectionCount = useExcalidrawBridge
+        ? 0
+        : selectedFrameIds.length + selectedEmbedIds.length;
     $: toolLabel = useExcalidrawBridge
         ? "EX"
-        : (({
-            select: "🖱️",
-            pen: "✏️",
-            eraser: "🧽",
-            text: "T",
-            line: "／",
-            rect: "▭",
-            circle: "◯",
-            laser: "🔦",
-            frame: "▣",
-            webembed: "🌐",
-        } as Record<string, string>)[tool] || tool);
+        : (
+              {
+                  select: "🖱️",
+                  pen: "✏️",
+                  eraser: "🧽",
+                  text: "T",
+                  line: "／",
+                  rect: "▭",
+                  circle: "◯",
+                  laser: "🔦",
+                  frame: "▣",
+                  webembed: "🌐",
+              } as Record<string, string>
+          )[tool] || tool;
 
     $: saveAgeText = lastProjectSaveAt
         ? `${Math.max(0, Math.floor((Date.now() - lastProjectSaveAt) / 1000))}s`
         : "--";
-    $: hiddenFrames = frames.filter(f => f.hidden);
-    $: hiddenEmbeds = webEmbeds.filter(e => e.hidden);
+    $: hiddenFrames = frames.filter((f) => f.hidden);
+    $: hiddenEmbeds = webEmbeds.filter((e) => e.hidden);
 
-    $: boardCursor = tool === "text"
-        ? "text"
-        : tool === "select"
-            ? (slideDragging ? "grabbing" : "grab")
-            : tool === "laser"
+    $: boardCursor =
+        tool === "text"
+            ? "text"
+            : tool === "select"
+              ? slideDragging
+                  ? "grabbing"
+                  : "grab"
+              : tool === "laser"
                 ? "crosshair"
                 : "crosshair";
 
@@ -2560,7 +3021,6 @@
     $: if (!useExcalidrawBridge) {
         unmountExcalidrawBridge();
     }
-
 
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
         if (!isRecording) return;
@@ -2581,7 +3041,8 @@
         if (useExcalidrawBridge) {
             if (e.code === "Space" || e.key.toLowerCase() === "p") {
                 e.preventDefault();
-                if (isRecording) stopRecord(); else void triggerRecordStart();
+                if (isRecording) stopRecord();
+                else void triggerRecordStart();
                 return;
             }
             if (e.key.toLowerCase() === "k") {
@@ -2593,7 +3054,8 @@
         }
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
             e.preventDefault();
-            if (e.shiftKey) redo(); else undo();
+            if (e.shiftKey) redo();
+            else undo();
             return;
         }
 
@@ -2603,19 +3065,23 @@
             return;
         }
 
-        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
+        if (
+            e.target instanceof HTMLInputElement ||
+            e.target instanceof HTMLTextAreaElement ||
+            e.target instanceof HTMLSelectElement
+        ) {
             return;
         }
 
         if (e.key === "Delete" || e.key === "Backspace") {
             if (selectedFrameIds.length) {
-                for (const id of [ ...selectedFrameIds ]) removeFrame(id);
+                for (const id of [...selectedFrameIds]) removeFrame(id);
                 selectedFrameIds = [];
                 selectedFrameId = null;
                 return;
             }
             if (selectedEmbedIds.length) {
-                for (const id of [ ...selectedEmbedIds ]) removeWebEmbed(id);
+                for (const id of [...selectedEmbedIds]) removeWebEmbed(id);
                 selectedEmbedIds = [];
                 selectedEmbedId = null;
                 return;
@@ -2640,7 +3106,11 @@
             return;
         }
 
-        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+        if (
+            (e.metaKey || e.ctrlKey) &&
+            e.shiftKey &&
+            e.key.toLowerCase() === "d"
+        ) {
             e.preventDefault();
             duplicateSlide();
             return;
@@ -2670,8 +3140,10 @@
             return;
         }
 
-        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-            const step = (e.metaKey || e.ctrlKey) ? 50 : (e.shiftKey ? 10 : 1);
+        if (
+            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+        ) {
+            const step = e.metaKey || e.ctrlKey ? 50 : e.shiftKey ? 10 : 1;
             let dx = 0;
             let dy = 0;
             if (e.key === "ArrowUp") dy = -step;
@@ -2693,8 +3165,13 @@
 
         if (e.key.toLowerCase() === "h") {
             if (selectedFrameIds.length || selectedEmbedIds.length) {
-                const anyVisible = frames.some(f => selectedFrameIds.includes(f.id) && !f.hidden)
-                    || webEmbeds.some(e => selectedEmbedIds.includes(e.id) && !e.hidden);
+                const anyVisible =
+                    frames.some(
+                        (f) => selectedFrameIds.includes(f.id) && !f.hidden,
+                    ) ||
+                    webEmbeds.some(
+                        (e) => selectedEmbedIds.includes(e.id) && !e.hidden,
+                    );
                 setSelectedVisibility(anyVisible);
                 return;
             }
@@ -2702,7 +3179,8 @@
 
         if (e.code === "Space" || e.key.toLowerCase() === "p") {
             e.preventDefault();
-            if (isRecording) stopRecord(); else triggerRecordStart();
+            if (isRecording) stopRecord();
+            else triggerRecordStart();
             return;
         }
 
@@ -2721,33 +3199,54 @@
         if (key === "c") tool = "circle";
         if (key === "f") tool = "frame";
     };
-
 </script>
 
-<svelte:window on:keydown={onGlobalKeydown} on:beforeunload={onBeforeUnload} on:pagehide={onPageHide} on:pointermove={onWindowPointerMove} on:pointerup={onWindowPointerUp} />
+<svelte:window
+    on:keydown={onGlobalKeydown}
+    on:beforeunload={onBeforeUnload}
+    on:pagehide={onPageHide}
+    on:pointermove={onWindowPointerMove}
+    on:pointerup={onWindowPointerUp}
+/>
 
 <svelte:head>
     <title>Video Record Whiteboard</title>
 </svelte:head>
 
 <div class="page">
-    <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
+    <input
+        bind:this={imageInputEl}
+        type="file"
+        accept="image/*"
+        class="hidden-file-input"
+        on:change={onImageSelected}
+    />
 
-    <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
+    <div
+        class="board-wrap"
+        style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}
+    >
         <canvas
             bind:this={canvasEl}
-            class="board" style={`cursor:${boardCursor}; opacity:${useExcalidrawBridge ? 0 : 1};`}
+            class="board"
+            style={`cursor:${boardCursor}; opacity:${useExcalidrawBridge ? 0 : 1};`}
             on:pointerenter={enterBoard}
             on:pointerdown={beginDraw}
             on:pointermove={draw}
             on:pointerup={endDraw}
             on:pointercancel={endDraw}
-            on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
+            on:pointerleave={(e) => {
+                endDraw(e);
+                leaveBoard();
+            }}
         />
 
         {#if useExcalidrawBridge}
             <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
         {/if}
+
+        <!-- Slide 标题（对标 Excalicord） -->
+        <div class="slide-title-overlay">Slide {activeSlide + 1}</div>
 
         {#if !useExcalidrawBridge && showGuideV}
             <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>
@@ -2757,7 +3256,10 @@
         {/if}
 
         {#if !useExcalidrawBridge && marqueeSelecting && marqueeW > 0 && marqueeH > 0}
-            <div class="marquee-box" style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}></div>
+            <div
+                class="marquee-box"
+                style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}
+            ></div>
         {/if}
 
         {#if !useExcalidrawBridge && textEditing}
@@ -2773,7 +3275,10 @@
         {/if}
 
         {#if !useExcalidrawBridge && tool === "laser" && cursorInside && laserPressed}
-            <div class="laser-dot" style={`left:${cursorX}px; top:${cursorY}px; width:${laserSize}px; height:${laserSize}px; background:${laserColor};`}></div>
+            <div
+                class="laser-dot"
+                style={`left:${cursorX}px; top:${cursorY}px; width:${laserSize}px; height:${laserSize}px; background:${laserColor};`}
+            ></div>
         {/if}
 
         {#if showCursorHighlight && cursorInside && isRecording}
@@ -2783,64 +3288,192 @@
             ></div>
         {/if}
 
-        <div class="floating-controls">
-            <button class="floating-btn" on:click={() => (showSettings = true)}>⚙</button>
-            <button class="floating-btn" class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>📝</button>
+        <div
+            class="floating-controls"
+            style={`transform:translate(${floatingControlsX}px, ${floatingControlsY}px);`}
+        >
+            <div
+                class="fc-drag-handle"
+                on:pointerdown={startDragFloatingControls}
+                title="拖拽移动工具栏"
+            >
+                ⠿
+            </div>
+            <button class="floating-btn" on:click={() => (showSettings = true)}
+                >⚙</button
+            >
+            <button
+                class="floating-btn"
+                class:active={showTeleprompter}
+                on:click={() => (showTeleprompter = !showTeleprompter)}
+                >📝</button
+            >
             {#if !useExcalidrawBridge}
-                <button class="floating-btn" on:click={saveProjectSnapshot} title="保存项目">💾</button>
-                <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
+                <button
+                    class="floating-btn"
+                    on:click={saveProjectSnapshot}
+                    title="保存项目">💾</button
+                >
+                <button
+                    class="floating-btn"
+                    on:click={loadProjectSnapshot}
+                    title="恢复项目">⟲</button
+                >
             {/if}
-            <button class="floating-btn" on:click={() => (showShortcutsHelp = !showShortcutsHelp)} title="快捷键帮助">⌨</button>
+            <button
+                class="floating-btn"
+                on:click={() => (showShortcutsHelp = !showShortcutsHelp)}
+                title="快捷键帮助">⌨</button
+            >
             {#if !isRecording}
-                <button class="floating-record" on:click={triggerRecordStart} disabled={isRecordingStarting || isRecordingStopping}>{isRecordingStarting ? "… 启动中" : "● 录制"}</button>
+                <button
+                    class="floating-record"
+                    on:click={triggerRecordStart}
+                    disabled={isRecordingStarting ||
+                        isRecordingStopping ||
+                        recordCountdownLeft > 0}
+                    >{isRecordingStarting
+                        ? "… 启动中"
+                        : recordCountdownLeft > 0
+                          ? `倒计时 ${recordCountdownLeft}`
+                          : "● 录制"}</button
+                >
             {:else}
-                <button class="floating-pause" on:click={togglePauseRecord} disabled={isRecordingStopping}>{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button>
-                <button class="floating-stop" on:click={stopRecord} disabled={isRecordingStopping}>{isRecordingStopping ? "… 停止中" : `■ 停止 ${formatDuration(recordDuration)}`}</button>
+                <button
+                    class="floating-pause"
+                    on:click={togglePauseRecord}
+                    disabled={isRecordingStopping}
+                    >{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button
+                >
+                <button
+                    class="floating-stop"
+                    on:click={stopRecord}
+                    disabled={isRecordingStopping}
+                    >{isRecordingStopping
+                        ? "… 停止中"
+                        : `■ 停止 ${formatDuration(recordDuration)}`}</button
+                >
             {/if}
         </div>
 
+        {#if recordCountdownLeft > 0}
+            <div class="countdown-overlay">
+                <span class="countdown-number" key={recordCountdownLeft}
+                    >{recordCountdownLeft}</span
+                >
+            </div>
+        {/if}
+
         {#if !useExcalidrawBridge && draftingFrame}
-            <div class="frame-item draft" style={`left:${draftFrameX}px; top:${draftFrameY}px; width:${draftFrameW}px; height:${draftFrameH}px;`}>
+            <div
+                class="frame-item draft"
+                style={`left:${draftFrameX}px; top:${draftFrameY}px; width:${draftFrameW}px; height:${draftFrameH}px;`}
+            >
                 <div class="frame-head"><span>Frame</span></div>
             </div>
         {/if}
 
-        {#if !useExcalidrawBridge}{#each frames.filter(f => !f.hidden) as frame (frame.id)}
-            <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} class:locked={!!frame.locked} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
-                <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
-                    <span>{frame.title}</span>
-                    <div class="frame-actions"><button on:click={() => toggleFrameLock(frame.id)}>{frame.locked ? "🔒" : "🔓"}</button><button on:click={() => updateFrameProps(frame.id, { hidden: !frame.hidden })}>{frame.hidden ? "🙈" : "👁"}</button><button on:click={() => moveFrameLayer(frame.id, -1)}>↓</button><button on:click={() => moveFrameLayer(frame.id, 1)}>↑</button><button on:click={() => removeFrame(frame.id)}>✕</button></div>
+        {#if !useExcalidrawBridge}{#each frames.filter((f) => !f.hidden) as frame (frame.id)}
+                <div
+                    class="frame-item"
+                    class:selected={selectedFrameIds.includes(frame.id)}
+                    class:locked={!!frame.locked}
+                    style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`}
+                    role="button"
+                    aria-label="select frame"
+                    tabindex="-1"
+                    on:pointerdown={(e) =>
+                        toggleFrameSelection(frame.id, e.shiftKey)}
+                >
+                    <div
+                        class="frame-head"
+                        on:pointerdown={(e) => startDragFrame(frame.id, e)}
+                    >
+                        <span>{frame.title}</span>
+                        <div class="frame-actions">
+                            <button on:click={() => toggleFrameLock(frame.id)}
+                                >{frame.locked ? "🔒" : "🔓"}</button
+                            ><button
+                                on:click={() =>
+                                    updateFrameProps(frame.id, {
+                                        hidden: !frame.hidden,
+                                    })}>{frame.hidden ? "🙈" : "👁"}</button
+                            ><button
+                                on:click={() => moveFrameLayer(frame.id, -1)}
+                                >↓</button
+                            ><button
+                                on:click={() => moveFrameLayer(frame.id, 1)}
+                                >↑</button
+                            ><button on:click={() => removeFrame(frame.id)}
+                                >✕</button
+                            >
+                        </div>
+                    </div>
+                    <div
+                        class="frame-resize"
+                        on:pointerdown={(e) => startResizeFrame(frame.id, e)}
+                    ></div>
                 </div>
-                <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
-            </div>
-        {/each}{/if}
+            {/each}{/if}
 
         {#if !useExcalidrawBridge && selectedFrameIds.length + selectedEmbedIds.length > 1}
             <div class="floating-edit-panel group-panel">
-                <div class="edit-title">批量编辑（{selectedFrameIds.length + selectedEmbedIds.length}）</div>
+                <div class="edit-title">
+                    批量编辑（{selectedFrameIds.length +
+                        selectedEmbedIds.length}）
+                </div>
                 <div class="edit-grid">
-                    <button on:click={() => alignSelectedGroup("left")}>左</button>
-                    <button on:click={() => alignSelectedGroup("center")}>中</button>
-                    <button on:click={() => alignSelectedGroup("right")}>右</button>
-                    <button on:click={() => alignSelectedGroup("top")}>上</button>
-                    <button on:click={() => alignSelectedGroup("middle")}>中</button>
-                    <button on:click={() => alignSelectedGroup("bottom")}>下</button>
-                    <button on:click={() => distributeSelected("x")}>横向均分</button>
-                    <button on:click={() => distributeSelected("y")}>纵向均分</button>
+                    <button on:click={() => alignSelectedGroup("left")}
+                        >左</button
+                    >
+                    <button on:click={() => alignSelectedGroup("center")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedGroup("right")}
+                        >右</button
+                    >
+                    <button on:click={() => alignSelectedGroup("top")}
+                        >上</button
+                    >
+                    <button on:click={() => alignSelectedGroup("middle")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedGroup("bottom")}
+                        >下</button
+                    >
+                    <button on:click={() => distributeSelected("x")}
+                        >横向均分</button
+                    >
+                    <button on:click={() => distributeSelected("y")}
+                        >纵向均分</button
+                    >
                 </div>
                 <div class="edit-grid small-grid">
-                    <button on:click={() => moveSelectionLayer("back")}>置底</button>
-                    <button on:click={() => moveSelectionLayer("front")}>置顶</button>
-                    <button on:click={() => moveSelectionLayerStep(-1)}>下移一层</button>
-                    <button on:click={() => moveSelectionLayerStep(1)}>上移一层</button>
+                    <button on:click={() => moveSelectionLayer("back")}
+                        >置底</button
+                    >
+                    <button on:click={() => moveSelectionLayer("front")}
+                        >置顶</button
+                    >
+                    <button on:click={() => moveSelectionLayerStep(-1)}
+                        >下移一层</button
+                    >
+                    <button on:click={() => moveSelectionLayerStep(1)}
+                        >上移一层</button
+                    >
                     <button on:click={copySelection}>复制</button>
                     <button on:click={() => resizeSelectedBy(0.9)}>缩小</button>
                     <button on:click={() => resizeSelectedBy(1.1)}>放大</button>
                     <button on:click={normalizeSelectedSize}>同尺寸</button>
                     <button on:click={() => setSelectedLock(true)}>锁定</button>
-                    <button on:click={() => setSelectedLock(false)}>解锁</button>
-                    <button on:click={() => setSelectedVisibility(true)}>隐藏</button>
-                    <button on:click={() => setSelectedVisibility(false)}>显示</button>
+                    <button on:click={() => setSelectedLock(false)}>解锁</button
+                    >
+                    <button on:click={() => setSelectedVisibility(true)}
+                        >隐藏</button
+                    >
+                    <button on:click={() => setSelectedVisibility(false)}
+                        >显示</button
+                    >
                     <button on:click={() => flipSelected("x")}>水平翻转</button>
                     <button on:click={() => flipSelected("y")}>垂直翻转</button>
                     <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
@@ -2853,12 +3486,24 @@
             <div class="floating-edit-panel">
                 <div class="edit-title">Frame 编辑</div>
                 <div class="edit-grid">
-                    <button on:click={() => alignSelectedFrame("left")}>左</button>
-                    <button on:click={() => alignSelectedFrame("center")}>中</button>
-                    <button on:click={() => alignSelectedFrame("right")}>右</button>
-                    <button on:click={() => alignSelectedFrame("top")}>上</button>
-                    <button on:click={() => alignSelectedFrame("middle")}>中</button>
-                    <button on:click={() => alignSelectedFrame("bottom")}>下</button>
+                    <button on:click={() => alignSelectedFrame("left")}
+                        >左</button
+                    >
+                    <button on:click={() => alignSelectedFrame("center")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedFrame("right")}
+                        >右</button
+                    >
+                    <button on:click={() => alignSelectedFrame("top")}
+                        >上</button
+                    >
+                    <button on:click={() => alignSelectedFrame("middle")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedFrame("bottom")}
+                        >下</button
+                    >
                 </div>
             </div>
         {/if}
@@ -2867,70 +3512,271 @@
             <div class="floating-edit-panel embed-panel">
                 <div class="edit-title">Embed 编辑</div>
                 <div class="edit-grid">
-                    <button on:click={() => alignSelectedEmbed("left")}>左</button>
-                    <button on:click={() => alignSelectedEmbed("center")}>中</button>
-                    <button on:click={() => alignSelectedEmbed("right")}>右</button>
-                    <button on:click={() => alignSelectedEmbed("top")}>上</button>
-                    <button on:click={() => alignSelectedEmbed("middle")}>中</button>
-                    <button on:click={() => alignSelectedEmbed("bottom")}>下</button>
+                    <button on:click={() => alignSelectedEmbed("left")}
+                        >左</button
+                    >
+                    <button on:click={() => alignSelectedEmbed("center")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedEmbed("right")}
+                        >右</button
+                    >
+                    <button on:click={() => alignSelectedEmbed("top")}
+                        >上</button
+                    >
+                    <button on:click={() => alignSelectedEmbed("middle")}
+                        >中</button
+                    >
+                    <button on:click={() => alignSelectedEmbed("bottom")}
+                        >下</button
+                    >
                 </div>
                 <div class="edit-grid small-grid">
-                    <button on:click={() => resizeSelectedEmbedPreset("small")}>S</button>
-                    <button on:click={() => resizeSelectedEmbedPreset("medium")}>M</button>
-                    <button on:click={() => resizeSelectedEmbedPreset("large")}>L</button>
+                    <button on:click={() => resizeSelectedEmbedPreset("small")}
+                        >S</button
+                    >
+                    <button on:click={() => resizeSelectedEmbedPreset("medium")}
+                        >M</button
+                    >
+                    <button on:click={() => resizeSelectedEmbedPreset("large")}
+                        >L</button
+                    >
                 </div>
             </div>
         {/if}
 
         {#if !useExcalidrawBridge && selectedFrameId && selectedFrameIds.length <= 1}
-            {#each frames.filter(f => f.id === selectedFrameId) as f}
+            {#each frames.filter((f) => f.id === selectedFrameId) as f}
                 <div class="floating-edit-panel props-panel frame-props">
                     <div class="edit-title">Frame 属性</div>
                     <div class="prop-grid">
-                        <label>X<input type="number" value={Math.round(f.x)} on:change={(e) => updateFrameProps(f.id, { x: inputNumber(e, 0) })} /></label>
-                        <label>Y<input type="number" value={Math.round(f.y)} on:change={(e) => updateFrameProps(f.id, { y: inputNumber(e, 0) })} /></label>
-                        <label>W<input type="number" value={Math.round(f.w)} on:change={(e) => updateFrameProps(f.id, { w: Math.max(120, inputNumber(e, 120)) })} /></label>
-                        <label>H<input type="number" value={Math.round(f.h)} on:change={(e) => updateFrameProps(f.id, { h: Math.max(80, inputNumber(e, 80)) })} /></label>
+                        <label
+                            >X<input
+                                type="number"
+                                value={Math.round(f.x)}
+                                on:change={(e) =>
+                                    updateFrameProps(f.id, {
+                                        x: inputNumber(e, 0),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >Y<input
+                                type="number"
+                                value={Math.round(f.y)}
+                                on:change={(e) =>
+                                    updateFrameProps(f.id, {
+                                        y: inputNumber(e, 0),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >W<input
+                                type="number"
+                                value={Math.round(f.w)}
+                                on:change={(e) =>
+                                    updateFrameProps(f.id, {
+                                        w: Math.max(120, inputNumber(e, 120)),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >H<input
+                                type="number"
+                                value={Math.round(f.h)}
+                                on:change={(e) =>
+                                    updateFrameProps(f.id, {
+                                        h: Math.max(80, inputNumber(e, 80)),
+                                    })}
+                            /></label
+                        >
                     </div>
-                    <label class="prop-full">标题<input type="text" value={f.title} on:change={(e) => updateFrameProps(f.id, { title: inputValue(e) || f.title })} /></label>
-                    <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={f.opacity ?? 1} on:input={(e) => updateFrameProps(f.id, { opacity: inputNumber(e, 1) })} /></label>
+                    <label class="prop-full"
+                        >标题<input
+                            type="text"
+                            value={f.title}
+                            on:change={(e) =>
+                                updateFrameProps(f.id, {
+                                    title: inputValue(e) || f.title,
+                                })}
+                        /></label
+                    >
+                    <label class="prop-full"
+                        >透明度<input
+                            type="range"
+                            min="0.05"
+                            max="1"
+                            step="0.05"
+                            value={f.opacity ?? 1}
+                            on:input={(e) =>
+                                updateFrameProps(f.id, {
+                                    opacity: inputNumber(e, 1),
+                                })}
+                        /></label
+                    >
                     <div class="edit-grid small-grid">
-                        <button on:click={() => updateFrameProps(f.id, { flipX: !(f.flipX ?? false) })}>水平翻转</button>
-                        <button on:click={() => updateFrameProps(f.id, { flipY: !(f.flipY ?? false) })}>垂直翻转</button>
+                        <button
+                            on:click={() =>
+                                updateFrameProps(f.id, {
+                                    flipX: !(f.flipX ?? false),
+                                })}>水平翻转</button
+                        >
+                        <button
+                            on:click={() =>
+                                updateFrameProps(f.id, {
+                                    flipY: !(f.flipY ?? false),
+                                })}>垂直翻转</button
+                        >
                     </div>
                 </div>
             {/each}
         {/if}
 
         {#if !useExcalidrawBridge && selectedEmbedId && selectedEmbedIds.length <= 1}
-            {#each webEmbeds.filter(e => e.id === selectedEmbedId) as em}
+            {#each webEmbeds.filter((e) => e.id === selectedEmbedId) as em}
                 <div class="floating-edit-panel props-panel embed-props">
                     <div class="edit-title">Embed 属性</div>
                     <div class="prop-grid">
-                        <label>X<input type="number" value={Math.round(em.x)} on:change={(e) => updateEmbedProps(em.id, { x: inputNumber(e, 0) })} /></label>
-                        <label>Y<input type="number" value={Math.round(em.y)} on:change={(e) => updateEmbedProps(em.id, { y: inputNumber(e, 0) })} /></label>
-                        <label>W<input type="number" value={Math.round(em.w)} on:change={(e) => updateEmbedProps(em.id, { w: Math.max(220, inputNumber(e, 220)) })} /></label>
-                        <label>H<input type="number" value={Math.round(em.h)} on:change={(e) => updateEmbedProps(em.id, { h: Math.max(140, inputNumber(e, 140)) })} /></label>
+                        <label
+                            >X<input
+                                type="number"
+                                value={Math.round(em.x)}
+                                on:change={(e) =>
+                                    updateEmbedProps(em.id, {
+                                        x: inputNumber(e, 0),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >Y<input
+                                type="number"
+                                value={Math.round(em.y)}
+                                on:change={(e) =>
+                                    updateEmbedProps(em.id, {
+                                        y: inputNumber(e, 0),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >W<input
+                                type="number"
+                                value={Math.round(em.w)}
+                                on:change={(e) =>
+                                    updateEmbedProps(em.id, {
+                                        w: Math.max(220, inputNumber(e, 220)),
+                                    })}
+                            /></label
+                        >
+                        <label
+                            >H<input
+                                type="number"
+                                value={Math.round(em.h)}
+                                on:change={(e) =>
+                                    updateEmbedProps(em.id, {
+                                        h: Math.max(140, inputNumber(e, 140)),
+                                    })}
+                            /></label
+                        >
                     </div>
-                    <label class="prop-full">URL<input type="text" value={em.url} on:change={(e) => updateEmbedProps(em.id, { url: inputValue(e) || em.url })} /></label>
-                    <label class="prop-full">透明度<input type="range" min="0.05" max="1" step="0.05" value={em.opacity ?? 1} on:input={(e) => updateEmbedProps(em.id, { opacity: inputNumber(e, 1) })} /></label>
+                    <label class="prop-full"
+                        >URL<input
+                            type="text"
+                            value={em.url}
+                            on:change={(e) =>
+                                updateEmbedProps(em.id, {
+                                    url: inputValue(e) || em.url,
+                                })}
+                        /></label
+                    >
+                    <label class="prop-full"
+                        >透明度<input
+                            type="range"
+                            min="0.05"
+                            max="1"
+                            step="0.05"
+                            value={em.opacity ?? 1}
+                            on:input={(e) =>
+                                updateEmbedProps(em.id, {
+                                    opacity: inputNumber(e, 1),
+                                })}
+                        /></label
+                    >
                     <div class="edit-grid small-grid">
-                        <button on:click={() => updateEmbedProps(em.id, { flipX: !(em.flipX ?? false) })}>水平翻转</button>
-                        <button on:click={() => updateEmbedProps(em.id, { flipY: !(em.flipY ?? false) })}>垂直翻转</button>
+                        <button
+                            on:click={() =>
+                                updateEmbedProps(em.id, {
+                                    flipX: !(em.flipX ?? false),
+                                })}>水平翻转</button
+                        >
+                        <button
+                            on:click={() =>
+                                updateEmbedProps(em.id, {
+                                    flipY: !(em.flipY ?? false),
+                                })}>垂直翻转</button
+                        >
                     </div>
                 </div>
             {/each}
         {/if}
 
         {#if !useExcalidrawBridge}
-            {#each webEmbeds.filter(e => !e.hidden) as embed (embed.id)}
-                <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} class:locked={!!embed.locked} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
-                    <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
+            {#each webEmbeds.filter((e) => !e.hidden) as embed (embed.id)}
+                <div
+                    class="web-embed"
+                    class:selected={selectedEmbedIds.includes(embed.id)}
+                    class:locked={!!embed.locked}
+                    style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}
+                    role="button"
+                    aria-label="select embed"
+                    tabindex="-1"
+                    on:pointerdown={(e) =>
+                        toggleEmbedSelection(embed.id, e.shiftKey)}
+                >
+                    <div
+                        class="web-embed-head"
+                        on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}
+                    >
                         <span>🌐 Web</span>
-                        <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => updateEmbedProps(embed.id, { hidden: !embed.hidden })}>{embed.hidden ? "🙈" : "👁"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+                        <div class="web-embed-actions">
+                            <button
+                                class="web-embed-mini"
+                                on:click={() => toggleEmbedLock(embed.id)}
+                                >{embed.locked ? "🔒" : "🔓"}</button
+                            ><button
+                                class="web-embed-mini"
+                                on:click={() =>
+                                    updateEmbedProps(embed.id, {
+                                        hidden: !embed.hidden,
+                                    })}>{embed.hidden ? "🙈" : "👁"}</button
+                            ><button
+                                class="web-embed-mini"
+                                on:click={() => moveWebEmbedLayer(embed.id, -1)}
+                                >↓</button
+                            ><button
+                                class="web-embed-mini"
+                                on:click={() => moveWebEmbedLayer(embed.id, 1)}
+                                >↑</button
+                            ><button
+                                class="web-embed-mini"
+                                on:click={() => editWebEmbedUrl(embed.id)}
+                                >✎</button
+                            ><button
+                                class="web-embed-close"
+                                on:click={() => removeWebEmbed(embed.id)}
+                                >✕</button
+                            >
+                        </div>
                     </div>
-                    <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
-                    <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
+                    <iframe
+                        src={embed.url}
+                        title={embed.url}
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                    ></iframe>
+                    <div
+                        class="web-embed-resize"
+                        on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}
+                    ></div>
                 </div>
             {/each}
         {/if}
@@ -2939,10 +3785,24 @@
             <div class="slides-title">📋 幻灯片</div>
 
             <div class="slides-actions">
-                <button class="slide-icon" title="上移" on:click={() => moveSlide(-1)}>↑</button>
-                <button class="slide-icon" title="下移" on:click={() => moveSlide(1)}>↓</button>
-                <button class="slide-icon" title="复制" on:click={duplicateSlide}>⎘</button>
-                <button class="slide-icon" title="删除" on:click={deleteSlide}>✕</button>
+                <button
+                    class="slide-icon"
+                    title="上移"
+                    on:click={() => moveSlide(-1)}>↑</button
+                >
+                <button
+                    class="slide-icon"
+                    title="下移"
+                    on:click={() => moveSlide(1)}>↓</button
+                >
+                <button
+                    class="slide-icon"
+                    title="复制"
+                    on:click={duplicateSlide}>⎘</button
+                >
+                <button class="slide-icon" title="删除" on:click={deleteSlide}
+                    >✕</button
+                >
             </div>
 
             <div class="slides-list">
@@ -2968,10 +3828,18 @@
                             <span class="slide-empty">空</span>
                         {/if}
                     </button>
+                    <span class="slide-label" class:active={i === activeSlide}
+                        >Slide {i + 1}</span
+                    >
                 {/each}
             </div>
 
-            <button class="slide-add" on:click={addSlide} on:dragover|preventDefault on:drop={() => onSlideDrop(slides.length - 1)}>＋</button>
+            <button
+                class="slide-add"
+                on:click={addSlide}
+                on:dragover|preventDefault
+                on:drop={() => onSlideDrop(slides.length - 1)}>＋</button
+            >
         </div>
 
         {#if showTeleprompter}
@@ -2980,24 +3848,59 @@
                 class="teleprompter-panel"
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >
-                <div class="teleprompter-controls compact teleprompter-dragbar" on:pointerdown={startDragTeleprompter}>
-                    <button class="icon-btn" on:click={startTeleprompter} disabled={isTeleprompterRunning} title="播放">▶</button>
-                    <button class="icon-btn" on:click={stopTeleprompter} disabled={!isTeleprompterRunning} title="暂停">⏸</button>
-                    <button class="icon-btn" on:click={resetTeleprompterPosition} title="重置">↺</button>
+                <div
+                    class="teleprompter-controls compact teleprompter-dragbar"
+                    on:pointerdown={startDragTeleprompter}
+                >
+                    <button
+                        class="icon-btn"
+                        on:click={startTeleprompter}
+                        disabled={isTeleprompterRunning}
+                        title="播放">▶</button
+                    >
+                    <button
+                        class="icon-btn"
+                        on:click={stopTeleprompter}
+                        disabled={!isTeleprompterRunning}
+                        title="暂停">⏸</button
+                    >
+                    <button
+                        class="icon-btn"
+                        on:click={resetTeleprompterPosition}
+                        title="重置">↺</button
+                    >
 
                     <div class="mini slider-inline">
                         <span>速度</span>
-                        <input type="range" min="10" max="180" step="5" bind:value={teleprompterSpeed} />
+                        <input
+                            type="range"
+                            min="10"
+                            max="180"
+                            step="5"
+                            bind:value={teleprompterSpeed}
+                        />
                     </div>
 
                     <div class="mini slider-inline">
                         <span>透明</span>
-                        <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
+                        <input
+                            type="range"
+                            min="20"
+                            max="100"
+                            step="2"
+                            bind:value={teleprompterOpacity}
+                        />
                     </div>
 
                     <div class="mini slider-inline">
                         <span>字号</span>
-                        <input type="range" min="14" max="52" step="1" bind:value={teleprompterFontSize} />
+                        <input
+                            type="range"
+                            min="14"
+                            max="52"
+                            step="1"
+                            bind:value={teleprompterFontSize}
+                        />
                     </div>
                 </div>
 
@@ -3013,7 +3916,9 @@
                     }}
                 />
 
-                <div class="teleprompter-note">仅你可见，不会出现在录制内容中。</div>
+                <div class="teleprompter-note">
+                    仅你可见，不会出现在录制内容中。
+                </div>
             </div>
         {/if}
     </div>
@@ -3025,22 +3930,46 @@
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
             {#if useExcalidrawBridge}
-                <div><strong>白板:</strong> 使用顶部工具栏进行选择/图形/文字/缩放/平移。</div>
-                <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时） · K 暂停/继续</div>
+                <div>
+                    <strong>白板:</strong> 使用顶部工具栏进行选择/图形/文字/缩放/平移。
+                </div>
+                <div>
+                    <strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）
+                    · K 暂停/继续
+                </div>
             {:else}
-                <div><strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形 · C 圆 · F 框架</div>
-                <div><strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y 重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D 快速复制</div>
-                <div><strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级 · Delete 删除 · Esc 取消选中</div>
-                <div><strong>幻灯片:</strong> Ctrl/Cmd+Shift+D 复制当前页 · Alt+←/→ 调整当前页顺序</div>
-                <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时） · K 暂停/继续</div>
+                <div>
+                    <strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形
+                    · C 圆 · F 框架
+                </div>
+                <div>
+                    <strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y
+                    重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D
+                    快速复制
+                </div>
+                <div>
+                    <strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级
+                    · Delete 删除 · Esc 取消选中
+                </div>
+                <div>
+                    <strong>幻灯片:</strong> Ctrl/Cmd+Shift+D 复制当前页 · Alt+←/→
+                    调整当前页顺序
+                </div>
+                <div>
+                    <strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）
+                    · K 暂停/继续
+                </div>
             {/if}
         </div>
     {/if}
-
 </div>
 
 {#if showSettings}
-    <button class="modal-backdrop" aria-label="关闭录制设置" on:click={() => (showSettings = false)}></button>
+    <button
+        class="modal-backdrop"
+        aria-label="关闭录制设置"
+        on:click={() => (showSettings = false)}
+    ></button>
 
     <div class="settings-modal" role="dialog" aria-label="录制设置">
         <div class="settings-header">
@@ -3092,12 +4021,24 @@
             <div class="section-title">画布样式</div>
             <label class="slider-row">
                 <span>圆角</span>
-                <input type="range" min="0" max="64" step="2" bind:value={canvasCornerRadius} />
+                <input
+                    type="range"
+                    min="0"
+                    max="64"
+                    step="2"
+                    bind:value={canvasCornerRadius}
+                />
                 <span>{canvasCornerRadius}px</span>
             </label>
             <label class="slider-row">
                 <span>画布边距</span>
-                <input type="range" min="0" max="120" step="2" bind:value={canvasInnerPadding} />
+                <input
+                    type="range"
+                    min="0"
+                    max="120"
+                    step="2"
+                    bind:value={canvasInnerPadding}
+                />
                 <span>{canvasInnerPadding}px</span>
             </label>
         </section>
@@ -3107,7 +4048,7 @@
             <div class="settings-preview-wrap">
                 <div
                     class="settings-preview"
-                    style={`aspect-ratio:${boardAspectRatio}; border-radius:${canvasCornerRadius}px; padding:${Math.max(2, Math.floor(canvasInnerPadding/3))}px; background:${backgroundColor};`}
+                    style={`aspect-ratio:${boardAspectRatio}; border-radius:${canvasCornerRadius}px; padding:${Math.max(2, Math.floor(canvasInnerPadding / 3))}px; background:${backgroundColor};`}
                 >
                     <div class="settings-preview-inner"></div>
                     <div class="settings-preview-dot"></div>
@@ -3118,7 +4059,13 @@
         <section>
             <div class="section-title">提词器透明度</div>
             <label class="slider-row">
-                <input type="range" min="20" max="100" step="2" bind:value={teleprompterOpacity} />
+                <input
+                    type="range"
+                    min="20"
+                    max="100"
+                    step="2"
+                    bind:value={teleprompterOpacity}
+                />
                 <span>{teleprompterOpacity}%</span>
             </label>
         </section>
@@ -3126,10 +4073,19 @@
         <section>
             <div class="section-title">导出格式</div>
             <div class="export-format-row">
-                <button class:active={exportFormat === "webm"} on:click={() => (exportFormat = "webm")}>WebM（兼容好）</button>
-                <button class:active={exportFormat === "mp4"} on:click={() => (exportFormat = "mp4")}>MP4（默认）</button>
+                <button
+                    class:active={exportFormat === "webm"}
+                    on:click={() => (exportFormat = "webm")}
+                    >WebM（兼容好）</button
+                >
+                <button
+                    class:active={exportFormat === "mp4"}
+                    on:click={() => (exportFormat = "mp4")}>MP4（默认）</button
+                >
             </div>
-            <div class="subnote">说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退到 WebM。</div>
+            <div class="subnote">
+                说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退到 WebM。
+            </div>
         </section>
 
         <section>
@@ -3140,7 +4096,14 @@
             </label>
             <label class="slider-row">
                 <span>秒数</span>
-                <input type="range" min="1" max="8" step="1" bind:value={recordCountdownSeconds} disabled={!enableRecordCountdown} />
+                <input
+                    type="range"
+                    min="1"
+                    max="8"
+                    step="1"
+                    bind:value={recordCountdownSeconds}
+                    disabled={!enableRecordCountdown}
+                />
                 <span>{recordCountdownSeconds}s</span>
             </label>
         </section>
@@ -3154,44 +4117,105 @@
             <div class="camera-settings">
                 <label class="slider-row">
                     <span>大小</span>
-                    <input type="range" min="100" max="320" step="4" bind:value={cameraSize} disabled={!showCameraInRecord} />
+                    <input
+                        type="range"
+                        min="100"
+                        max="320"
+                        step="4"
+                        bind:value={cameraSize}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>{cameraSize}px</span>
                 </label>
                 <label class="slider-row">
                     <span>圆角</span>
-                    <input type="range" min="0" max="80" step="2" bind:value={cameraRadius} disabled={!showCameraInRecord} />
+                    <input
+                        type="range"
+                        min="0"
+                        max="80"
+                        step="2"
+                        bind:value={cameraRadius}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>{cameraRadius}px</span>
                 </label>
                 <label class="slider-row">
                     <span>边距</span>
-                    <input type="range" min="0" max="120" step="2" bind:value={cameraMargin} disabled={!showCameraInRecord} />
+                    <input
+                        type="range"
+                        min="0"
+                        max="120"
+                        step="2"
+                        bind:value={cameraMargin}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>{cameraMargin}px</span>
                 </label>
 
                 <label class="switch-row">
-                    <input type="checkbox" bind:checked={cameraMirror} disabled={!showCameraInRecord} />
+                    <input
+                        type="checkbox"
+                        bind:checked={cameraMirror}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>镜像摄像头</span>
                 </label>
 
                 <div class="camera-corner-grid">
-                    <button class:active={cameraCorner === "tl"} on:click={() => (cameraCorner = "tl")} disabled={!showCameraInRecord}>左上</button>
-                    <button class:active={cameraCorner === "tr"} on:click={() => (cameraCorner = "tr")} disabled={!showCameraInRecord}>右上</button>
-                    <button class:active={cameraCorner === "bl"} on:click={() => (cameraCorner = "bl")} disabled={!showCameraInRecord}>左下</button>
-                    <button class:active={cameraCorner === "br"} on:click={() => (cameraCorner = "br")} disabled={!showCameraInRecord}>右下</button>
+                    <button
+                        class:active={cameraCorner === "tl"}
+                        on:click={() => (cameraCorner = "tl")}
+                        disabled={!showCameraInRecord}>左上</button
+                    >
+                    <button
+                        class:active={cameraCorner === "tr"}
+                        on:click={() => (cameraCorner = "tr")}
+                        disabled={!showCameraInRecord}>右上</button
+                    >
+                    <button
+                        class:active={cameraCorner === "bl"}
+                        on:click={() => (cameraCorner = "bl")}
+                        disabled={!showCameraInRecord}>左下</button
+                    >
+                    <button
+                        class:active={cameraCorner === "br"}
+                        on:click={() => (cameraCorner = "br")}
+                        disabled={!showCameraInRecord}>右下</button
+                    >
                 </div>
 
                 <label class="slider-row">
                     <span>X偏移</span>
-                    <input type="range" min="-320" max="320" step="2" bind:value={cameraOffsetX} disabled={!showCameraInRecord} />
+                    <input
+                        type="range"
+                        min="-320"
+                        max="320"
+                        step="2"
+                        bind:value={cameraOffsetX}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>{cameraOffsetX}px</span>
                 </label>
                 <label class="slider-row">
                     <span>Y偏移</span>
-                    <input type="range" min="-320" max="320" step="2" bind:value={cameraOffsetY} disabled={!showCameraInRecord} />
+                    <input
+                        type="range"
+                        min="-320"
+                        max="320"
+                        step="2"
+                        bind:value={cameraOffsetY}
+                        disabled={!showCameraInRecord}
+                    />
                     <span>{cameraOffsetY}px</span>
                 </label>
                 <div class="camera-reset-row">
-                    <button on:click={() => { cameraOffsetX = 0; cameraOffsetY = 0; }} disabled={!showCameraInRecord}>重置摄像头偏移</button>
+                    <button
+                        on:click={() => {
+                            cameraOffsetX = 0;
+                            cameraOffsetY = 0;
+                        }}
+                        disabled={!showCameraInRecord}>重置摄像头偏移</button
+                    >
                 </div>
             </div>
         </section>
@@ -3200,7 +4224,11 @@
             <div class="section-title">录制链路预检</div>
             <div class="mic-row">
                 <button on:click={runRecordPreflight}>运行预检</button>
-                <span class="subnote">最近预检：{lastPreflightAt ? new Date(lastPreflightAt).toLocaleTimeString() : "未运行"}</span>
+                <span class="subnote"
+                    >最近预检：{lastPreflightAt
+                        ? new Date(lastPreflightAt).toLocaleTimeString()
+                        : "未运行"}</span
+                >
             </div>
         </section>
 
@@ -3211,20 +4239,33 @@
                 <span>录制时包含麦克风声音</span>
             </label>
             <div class="mic-row">
-                <select bind:value={selectedMicDeviceId} disabled={!includeMicAudio}>
+                <select
+                    bind:value={selectedMicDeviceId}
+                    disabled={!includeMicAudio}
+                >
                     {#if micDevices.length === 0}
                         <option value="">未检测到麦克风</option>
                     {/if}
                     {#each micDevices as dev}
-                        <option value={dev.deviceId}>{dev.label || `麦克风 ${dev.deviceId.slice(0, 6)}`}</option>
+                        <option value={dev.deviceId}
+                            >{dev.label ||
+                                `麦克风 ${dev.deviceId.slice(0, 6)}`}</option
+                        >
                     {/each}
                 </select>
-                <button on:click={() => void refreshMicDevices()}>刷新设备</button>
-                <button on:click={runMicLevelTest}>{micTestRunning ? "检测中..." : "测试麦克风"}</button>
+                <button on:click={() => void refreshMicDevices()}
+                    >刷新设备</button
+                >
+                <button on:click={runMicLevelTest}
+                    >{micTestRunning ? "检测中..." : "测试麦克风"}</button
+                >
             </div>
             <div class="mic-level-wrap">
                 <div class="mic-level-bar">
-                    <div class="mic-level-fill" style={`width:${Math.round(micLevel * 100)}%`}></div>
+                    <div
+                        class="mic-level-fill"
+                        style={`width:${Math.round(micLevel * 100)}%`}
+                    ></div>
                 </div>
                 <span>{Math.round(micLevel * 100)}%</span>
             </div>
@@ -3237,9 +4278,20 @@
                 <span>录制时显示光标高亮</span>
             </label>
             <div class="cursor-settings">
-                <input type="color" bind:value={cursorHighlightColor} disabled={!showCursorHighlight} />
+                <input
+                    type="color"
+                    bind:value={cursorHighlightColor}
+                    disabled={!showCursorHighlight}
+                />
                 <label class="slider-row">
-                    <input type="range" min="8" max="60" step="2" bind:value={cursorHighlightSize} disabled={!showCursorHighlight} />
+                    <input
+                        type="range"
+                        min="8"
+                        max="60"
+                        step="2"
+                        bind:value={cursorHighlightSize}
+                        disabled={!showCursorHighlight}
+                    />
                     <span>{cursorHighlightSize}px</span>
                 </label>
             </div>
@@ -3286,7 +4338,6 @@
         gap: 8px;
         flex-wrap: wrap;
     }
-
 
     .tool-btn {
         min-width: 36px;
@@ -3383,7 +4434,7 @@
         top: 0;
         width: 1px;
         height: 100vh;
-        background: rgba(110,168,255,0.85);
+        background: rgba(110, 168, 255, 0.85);
         z-index: 7;
         pointer-events: none;
     }
@@ -3393,15 +4444,15 @@
         left: 0;
         width: 100vw;
         height: 1px;
-        background: rgba(110,168,255,0.85);
+        background: rgba(110, 168, 255, 0.85);
         z-index: 7;
         pointer-events: none;
     }
 
     .marquee-box {
         position: fixed;
-        border: 1px dashed rgba(110,168,255,0.95);
-        background: rgba(110,168,255,0.18);
+        border: 1px dashed rgba(110, 168, 255, 0.95);
+        background: rgba(110, 168, 255, 0.18);
         z-index: 8;
         pointer-events: none;
     }
@@ -3521,10 +4572,9 @@
         color: #4b5563;
     }
 
-     .hidden-file-input {
+    .hidden-file-input {
         display: none;
     }
-
 
     .more-tools-wrap {
         position: relative;
@@ -3540,7 +4590,7 @@
         border-radius: 10px;
         padding: 8px;
         min-width: 170px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -3548,7 +4598,7 @@
 
     .more-tools-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0,1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
     }
 
@@ -3569,12 +4619,11 @@
         z-index: 6;
     }
 
-
     .frame-item {
         position: fixed;
-        border: 2px dashed rgba(17,17,17,0.45);
+        border: 2px dashed rgba(17, 17, 17, 0.45);
         border-radius: 10px;
-        background: rgba(255,255,255,0.88);
+        background: rgba(255, 255, 255, 0.88);
         z-index: 5;
         min-width: 40px;
         min-height: 30px;
@@ -3582,22 +4631,22 @@
 
     .frame-item.draft {
         pointer-events: none;
-        border-color: rgba(17,17,17,0.28);
+        border-color: rgba(17, 17, 17, 0.28);
     }
 
     .frame-item.selected {
         border-color: #6ea8ff;
-        box-shadow: 0 0 0 2px rgba(110,168,255,0.35);
+        box-shadow: 0 0 0 2px rgba(110, 168, 255, 0.35);
     }
 
     .frame-item.locked {
         border-style: solid;
-        border-color: rgba(255,200,100,0.9);
+        border-color: rgba(255, 200, 100, 0.9);
     }
 
     .frame-head {
         height: 24px;
-        background: rgba(243,244,246,0.96);
+        background: rgba(243, 244, 246, 0.96);
         color: #111111;
         display: flex;
         align-items: center;
@@ -3629,18 +4678,18 @@
         width: 12px;
         height: 12px;
         border-radius: 3px;
-        background: rgba(17,17,17,0.22);
+        background: rgba(17, 17, 17, 0.22);
         cursor: nwse-resize;
     }
 
     .web-embed {
         position: fixed;
         background: #fff;
-        border: 1px solid rgba(17,17,17,0.16);
+        border: 1px solid rgba(17, 17, 17, 0.16);
         border-radius: 10px;
         overflow: hidden;
         z-index: 5;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     }
 
     .web-embed-head {
@@ -3679,16 +4728,18 @@
         width: 14px;
         height: 14px;
         border-radius: 3px;
-        background: rgba(17,17,17,0.2);
+        background: rgba(17, 17, 17, 0.2);
         cursor: nwse-resize;
     }
 
     .web-embed.selected {
-        box-shadow: 0 0 0 2px rgba(110,168,255,0.45), 0 8px 28px rgba(0,0,0,0.2);
+        box-shadow:
+            0 0 0 2px rgba(110, 168, 255, 0.45),
+            0 8px 28px rgba(0, 0, 0, 0.2);
     }
 
     .web-embed.locked {
-        outline: 2px solid rgba(255,200,100,0.85);
+        outline: 2px solid rgba(255, 200, 100, 0.85);
         outline-offset: 0;
     }
 
@@ -3897,7 +4948,7 @@
     .settings-preview {
         position: relative;
         width: min(360px, 100%);
-        border: 1px solid rgba(17,17,17,0.16);
+        border: 1px solid rgba(17, 17, 17, 0.16);
         box-sizing: border-box;
     }
 
@@ -3905,7 +4956,7 @@
         width: 100%;
         height: 100%;
         border-radius: inherit;
-        background: rgba(255,255,255,0.85);
+        background: rgba(255, 255, 255, 0.85);
     }
 
     .settings-preview-dot {
@@ -3915,7 +4966,7 @@
         width: 16px;
         height: 16px;
         border-radius: 999px;
-        background: rgba(17,17,17,0.2);
+        background: rgba(17, 17, 17, 0.2);
     }
 
     .cursor-highlight {
@@ -3933,8 +4984,87 @@
         top: 14px;
         right: 12px;
         display: flex;
-        gap: 8px;
-        z-index: 7;
+        align-items: center;
+        gap: 6px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(17, 17, 17, 0.12);
+        border-radius: 12px;
+        padding: 6px 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        user-select: none;
+    }
+
+    .fc-drag-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 32px;
+        cursor: grab;
+        color: #999;
+        font-size: 16px;
+        letter-spacing: 2px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        transition: background 0.15s;
+    }
+    .fc-drag-handle:hover {
+        background: rgba(17, 17, 17, 0.06);
+        color: #555;
+    }
+    .fc-drag-handle:active {
+        cursor: grabbing;
+        background: rgba(17, 17, 17, 0.1);
+    }
+
+    .slide-title-overlay {
+        position: absolute;
+        top: 10px;
+        left: 14px;
+        z-index: 3;
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(17, 17, 17, 0.5);
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: 0.3px;
+    }
+
+    .countdown-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(17, 24, 39, 0.55);
+        backdrop-filter: blur(4px);
+        pointer-events: none;
+    }
+
+    .countdown-number {
+        font-size: 140px;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 6px 36px rgba(0, 0, 0, 0.35);
+        animation: countdown-pulse 0.9s ease-out;
+    }
+
+    @keyframes countdown-pulse {
+        0% {
+            transform: scale(1.6);
+            opacity: 0.3;
+        }
+        50% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.92);
+            opacity: 0.85;
+        }
     }
 
     .floating-edit-panel {
@@ -3943,11 +5073,11 @@
         top: 12px;
         z-index: 7;
         background: #ffffff;
-        border: 1px solid rgba(17,17,17,0.12);
+        border: 1px solid rgba(17, 17, 17, 0.12);
         border-radius: 12px;
         padding: 8px;
         width: 180px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     }
 
     .edit-title {
@@ -4064,7 +5194,7 @@
         z-index: 6;
         width: 74px;
         background: #ffffff;
-        border: 1px solid rgba(17,17,17,0.12);
+        border: 1px solid rgba(17, 17, 17, 0.12);
         border-radius: 14px;
         padding: 8px;
         display: flex;
@@ -4185,6 +5315,27 @@
         font-weight: 700;
     }
 
+    .floating-pause {
+        background: #f59e0b;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .slide-label {
+        display: block;
+        font-size: 10px;
+        color: #888;
+        text-align: center;
+        margin-top: 2px;
+        line-height: 1.2;
+        user-select: none;
+    }
+
+    .slide-label.active {
+        color: #111;
+        font-weight: 600;
+    }
+
     .switch-row {
         display: flex;
         align-items: center;
@@ -4265,7 +5416,7 @@
         height: 100%;
         background: linear-gradient(90deg, #2d9d67, #8bc34a);
         width: 0%;
-        transition: width .08s linear;
+        transition: width 0.08s linear;
     }
 
     .camera-corner-grid {
@@ -4338,7 +5489,6 @@
             width: calc(100% - 24px);
             min-width: 0;
         }
-
 
         .ratio-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));

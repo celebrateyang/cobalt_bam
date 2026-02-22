@@ -642,6 +642,8 @@
             ...scene.appState,
             viewBackgroundColor: backgroundColor,
             theme: "light",
+            zenModeEnabled: false,
+            viewModeEnabled: false,
         };
         excalidrawApi.updateScene?.({
             elements: scene.elements,
@@ -949,6 +951,9 @@
                     initialData: {
                         appState: {
                             viewBackgroundColor: backgroundColor,
+                            theme: "light",
+                            zenModeEnabled: false,
+                            viewModeEnabled: false,
                         },
                     },
                     excalidrawAPI: (api: any) => {
@@ -2671,14 +2676,6 @@
 </svelte:head>
 
 <div class="page">
-    <div class="toolbar">
-        <div class="left">
-            <span class="bridge-pill">白板模式</span>
-            <span class="subnote">白板工具与快捷键已接管</span>
-        </div>
-
-    </div>
-
     <input bind:this={imageInputEl} type="file" accept="image/*" class="hidden-file-input" on:change={onImageSelected} />
 
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>

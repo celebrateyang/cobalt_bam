@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import "@excalidraw/excalidraw/index.css";
 
     let canvasEl: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null = null;
@@ -9,6 +10,7 @@
     let cleanupExcalidraw: (() => void) | null = null;
     let excalidrawMountToken = 0;
     let excalidrawMounted = false;
+    let excalidrawApi: any = null;
 
     let drawing = false;
     let lastX = 0;
@@ -152,6 +154,7 @@
 
     // slides (basic multi-page)
     let slides: string[] = [""];
+    let bridgeSlides: Array<{ elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }> = [{ elements: [], appState: {}, files: {} }];
     let activeSlide = 0;
     let draggingSlideIndex: number | null = null;
 
@@ -571,16 +574,63 @@
         ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
+    const cloneBridgeScene = (scene: { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }) => {
+        if (typeof structuredClone === "function") return structuredClone(scene);
+        return JSON.parse(JSON.stringify(scene));
+    };
+
+    const captureBridgeScene = () => {
+        if (!excalidrawApi) return { elements: [], appState: {}, files: {} };
+        return {
+            elements: excalidrawApi.getSceneElements?.() ?? [],
+            appState: excalidrawApi.getAppState?.() ?? {},
+            files: excalidrawApi.getFiles?.() ?? {},
+        };
+    };
+
+    const applyBridgeScene = (scene: { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }) => {
+        if (!excalidrawApi) return;
+        const nextAppState = {
+            ...scene.appState,
+            viewBackgroundColor: backgroundColor,
+            theme: "light",
+        };
+        excalidrawApi.updateScene?.({
+            elements: scene.elements,
+            appState: nextAppState,
+            files: scene.files,
+        });
+    };
+
     const saveCurrentSlide = () => {
-        if (!canvasEl || activeSlide < 0 || activeSlide >= slides.length) return;
+        if (activeSlide < 0 || activeSlide >= slides.length) return;
+
         const next = [ ...slides ];
-        next[activeSlide] = canvasEl.toDataURL("image/png");
-        slides = next;
+        const source = getRecordingCanvas() || canvasEl;
+        if (source) {
+            next[activeSlide] = source.toDataURL("image/png");
+            slides = next;
+        }
+
+        if (useExcalidrawBridge) {
+            const bridgeNext = [ ...bridgeSlides ];
+            bridgeNext[activeSlide] = cloneBridgeScene(captureBridgeScene());
+            bridgeSlides = bridgeNext;
+            return;
+        }
     };
 
     const loadSlide = (index: number) => {
-        if (!ctx || !canvasEl || index < 0 || index >= slides.length) return;
+        if (index < 0 || index >= slides.length) return;
         activeSlide = index;
+
+        if (useExcalidrawBridge) {
+            const scene = bridgeSlides[index] ?? { elements: [], appState: {}, files: {} };
+            requestAnimationFrame(() => applyBridgeScene(scene));
+            return;
+        }
+
+        if (!ctx || !canvasEl) return;
         const data = slides[index];
         if (!data) {
             fillCanvasBg();
@@ -649,10 +699,15 @@
     const addSlide = () => {
         saveCurrentSlide();
         slides = [ ...slides, "" ];
+        bridgeSlides = [ ...bridgeSlides, { elements: [], appState: {}, files: {} } ];
         activeSlide = slides.length - 1;
         undoStack = [];
         redoStack = [];
-        requestAnimationFrame(() => fillCanvasBg());
+        if (useExcalidrawBridge) {
+            requestAnimationFrame(() => loadSlide(activeSlide));
+        } else {
+            requestAnimationFrame(() => fillCanvasBg());
+        }
     };
 
     const duplicateSlide = () => {
@@ -661,6 +716,12 @@
         const next = [ ...slides ];
         next.splice(activeSlide + 1, 0, clone);
         slides = next;
+
+        const bridgeNext = [ ...bridgeSlides ];
+        const sceneClone = cloneBridgeScene(bridgeSlides[activeSlide] ?? { elements: [], appState: {}, files: {} });
+        bridgeNext.splice(activeSlide + 1, 0, sceneClone);
+        bridgeSlides = bridgeNext;
+
         activeSlide = activeSlide + 1;
         requestAnimationFrame(() => loadSlide(activeSlide));
     };
@@ -668,15 +729,25 @@
     const deleteSlide = () => {
         if (slides.length <= 1) {
             slides = [""];
+            bridgeSlides = [{ elements: [], appState: {}, files: {} }];
             activeSlide = 0;
-            requestAnimationFrame(() => fillCanvasBg());
+            if (useExcalidrawBridge) {
+                requestAnimationFrame(() => loadSlide(0));
+            } else {
+                requestAnimationFrame(() => fillCanvasBg());
+            }
             return;
         }
 
         const next = [ ...slides ];
         next.splice(activeSlide, 1);
+
+        const bridgeNext = [ ...bridgeSlides ];
+        bridgeNext.splice(activeSlide, 1);
+
         const target = Math.min(activeSlide, next.length - 1);
         slides = next;
+        bridgeSlides = bridgeNext.length ? bridgeNext : [{ elements: [], appState: {}, files: {} }];
         activeSlide = target;
         requestAnimationFrame(() => loadSlide(target));
     };
@@ -691,6 +762,12 @@
         const [item] = next.splice(from, 1);
         next.splice(to, 0, item);
         slides = next;
+
+        const bridgeNext = [ ...bridgeSlides ];
+        const [sceneItem] = bridgeNext.splice(from, 1);
+        bridgeNext.splice(to, 0, sceneItem ?? { elements: [], appState: {}, files: {} });
+        bridgeSlides = bridgeNext;
+
         activeSlide = to;
     };
 
@@ -709,6 +786,10 @@
         const [item] = next.splice(draggingSlideIndex, 1);
         next.splice(targetIndex, 0, item);
 
+        const bridgeNext = [ ...bridgeSlides ];
+        const [sceneItem] = bridgeNext.splice(draggingSlideIndex, 1);
+        bridgeNext.splice(targetIndex, 0, sceneItem ?? { elements: [], appState: {}, files: {} });
+
         const oldActive = activeSlide;
         let newActive = oldActive;
 
@@ -721,6 +802,7 @@
         }
 
         slides = next;
+        bridgeSlides = bridgeNext;
         activeSlide = newActive;
         draggingSlideIndex = null;
     };
@@ -791,43 +873,68 @@
         if (cleanupExcalidraw) cleanupExcalidraw();
         cleanupExcalidraw = null;
         excalidrawMounted = false;
+        excalidrawApi = null;
     };
 
     const mountExcalidrawBridge = async () => {
         if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted) return;
         const token = ++excalidrawMountToken;
 
-        const React = await import("react");
-        const ReactDOMClient = await import("react-dom/client");
-        const pkg = await import("@excalidraw/excalidraw");
-        await import("@excalidraw/excalidraw/index.css");
+        try {
+            const React = await import("react");
+            const ReactDOMClient = await import("react-dom/client");
+            const pkg = await import("@excalidraw/excalidraw");
 
-        if (token !== excalidrawMountToken || !useExcalidrawBridge || !excalidrawHostEl) return;
+            if (token !== excalidrawMountToken || !useExcalidrawBridge || !excalidrawHostEl) return;
 
-        const root = ReactDOMClient.createRoot(excalidrawHostEl);
-        const ExcalidrawComp = (pkg as { Excalidraw: unknown }).Excalidraw as unknown as any;
+            const root = ReactDOMClient.createRoot(excalidrawHostEl);
+            const ExcalidrawComp = (pkg as { Excalidraw: unknown }).Excalidraw as unknown as any;
 
-        root.render(
-            React.createElement(ExcalidrawComp, {
-                UIOptions: {
-                    canvasActions: {
-                        export: false,
-                        saveToActiveFile: false,
+            root.render(
+                React.createElement(ExcalidrawComp, {
+                    UIOptions: {
+                        canvasActions: {
+                            export: false,
+                            saveToActiveFile: false,
+                        },
                     },
-                },
-                initialData: {
-                    appState: {
-                        viewBackgroundColor: backgroundColor,
+                    initialData: {
+                        appState: {
+                            viewBackgroundColor: backgroundColor,
+                        },
                     },
-                },
-                theme: "light",
-            }),
-        );
+                    excalidrawAPI: (api: any) => {
+                        excalidrawApi = api;
+                        const scene = bridgeSlides[activeSlide] ?? { elements: [], appState: {}, files: {} };
+                        requestAnimationFrame(() => applyBridgeScene(scene));
+                    },
+                    onChange: (elements: any[], appState: Record<string, unknown>, files: Record<string, unknown>) => {
+                        if (!useExcalidrawBridge || activeSlide < 0 || activeSlide >= slides.length) return;
+                        const bridgeNext = [ ...bridgeSlides ];
+                        bridgeNext[activeSlide] = cloneBridgeScene({ elements, appState, files });
+                        bridgeSlides = bridgeNext;
+                        const source = getRecordingCanvas();
+                        if (!source) return;
+                        requestAnimationFrame(() => {
+                            const thumbs = [ ...slides ];
+                            thumbs[activeSlide] = source.toDataURL("image/png");
+                            slides = thumbs;
+                        });
+                    },
+                    theme: "light",
+                }),
+            );
 
-        cleanupExcalidraw = () => {
-            root.unmount();
-        };
-        excalidrawMounted = true;
+            cleanupExcalidraw = () => {
+                root.unmount();
+            };
+            excalidrawMounted = true;
+        } catch (e) {
+            console.error("excalidraw bridge mount failed", e);
+            exportNotice = "Excalidraw 加载失败，请刷新页面重试。";
+            exportNoticeLevel = "error";
+            excalidrawMounted = false;
+        }
     };
 
     onMount(() => {
@@ -2644,7 +2751,6 @@
             {/each}
         {/if}
 
-        {#if !useExcalidrawBridge}
         <div class="slides-panel">
             <div class="slides-title">📋 幻灯片</div>
 
@@ -2683,7 +2789,6 @@
 
             <button class="slide-add" on:click={addSlide} on:dragover|preventDefault on:drop={() => onSlideDrop(slides.length - 1)}>＋</button>
         </div>
-        {/if}
 
         {#if showTeleprompter}
             <div
@@ -3087,6 +3192,17 @@
         cursor: crosshair;
         border-radius: inherit;
         background: transparent;
+    }
+
+    .excalidraw-host {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        border-radius: inherit;
+        overflow: hidden;
+        background: #ffffff;
     }
 
     .snap-guide-v {

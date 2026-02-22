@@ -3018,19 +3018,6 @@
         {/if}
     </div>
 
-    <div class="status-bar">
-        <span class="tool-chip" title="当前工具">{toolLabel}</span>
-        <span>选中：{selectionCount}</span>
-        <span>幻灯片：{activeSlide + 1}/{slides.length}</span>
-        <span>录制：{isRecordingStarting ? "启动中" : isRecordingStopping ? "停止中" : isRecording ? `${isRecordPaused ? "已暂停" : "进行中"} ${formatDuration(recordDuration)}` : "未录制"}</span>
-        <span>快捷录制：Space / P</span>
-        {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
-        <span>最近保存：{saveAgeText}</span>
-        {#if !useExcalidrawBridge}<span>历史：{undoStack.length}/{redoStack.length}</span>{/if}
-        <span>链路保护：离开页中断保护已启用</span>
-        {#if useExcalidrawBridge}<span>白板已就绪：{excalidrawMounted ? "✓" : "加载中..."}</span>{/if}
-    </div>
-
     {#if exportNotice}
         <div class={`export-notice ${exportNoticeLevel}`}>{exportNotice}</div>
     {/if}
@@ -3050,13 +3037,6 @@
         </div>
     {/if}
 
-    <p class="hint">
-        {#if useExcalidrawBridge}
-            提示：请使用白板原生工具进行绘制/编辑；停止录制后自动下载视频（默认 MP4，不支持时回退 WebM）。
-        {:else}
-            提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；支持对象翻转；手型工具可左右拖动切换幻灯片；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。
-        {/if}
-    </p>
 </div>
 
 {#if showSettings}
@@ -3277,15 +3257,16 @@
 
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
         width: 100%;
-        max-width: 1240px;
-        margin: 0 auto;
-        padding: 10px;
+        max-width: none;
+        margin: 0;
+        padding: 8px;
         box-sizing: border-box;
         background: #ffffff;
         color: #111111;
-        border-radius: 14px;
+        border-radius: 0;
+        min-height: 100vh;
     }
 
     .toolbar {
@@ -3361,8 +3342,8 @@
     .board-wrap {
         position: relative;
         width: 100%;
-        height: auto;
-        max-height: 78vh;
+        height: calc(100vh - 88px);
+        max-height: none;
         border-radius: 14px;
         overflow: hidden;
         border: 1px solid var(--button);

@@ -172,6 +172,8 @@
     let exportFormat: "webm" | "mp4" = "mp4";
     let selectedMimeType = "video/mp4;codecs=avc1.42E01E,mp4a.40.2";
     let lastProjectSaveAt = 0;
+    let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+    let autosaveSignature = "";
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
     let lastPreflightAt = 0;
@@ -519,6 +521,15 @@
         if (bridgeCompositeRaf) cancelAnimationFrame(bridgeCompositeRaf);
         bridgeCompositeRaf = requestAnimationFrame(tick);
         return out;
+    };
+
+    const scheduleProjectAutosave = (delay = 600) => {
+        if (typeof window === "undefined") return;
+        if (autosaveTimer) clearTimeout(autosaveTimer);
+        autosaveTimer = window.setTimeout(() => {
+            autosaveTimer = null;
+            saveProjectSnapshot();
+        }, delay);
     };
 
     const saveProjectSnapshot = () => {
@@ -1000,6 +1011,10 @@
             window.removeEventListener("devicechange", refreshMicDevices);
             if (timer) clearInterval(timer);
             clearStopTimer();
+            if (autosaveTimer) {
+                clearTimeout(autosaveTimer);
+                autosaveTimer = null;
+            }
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             stopCameraStream();
@@ -2031,9 +2046,11 @@
         persistTeleprompterPrefs();
     }
 
-    $: if (typeof window !== "undefined" && !useExcalidrawBridge) {
-        // lightweight autosave (legacy whiteboard mode only)
-        saveProjectSnapshot();
+    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${(bridgeSlides[activeSlide]?.elements?.length ?? 0)}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}`;
+
+    $: if (typeof window !== "undefined" && autosaveSignature) {
+        // throttled autosave for both whiteboard runtimes
+        scheduleProjectAutosave();
     }
 
     const toggleFrameSelection = (id: string, additive: boolean) => {

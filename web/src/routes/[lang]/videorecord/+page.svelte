@@ -2495,8 +2495,10 @@
         <div class="floating-controls">
             <button class="floating-btn" on:click={() => (showSettings = true)}>⚙</button>
             <button class="floating-btn" class:active={showTeleprompter} on:click={() => (showTeleprompter = !showTeleprompter)}>📝</button>
-            <button class="floating-btn" on:click={saveProjectSnapshot} title="保存项目">💾</button>
-            <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
+            {#if !useExcalidrawBridge}
+                <button class="floating-btn" on:click={saveProjectSnapshot} title="保存项目">💾</button>
+                <button class="floating-btn" on:click={loadProjectSnapshot} title="恢复项目">⟲</button>
+            {/if}
             <button class="floating-btn" on:click={() => (showShortcutsHelp = !showShortcutsHelp)} title="快捷键帮助">⌨</button>
             {#if !isRecording}
                 <button class="floating-record" on:click={triggerRecordStart} disabled={isRecordingStarting || isRecordingStopping}>{isRecordingStarting ? "… 启动中" : "● 录制"}</button>

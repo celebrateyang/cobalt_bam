@@ -4,7 +4,7 @@
     let canvasEl: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null = null;
 
-    let useExcalidrawBridge = false;
+    let useExcalidrawBridge = true;
     let excalidrawHostEl: HTMLDivElement | null = null;
     let cleanupExcalidraw: (() => void) | null = null;
     let excalidrawMountToken = 0;
@@ -842,6 +842,7 @@
     };
 
     const beginDraw = (e: PointerEvent) => {
+        if (useExcalidrawBridge) return;
         if (!ctx) return;
 
         const p = getPoint(e);
@@ -902,6 +903,7 @@
     };
 
     const draw = (e: PointerEvent) => {
+        if (useExcalidrawBridge) return;
         updateCursorPosition(e);
         if (tool === "laser") return;
         if (tool === "select") {
@@ -977,6 +979,7 @@
     };
 
     const endDraw = (e: PointerEvent) => {
+        if (useExcalidrawBridge) return;
         if (tool === "laser") {
             laserPressed = false;
             try {
@@ -2319,6 +2322,7 @@
 <div class="page">
     <div class="toolbar">
         <div class="left">
+            {#if !useExcalidrawBridge}
             <button class="tool-btn" class:active={tool === "select"} on:click={() => (tool = "select")} title="选择">✋</button>
             <button class="tool-btn" class:active={tool === "pen"} on:click={() => (tool = "pen")} title="画笔">✏️</button>
             <button class="tool-btn" class:active={tool === "eraser"} on:click={() => (tool = "eraser")} title="橡皮">🧽</button>
@@ -2353,6 +2357,12 @@
             <span>{strokeWidth}px</span>
             {#if tool === "text"}
                 <label class="text-size"><input type="range" min="14" max="64" step="1" bind:value={textFontSize} /> <span>{textFontSize}px</span></label>
+            {/if}
+            {/if}
+
+            <button class="tool-btn" class:active={useExcalidrawBridge} on:click={() => (useExcalidrawBridge = !useExcalidrawBridge)} title="Excalidraw 桥接">EX</button>
+            {#if useExcalidrawBridge}
+                <span class="bridge-pill">Excalidraw 模式</span>
             {/if}
         </div>
 
@@ -2931,6 +2941,18 @@
         justify-content: center;
         font-size: 16px;
         line-height: 1;
+    }
+
+    .bridge-pill {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+        font-size: 12px;
     }
 
     .text-size {

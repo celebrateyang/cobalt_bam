@@ -952,7 +952,7 @@
             excalidrawMounted = true;
         } catch (e) {
             console.error("excalidraw bridge mount failed", e);
-            exportNotice = "Excalidraw 加载失败，请刷新页面重试。";
+            exportNotice = "白板加载失败，请刷新页面重试。";
             exportNoticeLevel = "error";
             excalidrawMounted = false;
         }
@@ -2562,8 +2562,8 @@
 <div class="page">
     <div class="toolbar">
         <div class="left">
-            <span class="bridge-pill">Excalidraw 模式</span>
-            <span class="subnote">白板工具与快捷键由 Excalidraw 原生接管</span>
+            <span class="bridge-pill">白板模式</span>
+            <span class="subnote">白板工具与快捷键已接管</span>
         </div>
 
     </div>
@@ -2865,7 +2865,7 @@
         <span>最近保存：{saveAgeText}</span>
         {#if !useExcalidrawBridge}<span>历史：{undoStack.length}/{redoStack.length}</span>{/if}
         <span>链路保护：离开页中断保护已启用</span>
-        {#if useExcalidrawBridge}<span>白板内核：Excalidraw{excalidrawMounted ? " ✓" : " ..."}</span>{/if}
+        {#if useExcalidrawBridge}<span>白板已就绪：{excalidrawMounted ? "✓" : "加载中..."}</span>{/if}
     </div>
 
     {#if exportNotice}
@@ -2875,7 +2875,7 @@
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
             {#if useExcalidrawBridge}
-                <div><strong>白板:</strong> Excalidraw 原生工具栏与快捷键已接管（选择/图形/文字/缩放/平移）。</div>
+                <div><strong>白板:</strong> 使用顶部工具栏进行选择/图形/文字/缩放/平移。</div>
                 <div><strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时） · K 暂停/继续</div>
             {:else}
                 <div><strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形 · C 圆 · F 框架</div>
@@ -2889,7 +2889,7 @@
 
     <p class="hint">
         {#if useExcalidrawBridge}
-            提示：当前为 Excalidraw 内核。白板绘制/编辑请使用 Excalidraw 原生工具；停止录制后自动下载视频（默认 MP4，不支持时回退 WebM）。
+            提示：请使用白板原生工具进行绘制/编辑；停止录制后自动下载视频（默认 MP4，不支持时回退 WebM）。
         {:else}
             提示：停止录制后会自动下载 webm 视频。快捷键：V/E/T/L/R/C/F 切工具，Ctrl/Cmd+Z 撤销，Ctrl/Cmd+A 全选可见，Ctrl/Cmd+D 复制选中对象，方向键微调（Shift=10px，Ctrl/Cmd=50px），Ctrl/Cmd+C/V 复制粘贴，[/] 调整层级（Ctrl/Cmd+[/] 为逐层），可用🔒锁定对象，H可快速隐藏/显示选中对象；支持对象翻转；手型工具可左右拖动切换幻灯片；多选支持横纵均分；Alt+←/→ 可快速调换当前幻灯片顺序；Space/P 可快速开始或停止录制（支持倒计时），K 可暂停/继续。
         {/if}

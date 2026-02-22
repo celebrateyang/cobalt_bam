@@ -4,6 +4,11 @@
     let canvasEl: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null = null;
 
+    let useExcalidrawBridge = false;
+    let excalidrawHostEl: HTMLDivElement | null = null;
+    let cleanupExcalidraw: (() => void) | null = null;
+    let excalidrawMountToken = 0;
+
     let drawing = false;
     let lastX = 0;
     let lastY = 0;
@@ -695,6 +700,47 @@
         window.localStorage.setItem("videorecord.teleprompter", JSON.stringify(payload));
     };
 
+    const unmountExcalidrawBridge = () => {
+        if (cleanupExcalidraw) cleanupExcalidraw();
+        cleanupExcalidraw = null;
+    };
+
+    const mountExcalidrawBridge = async () => {
+        if (!useExcalidrawBridge || !excalidrawHostEl) return;
+        const token = ++excalidrawMountToken;
+
+        const React = await import("react");
+        const ReactDOMClient = await import("react-dom/client");
+        const pkg = await import("@excalidraw/excalidraw");
+        await import("@excalidraw/excalidraw/index.css");
+
+        if (token !== excalidrawMountToken || !useExcalidrawBridge || !excalidrawHostEl) return;
+
+        const root = ReactDOMClient.createRoot(excalidrawHostEl);
+        const ExcalidrawComp = (pkg as { Excalidraw: unknown }).Excalidraw as unknown as any;
+
+        root.render(
+            React.createElement(ExcalidrawComp, {
+                UIOptions: {
+                    canvasActions: {
+                        export: false,
+                        saveToActiveFile: false,
+                    },
+                },
+                initialData: {
+                    appState: {
+                        viewBackgroundColor: backgroundColor,
+                    },
+                },
+                theme: "light",
+            }),
+        );
+
+        cleanupExcalidraw = () => {
+            root.unmount();
+        };
+    };
+
     onMount(() => {
         ctx = canvasEl.getContext("2d");
         if (!ctx) return;
@@ -737,6 +783,7 @@
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             stopCameraStream();
             stopMicStream();
+            unmountExcalidrawBridge();
             recorder?.stop();
         };
     });
@@ -2088,6 +2135,14 @@
                 ? "crosshair"
                 : "crosshair";
 
+    $: if (useExcalidrawBridge && excalidrawHostEl) {
+        void mountExcalidrawBridge();
+    }
+
+    $: if (!useExcalidrawBridge) {
+        unmountExcalidrawBridge();
+    }
+
 
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
         if (!isRecording) return;
@@ -2290,7 +2345,7 @@
     <div class="board-wrap" style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}>
         <canvas
             bind:this={canvasEl}
-            class="board" style={`cursor:${boardCursor};`}
+            class="board" style={`cursor:${boardCursor}; opacity:${useExcalidrawBridge ? 0 : 1};`}
             on:pointerenter={enterBoard}
             on:pointerdown={beginDraw}
             on:pointermove={draw}
@@ -2298,6 +2353,10 @@
             on:pointercancel={endDraw}
             on:pointerleave={(e) => { endDraw(e); leaveBoard(); }}
         />
+
+        {#if useExcalidrawBridge}
+            <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
+        {/if}
 
         {#if showGuideV}
             <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>

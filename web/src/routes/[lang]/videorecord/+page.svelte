@@ -627,24 +627,30 @@
         return JSON.parse(JSON.stringify(scene));
     };
 
+    const normalizeBridgeAppState = (appState: Record<string, unknown> | undefined) => {
+        const next = { ...(appState ?? {}) } as Record<string, unknown>;
+        next.theme = "light";
+        next.viewBackgroundColor = backgroundColor;
+        next.zenModeEnabled = false;
+        next.viewModeEnabled = false;
+        next.openSidebar = null;
+        next.openDialog = null;
+        next.showHelpDialog = false;
+        return next;
+    };
+
     const captureBridgeScene = () => {
         if (!excalidrawApi) return { elements: [], appState: {}, files: {} };
         return {
             elements: excalidrawApi.getSceneElements?.() ?? [],
-            appState: excalidrawApi.getAppState?.() ?? {},
+            appState: normalizeBridgeAppState(excalidrawApi.getAppState?.() ?? {}),
             files: excalidrawApi.getFiles?.() ?? {},
         };
     };
 
     const applyBridgeScene = (scene: BridgeSlideScene) => {
         if (!excalidrawApi) return;
-        const nextAppState = {
-            ...scene.appState,
-            viewBackgroundColor: backgroundColor,
-            theme: "light",
-            zenModeEnabled: false,
-            viewModeEnabled: false,
-        };
+        const nextAppState = normalizeBridgeAppState(scene.appState);
         excalidrawApi.updateScene?.({
             elements: scene.elements,
             appState: nextAppState,
@@ -964,7 +970,11 @@
                     onChange: (elements: any[], appState: Record<string, unknown>, files: Record<string, unknown>) => {
                         if (!useExcalidrawBridge || activeSlide < 0 || activeSlide >= slides.length) return;
                         const bridgeNext = [ ...bridgeSlides ];
-                        bridgeNext[activeSlide] = cloneBridgeScene({ elements, appState, files });
+                        bridgeNext[activeSlide] = cloneBridgeScene({
+                            elements,
+                            appState: normalizeBridgeAppState(appState),
+                            files,
+                        });
                         bridgeSlides = bridgeNext;
                         const source = getRecordingCanvas();
                         if (!source) return;

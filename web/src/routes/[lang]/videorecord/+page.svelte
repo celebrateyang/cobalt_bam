@@ -629,6 +629,13 @@
         return JSON.parse(JSON.stringify(scene));
     };
 
+    const toPersistedBridgeAppState = (appState: Record<string, unknown> | undefined) => ({
+        viewBackgroundColor: (appState?.viewBackgroundColor as string) || backgroundColor,
+        theme: "light",
+        zenModeEnabled: false,
+        viewModeEnabled: false,
+    });
+
     const normalizeBridgeAppState = (appState: Record<string, unknown> | undefined) => {
         const next = { ...(appState ?? {}) } as Record<string, unknown>;
         next.theme = "light";
@@ -638,6 +645,10 @@
         next.openSidebar = null;
         next.openDialog = null;
         next.showHelpDialog = false;
+        const collaborators = (next as { collaborators?: unknown }).collaborators;
+        if (!collaborators || typeof (collaborators as { forEach?: unknown }).forEach !== "function") {
+            (next as { collaborators: Map<string, unknown> }).collaborators = new Map();
+        }
         return next;
     };
 
@@ -645,7 +656,7 @@
         if (!excalidrawApi) return { elements: [], appState: {}, files: {} };
         return {
             elements: excalidrawApi.getSceneElements?.() ?? [],
-            appState: normalizeBridgeAppState(excalidrawApi.getAppState?.() ?? {}),
+            appState: toPersistedBridgeAppState(excalidrawApi.getAppState?.() ?? {}),
             files: excalidrawApi.getFiles?.() ?? {},
         };
     };
@@ -1006,7 +1017,7 @@
                         const bridgeNext = [ ...bridgeSlides ];
                         bridgeNext[activeSlide] = cloneBridgeScene({
                             elements,
-                            appState: normalized,
+                            appState: toPersistedBridgeAppState(normalized),
                             files,
                         });
                         bridgeSlides = bridgeNext;

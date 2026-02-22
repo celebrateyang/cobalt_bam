@@ -155,6 +155,7 @@
     let recorderStopTimer: ReturnType<typeof setTimeout> | null = null;
     let stopHandled = false;
     let lastChunkAt = 0;
+    let recordingStopCause: "user" | "pagehide" | "video-ended" | "recorder-error" | "timeout" | "unknown" = "unknown";
     let isRecordPaused = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -1795,7 +1796,7 @@
                 if (!isRecording || isRecordingStopping) return;
                 exportNotice = "画面轨道意外中断，正在自动停止录制。";
                 exportNoticeLevel = "warn";
-                stopRecord();
+                stopRecord("video-ended");
             };
             stream.addTrack(t);
         }
@@ -1860,6 +1861,7 @@
         };
 
         recorder.onerror = () => {
+            recordingStopCause = "recorder-error";
             exportNotice = "录制器发生错误，正在尝试安全停止并导出。";
             exportNoticeLevel = "error";
             try { recorder?.requestData(); } catch {}
@@ -1900,12 +1902,25 @@
                 exportNoticeLevel = "warn";
             }
             downloadRecordingBlob(blob, ext);
-            const staleChunk = lastChunkAt ? (Date.now() - lastChunkAt > 3000) : false;
-            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB)${staleChunk ? "，末段数据可能不完整" : ""}`;
-            exportNoticeLevel = staleChunk ? "warn" : "info";
+            const staleChunkMs = lastChunkAt ? (Date.now() - lastChunkAt) : 0;
+            const staleChunk = lastChunkMs > 3000;
+            const causeLabel = recordingStopCause === "user"
+                ? "手动停止"
+                : recordingStopCause === "pagehide"
+                    ? "页面切后台"
+                    : recordingStopCause === "video-ended"
+                        ? "画面轨道中断"
+                        : recordingStopCause === "recorder-error"
+                            ? "录制器错误"
+                            : recordingStopCause === "timeout"
+                                ? "停止超时收尾"
+                                : "未知原因";
+            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB) · 停止原因：${causeLabel}${staleChunk ? `，末段数据可能不完整（${Math.round(staleChunkMs / 1000)}s 无新片段）` : ""}`;
+            exportNoticeLevel = staleChunk || recordingStopCause !== "user" ? "warn" : "info";
         };
 
         try {
+            recordingStopCause = "unknown";
             recorder.start(300);
             isRecording = true;
             isRecordPaused = false;
@@ -1935,9 +1950,10 @@
         isRecordingStarting = false;
     };
 
-    const stopRecord = () => {
+    const stopRecord = (cause: "user" | "pagehide" | "video-ended" | "recorder-error" | "unknown" = "user") => {
         if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
         if (recorder.state !== "recording" && recorder.state !== "paused") return;
+        recordingStopCause = cause;
         isRecordingStopping = true;
 
         try { recorder.requestData(); } catch {}
@@ -1962,6 +1978,7 @@
             if (isRecordingStopping && !stopHandled) {
                 isRecordingStopping = false;
                 isRecording = false;
+                recordingStopCause = "timeout";
                 stopBridgeComposite();
                 stopCameraStream();
                 stopMicStream();
@@ -2495,7 +2512,7 @@
         if (!isRecording || isRecordingStopping) return;
         exportNotice = "页面进入后台，已自动停止录制以保护文件完整性。";
         exportNoticeLevel = "warn";
-        stopRecord();
+        stopRecord("pagehide");
     };
 
     const onGlobalKeydown = (e: KeyboardEvent) => {

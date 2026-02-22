@@ -2420,7 +2420,7 @@
 
 </script>
 
-<svelte:window on:keydown={onGlobalKeydown} on:beforeunload={onBeforeUnload} on:pagehide={onPageHide} on:pointermove={(e) => { onWindowPointerMove(e); onWindowPointerMoveEmbed(e); onWindowPointerMoveFrame(e); }} on:pointerup={() => { onWindowPointerUp(); onWindowPointerUpEmbed(); onWindowPointerUpFrame(); }} />
+<svelte:window on:keydown={onGlobalKeydown} on:beforeunload={onBeforeUnload} on:pagehide={onPageHide} on:pointermove={onWindowPointerMove} on:pointerup={onWindowPointerUp} />
 
 <svelte:head>
     <title>Video Record Whiteboard</title>

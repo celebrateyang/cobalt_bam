@@ -67,9 +67,12 @@
         flipY?: boolean;
     };
 
+    type BridgeSlideScene = { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> };
+
     type ProjectSnapshot = {
-        version: 1;
+        version: 2;
         slides: string[];
+        bridgeSlides?: BridgeSlideScene[];
         activeSlide: number;
         frames: FrameItem[];
         webEmbeds: WebEmbedItem[];
@@ -154,7 +157,7 @@
 
     // slides (basic multi-page)
     let slides: string[] = [""];
-    let bridgeSlides: Array<{ elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }> = [{ elements: [], appState: {}, files: {} }];
+    let bridgeSlides: BridgeSlideScene[] = [{ elements: [], appState: {}, files: {} }];
     let activeSlide = 0;
     let draggingSlideIndex: number | null = null;
 
@@ -518,8 +521,9 @@
     const saveProjectSnapshot = () => {
         if (typeof window === "undefined") return;
         const payload: ProjectSnapshot = {
-            version: 1,
+            version: 2,
             slides,
+            bridgeSlides,
             activeSlide,
             frames,
             webEmbeds,
@@ -539,9 +543,26 @@
         const raw = window.localStorage.getItem("videorecord.project");
         if (!raw) return;
         try {
-            const data = JSON.parse(raw) as ProjectSnapshot;
-            if (!data || data.version !== 1) return;
+            const data = JSON.parse(raw) as Partial<ProjectSnapshot> & { version?: number };
+            if (!data || (data.version !== 1 && data.version !== 2)) return;
             slides = Array.isArray(data.slides) && data.slides.length ? data.slides : [""];
+
+            if (Array.isArray(data.bridgeSlides) && data.bridgeSlides.length) {
+                bridgeSlides = data.bridgeSlides.map((scene) => ({
+                    elements: Array.isArray(scene?.elements) ? scene.elements : [],
+                    appState: scene?.appState && typeof scene.appState === "object" ? scene.appState : {},
+                    files: scene?.files && typeof scene.files === "object" ? scene.files : {},
+                }));
+            } else {
+                bridgeSlides = slides.map(() => ({ elements: [], appState: {}, files: {} }));
+            }
+            if (bridgeSlides.length < slides.length) {
+                bridgeSlides = [
+                    ...bridgeSlides,
+                    ...Array.from({ length: slides.length - bridgeSlides.length }, () => ({ elements: [], appState: {}, files: {} })),
+                ];
+            }
+
             activeSlide = Math.max(0, Math.min(data.activeSlide || 0, slides.length - 1));
             frames = Array.isArray(data.frames) ? data.frames : [];
             webEmbeds = Array.isArray(data.webEmbeds) ? data.webEmbeds : [];
@@ -574,7 +595,7 @@
         ctx.fillRect(0, 0, rect.width, rect.height);
     };
 
-    const cloneBridgeScene = (scene: { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }) => {
+    const cloneBridgeScene = (scene: BridgeSlideScene) => {
         if (typeof structuredClone === "function") return structuredClone(scene);
         return JSON.parse(JSON.stringify(scene));
     };
@@ -588,7 +609,7 @@
         };
     };
 
-    const applyBridgeScene = (scene: { elements: any[]; appState: Record<string, unknown>; files: Record<string, unknown> }) => {
+    const applyBridgeScene = (scene: BridgeSlideScene) => {
         if (!excalidrawApi) return;
         const nextAppState = {
             ...scene.appState,

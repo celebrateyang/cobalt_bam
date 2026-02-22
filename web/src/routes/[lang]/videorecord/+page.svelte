@@ -152,6 +152,9 @@
     let isRecordingStarting = false;
     let isRecordingStopping = false;
     let recordDuration = 0;
+    let recorderStopTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopHandled = false;
+    let lastChunkAt = 0;
     let isRecordPaused = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -996,6 +999,7 @@
             window.removeEventListener("resize", clampAndSnapTeleprompter);
             window.removeEventListener("devicechange", refreshMicDevices);
             if (timer) clearInterval(timer);
+            clearStopTimer();
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             stopCameraStream();
@@ -1726,9 +1730,18 @@
         }, 1000);
     };
 
+    const clearStopTimer = () => {
+        if (recorderStopTimer) {
+            clearTimeout(recorderStopTimer);
+            recorderStopTimer = null;
+        }
+    };
+
     const startRecord = async () => {
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         isRecordingStarting = true;
+        clearStopTimer();
+        stopHandled = false;
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
         const recordingCanvas = getRecordingCanvas();
@@ -1791,16 +1804,26 @@
         }
 
         recorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) chunks.push(event.data);
+            if (event.data && event.data.size > 0) {
+                chunks.push(event.data);
+                lastChunkAt = Date.now();
+            }
         };
 
         recorder.onerror = () => {
-            exportNotice = "录制器发生错误，已自动停止。";
+            exportNotice = "录制器发生错误，正在尝试安全停止并导出。";
             exportNoticeLevel = "error";
-            try { recorder?.stop(); } catch {}
+            try { recorder?.requestData(); } catch {}
+            window.setTimeout(() => {
+                try { recorder?.stop(); } catch {}
+            }, 80);
         };
 
         recorder.onstop = () => {
+            if (stopHandled) return;
+            stopHandled = true;
+            clearStopTimer();
+
             if (timer) {
                 clearInterval(timer);
                 timer = null;
@@ -1828,8 +1851,9 @@
                 exportNoticeLevel = "warn";
             }
             downloadRecordingBlob(blob, ext);
-            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB)`;
-            exportNoticeLevel = "info";
+            const staleChunk = lastChunkAt ? (Date.now() - lastChunkAt > 3000) : false;
+            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB)${staleChunk ? "，末段数据可能不完整" : ""}`;
+            exportNoticeLevel = staleChunk ? "warn" : "info";
         };
 
         try {
@@ -1865,18 +1889,36 @@
     const stopRecord = () => {
         if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
         isRecordingStopping = true;
+
         try { recorder.requestData(); } catch {}
-        recorder.stop();
+        window.setTimeout(() => {
+            try { recorder?.requestData(); } catch {}
+        }, 120);
+
+        try {
+            recorder.stop();
+        } catch {
+            isRecordingStopping = false;
+            exportNotice = "停止录制失败，请重试。";
+            exportNoticeLevel = "error";
+            return;
+        }
+
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
-        window.setTimeout(() => {
-            if (isRecordingStopping) {
+
+        clearStopTimer();
+        recorderStopTimer = window.setTimeout(() => {
+            if (isRecordingStopping && !stopHandled) {
                 isRecordingStopping = false;
                 isRecording = false;
-                exportNotice = "停止录制超时，已重置状态。";
+                stopBridgeComposite();
+                stopCameraStream();
+                stopMicStream();
+                exportNotice = "停止录制超时，已强制收尾。";
                 exportNoticeLevel = "warn";
             }
-        }, 1800);
+        }, 3200);
     };
 
     const togglePauseRecord = () => {

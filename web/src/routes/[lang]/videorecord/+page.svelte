@@ -1778,7 +1778,15 @@
         }
         const canvasStream = recordingSurface.captureStream(60);
         const stream = new MediaStream();
-        for (const t of canvasStream.getVideoTracks()) stream.addTrack(t);
+        for (const t of canvasStream.getVideoTracks()) {
+            t.onended = () => {
+                if (!isRecording || isRecordingStopping) return;
+                exportNotice = "画面轨道意外中断，正在自动停止录制。";
+                exportNoticeLevel = "warn";
+                stopRecord();
+            };
+            stream.addTrack(t);
+        }
 
         if (includeMicAudio) {
             try {
@@ -1795,9 +1803,23 @@
                     const source = micAudioCtx.createMediaStreamSource(micStream);
                     micDest = micAudioCtx.createMediaStreamDestination();
                     source.connect(micDest);
-                    for (const t of micDest.stream.getAudioTracks()) stream.addTrack(t);
+                    for (const t of micDest.stream.getAudioTracks()) {
+                        t.onended = () => {
+                            if (!isRecording) return;
+                            exportNotice = "麦克风轨道已中断，后续录制将无音频。";
+                            exportNoticeLevel = "warn";
+                        };
+                        stream.addTrack(t);
+                    }
                 } else {
-                    for (const t of micStream.getAudioTracks()) stream.addTrack(t);
+                    for (const t of micStream.getAudioTracks()) {
+                        t.onended = () => {
+                            if (!isRecording) return;
+                            exportNotice = "麦克风轨道已中断，后续录制将无音频。";
+                            exportNoticeLevel = "warn";
+                        };
+                        stream.addTrack(t);
+                    }
                 }
             } catch (e) {
                 console.warn("mic capture failed", e);
@@ -1903,6 +1925,7 @@
 
     const stopRecord = () => {
         if (!recorder || recorder.state === "inactive" || isRecordingStopping) return;
+        if (recorder.state !== "recording" && recorder.state !== "paused") return;
         isRecordingStopping = true;
 
         try { recorder.requestData(); } catch {}
@@ -2457,7 +2480,7 @@
     };
 
     const onPageHide = () => {
-        if (!isRecording) return;
+        if (!isRecording || isRecordingStopping) return;
         exportNotice = "页面进入后台，已自动停止录制以保护文件完整性。";
         exportNoticeLevel = "warn";
         stopRecord();

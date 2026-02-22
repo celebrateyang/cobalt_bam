@@ -1861,8 +1861,8 @@
         persistTeleprompterPrefs();
     }
 
-    $: if (typeof window !== "undefined") {
-        // lightweight autosave
+    $: if (typeof window !== "undefined" && !useExcalidrawBridge) {
+        // lightweight autosave (legacy whiteboard mode only)
         saveProjectSnapshot();
     }
 
@@ -2735,9 +2735,9 @@
         <span>快捷录制：Space / P</span>
         {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>
-        <span>历史：{undoStack.length}/{redoStack.length}</span>
+        {#if !useExcalidrawBridge}<span>历史：{undoStack.length}/{redoStack.length}</span>{/if}
         <span>链路保护：离开页中断保护已启用</span>
-        {#if useExcalidrawBridge}<span>白板内核：Excalidraw</span>{/if}
+        {#if useExcalidrawBridge}<span>白板内核：Excalidraw{excalidrawMounted ? " ✓" : " ..."}</span>{/if}
     </div>
 
     {#if exportNotice}

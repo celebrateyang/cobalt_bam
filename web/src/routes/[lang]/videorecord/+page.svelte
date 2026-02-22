@@ -1394,9 +1394,21 @@
         strokeColor = "#111111";
     };
 
+    const getRecordingCanvas = () => {
+        if (useExcalidrawBridge && excalidrawHostEl) {
+            const canvases = Array.from(excalidrawHostEl.querySelectorAll("canvas")) as HTMLCanvasElement[];
+            if (canvases.length) {
+                canvases.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+                return canvases[0];
+            }
+        }
+        return canvasEl;
+    };
+
     const runRecordPreflight = () => {
         lastPreflightAt = Date.now();
-        if (!canvasEl) {
+        const recordingCanvas = getRecordingCanvas();
+        if (!recordingCanvas) {
             exportNotice = "录制预检失败：画布尚未就绪。";
             exportNoticeLevel = "error";
             return false;
@@ -1408,7 +1420,7 @@
             return false;
         }
 
-        if (typeof canvasEl.captureStream !== "function") {
+        if (typeof recordingCanvas.captureStream !== "function") {
             exportNotice = "录制预检失败：当前浏览器不支持 canvas.captureStream。";
             exportNoticeLevel = "error";
             return false;
@@ -1498,13 +1510,14 @@
         isRecordingStarting = true;
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
-        if (!canvasEl || typeof canvasEl.captureStream !== "function") {
+        const recordingCanvas = getRecordingCanvas();
+        if (!recordingCanvas || typeof recordingCanvas.captureStream !== "function") {
             exportNotice = "录制启动失败：画布流不可用。";
             exportNoticeLevel = "error";
             isRecordingStarting = false;
             return;
         }
-        const canvasStream = canvasEl.captureStream(60);
+        const canvasStream = recordingCanvas.captureStream(60);
         const stream = new MediaStream();
         for (const t of canvasStream.getVideoTracks()) stream.addTrack(t);
 
@@ -1602,12 +1615,17 @@
             return;
         }
         if (showCameraInRecord) {
-            try {
-                await startCameraRenderLoop();
-            } catch (e) {
-                console.error("camera start failed", e);
-                exportNotice = "摄像头开启失败：将仅录制白板内容。";
+            if (useExcalidrawBridge) {
+                exportNotice = "Excalidraw 桥接模式下暂不叠加摄像头画中画，将仅录制白板与音频。";
                 exportNoticeLevel = "warn";
+            } else {
+                try {
+                    await startCameraRenderLoop();
+                } catch (e) {
+                    console.error("camera start failed", e);
+                    exportNotice = "摄像头开启失败：将仅录制白板内容。";
+                    exportNoticeLevel = "warn";
+                }
             }
         }
         recordDuration = 0;
@@ -2633,7 +2651,9 @@
         <span>最近保存：{saveAgeText}</span>
         <span>历史：{undoStack.length}/{redoStack.length}</span>
         <span>链路保护：离开页中断保护已启用</span>
+        {#if useExcalidrawBridge}<span>白板内核：Excalidraw</span>{/if}
         <span>链路保护：离开页中断保护已启用</span>
+        {#if useExcalidrawBridge}<span>白板内核：Excalidraw</span>{/if}
     </div>
 
     {#if exportNotice}

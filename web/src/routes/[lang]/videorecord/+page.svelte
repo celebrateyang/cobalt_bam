@@ -2273,6 +2273,20 @@
 
     const onGlobalKeydown = (e: KeyboardEvent) => {
         if (textEditing) return;
+
+        if (useExcalidrawBridge) {
+            if (e.code === "Space" || e.key.toLowerCase() === "p") {
+                e.preventDefault();
+                if (isRecording) stopRecord(); else void triggerRecordStart();
+                return;
+            }
+            if (e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                if (isRecording) togglePauseRecord();
+                return;
+            }
+            return;
+        }
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
             e.preventDefault();
             if (e.shiftKey) redo(); else undo();
@@ -2479,18 +2493,18 @@
             <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
         {/if}
 
-        {#if showGuideV}
+        {#if !useExcalidrawBridge && showGuideV}
             <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>
         {/if}
-        {#if showGuideH}
+        {#if !useExcalidrawBridge && showGuideH}
             <div class="snap-guide-h" style={`top:${guideHY}px;`}></div>
         {/if}
 
-        {#if marqueeSelecting && marqueeW > 0 && marqueeH > 0}
+        {#if !useExcalidrawBridge && marqueeSelecting && marqueeW > 0 && marqueeH > 0}
             <div class="marquee-box" style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}></div>
         {/if}
 
-        {#if textEditing}
+        {#if !useExcalidrawBridge && textEditing}
             <textarea
                 bind:this={textAreaEl}
                 class="canvas-text-input"
@@ -2502,7 +2516,7 @@
             />
         {/if}
 
-        {#if tool === "laser" && cursorInside && laserPressed}
+        {#if !useExcalidrawBridge && tool === "laser" && cursorInside && laserPressed}
             <div class="laser-dot" style={`left:${cursorX}px; top:${cursorY}px; width:${laserSize}px; height:${laserSize}px; background:${laserColor};`}></div>
         {/if}
 
@@ -2527,13 +2541,13 @@
             {/if}
         </div>
 
-        {#if draftingFrame}
+        {#if !useExcalidrawBridge && draftingFrame}
             <div class="frame-item draft" style={`left:${draftFrameX}px; top:${draftFrameY}px; width:${draftFrameW}px; height:${draftFrameH}px;`}>
                 <div class="frame-head"><span>Frame</span></div>
             </div>
         {/if}
 
-        {#each frames.filter(f => !f.hidden) as frame (frame.id)}
+        {#if !useExcalidrawBridge}{#each frames.filter(f => !f.hidden) as frame (frame.id)}
             <div class="frame-item" class:selected={selectedFrameIds.includes(frame.id)} class:locked={!!frame.locked} style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`} role="button" aria-label="select frame" tabindex="-1" on:pointerdown={(e) => toggleFrameSelection(frame.id, e.shiftKey)}>
                 <div class="frame-head" on:pointerdown={(e) => startDragFrame(frame.id, e)}>
                     <span>{frame.title}</span>
@@ -2541,9 +2555,9 @@
                 </div>
                 <div class="frame-resize" on:pointerdown={(e) => startResizeFrame(frame.id, e)}></div>
             </div>
-        {/each}
+        {/each}{/if}
 
-        {#if selectedFrameIds.length + selectedEmbedIds.length > 1}
+        {#if !useExcalidrawBridge && selectedFrameIds.length + selectedEmbedIds.length > 1}
             <div class="floating-edit-panel group-panel">
                 <div class="edit-title">批量编辑（{selectedFrameIds.length + selectedEmbedIds.length}）</div>
                 <div class="edit-grid">
@@ -2577,7 +2591,7 @@
             </div>
         {/if}
 
-        {#if selectedFrameId && selectedFrameIds.length <= 1}
+        {#if !useExcalidrawBridge && selectedFrameId && selectedFrameIds.length <= 1}
             <div class="floating-edit-panel">
                 <div class="edit-title">Frame 编辑</div>
                 <div class="edit-grid">
@@ -2591,7 +2605,7 @@
             </div>
         {/if}
 
-        {#if selectedEmbedId && selectedEmbedIds.length <= 1}
+        {#if !useExcalidrawBridge && selectedEmbedId && selectedEmbedIds.length <= 1}
             <div class="floating-edit-panel embed-panel">
                 <div class="edit-title">Embed 编辑</div>
                 <div class="edit-grid">
@@ -2610,7 +2624,7 @@
             </div>
         {/if}
 
-        {#if selectedFrameId && selectedFrameIds.length <= 1}
+        {#if !useExcalidrawBridge && selectedFrameId && selectedFrameIds.length <= 1}
             {#each frames.filter(f => f.id === selectedFrameId) as f}
                 <div class="floating-edit-panel props-panel frame-props">
                     <div class="edit-title">Frame 属性</div>
@@ -2630,7 +2644,7 @@
             {/each}
         {/if}
 
-        {#if selectedEmbedId && selectedEmbedIds.length <= 1}
+        {#if !useExcalidrawBridge && selectedEmbedId && selectedEmbedIds.length <= 1}
             {#each webEmbeds.filter(e => e.id === selectedEmbedId) as em}
                 <div class="floating-edit-panel props-panel embed-props">
                     <div class="edit-title">Embed 属性</div>
@@ -2650,17 +2664,20 @@
             {/each}
         {/if}
 
-        {#each webEmbeds.filter(e => !e.hidden) as embed (embed.id)}
-            <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} class:locked={!!embed.locked} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
-                <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
-                    <span>🌐 Web</span>
-                    <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => updateEmbedProps(embed.id, { hidden: !embed.hidden })}>{embed.hidden ? "🙈" : "👁"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+        {#if !useExcalidrawBridge}
+            {#each webEmbeds.filter(e => !e.hidden) as embed (embed.id)}
+                <div class="web-embed" class:selected={selectedEmbedIds.includes(embed.id)} class:locked={!!embed.locked} style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`} role="button" aria-label="select embed" tabindex="-1" on:pointerdown={(e) => toggleEmbedSelection(embed.id, e.shiftKey)}>
+                    <div class="web-embed-head" on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}>
+                        <span>🌐 Web</span>
+                        <div class="web-embed-actions"><button class="web-embed-mini" on:click={() => toggleEmbedLock(embed.id)}>{embed.locked ? "🔒" : "🔓"}</button><button class="web-embed-mini" on:click={() => updateEmbedProps(embed.id, { hidden: !embed.hidden })}>{embed.hidden ? "🙈" : "👁"}</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, -1)}>↓</button><button class="web-embed-mini" on:click={() => moveWebEmbedLayer(embed.id, 1)}>↑</button><button class="web-embed-mini" on:click={() => editWebEmbedUrl(embed.id)}>✎</button><button class="web-embed-close" on:click={() => removeWebEmbed(embed.id)}>✕</button></div>
+                    </div>
+                    <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
+                    <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
                 </div>
-                <iframe src={embed.url} title={embed.url} loading="lazy" referrerpolicy="no-referrer"></iframe>
-                <div class="web-embed-resize" on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}></div>
-            </div>
-        {/each}
+            {/each}
+        {/if}
 
+        {#if !useExcalidrawBridge}
         <div class="slides-panel">
             <div class="slides-title">📋 幻灯片</div>
 
@@ -2699,6 +2716,7 @@
 
             <button class="slide-add" on:click={addSlide} on:dragover|preventDefault on:drop={() => onSlideDrop(slides.length - 1)}>＋</button>
         </div>
+        {/if}
 
         {#if showTeleprompter}
             <div
@@ -2753,8 +2771,6 @@
         {#if recordCountdownLeft > 0}<span>倒计时：{recordCountdownLeft}</span>{/if}
         <span>最近保存：{saveAgeText}</span>
         <span>历史：{undoStack.length}/{redoStack.length}</span>
-        <span>链路保护：离开页中断保护已启用</span>
-        {#if useExcalidrawBridge}<span>白板内核：Excalidraw</span>{/if}
         <span>链路保护：离开页中断保护已启用</span>
         {#if useExcalidrawBridge}<span>白板内核：Excalidraw</span>{/if}
     </div>

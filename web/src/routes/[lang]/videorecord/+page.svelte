@@ -12,6 +12,7 @@
     let excalidrawMounted = false;
     let excalidrawApi: any = null;
     let bridgeAppStateGuard = false;
+    const excalidrawSessionName = `videorecord-bridge-${Date.now()}`;
 
     let drawing = false;
     let lastX = 0;
@@ -949,6 +950,7 @@
 
             root.render(
                 React.createElement(ExcalidrawComp, {
+                    name: excalidrawSessionName,
                     UIOptions: {
                         canvasActions: {
                             export: false,
@@ -3357,6 +3359,14 @@
         border-radius: inherit;
         overflow: hidden;
         background: #ffffff;
+    }
+
+    .excalidraw-host :global(.App-toolbar),
+    .excalidraw-host :global(.Stack.App-toolbar) {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
     }
 
     .snap-guide-v {

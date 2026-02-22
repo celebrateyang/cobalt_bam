@@ -201,6 +201,9 @@
     let cameraStream: MediaStream | null = null;
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
+    let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
+    let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
+    let bridgeCompositeRaf = 0;
 
     let includeMicAudio = true;
     let enableRecordCountdown = true;
@@ -265,6 +268,7 @@
     const stopCameraStream = () => {
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = 0;
+        stopBridgeComposite();
         if (cameraStream) {
             for (const track of cameraStream.getTracks()) track.stop();
         }
@@ -423,6 +427,88 @@
         await ensureCameraStream();
         if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
         cameraRenderRaf = requestAnimationFrame(drawCameraFrame);
+    };
+
+    const stopBridgeComposite = () => {
+        if (bridgeCompositeRaf) cancelAnimationFrame(bridgeCompositeRaf);
+        bridgeCompositeRaf = 0;
+        bridgeCompositeCtx = null;
+        bridgeCompositeCanvas = null;
+    };
+
+    const drawRoundRectPathOn = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        c.beginPath();
+        c.moveTo(x + rr, y);
+        c.arcTo(x + w, y, x + w, y + h, rr);
+        c.arcTo(x + w, y + h, x, y + h, rr);
+        c.arcTo(x, y + h, x, y, rr);
+        c.arcTo(x, y, x + w, y, rr);
+        c.closePath();
+    };
+
+    const startBridgeCompositeLoop = async (sourceCanvas: HTMLCanvasElement) => {
+        await ensureCameraStream();
+
+        const out = document.createElement("canvas");
+        out.width = sourceCanvas.width || Math.max(2, sourceCanvas.clientWidth);
+        out.height = sourceCanvas.height || Math.max(2, sourceCanvas.clientHeight);
+        const outCtx = out.getContext("2d");
+        if (!outCtx) throw new Error("composite ctx unavailable");
+
+        bridgeCompositeCanvas = out;
+        bridgeCompositeCtx = outCtx;
+
+        const tick = () => {
+            if (!bridgeCompositeCanvas || !bridgeCompositeCtx) return;
+
+            if (bridgeCompositeCanvas.width !== (sourceCanvas.width || bridgeCompositeCanvas.width)
+                || bridgeCompositeCanvas.height !== (sourceCanvas.height || bridgeCompositeCanvas.height)) {
+                bridgeCompositeCanvas.width = sourceCanvas.width || bridgeCompositeCanvas.width;
+                bridgeCompositeCanvas.height = sourceCanvas.height || bridgeCompositeCanvas.height;
+            }
+
+            const w = bridgeCompositeCanvas.width;
+            const h = bridgeCompositeCanvas.height;
+
+            bridgeCompositeCtx.clearRect(0, 0, w, h);
+            bridgeCompositeCtx.drawImage(sourceCanvas, 0, 0, w, h);
+
+            if (cameraVideoEl && showCameraInRecord) {
+                const size = Math.min(cameraSize, w * 0.5, h * 0.5);
+                const baseX = (cameraCorner === "br" || cameraCorner === "tr") ? (w - cameraMargin - size) : cameraMargin;
+                const baseY = (cameraCorner === "br" || cameraCorner === "bl") ? (h - cameraMargin - size) : cameraMargin;
+                const x = Math.max(0, Math.min(w - size, baseX + cameraOffsetX));
+                const y = Math.max(0, Math.min(h - size, baseY + cameraOffsetY));
+
+                bridgeCompositeCtx.save();
+                drawRoundRectPathOn(bridgeCompositeCtx, x, y, size, size, cameraRadius);
+                bridgeCompositeCtx.clip();
+                bridgeCompositeCtx.fillStyle = "#000";
+                bridgeCompositeCtx.fillRect(x, y, size, size);
+                if (cameraMirror) {
+                    bridgeCompositeCtx.translate(x + size, y);
+                    bridgeCompositeCtx.scale(-1, 1);
+                    bridgeCompositeCtx.drawImage(cameraVideoEl, 0, 0, size, size);
+                } else {
+                    bridgeCompositeCtx.drawImage(cameraVideoEl, x, y, size, size);
+                }
+                bridgeCompositeCtx.restore();
+
+                bridgeCompositeCtx.save();
+                drawRoundRectPathOn(bridgeCompositeCtx, x, y, size, size, cameraRadius);
+                bridgeCompositeCtx.strokeStyle = "rgba(255,255,255,0.8)";
+                bridgeCompositeCtx.lineWidth = 2;
+                bridgeCompositeCtx.stroke();
+                bridgeCompositeCtx.restore();
+            }
+
+            bridgeCompositeRaf = requestAnimationFrame(tick);
+        };
+
+        if (bridgeCompositeRaf) cancelAnimationFrame(bridgeCompositeRaf);
+        bridgeCompositeRaf = requestAnimationFrame(tick);
+        return out;
     };
 
     const saveProjectSnapshot = () => {
@@ -782,6 +868,7 @@
             if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             stopCameraStream();
+            stopBridgeComposite();
             stopMicStream();
             unmountExcalidrawBridge();
             recorder?.stop();
@@ -1520,7 +1607,17 @@
             isRecordingStarting = false;
             return;
         }
-        const canvasStream = recordingCanvas.captureStream(60);
+        let recordingSurface: HTMLCanvasElement = recordingCanvas;
+        if (useExcalidrawBridge && showCameraInRecord) {
+            try {
+                recordingSurface = await startBridgeCompositeLoop(recordingCanvas);
+            } catch (e) {
+                console.warn("bridge camera composite failed", e);
+                exportNotice = "摄像头叠加失败：将仅录制白板内容。";
+                exportNoticeLevel = "warn";
+            }
+        }
+        const canvasStream = recordingSurface.captureStream(60);
         const stream = new MediaStream();
         for (const t of canvasStream.getVideoTracks()) stream.addTrack(t);
 
@@ -1584,6 +1681,7 @@
             if (cameraRenderRaf) cancelAnimationFrame(cameraRenderRaf);
             cameraRenderRaf = 0;
             stopCameraStream();
+            stopBridgeComposite();
             stopMicStream();
 
             if (!chunks.length) {
@@ -1617,18 +1715,13 @@
             isRecordingStarting = false;
             return;
         }
-        if (showCameraInRecord) {
-            if (useExcalidrawBridge) {
-                exportNotice = "Excalidraw 桥接模式下暂不叠加摄像头画中画，将仅录制白板与音频。";
+        if (showCameraInRecord && !useExcalidrawBridge) {
+            try {
+                await startCameraRenderLoop();
+            } catch (e) {
+                console.error("camera start failed", e);
+                exportNotice = "摄像头开启失败：将仅录制白板内容。";
                 exportNoticeLevel = "warn";
-            } else {
-                try {
-                    await startCameraRenderLoop();
-                } catch (e) {
-                    console.error("camera start failed", e);
-                    exportNotice = "摄像头开启失败：将仅录制白板内容。";
-                    exportNoticeLevel = "warn";
-                }
             }
         }
         recordDuration = 0;

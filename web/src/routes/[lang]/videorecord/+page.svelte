@@ -474,17 +474,29 @@
         const tick = () => {
             if (!bridgeCompositeCanvas || !bridgeCompositeCtx) return;
 
-            if (bridgeCompositeCanvas.width !== (sourceCanvas.width || bridgeCompositeCanvas.width)
-                || bridgeCompositeCanvas.height !== (sourceCanvas.height || bridgeCompositeCanvas.height)) {
-                bridgeCompositeCanvas.width = sourceCanvas.width || bridgeCompositeCanvas.width;
-                bridgeCompositeCanvas.height = sourceCanvas.height || bridgeCompositeCanvas.height;
+            const liveSource = getRecordingCanvas() || sourceCanvas;
+            const srcW = liveSource.width || bridgeCompositeCanvas.width;
+            const srcH = liveSource.height || bridgeCompositeCanvas.height;
+
+            if (bridgeCompositeCanvas.width !== srcW || bridgeCompositeCanvas.height !== srcH) {
+                bridgeCompositeCanvas.width = srcW;
+                bridgeCompositeCanvas.height = srcH;
             }
 
             const w = bridgeCompositeCanvas.width;
             const h = bridgeCompositeCanvas.height;
 
             bridgeCompositeCtx.clearRect(0, 0, w, h);
-            bridgeCompositeCtx.drawImage(sourceCanvas, 0, 0, w, h);
+            try {
+                bridgeCompositeCtx.drawImage(liveSource, 0, 0, w, h);
+            } catch {
+                if (isRecording && !isRecordingStopping) {
+                    exportNotice = "白板画面暂不可用，正在等待恢复…";
+                    exportNoticeLevel = "warn";
+                }
+                bridgeCompositeRaf = requestAnimationFrame(tick);
+                return;
+            }
 
             if (cameraVideoEl && showCameraInRecord) {
                 const size = Math.min(cameraSize, w * 0.5, h * 0.5);

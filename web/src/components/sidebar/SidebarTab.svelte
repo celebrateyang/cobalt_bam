@@ -3,9 +3,10 @@
 
     import { t } from "$lib/i18n/translations";
 
-    export let tabName: string;
-    export let tabLink: string;
-    export let beta = false;
+export let tabName: string;
+export let tabLink: string;
+export let beta = false;
+export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = null;
 
     const firstTabPage = ["save", "remux", "settings"];
 
@@ -37,6 +38,7 @@
     class="sidebar-tab"
     class:active={isTabActive}
     href={tabLink}
+    data-sveltekit-preload-code={preloadCode ?? undefined}
     bind:this={tab}
     on:focus={() => showTab(tab)}
     aria-current={isTabActive ? "page" : undefined}

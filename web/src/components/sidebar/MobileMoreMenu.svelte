@@ -6,6 +6,7 @@
 
     import IconDotsVertical from "@tabler/icons-svelte/IconDotsVertical.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
+    import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
     import IconComet from "@tabler/icons-svelte/IconComet.svelte";
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
@@ -20,6 +21,12 @@
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
 
     $: menuItems = [
+        {
+            name: "videorecord",
+            icon: IconVideo,
+            link: `/${currentLang}/videorecord`,
+            label: $t("tabs.videorecord"),
+        },
         {
             name: "clipboard",
             icon: IconClipboard,
@@ -101,6 +108,9 @@
             {#each menuItems as item}
                 <a
                     href={item.link}
+                    data-sveltekit-preload-code={item.name === "videorecord"
+                        ? "off"
+                        : undefined}
                     class="menu-item"
                     role="menuitem"
                     on:click={close}

@@ -1,5 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { page } from "$app/stores";
+    import env from "$lib/env";
     import "@excalidraw/excalidraw/index.css";
 
     let canvasEl: HTMLCanvasElement;
@@ -19,6 +21,49 @@
     let bridgeViewportVersion = 0;
     let unsubscribeBridgeScroll: (() => void) | null = null;
     const excalidrawSessionName = `videorecord-bridge-${Date.now()}`;
+    const fallbackHost = env.HOST || "freesavevideo.online";
+    const normalizePathname = (pathname: string) => {
+        if (pathname !== "/" && pathname.endsWith("/")) {
+            return pathname.replace(/\/+$/, "");
+        }
+        return pathname;
+    };
+    const videorecordSeo = {
+        en: {
+            title: "Whiteboard Video Recorder - Record Slide Tutorials Online | freesavevideo",
+            description:
+                "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required.",
+            keywords:
+                "whiteboard recorder,slide recorder,online video recorder,excalidraw recorder,tutorial recording",
+            appName: "Whiteboard Video Recorder",
+        },
+        zh: {
+            title: "Whiteboard Video Recorder - Record Slide Tutorials Online | freesavevideo",
+            description:
+                "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required.",
+            keywords:
+                "whiteboard recorder,slide recorder,online video recorder,excalidraw recorder,tutorial recording",
+            appName: "Whiteboard Video Recorder",
+        },
+    } as const;
+    type VideorecordSeoLocale = keyof typeof videorecordSeo;
+    $: pageLang = ($page.params?.lang || "en").toLowerCase();
+    $: seoLocale = (pageLang.startsWith("zh") ? "zh" : "en") as VideorecordSeoLocale;
+    $: seoMeta = videorecordSeo[seoLocale] ?? videorecordSeo.en;
+    $: seoTitle = seoMeta.title;
+    $: seoDescription = seoMeta.description;
+    $: seoKeywords = seoMeta.keywords;
+    $: canonicalPathname = normalizePathname($page.url.pathname);
+    $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
+    $: seoJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: seoMeta.appName,
+        url: canonicalUrl,
+        applicationCategory: "MultimediaApplication",
+        operatingSystem: "Web Browser",
+        description: seoDescription,
+    };
 
     let drawing = false;
     let lastX = 0;
@@ -3552,7 +3597,18 @@
 />
 
 <svelte:head>
-    <title>Video Record Whiteboard</title>
+    <title>{seoTitle}</title>
+    <meta name="description" content={seoDescription} />
+    <meta name="keywords" content={seoKeywords} />
+    <meta property="og:title" content={seoTitle} />
+    <meta property="og:description" content={seoDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={`https://${fallbackHost}/og.png`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={seoTitle} />
+    <meta name="twitter:description" content={seoDescription} />
+    <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
+    {@html `<script type="application/ld+json">${JSON.stringify(seoJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 
 <div class="page">

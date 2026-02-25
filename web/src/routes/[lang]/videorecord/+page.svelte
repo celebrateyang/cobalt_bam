@@ -16,6 +16,8 @@
         | ((elementsSkeleton: any[] | null, opts?: any) => any[])
         | null = null;
     let bridgeAppStateGuard = false;
+    let bridgeViewportVersion = 0;
+    let unsubscribeBridgeScroll: (() => void) | null = null;
     const excalidrawSessionName = `videorecord-bridge-${Date.now()}`;
 
     let drawing = false;
@@ -253,9 +255,12 @@
     let cameraDragStartY = 0;
     let cameraDragBaseX = 0;
     let cameraDragBaseY = 0;
-    let cameraDragSurfaceW = 0;
-    let cameraDragSurfaceH = 0;
-    let cameraDragSize = 0;
+    let cameraDragOriginBaseX = 0;
+    let cameraDragOriginBaseY = 0;
+    let cameraDragMinX = 0;
+    let cameraDragMaxX = 0;
+    let cameraDragMinY = 0;
+    let cameraDragMaxY = 0;
 
     let includeMicAudio = true;
     let enableRecordCountdown = true;
@@ -277,6 +282,7 @@
     let cursorInside = false;
     let cursorX = 0;
     let cursorY = 0;
+    let activeSlideFocusStyle = "";
 
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText =
@@ -364,46 +370,32 @@
         micAudioCtx = null;
     };
 
+    type CameraSurfaceRect = {
+        width: number;
+        height: number;
+    };
+
+    type CameraConstraintRect = {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+    };
+
     type CameraPlacement = {
         size: number;
         baseX: number;
         baseY: number;
         x: number;
         y: number;
+        minX: number;
+        maxX: number;
+        minY: number;
+        maxY: number;
+        bounds: CameraConstraintRect;
     };
 
-    const getCameraBasePosition = (
-        surfaceW: number,
-        surfaceH: number,
-        size: number,
-    ) => {
-        const baseX =
-            cameraCorner === "br" || cameraCorner === "tr"
-                ? surfaceW - cameraMargin - size
-                : cameraMargin;
-        const baseY =
-            cameraCorner === "br" || cameraCorner === "bl"
-                ? surfaceH - cameraMargin - size
-                : cameraMargin;
-        return { baseX, baseY };
-    };
-
-    const resolveCameraPlacement = (
-        surfaceW: number,
-        surfaceH: number,
-    ): CameraPlacement => {
-        const safeW = Math.max(1, surfaceW);
-        const safeH = Math.max(1, surfaceH);
-        const size = Math.min(cameraSize, safeW * 0.5, safeH * 0.5);
-        const { baseX, baseY } = getCameraBasePosition(safeW, safeH, size);
-        const maxX = Math.max(0, safeW - size);
-        const maxY = Math.max(0, safeH - size);
-        const x = Math.max(0, Math.min(maxX, baseX + cameraOffsetX));
-        const y = Math.max(0, Math.min(maxY, baseY + cameraOffsetY));
-        return { size, baseX, baseY, x, y };
-    };
-
-    const getCameraSurfaceSize = () => {
+    const getCameraSurfaceSize = (): CameraSurfaceRect | null => {
         const source = getRecordingCanvas();
         if (source) {
             const rect = source.getBoundingClientRect();
@@ -418,6 +410,148 @@
             }
         }
         return null;
+    };
+
+    const findFrameElement = (elements: any[] | undefined) => {
+        if (!Array.isArray(elements)) return null;
+        return (
+            elements.find(
+                (element) =>
+                    !element?.isDeleted &&
+                    (element?.type === "frame" ||
+                        element?.type === "magicframe"),
+            ) ?? null
+        );
+    };
+
+    const getActiveSlideFrameBoundsInCss = (): CameraConstraintRect | null => {
+        const sceneElements = excalidrawApi?.getSceneElements?.() as
+            | any[]
+            | undefined;
+        const frame =
+            findFrameElement(sceneElements) ??
+            findFrameElement(bridgeSlides[activeSlide]?.elements);
+        if (!frame) return null;
+
+        const appState = (excalidrawApi?.getAppState?.() ?? {}) as Record<
+            string,
+            unknown
+        >;
+        const zoomRaw = appState.zoom as { value?: unknown } | number | null;
+        const zoom =
+            typeof zoomRaw === "number"
+                ? zoomRaw
+                : typeof zoomRaw?.value === "number"
+                  ? zoomRaw.value
+                  : 1;
+        const scrollX =
+            typeof appState.scrollX === "number" ? appState.scrollX : 0;
+        const scrollY =
+            typeof appState.scrollY === "number" ? appState.scrollY : 0;
+
+        const x = Number(frame.x) || 0;
+        const y = Number(frame.y) || 0;
+        const width = Math.max(1, Number(frame.width) || 0);
+        const height = Math.max(1, Number(frame.height) || 0);
+
+        const left = (x + scrollX) * zoom;
+        const top = (y + scrollY) * zoom;
+        const w = width * zoom;
+        const h = height * zoom;
+        if (
+            !Number.isFinite(left) ||
+            !Number.isFinite(top) ||
+            !Number.isFinite(w) ||
+            !Number.isFinite(h) ||
+            w <= 0 ||
+            h <= 0
+        ) {
+            return null;
+        }
+        return { left, top, width: w, height: h };
+    };
+
+    const getCameraConstraintRect = (
+        surfaceW: number,
+        surfaceH: number,
+    ): CameraConstraintRect => {
+        const safeW = Math.max(1, surfaceW);
+        const safeH = Math.max(1, surfaceH);
+        const full: CameraConstraintRect = {
+            left: 0,
+            top: 0,
+            width: safeW,
+            height: safeH,
+        };
+        const frameCss = getActiveSlideFrameBoundsInCss();
+        if (!frameCss) return full;
+
+        const cssSurface = getCameraSurfaceSize();
+        const scaleX =
+            cssSurface && cssSurface.width > 0 ? safeW / cssSurface.width : 1;
+        const scaleY =
+            cssSurface && cssSurface.height > 0 ? safeH / cssSurface.height : 1;
+
+        const left = frameCss.left * scaleX;
+        const top = frameCss.top * scaleY;
+        const right = (frameCss.left + frameCss.width) * scaleX;
+        const bottom = (frameCss.top + frameCss.height) * scaleY;
+
+        const clampedLeft = Math.max(0, Math.min(safeW - 1, left));
+        const clampedTop = Math.max(0, Math.min(safeH - 1, top));
+        const clampedRight = Math.max(clampedLeft + 1, Math.min(safeW, right));
+        const clampedBottom = Math.max(clampedTop + 1, Math.min(safeH, bottom));
+
+        return {
+            left: clampedLeft,
+            top: clampedTop,
+            width: clampedRight - clampedLeft,
+            height: clampedBottom - clampedTop,
+        };
+    };
+
+    const resolveCameraPlacement = (
+        surfaceW: number,
+        surfaceH: number,
+    ): CameraPlacement => {
+        const safeW = Math.max(1, surfaceW);
+        const safeH = Math.max(1, surfaceH);
+        const bounds = getCameraConstraintRect(safeW, safeH);
+
+        const maxAllowed = Math.max(8, Math.min(bounds.width, bounds.height));
+        const preferred = Math.min(
+            cameraSize,
+            bounds.width * 0.5,
+            bounds.height * 0.5,
+        );
+        const size = Math.min(maxAllowed, Math.max(24, preferred));
+
+        const marginX = Math.min(
+            cameraMargin,
+            Math.max(0, (bounds.width - size) / 2),
+        );
+        const marginY = Math.min(
+            cameraMargin,
+            Math.max(0, (bounds.height - size) / 2),
+        );
+
+        const baseX =
+            cameraCorner === "br" || cameraCorner === "tr"
+                ? bounds.left + bounds.width - marginX - size
+                : bounds.left + marginX;
+        const baseY =
+            cameraCorner === "br" || cameraCorner === "bl"
+                ? bounds.top + bounds.height - marginY - size
+                : bounds.top + marginY;
+
+        const minX = bounds.left;
+        const maxX = Math.max(bounds.left, bounds.left + bounds.width - size);
+        const minY = bounds.top;
+        const maxY = Math.max(bounds.top, bounds.top + bounds.height - size);
+
+        const x = Math.max(minX, Math.min(maxX, baseX + cameraOffsetX));
+        const y = Math.max(minY, Math.min(maxY, baseY + cameraOffsetY));
+        return { size, baseX, baseY, x, y, minX, maxX, minY, maxY, bounds };
     };
 
     const clampCameraOverlayIntoSlide = () => {
@@ -447,9 +581,12 @@
         cameraDragStartY = e.clientY;
         cameraDragBaseX = placement.x;
         cameraDragBaseY = placement.y;
-        cameraDragSurfaceW = surface.width;
-        cameraDragSurfaceH = surface.height;
-        cameraDragSize = placement.size;
+        cameraDragOriginBaseX = placement.baseX;
+        cameraDragOriginBaseY = placement.baseY;
+        cameraDragMinX = placement.minX;
+        cameraDragMaxX = placement.maxX;
+        cameraDragMinY = placement.minY;
+        cameraDragMaxY = placement.maxY;
         e.preventDefault();
         e.stopPropagation();
     };
@@ -1013,20 +1150,20 @@
         };
     };
 
-    const findSceneFrameId = (elements: any[] | undefined) => {
-        if (!Array.isArray(elements)) return null;
-        const frame = elements.find(
-            (element) =>
-                !element?.isDeleted &&
-                (element?.type === "frame" || element?.type === "magicframe"),
-        );
-        return frame?.id ?? null;
-    };
-
-    const selectSceneFrame = (scene: BridgeSlideScene) => {
+    const selectSceneFrame = (
+        scene: BridgeSlideScene,
+        options?: {
+            focusViewport?: boolean;
+            animateViewport?: boolean;
+            viewportZoomFactor?: number;
+        },
+    ) => {
         if (!excalidrawApi) return;
-        const frameId = findSceneFrameId(scene.elements);
-        if (!frameId) return;
+        const frame = findFrameElement(scene.elements);
+        const frameId = frame?.id ?? null;
+        if (!frame || !frameId) return;
+
+        excalidrawApi.setActiveTool?.({ type: "selection" });
 
         const currentAppState = normalizeBridgeAppState(
             excalidrawApi.getAppState?.() ?? {},
@@ -1039,16 +1176,29 @@
                 editingFrame: null,
             },
         });
+
+        if (options?.focusViewport) {
+            excalidrawApi.scrollToContent?.([frame], {
+                fitToViewport: true,
+                viewportZoomFactor: options.viewportZoomFactor ?? 0.92,
+                animate: options.animateViewport ?? false,
+                duration: 260,
+            });
+        }
     };
 
-    const selectCurrentSlideFrame = () => {
+    const selectCurrentSlideFrame = (options?: {
+        focusViewport?: boolean;
+        animateViewport?: boolean;
+        viewportZoomFactor?: number;
+    }) => {
         const activeScene = getBridgeSceneForIndex(activeSlide);
-        requestAnimationFrame(() => selectSceneFrame(activeScene));
+        requestAnimationFrame(() => selectSceneFrame(activeScene, options));
     };
 
     const applyBridgeScene = (
         scene: BridgeSlideScene,
-        options?: { selectFrame?: boolean },
+        options?: { selectFrame?: boolean; focusFrame?: boolean },
     ) => {
         if (!excalidrawApi) return;
         const nextAppState = normalizeBridgeAppState(scene.appState);
@@ -1057,8 +1207,15 @@
             appState: nextAppState,
             files: scene.files,
         });
+        bridgeViewportVersion += 1;
         if (options?.selectFrame) {
-            requestAnimationFrame(() => selectSceneFrame(scene));
+            requestAnimationFrame(() =>
+                selectSceneFrame(scene, {
+                    focusViewport: options.focusFrame,
+                    animateViewport: false,
+                    viewportZoomFactor: 0.92,
+                }),
+            );
         }
     };
 
@@ -1080,11 +1237,13 @@
     const loadSlide = (index: number) => {
         if (index < 0 || index >= slides.length) return;
         activeSlide = index;
+        bridgeViewportVersion += 1;
 
         const scene = getBridgeSceneForIndex(index);
         requestAnimationFrame(() =>
             applyBridgeScene(scene, {
                 selectFrame: isRecording,
+                focusFrame: isRecording,
             }),
         );
     };
@@ -1331,6 +1490,8 @@
     };
 
     const unmountExcalidrawBridge = () => {
+        if (unsubscribeBridgeScroll) unsubscribeBridgeScroll();
+        unsubscribeBridgeScroll = null;
         if (cleanupExcalidraw) cleanupExcalidraw();
         cleanupExcalidraw = null;
         excalidrawMounted = false;
@@ -1404,6 +1565,16 @@
                     },
                     excalidrawAPI: (api: any) => {
                         excalidrawApi = api;
+                        if (unsubscribeBridgeScroll) unsubscribeBridgeScroll();
+                        unsubscribeBridgeScroll =
+                            excalidrawApi.onScrollChange?.(() => {
+                                bridgeViewportVersion += 1;
+                                if (isRecording && showCameraInRecord) {
+                                    requestAnimationFrame(() =>
+                                        clampCameraOverlayIntoSlide(),
+                                    );
+                                }
+                            }) ?? null;
                         const scene = getBridgeSceneForIndex(activeSlide);
                         requestAnimationFrame(() => applyBridgeScene(scene));
                         window.setTimeout(() => {
@@ -1445,6 +1616,7 @@
                             files,
                         });
                         bridgeSlides = bridgeNext;
+                        bridgeViewportVersion += 1;
                         const source = getRecordingCanvas();
                         if (!source) return;
                         requestAnimationFrame(() => {
@@ -2302,7 +2474,11 @@
     const triggerRecordStart = async () => {
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
-        selectCurrentSlideFrame();
+        selectCurrentSlideFrame({
+            focusViewport: true,
+            animateViewport: true,
+            viewportZoomFactor: 0.92,
+        });
         // 倒计时期间预先请求摄像头权限，避免录制开始时权限弹窗导致画面缺失
         if (showCameraInRecord) {
             try {
@@ -2522,7 +2698,11 @@
             recorder.start(300);
             isRecording = true;
             isRecordPaused = false;
-            selectCurrentSlideFrame();
+            selectCurrentSlideFrame({
+                focusViewport: true,
+                animateViewport: false,
+                viewportZoomFactor: 0.92,
+            });
             const hasAudioTrack = stream.getAudioTracks().length > 0;
             exportNotice = hasAudioTrack
                 ? "录制已开始（含麦克风）。"
@@ -2697,17 +2877,16 @@
         if (draggingCameraOverlay) {
             const dx = e.clientX - cameraDragStartX;
             const dy = e.clientY - cameraDragStartY;
-            const maxX = Math.max(0, cameraDragSurfaceW - cameraDragSize);
-            const maxY = Math.max(0, cameraDragSurfaceH - cameraDragSize);
-            const nextX = Math.max(0, Math.min(maxX, cameraDragBaseX + dx));
-            const nextY = Math.max(0, Math.min(maxY, cameraDragBaseY + dy));
-            const { baseX, baseY } = getCameraBasePosition(
-                cameraDragSurfaceW,
-                cameraDragSurfaceH,
-                cameraDragSize,
+            const nextX = Math.max(
+                cameraDragMinX,
+                Math.min(cameraDragMaxX, cameraDragBaseX + dx),
             );
-            cameraOffsetX = Math.round(nextX - baseX);
-            cameraOffsetY = Math.round(nextY - baseY);
+            const nextY = Math.max(
+                cameraDragMinY,
+                Math.min(cameraDragMaxY, cameraDragBaseY + dy),
+            );
+            cameraOffsetX = Math.round(nextX - cameraDragOriginBaseX);
+            cameraOffsetY = Math.round(nextY - cameraDragOriginBaseY);
         }
     };
 
@@ -2747,6 +2926,27 @@
             }
         } else if (cameraPreviewEl.srcObject) {
             cameraPreviewEl.srcObject = null;
+        }
+    }
+
+    $: {
+        const focusMode =
+            isRecording || isRecordingStarting || recordCountdownLeft > 0;
+        bridgeViewportVersion;
+        activeSlide;
+        if (!focusMode) {
+            activeSlideFocusStyle = "";
+        } else {
+            const surface = getCameraSurfaceSize();
+            if (!surface) {
+                activeSlideFocusStyle = "";
+            } else {
+                const bounds = getCameraConstraintRect(
+                    surface.width,
+                    surface.height,
+                );
+                activeSlideFocusStyle = `left:${Math.round(bounds.left)}px; top:${Math.round(bounds.top)}px; width:${Math.round(bounds.width)}px; height:${Math.round(bounds.height)}px;`;
+            }
         }
     }
 
@@ -3301,6 +3501,13 @@
 
         <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
 
+        {#if activeSlideFocusStyle}
+            <div
+                class="slide-focus-overlay"
+                class:recording={isRecording}
+                style={activeSlideFocusStyle}
+            ></div>
+        {/if}
 
         {#if isRecording && showCameraInRecord && cameraStream}
             <div
@@ -4052,6 +4259,20 @@
         ) !important;
         margin-top: 0 !important;
         z-index: 23 !important;
+    }
+
+    .slide-focus-overlay {
+        position: absolute;
+        border: 2px solid #16a34a;
+        border-radius: 8px;
+        box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2);
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    .slide-focus-overlay.recording {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.24);
     }
 
     .snap-guide-v {

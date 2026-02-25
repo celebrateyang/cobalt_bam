@@ -6,12 +6,15 @@
     let boardWrapEl: HTMLDivElement | null = null;
     let ctx: CanvasRenderingContext2D | null = null;
 
-    let useExcalidrawBridge = true;
+    const useExcalidrawBridge = true;
     let excalidrawHostEl: HTMLDivElement | null = null;
     let cleanupExcalidraw: (() => void) | null = null;
     let excalidrawMountToken = 0;
     let excalidrawMounted = false;
     let excalidrawApi: any = null;
+    let bridgeConvertElements:
+        | ((elementsSkeleton: any[] | null, opts?: any) => any[])
+        | null = null;
     let bridgeAppStateGuard = false;
     const excalidrawSessionName = `videorecord-bridge-${Date.now()}`;
 
@@ -836,6 +839,106 @@
 
     $: boardAspectRatio = ratioToNumber(aspectRatio);
 
+    const hasSceneFrameElement = (elements: any[] | undefined) =>
+        Array.isArray(elements) &&
+        elements.some(
+            (element) =>
+                element?.type === "frame" || element?.type === "magicframe",
+        );
+
+    const getDefaultBridgeFrameRect = () => {
+        const boardRect = boardWrapEl?.getBoundingClientRect();
+        const viewportW =
+            boardRect?.width ??
+            (typeof window !== "undefined"
+                ? Math.max(840, window.innerWidth - 280)
+                : 1280);
+        const viewportH =
+            boardRect?.height ??
+            (typeof window !== "undefined"
+                ? Math.max(520, window.innerHeight - 220)
+                : 720);
+        const ratio = ratioToNumber(aspectRatio);
+
+        const horizontalPadding = Math.max(48, viewportW * 0.08);
+        const topInset = Math.max(132, viewportH * 0.14);
+        const bottomInset = 36;
+
+        let width = Math.max(420, viewportW - horizontalPadding * 2);
+        width = Math.min(width, Math.max(420, viewportW - 24));
+        let height = width / ratio;
+
+        const maxHeight = Math.max(220, viewportH - topInset - bottomInset);
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height * ratio;
+        }
+
+        return {
+            x: Math.round((viewportW - width) / 2),
+            y: Math.round(topInset),
+            width: Math.round(width),
+            height: Math.round(height),
+        };
+    };
+
+    const createDefaultBridgeFrameElement = (slideIndex: number) => {
+        if (!bridgeConvertElements) return null;
+
+        const rect = getDefaultBridgeFrameRect();
+        const appState = (excalidrawApi?.getAppState?.() ?? {}) as Record<
+            string,
+            unknown
+        >;
+        const scrollX =
+            typeof appState.scrollX === "number" ? appState.scrollX : 0;
+        const scrollY =
+            typeof appState.scrollY === "number" ? appState.scrollY : 0;
+
+        const [frame] = bridgeConvertElements(
+            [
+                {
+                    type: "frame",
+                    x: rect.x - scrollX,
+                    y: rect.y - scrollY,
+                    width: rect.width,
+                    height: rect.height,
+                    children: [],
+                    name: `Slide ${slideIndex + 1}`,
+                },
+            ],
+            { regenerateIds: true },
+        );
+        return frame ?? null;
+    };
+
+    const ensureSceneHasDefaultFrame = (
+        scene: BridgeSlideScene,
+        slideIndex: number,
+    ): BridgeSlideScene => {
+        const nextElements = Array.isArray(scene.elements) ? scene.elements : [];
+        if (hasSceneFrameElement(nextElements)) {
+            return {
+                elements: nextElements,
+                appState: scene.appState ?? {},
+                files: scene.files ?? {},
+            };
+        }
+        const defaultFrame = createDefaultBridgeFrameElement(slideIndex);
+        if (!defaultFrame) {
+            return {
+                elements: nextElements,
+                appState: scene.appState ?? {},
+                files: scene.files ?? {},
+            };
+        }
+        return {
+            elements: [defaultFrame, ...nextElements],
+            appState: scene.appState ?? {},
+            files: scene.files ?? {},
+        };
+    };
+
     const fillCanvasBg = () => {
         if (!ctx || !canvasEl) return;
         const rect = canvasEl.getBoundingClientRect();
@@ -847,6 +950,21 @@
         if (typeof structuredClone === "function")
             return structuredClone(scene);
         return JSON.parse(JSON.stringify(scene));
+    };
+
+    const getBridgeSceneForIndex = (index: number) => {
+        const baseScene = bridgeSlides[index] ?? {
+            elements: [],
+            appState: {},
+            files: {},
+        };
+        const ensuredScene = ensureSceneHasDefaultFrame(baseScene, index);
+        if (!hasSceneFrameElement(baseScene.elements)) {
+            const bridgeNext = [...bridgeSlides];
+            bridgeNext[index] = cloneBridgeScene(ensuredScene);
+            bridgeSlides = bridgeNext;
+        }
+        return ensuredScene;
     };
 
     const toPersistedBridgeAppState = (
@@ -914,47 +1032,17 @@
             slides = next;
         }
 
-        if (useExcalidrawBridge) {
-            const bridgeNext = [...bridgeSlides];
-            bridgeNext[activeSlide] = cloneBridgeScene(captureBridgeScene());
-            bridgeSlides = bridgeNext;
-            return;
-        }
+        const bridgeNext = [...bridgeSlides];
+        bridgeNext[activeSlide] = cloneBridgeScene(captureBridgeScene());
+        bridgeSlides = bridgeNext;
     };
 
     const loadSlide = (index: number) => {
         if (index < 0 || index >= slides.length) return;
         activeSlide = index;
 
-        if (useExcalidrawBridge) {
-            const scene = bridgeSlides[index] ?? {
-                elements: [],
-                appState: {},
-                files: {},
-            };
-            requestAnimationFrame(() => applyBridgeScene(scene));
-            return;
-        }
-
-        if (!ctx || !canvasEl) return;
-        const data = slides[index];
-        if (!data) {
-            fillCanvasBg();
-            undoStack = [];
-            redoStack = [];
-            pushHistorySnapshot();
-            return;
-        }
-        const img = new Image();
-        img.onload = () => {
-            const rect = canvasEl.getBoundingClientRect();
-            fillCanvasBg();
-            ctx?.drawImage(img, 0, 0, rect.width, rect.height);
-            undoStack = [];
-            redoStack = [];
-            pushHistorySnapshot();
-        };
-        img.src = data;
+        const scene = getBridgeSceneForIndex(index);
+        requestAnimationFrame(() => applyBridgeScene(scene));
     };
 
     const pushHistorySnapshot = () => {
@@ -1015,11 +1103,7 @@
         activeSlide = slides.length - 1;
         undoStack = [];
         redoStack = [];
-        if (useExcalidrawBridge) {
-            requestAnimationFrame(() => loadSlide(activeSlide));
-        } else {
-            requestAnimationFrame(() => fillCanvasBg());
-        }
+        requestAnimationFrame(() => loadSlide(activeSlide));
     };
 
     const duplicateSlide = () => {
@@ -1049,11 +1133,7 @@
             slides = [""];
             bridgeSlides = [{ elements: [], appState: {}, files: {} }];
             activeSlide = 0;
-            if (useExcalidrawBridge) {
-                requestAnimationFrame(() => loadSlide(0));
-            } else {
-                requestAnimationFrame(() => fillCanvasBg());
-            }
+            requestAnimationFrame(() => loadSlide(0));
             return;
         }
 
@@ -1211,6 +1291,7 @@
         cleanupExcalidraw = null;
         excalidrawMounted = false;
         excalidrawApi = null;
+        bridgeConvertElements = null;
     };
 
     const clearExcalidrawPersistedUiState = () => {
@@ -1234,8 +1315,7 @@
     };
 
     const mountExcalidrawBridge = async () => {
-        if (!useExcalidrawBridge || !excalidrawHostEl || excalidrawMounted)
-            return;
+        if (!excalidrawHostEl || excalidrawMounted) return;
         const token = ++excalidrawMountToken;
 
         try {
@@ -1243,12 +1323,18 @@
             const React = await import("react");
             const ReactDOMClient = await import("react-dom/client");
             const pkg = await import("@excalidraw/excalidraw");
+            const convertFromPkg = (
+                pkg as {
+                    convertToExcalidrawElements?: (
+                        elementsSkeleton: any[] | null,
+                        opts?: any,
+                    ) => any[];
+                }
+            ).convertToExcalidrawElements;
+            bridgeConvertElements =
+                typeof convertFromPkg === "function" ? convertFromPkg : null;
 
-            if (
-                token !== excalidrawMountToken ||
-                !useExcalidrawBridge ||
-                !excalidrawHostEl
-            )
+            if (token !== excalidrawMountToken || !excalidrawHostEl)
                 return;
 
             const root = ReactDOMClient.createRoot(excalidrawHostEl);
@@ -1274,11 +1360,7 @@
                     },
                     excalidrawAPI: (api: any) => {
                         excalidrawApi = api;
-                        const scene = bridgeSlides[activeSlide] ?? {
-                            elements: [],
-                            appState: {},
-                            files: {},
-                        };
+                        const scene = getBridgeSceneForIndex(activeSlide);
                         requestAnimationFrame(() => applyBridgeScene(scene));
                         window.setTimeout(() => {
                             if (!excalidrawApi) return;
@@ -1296,11 +1378,7 @@
                         appState: Record<string, unknown>,
                         files: Record<string, unknown>,
                     ) => {
-                        if (
-                            !useExcalidrawBridge ||
-                            activeSlide < 0 ||
-                            activeSlide >= slides.length
-                        )
+                        if (activeSlide < 0 || activeSlide >= slides.length)
                             return;
 
                         const normalized = normalizeBridgeAppState(appState);
@@ -2083,7 +2161,7 @@
     };
 
     const getRecordingCanvas = () => {
-        if (useExcalidrawBridge && excalidrawHostEl) {
+        if (excalidrawHostEl) {
             const canvases = Array.from(
                 excalidrawHostEl.querySelectorAll("canvas"),
             ) as HTMLCanvasElement[];
@@ -2232,7 +2310,7 @@
             return;
         }
         let recordingSurface: HTMLCanvasElement = recordingCanvas;
-        if (useExcalidrawBridge && showCameraInRecord) {
+        if (showCameraInRecord) {
             try {
                 recordingSurface =
                     await startBridgeCompositeLoop(recordingCanvas);
@@ -2410,15 +2488,6 @@
             stopMicStream();
             isRecordingStarting = false;
             return;
-        }
-        if (showCameraInRecord && !useExcalidrawBridge) {
-            try {
-                await startCameraRenderLoop();
-            } catch (e) {
-                console.error("camera start failed", e);
-                exportNotice = "摄像头开启失败：将仅录制白板内容。";
-                exportNoticeLevel = "warn";
-            }
         }
         recordDuration = 0;
         timer = setInterval(() => {
@@ -3087,25 +3156,8 @@
         return Number.isFinite(n) ? n : fallback;
     };
 
-    $: selectionCount = useExcalidrawBridge
-        ? 0
-        : selectedFrameIds.length + selectedEmbedIds.length;
-    $: toolLabel = useExcalidrawBridge
-        ? "EX"
-        : (
-              {
-                  select: "🖱️",
-                  pen: "✏️",
-                  eraser: "🧽",
-                  text: "T",
-                  line: "／",
-                  rect: "▭",
-                  circle: "◯",
-                  laser: "🔦",
-                  frame: "▣",
-                  webembed: "🌐",
-              } as Record<string, string>
-          )[tool] || tool;
+    $: selectionCount = 0;
+    $: toolLabel = "EX";
 
     $: saveAgeText = lastProjectSaveAt
         ? `${Math.max(0, Math.floor((Date.now() - lastProjectSaveAt) / 1000))}s`
@@ -3124,12 +3176,8 @@
                 ? "crosshair"
                 : "crosshair";
 
-    $: if (useExcalidrawBridge && excalidrawHostEl) {
+    $: if (excalidrawHostEl) {
         void mountExcalidrawBridge();
-    }
-
-    $: if (!useExcalidrawBridge) {
-        unmountExcalidrawBridge();
     }
 
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -3146,151 +3194,10 @@
     };
 
     const onGlobalKeydown = (e: KeyboardEvent) => {
-        if (textEditing) return;
-
-        if (useExcalidrawBridge) {
-            if (e.code === "Space" || e.key.toLowerCase() === "p") {
-                e.preventDefault();
-                if (isRecording) stopRecord();
-                else void triggerRecordStart();
-                return;
-            }
-            if (e.key.toLowerCase() === "k") {
-                e.preventDefault();
-                if (isRecording) togglePauseRecord();
-                return;
-            }
-            return;
-        }
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
-            e.preventDefault();
-            if (e.shiftKey) redo();
-            else undo();
-            return;
-        }
-
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
-            e.preventDefault();
-            redo();
-            return;
-        }
-
-        if (
-            e.target instanceof HTMLInputElement ||
-            e.target instanceof HTMLTextAreaElement ||
-            e.target instanceof HTMLSelectElement
-        ) {
-            return;
-        }
-
-        if (e.key === "Delete" || e.key === "Backspace") {
-            if (selectedFrameIds.length) {
-                for (const id of [...selectedFrameIds]) removeFrame(id);
-                selectedFrameIds = [];
-                selectedFrameId = null;
-                return;
-            }
-            if (selectedEmbedIds.length) {
-                for (const id of [...selectedEmbedIds]) removeWebEmbed(id);
-                selectedEmbedIds = [];
-                selectedEmbedId = null;
-                return;
-            }
-        }
-
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") {
-            e.preventDefault();
-            selectAllVisibleObjects();
-            return;
-        }
-
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c") {
-            e.preventDefault();
-            copySelection();
-            return;
-        }
-
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") {
-            e.preventDefault();
-            pasteSelection();
-            return;
-        }
-
-        if (
-            (e.metaKey || e.ctrlKey) &&
-            e.shiftKey &&
-            e.key.toLowerCase() === "d"
-        ) {
-            e.preventDefault();
-            duplicateSlide();
-            return;
-        }
-
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
-            e.preventDefault();
-            copySelection();
-            pasteSelection();
-            return;
-        }
-
-        if (e.key === "]") {
-            if (e.metaKey || e.ctrlKey) {
-                moveSelectionLayerStep(1);
-            } else {
-                moveSelectionLayer("front");
-            }
-            return;
-        }
-        if (e.key === "[") {
-            if (e.metaKey || e.ctrlKey) {
-                moveSelectionLayerStep(-1);
-            } else {
-                moveSelectionLayer("back");
-            }
-            return;
-        }
-
-        if (
-            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
-        ) {
-            const step = e.metaKey || e.ctrlKey ? 50 : e.shiftKey ? 10 : 1;
-            let dx = 0;
-            let dy = 0;
-            if (e.key === "ArrowUp") dy = -step;
-            if (e.key === "ArrowDown") dy = step;
-            if (e.key === "ArrowLeft") dx = -step;
-            if (e.key === "ArrowRight") dx = step;
-
-            if (selectedFrameIds.length || selectedEmbedIds.length) {
-                e.preventDefault();
-                nudgeSelected(dx, dy);
-                return;
-            }
-        }
-
-        if (e.key === "Escape") {
-            clearAllSelections();
-            return;
-        }
-
-        if (e.key.toLowerCase() === "h") {
-            if (selectedFrameIds.length || selectedEmbedIds.length) {
-                const anyVisible =
-                    frames.some(
-                        (f) => selectedFrameIds.includes(f.id) && !f.hidden,
-                    ) ||
-                    webEmbeds.some(
-                        (e) => selectedEmbedIds.includes(e.id) && !e.hidden,
-                    );
-                setSelectedVisibility(anyVisible);
-                return;
-            }
-        }
-
         if (e.code === "Space" || e.key.toLowerCase() === "p") {
             e.preventDefault();
             if (isRecording) stopRecord();
-            else triggerRecordStart();
+            else void triggerRecordStart();
             return;
         }
 
@@ -3299,15 +3206,6 @@
             if (isRecording) togglePauseRecord();
             return;
         }
-
-        const key = e.key.toLowerCase();
-        if (key === "v") tool = "pen";
-        if (key === "e") tool = "eraser";
-        if (key === "t") tool = "text";
-        if (key === "l") tool = "line";
-        if (key === "r") tool = "rect";
-        if (key === "c") tool = "circle";
-        if (key === "f") tool = "frame";
     };
 </script>
 
@@ -3343,7 +3241,7 @@
         <canvas
             bind:this={canvasEl}
             class="board"
-            style={`cursor:${boardCursor}; opacity:${useExcalidrawBridge ? 0 : 1};`}
+            style={`cursor:${boardCursor}; opacity:0;`}
             on:pointerenter={enterBoard}
             on:pointerdown={beginDraw}
             on:pointermove={draw}
@@ -3355,12 +3253,8 @@
             }}
         />
 
-        {#if useExcalidrawBridge}
-            <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
-        {/if}
+        <div class="excalidraw-host" bind:this={excalidrawHostEl}></div>
 
-        <!-- Slide 标题（对标 Excalicord） -->
-        <div class="slide-title-overlay">Slide {activeSlide + 1}</div>
 
         {#if isRecording && showCameraInRecord && cameraStream}
             <div
@@ -3380,39 +3274,6 @@
                     style={`transform:${cameraMirror ? "scaleX(-1)" : "none"};`}
                 ></video>
             </div>
-        {/if}
-
-        {#if !useExcalidrawBridge && showGuideV}
-            <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>
-        {/if}
-        {#if !useExcalidrawBridge && showGuideH}
-            <div class="snap-guide-h" style={`top:${guideHY}px;`}></div>
-        {/if}
-
-        {#if !useExcalidrawBridge && marqueeSelecting && marqueeW > 0 && marqueeH > 0}
-            <div
-                class="marquee-box"
-                style={`left:${marqueeX}px; top:${marqueeY}px; width:${marqueeW}px; height:${marqueeH}px;`}
-            ></div>
-        {/if}
-
-        {#if !useExcalidrawBridge && textEditing}
-            <textarea
-                bind:this={textAreaEl}
-                class="canvas-text-input"
-                style={`left:${textInputX}px; top:${textInputY}px; font-size:${textFontSize}px; color:${strokeColor};`}
-                bind:value={textInputValue}
-                placeholder="输入文字，Ctrl/Cmd+Enter 确认"
-                on:keydown={onTextInputKeydown}
-                on:blur={commitTextToCanvas}
-            />
-        {/if}
-
-        {#if !useExcalidrawBridge && tool === "laser" && cursorInside && laserPressed}
-            <div
-                class="laser-dot"
-                style={`left:${cursorX}px; top:${cursorY}px; width:${laserSize}px; height:${laserSize}px; background:${laserColor};`}
-            ></div>
         {/if}
 
         {#if showCursorHighlight && cursorInside && isRecording}
@@ -3442,18 +3303,6 @@
                 on:click={() => (showTeleprompter = !showTeleprompter)}
                 >📝</button
             >
-            {#if !useExcalidrawBridge}
-                <button
-                    class="floating-btn"
-                    on:click={saveProjectSnapshot}
-                    title="保存项目">💾</button
-                >
-                <button
-                    class="floating-btn"
-                    on:click={loadProjectSnapshot}
-                    title="恢复项目">⟲</button
-                >
-            {/if}
             <button
                 class="floating-btn"
                 on:click={() => (showShortcutsHelp = !showShortcutsHelp)}
@@ -3498,422 +3347,6 @@
             </div>
         {/if}
 
-        {#if !useExcalidrawBridge && draftingFrame}
-            <div
-                class="frame-item draft"
-                style={`left:${draftFrameX}px; top:${draftFrameY}px; width:${draftFrameW}px; height:${draftFrameH}px;`}
-            >
-                <div class="frame-head"><span>Frame</span></div>
-            </div>
-        {/if}
-
-        {#if !useExcalidrawBridge}{#each frames.filter((f) => !f.hidden) as frame (frame.id)}
-                <div
-                    class="frame-item"
-                    class:selected={selectedFrameIds.includes(frame.id)}
-                    class:locked={!!frame.locked}
-                    style={`left:${frame.x}px; top:${frame.y}px; width:${frame.w}px; height:${frame.h}px;`}
-                    role="button"
-                    aria-label="select frame"
-                    tabindex="-1"
-                    on:pointerdown={(e) =>
-                        toggleFrameSelection(frame.id, e.shiftKey)}
-                >
-                    <div
-                        class="frame-head"
-                        on:pointerdown={(e) => startDragFrame(frame.id, e)}
-                    >
-                        <span>{frame.title}</span>
-                        <div class="frame-actions">
-                            <button on:click={() => toggleFrameLock(frame.id)}
-                                >{frame.locked ? "🔒" : "🔓"}</button
-                            ><button
-                                on:click={() =>
-                                    updateFrameProps(frame.id, {
-                                        hidden: !frame.hidden,
-                                    })}>{frame.hidden ? "🙈" : "👁"}</button
-                            ><button
-                                on:click={() => moveFrameLayer(frame.id, -1)}
-                                >↓</button
-                            ><button
-                                on:click={() => moveFrameLayer(frame.id, 1)}
-                                >↑</button
-                            ><button on:click={() => removeFrame(frame.id)}
-                                >✕</button
-                            >
-                        </div>
-                    </div>
-                    <div
-                        class="frame-resize"
-                        on:pointerdown={(e) => startResizeFrame(frame.id, e)}
-                    ></div>
-                </div>
-            {/each}{/if}
-
-        {#if !useExcalidrawBridge && selectedFrameIds.length + selectedEmbedIds.length > 1}
-            <div class="floating-edit-panel group-panel">
-                <div class="edit-title">
-                    批量编辑（{selectedFrameIds.length +
-                        selectedEmbedIds.length}）
-                </div>
-                <div class="edit-grid">
-                    <button on:click={() => alignSelectedGroup("left")}
-                        >左</button
-                    >
-                    <button on:click={() => alignSelectedGroup("center")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedGroup("right")}
-                        >右</button
-                    >
-                    <button on:click={() => alignSelectedGroup("top")}
-                        >上</button
-                    >
-                    <button on:click={() => alignSelectedGroup("middle")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedGroup("bottom")}
-                        >下</button
-                    >
-                    <button on:click={() => distributeSelected("x")}
-                        >横向均分</button
-                    >
-                    <button on:click={() => distributeSelected("y")}
-                        >纵向均分</button
-                    >
-                </div>
-                <div class="edit-grid small-grid">
-                    <button on:click={() => moveSelectionLayer("back")}
-                        >置底</button
-                    >
-                    <button on:click={() => moveSelectionLayer("front")}
-                        >置顶</button
-                    >
-                    <button on:click={() => moveSelectionLayerStep(-1)}
-                        >下移一层</button
-                    >
-                    <button on:click={() => moveSelectionLayerStep(1)}
-                        >上移一层</button
-                    >
-                    <button on:click={copySelection}>复制</button>
-                    <button on:click={() => resizeSelectedBy(0.9)}>缩小</button>
-                    <button on:click={() => resizeSelectedBy(1.1)}>放大</button>
-                    <button on:click={normalizeSelectedSize}>同尺寸</button>
-                    <button on:click={() => setSelectedLock(true)}>锁定</button>
-                    <button on:click={() => setSelectedLock(false)}>解锁</button
-                    >
-                    <button on:click={() => setSelectedVisibility(true)}
-                        >隐藏</button
-                    >
-                    <button on:click={() => setSelectedVisibility(false)}
-                        >显示</button
-                    >
-                    <button on:click={() => flipSelected("x")}>水平翻转</button>
-                    <button on:click={() => flipSelected("y")}>垂直翻转</button>
-                    <button on:click={() => nudgeSelected(0, 0)}>刷新</button>
-                    <button on:click={selectAllVisibleObjects}>全选可见</button>
-                </div>
-            </div>
-        {/if}
-
-        {#if !useExcalidrawBridge && selectedFrameId && selectedFrameIds.length <= 1}
-            <div class="floating-edit-panel">
-                <div class="edit-title">Frame 编辑</div>
-                <div class="edit-grid">
-                    <button on:click={() => alignSelectedFrame("left")}
-                        >左</button
-                    >
-                    <button on:click={() => alignSelectedFrame("center")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedFrame("right")}
-                        >右</button
-                    >
-                    <button on:click={() => alignSelectedFrame("top")}
-                        >上</button
-                    >
-                    <button on:click={() => alignSelectedFrame("middle")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedFrame("bottom")}
-                        >下</button
-                    >
-                </div>
-            </div>
-        {/if}
-
-        {#if !useExcalidrawBridge && selectedEmbedId && selectedEmbedIds.length <= 1}
-            <div class="floating-edit-panel embed-panel">
-                <div class="edit-title">Embed 编辑</div>
-                <div class="edit-grid">
-                    <button on:click={() => alignSelectedEmbed("left")}
-                        >左</button
-                    >
-                    <button on:click={() => alignSelectedEmbed("center")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedEmbed("right")}
-                        >右</button
-                    >
-                    <button on:click={() => alignSelectedEmbed("top")}
-                        >上</button
-                    >
-                    <button on:click={() => alignSelectedEmbed("middle")}
-                        >中</button
-                    >
-                    <button on:click={() => alignSelectedEmbed("bottom")}
-                        >下</button
-                    >
-                </div>
-                <div class="edit-grid small-grid">
-                    <button on:click={() => resizeSelectedEmbedPreset("small")}
-                        >S</button
-                    >
-                    <button on:click={() => resizeSelectedEmbedPreset("medium")}
-                        >M</button
-                    >
-                    <button on:click={() => resizeSelectedEmbedPreset("large")}
-                        >L</button
-                    >
-                </div>
-            </div>
-        {/if}
-
-        {#if !useExcalidrawBridge && selectedFrameId && selectedFrameIds.length <= 1}
-            {#each frames.filter((f) => f.id === selectedFrameId) as f}
-                <div class="floating-edit-panel props-panel frame-props">
-                    <div class="edit-title">Frame 属性</div>
-                    <div class="prop-grid">
-                        <label
-                            >X<input
-                                type="number"
-                                value={Math.round(f.x)}
-                                on:change={(e) =>
-                                    updateFrameProps(f.id, {
-                                        x: inputNumber(e, 0),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >Y<input
-                                type="number"
-                                value={Math.round(f.y)}
-                                on:change={(e) =>
-                                    updateFrameProps(f.id, {
-                                        y: inputNumber(e, 0),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >W<input
-                                type="number"
-                                value={Math.round(f.w)}
-                                on:change={(e) =>
-                                    updateFrameProps(f.id, {
-                                        w: Math.max(120, inputNumber(e, 120)),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >H<input
-                                type="number"
-                                value={Math.round(f.h)}
-                                on:change={(e) =>
-                                    updateFrameProps(f.id, {
-                                        h: Math.max(80, inputNumber(e, 80)),
-                                    })}
-                            /></label
-                        >
-                    </div>
-                    <label class="prop-full"
-                        >标题<input
-                            type="text"
-                            value={f.title}
-                            on:change={(e) =>
-                                updateFrameProps(f.id, {
-                                    title: inputValue(e) || f.title,
-                                })}
-                        /></label
-                    >
-                    <label class="prop-full"
-                        >透明度<input
-                            type="range"
-                            min="0.05"
-                            max="1"
-                            step="0.05"
-                            value={f.opacity ?? 1}
-                            on:input={(e) =>
-                                updateFrameProps(f.id, {
-                                    opacity: inputNumber(e, 1),
-                                })}
-                        /></label
-                    >
-                    <div class="edit-grid small-grid">
-                        <button
-                            on:click={() =>
-                                updateFrameProps(f.id, {
-                                    flipX: !(f.flipX ?? false),
-                                })}>水平翻转</button
-                        >
-                        <button
-                            on:click={() =>
-                                updateFrameProps(f.id, {
-                                    flipY: !(f.flipY ?? false),
-                                })}>垂直翻转</button
-                        >
-                    </div>
-                </div>
-            {/each}
-        {/if}
-
-        {#if !useExcalidrawBridge && selectedEmbedId && selectedEmbedIds.length <= 1}
-            {#each webEmbeds.filter((e) => e.id === selectedEmbedId) as em}
-                <div class="floating-edit-panel props-panel embed-props">
-                    <div class="edit-title">Embed 属性</div>
-                    <div class="prop-grid">
-                        <label
-                            >X<input
-                                type="number"
-                                value={Math.round(em.x)}
-                                on:change={(e) =>
-                                    updateEmbedProps(em.id, {
-                                        x: inputNumber(e, 0),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >Y<input
-                                type="number"
-                                value={Math.round(em.y)}
-                                on:change={(e) =>
-                                    updateEmbedProps(em.id, {
-                                        y: inputNumber(e, 0),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >W<input
-                                type="number"
-                                value={Math.round(em.w)}
-                                on:change={(e) =>
-                                    updateEmbedProps(em.id, {
-                                        w: Math.max(220, inputNumber(e, 220)),
-                                    })}
-                            /></label
-                        >
-                        <label
-                            >H<input
-                                type="number"
-                                value={Math.round(em.h)}
-                                on:change={(e) =>
-                                    updateEmbedProps(em.id, {
-                                        h: Math.max(140, inputNumber(e, 140)),
-                                    })}
-                            /></label
-                        >
-                    </div>
-                    <label class="prop-full"
-                        >URL<input
-                            type="text"
-                            value={em.url}
-                            on:change={(e) =>
-                                updateEmbedProps(em.id, {
-                                    url: inputValue(e) || em.url,
-                                })}
-                        /></label
-                    >
-                    <label class="prop-full"
-                        >透明度<input
-                            type="range"
-                            min="0.05"
-                            max="1"
-                            step="0.05"
-                            value={em.opacity ?? 1}
-                            on:input={(e) =>
-                                updateEmbedProps(em.id, {
-                                    opacity: inputNumber(e, 1),
-                                })}
-                        /></label
-                    >
-                    <div class="edit-grid small-grid">
-                        <button
-                            on:click={() =>
-                                updateEmbedProps(em.id, {
-                                    flipX: !(em.flipX ?? false),
-                                })}>水平翻转</button
-                        >
-                        <button
-                            on:click={() =>
-                                updateEmbedProps(em.id, {
-                                    flipY: !(em.flipY ?? false),
-                                })}>垂直翻转</button
-                        >
-                    </div>
-                </div>
-            {/each}
-        {/if}
-
-        {#if !useExcalidrawBridge}
-            {#each webEmbeds.filter((e) => !e.hidden) as embed (embed.id)}
-                <div
-                    class="web-embed"
-                    class:selected={selectedEmbedIds.includes(embed.id)}
-                    class:locked={!!embed.locked}
-                    style={`left:${embed.x}px; top:${embed.y}px; width:${embed.w}px; height:${embed.h}px;`}
-                    role="button"
-                    aria-label="select embed"
-                    tabindex="-1"
-                    on:pointerdown={(e) =>
-                        toggleEmbedSelection(embed.id, e.shiftKey)}
-                >
-                    <div
-                        class="web-embed-head"
-                        on:pointerdown={(e) => startDragWebEmbed(embed.id, e)}
-                    >
-                        <span>🌐 Web</span>
-                        <div class="web-embed-actions">
-                            <button
-                                class="web-embed-mini"
-                                on:click={() => toggleEmbedLock(embed.id)}
-                                >{embed.locked ? "🔒" : "🔓"}</button
-                            ><button
-                                class="web-embed-mini"
-                                on:click={() =>
-                                    updateEmbedProps(embed.id, {
-                                        hidden: !embed.hidden,
-                                    })}>{embed.hidden ? "🙈" : "👁"}</button
-                            ><button
-                                class="web-embed-mini"
-                                on:click={() => moveWebEmbedLayer(embed.id, -1)}
-                                >↓</button
-                            ><button
-                                class="web-embed-mini"
-                                on:click={() => moveWebEmbedLayer(embed.id, 1)}
-                                >↑</button
-                            ><button
-                                class="web-embed-mini"
-                                on:click={() => editWebEmbedUrl(embed.id)}
-                                >✎</button
-                            ><button
-                                class="web-embed-close"
-                                on:click={() => removeWebEmbed(embed.id)}
-                                >✕</button
-                            >
-                        </div>
-                    </div>
-                    <iframe
-                        src={embed.url}
-                        title={embed.url}
-                        loading="lazy"
-                        referrerpolicy="no-referrer"
-                    ></iframe>
-                    <div
-                        class="web-embed-resize"
-                        on:pointerdown={(e) => startResizeWebEmbed(embed.id, e)}
-                    ></div>
-                </div>
-            {/each}
-        {/if}
 
         <div class="slides-panel">
             <div class="slides-title">📋 幻灯片</div>
@@ -4067,37 +3500,8 @@
 
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
-            {#if useExcalidrawBridge}
-                <div>
-                    <strong>白板:</strong> 使用顶部工具栏进行选择/图形/文字/缩放/平移。
-                </div>
-                <div>
-                    <strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）
-                    · K 暂停/继续
-                </div>
-            {:else}
-                <div>
-                    <strong>工具:</strong> V 画笔 · E 橡皮 · T 文本 · L 线 · R 矩形
-                    · C 圆 · F 框架
-                </div>
-                <div>
-                    <strong>编辑:</strong> Ctrl/Cmd+Z 撤销 · Ctrl/Cmd+Shift+Z / Ctrl/Cmd+Y
-                    重做 · Ctrl/Cmd+A 全选可见 · Ctrl/Cmd+C/V 复制粘贴 · Ctrl/Cmd+D
-                    快速复制
-                </div>
-                <div>
-                    <strong>对象:</strong> 方向键微调（Shift=10px） · [/] 调层级
-                    · Delete 删除 · Esc 取消选中
-                </div>
-                <div>
-                    <strong>幻灯片:</strong> Ctrl/Cmd+Shift+D 复制当前页 · Alt+←/→
-                    调整当前页顺序
-                </div>
-                <div>
-                    <strong>录制:</strong> Space / P 开始或停止录制（可配置倒计时）
-                    · K 暂停/继续
-                </div>
-            {/if}
+            <div><strong>Whiteboard:</strong> Use Excalidraw top toolbar for select/draw/text/zoom/pan.</div>
+            <div><strong>Recording:</strong> Space or P to start/stop, K to pause/resume.</div>
         </div>
     {/if}
 </div>
@@ -4567,6 +3971,10 @@
         border-radius: inherit;
         overflow: hidden;
         background: #ffffff;
+        --vr-main-menu-left: 96px;
+        --vr-main-menu-top: 92px;
+        --vr-main-menu-gap: 8px;
+        --vr-main-menu-btn-size: 36px;
     }
 
     .excalidraw-host :global(.App-toolbar),
@@ -4575,6 +3983,26 @@
         opacity: 1 !important;
         visibility: visible !important;
         pointer-events: auto !important;
+    }
+
+    /* Keep the main menu trigger outside the slide canvas (left gutter). */
+    .excalidraw-host :global(.main-menu-trigger) {
+        position: fixed !important;
+        left: var(--vr-main-menu-left) !important;
+        top: var(--vr-main-menu-top) !important;
+        z-index: 24 !important;
+    }
+
+    /* Keep main menu panel anchored under the trigger, outside slide area. */
+    .excalidraw-host :global(.main-menu-trigger + .dropdown-menu) {
+        position: fixed !important;
+        left: var(--vr-main-menu-left) !important;
+        top: calc(
+            var(--vr-main-menu-top) + var(--vr-main-menu-btn-size) +
+                var(--vr-main-menu-gap)
+        ) !important;
+        margin-top: 0 !important;
+        z-index: 23 !important;
     }
 
     .snap-guide-v {
@@ -4810,15 +4238,6 @@
         gap: 3px;
     }
 
-    .frame-head button {
-        min-width: 22px;
-        height: 20px;
-        padding: 0;
-        border-radius: 5px;
-        background: #ffffff;
-        color: #111111;
-    }
-
     .frame-resize {
         position: absolute;
         right: 2px;
@@ -4858,17 +4277,6 @@
         align-items: center;
     }
 
-    .web-embed-head button.web-embed-mini,
-    .web-embed-head button.web-embed-close {
-        min-width: 24px;
-        height: 22px;
-        border-radius: 6px;
-        padding: 0;
-        background: #fff;
-        color: #333;
-        border: 1px solid #ddd;
-    }
-
     .web-embed-resize {
         position: absolute;
         right: 2px;
@@ -4889,13 +4297,6 @@
     .web-embed.locked {
         outline: 2px solid rgba(255, 200, 100, 0.85);
         outline-offset: 0;
-    }
-
-    .web-embed iframe {
-        width: 100%;
-        height: calc(100% - 30px);
-        border: 0;
-        background: #fff;
     }
 
     .status-bar {
@@ -5323,40 +4724,8 @@
         gap: 6px;
     }
 
-    .prop-grid label,
-    .prop-full {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        font-size: 11px;
-        color: #555;
-    }
-
-    .prop-grid input,
-    .prop-full input {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 6px 8px;
-        background: #fff;
-        font-size: 12px;
-        color: #222;
-    }
-
-    .prop-full {
-        margin-top: 6px;
-    }
-
     .embed-panel {
         top: 122px;
-    }
-
-    .edit-grid button {
-        background: #fff;
-        color: #222;
-        border: 1px solid #ddd;
-        padding: 6px 4px;
-        border-radius: 8px;
-        font-size: 12px;
     }
 
     .slides-panel {
@@ -5632,6 +5001,17 @@
 
         .board-wrap {
             width: calc(100vw - 16px);
+        }
+
+        .excalidraw-host :global(.main-menu-trigger) {
+            left: 8px !important;
+            top: 88px !important;
+        }
+
+        .excalidraw-host :global(.main-menu-trigger + .dropdown-menu) {
+            left: 8px !important;
+            top: calc(88px + 36px + 8px) !important;
+            margin-top: 0 !important;
         }
 
         .floating-controls {

@@ -764,10 +764,72 @@
         c.closePath();
     };
 
+    type RecordingCropInfo = {
+        sx: number;
+        sy: number;
+        sw: number;
+        sh: number;
+        scaleX: number;
+        scaleY: number;
+        cropLeftCss: number;
+        cropTopCss: number;
+    };
+
+    const getRecordingCropInfo = (
+        liveSource: HTMLCanvasElement,
+    ): RecordingCropInfo => {
+        const srcW = Math.max(1, liveSource.width || liveSource.clientWidth || 1);
+        const srcH = Math.max(
+            1,
+            liveSource.height || liveSource.clientHeight || 1,
+        );
+        const sourceRect = liveSource.getBoundingClientRect();
+        const fallback: RecordingCropInfo = {
+            sx: 0,
+            sy: 0,
+            sw: srcW,
+            sh: srcH,
+            scaleX: sourceRect.width > 0 ? srcW / sourceRect.width : 1,
+            scaleY: sourceRect.height > 0 ? srcH / sourceRect.height : 1,
+            cropLeftCss: 0,
+            cropTopCss: 0,
+        };
+
+        if (sourceRect.width <= 0 || sourceRect.height <= 0) return fallback;
+        const frameCss = getActiveSlideFrameBoundsInCss();
+        if (!frameCss) return fallback;
+
+        const scaleX = srcW / sourceRect.width;
+        const scaleY = srcH / sourceRect.height;
+
+        const rawSx = Math.floor(frameCss.left * scaleX);
+        const rawSy = Math.floor(frameCss.top * scaleY);
+        const rawEx = Math.ceil((frameCss.left + frameCss.width) * scaleX);
+        const rawEy = Math.ceil((frameCss.top + frameCss.height) * scaleY);
+
+        const sx = Math.max(0, Math.min(srcW - 1, rawSx));
+        const sy = Math.max(0, Math.min(srcH - 1, rawSy));
+        const ex = Math.max(sx + 1, Math.min(srcW, rawEx));
+        const ey = Math.max(sy + 1, Math.min(srcH, rawEy));
+
+        return {
+            sx,
+            sy,
+            sw: ex - sx,
+            sh: ey - sy,
+            scaleX,
+            scaleY,
+            cropLeftCss: sx / scaleX,
+            cropTopCss: sy / scaleY,
+        };
+    };
+
     const startBridgeCompositeLoop = async (
         sourceCanvas: HTMLCanvasElement,
     ) => {
-        await ensureCameraStream();
+        if (showCameraInRecord) {
+            await ensureCameraStream();
+        }
 
         const out = document.createElement("canvas");
         out.width = sourceCanvas.width || Math.max(2, sourceCanvas.clientWidth);
@@ -783,15 +845,14 @@
             if (!bridgeCompositeCanvas || !bridgeCompositeCtx) return;
 
             const liveSource = getRecordingCanvas() || sourceCanvas;
-            const srcW = liveSource.width || bridgeCompositeCanvas.width;
-            const srcH = liveSource.height || bridgeCompositeCanvas.height;
+            const crop = getRecordingCropInfo(liveSource);
 
             if (
-                bridgeCompositeCanvas.width !== srcW ||
-                bridgeCompositeCanvas.height !== srcH
+                bridgeCompositeCanvas.width !== crop.sw ||
+                bridgeCompositeCanvas.height !== crop.sh
             ) {
-                bridgeCompositeCanvas.width = srcW;
-                bridgeCompositeCanvas.height = srcH;
+                bridgeCompositeCanvas.width = crop.sw;
+                bridgeCompositeCanvas.height = crop.sh;
             }
 
             const w = bridgeCompositeCanvas.width;
@@ -799,7 +860,17 @@
 
             bridgeCompositeCtx.clearRect(0, 0, w, h);
             try {
-                bridgeCompositeCtx.drawImage(liveSource, 0, 0, w, h);
+                bridgeCompositeCtx.drawImage(
+                    liveSource,
+                    crop.sx,
+                    crop.sy,
+                    crop.sw,
+                    crop.sh,
+                    0,
+                    0,
+                    w,
+                    h,
+                );
             } catch {
                 if (isRecording && !isRecordingStopping) {
                     exportNotice = "白板画面暂不可用，正在等待恢复…";
@@ -810,22 +881,41 @@
             }
 
             if (cameraVideoEl && showCameraInRecord) {
-                const { size, x, y } = resolveCameraPlacement(w, h);
+                const surface = getCameraSurfaceSize();
+                if (!surface) {
+                    bridgeCompositeRaf = requestAnimationFrame(tick);
+                    return;
+                }
+
+                const placementCss = resolveCameraPlacement(
+                    surface.width,
+                    surface.height,
+                );
+                const scale = Math.min(crop.scaleX, crop.scaleY);
+                const size = Math.max(16, Math.round(placementCss.size * scale));
+                const x = Math.round(
+                    (placementCss.x - crop.cropLeftCss) * crop.scaleX,
+                );
+                const y = Math.round(
+                    (placementCss.y - crop.cropTopCss) * crop.scaleY,
+                );
+                const clampedX = Math.max(0, Math.min(Math.max(0, w - size), x));
+                const clampedY = Math.max(0, Math.min(Math.max(0, h - size), y));
 
                 bridgeCompositeCtx.save();
                 drawRoundRectPathOn(
                     bridgeCompositeCtx,
-                    x,
-                    y,
+                    clampedX,
+                    clampedY,
                     size,
                     size,
                     cameraRadius,
                 );
                 bridgeCompositeCtx.clip();
                 bridgeCompositeCtx.fillStyle = "#000";
-                bridgeCompositeCtx.fillRect(x, y, size, size);
+                bridgeCompositeCtx.fillRect(clampedX, clampedY, size, size);
                 if (cameraMirror) {
-                    bridgeCompositeCtx.translate(x + size, y);
+                    bridgeCompositeCtx.translate(clampedX + size, clampedY);
                     bridgeCompositeCtx.scale(-1, 1);
                     bridgeCompositeCtx.drawImage(
                         cameraVideoEl,
@@ -837,8 +927,8 @@
                 } else {
                     bridgeCompositeCtx.drawImage(
                         cameraVideoEl,
-                        x,
-                        y,
+                        clampedX,
+                        clampedY,
                         size,
                         size,
                     );
@@ -848,8 +938,8 @@
                 bridgeCompositeCtx.save();
                 drawRoundRectPathOn(
                     bridgeCompositeCtx,
-                    x,
-                    y,
+                    clampedX,
+                    clampedY,
                     size,
                     size,
                     cameraRadius,
@@ -2531,15 +2621,13 @@
             return;
         }
         let recordingSurface: HTMLCanvasElement = recordingCanvas;
-        if (showCameraInRecord) {
-            try {
-                recordingSurface =
-                    await startBridgeCompositeLoop(recordingCanvas);
-            } catch (e) {
-                console.warn("bridge camera composite failed", e);
-                exportNotice = "摄像头叠加失败：将仅录制白板内容。";
-                exportNoticeLevel = "warn";
-            }
+        try {
+            recordingSurface = await startBridgeCompositeLoop(recordingCanvas);
+        } catch (e) {
+            console.warn("bridge recording crop/composite failed", e);
+            exportNotice =
+                "Recording crop failed, fallback to full canvas capture.";
+            exportNoticeLevel = "warn";
         }
         const canvasStream = recordingSurface.captureStream(60);
         const stream = new MediaStream();

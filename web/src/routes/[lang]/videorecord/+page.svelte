@@ -217,9 +217,10 @@
     let aspectRatio = "16:9";
 
     const bgColors = [
+        "#fefcf9",
         "#ffffff",
-        "#f8fafc",
         "#f5f5f4",
+        "#f8fafc",
         "#fff7ed",
         "#fefce8",
         "#ecfeff",
@@ -227,13 +228,13 @@
         "#f5f3ff",
     ];
     let backgroundColor = bgColors[0];
-    let canvasCornerRadius = 16;
+    let canvasCornerRadius = 14;
     let canvasInnerPadding = 0;
 
     // camera overlay in recording
     let showCameraInRecord = true;
     let cameraSize = 180;
-    let cameraRadius = 16;
+    let cameraRadius = 80;
     let cameraMargin = 24;
     let cameraCorner: "br" | "bl" | "tr" | "tl" = "br";
     let cameraMirror = true;
@@ -1012,7 +1013,43 @@
         };
     };
 
-    const applyBridgeScene = (scene: BridgeSlideScene) => {
+    const findSceneFrameId = (elements: any[] | undefined) => {
+        if (!Array.isArray(elements)) return null;
+        const frame = elements.find(
+            (element) =>
+                !element?.isDeleted &&
+                (element?.type === "frame" || element?.type === "magicframe"),
+        );
+        return frame?.id ?? null;
+    };
+
+    const selectSceneFrame = (scene: BridgeSlideScene) => {
+        if (!excalidrawApi) return;
+        const frameId = findSceneFrameId(scene.elements);
+        if (!frameId) return;
+
+        const currentAppState = normalizeBridgeAppState(
+            excalidrawApi.getAppState?.() ?? {},
+        ) as Record<string, unknown>;
+        excalidrawApi.updateScene?.({
+            appState: {
+                ...currentAppState,
+                selectedElementIds: { [frameId]: true },
+                selectedGroupIds: {},
+                editingFrame: null,
+            },
+        });
+    };
+
+    const selectCurrentSlideFrame = () => {
+        const activeScene = getBridgeSceneForIndex(activeSlide);
+        requestAnimationFrame(() => selectSceneFrame(activeScene));
+    };
+
+    const applyBridgeScene = (
+        scene: BridgeSlideScene,
+        options?: { selectFrame?: boolean },
+    ) => {
         if (!excalidrawApi) return;
         const nextAppState = normalizeBridgeAppState(scene.appState);
         excalidrawApi.updateScene?.({
@@ -1020,6 +1057,9 @@
             appState: nextAppState,
             files: scene.files,
         });
+        if (options?.selectFrame) {
+            requestAnimationFrame(() => selectSceneFrame(scene));
+        }
     };
 
     const saveCurrentSlide = () => {
@@ -1042,7 +1082,11 @@
         activeSlide = index;
 
         const scene = getBridgeSceneForIndex(index);
-        requestAnimationFrame(() => applyBridgeScene(scene));
+        requestAnimationFrame(() =>
+            applyBridgeScene(scene, {
+                selectFrame: isRecording,
+            }),
+        );
     };
 
     const pushHistorySnapshot = () => {
@@ -2258,6 +2302,7 @@
     const triggerRecordStart = async () => {
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
+        selectCurrentSlideFrame();
         // 倒计时期间预先请求摄像头权限，避免录制开始时权限弹窗导致画面缺失
         if (showCameraInRecord) {
             try {
@@ -2477,6 +2522,7 @@
             recorder.start(300);
             isRecording = true;
             isRecordPaused = false;
+            selectCurrentSlideFrame();
             const hasAudioTrack = stream.getAudioTracks().length > 0;
             exportNotice = hasAudioTrack
                 ? "录制已开始（含麦克风）。"
@@ -3236,7 +3282,7 @@
         class:recording-slide-focus={isRecording ||
             isRecordingStarting ||
             recordCountdownLeft > 0}
-        style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}
+        style={`border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}
     >
         <canvas
             bind:this={canvasEl}
@@ -3290,9 +3336,9 @@
             <div
                 class="fc-drag-handle"
                 on:pointerdown={startDragFloatingControls}
-                title="拖拽移动工具栏"
+                title="Drag controls"
             >
-                ⠿
+                ⋮⋮
             </div>
             <button class="floating-btn" on:click={() => (showSettings = true)}
                 >⚙</button
@@ -3306,7 +3352,7 @@
             <button
                 class="floating-btn"
                 on:click={() => (showShortcutsHelp = !showShortcutsHelp)}
-                title="快捷键帮助">⌨</button
+                title="Help">⌨</button
             >
             {#if !isRecording}
                 <button
@@ -3316,25 +3362,25 @@
                         isRecordingStopping ||
                         recordCountdownLeft > 0}
                     >{isRecordingStarting
-                        ? "… 启动中"
+                        ? "Starting..."
                         : recordCountdownLeft > 0
-                          ? `倒计时 ${recordCountdownLeft}`
-                          : "● 录制"}</button
+                          ? `Countdown ${recordCountdownLeft}`
+                          : "Record"}</button
                 >
             {:else}
                 <button
                     class="floating-pause"
                     on:click={togglePauseRecord}
                     disabled={isRecordingStopping}
-                    >{isRecordPaused ? "▶ 继续" : "⏸ 暂停"}</button
+                    >{isRecordPaused ? "Resume" : "Pause"}</button
                 >
                 <button
                     class="floating-stop"
                     on:click={stopRecord}
                     disabled={isRecordingStopping}
                     >{isRecordingStopping
-                        ? "… 停止中"
-                        : `■ 停止 ${formatDuration(recordDuration)}`}</button
+                        ? "Stopping..."
+                        : `Stop ${formatDuration(recordDuration)}`}</button
                 >
             {/if}
         </div>
@@ -3349,31 +3395,31 @@
 
 
         <div class="slides-panel">
-            <div class="slides-title">📋 幻灯片</div>
+            <div class="slides-title">Slides</div>
 
             <div class="slides-actions">
                 <button
                     class="slide-icon"
-                    title="上移"
-                    on:click={() => moveSlide(-1)}>↑</button
+                    title="Move up"
+                    on:click={() => moveSlide(-1)}>^</button
                 >
                 <button
                     class="slide-icon"
-                    title="下移"
-                    on:click={() => moveSlide(1)}>↓</button
+                    title="Move down"
+                    on:click={() => moveSlide(1)}>v</button
                 >
                 <button
                     class="slide-icon"
-                    title="复制"
-                    on:click={duplicateSlide}>⎘</button
+                    title="Duplicate"
+                    on:click={duplicateSlide}>D</button
                 >
-                <button class="slide-icon" title="删除" on:click={deleteSlide}
-                    >✕</button
+                <button class="slide-icon" title="Delete" on:click={deleteSlide}
+                    >x</button
                 >
             </div>
 
             <div class="slides-list">
-                {#each slides as thumb, i}
+                {#each slides as _thumb, i}
                     <button
                         class="slide-item"
                         class:active={i === activeSlide}
@@ -3392,16 +3438,8 @@
                             loadSlide(i);
                         }}
                     >
-                        <span class="slide-no">{i + 1}</span>
-                        {#if thumb}
-                            <img src={thumb} alt={`slide-${i + 1}`} />
-                        {:else}
-                            <span class="slide-empty">空</span>
-                        {/if}
+                        <span class="slide-number">{i + 1}</span>
                     </button>
-                    <span class="slide-label" class:active={i === activeSlide}
-                        >Slide {i + 1}</span
-                    >
                 {/each}
             </div>
 
@@ -3409,8 +3447,7 @@
                 class="slide-add"
                 on:click={addSlide}
                 on:dragover|preventDefault
-                on:drop={() => onSlideDrop(slides.length - 1)}>＋</button
-            >
+                on:drop={() => onSlideDrop(slides.length - 1)}>+</button>
         </div>
 
         {#if showTeleprompter}
@@ -3851,14 +3888,14 @@
 
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        align-items: center;
+        gap: 0;
+        align-items: stretch;
         width: 100%;
         max-width: none;
         margin: 0;
-        padding: 12px;
+        padding: 0;
         box-sizing: border-box;
-        background: #eceff3;
+        background: transparent;
         color: #111111;
         border-radius: 0;
         min-height: 100vh;
@@ -3935,21 +3972,21 @@
 
     .board-wrap {
         position: relative;
-        width: min(1440px, calc(100vw - 176px));
-        height: auto;
-        max-height: unset;
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 100vh;
+        height: 100vh;
+        max-height: 100vh;
         border-radius: 14px;
         overflow: hidden;
-        border: 1px solid rgba(17, 17, 17, 0.14);
-        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
-        background: #ffffff;
+        border: none;
+        box-shadow: none;
+        background: transparent;
     }
 
     .board-wrap.recording-slide-focus {
-        border-color: #1f9d58;
-        box-shadow:
-            0 0 0 2px rgba(31, 157, 88, 0.26),
-            0 14px 34px rgba(15, 23, 42, 0.14);
+        border: none;
+        box-shadow: none;
     }
 
     .board {
@@ -3970,11 +4007,23 @@
         z-index: 1;
         border-radius: inherit;
         overflow: hidden;
-        background: #ffffff;
-        --vr-main-menu-left: 96px;
+        background: transparent;
+        --vr-main-menu-left: 112px;
         --vr-main-menu-top: 92px;
         --vr-main-menu-gap: 8px;
         --vr-main-menu-btn-size: 36px;
+    }
+
+    .excalidraw-host :global(.excalidraw),
+    .excalidraw-host :global(.excalidraw .App),
+    .excalidraw-host :global(.excalidraw .App-main),
+    .excalidraw-host :global(.excalidraw .layer-ui__wrapper) {
+        background: transparent !important;
+    }
+
+    .excalidraw-host :global(.excalidraw .App) {
+        border-radius: 0 !important;
+        box-shadow: none !important;
     }
 
     .excalidraw-host :global(.App-toolbar),
@@ -4530,18 +4579,20 @@
 
     .floating-controls {
         position: absolute;
-        top: 14px;
+        top: 12px;
         right: 12px;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         z-index: 10;
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(17, 17, 17, 0.12);
-        border-radius: 12px;
-        padding: 6px 8px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        background: #fefcf9;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 14px;
+        padding: 8px 12px;
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            0 12px 32px rgba(0, 0, 0, 0.06);
         user-select: none;
     }
 
@@ -4549,36 +4600,23 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 20px;
+        width: 22px;
         height: 32px;
         cursor: grab;
-        color: #999;
-        font-size: 16px;
+        color: #a8a29e;
+        font-size: 14px;
         letter-spacing: 2px;
         flex-shrink: 0;
-        border-radius: 6px;
+        border-radius: 8px;
         transition: background 0.15s;
     }
     .fc-drag-handle:hover {
-        background: rgba(17, 17, 17, 0.06);
-        color: #555;
+        background: #f5f5f4;
+        color: #57534e;
     }
     .fc-drag-handle:active {
         cursor: grabbing;
-        background: rgba(17, 17, 17, 0.1);
-    }
-
-    .slide-title-overlay {
-        position: absolute;
-        top: 10px;
-        left: 14px;
-        z-index: 3;
-        font-size: 13px;
-        font-weight: 500;
-        color: rgba(17, 17, 17, 0.5);
-        pointer-events: none;
-        user-select: none;
-        letter-spacing: 0.3px;
+        background: #ece8e4;
     }
 
     .camera-overlay {
@@ -4730,23 +4768,30 @@
 
     .slides-panel {
         position: absolute;
-        right: 12px;
-        top: 74px;
-        z-index: 6;
-        width: 74px;
-        background: #ffffff;
-        border: 1px solid rgba(17, 17, 17, 0.12);
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 950;
+        width: 76px;
+        background: #fefcf9;
+        border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 14px;
         padding: 8px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04),
+            0 4px 16px rgba(0, 0, 0, 0.08),
+            0 12px 32px rgba(0, 0, 0, 0.06);
     }
 
     .slides-title {
-        font-size: 11px;
-        color: #555;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        color: #78716c;
     }
 
     .slides-actions {
@@ -4757,72 +4802,71 @@
     }
 
     .slide-icon {
-        height: 26px;
-        border-radius: 8px;
-        border: 1px solid #d8d8d8;
-        background: #fff;
-        color: #333;
+        height: 28px;
+        border-radius: 9px;
+        border: 1.5px solid #e7e5e4;
+        background: #fafaf9;
+        color: #57534e;
         padding: 0;
         font-size: 13px;
+    }
+    .slide-icon:hover {
+        border-color: #d6d3d1;
+        background: #f5f5f4;
+        color: #44403c;
     }
 
     .slides-list {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        max-height: 230px;
+        max-height: 50vh;
         overflow: auto;
         width: 100%;
         align-items: center;
+        padding: 8px 0 2px;
     }
 
     .slide-item {
-        width: 54px;
-        height: 42px;
+        width: 36px;
+        height: 36px;
         border-radius: 10px;
-        background: #ececec;
-        color: #222;
-        border: 1px solid #ddd;
+        background: #fafaf9;
+        color: #57534e;
+        border: 1.5px solid #e7e5e4;
         padding: 0;
-        font-weight: 700;
+        font-weight: 600;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.15s ease;
+    }
+    .slide-item:hover {
+        border-color: #d6d3d1;
+        background: #f5f5f4;
+        color: #44403c;
+        transform: scale(1.06);
     }
 
-    .slide-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .slide-no {
-        position: absolute;
-        left: 4px;
-        top: 3px;
-        z-index: 1;
-        font-size: 10px;
-        background: #ffffff;
-        color: #111111;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 1px 4px;
-    }
-
-    .slide-empty {
-        font-size: 11px;
-        color: #666;
+    .slide-number {
+        font-size: 13px;
+        line-height: 1;
     }
 
     .slide-item.active {
-        outline: 2px solid #111111;
-        outline-offset: 0;
+        background: #292524;
+        border-color: #292524;
+        color: #fefcf9;
+        box-shadow: 0 2px 8px rgba(41, 37, 36, 0.25);
     }
 
     .slide-item.record-target {
-        outline-color: #1f9d58;
+        background: #16a34a;
+        border-color: #16a34a;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
     }
 
     .slide-item.dragging {
@@ -4833,52 +4877,59 @@
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: #fff;
-        color: #222;
-        border: 1px dashed #bbb;
+        background: transparent;
+        color: #a8a29e;
+        border: 1.5px dashed #d6d3d1;
         padding: 0;
-        font-size: 22px;
+        font-size: 18px;
         line-height: 1;
+    }
+    .slide-add:hover {
+        border-color: #a8a29e;
+        background: #f5f5f4;
+        color: #57534e;
+        transform: scale(1.06);
     }
 
     .floating-btn {
-        background: #ffffff;
-        color: #222;
-        min-width: 40px;
-        padding: 8px 10px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1.5px solid #e7e5e4;
+        background: #fafaf9;
+        color: #57534e;
+        padding: 0;
     }
 
     .floating-record {
-        background: #df2f35;
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        padding: 0 16px;
+        background: #dc2626;
         color: #fff;
         font-weight: 700;
     }
 
     .floating-stop {
-        background: #2d9d67;
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        padding: 0 16px;
+        background: #44403c;
         color: #fff;
         font-weight: 700;
     }
 
     .floating-pause {
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        padding: 0 16px;
         background: #f59e0b;
         color: #fff;
         font-weight: 700;
-    }
-
-    .slide-label {
-        display: block;
-        font-size: 10px;
-        color: #888;
-        text-align: center;
-        margin-top: 2px;
-        line-height: 1.2;
-        user-select: none;
-    }
-
-    .slide-label.active {
-        color: #111;
-        font-weight: 600;
     }
 
     .switch-row {
@@ -4996,20 +5047,22 @@
 
     @media (max-width: 900px) {
         .page {
-            padding: 8px;
+            min-height: 100vh;
         }
 
         .board-wrap {
-            width: calc(100vw - 16px);
+            min-height: 100vh;
+            height: 100vh;
+            max-height: 100vh;
         }
 
         .excalidraw-host :global(.main-menu-trigger) {
-            left: 8px !important;
+            left: 16px !important;
             top: 88px !important;
         }
 
         .excalidraw-host :global(.main-menu-trigger + .dropdown-menu) {
-            left: 8px !important;
+            left: 16px !important;
             top: calc(88px + 36px + 8px) !important;
             margin-top: 0 !important;
         }
@@ -5021,7 +5074,7 @@
 
         .slides-panel {
             right: 12px;
-            top: 70px;
+            top: 50%;
             width: 64px;
         }
 

@@ -3,6 +3,7 @@
     import "@excalidraw/excalidraw/index.css";
 
     let canvasEl: HTMLCanvasElement;
+    let boardWrapEl: HTMLDivElement | null = null;
     let ctx: CanvasRenderingContext2D | null = null;
 
     let useExcalidrawBridge = true;
@@ -243,6 +244,14 @@
     let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
     let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
     let bridgeCompositeRaf = 0;
+    let draggingCameraOverlay = false;
+    let cameraDragStartX = 0;
+    let cameraDragStartY = 0;
+    let cameraDragBaseX = 0;
+    let cameraDragBaseY = 0;
+    let cameraDragSurfaceW = 0;
+    let cameraDragSurfaceH = 0;
+    let cameraDragSize = 0;
 
     let includeMicAudio = true;
     let enableRecordCountdown = true;
@@ -349,6 +358,96 @@
             void micAudioCtx.close();
         }
         micAudioCtx = null;
+    };
+
+    type CameraPlacement = {
+        size: number;
+        baseX: number;
+        baseY: number;
+        x: number;
+        y: number;
+    };
+
+    const getCameraBasePosition = (
+        surfaceW: number,
+        surfaceH: number,
+        size: number,
+    ) => {
+        const baseX =
+            cameraCorner === "br" || cameraCorner === "tr"
+                ? surfaceW - cameraMargin - size
+                : cameraMargin;
+        const baseY =
+            cameraCorner === "br" || cameraCorner === "bl"
+                ? surfaceH - cameraMargin - size
+                : cameraMargin;
+        return { baseX, baseY };
+    };
+
+    const resolveCameraPlacement = (
+        surfaceW: number,
+        surfaceH: number,
+    ): CameraPlacement => {
+        const safeW = Math.max(1, surfaceW);
+        const safeH = Math.max(1, surfaceH);
+        const size = Math.min(cameraSize, safeW * 0.5, safeH * 0.5);
+        const { baseX, baseY } = getCameraBasePosition(safeW, safeH, size);
+        const maxX = Math.max(0, safeW - size);
+        const maxY = Math.max(0, safeH - size);
+        const x = Math.max(0, Math.min(maxX, baseX + cameraOffsetX));
+        const y = Math.max(0, Math.min(maxY, baseY + cameraOffsetY));
+        return { size, baseX, baseY, x, y };
+    };
+
+    const getCameraSurfaceSize = () => {
+        const source = getRecordingCanvas();
+        if (source) {
+            const rect = source.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                return { width: rect.width, height: rect.height };
+            }
+        }
+        if (boardWrapEl) {
+            const rect = boardWrapEl.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                return { width: rect.width, height: rect.height };
+            }
+        }
+        return null;
+    };
+
+    const clampCameraOverlayIntoSlide = () => {
+        const surface = getCameraSurfaceSize();
+        if (!surface) return;
+        const placement = resolveCameraPlacement(surface.width, surface.height);
+        const nextOffsetX = Math.round(placement.x - placement.baseX);
+        const nextOffsetY = Math.round(placement.y - placement.baseY);
+        if (nextOffsetX !== cameraOffsetX) cameraOffsetX = nextOffsetX;
+        if (nextOffsetY !== cameraOffsetY) cameraOffsetY = nextOffsetY;
+    };
+
+    const getCameraOverlayStyle = () => {
+        const surface = getCameraSurfaceSize();
+        if (!surface) return "display:none;";
+        const placement = resolveCameraPlacement(surface.width, surface.height);
+        return `left:${placement.x}px; top:${placement.y}px; width:${placement.size}px; height:${placement.size}px; border-radius:${cameraRadius}px;`;
+    };
+
+    const startDragCameraOverlay = (e: PointerEvent) => {
+        if (!isRecording || !showCameraInRecord || !cameraStream) return;
+        const surface = getCameraSurfaceSize();
+        if (!surface) return;
+        const placement = resolveCameraPlacement(surface.width, surface.height);
+        draggingCameraOverlay = true;
+        cameraDragStartX = e.clientX;
+        cameraDragStartY = e.clientY;
+        cameraDragBaseX = placement.x;
+        cameraDragBaseY = placement.y;
+        cameraDragSurfaceW = surface.width;
+        cameraDragSurfaceH = surface.height;
+        cameraDragSize = placement.size;
+        e.preventDefault();
+        e.stopPropagation();
     };
 
     const refreshMicDevices = async () => {
@@ -466,24 +565,7 @@
         )
             return;
         const rect = canvasEl.getBoundingClientRect();
-        const size = Math.min(cameraSize, rect.width * 0.5, rect.height * 0.5);
-        const baseX =
-            cameraCorner === "br" || cameraCorner === "tr"
-                ? rect.width - cameraMargin - size
-                : cameraMargin;
-        const baseY =
-            cameraCorner === "br" || cameraCorner === "bl"
-                ? rect.height - cameraMargin - size
-                : cameraMargin;
-
-        const x = Math.max(
-            0,
-            Math.min(rect.width - size, baseX + cameraOffsetX),
-        );
-        const y = Math.max(
-            0,
-            Math.min(rect.height - size, baseY + cameraOffsetY),
-        );
+        const { size, x, y } = resolveCameraPlacement(rect.width, rect.height);
 
         ctx.save();
         drawRoundRectPath(x, y, size, size, cameraRadius);
@@ -587,23 +669,7 @@
             }
 
             if (cameraVideoEl && showCameraInRecord) {
-                const size = Math.min(cameraSize, w * 0.5, h * 0.5);
-                const baseX =
-                    cameraCorner === "br" || cameraCorner === "tr"
-                        ? w - cameraMargin - size
-                        : cameraMargin;
-                const baseY =
-                    cameraCorner === "br" || cameraCorner === "bl"
-                        ? h - cameraMargin - size
-                        : cameraMargin;
-                const x = Math.max(
-                    0,
-                    Math.min(w - size, baseX + cameraOffsetX),
-                );
-                const y = Math.max(
-                    0,
-                    Math.min(h - size, baseY + cameraOffsetY),
-                );
+                const { size, x, y } = resolveCameraPlacement(w, h);
 
                 bridgeCompositeCtx.save();
                 drawRoundRectPathOn(
@@ -1314,12 +1380,14 @@
 
         window.addEventListener("resize", resizeCanvas);
         window.addEventListener("resize", clampAndSnapTeleprompter);
+        window.addEventListener("resize", clampCameraOverlayIntoSlide);
         window.addEventListener("devicechange", refreshMicDevices);
         void refreshMicDevices();
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
             window.removeEventListener("resize", clampAndSnapTeleprompter);
+            window.removeEventListener("resize", clampCameraOverlayIntoSlide);
             window.removeEventListener("devicechange", refreshMicDevices);
             if (timer) clearInterval(timer);
             clearStopTimer();
@@ -2116,6 +2184,7 @@
         if (showCameraInRecord) {
             try {
                 await ensureCameraStream();
+                clampCameraOverlayIntoSlide();
             } catch {}
         }
         if (includeMicAudio) {
@@ -2149,6 +2218,7 @@
         isRecordingStarting = true;
         clearStopTimer();
         stopHandled = false;
+        clampCameraOverlayIntoSlide();
 
         // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
         const recordingCanvas = getRecordingCanvas();
@@ -2509,6 +2579,21 @@
             floatingControlsX = fcDragBaseX + (e.clientX - fcDragStartX);
             floatingControlsY = fcDragBaseY + (e.clientY - fcDragStartY);
         }
+        if (draggingCameraOverlay) {
+            const dx = e.clientX - cameraDragStartX;
+            const dy = e.clientY - cameraDragStartY;
+            const maxX = Math.max(0, cameraDragSurfaceW - cameraDragSize);
+            const maxY = Math.max(0, cameraDragSurfaceH - cameraDragSize);
+            const nextX = Math.max(0, Math.min(maxX, cameraDragBaseX + dx));
+            const nextY = Math.max(0, Math.min(maxY, cameraDragBaseY + dy));
+            const { baseX, baseY } = getCameraBasePosition(
+                cameraDragSurfaceW,
+                cameraDragSurfaceH,
+                cameraDragSize,
+            );
+            cameraOffsetX = Math.round(nextX - baseX);
+            cameraOffsetY = Math.round(nextY - baseY);
+        }
     };
 
     const onWindowPointerUp = () => {
@@ -2519,6 +2604,10 @@
         }
         if (draggingFloatingControls) {
             draggingFloatingControls = false;
+        }
+        if (draggingCameraOverlay) {
+            draggingCameraOverlay = false;
+            clampCameraOverlayIntoSlide();
         }
     };
 
@@ -2531,6 +2620,27 @@
     $: if (typeof window !== "undefined" && autosaveSignature) {
         // throttled autosave for both whiteboard runtimes
         scheduleProjectAutosave();
+    }
+
+    $: if (cameraPreviewEl) {
+        if (cameraStream) {
+            if (cameraPreviewEl.srcObject !== cameraStream) {
+                cameraPreviewEl.srcObject = cameraStream;
+            }
+            if (cameraPreviewEl.paused) {
+                void cameraPreviewEl.play().catch(() => {});
+            }
+        } else if (cameraPreviewEl.srcObject) {
+            cameraPreviewEl.srcObject = null;
+        }
+    }
+
+    $: if (isRecording && showCameraInRecord) {
+        activeSlide;
+        cameraCorner;
+        cameraMargin;
+        cameraSize;
+        requestAnimationFrame(() => clampCameraOverlayIntoSlide());
     }
 
     const toggleFrameSelection = (id: string, additive: boolean) => {
@@ -3223,7 +3333,11 @@
     />
 
     <div
+        bind:this={boardWrapEl}
         class="board-wrap"
+        class:recording-slide-focus={isRecording ||
+            isRecordingStarting ||
+            recordCountdownLeft > 0}
         style={`aspect-ratio:${boardAspectRatio}; background:${backgroundColor}; border-radius:${canvasCornerRadius}px; padding:${canvasInnerPadding}px;`}
     >
         <canvas
@@ -3247,6 +3361,26 @@
 
         <!-- Slide 标题（对标 Excalicord） -->
         <div class="slide-title-overlay">Slide {activeSlide + 1}</div>
+
+        {#if isRecording && showCameraInRecord && cameraStream}
+            <div
+                class="camera-overlay"
+                class:dragging={draggingCameraOverlay}
+                style={getCameraOverlayStyle()}
+                role="button"
+                aria-label="drag camera overlay"
+                tabindex="-1"
+                on:pointerdown={startDragCameraOverlay}
+            >
+                <video
+                    bind:this={cameraPreviewEl}
+                    autoplay
+                    muted
+                    playsinline
+                    style={`transform:${cameraMirror ? "scaleX(-1)" : "none"};`}
+                ></video>
+            </div>
+        {/if}
 
         {#if !useExcalidrawBridge && showGuideV}
             <div class="snap-guide-v" style={`left:${guideVX}px;`}></div>
@@ -3810,6 +3944,10 @@
                     <button
                         class="slide-item"
                         class:active={i === activeSlide}
+                        class:record-target={i === activeSlide &&
+                            (isRecording ||
+                                isRecordingStarting ||
+                                recordCountdownLeft > 0)}
                         class:dragging={draggingSlideIndex === i}
                         draggable="true"
                         on:dragstart={() => onSlideDragStart(i)}
@@ -4309,13 +4447,14 @@
 
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+        align-items: center;
         width: 100%;
         max-width: none;
         margin: 0;
-        padding: 8px;
+        padding: 12px;
         box-sizing: border-box;
-        background: #ffffff;
+        background: #eceff3;
         color: #111111;
         border-radius: 0;
         min-height: 100vh;
@@ -4392,12 +4531,21 @@
 
     .board-wrap {
         position: relative;
-        width: 100%;
-        height: calc(100vh - 88px);
-        max-height: none;
+        width: min(1440px, calc(100vw - 176px));
+        height: auto;
+        max-height: unset;
         border-radius: 14px;
         overflow: hidden;
-        border: 1px solid var(--button);
+        border: 1px solid rgba(17, 17, 17, 0.14);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+        background: #ffffff;
+    }
+
+    .board-wrap.recording-slide-focus {
+        border-color: #1f9d58;
+        box-shadow:
+            0 0 0 2px rgba(31, 157, 88, 0.26),
+            0 14px 34px rgba(15, 23, 42, 0.14);
     }
 
     .board {
@@ -5032,6 +5180,30 @@
         letter-spacing: 0.3px;
     }
 
+    .camera-overlay {
+        position: absolute;
+        z-index: 9;
+        overflow: hidden;
+        background: #000;
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+    }
+
+    .camera-overlay.dragging {
+        cursor: grabbing;
+    }
+
+    .camera-overlay video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        transform-origin: center;
+    }
+
     .countdown-overlay {
         position: absolute;
         inset: 0;
@@ -5280,6 +5452,10 @@
         outline-offset: 0;
     }
 
+    .slide-item.record-target {
+        outline-color: #1f9d58;
+    }
+
     .slide-item.dragging {
         opacity: 0.45;
     }
@@ -5450,6 +5626,14 @@
     }
 
     @media (max-width: 900px) {
+        .page {
+            padding: 8px;
+        }
+
+        .board-wrap {
+            width: calc(100vw - 16px);
+        }
+
         .floating-controls {
             right: 12px;
             top: 12px;

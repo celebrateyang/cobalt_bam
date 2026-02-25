@@ -10,6 +10,7 @@
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+    import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
@@ -26,6 +27,7 @@
     // Generate language-aware links
     $: homeLink = `/${currentLang}`;
     $: clipboardLink = `/${currentLang}/clipboard`;
+    $: videorecordLink = `/${currentLang}/videorecord`;
     $: discoverLink = `/${currentLang}/discover`;
     $: historyLink = `/${currentLang}/history`;
     $: remuxLink = `/${currentLang}/remux`;
@@ -50,7 +52,7 @@
                 class="sidebar-inner-container mobile-nav"
             >
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
-                    <IconVideo />
+                    <IconStack2 />
                 </SidebarTab>
                 <MobileMoreMenu />
                 <div class="mobile-home-wrapper">
@@ -71,11 +73,18 @@
                 <SidebarTab tabName="save" tabLink={homeLink}>
                     <IconDownload />
                 </SidebarTab>
+                <SidebarTab
+                    tabName="videorecord"
+                    tabLink={videorecordLink}
+                    preloadCode="off"
+                >
+                    <IconVideo />
+                </SidebarTab>
                 <SidebarTab tabName="clipboard" tabLink={clipboardLink}>
                     <IconClipboard />
                 </SidebarTab>
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
-                    <IconVideo />
+                    <IconStack2 />
                 </SidebarTab>
                 <SidebarTab tabName="history" tabLink={historyLink}>
                     <IconHistory />

@@ -39,6 +39,8 @@
         "@types/fluent-ffmpeg": "^2.1.25",
         "@types/node": "^20.14.10",
         "@types/qrcode": "^1.5.5",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-basic-ssl": "^1.1.0",
         "compare-versions": "^6.1.0",
         "dotenv": "^16.0.1",
@@ -60,7 +62,10 @@
     "dependencies": {
         "@clerk/clerk-js": "^5.114.1",
         "@clerk/localizations": "^3.30.1",
+        "@excalidraw/excalidraw": "^0.18.0",
         "@zxing/browser": "^0.1.5",
-        "qrcode": "^1.5.4"
+        "qrcode": "^1.5.4",
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
     }
 }

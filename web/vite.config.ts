@@ -91,6 +91,11 @@ export default defineConfig(({ mode }) => {
     const wsUrl = apiUrl.replace(/^http/, 'ws');
 
     return {
+        resolve: {
+            alias: {
+                'roughjs/bin/rough': 'roughjs/bin/rough.js',
+            },
+        },
         plugins: [
             basicSSL(), // 临时禁用 HTTPS 以避免混合内容错误
             sveltekit(),

@@ -291,7 +291,6 @@
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
     let cameraPreviewEl: HTMLVideoElement | null = null;
-    let cameraOverlayStyle = "display:none;";
     let showCameraPreview = false;
     let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
     let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
@@ -1120,41 +1119,6 @@
                 element?.type === "frame" || element?.type === "magicframe",
         );
 
-    const isFrameLikeElement = (element: any) =>
-        !!element &&
-        !element?.isDeleted &&
-        (element?.type === "frame" || element?.type === "magicframe");
-
-    const reshapeFrameToAspect = (frame: any, ratio: number) => {
-        const x = Number(frame?.x) || 0;
-        const y = Number(frame?.y) || 0;
-        const width = Math.max(1, Number(frame?.width) || 0);
-        const height = Math.max(1, Number(frame?.height) || 0);
-        const centerX = x + width / 2;
-        const centerY = y + height / 2;
-        const area = Math.max(1, width * height);
-
-        let nextWidth = Math.sqrt(area * ratio);
-        let nextHeight = nextWidth / ratio;
-        const minSide = 120;
-        if (nextWidth < minSide) {
-            nextWidth = minSide;
-            nextHeight = nextWidth / ratio;
-        }
-        if (nextHeight < minSide) {
-            nextHeight = minSide;
-            nextWidth = nextHeight * ratio;
-        }
-
-        return {
-            ...frame,
-            x: Math.round(centerX - nextWidth / 2),
-            y: Math.round(centerY - nextHeight / 2),
-            width: Math.round(nextWidth),
-            height: Math.round(nextHeight),
-        };
-    };
-
     const getDefaultBridgeFrameRect = () => {
         const boardRect = boardWrapEl?.getBoundingClientRect();
         const viewportW =
@@ -1246,95 +1210,6 @@
             appState: scene.appState ?? {},
             files: scene.files ?? {},
         };
-    };
-
-    const normalizeSceneFrameAspectRatio = (
-        scene: BridgeSlideScene,
-        slideIndex: number,
-        ratio: number,
-    ): { scene: BridgeSlideScene; changed: boolean } => {
-        const elements = Array.isArray(scene.elements) ? [...scene.elements] : [];
-        const frameIndex = elements.findIndex((element) =>
-            isFrameLikeElement(element),
-        );
-        if (frameIndex < 0) {
-            const defaultFrame = createDefaultBridgeFrameElement(slideIndex);
-            if (!defaultFrame) {
-                return {
-                    scene: {
-                        elements,
-                        appState: scene.appState ?? {},
-                        files: scene.files ?? {},
-                    },
-                    changed: false,
-                };
-            }
-            return {
-                scene: {
-                    elements: [defaultFrame, ...elements],
-                    appState: scene.appState ?? {},
-                    files: scene.files ?? {},
-                },
-                changed: true,
-            };
-        }
-
-        const currentFrame = elements[frameIndex];
-        const nextFrame = reshapeFrameToAspect(currentFrame, ratio);
-        const changed =
-            nextFrame.x !== currentFrame?.x ||
-            nextFrame.y !== currentFrame?.y ||
-            nextFrame.width !== currentFrame?.width ||
-            nextFrame.height !== currentFrame?.height;
-        if (changed) elements[frameIndex] = nextFrame;
-
-        return {
-            scene: {
-                elements,
-                appState: scene.appState ?? {},
-                files: scene.files ?? {},
-            },
-            changed,
-        };
-    };
-
-    const applyAspectRatioToSlides = (options?: { focusActive?: boolean }) => {
-        const ratio = ratioToNumber(aspectRatio);
-        if (!Number.isFinite(ratio) || ratio <= 0) return;
-
-        const totalSlides = Math.max(1, slides.length, bridgeSlides.length);
-        const nextScenes: BridgeSlideScene[] = [];
-        let changed = false;
-
-        for (let i = 0; i < totalSlides; i += 1) {
-            const baseScene = bridgeSlides[i] ?? {
-                elements: [],
-                appState: {},
-                files: {},
-            };
-            const normalized = normalizeSceneFrameAspectRatio(
-                baseScene,
-                i,
-                ratio,
-            );
-            nextScenes[i] = normalized.scene;
-            if (normalized.changed) changed = true;
-        }
-
-        if (!changed && nextScenes.length === bridgeSlides.length) return;
-        bridgeSlides = nextScenes;
-
-        const activeIndex = Math.max(
-            0,
-            Math.min(activeSlide, nextScenes.length - 1),
-        );
-        const activeScene = nextScenes[activeIndex];
-        if (excalidrawApi && activeScene) {
-            applyBridgeScene(activeScene, {
-                selectFrame: true,
-                focusFrame: options?.focusActive ?? true,
-            });
-        }
     };
 
     const fillCanvasBg = () => {
@@ -1708,16 +1583,6 @@
     const triggerResizeNextFrame = () => {
         requestAnimationFrame(() => {
             resizeCanvas();
-        });
-    };
-
-    const setAspectRatio = (nextRatio: string) => {
-        if (!nextRatio || nextRatio === aspectRatio) return;
-        saveCurrentSlide();
-        aspectRatio = nextRatio;
-        triggerResizeNextFrame();
-        requestAnimationFrame(() => {
-            applyAspectRatioToSlides({ focusActive: true });
         });
     };
 
@@ -3226,24 +3091,6 @@
         requestAnimationFrame(() => clampCameraOverlayIntoSlide());
     }
 
-    $: {
-        isRecording;
-        showCameraInRecord;
-        cameraStream;
-        activeSlide;
-        bridgeViewportVersion;
-        cameraCorner;
-        cameraMargin;
-        cameraSize;
-        cameraRadius;
-        cameraOffsetX;
-        cameraOffsetY;
-        cameraOverlayStyle =
-            isRecording && showCameraInRecord && !!cameraStream
-                ? getCameraOverlayStyle()
-                : "display:none;";
-    }
-
     const toggleFrameSelection = (id: string, additive: boolean) => {
         if (!additive) {
             selectedFrameIds = [id];
@@ -3810,7 +3657,7 @@
             <div
                 class="camera-overlay"
                 class:dragging={draggingCameraOverlay}
-                style={cameraOverlayStyle}
+                style={getCameraOverlayStyle()}
                 role="button"
                 aria-label="drag camera overlay"
                 tabindex="-1"
@@ -3942,11 +3789,7 @@
                             loadSlide(i);
                         }}
                     >
-                        <span class="slide-drag-handle" aria-hidden="true">⋮⋮</span>
-                        <span class="slide-title">Slide {i + 1}</span>
-                        <span class="slide-thumb-frame">
-                            <span class="slide-number">{i + 1}</span>
-                        </span>
+                        <span class="slide-number">{i + 1}</span>
                     </button>
                 {/each}
             </div>
@@ -4070,7 +3913,10 @@
                 {#each aspectOptions as item}
                     <button
                         class:active={aspectRatio === item.key}
-                        on:click={() => setAspectRatio(item.key)}
+                        on:click={() => {
+                            aspectRatio = item.key;
+                            triggerResizeNextFrame();
+                        }}
                     >
                         <strong>{item.key}</strong>
                         <small>{item.label}</small>
@@ -5291,7 +5137,7 @@
         top: 50%;
         transform: translateY(-50%);
         z-index: 950;
-        width: 120px;
+        width: 76px;
         background: #fefcf9;
         border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 14px;
@@ -5338,7 +5184,7 @@
     .slides-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         max-height: 50vh;
         overflow: auto;
         width: 100%;
@@ -5347,66 +5193,26 @@
     }
 
     .slide-item {
-        width: 100%;
-        min-height: 72px;
+        width: 36px;
+        height: 36px;
         border-radius: 10px;
         background: #fafaf9;
         color: #57534e;
         border: 1.5px solid #e7e5e4;
-        padding: 6px;
+        padding: 0;
         font-weight: 600;
         position: relative;
         overflow: hidden;
-        display: grid;
-        grid-template-columns: 10px 1fr;
-        grid-template-rows: auto 1fr;
-        gap: 4px 6px;
-        align-items: start;
-        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.15s ease;
-        cursor: grab;
     }
     .slide-item:hover {
         border-color: #d6d3d1;
         background: #f5f5f4;
         color: #44403c;
-        transform: translateY(-1px);
-    }
-
-    .slide-item:active {
-        cursor: grabbing;
-    }
-
-    .slide-drag-handle {
-        grid-row: 1 / span 2;
-        grid-column: 1;
-        font-size: 9px;
-        line-height: 1.1;
-        color: #a8a29e;
-        letter-spacing: -1px;
-        padding-top: 2px;
-    }
-
-    .slide-title {
-        grid-column: 2;
-        font-size: 11px;
-        line-height: 1.1;
-        color: #57534e;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .slide-thumb-frame {
-        grid-column: 2;
-        width: 100%;
-        height: 42px;
-        border-radius: 8px;
-        border: 1.5px solid #d6d3d1;
-        background: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        transform: scale(1.06);
     }
 
     .slide-number {
@@ -5415,24 +5221,17 @@
     }
 
     .slide-item.active {
-        background: #fff;
+        background: #292524;
         border-color: #292524;
-        color: #292524;
-        box-shadow: 0 2px 8px rgba(41, 37, 36, 0.18);
-    }
-
-    .slide-item.active .slide-thumb-frame {
-        border-color: #292524;
-        box-shadow: inset 0 0 0 1px rgba(41, 37, 36, 0.08);
+        color: #fefcf9;
+        box-shadow: 0 2px 8px rgba(41, 37, 36, 0.25);
     }
 
     .slide-item.record-target {
+        background: #16a34a;
         border-color: #16a34a;
-        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
-    }
-
-    .slide-item.record-target .slide-thumb-frame {
-        border-color: #16a34a;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
     }
 
     .slide-item.dragging {
@@ -5641,7 +5440,7 @@
         .slides-panel {
             right: 12px;
             top: 50%;
-            width: 104px;
+            width: 64px;
         }
 
         .group-panel {

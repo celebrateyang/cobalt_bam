@@ -3789,7 +3789,11 @@
                             loadSlide(i);
                         }}
                     >
-                        <span class="slide-number">{i + 1}</span>
+                        <span class="slide-drag-handle" aria-hidden="true">⋮⋮</span>
+                        <span class="slide-title">Slide {i + 1}</span>
+                        <span class="slide-thumb-frame">
+                            <span class="slide-number">{i + 1}</span>
+                        </span>
                     </button>
                 {/each}
             </div>
@@ -5137,7 +5141,7 @@
         top: 50%;
         transform: translateY(-50%);
         z-index: 950;
-        width: 76px;
+        width: 120px;
         background: #fefcf9;
         border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 14px;
@@ -5184,7 +5188,7 @@
     .slides-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         max-height: 50vh;
         overflow: auto;
         width: 100%;
@@ -5193,26 +5197,66 @@
     }
 
     .slide-item {
-        width: 36px;
-        height: 36px;
+        width: 100%;
+        min-height: 72px;
         border-radius: 10px;
         background: #fafaf9;
         color: #57534e;
         border: 1.5px solid #e7e5e4;
-        padding: 0;
+        padding: 6px;
         font-weight: 600;
         position: relative;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: 10px 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 4px 6px;
+        align-items: start;
+        text-align: left;
         transition: all 0.15s ease;
+        cursor: grab;
     }
     .slide-item:hover {
         border-color: #d6d3d1;
         background: #f5f5f4;
         color: #44403c;
-        transform: scale(1.06);
+        transform: translateY(-1px);
+    }
+
+    .slide-item:active {
+        cursor: grabbing;
+    }
+
+    .slide-drag-handle {
+        grid-row: 1 / span 2;
+        grid-column: 1;
+        font-size: 9px;
+        line-height: 1.1;
+        color: #a8a29e;
+        letter-spacing: -1px;
+        padding-top: 2px;
+    }
+
+    .slide-title {
+        grid-column: 2;
+        font-size: 11px;
+        line-height: 1.1;
+        color: #57534e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .slide-thumb-frame {
+        grid-column: 2;
+        width: 100%;
+        height: 42px;
+        border-radius: 8px;
+        border: 1.5px solid #d6d3d1;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .slide-number {
@@ -5221,17 +5265,24 @@
     }
 
     .slide-item.active {
-        background: #292524;
+        background: #fff;
         border-color: #292524;
-        color: #fefcf9;
-        box-shadow: 0 2px 8px rgba(41, 37, 36, 0.25);
+        color: #292524;
+        box-shadow: 0 2px 8px rgba(41, 37, 36, 0.18);
+    }
+
+    .slide-item.active .slide-thumb-frame {
+        border-color: #292524;
+        box-shadow: inset 0 0 0 1px rgba(41, 37, 36, 0.08);
     }
 
     .slide-item.record-target {
-        background: #16a34a;
         border-color: #16a34a;
-        color: #ffffff;
-        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
+    }
+
+    .slide-item.record-target .slide-thumb-frame {
+        border-color: #16a34a;
     }
 
     .slide-item.dragging {
@@ -5440,7 +5491,7 @@
         .slides-panel {
             right: 12px;
             top: 50%;
-            width: 64px;
+            width: 104px;
         }
 
         .group-panel {

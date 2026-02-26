@@ -291,6 +291,7 @@
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
     let cameraPreviewEl: HTMLVideoElement | null = null;
+    let cameraOverlayStyle = "display:none;";
     let showCameraPreview = false;
     let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
     let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
@@ -3091,6 +3092,24 @@
         requestAnimationFrame(() => clampCameraOverlayIntoSlide());
     }
 
+    $: {
+        isRecording;
+        showCameraInRecord;
+        cameraStream;
+        activeSlide;
+        bridgeViewportVersion;
+        cameraCorner;
+        cameraMargin;
+        cameraSize;
+        cameraRadius;
+        cameraOffsetX;
+        cameraOffsetY;
+        cameraOverlayStyle =
+            isRecording && showCameraInRecord && !!cameraStream
+                ? getCameraOverlayStyle()
+                : "display:none;";
+    }
+
     const toggleFrameSelection = (id: string, additive: boolean) => {
         if (!additive) {
             selectedFrameIds = [id];
@@ -3657,7 +3676,7 @@
             <div
                 class="camera-overlay"
                 class:dragging={draggingCameraOverlay}
-                style={getCameraOverlayStyle()}
+                style={cameraOverlayStyle}
                 role="button"
                 aria-label="drag camera overlay"
                 tabindex="-1"

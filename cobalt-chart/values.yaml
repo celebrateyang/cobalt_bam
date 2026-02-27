@@ -22,7 +22,6 @@ instagram:
   # upstreamUrl: "https://api2.freesavevideo.online"
   # 台式机服务器
   upstreamUrl: "https://api3.freesavevideo.online"
-  upstreamApiKey: "miaohu2f4%ddxg3v3qf8vwf8e5y7k1z8c9"
   upstreamTimeoutMs: 12000
 
 douyin:

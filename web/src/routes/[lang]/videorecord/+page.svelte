@@ -291,6 +291,7 @@
     let cameraVideoEl: HTMLVideoElement | null = null;
     let cameraRenderRaf = 0;
     let cameraPreviewEl: HTMLVideoElement | null = null;
+    let cameraOverlayStyle = "display:none;";
     let showCameraPreview = false;
     let bridgeCompositeCanvas: HTMLCanvasElement | null = null;
     let bridgeCompositeCtx: CanvasRenderingContext2D | null = null;
@@ -1119,6 +1120,41 @@
                 element?.type === "frame" || element?.type === "magicframe",
         );
 
+    const isFrameLikeElement = (element: any) =>
+        !!element &&
+        !element?.isDeleted &&
+        (element?.type === "frame" || element?.type === "magicframe");
+
+    const reshapeFrameToAspect = (frame: any, ratio: number) => {
+        const x = Number(frame?.x) || 0;
+        const y = Number(frame?.y) || 0;
+        const width = Math.max(1, Number(frame?.width) || 0);
+        const height = Math.max(1, Number(frame?.height) || 0);
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        const area = Math.max(1, width * height);
+
+        let nextWidth = Math.sqrt(area * ratio);
+        let nextHeight = nextWidth / ratio;
+        const minSide = 120;
+        if (nextWidth < minSide) {
+            nextWidth = minSide;
+            nextHeight = nextWidth / ratio;
+        }
+        if (nextHeight < minSide) {
+            nextHeight = minSide;
+            nextWidth = nextHeight * ratio;
+        }
+
+        return {
+            ...frame,
+            x: Math.round(centerX - nextWidth / 2),
+            y: Math.round(centerY - nextHeight / 2),
+            width: Math.round(nextWidth),
+            height: Math.round(nextHeight),
+        };
+    };
+
     const getDefaultBridgeFrameRect = () => {
         const boardRect = boardWrapEl?.getBoundingClientRect();
         const viewportW =
@@ -1210,6 +1246,95 @@
             appState: scene.appState ?? {},
             files: scene.files ?? {},
         };
+    };
+
+    const normalizeSceneFrameAspectRatio = (
+        scene: BridgeSlideScene,
+        slideIndex: number,
+        ratio: number,
+    ): { scene: BridgeSlideScene; changed: boolean } => {
+        const elements = Array.isArray(scene.elements) ? [...scene.elements] : [];
+        const frameIndex = elements.findIndex((element) =>
+            isFrameLikeElement(element),
+        );
+        if (frameIndex < 0) {
+            const defaultFrame = createDefaultBridgeFrameElement(slideIndex);
+            if (!defaultFrame) {
+                return {
+                    scene: {
+                        elements,
+                        appState: scene.appState ?? {},
+                        files: scene.files ?? {},
+                    },
+                    changed: false,
+                };
+            }
+            return {
+                scene: {
+                    elements: [defaultFrame, ...elements],
+                    appState: scene.appState ?? {},
+                    files: scene.files ?? {},
+                },
+                changed: true,
+            };
+        }
+
+        const currentFrame = elements[frameIndex];
+        const nextFrame = reshapeFrameToAspect(currentFrame, ratio);
+        const changed =
+            nextFrame.x !== currentFrame?.x ||
+            nextFrame.y !== currentFrame?.y ||
+            nextFrame.width !== currentFrame?.width ||
+            nextFrame.height !== currentFrame?.height;
+        if (changed) elements[frameIndex] = nextFrame;
+
+        return {
+            scene: {
+                elements,
+                appState: scene.appState ?? {},
+                files: scene.files ?? {},
+            },
+            changed,
+        };
+    };
+
+    const applyAspectRatioToSlides = (options?: { focusActive?: boolean }) => {
+        const ratio = ratioToNumber(aspectRatio);
+        if (!Number.isFinite(ratio) || ratio <= 0) return;
+
+        const totalSlides = Math.max(1, slides.length, bridgeSlides.length);
+        const nextScenes: BridgeSlideScene[] = [];
+        let changed = false;
+
+        for (let i = 0; i < totalSlides; i += 1) {
+            const baseScene = bridgeSlides[i] ?? {
+                elements: [],
+                appState: {},
+                files: {},
+            };
+            const normalized = normalizeSceneFrameAspectRatio(
+                baseScene,
+                i,
+                ratio,
+            );
+            nextScenes[i] = normalized.scene;
+            if (normalized.changed) changed = true;
+        }
+
+        if (!changed && nextScenes.length === bridgeSlides.length) return;
+        bridgeSlides = nextScenes;
+
+        const activeIndex = Math.max(
+            0,
+            Math.min(activeSlide, nextScenes.length - 1),
+        );
+        const activeScene = nextScenes[activeIndex];
+        if (excalidrawApi && activeScene) {
+            applyBridgeScene(activeScene, {
+                selectFrame: true,
+                focusFrame: options?.focusActive ?? true,
+            });
+        }
     };
 
     const fillCanvasBg = () => {
@@ -1583,6 +1708,16 @@
     const triggerResizeNextFrame = () => {
         requestAnimationFrame(() => {
             resizeCanvas();
+        });
+    };
+
+    const setAspectRatio = (nextRatio: string) => {
+        if (!nextRatio || nextRatio === aspectRatio) return;
+        saveCurrentSlide();
+        aspectRatio = nextRatio;
+        triggerResizeNextFrame();
+        requestAnimationFrame(() => {
+            applyAspectRatioToSlides({ focusActive: true });
         });
     };
 
@@ -3091,6 +3226,24 @@
         requestAnimationFrame(() => clampCameraOverlayIntoSlide());
     }
 
+    $: {
+        isRecording;
+        showCameraInRecord;
+        cameraStream;
+        activeSlide;
+        bridgeViewportVersion;
+        cameraCorner;
+        cameraMargin;
+        cameraSize;
+        cameraRadius;
+        cameraOffsetX;
+        cameraOffsetY;
+        cameraOverlayStyle =
+            isRecording && showCameraInRecord && !!cameraStream
+                ? getCameraOverlayStyle()
+                : "display:none;";
+    }
+
     const toggleFrameSelection = (id: string, additive: boolean) => {
         if (!additive) {
             selectedFrameIds = [id];
@@ -3657,7 +3810,7 @@
             <div
                 class="camera-overlay"
                 class:dragging={draggingCameraOverlay}
-                style={getCameraOverlayStyle()}
+                style={cameraOverlayStyle}
                 role="button"
                 aria-label="drag camera overlay"
                 tabindex="-1"
@@ -3913,10 +4066,7 @@
                 {#each aspectOptions as item}
                     <button
                         class:active={aspectRatio === item.key}
-                        on:click={() => {
-                            aspectRatio = item.key;
-                            triggerResizeNextFrame();
-                        }}
+                        on:click={() => setAspectRatio(item.key)}
                     >
                         <strong>{item.key}</strong>
                         <small>{item.label}</small>

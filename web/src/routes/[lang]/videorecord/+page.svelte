@@ -335,10 +335,9 @@
     let activeSlideFocusStyle = "";
 
     // teleprompter (DOM overlay only; not part of canvas stream)
-    let teleprompterText =
-        "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
+    let teleprompterText = "";
     const teleprompterInputPlaceholder =
-        "Paste your script here...\n\n\u4ec5\u4f60\u53ef\u89c1\uff0c\u4e0d\u4f1a\u51fa\u73b0\u5728\u5f55\u5236\u5185\u5bb9\u4e2d\u3002";
+        "把你的讲稿粘贴到这里...\n\u4ec5\u4f60\u53ef\u89c1\uff0c\u4e0d\u4f1a\u51fa\u73b0\u5728\u5f55\u5236\u5185\u5bb9\u4e2d\u3002";
     let showTeleprompter = false;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
@@ -2933,7 +2932,7 @@
         stopHandled = false;
         clampCameraOverlayIntoSlide();
 
-        // only canvas stream is recorded; toolbar/teleprompter DOM won't be captured
+        // only canvas stream is recorded; DOM overlays won't be captured
         const recordingCanvas = getRecordingCanvas();
         if (
             !recordingCanvas ||
@@ -3908,7 +3907,18 @@
     };
 
     const onGlobalKeydown = (e: KeyboardEvent) => {
-        if (e.code === "Space" || e.key.toLowerCase() === "p") {
+        const target = e.target as HTMLElement | null;
+        const tag = target?.tagName;
+        const isTypingTarget =
+            !!target &&
+            (target.isContentEditable ||
+                tag === "INPUT" ||
+                tag === "TEXTAREA" ||
+                tag === "SELECT");
+
+        if (isTypingTarget) return;
+
+        if (e.key.toLowerCase() === "p") {
             e.preventDefault();
             if (isRecording) stopRecord();
             else void triggerRecordStart();
@@ -4036,11 +4046,6 @@
                 on:click={toggleTeleprompterPanel}
                 >📝</button
             >
-            <button
-                class="floating-btn floating-help-btn"
-                on:click={() => (showShortcutsHelp = !showShortcutsHelp)}
-                title="Help">⌨</button
-            >
             {#if !isRecording}
                 <button
                     class="floating-record"
@@ -4149,8 +4154,18 @@
             >
                 <div
                     class="teleprompter-controls compact teleprompter-dragbar"
-                    on:pointerdown={startDragTeleprompter}
                 >
+                    <button
+                        type="button"
+                        class="teleprompter-grip"
+                        title="拖动提词器"
+                        aria-label="拖动提词器"
+                        on:pointerdown={startDragTeleprompter}
+                    >
+                        <span class="teleprompter-grip-dots">⋮⋮</span>
+                        <span>拖动</span>
+                    </button>
+
                     <button
                         class="icon-btn"
                         on:click={startTeleprompter}
@@ -4216,6 +4231,7 @@
                 />
             </div>
         {/if}
+
     </div>
 
     {#if exportNotice}
@@ -4225,7 +4241,7 @@
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
             <div><strong>Whiteboard:</strong> Use Excalidraw top toolbar for select/draw/text/zoom/pan.</div>
-            <div><strong>Recording:</strong> Space or P to start/stop, K to pause/resume.</div>
+            <div><strong>Recording:</strong> P to start/stop, K to pause/resume.</div>
         </div>
     {/if}
 </div>
@@ -4347,7 +4363,7 @@
                 >
             </div>
             <div class="subnote">
-                说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退到 WebM。
+                说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退为 WebM。
             </div>
         </section>
 
@@ -4525,7 +4541,7 @@
                     {#each micDevices as dev}
                         <option value={dev.deviceId}
                             >{dev.label ||
-                                `麦克风 ${dev.deviceId.slice(0, 6)}`}</option
+                                `麦克风${dev.deviceId.slice(0, 6)}`}</option
                         >
                     {/each}
                 </select>
@@ -4841,8 +4857,34 @@
         padding: 0;
         border-radius: 0;
         background: transparent;
-        cursor: move;
         user-select: none;
+    }
+
+    .teleprompter-grip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 30px;
+        padding: 0 8px;
+        border-radius: 8px;
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 12px;
+        cursor: grab;
+        flex-shrink: 0;
+    }
+
+    .teleprompter-grip:active {
+        cursor: grabbing;
+        background: #eef2f7;
+    }
+
+    .teleprompter-grip-dots {
+        letter-spacing: 1px;
+        font-size: 14px;
+        line-height: 1;
+        opacity: 0.8;
     }
 
     .teleprompter-controls {
@@ -5986,10 +6028,6 @@
 
         .floating-controls {
             width: min(calc(100% - 8px), 460px);
-        }
-
-        .floating-help-btn {
-            display: none;
         }
 
         .slides-panel {

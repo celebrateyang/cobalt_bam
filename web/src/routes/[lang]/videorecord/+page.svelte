@@ -148,6 +148,7 @@
             backgroundColor: string;
             canvasCornerRadius: number;
             canvasInnerPadding: number;
+            cameraFillFrame?: boolean;
         };
     };
     let webEmbeds: WebEmbedItem[] = [];
@@ -254,6 +255,7 @@
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
     let lastPreflightAt = 0;
     let showShortcutsHelp = false;
+    let mobileImmersiveMode = false;
     const aspectOptions = [
         { key: "16:9", label: "YouTube" },
         { key: "4:3", label: "经典" },
@@ -285,6 +287,8 @@
     let cameraMargin = 24;
     let cameraCorner: "br" | "bl" | "tr" | "tl" = "br";
     let cameraMirror = true;
+    let cameraFillFrame = false;
+    let cameraFillFrameHydrated = false;
     let cameraOffsetX = 0;
     let cameraOffsetY = 0;
     let cameraStream: MediaStream | null = null;
@@ -333,6 +337,8 @@
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText =
         "把你的讲稿粘贴到这里，然后点击开始滚动。\n\n你可以一边看提词器，一边在白板上讲解。";
+    const teleprompterInputPlaceholder =
+        "Paste your script here...\n\n\u4ec5\u4f60\u53ef\u89c1\uff0c\u4e0d\u4f1a\u51fa\u73b0\u5728\u5f55\u5236\u5185\u5bb9\u4e2d\u3002";
     let showTeleprompter = false;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
@@ -613,12 +619,22 @@
     const getCameraOverlayStyle = () => {
         const surface = getCameraSurfaceSize();
         if (!surface) return "display:none;";
+        if (cameraFillFrame) {
+            const bounds = getCameraConstraintRect(surface.width, surface.height);
+            return `left:${Math.round(bounds.left)}px; top:${Math.round(bounds.top)}px; width:${Math.round(bounds.width)}px; height:${Math.round(bounds.height)}px; border-radius:0;`;
+        }
         const placement = resolveCameraPlacement(surface.width, surface.height);
         return `left:${placement.x}px; top:${placement.y}px; width:${placement.size}px; height:${placement.size}px; border-radius:${cameraRadius}px;`;
     };
 
     const startDragCameraOverlay = (e: PointerEvent) => {
-        if (!isRecording || !showCameraInRecord || !cameraStream) return;
+        if (
+            !isRecording ||
+            !showCameraInRecord ||
+            !cameraStream ||
+            cameraFillFrame
+        )
+            return;
         const surface = getCameraSurfaceSize();
         if (!surface) return;
         const placement = resolveCameraPlacement(surface.width, surface.height);
@@ -752,28 +768,50 @@
         )
             return;
         const rect = canvasEl.getBoundingClientRect();
-        const { size, x, y } = resolveCameraPlacement(rect.width, rect.height);
-
-        ctx.save();
-        drawRoundRectPath(x, y, size, size, cameraRadius);
-        ctx.clip();
-        ctx.fillStyle = "#000";
-        ctx.fillRect(x, y, size, size);
-        if (cameraMirror) {
-            ctx.translate(x + size, y);
-            ctx.scale(-1, 1);
-            ctx.drawImage(cameraVideoEl, 0, 0, size, size);
+        if (cameraFillFrame) {
+            const { bounds } = resolveCameraPlacement(rect.width, rect.height);
+            const drawX = Math.round(bounds.left);
+            const drawY = Math.round(bounds.top);
+            const drawW = Math.max(1, Math.round(bounds.width));
+            const drawH = Math.max(1, Math.round(bounds.height));
+            ctx.save();
+            ctx.fillStyle = "#000";
+            ctx.fillRect(drawX, drawY, drawW, drawH);
+            if (cameraMirror) {
+                ctx.translate(drawX + drawW, drawY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(cameraVideoEl, 0, 0, drawW, drawH);
+            } else {
+                ctx.drawImage(cameraVideoEl, drawX, drawY, drawW, drawH);
+            }
+            ctx.restore();
         } else {
-            ctx.drawImage(cameraVideoEl, x, y, size, size);
-        }
-        ctx.restore();
+            const { size, x, y } = resolveCameraPlacement(
+                rect.width,
+                rect.height,
+            );
 
-        ctx.save();
-        drawRoundRectPath(x, y, size, size, cameraRadius);
-        ctx.strokeStyle = "rgba(255,255,255,0.8)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
+            ctx.save();
+            drawRoundRectPath(x, y, size, size, cameraRadius);
+            ctx.clip();
+            ctx.fillStyle = "#000";
+            ctx.fillRect(x, y, size, size);
+            if (cameraMirror) {
+                ctx.translate(x + size, y);
+                ctx.scale(-1, 1);
+                ctx.drawImage(cameraVideoEl, 0, 0, size, size);
+            } else {
+                ctx.drawImage(cameraVideoEl, x, y, size, size);
+            }
+            ctx.restore();
+
+            ctx.save();
+            drawRoundRectPath(x, y, size, size, cameraRadius);
+            ctx.strokeStyle = "rgba(255,255,255,0.8)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
 
         cameraRenderRaf = requestAnimationFrame(drawCameraFrame);
     };
@@ -927,73 +965,144 @@
             }
 
             if (cameraVideoEl && showCameraInRecord) {
-                const surface = getCameraSurfaceSize();
-                if (!surface) {
-                    bridgeCompositeRaf = requestAnimationFrame(tick);
-                    return;
-                }
-
-                const placementCss = resolveCameraPlacement(
-                    surface.width,
-                    surface.height,
-                );
-                const scale = Math.min(crop.scaleX, crop.scaleY);
-                const size = Math.max(16, Math.round(placementCss.size * scale));
-                const x = Math.round(
-                    (placementCss.x - crop.cropLeftCss) * crop.scaleX,
-                );
-                const y = Math.round(
-                    (placementCss.y - crop.cropTopCss) * crop.scaleY,
-                );
-                const clampedX = Math.max(0, Math.min(Math.max(0, w - size), x));
-                const clampedY = Math.max(0, Math.min(Math.max(0, h - size), y));
-
-                bridgeCompositeCtx.save();
-                drawRoundRectPathOn(
-                    bridgeCompositeCtx,
-                    clampedX,
-                    clampedY,
-                    size,
-                    size,
-                    cameraRadius,
-                );
-                bridgeCompositeCtx.clip();
-                bridgeCompositeCtx.fillStyle = "#000";
-                bridgeCompositeCtx.fillRect(clampedX, clampedY, size, size);
-                if (cameraMirror) {
-                    bridgeCompositeCtx.translate(clampedX + size, clampedY);
-                    bridgeCompositeCtx.scale(-1, 1);
-                    bridgeCompositeCtx.drawImage(
-                        cameraVideoEl,
-                        0,
-                        0,
-                        size,
-                        size,
+                if (cameraFillFrame) {
+                    const surface = getCameraSurfaceSize();
+                    if (!surface) {
+                        bridgeCompositeRaf = requestAnimationFrame(tick);
+                        return;
+                    }
+                    const boundsCss = getCameraConstraintRect(
+                        surface.width,
+                        surface.height,
                     );
+                    const rawX = Math.round(
+                        (boundsCss.left - crop.cropLeftCss) * crop.scaleX,
+                    );
+                    const rawY = Math.round(
+                        (boundsCss.top - crop.cropTopCss) * crop.scaleY,
+                    );
+                    const rawW = Math.max(
+                        1,
+                        Math.round(boundsCss.width * crop.scaleX),
+                    );
+                    const rawH = Math.max(
+                        1,
+                        Math.round(boundsCss.height * crop.scaleY),
+                    );
+                    const drawLeft = Math.max(0, Math.min(Math.max(0, w - 1), rawX));
+                    const drawTop = Math.max(0, Math.min(Math.max(0, h - 1), rawY));
+                    const drawRight = Math.max(
+                        drawLeft + 1,
+                        Math.min(w, rawX + rawW),
+                    );
+                    const drawBottom = Math.max(
+                        drawTop + 1,
+                        Math.min(h, rawY + rawH),
+                    );
+                    const drawW = Math.max(1, drawRight - drawLeft);
+                    const drawH = Math.max(1, drawBottom - drawTop);
+
+                    bridgeCompositeCtx.save();
+                    bridgeCompositeCtx.fillStyle = "#000";
+                    bridgeCompositeCtx.fillRect(drawLeft, drawTop, drawW, drawH);
+                    if (cameraMirror) {
+                        bridgeCompositeCtx.translate(drawLeft + drawW, drawTop);
+                        bridgeCompositeCtx.scale(-1, 1);
+                        bridgeCompositeCtx.drawImage(
+                            cameraVideoEl,
+                            0,
+                            0,
+                            drawW,
+                            drawH,
+                        );
+                    } else {
+                        bridgeCompositeCtx.drawImage(
+                            cameraVideoEl,
+                            drawLeft,
+                            drawTop,
+                            drawW,
+                            drawH,
+                        );
+                    }
+                    bridgeCompositeCtx.restore();
                 } else {
-                    bridgeCompositeCtx.drawImage(
-                        cameraVideoEl,
+                    const surface = getCameraSurfaceSize();
+                    if (!surface) {
+                        bridgeCompositeRaf = requestAnimationFrame(tick);
+                        return;
+                    }
+
+                    const placementCss = resolveCameraPlacement(
+                        surface.width,
+                        surface.height,
+                    );
+                    const scale = Math.min(crop.scaleX, crop.scaleY);
+                    const size = Math.max(
+                        16,
+                        Math.round(placementCss.size * scale),
+                    );
+                    const x = Math.round(
+                        (placementCss.x - crop.cropLeftCss) * crop.scaleX,
+                    );
+                    const y = Math.round(
+                        (placementCss.y - crop.cropTopCss) * crop.scaleY,
+                    );
+                    const clampedX = Math.max(
+                        0,
+                        Math.min(Math.max(0, w - size), x),
+                    );
+                    const clampedY = Math.max(
+                        0,
+                        Math.min(Math.max(0, h - size), y),
+                    );
+
+                    bridgeCompositeCtx.save();
+                    drawRoundRectPathOn(
+                        bridgeCompositeCtx,
                         clampedX,
                         clampedY,
                         size,
                         size,
+                        cameraRadius,
                     );
-                }
-                bridgeCompositeCtx.restore();
+                    bridgeCompositeCtx.clip();
+                    bridgeCompositeCtx.fillStyle = "#000";
+                    bridgeCompositeCtx.fillRect(clampedX, clampedY, size, size);
+                    if (cameraMirror) {
+                        bridgeCompositeCtx.translate(clampedX + size, clampedY);
+                        bridgeCompositeCtx.scale(-1, 1);
+                        bridgeCompositeCtx.drawImage(
+                            cameraVideoEl,
+                            0,
+                            0,
+                            size,
+                            size,
+                        );
+                    } else {
+                        bridgeCompositeCtx.drawImage(
+                            cameraVideoEl,
+                            clampedX,
+                            clampedY,
+                            size,
+                            size,
+                        );
+                    }
+                    bridgeCompositeCtx.restore();
 
-                bridgeCompositeCtx.save();
-                drawRoundRectPathOn(
-                    bridgeCompositeCtx,
-                    clampedX,
-                    clampedY,
-                    size,
-                    size,
-                    cameraRadius,
-                );
-                bridgeCompositeCtx.strokeStyle = "rgba(255,255,255,0.8)";
-                bridgeCompositeCtx.lineWidth = 2;
-                bridgeCompositeCtx.stroke();
-                bridgeCompositeCtx.restore();
+                    bridgeCompositeCtx.save();
+                    drawRoundRectPathOn(
+                        bridgeCompositeCtx,
+                        clampedX,
+                        clampedY,
+                        size,
+                        size,
+                        cameraRadius,
+                    );
+                    bridgeCompositeCtx.strokeStyle = "rgba(255,255,255,0.8)";
+                    bridgeCompositeCtx.lineWidth = 2;
+                    bridgeCompositeCtx.stroke();
+                    bridgeCompositeCtx.restore();
+                }
             }
 
             bridgeCompositeRaf = requestAnimationFrame(tick);
@@ -1027,6 +1136,7 @@
                 backgroundColor,
                 canvasCornerRadius,
                 canvasInnerPadding,
+                cameraFillFrame,
             },
         };
         window.localStorage.setItem(
@@ -1087,18 +1197,23 @@
             );
             frames = Array.isArray(data.frames) ? data.frames : [];
             webEmbeds = Array.isArray(data.webEmbeds) ? data.webEmbeds : [];
-            aspectRatio = data.settings?.aspectRatio || aspectRatio;
-            backgroundColor = data.settings?.backgroundColor || backgroundColor;
+            const snapshotSettings = data.settings;
+            aspectRatio = snapshotSettings?.aspectRatio || aspectRatio;
+            backgroundColor = snapshotSettings?.backgroundColor || backgroundColor;
             canvasCornerRadius = Number.isFinite(
-                data.settings?.canvasCornerRadius,
+                snapshotSettings?.canvasCornerRadius,
             )
-                ? data.settings.canvasCornerRadius
+                ? (snapshotSettings?.canvasCornerRadius ?? canvasCornerRadius)
                 : canvasCornerRadius;
             canvasInnerPadding = Number.isFinite(
-                data.settings?.canvasInnerPadding,
+                snapshotSettings?.canvasInnerPadding,
             )
-                ? data.settings.canvasInnerPadding
+                ? (snapshotSettings?.canvasInnerPadding ?? canvasInnerPadding)
                 : canvasInnerPadding;
+            if (typeof snapshotSettings?.cameraFillFrame === "boolean") {
+                cameraFillFrame = snapshotSettings.cameraFillFrame;
+                cameraFillFrameHydrated = true;
+            }
             requestAnimationFrame(() => loadSlide(activeSlide));
         } catch {
             // ignore broken snapshot
@@ -1917,6 +2032,13 @@
 
         resizeCanvas();
         loadProjectSnapshot();
+        if (
+            !cameraFillFrameHydrated &&
+            typeof window !== "undefined" &&
+            window.matchMedia("(max-width: 768px)").matches
+        ) {
+            cameraFillFrame = true;
+        }
         pushHistorySnapshot();
 
         try {
@@ -1964,6 +2086,7 @@
             stopCameraStream();
             stopBridgeComposite();
             stopMicStream();
+            delete document.body.dataset.vrImmersive;
             unmountExcalidrawBridge();
             recorder?.stop();
         };
@@ -2943,7 +3066,7 @@
             }
             downloadRecordingBlob(blob, ext);
             const staleChunkMs = lastChunkAt ? Date.now() - lastChunkAt : 0;
-            const staleChunk = lastChunkMs > 3000;
+            const staleChunk = staleChunkMs > 3000;
             const causeLabel =
                 recordingStopCause === "user"
                     ? "手动停止"
@@ -3125,6 +3248,28 @@
         teleprompterRaf = requestAnimationFrame(runTeleprompter);
     };
 
+    const toggleTeleprompterPanel = () => {
+        const next = !showTeleprompter;
+        showTeleprompter = next;
+        if (!next) {
+            stopTeleprompter();
+            return;
+        }
+
+        // On mobile, persisted desktop offsets can place the panel off-screen.
+        if (typeof window !== "undefined" && window.innerWidth <= 768) {
+            teleprompterOffsetX = 0;
+            teleprompterOffsetY = 0;
+        }
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clampAndSnapTeleprompter();
+                persistTeleprompterPrefs();
+            });
+        });
+    };
+
     const startDragTeleprompter = (e: PointerEvent) => {
         draggingTeleprompter = true;
         dragStartX = e.clientX;
@@ -3177,7 +3322,7 @@
         persistTeleprompterPrefs();
     }
 
-    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}`;
+    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}|${cameraFillFrame}`;
 
     $: if (typeof window !== "undefined" && autosaveSignature) {
         // throttled autosave for both whiteboard runtimes
@@ -3218,7 +3363,7 @@
         }
     }
 
-    $: if (isRecording && showCameraInRecord) {
+    $: if (isRecording && showCameraInRecord && !cameraFillFrame) {
         activeSlide;
         cameraCorner;
         cameraMargin;
@@ -3236,6 +3381,7 @@
         cameraMargin;
         cameraSize;
         cameraRadius;
+        cameraFillFrame;
         cameraOffsetX;
         cameraOffsetY;
         cameraOverlayStyle =
@@ -3712,6 +3858,21 @@
         void mountExcalidrawBridge();
     }
 
+    $: mobileImmersiveMode =
+        isRecording ||
+        isRecordingStarting ||
+        isRecordingStopping ||
+        recordCountdownLeft > 0 ||
+        showSettings;
+
+    $: if (typeof document !== "undefined") {
+        if (mobileImmersiveMode) {
+            document.body.dataset.vrImmersive = "1";
+        } else {
+            delete document.body.dataset.vrImmersive;
+        }
+    }
+
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
         if (!isRecording) return;
         e.preventDefault();
@@ -3764,7 +3925,7 @@
     {@html `<script type="application/ld+json">${JSON.stringify(seoJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 
-<div class="page">
+<div class="page" class:settings-open={showSettings}>
     <input
         bind:this={imageInputEl}
         type="file"
@@ -3809,6 +3970,7 @@
         {#if isRecording && showCameraInRecord && cameraStream}
             <div
                 class="camera-overlay"
+                class:full={cameraFillFrame}
                 class:dragging={draggingCameraOverlay}
                 style={cameraOverlayStyle}
                 role="button"
@@ -3844,17 +4006,17 @@
             >
                 ⋮⋮
             </div>
-            <button class="floating-btn" on:click={() => (showSettings = true)}
+            <button class="floating-btn floating-settings-btn" on:click={() => (showSettings = true)}
                 >⚙</button
             >
             <button
-                class="floating-btn"
+                class="floating-btn floating-teleprompter-btn"
                 class:active={showTeleprompter}
-                on:click={() => (showTeleprompter = !showTeleprompter)}
+                on:click={toggleTeleprompterPanel}
                 >📝</button
             >
             <button
-                class="floating-btn"
+                class="floating-btn floating-help-btn"
                 on:click={() => (showShortcutsHelp = !showShortcutsHelp)}
                 title="Help">⌨</button
             >
@@ -4021,16 +4183,12 @@
                     bind:this={teleprompterTextEl}
                     bind:value={teleprompterText}
                     style={`font-size:${teleprompterFontSize}px`}
-                    placeholder="在此粘贴你的脚本..."
+                    placeholder={teleprompterInputPlaceholder}
                     on:input={() => {
                         stopTeleprompter();
                         resetTeleprompterPosition();
                     }}
                 />
-
-                <div class="teleprompter-note">
-                    仅你可见，不会出现在录制内容中。
-                </div>
             </div>
         {/if}
     </div>
@@ -4194,6 +4352,14 @@
                 <input type="checkbox" bind:checked={showCameraInRecord} />
                 <span>录制时显示摄像头画面</span>
             </label>
+            <label class="switch-row">
+                <input
+                    type="checkbox"
+                    bind:checked={cameraFillFrame}
+                    disabled={!showCameraInRecord}
+                />
+                <span>摄像头充满整个录制画面</span>
+            </label>
             <div class="camera-settings">
                 <label class="slider-row">
                     <span>大小</span>
@@ -4203,7 +4369,7 @@
                         max="320"
                         step="4"
                         bind:value={cameraSize}
-                        disabled={!showCameraInRecord}
+                        disabled={!showCameraInRecord || cameraFillFrame}
                     />
                     <span>{cameraSize}px</span>
                 </label>
@@ -4215,7 +4381,7 @@
                         max="80"
                         step="2"
                         bind:value={cameraRadius}
-                        disabled={!showCameraInRecord}
+                        disabled={!showCameraInRecord || cameraFillFrame}
                     />
                     <span>{cameraRadius}px</span>
                 </label>
@@ -4227,7 +4393,7 @@
                         max="120"
                         step="2"
                         bind:value={cameraMargin}
-                        disabled={!showCameraInRecord}
+                        disabled={!showCameraInRecord || cameraFillFrame}
                     />
                     <span>{cameraMargin}px</span>
                 </label>
@@ -4245,22 +4411,26 @@
                     <button
                         class:active={cameraCorner === "tl"}
                         on:click={() => (cameraCorner = "tl")}
-                        disabled={!showCameraInRecord}>左上</button
+                        disabled={!showCameraInRecord || cameraFillFrame}
+                        >左上</button
                     >
                     <button
                         class:active={cameraCorner === "tr"}
                         on:click={() => (cameraCorner = "tr")}
-                        disabled={!showCameraInRecord}>右上</button
+                        disabled={!showCameraInRecord || cameraFillFrame}
+                        >右上</button
                     >
                     <button
                         class:active={cameraCorner === "bl"}
                         on:click={() => (cameraCorner = "bl")}
-                        disabled={!showCameraInRecord}>左下</button
+                        disabled={!showCameraInRecord || cameraFillFrame}
+                        >左下</button
                     >
                     <button
                         class:active={cameraCorner === "br"}
                         on:click={() => (cameraCorner = "br")}
-                        disabled={!showCameraInRecord}>右下</button
+                        disabled={!showCameraInRecord || cameraFillFrame}
+                        >右下</button
                     >
                 </div>
 
@@ -4272,7 +4442,7 @@
                         max="320"
                         step="2"
                         bind:value={cameraOffsetX}
-                        disabled={!showCameraInRecord}
+                        disabled={!showCameraInRecord || cameraFillFrame}
                     />
                     <span>{cameraOffsetX}px</span>
                 </label>
@@ -4284,7 +4454,7 @@
                         max="320"
                         step="2"
                         bind:value={cameraOffsetY}
-                        disabled={!showCameraInRecord}
+                        disabled={!showCameraInRecord || cameraFillFrame}
                     />
                     <span>{cameraOffsetY}px</span>
                 </label>
@@ -4294,7 +4464,8 @@
                             cameraOffsetX = 0;
                             cameraOffsetY = 0;
                         }}
-                        disabled={!showCameraInRecord}>重置摄像头偏移</button
+                        disabled={!showCameraInRecord || cameraFillFrame}
+                        >重置摄像头偏移</button
                     >
                 </div>
             </div>
@@ -4693,11 +4864,11 @@
     .teleprompter-editor {
         width: 100%;
         min-height: 320px;
-        border-radius: 10px;
-        border: 1px solid #d1d5db;
-        background: #ffffff;
+        border-radius: 0;
+        border: 0;
+        background: transparent;
         color: #111111;
-        padding: 10px;
+        padding: 6px 2px;
         resize: none;
         line-height: 1.7;
         font-weight: 700;
@@ -4705,11 +4876,9 @@
         outline: none;
     }
 
-    .teleprompter-note {
-        margin-top: 8px;
-        font-size: 12px;
-        opacity: 0.9;
-        color: #4b5563;
+    .teleprompter-editor::placeholder {
+        color: #6b7280;
+        font-weight: 500;
     }
 
     .hidden-file-input {
@@ -5111,6 +5280,12 @@
         user-select: none;
     }
 
+    .page.settings-open .floating-controls,
+    .page.settings-open .slides-panel {
+        opacity: 0;
+        pointer-events: none;
+    }
+
     .fc-drag-handle {
         display: flex;
         align-items: center;
@@ -5148,6 +5323,13 @@
 
     .camera-overlay.dragging {
         cursor: grabbing;
+    }
+
+    .camera-overlay.full {
+        border: 0;
+        box-shadow: none;
+        cursor: default;
+        pointer-events: none;
     }
 
     .camera-overlay video {
@@ -5566,9 +5748,9 @@
         }
 
         .board-wrap {
-            min-height: 100vh;
-            height: 100vh;
-            max-height: 100vh;
+            min-height: 100dvh;
+            height: 100dvh;
+            max-height: 100dvh;
         }
 
         .excalidraw-host :global(.main-menu-trigger) {
@@ -5628,6 +5810,179 @@
 
         .bg-grid {
             grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page {
+            min-height: 100dvh;
+        }
+
+        .floating-controls {
+            left: 50%;
+            right: auto;
+            top: calc(env(safe-area-inset-top, 0px) + 8px);
+            width: min(calc(100% - 12px), 460px);
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 8px;
+            transform: translateX(-50%) !important;
+        }
+
+        .fc-drag-handle {
+            display: none;
+        }
+
+        .floating-btn {
+            width: 42px;
+            min-width: 42px;
+            height: 42px;
+            border-radius: 11px;
+        }
+
+        .floating-record,
+        .floating-stop,
+        .floating-pause {
+            height: 42px;
+            border-radius: 11px;
+            padding: 0 12px;
+            font-size: 14px;
+        }
+
+        .slides-panel {
+            left: 50%;
+            right: auto;
+            top: auto;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+            transform: translateX(-50%);
+            width: min(calc(100% - 12px), 560px);
+            max-width: calc(100% - 12px);
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .slides-title {
+            display: none;
+        }
+
+        .slides-actions {
+            display: flex;
+            grid-template-columns: none;
+            width: auto;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .slides-actions .slide-icon:nth-child(1),
+        .slides-actions .slide-icon:nth-child(2) {
+            display: none;
+        }
+
+        .slide-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            flex: 0 0 auto;
+        }
+
+        .slides-list {
+            flex: 1 1 auto;
+            flex-direction: row;
+            max-height: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+            width: auto;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 2px;
+            gap: 6px;
+        }
+
+        .slide-item,
+        .slide-add {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            flex: 0 0 auto;
+        }
+
+        .slide-number {
+            font-size: 12px;
+        }
+
+        .teleprompter-panel {
+            left: 8px;
+            right: 8px;
+            width: auto;
+            max-width: none;
+            max-height: min(72dvh, 620px);
+            top: calc(env(safe-area-inset-top, 0px) + 56px);
+        }
+
+        .settings-modal {
+            inset: auto 0 0 0;
+            transform: none;
+            width: 100%;
+            max-height: min(88dvh, 760px);
+            border-radius: 16px 16px 0 0;
+            padding: 14px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .settings-header h3 {
+            font-size: 20px;
+        }
+
+        .ratio-grid strong {
+            font-size: 20px;
+        }
+    }
+
+    @media (max-width: 535px) {
+        :global(body[data-vr-immersive="1"] #sidebar) {
+            display: none !important;
+        }
+
+        :global(body[data-vr-immersive="1"] #content) {
+            padding: 0 !important;
+            gap: 0 !important;
+        }
+
+        .board-wrap {
+            border-radius: 0 !important;
+        }
+
+        .floating-controls {
+            width: min(calc(100% - 8px), 460px);
+        }
+
+        .floating-help-btn {
+            display: none;
+        }
+
+        .slides-panel {
+            width: calc(100% - 8px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
+        }
+
+        :global(body[data-vr-immersive="1"]) .slides-panel {
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+        }
+    }
+
+    @media (max-width: 390px) {
+        .floating-record,
+        .floating-stop,
+        .floating-pause {
+            padding: 0 10px;
+            font-size: 13px;
+        }
+
+        .slides-actions {
+            display: none;
         }
     }
 </style>

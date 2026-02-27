@@ -92,3 +92,19 @@
 - Avoid PowerShell defaults that can introduce mojibake; prefer `python` with `encoding='utf-8'` or `apply_patch` to preserve Unicode.
 - If you add new UI strings, keep them ASCII unless you can guarantee UTF-8 encoding and the file already contains Unicode.
 
+### Encoding incident notes (2026-02)
+- Root cause: in Windows PowerShell, `Get-Content` on UTF-8-without-BOM files may be decoded with legacy codepage, then writing back as UTF-8 corrupts CJK text.
+- DO NOT use this pattern on CJK files:
+  - `Get-Content` -> mutate array -> `[IO.File]::WriteAllLines(...)`
+  - `Set-Content` / `Out-File` without explicit UTF-8 handling
+- Safe edit order for CJK files:
+  1. Prefer `apply_patch` for targeted edits.
+  2. If scripting is required, use Python with explicit `encoding='utf-8'` for both read and write.
+  3. Avoid full-file rewrite if a localized patch is enough.
+  4. After edits, run a quick mojibake scan:
+     - `rg -n "�|锟|\\uFFFD" <file>`
+     - and spot-check known CJK UI strings.
+- If mojibake is detected:
+  - stop further edits immediately,
+  - restore text before continuing feature changes.
+

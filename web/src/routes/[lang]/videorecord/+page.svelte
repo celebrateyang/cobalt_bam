@@ -385,7 +385,11 @@
     const ensureCameraStream = async () => {
         if (cameraStream && cameraVideoEl) return;
         cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+            video: {
+                facingMode: "user",
+                width: { ideal: 1280, max: 1920 },
+                height: { ideal: 720, max: 1080 },
+            },
             audio: false,
         });
         const v = document.createElement("video");
@@ -859,6 +863,12 @@
         cropTopCss: number;
     };
 
+    const normalizeEncodeSize = (value: number) => {
+        const n = Math.max(2, Math.floor(value));
+        // Keep dimensions even for better encoder compatibility on mobile.
+        return n % 2 === 0 ? n : n - 1;
+    };
+
     const getRecordingCropInfo = (
         liveSource: HTMLCanvasElement,
     ): RecordingCropInfo => {
@@ -915,12 +925,18 @@
             await ensureCameraStream();
         }
 
+        const initialSource = getRecordingCanvas() || sourceCanvas;
+        const initialCrop = getRecordingCropInfo(initialSource);
+        const outputW = normalizeEncodeSize(initialCrop.sw);
+        const outputH = normalizeEncodeSize(initialCrop.sh);
+
         const out = document.createElement("canvas");
-        out.width = sourceCanvas.width || Math.max(2, sourceCanvas.clientWidth);
-        out.height =
-            sourceCanvas.height || Math.max(2, sourceCanvas.clientHeight);
+        out.width = outputW;
+        out.height = outputH;
         const outCtx = out.getContext("2d");
         if (!outCtx) throw new Error("composite ctx unavailable");
+        outCtx.imageSmoothingEnabled = true;
+        outCtx.imageSmoothingQuality = "high";
 
         bridgeCompositeCanvas = out;
         bridgeCompositeCtx = outCtx;
@@ -931,16 +947,10 @@
             const liveSource = getRecordingCanvas() || sourceCanvas;
             const crop = getRecordingCropInfo(liveSource);
 
-            if (
-                bridgeCompositeCanvas.width !== crop.sw ||
-                bridgeCompositeCanvas.height !== crop.sh
-            ) {
-                bridgeCompositeCanvas.width = crop.sw;
-                bridgeCompositeCanvas.height = crop.sh;
-            }
-
             const w = bridgeCompositeCanvas.width;
             const h = bridgeCompositeCanvas.height;
+            const outScaleX = w / Math.max(1, crop.sw);
+            const outScaleY = h / Math.max(1, crop.sh);
 
             bridgeCompositeCtx.clearRect(0, 0, w, h);
             try {
@@ -976,18 +986,22 @@
                         surface.height,
                     );
                     const rawX = Math.round(
-                        (boundsCss.left - crop.cropLeftCss) * crop.scaleX,
+                        (boundsCss.left - crop.cropLeftCss) *
+                            crop.scaleX *
+                            outScaleX,
                     );
                     const rawY = Math.round(
-                        (boundsCss.top - crop.cropTopCss) * crop.scaleY,
+                        (boundsCss.top - crop.cropTopCss) *
+                            crop.scaleY *
+                            outScaleY,
                     );
                     const rawW = Math.max(
                         1,
-                        Math.round(boundsCss.width * crop.scaleX),
+                        Math.round(boundsCss.width * crop.scaleX * outScaleX),
                     );
                     const rawH = Math.max(
                         1,
-                        Math.round(boundsCss.height * crop.scaleY),
+                        Math.round(boundsCss.height * crop.scaleY * outScaleY),
                     );
                     const drawLeft = Math.max(0, Math.min(Math.max(0, w - 1), rawX));
                     const drawTop = Math.max(0, Math.min(Math.max(0, h - 1), rawY));
@@ -1036,16 +1050,22 @@
                         surface.width,
                         surface.height,
                     );
-                    const scale = Math.min(crop.scaleX, crop.scaleY);
+                    const scale =
+                        Math.min(crop.scaleX, crop.scaleY) *
+                        Math.min(outScaleX, outScaleY);
                     const size = Math.max(
                         16,
                         Math.round(placementCss.size * scale),
                     );
                     const x = Math.round(
-                        (placementCss.x - crop.cropLeftCss) * crop.scaleX,
+                        (placementCss.x - crop.cropLeftCss) *
+                            crop.scaleX *
+                            outScaleX,
                     );
                     const y = Math.round(
-                        (placementCss.y - crop.cropTopCss) * crop.scaleY,
+                        (placementCss.y - crop.cropTopCss) *
+                            crop.scaleY *
+                            outScaleY,
                     );
                     const clampedX = Math.max(
                         0,
@@ -2827,6 +2847,7 @@
             "video/webm",
         ];
         const mp4Candidates = [
+            "video/mp4;codecs=avc3.42E01E,mp4a.40.2",
             "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
             "video/mp4",
         ];
@@ -4120,6 +4141,10 @@
             <div
                 bind:this={teleprompterPanelEl}
                 class="teleprompter-panel"
+                class:recording-active={isRecording ||
+                    isRecordingStarting ||
+                    isRecordingStopping ||
+                    recordCountdownLeft > 0}
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >
                 <div
@@ -4789,20 +4814,22 @@
         top: 64px;
         right: 12px;
         width: min(44%, 520px);
-        height: min(56vh, 560px);
         min-width: 320px;
-        min-height: 260px;
         max-width: calc(100vw - 24px);
-        max-height: calc(100vh - 24px);
-        overflow: auto;
-        resize: both;
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 10px;
-        backdrop-filter: blur(4px);
+        height: auto;
+        overflow: visible;
+        resize: none;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        backdrop-filter: none;
         color: #111111;
-        z-index: 2;
+        z-index: 6;
+    }
+
+    .teleprompter-panel.recording-active {
+        z-index: 980;
     }
 
     .teleprompter-dragbar {
@@ -4810,10 +4837,10 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        margin-bottom: 6px;
-        padding: 6px 8px;
-        border-radius: 8px;
-        background: #f3f4f6;
+        margin-bottom: 8px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
         cursor: move;
         user-select: none;
     }
@@ -4863,13 +4890,15 @@
 
     .teleprompter-editor {
         width: 100%;
+        height: min(56vh, 560px);
         min-height: 320px;
-        border-radius: 0;
-        border: 0;
-        background: transparent;
+        max-height: calc(100vh - 120px);
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
         color: #111111;
-        padding: 6px 2px;
-        resize: none;
+        padding: 10px;
+        resize: both;
         line-height: 1.7;
         font-weight: 700;
         box-sizing: border-box;
@@ -5107,13 +5136,13 @@
         inset: 0;
         background: rgba(17, 24, 39, 0.18);
         border: 0;
-        z-index: 8;
+        z-index: 1000;
         border-radius: 0;
     }
 
     .settings-modal {
         position: fixed;
-        z-index: 9;
+        z-index: 1001;
         inset: 7vh auto auto 50%;
         transform: translateX(-50%);
         width: min(900px, calc(100vw - 28px));

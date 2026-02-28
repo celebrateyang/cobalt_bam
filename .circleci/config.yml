@@ -123,4 +123,5 @@ jobs:
               --set admin.password="${ADMIN_PASSWORD}" \
               --set admin.email=${ADMIN_EMAIL} \
               --set jwt.secret="${JWT_SECRET}" \
+              --set-string instagram.upstreamApiKey="${INSTAGRAM_UPSTREAM_API_KEY}" \
               --history-max=3 --wait --atomic --timeout 4m0s

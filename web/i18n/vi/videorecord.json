@@ -1,0 +1,181 @@
+{
+    "seo": {
+        "title": "Trình ghi video bảng trắng - Hướng dẫn ghi slide trực tuyến | video miễn phí",
+        "description": "Tạo, di chuyển và thay đổi kích thước các trang chiếu, sau đó ghi lại các hướng dẫn trên bảng trắng với lớp phủ camera trong trình duyệt của bạn. Không cần cài đặt.",
+        "keywords": "máy ghi bảng trắng, máy ghi slide, máy ghi video trực tuyến, máy ghi excalidraw, ghi hướng dẫn",
+        "app_name": "Đầu ghi video bảng trắng"
+    },
+    "controls": {
+        "drag_controls": "Kéo điều khiển",
+        "open_settings": "Mở cài đặt",
+        "toggle_teleprompter": "Chuyển đổi máy nhắc chữ từ xa",
+        "starting": "Đang bắt đầu...",
+        "countdown": "Đếm ngược {{value}}",
+        "record": "Ghi hình",
+        "resume": "Tiếp tục",
+        "pause": "Tạm dừng",
+        "stopping": "Đang dừng...",
+        "stop_with_duration": "Dừng {{value}}"
+    },
+    "slides": {
+        "title": "Trang trình bày",
+        "move_up": "Di chuyển lên",
+        "move_down": "Di chuyển xuống",
+        "duplicate": "Nhân bản",
+        "delete": "Xóa bỏ",
+        "add": "Thêm trang trình bày"
+    },
+    "teleprompter": {
+        "placeholder": "Dán tập lệnh của bạn vào đây...\nChỉ bạn mới có thể nhìn thấy nó; nó sẽ không xuất hiện trong bản ghi âm.",
+        "drag_title": "Kéo máy nhắc chữ",
+        "drag": "Lôi kéo",
+        "play": "Chơi",
+        "pause": "Tạm dừng",
+        "reset": "Cài lại",
+        "speed": "Tốc độ",
+        "opacity": "Độ mờ",
+        "font_size": "Cỡ chữ"
+    },
+    "camera": {
+        "drag_overlay": "Kéo lớp phủ camera"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Bảng trắng",
+        "whiteboard_body": "Sử dụng thanh công cụ trên cùng Excalidraw để chọn/vẽ/văn bản/thu phóng/pan.",
+        "recording_title": "Ghi âm",
+        "recording_body": "P để bắt đầu/dừng, K để tạm dừng/tiếp tục."
+    },
+    "settings": {
+        "title": "Cài đặt ghi hình",
+        "dialog": "Cài đặt ghi hình",
+        "close": "Đóng cài đặt ghi âm",
+        "aspect": {
+            "title": "tỷ lệ khung hình",
+            "youtube": "YouTube",
+            "classic": "Cổ điển",
+            "portrait": "Chân dung",
+            "short_video": "Video ngắn",
+            "square": "Quảng trường"
+        },
+        "background": {
+            "title": "Lý lịch",
+            "random": "Nền ngẫu nhiên",
+            "light_preset": "Nền trắng + chữ tối",
+            "swatch": "Bối cảnh {{value}}"
+        },
+        "canvas": {
+            "title": "Phong cách vải",
+            "corner_radius": "Bán kính góc",
+            "inner_padding": "Đệm vải"
+        },
+        "preview": {
+            "title": "Xem trước"
+        },
+        "teleprompter_opacity": {
+            "title": "Độ mờ của máy nhắc chữ"
+        },
+        "export": {
+            "title": "Định dạng xuất",
+            "webm": "WebM (khả năng tương thích tốt hơn)",
+            "mp4": "MP4 (mặc định)",
+            "note": "Xuất mặc định là MP4. Nếu trình duyệt không hỗ trợ ghi MP4, nó sẽ tự động quay trở lại WebM."
+        },
+        "countdown": {
+            "title": "Đếm ngược trước khi ghi",
+            "enable": "Bật đếm ngược",
+            "seconds": "Giây"
+        },
+        "camera": {
+            "title": "Máy ảnh (ảnh trong ảnh)",
+            "show": "Hiển thị camera trong khi ghi",
+            "fill_frame": "Lấp đầy toàn bộ khung ghi bằng camera",
+            "size": "Kích cỡ",
+            "radius": "Bán kính góc",
+            "margin": "Lề",
+            "mirror": "Máy ảnh gương",
+            "corner_tl": "Trên cùng bên trái",
+            "corner_tr": "Trên cùng bên phải",
+            "corner_bl": "Dưới cùng bên trái",
+            "corner_br": "Dưới cùng bên phải",
+            "offset_x": "Độ lệch X",
+            "offset_y": "Độ lệch Y",
+            "reset_offset": "Đặt lại độ lệch camera"
+        },
+        "preflight": {
+            "title": "Kiểm tra trước khi ghi hình",
+            "run": "Chạy trước",
+            "last_run": "Lần chạy cuối cùng",
+            "never": "Chưa chạy"
+        },
+        "mic": {
+            "title": "Micrô",
+            "include_audio": "Bao gồm âm thanh micrô trong bản ghi",
+            "device_none": "Không phát hiện thấy micrô",
+            "device_fallback": "Micrô {{value}}",
+            "refresh": "Làm mới thiết bị",
+            "test": "Kiểm tra micrô",
+            "testing": "Đang thử nghiệm...",
+            "hum_reduction": "Giảm tiếng ù điện lưới (bộ lọc notch)",
+            "mains_frequency": "Tần số nguồn điện",
+            "hum_hint": "Áp dụng bộ lọc thông cao và notch 50/60Hz trước khi ghi."
+        },
+        "cursor": {
+            "title": "Đánh dấu con trỏ",
+            "enable": "Hiển thị điểm đánh dấu con trỏ trong khi ghi"
+        }
+    },
+    "notice": {
+        "before_unload": "Quá trình ghi đang được tiến hành. Việc rời khỏi trang này có thể làm gián đoạn quá trình ghi và mất dữ liệu xuất.",
+        "pagehide_autostop": "Trang đã chuyển sang nền. Quá trình ghi đã được tự động dừng để bảo vệ tính toàn vẹn của tệp.",
+        "whiteboard_temporarily_unavailable": "Khung bảng trắng tạm thời không có sẵn. Đang chờ phục hồi...",
+        "whiteboard_load_failed": "Bảng trắng không tải được. Vui lòng làm mới và thử lại.",
+        "mic_test_unsupported": "Trình duyệt hiện tại không hỗ trợ kiểm tra mức micrô.",
+        "mic_test_low_input": "Đầu vào micrô quá thấp. Vui lòng kiểm tra thiết bị đầu vào hoặc sự cho phép.",
+        "mic_test_passed": "Đã vượt qua bài kiểm tra micrô.",
+        "mic_test_failed": "Kiểm tra micrô không thành công. Vui lòng cho phép sử dụng micrô trong trình duyệt.",
+        "preflight_canvas_not_ready": "Preflight không thành công: canvas chưa sẵn sàng.",
+        "preflight_mediarecorder_unsupported": "Kiểm tra trước không thành công: trình duyệt hiện tại không hỗ trợ MediaRecorder.",
+        "preflight_capturestream_unsupported": "Kiểm tra trước không thành công: trình duyệt hiện tại không hỗ trợ canvas.captureStream.",
+        "preflight_no_mic_device": "Kiểm tra trước không thành công: không phát hiện micrô.",
+        "preflight_passed": "Kiểm tra trước khi ghi hình đã đạt: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Camera",
+            "mic": "Micrô"
+        },
+        "mp4_fallback_webm": "Trình duyệt hiện tại không hỗ trợ ghi MP4. Đã tự động chuyển sang WebM.",
+        "webm_fallback_mp4": "Trình duyệt hiện tại không hỗ trợ ghi WebM. Đã tự động chuyển sang MP4.",
+        "no_supported_mime": "Trình duyệt hiện tại không hỗ trợ codec ghi hình nào có thể dùng được. Có thể không bắt đầu ghi hình được.",
+        "record_will_include_mic": "Ghi âm sẽ bao gồm âm thanh micrô. Vui lòng xác nhận quyền sử dụng micrô đã được cấp.",
+        "record_start_canvas_unavailable": "Không thể bắt đầu ghi: luồng canvas không khả dụng.",
+        "record_crop_fallback": "Ghi âm không thành công. Quay trở lại chế độ chụp canvas đầy đủ.",
+        "video_track_ended": "Track video kết thúc ngoài dự kiến. Đang tự động dừng ghi hình.",
+        "mic_track_ended": "Track micrô đã kết thúc. Các lần ghi sau sẽ không có âm thanh.",
+        "mic_unavailable_video_only": "Micrô không khả dụng. Chỉ ghi hình video.",
+        "recorder_init_failed": "Khởi tạo trình ghi không thành công. Hãy thử đổi định dạng xuất hoặc trình duyệt.",
+        "recorder_error_stopping": "Đã xảy ra lỗi trình ghi. Đang thử dừng và xuất an toàn.",
+        "no_output_chunks": "Không có khối có thể xuất được tạo ra. Vui lòng thử ghi lại.",
+        "output_too_small": "Tệp đầu ra quá nhỏ. Quá trình ghi có thể quá ngắn hoặc bị gián đoạn.",
+        "stop_cause": {
+            "user": "dừng thủ công",
+            "pagehide": "trang chuyển nền",
+            "video_ended": "đoạn video đã kết thúc",
+            "recorder_error": "lỗi ghi âm",
+            "timeout": "hết thời gian dừng",
+            "unknown": "không xác định"
+        },
+        "export_complete": "Xu?t ho?n t?t: {{ext}} ({{size_kb}} KB) - L? do d?ng: {{cause}}{{tail}}",
+        "export_tail": ", phân đoạn cuối cùng có thể không đầy đủ ({{seconds}}s không có đoạn mới)",
+        "record_started_with_audio": "Đã bắt đầu ghi âm (có micrô).",
+        "record_started_without_audio": "Đã bắt đầu ghi âm (không có đoạn âm thanh nào).",
+        "record_start_failed": "Không thể bắt đầu ghi hình. Vui lòng kiểm tra quyền trình duyệt và khả năng hỗ trợ codec.",
+        "stop_failed": "Không thể dừng ghi. Vui lòng thử lại.",
+        "stop_timeout_forced": "Dừng ghi hình bị quá thời gian chờ. Đã áp dụng kết thúc bắt buộc.",
+        "pause_unsupported": "Trình duyệt hiện tại không hỗ trợ ghi tạm dừng.",
+        "resume_unsupported": "Trình duyệt hiện tại không hỗ trợ ghi sơ yếu lý lịch."
+    },
+    "embed": {
+        "create_prompt": "Nhập URL trang web cần nhúng (https://...)",
+        "edit_prompt": "Chỉnh sửa URL được nhúng",
+        "invalid_url_alert": "Vui lòng nhập liên kết bắt đầu bằng http(s)"
+    }
+}

@@ -1,0 +1,181 @@
+{
+    "seo": {
+        "title": "ホワイトボード ビデオ レコーダー - スライド チュートリアルをオンラインで録画 |無料保存ビデオ",
+        "description": "スライドを作成、移動、サイズ変更し、ブラウザーでカメラ オーバーレイを使用してホワイトボード チュートリアルを記録します。インストールは必要ありません。",
+        "keywords": "ホワイトボードレコーダー、スライドレコーダー、オンラインビデオレコーダー、excalidrawレコーダー、チュートリアル録画",
+        "app_name": "ホワイトボードビデオレコーダー"
+    },
+    "controls": {
+        "drag_controls": "ドラッグコントロール",
+        "open_settings": "設定を開く",
+        "toggle_teleprompter": "テレプロンプターの切り替え",
+        "starting": "開始中...",
+        "countdown": "カウントダウン {{value}}",
+        "record": "録画",
+        "resume": "再開",
+        "pause": "一時停止",
+        "stopping": "停止中...",
+        "stop_with_duration": "{{value}} を停止してください"
+    },
+    "slides": {
+        "title": "スライド",
+        "move_up": "上に移動",
+        "move_down": "下に移動",
+        "duplicate": "重複",
+        "delete": "消去",
+        "add": "スライドを追加"
+    },
+    "teleprompter": {
+        "placeholder": "ここにスクリプトを貼り付けます...\nあなただけがそれを見ることができます。録画には表示されません。",
+        "drag_title": "ドラッグテレプロンプター",
+        "drag": "ドラッグ",
+        "play": "遊ぶ",
+        "pause": "一時停止",
+        "reset": "リセット",
+        "speed": "スピード",
+        "opacity": "不透明度",
+        "font_size": "フォントサイズ"
+    },
+    "camera": {
+        "drag_overlay": "カメラオーバーレイをドラッグします"
+    },
+    "shortcuts": {
+        "whiteboard_title": "ホワイトボード",
+        "whiteboard_body": "Excalidraw の上部ツールバーを選択/描画/テキスト/ズーム/パンに使用します。",
+        "recording_title": "録音",
+        "recording_body": "P で開始/停止、K で一時停止/再開します。"
+    },
+    "settings": {
+        "title": "録画設定",
+        "dialog": "録画設定",
+        "close": "録音設定を閉じる",
+        "aspect": {
+            "title": "アスペクト比",
+            "youtube": "YouTube",
+            "classic": "クラシック",
+            "portrait": "肖像画",
+            "short_video": "ショートビデオ",
+            "square": "四角"
+        },
+        "background": {
+            "title": "背景",
+            "random": "ランダムな背景",
+            "light_preset": "白背景 + 濃い文字",
+            "swatch": "背景 {{value}}"
+        },
+        "canvas": {
+            "title": "キャンバススタイル",
+            "corner_radius": "コーナー半径",
+            "inner_padding": "キャンバスパディング"
+        },
+        "preview": {
+            "title": "プレビュー"
+        },
+        "teleprompter_opacity": {
+            "title": "テレプロンプターの不透明度"
+        },
+        "export": {
+            "title": "エクスポート形式",
+            "webm": "WebM (互換性の向上)",
+            "mp4": "MP4 (デフォルト)",
+            "note": "デフォルトのエクスポートは MP4 です。 MP4 録音がブラウザでサポートされていない場合は、自動的に WebM に戻ります。"
+        },
+        "countdown": {
+            "title": "録音前のカウントダウン",
+            "enable": "カウントダウンを有効にする",
+            "seconds": "秒"
+        },
+        "camera": {
+            "title": "カメラ（ピクチャーインピクチャー）",
+            "show": "録画中にカメラを表示する",
+            "fill_frame": "録画フレーム全体をカメラで埋める",
+            "size": "サイズ",
+            "radius": "コーナー半径",
+            "margin": "マージン",
+            "mirror": "ミラーカメラ",
+            "corner_tl": "左上",
+            "corner_tr": "右上",
+            "corner_bl": "左下",
+            "corner_br": "右下",
+            "offset_x": "Xオフセット",
+            "offset_y": "Yオフセット",
+            "reset_offset": "カメラのオフセットをリセット"
+        },
+        "preflight": {
+            "title": "録画前チェック",
+            "run": "プリフライトの実行",
+            "last_run": "最後の実行",
+            "never": "まだ実行されていません"
+        },
+        "mic": {
+            "title": "マイクロフォン",
+            "include_audio": "録音にマイク音声を含める",
+            "device_none": "マイクが検出されませんでした",
+            "device_fallback": "マイク {{value}}",
+            "refresh": "デバイスをリフレッシュする",
+            "test": "マイクをテスト",
+            "testing": "テスト中...",
+            "hum_reduction": "電源ハムを低減します (ノッチフィルター)",
+            "mains_frequency": "主電源周波数",
+            "hum_hint": "録音前にハイパス+50/60Hz高調波ノッチを適用します。"
+        },
+        "cursor": {
+            "title": "カーソルのハイライト",
+            "enable": "録音中にカーソルのハイライトを表示する"
+        }
+    },
+    "notice": {
+        "before_unload": "録音中です。このページを離れると、記録が中断され、エクスポート データが失われる可能性があります。",
+        "pagehide_autostop": "ページが背景に移動されました。ファイルの整合性を保護するために、録音は自動的に停止されました。",
+        "whiteboard_temporarily_unavailable": "ホワイトボードフレームは一時的に利用できなくなります。回復を待っています...",
+        "whiteboard_load_failed": "ホワイトボードの読み込みに失敗しました。更新してもう一度お試しください。",
+        "mic_test_unsupported": "現在のブラウザはマイク レベル テストをサポートしていません。",
+        "mic_test_low_input": "マイク入力が低すぎます。入力デバイスまたは許可を確認してください。",
+        "mic_test_passed": "マイクテストに合格しました。",
+        "mic_test_failed": "マイクテストに失敗しました。ブラウザでマイクの許可を許可してください。",
+        "preflight_canvas_not_ready": "プリフライトに失敗しました: キャンバスの準備ができていません。",
+        "preflight_mediarecorder_unsupported": "事前チェック失敗: 現在のブラウザは MediaRecorder をサポートしていません。",
+        "preflight_capturestream_unsupported": "事前チェック失敗: 現在のブラウザは canvas.captureStream をサポートしていません。",
+        "preflight_no_mic_device": "事前チェック失敗: マイクデバイスが検出されません。",
+        "preflight_passed": "事前チェック通過: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "カメラ",
+            "mic": "マイク"
+        },
+        "mp4_fallback_webm": "現在のブラウザは MP4 録画に対応していません。WebM に自動で切り替えました。",
+        "webm_fallback_mp4": "現在のブラウザは WebM 録画に対応していません。MP4 に自動で切り替えました。",
+        "no_supported_mime": "現在のブラウザは使用可能な録画コーデックをサポートしていません。録画を開始できない可能性があります。",
+        "record_will_include_mic": "録音にはマイク音声が含まれます。マイクの許可が与えられていることを確認してください。",
+        "record_start_canvas_unavailable": "記録の開始に失敗しました: キャンバス ストリームが利用できません。",
+        "record_crop_fallback": "録画クロップに失敗しました。フルキャンバスキャプチャに戻ります。",
+        "video_track_ended": "ビデオトラックが予期せず終了しました。録画を自動停止します。",
+        "mic_track_ended": "マイクトラックが終了しました。以降の録画には音声が含まれません。",
+        "mic_unavailable_video_only": "マイクを使用できないため、動画のみ録画します。",
+        "recorder_init_failed": "レコーダーの初期化に失敗しました。エクスポート形式またはブラウザを変更してください。",
+        "recorder_error_stopping": "レコーダーエラーが発生しました。安全に停止してエクスポートを試みます。",
+        "no_output_chunks": "エクスポート可能なチャンクは生成されません。もう一度録音してみてください。",
+        "output_too_small": "出力ファイルが小さすぎます。録音が短すぎたか、中断された可能性があります。",
+        "stop_cause": {
+            "user": "手動停止",
+            "pagehide": "ページがバックグラウンド化",
+            "video_ended": "ビデオトラックが終了しました",
+            "recorder_error": "レコーダーエラー",
+            "timeout": "停止タイムアウト",
+            "unknown": "未知"
+        },
+        "export_complete": "エクスポート完了: {{ext}} ({{size_kb}} KB) ･ 停止理由: {{cause}}{{tail}}",
+        "export_tail": "、最後のセグメントが不完全である可能性があります (新しいチャンクのない {{seconds}}s)",
+        "record_started_with_audio": "録音を開始しました（マイクあり）。",
+        "record_started_without_audio": "録音が開始されました (音声トラックなし)。",
+        "record_start_failed": "録画を開始できませんでした。ブラウザの権限とコーデック対応を確認してください。",
+        "stop_failed": "記録の停止に失敗しました。再試行してください。",
+        "stop_timeout_forced": "録画の停止がタイムアウトしたため、強制ファイナライズを適用しました。",
+        "pause_unsupported": "現在のブラウザは録画の一時停止をサポートしていません。",
+        "resume_unsupported": "現在のブラウザは録画の再開をサポートしていません。"
+    },
+    "embed": {
+        "create_prompt": "埋め込む Web サイトの URL を入力します (https://...)",
+        "edit_prompt": "埋め込みURLを編集する",
+        "invalid_url_alert": "httpで始まるリンクを入力してください"
+    }
+}

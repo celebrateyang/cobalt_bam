@@ -2029,6 +2029,29 @@
             const root = ReactDOMClient.createRoot(excalidrawHostEl);
             const ExcalidrawComp = (pkg as { Excalidraw: unknown })
                 .Excalidraw as unknown as any;
+            const MainMenuComp = (pkg as { MainMenu?: unknown })
+                .MainMenu as unknown as any;
+
+            const mainMenu =
+                MainMenuComp && MainMenuComp.DefaultItems
+                    ? React.createElement(
+                          MainMenuComp,
+                          null,
+                          React.createElement(
+                              MainMenuComp.DefaultItems.LoadScene,
+                          ),
+                          React.createElement(
+                              MainMenuComp.DefaultItems.SaveAsImage,
+                          ),
+                          React.createElement(
+                              MainMenuComp.DefaultItems.SearchMenu,
+                          ),
+                          React.createElement(MainMenuComp.DefaultItems.Help),
+                          React.createElement(
+                              MainMenuComp.DefaultItems.ClearCanvas,
+                          ),
+                      )
+                    : null;
 
             root.render(
                 React.createElement(ExcalidrawComp, {
@@ -2111,7 +2134,7 @@
                         });
                     },
                     theme: "light",
-                }),
+                }, mainMenu),
             );
 
             cleanupExcalidraw = () => {
@@ -2519,11 +2542,11 @@
     };
 
     const beginCreateWebEmbed = (x: number, y: number) => {
-        const raw = window.prompt("输入要嵌入的网址（https://...）");
+        const raw = window.prompt(tr("videorecord.embed.create_prompt"));
         if (!raw) return;
         const url = raw.trim();
         if (!/^https?:\/\//i.test(url)) {
-            window.alert("请输入 http(s) 开头的链接");
+            window.alert(tr("videorecord.embed.invalid_url_alert"));
             return;
         }
 
@@ -2670,7 +2693,7 @@
     const editWebEmbedUrl = (id: string) => {
         const item = webEmbeds.find((x) => x.id === id);
         if (!item) return;
-        const next = window.prompt("编辑嵌入网址", item.url);
+        const next = window.prompt(tr("videorecord.embed.edit_prompt"), item.url);
         if (!next) return;
         const url = next.trim();
         if (!/^https?:\/\//i.test(url)) return;

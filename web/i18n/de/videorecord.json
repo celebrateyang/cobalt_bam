@@ -1,0 +1,181 @@
+{
+    "seo": {
+        "title": "Whiteboard-Videorecorder – Folien-Tutorials online aufzeichnen | kostenloses Video speichern",
+        "description": "Erstellen, verschieben und skalieren Sie Folien und zeichnen Sie dann Whiteboard-Tutorials mit Kamera-Overlay in Ihrem Browser auf. Keine Installation erforderlich.",
+        "keywords": "Whiteboard-Recorder, Folienrecorder, Online-Videorecorder, Excelidraw-Recorder, Tutorial-Aufzeichnung",
+        "app_name": "Whiteboard-Videorecorder"
+    },
+    "controls": {
+        "drag_controls": "Ziehen Sie Steuerelemente",
+        "open_settings": "Einstellungen öffnen",
+        "toggle_teleprompter": "Teleprompter umschalten",
+        "starting": "Startet...",
+        "countdown": "Countdown {{value}}",
+        "record": "Aufnehmen",
+        "resume": "Fortsetzen",
+        "pause": "Pausieren",
+        "stopping": "Wird gestoppt...",
+        "stop_with_duration": "Stoppen Sie {{value}}"
+    },
+    "slides": {
+        "title": "Folien",
+        "move_up": "Bewegen Sie sich nach oben",
+        "move_down": "Bewegen Sie sich nach unten",
+        "duplicate": "Duplikat",
+        "delete": "Löschen",
+        "add": "Folie hinzufügen"
+    },
+    "teleprompter": {
+        "placeholder": "Fügen Sie Ihr Skript hier ein...\nNur Sie können es sehen; es erscheint nicht in der Aufnahme.",
+        "drag_title": "Teleprompter ziehen",
+        "drag": "Ziehen",
+        "play": "Spielen",
+        "pause": "Pause",
+        "reset": "Zurücksetzen",
+        "speed": "Geschwindigkeit",
+        "opacity": "Opazität",
+        "font_size": "Schriftgröße"
+    },
+    "camera": {
+        "drag_overlay": "Kamera-Overlay ziehen"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Whiteboard",
+        "whiteboard_body": "Verwenden Sie die obere Symbolleiste von Excalidraw zum Auswählen/Zeichnen/Texten/Zoomen/Schwenken.",
+        "recording_title": "Aufnahme",
+        "recording_body": "P zum Starten/Stoppen, K zum Anhalten/Fortfahren."
+    },
+    "settings": {
+        "title": "Aufnahmeeinstellungen",
+        "dialog": "Aufnahmeeinstellungen",
+        "close": "Aufnahmeeinstellungen schließen",
+        "aspect": {
+            "title": "Seitenverhältnis",
+            "youtube": "YouTube",
+            "classic": "Klassiker",
+            "portrait": "Porträt",
+            "short_video": "Kurzes Video",
+            "square": "Quadrat"
+        },
+        "background": {
+            "title": "Hintergrund",
+            "random": "Zufälliger Hintergrund",
+            "light_preset": "Weißer Hintergrund + dunkler Text",
+            "swatch": "Hintergrund {{value}}"
+        },
+        "canvas": {
+            "title": "Canvas-Stil",
+            "corner_radius": "Eckenradius",
+            "inner_padding": "Polsterung aus Segeltuch"
+        },
+        "preview": {
+            "title": "Vorschau"
+        },
+        "teleprompter_opacity": {
+            "title": "Opazität des Teleprompters"
+        },
+        "export": {
+            "title": "Exportformat",
+            "webm": "WebM (bessere Kompatibilität)",
+            "mp4": "MP4 (Standard)",
+            "note": "Der Standardexport ist MP4. Wenn die MP4-Aufnahme vom Browser nicht unterstützt wird, wird automatisch auf WebM zurückgegriffen."
+        },
+        "countdown": {
+            "title": "Countdown vor der Aufnahme",
+            "enable": "Countdown aktivieren",
+            "seconds": "Sekunden"
+        },
+        "camera": {
+            "title": "Kamera (Bild-in-Bild)",
+            "show": "Kamera während der Aufnahme anzeigen",
+            "fill_frame": "Füllen Sie den gesamten Aufnahmerahmen mit der Kamera aus",
+            "size": "Größe",
+            "radius": "Eckenradius",
+            "margin": "Marge",
+            "mirror": "Spiegelkamera",
+            "corner_tl": "Oben links",
+            "corner_tr": "Oben rechts",
+            "corner_bl": "Unten links",
+            "corner_br": "Unten rechts",
+            "offset_x": "X-Versatz",
+            "offset_y": "Y-Versatz",
+            "reset_offset": "Kamera-Offset zurücksetzen"
+        },
+        "preflight": {
+            "title": "Aufnahme-Vorabprüfung",
+            "run": "Führen Sie den Preflight aus",
+            "last_run": "Letzter Lauf",
+            "never": "Noch nicht ausgeführt"
+        },
+        "mic": {
+            "title": "Mikrofon",
+            "include_audio": "Beziehen Sie den Ton des Mikrofons in die Aufnahme ein",
+            "device_none": "Kein Mikrofon erkannt",
+            "device_fallback": "Mikrofon {{value}}",
+            "refresh": "Geräte aktualisieren",
+            "test": "Mikrofon testen",
+            "testing": "Testen...",
+            "hum_reduction": "Netzbrummen reduzieren (Notchfilter)",
+            "mains_frequency": "Netzfrequenz",
+            "hum_hint": "Wendet vor der Aufnahme einen Hochpass und einen 50/60-Hz-Notchfilter an."
+        },
+        "cursor": {
+            "title": "Cursor-Hervorhebung",
+            "enable": "Cursorhervorhebung während der Aufnahme anzeigen"
+        }
+    },
+    "notice": {
+        "before_unload": "Die Aufnahme läuft. Das Verlassen dieser Seite kann zu einer Unterbrechung der Aufzeichnung und zum Verlust von Exportdaten führen.",
+        "pagehide_autostop": "Seite in den Hintergrund verschoben. Die Aufnahme wurde zum Schutz der Dateiintegrität automatisch gestoppt.",
+        "whiteboard_temporarily_unavailable": "Der Whiteboard-Rahmen ist vorübergehend nicht verfügbar. Warten auf Genesung...",
+        "whiteboard_load_failed": "Whiteboard konnte nicht geladen werden. Bitte aktualisieren Sie und versuchen Sie es erneut.",
+        "mic_test_unsupported": "Der aktuelle Browser unterstützt keinen Mikrofonpegeltest.",
+        "mic_test_low_input": "Der Mikrofoneingang ist zu niedrig. Bitte überprüfen Sie das Eingabegerät oder die Berechtigung.",
+        "mic_test_passed": "Mikrofontest bestanden.",
+        "mic_test_failed": "Der Mikrofontest ist fehlgeschlagen. Bitte erlauben Sie die Mikrofonberechtigung im Browser.",
+        "preflight_canvas_not_ready": "Preflight fehlgeschlagen: Canvas ist nicht bereit.",
+        "preflight_mediarecorder_unsupported": "Vorabprüfung fehlgeschlagen: Der aktuelle Browser unterstützt MediaRecorder nicht.",
+        "preflight_capturestream_unsupported": "Vorabprüfung fehlgeschlagen: Der aktuelle Browser unterstützt canvas.captureStream nicht.",
+        "preflight_no_mic_device": "Vorabprüfung fehlgeschlagen: Kein Mikrofon erkannt.",
+        "preflight_passed": "Vorabprüfung bestanden: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Kamera",
+            "mic": "Mikrofon"
+        },
+        "mp4_fallback_webm": "Der aktuelle Browser unterstützt keine MP4-Aufnahme. Es wurde auf WebM zurückgefallen.",
+        "webm_fallback_mp4": "Der aktuelle Browser unterstützt keine WebM-Aufnahme. Es wurde auf MP4 zurückgefallen.",
+        "no_supported_mime": "Der aktuelle Browser unterstützt keinen nutzbaren Aufnahme-Codec. Die Aufnahme kann möglicherweise nicht starten.",
+        "record_will_include_mic": "Die Aufnahme umfasst Mikrofonton. Bitte bestätigen Sie, dass die Mikrofonberechtigung erteilt wurde.",
+        "record_start_canvas_unavailable": "Aufnahme konnte nicht gestartet werden: Canvas-Stream ist nicht verfügbar.",
+        "record_crop_fallback": "Die Aufnahme des Zuschnitts ist fehlgeschlagen. Zurückgreifen auf die vollständige Leinwanderfassung.",
+        "video_track_ended": "Der Videotrack wurde unerwartet beendet. Die Aufnahme wird automatisch gestoppt.",
+        "mic_track_ended": "Der Mikrofontrack wurde beendet. Weitere Aufnahmen enthalten keinen Ton.",
+        "mic_unavailable_video_only": "Mikrofon nicht verfügbar. Es wird nur Video aufgenommen.",
+        "recorder_init_failed": "Recorder-Initialisierung fehlgeschlagen. Versuchen Sie ein anderes Exportformat oder einen anderen Browser.",
+        "recorder_error_stopping": "Recorderfehler aufgetreten. Es wird versucht, sicher zu stoppen und zu exportieren.",
+        "no_output_chunks": "Es wurden keine exportierbaren Blöcke generiert. Bitte versuchen Sie es erneut mit der Aufnahme.",
+        "output_too_small": "Die Ausgabedatei ist zu klein. Möglicherweise war die Aufnahme zu kurz oder wurde unterbrochen.",
+        "stop_cause": {
+            "user": "manueller Stopp",
+            "pagehide": "Seite im Hintergrund",
+            "video_ended": "Videospur beendet",
+            "recorder_error": "Rekorderfehler",
+            "timeout": "Stopp-Timeout",
+            "unknown": "unbekannt"
+        },
+        "export_complete": "Export abgeschlossen: {{ext}} ({{size_kb}} KB) · Stoppgrund: {{cause}}{{tail}}",
+        "export_tail": ", das letzte Segment ist möglicherweise unvollständig ({{seconds}}s ohne neue Blöcke)",
+        "record_started_with_audio": "Aufnahme gestartet (mit Mikrofon).",
+        "record_started_without_audio": "Aufnahme gestartet (keine Audiospur).",
+        "record_start_failed": "Aufnahme konnte nicht gestartet werden. Bitte prüfen Sie Browserberechtigungen und Codec-Unterstützung.",
+        "stop_failed": "Die Aufnahme konnte nicht gestoppt werden. Bitte versuchen Sie es erneut.",
+        "stop_timeout_forced": "Das Stoppen der Aufnahme hat das Zeitlimit überschritten. Erzwungene Finalisierung wurde angewendet.",
+        "pause_unsupported": "Der aktuelle Browser unterstützt keine Aufnahmepause.",
+        "resume_unsupported": "Der aktuelle Browser unterstützt keine Fortsetzungsaufzeichnung."
+    },
+    "embed": {
+        "create_prompt": "Geben Sie eine Website-URL zum Einbetten ein (https://...)",
+        "edit_prompt": "Bearbeiten Sie die eingebettete URL",
+        "invalid_url_alert": "Bitte geben Sie einen Link ein, der mit http(s) beginnt."
+    }
+}

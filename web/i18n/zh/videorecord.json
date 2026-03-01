@@ -172,5 +172,10 @@
         "stop_timeout_forced": "停止录制超时，已强制收尾。",
         "pause_unsupported": "当前浏览器不支持暂停录制。",
         "resume_unsupported": "当前浏览器不支持恢复录制。"
+    },
+    "embed": {
+        "create_prompt": "?????????https://...?",
+        "edit_prompt": "??????",
+        "invalid_url_alert": "??? http(s) ?????"
     }
 }

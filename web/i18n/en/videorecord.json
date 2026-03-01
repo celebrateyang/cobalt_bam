@@ -172,6 +172,10 @@
         "stop_timeout_forced": "Stopping recording timed out. Forced finalize applied.",
         "pause_unsupported": "Current browser does not support pause recording.",
         "resume_unsupported": "Current browser does not support resume recording."
+    },
+    "embed": {
+        "create_prompt": "Enter a website URL to embed (https://...)",
+        "edit_prompt": "Edit embedded URL",
+        "invalid_url_alert": "Please enter a link that starts with http(s)"
     }
 }
-

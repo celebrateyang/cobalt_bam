@@ -1,0 +1,181 @@
+{
+    "seo": {
+        "title": "Enregistreur vidéo sur tableau blanc - Enregistrer des didacticiels de diapositives en ligne | sauvegarde gratuite de la vidéo",
+        "description": "Créez, déplacez et redimensionnez des diapositives, puis enregistrez des didacticiels sur tableau blanc avec superposition de caméra dans votre navigateur. Aucune installation requise.",
+        "keywords": "enregistreur de tableau blanc, enregistreur de diapositives, enregistreur vidéo en ligne, enregistreur excalidraw, enregistrement de tutoriel",
+        "app_name": "Enregistreur vidéo sur tableau blanc"
+    },
+    "controls": {
+        "drag_controls": "Contrôles de déplacement",
+        "open_settings": "Ouvrir les paramètres",
+        "toggle_teleprompter": "Activer le téléprompteur",
+        "starting": "Démarrage...",
+        "countdown": "Compte à rebours {{value}}",
+        "record": "Enregistrer",
+        "resume": "Reprendre",
+        "pause": "Pause",
+        "stopping": "Arrêt...",
+        "stop_with_duration": "Arrêter {{value}}"
+    },
+    "slides": {
+        "title": "Diapositives",
+        "move_up": "Monter",
+        "move_down": "Descendre",
+        "duplicate": "Double",
+        "delete": "Supprimer",
+        "add": "Ajouter une diapositive"
+    },
+    "teleprompter": {
+        "placeholder": "Collez votre script ici...\nVous seul pouvez le voir ; il n'apparaîtra pas dans l'enregistrement.",
+        "drag_title": "Faites glisser le téléprompteur",
+        "drag": "Traîner",
+        "play": "Jouer",
+        "pause": "Pause",
+        "reset": "Réinitialiser",
+        "speed": "Vitesse",
+        "opacity": "Opacité",
+        "font_size": "Taille de la police"
+    },
+    "camera": {
+        "drag_overlay": "Faites glisser la superposition de la caméra"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Tableau blanc",
+        "whiteboard_body": "Utilisez la barre d'outils supérieure d'Excalidraw pour sélectionner/dessiner/texte/zoom/pan.",
+        "recording_title": "Enregistrement",
+        "recording_body": "P pour démarrer/arrêter, K pour mettre en pause/reprendre."
+    },
+    "settings": {
+        "title": "Paramètres d'enregistrement",
+        "dialog": "Paramètres d'enregistrement",
+        "close": "Fermer les paramètres d'enregistrement",
+        "aspect": {
+            "title": "Rapport hauteur/largeur",
+            "youtube": "YouTube",
+            "classic": "Classique",
+            "portrait": "Portrait",
+            "short_video": "Courte vidéo",
+            "square": "Carré"
+        },
+        "background": {
+            "title": "Arrière-plan",
+            "random": "Fond aléatoire",
+            "light_preset": "Fond blanc + texte sombre",
+            "swatch": "Contexte {{value}}"
+        },
+        "canvas": {
+            "title": "Style toile",
+            "corner_radius": "Rayon d'angle",
+            "inner_padding": "Rembourrage en toile"
+        },
+        "preview": {
+            "title": "Aperçu"
+        },
+        "teleprompter_opacity": {
+            "title": "Opacité du téléprompteur"
+        },
+        "export": {
+            "title": "Format d'exportation",
+            "webm": "WebM (meilleure compatibilité)",
+            "mp4": "MP4 (par défaut)",
+            "note": "L'exportation par défaut est MP4. Si l'enregistrement MP4 n'est pas pris en charge par le navigateur, il reviendra automatiquement à WebM."
+        },
+        "countdown": {
+            "title": "Compte à rebours avant l'enregistrement",
+            "enable": "Activer le compte à rebours",
+            "seconds": "Secondes"
+        },
+        "camera": {
+            "title": "Appareil photo (image dans l'image)",
+            "show": "Afficher la caméra pendant l'enregistrement",
+            "fill_frame": "Remplissez tout le cadre d'enregistrement avec la caméra",
+            "size": "Taille",
+            "radius": "Rayon d'angle",
+            "margin": "Marge",
+            "mirror": "Caméra miroir",
+            "corner_tl": "En haut à gauche",
+            "corner_tr": "En haut à droite",
+            "corner_bl": "En bas à gauche",
+            "corner_br": "En bas à droite",
+            "offset_x": "Décalage X",
+            "offset_y": "Décalage Y",
+            "reset_offset": "Réinitialiser le décalage de la caméra"
+        },
+        "preflight": {
+            "title": "Vérification avant enregistrement",
+            "run": "Exécuter le contrôle en amont",
+            "last_run": "Dernière course",
+            "never": "Pas encore exécuté"
+        },
+        "mic": {
+            "title": "Microphone",
+            "include_audio": "Inclure l'audio du microphone dans l'enregistrement",
+            "device_none": "Aucun microphone détecté",
+            "device_fallback": "Micro {{value}}",
+            "refresh": "Actualiser les appareils",
+            "test": "Tester le micro",
+            "testing": "Test en cours...",
+            "hum_reduction": "Réduire le bourdonnement du secteur (filtre coupe-bande)",
+            "mains_frequency": "Fréquence secteur",
+            "hum_hint": "Applique un passe-haut + une notche harmonique 50/60 Hz avant l'enregistrement."
+        },
+        "cursor": {
+            "title": "Surbrillance du curseur",
+            "enable": "Afficher la surbrillance du curseur pendant l'enregistrement"
+        }
+    },
+    "notice": {
+        "before_unload": "L'enregistrement est en cours. Quitter cette page peut interrompre l'enregistrement et perdre les données d'exportation.",
+        "pagehide_autostop": "Page déplacée en arrière-plan. L'enregistrement a été automatiquement arrêté pour protéger l'intégrité du fichier.",
+        "whiteboard_temporarily_unavailable": "Le cadre du tableau blanc est temporairement indisponible. En attendant la guérison...",
+        "whiteboard_load_failed": "Le tableau blanc n'a pas pu être chargé. Veuillez actualiser et réessayer.",
+        "mic_test_unsupported": "Le navigateur actuel ne prend pas en charge le test de niveau du microphone.",
+        "mic_test_low_input": "L'entrée du microphone est trop faible. Veuillez vérifier le périphérique d'entrée ou l'autorisation.",
+        "mic_test_passed": "Test du microphone réussi.",
+        "mic_test_failed": "Le test du microphone a échoué. Veuillez autoriser l'autorisation du microphone dans le navigateur.",
+        "preflight_canvas_not_ready": "Échec du contrôle en amont : le canevas n'est pas prêt.",
+        "preflight_mediarecorder_unsupported": "La vérification préalable a échoué : le navigateur actuel ne prend pas en charge MediaRecorder.",
+        "preflight_capturestream_unsupported": "La vérification préalable a échoué : le navigateur actuel ne prend pas en charge canvas.captureStream.",
+        "preflight_no_mic_device": "La vérification préalable a échoué : aucun microphone détecté.",
+        "preflight_passed": "Vérification préalable réussie : {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Caméra",
+            "mic": "Microphone"
+        },
+        "mp4_fallback_webm": "Le navigateur actuel ne prend pas en charge l'enregistrement MP4. Bascule automatique vers WebM.",
+        "webm_fallback_mp4": "Le navigateur actuel ne prend pas en charge l'enregistrement WebM. Bascule automatique vers MP4.",
+        "no_supported_mime": "Le navigateur actuel ne prend en charge aucun codec d'enregistrement exploitable. L'enregistrement peut ne pas démarrer.",
+        "record_will_include_mic": "L'enregistrement inclura l'audio du microphone. Veuillez confirmer que l'autorisation du microphone est accordée.",
+        "record_start_canvas_unavailable": "Échec du démarrage de l'enregistrement : le flux de toile n'est pas disponible.",
+        "record_crop_fallback": "Le recadrage d'enregistrement a échoué. Revenir à la capture complète de la toile.",
+        "video_track_ended": "La piste vidéo s'est terminée de manière inattendue. L'enregistrement sera arrêté automatiquement.",
+        "mic_track_ended": "La piste micro est terminée. Les enregistrements suivants n'auront pas de son.",
+        "mic_unavailable_video_only": "Micro indisponible. Enregistrement vidéo uniquement.",
+        "recorder_init_failed": "L'initialisation de l'enregistreur a échoué. Essayez de changer le format d'export ou de navigateur.",
+        "recorder_error_stopping": "Une erreur d'enregistreur est survenue. Tentative d'arrêt et d'export sécurisés.",
+        "no_output_chunks": "Aucun morceau exportable généré. Veuillez réessayer d'enregistrer.",
+        "output_too_small": "Le fichier de sortie est trop petit. L'enregistrement a peut-être été trop court ou interrompu.",
+        "stop_cause": {
+            "user": "arrêt manuel",
+            "pagehide": "page en arrière-plan",
+            "video_ended": "piste vidéo terminée",
+            "recorder_error": "erreur d'enregistreur",
+            "timeout": "délai d'arrêt dépassé",
+            "unknown": "inconnu"
+        },
+        "export_complete": "Exportation terminée : {{ext}} ({{size_kb}} Ko) 路 Motif de l'arrêt : {{cause}}{{tail}}",
+        "export_tail": ", le dernier segment peut être incomplet ({{seconds}}s sans nouveaux morceaux)",
+        "record_started_with_audio": "L'enregistrement a commencé (avec microphone).",
+        "record_started_without_audio": "L'enregistrement a commencé (pas de piste audio).",
+        "record_start_failed": "Impossible de démarrer l'enregistrement. Vérifiez les autorisations du navigateur et la prise en charge des codecs.",
+        "stop_failed": "Échec de l'arrêt de l'enregistrement. Veuillez réessayer.",
+        "stop_timeout_forced": "Le délai d'arrêt de l'enregistrement a été dépassé. Finalisation forcée appliquée.",
+        "pause_unsupported": "Le navigateur actuel ne prend pas en charge l'enregistrement en pause.",
+        "resume_unsupported": "Le navigateur actuel ne prend pas en charge la reprise de l'enregistrement."
+    },
+    "embed": {
+        "create_prompt": "Entrez l'URL d'un site Web à intégrer (https://...)",
+        "edit_prompt": "Modifier l'URL intégrée",
+        "invalid_url_alert": "Veuillez saisir un lien commençant par http(s)"
+    }
+}

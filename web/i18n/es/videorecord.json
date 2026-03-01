@@ -1,0 +1,181 @@
+{
+    "seo": {
+        "title": "Grabador de vídeo de pizarra: tutoriales de grabación de diapositivas en línea | guardarvideo gratis",
+        "description": "Cree, mueva y cambie el tamaño de las diapositivas, luego grabe tutoriales de pizarra con la cámara superpuesta en su navegador. No se requiere instalación.",
+        "keywords": "grabadora de pizarra, grabadora de diapositivas, grabadora de vídeo en línea, grabadora excalidraw, grabación de tutoriales",
+        "app_name": "Grabador de vídeo de pizarra"
+    },
+    "controls": {
+        "drag_controls": "Controles de arrastre",
+        "open_settings": "Abrir configuración",
+        "toggle_teleprompter": "Alternar teleprompter",
+        "starting": "Iniciando...",
+        "countdown": "Cuenta regresiva {{value}}",
+        "record": "Grabar",
+        "resume": "Reanudar",
+        "pause": "Pausar",
+        "stopping": "Deteniendo...",
+        "stop_with_duration": "Detener {{value}}"
+    },
+    "slides": {
+        "title": "Diapositivas",
+        "move_up": "Subir",
+        "move_down": "Bajar",
+        "duplicate": "Duplicado",
+        "delete": "Borrar",
+        "add": "Agregar diapositiva"
+    },
+    "teleprompter": {
+        "placeholder": "Pega tu script aquí...\nSólo tú puedes verlo; no aparecerá en la grabación.",
+        "drag_title": "Arrastrar teleprompter",
+        "drag": "Arrastrar",
+        "play": "Jugar",
+        "pause": "Pausa",
+        "reset": "Reiniciar",
+        "speed": "Velocidad",
+        "opacity": "Opacidad",
+        "font_size": "Tamaño de fuente"
+    },
+    "camera": {
+        "drag_overlay": "Arrastrar superposición de cámara"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Pizarra",
+        "whiteboard_body": "Utilice la barra de herramientas superior de Excalidraw para seleccionar/dibujar/texto/zoom/panorámica.",
+        "recording_title": "Grabación",
+        "recording_body": "P para iniciar/detener, K para pausar/reanudar."
+    },
+    "settings": {
+        "title": "Configuración de grabación",
+        "dialog": "Configuración de grabación",
+        "close": "Cerrar la configuración de grabación",
+        "aspect": {
+            "title": "relación de aspecto",
+            "youtube": "YouTube",
+            "classic": "Clásico",
+            "portrait": "Retrato",
+            "short_video": "Vídeo corto",
+            "square": "Cuadrado"
+        },
+        "background": {
+            "title": "Fondo",
+            "random": "Fondo aleatorio",
+            "light_preset": "Fondo blanco + texto oscuro",
+            "swatch": "Antecedentes {{value}}"
+        },
+        "canvas": {
+            "title": "Estilo lienzo",
+            "corner_radius": "Radio de esquina",
+            "inner_padding": "Relleno de lona"
+        },
+        "preview": {
+            "title": "Avance"
+        },
+        "teleprompter_opacity": {
+            "title": "Opacidad del teleprompter"
+        },
+        "export": {
+            "title": "Formato de exportación",
+            "webm": "WebM (mejor compatibilidad)",
+            "mp4": "MP4 (predeterminado)",
+            "note": "La exportación predeterminada es MP4. Si el navegador no admite la grabación MP4, automáticamente volverá a WebM."
+        },
+        "countdown": {
+            "title": "Cuenta atrás antes de grabar",
+            "enable": "Habilitar cuenta regresiva",
+            "seconds": "Artículos de segunda clase"
+        },
+        "camera": {
+            "title": "Cámara (imagen en imagen)",
+            "show": "Mostrar cámara mientras graba",
+            "fill_frame": "Llena todo el cuadro de grabación con la cámara.",
+            "size": "Tamaño",
+            "radius": "Radio de esquina",
+            "margin": "Margen",
+            "mirror": "cámara espejo",
+            "corner_tl": "Arriba a la izquierda",
+            "corner_tr": "Arriba a la derecha",
+            "corner_bl": "Abajo a la izquierda",
+            "corner_br": "Abajo a la derecha",
+            "offset_x": "desplazamiento X",
+            "offset_y": "Desplazamiento Y",
+            "reset_offset": "Restablecer compensación de cámara"
+        },
+        "preflight": {
+            "title": "Comprobación previa de grabación",
+            "run": "Ejecutar verificación previa",
+            "last_run": "última ejecución",
+            "never": "Aún no se ha ejecutado"
+        },
+        "mic": {
+            "title": "Micrófono",
+            "include_audio": "Incluir audio del micrófono en la grabación.",
+            "device_none": "No se detectó ningún micrófono",
+            "device_fallback": "Micrófono {{value}}",
+            "refresh": "Actualizar dispositivos",
+            "test": "Probar micrófono",
+            "testing": "Probando...",
+            "hum_reduction": "Reducir el zumbido de la red (filtro de muesca)",
+            "mains_frequency": "Frecuencia de red",
+            "hum_hint": "Aplica muesca armónica de paso alto + 50/60 Hz antes de grabar."
+        },
+        "cursor": {
+            "title": "Resaltado del cursor",
+            "enable": "Mostrar resaltado del cursor durante la grabación"
+        }
+    },
+    "notice": {
+        "before_unload": "La grabación está en curso. Salir de esta página puede interrumpir la grabación y perder datos de exportación.",
+        "pagehide_autostop": "La página pasó al fondo. La grabación se ha detenido automáticamente para proteger la integridad del archivo.",
+        "whiteboard_temporarily_unavailable": "El marco de pizarra no está disponible temporalmente. Esperando la recuperación...",
+        "whiteboard_load_failed": "La pizarra no se pudo cargar. Actualice e inténtelo de nuevo.",
+        "mic_test_unsupported": "El navegador actual no admite la prueba de nivel de micrófono.",
+        "mic_test_low_input": "La entrada del micrófono es demasiado baja. Verifique el dispositivo de entrada o el permiso.",
+        "mic_test_passed": "La prueba del micrófono pasó.",
+        "mic_test_failed": "La prueba del micrófono falló. Permita el permiso del micrófono en el navegador.",
+        "preflight_canvas_not_ready": "Error en la verificación previa: el lienzo no está listo.",
+        "preflight_mediarecorder_unsupported": "La verificación previa falló: el navegador actual no es compatible con MediaRecorder.",
+        "preflight_capturestream_unsupported": "La verificación previa falló: el navegador actual no es compatible con canvas.captureStream.",
+        "preflight_no_mic_device": "La verificación previa falló: no se detectó ningún micrófono.",
+        "preflight_passed": "Verificación previa superada: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Cámara",
+            "mic": "Micrófono"
+        },
+        "mp4_fallback_webm": "El navegador actual no admite la grabación en MP4. Se cambió automáticamente a WebM.",
+        "webm_fallback_mp4": "El navegador actual no admite la grabación en WebM. Se cambió automáticamente a MP4.",
+        "no_supported_mime": "El navegador actual no admite ningún códec de grabación utilizable. Es posible que no se pueda iniciar la grabación.",
+        "record_will_include_mic": "La grabación incluirá audio del micrófono. Confirme que se ha concedido el permiso del micrófono.",
+        "record_start_canvas_unavailable": "No se pudo iniciar la grabación: la transmisión del lienzo no está disponible.",
+        "record_crop_fallback": "La cosecha de grabación falló. Regresando a la captura de lienzo completo.",
+        "video_track_ended": "La pista de video terminó inesperadamente. La grabación se detendrá automáticamente.",
+        "mic_track_ended": "La pista del micrófono terminó. Las grabaciones posteriores no tendrán audio.",
+        "mic_unavailable_video_only": "Micrófono no disponible. Se grabará solo video.",
+        "recorder_init_failed": "Error al inicializar el grabador. Prueba cambiar el formato de exportación o el navegador.",
+        "recorder_error_stopping": "Se produjo un error del grabador. Intentando detener y exportar de forma segura.",
+        "no_output_chunks": "No se generan fragmentos exportables. Intente grabar nuevamente.",
+        "output_too_small": "El archivo de salida es demasiado pequeño. Es posible que la grabación haya sido demasiado corta o haya sido interrumpida.",
+        "stop_cause": {
+            "user": "parada manual",
+            "pagehide": "página en segundo plano",
+            "video_ended": "pista de vídeo finalizada",
+            "recorder_error": "error de grabadora",
+            "timeout": "tiempo de espera al detener",
+            "unknown": "desconocido"
+        },
+        "export_complete": "Exportación completa: {{ext}} ({{size_kb}} KB) · Motivo de la detención: {{cause}}{{tail}}",
+        "export_tail": ", el último segmento puede estar incompleto ({{seconds}}s sin nuevos fragmentos)",
+        "record_started_with_audio": "Se inició la grabación (con micrófono).",
+        "record_started_without_audio": "Se inició la grabación (sin pista de audio).",
+        "record_start_failed": "No se pudo iniciar la grabación. Verifica los permisos del navegador y la compatibilidad de códecs.",
+        "stop_failed": "No se pudo detener la grabación. Vuelva a intentarlo.",
+        "stop_timeout_forced": "Se agotó el tiempo al detener la grabación. Se aplicó una finalización forzada.",
+        "pause_unsupported": "El navegador actual no admite pausar la grabación.",
+        "resume_unsupported": "El navegador actual no admite reanudar la grabación."
+    },
+    "embed": {
+        "create_prompt": "Ingrese la URL de un sitio web para insertar (https://...)",
+        "edit_prompt": "Editar URL incrustada",
+        "invalid_url_alert": "Por favor ingrese un enlace que comience con http(s)"
+    }
+}

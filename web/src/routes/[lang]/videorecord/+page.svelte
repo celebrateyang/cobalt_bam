@@ -4098,6 +4098,21 @@
         }
     }
 
+    $: mobileImmersiveMode =
+        isRecording ||
+        isRecordingStarting ||
+        isRecordingStopping ||
+        recordCountdownLeft > 0 ||
+        showSettings;
+
+    $: if (typeof document !== "undefined") {
+        if (mobileImmersiveMode) {
+            document.body.dataset.vrImmersive = "1";
+        } else {
+            delete document.body.dataset.vrImmersive;
+        }
+    }
+
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
         if (!isRecording) return;
         e.preventDefault();
@@ -4663,6 +4678,14 @@
                     disabled={!showCameraInRecord}
                 />
                 <span>{$t("videorecord.settings.camera.fill_frame")}</span>
+            </label>
+            <label class="switch-row">
+                <input
+                    type="checkbox"
+                    bind:checked={cameraFillFrame}
+                    disabled={!showCameraInRecord}
+                />
+                <span>摄像头充满整个录制画面</span>
             </label>
             <div class="camera-settings">
                 <label class="slider-row">

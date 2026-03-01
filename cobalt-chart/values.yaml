@@ -21,8 +21,8 @@ instagram:
   # 笔记本服务器
   # upstreamUrl: "https://api2.freesavevideo.online"
   # 台式机服务器
-  upstreamUrl: "https://api3.freesavevideo.online"
-  upstreamTimeoutMs: 12000
+    upstreamUrl: "https://api3.freesavevideo.online"
+    upstreamTimeoutMs: 12000
 
 douyin:
   # Route large files through upstream fallback to avoid CDN mid-stream closes.

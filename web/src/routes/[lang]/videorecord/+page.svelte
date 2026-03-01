@@ -397,6 +397,17 @@
     let fcDragBaseX = 0;
     let fcDragBaseY = 0;
 
+    // draggable slides panel (desktop only)
+    let slidesPanelEl: HTMLDivElement | null = null;
+    let slidesPanelOffsetX = 0;
+    let slidesPanelOffsetY = 0;
+    let slidesPanelHydrated = false;
+    let draggingSlidesPanel = false;
+    let spDragStartX = 0;
+    let spDragStartY = 0;
+    let spDragBaseX = 0;
+    let spDragBaseY = 0;
+
     const startDragFloatingControls = (e: PointerEvent) => {
         draggingFloatingControls = true;
         fcDragStartX = e.clientX;
@@ -1936,6 +1947,40 @@
     const clamp = (v: number, min: number, max: number) =>
         Math.min(max, Math.max(min, v));
 
+    const isMobileViewport = () =>
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 768px)").matches;
+
+    const clampSlidesPanelIntoViewport = () => {
+        if (!slidesPanelEl || typeof window === "undefined") return;
+        if (isMobileViewport()) return;
+
+        const panelRect = slidesPanelEl.getBoundingClientRect();
+        const baseLeft = panelRect.left - slidesPanelOffsetX;
+        const baseTop = panelRect.top - slidesPanelOffsetY;
+        const margin = 8;
+
+        const minX = margin - baseLeft;
+        const maxX = window.innerWidth - margin - panelRect.width - baseLeft;
+        const minY = margin - baseTop;
+        const maxY = window.innerHeight - margin - panelRect.height - baseTop;
+
+        slidesPanelOffsetX = clamp(slidesPanelOffsetX, minX, maxX);
+        slidesPanelOffsetY = clamp(slidesPanelOffsetY, minY, maxY);
+    };
+
+    const persistSlidesPanelPrefs = () => {
+        if (!slidesPanelHydrated || typeof window === "undefined") return;
+        if (isMobileViewport()) return;
+        window.localStorage.setItem(
+            "videorecord.slides-panel",
+            JSON.stringify({
+                x: slidesPanelOffsetX,
+                y: slidesPanelOffsetY,
+            }),
+        );
+    };
+
     const clampAndSnapTeleprompter = () => {
         if (!teleprompterPanelEl || typeof window === "undefined") return;
 
@@ -2181,21 +2226,51 @@
             // ignore storage parse errors
         }
 
+        try {
+            const raw = window.localStorage.getItem("videorecord.slides-panel");
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (typeof saved.x === "number") slidesPanelOffsetX = saved.x;
+                if (typeof saved.y === "number") slidesPanelOffsetY = saved.y;
+            }
+        } catch {
+            // ignore storage parse errors
+        }
+
         requestAnimationFrame(() => {
             clampAndSnapTeleprompter();
             teleprompterHydrated = true;
             persistTeleprompterPrefs();
+            if (isMobileViewport()) {
+                slidesPanelOffsetX = 0;
+                slidesPanelOffsetY = 0;
+            } else {
+                clampSlidesPanelIntoViewport();
+            }
+            slidesPanelHydrated = true;
+            persistSlidesPanelPrefs();
         });
 
-        window.addEventListener("resize", resizeCanvas);
-        window.addEventListener("resize", clampAndSnapTeleprompter);
+        const onWindowResize = () => {
+            resizeCanvas();
+            clampAndSnapTeleprompter();
+            if (isMobileViewport()) {
+                draggingSlidesPanel = false;
+                slidesPanelOffsetX = 0;
+                slidesPanelOffsetY = 0;
+                return;
+            }
+            clampSlidesPanelIntoViewport();
+            persistSlidesPanelPrefs();
+        };
+
+        window.addEventListener("resize", onWindowResize);
         window.addEventListener("resize", clampCameraOverlayIntoSlide);
         window.addEventListener("devicechange", refreshMicDevices);
         void refreshMicDevices();
 
         return () => {
-            window.removeEventListener("resize", resizeCanvas);
-            window.removeEventListener("resize", clampAndSnapTeleprompter);
+            window.removeEventListener("resize", onWindowResize);
             window.removeEventListener("resize", clampCameraOverlayIntoSlide);
             window.removeEventListener("devicechange", refreshMicDevices);
             if (timer) clearInterval(timer);
@@ -3401,10 +3476,24 @@
         dragBaseY = teleprompterOffsetY;
     };
 
+    const startDragSlidesPanel = (e: PointerEvent) => {
+        if (isMobileViewport()) return;
+        e.preventDefault();
+        draggingSlidesPanel = true;
+        spDragStartX = e.clientX;
+        spDragStartY = e.clientY;
+        spDragBaseX = slidesPanelOffsetX;
+        spDragBaseY = slidesPanelOffsetY;
+    };
+
     const onWindowPointerMove = (e: PointerEvent) => {
         if (draggingTeleprompter) {
             teleprompterOffsetX = dragBaseX + (e.clientX - dragStartX);
             teleprompterOffsetY = dragBaseY + (e.clientY - dragStartY);
+        }
+        if (draggingSlidesPanel) {
+            slidesPanelOffsetX = spDragBaseX + (e.clientX - spDragStartX);
+            slidesPanelOffsetY = spDragBaseY + (e.clientY - spDragStartY);
         }
         if (draggingFloatingControls) {
             floatingControlsX = fcDragBaseX + (e.clientX - fcDragStartX);
@@ -3431,6 +3520,11 @@
             draggingTeleprompter = false;
             clampAndSnapTeleprompter();
             persistTeleprompterPrefs();
+        }
+        if (draggingSlidesPanel) {
+            draggingSlidesPanel = false;
+            clampSlidesPanelIntoViewport();
+            persistSlidesPanelPrefs();
         }
         if (draggingFloatingControls) {
             draggingFloatingControls = false;
@@ -4206,8 +4300,23 @@
         {/if}
 
 
-        <div class="slides-panel">
-            <div class="slides-title">{$t("videorecord.slides.title")}</div>
+        <div
+            bind:this={slidesPanelEl}
+            class="slides-panel"
+            style={`--slides-panel-dx:${slidesPanelOffsetX}px; --slides-panel-dy:${slidesPanelOffsetY}px;`}
+        >
+            <div class="slides-title-row">
+                <button
+                    type="button"
+                    class="slides-drag-handle"
+                    title={$t("videorecord.controls.drag_controls")}
+                    aria-label={$t("videorecord.controls.drag_controls")}
+                    on:pointerdown={startDragSlidesPanel}
+                >
+                    ::
+                </button>
+                <div class="slides-title">{$t("videorecord.slides.title")}</div>
+            </div>
 
             <div class="slides-actions">
                 <button
@@ -5733,7 +5842,10 @@
         position: absolute;
         right: 16px;
         top: 50%;
-        transform: translateY(-50%);
+        transform: translate(
+            var(--slides-panel-dx, 0px),
+            calc(-50% + var(--slides-panel-dy, 0px))
+        );
         z-index: 950;
         width: 76px;
         background: #fefcf9;
@@ -5748,6 +5860,38 @@
             0 1px 2px rgba(0, 0, 0, 0.04),
             0 4px 16px rgba(0, 0, 0, 0.08),
             0 12px 32px rgba(0, 0, 0, 0.06);
+    }
+
+    .slides-title-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .slides-drag-handle {
+        width: 18px;
+        height: 18px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #a8a29e;
+        cursor: grab;
+        padding: 0;
+        line-height: 1;
+        font-size: 11px;
+        letter-spacing: 1px;
+        touch-action: none;
+        flex: 0 0 auto;
+    }
+    .slides-drag-handle:hover {
+        background: #f5f5f4;
+        color: #57534e;
+    }
+    .slides-drag-handle:active {
+        cursor: grabbing;
+        background: #ece8e4;
     }
 
     .slides-title {
@@ -6135,6 +6279,10 @@
             gap: 6px;
             padding: 6px;
             border-radius: 12px;
+        }
+
+        .slides-title-row {
+            display: none;
         }
 
         .slides-title {

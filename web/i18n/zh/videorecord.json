@@ -1,0 +1,176 @@
+{
+    "seo": {
+        "title": "白板视频录制器 - 在线录制课件讲解视频 | freesavevideo",
+        "description": "在浏览器中创建、移动、调整幻灯片，并进行带摄像头画中画的白板录制。无需安装。",
+        "keywords": "白板录屏,课件录制,在线视频录制,excalidraw 录制,教程录屏",
+        "app_name": "白板视频录制器"
+    },
+    "controls": {
+        "drag_controls": "拖动控制栏",
+        "open_settings": "打开设置",
+        "toggle_teleprompter": "切换提词器",
+        "starting": "启动中...",
+        "countdown": "倒计时 {{value}}",
+        "record": "录制",
+        "resume": "继续",
+        "pause": "暂停",
+        "stopping": "停止中...",
+        "stop_with_duration": "停止 {{value}}"
+    },
+    "slides": {
+        "title": "幻灯片",
+        "move_up": "上移",
+        "move_down": "下移",
+        "duplicate": "复制",
+        "delete": "删除",
+        "add": "新增幻灯片"
+    },
+    "teleprompter": {
+        "placeholder": "把你的讲稿粘贴到这里...\n仅你可见，不会出现在录制内容中。",
+        "drag_title": "拖动提词器",
+        "drag": "拖动",
+        "play": "播放",
+        "pause": "暂停",
+        "reset": "重置",
+        "speed": "速度",
+        "opacity": "透明",
+        "font_size": "字号"
+    },
+    "camera": {
+        "drag_overlay": "拖动摄像头画面"
+    },
+    "shortcuts": {
+        "whiteboard_title": "白板",
+        "whiteboard_body": "使用 Excalidraw 顶部工具栏进行选择/绘制/文本/缩放/平移。",
+        "recording_title": "录制",
+        "recording_body": "P 开始/停止，K 暂停/继续。"
+    },
+    "settings": {
+        "title": "录制设置",
+        "dialog": "录制设置",
+        "close": "关闭录制设置",
+        "aspect": {
+            "title": "画面比例",
+            "youtube": "YouTube",
+            "classic": "经典",
+            "portrait": "竖屏",
+            "short_video": "短视频",
+            "square": "正方形"
+        },
+        "background": {
+            "title": "背景",
+            "random": "随机选择背景",
+            "light_preset": "一键白底黑字",
+            "swatch": "背景 {{value}}"
+        },
+        "canvas": {
+            "title": "画布样式",
+            "corner_radius": "圆角",
+            "inner_padding": "画布边距"
+        },
+        "preview": {
+            "title": "预览"
+        },
+        "teleprompter_opacity": {
+            "title": "提词器透明度"
+        },
+        "export": {
+            "title": "导出格式",
+            "webm": "WebM（兼容好）",
+            "mp4": "MP4（默认）",
+            "note": "默认导出 MP4；若浏览器不支持 MP4 录制会自动回退为 WebM。"
+        },
+        "countdown": {
+            "title": "开始录制倒计时",
+            "enable": "启用倒计时",
+            "seconds": "秒数"
+        },
+        "camera": {
+            "title": "摄像头（录制画中画）",
+            "show": "录制时显示摄像头画面",
+            "fill_frame": "摄像头充满整个录制画面",
+            "size": "大小",
+            "radius": "圆角",
+            "margin": "边距",
+            "mirror": "镜像摄像头",
+            "corner_tl": "左上",
+            "corner_tr": "右上",
+            "corner_bl": "左下",
+            "corner_br": "右下",
+            "offset_x": "X偏移",
+            "offset_y": "Y偏移",
+            "reset_offset": "重置摄像头偏移"
+        },
+        "preflight": {
+            "title": "录制链路预检",
+            "run": "运行预检",
+            "last_run": "最近预检",
+            "never": "未运行"
+        },
+        "mic": {
+            "title": "麦克风",
+            "include_audio": "录制时包含麦克风声音",
+            "device_none": "未检测到麦克风",
+            "device_fallback": "麦克风 {{value}}",
+            "refresh": "刷新设备",
+            "test": "测试麦克风",
+            "testing": "测试中...",
+            "hum_reduction": "降低交流电嗡声（陷波滤波）",
+            "mains_frequency": "市电频率",
+            "hum_hint": "在录制前应用高通 + 50/60Hz 谐波陷波滤波。"
+        },
+        "cursor": {
+            "title": "鼠标光标效果",
+            "enable": "录制时显示光标高亮"
+        }
+    },
+    "notice": {
+        "before_unload": "录制进行中，离开页面会中断并可能丢失导出。",
+        "pagehide_autostop": "页面进入后台，已自动停止录制以保护文件完整性。",
+        "whiteboard_temporarily_unavailable": "白板画面暂不可用，正在等待恢复...",
+        "whiteboard_load_failed": "白板加载失败，请刷新页面重试。",
+        "mic_test_unsupported": "当前浏览器不支持麦克风电平检测。",
+        "mic_test_low_input": "麦克风输入过低：请检查系统输入设备或权限。",
+        "mic_test_passed": "麦克风检测通过。",
+        "mic_test_failed": "麦克风检测失败：请允许浏览器麦克风权限。",
+        "preflight_canvas_not_ready": "录制预检失败：画布尚未就绪。",
+        "preflight_mediarecorder_unsupported": "录制预检失败：当前浏览器不支持 MediaRecorder。",
+        "preflight_capturestream_unsupported": "录制预检失败：当前浏览器不支持 canvas.captureStream。",
+        "preflight_no_mic_device": "录制预检失败：未检测到麦克风设备。",
+        "preflight_passed": "录制预检通过：{{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "摄像头",
+            "mic": "麦克风"
+        },
+        "mp4_fallback_webm": "当前浏览器不支持 MP4 录制，已回退为 WebM。",
+        "webm_fallback_mp4": "当前浏览器不支持 WebM 录制，已回退为 MP4。",
+        "no_supported_mime": "当前浏览器不支持可用录制编码，可能无法开始录制。",
+        "record_will_include_mic": "将录制麦克风声音，请确认浏览器已授权麦克风。",
+        "record_start_canvas_unavailable": "录制启动失败：画布流不可用。",
+        "record_crop_fallback": "录制裁剪失败，已回退为全画布录制。",
+        "video_track_ended": "画面轨道意外中断，正在自动停止录制。",
+        "mic_track_ended": "麦克风轨道已中断，后续录制将无音频。",
+        "mic_unavailable_video_only": "麦克风不可用：将仅录制画面。",
+        "recorder_init_failed": "录制器初始化失败，请切换导出格式或更换浏览器。",
+        "recorder_error_stopping": "录制器发生错误，正在尝试安全停止并导出。",
+        "no_output_chunks": "未生成可导出片段，请重试录制。",
+        "output_too_small": "录制文件过小，可能录制时长过短或被中断。",
+        "stop_cause": {
+            "user": "手动停止",
+            "pagehide": "页面切后台",
+            "video_ended": "画面轨道中断",
+            "recorder_error": "录制器错误",
+            "timeout": "停止超时收尾",
+            "unknown": "未知原因"
+        },
+        "export_complete": "导出完成：{{ext}} ({{size_kb}} KB) · 停止原因：{{cause}}{{tail}}",
+        "export_tail": "，末段数据可能不完整（{{seconds}}s 无新片段）",
+        "record_started_with_audio": "录制已开始（含麦克风）。",
+        "record_started_without_audio": "录制已开始（当前无音轨）。",
+        "record_start_failed": "录制启动失败，请检查浏览器权限与编码支持。",
+        "stop_failed": "停止录制失败，请重试。",
+        "stop_timeout_forced": "停止录制超时，已强制收尾。",
+        "pause_unsupported": "当前浏览器不支持暂停录制。",
+        "resume_unsupported": "当前浏览器不支持恢复录制。"
+    }
+}

@@ -1,0 +1,177 @@
+{
+    "seo": {
+        "title": "Whiteboard Video Recorder - Record Slide Tutorials Online | freesavevideo",
+        "description": "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required.",
+        "keywords": "whiteboard recorder,slide recorder,online video recorder,excalidraw recorder,tutorial recording",
+        "app_name": "Whiteboard Video Recorder"
+    },
+    "controls": {
+        "drag_controls": "Drag controls",
+        "open_settings": "Open settings",
+        "toggle_teleprompter": "Toggle teleprompter",
+        "starting": "Starting...",
+        "countdown": "Countdown {{value}}",
+        "record": "Record",
+        "resume": "Resume",
+        "pause": "Pause",
+        "stopping": "Stopping...",
+        "stop_with_duration": "Stop {{value}}"
+    },
+    "slides": {
+        "title": "Slides",
+        "move_up": "Move up",
+        "move_down": "Move down",
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "add": "Add slide"
+    },
+    "teleprompter": {
+        "placeholder": "Paste your script here...\nOnly you can see it; it will not appear in the recording.",
+        "drag_title": "Drag teleprompter",
+        "drag": "Drag",
+        "play": "Play",
+        "pause": "Pause",
+        "reset": "Reset",
+        "speed": "Speed",
+        "opacity": "Opacity",
+        "font_size": "Font size"
+    },
+    "camera": {
+        "drag_overlay": "Drag camera overlay"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Whiteboard",
+        "whiteboard_body": "Use Excalidraw top toolbar for select/draw/text/zoom/pan.",
+        "recording_title": "Recording",
+        "recording_body": "P to start/stop, K to pause/resume."
+    },
+    "settings": {
+        "title": "Recording settings",
+        "dialog": "Recording settings",
+        "close": "Close recording settings",
+        "aspect": {
+            "title": "Aspect ratio",
+            "youtube": "YouTube",
+            "classic": "Classic",
+            "portrait": "Portrait",
+            "short_video": "Short Video",
+            "square": "Square"
+        },
+        "background": {
+            "title": "Background",
+            "random": "Random background",
+            "light_preset": "White background + dark text",
+            "swatch": "Background {{value}}"
+        },
+        "canvas": {
+            "title": "Canvas style",
+            "corner_radius": "Corner radius",
+            "inner_padding": "Canvas padding"
+        },
+        "preview": {
+            "title": "Preview"
+        },
+        "teleprompter_opacity": {
+            "title": "Teleprompter opacity"
+        },
+        "export": {
+            "title": "Export format",
+            "webm": "WebM (better compatibility)",
+            "mp4": "MP4 (default)",
+            "note": "Default export is MP4. If MP4 recording is unsupported by the browser, it will automatically fall back to WebM."
+        },
+        "countdown": {
+            "title": "Countdown before recording",
+            "enable": "Enable countdown",
+            "seconds": "Seconds"
+        },
+        "camera": {
+            "title": "Camera (picture-in-picture)",
+            "show": "Show camera while recording",
+            "fill_frame": "Fill the whole recording frame with camera",
+            "size": "Size",
+            "radius": "Corner radius",
+            "margin": "Margin",
+            "mirror": "Mirror camera",
+            "corner_tl": "Top left",
+            "corner_tr": "Top right",
+            "corner_bl": "Bottom left",
+            "corner_br": "Bottom right",
+            "offset_x": "X offset",
+            "offset_y": "Y offset",
+            "reset_offset": "Reset camera offset"
+        },
+        "preflight": {
+            "title": "Recording preflight",
+            "run": "Run preflight",
+            "last_run": "Last run",
+            "never": "Not run yet"
+        },
+        "mic": {
+            "title": "Microphone",
+            "include_audio": "Include microphone audio in recording",
+            "device_none": "No microphone detected",
+            "device_fallback": "Mic {{value}}",
+            "refresh": "Refresh devices",
+            "test": "Test mic",
+            "testing": "Testing...",
+            "hum_reduction": "Reduce mains hum (notch filter)",
+            "mains_frequency": "Mains frequency",
+            "hum_hint": "Applies high-pass + 50/60Hz harmonic notch before recording."
+        },
+        "cursor": {
+            "title": "Cursor highlight",
+            "enable": "Show cursor highlight while recording"
+        }
+    },
+    "notice": {
+        "before_unload": "Recording is in progress. Leaving this page may interrupt recording and lose export data.",
+        "pagehide_autostop": "Page moved to background. Recording has been auto-stopped to protect file integrity.",
+        "whiteboard_temporarily_unavailable": "Whiteboard frame is temporarily unavailable. Waiting for recovery...",
+        "whiteboard_load_failed": "Whiteboard failed to load. Please refresh and try again.",
+        "mic_test_unsupported": "Current browser does not support microphone level test.",
+        "mic_test_low_input": "Microphone input is too low. Please check input device or permission.",
+        "mic_test_passed": "Microphone test passed.",
+        "mic_test_failed": "Microphone test failed. Please allow microphone permission in browser.",
+        "preflight_canvas_not_ready": "Preflight failed: canvas is not ready.",
+        "preflight_mediarecorder_unsupported": "Preflight failed: current browser does not support MediaRecorder.",
+        "preflight_capturestream_unsupported": "Preflight failed: current browser does not support canvas.captureStream.",
+        "preflight_no_mic_device": "Preflight failed: no microphone device detected.",
+        "preflight_passed": "Preflight passed: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Camera",
+            "mic": "Microphone"
+        },
+        "mp4_fallback_webm": "Current browser does not support MP4 recording. Fell back to WebM.",
+        "webm_fallback_mp4": "Current browser does not support WebM recording. Fell back to MP4.",
+        "no_supported_mime": "Current browser does not support any usable recording codec. Recording may fail to start.",
+        "record_will_include_mic": "Recording will include microphone audio. Please confirm microphone permission is granted.",
+        "record_start_canvas_unavailable": "Failed to start recording: canvas stream is unavailable.",
+        "record_crop_fallback": "Recording crop failed. Falling back to full canvas capture.",
+        "video_track_ended": "Video track ended unexpectedly. Auto-stopping recording.",
+        "mic_track_ended": "Microphone track ended. Subsequent recording will have no audio.",
+        "mic_unavailable_video_only": "Microphone unavailable. Recording video only.",
+        "recorder_init_failed": "Recorder initialization failed. Try changing export format or browser.",
+        "recorder_error_stopping": "Recorder error occurred. Attempting safe stop and export.",
+        "no_output_chunks": "No exportable chunks generated. Please try recording again.",
+        "output_too_small": "Output file is too small. Recording may have been too short or interrupted.",
+        "stop_cause": {
+            "user": "manual stop",
+            "pagehide": "page backgrounded",
+            "video_ended": "video track ended",
+            "recorder_error": "recorder error",
+            "timeout": "stop timeout",
+            "unknown": "unknown"
+        },
+        "export_complete": "Export complete: {{ext}} ({{size_kb}} KB) 路 Stop reason: {{cause}}{{tail}}",
+        "export_tail": ", last segment may be incomplete ({{seconds}}s without new chunks)",
+        "record_started_with_audio": "Recording started (with microphone).",
+        "record_started_without_audio": "Recording started (no audio track).",
+        "record_start_failed": "Failed to start recording. Please check browser permission and codec support.",
+        "stop_failed": "Failed to stop recording. Please retry.",
+        "stop_timeout_forced": "Stopping recording timed out. Forced finalize applied.",
+        "pause_unsupported": "Current browser does not support pause recording.",
+        "resume_unsupported": "Current browser does not support resume recording."
+    }
+}
+

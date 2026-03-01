@@ -1,7 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { get } from "svelte/store";
     import { page } from "$app/stores";
     import env from "$lib/env";
+    import { t } from "$lib/i18n/translations";
     import "@excalidraw/excalidraw/index.css";
 
     let canvasEl: HTMLCanvasElement;
@@ -20,6 +22,7 @@
     let bridgeAppStateGuard = false;
     let bridgeViewportVersion = 0;
     let unsubscribeBridgeScroll: (() => void) | null = null;
+    let mountedExcalidrawLangCode = "";
     const excalidrawSessionName = `videorecord-bridge-${Date.now()}`;
     const fallbackHost = env.HOST || "freesavevideo.online";
     const normalizePathname = (pathname: string) => {
@@ -28,37 +31,44 @@
         }
         return pathname;
     };
-    const videorecordSeo = {
-        en: {
-            title: "Whiteboard Video Recorder - Record Slide Tutorials Online | freesavevideo",
-            description:
-                "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required.",
-            keywords:
-                "whiteboard recorder,slide recorder,online video recorder,excalidraw recorder,tutorial recording",
-            appName: "Whiteboard Video Recorder",
-        },
-        zh: {
-            title: "Whiteboard Video Recorder - Record Slide Tutorials Online | freesavevideo",
-            description:
-                "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required.",
-            keywords:
-                "whiteboard recorder,slide recorder,online video recorder,excalidraw recorder,tutorial recording",
-            appName: "Whiteboard Video Recorder",
-        },
-    } as const;
-    type VideorecordSeoLocale = keyof typeof videorecordSeo;
-    $: pageLang = ($page.params?.lang || "en").toLowerCase();
-    $: seoLocale = (pageLang.startsWith("zh") ? "zh" : "en") as VideorecordSeoLocale;
-    $: seoMeta = videorecordSeo[seoLocale] ?? videorecordSeo.en;
-    $: seoTitle = seoMeta.title;
-    $: seoDescription = seoMeta.description;
-    $: seoKeywords = seoMeta.keywords;
+    const EXCALIDRAW_LANG_MAP: Record<string, string> = {
+        de: "de-DE",
+        en: "en",
+        es: "es-ES",
+        fr: "fr-FR",
+        ja: "ja-JP",
+        ko: "ko-KR",
+        ru: "ru-RU",
+        th: "th-TH",
+        vi: "vi-VN",
+        zh: "zh-CN",
+    };
+    const getRouteLangFromPathname = (pathname: string) => {
+        const match = pathname.match(/^\/([a-z]{2})(?:\/|$)/i);
+        return (match?.[1] ?? "en").toLowerCase();
+    };
+    const toExcalidrawLangCode = (lang: string) => {
+        const normalized = lang.toLowerCase();
+        return (
+            EXCALIDRAW_LANG_MAP[normalized] ??
+            EXCALIDRAW_LANG_MAP[normalized.slice(0, 2)] ??
+            "en"
+        );
+    };
+    let routeLang = "en";
+    let excalidrawLangCode = "en";
+    $: routeLang = getRouteLangFromPathname($page.url.pathname);
+    $: excalidrawLangCode = toExcalidrawLangCode(routeLang);
+    $: seoTitle = String($t("videorecord.seo.title"));
+    $: seoDescription = String($t("videorecord.seo.description"));
+    $: seoKeywords = String($t("videorecord.seo.keywords"));
+    $: seoAppName = String($t("videorecord.seo.app_name"));
     $: canonicalPathname = normalizePathname($page.url.pathname);
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: seoJsonLd = {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        name: seoMeta.appName,
+        name: seoAppName,
         url: canonicalUrl,
         applicationCategory: "MultimediaApplication",
         operatingSystem: "Web Browser",
@@ -253,15 +263,26 @@
     let autosaveSignature = "";
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";
+    type VrNoticeParams = Record<string, string | number>;
+    const tr = (key: string, params?: VrNoticeParams) =>
+        String(get(t)(key, params as any));
+    const setExportNotice = (
+        level: "info" | "warn" | "error",
+        key: string,
+        params?: VrNoticeParams,
+    ) => {
+        exportNotice = tr(key, params);
+        exportNoticeLevel = level;
+    };
     let lastPreflightAt = 0;
     let showShortcutsHelp = false;
     let mobileImmersiveMode = false;
     const aspectOptions = [
-        { key: "16:9", label: "YouTube" },
-        { key: "4:3", label: "经典" },
-        { key: "3:4", label: "小红书" },
-        { key: "9:16", label: "抖音" },
-        { key: "1:1", label: "正方形" },
+        { key: "16:9", labelKey: "videorecord.settings.aspect.youtube" },
+        { key: "4:3", labelKey: "videorecord.settings.aspect.classic" },
+        { key: "3:4", labelKey: "videorecord.settings.aspect.portrait" },
+        { key: "9:16", labelKey: "videorecord.settings.aspect.short_video" },
+        { key: "1:1", labelKey: "videorecord.settings.aspect.square" },
     ];
     let aspectRatio = "16:9";
 
@@ -321,6 +342,9 @@
     let micStream: MediaStream | null = null;
     let micAudioCtx: AudioContext | null = null;
     let micDest: MediaStreamAudioDestinationNode | null = null;
+    let micProcessingNodes: AudioNode[] = [];
+    let enableMicHumReduction = true;
+    let micMainsFrequency: 50 | 60 = 50;
     let micLevel = 0;
     let micTestRunning = false;
     let micLevelRaf = 0;
@@ -336,8 +360,8 @@
 
     // teleprompter (DOM overlay only; not part of canvas stream)
     let teleprompterText = "";
-    const teleprompterInputPlaceholder =
-        "把你的讲稿粘贴到这里...\n\u4ec5\u4f60\u53ef\u89c1\uff0c\u4e0d\u4f1a\u51fa\u73b0\u5728\u5f55\u5236\u5185\u5bb9\u4e2d\u3002";
+    let teleprompterInputPlaceholder = "";
+    $: teleprompterInputPlaceholder = tr("videorecord.teleprompter.placeholder");
     let showTeleprompter = false;
     let isTeleprompterRunning = false;
     let teleprompterSpeed = 40; // px/s
@@ -415,6 +439,12 @@
             for (const track of micStream.getTracks()) track.stop();
         }
         micStream = null;
+        for (const node of micProcessingNodes) {
+            try {
+                node.disconnect();
+            } catch {}
+        }
+        micProcessingNodes = [];
         if (micDest) {
             for (const track of micDest.stream.getTracks()) track.stop();
         }
@@ -423,6 +453,58 @@
             void micAudioCtx.close();
         }
         micAudioCtx = null;
+    };
+
+    const buildMicAudioConstraints = (): MediaTrackConstraints => {
+        const constraints: MediaTrackConstraints = {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+        };
+        if (selectedMicDeviceId) {
+            constraints.deviceId = { ideal: selectedMicDeviceId };
+        }
+        return constraints;
+    };
+
+    const getMainsHumFrequencies = (base: 50 | 60): number[] => {
+        const freqs: number[] = [];
+        for (let i = 1; i <= 4; i++) {
+            freqs.push(base * i);
+        }
+        return freqs;
+    };
+
+    const connectMicProcessingGraph = (
+        audioCtx: AudioContext,
+        source: MediaStreamAudioSourceNode,
+        destination: MediaStreamAudioDestinationNode,
+    ): AudioNode[] => {
+        let currentNode: AudioNode = source;
+        const createdNodes: AudioNode[] = [];
+
+        if (enableMicHumReduction) {
+            const highpass = audioCtx.createBiquadFilter();
+            highpass.type = "highpass";
+            highpass.frequency.value = 85;
+            highpass.Q.value = 0.707;
+            currentNode.connect(highpass);
+            currentNode = highpass;
+            createdNodes.push(highpass);
+
+            for (const freq of getMainsHumFrequencies(micMainsFrequency)) {
+                const notch = audioCtx.createBiquadFilter();
+                notch.type = "notch";
+                notch.frequency.value = freq;
+                notch.Q.value = 30;
+                currentNode.connect(notch);
+                currentNode = notch;
+                createdNodes.push(notch);
+            }
+        }
+
+        currentNode.connect(destination);
+        return createdNodes;
     };
 
     type CameraSurfaceRect = {
@@ -682,9 +764,7 @@
         }
         try {
             const testStream = await navigator.mediaDevices.getUserMedia({
-                audio: selectedMicDeviceId
-                    ? { deviceId: { ideal: selectedMicDeviceId } }
-                    : true,
+                audio: buildMicAudioConstraints(),
                 video: false,
             });
             const AC =
@@ -695,8 +775,7 @@
                     }
                 ).webkitAudioContext;
             if (!AC) {
-                exportNotice = "当前浏览器不支持麦克风电平检测。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.mic_test_unsupported");
                 for (const t of testStream.getTracks()) t.stop();
                 return;
             }
@@ -730,16 +809,13 @@
                 for (const t of testStream.getTracks()) t.stop();
                 void testCtx.close();
                 if (finalPeak < 0.02) {
-                    exportNotice = "麦克风输入过低：请检查系统输入设备或权限。";
-                    exportNoticeLevel = "warn";
+                    setExportNotice("warn", "videorecord.notice.mic_test_low_input");
                 } else {
-                    exportNotice = "麦克风检测通过。";
-                    exportNoticeLevel = "info";
+                    setExportNotice("info", "videorecord.notice.mic_test_passed");
                 }
             }, 3500);
         } catch (e) {
-            exportNotice = "麦克风检测失败：请允许浏览器麦克风权限。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.mic_test_failed");
         }
     };
 
@@ -966,8 +1042,10 @@
                 );
             } catch {
                 if (isRecording && !isRecordingStopping) {
-                    exportNotice = "白板画面暂不可用，正在等待恢复…";
-                    exportNoticeLevel = "warn";
+                    setExportNotice(
+                        "warn",
+                        "videorecord.notice.whiteboard_temporarily_unavailable",
+                    );
                 }
                 bridgeCompositeRaf = requestAnimationFrame(tick);
                 return;
@@ -1899,6 +1977,7 @@
         if (cleanupExcalidraw) cleanupExcalidraw();
         cleanupExcalidraw = null;
         excalidrawMounted = false;
+        mountedExcalidrawLangCode = "";
         excalidrawApi = null;
         bridgeConvertElements = null;
     };
@@ -1926,6 +2005,7 @@
     const mountExcalidrawBridge = async () => {
         if (!excalidrawHostEl || excalidrawMounted) return;
         const token = ++excalidrawMountToken;
+        const langCode = excalidrawLangCode;
 
         try {
             clearExcalidrawPersistedUiState();
@@ -1953,6 +2033,7 @@
             root.render(
                 React.createElement(ExcalidrawComp, {
                     name: excalidrawSessionName,
+                    langCode,
                     UIOptions: {
                         canvasActions: {
                             export: false,
@@ -2037,10 +2118,10 @@
                 root.unmount();
             };
             excalidrawMounted = true;
+            mountedExcalidrawLangCode = langCode;
         } catch (e) {
             console.error("excalidraw bridge mount failed", e);
-            exportNotice = "白板加载失败，请刷新页面重试。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.whiteboard_load_failed");
             excalidrawMounted = false;
         }
     };
@@ -2807,21 +2888,23 @@
         lastPreflightAt = Date.now();
         const recordingCanvas = getRecordingCanvas();
         if (!recordingCanvas) {
-            exportNotice = "录制预检失败：画布尚未就绪。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.preflight_canvas_not_ready");
             return false;
         }
 
         if (typeof MediaRecorder === "undefined") {
-            exportNotice = "录制预检失败：当前浏览器不支持 MediaRecorder。";
-            exportNoticeLevel = "error";
+            setExportNotice(
+                "error",
+                "videorecord.notice.preflight_mediarecorder_unsupported",
+            );
             return false;
         }
 
         if (typeof recordingCanvas.captureStream !== "function") {
-            exportNotice =
-                "录制预检失败：当前浏览器不支持 canvas.captureStream。";
-            exportNoticeLevel = "error";
+            setExportNotice(
+                "error",
+                "videorecord.notice.preflight_capturestream_unsupported",
+            );
             return false;
         }
 
@@ -2829,13 +2912,17 @@
         if (!mime) return false;
 
         if (includeMicAudio && micDevices.length === 0) {
-            exportNotice = "录制预检失败：未检测到麦克风设备。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.preflight_no_mic_device");
             return false;
         }
 
-        exportNotice = `录制预检通过：${mime}${showCameraInRecord ? " + 摄像头" : ""}${includeMicAudio ? " + 麦克风" : ""}`;
-        exportNoticeLevel = "info";
+        setExportNotice("info", "videorecord.notice.preflight_passed", {
+            mime,
+            camera: showCameraInRecord
+                ? ` + ${tr("videorecord.notice.media.camera")}`
+                : "",
+            mic: includeMicAudio ? ` + ${tr("videorecord.notice.media.mic")}` : "",
+        });
         return true;
     };
 
@@ -2869,18 +2956,15 @@
             if (MediaRecorder.isTypeSupported(m)) {
                 selectedMimeType = m;
                 if (exportFormat === "mp4" && m.includes("webm")) {
-                    exportNotice = "当前浏览器不支持 MP4 录制，已回退为 WebM。";
-                    exportNoticeLevel = "warn";
+                    setExportNotice("warn", "videorecord.notice.mp4_fallback_webm");
                 } else if (exportFormat === "webm" && m.includes("mp4")) {
-                    exportNotice = "当前浏览器不支持 WebM 录制，已回退为 MP4。";
-                    exportNoticeLevel = "warn";
+                    setExportNotice("warn", "videorecord.notice.webm_fallback_mp4");
                 }
                 return m;
             }
         }
         selectedMimeType = "";
-        exportNotice = "当前浏览器不支持可用录制编码，可能无法开始录制。";
-        exportNoticeLevel = "error";
+        setExportNotice("error", "videorecord.notice.no_supported_mime");
         return "";
     };
 
@@ -2900,8 +2984,7 @@
             } catch {}
         }
         if (includeMicAudio) {
-            exportNotice = "将录制麦克风声音，请确认浏览器已授权麦克风。";
-            exportNoticeLevel = "info";
+            setExportNotice("info", "videorecord.notice.record_will_include_mic");
         }
         if (!enableRecordCountdown || recordCountdownSeconds <= 0) {
             await startRecord();
@@ -2938,8 +3021,7 @@
             !recordingCanvas ||
             typeof recordingCanvas.captureStream !== "function"
         ) {
-            exportNotice = "录制启动失败：画布流不可用。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.record_start_canvas_unavailable");
             isRecordingStarting = false;
             return;
         }
@@ -2948,17 +3030,14 @@
             recordingSurface = await startBridgeCompositeLoop(recordingCanvas);
         } catch (e) {
             console.warn("bridge recording crop/composite failed", e);
-            exportNotice =
-                "Recording crop failed, fallback to full canvas capture.";
-            exportNoticeLevel = "warn";
+            setExportNotice("warn", "videorecord.notice.record_crop_fallback");
         }
         const canvasStream = recordingSurface.captureStream(60);
         const stream = new MediaStream();
         for (const t of canvasStream.getVideoTracks()) {
             t.onended = () => {
                 if (!isRecording || isRecordingStopping) return;
-                exportNotice = "画面轨道意外中断，正在自动停止录制。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.video_track_ended");
                 stopRecord("video-ended");
             };
             stream.addTrack(t);
@@ -2967,13 +3046,7 @@
         if (includeMicAudio) {
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({
-                    audio: selectedMicDeviceId
-                        ? { deviceId: { ideal: selectedMicDeviceId } }
-                        : {
-                              echoCancellation: true,
-                              noiseSuppression: true,
-                              autoGainControl: true,
-                          },
+                    audio: buildMicAudioConstraints(),
                     video: false,
                 });
 
@@ -2989,13 +3062,20 @@
                     const source =
                         micAudioCtx.createMediaStreamSource(micStream);
                     micDest = micAudioCtx.createMediaStreamDestination();
-                    source.connect(micDest);
+                    micProcessingNodes = connectMicProcessingGraph(
+                        micAudioCtx,
+                        source,
+                        micDest,
+                    );
+                    if (micAudioCtx.state === "suspended") {
+                        try {
+                            await micAudioCtx.resume();
+                        } catch {}
+                    }
                     for (const t of micDest.stream.getAudioTracks()) {
                         t.onended = () => {
                             if (!isRecording) return;
-                            exportNotice =
-                                "麦克风轨道已中断，后续录制将无音频。";
-                            exportNoticeLevel = "warn";
+                            setExportNotice("warn", "videorecord.notice.mic_track_ended");
                         };
                         stream.addTrack(t);
                     }
@@ -3003,17 +3083,14 @@
                     for (const t of micStream.getAudioTracks()) {
                         t.onended = () => {
                             if (!isRecording) return;
-                            exportNotice =
-                                "麦克风轨道已中断，后续录制将无音频。";
-                            exportNoticeLevel = "warn";
+                            setExportNotice("warn", "videorecord.notice.mic_track_ended");
                         };
                         stream.addTrack(t);
                     }
                 }
             } catch (e) {
                 console.warn("mic capture failed", e);
-                exportNotice = "麦克风不可用：将仅录制画面。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.mic_unavailable_video_only");
             }
         }
         const mime = pickRecorderMime();
@@ -3024,8 +3101,7 @@
                 ? new MediaRecorder(stream, { mimeType: mime })
                 : new MediaRecorder(stream);
         } catch (err) {
-            exportNotice = "录制器初始化失败，请切换导出格式或更换浏览器。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.recorder_init_failed");
             stopMicStream();
             isRecordingStarting = false;
             return;
@@ -3040,8 +3116,7 @@
 
         recorder.onerror = () => {
             recordingStopCause = "recorder-error";
-            exportNotice = "录制器发生错误，正在尝试安全停止并导出。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.recorder_error_stopping");
             try {
                 recorder?.requestData();
             } catch {}
@@ -3072,8 +3147,7 @@
             stopMicStream();
 
             if (!chunks.length) {
-                exportNotice = "未生成可导出片段，请重试录制。";
-                exportNoticeLevel = "error";
+                setExportNotice("error", "videorecord.notice.no_output_chunks");
                 return;
             }
             const actualType =
@@ -3081,27 +3155,37 @@
             const ext = actualType.includes("mp4") ? "mp4" : "webm";
             const blob = new Blob(chunks, { type: actualType });
             if (blob.size < 32 * 1024) {
-                exportNotice = "录制文件过小，可能录制时长过短或被中断。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.output_too_small");
             }
             downloadRecordingBlob(blob, ext);
             const staleChunkMs = lastChunkAt ? Date.now() - lastChunkAt : 0;
             const staleChunk = staleChunkMs > 3000;
             const causeLabel =
                 recordingStopCause === "user"
-                    ? "手动停止"
+                    ? tr("videorecord.notice.stop_cause.user")
                     : recordingStopCause === "pagehide"
-                      ? "页面切后台"
+                      ? tr("videorecord.notice.stop_cause.pagehide")
                       : recordingStopCause === "video-ended"
-                        ? "画面轨道中断"
+                        ? tr("videorecord.notice.stop_cause.video_ended")
                         : recordingStopCause === "recorder-error"
-                          ? "录制器错误"
+                          ? tr("videorecord.notice.stop_cause.recorder_error")
                           : recordingStopCause === "timeout"
-                            ? "停止超时收尾"
-                            : "未知原因";
-            exportNotice = `导出完成：${ext.toUpperCase()} (${Math.round(blob.size / 1024)} KB) · 停止原因：${causeLabel}${staleChunk ? `，末段数据可能不完整（${Math.round(staleChunkMs / 1000)}s 无新片段）` : ""}`;
-            exportNoticeLevel =
-                staleChunk || recordingStopCause !== "user" ? "warn" : "info";
+                            ? tr("videorecord.notice.stop_cause.timeout")
+                            : tr("videorecord.notice.stop_cause.unknown");
+            setExportNotice(
+                staleChunk || recordingStopCause !== "user" ? "warn" : "info",
+                "videorecord.notice.export_complete",
+                {
+                    ext: ext.toUpperCase(),
+                    size_kb: Math.round(blob.size / 1024),
+                    cause: causeLabel,
+                    tail: staleChunk
+                        ? tr("videorecord.notice.export_tail", {
+                              seconds: Math.round(staleChunkMs / 1000),
+                          })
+                        : "",
+                },
+            );
         };
 
         try {
@@ -3115,13 +3199,13 @@
                 viewportZoomFactor: 0.92,
             });
             const hasAudioTrack = stream.getAudioTracks().length > 0;
-            exportNotice = hasAudioTrack
-                ? "录制已开始（含麦克风）。"
-                : "录制已开始（当前无音轨）。";
-            exportNoticeLevel = hasAudioTrack ? "info" : "warn";
+            if (hasAudioTrack) {
+                setExportNotice("info", "videorecord.notice.record_started_with_audio");
+            } else {
+                setExportNotice("warn", "videorecord.notice.record_started_without_audio");
+            }
         } catch {
-            exportNotice = "录制启动失败，请检查浏览器权限与编码支持。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.record_start_failed");
             stopMicStream();
             isRecordingStarting = false;
             return;
@@ -3161,8 +3245,7 @@
             recorder.stop();
         } catch {
             isRecordingStopping = false;
-            exportNotice = "停止录制失败，请重试。";
-            exportNoticeLevel = "error";
+            setExportNotice("error", "videorecord.notice.stop_failed");
             return;
         }
 
@@ -3178,8 +3261,7 @@
                 stopBridgeComposite();
                 stopCameraStream();
                 stopMicStream();
-                exportNotice = "停止录制超时，已强制收尾。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.stop_timeout_forced");
             }
         }, 3200);
     };
@@ -3191,8 +3273,7 @@
                 recorder.pause();
                 isRecordPaused = true;
             } catch {
-                exportNotice = "当前浏览器不支持暂停录制。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.pause_unsupported");
             }
             return;
         }
@@ -3201,8 +3282,7 @@
                 recorder.resume();
                 isRecordPaused = false;
             } catch {
-                exportNotice = "当前浏览器不支持恢复录制。";
-                exportNoticeLevel = "warn";
+                setExportNotice("warn", "videorecord.notice.resume_unsupported");
             }
         }
     };
@@ -3877,6 +3957,14 @@
     $: if (excalidrawHostEl) {
         void mountExcalidrawBridge();
     }
+    $: if (
+        excalidrawHostEl &&
+        excalidrawMounted &&
+        mountedExcalidrawLangCode !== excalidrawLangCode
+    ) {
+        unmountExcalidrawBridge();
+        void mountExcalidrawBridge();
+    }
 
     $: mobileImmersiveMode =
         isRecording ||
@@ -3896,13 +3984,12 @@
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
         if (!isRecording) return;
         e.preventDefault();
-        e.returnValue = "录制进行中，离开页面会中断并可能丢失导出。";
+        e.returnValue = tr("videorecord.notice.before_unload");
     };
 
     const onPageHide = () => {
         if (!isRecording || isRecordingStopping) return;
-        exportNotice = "页面进入后台，已自动停止录制以保护文件完整性。";
-        exportNoticeLevel = "warn";
+        setExportNotice("warn", "videorecord.notice.pagehide_autostop");
         stopRecord("pagehide");
     };
 
@@ -4005,7 +4092,7 @@
                 class:dragging={draggingCameraOverlay}
                 style={cameraOverlayStyle}
                 role="button"
-                aria-label="drag camera overlay"
+                aria-label={$t("videorecord.camera.drag_overlay")}
                 tabindex="-1"
                 on:pointerdown={startDragCameraOverlay}
             >
@@ -4033,16 +4120,22 @@
             <div
                 class="fc-drag-handle"
                 on:pointerdown={startDragFloatingControls}
-                title="Drag controls"
+                title={$t("videorecord.controls.drag_controls")}
             >
                 ⋮⋮
             </div>
-            <button class="floating-btn floating-settings-btn" on:click={() => (showSettings = true)}
+            <button
+                class="floating-btn floating-settings-btn"
+                title={$t("videorecord.controls.open_settings")}
+                aria-label={$t("videorecord.controls.open_settings")}
+                on:click={() => (showSettings = true)}
                 >⚙</button
             >
             <button
                 class="floating-btn floating-teleprompter-btn"
                 class:active={showTeleprompter}
+                title={$t("videorecord.controls.toggle_teleprompter")}
+                aria-label={$t("videorecord.controls.toggle_teleprompter")}
                 on:click={toggleTeleprompterPanel}
                 >📝</button
             >
@@ -4054,58 +4147,65 @@
                         isRecordingStopping ||
                         recordCountdownLeft > 0}
                     >{isRecordingStarting
-                        ? "Starting..."
+                        ? $t("videorecord.controls.starting")
                         : recordCountdownLeft > 0
-                          ? `Countdown ${recordCountdownLeft}`
-                          : "Record"}</button
+                          ? $t("videorecord.controls.countdown", {
+                                value: String(recordCountdownLeft),
+                            })
+                          : $t("videorecord.controls.record")}</button
                 >
             {:else}
                 <button
                     class="floating-pause"
                     on:click={togglePauseRecord}
                     disabled={isRecordingStopping}
-                    >{isRecordPaused ? "Resume" : "Pause"}</button
+                    >{isRecordPaused
+                        ? $t("videorecord.controls.resume")
+                        : $t("videorecord.controls.pause")}</button
                 >
                 <button
                     class="floating-stop"
-                    on:click={stopRecord}
+                    on:click={() => stopRecord()}
                     disabled={isRecordingStopping}
                     >{isRecordingStopping
-                        ? "Stopping..."
-                        : `Stop ${formatDuration(recordDuration)}`}</button
+                        ? $t("videorecord.controls.stopping")
+                        : $t("videorecord.controls.stop_with_duration", {
+                                value: formatDuration(recordDuration),
+                            })}</button
                 >
             {/if}
         </div>
 
         {#if recordCountdownLeft > 0}
             <div class="countdown-overlay">
-                <span class="countdown-number" key={recordCountdownLeft}
-                    >{recordCountdownLeft}</span
-                >
+                <span class="countdown-number">{recordCountdownLeft}</span>
             </div>
         {/if}
 
 
         <div class="slides-panel">
-            <div class="slides-title">Slides</div>
+            <div class="slides-title">{$t("videorecord.slides.title")}</div>
 
             <div class="slides-actions">
                 <button
                     class="slide-icon"
-                    title="Move up"
+                    title={$t("videorecord.slides.move_up")}
                     on:click={() => moveSlide(-1)}>^</button
                 >
                 <button
                     class="slide-icon"
-                    title="Move down"
+                    title={$t("videorecord.slides.move_down")}
                     on:click={() => moveSlide(1)}>v</button
                 >
                 <button
                     class="slide-icon"
-                    title="Duplicate"
+                    title={$t("videorecord.slides.duplicate")}
                     on:click={duplicateSlide}>D</button
                 >
-                <button class="slide-icon" title="Delete" on:click={deleteSlide}
+                <button
+                    class="slide-icon"
+                    title={$t("videorecord.slides.delete")}
+                    on:click={deleteSlide}
                     >x</button
                 >
             </div>
@@ -4137,6 +4237,8 @@
 
             <button
                 class="slide-add"
+                title={$t("videorecord.slides.add")}
+                aria-label={$t("videorecord.slides.add")}
                 on:click={addSlide}
                 on:dragover|preventDefault
                 on:drop={() => onSlideDrop(slides.length - 1)}>+</button>
@@ -4158,34 +4260,34 @@
                     <button
                         type="button"
                         class="teleprompter-grip"
-                        title="拖动提词器"
-                        aria-label="拖动提词器"
+                        title={$t("videorecord.teleprompter.drag_title")}
+                        aria-label={$t("videorecord.teleprompter.drag_title")}
                         on:pointerdown={startDragTeleprompter}
                     >
                         <span class="teleprompter-grip-dots">⋮⋮</span>
-                        <span>拖动</span>
+                        <span>{$t("videorecord.teleprompter.drag")}</span>
                     </button>
 
                     <button
                         class="icon-btn"
                         on:click={startTeleprompter}
                         disabled={isTeleprompterRunning}
-                        title="播放">▶</button
+                        title={$t("videorecord.teleprompter.play")}>▶</button
                     >
                     <button
                         class="icon-btn"
                         on:click={stopTeleprompter}
                         disabled={!isTeleprompterRunning}
-                        title="暂停">⏸</button
+                        title={$t("videorecord.teleprompter.pause")}>⏸</button
                     >
                     <button
                         class="icon-btn"
                         on:click={resetTeleprompterPosition}
-                        title="重置">↺</button
+                        title={$t("videorecord.teleprompter.reset")}>↺</button
                     >
 
                     <div class="mini slider-inline">
-                        <span>速度</span>
+                        <span>{$t("videorecord.teleprompter.speed")}</span>
                         <input
                             type="range"
                             min="10"
@@ -4196,7 +4298,7 @@
                     </div>
 
                     <div class="mini slider-inline">
-                        <span>透明</span>
+                        <span>{$t("videorecord.teleprompter.opacity")}</span>
                         <input
                             type="range"
                             min="20"
@@ -4207,7 +4309,7 @@
                     </div>
 
                     <div class="mini slider-inline">
-                        <span>字号</span>
+                        <span>{$t("videorecord.teleprompter.font_size")}</span>
                         <input
                             type="range"
                             min="14"
@@ -4240,8 +4342,14 @@
 
     {#if showShortcutsHelp}
         <div class="shortcut-panel">
-            <div><strong>Whiteboard:</strong> Use Excalidraw top toolbar for select/draw/text/zoom/pan.</div>
-            <div><strong>Recording:</strong> P to start/stop, K to pause/resume.</div>
+            <div>
+                <strong>{$t("videorecord.shortcuts.whiteboard_title")}:</strong>
+                {$t("videorecord.shortcuts.whiteboard_body")}
+            </div>
+            <div>
+                <strong>{$t("videorecord.shortcuts.recording_title")}:</strong>
+                {$t("videorecord.shortcuts.recording_body")}
+            </div>
         </div>
     {/if}
 </div>
@@ -4249,18 +4357,22 @@
 {#if showSettings}
     <button
         class="modal-backdrop"
-        aria-label="关闭录制设置"
+        aria-label={$t("videorecord.settings.close")}
         on:click={() => (showSettings = false)}
     ></button>
 
-    <div class="settings-modal" role="dialog" aria-label="录制设置">
+    <div
+        class="settings-modal"
+        role="dialog"
+        aria-label={$t("videorecord.settings.dialog")}
+    >
         <div class="settings-header">
-            <h3>录制设置</h3>
+            <h3>{$t("videorecord.settings.title")}</h3>
             <button on:click={() => (showSettings = false)}>✕</button>
         </div>
 
         <section>
-            <div class="section-title">画面比例</div>
+            <div class="section-title">{$t("videorecord.settings.aspect.title")}</div>
             <div class="ratio-grid">
                 {#each aspectOptions as item}
                     <button
@@ -4268,17 +4380,23 @@
                         on:click={() => setAspectRatio(item.key)}
                     >
                         <strong>{item.key}</strong>
-                        <small>{item.label}</small>
+                        <small>{$t(item.labelKey)}</small>
                     </button>
                 {/each}
             </div>
         </section>
 
         <section>
-            <div class="section-title">背景</div>
+            <div class="section-title">
+                {$t("videorecord.settings.background.title")}
+            </div>
             <div class="bg-actions">
-                <button on:click={randomBackground}>随机选择背景</button>
-                <button on:click={applyLightCanvasPreset}>一键白底黑字</button>
+                <button on:click={randomBackground}>
+                    {$t("videorecord.settings.background.random")}
+                </button>
+                <button on:click={applyLightCanvasPreset}>
+                    {$t("videorecord.settings.background.light_preset")}
+                </button>
             </div>
             <div class="bg-grid">
                 {#each bgColors as color}
@@ -4290,16 +4408,20 @@
                             backgroundColor = color;
                             clearCanvas();
                         }}
-                        aria-label={`背景 ${color}`}
+                        aria-label={$t("videorecord.settings.background.swatch", {
+                            value: color,
+                        })}
                     ></button>
                 {/each}
             </div>
         </section>
 
         <section>
-            <div class="section-title">画布样式</div>
+            <div class="section-title">
+                {$t("videorecord.settings.canvas.title")}
+            </div>
             <label class="slider-row">
-                <span>圆角</span>
+                <span>{$t("videorecord.settings.canvas.corner_radius")}</span>
                 <input
                     type="range"
                     min="0"
@@ -4310,7 +4432,7 @@
                 <span>{canvasCornerRadius}px</span>
             </label>
             <label class="slider-row">
-                <span>画布边距</span>
+                <span>{$t("videorecord.settings.canvas.inner_padding")}</span>
                 <input
                     type="range"
                     min="0"
@@ -4323,7 +4445,9 @@
         </section>
 
         <section>
-            <div class="section-title">预览</div>
+            <div class="section-title">
+                {$t("videorecord.settings.preview.title")}
+            </div>
             <div class="settings-preview-wrap">
                 <div
                     class="settings-preview"
@@ -4336,7 +4460,9 @@
         </section>
 
         <section>
-            <div class="section-title">提词器透明度</div>
+            <div class="section-title">
+                {$t("videorecord.settings.teleprompter_opacity.title")}
+            </div>
             <label class="slider-row">
                 <input
                     type="range"
@@ -4350,31 +4476,36 @@
         </section>
 
         <section>
-            <div class="section-title">导出格式</div>
+            <div class="section-title">
+                {$t("videorecord.settings.export.title")}
+            </div>
             <div class="export-format-row">
                 <button
                     class:active={exportFormat === "webm"}
                     on:click={() => (exportFormat = "webm")}
-                    >WebM（兼容好）</button
+                    >{$t("videorecord.settings.export.webm")}</button
                 >
                 <button
                     class:active={exportFormat === "mp4"}
-                    on:click={() => (exportFormat = "mp4")}>MP4（默认）</button
+                    on:click={() => (exportFormat = "mp4")}
+                    >{$t("videorecord.settings.export.mp4")}</button
                 >
             </div>
             <div class="subnote">
-                说明：默认导出 MP4；若浏览器不支持 MP4 录制会自动回退为 WebM。
+                {$t("videorecord.settings.export.note")}
             </div>
         </section>
 
         <section>
-            <div class="section-title">开始录制倒计时</div>
+            <div class="section-title">
+                {$t("videorecord.settings.countdown.title")}
+            </div>
             <label class="switch-row">
                 <input type="checkbox" bind:checked={enableRecordCountdown} />
-                <span>启用倒计时</span>
+                <span>{$t("videorecord.settings.countdown.enable")}</span>
             </label>
             <label class="slider-row">
-                <span>秒数</span>
+                <span>{$t("videorecord.settings.countdown.seconds")}</span>
                 <input
                     type="range"
                     min="1"
@@ -4388,10 +4519,10 @@
         </section>
 
         <section>
-            <div class="section-title">摄像头（录制画中画）</div>
+            <div class="section-title">{$t("videorecord.settings.camera.title")}</div>
             <label class="switch-row">
                 <input type="checkbox" bind:checked={showCameraInRecord} />
-                <span>录制时显示摄像头画面</span>
+                <span>{$t("videorecord.settings.camera.show")}</span>
             </label>
             <label class="switch-row">
                 <input
@@ -4399,11 +4530,11 @@
                     bind:checked={cameraFillFrame}
                     disabled={!showCameraInRecord}
                 />
-                <span>摄像头充满整个录制画面</span>
+                <span>{$t("videorecord.settings.camera.fill_frame")}</span>
             </label>
             <div class="camera-settings">
                 <label class="slider-row">
-                    <span>大小</span>
+                    <span>{$t("videorecord.settings.camera.size")}</span>
                     <input
                         type="range"
                         min="100"
@@ -4415,7 +4546,7 @@
                     <span>{cameraSize}px</span>
                 </label>
                 <label class="slider-row">
-                    <span>圆角</span>
+                    <span>{$t("videorecord.settings.camera.radius")}</span>
                     <input
                         type="range"
                         min="0"
@@ -4427,7 +4558,7 @@
                     <span>{cameraRadius}px</span>
                 </label>
                 <label class="slider-row">
-                    <span>边距</span>
+                    <span>{$t("videorecord.settings.camera.margin")}</span>
                     <input
                         type="range"
                         min="0"
@@ -4445,7 +4576,7 @@
                         bind:checked={cameraMirror}
                         disabled={!showCameraInRecord}
                     />
-                    <span>镜像摄像头</span>
+                    <span>{$t("videorecord.settings.camera.mirror")}</span>
                 </label>
 
                 <div class="camera-corner-grid">
@@ -4453,30 +4584,30 @@
                         class:active={cameraCorner === "tl"}
                         on:click={() => (cameraCorner = "tl")}
                         disabled={!showCameraInRecord || cameraFillFrame}
-                        >左上</button
+                        >{$t("videorecord.settings.camera.corner_tl")}</button
                     >
                     <button
                         class:active={cameraCorner === "tr"}
                         on:click={() => (cameraCorner = "tr")}
                         disabled={!showCameraInRecord || cameraFillFrame}
-                        >右上</button
+                        >{$t("videorecord.settings.camera.corner_tr")}</button
                     >
                     <button
                         class:active={cameraCorner === "bl"}
                         on:click={() => (cameraCorner = "bl")}
                         disabled={!showCameraInRecord || cameraFillFrame}
-                        >左下</button
+                        >{$t("videorecord.settings.camera.corner_bl")}</button
                     >
                     <button
                         class:active={cameraCorner === "br"}
                         on:click={() => (cameraCorner = "br")}
                         disabled={!showCameraInRecord || cameraFillFrame}
-                        >右下</button
+                        >{$t("videorecord.settings.camera.corner_br")}</button
                     >
                 </div>
 
                 <label class="slider-row">
-                    <span>X偏移</span>
+                    <span>{$t("videorecord.settings.camera.offset_x")}</span>
                     <input
                         type="range"
                         min="-320"
@@ -4488,7 +4619,7 @@
                     <span>{cameraOffsetX}px</span>
                 </label>
                 <label class="slider-row">
-                    <span>Y偏移</span>
+                    <span>{$t("videorecord.settings.camera.offset_y")}</span>
                     <input
                         type="range"
                         min="-320"
@@ -4506,29 +4637,32 @@
                             cameraOffsetY = 0;
                         }}
                         disabled={!showCameraInRecord || cameraFillFrame}
-                        >重置摄像头偏移</button
+                        >{$t("videorecord.settings.camera.reset_offset")}</button
                     >
                 </div>
             </div>
         </section>
 
         <section>
-            <div class="section-title">录制链路预检</div>
+            <div class="section-title">{$t("videorecord.settings.preflight.title")}</div>
             <div class="mic-row">
-                <button on:click={runRecordPreflight}>运行预检</button>
-                <span class="subnote"
-                    >最近预检：{lastPreflightAt
+                <button on:click={runRecordPreflight}>
+                    {$t("videorecord.settings.preflight.run")}
+                </button>
+                <span class="subnote">
+                    {$t("videorecord.settings.preflight.last_run")}:
+                    {lastPreflightAt
                         ? new Date(lastPreflightAt).toLocaleTimeString()
-                        : "未运行"}</span
-                >
+                        : $t("videorecord.settings.preflight.never")}
+                </span>
             </div>
         </section>
 
         <section>
-            <div class="section-title">麦克风</div>
+            <div class="section-title">{$t("videorecord.settings.mic.title")}</div>
             <label class="switch-row">
                 <input type="checkbox" bind:checked={includeMicAudio} />
-                <span>录制时包含麦克风声音</span>
+                <span>{$t("videorecord.settings.mic.include_audio")}</span>
             </label>
             <div class="mic-row">
                 <select
@@ -4536,20 +4670,26 @@
                     disabled={!includeMicAudio}
                 >
                     {#if micDevices.length === 0}
-                        <option value="">未检测到麦克风</option>
+                        <option value="">
+                            {$t("videorecord.settings.mic.device_none")}
+                        </option>
                     {/if}
                     {#each micDevices as dev}
                         <option value={dev.deviceId}
                             >{dev.label ||
-                                `麦克风${dev.deviceId.slice(0, 6)}`}</option
+                                $t("videorecord.settings.mic.device_fallback", {
+                                    value: dev.deviceId.slice(0, 6),
+                                })}</option
                         >
                     {/each}
                 </select>
-                <button on:click={() => void refreshMicDevices()}
-                    >刷新设备</button
-                >
+                <button on:click={() => void refreshMicDevices()}>
+                    {$t("videorecord.settings.mic.refresh")}
+                </button>
                 <button on:click={runMicLevelTest}
-                    >{micTestRunning ? "检测中..." : "测试麦克风"}</button
+                    >{micTestRunning
+                        ? $t("videorecord.settings.mic.testing")
+                        : $t("videorecord.settings.mic.test")}</button
                 >
             </div>
             <div class="mic-level-wrap">
@@ -4561,13 +4701,45 @@
                 </div>
                 <span>{Math.round(micLevel * 100)}%</span>
             </div>
+            <label class="switch-row">
+                <input
+                    type="checkbox"
+                    bind:checked={enableMicHumReduction}
+                    disabled={!includeMicAudio}
+                />
+                <span>{$t("videorecord.settings.mic.hum_reduction")}</span>
+            </label>
+            <div class="mic-row">
+                <span class="subnote">
+                    {$t("videorecord.settings.mic.mains_frequency")}
+                </span>
+                <button
+                    class:active={micMainsFrequency === 50}
+                    on:click={() => (micMainsFrequency = 50)}
+                    disabled={!includeMicAudio || !enableMicHumReduction}
+                >
+                    50Hz
+                </button>
+                <button
+                    class:active={micMainsFrequency === 60}
+                    on:click={() => (micMainsFrequency = 60)}
+                    disabled={!includeMicAudio || !enableMicHumReduction}
+                >
+                    60Hz
+                </button>
+            </div>
+            <div class="subnote">
+                {$t("videorecord.settings.mic.hum_hint")}
+            </div>
         </section>
 
         <section>
-            <div class="section-title">鼠标光标效果</div>
+            <div class="section-title">
+                {$t("videorecord.settings.cursor.title")}
+            </div>
             <label class="switch-row">
                 <input type="checkbox" bind:checked={showCursorHighlight} />
-                <span>录制时显示光标高亮</span>
+                <span>{$t("videorecord.settings.cursor.enable")}</span>
             </label>
             <div class="cursor-settings">
                 <input
@@ -5758,6 +5930,12 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         padding: 7px 10px;
+    }
+
+    .mic-row button.active {
+        background: #111111;
+        color: #fff;
+        border-color: #111111;
     }
 
     .mic-level-wrap {

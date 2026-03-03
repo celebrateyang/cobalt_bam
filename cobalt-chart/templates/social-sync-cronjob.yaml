@@ -30,10 +30,6 @@ spec:
             - name: social-sync
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
-              volumeMounts:
-                - mountPath: /app/src/cookies.json
-                  name: cookies-volume
-                  subPath: cookie/cookies.json
               command: ["node", "src/util/sync-enabled-accounts.js"]
               args:
                 - "--concurrency={{ .Values.socialSync.concurrency | default 2 }}"
@@ -47,8 +43,6 @@ spec:
               env:
                 - name: API_URL
                   value: https://api.freesavevideo.online/
-                - name: COOKIE_PATH
-                  value: src/cookies.json
                 {{- with .Values.instagram }}
                 {{- if .upstreamUrl }}
                 - name: INSTAGRAM_UPSTREAM_URL
@@ -74,10 +68,6 @@ spec:
                   value: {{ .Values.database.password | quote }}
                 - name: DB_NAME
                   value: {{ .Values.database.name | quote }}
-          volumes:
-            - name: cookies-volume
-              persistentVolumeClaim:
-                claimName: {{ .Release.Name }}-pvc
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}

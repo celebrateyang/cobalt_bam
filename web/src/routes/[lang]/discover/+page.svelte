@@ -1007,7 +1007,6 @@
                                         src={streamPlayingUrl}
                                         autoplay
                                         playsinline
-                                        controls
                                         muted={streamMuted}
                                         preload="metadata"
                                         on:ended={handleStreamEnded}
@@ -1023,6 +1022,16 @@
                                 {#if streamResolving}
                                     <div class="immersive-badge">Resolving...</div>
                                 {/if}
+
+                                <button
+                                    class="immersive-mute-toggle"
+                                    type="button"
+                                    on:click|stopPropagation={() => {
+                                        streamMuted = !streamMuted;
+                                    }}
+                                >
+                                    {streamMuted ? "Unmute" : "Mute"}
+                                </button>
 
                                 <div class="immersive-meta">
                                     <div class="immersive-title" title={getTitle(currentStreamVideo)}>
@@ -1041,51 +1050,29 @@
                                     </div>
                                 </div>
 
-                                <div class="immersive-actions">
-                                    <button class="btn-secondary" type="button" on:click={goPrevVideo}>
-                                        Prev
-                                    </button>
-                                    <button class="btn-secondary" type="button" on:click={goNextVideo}>
-                                        Next
-                                    </button>
-                                    <button
-                                        class="btn-secondary"
-                                        type="button"
-                                        on:click={() => {
-                                            streamMuted = !streamMuted;
-                                        }}
-                                    >
-                                        {streamMuted ? "Unmute" : "Mute"}
-                                    </button>
-                                    <button
-                                        class="btn-secondary"
-                                        type="button"
-                                        disabled={streamResolving}
-                                        on:click={() => ensureCurrentStreamPlayable(true)}
-                                    >
-                                        Refresh Link
-                                    </button>
-                                    <button
-                                        class="btn-primary"
-                                        type="button"
-                                        disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
-                                        on:click={() => {
-                                            if (currentStreamVideo) {
-                                                void handleDownload(currentStreamVideo);
-                                            }
-                                        }}
-                                    >
-                                        {runningDownloadId === currentStreamVideo.id
-                                            ? $t("discover.status.parsing")
-                                            : $t("button.download")}
-                                    </button>
-                                </div>
-
                                 {#if streamError}
                                     <div class="error-banner immersive-error">{streamError}</div>
                                 {/if}
                             {/if}
                         </div>
+                        {#if currentStreamVideo}
+                            <div class="immersive-download-row">
+                                <button
+                                    class="btn-primary immersive-download-btn"
+                                    type="button"
+                                    disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
+                                    on:click={() => {
+                                        if (currentStreamVideo) {
+                                            void handleDownload(currentStreamVideo);
+                                        }
+                                    }}
+                                >
+                                    {runningDownloadId === currentStreamVideo.id
+                                        ? $t("discover.status.parsing")
+                                        : $t("button.download")}
+                                </button>
+                            </div>
+                        {/if}
                     </section>
                 {/if}
             </div>
@@ -1210,6 +1197,7 @@
         background: #000;
         object-fit: cover;
         display: block;
+        touch-action: pan-y;
     }
 
     .immersive-loading {
@@ -1251,14 +1239,6 @@
         opacity: 0.86;
     }
 
-    .immersive-actions {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 8px;
-        padding: 10px 12px 12px;
-        background: rgba(15, 17, 22, 0.96);
-    }
-
     .immersive-badge {
         position: absolute;
         top: 12px;
@@ -1271,8 +1251,34 @@
         padding: 4px 10px;
     }
 
+    .immersive-mute-toggle {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 4;
+        border: none;
+        border-radius: 999px;
+        padding: 6px 12px;
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--white);
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
     .immersive-error {
         margin: 0 12px 12px;
+    }
+
+    .immersive-download-row {
+        margin-top: 10px;
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    .immersive-download-btn {
+        width: 100%;
+        min-height: 44px;
     }
 
     .resource-layout {
@@ -1581,16 +1587,6 @@
         .immersive-video,
         .immersive-loading {
             max-height: 72vh;
-        }
-
-        .immersive-actions {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 520px) {
-        .immersive-actions {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 

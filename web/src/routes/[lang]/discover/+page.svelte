@@ -160,12 +160,24 @@
             if (found >= 0) {
                 streamIndex = found;
                 currentStreamVideo = streamVideos[streamIndex];
-                return;
+            } else {
+                streamIndex = Math.min(streamIndex, streamVideos.length - 1);
+                currentStreamVideo = streamVideos[streamIndex];
             }
+        } else {
+            streamIndex = Math.min(streamIndex, streamVideos.length - 1);
+            currentStreamVideo = streamVideos[streamIndex];
         }
 
-        streamIndex = Math.min(streamIndex, streamVideos.length - 1);
-        currentStreamVideo = streamVideos[streamIndex];
+        if (currentStreamVideo && isPlayableFresh(currentStreamVideo)) {
+            streamPlayingUrl = currentStreamVideo.play_url || "";
+            streamError = "";
+            return;
+        }
+
+        streamPlayingUrl = "";
+        streamError = "";
+        void ensureCurrentStreamPlayable(false);
     };
 
     const showBatchLimitDialog = (count: number, onDownloadFirst?: (count: number) => void) => {
@@ -630,6 +642,12 @@
         goNextVideo();
     };
 
+    const handleStreamVideoError = () => {
+        if (!currentStreamVideo || streamResolving) return;
+        streamPlayingUrl = "";
+        void ensureCurrentStreamPlayable(true);
+    };
+
     const handleStreamTouchStart = (event: TouchEvent) => {
         streamTouchStartY = event.touches?.[0]?.clientY ?? null;
     };
@@ -993,6 +1011,7 @@
                                         muted={streamMuted}
                                         preload="metadata"
                                         on:ended={handleStreamEnded}
+                                        on:error={handleStreamVideoError}
                                     ></video>
                                 {:else}
                                     <div class="immersive-loading">

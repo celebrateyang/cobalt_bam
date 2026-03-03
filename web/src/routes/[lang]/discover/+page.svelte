@@ -1222,16 +1222,16 @@
 
                                 <div class="immersive-side-actions">
                                     <button
-                                        class="immersive-mute-toggle"
+                                        class="immersive-side-btn"
                                         type="button"
                                         on:click|stopPropagation={() => {
                                             streamMuted = !streamMuted;
                                         }}
                                     >
-                                        {streamMuted ? "Unmute" : "Mute"}
+                                        {streamMuted ? "开声" : "静音"}
                                     </button>
                                     <button
-                                        class="btn-primary immersive-download-btn"
+                                        class="immersive-side-btn immersive-download-btn"
                                         type="button"
                                         disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
                                         on:click={() => {
@@ -1243,6 +1243,31 @@
                                         {runningDownloadId === currentStreamVideo.id
                                             ? $t("discover.status.parsing")
                                             : $t("button.download")}
+                                    </button>
+                                </div>
+
+                                <div class="immersive-desktop-nav">
+                                    <button
+                                        class="immersive-nav-btn"
+                                        type="button"
+                                        aria-label="上一条视频"
+                                        disabled={streamNavigating}
+                                        on:click|stopPropagation={goPrevVideo}
+                                    >
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 14l6-6 6 6" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        class="immersive-nav-btn"
+                                        type="button"
+                                        aria-label="下一条视频"
+                                        disabled={streamNavigating}
+                                        on:click|stopPropagation={goNextVideo}
+                                    >
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 10l6 6 6-6" />
+                                        </svg>
                                     </button>
                                 </div>
 
@@ -1441,16 +1466,28 @@
         width: 118px;
     }
 
-    .immersive-mute-toggle {
+    .immersive-side-btn {
         position: static;
         border: none;
         border-radius: 999px;
-        padding: 6px 12px;
+        padding: 8px 12px;
         background: rgba(0, 0, 0, 0.7);
         color: var(--white);
-        font-size: 0.78rem;
+        font-size: 0.8rem;
         font-weight: 700;
         cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .immersive-side-btn:hover:not(:disabled) {
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-1px);
+    }
+
+    .immersive-side-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .immersive-error {
@@ -1461,6 +1498,56 @@
         width: 100%;
         min-height: 44px;
         border-radius: 999px;
+    }
+
+    .immersive-desktop-nav {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+        display: grid;
+        gap: 10px;
+    }
+
+    .immersive-nav-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.08)),
+            rgba(0, 0, 0, 0.56);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+        backdrop-filter: blur(6px);
+    }
+
+    .immersive-nav-btn svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+    }
+
+    .immersive-nav-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.12)),
+            rgba(0, 0, 0, 0.66);
+    }
+
+    .immersive-nav-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .resource-layout {
@@ -1723,6 +1810,10 @@
         .immersive-video,
         .immersive-loading {
             max-height: 72vh;
+        }
+
+        .immersive-desktop-nav {
+            display: none;
         }
     }
 

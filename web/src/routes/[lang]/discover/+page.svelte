@@ -16,7 +16,6 @@
     import cachedInfo from "$lib/state/server-info";
     import type { DialogBatchItem } from "$lib/types/dialog";
 
-    type PlatformFilter = "all" | "tiktok" | "instagram";
     type DiscoverTab = "resources" | "beauty";
     type ResourceDownloadMode = "audio" | "video";
 
@@ -42,7 +41,6 @@
     };
 
     let activeTab: DiscoverTab = "beauty";
-    let selectedPlatform: PlatformFilter = "all";
 
     let featuredVideos: SocialVideo[] = [];
     let latestVideos: SocialVideo[] = [];
@@ -63,6 +61,8 @@
     let streamMuted = true;
     let streamTouchStartY: number | null = null;
     let streamResolveToken = 0;
+    let streamIgnoreTapUntil = 0;
+    let streamVideoElement: HTMLVideoElement | null = null;
 
     let runningDownloadId: number | null = null;
     let showSlowHint = false;
@@ -87,16 +87,9 @@
     let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
     let batchLimitEnabled = true;
 
-    $: platformParam = selectedPlatform === "all" ? undefined : selectedPlatform;
     $: locale = $page.params.lang;
     $: batchMaxItems = resolveBatchMaxItems($cachedInfo?.info?.cobalt?.batchMaxItems);
     $: batchLimitEnabled = Number.isFinite(batchMaxItems) && batchMaxItems > 0;
-
-    $: platforms = [
-        { value: "all", label: $t("discover.filter.all") },
-        { value: "tiktok", label: "TikTok" },
-        { value: "instagram", label: "Instagram" },
-    ] as const;
 
     const normalize = (list: SocialVideo[]) =>
         list.filter((video) => SUPPORTED_PLATFORMS.has(video.platform) && !video.is_pinned);
@@ -481,7 +474,6 @@
         try {
             const [featuredRes, latestRes] = await Promise.all([
                 videos.list({
-                    platform: platformParam,
                     is_active: true,
                     is_featured: true,
                     limit: 20,
@@ -489,7 +481,6 @@
                     order: "DESC",
                 }),
                 videos.list({
-                    platform: platformParam,
                     is_active: true,
                     page: 1,
                     limit: LATEST_PAGE_SIZE,
@@ -534,7 +525,6 @@
             const nextPage = latestPage + 1;
 
             const res = await videos.list({
-                platform: platformParam,
                 is_active: true,
                 page: nextPage,
                 limit: LATEST_PAGE_SIZE,
@@ -642,6 +632,23 @@
         goNextVideo();
     };
 
+    const handleStreamVideoClick = async () => {
+        if (Date.now() < streamIgnoreTapUntil) return;
+        const player = streamVideoElement;
+        if (!player) return;
+
+        if (player.paused) {
+            try {
+                await player.play();
+            } catch {
+                // no-op
+            }
+            return;
+        }
+
+        player.pause();
+    };
+
     const handleStreamVideoError = () => {
         if (!currentStreamVideo || streamResolving) return;
         streamPlayingUrl = "";
@@ -652,12 +659,17 @@
         streamTouchStartY = event.touches?.[0]?.clientY ?? null;
     };
 
+    const handleStreamTouchMove = (event: TouchEvent) => {
+        event.preventDefault();
+    };
+
     const handleStreamTouchEnd = (event: TouchEvent) => {
         if (streamTouchStartY === null) return;
         const endY = event.changedTouches?.[0]?.clientY ?? streamTouchStartY;
         const diff = endY - streamTouchStartY;
         streamTouchStartY = null;
         if (Math.abs(diff) < 36) return;
+        streamIgnoreTapUntil = Date.now() + 280;
         if (diff < 0) {
             goNextVideo();
         } else {
@@ -961,24 +973,6 @@
             </div>
         {:else}
             <div class="discover-container">
-                <header class="header">
-                    <div class="header-content">
-                        <h1 class="title">{$t("discover.title")}</h1>
-                        <p class="subtitle">{$t("discover.subtitle")}</p>
-                    </div>
-                </header>
-
-                <div class="filter-bar">
-                    <div class="select-wrapper">
-                        <select bind:value={selectedPlatform} on:change={loadAll} class="platform-select">
-                            {#each platforms as platform}
-                                <option value={platform.value}>{platform.label}</option>
-                            {/each}
-                        </select>
-                        <div class="select-arrow">v</div>
-                    </div>
-                </div>
-
                 {#if error}
                     <div class="error-banner">{error}</div>
                 {/if}
@@ -998,17 +992,20 @@
                         <div
                             class="immersive-player"
                             on:touchstart={handleStreamTouchStart}
+                            on:touchmove={handleStreamTouchMove}
                             on:touchend={handleStreamTouchEnd}
                         >
                             {#if currentStreamVideo}
                                 {#if streamPlayingUrl}
                                     <video
+                                        bind:this={streamVideoElement}
                                         class="immersive-video"
                                         src={streamPlayingUrl}
                                         autoplay
                                         playsinline
                                         muted={streamMuted}
                                         preload="metadata"
+                                        on:click={handleStreamVideoClick}
                                         on:ended={handleStreamEnded}
                                         on:error={handleStreamVideoError}
                                     ></video>
@@ -1168,14 +1165,6 @@
         line-height: 1.5;
     }
 
-    .filter-bar {
-        width: 100%;
-        max-width: 1100px;
-        margin-bottom: calc(var(--padding) * 2);
-        display: flex;
-        justify-content: flex-end;
-    }
-
     .immersive-section {
         width: 100%;
         max-width: 1100px;
@@ -1188,6 +1177,8 @@
         background: #0f1116;
         box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
         position: relative;
+        touch-action: none;
+        overscroll-behavior: contain;
     }
 
     .immersive-video {
@@ -1197,7 +1188,7 @@
         background: #000;
         object-fit: cover;
         display: block;
-        touch-action: pan-y;
+        touch-action: none;
     }
 
     .immersive-loading {
@@ -1418,44 +1409,6 @@
         color: var(--gray);
     }
 
-    .select-wrapper {
-        position: relative;
-        min-width: 200px;
-    }
-
-    .platform-select {
-        appearance: none;
-        width: 100%;
-        padding: 12px 40px 12px 16px;
-        border: none;
-        border-radius: var(--border-radius);
-        font-size: 0.95rem;
-        background: var(--button);
-        color: var(--button-text);
-        box-shadow: var(--button-box-shadow);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .platform-select:hover {
-        background: var(--button-hover);
-    }
-
-    .platform-select:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px var(--blue) inset;
-    }
-
-    .select-arrow {
-        position: absolute;
-        right: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: var(--gray);
-        font-size: 0.8rem;
-    }
-
     .error-banner {
         width: 100%;
         max-width: 1100px;
@@ -1539,14 +1492,6 @@
     @media (max-width: 520px) {
         .discover-layout {
             padding: calc(var(--padding) * 2) var(--padding);
-        }
-
-        .filter-bar {
-            justify-content: stretch;
-        }
-
-        .select-wrapper {
-            width: 100%;
         }
 
         .video-grid {

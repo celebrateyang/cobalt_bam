@@ -99,6 +99,7 @@ const refreshAccountThumbnails = async (account, options) => {
         typeof options?.startedAt === "number" && Number.isFinite(options.startedAt)
             ? options.startedAt
             : Date.now();
+    const clearSyncError = options?.clearSyncError !== false;
     const limit =
         typeof options?.thumbnailLimit === "number" && options.thumbnailLimit > 0
             ? Math.floor(options.thumbnailLimit)
@@ -119,10 +120,14 @@ const refreshAccountThumbnails = async (account, options) => {
         refreshed += 1;
     }
 
-    await updateAccount(account.id, {
+    const accountUpdates = {
         sync_last_run_at: startedAt,
-        sync_error: null,
-    });
+    };
+    if (clearSyncError) {
+        accountUpdates.sync_error = null;
+    }
+
+    await updateAccount(account.id, accountUpdates);
 
     return { refreshed, total: videos.length, started_at: startedAt };
 };
@@ -290,6 +295,7 @@ const run = async () => {
                     pinnedLimit,
                     thumbnailLimit,
                     startedAt,
+                    clearSyncError: false,
                 });
                 console.log(
                     `sync-enabled-accounts: fallback ok ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,

@@ -30,6 +30,10 @@ spec:
             - name: social-sync
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
+              volumeMounts:
+                - mountPath: /app/src/cookies.json
+                  name: cookies-volume
+                  subPath: cookie/cookies.json
               command: ["node", "src/util/sync-enabled-accounts.js"]
               args:
                 - "--concurrency={{ .Values.socialSync.concurrency | default 2 }}"
@@ -41,6 +45,22 @@ spec:
                 - "--otherIntervalMinutes={{ .Values.socialSync.otherIntervalMinutes | default 720 }}"
                 - "--intervalSlackMinutes={{ .Values.socialSync.intervalSlackMinutes | default 5 }}"
               env:
+                - name: API_URL
+                  value: https://api.freesavevideo.online/
+                - name: COOKIE_PATH
+                  value: src/cookies.json
+                {{- with .Values.instagram }}
+                {{- if .upstreamUrl }}
+                - name: INSTAGRAM_UPSTREAM_URL
+                  value: {{ .upstreamUrl | quote }}
+                {{- if .upstreamApiKey }}
+                - name: INSTAGRAM_UPSTREAM_API_KEY
+                  value: {{ .upstreamApiKey | quote }}
+                {{- end }}
+                - name: INSTAGRAM_UPSTREAM_TIMEOUT_MS
+                  value: {{ .upstreamTimeoutMs | default 12000 | quote }}
+                {{- end }}
+                {{- end }}
                 # Database Configuration
                 - name: DB_TYPE
                   value: {{ .Values.database.type | quote }}
@@ -54,6 +74,10 @@ spec:
                   value: {{ .Values.database.password | quote }}
                 - name: DB_NAME
                   value: {{ .Values.database.name | quote }}
+          volumes:
+            - name: cookies-volume
+              persistentVolumeClaim:
+                claimName: {{ .Release.Name }}-pvc
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}

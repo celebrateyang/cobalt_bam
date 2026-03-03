@@ -1,5 +1,7 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
+    import { get } from "svelte/store";
 
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
@@ -14,6 +16,13 @@
     import API from "$lib/api/api";
     import { createDialog } from "$lib/state/dialogs";
     import cachedInfo from "$lib/state/server-info";
+    import {
+        checkSignedIn,
+        clerkEnabled,
+        getClerkToken,
+        isSignedIn,
+        signIn,
+    } from "$lib/state/clerk";
     import type { DialogBatchItem } from "$lib/types/dialog";
 
     type DiscoverTab = "resources" | "beauty";
@@ -29,6 +38,8 @@
     const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
     const LATEST_PAGE_SIZE = 24;
     const DEFAULT_BATCH_MAX_ITEMS = 20;
+    const FREE_VIDEO_LIMIT = 8;
+    const VIEW_POINT_COST = 1;
 
     const resolveBatchMaxItems = (value: unknown) => {
         if (typeof value === "number" && Number.isFinite(value)) {
@@ -63,6 +74,10 @@
     let streamResolveToken = 0;
     let streamIgnoreTapUntil = 0;
     let streamVideoElement: HTMLVideoElement | null = null;
+    let streamNavigating = false;
+    let guestViewedVideoIds = new Set<number>();
+    let chargedVideoIds = new Set<number>();
+    let initialChargedAttemptIds = new Set<number>();
 
     let runningDownloadId: number | null = null;
     let showSlowHint = false;
@@ -435,7 +450,25 @@
             if (currentStreamVideo && isPlayableFresh(currentStreamVideo)) {
                 streamPlayingUrl = currentStreamVideo.play_url || "";
             }
+            if (currentStreamVideo && !$isSignedIn) {
+                recordGuestView(currentStreamVideo.id);
+            }
             void ensureCurrentStreamPlayable(false);
+        }
+    }
+
+    $: if (
+        activeTab === "beauty" &&
+        currentStreamVideo &&
+        $isSignedIn &&
+        guestViewedVideoIds.size === 0
+    ) {
+        const videoId = currentStreamVideo.id;
+        if (!chargedVideoIds.has(videoId) && !initialChargedAttemptIds.has(videoId)) {
+            const next = new Set(initialChargedAttemptIds);
+            next.add(videoId);
+            initialChargedAttemptIds = next;
+            void consumeViewPoint(videoId);
         }
     }
 
@@ -606,26 +639,193 @@
         }
     };
 
-    const goToStreamIndex = (nextIndex: number) => {
-        if (!streamVideos.length) return;
-        const total = streamVideos.length;
-        const normalized = ((nextIndex % total) + total) % total;
-        streamIndex = normalized;
-        currentStreamVideo = streamVideos[streamIndex] || null;
-        streamPlayingUrl = currentStreamVideo?.play_url && isPlayableFresh(currentStreamVideo)
-            ? currentStreamVideo.play_url
-            : "";
-        streamError = "";
-        ensureMoreAhead();
-        void ensureCurrentStreamPlayable(false);
+    const accountPath = () => `/${locale || "en"}/account`;
+
+    const recordGuestView = (videoId: number) => {
+        if (guestViewedVideoIds.has(videoId)) return;
+        const next = new Set(guestViewedVideoIds);
+        next.add(videoId);
+        guestViewedVideoIds = next;
     };
 
+    const canGuestAccessVideo = (videoId: number) =>
+        guestViewedVideoIds.has(videoId) || guestViewedVideoIds.size < FREE_VIDEO_LIMIT;
+
+    const showDiscoverSignInDialog = () => {
+        createDialog({
+            id: `discover-signin-${Date.now()}`,
+            type: "small",
+            title: $t("auth.sign_in"),
+            bodyText: `You can watch up to ${FREE_VIDEO_LIMIT} videos without signing in. Please sign in to continue.`,
+            buttons: [
+                {
+                    text: $t("button.cancel"),
+                    main: false,
+                    action: () => {},
+                },
+                {
+                    text: $t("auth.sign_in"),
+                    main: true,
+                    action: () => {
+                        const currentUrl = get(page)?.url?.href;
+                        if (!clerkEnabled) {
+                            void goto(accountPath());
+                            return;
+                        }
+                        void signIn({
+                            fallbackRedirectUrl: currentUrl,
+                            signUpFallbackRedirectUrl: currentUrl,
+                        });
+                    },
+                },
+            ],
+        });
+    };
+
+    const showPointsCheckFailedDialog = () => {
+        createDialog({
+            id: `discover-points-check-${Date.now()}`,
+            type: "small",
+            meowbalt: "error",
+            bodyText: $t("dialog.batch.points_check_failed"),
+            buttons: [
+                {
+                    text: $t("button.gotit"),
+                    main: true,
+                    action: () => {},
+                },
+            ],
+        });
+    };
+
+    const showPointsInsufficientDialog = (currentPoints = 0, requiredPoints = VIEW_POINT_COST) => {
+        createDialog({
+            id: `discover-points-insufficient-${Date.now()}`,
+            type: "small",
+            meowbalt: "error",
+            title: $t("dialog.batch.points_insufficient.title"),
+            bodyText: $t("dialog.batch.points_insufficient.body", {
+                current: currentPoints,
+                required: requiredPoints,
+            }),
+            buttons: [
+                {
+                    text: $t("button.cancel"),
+                    main: false,
+                    action: () => {},
+                },
+                {
+                    text: $t("button.buy_points"),
+                    main: true,
+                    action: () => {
+                        void goto(accountPath());
+                    },
+                },
+            ],
+        });
+    };
+
+    const getViewAccessToken = async (attempts = 4, delayMs = 120) => {
+        let token = await getClerkToken();
+        if (token) return token;
+
+        for (let i = 0; i < attempts; i += 1) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            token = await getClerkToken();
+            if (token) return token;
+        }
+
+        return null;
+    };
+
+    const consumeViewPoint = async (videoId: number) => {
+        if (chargedVideoIds.has(videoId)) return true;
+
+        const token = await getViewAccessToken();
+        if (!token) {
+            showDiscoverSignInDialog();
+            return false;
+        }
+
+        const apiBase = currentApiURL();
+        const res = await fetch(`${apiBase}/user/points/consume`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ points: VIEW_POINT_COST }),
+        }).catch(() => null);
+
+        const data = await res?.json().catch(() => ({}));
+        if (!res?.ok || data?.status !== "success") {
+            if (res?.status === 409 || data?.error?.code === "INSUFFICIENT_POINTS") {
+                const currentPoints =
+                    typeof data?.data?.user?.points === "number" ? data.data.user.points : 0;
+                showPointsInsufficientDialog(currentPoints, VIEW_POINT_COST);
+                return false;
+            }
+
+            if (res?.status === 401 || data?.error?.code === "UNAUTHORIZED") {
+                showDiscoverSignInDialog();
+                return false;
+            }
+
+            showPointsCheckFailedDialog();
+            return false;
+        }
+
+        const next = new Set(chargedVideoIds);
+        next.add(videoId);
+        chargedVideoIds = next;
+        return true;
+    };
+
+    async function goToStreamIndex(nextIndex: number) {
+        if (!streamVideos.length || streamNavigating) return;
+        const total = streamVideos.length;
+        const normalized = ((nextIndex % total) + total) % total;
+        const nextVideo = streamVideos[normalized];
+        if (!nextVideo) return;
+
+        streamNavigating = true;
+        try {
+            let signedIn = $isSignedIn;
+            if (!signedIn && clerkEnabled) {
+                signedIn = await checkSignedIn(150);
+            }
+
+            if (!signedIn) {
+                if (!canGuestAccessVideo(nextVideo.id)) {
+                    showDiscoverSignInDialog();
+                    return;
+                }
+
+                recordGuestView(nextVideo.id);
+            } else {
+                const charged = await consumeViewPoint(nextVideo.id);
+                if (!charged) return;
+            }
+
+            streamIndex = normalized;
+            currentStreamVideo = nextVideo;
+            streamPlayingUrl = currentStreamVideo.play_url && isPlayableFresh(currentStreamVideo)
+                ? currentStreamVideo.play_url
+                : "";
+            streamError = "";
+            ensureMoreAhead();
+            void ensureCurrentStreamPlayable(false);
+        } finally {
+            streamNavigating = false;
+        }
+    }
+
     const goNextVideo = () => {
-        goToStreamIndex(streamIndex + 1);
+        void goToStreamIndex(streamIndex + 1);
     };
 
     const goPrevVideo = () => {
-        goToStreamIndex(streamIndex - 1);
+        void goToStreamIndex(streamIndex - 1);
     };
 
     const handleStreamEnded = () => {
@@ -1020,15 +1220,31 @@
                                     <div class="immersive-badge">Resolving...</div>
                                 {/if}
 
-                                <button
-                                    class="immersive-mute-toggle"
-                                    type="button"
-                                    on:click|stopPropagation={() => {
-                                        streamMuted = !streamMuted;
-                                    }}
-                                >
-                                    {streamMuted ? "Unmute" : "Mute"}
-                                </button>
+                                <div class="immersive-side-actions">
+                                    <button
+                                        class="immersive-mute-toggle"
+                                        type="button"
+                                        on:click|stopPropagation={() => {
+                                            streamMuted = !streamMuted;
+                                        }}
+                                    >
+                                        {streamMuted ? "Unmute" : "Mute"}
+                                    </button>
+                                    <button
+                                        class="btn-primary immersive-download-btn"
+                                        type="button"
+                                        disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
+                                        on:click={() => {
+                                            if (currentStreamVideo) {
+                                                void handleDownload(currentStreamVideo);
+                                            }
+                                        }}
+                                    >
+                                        {runningDownloadId === currentStreamVideo.id
+                                            ? $t("discover.status.parsing")
+                                            : $t("button.download")}
+                                    </button>
+                                </div>
 
                                 <div class="immersive-meta">
                                     <div class="immersive-title" title={getTitle(currentStreamVideo)}>
@@ -1049,24 +1265,6 @@
                                 {/if}
                             {/if}
                         </div>
-                        {#if currentStreamVideo}
-                            <div class="immersive-download-row">
-                                <button
-                                    class="btn-primary immersive-download-btn"
-                                    type="button"
-                                    disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
-                                    on:click={() => {
-                                        if (currentStreamVideo) {
-                                            void handleDownload(currentStreamVideo);
-                                        }
-                                    }}
-                                >
-                                    {runningDownloadId === currentStreamVideo.id
-                                        ? $t("discover.status.parsing")
-                                        : $t("button.download")}
-                                </button>
-                            </div>
-                        {/if}
                     </section>
                 {/if}
             </div>
@@ -1233,11 +1431,18 @@
         padding: 4px 10px;
     }
 
-    .immersive-mute-toggle {
+    .immersive-side-actions {
         position: absolute;
         right: 12px;
         bottom: 108px;
-        z-index: 4;
+        z-index: 5;
+        display: grid;
+        gap: 8px;
+        width: 118px;
+    }
+
+    .immersive-mute-toggle {
+        position: static;
         border: none;
         border-radius: 999px;
         padding: 6px 12px;
@@ -1252,15 +1457,10 @@
         margin: 0 12px 12px;
     }
 
-    .immersive-download-row {
-        margin-top: 10px;
-        width: 100%;
-        max-width: 1100px;
-    }
-
     .immersive-download-btn {
         width: 100%;
         min-height: 44px;
+        border-radius: 999px;
     }
 
     .resource-layout {
@@ -1527,22 +1727,10 @@
     }
 
     @media (max-width: 700px) {
-        .immersive-mute-toggle {
+        .immersive-side-actions {
+            right: 10px;
             bottom: 96px;
-        }
-
-        .immersive-download-row {
-            position: fixed;
-            left: var(--padding);
-            right: var(--padding);
-            bottom: calc(var(--sidebar-height-mobile) + 8px);
-            margin-top: 0;
-            max-width: none;
-            z-index: 8;
-        }
-
-        .discover-container {
-            padding-bottom: calc(var(--sidebar-height-mobile) + 76px);
+            width: 110px;
         }
     }
 

@@ -1041,9 +1041,6 @@
                                         {#if getCreatorName(currentStreamVideo)}
                                             <span class="creator">{getCreatorName(currentStreamVideo)}</span>
                                         {/if}
-                                        <span class="immersive-count">
-                                            {streamIndex + 1}/{streamVideos.length}
-                                        </span>
                                     </div>
                                 </div>
 
@@ -1224,12 +1221,6 @@
         flex-wrap: wrap;
     }
 
-    .immersive-count {
-        margin-left: auto;
-        font-size: 0.82rem;
-        opacity: 0.86;
-    }
-
     .immersive-badge {
         position: absolute;
         top: 12px;
@@ -1244,8 +1235,8 @@
 
     .immersive-mute-toggle {
         position: absolute;
-        top: 12px;
-        left: 12px;
+        right: 12px;
+        bottom: 108px;
         z-index: 4;
         border: none;
         border-radius: 999px;
@@ -1532,6 +1523,26 @@
         .immersive-video,
         .immersive-loading {
             max-height: 72vh;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .immersive-mute-toggle {
+            bottom: 96px;
+        }
+
+        .immersive-download-row {
+            position: fixed;
+            left: var(--padding);
+            right: var(--padding);
+            bottom: calc(var(--sidebar-height-mobile) + 8px);
+            margin-top: 0;
+            max-width: none;
+            z-index: 8;
+        }
+
+        .discover-container {
+            padding-bottom: calc(var(--sidebar-height-mobile) + 76px);
         }
     }
 

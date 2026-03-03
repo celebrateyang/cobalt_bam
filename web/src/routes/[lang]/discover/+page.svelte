@@ -1471,6 +1471,11 @@
         border: none;
         border-radius: 999px;
         padding: 8px 12px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
         background: rgba(0, 0, 0, 0.7);
         color: var(--white);
         font-size: 0.8rem;

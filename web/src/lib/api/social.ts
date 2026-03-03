@@ -53,6 +53,10 @@ export interface SocialVideo {
     is_pinned?: boolean;
     pinned_order?: number;
     synced_at?: number | null;
+    play_url?: string | null;
+    play_url_expires_at?: number | string | null;
+    play_url_synced_at?: number | string | null;
+    play_url_error?: string | null;
     trend_score?: number;
     created_at: number;
     updated_at: number;
@@ -104,7 +108,8 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-    [key: string]: T[];
+    videos?: T[];
+    accounts?: T[];
     pagination: {
         page: number;
         limit: number;
@@ -153,6 +158,13 @@ export interface GroupedVideos {
     }[];
 }
 
+export interface VideoPlayResult {
+    url: string;
+    expires_at?: number | null;
+    cached?: boolean;
+    stale?: boolean;
+}
+
 // 辅助函数：获取存储的 token
 const getToken = (): string | null => {
     if (typeof window !== 'undefined') {
@@ -181,13 +193,13 @@ const request = async <T>(
     options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
     const token = getToken();
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-    };
+    const headers = new Headers(options.headers || undefined);
+    if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+    }
 
     if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers.set('Authorization', `Bearer ${token}`);
     }
 
     try {
@@ -433,6 +445,18 @@ export const videos = {
      */
     get: async (id: number): Promise<ApiResponse<SocialVideo>> => {
         return request(`/videos/${id}`);
+    },
+
+    play: async (
+        id: number,
+        params?: { refresh?: boolean }
+    ): Promise<ApiResponse<VideoPlayResult>> => {
+        const queryParams = new URLSearchParams();
+        if (params?.refresh) {
+            queryParams.append('refresh', 'true');
+        }
+        const query = queryParams.toString();
+        return request(`/videos/${id}/play${query ? `?${query}` : ''}`);
     },
 
     /**

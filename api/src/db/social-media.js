@@ -102,6 +102,22 @@ export const initDatabase = async () => {
         `ALTER TABLE social_videos
             ADD COLUMN IF NOT EXISTS synced_at BIGINT;`,
     );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS play_url TEXT;`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS play_url_expires_at BIGINT;`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS play_url_synced_at BIGINT;`,
+    );
+    await query(
+        `ALTER TABLE social_videos
+            ADD COLUMN IF NOT EXISTS play_url_error TEXT;`,
+    );
 
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_account ON social_videos(account_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_platform ON social_videos(platform);`);
@@ -111,6 +127,7 @@ export const initDatabase = async () => {
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_created_at ON social_videos(created_at DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_pinned ON social_videos(is_pinned, pinned_order DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_videos_source ON social_videos(source);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_videos_play_url_expires ON social_videos(play_url_expires_at DESC);`);
 
     // ==================== 资源分类/链接 ====================
     await query(`
@@ -421,8 +438,9 @@ export const createVideo = async (videoData) => {
             video_url, thumbnail_url, duration, view_count, like_count,
             publish_date, tags, is_featured, is_active, display_order,
             source, is_pinned, pinned_order, synced_at,
+            play_url, play_url_expires_at, play_url_synced_at, play_url_error,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
         RETURNING id
     `, [
         videoData.account_id,
@@ -444,6 +462,10 @@ export const createVideo = async (videoData) => {
         videoData.is_pinned ? true : false,
         videoData.pinned_order || 0,
         videoData.synced_at || null,
+        videoData.play_url || null,
+        videoData.play_url_expires_at || null,
+        videoData.play_url_synced_at || null,
+        videoData.play_url_error || null,
         now,
         now
     ]);
@@ -506,8 +528,12 @@ export const upsertVideoFromSync = async (videoData) => {
             is_pinned = $10,
             pinned_order = $11,
             synced_at = $12,
-            updated_at = $13
-        WHERE id = $14
+            play_url = COALESCE($13, play_url),
+            play_url_expires_at = COALESCE($14, play_url_expires_at),
+            play_url_synced_at = COALESCE($15, play_url_synced_at),
+            play_url_error = COALESCE($16, play_url_error),
+            updated_at = $17
+        WHERE id = $18
         `,
         [
             videoData.video_id || "",
@@ -522,6 +548,10 @@ export const upsertVideoFromSync = async (videoData) => {
             videoData.is_pinned ? true : false,
             videoData.pinned_order || 0,
             videoData.synced_at || now,
+            videoData.play_url ?? null,
+            videoData.play_url_expires_at ?? null,
+            videoData.play_url_synced_at ?? null,
+            videoData.play_url_error ?? null,
             now,
             existingId,
         ],
@@ -881,6 +911,7 @@ export const updateVideo = async (id, updates) => {
         'duration', 'view_count', 'like_count', 'publish_date',
         'is_featured', 'is_active', 'display_order',
         'source', 'is_pinned', 'pinned_order', 'synced_at',
+        'play_url', 'play_url_expires_at', 'play_url_synced_at', 'play_url_error',
     ];
 
     allowedFields.forEach(field => {

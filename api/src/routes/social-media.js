@@ -5,6 +5,7 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '../config.js';
 import { requireAuth, loginAdmin } from '../middleware/admin-auth.js';
 import { fetchInstagramCreatorItemsDirect, fetchOembedForAccount, syncAccountVideos } from '../processing/social/sync.js';
+import { isPlayUrlFresh, resolveDirectPlayUrlForVideo } from '../processing/social/play-url.js';
 import {
     createAccount,
     getAccounts,
@@ -62,6 +63,13 @@ const isAllowedMediaHost = (hostname) => {
 const safeSingleQueryValue = (value) => {
     if (Array.isArray(value)) return value[0];
     return value;
+};
+
+const toMsTimestamp = (value) => {
+    if (value === null || value === undefined) return null;
+    const raw = typeof value === "string" ? Number.parseInt(value, 10) : Number(value);
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return raw < 1e12 ? raw * 1000 : raw;
 };
 
 const sanitizeLogValue = (value, maxLength) => {
@@ -1526,6 +1534,107 @@ router.get('/videos/trending', publicLimiter, async (req, res) => {
  * POST /api/social/videos/:id/event
  * 上报站内行为事件（用于热榜）
  */
+/**
+ * GET /api/social/videos/:id/play
+ * Resolve a direct playable URL (no server-side media stream).
+ */
+router.get('/videos/:id/play', publicLimiter, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({
+                status: 'error',
+                error: {
+                    code: 'INVALID_INPUT',
+                    message: 'Invalid video id'
+                }
+            });
+        }
+
+        const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
+        const video = await getVideoById(id);
+        if (!video) {
+            return res.status(404).json({
+                status: 'error',
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Video not found'
+                }
+            });
+        }
+
+        const cachedExpiresAt = toMsTimestamp(video.play_url_expires_at);
+        if (!forceRefresh && isPlayUrlFresh(video.play_url, cachedExpiresAt)) {
+            return res.json({
+                status: 'success',
+                data: {
+                    url: video.play_url,
+                    expires_at: cachedExpiresAt,
+                    cached: true,
+                    stale: false,
+                }
+            });
+        }
+
+        try {
+            const resolved = await resolveDirectPlayUrlForVideo(video);
+            await updateVideo(id, {
+                play_url: resolved.playUrl,
+                play_url_expires_at: resolved.expiresAt,
+                play_url_synced_at: Date.now(),
+                play_url_error: null,
+            });
+
+            return res.json({
+                status: 'success',
+                data: {
+                    url: resolved.playUrl,
+                    expires_at: resolved.expiresAt,
+                    cached: false,
+                    stale: false,
+                }
+            });
+        } catch (resolveError) {
+            const message =
+                resolveError instanceof Error ? resolveError.message : String(resolveError);
+
+            await updateVideo(id, {
+                play_url_error: message.slice(0, 500),
+                play_url_synced_at: Date.now(),
+            }).catch(() => null);
+
+            if (isPlayUrlFresh(video.play_url, cachedExpiresAt, { safetyMs: 0 })) {
+                return res.json({
+                    status: 'success',
+                    data: {
+                        url: video.play_url,
+                        expires_at: cachedExpiresAt,
+                        cached: true,
+                        stale: true,
+                    }
+                });
+            }
+
+            return res.status(502).json({
+                status: 'error',
+                error: {
+                    code: 'PLAY_URL_RESOLVE_FAILED',
+                    message,
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Resolve video play url error:', error);
+        res.status(500).json({
+            status: 'error',
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to resolve play url'
+            }
+        });
+    }
+});
+
 router.post('/videos/:id/event', eventLimiter, async (req, res) => {
     try {
         const id = parseInt(req.params.id);

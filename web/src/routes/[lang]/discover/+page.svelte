@@ -17,7 +17,6 @@
     import type { DialogBatchItem } from "$lib/types/dialog";
 
     type PlatformFilter = "all" | "tiktok" | "instagram";
-    type DiscoverSectionKey = "featured" | "latest";
     type DiscoverTab = "resources" | "beauty";
     type ResourceDownloadMode = "audio" | "video";
 
@@ -42,7 +41,7 @@
         return DEFAULT_BATCH_MAX_ITEMS;
     };
 
-    let activeTab: DiscoverTab = "resources";
+    let activeTab: DiscoverTab = "beauty";
     let selectedPlatform: PlatformFilter = "all";
 
     let featuredVideos: SocialVideo[] = [];
@@ -54,6 +53,16 @@
 
     let latestPage = 1;
     let latestHasMore = false;
+
+    let streamVideos: SocialVideo[] = [];
+    let streamIndex = 0;
+    let currentStreamVideo: SocialVideo | null = null;
+    let streamPlayingUrl = "";
+    let streamResolving = false;
+    let streamError = "";
+    let streamMuted = true;
+    let streamTouchStartY: number | null = null;
+    let streamResolveToken = 0;
 
     let runningDownloadId: number | null = null;
     let showSlowHint = false;
@@ -106,6 +115,57 @@
         setter(normalize(response.data.videos || []));
 
         return response.data.pagination;
+    };
+
+    const toMsTimestamp = (value: number | string | null | undefined): number | null => {
+        if (value === null || value === undefined) return null;
+        const raw = typeof value === "string" ? Number.parseInt(value, 10) : Number(value);
+        if (!Number.isFinite(raw) || raw <= 0) return null;
+        return raw < 1e12 ? raw * 1000 : raw;
+    };
+
+    const isPlayableFresh = (video: SocialVideo) => {
+        if (!video?.play_url) return false;
+        const expiresAt = toMsTimestamp(video.play_url_expires_at);
+        if (!expiresAt) return true;
+        return expiresAt - Date.now() > 120 * 1000;
+    };
+
+    const mergeStreamQueue = () => {
+        const merged = [...latestVideos, ...featuredVideos];
+        const deduped: SocialVideo[] = [];
+        const seen = new Set<number>();
+        for (const item of merged) {
+            if (!item || seen.has(item.id)) continue;
+            seen.add(item.id);
+            deduped.push(item);
+        }
+        return deduped;
+    };
+
+    const syncStreamQueue = () => {
+        const currentId = currentStreamVideo?.id ?? null;
+        streamVideos = mergeStreamQueue();
+
+        if (!streamVideos.length) {
+            streamIndex = 0;
+            currentStreamVideo = null;
+            streamPlayingUrl = "";
+            streamError = "";
+            return;
+        }
+
+        if (currentId) {
+            const found = streamVideos.findIndex((item) => item.id === currentId);
+            if (found >= 0) {
+                streamIndex = found;
+                currentStreamVideo = streamVideos[streamIndex];
+                return;
+            }
+        }
+
+        streamIndex = Math.min(streamIndex, streamVideos.length - 1);
+        currentStreamVideo = streamVideos[streamIndex];
     };
 
     const showBatchLimitDialog = (count: number, onDownloadFirst?: (count: number) => void) => {
@@ -286,11 +346,14 @@
         return list;
     };
 
-    const findResourceNode = (nodes: ResourceCategoryNode[], id: number | null) => {
+    const findResourceNode = (
+        nodes: ResourceCategoryNode[],
+        id: number | null
+    ): ResourceCategoryNode | null => {
         if (id == null) return null;
         for (const node of nodes) {
             if (node.id === id) return node;
-            const child = findResourceNode(node.children || [], id);
+            const child: ResourceCategoryNode | null = findResourceNode(node.children || [], id);
             if (child) return child;
         }
         return null;
@@ -300,21 +363,21 @@
         nodes: ResourceCategoryNode[],
         id: number | null,
         trail: ResourceCategoryNode[] = []
-    ) => {
+    ): ResourceCategoryNode[] => {
         if (id == null) return [];
         for (const node of nodes) {
             const nextTrail = [...trail, node];
             if (node.id === id) return nextTrail;
-            const childPath = findResourcePath(node.children || [], id, nextTrail);
+            const childPath: ResourceCategoryNode[] = findResourcePath(node.children || [], id, nextTrail);
             if (childPath.length) return childPath;
         }
         return [];
     };
 
-    const findFirstSelectable = (nodes: ResourceCategoryNode[]) => {
+    const findFirstSelectable = (nodes: ResourceCategoryNode[]): ResourceCategoryNode | null => {
         for (const node of nodes) {
             if (node.links && node.links.length) return node;
-            const child = findFirstSelectable(node.children || []);
+            const child: ResourceCategoryNode | null = findFirstSelectable(node.children || []);
             if (child) return child;
         }
         return nodes.length ? nodes[0] : null;
@@ -354,6 +417,21 @@
 
     $: if (isBrowser && activeTab === "resources" && locale && locale !== resourceLoadedLocale) {
         void loadResources();
+    }
+
+    $: if (activeTab === "beauty") {
+        if (streamVideos.length === 0) {
+            currentStreamVideo = null;
+            streamPlayingUrl = "";
+            streamError = "";
+        } else if (!currentStreamVideo) {
+            currentStreamVideo = streamVideos[streamIndex] || streamVideos[0];
+            streamIndex = Math.max(0, streamVideos.findIndex((item) => item.id === currentStreamVideo?.id));
+            if (currentStreamVideo && isPlayableFresh(currentStreamVideo)) {
+                streamPlayingUrl = currentStreamVideo.play_url || "";
+            }
+            void ensureCurrentStreamPlayable(false);
+        }
     }
 
     async function loadResources() {
@@ -429,6 +507,7 @@
             latestHasMore = false;
             error = e instanceof Error ? e.message : $t("discover.status.error");
         } finally {
+            syncStreamQueue();
             loading = false;
         }
     }
@@ -458,12 +537,115 @@
             latestVideos = [...latestVideos, ...normalize(res.data.videos || [])];
             latestPage = res.data.pagination.page;
             latestHasMore = pageHasMore(res.data.pagination);
+            syncStreamQueue();
         } catch (e) {
             error = e instanceof Error ? e.message : $t("discover.status.error");
         } finally {
             loadingMore = false;
         }
     }
+
+    const updateStreamVideo = (videoId: number, updates: Partial<SocialVideo>) => {
+        streamVideos = streamVideos.map((item) =>
+            item.id === videoId ? { ...item, ...updates } : item
+        );
+        featuredVideos = featuredVideos.map((item) =>
+            item.id === videoId ? { ...item, ...updates } : item
+        );
+        latestVideos = latestVideos.map((item) =>
+            item.id === videoId ? { ...item, ...updates } : item
+        );
+        currentStreamVideo = streamVideos[streamIndex] || null;
+    };
+
+    async function ensureCurrentStreamPlayable(forceRefresh = false) {
+        const video = currentStreamVideo;
+        if (!video) return;
+
+        if (!forceRefresh && isPlayableFresh(video)) {
+            streamPlayingUrl = video.play_url || "";
+            streamError = "";
+            return;
+        }
+
+        const token = ++streamResolveToken;
+        streamResolving = true;
+        streamError = "";
+
+        try {
+            const response = await videos.play(video.id, { refresh: forceRefresh });
+            if (token !== streamResolveToken) return;
+
+            if (response.status !== "success" || !response.data?.url) {
+                throw new Error(response.error?.message || $t("discover.status.error"));
+            }
+
+            streamPlayingUrl = response.data.url;
+            updateStreamVideo(video.id, {
+                play_url: response.data.url,
+                play_url_expires_at: response.data.expires_at ?? null,
+                play_url_error: null,
+            });
+        } catch (e) {
+            if (token !== streamResolveToken) return;
+            streamError = e instanceof Error ? e.message : $t("discover.status.error");
+            streamPlayingUrl = video.play_url || "";
+        } finally {
+            if (token === streamResolveToken) {
+                streamResolving = false;
+            }
+        }
+    }
+
+    const ensureMoreAhead = () => {
+        if (!latestHasMore || loadingMore) return;
+        if (streamIndex >= Math.max(0, streamVideos.length - 3)) {
+            void loadMore();
+        }
+    };
+
+    const goToStreamIndex = (nextIndex: number) => {
+        if (!streamVideos.length) return;
+        const total = streamVideos.length;
+        const normalized = ((nextIndex % total) + total) % total;
+        streamIndex = normalized;
+        currentStreamVideo = streamVideos[streamIndex] || null;
+        streamPlayingUrl = currentStreamVideo?.play_url && isPlayableFresh(currentStreamVideo)
+            ? currentStreamVideo.play_url
+            : "";
+        streamError = "";
+        ensureMoreAhead();
+        void ensureCurrentStreamPlayable(false);
+    };
+
+    const goNextVideo = () => {
+        goToStreamIndex(streamIndex + 1);
+    };
+
+    const goPrevVideo = () => {
+        goToStreamIndex(streamIndex - 1);
+    };
+
+    const handleStreamEnded = () => {
+        goNextVideo();
+    };
+
+    const handleStreamTouchStart = (event: TouchEvent) => {
+        streamTouchStartY = event.touches?.[0]?.clientY ?? null;
+    };
+
+    const handleStreamTouchEnd = (event: TouchEvent) => {
+        if (streamTouchStartY === null) return;
+        const endY = event.changedTouches?.[0]?.clientY ?? streamTouchStartY;
+        const diff = endY - streamTouchStartY;
+        streamTouchStartY = null;
+        if (Math.abs(diff) < 36) return;
+        if (diff < 0) {
+            goNextVideo();
+        } else {
+            goPrevVideo();
+        }
+    };
 
     async function handleDownload(video: SocialVideo) {
         if (!video?.video_url) return;
@@ -603,19 +785,6 @@
             });
         }
     }
-
-    $: sections = [
-        {
-            key: "featured" as const,
-            title: $t("discover.section.featured"),
-            videos: featuredVideos,
-        },
-        {
-            key: "latest" as const,
-            title: $t("discover.section.latest"),
-            videos: latestVideos,
-        },
-    ] satisfies { key: DiscoverSectionKey; title: string; videos: SocialVideo[] }[];
 
     $: resourceList = flattenResourceTree(resourceTree, 0, [], resourceExpanded);
     $: selectedResource = findResourceNode(resourceTree, resourceSelectedId);
@@ -807,99 +976,98 @@
                         <p>{$t("discover.status.empty.description")}</p>
                     </div>
                 {:else}
-                    {#each sections as section (section.key)}
-                        {#if section.videos.length > 0}
-                            <section class="section">
-                                <div class="section-header">
-                                    <h2 class="section-title">{section.title}</h2>
-                                </div>
-
-                                <div class="video-grid">
-                                    {#each section.videos as video (video.id)}
-                                        <article class="video-card">
-                                            <button
-                                                class="thumb"
-                                                type="button"
-                                                disabled={runningDownloadId === video.id}
-                                                aria-busy={runningDownloadId === video.id}
-                                                on:click={() => handleDownload(video)}
-                                            >
-                                                {#if video.thumbnail_url}
-                                                    <img class="thumb-img" src={getThumbnailSrc(video)} alt={getTitle(video)} loading="lazy" />
-                                                {:else}
-                                                    <div class="thumb-placeholder"></div>
-                                                {/if}
-                                                {#if runningDownloadId === video.id}
-                                                    <div class="thumb-loading">
-                                                        <div class="thumb-spinner"></div>
-                                                        <span>{$t("discover.status.parsing")}</span>
-                                                        {#if showSlowHint}
-                                                            <span class="thumb-hint">
-                                                                {$t("discover.status.still_parsing")}
-                                                            </span>
-                                                        {/if}
-                                                    </div>
-                                                {/if}
-                                            </button>
-
-                                            <div class="card-body">
-                                                <div class="card-title" title={getTitle(video)}>
-                                                    {getTitle(video)}
-                                                </div>
-
-                                                <div class="card-meta">
-                                                    <span class={`badge badge-${video.platform}`}>{getPlatformLabel(video.platform)}</span>
-
-                                                    {#if getCreatorName(video)}
-                                                        <span class="creator">{getCreatorName(video)}</span>
-                                                    {/if}
-
-                                                    {#if getCreatorHandle(video)}
-                                                        <span class="creator-handle">{getCreatorHandle(video)}</span>
-                                                    {/if}
-                                                </div>
-
-                                                <div class="card-actions">
-                                                    <button
-                                                        class="btn-primary"
-                                                        type="button"
-                                                        disabled={runningDownloadId === video.id}
-                                                        on:click={() => handleDownload(video)}
-                                                    >
-                                                        {runningDownloadId === video.id
-                                                            ? $t("discover.status.parsing")
-                                                            : $t("button.download")}
-                                                    </button>
-                                                    <button
-                                                        class="btn-secondary"
-                                                        type="button"
-                                                        on:click={() => handleCreatorBatch(video)}
-                                                    >
-                                                        {$t("discover.action.creator_batch")}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </article>
-                                    {/each}
-                                </div>
-
-                                {#if section.key === "latest" && latestHasMore}
-                                    <div class="load-more">
-                                        <button
-                                            class="btn-secondary"
-                                            type="button"
-                                            disabled={loadingMore}
-                                            on:click={loadMore}
-                                        >
-                                            {loadingMore
-                                                ? $t("discover.status.loading")
-                                                : $t("discover.action.load_more")}
-                                        </button>
+                    <section class="immersive-section">
+                        <div
+                            class="immersive-player"
+                            on:touchstart={handleStreamTouchStart}
+                            on:touchend={handleStreamTouchEnd}
+                        >
+                            {#if currentStreamVideo}
+                                {#if streamPlayingUrl}
+                                    <video
+                                        class="immersive-video"
+                                        src={streamPlayingUrl}
+                                        autoplay
+                                        playsinline
+                                        controls
+                                        muted={streamMuted}
+                                        preload="metadata"
+                                        on:ended={handleStreamEnded}
+                                    ></video>
+                                {:else}
+                                    <div class="immersive-loading">
+                                        <div class="spinner"></div>
+                                        <p>{$t("discover.status.loading")}</p>
                                     </div>
                                 {/if}
-                            </section>
-                        {/if}
-                    {/each}
+
+                                {#if streamResolving}
+                                    <div class="immersive-badge">Resolving...</div>
+                                {/if}
+
+                                <div class="immersive-meta">
+                                    <div class="immersive-title" title={getTitle(currentStreamVideo)}>
+                                        {getTitle(currentStreamVideo)}
+                                    </div>
+                                    <div class="immersive-submeta">
+                                        <span class={`badge badge-${currentStreamVideo.platform}`}>
+                                            {getPlatformLabel(currentStreamVideo.platform)}
+                                        </span>
+                                        {#if getCreatorName(currentStreamVideo)}
+                                            <span class="creator">{getCreatorName(currentStreamVideo)}</span>
+                                        {/if}
+                                        <span class="immersive-count">
+                                            {streamIndex + 1}/{streamVideos.length}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="immersive-actions">
+                                    <button class="btn-secondary" type="button" on:click={goPrevVideo}>
+                                        Prev
+                                    </button>
+                                    <button class="btn-secondary" type="button" on:click={goNextVideo}>
+                                        Next
+                                    </button>
+                                    <button
+                                        class="btn-secondary"
+                                        type="button"
+                                        on:click={() => {
+                                            streamMuted = !streamMuted;
+                                        }}
+                                    >
+                                        {streamMuted ? "Unmute" : "Mute"}
+                                    </button>
+                                    <button
+                                        class="btn-secondary"
+                                        type="button"
+                                        disabled={streamResolving}
+                                        on:click={() => ensureCurrentStreamPlayable(true)}
+                                    >
+                                        Refresh Link
+                                    </button>
+                                    <button
+                                        class="btn-primary"
+                                        type="button"
+                                        disabled={!currentStreamVideo || runningDownloadId === currentStreamVideo.id}
+                                        on:click={() => {
+                                            if (currentStreamVideo) {
+                                                void handleDownload(currentStreamVideo);
+                                            }
+                                        }}
+                                    >
+                                        {runningDownloadId === currentStreamVideo.id
+                                            ? $t("discover.status.parsing")
+                                            : $t("button.download")}
+                                    </button>
+                                </div>
+
+                                {#if streamError}
+                                    <div class="error-banner immersive-error">{streamError}</div>
+                                {/if}
+                            {/if}
+                        </div>
+                    </section>
                 {/if}
             </div>
         {/if}
@@ -1000,6 +1168,92 @@
         margin-bottom: calc(var(--padding) * 2);
         display: flex;
         justify-content: flex-end;
+    }
+
+    .immersive-section {
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    .immersive-player {
+        width: 100%;
+        border-radius: calc(var(--border-radius) * 1.5);
+        overflow: hidden;
+        background: #0f1116;
+        box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
+        position: relative;
+    }
+
+    .immersive-video {
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        max-height: 76vh;
+        background: #000;
+        object-fit: cover;
+        display: block;
+    }
+
+    .immersive-loading {
+        aspect-ratio: 9 / 16;
+        max-height: 76vh;
+        min-height: 420px;
+        display: grid;
+        place-items: center;
+        color: var(--white);
+        gap: 12px;
+    }
+
+    .immersive-meta {
+        padding: 12px 14px 10px;
+        background: rgba(15, 17, 22, 0.96);
+        color: var(--white);
+    }
+
+    .immersive-title {
+        font-weight: 700;
+        line-height: 1.35;
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .immersive-submeta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .immersive-count {
+        margin-left: auto;
+        font-size: 0.82rem;
+        opacity: 0.86;
+    }
+
+    .immersive-actions {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px 12px 12px;
+        background: rgba(15, 17, 22, 0.96);
+    }
+
+    .immersive-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 4;
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--white);
+        font-size: 0.72rem;
+        border-radius: 999px;
+        padding: 4px 10px;
+    }
+
+    .immersive-error {
+        margin: 0 12px 12px;
     }
 
     .resource-layout {
@@ -1303,6 +1557,21 @@
 
         .resource-layout {
             grid-template-columns: 1fr;
+        }
+
+        .immersive-video,
+        .immersive-loading {
+            max-height: 72vh;
+        }
+
+        .immersive-actions {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 520px) {
+        .immersive-actions {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 

@@ -2,6 +2,7 @@ import "../config.js";
 import { query, closePool } from "../db/pg-client.js";
 import { updateAccount, updateVideo } from "../db/social-media.js";
 import { fetchOembedForAccount, syncAccountVideos } from "../processing/social/sync.js";
+import { isPlayUrlFresh, resolveDirectPlayUrlForVideo } from "../processing/social/play-url.js";
 
 const parseIntArg = (args, name, fallback, { min = 1 } = {}) => {
     const raw = args.find((arg) => arg.startsWith(`--${name}=`))?.split("=")[1];
@@ -66,7 +67,7 @@ const getEnabledAccounts = async () => {
 const getAccountVideos = async (accountId, limit) => {
     const res = await query(
         `
-        SELECT id, platform, video_url
+        SELECT id, platform, video_url, play_url, play_url_expires_at
         FROM social_videos
         WHERE account_id = $1
           AND is_active = true
@@ -132,6 +133,53 @@ const refreshAccountThumbnails = async (account, options) => {
     return { refreshed, total: videos.length, started_at: startedAt };
 };
 
+const refreshAccountPlayUrls = async (account, options) => {
+    const startedAt =
+        typeof options?.startedAt === "number" && Number.isFinite(options.startedAt)
+            ? options.startedAt
+            : Date.now();
+    const limit =
+        typeof options?.playLimit === "number" && options.playLimit > 0
+            ? Math.floor(options.playLimit)
+            : options.pinnedLimit + options.recentLimit;
+    const refreshSafetyMs =
+        typeof options?.playUrlSafetyMs === "number" && options.playUrlSafetyMs >= 0
+            ? Math.floor(options.playUrlSafetyMs)
+            : minutesToMs(15);
+
+    const videos = await getAccountVideos(account.id, limit);
+    let refreshed = 0;
+    let skippedFresh = 0;
+    let failed = 0;
+
+    for (const video of videos) {
+        if (isPlayUrlFresh(video.play_url, video.play_url_expires_at, { safetyMs: refreshSafetyMs })) {
+            skippedFresh += 1;
+            continue;
+        }
+
+        try {
+            const resolved = await resolveDirectPlayUrlForVideo(video);
+            await updateVideo(video.id, {
+                play_url: resolved.playUrl,
+                play_url_expires_at: resolved.expiresAt,
+                play_url_synced_at: startedAt,
+                play_url_error: null,
+            });
+            refreshed += 1;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await updateVideo(video.id, {
+                play_url_error: message.slice(0, 500),
+                play_url_synced_at: startedAt,
+            }).catch(() => null);
+            failed += 1;
+        }
+    }
+
+    return { refreshed, failed, skippedFresh, total: videos.length, started_at: startedAt };
+};
+
 const pruneAccountVideos = async (account, options) => {
     const limit =
         typeof options?.pruneLimit === "number" && options.pruneLimit > 0
@@ -191,6 +239,7 @@ const run = async () => {
     const recentLimit = parseIntArg(args, "recent", 5, { min: 1 });
     const pinnedLimit = parseIntArg(args, "pinned", 3, { min: 0 });
     const thumbnailLimit = parseIntArg(args, "thumbnailLimit", 0, { min: 0 });
+    const playLimit = parseIntArg(args, "playLimit", 0, { min: 0 });
     const pruneLimit = parseIntArg(args, "pruneLimit", 0, { min: 0 });
     const keepFeatured = parseIntArg(args, "keepFeatured", 1, { min: 0 }) !== 0;
 
@@ -200,6 +249,7 @@ const run = async () => {
     const instagramIntervalMinutes = parseIntArg(args, "instagramIntervalMinutes", 720, { min: 0 });
     const otherIntervalMinutes = parseIntArg(args, "otherIntervalMinutes", 720, { min: 0 });
     const intervalSlackMinutes = parseIntArg(args, "intervalSlackMinutes", 5, { min: 0 });
+    const playUrlSafetyMinutes = parseIntArg(args, "playUrlSafetyMinutes", 15, { min: 0 });
 
     const intervals = {
         tiktok: minutesToMs(tiktokIntervalMinutes),
@@ -207,9 +257,10 @@ const run = async () => {
         other: minutesToMs(otherIntervalMinutes),
         slack: minutesToMs(intervalSlackMinutes),
     };
+    const playUrlSafetyMs = minutesToMs(playUrlSafetyMinutes);
 
     console.log(
-        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, pruneLimit=${pruneLimit || "auto"}, keepFeatured=${keepFeatured ? "yes" : "no"}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m)`,
+        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, playLimit=${playLimit || "auto"}, pruneLimit=${pruneLimit || "auto"}, keepFeatured=${keepFeatured ? "yes" : "no"}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m, playUrlSafety=${playUrlSafetyMinutes}m)`,
     );
 
     const accounts = await getEnabledAccounts();
@@ -225,6 +276,8 @@ const run = async () => {
     let attemptFailedCount = 0;
     let failedCount = 0;
     let refreshedAccounts = 0;
+    let playUrlsRefreshedAccounts = 0;
+    let playUrlsRefreshedVideos = 0;
 
     await mapLimit(accounts, concurrency, async (account) => {
         const label = `${account.platform}:${account.username} (#${account.id})`;
@@ -273,6 +326,25 @@ const run = async () => {
                 keepFeatured,
                 refreshCutoff: summary.started_at,
             });
+
+            try {
+                const playRefresh = await refreshAccountPlayUrls(account, {
+                    recentLimit,
+                    pinnedLimit,
+                    playLimit,
+                    playUrlSafetyMs,
+                    startedAt: summary.started_at,
+                });
+                playUrlsRefreshedAccounts += 1;
+                playUrlsRefreshedVideos += playRefresh.refreshed;
+                console.log(
+                    `sync-enabled-accounts: play urls refreshed ${label} refreshed=${playRefresh.refreshed} skippedFresh=${playRefresh.skippedFresh} failed=${playRefresh.failed} total=${playRefresh.total}`,
+                );
+            } catch (playError) {
+                const playMessage =
+                    playError instanceof Error ? playError.message : String(playError);
+                console.warn(`sync-enabled-accounts: play url refresh failed ${label}: ${playMessage}`);
+            }
 
             okCount += 1;
             return { ok: true, label, summary };
@@ -336,7 +408,7 @@ const run = async () => {
     });
 
     console.log(
-        `sync-enabled-accounts: done ok=${okCount} failed=${failedCount} attemptsFailed=${attemptFailedCount} skipped=${skippedCount} tiktokThumbsRefreshed=${refreshedAccounts}`,
+        `sync-enabled-accounts: done ok=${okCount} failed=${failedCount} attemptsFailed=${attemptFailedCount} skipped=${skippedCount} tiktokThumbsRefreshed=${refreshedAccounts} playUrlAccounts=${playUrlsRefreshedAccounts} playUrlsRefreshed=${playUrlsRefreshedVideos}`,
     );
 };
 

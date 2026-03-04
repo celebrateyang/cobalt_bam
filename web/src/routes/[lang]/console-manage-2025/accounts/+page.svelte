@@ -62,14 +62,21 @@
         }
     }
 
+    async function handleAdminAuthExpired() {
+        if (typeof window !== "undefined") {
+            window.localStorage.removeItem("admin_token");
+        }
+        error = "登录已过期，请重新登录";
+        await goto(`/${lang}/console-manage-2025`);
+    }
+
     async function syncClerkUsers() {
         const token = typeof window !== "undefined"
             ? window.localStorage.getItem("admin_token")
             : null;
 
         if (!token) {
-            error = "请先登录";
-            goto(`/${lang}/console-manage-2025`);
+            await handleAdminAuthExpired();
             return;
         }
 
@@ -84,6 +91,11 @@
             });
 
             const data = await res.json();
+            if (res.status === 401 || data?.error?.code === "UNAUTHORIZED") {
+                await handleAdminAuthExpired();
+                return;
+            }
+
             if (!res.ok || data.status !== "success") {
                 throw new Error(data?.error?.message || "同步失败");
             }

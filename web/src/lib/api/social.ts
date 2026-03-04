@@ -187,6 +187,23 @@ export const clearToken = (): void => {
     }
 };
 
+const getAdminLoginPath = () => {
+    if (typeof window === 'undefined') return '/en/console-manage-2025';
+
+    const langMatch = window.location.pathname.match(/^\/([a-z]{2})\b/i);
+    const lang = langMatch?.[1] || 'en';
+    return `/${lang}/console-manage-2025`;
+};
+
+const redirectToAdminLogin = () => {
+    if (typeof window === 'undefined') return;
+
+    const target = getAdminLoginPath();
+    if (window.location.pathname !== target) {
+        window.location.assign(target);
+    }
+};
+
 // 通用请求函数
 const request = async <T>(
     endpoint: string,
@@ -214,6 +231,14 @@ const request = async <T>(
             // 401 错误自动清除 token
             if (response.status === 401) {
                 clearToken();
+
+                const inAdminConsole =
+                    typeof window !== 'undefined' &&
+                    window.location.pathname.includes('/console-manage-2025');
+
+                if (inAdminConsole && endpoint !== '/auth/login') {
+                    redirectToAdminLogin();
+                }
             }
         }
 

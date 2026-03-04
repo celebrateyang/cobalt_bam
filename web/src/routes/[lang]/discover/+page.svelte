@@ -40,6 +40,8 @@
     const DEFAULT_BATCH_MAX_ITEMS = 20;
     const FREE_VIDEO_LIMIT = 8;
     const VIEW_POINT_COST = 1;
+    const STREAM_SESSION_SEED_KEY = "discover_stream_seed_v1";
+    let streamSessionSeed = "";
 
     const resolveBatchMaxItems = (value: unknown) => {
         if (typeof value === "number" && Number.isFinite(value)) {
@@ -49,6 +51,115 @@
         }
 
         return DEFAULT_BATCH_MAX_ITEMS;
+    };
+
+    const normalizeAccountKey = (video: SocialVideo) => {
+        if (video.account_id !== null && video.account_id !== undefined) {
+            return `id:${video.account_id}`;
+        }
+        if (video.account?.username) {
+            return `u:${video.account.username.toLowerCase()}`;
+        }
+        return `v:${video.id}`;
+    };
+
+    const getSessionSeed = () => {
+        if (streamSessionSeed) return streamSessionSeed;
+        if (typeof window === "undefined") {
+            streamSessionSeed = "server";
+            return streamSessionSeed;
+        }
+
+        const existing = window.sessionStorage.getItem(STREAM_SESSION_SEED_KEY);
+        if (existing) {
+            streamSessionSeed = existing;
+            return streamSessionSeed;
+        }
+
+        const created = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        window.sessionStorage.setItem(STREAM_SESSION_SEED_KEY, created);
+        streamSessionSeed = created;
+        return streamSessionSeed;
+    };
+
+    const seededScore = (scope: string, value: string | number) => {
+        const seed = getSessionSeed();
+        const input = `${seed}|${scope}|${String(value)}`;
+        let hash = 2166136261;
+
+        for (let i = 0; i < input.length; i += 1) {
+            hash ^= input.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+
+        return hash >>> 0;
+    };
+
+    const orderForSessionNoAdjacent = (
+        list: SocialVideo[],
+        initialPrevAccountKey: string | null = null
+    ) => {
+        if (list.length <= 1) return list;
+
+        type Group = {
+            key: string;
+            rank: number;
+            items: SocialVideo[];
+        };
+
+        const groupsMap = new Map<string, Group>();
+
+        const sorted = [...list].sort((a, b) => {
+            const scoreDiff = seededScore("video", a.id) - seededScore("video", b.id);
+            if (scoreDiff !== 0) return scoreDiff;
+            return a.id - b.id;
+        });
+
+        for (const video of sorted) {
+            const key = normalizeAccountKey(video);
+            const existing = groupsMap.get(key);
+            if (existing) {
+                existing.items.push(video);
+                continue;
+            }
+            groupsMap.set(key, {
+                key,
+                rank: seededScore("account", key),
+                items: [video],
+            });
+        }
+
+        const groups = [...groupsMap.values()];
+        const ordered: SocialVideo[] = [];
+        let prevAccountKey = initialPrevAccountKey;
+
+        while (ordered.length < list.length) {
+            const available = groups.filter((group) => group.items.length > 0);
+            if (!available.length) break;
+
+            available.sort((a, b) => {
+                const aIsPrev = prevAccountKey !== null && a.key === prevAccountKey;
+                const bIsPrev = prevAccountKey !== null && b.key === prevAccountKey;
+                if (aIsPrev !== bIsPrev) return aIsPrev ? 1 : -1;
+
+                const lenDiff = b.items.length - a.items.length;
+                if (lenDiff !== 0) return lenDiff;
+
+                const rankDiff = a.rank - b.rank;
+                if (rankDiff !== 0) return rankDiff;
+
+                return a.key.localeCompare(b.key);
+            });
+
+            const picked = available[0];
+            const nextVideo = picked.items.shift();
+            if (!nextVideo) break;
+
+            ordered.push(nextVideo);
+            prevAccountKey = picked.key;
+        }
+
+        return ordered.length === list.length ? ordered : list;
     };
 
     let activeTab: DiscoverTab = "beauty";
@@ -153,7 +264,24 @@
 
     const syncStreamQueue = () => {
         const currentId = currentStreamVideo?.id ?? null;
-        streamVideos = mergeStreamQueue();
+        const merged = mergeStreamQueue();
+        const byId = new Map<number, SocialVideo>(merged.map((item) => [item.id, item]));
+
+        const preserved: SocialVideo[] = [];
+        const preservedIds = new Set<number>();
+        for (const existing of streamVideos) {
+            const latest = byId.get(existing.id);
+            if (!latest) continue;
+            preserved.push(latest);
+            preservedIds.add(latest.id);
+        }
+
+        const freshItems = merged.filter((item) => !preservedIds.has(item.id));
+        const lastAccountKey = preserved.length
+            ? normalizeAccountKey(preserved[preserved.length - 1])
+            : null;
+        const orderedFresh = orderForSessionNoAdjacent(freshItems, lastAccountKey);
+        streamVideos = [...preserved, ...orderedFresh];
 
         if (!streamVideos.length) {
             streamIndex = 0;

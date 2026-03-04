@@ -133,6 +133,16 @@ const refreshAccountThumbnails = async (account, options) => {
     return { refreshed, total: videos.length, started_at: startedAt };
 };
 
+const sleep = (ms) =>
+    new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.floor(ms))));
+
+const randomBetween = (minMs, maxMs) => {
+    const low = Math.max(0, Math.floor(Math.min(minMs, maxMs)));
+    const high = Math.max(0, Math.floor(Math.max(minMs, maxMs)));
+    if (high <= low) return low;
+    return Math.floor(Math.random() * (high - low + 1)) + low;
+};
+
 const refreshAccountPlayUrls = async (account, options) => {
     const startedAt =
         typeof options?.startedAt === "number" && Number.isFinite(options.startedAt)
@@ -242,6 +252,9 @@ const run = async () => {
     const playLimit = parseIntArg(args, "playLimit", 0, { min: 0 });
     const pruneLimit = parseIntArg(args, "pruneLimit", 0, { min: 0 });
     const keepFeatured = parseIntArg(args, "keepFeatured", 1, { min: 0 }) !== 0;
+    const instagramSerialized = parseIntArg(args, "instagramSerialized", 1, { min: 0 }) !== 0;
+    const instagramDelayMinMs = parseIntArg(args, "instagramDelayMinMs", 8000, { min: 0 });
+    const instagramDelayMaxMs = parseIntArg(args, "instagramDelayMaxMs", 20000, { min: 0 });
 
     // TikTok thumbnails expire quickly; refresh frequently.
     // Instagram thumbnails are fairly stable; avoid needless requests.
@@ -260,7 +273,7 @@ const run = async () => {
     const playUrlSafetyMs = minutesToMs(playUrlSafetyMinutes);
 
     console.log(
-        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, playLimit=${playLimit || "auto"}, pruneLimit=${pruneLimit || "auto"}, keepFeatured=${keepFeatured ? "yes" : "no"}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m, playUrlSafety=${playUrlSafetyMinutes}m)`,
+        `sync-enabled-accounts: start (concurrency=${concurrency}, recent=${recentLimit}, pinned=${pinnedLimit}, thumbnailLimit=${thumbnailLimit || "auto"}, playLimit=${playLimit || "auto"}, pruneLimit=${pruneLimit || "auto"}, keepFeatured=${keepFeatured ? "yes" : "no"}, instagramSerialized=${instagramSerialized ? "yes" : "no"}, instagramDelayMs=${Math.min(instagramDelayMinMs, instagramDelayMaxMs)}-${Math.max(instagramDelayMinMs, instagramDelayMaxMs)}, tiktokEvery=${tiktokIntervalMinutes}m, instagramEvery=${instagramIntervalMinutes}m, playUrlSafety=${playUrlSafetyMinutes}m)`,
     );
 
     const accounts = await getEnabledAccounts();
@@ -278,133 +291,163 @@ const run = async () => {
     let refreshedAccounts = 0;
     let playUrlsRefreshedAccounts = 0;
     let playUrlsRefreshedVideos = 0;
+    let instagramGate = Promise.resolve();
 
-    await mapLimit(accounts, concurrency, async (account) => {
-        const label = `${account.platform}:${account.username} (#${account.id})`;
-        const startedAt = Date.now();
-
-        const nowMs = startedAt;
-        const intervalMs =
-            account.platform === "tiktok"
-                ? intervals.tiktok
-                : account.platform === "instagram"
-                    ? intervals.instagram
-                    : intervals.other;
-        const due = shouldRunByInterval(account.sync_last_run_at, nowMs, intervalMs, intervals.slack);
-
-        if (!due) {
-            console.log(
-                `sync-enabled-accounts: skipped ${label} lastRunAt=${account.sync_last_run_at ?? "none"} intervalMs=${intervalMs}`,
-            );
-            skippedCount += 1;
-            return { ok: true, label, skipped: true };
+    const withInstagramGate = async (account, worker) => {
+        if (account.platform !== "instagram" || !instagramSerialized) {
+            return await worker();
         }
 
+        let release;
+        const previous = instagramGate;
+        instagramGate = new Promise((resolve) => {
+            release = resolve;
+        });
+
+        await previous;
         try {
-            const summary = await syncAccountVideos(account, { recentLimit, pinnedLimit });
-            console.log(
-                `sync-enabled-accounts: ok ${label} created=${summary.created} updated=${summary.updated} total=${summary.total} in=${Date.now() - startedAt}ms`,
-            );
+            return await worker();
+        } finally {
+            release();
+        }
+    };
 
-            if (account.platform === "tiktok") {
-                const refreshed = await refreshAccountThumbnails(account, {
-                    recentLimit,
-                    pinnedLimit,
-                    thumbnailLimit,
-                    startedAt: summary.started_at,
-                });
-                refreshedAccounts += 1;
+    await mapLimit(accounts, concurrency, async (account) => {
+        return await withInstagramGate(account, async () => {
+            const label = `${account.platform}:${account.username} (#${account.id})`;
+            const startedAt = Date.now();
+
+            const nowMs = startedAt;
+            const intervalMs =
+                account.platform === "tiktok"
+                    ? intervals.tiktok
+                    : account.platform === "instagram"
+                        ? intervals.instagram
+                        : intervals.other;
+            const due = shouldRunByInterval(account.sync_last_run_at, nowMs, intervalMs, intervals.slack);
+
+            if (!due) {
                 console.log(
-                    `sync-enabled-accounts: tiktok thumbs refreshed ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
+                    `sync-enabled-accounts: skipped ${label} lastRunAt=${account.sync_last_run_at ?? "none"} intervalMs=${intervalMs}`,
                 );
+                skippedCount += 1;
+                return { ok: true, label, skipped: true };
             }
 
-            const pruned = await pruneAccountVideos(account, {
-                recentLimit,
-                pinnedLimit,
-                pruneLimit,
-                keepFeatured,
-                refreshCutoff: summary.started_at,
-            });
-
-            try {
-                const playRefresh = await refreshAccountPlayUrls(account, {
-                    recentLimit,
-                    pinnedLimit,
-                    playLimit,
-                    playUrlSafetyMs,
-                    startedAt: summary.started_at,
-                });
-                playUrlsRefreshedAccounts += 1;
-                playUrlsRefreshedVideos += playRefresh.refreshed;
-                console.log(
-                    `sync-enabled-accounts: play urls refreshed ${label} refreshed=${playRefresh.refreshed} skippedFresh=${playRefresh.skippedFresh} failed=${playRefresh.failed} total=${playRefresh.total}`,
-                );
-            } catch (playError) {
-                const playMessage =
-                    playError instanceof Error ? playError.message : String(playError);
-                console.warn(`sync-enabled-accounts: play url refresh failed ${label}: ${playMessage}`);
-            }
-
-            okCount += 1;
-            return { ok: true, label, summary };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.warn(`sync-enabled-accounts: failed ${label}: ${message}`);
-            attemptFailedCount += 1;
-
-            await updateAccount(account.id, {
-                sync_last_run_at: Date.now(),
-                sync_error: message.slice(0, 500),
-            }).catch(() => null);
-
-            // Fallback: refresh thumbnails for existing videos using oEmbed.
-            let fallbackResult = null;
-            let fallbackMessage = null;
-            try {
-                const refreshed = await refreshAccountThumbnails(account, {
-                    recentLimit,
-                    pinnedLimit,
-                    thumbnailLimit,
-                    startedAt,
-                    clearSyncError: false,
-                });
-                console.log(
-                    `sync-enabled-accounts: fallback ok ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
-                );
-                fallbackResult = refreshed;
-            } catch (fallbackError) {
-                fallbackMessage =
-                    fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-                console.warn(`sync-enabled-accounts: fallback failed ${label}: ${fallbackMessage}`);
+            if (account.platform === "instagram") {
+                const jitterMs = randomBetween(instagramDelayMinMs, instagramDelayMaxMs);
+                if (jitterMs > 0) {
+                    console.log(`sync-enabled-accounts: instagram jitter ${label} wait=${jitterMs}ms`);
+                    await sleep(jitterMs);
+                }
             }
 
             try {
+                const summary = await syncAccountVideos(account, { recentLimit, pinnedLimit });
+                console.log(
+                    `sync-enabled-accounts: ok ${label} created=${summary.created} updated=${summary.updated} total=${summary.total} in=${Date.now() - startedAt}ms`,
+                );
+
+                if (account.platform === "tiktok") {
+                    const refreshed = await refreshAccountThumbnails(account, {
+                        recentLimit,
+                        pinnedLimit,
+                        thumbnailLimit,
+                        startedAt: summary.started_at,
+                    });
+                    refreshedAccounts += 1;
+                    console.log(
+                        `sync-enabled-accounts: tiktok thumbs refreshed ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
+                    );
+                }
+
                 await pruneAccountVideos(account, {
                     recentLimit,
                     pinnedLimit,
                     pruneLimit,
                     keepFeatured,
-                    refreshCutoff: startedAt,
+                    refreshCutoff: summary.started_at,
                 });
-            } catch (pruneError) {
-                const pruneMessage =
-                    pruneError instanceof Error ? pruneError.message : String(pruneError);
-                console.warn(`sync-enabled-accounts: prune failed ${label}: ${pruneMessage}`);
-            }
 
-            if (fallbackResult) {
+                try {
+                    const playRefresh = await refreshAccountPlayUrls(account, {
+                        recentLimit,
+                        pinnedLimit,
+                        playLimit,
+                        playUrlSafetyMs,
+                        startedAt: summary.started_at,
+                    });
+                    playUrlsRefreshedAccounts += 1;
+                    playUrlsRefreshedVideos += playRefresh.refreshed;
+                    console.log(
+                        `sync-enabled-accounts: play urls refreshed ${label} refreshed=${playRefresh.refreshed} skippedFresh=${playRefresh.skippedFresh} failed=${playRefresh.failed} total=${playRefresh.total}`,
+                    );
+                } catch (playError) {
+                    const playMessage =
+                        playError instanceof Error ? playError.message : String(playError);
+                    console.warn(`sync-enabled-accounts: play url refresh failed ${label}: ${playMessage}`);
+                }
+
                 okCount += 1;
-                return { ok: true, label, fallback: true, refreshed: fallbackResult };
-            }
+                return { ok: true, label, summary };
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                console.warn(`sync-enabled-accounts: failed ${label}: ${message}`);
+                attemptFailedCount += 1;
 
-            failedCount += 1;
-            await updateAccount(account.id, {
-                sync_last_run_at: Date.now(),
-                sync_error: `sync failed: ${message}; fallback failed: ${fallbackMessage ?? "unknown"}`.slice(0, 500),
-            }).catch(() => null);
-            return { ok: false, label, error: message, fallbackError: fallbackMessage };
-        }
+                await updateAccount(account.id, {
+                    sync_last_run_at: Date.now(),
+                    sync_error: message.slice(0, 500),
+                }).catch(() => null);
+
+                // Fallback: refresh thumbnails for existing videos using oEmbed.
+                let fallbackResult = null;
+                let fallbackMessage = null;
+                try {
+                    const refreshed = await refreshAccountThumbnails(account, {
+                        recentLimit,
+                        pinnedLimit,
+                        thumbnailLimit,
+                        startedAt,
+                        clearSyncError: false,
+                    });
+                    console.log(
+                        `sync-enabled-accounts: fallback ok ${label} refreshed=${refreshed.refreshed}/${refreshed.total}`,
+                    );
+                    fallbackResult = refreshed;
+                } catch (fallbackError) {
+                    fallbackMessage =
+                        fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+                    console.warn(`sync-enabled-accounts: fallback failed ${label}: ${fallbackMessage}`);
+                }
+
+                try {
+                    await pruneAccountVideos(account, {
+                        recentLimit,
+                        pinnedLimit,
+                        pruneLimit,
+                        keepFeatured,
+                        refreshCutoff: startedAt,
+                    });
+                } catch (pruneError) {
+                    const pruneMessage =
+                        pruneError instanceof Error ? pruneError.message : String(pruneError);
+                    console.warn(`sync-enabled-accounts: prune failed ${label}: ${pruneMessage}`);
+                }
+
+                if (fallbackResult) {
+                    okCount += 1;
+                    return { ok: true, label, fallback: true, refreshed: fallbackResult };
+                }
+
+                failedCount += 1;
+                await updateAccount(account.id, {
+                    sync_last_run_at: Date.now(),
+                    sync_error: `sync failed: ${message}; fallback failed: ${fallbackMessage ?? "unknown"}`.slice(0, 500),
+                }).catch(() => null);
+                return { ok: false, label, error: message, fallbackError: fallbackMessage };
+            }
+        });
     });
 
     console.log(

@@ -52,6 +52,10 @@ const MEDIA_PROXY_ALLOWED_HOSTS = [
 const MEDIA_PROXY_SIGNING_SECRET = env.mediaProxySigningSecret || '';
 const MEDIA_PROXY_TOKEN_TTL_SECONDS = env.mediaProxyTokenTtlSeconds || 3600;
 const MEDIA_PROXY_TOKEN_FUTURE_SKEW_SECONDS = 30;
+const INSTAGRAM_MANUAL_SYNC_COOLDOWN_MS = 15 * 60 * 1000;
+const INSTAGRAM_MANUAL_SYNC_JITTER_MIN_MS = 1500;
+const INSTAGRAM_MANUAL_SYNC_JITTER_MAX_MS = 4500;
+const instagramManualSyncInFlight = new Set();
 
 const isAllowedMediaHost = (hostname) => {
     const host = String(hostname || '').toLowerCase();
@@ -70,6 +74,16 @@ const toMsTimestamp = (value) => {
     const raw = typeof value === "string" ? Number.parseInt(value, 10) : Number(value);
     if (!Number.isFinite(raw) || raw <= 0) return null;
     return raw < 1e12 ? raw * 1000 : raw;
+};
+
+const sleep = (ms) =>
+    new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.floor(ms))));
+
+const randomBetween = (minMs, maxMs) => {
+    const low = Math.max(0, Math.floor(Math.min(minMs, maxMs)));
+    const high = Math.max(0, Math.floor(Math.max(minMs, maxMs)));
+    if (high <= low) return low;
+    return Math.floor(Math.random() * (high - low + 1)) + low;
 };
 
 const sanitizeLogValue = (value, maxLength) => {
@@ -983,6 +997,7 @@ router.delete('/accounts/:id', requireAuth, adminLimiter, async (req, res) => {
 router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) => {
     const now = Date.now();
     const logId = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
+    let inFlightInstagramAccountId = null;
 
     try {
         const id = parseInt(req.params.id);
@@ -996,6 +1011,51 @@ router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) =>
                     message: 'Account not found'
                 }
             });
+        }
+
+        if (account.platform === 'instagram') {
+            if (instagramManualSyncInFlight.has(account.id)) {
+                return res.status(429).json({
+                    status: 'error',
+                    error: {
+                        code: 'SYNC_IN_PROGRESS',
+                        message: 'Instagram sync is already running for this account'
+                    }
+                });
+            }
+
+            const lastRunMs = toMsTimestamp(account.sync_last_run_at);
+            const elapsedMs = lastRunMs ? now - lastRunMs : Number.POSITIVE_INFINITY;
+            if (Number.isFinite(elapsedMs) && elapsedMs < INSTAGRAM_MANUAL_SYNC_COOLDOWN_MS) {
+                const retryAfterSeconds = Math.max(
+                    1,
+                    Math.ceil((INSTAGRAM_MANUAL_SYNC_COOLDOWN_MS - elapsedMs) / 1000),
+                );
+                return res.status(429).json({
+                    status: 'error',
+                    error: {
+                        code: 'SYNC_COOLDOWN',
+                        message: `Instagram sync cooldown active, retry in ${retryAfterSeconds}s`
+                    },
+                    data: {
+                        retry_after_seconds: retryAfterSeconds
+                    }
+                });
+            }
+
+            instagramManualSyncInFlight.add(account.id);
+            inFlightInstagramAccountId = account.id;
+
+            const jitterMs = randomBetween(
+                INSTAGRAM_MANUAL_SYNC_JITTER_MIN_MS,
+                INSTAGRAM_MANUAL_SYNC_JITTER_MAX_MS,
+            );
+            if (jitterMs > 0) {
+                console.log(
+                    `[social-sync:${logId}] instagram pre-sync jitter account=${account.id} wait=${jitterMs}ms`,
+                );
+                await sleep(jitterMs);
+            }
         }
 
         console.log(
@@ -1034,6 +1094,11 @@ router.post('/accounts/:id/sync', requireAuth, adminLimiter, async (req, res) =>
                 message: 'Failed to sync account'
             }
         });
+    }
+    finally {
+        if (inFlightInstagramAccountId !== null) {
+            instagramManualSyncInFlight.delete(inFlightInstagramAccountId);
+        }
     }
 });
 

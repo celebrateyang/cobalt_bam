@@ -171,3 +171,13 @@ socialSync:
   otherIntervalMinutes: 720
   # Allow small scheduling jitter without skipping a run
   intervalSlackMinutes: 5
+
+pointsHoldCleanup:
+  enabled: true
+  # Run once per day.
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  suspend: false

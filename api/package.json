@@ -16,6 +16,7 @@
         "test": "node src/util/test",
         "social:sync-enabled": "node src/util/sync-enabled-accounts.js",
         "social:thumb-expiry": "node src/util/analyze-thumbnail-expiry.js",
+        "points:cleanup-holds": "node src/util/cleanup-points-holds.js",
         "token:jwt": "node src/util/generate-jwt-secret",
         "init-social": "node init-social.js",
         "init-users": "node init-users.js"

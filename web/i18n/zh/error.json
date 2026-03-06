@@ -13,6 +13,7 @@
     "api.quota": "已达到配额限制，请稍后再试。",
     "api.content.too_long": "您请求的媒体太长。目前的时长限制为 {{ limit }} 分钟。请尝试较短的内容！",
     "api.content.video.unavailable": "我无法访问该视频。可能是由于 {{ service }} 的限制。您粘贴的链接正确吗？",
+    "api.content.platform_restricted": "这类 {{ service }} 链接通常受平台限制（例如付费会员墙或地区版权限制），因此我无法下载。请尝试可公开访问的视频链接。",
     "api.content.video.live": "该视频当前正在直播，因此我无法下载。请等直播结束后再试！",
     "api.content.video.private": "该视频是私密的，因此我无法访问。请更改其可见性或尝试其他视频！",
     "api.content.video.age": "该视频有年龄限制，因此我无法匿名访问。请尝试其他视频！",

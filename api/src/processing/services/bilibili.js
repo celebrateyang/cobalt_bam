@@ -217,7 +217,13 @@ async function tv_download(id) {
     };
 }
 
-export default async function({ comId, tvId, comShortLink, partId }) {
+export default async function({ comId, tvId, comShortLink, partId, epId }) {
+    if (epId) {
+        // bangumi episodes are often behind paid membership / regional licensing walls.
+        // return an explicit user-facing error instead of a generic fetch.empty.
+        return { error: "content.platform_restricted" };
+    }
+
     if (comShortLink) {
         const patternMatch = await resolveRedirectingURL(`https://b23.tv/${comShortLink}`);
         comId = patternMatch?.comId;

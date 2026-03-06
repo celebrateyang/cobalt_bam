@@ -38,6 +38,7 @@
     "api.content.too_long": "Die von Ihnen angeforderten Medien sind zu lang. Die aktuelle Dauerbegrenzung beträgt {{ limit }} Minuten. Versuchen Sie stattdessen etwas Kürzeres!",
 
     "api.content.video.unavailable": "Ich kann nicht auf dieses Video zugreifen. Es könnte auf Seiten von {{ service }} eingeschränkt sein. Haben Sie den richtigen Link eingefügt?",
+    "api.content.platform_restricted": "Diese Art von {{ service }}-Link ist auf der Plattform eingeschränkt (z. B. durch Paywall oder regionale Rechte), daher kann ich ihn nicht herunterladen. Versuche stattdessen einen öffentlich verfügbaren Videolink!",
     "api.content.video.live": "Dieses Video ist derzeit live, daher kann ich es noch nicht herunterladen. Warten Sie, bis der Livestream beendet ist, und versuchen Sie es dann erneut!",
     "api.content.video.private": "Dieses Video ist privat, daher kann ich nicht darauf zugreifen. Ändern Sie seine Sichtbarkeit oder versuchen Sie ein anderes!",
     "api.content.video.age": "Dieses Video ist altersbeschränkt, daher kann ich nicht anonym darauf zugreifen. Versuchen Sie ein anderes!",

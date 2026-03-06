@@ -2,6 +2,7 @@ export const testers = {
     "bilibili": pattern =>
         (pattern.comId?.length <= 12 && pattern.partId?.length <= 3) ||
         (pattern.comId?.length <= 12 && !pattern.partId) ||
+        pattern.epId?.length <= 16 ||
         pattern.comShortLink?.length <= 16 ||
         pattern.tvId?.length <= 24,
 

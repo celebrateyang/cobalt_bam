@@ -38,6 +38,7 @@
     "api.content.too_long": "phương tiện bạn yêu cầu quá dài. giới hạn thời lượng hiện tại là {{ limit }} phút. thử cái gì đó ngắn hơn thay thế!",
 
     "api.content.video.unavailable": "tôi không thể truy cập video này. nó có thể bị hạn chế ở phía {{ service }}. bạn đã dán đúng liên kết chưa?",
+    "api.content.platform_restricted": "Loại liên kết {{ service }} này bị nền tảng giới hạn (ví dụ tường phí hoặc giới hạn bản quyền theo khu vực), nên tôi không thể tải xuống. Hãy thử một liên kết video công khai khác!",
     "api.content.video.live": "video này hiện đang phát trực tiếp, nên tôi chưa thể tải xuống. đợi phát trực tiếp kết thúc, sau đó thử lại!",
     "api.content.video.private": "video này riêng tư, nên tôi không thể truy cập. thay đổi khả năng hiển thị của nó hoặc thử video khác!",
     "api.content.video.age": "video này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. thử video khác!",

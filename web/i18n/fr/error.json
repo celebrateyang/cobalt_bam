@@ -38,6 +38,7 @@
     "api.content.too_long": "le média que vous avez demandé est trop long. la limite de durée actuelle est de {{ limit }} minutes. essayez quelque chose de plus court !",
 
     "api.content.video.unavailable": "je ne peux pas accéder à cette vidéo. elle peut être restreinte du côté de {{ service }}. avez-vous collé le bon lien ?",
+    "api.content.platform_restricted": "Ce type de lien {{ service }} est limité par la plateforme (par exemple paywall ou droits régionaux), je ne peux donc pas le télécharger. Essaie plutôt un lien vidéo public !",
     "api.content.video.live": "cette vidéo est actuellement en direct, donc je ne peux pas encore la télécharger. attendez que le direct se termine, puis réessayez !",
     "api.content.video.private": "cette vidéo est privée, donc je ne peux pas y accéder. modifiez sa visibilité ou essayez-en une autre !",
     "api.content.video.age": "cette vidéo est soumise à une restriction d'âge, donc je ne peux pas y accéder anonymement. essayez-en une autre !",

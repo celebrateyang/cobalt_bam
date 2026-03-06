@@ -8,6 +8,7 @@ export const services = {
         patterns: [
             "video/:comId",
             "video/:comId?p=:partId",
+            "bangumi/play/:epId",
             "_shortLink/:comShortLink",
             "_tv/:lang/video/:tvId",
             "_tv/video/:tvId"

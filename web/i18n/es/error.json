@@ -38,6 +38,7 @@
     "api.content.too_long": "el medio que solicitaste es demasiado largo. el límite de duración actual es {{ limit }} minutos. ¡intenta algo más corto!",
 
     "api.content.video.unavailable": "no puedo acceder a este video. puede estar restringido del lado de {{ service }}. ¿has pegado el enlace correcto?",
+    "api.content.platform_restricted": "Este tipo de enlace de {{ service }} está restringido por la plataforma (por ejemplo, muro de pago o derechos regionales), así que no puedo descargarlo. ¡Prueba con un enlace de video público!",
     "api.content.video.live": "este video está actualmente en vivo, así que aún no puedo descargarlo. ¡espera a que el stream en vivo termine e intenta de nuevo!",
     "api.content.video.private": "este video es privado, así que no puedo acceder a él. ¡cambia su visibilidad o intenta otro!",
     "api.content.video.age": "este video tiene restricción de edad, así que no puedo acceder a él anónimamente. ¡intenta otro!",

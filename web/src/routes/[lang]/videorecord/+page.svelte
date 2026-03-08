@@ -159,6 +159,7 @@
             canvasCornerRadius: number;
             canvasInnerPadding: number;
             cameraFillFrame?: boolean;
+            cameraFillZoom?: number;
         };
     };
     let webEmbeds: WebEmbedItem[] = [];
@@ -320,8 +321,13 @@
     let cameraMirror = true;
     let cameraFillFrame = false;
     let cameraFillFrameHydrated = false;
+    let cameraFillZoom = 1;
+    const cameraFillZoomMin = 1;
+    const cameraFillZoomMax = 2;
+    const cameraFillZoomStep = 0.1;
     type CameraCaptureProfile = "desktop" | "phone";
     let cameraCaptureProfile: CameraCaptureProfile | null = null;
+    let cameraZoomMode: "none" | "hardware" | "digital" = "none";
     let cameraOffsetX = 0;
     let cameraOffsetY = 0;
     let cameraStream: MediaStream | null = null;
@@ -433,6 +439,19 @@
             ? "phone"
             : "desktop";
 
+    const shouldEnablePortraitFillZoom = () =>
+        cameraFillFrame && isPortraitFillAspectRatio(aspectRatio);
+
+    const sanitizeCameraFillZoom = (value: number) => {
+        const rounded = Math.round(value / cameraFillZoomStep) * cameraFillZoomStep;
+        return Number(
+            Math.min(
+                cameraFillZoomMax,
+                Math.max(cameraFillZoomMin, rounded),
+            ).toFixed(1),
+        );
+    };
+
     const buildCameraVideoConstraints = (
         profile: CameraCaptureProfile,
     ): MediaTrackConstraints => {
@@ -452,14 +471,64 @@
         };
     };
 
+    const applyCameraTrackZoomPreference = async () => {
+        const track = cameraStream?.getVideoTracks?.()[0];
+        if (!track) {
+            cameraZoomMode = "none";
+            return;
+        }
+
+        const wantsPortraitFillZoom = shouldEnablePortraitFillZoom();
+        const requestedZoom = wantsPortraitFillZoom
+            ? sanitizeCameraFillZoom(cameraFillZoom)
+            : 1;
+
+        const rawCapabilities =
+            typeof (track as any).getCapabilities === "function"
+                ? ((track as any).getCapabilities() as Record<string, any>)
+                : null;
+        const zoomCapability = rawCapabilities?.zoom;
+        const canApplyZoom =
+            !!zoomCapability && typeof track.applyConstraints === "function";
+
+        if (canApplyZoom) {
+            const capMin = Number(zoomCapability.min);
+            const capMax = Number(zoomCapability.max);
+            const min = Number.isFinite(capMin)
+                ? Math.max(cameraFillZoomMin, capMin)
+                : cameraFillZoomMin;
+            const max = Number.isFinite(capMax)
+                ? Math.min(cameraFillZoomMax, capMax)
+                : cameraFillZoomMax;
+            const target =
+                min <= max
+                    ? Math.min(max, Math.max(min, requestedZoom))
+                    : requestedZoom;
+
+            try {
+                await track.applyConstraints({
+                    advanced: [{ zoom: target } as any],
+                });
+                cameraZoomMode =
+                    wantsPortraitFillZoom && target > 1 ? "hardware" : "none";
+                return;
+            } catch {}
+        }
+
+        cameraZoomMode =
+            wantsPortraitFillZoom && requestedZoom > 1 ? "digital" : "none";
+    };
+
     const ensureCameraStream = async () => {
         const targetProfile = getTargetCameraCaptureProfile();
         if (
             cameraStream &&
             cameraVideoEl &&
             cameraCaptureProfile === targetProfile
-        )
+        ) {
+            await applyCameraTrackZoomPreference();
             return;
+        }
 
         if (cameraStream) {
             for (const track of cameraStream.getTracks()) track.stop();
@@ -482,6 +551,7 @@
         await v.play();
         cameraVideoEl = v;
         cameraCaptureProfile = targetProfile;
+        await applyCameraTrackZoomPreference();
     };
 
     const stopCameraStream = () => {
@@ -498,6 +568,7 @@
         cameraStream = null;
         cameraVideoEl = null;
         cameraCaptureProfile = null;
+        cameraZoomMode = "none";
     };
 
     const stopMicStream = () => {
@@ -916,6 +987,7 @@
         targetW: number,
         targetH: number,
         profile: CameraCaptureProfile,
+        zoom = 1,
     ): CameraCoverCrop => {
         const srcW = Math.max(1, sourceW);
         const srcH = Math.max(1, sourceH);
@@ -931,6 +1003,12 @@
             sw = srcH * dstRatio;
         } else if (srcRatio < dstRatio) {
             sh = srcW / dstRatio;
+        }
+
+        const safeZoom = Math.max(1, zoom);
+        if (safeZoom > 1) {
+            sw = Math.max(1, sw / safeZoom);
+            sh = Math.max(1, sh / safeZoom);
         }
 
         const maxSx = Math.max(0, srcW - sw);
@@ -958,6 +1036,7 @@
         dh: number,
         mirrored: boolean,
         profile: CameraCaptureProfile,
+        zoom = 1,
     ) => {
         const targetW = Math.max(1, Math.round(dw));
         const targetH = Math.max(1, Math.round(dh));
@@ -969,6 +1048,7 @@
             targetW,
             targetH,
             profile,
+            zoom,
         );
 
         if (mirrored) {
@@ -1003,6 +1083,12 @@
         );
     };
 
+    const getCameraDigitalZoomFactor = () => {
+        if (!shouldEnablePortraitFillZoom()) return 1;
+        if (cameraZoomMode === "hardware") return 1;
+        return sanitizeCameraFillZoom(cameraFillZoom);
+    };
+
     const drawCameraFrame = () => {
         if (
             !ctx ||
@@ -1031,6 +1117,7 @@
                 drawH,
                 cameraMirror,
                 cameraCaptureProfile ?? getTargetCameraCaptureProfile(),
+                getCameraDigitalZoomFactor(),
             );
             ctx.restore();
         } else {
@@ -1053,6 +1140,7 @@
                 size,
                 cameraMirror,
                 "desktop",
+                1,
             );
             ctx.restore();
 
@@ -1277,6 +1365,7 @@
                         drawH,
                         cameraMirror,
                         cameraCaptureProfile ?? getTargetCameraCaptureProfile(),
+                        getCameraDigitalZoomFactor(),
                     );
                     bridgeCompositeCtx.restore();
                 } else {
@@ -1337,6 +1426,7 @@
                         size,
                         cameraMirror,
                         "desktop",
+                        1,
                     );
                     bridgeCompositeCtx.restore();
 
@@ -1388,6 +1478,7 @@
                 canvasCornerRadius,
                 canvasInnerPadding,
                 cameraFillFrame,
+                cameraFillZoom,
             },
         };
         window.localStorage.setItem(
@@ -1465,6 +1556,11 @@
                 cameraFillFrame = snapshotSettings.cameraFillFrame;
                 cameraFillFrameHydrated = true;
             }
+            if (Number.isFinite(snapshotSettings?.cameraFillZoom)) {
+                cameraFillZoom = sanitizeCameraFillZoom(
+                    snapshotSettings?.cameraFillZoom ?? cameraFillZoom,
+                );
+            }
             requestAnimationFrame(() => loadSlide(activeSlide));
         } catch {
             // ignore broken snapshot
@@ -1476,8 +1572,6 @@
         if (!w || !h) return 16 / 9;
         return w / h;
     };
-
-    $: boardAspectRatio = ratioToNumber(aspectRatio);
 
     const hasSceneFrameElement = (elements: any[] | undefined) =>
         Array.isArray(elements) &&
@@ -3717,7 +3811,9 @@
         persistTeleprompterPrefs();
     }
 
-    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}|${cameraFillFrame}`;
+    $: cameraFillZoom = sanitizeCameraFillZoom(cameraFillZoom);
+
+    $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}|${cameraFillFrame}|${cameraFillZoom}`;
 
     $: if (typeof window !== "undefined" && autosaveSignature) {
         // throttled autosave for both whiteboard runtimes
@@ -4790,37 +4886,6 @@
 
         <section>
             <div class="section-title">
-                {$t("videorecord.settings.preview.title")}
-            </div>
-            <div class="settings-preview-wrap">
-                <div
-                    class="settings-preview"
-                    style={`aspect-ratio:${boardAspectRatio}; border-radius:${canvasCornerRadius}px; padding:${Math.max(2, Math.floor(canvasInnerPadding / 3))}px; background:${backgroundColor};`}
-                >
-                    <div class="settings-preview-inner"></div>
-                    <div class="settings-preview-dot"></div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">
-                {$t("videorecord.settings.teleprompter_opacity.title")}
-            </div>
-            <label class="slider-row">
-                <input
-                    type="range"
-                    min="20"
-                    max="100"
-                    step="2"
-                    bind:value={teleprompterOpacity}
-                />
-                <span>{teleprompterOpacity}%</span>
-            </label>
-        </section>
-
-        <section>
-            <div class="section-title">
                 {$t("videorecord.settings.export.title")}
             </div>
             <div class="export-format-row">
@@ -4876,14 +4941,23 @@
                 />
                 <span>{$t("videorecord.settings.camera.fill_frame")}</span>
             </label>
-            <label class="switch-row">
-                <input
-                    type="checkbox"
-                    bind:checked={cameraFillFrame}
-                    disabled={!showCameraInRecord}
-                />
-                <span>摄像头充满整个录制画面</span>
-            </label>
+            {#if showCameraInRecord && shouldEnablePortraitFillZoom()}
+                <label class="slider-row">
+                    <span>Camera zoom (portrait fill)</span>
+                    <input
+                        type="range"
+                        min={cameraFillZoomMin}
+                        max={cameraFillZoomMax}
+                        step={cameraFillZoomStep}
+                        bind:value={cameraFillZoom}
+                        disabled={isRecording ||
+                            isRecordingStarting ||
+                            isRecordingStopping ||
+                            recordCountdownLeft > 0}
+                    />
+                    <span>{cameraFillZoom.toFixed(1)}x</span>
+                </label>
+            {/if}
             <div class="camera-settings">
                 <label class="slider-row">
                     <span>{$t("videorecord.settings.camera.size")}</span>
@@ -4992,21 +5066,6 @@
                         >{$t("videorecord.settings.camera.reset_offset")}</button
                     >
                 </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">{$t("videorecord.settings.preflight.title")}</div>
-            <div class="mic-row">
-                <button on:click={runRecordPreflight}>
-                    {$t("videorecord.settings.preflight.run")}
-                </button>
-                <span class="subnote">
-                    {$t("videorecord.settings.preflight.last_run")}:
-                    {lastPreflightAt
-                        ? new Date(lastPreflightAt).toLocaleTimeString()
-                        : $t("videorecord.settings.preflight.never")}
-                </span>
             </div>
         </section>
 

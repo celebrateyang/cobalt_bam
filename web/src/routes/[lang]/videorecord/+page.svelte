@@ -3407,7 +3407,23 @@
         if (teleprompterTextEl) teleprompterTextEl.scrollTop = 0;
     };
 
+    const syncTeleprompterScrollFromElement = () => {
+        if (!teleprompterTextEl) return;
+        teleprompterScrollTop = teleprompterTextEl.scrollTop;
+    };
+
+    const applyTeleprompterScroll = (nextScrollTop: number) => {
+        if (!teleprompterTextEl) return;
+        const maxScroll = Math.max(
+            0,
+            teleprompterTextEl.scrollHeight - teleprompterTextEl.clientHeight,
+        );
+        teleprompterScrollTop = clamp(nextScrollTop, 0, maxScroll);
+        teleprompterTextEl.scrollTop = teleprompterScrollTop;
+    };
+
     const stopTeleprompter = () => {
+        syncTeleprompterScrollFromElement();
         isTeleprompterRunning = false;
         teleprompterLastTs = 0;
         if (teleprompterRaf) cancelAnimationFrame(teleprompterRaf);
@@ -3421,29 +3437,47 @@
         const dt = (ts - teleprompterLastTs) / 1000;
         teleprompterLastTs = ts;
 
-        teleprompterScrollTop += teleprompterSpeed * dt;
-
         const maxScroll = Math.max(
             0,
             teleprompterTextEl.scrollHeight - teleprompterTextEl.clientHeight,
         );
-
+        teleprompterScrollTop = clamp(
+            teleprompterScrollTop + teleprompterSpeed * dt,
+            0,
+            maxScroll,
+        );
         if (teleprompterScrollTop >= maxScroll) {
-            teleprompterScrollTop = maxScroll;
-            teleprompterTextEl.scrollTop = teleprompterScrollTop;
+            applyTeleprompterScroll(maxScroll);
             stopTeleprompter();
             return;
         }
 
-        teleprompterTextEl.scrollTop = teleprompterScrollTop;
+        applyTeleprompterScroll(teleprompterScrollTop);
         teleprompterRaf = requestAnimationFrame(runTeleprompter);
     };
 
     const startTeleprompter = () => {
         if (!showTeleprompter || isTeleprompterRunning) return;
+        syncTeleprompterScrollFromElement();
         isTeleprompterRunning = true;
         teleprompterLastTs = 0;
         teleprompterRaf = requestAnimationFrame(runTeleprompter);
+    };
+
+    const onTeleprompterWheel = (e: WheelEvent) => {
+        if (!isTeleprompterRunning || !teleprompterTextEl) return;
+        e.preventDefault();
+        applyTeleprompterScroll(teleprompterScrollTop + e.deltaY);
+        teleprompterLastTs = performance.now();
+    };
+
+    const toggleTeleprompterPlayback = () => {
+        if (isTeleprompterRunning) {
+            stopTeleprompter();
+            return;
+        }
+
+        startTeleprompter();
     };
 
     const toggleTeleprompterPanel = () => {
@@ -3469,6 +3503,7 @@
     };
 
     const startDragTeleprompter = (e: PointerEvent) => {
+        e.preventDefault();
         draggingTeleprompter = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
@@ -4402,68 +4437,82 @@
                 style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
             >
                 <div
-                    class="teleprompter-controls compact teleprompter-dragbar"
+                    class="teleprompter-header"
+                    title={$t("videorecord.teleprompter.drag_title")}
+                    aria-label={$t("videorecord.teleprompter.drag_title")}
+                    on:pointerdown={startDragTeleprompter}
                 >
+                    <div class="teleprompter-header-title">
+                        <span class="teleprompter-title-icon" aria-hidden="true"
+                            ></span>
+                        <span class="teleprompter-title-text"
+                            >{$t("videorecord.teleprompter.title")}</span
+                        >
+                    </div>
                     <button
                         type="button"
-                        class="teleprompter-grip"
-                        title={$t("videorecord.teleprompter.drag_title")}
-                        aria-label={$t("videorecord.teleprompter.drag_title")}
-                        on:pointerdown={startDragTeleprompter}
+                        class="teleprompter-close-btn"
+                        title={$t("videorecord.settings.close")}
+                        aria-label={$t("videorecord.settings.close")}
+                        on:pointerdown|stopPropagation
+                        on:click={toggleTeleprompterPanel}
                     >
-                        <span class="teleprompter-grip-dots">⋮⋮</span>
-                        <span>{$t("videorecord.teleprompter.drag")}</span>
+                        ×
+                    </button>
+                </div>
+
+                <div class="teleprompter-controls-card">
+                    <button
+                        class="teleprompter-play-btn"
+                        type="button"
+                        on:click={toggleTeleprompterPlayback}
+                        title={isTeleprompterRunning
+                            ? $t("videorecord.teleprompter.pause")
+                            : $t("videorecord.teleprompter.play")}
+                        aria-label={isTeleprompterRunning
+                            ? $t("videorecord.teleprompter.pause")
+                            : $t("videorecord.teleprompter.play")}
+                    >
+                        {#if isTeleprompterRunning}
+                            &#9208;
+                        {:else}
+                            &#9654;
+                        {/if}
                     </button>
 
-                    <button
-                        class="icon-btn"
-                        on:click={startTeleprompter}
-                        disabled={isTeleprompterRunning}
-                        title={$t("videorecord.teleprompter.play")}>▶</button
-                    >
-                    <button
-                        class="icon-btn"
-                        on:click={stopTeleprompter}
-                        disabled={!isTeleprompterRunning}
-                        title={$t("videorecord.teleprompter.pause")}>⏸</button
-                    >
-                    <button
-                        class="icon-btn"
-                        on:click={resetTeleprompterPosition}
-                        title={$t("videorecord.teleprompter.reset")}>↺</button
-                    >
+                    <div class="teleprompter-slider-stack">
+                        <label class="teleprompter-slider-row">
+                            <span>{$t("videorecord.teleprompter.speed")}</span>
+                            <input
+                                type="range"
+                                min="10"
+                                max="180"
+                                step="5"
+                                bind:value={teleprompterSpeed}
+                            />
+                        </label>
 
-                    <div class="mini slider-inline">
-                        <span>{$t("videorecord.teleprompter.speed")}</span>
-                        <input
-                            type="range"
-                            min="10"
-                            max="180"
-                            step="5"
-                            bind:value={teleprompterSpeed}
-                        />
-                    </div>
+                        <label class="teleprompter-slider-row">
+                            <span>{$t("videorecord.teleprompter.opacity")}</span>
+                            <input
+                                type="range"
+                                min="20"
+                                max="100"
+                                step="2"
+                                bind:value={teleprompterOpacity}
+                            />
+                        </label>
 
-                    <div class="mini slider-inline">
-                        <span>{$t("videorecord.teleprompter.opacity")}</span>
-                        <input
-                            type="range"
-                            min="20"
-                            max="100"
-                            step="2"
-                            bind:value={teleprompterOpacity}
-                        />
-                    </div>
-
-                    <div class="mini slider-inline">
-                        <span>{$t("videorecord.teleprompter.font_size")}</span>
-                        <input
-                            type="range"
-                            min="14"
-                            max="52"
-                            step="1"
-                            bind:value={teleprompterFontSize}
-                        />
+                        <label class="teleprompter-slider-row">
+                            <span>{$t("videorecord.teleprompter.font_size")}</span>
+                            <input
+                                type="range"
+                                min="14"
+                                max="52"
+                                step="1"
+                                bind:value={teleprompterFontSize}
+                            />
+                        </label>
                     </div>
                 </div>
 
@@ -4477,6 +4526,11 @@
                         stopTeleprompter();
                         resetTeleprompterPosition();
                     }}
+                    on:scroll={() => {
+                        if (isTeleprompterRunning) return;
+                        syncTeleprompterScrollFromElement();
+                    }}
+                    on:wheel={onTeleprompterWheel}
                 />
             </div>
         {/if}
@@ -5158,16 +5212,20 @@
         right: 12px;
         width: min(44%, 520px);
         min-width: 320px;
+        min-height: 280px;
         max-width: calc(100vw - 24px);
-        height: auto;
-        overflow: visible;
-        resize: none;
-        background: transparent;
-        border: 0;
-        border-radius: 0;
-        padding: 0;
-        backdrop-filter: none;
-        color: #111111;
+        max-height: min(78vh, 720px);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+        resize: both;
+        background: #f8f8f6;
+        border: 1px solid #e2e2df;
+        border-radius: 18px;
+        padding: 10px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+        color: #202020;
         z-index: 6;
     }
 
@@ -5175,101 +5233,141 @@
         z-index: 980;
     }
 
-    .teleprompter-dragbar {
+    .teleprompter-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 8px;
-        padding: 0;
-        border-radius: 0;
-        background: transparent;
+        gap: 10px;
+        min-height: 30px;
+        padding: 4px 2px;
         user-select: none;
-    }
-
-    .teleprompter-grip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        height: 30px;
-        padding: 0 8px;
-        border-radius: 8px;
-        border: 1px dashed #cbd5e1;
-        background: #f8fafc;
-        color: #334155;
-        font-size: 12px;
         cursor: grab;
-        flex-shrink: 0;
     }
 
-    .teleprompter-grip:active {
+    .teleprompter-header:active {
         cursor: grabbing;
-        background: #eef2f7;
     }
 
-    .teleprompter-grip-dots {
-        letter-spacing: 1px;
-        font-size: 14px;
-        line-height: 1;
-        opacity: 0.8;
-    }
-
-    .teleprompter-controls {
+    .teleprompter-header-title {
         display: flex;
-        flex-wrap: wrap;
+        align-items: center;
         gap: 8px;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-    .teleprompter-controls.compact {
-        gap: 6px;
-        margin-bottom: 6px;
-        align-items: center;
+        min-width: 0;
     }
 
-    .icon-btn {
-        min-width: 30px;
+    .teleprompter-title-icon {
+        width: 16px;
+        height: 18px;
+        flex: 0 0 auto;
+        border: 1px solid #9ca3af;
+        border-radius: 3px;
+        background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+        position: relative;
+    }
+
+    .teleprompter-title-icon::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 3px;
+        width: 8px;
+        height: 2px;
+        background: #9ca3af;
+        box-shadow:
+            0 4px 0 #9ca3af,
+            0 8px 0 #9ca3af;
+    }
+
+    .teleprompter-title-text {
+        font-size: 15px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .teleprompter-close-btn {
+        width: 30px;
         height: 30px;
-        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #7c7c7c;
+        font-size: 20px;
+        line-height: 1;
         border-radius: 8px;
-        background: #ffffff;
-        border: 1px solid #d1d5db;
+        cursor: pointer;
+    }
+
+    .teleprompter-close-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
         color: #111111;
+    }
+
+    .teleprompter-controls-card {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: #ededeb;
+        border-radius: 12px;
+        padding: 10px 12px;
+    }
+
+    .teleprompter-play-btn {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        padding: 0;
+        border-radius: 999px;
+        background: #dedfdd;
+        border: 0;
+        color: #4b4b4b;
         font-size: 14px;
         line-height: 1;
+        cursor: pointer;
     }
 
-    .teleprompter-controls .mini {
-        display: inline-flex;
-        align-items: center;
+    .teleprompter-play-btn:hover {
+        background: #d2d3d1;
+    }
+
+    .teleprompter-slider-stack {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
         gap: 6px;
-        font-size: 11px;
-        padding: 0 4px;
-        opacity: 0.9;
     }
 
-    .teleprompter-controls .mini input {
-        width: 72px;
+    .teleprompter-slider-row {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
     }
 
-    .slider-inline span {
-        min-width: 28px;
-        text-align: right;
+    .teleprompter-slider-row span {
+        font-size: 12px;
+        color: #7d7d7d;
+        white-space: nowrap;
+    }
+
+    .teleprompter-slider-row input {
+        width: 100%;
     }
 
     .teleprompter-editor {
         width: 100%;
-        height: min(56vh, 560px);
-        min-height: 320px;
-        max-height: calc(100vh - 120px);
-        border-radius: 12px;
-        border: 1px solid #d1d5db;
+        flex: 1;
+        min-height: 260px;
+        border-radius: 14px;
+        border: 1px solid #e4e4e0;
         background: #ffffff;
-        color: #111111;
-        padding: 10px;
-        resize: both;
+        color: #242424;
+        padding: 14px 16px;
+        resize: none;
         line-height: 1.7;
-        font-weight: 700;
+        font-weight: 600;
         box-sizing: border-box;
         outline: none;
     }

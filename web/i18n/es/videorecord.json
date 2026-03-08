@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "Pega tu script aquí...\nSólo tú puedes verlo; no aparecerá en la grabación.",
+        "title": "Teleprompter",
         "drag_title": "Arrastrar teleprompter",
         "drag": "Arrastrar",
         "play": "Jugar",

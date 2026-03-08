@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "把你的讲稿粘贴到这里...\n仅你可见，不会出现在录制内容中。",
+        "title": "提词器",
         "drag_title": "拖动提词器",
         "drag": "拖动",
         "play": "播放",

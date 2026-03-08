@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "Collez votre script ici...\nVous seul pouvez le voir ; il n'apparaîtra pas dans l'enregistrement.",
+        "title": "Téléprompteur",
         "drag_title": "Faites glisser le téléprompteur",
         "drag": "Traîner",
         "play": "Jouer",

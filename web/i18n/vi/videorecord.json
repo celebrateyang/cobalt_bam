@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "Dán tập lệnh của bạn vào đây...\nChỉ bạn mới có thể nhìn thấy nó; nó sẽ không xuất hiện trong bản ghi âm.",
+        "title": "Máy nhắc chữ",
         "drag_title": "Kéo máy nhắc chữ",
         "drag": "Lôi kéo",
         "play": "Chơi",

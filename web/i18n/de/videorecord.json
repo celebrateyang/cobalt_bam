@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "Fügen Sie Ihr Skript hier ein...\nNur Sie können es sehen; es erscheint nicht in der Aufnahme.",
+        "title": "Teleprompter",
         "drag_title": "Teleprompter ziehen",
         "drag": "Ziehen",
         "play": "Spielen",

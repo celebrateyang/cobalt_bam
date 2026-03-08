@@ -27,6 +27,7 @@
     },
     "teleprompter": {
         "placeholder": "Paste your script here...\nOnly you can see it; it will not appear in the recording.",
+        "title": "Teleprompter",
         "drag_title": "Drag teleprompter",
         "drag": "Drag",
         "play": "Play",

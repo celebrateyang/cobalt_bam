@@ -285,6 +285,16 @@
         { key: "1:1", labelKey: "videorecord.settings.aspect.square" },
     ];
     let aspectRatio = "16:9";
+    const portraitFillAspectRatios = new Set(["9:16", "3:4"]);
+    const landscapeFillAspectRatios = new Set(["16:9", "4:3", "1:1"]);
+    const isPortraitFillAspectRatio = (ratio: string) => {
+        if (portraitFillAspectRatios.has(ratio)) return true;
+        if (landscapeFillAspectRatios.has(ratio)) return false;
+        const [w, h] = ratio.split(":").map(Number);
+        return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0
+            ? w < h
+            : false;
+    };
 
     const bgColors = [
         "#fefcf9",
@@ -310,6 +320,8 @@
     let cameraMirror = true;
     let cameraFillFrame = false;
     let cameraFillFrameHydrated = false;
+    type CameraCaptureProfile = "desktop" | "phone";
+    let cameraCaptureProfile: CameraCaptureProfile | null = null;
     let cameraOffsetX = 0;
     let cameraOffsetY = 0;
     let cameraStream: MediaStream | null = null;
@@ -416,14 +428,51 @@
         fcDragBaseY = floatingControlsY;
     };
 
-    const ensureCameraStream = async () => {
-        if (cameraStream && cameraVideoEl) return;
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
+    const getTargetCameraCaptureProfile = (): CameraCaptureProfile =>
+        cameraFillFrame && isPortraitFillAspectRatio(aspectRatio)
+            ? "phone"
+            : "desktop";
+
+    const buildCameraVideoConstraints = (
+        profile: CameraCaptureProfile,
+    ): MediaTrackConstraints => {
+        if (profile === "phone") {
+            return {
                 facingMode: "user",
-                width: { ideal: 1280, max: 1920 },
-                height: { ideal: 720, max: 1080 },
-            },
+                aspectRatio: { ideal: 9 / 16 },
+                width: { ideal: 720, max: 1080 },
+                height: { ideal: 1280, max: 1920 },
+            };
+        }
+        return {
+            facingMode: "user",
+            aspectRatio: { ideal: 16 / 9 },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+        };
+    };
+
+    const ensureCameraStream = async () => {
+        const targetProfile = getTargetCameraCaptureProfile();
+        if (
+            cameraStream &&
+            cameraVideoEl &&
+            cameraCaptureProfile === targetProfile
+        )
+            return;
+
+        if (cameraStream) {
+            for (const track of cameraStream.getTracks()) track.stop();
+        }
+        if (cameraVideoEl) {
+            cameraVideoEl.pause();
+            cameraVideoEl.srcObject = null;
+        }
+        cameraStream = null;
+        cameraVideoEl = null;
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: buildCameraVideoConstraints(targetProfile),
             audio: false,
         });
         const v = document.createElement("video");
@@ -432,6 +481,7 @@
         v.playsInline = true;
         await v.play();
         cameraVideoEl = v;
+        cameraCaptureProfile = targetProfile;
     };
 
     const stopCameraStream = () => {
@@ -441,8 +491,13 @@
         if (cameraStream) {
             for (const track of cameraStream.getTracks()) track.stop();
         }
+        if (cameraVideoEl) {
+            cameraVideoEl.pause();
+            cameraVideoEl.srcObject = null;
+        }
         cameraStream = null;
         cameraVideoEl = null;
+        cameraCaptureProfile = null;
     };
 
     const stopMicStream = () => {
@@ -848,6 +903,106 @@
         ctx.closePath();
     };
 
+    type CameraCoverCrop = {
+        sx: number;
+        sy: number;
+        sw: number;
+        sh: number;
+    };
+
+    const resolveCameraCoverCrop = (
+        sourceW: number,
+        sourceH: number,
+        targetW: number,
+        targetH: number,
+        profile: CameraCaptureProfile,
+    ): CameraCoverCrop => {
+        const srcW = Math.max(1, sourceW);
+        const srcH = Math.max(1, sourceH);
+        const dstW = Math.max(1, targetW);
+        const dstH = Math.max(1, targetH);
+
+        const srcRatio = srcW / srcH;
+        const dstRatio = dstW / dstH;
+        let sw = srcW;
+        let sh = srcH;
+
+        if (srcRatio > dstRatio) {
+            sw = srcH * dstRatio;
+        } else if (srcRatio < dstRatio) {
+            sh = srcW / dstRatio;
+        }
+
+        const maxSx = Math.max(0, srcW - sw);
+        const maxSy = Math.max(0, srcH - sh);
+        const anchorX = 0.5;
+        // In phone profile, keep a touch more headroom when vertical crop is needed.
+        const anchorY = profile === "phone" ? 0.44 : 0.5;
+        const sx = Math.round(maxSx * anchorX);
+        const sy = Math.round(maxSy * anchorY);
+
+        return {
+            sx: Math.max(0, Math.min(maxSx, sx)),
+            sy: Math.max(0, Math.min(maxSy, sy)),
+            sw: Math.max(1, Math.round(sw)),
+            sh: Math.max(1, Math.round(sh)),
+        };
+    };
+
+    const drawCameraVideoCover = (
+        c: CanvasRenderingContext2D,
+        videoEl: HTMLVideoElement,
+        dx: number,
+        dy: number,
+        dw: number,
+        dh: number,
+        mirrored: boolean,
+        profile: CameraCaptureProfile,
+    ) => {
+        const targetW = Math.max(1, Math.round(dw));
+        const targetH = Math.max(1, Math.round(dh));
+        const sourceW = Math.max(1, videoEl.videoWidth || targetW);
+        const sourceH = Math.max(1, videoEl.videoHeight || targetH);
+        const crop = resolveCameraCoverCrop(
+            sourceW,
+            sourceH,
+            targetW,
+            targetH,
+            profile,
+        );
+
+        if (mirrored) {
+            c.save();
+            c.translate(dx + targetW, dy);
+            c.scale(-1, 1);
+            c.drawImage(
+                videoEl,
+                crop.sx,
+                crop.sy,
+                crop.sw,
+                crop.sh,
+                0,
+                0,
+                targetW,
+                targetH,
+            );
+            c.restore();
+            return;
+        }
+
+        c.drawImage(
+            videoEl,
+            crop.sx,
+            crop.sy,
+            crop.sw,
+            crop.sh,
+            dx,
+            dy,
+            targetW,
+            targetH,
+        );
+    };
+
     const drawCameraFrame = () => {
         if (
             !ctx ||
@@ -867,13 +1022,16 @@
             ctx.save();
             ctx.fillStyle = "#000";
             ctx.fillRect(drawX, drawY, drawW, drawH);
-            if (cameraMirror) {
-                ctx.translate(drawX + drawW, drawY);
-                ctx.scale(-1, 1);
-                ctx.drawImage(cameraVideoEl, 0, 0, drawW, drawH);
-            } else {
-                ctx.drawImage(cameraVideoEl, drawX, drawY, drawW, drawH);
-            }
+            drawCameraVideoCover(
+                ctx,
+                cameraVideoEl,
+                drawX,
+                drawY,
+                drawW,
+                drawH,
+                cameraMirror,
+                cameraCaptureProfile ?? getTargetCameraCaptureProfile(),
+            );
             ctx.restore();
         } else {
             const { size, x, y } = resolveCameraPlacement(
@@ -886,13 +1044,16 @@
             ctx.clip();
             ctx.fillStyle = "#000";
             ctx.fillRect(x, y, size, size);
-            if (cameraMirror) {
-                ctx.translate(x + size, y);
-                ctx.scale(-1, 1);
-                ctx.drawImage(cameraVideoEl, 0, 0, size, size);
-            } else {
-                ctx.drawImage(cameraVideoEl, x, y, size, size);
-            }
+            drawCameraVideoCover(
+                ctx,
+                cameraVideoEl,
+                x,
+                y,
+                size,
+                size,
+                cameraMirror,
+                "desktop",
+            );
             ctx.restore();
 
             ctx.save();
@@ -1107,25 +1268,16 @@
                     bridgeCompositeCtx.save();
                     bridgeCompositeCtx.fillStyle = "#000";
                     bridgeCompositeCtx.fillRect(drawLeft, drawTop, drawW, drawH);
-                    if (cameraMirror) {
-                        bridgeCompositeCtx.translate(drawLeft + drawW, drawTop);
-                        bridgeCompositeCtx.scale(-1, 1);
-                        bridgeCompositeCtx.drawImage(
-                            cameraVideoEl,
-                            0,
-                            0,
-                            drawW,
-                            drawH,
-                        );
-                    } else {
-                        bridgeCompositeCtx.drawImage(
-                            cameraVideoEl,
-                            drawLeft,
-                            drawTop,
-                            drawW,
-                            drawH,
-                        );
-                    }
+                    drawCameraVideoCover(
+                        bridgeCompositeCtx,
+                        cameraVideoEl,
+                        drawLeft,
+                        drawTop,
+                        drawW,
+                        drawH,
+                        cameraMirror,
+                        cameraCaptureProfile ?? getTargetCameraCaptureProfile(),
+                    );
                     bridgeCompositeCtx.restore();
                 } else {
                     const surface = getCameraSurfaceSize();
@@ -1176,25 +1328,16 @@
                     bridgeCompositeCtx.clip();
                     bridgeCompositeCtx.fillStyle = "#000";
                     bridgeCompositeCtx.fillRect(clampedX, clampedY, size, size);
-                    if (cameraMirror) {
-                        bridgeCompositeCtx.translate(clampedX + size, clampedY);
-                        bridgeCompositeCtx.scale(-1, 1);
-                        bridgeCompositeCtx.drawImage(
-                            cameraVideoEl,
-                            0,
-                            0,
-                            size,
-                            size,
-                        );
-                    } else {
-                        bridgeCompositeCtx.drawImage(
-                            cameraVideoEl,
-                            clampedX,
-                            clampedY,
-                            size,
-                            size,
-                        );
-                    }
+                    drawCameraVideoCover(
+                        bridgeCompositeCtx,
+                        cameraVideoEl,
+                        clampedX,
+                        clampedY,
+                        size,
+                        size,
+                        cameraMirror,
+                        "desktop",
+                    );
                     bridgeCompositeCtx.restore();
 
                     bridgeCompositeCtx.save();

@@ -739,6 +739,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return res.status(streamInfo.status).end();
         }
 
+        streamInfo.tunnelId = id;
+        const clientIp = String(
+            req.headers["cf-connecting-ip"] ||
+            req.headers["x-forwarded-for"] ||
+            req.ip ||
+            "unknown"
+        ).split(",")[0].trim();
+        console.log(
+            `[TUNNEL OPEN] id=${id} service=${streamInfo.service} type=${streamInfo.type} range=${req.headers["range"] || "none"} ip=${clientIp}`,
+        );
+
         if (streamInfo.type === 'proxy') {
             streamInfo.range = req.headers['range'];
         }

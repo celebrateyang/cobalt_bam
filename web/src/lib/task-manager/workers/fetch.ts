@@ -184,6 +184,16 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
 
 const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
     const runtimeTuning = normalizeTuning(tuning);
+    const debug = Boolean(tuning);
+    const debugPrefix = "[FETCH DEBUG]";
+    const logDebug = (message: string, extra?: Record<string, unknown>) => {
+        if (!debug) return;
+        if (extra) {
+            console.log(debugPrefix, message, extra);
+            return;
+        }
+        console.log(debugPrefix, message);
+    };
     let storage: Awaited<ReturnType<typeof Storage.init>> | null = null;
     let abortReason: "timeout" | "stalled" | null = null;
     const controller = new AbortController();
@@ -222,6 +232,11 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             await storage.destroy().catch(() => undefined);
         }
 
+        logDebug("worker_error", {
+            code,
+            elapsedMs: Date.now() - startedAt,
+        });
+
         self.postMessage({
             cobaltFetchWorker: {
                 error: code,
@@ -240,6 +255,13 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         let contentType = "application/octet-stream";
         let rangeChunkBytes = runtimeTuning.initialChunkBytes;
         let upstreamIgnoresRange = false;
+        logDebug("worker_start", {
+            url,
+            initialChunkBytes: rangeChunkBytes,
+            maxChunkBytes: runtimeTuning.maxChunkBytes,
+            fastChunkMs: runtimeTuning.fastChunkMs,
+            slowChunkMs: runtimeTuning.slowChunkMs,
+        });
 
         const reportProgress = () => {
             if (!expectedSize) return;
@@ -298,19 +320,46 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             let response: Response;
             const requestStartedAt = Date.now();
             try {
+                logDebug("request_start", {
+                    offset: rangeStart,
+                    range: headers.Range || "none",
+                    expectedChunkBytes: expectedChunkBytes ?? null,
+                    chunkBytes: rangeChunkBytes,
+                    retries,
+                });
                 response = await fetch(url, {
                     signal: controller.signal,
                     headers,
                 });
             } catch (e) {
+                logDebug("request_fetch_error", {
+                    offset: rangeStart,
+                    range: headers.Range || "none",
+                    message: String(e),
+                    retries,
+                });
                 if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    logDebug("request_retry_network", {
+                        offset: rangeStart,
+                        nextChunkBytes: rangeChunkBytes,
+                        retries,
+                    });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
                 throw e;
             }
+
+            logDebug("request_response", {
+                offset: rangeStart,
+                range: headers.Range || "none",
+                status: response.status,
+                contentLength: response.headers.get("Content-Length") || "none",
+                contentRange: response.headers.get("Content-Range") || "none",
+                elapsedMs: Date.now() - requestStartedAt,
+            });
 
             if (response.status === 416 && receivedBytes > 0) {
                 if (!expectedSizeReliable || (expectedSize && receivedBytes >= expectedSize)) {
@@ -328,6 +377,12 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                     const retryAfterMs = parseRetryAfterMs(response.headers.get("Retry-After"));
+                    logDebug("request_retry_http", {
+                        status: response.status,
+                        retries,
+                        nextChunkBytes: rangeChunkBytes,
+                        retryAfterMs: retryAfterMs ?? null,
+                    });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries, retryAfterMs));
                     continue;
                 }
@@ -339,6 +394,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 // Keep already written bytes and discard the duplicated prefix
                 // from this response instead of restarting from zero.
                 bytesToSkip = receivedBytes;
+                logDebug("range_ignored_on_resume", {
+                    offset: rangeStart,
+                    bytesToSkip,
+                });
 
                 const fullLength = Number(response.headers.get("Content-Length"));
                 if (Number.isFinite(fullLength) && fullLength > 0) {
@@ -354,6 +413,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 // Some tunnel hops ignore Range and stream the full file with 200.
                 // Mark this mode so we don't keep issuing follow-up range requests.
                 upstreamIgnoresRange = true;
+                logDebug("range_ignored_from_start", {
+                    requestedRange: headers.Range || "none",
+                    status: response.status,
+                });
             }
 
             const nextContentType = response.headers.get("Content-Type");
@@ -472,6 +535,11 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 }
                 retries++;
                 rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                logDebug("request_retry_skip_prefix", {
+                    retries,
+                    remainingSkipBytes: bytesToSkip,
+                    nextChunkBytes: rangeChunkBytes,
+                });
                 await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                 continue;
             }
@@ -486,6 +554,16 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 runtimeTuning.slowChunkMs,
                 runtimeTuning.maxChunkBytes,
             );
+            logDebug("request_done", {
+                status: response.status,
+                bytesReceivedThisResponse,
+                totalReceivedBytes: receivedBytes,
+                expectedSize: expectedSize ?? null,
+                expectedSizeReliable,
+                nextChunkBytes: rangeChunkBytes,
+                elapsedMs,
+                upstreamIgnoresRange,
+            });
 
             if (expectedSizeReliable && expectedSize && receivedBytes >= expectedSize) {
                 break;
@@ -501,6 +579,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                     }
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    logDebug("request_retry_ignored_range_zero_bytes", {
+                        retries,
+                        nextChunkBytes: rangeChunkBytes,
+                    });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
@@ -517,6 +599,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                     }
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    logDebug("request_retry_zero_chunk", {
+                        retries,
+                        nextChunkBytes: rangeChunkBytes,
+                    });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
@@ -534,6 +620,12 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
 
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    logDebug("request_retry_short_chunk", {
+                        retries,
+                        expectedChunkBytes,
+                        bytesReceivedThisResponse,
+                        nextChunkBytes: rangeChunkBytes,
+                    });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
@@ -546,6 +638,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 }
                 retries++;
                 rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                logDebug("request_retry_no_progress", {
+                    retries,
+                    nextChunkBytes: rangeChunkBytes,
+                });
                 await waitForRetry(controller.signal, getBackoffDelayMs(retries));
             }
         }
@@ -566,6 +662,13 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         }
 
         highestReportedProgress = 100;
+        logDebug("worker_done", {
+            elapsedMs: Date.now() - startedAt,
+            receivedBytes,
+            contentType,
+            expectedSize: expectedSize ?? null,
+            expectedSizeReliable,
+        });
         self.postMessage({
             cobaltFetchWorker: {
                 progress: 100,
@@ -581,6 +684,10 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
     } catch (e) {
         stopTimers();
         if (isAbortError(e)) {
+            logDebug("worker_aborted", {
+                abortReason: abortReason || "abort",
+                elapsedMs: Date.now() - startedAt,
+            });
             return error(
                 abortReason === "stalled"
                     ? "queue.fetch.stalled"
@@ -589,10 +696,18 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         }
 
         if (isRetryableNetworkError(e)) {
+            logDebug("worker_network_error", {
+                elapsedMs: Date.now() - startedAt,
+                message: String(e),
+            });
             return error("queue.fetch.network_error");
         }
 
         if (isStorageWriteError(e)) {
+            logDebug("worker_storage_error", {
+                elapsedMs: Date.now() - startedAt,
+                message: String(e),
+            });
             return error("queue.fetch.corrupted_file");
         }
 

@@ -64,27 +64,66 @@
     const baseBatchDelayMs = 1200;
     const rateLimitBackoffMs = 4000;
     const maxRateLimitRetries = 2;
-    const maxQueuePrefetch = 2;
-    const queueSlotWaitMs = 600;
+    const queueTaskTimeoutMs = 30 * 60 * 1000;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let rateLimitSkipNotified = false;
 
-    const countQueuedPendingItems = () => {
-        const queue = get(queueStore);
-        return Object.values(queue).filter(
-            (item) => item.state === "waiting" || item.state === "running",
-        ).length;
-    };
+    const waitForQueueItemDone = (taskId: string) =>
+        new Promise<"done" | "error" | "missing" | "timeout" | "cancelled">((resolve) => {
+            let seen = false;
+            let settled = false;
+            let timer: ReturnType<typeof setTimeout> | null = null;
+            let unsubscribe: (() => void) | null = null;
 
-    const waitForQueueSlot = async () => {
-        while (!cancelRequested) {
-            if (countQueuedPendingItems() < maxQueuePrefetch) {
+            const settle = (status: "done" | "error" | "missing" | "timeout" | "cancelled") => {
+                if (settled) return;
+                settled = true;
+                if (timer) {
+                    clearTimeout(timer);
+                }
+                if (unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
+                resolve(status);
+            };
+
+            unsubscribe = queueStore.subscribe((queueData) => {
+                if (cancelRequested) {
+                    settle("cancelled");
+                    return;
+                }
+
+                const item = queueData[taskId];
+                if (!item) {
+                    if (seen) {
+                        settle("missing");
+                    }
+                    return;
+                }
+
+                seen = true;
+
+                if (item.state === "done") {
+                    settle("done");
+                } else if (item.state === "error") {
+                    settle("error");
+                }
+            });
+
+            if (settled && unsubscribe) {
+                unsubscribe();
+                unsubscribe = null;
+            }
+
+            if (settled) {
                 return;
             }
 
-            await sleep(queueSlotWaitMs);
-        }
-    };
+            timer = setTimeout(() => {
+                settle("timeout");
+            }, queueTaskTimeoutMs);
+        });
 
     const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
         const request = buildSaveRequest(url);
@@ -437,12 +476,10 @@
         for (const item of selectedItems) {
             if (cancelRequested) break;
 
-            await waitForQueueSlot();
-            if (cancelRequested) break;
-
             const taskId = uuid();
             let response = null;
             let rateLimitRetries = 0;
+            let shouldStopBatch = false;
 
             while (!cancelRequested) {
                 response = await savingHandler({
@@ -478,7 +515,7 @@
                                 type: "small",
                                 meowbalt: "error",
                                 title: $t("dialog.batch.points_check_failed"),
-                                bodyText: "rate limit hit; some items were skipped. batch will continue.",
+                                bodyText: "rate limit hit; batch stopped. please retry later.",
                                 buttons: [
                                     {
                                         text: $t("button.gotit"),
@@ -488,6 +525,7 @@
                                 ],
                             });
                         }
+                        shouldStopBatch = true;
                         break;
                     }
                     await sleep(rateLimitBackoffMs * rateLimitRetries);
@@ -497,10 +535,10 @@
                 break;
             }
 
-            progress += 1;
+            if (cancelRequested) break;
 
-            if (response?.status === "error") {
-                const code = response.error.code;
+            if (shouldStopBatch || !response || response.status === "error") {
+                const code = response?.status === "error" ? response.error.code : undefined;
                 if (
                     code === "error.api.points.insufficient" ||
                     code === "error.api.points.unavailable" ||
@@ -509,11 +547,23 @@
                     code === "error.api.auth.clerk.invalid"
                 ) {
                     cancelRequested = true;
+                }
+                break;
+            }
+
+            const queuedItem = get(queueStore)[taskId];
+            if (queuedItem) {
+                const queueResult = await waitForQueueItemDone(taskId);
+                if (queueResult !== "done") {
                     break;
                 }
             }
 
-            await sleep(baseBatchDelayMs);
+            progress += 1;
+
+            if (!cancelRequested) {
+                await sleep(baseBatchDelayMs);
+            }
         }
 
         resetRunState();

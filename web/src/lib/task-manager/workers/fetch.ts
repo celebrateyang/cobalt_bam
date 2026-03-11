@@ -91,7 +91,30 @@ const fetchFile = async (url: string) => {
         let retries = 0;
         let expectedSize: number | undefined;
         let expectedSizeReliable = false;
+        let largestExpectedSize = 0;
+        let highestReportedProgress = 0;
         let contentType = "application/octet-stream";
+
+        const reportProgress = () => {
+            if (!expectedSize) return;
+
+            largestExpectedSize = Math.max(largestExpectedSize, expectedSize, receivedBytes);
+            if (largestExpectedSize <= 0) return;
+
+            const percentage = Math.max(
+                0,
+                Math.min(100, Math.round((receivedBytes / largestExpectedSize) * 100))
+            );
+            const stablePercentage = Math.max(highestReportedProgress, percentage);
+            highestReportedProgress = stablePercentage;
+
+            self.postMessage({
+                cobaltFetchWorker: {
+                    progress: stablePercentage,
+                    size: receivedBytes,
+                }
+            });
+        };
 
         markProgress();
         startStallMonitor();
@@ -123,7 +146,8 @@ const fetchFile = async (url: string) => {
             }
 
             const resumedRequest = receivedBytes > 0;
-            const partialResponse = resumedRequest && response.status === 206;
+            const partialResponse = response.status === 206;
+            let bytesToSkip = 0;
 
             if (!response.ok && !partialResponse) {
                 if (resumedRequest && retries < MAX_RETRIES && response.status >= 500) {
@@ -134,18 +158,19 @@ const fetchFile = async (url: string) => {
             }
 
             if (resumedRequest && response.status === 200) {
-                if (retries < MAX_RETRIES) {
-                    retries++;
-                    receivedBytes = 0;
-                    expectedSize = undefined;
-                    expectedSizeReliable = false;
-                    if (storage) {
-                        await storage.destroy().catch(() => undefined);
-                        storage = null;
+                // Some upstreams ignore Range and return the full file (200).
+                // Keep already written bytes and discard the duplicated prefix
+                // from this response instead of restarting from zero.
+                bytesToSkip = receivedBytes;
+
+                const fullLength = Number(response.headers.get("Content-Length"));
+                if (Number.isFinite(fullLength) && fullLength > 0) {
+                    expectedSize = Math.max(expectedSize ?? 0, fullLength);
+                    expectedSizeReliable = true;
+                    if (receivedBytes >= fullLength) {
+                        break;
                     }
-                    continue;
                 }
-                return error("queue.fetch.bad_response");
             }
 
             const nextContentType = response.headers.get("Content-Type");
@@ -160,10 +185,14 @@ const fetchFile = async (url: string) => {
             } else {
                 const contentLength = Number(response.headers.get("Content-Length"));
                 if (Number.isFinite(contentLength) && contentLength > 0) {
-                    expectedSize = partialResponse
+                    const candidateExpected = partialResponse
                         ? receivedBytes + contentLength
                         : contentLength;
-                    expectedSizeReliable = true;
+                    expectedSize = Math.max(expectedSize ?? 0, candidateExpected);
+                    expectedSizeReliable =
+                        partialResponse ||
+                        !resumedRequest ||
+                        contentLength >= receivedBytes;
                 } else if (!expectedSize) {
                     const estimatedLength = Number(response.headers.get("Estimated-Content-Length"));
                     if (Number.isFinite(estimatedLength) && estimatedLength > 0) {
@@ -199,25 +228,36 @@ const fetchFile = async (url: string) => {
                 if (done) break;
                 if (!value) continue;
 
-                madeProgress = true;
-                await storage.write(value, receivedBytes);
-                receivedBytes += value.length;
-                retries = 0;
                 markProgress();
+                let chunkData = value;
 
-                if (expectedSize) {
-                    const percentage = Math.max(
-                        0,
-                        Math.min(100, Math.round((receivedBytes / expectedSize) * 100))
-                    );
+                if (bytesToSkip > 0) {
+                    if (chunkData.length <= bytesToSkip) {
+                        bytesToSkip -= chunkData.length;
+                        continue;
+                    }
 
-                    self.postMessage({
-                        cobaltFetchWorker: {
-                            progress: percentage,
-                            size: receivedBytes,
-                        }
-                    });
+                    chunkData = chunkData.subarray(bytesToSkip);
+                    bytesToSkip = 0;
                 }
+
+                if (chunkData.length === 0) {
+                    continue;
+                }
+
+                madeProgress = true;
+                await storage.write(chunkData, receivedBytes);
+                receivedBytes += chunkData.length;
+                retries = 0;
+                reportProgress();
+            }
+
+            if (bytesToSkip > 0) {
+                if (retries >= MAX_RETRIES) {
+                    return error("queue.fetch.network_error");
+                }
+                retries++;
+                continue;
             }
 
             if (expectedSize && receivedBytes >= expectedSize) {
@@ -251,14 +291,13 @@ const fetchFile = async (url: string) => {
             return error("queue.fetch.corrupted_file");
         }
 
-        if (expectedSize) {
-            self.postMessage({
-                cobaltFetchWorker: {
-                    progress: 100,
-                    size: receivedBytes,
-                }
-            });
-        }
+        highestReportedProgress = 100;
+        self.postMessage({
+            cobaltFetchWorker: {
+                progress: 100,
+                size: receivedBytes,
+            }
+        });
 
         self.postMessage({
             cobaltFetchWorker: {

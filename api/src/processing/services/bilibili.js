@@ -21,6 +21,8 @@ const shouldUseUpstream = () => {
     }
 };
 
+const PROACTIVE_UPSTREAM_TIMEOUT_MS = 3500;
+
 const rewriteUpstreamTunnelUrl = (rawUrl) => {
     try {
         const upstreamBase = new URL(env.instagramUpstreamURL);
@@ -35,7 +37,27 @@ const rewriteUpstreamTunnelUrl = (rawUrl) => {
     }
 };
 
-const fetchUpstream = async (url) => {
+const resolveUpstreamTimeoutMs = (overrideMs) => {
+    if (
+        typeof overrideMs === "number" &&
+        Number.isFinite(overrideMs) &&
+        overrideMs > 0
+    ) {
+        return overrideMs;
+    }
+
+    if (
+        typeof env.instagramUpstreamTimeoutMs === "number" &&
+        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
+        env.instagramUpstreamTimeoutMs > 0
+    ) {
+        return env.instagramUpstreamTimeoutMs;
+    }
+
+    return 12000;
+};
+
+const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fallback" } = {}) => {
     if (!shouldUseUpstream()) return null;
 
     const endpoint = new URL(env.instagramUpstreamURL);
@@ -58,21 +80,16 @@ const fetchUpstream = async (url) => {
         headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
     }
 
-    const timeoutMs =
-        typeof env.instagramUpstreamTimeoutMs === "number" &&
-        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
-        env.instagramUpstreamTimeoutMs > 0
-            ? env.instagramUpstreamTimeoutMs
-            : 12000;
+    const timeoutMs = resolveUpstreamTimeoutMs(timeoutOverrideMs);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         if (upstreamOrigin) {
-            console.log(`[bilibili] upstream fallback -> ${upstreamOrigin}`);
+            console.log(`[bilibili] upstream ${reason} -> ${upstreamOrigin}`);
         } else {
-            console.log(`[bilibili] upstream fallback`);
+            console.log(`[bilibili] upstream ${reason}`);
         }
 
         const res = await fetch(endpoint, {
@@ -87,7 +104,7 @@ const fetchUpstream = async (url) => {
 
         const payload = await res.json().catch(() => null);
         if (!res.ok) {
-            console.log(`[bilibili] upstream response status=${res.status}`);
+            console.log(`[bilibili] upstream response status=${res.status} reason=${reason}`);
             return null;
         }
         if (!payload || typeof payload !== "object") return null;
@@ -106,7 +123,7 @@ const fetchUpstream = async (url) => {
             duration: payload.duration,
         };
     } catch {
-        console.log(`[bilibili] upstream request failed`);
+        console.log(`[bilibili] upstream request failed reason=${reason}`);
         return null;
     } finally {
         clearTimeout(timeout);
@@ -217,6 +234,51 @@ async function tv_download(id) {
     };
 }
 
+const buildUpstreamContext = ({ comId, tvId, partId }) => {
+    if (comId) {
+        const upstreamUrl = new URL(`https://www.bilibili.com/video/${comId}`);
+        if (partId) upstreamUrl.searchParams.set('p', partId);
+
+        return {
+            upstreamUrl,
+            audioFilename: `bilibili_${comId}${partId ? `_${partId}` : ''}_audio`,
+            defaultFilename: `bilibili_${comId}.mp4`,
+        };
+    }
+
+    if (tvId) {
+        return {
+            upstreamUrl: `https://www.bilibili.tv/video/${tvId}`,
+            audioFilename: `bilibili_tv_${tvId}_audio`,
+            defaultFilename: `bilibili_${tvId}.mp4`,
+        };
+    }
+
+    return {};
+};
+
+const buildUpstreamResult = ({ upstream, audioFilename, defaultFilename }) => {
+    if (!upstream?.tunnels?.length) return null;
+
+    if (
+        typeof upstream.duration === "number" &&
+        Number.isFinite(upstream.duration) &&
+        upstream.duration > env.durationLimit
+    ) {
+        return { error: "content.too_long" };
+    }
+
+    return {
+        urls: upstream.tunnels.slice(0, 2),
+        filename: upstream.filename || defaultFilename,
+        audioFilename,
+        duration: upstream.duration,
+        headers: {
+            "ngrok-skip-browser-warning": "true",
+        },
+    };
+};
+
 export default async function({ comId, tvId, comShortLink, partId, epId }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
@@ -227,6 +289,29 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
     if (comShortLink) {
         const patternMatch = await resolveRedirectingURL(`https://b23.tv/${comShortLink}`);
         comId = patternMatch?.comId;
+    }
+
+    const {
+        upstreamUrl,
+        audioFilename,
+        defaultFilename,
+    } = buildUpstreamContext({ comId, tvId, partId });
+
+    // Prefer upstream first for bilibili when available to avoid frequent
+    // mid-stream closes on some egress paths. Keep timeout short to fallback fast.
+    if (upstreamUrl) {
+        const proactiveUpstream = await fetchUpstream(upstreamUrl, {
+            timeoutMs: PROACTIVE_UPSTREAM_TIMEOUT_MS,
+            reason: "preferred",
+        });
+        const proactiveResult = buildUpstreamResult({
+            upstream: proactiveUpstream,
+            audioFilename,
+            defaultFilename,
+        });
+        if (proactiveResult) {
+            return proactiveResult;
+        }
     }
 
     let result;
@@ -243,38 +328,15 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
         return result;
     }
 
-    let upstreamUrl;
-    let audioFilename;
-
-    if (comId) {
-        upstreamUrl = new URL(`https://www.bilibili.com/video/${comId}`);
-        if (partId) upstreamUrl.searchParams.set('p', partId);
-        audioFilename = `bilibili_${comId}${partId ? `_${partId}` : ''}_audio`;
-    } else if (tvId) {
-        upstreamUrl = `https://www.bilibili.tv/video/${tvId}`;
-        audioFilename = `bilibili_tv_${tvId}_audio`;
-    }
-
     if (!upstreamUrl) return result;
 
-    const upstream = await fetchUpstream(upstreamUrl);
-    if (!upstream?.tunnels?.length) return result;
-
-    if (
-        typeof upstream.duration === "number" &&
-        Number.isFinite(upstream.duration) &&
-        upstream.duration > env.durationLimit
-    ) {
-        return { error: "content.too_long" };
-    }
-
-    return {
-        urls: upstream.tunnels.slice(0, 2),
-        filename: upstream.filename || `bilibili_${comId || tvId}.mp4`,
-        audioFilename,
-        duration: upstream.duration,
-        headers: {
-            "ngrok-skip-browser-warning": "true",
-        },
-    };
+    const upstream = await fetchUpstream(upstreamUrl, { reason: "fallback" });
+    return (
+        buildUpstreamResult({
+            upstream,
+            audioFilename,
+            defaultFilename,
+        })
+        || result
+    );
 }

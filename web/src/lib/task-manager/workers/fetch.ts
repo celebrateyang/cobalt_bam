@@ -6,7 +6,7 @@ const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 6;
 const INITIAL_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
 const MIN_RANGE_CHUNK_BYTES = 1 * 1024 * 1024;
-const MAX_RANGE_CHUNK_BYTES = 32 * 1024 * 1024;
+const MAX_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
 const FAST_CHUNK_MS = 4000;
 const SLOW_CHUNK_MS = 15000;
 const RETRY_BASE_DELAY_MS = 700;
@@ -31,6 +31,11 @@ const isRetryableNetworkError = (e: unknown) => {
         "terminated",
         "load failed",
     ].some((pattern) => message.includes(pattern));
+};
+
+const isStorageWriteError = (e: unknown) => {
+    const message = String(e).toLowerCase();
+    return message.includes("storage_write");
 };
 
 const isRetryableHttpStatus = (status: number) => (
@@ -375,9 +380,30 @@ const fetchFile = async (url: string) => {
                 }
 
                 madeProgress = true;
-                await storage.write(chunkData, receivedBytes);
-                receivedBytes += chunkData.length;
-                bytesReceivedThisResponse += chunkData.length;
+
+                let writtenTotal = 0;
+                while (writtenTotal < chunkData.length) {
+                    const bytesWritten = await storage.write(
+                        chunkData.subarray(writtenTotal),
+                        receivedBytes + writtenTotal,
+                    );
+
+                    if (
+                        !Number.isFinite(bytesWritten) ||
+                        bytesWritten <= 0
+                    ) {
+                        throw new Error("storage_write_no_progress");
+                    }
+
+                    writtenTotal += Math.min(
+                        chunkData.length - writtenTotal,
+                        bytesWritten,
+                    );
+                    markProgress();
+                }
+
+                receivedBytes += writtenTotal;
+                bytesReceivedThisResponse += writtenTotal;
                 retries = 0;
                 reportProgress();
             }
@@ -463,6 +489,10 @@ const fetchFile = async (url: string) => {
 
         if (isRetryableNetworkError(e)) {
             return error("queue.fetch.network_error");
+        }
+
+        if (isStorageWriteError(e)) {
+            return error("queue.fetch.corrupted_file");
         }
 
         console.error("error from the fetch worker:");

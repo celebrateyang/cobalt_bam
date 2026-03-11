@@ -63,6 +63,18 @@ export const schedule = () => {
                     break;
                 }
 
+                if (worker.worker === "fetch") {
+                    const hasRunningFetchWorker = Object.values(get(currentTasks))
+                        .some((taskItem) => (
+                            taskItem.parentId === task.id &&
+                            taskItem.type === "fetch"
+                        ));
+
+                    if (hasRunningFetchWorker) {
+                        break;
+                    }
+                }
+
                 startPipeline(worker);
             }
 

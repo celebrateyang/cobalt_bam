@@ -1,11 +1,13 @@
 <script lang="ts">
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
+    import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { clearCollectionMemory } from "$lib/api/collection-memory";
     import { createDialog } from "$lib/state/dialogs";
+    import { queue as queueStore } from "$lib/state/task-manager/queue";
     import {
         checkSignedIn,
         clerkEnabled,
@@ -62,8 +64,27 @@
     const baseBatchDelayMs = 1200;
     const rateLimitBackoffMs = 4000;
     const maxRateLimitRetries = 2;
+    const maxQueuePrefetch = 2;
+    const queueSlotWaitMs = 600;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let rateLimitSkipNotified = false;
+
+    const countQueuedPendingItems = () => {
+        const queue = get(queueStore);
+        return Object.values(queue).filter(
+            (item) => item.state === "waiting" || item.state === "running",
+        ).length;
+    };
+
+    const waitForQueueSlot = async () => {
+        while (!cancelRequested) {
+            if (countQueuedPendingItems() < maxQueuePrefetch) {
+                return;
+            }
+
+            await sleep(queueSlotWaitMs);
+        }
+    };
 
     const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
         const request = buildSaveRequest(url);
@@ -415,6 +436,10 @@
 
         for (const item of selectedItems) {
             if (cancelRequested) break;
+
+            await waitForQueueSlot();
+            if (cancelRequested) break;
+
             const taskId = uuid();
             let response = null;
             let rateLimitRetries = 0;

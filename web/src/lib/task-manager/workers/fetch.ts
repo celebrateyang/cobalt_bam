@@ -1,15 +1,43 @@
 import * as Storage from "$lib/storage";
 
-const networkErrors = [
-    "TypeError: Failed to fetch",
-    "TypeError: network error",
-];
-
 const TOTAL_TIMEOUT_MS = 15 * 60 * 1000;
-const STALL_TIMEOUT_MS = 60 * 1000;
+const STALL_TIMEOUT_MS = 3 * 60 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
+const MAX_RETRIES = 6;
 
-let attempts = 0;
+const isAbortError = (e: unknown) => (
+    (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
+    String(e).includes("AbortError")
+);
+
+const isRetryableNetworkError = (e: unknown) => {
+    if (isAbortError(e)) return false;
+
+    if (e instanceof TypeError) {
+        return true;
+    }
+
+    const message = String(e).toLowerCase();
+    return [
+        "failed to fetch",
+        "network error",
+        "networkerror",
+        "terminated",
+        "load failed",
+    ].some((pattern) => message.includes(pattern));
+};
+
+const parseContentRangeTotal = (value: string | null) => {
+    if (!value) return;
+
+    const match = /^bytes\s+\d+-\d+\/(\d+|\*)$/i.exec(value.trim());
+    if (!match || match[1] === "*") return;
+
+    const total = Number(match[1]);
+    if (!Number.isFinite(total) || total <= 0) return;
+
+    return total;
+};
 
 const fetchFile = async (url: string) => {
     let storage: Awaited<ReturnType<typeof Storage.init>> | null = null;
@@ -44,73 +72,167 @@ const fetchFile = async (url: string) => {
         }
     };
 
-    const error = async (code: string, retry: boolean = true) => {
+    const error = async (code: string) => {
         stopTimers();
         if (storage) {
             await storage.destroy().catch(() => undefined);
         }
-        attempts++;
 
-        // try 3 more times before actually failing
-        if (retry && attempts <= 3) {
-            await fetchFile(url);
-        } else {
-            self.postMessage({
-                cobaltFetchWorker: {
-                    error: code,
-                }
-            });
-            return self.close();
-        }
+        self.postMessage({
+            cobaltFetchWorker: {
+                error: code,
+            }
+        });
+        return self.close();
     };
 
     try {
-        const response = await fetch(url, { signal: controller.signal });
-
-        if (!response.ok) {
-            return error("queue.fetch.bad_response");
-        }
-
-        const contentType = response.headers.get('Content-Type')
-            || 'application/octet-stream';
-
-        const contentLength = response.headers.get('Content-Length');
-        const estimatedLength = response.headers.get('Estimated-Content-Length');
-
-        let expectedSize;
-
-        if (contentLength) {
-            expectedSize = +contentLength;
-        } else if (estimatedLength) {
-            expectedSize = +estimatedLength;
-        }
-
-        const reader = response.body?.getReader();
-        storage = await Storage.init(expectedSize);
-
-        if (!reader) {
-            return error("queue.fetch.no_file_reader");
-        }
-
         let receivedBytes = 0;
+        let retries = 0;
+        let expectedSize: number | undefined;
+        let expectedSizeReliable = false;
+        let contentType = "application/octet-stream";
+
         markProgress();
         startStallMonitor();
 
         while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+            const headers: Record<string, string> = {};
+            if (receivedBytes > 0) {
+                headers.Range = `bytes=${receivedBytes}-`;
+            }
 
-            await storage.write(value, receivedBytes);
-            receivedBytes += value.length;
-            markProgress();
-
-            if (expectedSize) {
-                self.postMessage({
-                    cobaltFetchWorker: {
-                        progress: Math.round((receivedBytes / expectedSize) * 100),
-                        size: receivedBytes,
-                    }
+            let response: Response;
+            try {
+                response = await fetch(url, {
+                    signal: controller.signal,
+                    headers,
                 });
+            } catch (e) {
+                if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
+                    retries++;
+                    continue;
+                }
+                throw e;
+            }
+
+            if (response.status === 416 && receivedBytes > 0) {
+                if (!expectedSizeReliable || (expectedSize && receivedBytes >= expectedSize)) {
+                    break;
+                }
+            }
+
+            const resumedRequest = receivedBytes > 0;
+            const partialResponse = resumedRequest && response.status === 206;
+
+            if (!response.ok && !partialResponse) {
+                if (resumedRequest && retries < MAX_RETRIES && response.status >= 500) {
+                    retries++;
+                    continue;
+                }
+                return error("queue.fetch.bad_response");
+            }
+
+            if (resumedRequest && response.status === 200) {
+                if (retries < MAX_RETRIES) {
+                    retries++;
+                    receivedBytes = 0;
+                    expectedSize = undefined;
+                    expectedSizeReliable = false;
+                    if (storage) {
+                        await storage.destroy().catch(() => undefined);
+                        storage = null;
+                    }
+                    continue;
+                }
+                return error("queue.fetch.bad_response");
+            }
+
+            const nextContentType = response.headers.get("Content-Type");
+            if (nextContentType) {
+                contentType = nextContentType;
+            }
+
+            const totalFromRange = parseContentRangeTotal(response.headers.get("Content-Range"));
+            if (totalFromRange) {
+                expectedSize = totalFromRange;
+                expectedSizeReliable = true;
+            } else {
+                const contentLength = Number(response.headers.get("Content-Length"));
+                if (Number.isFinite(contentLength) && contentLength > 0) {
+                    expectedSize = partialResponse
+                        ? receivedBytes + contentLength
+                        : contentLength;
+                    expectedSizeReliable = true;
+                } else if (!expectedSize) {
+                    const estimatedLength = Number(response.headers.get("Estimated-Content-Length"));
+                    if (Number.isFinite(estimatedLength) && estimatedLength > 0) {
+                        expectedSize = estimatedLength;
+                    }
+                }
+            }
+
+            if (!storage) {
+                storage = await Storage.init(expectedSize);
+            }
+
+            const reader = response.body?.getReader();
+            if (!reader) {
+                return error("queue.fetch.no_file_reader");
+            }
+
+            let madeProgress = false;
+
+            while (true) {
+                let chunk;
+                try {
+                    chunk = await reader.read();
+                } catch (e) {
+                    if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
+                        retries++;
+                        break;
+                    }
+                    throw e;
+                }
+
+                const { done, value } = chunk;
+                if (done) break;
+                if (!value) continue;
+
+                madeProgress = true;
+                await storage.write(value, receivedBytes);
+                receivedBytes += value.length;
+                retries = 0;
+                markProgress();
+
+                if (expectedSize) {
+                    const percentage = Math.max(
+                        0,
+                        Math.min(100, Math.round((receivedBytes / expectedSize) * 100))
+                    );
+
+                    self.postMessage({
+                        cobaltFetchWorker: {
+                            progress: percentage,
+                            size: receivedBytes,
+                        }
+                    });
+                }
+            }
+
+            if (expectedSize && receivedBytes >= expectedSize) {
+                break;
+            }
+
+            if (!expectedSizeReliable) {
+                break;
+            }
+
+            if (!madeProgress) {
+                if (retries >= MAX_RETRIES) {
+                    return error("queue.fetch.network_error");
+                }
+                retries++;
             }
         }
 
@@ -118,11 +240,24 @@ const fetchFile = async (url: string) => {
             return error("queue.fetch.empty_tunnel");
         }
 
+        if (!storage) {
+            return error("queue.fetch.empty_tunnel");
+        }
+
         stopTimers();
         const file = Storage.retype(await storage.res(), contentType);
 
-        if (contentLength && Number(contentLength) !== file.size) {
-            return error("queue.fetch.corrupted_file", false);
+        if (expectedSizeReliable && expectedSize && expectedSize !== file.size) {
+            return error("queue.fetch.corrupted_file");
+        }
+
+        if (expectedSize) {
+            self.postMessage({
+                cobaltFetchWorker: {
+                    progress: 100,
+                    size: receivedBytes,
+                }
+            });
         }
 
         self.postMessage({
@@ -132,23 +267,21 @@ const fetchFile = async (url: string) => {
         });
     } catch (e) {
         stopTimers();
-        const isAbort =
-            (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
-            String(e).includes("AbortError");
-        if (isAbort) {
+        if (isAbortError(e)) {
             return error(
                 abortReason === "stalled"
                     ? "queue.fetch.stalled"
                     : "queue.fetch.timeout"
             );
         }
-        // retry several times if the error is network-related
-        if (networkErrors.includes(String(e))) {
+
+        if (isRetryableNetworkError(e)) {
             return error("queue.fetch.network_error");
         }
+
         console.error("error from the fetch worker:");
         console.error(e);
-        return error("queue.fetch.crashed", false);
+        return error("queue.fetch.crashed");
     }
 }
 

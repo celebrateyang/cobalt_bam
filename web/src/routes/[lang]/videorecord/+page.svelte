@@ -382,6 +382,9 @@
     $: teleprompterInputPlaceholder = tr("videorecord.teleprompter.placeholder");
     let showTeleprompter = false;
     let isTeleprompterRunning = false;
+    const teleprompterSpeedMin = 5;
+    const teleprompterSpeedMax = 180;
+    const teleprompterSpeedStep = 5;
     let teleprompterSpeed = 40; // px/s
     let teleprompterFontSize = 14;
     let teleprompterOpacity = 92;
@@ -2238,6 +2241,15 @@
         teleprompterOffsetY = clamp(teleprompterOffsetY, minY, maxY);
     };
 
+    const sanitizeTeleprompterSpeed = (value: number) => {
+        const rounded =
+            Math.round(value / teleprompterSpeedStep) * teleprompterSpeedStep;
+        return Math.min(
+            teleprompterSpeedMax,
+            Math.max(teleprompterSpeedMin, rounded),
+        );
+    };
+
     const persistTeleprompterPrefs = () => {
         if (!teleprompterHydrated || typeof window === "undefined") return;
         const payload = {
@@ -2452,8 +2464,9 @@
                 const saved = JSON.parse(raw);
                 if (typeof saved.x === "number") teleprompterOffsetX = saved.x;
                 if (typeof saved.y === "number") teleprompterOffsetY = saved.y;
-                if (typeof saved.speed === "number")
-                    teleprompterSpeed = saved.speed;
+                if (typeof saved.speed === "number") {
+                    teleprompterSpeed = sanitizeTeleprompterSpeed(saved.speed);
+                }
                 if (typeof saved.opacity === "number")
                     teleprompterOpacity = saved.opacity;
                 if (typeof saved.fontSize === "number")
@@ -3811,6 +3824,8 @@
         persistTeleprompterPrefs();
     }
 
+    $: teleprompterSpeed = sanitizeTeleprompterSpeed(teleprompterSpeed);
+
     $: cameraFillZoom = sanitizeCameraFillZoom(cameraFillZoom);
 
     $: autosaveSignature = `${activeSlide}|${slides.length}|${(slides[activeSlide] || "").length}|${bridgeSlides.length}|${bridgeSlides[activeSlide]?.elements?.length ?? 0}|${frames.length}|${webEmbeds.length}|${aspectRatio}|${backgroundColor}|${canvasCornerRadius}|${canvasInnerPadding}|${cameraFillFrame}|${cameraFillZoom}`;
@@ -4673,7 +4688,8 @@
                     isRecordingStarting ||
                     isRecordingStopping ||
                     recordCountdownLeft > 0}
-                style={`opacity:${teleprompterOpacity / 100}; transform:translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px);`}
+                style:opacity={teleprompterOpacity / 100}
+                style:transform={`translate(${teleprompterOffsetX}px, ${teleprompterOffsetY}px)`}
             >
                 <div
                     class="teleprompter-header"
@@ -4724,9 +4740,9 @@
                             <span>{$t("videorecord.teleprompter.speed")}</span>
                             <input
                                 type="range"
-                                min="10"
-                                max="180"
-                                step="5"
+                                min={teleprompterSpeedMin}
+                                max={teleprompterSpeedMax}
+                                step={teleprompterSpeedStep}
                                 bind:value={teleprompterSpeed}
                             />
                         </label>

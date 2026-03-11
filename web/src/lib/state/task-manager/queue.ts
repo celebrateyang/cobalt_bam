@@ -89,12 +89,18 @@ const finalizeQueueHold = async (id: UUID) => {
         `[queue] finalizeQueueHold: start id=${id} holdId=${holdId ?? "none"} required=${required ?? "none"} status=${currentStatus ?? "none"}`
     );
     let result = holdId
-        ? await finalizePointsHold(holdId, "queue_done")
+        ? await finalizePointsHold(holdId, "queue_done", {
+            queueId: id,
+            itemId: id,
+        })
         : { ok: true, status: "skipped" };
 
     if (!result?.ok && holdId) {
         await new Promise((r) => setTimeout(r, 500));
-        result = await finalizePointsHold(holdId, "queue_done_retry");
+        result = await finalizePointsHold(holdId, "queue_done_retry", {
+            queueId: id,
+            itemId: id,
+        });
     }
 
     if (result?.ok) {
@@ -121,12 +127,16 @@ const finalizeQueueHold = async (id: UUID) => {
             status: "error",
         });
         if (holdId) {
-            await releasePointsHold(holdId, "finalize_failed").catch(() => false);
+            await releasePointsHold(holdId, "finalize_failed", {
+                queueId: id,
+                itemId: id,
+                errorCode: "finalize_failed",
+            }).catch(() => false);
         }
     }
 };
 
-const releaseQueueHold = async (id: UUID, reason: string) => {
+const releaseQueueHold = async (id: UUID, reason: string, errorCode?: string) => {
     const item = get(queue)[id];
     if (!item) {
         console.log(`[queue] releaseQueueHold: item not found id=${id}`);
@@ -139,8 +149,12 @@ const releaseQueueHold = async (id: UUID, reason: string) => {
         return;
     }
 
-    console.log(`[queue] releaseQueueHold: calling API holdId=${holdId} reason=${reason} itemId=${id}`);
-    const result = await releasePointsHold(holdId, reason).catch((error) => {
+    console.log(`[queue] releaseQueueHold: calling API holdId=${holdId} reason=${reason} itemId=${id} errorCode=${errorCode ?? "none"}`);
+    const result = await releasePointsHold(holdId, reason, {
+        queueId: id,
+        itemId: id,
+        errorCode,
+    }).catch((error) => {
         console.error(`[queue] releaseQueueHold: API call failed holdId=${holdId} error=`, error);
         return null;
     });
@@ -164,7 +178,11 @@ const releaseHoldForItem = (item: CobaltQueueItem, reason: string) => {
     const holdId = item.points?.holdId;
     const status = item.points?.status;
     if (!holdId || status === "finalized" || status === "released") return;
-    void releasePointsHold(holdId, reason).catch(() => false);
+    void releasePointsHold(holdId, reason, {
+        queueId: item.id,
+        itemId: item.id,
+        errorCode: reason,
+    }).catch(() => false);
 };
 
 export function addItem(item: CobaltQueueItem) {
@@ -205,7 +223,7 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
     removeWorkerFromQueue(workerId);
     schedule();
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
-    void releaseQueueHold(id, "queue_error");
+    void releaseQueueHold(id, "queue_error", error);
 }
 
 export function itemDone(id: UUID, file: File) {

@@ -422,7 +422,10 @@ export const savingHandler = async ({
 
                 const holdId = response?.points?.holdId;
                 if (holdId) {
-                    void finalizePointsHold(holdId, "redirect_download_started").catch(() => false);
+                    void finalizePointsHold(holdId, "redirect_download_started", {
+                        queueId: oldTaskId,
+                        itemId: oldTaskId,
+                    }).catch(() => false);
                 }
 
                 const memory = queueMeta?.collectionMemory;
@@ -531,7 +534,11 @@ export const savingHandler = async ({
             const holdId = response?.points?.holdId;
             if (holdId) {
                 import("$lib/api/points").then(({ releasePointsHold }) => {
-                    releasePointsHold(holdId, "pipeline_creation_failed").catch(() => { });
+                    releasePointsHold(holdId, "pipeline_creation_failed", {
+                        queueId: oldTaskId,
+                        itemId: oldTaskId,
+                        errorCode: "pipeline_creation_failed",
+                    }).catch(() => { });
                 });
             }
 

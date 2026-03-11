@@ -14,6 +14,13 @@ export type PointsHoldReleaseResult = {
     status?: string;
 };
 
+export type PointsHoldRequestContext = {
+    queueId?: string;
+    itemId?: string;
+    errorCode?: string;
+};
+
+
 const getTokenWithRetry = async (attempts = 6, delayMs = 250) => {
     let token = await getClerkToken();
     if (token) return token;
@@ -33,6 +40,7 @@ const createRequestId = () =>
 export const finalizePointsHold = async (
     holdId: string,
     reason?: string,
+    context?: PointsHoldRequestContext,
 ): Promise<PointsHoldFinalizeResult> => {
     const token = await getTokenWithRetry();
     if (!token) {
@@ -48,7 +56,14 @@ export const finalizePointsHold = async (
             "Content-Type": "application/json",
             "X-Request-Id": requestId,
         },
-        body: JSON.stringify({ holdId, reason, requestId }),
+        body: JSON.stringify({
+            holdId,
+            reason,
+            requestId,
+            queueId: context?.queueId,
+            itemId: context?.itemId,
+            errorCode: context?.errorCode,
+        }),
     }).catch(() => null);
 
     const data = await res?.json().catch(() => ({}));
@@ -68,8 +83,9 @@ export const finalizePointsHold = async (
 export const releasePointsHold = async (
     holdId: string,
     reason?: string,
+    context?: PointsHoldRequestContext,
 ): Promise<PointsHoldReleaseResult> => {
-    console.log(`[points] releasePointsHold: start holdId=${holdId} reason=${reason}`);
+    console.log(`[points] releasePointsHold: start holdId=${holdId} reason=${reason} queueId=${context?.queueId ?? "none"} itemId=${context?.itemId ?? "none"} errorCode=${context?.errorCode ?? "none"}`);
 
     const token = await getTokenWithRetry();
     if (!token) {
@@ -88,7 +104,14 @@ export const releasePointsHold = async (
             "Content-Type": "application/json",
             "X-Request-Id": requestId,
         },
-        body: JSON.stringify({ holdId, reason, requestId }),
+        body: JSON.stringify({
+            holdId,
+            reason,
+            requestId,
+            queueId: context?.queueId,
+            itemId: context?.itemId,
+            errorCode: context?.errorCode,
+        }),
     }).catch((error) => {
         console.error(`[points] releasePointsHold: fetch failed holdId=${holdId} requestId=${requestId} error=`, error);
         return null;

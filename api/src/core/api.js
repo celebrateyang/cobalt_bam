@@ -692,7 +692,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             });
 
             res.status(statusCode);
-            for (const headerName of ["accept-ranges", "content-type", "content-length"]) {
+            for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
                 if (headers[headerName]) {
                     res.setHeader(headerName, headers[headerName]);
                 }

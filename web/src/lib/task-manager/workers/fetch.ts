@@ -98,6 +98,7 @@ const fetchFile = async (url: string) => {
 
         const reportProgress = () => {
             if (!expectedSize) return;
+            if (!expectedSizeReliable && expectedSize <= receivedBytes) return;
 
             largestExpectedSize = Math.max(largestExpectedSize, expectedSize, receivedBytes);
             if (largestExpectedSize <= 0) return;
@@ -122,6 +123,7 @@ const fetchFile = async (url: string) => {
 
         while (true) {
             const headers: Record<string, string> = {};
+            const rangeStart = receivedBytes;
             let requestedRangeEnd: number | undefined;
 
             if (expectedSizeReliable && expectedSize) {
@@ -135,12 +137,18 @@ const fetchFile = async (url: string) => {
                 );
                 headers.Range = `bytes=${receivedBytes}-${requestedRangeEnd}`;
             } else if (receivedBytes > 0) {
-                headers.Range = `bytes=${receivedBytes}-`;
+                requestedRangeEnd = receivedBytes + RANGE_CHUNK_BYTES - 1;
+                headers.Range = `bytes=${receivedBytes}-${requestedRangeEnd}`;
             } else {
                 // Start with a bounded range to avoid one fragile long-lived connection.
                 requestedRangeEnd = RANGE_CHUNK_BYTES - 1;
                 headers.Range = `bytes=0-${requestedRangeEnd}`;
             }
+
+            const expectedChunkBytes =
+                requestedRangeEnd != null
+                    ? requestedRangeEnd - rangeStart + 1
+                    : undefined;
 
             let response: Response;
             try {
@@ -234,6 +242,7 @@ const fetchFile = async (url: string) => {
             }
 
             let madeProgress = false;
+            let bytesReceivedThisResponse = 0;
 
             while (true) {
                 let chunk;
@@ -271,6 +280,7 @@ const fetchFile = async (url: string) => {
                 madeProgress = true;
                 await storage.write(chunkData, receivedBytes);
                 receivedBytes += chunkData.length;
+                bytesReceivedThisResponse += chunkData.length;
                 retries = 0;
                 reportProgress();
             }
@@ -283,12 +293,17 @@ const fetchFile = async (url: string) => {
                 continue;
             }
 
-            if (expectedSize && receivedBytes >= expectedSize) {
+            if (expectedSizeReliable && expectedSize && receivedBytes >= expectedSize) {
                 break;
             }
 
-            if (!expectedSizeReliable) {
-                break;
+            if (expectedChunkBytes != null) {
+                // For chunked range mode without reliable total size,
+                // a short chunk indicates we've reached the end.
+                if (bytesReceivedThisResponse < expectedChunkBytes) {
+                    break;
+                }
+                continue;
             }
 
             if (!madeProgress) {

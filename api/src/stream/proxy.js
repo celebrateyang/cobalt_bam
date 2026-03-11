@@ -51,7 +51,7 @@ export default async function (streamInfo, res) {
         upstreamContentLength = headers["content-length"];
         res.status(statusCode);
 
-        for (const headerName of ['accept-ranges', 'content-type', 'content-length']) {
+        for (const headerName of ['accept-ranges', 'content-type', 'content-length', 'content-range']) {
             if (headers[headerName]) {
                 res.setHeader(headerName, headers[headerName]);
             }

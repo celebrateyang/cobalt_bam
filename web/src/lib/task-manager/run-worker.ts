@@ -53,7 +53,7 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
         }
 
         case "fetch":
-            await runFetchWorker(workerId, parentId, workerArgs.url);
+            await runFetchWorker(workerId, parentId, workerArgs.url, workerArgs.tuning);
             break;
     }
 }

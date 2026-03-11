@@ -157,6 +157,15 @@ export const createSavePipeline = (
 
     const parentId = oldTaskId || uuid();
     const pipeline: CobaltPipelineItem[] = [];
+    const isBilibili = info.service === "bilibili";
+    const fetchTuning = isBilibili
+        ? {
+            initialChunkBytes: 2 * 1024 * 1024,
+            maxChunkBytes: 4 * 1024 * 1024,
+            fastChunkMs: 2500,
+            slowChunkMs: 8000,
+        }
+        : undefined;
 
     // reverse is needed for audio (second item) to be downloaded first
     const tunnels = info.tunnel.reverse();
@@ -168,6 +177,7 @@ export const createSavePipeline = (
             parentId,
             workerArgs: {
                 url: tunnel,
+                tuning: fetchTuning,
             },
         });
     }

@@ -11,6 +11,13 @@ const FAST_CHUNK_MS = 4000;
 const SLOW_CHUNK_MS = 15000;
 const RETRY_BASE_DELAY_MS = 700;
 
+type FetchWorkerTuning = {
+    initialChunkBytes?: number,
+    maxChunkBytes?: number,
+    fastChunkMs?: number,
+    slowChunkMs?: number,
+};
+
 const isAbortError = (e: unknown) => (
     (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
     String(e).includes("AbortError")
@@ -64,8 +71,8 @@ const parseRetryAfterMs = (value: string | null) => {
     }
 };
 
-const clampChunkSize = (size: number) => (
-    Math.max(MIN_RANGE_CHUNK_BYTES, Math.min(MAX_RANGE_CHUNK_BYTES, size))
+const clampChunkSize = (size: number, maxChunkBytes = MAX_RANGE_CHUNK_BYTES) => (
+    Math.max(MIN_RANGE_CHUNK_BYTES, Math.min(maxChunkBytes, size))
 );
 
 const getBackoffDelayMs = (retryCount: number, retryAfterMs?: number) => {
@@ -105,17 +112,20 @@ const tuneChunkSizeOnSuccess = (
     bytesReceived: number,
     expectedChunkBytes: number | undefined,
     elapsedMs: number,
+    fastChunkMs: number,
+    slowChunkMs: number,
+    maxChunkBytes: number,
 ) => {
     if (!expectedChunkBytes || bytesReceived < expectedChunkBytes) {
         return currentChunkBytes;
     }
 
-    if (elapsedMs <= FAST_CHUNK_MS) {
-        return clampChunkSize(currentChunkBytes * 2);
+    if (elapsedMs <= fastChunkMs) {
+        return clampChunkSize(currentChunkBytes * 2, maxChunkBytes);
     }
 
-    if (elapsedMs >= SLOW_CHUNK_MS) {
-        return clampChunkSize(Math.floor(currentChunkBytes / 2));
+    if (elapsedMs >= slowChunkMs) {
+        return clampChunkSize(Math.floor(currentChunkBytes / 2), maxChunkBytes);
     }
 
     return currentChunkBytes;
@@ -133,7 +143,47 @@ const parseContentRangeTotal = (value: string | null) => {
     return total;
 };
 
-const fetchFile = async (url: string) => {
+const normalizeTuning = (tuning?: FetchWorkerTuning) => {
+    const normalizedMaxChunkBytes = clampChunkSize(
+        Math.floor(
+            Number.isFinite(tuning?.maxChunkBytes)
+                ? Number(tuning?.maxChunkBytes)
+                : MAX_RANGE_CHUNK_BYTES
+        ),
+    );
+
+    const normalizedInitialChunkBytes = clampChunkSize(
+        Math.floor(
+            Number.isFinite(tuning?.initialChunkBytes)
+                ? Number(tuning?.initialChunkBytes)
+                : INITIAL_RANGE_CHUNK_BYTES
+        ),
+        normalizedMaxChunkBytes,
+    );
+
+    const normalizedFastChunkMs = (
+        Number.isFinite(tuning?.fastChunkMs) && Number(tuning?.fastChunkMs) > 0
+            ? Math.floor(Number(tuning?.fastChunkMs))
+            : FAST_CHUNK_MS
+    );
+
+    const normalizedSlowChunkMs = Math.max(
+        normalizedFastChunkMs + 1000,
+        Number.isFinite(tuning?.slowChunkMs) && Number(tuning?.slowChunkMs) > 0
+            ? Math.floor(Number(tuning?.slowChunkMs))
+            : SLOW_CHUNK_MS,
+    );
+
+    return {
+        maxChunkBytes: normalizedMaxChunkBytes,
+        initialChunkBytes: normalizedInitialChunkBytes,
+        fastChunkMs: normalizedFastChunkMs,
+        slowChunkMs: normalizedSlowChunkMs,
+    };
+};
+
+const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
+    const runtimeTuning = normalizeTuning(tuning);
     let storage: Awaited<ReturnType<typeof Storage.init>> | null = null;
     let abortReason: "timeout" | "stalled" | null = null;
     const controller = new AbortController();
@@ -188,7 +238,7 @@ const fetchFile = async (url: string) => {
         let largestExpectedSize = 0;
         let highestReportedProgress = 0;
         let contentType = "application/octet-stream";
-        let rangeChunkBytes = INITIAL_RANGE_CHUNK_BYTES;
+        let rangeChunkBytes = runtimeTuning.initialChunkBytes;
 
         const reportProgress = () => {
             if (!expectedSize) return;
@@ -254,7 +304,7 @@ const fetchFile = async (url: string) => {
             } catch (e) {
                 if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
                     retries++;
-                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
@@ -274,7 +324,7 @@ const fetchFile = async (url: string) => {
             if (!response.ok && !partialResponse) {
                 if (retries < MAX_RETRIES && isRetryableHttpStatus(response.status)) {
                     retries++;
-                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                     const retryAfterMs = parseRetryAfterMs(response.headers.get("Retry-After"));
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries, retryAfterMs));
                     continue;
@@ -351,7 +401,7 @@ const fetchFile = async (url: string) => {
                 } catch (e) {
                     if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
                         retries++;
-                        rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                        rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                         await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                         break;
                     }
@@ -413,7 +463,7 @@ const fetchFile = async (url: string) => {
                     return error("queue.fetch.network_error");
                 }
                 retries++;
-                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                 await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                 continue;
             }
@@ -424,6 +474,9 @@ const fetchFile = async (url: string) => {
                 bytesReceivedThisResponse,
                 expectedChunkBytes,
                 elapsedMs,
+                runtimeTuning.fastChunkMs,
+                runtimeTuning.slowChunkMs,
+                runtimeTuning.maxChunkBytes,
             );
 
             if (expectedSizeReliable && expectedSize && receivedBytes >= expectedSize) {
@@ -443,7 +496,7 @@ const fetchFile = async (url: string) => {
                     }
 
                     retries++;
-                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
@@ -455,7 +508,7 @@ const fetchFile = async (url: string) => {
                     return error("queue.fetch.network_error");
                 }
                 retries++;
-                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
                 await waitForRetry(controller.signal, getBackoffDelayMs(retries));
             }
         }
@@ -514,7 +567,10 @@ const fetchFile = async (url: string) => {
 
 self.onmessage = async (event: MessageEvent) => {
     if (event.data.cobaltFetchWorker) {
-        await fetchFile(event.data.cobaltFetchWorker.url);
+        await fetchFile(
+            event.data.cobaltFetchWorker.url,
+            event.data.cobaltFetchWorker.tuning,
+        );
         self.close();
     }
 }

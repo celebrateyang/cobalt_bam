@@ -17,6 +17,13 @@ type CobaltFFmpegWorkerArgs = {
     output: FileInfo,
 };
 
+export type CobaltFetchTuning = {
+    initialChunkBytes?: number,
+    maxChunkBytes?: number,
+    fastChunkMs?: number,
+    slowChunkMs?: number,
+};
+
 type CobaltPipelineItemBase = {
     workerId: UUID,
     parentId: UUID,
@@ -35,7 +42,10 @@ type CobaltEncodePipelineItem = CobaltPipelineItemBase & {
 
 type CobaltFetchPipelineItem = CobaltPipelineItemBase & {
     worker: "fetch",
-    workerArgs: { url: string },
+    workerArgs: {
+        url: string,
+        tuning?: CobaltFetchTuning,
+    },
 }
 
 export type CobaltPipelineItem = CobaltEncodePipelineItem

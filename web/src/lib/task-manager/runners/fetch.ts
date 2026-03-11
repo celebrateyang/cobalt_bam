@@ -5,8 +5,14 @@ import { updateWorkerProgress } from "$lib/state/task-manager/current-tasks";
 import { pipelineTaskDone, itemError, queue } from "$lib/state/task-manager/queue";
 
 import type { CobaltQueue, UUID } from "$lib/types/queue";
+import type { CobaltFetchTuning } from "$lib/types/workers";
 
-export const runFetchWorker = async (workerId: UUID, parentId: UUID, url: string) => {
+export const runFetchWorker = async (
+    workerId: UUID,
+    parentId: UUID,
+    url: string,
+    tuning?: CobaltFetchTuning,
+) => {
     const worker = new FetchWorker();
 
     const unsubscribe = queue.subscribe((queue: CobaltQueue) => {
@@ -17,7 +23,8 @@ export const runFetchWorker = async (workerId: UUID, parentId: UUID, url: string
 
     worker.postMessage({
         cobaltFetchWorker: {
-            url
+            url,
+            tuning,
         }
     });
 

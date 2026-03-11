@@ -21,7 +21,7 @@ const shouldUseUpstream = () => {
     }
 };
 
-const PROACTIVE_UPSTREAM_TIMEOUT_MS = 6000;
+const PROACTIVE_UPSTREAM_TIMEOUT_MS = 12000;
 
 const rewriteUpstreamTunnelUrl = (rawUrl) => {
     try {
@@ -313,8 +313,12 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
             defaultFilename,
         });
         if (proactiveResult) {
+            console.log(
+                `[bilibili] upstream preferred selected tunnels=${proactiveResult.urls.length}`,
+            );
             return proactiveResult;
         }
+        console.log("[bilibili] upstream preferred unavailable, fallback to local extractor");
     }
 
     let result;
@@ -334,6 +338,9 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
     if (!upstreamUrl) return result;
 
     const upstream = await fetchUpstream(upstreamUrl, { reason: "fallback" });
+    if (upstream?.tunnels?.length) {
+        console.log(`[bilibili] upstream fallback selected tunnels=${upstream.tunnels.length}`);
+    }
     return (
         buildUpstreamResult({
             upstream,

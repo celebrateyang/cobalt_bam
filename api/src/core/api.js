@@ -449,9 +449,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 return fail(res, "error.api.points.unavailable");
             }
         }
+        const requestId = Math.random().toString(36).slice(2, 10);
         const hasClerkTokenHeader = !!req.header("X-Clerk-Token");
         console.log(
-            `[DOWNLOAD AUTH] url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
+            `[DOWNLOAD AUTH] request_id=${requestId} url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
         );
 
         const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
@@ -473,12 +474,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 // fail open if dedupe storage is unavailable
             }
         }
-        const requestId = Math.random().toString(36).slice(2, 10);
         const requestTime = new Date().toISOString();
         const authType = req.authType ?? "none";
         const startedAtMs = Date.now();
         console.log(
-            `[DOWNLOAD REQUEST] url=${normalizedRequest.url} email=${email} time=${requestTime}`,
+            `[DOWNLOAD REQUEST] request_id=${requestId} url=${normalizedRequest.url} email=${email} time=${requestTime}`,
         );
 
         const parsed = extract(
@@ -539,7 +539,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         if (!hold.ok) {
                             pointsOutcome = "insufficient";
                             console.log(
-                                `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=insufficient current=${hold.current ?? pointsBefore} required=${pointsRequired} email=${email}`,
+                                `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=insufficient current=${hold.current ?? pointsBefore} required=${pointsRequired} email=${email}`,
                             );
                             return fail(res, "error.api.points.insufficient", {
                                 current: hold.current ?? pointsUser.points,
@@ -554,13 +554,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         pointsAfter = pointsBefore;
 
                         console.log(
-                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=held before=${pointsBefore} required=${pointsRequired} hold_id=${pointsHoldId} email=${email}`,
+                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=held before=${pointsBefore} required=${pointsRequired} hold_id=${pointsHoldId} email=${email}`,
                         );
                     } catch (error) {
                         console.error("Failed to hold points:", error);
                         pointsOutcome = "error";
                         console.log(
-                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=error email=${email}`,
+                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=error email=${email}`,
                         );
                         return fail(res, "error.api.points.unavailable");
                     }
@@ -574,7 +574,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         if (!updated) {
                             pointsOutcome = "insufficient";
                             console.log(
-                                `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=insufficient current=${pointsBefore} required=${pointsRequired} email=${email}`,
+                                `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=insufficient current=${pointsBefore} required=${pointsRequired} email=${email}`,
                             );
                             return fail(res, "error.api.points.insufficient", {
                                 current: pointsUser.points,
@@ -585,13 +585,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         pointsOutcome = "consumed";
                         pointsAfter = updated.points;
                         console.log(
-                            `[DOWNLOAD POINTS] url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} email=${email}`,
+                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} email=${email}`,
                         );
                     } catch (error) {
                         console.error("Failed to consume points:", error);
                         pointsOutcome = "error";
                         console.log(
-                            `[DOWNLOAD POINTS]  url=${normalizedRequest.url} result=error  email=${email}`,
+                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=error email=${email}`,
                         );
                         return fail(res, "error.api.points.unavailable");
                     }
@@ -599,7 +599,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             }
 
             console.log(
-                `[DOWNLOAD RESULT] url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"}  elapsed_ms=${Date.now() - startedAtMs}`,
+                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
             );
 
             console.log();
@@ -618,7 +618,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         } catch (error) {
             // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);
             console.log(
-                `[DOWNLOAD RESULT] url=${normalizedRequest.url}email=${email} result=exception   elapsed_ms=${Date.now() - startedAtMs}`,
+                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} result=exception elapsed_ms=${Date.now() - startedAtMs}`,
             );
             fail(res, "error.api.generic");
         }

@@ -5,12 +5,12 @@ import { destroyInternalStream } from "./manage.js";
 import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
 
 const defaultAgent = new Agent();
-const BILIBILI_HEADERS_TIMEOUT_MS = 20_000;
-const BILIBILI_BODY_TIMEOUT_MS = 60_000;
-const BILIBILI_IDLE_TIMEOUT_MS = 15_000;
-const BILIBILI_MIN_REQUEST_TIMEOUT_MS = 20_000;
-const BILIBILI_MAX_REQUEST_TIMEOUT_MS = 90_000;
-const BILIBILI_MIN_BYTES_PER_SECOND = 120 * 1024;
+const BILIBILI_HEADERS_TIMEOUT_MS = 30_000;
+const BILIBILI_BODY_TIMEOUT_MS = 120_000;
+const BILIBILI_IDLE_TIMEOUT_MS = 45_000;
+const BILIBILI_MIN_REQUEST_TIMEOUT_MS = 60_000;
+const BILIBILI_MAX_REQUEST_TIMEOUT_MS = 240_000;
+const BILIBILI_MIN_BYTES_PER_SECOND = 40 * 1024;
 
 const shouldApplyBilibiliFastFail = (streamInfo) => {
     if (streamInfo.service !== "bilibili") return false;

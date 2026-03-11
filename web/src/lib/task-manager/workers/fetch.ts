@@ -239,6 +239,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         let highestReportedProgress = 0;
         let contentType = "application/octet-stream";
         let rangeChunkBytes = runtimeTuning.initialChunkBytes;
+        let upstreamIgnoresRange = false;
 
         const reportProgress = () => {
             if (!expectedSize) return;
@@ -320,6 +321,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             const resumedRequest = receivedBytes > 0;
             const partialResponse = response.status === 206;
             let bytesToSkip = 0;
+            const requestedRange = requestedRangeEnd != null;
 
             if (!response.ok && !partialResponse) {
                 if (retries < MAX_RETRIES && isRetryableHttpStatus(response.status)) {
@@ -346,6 +348,12 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                         break;
                     }
                 }
+            }
+
+            if (!resumedRequest && requestedRange && response.status === 200) {
+                // Some tunnel hops ignore Range and stream the full file with 200.
+                // Mark this mode so we don't keep issuing follow-up range requests.
+                upstreamIgnoresRange = true;
             }
 
             const nextContentType = response.headers.get("Content-Type");
@@ -480,6 +488,13 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             );
 
             if (expectedSizeReliable && expectedSize && receivedBytes >= expectedSize) {
+                break;
+            }
+
+            if (
+                upstreamIgnoresRange &&
+                (!expectedSizeReliable || !expectedSize)
+            ) {
                 break;
             }
 

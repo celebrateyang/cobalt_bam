@@ -654,7 +654,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return res.sendStatus(400);
         }
 
-        if (service !== "douyin") {
+        if (!["douyin", "bilibili"].includes(service)) {
             return res.sendStatus(400);
         }
 
@@ -670,10 +670,19 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
 
         // Upstream relay often receives signed tunnel URLs whose host points to
-        // a public/protected domain (e.g. api1:9000). Fetching that externally
-        // may fail due ACL/port restrictions, so re-enter local tunnel handler.
+        // a public/protected domain (e.g. api1:9000). When relay runs on the
+        // same host as that tunnel, external fetch may fail due ACL/port
+        // restrictions, so re-enter local tunnel handler.
+        const requestedHost = String(req.header("host") || "").toLowerCase();
+        const targetHost = String(target.host || "").toLowerCase();
         let relayTarget = target;
-        if (target.pathname === "/tunnel") {
+        if (
+            target.pathname === "/tunnel" &&
+            (
+                targetHost === requestedHost ||
+                ["127.0.0.1", "localhost"].includes(String(target.hostname || "").toLowerCase())
+            )
+        ) {
             const localPort = Number.isFinite(Number(env.apiPort))
                 ? String(env.apiPort)
                 : "9000";

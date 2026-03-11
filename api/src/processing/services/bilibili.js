@@ -21,7 +21,7 @@ const shouldUseUpstream = () => {
     }
 };
 
-const PROACTIVE_UPSTREAM_TIMEOUT_MS = 3500;
+const PROACTIVE_UPSTREAM_TIMEOUT_MS = 6000;
 
 const rewriteUpstreamTunnelUrl = (rawUrl) => {
     try {
@@ -83,6 +83,7 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
     const timeoutMs = resolveUpstreamTimeoutMs(timeoutOverrideMs);
 
     const controller = new AbortController();
+    const startedAt = Date.now();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -122,8 +123,10 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
             filename: payload.output?.filename || payload.filename,
             duration: payload.duration,
         };
-    } catch {
-        console.log(`[bilibili] upstream request failed reason=${reason}`);
+    } catch (error) {
+        console.log(
+            `[bilibili] upstream request failed reason=${reason} elapsed_ms=${Date.now() - startedAt} message=${error?.message || "unknown"}`,
+        );
         return null;
     } finally {
         clearTimeout(timeout);

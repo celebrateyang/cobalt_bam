@@ -5,12 +5,29 @@ import { destroyInternalStream } from "./manage.js";
 import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
 
 const defaultAgent = new Agent();
-const BILIBILI_HEADERS_TIMEOUT_MS = 15_000;
-const BILIBILI_BODY_TIMEOUT_MS = 45_000;
-const BILIBILI_IDLE_TIMEOUT_MS = 6_000;
-const BILIBILI_MIN_REQUEST_TIMEOUT_MS = 7_000;
-const BILIBILI_MAX_REQUEST_TIMEOUT_MS = 25_000;
-const BILIBILI_MIN_BYTES_PER_SECOND = 350 * 1024;
+const BILIBILI_HEADERS_TIMEOUT_MS = 20_000;
+const BILIBILI_BODY_TIMEOUT_MS = 60_000;
+const BILIBILI_IDLE_TIMEOUT_MS = 15_000;
+const BILIBILI_MIN_REQUEST_TIMEOUT_MS = 20_000;
+const BILIBILI_MAX_REQUEST_TIMEOUT_MS = 90_000;
+const BILIBILI_MIN_BYTES_PER_SECOND = 120 * 1024;
+
+const shouldApplyBilibiliFastFail = (streamInfo) => {
+    if (streamInfo.service !== "bilibili") return false;
+
+    try {
+        const target = new URL(streamInfo.urls);
+        // If current hop already goes through an upstream tunnel endpoint,
+        // avoid stacking aggressive timers on top of upstream-side retries.
+        if (target.pathname === "/tunnel") {
+            return false;
+        }
+    } catch {
+        // Fallback to applying safeguards when URL parsing fails.
+    }
+
+    return true;
+};
 
 const estimateBilibiliMaxRequestMs = (contentLengthHeader) => {
     const bytes = Number(contentLengthHeader);
@@ -26,6 +43,7 @@ const estimateBilibiliMaxRequestMs = (contentLengthHeader) => {
 };
 
 export default async function (streamInfo, res) {
+    const shouldFastFailBilibili = shouldApplyBilibiliFastFail(streamInfo);
     const abortController = new AbortController();
     const startedAt = Date.now();
     let upstreamStatusCode;
@@ -58,7 +76,7 @@ export default async function (streamInfo, res) {
     };
 
     const setupBilibiliTimers = (stream) => {
-        if (streamInfo.service !== "bilibili") return;
+        if (!shouldFastFailBilibili) return;
 
         const restartIdleTimer = () => {
             if (idleTimer) clearTimeout(idleTimer);
@@ -108,7 +126,7 @@ export default async function (streamInfo, res) {
             signal: abortController.signal,
             maxRedirections: 16,
             dispatcher: defaultAgent,
-            ...(streamInfo.service === "bilibili"
+            ...(shouldFastFailBilibili
                 ? {
                     headersTimeout: BILIBILI_HEADERS_TIMEOUT_MS,
                     bodyTimeout: BILIBILI_BODY_TIMEOUT_MS,

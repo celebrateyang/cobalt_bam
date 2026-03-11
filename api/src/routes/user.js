@@ -79,7 +79,7 @@ const getHeaderValue = (headers, name) => {
     return value ?? null;
 };
 
-const buildHoldReleaseLogContext = (req) => {
+const buildHoldLogContext = (req) => {
     const rawUrl = req.body?.url ?? req.body?.targetUrl ?? null;
 
     return {
@@ -89,6 +89,13 @@ const buildHoldReleaseLogContext = (req) => {
         userAgent: sanitizeLogValue(getHeaderValue(req.headers, "user-agent"), 200),
         referer: sanitizeLogValue(getHeaderValue(req.headers, "referer"), 200),
         origin: sanitizeLogValue(getHeaderValue(req.headers, "origin"), 120),
+        requestId: sanitizeLogValue(
+            getHeaderValue(req.headers, "x-request-id")
+                ?? req.body?.requestId
+                ?? req.body?.request_id
+                ?? null,
+            120,
+        ),
         reason: sanitizeLogValue(req.body?.reason ?? null, 120),
         queueId: sanitizeLogValue(req.body?.queueId ?? req.body?.queue_id ?? null, 120),
         itemId: sanitizeLogValue(req.body?.itemId ?? req.body?.item_id ?? null, 120),
@@ -693,9 +700,8 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                console.log(
-                    `[hold-finalize] Request: userId=${auth.userId} holdId=${holdId} reason=${req.body?.reason ?? "none"}`,
-                );
+                const logContext = buildHoldLogContext(req);
+                console.log(`[hold-finalize] Request: userId=${auth.userId} holdId=${holdId} context=${JSON.stringify(logContext)}`);
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
@@ -707,7 +713,7 @@ if (!isClerkApiConfigured) {
                 });
 
                 console.log(
-                    `[hold-finalize] Result: userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? "none"} charged=${result.charged ?? "none"} code=${result.code ?? "none"}`,
+                    `[hold-finalize] Result: request_id=${logContext.requestId ?? "none"} userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? "none"} charged=${result.charged ?? "none"} code=${result.code ?? "none"}`,
                 );
 
                 if (!result.ok) {
@@ -793,7 +799,7 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const logContext = buildHoldReleaseLogContext(req);
+                const logContext = buildHoldLogContext(req);
                 console.log(`[hold-release] Request: userId=${auth.userId} holdId=${holdId} context=${JSON.stringify(logContext)}`);
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
@@ -805,7 +811,7 @@ if (!isClerkApiConfigured) {
                     reason: req.body?.reason ?? null,
                 });
 
-                console.log(`[hold-release] Result: userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? 'none'} code=${result.code ?? 'none'}`);
+                console.log(`[hold-release] Result: request_id=${logContext.requestId ?? "none"} userId=${user.id} holdId=${holdId} ok=${result.ok} status=${result.status ?? 'none'} code=${result.code ?? 'none'}`);
 
                 if (!result.ok) {
                     if (result.code === "HOLD_NOT_FOUND") {

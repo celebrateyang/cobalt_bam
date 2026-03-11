@@ -6,7 +6,7 @@ import { itemDone, itemError, itemRunning, queue } from "$lib/state/task-manager
 import type { CobaltPipelineItem } from "$lib/types/workers";
 
 const MAX_CONCURRENT_TASKS = 1;
-const MAX_CONCURRENT_WORKERS = 1;
+const MAX_CONCURRENT_WORKERS = 2;
 
 const startPipeline = (pipelineItem: CobaltPipelineItem) => {
     addWorkerToQueue(pipelineItem.workerId, {

@@ -4,6 +4,7 @@ const TOTAL_TIMEOUT_MS = 15 * 60 * 1000;
 const STALL_TIMEOUT_MS = 3 * 60 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 6;
+const RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
 
 const isAbortError = (e: unknown) => (
     (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
@@ -121,8 +122,24 @@ const fetchFile = async (url: string) => {
 
         while (true) {
             const headers: Record<string, string> = {};
-            if (receivedBytes > 0) {
+            let requestedRangeEnd: number | undefined;
+
+            if (expectedSizeReliable && expectedSize) {
+                if (receivedBytes >= expectedSize) {
+                    break;
+                }
+
+                requestedRangeEnd = Math.min(
+                    expectedSize - 1,
+                    receivedBytes + RANGE_CHUNK_BYTES - 1,
+                );
+                headers.Range = `bytes=${receivedBytes}-${requestedRangeEnd}`;
+            } else if (receivedBytes > 0) {
                 headers.Range = `bytes=${receivedBytes}-`;
+            } else {
+                // Start with a bounded range to avoid one fragile long-lived connection.
+                requestedRangeEnd = RANGE_CHUNK_BYTES - 1;
+                headers.Range = `bytes=0-${requestedRangeEnd}`;
             }
 
             let response: Response;
@@ -186,13 +203,19 @@ const fetchFile = async (url: string) => {
                 const contentLength = Number(response.headers.get("Content-Length"));
                 if (Number.isFinite(contentLength) && contentLength > 0) {
                     const candidateExpected = partialResponse
-                        ? receivedBytes + contentLength
+                        ? (
+                            requestedRangeEnd != null
+                                ? requestedRangeEnd + 1
+                                : receivedBytes + contentLength
+                        )
                         : contentLength;
                     expectedSize = Math.max(expectedSize ?? 0, candidateExpected);
-                    expectedSizeReliable =
-                        partialResponse ||
-                        !resumedRequest ||
-                        contentLength >= receivedBytes;
+
+                    if (!partialResponse) {
+                        expectedSizeReliable =
+                            !resumedRequest ||
+                            contentLength >= receivedBytes;
+                    }
                 } else if (!expectedSize) {
                     const estimatedLength = Number(response.headers.get("Estimated-Content-Length"));
                     if (Number.isFinite(estimatedLength) && estimatedLength > 0) {

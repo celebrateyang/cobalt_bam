@@ -22,6 +22,30 @@ const transplantRetryableStatuses = new Set([
     504,
 ]);
 
+const getTargetForLog = (rawUrl) => {
+    try {
+        const u = new URL(String(rawUrl));
+        return `${u.protocol}//${u.host}${u.pathname}`;
+    } catch {
+        return "invalid";
+    }
+};
+
+const parseRangeSpanBytes = (rangeHeader) => {
+    if (!rangeHeader || typeof rangeHeader !== "string") return null;
+    const match = /bytes=(\d+)-(\d+)/i.exec(rangeHeader);
+    if (!match) return null;
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+    return end - start + 1;
+};
+
+const toResponseHeaderValue = (value) => {
+    if (Array.isArray(value)) return value[0];
+    return value;
+};
+
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
@@ -274,14 +298,27 @@ async function handleChunkedStream(streamInfo, res) {
 
 async function handleGenericStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
+    const internalId = streamInfo.internalTunnelId || "unknown";
+    const startedAt = Date.now();
     const cleanup = () => res.end();
     const maxAttempts = streamInfo.transplant ? 3 : 1;
+    const target = getTargetForLog(streamInfo.url);
+
+    const rawHeaders = Object.fromEntries(streamInfo.headers || []);
+    const rangeHeader = String(rawHeaders.range || rawHeaders.Range || "none");
+    const requestedRange = rangeHeader !== "none";
+    const requestedSpan = parseRangeSpanBytes(rangeHeader);
+
+    console.log(
+        `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=prepare target=${target} range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} max_attempts=${maxAttempts}`,
+    );
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
+            const requestStartedAt = Date.now();
             const fileResponse = await request(streamInfo.url, {
                 headers: {
-                    ...Object.fromEntries(streamInfo.headers),
+                    ...rawHeaders,
                     host: undefined
                 },
                 dispatcher: streamInfo.dispatcher,
@@ -290,6 +327,34 @@ async function handleGenericStream(streamInfo, res) {
             });
 
             const status = fileResponse.statusCode;
+            const contentLengthHeader = toResponseHeaderValue(fileResponse.headers["content-length"]);
+            const contentRangeHeader = toResponseHeaderValue(fileResponse.headers["content-range"]);
+            const acceptRangesHeader = toResponseHeaderValue(fileResponse.headers["accept-ranges"]);
+            const contentLengthNum = Number(contentLengthHeader);
+            const elapsedMs = Date.now() - requestStartedAt;
+
+            console.log(
+                `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=response attempt=${attempt}/${maxAttempts} status=${status} elapsed_ms=${elapsedMs} range=${rangeHeader} content_length=${contentLengthHeader ?? "n/a"} content_range=${contentRangeHeader ?? "n/a"} accept_ranges=${acceptRangesHeader ?? "n/a"} target=${target}`,
+            );
+
+            if (requestedRange && status !== 206 && status !== 416) {
+                console.warn(
+                    `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=range_status_mismatch range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} status=${status} content_range=${contentRangeHeader ?? "none"} content_length=${contentLengthHeader ?? "n/a"} target=${target}`,
+                );
+            }
+
+            if (status === 206 && !contentRangeHeader) {
+                console.warn(
+                    `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=missing_content_range range=${rangeHeader} content_length=${contentLengthHeader ?? "n/a"} target=${target}`,
+                );
+            }
+
+            if (requestedRange && Number.isFinite(contentLengthNum) && contentLengthNum === 0) {
+                console.warn(
+                    `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=zero_length_range range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} status=${status} target=${target}`,
+                );
+            }
+
             const canRetryWithTransplant =
                 !!streamInfo.transplant &&
                 attempt < maxAttempts &&
@@ -312,6 +377,12 @@ async function handleGenericStream(streamInfo, res) {
 
             res.status(status);
             fileResponse.body.on('error', () => { });
+            let bytesForwarded = 0;
+            fileResponse.body.on("data", (chunk) => {
+                if (chunk?.length) {
+                    bytesForwarded += chunk.length;
+                }
+            });
 
             const isHls = isHlsResponse(fileResponse, streamInfo);
 
@@ -322,16 +393,35 @@ async function handleGenericStream(streamInfo, res) {
             }
 
             if (status < 200 || status > 299) {
+                console.warn(
+                    `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=non_2xx status=${status} elapsed_ms=${Date.now() - startedAt} target=${target}`,
+                );
                 return cleanup();
             }
 
             if (isHls) {
                 await handleHlsPlaylist(streamInfo, fileResponse, res);
             } else {
+                let endLogged = false;
+                const logEnd = (reason) => {
+                    if (endLogged) return;
+                    endLogged = true;
+                    const totalElapsedMs = Math.max(1, Date.now() - startedAt);
+                    const avgKbps = ((bytesForwarded * 8) / (totalElapsedMs / 1000) / 1024).toFixed(1);
+                    console.log(
+                        `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=${reason} status=${status} elapsed_ms=${totalElapsedMs} bytes_forwarded=${bytesForwarded} avg_kbps=${avgKbps} range=${rangeHeader} target=${target}`,
+                    );
+                };
+
+                res.once("finish", () => logEnd("finish"));
+                res.once("close", () => logEnd("close"));
+                fileResponse.body.once("end", () => logEnd("upstream_end"));
+                fileResponse.body.once("close", () => logEnd("upstream_close"));
+                fileResponse.body.once("error", () => logEnd("upstream_error"));
                 pipe(fileResponse.body, res, cleanup);
             }
             return;
-        } catch {
+        } catch (error) {
             const canRetryWithTransplant =
                 !!streamInfo.transplant && attempt < maxAttempts;
 
@@ -348,6 +438,9 @@ async function handleGenericStream(streamInfo, res) {
                 }
             }
 
+            console.warn(
+                `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=error attempt=${attempt}/${maxAttempts} elapsed_ms=${Date.now() - startedAt} message=${error?.message || "unknown"} target=${target} range=${rangeHeader}`,
+            );
             closeRequest(streamInfo.controller);
             cleanup();
             return;

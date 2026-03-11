@@ -4,6 +4,15 @@ import { setTunnelPort } from "../config.js";
 import { Green } from "../misc/console-text.js";
 import express from "express";
 
+const getTargetForLog = (rawUrl) => {
+    try {
+        const u = new URL(String(rawUrl));
+        return `${u.protocol}//${u.host}${u.pathname}`;
+    } catch {
+        return "invalid";
+    }
+};
+
 const validateTunnel = (req, res) => {
     if (!req.ip.endsWith('127.0.0.1')) {
         res.sendStatus(403);
@@ -29,11 +38,17 @@ const streamTunnel = (req, res) => {
     if (!streamInfo) {
         return;
     }
+    const tunnelId = String(req.query.id);
 
     streamInfo.headers = new Map([
         ...(streamInfo.headers || []),
         ...Object.entries(req.headers)
     ]);
+    streamInfo.internalTunnelId = tunnelId;
+
+    console.log(
+        `[ITUNNEL OPEN] id=${tunnelId} service=${streamInfo.service} range=${req.headers["range"] || "none"} target=${getTargetForLog(streamInfo.url)}`,
+    );
 
     return stream(res, { type: 'internal', data: streamInfo });
 }

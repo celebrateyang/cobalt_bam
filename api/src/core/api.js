@@ -209,6 +209,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "Authorization",
         "X-Clerk-Token",
         "X-Clerk-Email",
+        "xrequestid",
+        "XRequestId",
+        "X-Request-Id",
     ];
 
     app.use('/social', cors({

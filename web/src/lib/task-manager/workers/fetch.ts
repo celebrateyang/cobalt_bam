@@ -495,6 +495,16 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 upstreamIgnoresRange &&
                 (!expectedSizeReliable || !expectedSize)
             ) {
+                if (bytesReceivedThisResponse === 0) {
+                    if (retries >= MAX_RETRIES) {
+                        return error("queue.fetch.network_error");
+                    }
+                    retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                    continue;
+                }
+
                 break;
             }
 

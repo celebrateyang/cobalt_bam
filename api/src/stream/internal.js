@@ -7,6 +7,20 @@ const CHUNK_SIZE = BigInt(8e6); // 8 MB
 const min = (a, b) => a < b ? a : b;
 
 const serviceNeedsChunks = new Set(["youtube", "vk"]);
+const transplantRetryableStatuses = new Set([
+    401,
+    403,
+    404,
+    408,
+    410,
+    412,
+    416,
+    429,
+    500,
+    502,
+    503,
+    504,
+]);
 
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
@@ -261,42 +275,87 @@ async function handleChunkedStream(streamInfo, res) {
 async function handleGenericStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
     const cleanup = () => res.end();
+    const maxAttempts = streamInfo.transplant ? 3 : 1;
 
-    try {
-        const fileResponse = await request(streamInfo.url, {
-            headers: {
-                ...Object.fromEntries(streamInfo.headers),
-                host: undefined
-            },
-            dispatcher: streamInfo.dispatcher,
-            signal,
-            maxRedirections: 16
-        });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const fileResponse = await request(streamInfo.url, {
+                headers: {
+                    ...Object.fromEntries(streamInfo.headers),
+                    host: undefined
+                },
+                dispatcher: streamInfo.dispatcher,
+                signal,
+                maxRedirections: 16
+            });
 
-        res.status(fileResponse.statusCode);
-        fileResponse.body.on('error', () => { });
+            const status = fileResponse.statusCode;
+            const canRetryWithTransplant =
+                !!streamInfo.transplant &&
+                attempt < maxAttempts &&
+                transplantRetryableStatuses.has(status);
 
-        const isHls = isHlsResponse(fileResponse, streamInfo);
+            if (canRetryWithTransplant) {
+                try {
+                    fileResponse.body?.destroy?.();
+                } catch {
+                    // ignore destroy failures
+                }
 
-        for (const [name, value] of Object.entries(fileResponse.headers)) {
-            if (!isHls || name.toLowerCase() !== 'content-length') {
-                res.setHeader(name, value);
+                console.warn(
+                    `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry status=${status} attempt=${attempt}/${maxAttempts}`,
+                );
+
+                await streamInfo.transplant(streamInfo.dispatcher);
+                continue;
             }
-        }
 
-        if (fileResponse.statusCode < 200 || fileResponse.statusCode > 299) {
-            return cleanup();
-        }
+            res.status(status);
+            fileResponse.body.on('error', () => { });
 
-        if (isHls) {
-            await handleHlsPlaylist(streamInfo, fileResponse, res);
-        } else {
-            pipe(fileResponse.body, res, cleanup);
+            const isHls = isHlsResponse(fileResponse, streamInfo);
+
+            for (const [name, value] of Object.entries(fileResponse.headers)) {
+                if (!isHls || name.toLowerCase() !== 'content-length') {
+                    res.setHeader(name, value);
+                }
+            }
+
+            if (status < 200 || status > 299) {
+                return cleanup();
+            }
+
+            if (isHls) {
+                await handleHlsPlaylist(streamInfo, fileResponse, res);
+            } else {
+                pipe(fileResponse.body, res, cleanup);
+            }
+            return;
+        } catch {
+            const canRetryWithTransplant =
+                !!streamInfo.transplant && attempt < maxAttempts;
+
+            if (canRetryWithTransplant) {
+                console.warn(
+                    `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry error=request_failed attempt=${attempt}/${maxAttempts}`,
+                );
+
+                try {
+                    await streamInfo.transplant(streamInfo.dispatcher);
+                    continue;
+                } catch {
+                    // if transplant also fails, fall through to cleanup
+                }
+            }
+
+            closeRequest(streamInfo.controller);
+            cleanup();
+            return;
         }
-    } catch {
-        closeRequest(streamInfo.controller);
-        cleanup();
     }
+
+    closeRequest(streamInfo.controller);
+    cleanup();
 }
 
 export function internalStream(streamInfo, res) {

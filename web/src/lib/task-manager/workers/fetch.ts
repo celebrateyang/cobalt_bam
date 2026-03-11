@@ -484,6 +484,18 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             }
 
             if (expectedChunkBytes != null) {
+                // A zero-byte chunk for a ranged request is typically transient
+                // transport failure, not a valid end-of-file signal.
+                if (bytesReceivedThisResponse === 0) {
+                    if (retries >= MAX_RETRIES) {
+                        return error("queue.fetch.network_error");
+                    }
+                    retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                    continue;
+                }
+
                 // For chunked range mode without reliable total size,
                 // a short chunk indicates we've reached the end.
                 if (bytesReceivedThisResponse < expectedChunkBytes) {

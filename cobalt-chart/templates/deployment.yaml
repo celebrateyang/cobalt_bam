@@ -70,7 +70,7 @@ spec:
             - name: TUNNEL_RATELIMIT_WINDOW
               value: '60'
             - name: TUNNEL_RATELIMIT_MAX
-              value: '50'
+              value: {{ .Values.tunnelRateLimitMax | default 120 | quote }}
             - name: TURNSTILE_SITEKEY
               value: 0x4AAAAAAAw8jRb9G7cWXnbd
             - name: COOKIE_PATH

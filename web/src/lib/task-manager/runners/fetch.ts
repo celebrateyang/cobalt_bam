@@ -25,7 +25,7 @@ export const runFetchWorker = async (workerId: UUID, parentId: UUID, url: string
         const eventData = event.data.cobaltFetchWorker;
         if (!eventData) return;
 
-        if (eventData.progress) {
+        if (eventData.progress !== undefined) {
             updateWorkerProgress(workerId, {
                 percentage: eventData.progress,
                 size: eventData.size,

@@ -14,6 +14,8 @@ image:
 batchMaxItems: 20
 # Tunnel info lifespan in seconds (default 90).
 tunnelLifespanSeconds: 1800
+# Tunnel request rate limit per client IP per minute.
+tunnelRateLimitMax: 120
 
 instagram:
   # 亚马逊服务器

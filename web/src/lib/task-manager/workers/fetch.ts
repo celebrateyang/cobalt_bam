@@ -4,7 +4,12 @@ const TOTAL_TIMEOUT_MS = 15 * 60 * 1000;
 const STALL_TIMEOUT_MS = 90 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 6;
-const RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
+const INITIAL_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
+const MIN_RANGE_CHUNK_BYTES = 1 * 1024 * 1024;
+const MAX_RANGE_CHUNK_BYTES = 32 * 1024 * 1024;
+const FAST_CHUNK_MS = 4000;
+const SLOW_CHUNK_MS = 15000;
+const RETRY_BASE_DELAY_MS = 700;
 
 const isAbortError = (e: unknown) => (
     (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
@@ -26,6 +31,89 @@ const isRetryableNetworkError = (e: unknown) => {
         "terminated",
         "load failed",
     ].some((pattern) => message.includes(pattern));
+};
+
+const isRetryableHttpStatus = (status: number) => (
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+);
+
+const parseRetryAfterMs = (value: string | null) => {
+    if (!value) return;
+
+    const asSeconds = Number(value);
+    if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+        return Math.floor(asSeconds * 1000);
+    }
+
+    const asDateMs = Date.parse(value);
+    if (Number.isFinite(asDateMs)) {
+        const remaining = asDateMs - Date.now();
+        if (remaining > 0) {
+            return Math.floor(remaining);
+        }
+    }
+};
+
+const clampChunkSize = (size: number) => (
+    Math.max(MIN_RANGE_CHUNK_BYTES, Math.min(MAX_RANGE_CHUNK_BYTES, size))
+);
+
+const getBackoffDelayMs = (retryCount: number, retryAfterMs?: number) => {
+    if (retryAfterMs && Number.isFinite(retryAfterMs)) {
+        return Math.max(250, Math.min(15000, retryAfterMs));
+    }
+
+    const exponential = RETRY_BASE_DELAY_MS * (2 ** Math.max(0, retryCount - 1));
+    const jitter = Math.floor(Math.random() * 250);
+    return Math.max(250, Math.min(10000, exponential + jitter));
+};
+
+const waitForRetry = async (signal: AbortSignal, delayMs: number) => {
+    if (delayMs <= 0) return;
+    if (signal.aborted) {
+        throw new DOMException("The operation was aborted", "AbortError");
+    }
+
+    await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            signal.removeEventListener("abort", onAbort);
+            resolve();
+        }, delayMs);
+
+        const onAbort = () => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", onAbort);
+            reject(new DOMException("The operation was aborted", "AbortError"));
+        };
+
+        signal.addEventListener("abort", onAbort, { once: true });
+    });
+};
+
+const tuneChunkSizeOnSuccess = (
+    currentChunkBytes: number,
+    bytesReceived: number,
+    expectedChunkBytes: number | undefined,
+    elapsedMs: number,
+) => {
+    if (!expectedChunkBytes || bytesReceived < expectedChunkBytes) {
+        return currentChunkBytes;
+    }
+
+    if (elapsedMs <= FAST_CHUNK_MS) {
+        return clampChunkSize(currentChunkBytes * 2);
+    }
+
+    if (elapsedMs >= SLOW_CHUNK_MS) {
+        return clampChunkSize(Math.floor(currentChunkBytes / 2));
+    }
+
+    return currentChunkBytes;
 };
 
 const parseContentRangeTotal = (value: string | null) => {
@@ -95,6 +183,7 @@ const fetchFile = async (url: string) => {
         let largestExpectedSize = 0;
         let highestReportedProgress = 0;
         let contentType = "application/octet-stream";
+        let rangeChunkBytes = INITIAL_RANGE_CHUNK_BYTES;
 
         const reportProgress = () => {
             if (!expectedSize) return;
@@ -133,15 +222,15 @@ const fetchFile = async (url: string) => {
 
                 requestedRangeEnd = Math.min(
                     expectedSize - 1,
-                    receivedBytes + RANGE_CHUNK_BYTES - 1,
+                    receivedBytes + rangeChunkBytes - 1,
                 );
                 headers.Range = `bytes=${receivedBytes}-${requestedRangeEnd}`;
             } else if (receivedBytes > 0) {
-                requestedRangeEnd = receivedBytes + RANGE_CHUNK_BYTES - 1;
+                requestedRangeEnd = receivedBytes + rangeChunkBytes - 1;
                 headers.Range = `bytes=${receivedBytes}-${requestedRangeEnd}`;
             } else {
                 // Start with a bounded range to avoid one fragile long-lived connection.
-                requestedRangeEnd = RANGE_CHUNK_BYTES - 1;
+                requestedRangeEnd = rangeChunkBytes - 1;
                 headers.Range = `bytes=0-${requestedRangeEnd}`;
             }
 
@@ -151,6 +240,7 @@ const fetchFile = async (url: string) => {
                     : undefined;
 
             let response: Response;
+            const requestStartedAt = Date.now();
             try {
                 response = await fetch(url, {
                     signal: controller.signal,
@@ -159,6 +249,8 @@ const fetchFile = async (url: string) => {
             } catch (e) {
                 if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
                     retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                     continue;
                 }
                 throw e;
@@ -175,8 +267,11 @@ const fetchFile = async (url: string) => {
             let bytesToSkip = 0;
 
             if (!response.ok && !partialResponse) {
-                if (resumedRequest && retries < MAX_RETRIES && response.status >= 500) {
+                if (retries < MAX_RETRIES && isRetryableHttpStatus(response.status)) {
                     retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    const retryAfterMs = parseRetryAfterMs(response.headers.get("Retry-After"));
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries, retryAfterMs));
                     continue;
                 }
                 return error("queue.fetch.bad_response");
@@ -251,6 +346,8 @@ const fetchFile = async (url: string) => {
                 } catch (e) {
                     if (isRetryableNetworkError(e) && retries < MAX_RETRIES) {
                         retries++;
+                        rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                        await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                         break;
                     }
                     throw e;
@@ -290,8 +387,18 @@ const fetchFile = async (url: string) => {
                     return error("queue.fetch.network_error");
                 }
                 retries++;
+                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                await waitForRetry(controller.signal, getBackoffDelayMs(retries));
                 continue;
             }
+
+            const elapsedMs = Date.now() - requestStartedAt;
+            rangeChunkBytes = tuneChunkSizeOnSuccess(
+                rangeChunkBytes,
+                bytesReceivedThisResponse,
+                expectedChunkBytes,
+                elapsedMs,
+            );
 
             if (expectedSizeReliable && expectedSize && receivedBytes >= expectedSize) {
                 break;
@@ -311,6 +418,8 @@ const fetchFile = async (url: string) => {
                     return error("queue.fetch.network_error");
                 }
                 retries++;
+                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                await waitForRetry(controller.signal, getBackoffDelayMs(retries));
             }
         }
 

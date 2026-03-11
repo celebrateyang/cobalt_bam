@@ -1,7 +1,7 @@
 import * as Storage from "$lib/storage";
 
 const TOTAL_TIMEOUT_MS = 15 * 60 * 1000;
-const STALL_TIMEOUT_MS = 3 * 60 * 1000;
+const STALL_TIMEOUT_MS = 90 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 6;
 const RANGE_CHUNK_BYTES = 8 * 1024 * 1024;

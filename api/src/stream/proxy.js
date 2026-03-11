@@ -5,6 +5,8 @@ import { destroyInternalStream } from "./manage.js";
 import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
 
 const defaultAgent = new Agent();
+const BILIBILI_HEADERS_TIMEOUT_MS = 15_000;
+const BILIBILI_BODY_TIMEOUT_MS = 45_000;
 
 export default async function (streamInfo, res) {
     const abortController = new AbortController();
@@ -45,6 +47,12 @@ export default async function (streamInfo, res) {
             signal: abortController.signal,
             maxRedirections: 16,
             dispatcher: defaultAgent,
+            ...(streamInfo.service === "bilibili"
+                ? {
+                    headersTimeout: BILIBILI_HEADERS_TIMEOUT_MS,
+                    bodyTimeout: BILIBILI_BODY_TIMEOUT_MS,
+                }
+                : {}),
         });
 
         upstreamStatusCode = statusCode;

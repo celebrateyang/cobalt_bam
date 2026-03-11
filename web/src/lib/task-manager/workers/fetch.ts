@@ -3,7 +3,7 @@ import * as Storage from "$lib/storage";
 const TOTAL_TIMEOUT_MS = 15 * 60 * 1000;
 const STALL_TIMEOUT_MS = 90 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
-const MAX_RETRIES = 6;
+const MAX_RETRIES = 10;
 const INITIAL_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
 const MIN_RANGE_CHUNK_BYTES = 1 * 1024 * 1024;
 const MAX_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
@@ -434,7 +434,18 @@ const fetchFile = async (url: string) => {
                 // For chunked range mode without reliable total size,
                 // a short chunk indicates we've reached the end.
                 if (bytesReceivedThisResponse < expectedChunkBytes) {
-                    break;
+                    if (!expectedSizeReliable) {
+                        break;
+                    }
+
+                    if (retries >= MAX_RETRIES) {
+                        return error("queue.fetch.network_error");
+                    }
+
+                    retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2));
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                    continue;
                 }
                 continue;
             }

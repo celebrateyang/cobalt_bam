@@ -28,7 +28,11 @@ const rewriteUpstreamTunnelUrl = (rawUrl) => {
         const upstreamBase = new URL(env.instagramUpstreamURL);
         const url = new URL(String(rawUrl));
         url.protocol = upstreamBase.protocol;
-        url.host = upstreamBase.host;
+        // `url.host = upstreamBase.host` does not always clear an existing
+        // explicit port (for example upstream URL without port, tunnel URL with :9000).
+        // Assign hostname+port explicitly so we never keep stale tunnel ports.
+        url.hostname = upstreamBase.hostname;
+        url.port = upstreamBase.port;
         url.username = upstreamBase.username;
         url.password = upstreamBase.password;
         return url.toString();

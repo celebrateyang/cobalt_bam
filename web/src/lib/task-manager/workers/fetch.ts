@@ -403,6 +403,24 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             const partialResponse = response.status === 206;
             let bytesToSkip = 0;
             const requestedRange = requestedRangeEnd != null;
+            const contentLengthHeaderRaw = response.headers.get("Content-Length");
+            const contentLengthHeader = Number(contentLengthHeaderRaw);
+
+            if (
+                requestedRange &&
+                response.status === 200 &&
+                Number.isFinite(contentLengthHeader) &&
+                contentLengthHeader === 0
+            ) {
+                // Fast-fail obvious broken tunnel responses (200 with empty body on range request),
+                // otherwise the worker can appear stuck in repeated retries at 0%.
+                logDebug("request_empty_range_response", {
+                    status: response.status,
+                    range: headers.Range || "none",
+                    contentLength: contentLengthHeaderRaw || "none",
+                });
+                return error("queue.fetch.empty_tunnel");
+            }
 
             if (!response.ok && !partialResponse) {
                 if (retries < MAX_RETRIES && isRetryableHttpStatus(response.status)) {

@@ -301,6 +301,17 @@ async function handleGenericStream(streamInfo, res) {
     const internalId = streamInfo.internalTunnelId || "unknown";
     const startedAt = Date.now();
     const cleanup = () => res.end();
+    const failWithStatus = (statusCode, reason, extra = "") => {
+        if (!res.headersSent) {
+            res.status(statusCode);
+            res.setHeader("Cache-Control", "no-store");
+        }
+        console.warn(
+            `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=${reason} status=${statusCode} elapsed_ms=${Date.now() - startedAt}${extra}`,
+        );
+        closeRequest(streamInfo.controller);
+        cleanup();
+    };
     const maxAttempts = streamInfo.transplant ? 3 : 1;
     const target = getTargetForLog(streamInfo.url);
 
@@ -353,6 +364,20 @@ async function handleGenericStream(streamInfo, res) {
                 console.warn(
                     `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=zero_length_range range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} status=${status} target=${target}`,
                 );
+
+                if (status === 200) {
+                    try {
+                        fileResponse.body?.destroy?.();
+                    } catch {
+                        // ignore
+                    }
+
+                    return failWithStatus(
+                        502,
+                        "invalid_empty_range_response",
+                        ` range=${rangeHeader} target=${target}`,
+                    );
+                }
             }
 
             const canRetryWithTransplant =
@@ -441,14 +466,17 @@ async function handleGenericStream(streamInfo, res) {
             console.warn(
                 `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=error attempt=${attempt}/${maxAttempts} elapsed_ms=${Date.now() - startedAt} message=${error?.message || "unknown"} target=${target} range=${rangeHeader}`,
             );
-            closeRequest(streamInfo.controller);
-            cleanup();
-            return;
+            const message = String(error?.message || "").toLowerCase();
+            const statusCode = message.includes("timeout") ? 504 : 502;
+            return failWithStatus(
+                statusCode,
+                "request_failed",
+                ` attempt=${attempt}/${maxAttempts} range=${rangeHeader} target=${target} message=${error?.message || "unknown"}`,
+            );
         }
     }
 
-    closeRequest(streamInfo.controller);
-    cleanup();
+    return failWithStatus(502, "max_attempts_exhausted", ` range=${rangeHeader} target=${target}`);
 }
 
 export function internalStream(streamInfo, res) {

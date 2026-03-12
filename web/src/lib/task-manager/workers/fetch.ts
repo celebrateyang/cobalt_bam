@@ -207,6 +207,14 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
 };
 
 const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
+    // Let the runner know this worker booted successfully,
+    // so it can distinguish "slow network" vs "worker failed to load".
+    self.postMessage({
+        cobaltFetchWorker: {
+            started: true,
+        }
+    });
+
     const runtimeTuning = normalizeTuning(tuning);
     const debug = Boolean(tuning);
     const debugPrefix = "[FETCH DEBUG]";

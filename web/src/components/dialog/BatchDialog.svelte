@@ -64,6 +64,15 @@
     const baseBatchDelayMs = 1200;
     const rateLimitBackoffMs = 4000;
     const maxRateLimitRetries = 2;
+    const queueRetryBackoffMs = 1500;
+    const maxQueueErrorRetries = 1;
+    const retryableQueueErrorCodes = new Set([
+        "queue.fetch.bad_response",
+        "queue.fetch.empty_tunnel",
+        "queue.fetch.network_error",
+        "queue.fetch.timeout",
+        "queue.fetch.stalled",
+    ]);
     const queueTaskTimeoutMs = 30 * 60 * 1000;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let rateLimitSkipNotified = false;
@@ -477,32 +486,36 @@
             if (cancelRequested) break;
 
             const taskId = uuid();
+            const request = buildBatchRequest(item.url);
+            const queueMeta =
+                clerkEnabled &&
+                collectionKey &&
+                $isSignedIn &&
+                item.itemKey
+                    ? {
+                          collectionMemory: {
+                              collectionKey,
+                              title: title || undefined,
+                              sourceUrl: collectionSourceUrl,
+                              itemKey: item.itemKey,
+                              itemUrl: item.url,
+                              itemTitle: item.title,
+                          },
+                      }
+                    : undefined;
             let response = null;
             let rateLimitRetries = 0;
+            let queueRetries = 0;
             let shouldStopBatch = false;
+            let itemCompleted = false;
 
-            while (!cancelRequested) {
+            while (!cancelRequested && !itemCompleted) {
                 response = await savingHandler({
-                    request: buildBatchRequest(item.url),
+                    request,
                     skipPoints: true,
                     oldTaskId: taskId,
                     suppressErrors: [rateLimitErrorCode],
-                    queueMeta:
-                        clerkEnabled &&
-                        collectionKey &&
-                        $isSignedIn &&
-                        item.itemKey
-                            ? {
-                                  collectionMemory: {
-                                      collectionKey,
-                                      title: title || undefined,
-                                      sourceUrl: collectionSourceUrl,
-                                      itemKey: item.itemKey,
-                                      itemUrl: item.url,
-                                      itemTitle: item.title,
-                                  },
-                              }
-                            : undefined,
+                    queueMeta,
                 });
 
                 if (response?.status === "error" && response.error.code === rateLimitErrorCode) {
@@ -532,32 +545,53 @@
                     continue;
                 }
 
-                break;
-            }
-
-            if (cancelRequested) break;
-
-            if (shouldStopBatch || !response || response.status === "error") {
-                const code = response?.status === "error" ? response.error.code : undefined;
-                if (
-                    code === "error.api.points.insufficient" ||
-                    code === "error.api.points.unavailable" ||
-                    code === "error.api.user.disabled" ||
-                    code === "error.api.auth.clerk.missing" ||
-                    code === "error.api.auth.clerk.invalid"
-                ) {
-                    cancelRequested = true;
-                }
-                break;
-            }
-
-            const queuedItem = get(queueStore)[taskId];
-            if (queuedItem) {
-                const queueResult = await waitForQueueItemDone(taskId);
-                if (queueResult !== "done") {
+                if (shouldStopBatch || !response || response.status === "error") {
+                    const code = response?.status === "error" ? response.error.code : undefined;
+                    if (
+                        code === "error.api.points.insufficient" ||
+                        code === "error.api.points.unavailable" ||
+                        code === "error.api.user.disabled" ||
+                        code === "error.api.auth.clerk.missing" ||
+                        code === "error.api.auth.clerk.invalid"
+                    ) {
+                        cancelRequested = true;
+                    }
                     break;
                 }
+
+                const queuedItem = get(queueStore)[taskId];
+                if (!queuedItem) {
+                    itemCompleted = true;
+                    break;
+                }
+
+                const queueResult = await waitForQueueItemDone(taskId);
+                if (queueResult === "done") {
+                    itemCompleted = true;
+                    break;
+                }
+
+                const latestQueueItem = get(queueStore)[taskId];
+                const queueErrorCode =
+                    latestQueueItem?.state === "error"
+                        ? latestQueueItem.errorCode
+                        : undefined;
+                const shouldRetryQueueError =
+                    queueResult === "error" &&
+                    !!queueErrorCode &&
+                    retryableQueueErrorCodes.has(queueErrorCode) &&
+                    queueRetries < maxQueueErrorRetries;
+
+                if (shouldRetryQueueError) {
+                    queueRetries += 1;
+                    await sleep(queueRetryBackoffMs * queueRetries);
+                    continue;
+                }
+
+                break;
             }
+
+            if (!itemCompleted) break;
 
             progress += 1;
 

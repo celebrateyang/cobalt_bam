@@ -142,7 +142,21 @@ export const loadEnvs = (env = process.env) => {
             || 10,
 
         durationLimit: (env.DURATION_LIMIT && parseInt(env.DURATION_LIMIT)) || 10800,
-        streamLifespan: (env.TUNNEL_LIFESPAN && parseInt(env.TUNNEL_LIFESPAN)) || 90,
+        streamLifespan: (() => {
+            const parsed = env.TUNNEL_LIFESPAN && parseInt(env.TUNNEL_LIFESPAN);
+            if (parsed && Number.isFinite(parsed) && parsed > 0) {
+                return parsed;
+            }
+
+            // Upstream nodes can run long queue sessions (batch/serial pulls).
+            // Use a safer default there to reduce early tunnel expiry when env is missing.
+            const upstreamMode = String(env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+            if (upstreamMode === "1" || upstreamMode === "true") {
+                return 1800;
+            }
+
+            return 90;
+        })(),
 
         processingPriority: process.platform !== 'win32'
             && env.PROCESSING_PRIORITY

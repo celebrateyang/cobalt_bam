@@ -264,7 +264,12 @@ const buildUpstreamContext = ({ comId, tvId, partId }) => {
     return {};
 };
 
-const buildUpstreamResult = ({ upstream, audioFilename, defaultFilename }) => {
+const buildUpstreamResult = ({
+    upstream,
+    audioFilename,
+    defaultFilename,
+    originalRequest,
+}) => {
     if (!upstream?.tunnels?.length) return null;
 
     if (
@@ -280,6 +285,7 @@ const buildUpstreamResult = ({ upstream, audioFilename, defaultFilename }) => {
         filename: upstream.filename || defaultFilename,
         audioFilename,
         duration: upstream.duration,
+        originalRequest,
         headers: {
             "ngrok-skip-browser-warning": "true",
         },
@@ -303,6 +309,12 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
         audioFilename,
         defaultFilename,
     } = buildUpstreamContext({ comId, tvId, partId });
+    const originalRequest = {
+        comId,
+        tvId,
+        partId,
+        epId,
+    };
 
     // Prefer upstream first for bilibili when available to avoid frequent
     // mid-stream closes on some egress paths. Keep timeout short to fallback fast.
@@ -315,6 +327,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
             upstream: proactiveUpstream,
             audioFilename,
             defaultFilename,
+            originalRequest,
         });
         if (proactiveResult) {
             console.log(
@@ -336,6 +349,9 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
     }
 
     if (!result?.error || !['fetch.empty', 'fetch.fail'].includes(result.error)) {
+        if (result && !result.error) {
+            result.originalRequest = originalRequest;
+        }
         return result;
     }
 
@@ -350,6 +366,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
             upstream,
             audioFilename,
             defaultFilename,
+            originalRequest,
         })
         || result
     );

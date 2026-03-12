@@ -46,6 +46,25 @@ const toResponseHeaderValue = (value) => {
     return value;
 };
 
+const normalizeCandidateUrls = (streamInfo) => {
+    const unique = [];
+    const push = (value) => {
+        if (typeof value !== "string") return;
+        const url = value.trim();
+        if (!url || unique.includes(url)) return;
+        unique.push(url);
+    };
+
+    push(streamInfo.url);
+    if (Array.isArray(streamInfo.urlCandidates)) {
+        for (const candidate of streamInfo.urlCandidates) {
+            push(candidate);
+        }
+    }
+
+    return unique;
+};
+
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
@@ -312,8 +331,45 @@ async function handleGenericStream(streamInfo, res) {
         closeRequest(streamInfo.controller);
         cleanup();
     };
-    const maxAttempts = streamInfo.transplant ? 3 : 1;
-    const target = getTargetForLog(streamInfo.url);
+    let candidateUrls =
+        streamInfo.service === "bilibili"
+            ? normalizeCandidateUrls(streamInfo)
+            : [streamInfo.url];
+    if (!candidateUrls.length) {
+        candidateUrls = [streamInfo.url];
+    }
+    let candidateIndex = Math.max(0, candidateUrls.indexOf(streamInfo.url));
+    if (candidateIndex >= candidateUrls.length) {
+        candidateIndex = 0;
+    }
+
+    const refreshCandidateState = () => {
+        const refreshed =
+            streamInfo.service === "bilibili"
+                ? normalizeCandidateUrls(streamInfo)
+                : [streamInfo.url];
+        candidateUrls = refreshed.length ? refreshed : [streamInfo.url];
+        candidateIndex = Math.max(0, candidateUrls.indexOf(streamInfo.url));
+        if (candidateIndex >= candidateUrls.length) {
+            candidateIndex = 0;
+        }
+    };
+
+    const switchToNextCandidate = (attempt, detail) => {
+        if (candidateIndex + 1 >= candidateUrls.length) {
+            return false;
+        }
+
+        candidateIndex += 1;
+        streamInfo.url = candidateUrls[candidateIndex];
+        console.warn(
+            `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=candidate_retry attempt=${attempt} detail=${detail} next_target=${getTargetForLog(streamInfo.url)} candidate_index=${candidateIndex + 1}/${candidateUrls.length}`,
+        );
+        return true;
+    };
+
+    const baseAttempts = streamInfo.transplant ? 3 : 1;
+    const maxAttempts = baseAttempts + Math.max(0, candidateUrls.length - 1);
 
     const rawHeaders = Object.fromEntries(streamInfo.headers || []);
     const rangeHeader = String(rawHeaders.range || rawHeaders.Range || "none");
@@ -321,10 +377,12 @@ async function handleGenericStream(streamInfo, res) {
     const requestedSpan = parseRangeSpanBytes(rangeHeader);
 
     console.log(
-        `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=prepare target=${target} range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} max_attempts=${maxAttempts}`,
+        `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=prepare target=${getTargetForLog(streamInfo.url)} range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} max_attempts=${maxAttempts} candidates=${candidateUrls.length}`,
     );
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const target = getTargetForLog(streamInfo.url);
+
         try {
             const requestStartedAt = Date.now();
             const fileResponse = await request(streamInfo.url, {
@@ -380,10 +438,27 @@ async function handleGenericStream(streamInfo, res) {
                 }
             }
 
-            const canRetryWithTransplant =
-                !!streamInfo.transplant &&
+            const canRetryStatus =
                 attempt < maxAttempts &&
                 transplantRetryableStatuses.has(status);
+            const canRetryWithCandidate =
+                canRetryStatus &&
+                streamInfo.service === "bilibili" &&
+                switchToNextCandidate(attempt, `status_${status}`);
+
+            if (canRetryWithCandidate) {
+                try {
+                    fileResponse.body?.destroy?.();
+                } catch {
+                    // ignore destroy failures
+                }
+
+                continue;
+            }
+
+            const canRetryWithTransplant =
+                canRetryStatus &&
+                !!streamInfo.transplant;
 
             if (canRetryWithTransplant) {
                 try {
@@ -397,6 +472,7 @@ async function handleGenericStream(streamInfo, res) {
                 );
 
                 await streamInfo.transplant(streamInfo.dispatcher);
+                refreshCandidateState();
                 continue;
             }
 
@@ -447,6 +523,23 @@ async function handleGenericStream(streamInfo, res) {
             }
             return;
         } catch (error) {
+            if (signal.aborted) {
+                return failWithStatus(
+                    502,
+                    "aborted",
+                    ` attempt=${attempt}/${maxAttempts} range=${rangeHeader} target=${target}`,
+                );
+            }
+
+            const canRetryWithCandidate =
+                attempt < maxAttempts &&
+                streamInfo.service === "bilibili" &&
+                switchToNextCandidate(attempt, "request_failed");
+
+            if (canRetryWithCandidate) {
+                continue;
+            }
+
             const canRetryWithTransplant =
                 !!streamInfo.transplant && attempt < maxAttempts;
 
@@ -457,6 +550,7 @@ async function handleGenericStream(streamInfo, res) {
 
                 try {
                     await streamInfo.transplant(streamInfo.dispatcher);
+                    refreshCandidateState();
                     continue;
                 } catch {
                     // if transplant also fails, fall through to cleanup
@@ -476,7 +570,11 @@ async function handleGenericStream(streamInfo, res) {
         }
     }
 
-    return failWithStatus(502, "max_attempts_exhausted", ` range=${rangeHeader} target=${target}`);
+    return failWithStatus(
+        502,
+        "max_attempts_exhausted",
+        ` range=${rangeHeader} target=${getTargetForLog(streamInfo.url)}`,
+    );
 }
 
 export function internalStream(streamInfo, res) {

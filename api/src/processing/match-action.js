@@ -54,6 +54,7 @@ export default function({
         responseType = "tunnel",
         defaultParams = {
             url: r.urls,
+            urlCandidates: r.urlCandidates,
             headers: r.headers,
             service: host,
             filename: r.filenameAttributes ?

@@ -21,7 +21,30 @@ const shouldUseUpstream = () => {
     }
 };
 
-const PROACTIVE_UPSTREAM_TIMEOUT_MS = 12000;
+const STREAM_RETRY_UPSTREAM_TIMEOUT_MS = 8000;
+
+const asArray = (value) => {
+    if (Array.isArray(value)) return value;
+    return value ? [value] : [];
+};
+
+const collectCandidateUrls = (entry) => {
+    const unique = [];
+    const push = (raw) => {
+        if (typeof raw !== "string") return;
+        const value = raw.trim();
+        if (!value || unique.includes(value)) return;
+        unique.push(value);
+    };
+
+    push(entry?.baseUrl);
+    push(entry?.base_url);
+    push(entry?.url);
+    asArray(entry?.backupUrl).forEach(push);
+    asArray(entry?.backup_url).forEach(push);
+
+    return unique;
+};
 
 const rewriteUpstreamTunnelUrl = (rawUrl) => {
     try {
@@ -138,9 +161,20 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
 };
 
 function getBest(content) {
-    return content?.filter(v => v.baseUrl || v.url)
-                .map(v => (v.baseUrl = v.baseUrl || v.url, v))
-                .reduce((a, b) => a?.bandwidth > b?.bandwidth ? a : b);
+    return content
+        ?.map((entry) => {
+            const candidates = collectCandidateUrls(entry);
+            if (!candidates.length) return null;
+
+            return {
+                ...entry,
+                baseUrl: candidates[0],
+                url: candidates[0],
+                candidates,
+            };
+        })
+        ?.filter(Boolean)
+        ?.reduce((a, b) => a?.bandwidth > b?.bandwidth ? a : b);
 }
 
 function extractBestQuality(dashData) {
@@ -199,6 +233,7 @@ async function com_download(id, partId) {
 
     return {
         urls: [video.baseUrl, audio.baseUrl],
+        urlCandidates: [video.candidates, audio.candidates],
         audioFilename: `${filenameBase}_audio`,
         filename: `${filenameBase}_${video.width}x${video.height}.mp4`,
         duration: toSeconds(streamData.data.timelength),
@@ -235,6 +270,7 @@ async function tv_download(id) {
 
     return {
         urls: [video.url, audio.url],
+        urlCandidates: [video.candidates, audio.candidates],
         audioFilename: `bilibili_tv_${id}_audio`,
         filename: `bilibili_tv_${id}.mp4`,
         duration: toSeconds(video.duration),
@@ -292,7 +328,35 @@ const buildUpstreamResult = ({
     };
 };
 
-export default async function({ comId, tvId, comShortLink, partId, epId }) {
+const tryUpstreamResult = async ({
+    upstreamUrl,
+    audioFilename,
+    defaultFilename,
+    originalRequest,
+    reason,
+    timeoutMs,
+}) => {
+    if (!upstreamUrl) return null;
+
+    const upstream = await fetchUpstream(upstreamUrl, {
+        reason,
+        ...(timeoutMs ? { timeoutMs } : {}),
+    });
+    const result = buildUpstreamResult({
+        upstream,
+        audioFilename,
+        defaultFilename,
+        originalRequest,
+    });
+
+    if (result) {
+        console.log(`[bilibili] upstream ${reason} selected tunnels=${result.urls.length}`);
+    }
+
+    return result;
+};
+
+export default async function({ comId, tvId, comShortLink, partId, epId, __streamRetry }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
         // return an explicit user-facing error instead of a generic fetch.empty.
@@ -316,26 +380,20 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
         epId,
     };
 
-    // Prefer upstream first for bilibili when available to avoid frequent
-    // mid-stream closes on some egress paths. Keep timeout short to fallback fast.
-    if (upstreamUrl) {
-        const proactiveUpstream = await fetchUpstream(upstreamUrl, {
-            timeoutMs: PROACTIVE_UPSTREAM_TIMEOUT_MS,
-            reason: "preferred",
-        });
-        const proactiveResult = buildUpstreamResult({
-            upstream: proactiveUpstream,
+    // Default path is local API extractor first.
+    // For stream-level retries, prefer upstream first to escape degraded CDN routes.
+    if (__streamRetry) {
+        const streamRetryUpstream = await tryUpstreamResult({
+            upstreamUrl,
             audioFilename,
             defaultFilename,
             originalRequest,
+            reason: "stream-retry",
+            timeoutMs: STREAM_RETRY_UPSTREAM_TIMEOUT_MS,
         });
-        if (proactiveResult) {
-            console.log(
-                `[bilibili] upstream preferred selected tunnels=${proactiveResult.urls.length}`,
-            );
-            return proactiveResult;
+        if (streamRetryUpstream) {
+            return streamRetryUpstream;
         }
-        console.log("[bilibili] upstream preferred unavailable, fallback to local extractor");
     }
 
     let result;
@@ -357,16 +415,13 @@ export default async function({ comId, tvId, comShortLink, partId, epId }) {
 
     if (!upstreamUrl) return result;
 
-    const upstream = await fetchUpstream(upstreamUrl, { reason: "fallback" });
-    if (upstream?.tunnels?.length) {
-        console.log(`[bilibili] upstream fallback selected tunnels=${upstream.tunnels.length}`);
-    }
     return (
-        buildUpstreamResult({
-            upstream,
+        await tryUpstreamResult({
+            upstreamUrl,
             audioFilename,
             defaultFilename,
             originalRequest,
+            reason: "fallback",
         })
         || result
     );

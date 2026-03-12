@@ -18,7 +18,47 @@ const streamCache = new Store('streams');
 
 const internalStreamCache = new Map();
 
+const normalizeUrlCandidateList = (primaryUrl, rawCandidates) => {
+    const unique = [];
+    const push = (value) => {
+        if (typeof value !== "string") return;
+        const url = value.trim();
+        if (!url || unique.includes(url)) return;
+        unique.push(url);
+    };
+
+    push(primaryUrl);
+    if (Array.isArray(rawCandidates)) {
+        for (const candidate of rawCandidates) {
+            push(candidate);
+        }
+    }
+
+    return unique;
+};
+
+const pickRandomCandidateUrl = (primaryUrl, rawCandidates) => {
+    const candidates = normalizeUrlCandidateList(primaryUrl, rawCandidates);
+    if (candidates.length <= 1) {
+        return {
+            url: primaryUrl,
+            candidates,
+        };
+    }
+
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    return {
+        url: candidates[randomIndex],
+        candidates,
+    };
+};
+
 export function createStream(obj) {
+    const normalizedCandidates =
+        typeof obj.url === "string"
+            ? normalizeUrlCandidateList(obj.url, obj.urlCandidates)
+            : [];
+
     const streamID = nanoid(),
         iv = randomBytes(16).toString('base64url'),
         secret = randomBytes(32).toString('base64url'),
@@ -42,6 +82,7 @@ export function createStream(obj) {
 
             isHLS: obj.isHLS || false,
             originalRequest: obj.originalRequest,
+            urlCandidates: normalizedCandidates.length > 1 ? normalizedCandidates : undefined,
 
             // url to a subtitle file
             subtitles: obj.subtitles,
@@ -88,13 +129,29 @@ export function createProxyTunnels(info) {
         requestIP: info?.requestIP,
     }
 
-    for (const url of urls) {
+    for (const [index, url] of urls.entries()) {
+        const tunnelOriginalRequest = info?.originalRequest
+            ? {
+                ...info.originalRequest,
+                __streamIndex: index,
+                __streamCount: urls.length,
+            }
+            : undefined;
+        const tunnelUrlCandidates = (() => {
+            if (!Array.isArray(info?.urlCandidates)) return undefined;
+            if (urls.length === 1 && info.urlCandidates.every(item => typeof item === "string")) {
+                return info.urlCandidates;
+            }
+            return info.urlCandidates[index];
+        })();
+
         proxyTunnels.push(
             createStream({
                 ...tunnelTemplate,
                 url,
                 service: info?.service,
-                originalRequest: info?.originalRequest,
+                originalRequest: tunnelOriginalRequest,
+                urlCandidates: tunnelUrlCandidates,
             })
         );
     }
@@ -159,9 +216,11 @@ export function createInternalStream(url, obj = {}, isSubtitles) {
 
     // subtitles don't need special treatment unlike big media files
     const service = isSubtitles ? `${obj.service}-subtitles` : obj.service;
+    const urlCandidates = normalizeUrlCandidateList(url, obj.urlCandidates);
 
     internalStreamCache.set(streamID, {
         url,
+        urlCandidates: urlCandidates.length > 1 ? urlCandidates : undefined,
         service,
         headers,
         controller,
@@ -201,7 +260,7 @@ export function destroyInternalStream(url) {
     }
 }
 
-const transplantInternalTunnels = function(tunnelUrls, transplantUrls) {
+const transplantInternalTunnels = function(tunnelUrls, transplantUrls, transplantCandidates) {
     // console.log(`[transplantInternalTunnels] Starting transplant - tunnels: ${tunnelUrls.length}, urls: ${transplantUrls.length}`);
     
     if (tunnelUrls.length !== transplantUrls.length) {
@@ -209,6 +268,7 @@ const transplantInternalTunnels = function(tunnelUrls, transplantUrls) {
         return;
     }
 
+    let index = 0;
     for (const [ tun, url ] of zip(tunnelUrls, transplantUrls)) {
         const id = getInternalTunnelId(tun);
         const itunnel = getInternalTunnel(id);
@@ -219,10 +279,19 @@ const transplantInternalTunnels = function(tunnelUrls, transplantUrls) {
 
         if (!itunnel) {
             // console.log(`[transplantInternalTunnels] No internal tunnel found for ID: ${id}`);
+            index += 1;
             continue;
         }
         
         itunnel.url = url;
+        const nextCandidates = Array.isArray(transplantCandidates)
+            ? transplantCandidates[index]
+            : undefined;
+        const normalizedCandidates = normalizeUrlCandidateList(url, nextCandidates);
+        itunnel.urlCandidates = normalizedCandidates.length > 1
+            ? normalizedCandidates
+            : undefined;
+        index += 1;
         // console.log(`[transplantInternalTunnels] Successfully updated tunnel ${id} URL`);
     }
     
@@ -259,6 +328,7 @@ const transplantTunnel = async function (dispatcher) {
         
         const response = await handler.default({
             ...this.originalRequest,
+            __streamRetry: true,
             dispatcher
         });
 
@@ -277,14 +347,37 @@ const transplantTunnel = async function (dispatcher) {
         }
 
         response.urls = [response.urls].flat();
+        response.urlCandidates = Array.isArray(response.urlCandidates)
+            ? response.urlCandidates
+            : undefined;
         // console.log(`[transplant] Flattened URLs count: ${response.urls.length}`);
         
         if (this.originalRequest.isAudioOnly && response.urls.length > 1) {
             response.urls = [response.urls[1]];
+            if (response.urlCandidates) {
+                response.urlCandidates = [response.urlCandidates[1]];
+            }
             // console.log(`[transplant] Using audio-only URL (index 1)`);
         } else if (this.originalRequest.isAudioMuted) {
             response.urls = [response.urls[0]];
+            if (response.urlCandidates) {
+                response.urlCandidates = [response.urlCandidates[0]];
+            }
             // console.log(`[transplant] Using muted video URL (index 0)`);
+        }
+
+        const streamIndex = Number(this.originalRequest?.__streamIndex);
+        if (Number.isInteger(streamIndex) && streamIndex >= 0) {
+            if (streamIndex >= response.urls.length) {
+                return;
+            }
+
+            if (response.urls.length > 1 || streamIndex > 0) {
+                response.urls = [response.urls[streamIndex]];
+                if (response.urlCandidates) {
+                    response.urlCandidates = [response.urlCandidates[streamIndex]];
+                }
+            }
         }
 
         const tunnels = [this.urls].flat();
@@ -296,7 +389,7 @@ const transplantTunnel = async function (dispatcher) {
         }
 
         // console.log(`[transplant] Transplanting internal tunnels...`);
-        transplantInternalTunnels(tunnels, response.urls);
+        transplantInternalTunnels(tunnels, response.urls, response.urlCandidates);
         // console.log(`[transplant] Transplant completed successfully`);
     }
     catch (error) {
@@ -322,31 +415,60 @@ function wrapStream(streamInfo) {
             streamInfo.urls = createStream({
                 type: 'proxy',
                 url: url,
+                urlCandidates: streamInfo.urlCandidates,
                 service: streamInfo.service,
                 filename: streamInfo.filename,
                 headers: streamInfo.headers,
                 requestIP: streamInfo.requestIP,
+                originalRequest: streamInfo.originalRequest,
             });
         } else if (Array.isArray(url)) {
-            streamInfo.urls = streamInfo.urls.map(singleUrl => 
-                createStream({
+            streamInfo.urls = streamInfo.urls.map((singleUrl, index) => {
+                const tunnelUrlCandidates = Array.isArray(streamInfo.urlCandidates)
+                    ? streamInfo.urlCandidates[index]
+                    : undefined;
+                const tunnelOriginalRequest = streamInfo.originalRequest
+                    ? {
+                        ...streamInfo.originalRequest,
+                        __streamIndex: index,
+                        __streamCount: streamInfo.urls.length,
+                    }
+                    : undefined;
+
+                return createStream({
                     type: 'proxy',
                     url: singleUrl,
+                    urlCandidates: tunnelUrlCandidates,
                     service: streamInfo.service,
                     filename: streamInfo.filename,
                     headers: streamInfo.headers,
                     requestIP: streamInfo.requestIP,
-                })
-            );
+                    originalRequest: tunnelOriginalRequest,
+                });
+            });
         }
     } else {
         // For other types, use internal streams as before
         if (typeof url === 'string') {
-            streamInfo.urls = createInternalStream(url, streamInfo);
+            const selected = pickRandomCandidateUrl(url, streamInfo.urlCandidates);
+            streamInfo.urls = createInternalStream(selected.url, {
+                ...streamInfo,
+                urlCandidates: selected.candidates,
+            });
         } else if (Array.isArray(url)) {
             for (const idx in streamInfo.urls) {
+                const selected = pickRandomCandidateUrl(
+                    streamInfo.urls[idx],
+                    Array.isArray(streamInfo.urlCandidates)
+                        ? streamInfo.urlCandidates[idx]
+                        : undefined,
+                );
                 streamInfo.urls[idx] = createInternalStream(
-                    streamInfo.urls[idx], streamInfo
+                    selected.url,
+                    {
+                        ...streamInfo,
+                        urlCandidates: selected.candidates,
+                    },
                 );
             }
         } else throw 'invalid urls';

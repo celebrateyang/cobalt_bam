@@ -85,6 +85,8 @@ export default class LibAVWrapper {
 
         const outputName = `output.${output.format}`;
         const ffInputs = [];
+        const pendingWrites = new Set<Promise<void>>();
+        let writeError: unknown = null;
 
         try {
             for (let i = 0; i < files.length; i++) {
@@ -100,16 +102,37 @@ export default class LibAVWrapper {
             const totalInputSize = files.reduce((a, b) => a + b.size, 0);
             const storage = await Storage.init(totalInputSize);
 
-            libav.onwrite = async (name, pos, data) => {
+            libav.onwrite = (name, pos, data) => {
                 if (name === 'progress.txt') {
                     try {
-                        return this.#emitProgress(data);
+                        this.#emitProgress(data);
                     } catch (e) {
                         console.error(e);
                     }
-                } else if (name !== outputName) return;
+                    return;
+                }
 
-                await storage.write(data, pos);
+                if (name !== outputName) return;
+
+                let writeTask: Promise<void> | null = null;
+                writeTask = Promise.resolve(storage.write(data, pos))
+                    .then((written) => {
+                        if (!Number.isFinite(written) || written <= 0) {
+                            throw new Error("storage_write_no_progress");
+                        }
+                    })
+                    .catch((e) => {
+                        if (!writeError) {
+                            writeError = e;
+                        }
+                    })
+                    .finally(() => {
+                        if (writeTask) {
+                            pendingWrites.delete(writeTask);
+                        }
+                    });
+
+                pendingWrites.add(writeTask);
             };
 
             await libav.ffmpeg([
@@ -122,8 +145,31 @@ export default class LibAVWrapper {
                 outputName
             ]);
 
-            const file = Storage.retype(await storage.res(), output.type);
-            if (file.size === 0) return;
+            if (pendingWrites.size > 0) {
+                await Promise.allSettled(Array.from(pendingWrites));
+            }
+            if (writeError) {
+                throw writeError;
+            }
+
+            let file = Storage.retype(await storage.res(), output.type);
+            if (file.size === 0) {
+                try {
+                    const directOutput = await libav.readFile(outputName);
+                    if (directOutput && directOutput.length > 0) {
+                        file = Storage.retype(
+                            new File([directOutput], outputName, { type: output.type }),
+                            output.type,
+                        );
+                    }
+                } catch {
+                    // ignore, we'll fall back to no-render below
+                }
+            }
+            if (file.size === 0) {
+                await storage.destroy().catch(() => undefined);
+                return;
+            }
 
             return file;
         } finally {

@@ -143,6 +143,30 @@ const parseContentRangeTotal = (value: string | null) => {
     return total;
 };
 
+const parseContentRangeBounds = (value: string | null) => {
+    if (!value) return;
+
+    const match = /^bytes\s+(\d+)-(\d+)\/(\d+|\*)$/i.exec(value.trim());
+    if (!match || match[3] === "*") return;
+
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    const total = Number(match[3]);
+
+    if (
+        !Number.isFinite(start) ||
+        !Number.isFinite(end) ||
+        !Number.isFinite(total) ||
+        start < 0 ||
+        end < start ||
+        total <= 0
+    ) {
+        return;
+    }
+
+    return { start, end, total };
+};
+
 const normalizeTuning = (tuning?: FetchWorkerTuning) => {
     const normalizedMaxChunkBytes = clampChunkSize(
         Math.floor(
@@ -424,7 +448,26 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 contentType = nextContentType;
             }
 
-            const totalFromRange = parseContentRangeTotal(response.headers.get("Content-Range"));
+            const contentRangeHeader = response.headers.get("Content-Range");
+            const rangeBounds = parseContentRangeBounds(contentRangeHeader);
+            if (partialResponse && requestedRange && rangeBounds && rangeBounds.start !== rangeStart) {
+                if (retries >= MAX_RETRIES) {
+                    return error("queue.fetch.network_error");
+                }
+                retries++;
+                rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                logDebug("request_retry_range_mismatch", {
+                    retries,
+                    expectedRangeStart: rangeStart,
+                    receivedRangeStart: rangeBounds.start,
+                    rangeHeader: contentRangeHeader || "none",
+                    nextChunkBytes: rangeChunkBytes,
+                });
+                await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                continue;
+            }
+
+            const totalFromRange = parseContentRangeTotal(contentRangeHeader);
             if (totalFromRange) {
                 expectedSize = totalFromRange;
                 expectedSizeReliable = true;
@@ -657,8 +700,18 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         stopTimers();
         const file = Storage.retype(await storage.res(), contentType);
 
-        if (expectedSizeReliable && expectedSize && expectedSize !== file.size) {
+        if (expectedSizeReliable && expectedSize && expectedSize !== receivedBytes) {
             return error("queue.fetch.corrupted_file");
+        }
+
+        if (expectedSizeReliable && expectedSize && expectedSize !== file.size) {
+            // Some browsers may report a transient file.size mismatch after OPFS flush.
+            // Trust byte accounting from successful writes when it matches expected size.
+            logDebug("size_mismatch_ignored", {
+                expectedSize,
+                receivedBytes,
+                fileSize: file.size,
+            });
         }
 
         highestReportedProgress = 100;

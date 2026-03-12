@@ -1,14 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { beforeNavigate, onNavigate } from "$app/navigation";
 
+    import { openFile } from "$lib/download";
     import { clearFileStorage } from "$lib/storage/opfs";
 
     import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
-    import { clearQueue, queue as readableQueue } from "$lib/state/task-manager/queue";
+    import { clearQueue, removeItem, queue as readableQueue } from "$lib/state/task-manager/queue";
 
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
@@ -21,6 +23,8 @@
     const popoverAction = () => {
         $queueVisible = !$queueVisible;
     };
+    const autoPersistAttempted = new Set<string>();
+    let autoPersistSweepRunning = false;
 
     $: queue = Object.entries($readableQueue);
 
@@ -29,6 +33,75 @@
     ).reduce((a, b) => a + b) / (100 * queue.length) : 0;
 
     $: indeterminate = queue.length > 0 && totalProgress === 0;
+
+    const isAutoPersistBatchCandidate = (item: (typeof $readableQueue)[string]) =>
+        item.state === "done" &&
+        Boolean(item.resultFile) &&
+        Boolean(item.originalRequest?.batch);
+
+    const canRemoveDoneItemNow = (item: (typeof $readableQueue)[string]) => {
+        const holdId = item.points?.holdId;
+        if (!holdId) {
+            return true;
+        }
+
+        return item.points?.status === "finalized" || item.points?.status === "released";
+    };
+
+    const autoPersistDoneItems = async () => {
+        if (autoPersistSweepRunning || typeof window === "undefined") {
+            return;
+        }
+
+        autoPersistSweepRunning = true;
+        try {
+            const snapshot = Object.entries(get(readableQueue));
+            const hasPending = snapshot.some(([, item]) => (
+                item.state === "waiting" || item.state === "running"
+            ));
+
+            // Keep single-item/manual flows unchanged.
+            if (!hasPending) {
+                return;
+            }
+
+            for (const [id, item] of snapshot) {
+                if (!isAutoPersistBatchCandidate(item)) {
+                    continue;
+                }
+
+                if (!autoPersistAttempted.has(id)) {
+                    try {
+                        openFile(new File([item.resultFile], item.filename, {
+                            type: item.mimeType,
+                        }));
+                        console.log(`[queue] autoPersist: triggered download id=${id}`);
+                    } catch (error) {
+                        console.error(`[queue] autoPersist: openFile failed id=${id}`, error);
+                    }
+                    autoPersistAttempted.add(id);
+                }
+
+                if (canRemoveDoneItemNow(item)) {
+                    removeItem(id);
+                    console.log(`[queue] autoPersist: removed done item id=${id}`);
+                }
+            }
+        } finally {
+            autoPersistSweepRunning = false;
+        }
+    };
+
+    $: {
+        const existingIds = new Set(queue.map(([id]) => id));
+        for (const id of autoPersistAttempted) {
+            if (!existingIds.has(id)) {
+                autoPersistAttempted.delete(id);
+            }
+        }
+    }
+
+    $: void autoPersistDoneItems();
 
     onNavigate(() => {
         $queueVisible = false;

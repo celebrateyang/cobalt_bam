@@ -11,5 +11,6 @@
         },
         "retrying": "Wiederholen",
         "waiting": "Warten"
-    }
+    },
+    "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig."
 }

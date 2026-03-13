@@ -133,12 +133,16 @@
     >
         <div id="processing-header">
             <div class="header-top">
-                <SectionHeading
-                    title={$t("queue.title")}
-                    sectionId="queue"
-                    beta
-                    nolink
-                />
+                <div class="header-title">
+                    <SectionHeading
+                        title={$t("queue.title")}
+                        sectionId="queue"
+                        nolink
+                    />
+                    <div class="queue-waiting-notice" aria-live="polite">
+                        {$t("queue.waiting_notice", { count: queue.length })}
+                    </div>
+                </div>
                 <div class="header-buttons">
                     {#if queue.length}
                         <button
@@ -202,6 +206,19 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 6px;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .queue-waiting-notice {
+        font-size: 12px;
+        line-height: 1.35;
+        color: var(--gray);
     }
 
     .header-buttons {

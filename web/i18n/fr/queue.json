@@ -11,5 +11,6 @@
         },
         "retrying": "nouvelle tentative",
         "waiting": "en attente"
-    }
+    },
+    "waiting_notice": "Il y a actuellement {{ count }} videos dans la file d'attente. Merci de patienter pendant le telechargement."
 }

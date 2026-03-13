@@ -11,5 +11,6 @@
         },
         "retrying": "đang thử lại",
         "waiting": "đang chờ"
-    }
+    },
+    "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong."
 }

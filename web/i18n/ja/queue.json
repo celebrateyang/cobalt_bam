@@ -11,5 +11,6 @@
         },
         "retrying": "再試行中",
         "waiting": "待機中"
-    }
+    },
+    "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download."
 }

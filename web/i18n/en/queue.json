@@ -11,5 +11,6 @@
         },
         "retrying": "retrying",
         "waiting": "waiting"
-    }
+    },
+    "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download."
 }

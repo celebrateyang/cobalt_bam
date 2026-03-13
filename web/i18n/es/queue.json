@@ -11,5 +11,6 @@
         },
         "retrying": "reintentando",
         "waiting": "esperando"
-    }
+    },
+    "waiting_notice": "Actualmente hay {{ count }} videos en la cola. Espera pacientemente la descarga."
 }

@@ -2,6 +2,10 @@ import { request } from "undici";
 import { Readable } from "node:stream";
 import { closeRequest, getHeaders, pipe } from "./shared.js";
 import { handleHlsPlaylist, isHlsResponse, probeInternalHLSTunnel } from "./internal-hls.js";
+import {
+    classifyBilibiliStreamRoute,
+    reportBilibiliRouteStreamEvent,
+} from "../processing/services/bilibili-route-state.js";
 
 const CHUNK_SIZE = BigInt(8e6); // 8 MB
 const min = (a, b) => a < b ? a : b;
@@ -331,6 +335,15 @@ async function handleGenericStream(streamInfo, res) {
         closeRequest(streamInfo.controller);
         cleanup();
     };
+    const reportBilibiliStream = (route, event, elapsedMs, bytes) => {
+        if (streamInfo.service !== "bilibili" || !route) return;
+        reportBilibiliRouteStreamEvent({
+            route,
+            event,
+            elapsedMs,
+            bytes: bytes || 0,
+        });
+    };
     let candidateUrls =
         streamInfo.service === "bilibili"
             ? normalizeCandidateUrls(streamInfo)
@@ -382,6 +395,10 @@ async function handleGenericStream(streamInfo, res) {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         const target = getTargetForLog(streamInfo.url);
+        const attemptRoute =
+            streamInfo.service === "bilibili"
+                ? classifyBilibiliStreamRoute(streamInfo.url)
+                : null;
 
         try {
             const requestStartedAt = Date.now();
@@ -453,6 +470,8 @@ async function handleGenericStream(streamInfo, res) {
                     // ignore destroy failures
                 }
 
+                reportBilibiliStream(attemptRoute, "error", elapsedMs, 0);
+
                 continue;
             }
 
@@ -471,6 +490,7 @@ async function handleGenericStream(streamInfo, res) {
                     `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry status=${status} attempt=${attempt}/${maxAttempts}`,
                 );
 
+                reportBilibiliStream(attemptRoute, "error", elapsedMs, 0);
                 await streamInfo.transplant(streamInfo.dispatcher);
                 refreshCandidateState();
                 continue;
@@ -497,6 +517,12 @@ async function handleGenericStream(streamInfo, res) {
                 console.warn(
                     `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=non_2xx status=${status} elapsed_ms=${Date.now() - startedAt} target=${target}`,
                 );
+                reportBilibiliStream(
+                    attemptRoute,
+                    "error",
+                    Date.now() - requestStartedAt,
+                    0,
+                );
                 return cleanup();
             }
 
@@ -512,6 +538,12 @@ async function handleGenericStream(streamInfo, res) {
                     console.log(
                         `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=${reason} status=${status} elapsed_ms=${totalElapsedMs} bytes_forwarded=${bytesForwarded} avg_kbps=${avgKbps} range=${rangeHeader} target=${target}`,
                     );
+
+                    if (reason === "upstream_error") {
+                        reportBilibiliStream(attemptRoute, "error", totalElapsedMs, bytesForwarded);
+                    } else if (bytesForwarded > 0) {
+                        reportBilibiliStream(attemptRoute, "success", totalElapsedMs, bytesForwarded);
+                    }
                 };
 
                 res.once("finish", () => logEnd("finish"));
@@ -524,6 +556,12 @@ async function handleGenericStream(streamInfo, res) {
             return;
         } catch (error) {
             if (signal.aborted) {
+                reportBilibiliStream(
+                    attemptRoute,
+                    "error",
+                    Date.now() - startedAt,
+                    0,
+                );
                 return failWithStatus(
                     502,
                     "aborted",
@@ -537,6 +575,12 @@ async function handleGenericStream(streamInfo, res) {
                 switchToNextCandidate(attempt, "request_failed");
 
             if (canRetryWithCandidate) {
+                reportBilibiliStream(
+                    attemptRoute,
+                    "error",
+                    Date.now() - startedAt,
+                    0,
+                );
                 continue;
             }
 
@@ -549,6 +593,12 @@ async function handleGenericStream(streamInfo, res) {
                 );
 
                 try {
+                    reportBilibiliStream(
+                        attemptRoute,
+                        "error",
+                        Date.now() - startedAt,
+                        0,
+                    );
                     await streamInfo.transplant(streamInfo.dispatcher);
                     refreshCandidateState();
                     continue;
@@ -562,6 +612,12 @@ async function handleGenericStream(streamInfo, res) {
             );
             const message = String(error?.message || "").toLowerCase();
             const statusCode = message.includes("timeout") ? 504 : 502;
+            reportBilibiliStream(
+                attemptRoute,
+                "error",
+                Date.now() - startedAt,
+                0,
+            );
             return failWithStatus(
                 statusCode,
                 "request_failed",

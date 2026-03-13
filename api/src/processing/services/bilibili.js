@@ -1,5 +1,9 @@
 import { genericUserAgent, env } from "../../config.js";
 import { resolveRedirectingURL } from "../url.js";
+import {
+    pickBilibiliRoutePlan,
+    reportBilibiliRouteRequestEvent,
+} from "./bilibili-route-state.js";
 
 // TO-DO: higher quality downloads (currently requires an account)
 
@@ -350,7 +354,46 @@ const tryUpstreamResult = async ({
     });
 
     if (result) {
+        reportBilibiliRouteRequestEvent({
+            route: "upstream",
+            event: "request_success",
+        });
         console.log(`[bilibili] upstream ${reason} selected tunnels=${result.urls.length}`);
+    } else {
+        reportBilibiliRouteRequestEvent({
+            route: "upstream",
+            event: "request_fail",
+        });
+    }
+
+    return result;
+};
+
+const tryLocalExtractorResult = async ({
+    comId,
+    tvId,
+    partId,
+}) => {
+    let result;
+
+    if (comId) {
+        result = await com_download(comId, partId);
+    } else if (tvId) {
+        result = await tv_download(tvId);
+    } else {
+        result = { error: "fetch.fail" };
+    }
+
+    if (!result?.error || !["fetch.empty", "fetch.fail"].includes(result.error)) {
+        reportBilibiliRouteRequestEvent({
+            route: "local",
+            event: "request_success",
+        });
+    } else {
+        reportBilibiliRouteRequestEvent({
+            route: "local",
+            event: "request_fail",
+        });
     }
 
     return result;
@@ -380,49 +423,58 @@ export default async function({ comId, tvId, comShortLink, partId, epId, __strea
         epId,
     };
 
-    // Default path is local API extractor first.
-    // For stream-level retries, prefer upstream first to escape degraded CDN routes.
-    if (__streamRetry) {
-        const streamRetryUpstream = await tryUpstreamResult({
-            upstreamUrl,
-            audioFilename,
-            defaultFilename,
-            originalRequest,
-            reason: "stream-retry",
-            timeoutMs: STREAM_RETRY_UPSTREAM_TIMEOUT_MS,
-        });
-        if (streamRetryUpstream) {
-            return streamRetryUpstream;
-        }
-    }
-
-    let result;
-
-    if (comId) {
-        result = await com_download(comId, partId);
-    } else if (tvId) {
-        result = await tv_download(tvId);
-    } else {
-        return { error: "fetch.fail" };
-    }
-
-    if (!result?.error || !['fetch.empty', 'fetch.fail'].includes(result.error)) {
-        if (result && !result.error) {
-            result.originalRequest = originalRequest;
-        }
-        return result;
-    }
-
-    if (!upstreamUrl) return result;
-
-    return (
-        await tryUpstreamResult({
-            upstreamUrl,
-            audioFilename,
-            defaultFilename,
-            originalRequest,
-            reason: "fallback",
-        })
-        || result
+    const canUseUpstream = !!upstreamUrl && shouldUseUpstream();
+    const routePlan = pickBilibiliRoutePlan({
+        canUseUpstream,
+        streamRetry: !!__streamRetry,
+    });
+    console.log(
+        `[bilibili-route] choose primary=${routePlan.primary} secondary=${routePlan.secondary ?? "none"} stream_retry=${__streamRetry ? 1 : 0} reason=${routePlan.reason} score_local=${routePlan.scores.local} score_upstream=${routePlan.scores.upstream}`,
     );
+
+    const orderedRoutes = [routePlan.primary, routePlan.secondary].filter(Boolean);
+    const attempted = new Set();
+    let localFallbackError = null;
+
+    for (const [index, route] of orderedRoutes.entries()) {
+        if (attempted.has(route)) continue;
+        attempted.add(route);
+
+        if (route === "upstream") {
+            const upstreamResult = await tryUpstreamResult({
+                upstreamUrl,
+                audioFilename,
+                defaultFilename,
+                originalRequest,
+                reason: __streamRetry
+                    ? (index === 0 ? "adaptive-stream-retry-primary" : "adaptive-stream-retry-secondary")
+                    : (index === 0 ? "adaptive-primary" : "adaptive-secondary"),
+                timeoutMs: __streamRetry ? STREAM_RETRY_UPSTREAM_TIMEOUT_MS : undefined,
+            });
+
+            if (upstreamResult) {
+                return upstreamResult;
+            }
+            continue;
+        }
+
+        const localResult = await tryLocalExtractorResult({
+            comId,
+            tvId,
+            partId,
+        });
+
+        if (!localResult?.error) {
+            localResult.originalRequest = originalRequest;
+            return localResult;
+        }
+
+        if (!["fetch.empty", "fetch.fail"].includes(localResult.error)) {
+            return localResult;
+        }
+
+        localFallbackError = localResult;
+    }
+
+    return localFallbackError || { error: "fetch.fail" };
 }

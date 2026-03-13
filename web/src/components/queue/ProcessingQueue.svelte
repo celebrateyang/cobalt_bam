@@ -28,6 +28,26 @@
 
     $: queue = Object.entries($readableQueue);
 
+    $: queueNoticeCount = (() => {
+        const batchSessions = new Map<string, number>();
+
+        for (const [, item] of queue) {
+            if (!item.batchSessionId) continue;
+            const count = item.batchSelectionTotal;
+            if (typeof count !== "number" || !Number.isFinite(count) || count <= 0) {
+                continue;
+            }
+
+            batchSessions.set(item.batchSessionId, count);
+        }
+
+        if (batchSessions.size > 0) {
+            return [...batchSessions.values()].reduce((sum, value) => sum + value, 0);
+        }
+
+        return queue.length;
+    })();
+
     $: totalProgress = queue.length ? queue.map(
         ([, item]) => getProgress(item, $currentTasks) * 100
     ).reduce((a, b) => a + b) / (100 * queue.length) : 0;
@@ -140,7 +160,7 @@
                         nolink
                     />
                     <div class="queue-waiting-notice" aria-live="polite">
-                        {$t("queue.waiting_notice", { count: queue.length })}
+                        {$t("queue.waiting_notice", { count: queueNoticeCount })}
                     </div>
                 </div>
                 <div class="header-buttons">

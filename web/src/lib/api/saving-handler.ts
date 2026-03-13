@@ -35,6 +35,8 @@ type SavingHandlerArgs = {
     skipPoints?: boolean,
     queueMeta?: {
         collectionMemory?: CobaltQueueItemCollectionMemory;
+        batchSessionId?: string;
+        batchSelectionTotal?: number;
     },
     suppressErrors?: string[],
 }
@@ -110,9 +112,17 @@ const applyQueueMeta = (
         required,
         status,
         hasCollectionMemory: Boolean(queueMeta?.collectionMemory),
+        batchSessionId: queueMeta?.batchSessionId ?? null,
+        batchSelectionTotal: queueMeta?.batchSelectionTotal ?? null,
     });
 
-    if (!holdId && !required && !queueMeta?.collectionMemory) return;
+    if (
+        !holdId &&
+        !required &&
+        !queueMeta?.collectionMemory &&
+        !queueMeta?.batchSessionId &&
+        !queueMeta?.batchSelectionTotal
+    ) return;
 
     updateItem(taskId, (current) => ({
         ...current,
@@ -123,6 +133,8 @@ const applyQueueMeta = (
             status: status ?? current.points?.status ?? null,
         },
         collectionMemory: queueMeta?.collectionMemory ?? current.collectionMemory,
+        batchSessionId: queueMeta?.batchSessionId ?? current.batchSessionId,
+        batchSelectionTotal: queueMeta?.batchSelectionTotal ?? current.batchSelectionTotal,
     }));
 };
 

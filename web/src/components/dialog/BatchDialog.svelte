@@ -481,28 +481,39 @@
         close();
         // allow dialog stack to settle before any subsequent dialogs open
         await new Promise((r) => setTimeout(r, 200));
+        const batchSessionId = uuid();
 
         for (const item of selectedItems) {
             if (cancelRequested) break;
 
             const taskId = uuid();
             const request = buildBatchRequest(item.url);
-            const queueMeta =
-                clerkEnabled &&
-                collectionKey &&
-                $isSignedIn &&
-                item.itemKey
-                    ? {
-                          collectionMemory: {
-                              collectionKey,
-                              title: title || undefined,
-                              sourceUrl: collectionSourceUrl,
-                              itemKey: item.itemKey,
-                              itemUrl: item.url,
-                              itemTitle: item.title,
-                          },
-                      }
-                    : undefined;
+            const queueMeta: {
+                batchSessionId: string;
+                batchSelectionTotal: number;
+                collectionMemory?: {
+                    collectionKey: string;
+                    title?: string;
+                    sourceUrl?: string;
+                    itemKey: string;
+                    itemUrl?: string;
+                    itemTitle?: string;
+                };
+            } = {
+                batchSessionId,
+                batchSelectionTotal: selectedItems.length,
+            };
+
+            if (clerkEnabled && collectionKey && $isSignedIn && item.itemKey) {
+                queueMeta.collectionMemory = {
+                    collectionKey,
+                    title: title || undefined,
+                    sourceUrl: collectionSourceUrl,
+                    itemKey: item.itemKey,
+                    itemUrl: item.url,
+                    itemTitle: item.title,
+                };
+            }
             let response = null;
             let rateLimitRetries = 0;
             let queueRetries = 0;

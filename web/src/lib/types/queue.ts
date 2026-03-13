@@ -32,6 +32,8 @@ type CobaltQueueItemBase = {
     originalRequest?: CobaltSaveRequestBody;
     points?: CobaltQueueItemPoints;
     collectionMemory?: CobaltQueueItemCollectionMemory;
+    batchSessionId?: string;
+    batchSelectionTotal?: number;
 };
 
 export type CobaltQueueItemWaiting = CobaltQueueItemBase & {

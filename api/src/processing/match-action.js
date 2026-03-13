@@ -38,9 +38,10 @@ export default function({
             if (hostname.endsWith("zjcdn.com")) return false;
             if (/\/aweme\/v1\/play/i.test(parsed.pathname)) return false;
 
-            // Signed douyinvod links are usually safe for direct redirect.
-            if (hostname.endsWith("douyinvod.com")) return true;
-            if (hostname.includes("bytevod")) return true;
+            // douyinvod/bytevod links can also be anti-leech protected by egress/IP.
+            // Keep them on server-side proxy path to avoid client-side 403s.
+            if (hostname.endsWith("douyinvod.com")) return false;
+            if (hostname.includes("bytevod")) return false;
 
             // For unknown domains, prefer legacy proxy/tunnel behavior.
             return false;

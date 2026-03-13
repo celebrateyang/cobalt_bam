@@ -13,5 +13,6 @@
         "waiting": "等待中"
     },
     "stub": "队列为空",
-    "waiting_notice": "当前已有 {{ count }} 个视频进入队列，请耐心等待下载"
+    "waiting_notice": "当前已有 {{ count }} 个视频进入队列，请耐心等待下载",
+    "success_notice": "??????? {{ count }} ???"
 }

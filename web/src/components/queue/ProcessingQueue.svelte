@@ -10,7 +10,7 @@
     import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
-    import { clearQueue, removeItem, queue as readableQueue } from "$lib/state/task-manager/queue";
+    import { clearQueue, queue as readableQueue } from "$lib/state/task-manager/queue";
 
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
@@ -28,24 +28,80 @@
 
     $: queue = Object.entries($readableQueue);
 
-    $: queueNoticeCount = (() => {
-        const batchSessions = new Map<string, number>();
+    $: latestBatchSummary = (() => {
+        type BatchSummary = {
+            total: number;
+            seen: number;
+            completed: number;
+            success: number;
+        };
+
+        const summaries = new Map<string, BatchSummary>();
 
         for (const [, item] of queue) {
             if (!item.batchSessionId) continue;
-            const count = item.batchSelectionTotal;
-            if (typeof count !== "number" || !Number.isFinite(count) || count <= 0) {
-                continue;
+
+            const summary = summaries.get(item.batchSessionId) || {
+                total: 0,
+                seen: 0,
+                completed: 0,
+                success: 0,
+            };
+
+            summary.seen += 1;
+
+            const total = item.batchSelectionTotal;
+            if (typeof total === "number" && Number.isFinite(total) && total > 0) {
+                summary.total = Math.max(summary.total, total);
             }
 
-            batchSessions.set(item.batchSessionId, count);
+            if (item.state === "done") {
+                summary.success += 1;
+                summary.completed += 1;
+            } else if (item.state === "error") {
+                summary.completed += 1;
+            }
+
+            summaries.set(item.batchSessionId, summary);
         }
 
-        if (batchSessions.size > 0) {
-            return [...batchSessions.values()].reduce((sum, value) => sum + value, 0);
+        if (summaries.size === 0) return null;
+
+        const latestSessionId = [...summaries.keys()].at(-1);
+        if (!latestSessionId) return null;
+
+        const latest = summaries.get(latestSessionId);
+        if (!latest) return null;
+
+        const total = latest.total > 0 ? latest.total : latest.seen;
+        const finished = total > 0 && latest.completed >= total;
+
+        return {
+            total,
+            success: latest.success,
+            finished,
+        };
+    })();
+
+    $: queueNotice = (() => {
+        if (latestBatchSummary) {
+            if (latestBatchSummary.finished) {
+                return {
+                    key: "queue.success_notice",
+                    count: latestBatchSummary.success,
+                };
+            }
+
+            return {
+                key: "queue.waiting_notice",
+                count: latestBatchSummary.total,
+            };
         }
 
-        return queue.length;
+        return {
+            key: "queue.waiting_notice",
+            count: queue.length,
+        };
     })();
 
     $: totalProgress = queue.length ? queue.map(
@@ -54,19 +110,9 @@
 
     $: indeterminate = queue.length > 0 && totalProgress === 0;
 
-    const isAutoPersistBatchCandidate = (item: (typeof $readableQueue)[string]) =>
+    const isAutoPersistCandidate = (item: (typeof $readableQueue)[string]) =>
         item.state === "done" &&
-        Boolean(item.resultFile) &&
-        Boolean(item.originalRequest?.batch);
-
-    const canRemoveDoneItemNow = (item: (typeof $readableQueue)[string]) => {
-        const holdId = item.points?.holdId;
-        if (!holdId) {
-            return true;
-        }
-
-        return item.points?.status === "finalized" || item.points?.status === "released";
-    };
+        Boolean(item.resultFile);
 
     const autoPersistDoneItems = async () => {
         if (autoPersistSweepRunning || typeof window === "undefined") {
@@ -76,17 +122,9 @@
         autoPersistSweepRunning = true;
         try {
             const snapshot = Object.entries(get(readableQueue));
-            const hasPending = snapshot.some(([, item]) => (
-                item.state === "waiting" || item.state === "running"
-            ));
-
-            // Keep single-item/manual flows unchanged.
-            if (!hasPending) {
-                return;
-            }
 
             for (const [id, item] of snapshot) {
-                if (!isAutoPersistBatchCandidate(item)) {
+                if (!isAutoPersistCandidate(item)) {
                     continue;
                 }
 
@@ -100,11 +138,6 @@
                         console.error(`[queue] autoPersist: openFile failed id=${id}`, error);
                     }
                     autoPersistAttempted.add(id);
-                }
-
-                if (canRemoveDoneItemNow(item)) {
-                    removeItem(id);
-                    console.log(`[queue] autoPersist: removed done item id=${id}`);
                 }
             }
         } finally {
@@ -160,7 +193,7 @@
                         nolink
                     />
                     <div class="queue-waiting-notice" aria-live="polite">
-                        {$t("queue.waiting_notice", { count: queueNoticeCount })}
+                        {$t(queueNotice.key, { count: queueNotice.count })}
                     </div>
                 </div>
                 <div class="header-buttons">

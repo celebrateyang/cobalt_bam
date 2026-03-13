@@ -12,5 +12,6 @@
         "retrying": "재시도 중",
         "waiting": "대기 중"
     },
-    "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download."
+    "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
+    "success_notice": "?? ???? ??? {{ count }}?? ????? ????????."
 }

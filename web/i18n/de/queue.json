@@ -12,5 +12,6 @@
         "retrying": "Wiederholen",
         "waiting": "Warten"
     },
-    "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig."
+    "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",
+    "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen."
 }

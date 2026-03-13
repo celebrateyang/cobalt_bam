@@ -13,5 +13,6 @@
         "waiting": "đang chờ"
     },
     "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong.",
-    "success_notice": "?? t?i xu?ng th?nh c?ng {{ count }} video trong l? n?y."
+    "success_notice": "?? t?i xu?ng th?nh c?ng {{ count }} video trong l? n?y.",
+    "save_all_done": "Save all downloaded"
 }

@@ -18,6 +18,7 @@
     import ProcessingQueueItem from "$components/queue/ProcessingQueueItem.svelte";
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
 
+    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     const popoverAction = () => {
@@ -25,6 +26,7 @@
     };
     const autoPersistAttempted = new Set<string>();
     let autoPersistSweepRunning = false;
+    let bulkSaving = false;
 
     $: queue = Object.entries($readableQueue);
 
@@ -109,6 +111,9 @@
     ).reduce((a, b) => a + b) / (100 * queue.length) : 0;
 
     $: indeterminate = queue.length > 0 && totalProgress === 0;
+    $: pendingCount = queue.filter(([, item]) => item.state === "waiting" || item.state === "running").length;
+    $: doneCount = queue.filter(([, item]) => item.state === "done" && Boolean(item.resultFile)).length;
+    $: canBulkSave = doneCount > 0 && pendingCount === 0;
 
     const isAutoPersistCandidate = (item: (typeof $readableQueue)[string]) =>
         item.state === "done" &&
@@ -127,6 +132,9 @@
                 if (!isAutoPersistCandidate(item)) {
                     continue;
                 }
+                if (!item.resultFile) {
+                    continue;
+                }
 
                 if (!autoPersistAttempted.has(id)) {
                     try {
@@ -142,6 +150,40 @@
             }
         } finally {
             autoPersistSweepRunning = false;
+        }
+    };
+
+    const saveAllDownloaded = () => {
+        if (bulkSaving || typeof window === "undefined") {
+            return;
+        }
+
+        const snapshot = Object.entries(get(readableQueue)).filter(([, item]) =>
+            item.state === "done" && Boolean(item.resultFile)
+        );
+        if (!snapshot.length) {
+            return;
+        }
+
+        bulkSaving = true;
+        try {
+            for (const [id, item] of snapshot) {
+                if (item.state !== "done" || !item.resultFile) {
+                    continue;
+                }
+                try {
+                    openFile(new File([item.resultFile], item.filename, {
+                        type: item.mimeType,
+                    }));
+                    console.log(`[queue] bulkSave: triggered download id=${id}`);
+                } catch (error) {
+                    console.error(`[queue] bulkSave: openFile failed id=${id}`, error);
+                }
+            }
+        } finally {
+            setTimeout(() => {
+                bulkSaving = false;
+            }, 1200);
         }
     };
 
@@ -197,6 +239,17 @@
                     </div>
                 </div>
                 <div class="header-buttons">
+                    {#if canBulkSave}
+                        <button
+                            class="save-all-button"
+                            on:click={saveAllDownloaded}
+                            disabled={bulkSaving}
+                            tabindex={!$queueVisible ? -1 : undefined}
+                        >
+                            <IconDownload />
+                            {$t("queue.save_all_done")}
+                        </button>
+                    {/if}
                     {#if queue.length}
                         <button
                             class="clear-button"
@@ -298,6 +351,10 @@
 
     .clear-button {
         color: var(--medium-red);
+    }
+
+    .save-all-button {
+        color: var(--secondary);
     }
 
     #processing-list {

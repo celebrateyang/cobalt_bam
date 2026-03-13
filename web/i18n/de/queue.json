@@ -13,5 +13,6 @@
         "waiting": "Warten"
     },
     "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",
-    "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen."
+    "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen.",
+    "save_all_done": "Save all downloaded"
 }

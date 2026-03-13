@@ -13,5 +13,6 @@
         "waiting": "waiting"
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
-    "success_notice": "Successfully downloaded {{ count }} videos in this batch."
+    "success_notice": "Successfully downloaded {{ count }} videos in this batch.",
+    "save_all_done": "Save all downloaded"
 }

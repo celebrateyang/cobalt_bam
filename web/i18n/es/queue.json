@@ -13,5 +13,6 @@
         "waiting": "esperando"
     },
     "waiting_notice": "Actualmente hay {{ count }} videos en la cola. Espera pacientemente la descarga.",
-    "success_notice": "Se han descargado correctamente {{ count }} videos en este lote."
+    "success_notice": "Se han descargado correctamente {{ count }} videos en este lote.",
+    "save_all_done": "Save all downloaded"
 }

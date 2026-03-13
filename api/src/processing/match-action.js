@@ -32,11 +32,10 @@ export default function({
             const parsed = new URL(url);
             const hostname = parsed.hostname.toLowerCase();
 
-            // zjcdn/aweme links are often geo/header sensitive on client egress.
-            // Keep them on server-side proxy path for better success rate.
-            if (hostname.endsWith("zjcdn.com")) {
-                return options.allowZjcdnRedirect === true;
-            }
+            // zjcdn links frequently enforce anti-leech checks (referer/egress/IP).
+            // Direct client redirects are unstable and can return 403 in browser.
+            // Always keep zjcdn on server-side tunnel/proxy path.
+            if (hostname.endsWith("zjcdn.com")) return false;
             if (/\/aweme\/v1\/play/i.test(parsed.pathname)) return false;
 
             // Signed douyinvod links are usually safe for direct redirect.

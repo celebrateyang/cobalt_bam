@@ -232,9 +232,6 @@
                             {$t("clipboard.waiting_peer")}
                         </div>
                     {:else}
-                        <div class="success-info">
-                            {$t("clipboard.peer_connected")}
-                        </div>
                         <ActionButton
                             id="confirm-send-files"
                             disabled={files.length === 0 || isTransferring || sendingFiles}
@@ -601,18 +598,6 @@
         color: #ff9800;
         background: rgba(255, 152, 0, 0.1);
         border: 1px solid rgba(255, 152, 0, 0.2);
-        border-radius: 8px;
-        padding: 0.75rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-top: 1rem;
-    }
-
-    .success-info {
-        text-align: center;
-        color: #4caf50;
-        background: rgba(76, 175, 80, 0.1);
-        border: 1px solid rgba(76, 175, 80, 0.2);
         border-radius: 8px;
         padding: 0.75rem;
         font-size: 0.9rem;
@@ -1088,8 +1073,7 @@
             font-size: 0.74rem;
         }
 
-        .connection-warning,
-        .success-info {
+        .connection-warning {
             margin-top: 0.45rem;
             padding: 0.45rem;
             font-size: 0.78rem;

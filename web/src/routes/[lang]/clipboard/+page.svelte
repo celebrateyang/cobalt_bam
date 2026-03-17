@@ -488,7 +488,7 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        min-height: 60vh;
+        min-height: 120vh;
     }.clipboard-header {
         text-align: center;
         margin-bottom: 0.75rem;
@@ -1106,6 +1106,7 @@
             padding: 0.55rem;
             margin: 0.45rem;
             border-radius: 14px;
+            min-height: 70vh;
         }
 
         :global(.card) {

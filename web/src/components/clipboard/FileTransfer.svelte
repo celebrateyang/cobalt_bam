@@ -16,8 +16,6 @@
     export let isTransferring: boolean = false; // 新增：传输状态
     
     let fileInput: HTMLInputElement;
-    let autoSendScheduled = false; // 防止重复自动发送的标志
-    let pendingFiles: File[] = []; // 等待连接的文件
     let showReceivedNotification = false; // 新文件接收通知
     let isMobile = false; // 检测是否为移动端
     
@@ -45,145 +43,75 @@
     }
     
     const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
-    
+
+    function addSelectedFiles(candidateFiles: File[]): void {
+        const oversizedFiles = candidateFiles.filter(file => file.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+            const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+            const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+            alert(`Some files exceed ${maxSizeMB}MB and cannot be sent:\\n${oversizedNames}`);
+        }
+
+        const validFiles = candidateFiles.filter(file => file.size <= MAX_FILE_SIZE);
+        if (validFiles.length === 0) {
+            return;
+        }
+
+        // Keep selected files visible and let user manually confirm sending.
+        dispatch('filesSelected', { files: validFiles });
+    }
+
     function handleFileSelect(event: Event): void {
-        // 如果正在传输文件，则不处理新的文件选择
         if (isTransferring) {
             return;
         }
-        
-        // 文件选择完成后的处理
+
         const target = event.target as HTMLInputElement;
         if (target.files) {
-            // 通知连接管理器文件选择完成
             dispatch('fileSelectionComplete');
-            
-            const newFiles = Array.from(target.files);
-            
-            // 检查文件大小限制
-            const oversizedFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
-            if (oversizedFiles.length > 0) {
-                const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-                const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
-                alert(`以下文件超过${maxSizeMB}MB限制，无法发送：\n${oversizedNames}`);
-                
-                // 只选择符合大小要求的文件
-                const validFiles = newFiles.filter(file => file.size <= MAX_FILE_SIZE);
-                if (validFiles.length === 0) {
-                    return; // 如果没有有效文件，直接返回
-                }
-                dispatch('filesSelected', { files: validFiles });
-                
-                // 如果已连接且不在发送中，立即发送有效文件
-                if (peerConnected && !sendingFiles) {
-                    scheduleAutoSend();
-                } else {
-                    // 如果未连接，保存待发送文件
-                    pendingFiles = validFiles;
-                }
-            } else {
-                dispatch('filesSelected', { files: newFiles });
-                
-                // 如果已连接且不在发送中，立即发送
-                if (peerConnected && !sendingFiles) {
-                    scheduleAutoSend();
-                } else {
-                    // 如果未连接，保存待发送文件
-                    pendingFiles = newFiles;
-                }
-            }
+            addSelectedFiles(Array.from(target.files));
         }
     }
 
-    // 文件选择点击处理
     function handleFileInputClick() {
         if (!isTransferring) {
-            // 通知连接管理器准备文件选择
             dispatch('prepareFileSelection');
             fileInput?.click();
         }
     }
 
-    // 文件input的focus事件处理
     function handleFileInputFocus() {
-        console.log('📱 文件选择器获得焦点');
         dispatch('prepareFileSelection');
     }
 
-    function scheduleAutoSend(): void {
-        if (!autoSendScheduled) {
-            autoSendScheduled = true;
-            setTimeout(() => {
-                dispatch('sendFiles');
-                autoSendScheduled = false;
-                pendingFiles = []; // 清空待发送文件
-            }, 100);
-        }
-    }
-
     function handleDragOver(event: DragEvent): void {
-        // 如果正在传输文件，则不允许拖拽
         if (isTransferring) {
             return;
         }
-        
+
         event.preventDefault();
         dragover = true;
     }
 
     function handleDragLeave(): void {
-        // 如果正在传输文件，则不处理拖拽离开事件
         if (isTransferring) {
             return;
         }
-        
+
         dragover = false;
     }
 
     function handleDrop(event: DragEvent): void {
-        // 如果正在传输文件，则不处理拖拽放置
         if (isTransferring) {
             event.preventDefault();
             return;
         }
-        
+
         event.preventDefault();
         dragover = false;
+
         if (event.dataTransfer?.files) {
-            const droppedFiles = Array.from(event.dataTransfer.files);
-            
-            // 检查文件大小限制
-            const oversizedFiles = droppedFiles.filter(file => file.size > MAX_FILE_SIZE);
-            if (oversizedFiles.length > 0) {
-                const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-                const oversizedNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
-                alert(`以下文件超过${maxSizeMB}MB限制，无法发送：\n${oversizedNames}`);
-                
-                // 只处理符合大小要求的文件
-                const validFiles = droppedFiles.filter(file => file.size <= MAX_FILE_SIZE);
-                if (validFiles.length === 0) {
-                    return; // 如果没有有效文件，直接返回
-                }
-                dispatch('filesSelected', { files: validFiles });
-                
-                // 如果已连接且不在发送中，立即发送有效文件
-                if (peerConnected && !sendingFiles) {
-                    scheduleAutoSend();
-                } else {
-                    // 如果未连接，保存待发送文件
-                    pendingFiles = validFiles;
-                }
-            } else {
-                dispatch('filesSelected', { files: droppedFiles });
-                
-                // 如果已连接且不在发送中，立即发送
-                if (peerConnected && !sendingFiles) {
-                    scheduleAutoSend();
-                } else {
-                    // 如果未连接，保存待发送文件
-                    pendingFiles = droppedFiles;
-                }
-            }
+            addSelectedFiles(Array.from(event.dataTransfer.files));
         }
     }
 
@@ -193,12 +121,10 @@
 
     function sendFiles(): void {
         dispatch('sendFiles');
-        pendingFiles = []; // 开始发送时清空待发送列表
     }
 
     function cancelSending(): void {
         dispatch('cancelSending');
-        autoSendScheduled = false; // 取消时重置标志
     }
 
     function cancelReceiving(): void {
@@ -221,17 +147,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // 只监听连接状态变化，当从未连接变为连接时发送待发送文件
-    let wasConnected = peerConnected;
-    $: {
-        // 连接状态从 false 变为 true
-        if (peerConnected && !wasConnected && pendingFiles.length > 0 && !sendingFiles) {
-            scheduleAutoSend();
-        }
-        wasConnected = peerConnected;
-    }
-    
-    // 组件挂载时检测屏幕尺寸，并监听窗口大小变化
+    // Lifecycle: detect viewport for mobile-specific notification behavior
     import { onMount, onDestroy } from 'svelte';
     
     let resizeHandler: () => void;
@@ -295,8 +211,8 @@
             </div>
 
             {#if files.length > 0 && !sendingFiles}
-                <div class="file-list">
-                    <h5>{$t("clipboard.file_transfer.selected_files")}</h5>
+                <div class="file-list selected-files-list">
+                    <h5>{$t("clipboard.file_transfer.send_files")}</h5>
                     {#each files as file, index (file.name + index)}
                         <div class="file-item">
                             <span class="file-name">{file.name}</span>
@@ -306,18 +222,26 @@
                                 on:click={() => removeFile(index)}
                                 aria-label={$t("clipboard.file_transfer.remove")}
                             >
-                                ❌
+                                ×
                             </button>
                         </div>
                     {/each}
+
                     {#if !peerConnected}
                         <div class="connection-warning">
-                            {$t("clipboard.file_transfer.waiting_connection")}
+                            {$t("clipboard.waiting_peer")}
                         </div>
                     {:else}
                         <div class="success-info">
-                            {$t("clipboard.file_transfer.auto_sent")}
+                            {$t("clipboard.peer_connected")}
                         </div>
+                        <ActionButton
+                            id="confirm-send-files"
+                            disabled={files.length === 0 || isTransferring || sendingFiles}
+                            click={sendFiles}
+                        >
+                            {$t("clipboard.send")}
+                        </ActionButton>
                     {/if}
                 </div>
             {/if}
@@ -1207,4 +1131,27 @@
             font-size: 0.72rem;
         }
     }
+
+    .selected-files-list {
+        max-height: 230px;
+        overflow-y: auto;
+    }
+
+    .send-files :global(#confirm-send-files) {
+        align-self: center;
+        margin-top: 0.45rem;
+    }
+
+    @media (max-width: 768px) {
+        .selected-files-list {
+            max-height: 96px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .selected-files-list {
+            max-height: 84px;
+        }
+    }
+
 </style>

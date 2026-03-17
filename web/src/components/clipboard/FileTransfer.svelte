@@ -1036,4 +1036,175 @@
             font-size: 1rem;
         }
     }
+
+    /* Mobile first-screen fit overrides for file transfer tab */
+    @media (max-width: 768px) {
+        :global(#file-transfer .heading-container) {
+            display: none;
+        }
+
+        .file-transfer-section {
+            height: calc(100vh - 250px);
+            height: calc(100dvh - 250px);
+            min-height: 0;
+            gap: 0.6rem;
+            padding: 0.2rem;
+        }
+
+        .send-files,
+        .received-files {
+            min-height: 0;
+            padding: 0.75rem;
+            gap: 0.55rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .send-files {
+            flex: 0 0 44%;
+        }
+
+        .received-files {
+            flex: 1 1 auto;
+        }
+
+        .send-files h4,
+        .received-files h4 {
+            margin: 0;
+            font-size: 0.88rem;
+            line-height: 1.15;
+        }
+
+        .file-drop-zone {
+            min-height: 72px;
+            padding: 0.75rem 0.6rem;
+            border-radius: 10px;
+        }
+
+        .file-drop-zone p {
+            margin: 0;
+            font-size: 0.82rem;
+            line-height: 1.25;
+        }
+
+        .file-list {
+            margin-top: 0.35rem;
+            gap: 0.4rem;
+            min-height: 0;
+        }
+
+        .received-files .file-list {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            overflow: auto;
+        }
+
+        .file-item {
+            padding: 0.5rem 0.55rem;
+            gap: 0.35rem;
+            border-radius: 10px;
+        }
+
+        .file-name {
+            font-size: 0.82rem;
+            line-height: 1.25;
+        }
+
+        .file-size {
+            font-size: 0.74rem;
+        }
+
+        .file-actions {
+            gap: 0.35rem;
+            align-self: stretch;
+            justify-content: flex-end;
+        }
+
+        .download-btn,
+        .remove-file {
+            min-height: 30px;
+            padding: 0.35rem 0.55rem;
+            font-size: 0.76rem;
+        }
+
+        .remove-file {
+            padding: 0.3rem 0.45rem;
+        }
+
+        .empty-state {
+            min-height: 64px;
+            padding: 0.7rem 0.6rem;
+            font-size: 0.8rem;
+        }
+
+        .progress-section {
+            margin-top: 0.45rem;
+            padding: 0.6rem;
+        }
+
+        .progress-header {
+            margin-bottom: 0.45rem;
+            gap: 0.35rem;
+        }
+
+        .progress-header h4 {
+            font-size: 0.8rem;
+            line-height: 1.2;
+        }
+
+        .progress-bar {
+            height: 8px;
+        }
+
+        .progress-header :global(.action-button) {
+            min-height: 30px;
+            padding: 0.3rem 0.55rem;
+            font-size: 0.74rem;
+        }
+
+        .connection-warning,
+        .success-info {
+            margin-top: 0.45rem;
+            padding: 0.45rem;
+            font-size: 0.78rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .file-transfer-section {
+            height: calc(100vh - 220px);
+            height: calc(100dvh - 220px);
+            gap: 0.5rem;
+        }
+
+        .send-files,
+        .received-files {
+            padding: 0.62rem;
+            border-radius: 10px;
+        }
+
+        .send-files {
+            flex-basis: 42%;
+        }
+
+        .file-drop-zone {
+            min-height: 62px;
+            padding: 0.62rem 0.45rem;
+        }
+
+        .file-drop-zone p {
+            font-size: 0.78rem;
+        }
+
+        .file-item {
+            padding: 0.42rem 0.45rem;
+        }
+
+        .download-btn,
+        .remove-file {
+            font-size: 0.72rem;
+        }
+    }
 </style>

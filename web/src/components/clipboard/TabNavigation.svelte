@@ -94,28 +94,34 @@
 
     .tab-button.active::before {
         display: none;
-    }    @media (max-width: 768px) {
+    }
+
+    @media (max-width: 768px) {
         .tab-navigation {
             width: 100%;
             max-width: none;
-            margin: 0 0 1rem 0;
-            padding: 0.25rem;
+            margin: 0 0 0.5rem 0;
+            padding: 0.2rem;
+            gap: 0.25rem;
+            border-radius: 12px;
         }
         
         .tab-button {
             flex: 1;
             justify-content: center;
-            padding: 0.75rem;
-            font-size: 0.85rem;
+            padding: 0.55rem 0.45rem;
+            font-size: 0.8rem;
             min-width: auto;
+            gap: 0.35rem;
+            border-radius: 9px;
         }
     }
 
     @media (max-width: 480px) {
         .tab-button {
-            padding: 0.8rem 0.5rem;
-            font-size: 0.85rem;
-            gap: 0.5rem;
+            padding: 0.5rem 0.4rem;
+            font-size: 0.76rem;
+            gap: 0.3rem;
         }
     }
 </style>

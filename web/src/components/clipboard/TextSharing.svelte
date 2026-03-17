@@ -119,12 +119,11 @@
     <div class="text-sharing-section">
         <!-- 发送文本区域 - 移到上方 -->
         <div class="send-text">
-            <h4>{$t('clipboard.send_text')}</h4>
             <textarea
                 class="text-input"
                 bind:value={textContent}
                 placeholder={$t('clipboard.text_placeholder')}
-                rows="4"
+                rows="3"
                 disabled={!peerConnected}
             ></textarea>
             <ActionButton
@@ -138,24 +137,23 @@
 
         <!-- 接收文本区域 - 移到下方 -->
         <div class="received-text" class:new-message={isNewMessage} bind:this={receivedTextElement}>
-            <h4>{$t('clipboard.received_text')} {#if isNewMessage}<span class="new-badge">{$t('clipboard.new_badge')}</span>{/if}</h4>
             {#if receivedText}
                 <div class="text-display">
                     <div class="text-content">{receivedText}</div>
-                    <div class="text-actions">
-                        <button
-                            class="copy-btn"
-                            on:click={copyReceivedText}
-                        >
-                            📋 {$t('clipboard.copy')}
-                        </button>
-                        <button
-                            class="clear-btn"
-                            on:click={clearReceivedText}
-                        >
-                            🗑️ {$t('clipboard.clear')}
-                        </button>
-                    </div>
+                </div>
+                <div class="text-actions">
+                    <button
+                        class="copy-btn"
+                        on:click={copyReceivedText}
+                    >
+                        {$t('clipboard.copy')}
+                    </button>
+                    <button
+                        class="clear-btn"
+                        on:click={clearReceivedText}
+                    >
+                        {$t('clipboard.clear')}
+                    </button>
                 </div>
             {:else}
                 <div class="empty-state">
@@ -241,40 +239,17 @@
         }
     }
 
-    /* 新消息徽章 */
-    .new-badge {
-        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-        color: white;
-        font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-weight: 600;
-        margin-left: 0.5rem;
-        animation: pulse 2s infinite;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-        }
-        50% {
-            transform: scale(1.05);
-            opacity: 0.8;
-        }
-    }
-
     .text-sharing-section {
         display: flex;
         flex-direction: column;
-        gap: 2.5rem;
+        gap: 1.6rem;
         padding: 1rem;
-    }    .send-text, .received-text {
+    }
+
+    .send-text, .received-text {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1rem;
         padding: 2rem;
         background: rgba(255, 255, 255, 0.03);
         border-radius: 16px;
@@ -312,20 +287,9 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 35px rgba(102, 126, 234, 0.3);
         border-color: rgba(102, 126, 234, 0.4);
-    }    .send-text h4, .received-text h4 {
-        margin: 0 0 1rem 0;
-        font-size: 1.1rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        width: 100%;
-    }    .text-input {
+    }
+
+    .text-input {
         width: 100%;
         padding: 1rem;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -501,12 +465,6 @@
             justify-content: center;
         }
           /* 确保标题在PC端居中 */
-        .send-text h4, .received-text h4 {
-            justify-content: center;
-            text-align: center;
-            width: 100%;
-            margin: 0 auto 1rem auto;
-        }
         
         /* 确保输入框在PC端居中 */
         .text-input {
@@ -570,12 +528,6 @@
             justify-content: center;
         }
           /* 确保大桌面端标题居中 */
-        .send-text h4, .received-text h4 {
-            justify-content: center;
-            text-align: center;
-            width: 100%;
-            margin: 0 auto 1rem auto;
-        }
         
         /* 确保大桌面端输入框居中 */
         .text-input {
@@ -627,46 +579,84 @@
             top: 10px;
         }
 
+        :global(#text-sharing .heading-container) {
+            display: none;
+        }
+
         .text-sharing-section {
-            gap: 1.5rem;
-            padding: 0.5rem;
+            gap: 0.65rem;
+            padding: 0.2rem;
+            height: calc(100vh - 250px);
+            height: calc(100dvh - 250px);
+            min-height: 0;
         }
 
         .send-text, .received-text {
-            padding: 1.5rem;
-            gap: 1rem;
+            padding: 0.85rem;
+            gap: 0.65rem;
+            border-radius: 12px;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .send-text {
+            justify-content: space-between;
         }
 
         .text-input {
-            min-height: 100px;
-            font-size: 0.9rem;
+            min-height: 0;
+            max-height: none;
+            height: auto;
+            flex: 1;
+            padding: 0.7rem;
+            font-size: 0.88rem;
+            line-height: 1.35;
+        }
+
+        .send-text :global(.action-button) {
+            min-height: 36px;
+            padding: 0.45rem 0.9rem;
+            font-size: 0.82rem;
+        }
+
+        .text-display {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .text-content {
-            padding: 1rem;
-            font-size: 0.9rem;
-            max-height: 200px;
+            padding: 0.75rem;
+            font-size: 0.86rem;
+            min-height: 0;
+            max-height: none;
+            flex: 1;
+            line-height: 1.4;
         }
 
         .text-actions {
-            padding: 0.75rem 1rem;
-            gap: 0.5rem;
+            padding: 0.5rem 0.65rem;
+            gap: 0.4rem;
         }
 
         .copy-btn, .clear-btn {
-            padding: 0.6rem 1rem;
-            font-size: 0.85rem;
+            padding: 0.5rem 0.7rem;
+            font-size: 0.78rem;
             flex: 1;
             justify-content: center;
+            min-height: 34px;
+            gap: 0.35rem;
         }
 
         .empty-state {
-            padding: 2rem 1rem;
+            padding: 0.85rem 0.75rem;
+            min-height: 72px;
+            font-size: 0.82rem;
         }
 
         .empty-state::before {
-            font-size: 2rem;
-            margin-bottom: 0.75rem;
+            display: none;
         }
     }
 
@@ -681,7 +671,32 @@
         }
 
         .notification-text span {
-            font-size: 0.75rem;        }
+            font-size: 0.75rem;
+        }
+
+        .text-sharing-section {
+            height: calc(100vh - 220px);
+            height: calc(100dvh - 220px);
+        }
+
+        .send-text, .received-text {
+            padding: 0.7rem;
+            border-radius: 10px;
+        }
+
+        .text-input {
+            padding: 0.65rem;
+            font-size: 0.84rem;
+        }
+
+        .text-content {
+            padding: 0.65rem;
+            font-size: 0.82rem;
+        }
+
+        .copy-btn, .clear-btn {
+            font-size: 0.75rem;
+        }
     }
     
     /* ActionButton居中样式 */
@@ -712,4 +727,106 @@
             max-width: 220px;
         }
     }
+
+    /* Layout overrides: keep left/right text boxes same height and align action row */
+    .send-text,
+    .received-text {
+        align-items: stretch;
+        text-align: left;
+        justify-content: flex-start;
+    }
+
+    .text-input,
+    .text-display {
+        width: 100%;
+        min-height: 180px;
+        max-height: 180px;
+    }
+
+    .text-input {
+        resize: none;
+        align-self: stretch;
+        margin: 0;
+    }
+
+    .text-content {
+        min-height: 100%;
+        max-height: 100%;
+        border-bottom: none;
+    }
+
+    .text-actions {
+        margin-top: 0.75rem;
+        padding: 0;
+        background: transparent;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .copy-btn,
+    .clear-btn {
+        flex: 1;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .send-text :global(.action-button) {
+        min-height: 44px;
+    }
+
+    @media (min-width: 1024px) {
+        .text-input,
+        .text-display {
+            min-height: 220px;
+            max-height: 220px;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .text-input,
+        .text-display {
+            min-height: 260px;
+            max-height: 260px;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .text-input,
+        .text-display {
+            min-height: 190px;
+            max-height: 190px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .text-input,
+        .text-display {
+            min-height: 0;
+            max-height: none;
+            height: auto;
+        }
+
+        .text-content {
+            min-height: 0;
+            max-height: none;
+            height: 100%;
+        }
+
+        .text-actions {
+            margin-top: 0.55rem;
+            gap: 0.4rem;
+        }
+
+        .copy-btn,
+        .clear-btn {
+            min-height: 34px;
+        }
+
+        .send-text :global(.action-button) {
+            min-height: 34px;
+        }
+    }
+
 </style>

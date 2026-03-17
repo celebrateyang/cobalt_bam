@@ -231,7 +231,7 @@
     {/if}
 {:else}
     <!-- Session Info -->
-    <SettingsCategory title={$t("clipboard.session_active")} sectionId="session-info">
+    <div class="session-info-wrapper" id="session-info">
         <div class="session-info">
             <div class="session-details">                
                 {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
@@ -301,7 +301,7 @@
                 
             </div>
         </div>
-    </SettingsCategory>
+    </div>
     
     <!-- Disconnect Section -->
     <div class="disconnect-section">
@@ -569,7 +569,15 @@
         .session-copy-section {
             width: 100%;
         }
-    }.session-info {
+    }
+
+    .session-info-wrapper {
+        width: 100%;
+        padding: 0.25rem;
+        box-sizing: border-box;
+    }
+
+    .session-info {
         text-align: center;
         padding: 0.75rem 1.25rem;
         max-width: 900px;

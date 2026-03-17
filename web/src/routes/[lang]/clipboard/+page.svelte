@@ -51,12 +51,15 @@
     let showLinkCopied = false;
 
     const COMPACT_VIEWPORT_MAX_WIDTH = 768;
+    const HEADER_AUTO_COLLAPSE_DELAY_MS = 3000;
 
     let headerCollapsed = false;
     let headerManualOverride: 'collapsed' | 'expanded' | null = null;
     let isCompactViewport = false;
     let shouldCollapseAutomatically = false;
     let autoCollapseWasActive = false;
+    let initialHeaderCollapseTimer: ReturnType<typeof setTimeout> | null = null;
+    let hasQueuedInitialHeaderCollapse = false;
     let tabContentEl: HTMLDivElement | null = null;
     let detachViewportListener: (() => void) | null = null;
     
@@ -244,6 +247,33 @@
         }
     }
 
+    function clearInitialHeaderCollapseTimer() {
+        if (initialHeaderCollapseTimer) {
+            clearTimeout(initialHeaderCollapseTimer);
+            initialHeaderCollapseTimer = null;
+        }
+    }
+
+    function scheduleInitialHeaderCollapse() {
+        if (!isCompactViewport || hasQueuedInitialHeaderCollapse) {
+            return;
+        }
+
+        hasQueuedInitialHeaderCollapse = true;
+        clearInitialHeaderCollapseTimer();
+
+        initialHeaderCollapseTimer = setTimeout(() => {
+            initialHeaderCollapseTimer = null;
+
+            if (!isCompactViewport) return;
+            if (headerManualOverride !== null) return;
+            if (shouldCollapseAutomatically) return;
+
+            headerCollapsed = true;
+            headerManualOverride = 'collapsed';
+        }, HEADER_AUTO_COLLAPSE_DELAY_MS);
+    }
+
 // Lifecycle functions
     onMount(async () => {
         // 立即清除任何错误状态
@@ -260,6 +290,12 @@
 
             const applyViewportMatch = (matches: boolean) => {
                 isCompactViewport = matches;
+                if (!matches) {
+                    clearInitialHeaderCollapseTimer();
+                    return;
+                }
+
+                scheduleInitialHeaderCollapse();
             };
 
             applyViewportMatch(viewportQuery.matches);
@@ -281,6 +317,7 @@
     });
 
     onDestroy(() => {
+        clearInitialHeaderCollapseTimer();
         detachViewportListener?.();
         clipboardManager?.cleanup();
     });
@@ -324,6 +361,20 @@
             <div class="description-container">
                 <p class="description-main">{$t("clipboard.description")}</p>
                 <p class="description-subtitle">{$t("clipboard.description_subtitle")}</p>
+                {#if isConnected && peerConnected}
+                    <div class="session-status">
+                        <div class="status-badge">
+                            <div class="status-dot connected"></div>
+                            <span class="status-text">{$t('clipboard.peer_connected')}</span>
+                        </div>
+                        {#if isLAN}
+                            <div class="status-badge lan" title={$t('clipboard.lan_direct')}>
+                                <span class="status-icon">LAN</span>
+                                <span class="status-text">{$t('clipboard.lan_direct')}</span>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
@@ -352,19 +403,6 @@
     {/if}
 
     {#if isConnected && peerConnected}
-        <!-- Connection Status Indicator -->
-        <div class="session-status">
-            <div class="status-badge">
-                <div class="status-dot connected"></div>
-                <span class="status-text">{$t('clipboard.peer_connected')}</span>
-            </div>
-            {#if isLAN}
-                <div class="status-badge lan" title={$t('clipboard.lan_direct')}>
-                    <span class="status-icon">⚡</span>
-                    <span class="status-text">{$t('clipboard.lan_direct')}</span>
-                </div>
-            {/if}
-        </div>
 
         <!-- Tab Navigation Component - Moved to top -->
         <TabNavigation
@@ -498,7 +536,7 @@
     .header-description {
         overflow: hidden;
         transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
-        max-height: 220px;
+        max-height: 280px;
         opacity: 1;
         margin-top: 0.35rem;
     }
@@ -556,21 +594,45 @@
 
         .header-toggle {
             display: inline-flex;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.72rem;
         }
 
         .header-toggle .toggle-label {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
+        }
+
+        .clipboard-header {
+            margin-bottom: 0.35rem;
+            padding: 0.12rem 0 0.45rem;
+        }
+
+        .clipboard-header::before {
+            width: 46px;
+            height: 3px;
+        }
+
+        .clipboard-header h1 {
+            font-size: 1.55rem;
+            margin-top: 0.15rem;
+            margin-bottom: 0;
+            line-height: 1.1;
         }
 
         .clipboard-header.collapsed h1 {
-            font-size: 1.7rem;
+            font-size: 1.45rem;
             margin-bottom: 0;
         }
     }
 
     @media (max-width: 480px) {
         .header-toggle {
-            padding: 0.3rem 0.6rem;
+            padding: 0.2rem 0.45rem;
+        }
+
+        .header-toggle .toggle-icon {
+            width: 14px;
+            height: 14px;
         }
 
         .header-toggle .toggle-label {
@@ -712,7 +774,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0.25rem 0;
+        margin: 0.65rem 0 0;
         padding: 0.4rem;
         background: rgba(34, 197, 94, 0.1);
         border: 1px solid rgba(34, 197, 94, 0.2);
@@ -1041,37 +1103,60 @@
     
     @media (max-width: 768px) {
         .clipboard-container {
-            padding: 0.75rem;
-            margin: 0.75rem;
-            border-radius: 16px;
-        }
-
-        .clipboard-header h1 {
-            font-size: 1.9rem;
+            padding: 0.55rem;
+            margin: 0.45rem;
+            border-radius: 14px;
         }
 
         :global(.card) {
             padding: 0.75rem;
         }
 
-        :global(.tab-content) {
-            padding: 0.75rem;
-            margin-top: 0.5rem;
+        .tab-content {
+            padding: 0.45rem;
+            margin-top: 0.3rem;
         }
-    }    @media (max-width: 480px) {
+
+        .session-management-section {
+            margin-top: 0.6rem;
+            padding: 0.55rem 0.6rem;
+            border-radius: 12px;
+        }
+
+        .session-info h3 {
+            display: none;
+        }
+
+        .btn-secondary {
+            padding: 0.45rem 0.9rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+    }
+
+    @media (max-width: 480px) {
         .clipboard-container {
-            margin: 0.5rem;
-            padding: 0.5rem;
-            max-height: 90vh;
-            overflow-y: auto;
+            margin: 0.35rem;
+            padding: 0.42rem;
+            max-height: none;
+            overflow: visible;
         }
 
         .clipboard-header h1 {
-            font-size: 1.6rem;
+            font-size: 1.35rem;
+        }
+
+        .tab-content {
+            padding: 0.4rem;
+        }
+
+        .session-management-section {
+            margin-top: 0.45rem;
+            padding: 0.45rem 0.5rem;
         }
 
         :global(.drop-zone) {
-            padding: 1.5rem 1rem;
+            padding: 1.25rem 0.85rem;
         }
     }
 </style>

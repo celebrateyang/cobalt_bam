@@ -9,6 +9,7 @@
     import { removeItem } from "$lib/state/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
+    import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 
     import type { CobaltQueueItem, UUID } from "$lib/types/queue";
     import type { CobaltCurrentTasks } from "$lib/types/task-manager";
@@ -48,6 +49,8 @@
 
     let retrying = false;
     let downloading = false;
+    let hasResumeSnapshot = false;
+    $: hasResumeSnapshot = info.state === "error" && hasFetchResumeStateForTask(id);
 
     const retry = async (info: CobaltQueueItem) => {
         if (info.canRetry && info.originalRequest) {
@@ -284,10 +287,15 @@
             {#if info.state === "error" && info?.canRetry}
                 <button
                     class="button action-button"
-                    aria-label={$t("button.retry")}
+                    class:resume-button={hasResumeSnapshot}
+                    aria-label={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
+                    title={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
                     on:click={() => retry(info)}
                 >
                     <IconReload />
+                    {#if hasResumeSnapshot}
+                        <span>{$t("button.continue")}</span>
+                    {/if}
                 </button>
             {/if}
             <button
@@ -472,6 +480,13 @@
         width: 18px;
         height: 18px;
         stroke-width: 1.5px;
+    }
+
+    .action-button.resume-button {
+        gap: 6px;
+        padding: 8px 10px;
+        line-height: 1;
+        font-size: 12px;
     }
 
     .action-button:disabled {

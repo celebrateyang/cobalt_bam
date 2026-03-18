@@ -51,3 +51,15 @@ export const clearFetchResumeStateForTask = (taskId: UUID) => {
         }
     }
 };
+
+export const hasFetchResumeStateForTask = (taskId: UUID) => {
+    const prefix = `${taskId}:`;
+    for (const [key, state] of resumeState.entries()) {
+        if (!key.startsWith(prefix)) continue;
+        if (state.fileName && Number.isFinite(state.receivedBytes) && state.receivedBytes > 0) {
+            return true;
+        }
+    }
+
+    return false;
+};

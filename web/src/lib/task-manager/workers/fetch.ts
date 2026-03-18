@@ -18,6 +18,15 @@ type FetchWorkerTuning = {
     slowChunkMs?: number,
 };
 
+type FetchWorkerResume = {
+    enabled?: boolean,
+    slot?: number,
+    fileName?: string,
+    receivedBytes?: number,
+    expectedSize?: number,
+    contentType?: string,
+};
+
 const isAbortError = (e: unknown) => (
     (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
     String(e).includes("AbortError")
@@ -206,7 +215,7 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
     };
 };
 
-const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
+const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: FetchWorkerResume) => {
     // Let the runner know this worker booted successfully,
     // so it can distinguish "slow network" vs "worker failed to load".
     self.postMessage({
@@ -226,7 +235,13 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         }
         console.log(debugPrefix, message);
     };
+    const resumeEnabled = Boolean(resume?.enabled);
+    const resumeSlot = Number.isFinite(resume?.slot) ? Number(resume?.slot) : undefined;
     let storage: Awaited<ReturnType<typeof Storage.init>> | null = null;
+    let receivedBytes = 0;
+    let expectedSize: number | undefined;
+    let expectedSizeReliable = false;
+    let contentType = "application/octet-stream";
     let abortReason: "timeout" | "stalled" | null = null;
     const controller = new AbortController();
     const startedAt = Date.now();
@@ -258,10 +273,36 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         }
     };
 
-    const error = async (code: string) => {
+    const buildResumeSnapshot = async () => {
+        if (!resumeEnabled || !storage || resumeSlot === undefined) return null;
+        const fileName = storage.getName();
+        const persistedSize = await storage.getSize().catch(() => receivedBytes);
+        const safeReceived = Math.max(
+            0,
+            Math.min(
+                Number.isFinite(persistedSize) ? persistedSize : receivedBytes,
+                receivedBytes,
+            ),
+        );
+        if (!fileName || safeReceived <= 0) return null;
+
+        return {
+            slot: resumeSlot,
+            fileName,
+            receivedBytes: safeReceived,
+            expectedSize: expectedSizeReliable ? expectedSize : undefined,
+            contentType,
+        };
+    };
+
+    const error = async (code: string, resumeSnapshot?: Awaited<ReturnType<typeof buildResumeSnapshot>>) => {
         stopTimers();
         if (storage) {
-            await storage.destroy().catch(() => undefined);
+            if (resumeSnapshot) {
+                await storage.close().catch(() => undefined);
+            } else {
+                await storage.destroy().catch(() => undefined);
+            }
         }
 
         logDebug("worker_error", {
@@ -272,19 +313,16 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
         self.postMessage({
             cobaltFetchWorker: {
                 error: code,
+                resume: resumeSnapshot,
             }
         });
         return self.close();
     };
 
     try {
-        let receivedBytes = 0;
         let retries = 0;
-        let expectedSize: number | undefined;
-        let expectedSizeReliable = false;
         let largestExpectedSize = 0;
         let highestReportedProgress = 0;
-        let contentType = "application/octet-stream";
         let rangeChunkBytes = runtimeTuning.initialChunkBytes;
         let upstreamIgnoresRange = false;
         logDebug("worker_start", {
@@ -293,7 +331,48 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             maxChunkBytes: runtimeTuning.maxChunkBytes,
             fastChunkMs: runtimeTuning.fastChunkMs,
             slowChunkMs: runtimeTuning.slowChunkMs,
+            resumeEnabled,
+            resumeSlot: resumeSlot ?? null,
+            resumeFileName: resume?.fileName ?? null,
+            resumeReceivedBytes: resume?.receivedBytes ?? null,
         });
+
+        if (
+            resumeEnabled &&
+            resumeSlot !== undefined &&
+            typeof resume?.fileName === "string" &&
+            resume.fileName.length > 0
+        ) {
+            const resumedStorage = await Storage.openExisting(resume.fileName);
+            if (resumedStorage) {
+                storage = resumedStorage;
+                const persistedSize = await resumedStorage.getSize().catch(() => 0);
+                const resumeOffset = Number.isFinite(resume.receivedBytes)
+                    ? Number(resume.receivedBytes)
+                    : persistedSize;
+                receivedBytes = Math.max(0, Math.min(resumeOffset, persistedSize));
+                if (Number.isFinite(resume.expectedSize) && Number(resume.expectedSize) > 0) {
+                    expectedSize = Number(resume.expectedSize);
+                    expectedSizeReliable = false;
+                }
+                if (typeof resume.contentType === "string" && resume.contentType.length > 0) {
+                    contentType = resume.contentType;
+                }
+
+                logDebug("resume_restored", {
+                    slot: resumeSlot,
+                    fileName: resume.fileName,
+                    receivedBytes,
+                    persistedSize,
+                    expectedSize: expectedSize ?? null,
+                });
+            } else {
+                logDebug("resume_not_found", {
+                    slot: resumeSlot,
+                    fileName: resume.fileName,
+                });
+            }
+        }
 
         const reportProgress = () => {
             if (!expectedSize) return;
@@ -319,6 +398,9 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
 
         markProgress();
         startStallMonitor();
+        if (receivedBytes > 0) {
+            reportProgress();
+        }
 
         while (true) {
             const headers: Record<string, string> = {};
@@ -436,7 +518,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries, retryAfterMs));
                     continue;
                 }
-                return error("queue.fetch.bad_response");
+                return error("queue.fetch.bad_response", await buildResumeSnapshot());
             }
 
             if (resumedRequest && response.status === 200) {
@@ -478,7 +560,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             const rangeBounds = parseContentRangeBounds(contentRangeHeader);
             if (partialResponse && requestedRange && rangeBounds && rangeBounds.start !== rangeStart) {
                 if (retries >= MAX_RETRIES) {
-                    return error("queue.fetch.network_error");
+                    return error("queue.fetch.network_error", await buildResumeSnapshot());
                 }
                 retries++;
                 rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
@@ -494,6 +576,37 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             }
 
             const totalFromRange = parseContentRangeTotal(contentRangeHeader);
+            if (
+                totalFromRange &&
+                expectedSizeReliable &&
+                expectedSize &&
+                receivedBytes > 0 &&
+                totalFromRange !== expectedSize
+            ) {
+                logDebug("resume_mismatch_reset", {
+                    expectedSize,
+                    receivedBytes,
+                    responseTotal: totalFromRange,
+                    range: headers.Range || "none",
+                });
+
+                if (response.body) {
+                    await response.body.cancel().catch(() => undefined);
+                }
+                if (storage) {
+                    await storage.destroy().catch(() => undefined);
+                    storage = null;
+                }
+
+                receivedBytes = 0;
+                expectedSize = undefined;
+                expectedSizeReliable = false;
+                largestExpectedSize = 0;
+                highestReportedProgress = 0;
+                retries = 0;
+                continue;
+            }
+
             if (totalFromRange) {
                 expectedSize = totalFromRange;
                 expectedSizeReliable = true;
@@ -600,7 +713,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
 
             if (bytesToSkip > 0) {
                 if (retries >= MAX_RETRIES) {
-                    return error("queue.fetch.network_error");
+                    return error("queue.fetch.network_error", await buildResumeSnapshot());
                 }
                 retries++;
                 rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
@@ -644,7 +757,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             ) {
                 if (bytesReceivedThisResponse === 0) {
                     if (retries >= MAX_RETRIES) {
-                        return error("queue.fetch.network_error");
+                        return error("queue.fetch.network_error", await buildResumeSnapshot());
                     }
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
@@ -664,7 +777,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 // transport failure, not a valid end-of-file signal.
                 if (bytesReceivedThisResponse === 0) {
                     if (retries >= MAX_RETRIES) {
-                        return error("queue.fetch.network_error");
+                        return error("queue.fetch.network_error", await buildResumeSnapshot());
                     }
                     retries++;
                     rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
@@ -684,7 +797,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                     }
 
                     if (retries >= MAX_RETRIES) {
-                        return error("queue.fetch.network_error");
+                        return error("queue.fetch.network_error", await buildResumeSnapshot());
                     }
 
                     retries++;
@@ -703,7 +816,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
 
             if (!madeProgress) {
                 if (retries >= MAX_RETRIES) {
-                    return error("queue.fetch.network_error");
+                    return error("queue.fetch.network_error", await buildResumeSnapshot());
                 }
                 retries++;
                 rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
@@ -770,7 +883,8 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
             return error(
                 abortReason === "stalled"
                     ? "queue.fetch.stalled"
-                    : "queue.fetch.timeout"
+                    : "queue.fetch.timeout",
+                await buildResumeSnapshot(),
             );
         }
 
@@ -779,7 +893,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning) => {
                 elapsedMs: Date.now() - startedAt,
                 message: String(e),
             });
-            return error("queue.fetch.network_error");
+            return error("queue.fetch.network_error", await buildResumeSnapshot());
         }
 
         if (isStorageWriteError(e)) {
@@ -801,6 +915,7 @@ self.onmessage = async (event: MessageEvent) => {
         await fetchFile(
             event.data.cobaltFetchWorker.url,
             event.data.cobaltFetchWorker.tuning,
+            event.data.cobaltFetchWorker.resume,
         );
         self.close();
     }

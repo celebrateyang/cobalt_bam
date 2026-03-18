@@ -171,6 +171,7 @@ export const createSavePipeline = (
     const tunnels = info.tunnel.reverse();
 
     for (const tunnel of tunnels) {
+        const fetchSlot = pipeline.length;
         pipeline.push({
             worker: "fetch",
             workerId: uuid(),
@@ -178,6 +179,12 @@ export const createSavePipeline = (
             workerArgs: {
                 url: tunnel,
                 tuning: fetchTuning,
+                resume: isBilibili
+                    ? {
+                        enabled: true,
+                        slot: fetchSlot,
+                    }
+                    : undefined,
             },
         });
     }

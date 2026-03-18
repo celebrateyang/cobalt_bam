@@ -3,6 +3,7 @@ import { get, readable, type Updater } from "svelte/store";
 import { schedule } from "$lib/task-manager/scheduler";
 import { clearFileStorage, removeFromFileStorage } from "$lib/storage/opfs";
 import { clearCurrentTasks, removeWorkerFromQueue } from "$lib/state/task-manager/current-tasks";
+import { clearFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 
@@ -241,6 +242,7 @@ export function itemDone(id: UUID, file: File) {
     });
 
     schedule();
+    clearFetchResumeStateForTask(id);
     void finalizeQueueHold(id);
 }
 
@@ -285,6 +287,7 @@ export function removeItem(id: UUID) {
             removeWorkerFromQueue(worker.workerId);
         }
         clearPipelineCache(item);
+        clearFetchResumeStateForTask(id);
 
         delete queueData[id];
         return queueData;
@@ -309,6 +312,7 @@ export function clearQueue() {
     const items = get(queue);
     for (const item of Object.values(items)) {
         releaseHoldForItem(item, "queue_cleared");
+        clearFetchResumeStateForTask(item.id);
     }
     update(() => ({}));
     clearCurrentTasks();

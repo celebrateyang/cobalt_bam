@@ -24,6 +24,15 @@ export type CobaltFetchTuning = {
     slowChunkMs?: number,
 };
 
+export type CobaltFetchResume = {
+    enabled?: boolean,
+    slot?: number,
+    fileName?: string,
+    receivedBytes?: number,
+    expectedSize?: number,
+    contentType?: string,
+};
+
 type CobaltPipelineItemBase = {
     workerId: UUID,
     parentId: UUID,
@@ -45,6 +54,7 @@ type CobaltFetchPipelineItem = CobaltPipelineItemBase & {
     workerArgs: {
         url: string,
         tuning?: CobaltFetchTuning,
+        resume?: CobaltFetchResume,
     },
 }
 

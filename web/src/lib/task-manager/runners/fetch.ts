@@ -3,15 +3,21 @@ import FetchWorker from "$lib/task-manager/workers/fetch?worker";
 import { killWorker } from "$lib/task-manager/run-worker";
 import { updateWorkerProgress } from "$lib/state/task-manager/current-tasks";
 import { pipelineTaskDone, itemError, queue } from "$lib/state/task-manager/queue";
+import {
+    clearFetchResumeState,
+    getFetchResumeState,
+    setFetchResumeState,
+} from "$lib/state/task-manager/fetch-resume";
 
 import type { CobaltQueue, UUID } from "$lib/types/queue";
-import type { CobaltFetchTuning } from "$lib/types/workers";
+import type { CobaltFetchResume, CobaltFetchTuning } from "$lib/types/workers";
 
 export const runFetchWorker = async (
     workerId: UUID,
     parentId: UUID,
     url: string,
     tuning?: CobaltFetchTuning,
+    resume?: CobaltFetchResume,
     startAttempt = 0,
 ) => {
     const worker = new FetchWorker();
@@ -34,6 +40,7 @@ export const runFetchWorker = async (
                 parentId,
                 url,
                 tuning,
+                resume,
                 startAttempt + 1,
             );
         }
@@ -46,10 +53,28 @@ export const runFetchWorker = async (
         void restartOrFail("queue.worker_didnt_start");
     }, WORKER_START_TIMEOUT_MS);
 
+    const resumeSlot = resume?.enabled && Number.isFinite(resume.slot)
+        ? Number(resume.slot)
+        : undefined;
+    const savedResume = resumeSlot === undefined
+        ? undefined
+        : getFetchResumeState(parentId, resumeSlot);
+
     worker.postMessage({
         cobaltFetchWorker: {
             url,
             tuning,
+            resume: {
+                ...resume,
+                ...(savedResume
+                    ? {
+                        fileName: savedResume.fileName,
+                        receivedBytes: savedResume.receivedBytes,
+                        expectedSize: savedResume.expectedSize,
+                        contentType: savedResume.contentType,
+                    }
+                    : {}),
+            },
         }
     });
 
@@ -79,6 +104,9 @@ export const runFetchWorker = async (
         }
 
         if (eventData.result) {
+            if (resumeSlot !== undefined) {
+                clearFetchResumeState(parentId, resumeSlot);
+            }
             killWorker(worker, unsubscribe, startTimeout);
             return pipelineTaskDone(
                 parentId,
@@ -88,6 +116,25 @@ export const runFetchWorker = async (
         }
 
         if (eventData.error) {
+            if (
+                resumeSlot !== undefined &&
+                eventData.resume?.fileName &&
+                Number.isFinite(eventData.resume?.receivedBytes) &&
+                eventData.resume.receivedBytes > 0
+            ) {
+                setFetchResumeState(parentId, resumeSlot, {
+                    fileName: eventData.resume.fileName,
+                    receivedBytes: eventData.resume.receivedBytes,
+                    expectedSize: Number.isFinite(eventData.resume.expectedSize)
+                        ? eventData.resume.expectedSize
+                        : undefined,
+                    contentType: typeof eventData.resume.contentType === "string"
+                        ? eventData.resume.contentType
+                        : undefined,
+                });
+            } else if (resumeSlot !== undefined) {
+                clearFetchResumeState(parentId, resumeSlot);
+            }
             killWorker(worker, unsubscribe, startTimeout);
             return itemError(parentId, workerId, eventData.error);
         }

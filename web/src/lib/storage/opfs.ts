@@ -7,6 +7,7 @@ export class OPFSStorage extends AbstractStorage {
     #root;
     #handle;
     #io;
+    #closed = false;
 
     static #isAvailable?: boolean;
 
@@ -26,10 +27,34 @@ export class OPFSStorage extends AbstractStorage {
         return new this(cobaltDir, handle, reader);
     }
 
+    static async open(name: string) {
+        const root = await navigator.storage.getDirectory();
+        const cobaltDir = await root.getDirectoryHandle(COBALT_PROCESSING_DIR, { create: true });
+        const handle = await cobaltDir.getFileHandle(name);
+        const reader = await handle.createSyncAccessHandle();
+
+        return new this(cobaltDir, handle, reader);
+    }
+
+    getName() {
+        return this.#handle.name;
+    }
+
+    async getSize() {
+        const file = await this.#handle.getFile();
+        return file.size;
+    }
+
+    async close() {
+        if (this.#closed) return;
+        await this.#io.flush();
+        this.#io.close();
+        this.#closed = true;
+    }
+
     async res() {
         // await for compat with ios 15
-        await this.#io.flush();
-        await this.#io.close();
+        await this.close();
         return await this.#handle.getFile();
     }
 
@@ -38,6 +63,7 @@ export class OPFSStorage extends AbstractStorage {
     }
 
     async destroy() {
+        await this.close();
         await this.#root.removeEntry(this.#handle.name);
     }
 

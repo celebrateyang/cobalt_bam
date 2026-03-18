@@ -2,12 +2,14 @@ import { AbstractStorage } from "./storage";
 import { uuid } from "$lib/util";
 
 export class MemoryStorage extends AbstractStorage {
+    #name: string;
     #chunkSize: number;
     #actualSize: number = 0;
     #chunks: Uint8Array[] = [];
 
     constructor(chunkSize: number) {
         super();
+        this.#name = uuid();
         this.#chunkSize = chunkSize;
     }
 
@@ -59,7 +61,19 @@ export class MemoryStorage extends AbstractStorage {
             }
         }
 
-        return new File(outputView, uuid());
+        return new File(outputView, this.#name);
+    }
+
+    getName() {
+        return this.#name;
+    }
+
+    async getSize() {
+        return this.#actualSize;
+    }
+
+    async close() {
+        // memory storage does not hold OS handles
     }
 
     #expand(size: number) {

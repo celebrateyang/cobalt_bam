@@ -9,12 +9,125 @@ const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
 const CHAT_REQUIRE_PAID = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_REQUIRE_PAID || "").toLowerCase().trim(),
 );
+const CHAT_ALLOW_SELF_MATCH = ["1", "true", "yes", "on"].includes(
+    String(process.env.CHAT_ALLOW_SELF_MATCH || "").toLowerCase().trim(),
+);
+const CHAT_SELF_GENDERS = new Set(["unspecified", "male", "female"]);
+const CHAT_TARGET_GENDERS = new Set(["any", "male", "female"]);
+const CHAT_MESSAGE_TYPES = new Set([
+    "chat_auth",
+    "chat_match_enqueue",
+    "chat_match_cancel",
+    "chat_offer",
+    "chat_answer",
+    "chat_ice_candidate",
+    "chat_leave",
+    "chat_next",
+]);
+const CLIPBOARD_MESSAGE_TYPES = new Set([
+    "create_session",
+    "join_session",
+    "offer",
+    "answer",
+    "ice_candidate",
+    "disconnect",
+    "file_selection_start",
+    "file_selection_complete",
+    "recovery",
+    "keep_alive",
+    "keep_alive_ack",
+]);
+const SYSTEM_MESSAGE_TYPES = new Set(["heartbeat", "ping", "pong"]);
 
 const isWsOpen = (ws) => !!ws && ws.readyState === ws.OPEN;
 
 const sendJson = (ws, payload) => {
     if (!isWsOpen(ws)) return;
     ws.send(JSON.stringify(payload));
+};
+
+const classifyWsTrafficBucket = (messageType) => {
+    if (!messageType) return "unknown";
+    if (CHAT_MESSAGE_TYPES.has(messageType)) return "chat";
+    if (CLIPBOARD_MESSAGE_TYPES.has(messageType)) return "clipboard";
+    if (SYSTEM_MESSAGE_TYPES.has(messageType)) return "system";
+    return "unknown";
+};
+
+const normalizeText = (value, max = 24) => {
+    if (typeof value !== "string") return "";
+    return value.trim().slice(0, max);
+};
+
+const normalizeCountry = (value) => {
+    const raw = normalizeText(value, 8).toUpperCase();
+    if (!raw) return "ANY";
+    if (raw === "ANY") return "ANY";
+    if (!/^[A-Z]{2,3}$/.test(raw)) return "ANY";
+    return raw;
+};
+
+const normalizeLanguage = (value) => {
+    const raw = normalizeText(value, 16).toLowerCase();
+    if (!raw || raw === "auto") return "";
+    if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(raw)) return "";
+    return raw;
+};
+
+const normalizeSelfGender = (value) => {
+    const raw = normalizeText(value, 16).toLowerCase();
+    return CHAT_SELF_GENDERS.has(raw) ? raw : "unspecified";
+};
+
+const normalizeTargetGender = (value) => {
+    const raw = normalizeText(value, 16).toLowerCase();
+    return CHAT_TARGET_GENDERS.has(raw) ? raw : "any";
+};
+
+const normalizeChatPreferences = (message) => {
+    const profileInput =
+        message?.profile && typeof message.profile === "object"
+            ? message.profile
+            : {};
+    const filtersInput =
+        message?.filters && typeof message.filters === "object"
+            ? message.filters
+            : {};
+
+    return {
+        profile: {
+            selfGender: normalizeSelfGender(profileInput.selfGender),
+            country: normalizeCountry(profileInput.country),
+            language: normalizeLanguage(profileInput.language),
+        },
+        filters: {
+            targetGender: normalizeTargetGender(filtersInput.targetGender),
+            targetCountry: normalizeCountry(filtersInput.targetCountry),
+            language: normalizeLanguage(filtersInput.language),
+        },
+    };
+};
+
+const isMatchCompatible = (filters, peerProfile) => {
+    if (
+        filters.targetGender !== "any" &&
+        peerProfile.selfGender !== filters.targetGender
+    ) {
+        return false;
+    }
+
+    if (
+        filters.targetCountry !== "ANY" &&
+        peerProfile.country !== filters.targetCountry
+    ) {
+        return false;
+    }
+
+    if (filters.language && peerProfile.language !== filters.language) {
+        return false;
+    }
+
+    return true;
 };
 
 export const setupSignalingServer = (httpServer) => {
@@ -26,7 +139,7 @@ export const setupSignalingServer = (httpServer) => {
     // clipboard sessions: sessionId -> { creator, joiner, createdAt }
     const sessions = new Map();
 
-    // random chat queue: [{ clerkUserId, ws, enqueuedAt }]
+    // random chat queue: [{ clerkUserId, ws, enqueuedAt, profile, filters }]
     const chatQueue = [];
 
     // random chat matches: matchId -> { a, b, startedAt, expiresAt, timer }
@@ -112,12 +225,14 @@ export const setupSignalingServer = (httpServer) => {
             matchId,
             role: "initiator",
             expiresAt,
+            peer: match.b.profile,
         });
         sendJson(b.ws, {
             type: "chat_matched",
             matchId,
             role: "receiver",
             expiresAt,
+            peer: match.a.profile,
         });
     };
 
@@ -139,7 +254,18 @@ export const setupSignalingServer = (httpServer) => {
             const a = chatQueue[aIndex];
             for (let i = aIndex + 1; i < chatQueue.length; i += 1) {
                 if (!isWsOpen(chatQueue[i].ws)) continue;
-                if (chatQueue[i].clerkUserId === a.clerkUserId) continue;
+                if (
+                    !CHAT_ALLOW_SELF_MATCH &&
+                    chatQueue[i].clerkUserId === a.clerkUserId
+                ) {
+                    continue;
+                }
+                if (
+                    !isMatchCompatible(a.filters, chatQueue[i].profile) ||
+                    !isMatchCompatible(chatQueue[i].filters, a.profile)
+                ) {
+                    continue;
+                }
                 bIndex = i;
                 break;
             }
@@ -261,7 +387,7 @@ export const setupSignalingServer = (httpServer) => {
         }
     };
 
-    const handleChatEnqueue = (ws, authState) => {
+    const handleChatEnqueue = (ws, authState, message) => {
         if (!authState.authenticated || !authState.clerkUserId) {
             sendJson(ws, {
                 type: "chat_error",
@@ -290,12 +416,17 @@ export const setupSignalingServer = (httpServer) => {
         }
 
         removeChatQueueByWs(ws);
-        removeChatQueueByUser(authState.clerkUserId, ws);
+        if (!CHAT_ALLOW_SELF_MATCH) {
+            removeChatQueueByUser(authState.clerkUserId, ws);
+        }
+        const { profile, filters } = normalizeChatPreferences(message);
 
         chatQueue.push({
             clerkUserId: authState.clerkUserId,
             ws,
             enqueuedAt: Date.now(),
+            profile,
+            filters,
         });
 
         sendJson(ws, {
@@ -323,6 +454,52 @@ export const setupSignalingServer = (httpServer) => {
         handleChatCancel(ws);
     };
 
+    const handleChatNext = (ws, authState, message) => {
+        if (!authState.authenticated || !authState.clerkUserId) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "UNAUTHORIZED",
+                message: "Authenticate before using next",
+            });
+            return;
+        }
+
+        if (CHAT_REQUIRE_PAID && !authState.hasPaidOrder) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "PAYMENT_REQUIRED",
+                message: "Paid order is required",
+            });
+            return;
+        }
+
+        const activeMatchId = wsChatMatchId.get(ws);
+        if (activeMatchId) {
+            endChatMatch(activeMatchId, "left");
+        } else {
+            removeChatQueueByWs(ws);
+        }
+
+        if (!CHAT_ALLOW_SELF_MATCH) {
+            removeChatQueueByUser(authState.clerkUserId, ws);
+        }
+        const { profile, filters } = normalizeChatPreferences(message);
+
+        chatQueue.push({
+            clerkUserId: authState.clerkUserId,
+            ws,
+            enqueuedAt: Date.now(),
+            profile,
+            filters,
+        });
+
+        sendJson(ws, {
+            type: "chat_enqueued",
+        });
+
+        tryCreateChatMatches();
+    };
+
     console.log(
         `${Green("[✅]")} WebSocket signaling server started successfully, listening on path: /ws`,
     );
@@ -339,13 +516,41 @@ export const setupSignalingServer = (httpServer) => {
     }, 5 * 60 * 1000);
 
     wss.on("connection", (ws, req) => {
+        const connectionId = Math.random().toString(36).slice(2, 10);
         const clientIP =
             req.headers["x-forwarded-for"] ||
             req.headers["x-real-ip"] ||
             req.socket.remoteAddress;
         const userAgent = req.headers["user-agent"] || "Unknown";
+        const wsTrafficStats = {
+            chat: 0,
+            clipboard: 0,
+            system: 0,
+            unknown: 0,
+        };
+        let wsTrafficType = "unknown";
+        const logPrefix = () => `[WS ${connectionId} ${wsTrafficType}]`;
+        const refreshTrafficType = () => {
+            const hasChat = wsTrafficStats.chat > 0;
+            const hasClipboard = wsTrafficStats.clipboard > 0;
+            if (hasChat && hasClipboard) return "mixed";
+            if (hasChat) return "chat";
+            if (hasClipboard) return "clipboard";
+            return "unknown";
+        };
+        const trackWsTrafficType = (messageType) => {
+            const bucket = classifyWsTrafficBucket(messageType);
+            wsTrafficStats[bucket] += 1;
+            const nextType = refreshTrafficType();
+            if (nextType !== wsTrafficType) {
+                wsTrafficType = nextType;
+                console.log(
+                    `${logPrefix()} traffic classified by message type="${messageType}"`,
+                );
+            }
+        };
         console.log(
-            `WebSocket connection established: ${clientIP}, URL: ${req.url}, User-Agent: ${userAgent}`,
+            `${logPrefix()} connection established: ip=${clientIP}, url=${req.url}, ua=${userAgent}`,
         );
 
         let sessionId = null;
@@ -369,12 +574,12 @@ export const setupSignalingServer = (httpServer) => {
             if (now - lastPongTime > 75_000) {
                 missedPongs += 1;
                 console.warn(
-                    `Missed pong from ${clientIP} (session: ${sessionId || "none"}), count: ${missedPongs}`,
+                    `${logPrefix()} missed pong: ip=${clientIP}, session=${sessionId || "none"}, count=${missedPongs}`,
                 );
 
                 if (missedPongs >= maxMissedPongs) {
                     console.error(
-                        `Too many missed pongs from ${clientIP}, closing connection`,
+                        `${logPrefix()} too many missed pongs, closing connection: ip=${clientIP}`,
                     );
                     ws.terminate();
                     return;
@@ -394,7 +599,7 @@ export const setupSignalingServer = (httpServer) => {
 
             if (connectionAge > 2 * 60 * 60 * 1000 && lastActivity > 300_000) {
                 console.log(
-                    `Closing stale connection from ${clientIP} due to inactivity`,
+                    `${logPrefix()} closing stale connection due to inactivity: ip=${clientIP}`,
                 );
                 ws.close(1000, "Connection cleanup due to inactivity");
             }
@@ -409,8 +614,11 @@ export const setupSignalingServer = (httpServer) => {
             try {
                 const raw = typeof data === "string" ? data : data.toString();
                 const message = JSON.parse(raw);
+                const messageType =
+                    typeof message?.type === "string" ? message.type : "";
+                trackWsTrafficType(messageType);
 
-                switch (message.type) {
+                switch (messageType) {
                     case "create_session":
                         handleCreateSession(ws, message);
                         break;
@@ -453,7 +661,7 @@ export const setupSignalingServer = (httpServer) => {
                         await handleChatAuth(ws, message, chatAuthState);
                         break;
                     case "chat_match_enqueue":
-                        handleChatEnqueue(ws, chatAuthState);
+                        handleChatEnqueue(ws, chatAuthState, message);
                         break;
                     case "chat_match_cancel":
                         handleChatCancel(ws);
@@ -476,6 +684,9 @@ export const setupSignalingServer = (httpServer) => {
                     case "chat_leave":
                         handleChatLeave(ws);
                         break;
+                    case "chat_next":
+                        handleChatNext(ws, chatAuthState, message);
+                        break;
                     default:
                         sendJson(ws, {
                             type: "error",
@@ -484,7 +695,7 @@ export const setupSignalingServer = (httpServer) => {
                 }
             } catch (error) {
                 console.error(
-                    `WebSocket message processing error (sessionId: ${sessionId || "None"}):`,
+                    `${logPrefix()} message processing error (sessionId=${sessionId || "None"}):`,
                     error,
                 );
                 sendJson(ws, {
@@ -502,7 +713,7 @@ export const setupSignalingServer = (httpServer) => {
             const reasonStr = reason ? reason.toString() : "No reason provided";
 
             console.log(
-                `WebSocket connection closed: code=${code}, reason="${reasonStr}", sessionId=${sessionId || "None"}, role=${userRole || "None"}, duration=${connectionDuration}ms, clientIP=${clientIP}`,
+                `${logPrefix()} connection closed: code=${code}, reason="${reasonStr}", sessionId=${sessionId || "None"}, role=${userRole || "None"}, duration=${connectionDuration}ms, ip=${clientIP}, trafficStats=chat:${wsTrafficStats.chat}, clipboard:${wsTrafficStats.clipboard}, system:${wsTrafficStats.system}, unknown:${wsTrafficStats.unknown}`,
             );
 
             handleChatSocketClose(ws);
@@ -514,7 +725,7 @@ export const setupSignalingServer = (httpServer) => {
 
         ws.on("error", (error) => {
             console.error(
-                `WebSocket error (sessionId: ${sessionId || "None"}, role: ${userRole || "None"}):`,
+                `${logPrefix()} socket error (sessionId=${sessionId || "None"}, role=${userRole || "None"}):`,
                 error.message || error,
             );
         });

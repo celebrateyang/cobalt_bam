@@ -10,6 +10,7 @@
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
+    import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
 
@@ -29,6 +30,7 @@
     $: clipboardLink = `/${currentLang}/clipboard`;
     $: videorecordLink = `/${currentLang}/videorecord`;
     $: discoverLink = `/${currentLang}/discover`;
+    $: randomChatLink = `/${currentLang}/random-chat`;
     $: historyLink = `/${currentLang}/history`;
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
@@ -85,6 +87,9 @@
                 </SidebarTab>
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
                     <IconStack2 />
+                </SidebarTab>
+                <SidebarTab tabName="random_video" tabLink={randomChatLink}>
+                    <IconMessageCircle />
                 </SidebarTab>
                 <SidebarTab tabName="history" tabLink={historyLink}>
                     <IconHistory />

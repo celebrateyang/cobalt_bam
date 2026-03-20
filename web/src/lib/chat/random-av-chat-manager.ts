@@ -1,6 +1,25 @@
 import { currentApiURL } from "$lib/api/api-url";
 
 type MatchRole = "initiator" | "receiver";
+export type ChatSelfGender = "unspecified" | "male" | "female";
+export type ChatTargetGender = "any" | "male" | "female";
+
+export type ChatMatchProfile = {
+    selfGender?: ChatSelfGender;
+    country?: string;
+    language?: string;
+};
+
+export type ChatMatchFilters = {
+    targetGender?: ChatTargetGender;
+    targetCountry?: string;
+    language?: string;
+};
+
+export type ChatMatchEnqueueOptions = {
+    profile?: ChatMatchProfile;
+    filters?: ChatMatchFilters;
+};
 
 type ChatEventMap = {
     error: { message: string };
@@ -9,7 +28,12 @@ type ChatEventMap = {
     auth_failed: { reason: string; message: string };
     enqueued: undefined;
     queue_cancelled: undefined;
-    matched: { matchId: string; role: MatchRole; expiresAt: number };
+    matched: {
+        matchId: string;
+        role: MatchRole;
+        expiresAt: number;
+        peer?: ChatMatchProfile;
+    };
     match_ended: { reason: string };
     local_stream: { stream: MediaStream };
     remote_stream: { stream: MediaStream };
@@ -43,6 +67,8 @@ export class RandomAvChatManager {
     private role: MatchRole | null = null;
 
     private pendingIceCandidates: RTCIceCandidateInit[] = [];
+
+    private attachedTrackIds = new Set<string>();
 
     private listeners = new Map<ChatEventKey, Set<ChatEventListener<any>>>();
 
@@ -154,22 +180,45 @@ export class RandomAvChatManager {
         });
     }
 
-    async startMatching(): Promise<void> {
+    async startMatching(options?: ChatMatchEnqueueOptions): Promise<void> {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             throw new Error("WebSocket is not connected");
         }
 
-        this.send({ type: "chat_match_enqueue" });
+        await this.ensureLocalMedia();
+
+        this.send({
+            type: "chat_match_enqueue",
+            profile: options?.profile,
+            filters: options?.filters,
+        });
+    }
+
+    async nextMatch(options?: ChatMatchEnqueueOptions): Promise<void> {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("WebSocket is not connected");
+        }
+
+        await this.ensureLocalMedia();
+
+        this.send({
+            type: "chat_next",
+            profile: options?.profile,
+            filters: options?.filters,
+        });
     }
 
     cancelMatching(): void {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-        this.send({ type: "chat_match_cancel" });
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.send({ type: "chat_match_cancel" });
+        }
+        this.resetCallState();
     }
 
     leaveMatch(): void {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-        this.send({ type: "chat_leave" });
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.send({ type: "chat_leave" });
+        }
     }
 
     async disconnect(closeSocket = true): Promise<void> {
@@ -278,7 +327,12 @@ export class RandomAvChatManager {
         await this.ensurePeerConnection();
         await this.ensureLocalMedia();
 
-        this.emit("matched", { matchId, role, expiresAt });
+        const peer =
+            message?.peer && typeof message.peer === "object"
+                ? (message.peer as ChatMatchProfile)
+                : undefined;
+
+        this.emit("matched", { matchId, role, expiresAt, peer });
 
         if (role === "initiator") {
             await this.createAndSendOffer();
@@ -320,6 +374,17 @@ export class RandomAvChatManager {
         };
 
         this.pc = pc;
+        this.attachLocalTracks();
+    }
+
+    private attachLocalTracks(): void {
+        if (!this.pc || !this.localStream) return;
+
+        for (const track of this.localStream.getTracks()) {
+            if (this.attachedTrackIds.has(track.id)) continue;
+            this.pc.addTrack(track, this.localStream);
+            this.attachedTrackIds.add(track.id);
+        }
     }
 
     private async ensureLocalMedia(): Promise<void> {
@@ -331,12 +396,7 @@ export class RandomAvChatManager {
         });
         this.localStream = stream;
         this.emit("local_stream", { stream });
-
-        if (this.pc) {
-            for (const track of stream.getTracks()) {
-                this.pc.addTrack(track, stream);
-            }
-        }
+        this.attachLocalTracks();
     }
 
     private async createAndSendOffer(): Promise<void> {
@@ -409,6 +469,7 @@ export class RandomAvChatManager {
         this.matchId = null;
         this.role = null;
         this.pendingIceCandidates = [];
+        this.attachedTrackIds.clear();
 
         if (this.pc) {
             this.pc.onicecandidate = null;

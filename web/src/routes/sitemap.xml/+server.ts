@@ -11,6 +11,7 @@ const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 const pages = [
     '',
     'clipboard',
+    'random-chat',
     'discover',
     'guide',
     'download',

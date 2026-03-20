@@ -1,369 +1,662 @@
-import { WebSocketServer } from 'ws';
-import { Green } from '../misc/console-text.js';
+import { verifyToken } from "@clerk/express";
+import { WebSocketServer } from "ws";
+
+import { hasPaidCreditOrderByClerkUserId } from "../db/credit-orders.js";
+import { Green } from "../misc/console-text.js";
+
+const CLIPBOARD_SESSION_TTL_MS = 30 * 60 * 1000;
+const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
+const CHAT_REQUIRE_PAID = ["1", "true", "yes", "on"].includes(
+    String(process.env.CHAT_REQUIRE_PAID || "").toLowerCase().trim(),
+);
+
+const isWsOpen = (ws) => !!ws && ws.readyState === ws.OPEN;
+
+const sendJson = (ws, payload) => {
+    if (!isWsOpen(ws)) return;
+    ws.send(JSON.stringify(payload));
+};
 
 export const setupSignalingServer = (httpServer) => {
-    const wss = new WebSocketServer({ 
+    const wss = new WebSocketServer({
         server: httpServer,
-        path: '/ws'
+        path: "/ws",
     });
 
-    const sessions = new Map(); // sessionId -> { creator, joiner, createdAt }
+    // clipboard sessions: sessionId -> { creator, joiner, createdAt }
+    const sessions = new Map();
 
-    console.log(`${Green('[✓]')} WebSocket signaling server started successfully, listening on path: /ws`);
+    // random chat queue: [{ clerkUserId, ws, enqueuedAt }]
+    const chatQueue = [];
 
-    // Clean up expired sessions
+    // random chat matches: matchId -> { a, b, startedAt, expiresAt, timer }
+    const chatMatches = new Map();
+
+    // ws -> matchId
+    const wsChatMatchId = new Map();
+
+    const removeChatQueueByWs = (ws) => {
+        let removed = false;
+        for (let i = chatQueue.length - 1; i >= 0; i -= 1) {
+            if (chatQueue[i].ws === ws) {
+                chatQueue.splice(i, 1);
+                removed = true;
+            }
+        }
+        return removed;
+    };
+
+    const removeChatQueueByUser = (clerkUserId, keepWs = null) => {
+        for (let i = chatQueue.length - 1; i >= 0; i -= 1) {
+            const row = chatQueue[i];
+            if (
+                row.clerkUserId === clerkUserId &&
+                (!keepWs || row.ws !== keepWs)
+            ) {
+                chatQueue.splice(i, 1);
+            }
+        }
+    };
+
+    const pruneChatQueue = () => {
+        for (let i = chatQueue.length - 1; i >= 0; i -= 1) {
+            if (!isWsOpen(chatQueue[i].ws)) {
+                chatQueue.splice(i, 1);
+            }
+        }
+    };
+
+    const endChatMatch = (matchId, reason) => {
+        const match = chatMatches.get(matchId);
+        if (!match) return;
+
+        chatMatches.delete(matchId);
+        clearTimeout(match.timer);
+        wsChatMatchId.delete(match.a.ws);
+        wsChatMatchId.delete(match.b.ws);
+
+        sendJson(match.a.ws, {
+            type: "chat_match_ended",
+            reason,
+        });
+        sendJson(match.b.ws, {
+            type: "chat_match_ended",
+            reason,
+        });
+    };
+
+    const createChatMatch = (a, b) => {
+        const matchId = Math.random().toString(36).slice(2, 12);
+        const startedAt = Date.now();
+        const expiresAt = startedAt + CHAT_MATCH_TTL_MS;
+
+        const timer = setTimeout(() => {
+            endChatMatch(matchId, "timeout");
+        }, CHAT_MATCH_TTL_MS);
+
+        const match = {
+            id: matchId,
+            a,
+            b,
+            startedAt,
+            expiresAt,
+            timer,
+        };
+
+        chatMatches.set(matchId, match);
+        wsChatMatchId.set(a.ws, matchId);
+        wsChatMatchId.set(b.ws, matchId);
+
+        sendJson(a.ws, {
+            type: "chat_matched",
+            matchId,
+            role: "initiator",
+            expiresAt,
+        });
+        sendJson(b.ws, {
+            type: "chat_matched",
+            matchId,
+            role: "receiver",
+            expiresAt,
+        });
+    };
+
+    const tryCreateChatMatches = () => {
+        pruneChatQueue();
+
+        while (chatQueue.length >= 2) {
+            let aIndex = -1;
+            let bIndex = -1;
+
+            for (let i = 0; i < chatQueue.length; i += 1) {
+                if (!isWsOpen(chatQueue[i].ws)) continue;
+                aIndex = i;
+                break;
+            }
+
+            if (aIndex < 0) break;
+
+            const a = chatQueue[aIndex];
+            for (let i = aIndex + 1; i < chatQueue.length; i += 1) {
+                if (!isWsOpen(chatQueue[i].ws)) continue;
+                if (chatQueue[i].clerkUserId === a.clerkUserId) continue;
+                bIndex = i;
+                break;
+            }
+
+            if (bIndex < 0) break;
+
+            const [b] = chatQueue.splice(bIndex, 1);
+            const [nextA] = chatQueue.splice(aIndex, 1);
+            createChatMatch(nextA, b);
+        }
+    };
+
+    const handleChatSocketClose = (ws) => {
+        removeChatQueueByWs(ws);
+
+        const matchId = wsChatMatchId.get(ws);
+        if (matchId) {
+            endChatMatch(matchId, "peer_disconnected");
+        }
+    };
+
+    const forwardChatSignaling = (ws, type, payload) => {
+        const matchId = wsChatMatchId.get(ws);
+        if (!matchId) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "NOT_IN_MATCH",
+                message: "Not in an active match",
+            });
+            return;
+        }
+
+        const match = chatMatches.get(matchId);
+        if (!match) {
+            wsChatMatchId.delete(ws);
+            sendJson(ws, {
+                type: "chat_error",
+                code: "MATCH_NOT_FOUND",
+                message: "Match no longer exists",
+            });
+            return;
+        }
+
+        const peer = match.a.ws === ws ? match.b.ws : match.a.ws;
+        if (!isWsOpen(peer)) {
+            endChatMatch(matchId, "peer_disconnected");
+            return;
+        }
+
+        sendJson(peer, {
+            type,
+            ...payload,
+        });
+    };
+
+    const handleChatAuth = async (ws, message, authState) => {
+        const token = typeof message?.token === "string" ? message.token.trim() : "";
+        if (!token) {
+            sendJson(ws, {
+                type: "chat_auth_failed",
+                reason: "missing_token",
+                message: "Missing Clerk token",
+            });
+            return;
+        }
+
+        if (!process.env.CLERK_SECRET_KEY) {
+            sendJson(ws, {
+                type: "chat_auth_failed",
+                reason: "clerk_not_configured",
+                message: "Clerk is not configured on this server",
+            });
+            return;
+        }
+
+        try {
+            const payload = await verifyToken(token, {
+                secretKey: process.env.CLERK_SECRET_KEY,
+            });
+
+            const clerkUserId =
+                typeof payload?.sub === "string" ? payload.sub.trim() : "";
+            if (!clerkUserId) {
+                sendJson(ws, {
+                    type: "chat_auth_failed",
+                    reason: "invalid_token",
+                    message: "Invalid Clerk token",
+                });
+                return;
+            }
+
+            const hasPaidOrder = CHAT_REQUIRE_PAID
+                ? await hasPaidCreditOrderByClerkUserId(clerkUserId)
+                : true;
+
+            if (CHAT_REQUIRE_PAID && !hasPaidOrder) {
+                sendJson(ws, {
+                    type: "chat_auth_failed",
+                    reason: "payment_required",
+                    message: "Paid order is required for random chat",
+                });
+                return;
+            }
+
+            authState.authenticated = true;
+            authState.clerkUserId = clerkUserId;
+            authState.hasPaidOrder = hasPaidOrder;
+
+            sendJson(ws, {
+                type: "chat_auth_ok",
+                clerkUserId,
+            });
+        } catch {
+            sendJson(ws, {
+                type: "chat_auth_failed",
+                reason: "invalid_token",
+                message: "Invalid Clerk token",
+            });
+        }
+    };
+
+    const handleChatEnqueue = (ws, authState) => {
+        if (!authState.authenticated || !authState.clerkUserId) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "UNAUTHORIZED",
+                message: "Authenticate before enqueuing",
+            });
+            return;
+        }
+
+        if (CHAT_REQUIRE_PAID && !authState.hasPaidOrder) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "PAYMENT_REQUIRED",
+                message: "Paid order is required",
+            });
+            return;
+        }
+
+        if (wsChatMatchId.has(ws)) {
+            sendJson(ws, {
+                type: "chat_error",
+                code: "ALREADY_MATCHED",
+                message: "Already in an active match",
+            });
+            return;
+        }
+
+        removeChatQueueByWs(ws);
+        removeChatQueueByUser(authState.clerkUserId, ws);
+
+        chatQueue.push({
+            clerkUserId: authState.clerkUserId,
+            ws,
+            enqueuedAt: Date.now(),
+        });
+
+        sendJson(ws, {
+            type: "chat_enqueued",
+        });
+
+        tryCreateChatMatches();
+    };
+
+    const handleChatCancel = (ws) => {
+        const removed = removeChatQueueByWs(ws);
+        sendJson(ws, {
+            type: "chat_queue_cancelled",
+            removed,
+        });
+    };
+
+    const handleChatLeave = (ws) => {
+        const matchId = wsChatMatchId.get(ws);
+        if (matchId) {
+            endChatMatch(matchId, "left");
+            return;
+        }
+
+        handleChatCancel(ws);
+    };
+
+    console.log(
+        `${Green("[✅]")} WebSocket signaling server started successfully, listening on path: /ws`,
+    );
+
+    // Clean up expired clipboard sessions.
     setInterval(() => {
         const now = Date.now();
         for (const [sessionId, session] of sessions.entries()) {
-            if (now - session.createdAt > 30 * 60 * 1000) { // 30 minutes expiration
+            if (now - session.createdAt > CLIPBOARD_SESSION_TTL_MS) {
                 sessions.delete(sessionId);
                 console.log(`Cleaned up expired session: ${sessionId}`);
             }
         }
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    }, 5 * 60 * 1000);
 
-    wss.on('connection', (ws, req) => {
-        const clientIP = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress;
-        const userAgent = req.headers['user-agent'] || 'Unknown';
-        console.log(`WebSocket connection established: ${clientIP}, URL: ${req.url}, User-Agent: ${userAgent}`);
-        
+    wss.on("connection", (ws, req) => {
+        const clientIP =
+            req.headers["x-forwarded-for"] ||
+            req.headers["x-real-ip"] ||
+            req.socket.remoteAddress;
+        const userAgent = req.headers["user-agent"] || "Unknown";
+        console.log(
+            `WebSocket connection established: ${clientIP}, URL: ${req.url}, User-Agent: ${userAgent}`,
+        );
+
         let sessionId = null;
         let userRole = null; // 'creator' | 'joiner'
         let connectionStartTime = Date.now();
         let lastPingTime = Date.now();
         let lastPongTime = Date.now();
         let missedPongs = 0;
-        const maxMissedPongs = 3; // 允许最多3次未响应ping
-        
-        // Send ping every 25 seconds to keep connection alive
+        const maxMissedPongs = 3;
+
+        const chatAuthState = {
+            authenticated: false,
+            clerkUserId: null,
+            hasPaidOrder: false,
+        };
+
         const pingInterval = setInterval(() => {
-            if (ws.readyState === ws.OPEN) {
-                const now = Date.now();
-                
-                // 检查是否有太多未响应的ping
-                if (now - lastPongTime > 75000) { // 75秒没有pong响应
-                    missedPongs++;
-                    console.warn(`Missed pong from ${clientIP} (session: ${sessionId || 'none'}), count: ${missedPongs}`);
-                    
-                    if (missedPongs >= maxMissedPongs) {
-                        console.error(`Too many missed pongs from ${clientIP}, closing connection`);
-                        ws.terminate();
-                        return;
-                    }
+            if (ws.readyState !== ws.OPEN) return;
+
+            const now = Date.now();
+            if (now - lastPongTime > 75_000) {
+                missedPongs += 1;
+                console.warn(
+                    `Missed pong from ${clientIP} (session: ${sessionId || "none"}), count: ${missedPongs}`,
+                );
+
+                if (missedPongs >= maxMissedPongs) {
+                    console.error(
+                        `Too many missed pongs from ${clientIP}, closing connection`,
+                    );
+                    ws.terminate();
+                    return;
                 }
-                
-                ws.ping();
-                lastPingTime = now;
-                console.log(`Ping sent to ${clientIP} (session: ${sessionId || 'none'}), pongs missed: ${missedPongs}`);
             }
-        }, 25000);
-        
-        // 额外的健康检查，每60秒检查连接状态
+
+            ws.ping();
+            lastPingTime = now;
+        }, 25_000);
+
         const healthCheckInterval = setInterval(() => {
-            if (ws.readyState === ws.OPEN) {
-                const now = Date.now();
-                const connectionAge = now - connectionStartTime;
-                const lastActivity = Math.min(now - lastPingTime, now - lastPongTime);
-                
-                console.log(`Health check for ${clientIP} (session: ${sessionId || 'none'}): connection age ${Math.round(connectionAge/1000)}s, last activity ${Math.round(lastActivity/1000)}s ago`);
-                
-                // 如果连接超过2小时且长时间没有活动，主动关闭
-                if (connectionAge > 2 * 60 * 60 * 1000 && lastActivity > 300000) { // 2小时连接且5分钟无活动
-                    console.log(`Closing stale connection from ${clientIP} due to inactivity`);
-                    ws.close(1000, 'Connection cleanup due to inactivity');
-                }
+            if (ws.readyState !== ws.OPEN) return;
+
+            const now = Date.now();
+            const connectionAge = now - connectionStartTime;
+            const lastActivity = Math.min(now - lastPingTime, now - lastPongTime);
+
+            if (connectionAge > 2 * 60 * 60 * 1000 && lastActivity > 300_000) {
+                console.log(
+                    `Closing stale connection from ${clientIP} due to inactivity`,
+                );
+                ws.close(1000, "Connection cleanup due to inactivity");
             }
-        }, 60000);
-        
-        ws.on('pong', () => {
+        }, 60_000);
+
+        ws.on("pong", () => {
             lastPongTime = Date.now();
-            missedPongs = 0; // 重置未响应计数
-            console.log(`Pong received from ${clientIP} (session: ${sessionId || 'none'})`);
+            missedPongs = 0;
         });
 
-        ws.on('message', (data) => {
+        ws.on("message", async (data) => {
             try {
-                const message = JSON.parse(data);
-                console.log(`Received message type: ${message.type} from ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
-                
+                const raw = typeof data === "string" ? data : data.toString();
+                const message = JSON.parse(raw);
+
                 switch (message.type) {
-                    case 'create_session':
+                    case "create_session":
                         handleCreateSession(ws, message);
                         break;
-                    case 'join_session':
+                    case "join_session":
                         handleJoinSession(ws, message);
                         break;
-                    case 'offer':
-                    case 'answer':
-                    case 'ice_candidate':
+                    case "offer":
+                    case "answer":
+                    case "ice_candidate":
                         handleSignaling(ws, message, sessionId, userRole);
                         break;
-                    case 'disconnect':
+                    case "disconnect":
                         handleDisconnect(sessionId, userRole);
                         break;
-                    case 'keep_alive':
-                        console.log(`Keep alive signal from ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
-                        // 响应保活信号
-                        if (ws.readyState === ws.OPEN) {
-                            ws.send(JSON.stringify({ 
-                                type: 'keep_alive_ack', 
-                                message: 'Keep alive acknowledged by server',
-                                timestamp: Date.now()
-                            }));
-                        }
+                    case "keep_alive":
+                        sendJson(ws, {
+                            type: "keep_alive_ack",
+                            message: "Keep alive acknowledged by server",
+                            timestamp: Date.now(),
+                        });
                         break;
-                    case 'keep_alive_ack':
-                        console.log(`Keep alive ack from ${userRole || 'unknown'}`);
+                    case "keep_alive_ack":
                         break;
-                    case 'file_selection_start':
-                        console.log(`File selection started by ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
-                        // 转发给对端
+                    case "file_selection_start":
+                    case "file_selection_complete":
+                    case "recovery":
                         handleSignaling(ws, message, sessionId, userRole);
                         break;
-                    case 'file_selection_complete':
-                        console.log(`File selection completed by ${userRole || 'unknown'} in session ${sessionId || 'none'}, duration: ${message.duration}ms`);
-                        // 转发给对端
-                        handleSignaling(ws, message, sessionId, userRole);
+                    case "heartbeat":
                         break;
-                    case 'recovery':
-                        console.log(`Recovery signal from ${userRole || 'unknown'} in session ${sessionId || 'none'}`);
-                        // 转发给对端
-                        handleSignaling(ws, message, sessionId, userRole);
+                    case "ping":
+                        sendJson(ws, { type: "pong" });
                         break;
-                    case 'heartbeat':
-                        // 处理心跳消息
-                        console.log(`Heartbeat from ${userRole || 'unknown'}`);
-                        break;
-                    case 'ping':
-                        // 处理ping消息，返回pong
-                        if (ws.readyState === ws.OPEN) {
-                            ws.send(JSON.stringify({ type: 'pong' }));
-                        }
-                        break;
-                    case 'pong':
-                        // 更新最后pong时间
+                    case "pong":
                         lastPongTime = Date.now();
                         missedPongs = 0;
                         break;
+
+                    case "chat_auth":
+                        await handleChatAuth(ws, message, chatAuthState);
+                        break;
+                    case "chat_match_enqueue":
+                        handleChatEnqueue(ws, chatAuthState);
+                        break;
+                    case "chat_match_cancel":
+                        handleChatCancel(ws);
+                        break;
+                    case "chat_offer":
+                        forwardChatSignaling(ws, "chat_offer", {
+                            offer: message.offer,
+                        });
+                        break;
+                    case "chat_answer":
+                        forwardChatSignaling(ws, "chat_answer", {
+                            answer: message.answer,
+                        });
+                        break;
+                    case "chat_ice_candidate":
+                        forwardChatSignaling(ws, "chat_ice_candidate", {
+                            candidate: message.candidate,
+                        });
+                        break;
+                    case "chat_leave":
+                        handleChatLeave(ws);
+                        break;
                     default:
-                        console.log(`Unknown message type: ${message.type}`);
-                        ws.send(JSON.stringify({ 
-                            type: 'error', 
-                            message: 'Unknown message type' 
-                        }));
+                        sendJson(ws, {
+                            type: "error",
+                            message: "Unknown message type",
+                        });
                 }
             } catch (error) {
-                console.error(`WebSocket message processing error (sessionId: ${sessionId || 'None'}):`, error);
-                ws.send(JSON.stringify({ 
-                    type: 'error', 
-                    message: 'Message format error' 
-                }));
+                console.error(
+                    `WebSocket message processing error (sessionId: ${sessionId || "None"}):`,
+                    error,
+                );
+                sendJson(ws, {
+                    type: "error",
+                    message: "Message format error",
+                });
             }
-        });        ws.on('close', (code, reason) => {
-            // 清理所有定时器
+        });
+
+        ws.on("close", (code, reason) => {
             clearInterval(pingInterval);
             clearInterval(healthCheckInterval);
-            
+
             const connectionDuration = Date.now() - connectionStartTime;
-            const reasonStr = reason ? reason.toString() : 'No reason provided';
-            
-            // Log detailed close information
-            let closeReason = 'Unknown';
-            switch(code) {
-                case 1000: closeReason = 'Normal closure'; break;
-                case 1001: closeReason = 'Going away'; break;
-                case 1002: closeReason = 'Protocol error'; break;
-                case 1003: closeReason = 'Unsupported data'; break;
-                case 1005: closeReason = 'No status received'; break;
-                case 1006: closeReason = 'Abnormal closure'; break;
-                case 1007: closeReason = 'Invalid frame payload data'; break;
-                case 1008: closeReason = 'Policy violation'; break;
-                case 1009: closeReason = 'Message too big'; break;
-                case 1010: closeReason = 'Mandatory extension'; break;
-                case 1011: closeReason = 'Internal server error'; break;
-                case 1015: closeReason = 'TLS handshake'; break;
-            }
-            
-            console.log(`WebSocket connection closed: code=${code} (${closeReason}), reason="${reasonStr}", sessionId=${sessionId || 'None'}, role=${userRole || 'None'}, duration=${connectionDuration}ms, clientIP=${clientIP}`);
-            
+            const reasonStr = reason ? reason.toString() : "No reason provided";
+
+            console.log(
+                `WebSocket connection closed: code=${code}, reason="${reasonStr}", sessionId=${sessionId || "None"}, role=${userRole || "None"}, duration=${connectionDuration}ms, clientIP=${clientIP}`,
+            );
+
+            handleChatSocketClose(ws);
+
             if (sessionId && userRole) {
                 handleDisconnect(sessionId, userRole);
             }
         });
 
-        ws.on('error', (error) => {
-            console.error(`WebSocket error (sessionId: ${sessionId || 'None'}, role: ${userRole || 'None'}):`, error.message || error);
+        ws.on("error", (error) => {
+            console.error(
+                `WebSocket error (sessionId: ${sessionId || "None"}, role: ${userRole || "None"}):`,
+                error.message || error,
+            );
         });
 
-        function handleCreateSession(ws, message) {
-            console.log(`Handling create session request, existing sessionId: ${message.existingSessionId || 'None'}`);
-            
-            // Check if existing session ID is provided (for reconnection)
+        function handleCreateSession(socket, message) {
             if (message.existingSessionId) {
                 const existingSession = sessions.get(message.existingSessionId);
                 if (existingSession && !existingSession.creator) {
-                    // Reconnect to existing session
                     sessionId = message.existingSessionId;
-                    userRole = 'creator';
-                    existingSession.creator = { ws, publicKey: message.publicKey };
-                    
-                    ws.send(JSON.stringify({
-                        type: 'session_reconnected',
-                        sessionId: sessionId
-                    }));
-                    
-                    // If there's an online joiner, notify both parties to re-establish connection
-                    if (existingSession.joiner && existingSession.joiner.ws.readyState === ws.OPEN) {
-                        existingSession.joiner.ws.send(JSON.stringify({
-                            type: 'creator_reconnected',
-                            publicKey: message.publicKey
-                        }));
-                        
-                        ws.send(JSON.stringify({
-                            type: 'peer_already_joined',
-                            publicKey: existingSession.joiner.publicKey
-                        }));
+                    userRole = "creator";
+                    existingSession.creator = { ws: socket, publicKey: message.publicKey };
+
+                    sendJson(socket, {
+                        type: "session_reconnected",
+                        sessionId,
+                    });
+
+                    if (
+                        existingSession.joiner &&
+                        isWsOpen(existingSession.joiner.ws)
+                    ) {
+                        sendJson(existingSession.joiner.ws, {
+                            type: "creator_reconnected",
+                            publicKey: message.publicKey,
+                        });
+
+                        sendJson(socket, {
+                            type: "peer_already_joined",
+                            publicKey: existingSession.joiner.publicKey,
+                        });
                     }
-                    
-                    console.log(`Creator reconnected to session: ${sessionId}`);
+
                     return;
                 }
             }
-            
-            // Create new session
+
             sessionId = Math.random().toString(36).substring(2, 10);
-            userRole = 'creator';
-            
+            userRole = "creator";
+
             sessions.set(sessionId, {
-                creator: { ws, publicKey: message.publicKey },
+                creator: { ws: socket, publicKey: message.publicKey },
                 joiner: null,
-                createdAt: Date.now()
+                createdAt: Date.now(),
             });
-            
-            ws.send(JSON.stringify({
-                type: 'session_created',
-                sessionId: sessionId
-            }));
-            
-            console.log(`Session created: ${sessionId}`);
+
+            sendJson(socket, {
+                type: "session_created",
+                sessionId,
+            });
         }
 
-        function handleJoinSession(ws, message) {
-            console.log(`Handling join session request for sessionId: ${message.sessionId}`);
+        function handleJoinSession(socket, message) {
             const session = sessions.get(message.sessionId);
-            
             if (!session) {
-                console.log(`Session not found: ${message.sessionId}`);
-                ws.send(JSON.stringify({
-                    type: 'error',
-                    message: 'Session does not exist or has expired'
-                }));
+                sendJson(socket, {
+                    type: "error",
+                    message: "Session does not exist or has expired",
+                });
                 return;
             }
-            
-            // Check if there's already an active joiner
-            if (session.joiner && session.joiner.ws.readyState === ws.OPEN) {
-                console.log(`Session full: ${message.sessionId}`);
-                ws.send(JSON.stringify({
-                    type: 'error',
-                    message: 'Session is full'
-                }));
+
+            if (session.joiner && isWsOpen(session.joiner.ws)) {
+                sendJson(socket, {
+                    type: "error",
+                    message: "Session is full",
+                });
                 return;
             }
-            
+
             sessionId = message.sessionId;
-            userRole = 'joiner';
-            
-            // Set or reset joiner
-            session.joiner = { ws, publicKey: message.publicKey };
-            
-            // Notify creator that someone joined (if creator is online)
-            if (session.creator && session.creator.ws.readyState === ws.OPEN) {
-                session.creator.ws.send(JSON.stringify({
-                    type: 'peer_joined',
-                    publicKey: message.publicKey
-                }));
-                
-                // Reply to joiner with creator's public key
-                ws.send(JSON.stringify({
-                    type: 'session_joined',
-                    publicKey: session.creator.publicKey
-                }));
-                
-                console.log(`User joined session: ${sessionId}`);
-            } else {
-                // Creator is not online, notify joiner to wait
-                ws.send(JSON.stringify({
-                    type: 'waiting_for_creator',
-                    message: 'Waiting for creator to reconnect'
-                }));
-                console.log(`Joiner online, waiting for creator: ${sessionId}`);
-            }
-        }
+            userRole = "joiner";
+            session.joiner = { ws: socket, publicKey: message.publicKey };
 
-        function handleSignaling(ws, message, sessionId, userRole) {
-            if (!sessionId || !userRole) {
-                console.log(`Signaling error: not joined to session (sessionId: ${sessionId}, role: ${userRole})`);
-                ws.send(JSON.stringify({
-                    type: 'error',
-                    message: 'Not joined to any session'
-                }));
+            if (session.creator && isWsOpen(session.creator.ws)) {
+                sendJson(session.creator.ws, {
+                    type: "peer_joined",
+                    publicKey: message.publicKey,
+                });
+                sendJson(socket, {
+                    type: "session_joined",
+                    publicKey: session.creator.publicKey,
+                });
                 return;
             }
-            
-            const session = sessions.get(sessionId);
+
+            sendJson(socket, {
+                type: "waiting_for_creator",
+                message: "Waiting for creator to reconnect",
+            });
+        }
+
+        function handleSignaling(socket, message, currentSessionId, currentUserRole) {
+            if (!currentSessionId || !currentUserRole) {
+                sendJson(socket, {
+                    type: "error",
+                    message: "Not joined to any session",
+                });
+                return;
+            }
+
+            const session = sessions.get(currentSessionId);
             if (!session) {
-                console.log(`Signaling error: session not found (sessionId: ${sessionId})`);
-                ws.send(JSON.stringify({
-                    type: 'error',
-                    message: 'Session does not exist'
-                }));
+                sendJson(socket, {
+                    type: "error",
+                    message: "Session does not exist",
+                });
                 return;
             }
-            
-            // Forward signaling message to peer
-            const peer = userRole === 'creator' ? session.joiner : session.creator;
-            if (peer && peer.ws.readyState === ws.OPEN) {
-                peer.ws.send(JSON.stringify(message));
-                console.log(`Signaling message forwarded: ${message.type} from ${userRole} in session ${sessionId}`);
-            } else {
-                console.log(`Signaling failed: peer not available (sessionId: ${sessionId}, userRole: ${userRole})`);
+
+            const peer =
+                currentUserRole === "creator" ? session.joiner : session.creator;
+            if (peer && isWsOpen(peer.ws)) {
+                sendJson(peer.ws, message);
             }
         }
 
-        function handleDisconnect(sessionId, userRole) {
-            if (!sessionId) return;
-            
-            const session = sessions.get(sessionId);
+        function handleDisconnect(currentSessionId, currentUserRole) {
+            if (!currentSessionId) return;
+
+            const session = sessions.get(currentSessionId);
             if (!session) return;
-            
-            // Notify peer of disconnection (but don't delete session)
-            const peer = userRole === 'creator' ? session.joiner : session.creator;
-            if (peer && peer.ws.readyState === ws.OPEN) {
-                peer.ws.send(JSON.stringify({
-                    type: 'peer_disconnected'
-                }));
+
+            const peer =
+                currentUserRole === "creator" ? session.joiner : session.creator;
+            if (peer && isWsOpen(peer.ws)) {
+                sendJson(peer.ws, {
+                    type: "peer_disconnected",
+                });
             }
-            
-            // Only clear the disconnected user, keep session structure
-            if (userRole === 'creator') {
-                console.log(`Creator disconnected from session: ${sessionId}`);
+
+            if (currentUserRole === "creator") {
                 session.creator = null;
             } else {
-                console.log(`Joiner disconnected from session: ${sessionId}`);
                 session.joiner = null;
             }
-            
-            // Only delete session if both parties are disconnected
+
             if (!session.creator && !session.joiner) {
-                sessions.delete(sessionId);
-                console.log(`Session ended (both parties disconnected): ${sessionId}`);
-            } else {
-                console.log(`Session retained, waiting for reconnection: ${sessionId}`);
+                sessions.delete(currentSessionId);
             }
         }
     });
 
-    console.log(`${Green('[✓]')} WebSocket signaling server started successfully`);
+    console.log(`${Green("[✅]")} WebSocket signaling server started successfully`);
     return wss;
 };

@@ -285,4 +285,10 @@
     :global(#cobalt[data-iphone="true"]) {
         padding-top: env(safe-area-inset-top, 0px);
     }
+
+    @media screen and (max-width: 535px) {
+        :global(#content) {
+            padding-bottom: calc(var(--padding) + var(--sidebar-height-mobile));
+        }
+    }
 </style>

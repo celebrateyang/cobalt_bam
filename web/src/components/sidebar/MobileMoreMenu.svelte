@@ -22,6 +22,12 @@
 
     $: menuItems = [
         {
+            name: "random_video",
+            icon: IconVideo,
+            link: `/${currentLang}/random-chat`,
+            label: $t("tabs.random_video"),
+        },
+        {
             name: "videorecord",
             icon: IconVideo,
             link: `/${currentLang}/videorecord`,

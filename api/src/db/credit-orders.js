@@ -87,6 +87,25 @@ export const updateCreditOrderProviderData = async (id, providerData) => {
     return result.rows[0] || null;
 };
 
+export const hasPaidCreditOrderByClerkUserId = async (clerkUserId) => {
+    if (typeof clerkUserId !== "string" || !clerkUserId.trim()) {
+        return false;
+    }
+
+    const result = await query(
+        `
+        SELECT 1
+        FROM credit_orders
+        WHERE clerk_user_id = $1
+          AND status = $2
+        LIMIT 1;
+        `,
+        [clerkUserId.trim(), CREDIT_ORDER_STATUS.paid],
+    );
+
+    return Boolean(result.rows?.length);
+};
+
 export const listCreditOrdersForUser = async ({
     userId,
     page = 1,

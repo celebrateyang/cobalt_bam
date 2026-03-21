@@ -13,6 +13,67 @@ const getTargetForLog = (rawUrl) => {
     }
 };
 
+const forbiddenForwardHeaders = new Set([
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "proxy-connection",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+    "host",
+]);
+
+const mergeHeadersCaseInsensitive = (existingHeaders, incomingHeaders) => {
+    const merged = new Map();
+
+    const setHeader = (key, value) => {
+        if (!key || value === undefined || value === null) {
+            return;
+        }
+
+        const headerName = String(key).toLowerCase();
+        if (!headerName) {
+            return;
+        }
+        if (forbiddenForwardHeaders.has(headerName) || headerName.startsWith(":")) {
+            return;
+        }
+
+        if (Array.isArray(value)) {
+            const items = value
+                .map((entry) => (entry === undefined || entry === null ? "" : String(entry).trim()))
+                .filter(Boolean);
+
+            if (!items.length) {
+                return;
+            }
+
+            merged.set(headerName, items.join(", "));
+            return;
+        }
+
+        const headerValue = String(value).trim();
+        if (!headerValue) {
+            return;
+        }
+
+        merged.set(headerName, headerValue);
+    };
+
+    for (const [key, value] of existingHeaders || []) {
+        setHeader(key, value);
+    }
+
+    for (const [key, value] of Object.entries(incomingHeaders || {})) {
+        setHeader(key, value);
+    }
+
+    return merged;
+};
+
 const validateTunnel = (req, res) => {
     if (!req.ip.endsWith('127.0.0.1')) {
         res.sendStatus(403);
@@ -40,10 +101,7 @@ const streamTunnel = (req, res) => {
     }
     const tunnelId = String(req.query.id);
 
-    streamInfo.headers = new Map([
-        ...(streamInfo.headers || []),
-        ...Object.entries(req.headers)
-    ]);
+    streamInfo.headers = mergeHeadersCaseInsensitive(streamInfo.headers, req.headers);
     streamInfo.internalTunnelId = tunnelId;
 
     console.log(

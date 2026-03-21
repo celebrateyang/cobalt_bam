@@ -1,4 +1,6 @@
 import { get, readable, type Updater } from "svelte/store";
+import { t } from "$lib/i18n/translations";
+import { createDialog } from "$lib/state/dialogs";
 
 import { schedule } from "$lib/task-manager/scheduler";
 import { clearFileStorage, removeFromFileStorage } from "$lib/storage/opfs";
@@ -23,11 +25,40 @@ const clearPipelineCache = (queueItem: CobaltQueueItem) => {
 }
 
 let update: (_: Updater<CobaltQueue>) => void;
+let queueRefreshHintAt = 0;
+const QUEUE_REFRESH_HINT_COOLDOWN_MS = 60_000;
 
 export const queue = readable<CobaltQueue>(
     {},
     (_, _update) => { update = _update }
 );
+
+const maybeShowQueueRefreshHint = (errorCode: string) => {
+    if (!["queue.generic_error", "queue.worker_didnt_start"].includes(errorCode)) {
+        return;
+    }
+
+    const now = Date.now();
+    if (now - queueRefreshHintAt < QUEUE_REFRESH_HINT_COOLDOWN_MS) {
+        return;
+    }
+    queueRefreshHintAt = now;
+
+    createDialog({
+        id: `queue-refresh-required-${now}`,
+        type: "small",
+        meowbalt: "error",
+        title: get(t)("error.queue.refresh_required_title"),
+        bodyText: get(t)("error.queue.refresh_required"),
+        buttons: [
+            {
+                text: get(t)("button.gotit"),
+                main: true,
+                action: () => { },
+            },
+        ],
+    });
+};
 
 const updateItemPoints = (
     id: UUID,
@@ -202,6 +233,7 @@ export function addItem(item: CobaltQueueItem) {
 
 export function itemError(id: UUID, workerId: UUID, error: string) {
     console.log(`[queue] itemError: id=${id} workerId=${workerId} error=${error}`);
+    maybeShowQueueRefreshHint(error);
 
     update(queueData => {
         if (queueData[id]) {

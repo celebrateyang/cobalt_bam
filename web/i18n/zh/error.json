@@ -36,7 +36,6 @@
     "api.auth.turnstile.invalid": "无法确认您是否是人类，因为您的访问令牌已过期且未续期。请稍后重试或刷新页面！",
     "api.auth.clerk.missing": "请先登录后再下载。",
     "api.auth.clerk.invalid": "登录状态已失效，请重新登录后再试。",
-
     "api.user.disabled": "您的账号已被禁用，如有疑问请联系支持。",
     "api.points.insufficient": "积分不足：当前 {{ current }}，需要 {{ required }}。",
     "api.points.unavailable": "服务器未配置积分系统，请联系站点管理员。",
@@ -44,7 +43,6 @@
     "api.timed_out": "处理服务器响应时间过长。可能当前服务器负载较大，请稍后重试！",
     "api.rate_exceeded": "请求频率过高。请稍后再试！",
     "api.fetch.rate": "从 {{ service }} 获取信息时触发平台限流，请等待约 {{ limit }} 秒后再试。",
-
     "queue.fetch.bad_response": "下载服务器返回异常响应，请稍后重试。",
     "queue.fetch.no_file_reader": "无法读取下载流，请稍后重试。",
     "queue.fetch.empty_tunnel": "下载结果为空文件，请稍后重试。",
@@ -53,11 +51,14 @@
     "queue.fetch.crashed": "下载工作进程异常退出，请稍后重试。",
     "queue.fetch.timeout": "下载时间过长已超时，请重试。",
     "queue.fetch.stalled": "下载长时间无数据，请重试。",
-
     "queue.ffmpeg.probe_failed": "无法探测文件。它可能已损坏或不兼容。",
     "queue.ffmpeg.no_args": "FFmpeg 工作进程启动时没有参数。",
     "queue.ffmpeg.out_of_memory": "FFmpeg 内存不足。",
     "queue.ffmpeg.no_input_format": "无法确定输入格式。",
     "queue.ffmpeg.no_audio_channel": "视频没有音频通道。",
-    "queue.ffmpeg.no_input_type": "输入文件没有类型。"
+    "queue.ffmpeg.no_input_type": "输入文件没有类型。",
+    "queue.refresh_required_title": "download queue failed to start",
+    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
+    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
+    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
 }

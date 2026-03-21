@@ -14,7 +14,9 @@
     export let sessionId: string;
     export let isCreator: boolean;
     export let peerConnected: boolean;
+    export let sessionType: 'random' | 'personal' = 'random';
     export let qrCodeUrl: string;
+    export let hasSignedInSession: boolean = false;
     
     // Copy states
     let showSessionIdCopied = false;
@@ -22,6 +24,7 @@
 
     // QR scanner state
     let showScanner = false;
+    let showRandomDrawer = false;
     let scannerError: string | null = null;
     const scannerTitleId = 'clipboard-scanner-title';
     
@@ -35,6 +38,18 @@
     
     function handleCleanup() {
         dispatch('cleanup');
+    }
+
+    function handleOpenPersonalSession() {
+        dispatch('openPersonalSession');
+    }
+
+    function handleJoinPersonalSession() {
+        dispatch('joinPersonalSession');
+    }
+
+    function toggleRandomDrawer() {
+        showRandomDrawer = !showRandomDrawer;
     }
 
     function openScanner() {
@@ -144,58 +159,101 @@
             });
         }
     }
+
+    $: isPersonalSession = sessionType === 'personal';
+    $: shouldShowRandomSessionOptions = !hasSignedInSession || showRandomDrawer;
 </script>
 
 {#if !isConnected}
-    <SettingsCategory title="" sectionId="connection-setup">
-        <div class="connection-setup">
-            <div class="setup-option">
-                <h3>{$t("clipboard.create_session")}</h3>
-                <p>{$t("clipboard.create_description")}</p>                <ActionButton
-                    id="create-session"
-                    disabled={isCreating}
-                    click={handleCreateSession}
-                >
-                    {isCreating ? $t("clipboard.creating") : $t("clipboard.create")}
-                </ActionButton>
-            </div>
-            
-            <div class="divider">
-                <span>{$t("general.or")}</span>
-            </div>
-              <div class="setup-option">
-                <h3>{$t("clipboard.join_session")}</h3>
-                <div class="scan-option">
+    <SettingsCategory title="" sectionId="connection-setup" nolink={true}>
+        <div class="connection-setup" class:has-personal={hasSignedInSession}>
+            {#if hasSignedInSession}
+                <div class="setup-option personal-session">
+                    <h3>{$t("clipboard.entry.personal_transfer")}</h3>
+                    <p>{$t("clipboard.entry.personal_default_hint")}</p>
+                    <div class="personal-actions">
                         <ActionButton
-                            id="scan-session"
-                            disabled={isJoining}
-                            click={openScanner}
+                            id="open-personal-session"
+                            disabled={isCreating || isJoining}
+                            click={handleOpenPersonalSession}
                         >
-                            {$t("clipboard.scan_with_camera")}
+                            {$t("clipboard.personal.open")}
                         </ActionButton>
-                       
-                        {#if scannerError && !showScanner}
-                            <p class="scan-error">{scannerError}</p>
-                        {/if}
+                        <ActionButton
+                            id="join-personal-session"
+                            disabled={isCreating || isJoining}
+                            click={handleJoinPersonalSession}
+                        >
+                            {$t("clipboard.personal.join")}
+                        </ActionButton>
                     </div>
-                
-                <div class="join-form">
-                    <input
-                        type="text"
-                        bind:value={joinCode}
-                        placeholder={$t("clipboard.enter_code")}
-                        disabled={isJoining}
-                    />
-                    <ActionButton
-                        id="join-session"
-                        disabled={isJoining || !joinCode.trim()}
-                        click={handleJoinSession}
-                    >
-                        {isJoining ? $t("clipboard.joining") : $t("clipboard.join")}
-                    </ActionButton>
-                    
                 </div>
-            </div>
+
+                <div class="random-drawer-toggle">
+                    <ActionButton
+                        id="toggle-random-session"
+                        disabled={isCreating || isJoining}
+                        click={toggleRandomDrawer}
+                    >
+                        {showRandomDrawer
+                            ? $t("clipboard.entry.hide_random_session")
+                            : $t("clipboard.entry.open_random_session")}
+                    </ActionButton>
+                </div>
+            {/if}
+
+            {#if shouldShowRandomSessionOptions}
+                <div class="random-session-drawer">
+                    <div class="setup-option">
+                        <h3>{$t("clipboard.create_session")}</h3>
+                        <p>{$t("clipboard.create_description")}</p>
+                        <ActionButton
+                            id="create-session"
+                            disabled={isCreating}
+                            click={handleCreateSession}
+                        >
+                            {isCreating ? $t("clipboard.creating") : $t("clipboard.create")}
+                        </ActionButton>
+                    </div>
+
+                    <div class="divider">
+                        <span>{$t("general.or")}</span>
+                    </div>
+
+                    <div class="setup-option">
+                        <h3>{$t("clipboard.join_session")}</h3>
+                        <div class="scan-option">
+                            <ActionButton
+                                id="scan-session"
+                                disabled={isJoining}
+                                click={openScanner}
+                            >
+                                {$t("clipboard.scan_with_camera")}
+                            </ActionButton>
+
+                            {#if scannerError && !showScanner}
+                                <p class="scan-error">{scannerError}</p>
+                            {/if}
+                        </div>
+
+                        <div class="join-form">
+                            <input
+                                type="text"
+                                bind:value={joinCode}
+                                placeholder={$t("clipboard.enter_code")}
+                                disabled={isJoining}
+                            />
+                            <ActionButton
+                                id="join-session"
+                                disabled={isJoining || !joinCode.trim()}
+                                click={handleJoinSession}
+                            >
+                                {isJoining ? $t("clipboard.joining") : $t("clipboard.join")}
+                            </ActionButton>
+                        </div>
+                    </div>
+                </div>
+            {/if}
         </div>
     </SettingsCategory>
     {#if showScanner}
@@ -233,15 +291,22 @@
     <!-- Session Info -->
     <div class="session-info-wrapper" id="session-info">
         <div class="session-info">
-            <div class="session-details">                
-                {#if isCreator && sessionId && qrCodeUrl && !peerConnected}
+            <div class="session-details">
+                {#if isPersonalSession && !peerConnected}
+                    <div class="personal-ready-section">
+                        <h4>{$t("clipboard.personal.opened_title")}</h4>
+                        <p>{$t("clipboard.personal.opened_hint")}</p>
+                    </div>
+                {/if}
+
+                {#if !isPersonalSession && isCreator && sessionId && qrCodeUrl && !peerConnected}
                     <div class="qr-code">
                         <h4>{$t("clipboard.scan_qr")}</h4>
                         <img src={qrCodeUrl} alt="QR Code" />
                     </div>
                 {/if}
                 
-                {#if isCreator && sessionId}
+                {#if !isPersonalSession && isCreator && sessionId}
                     <!-- Session ID Display -->
                     <div class="session-copy-section">
                         <h4>会话信息</h4>
@@ -372,7 +437,33 @@
         color: var(--secondary);
         line-height: 1.4;
         font-size: 0.85rem;
-    }    .divider {
+    }
+
+    .personal-actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .personal-session {
+        width: 100%;
+    }
+
+    .random-drawer-toggle {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .random-session-drawer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .divider {
         text-align: center;
         position: relative;
         margin: 0.5rem 0;
@@ -591,6 +682,30 @@
         grid-template-columns: 1fr;
         max-width: 800px;
         margin: 0 auto;
+    }
+
+    .personal-ready-section {
+        width: min(680px, 100%);
+        margin: 0 auto 0.75rem;
+        padding: 1.1rem 1.25rem;
+        border-radius: 16px;
+        border: 1px solid rgba(34, 197, 94, 0.28);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.05));
+        text-align: center;
+    }
+
+    .personal-ready-section h4 {
+        margin: 0 0 0.45rem;
+        font-size: 1.1rem;
+        color: var(--text);
+        font-weight: 650;
+    }
+
+    .personal-ready-section p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.55;
+        font-size: 0.92rem;
     }
     
     .qr-code {
@@ -1133,6 +1248,51 @@
 
         .copy-button {
             min-width: 90px;
+        }
+    }
+
+    /* Desktop layout: personal session first, random session as drawer content */
+    @media (min-width: 1024px) {
+        .connection-setup {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            max-width: 960px;
+            max-height: none;
+            width: 100%;
+            align-items: center;
+        }
+
+        .connection-setup .personal-session,
+        .connection-setup .random-drawer-toggle {
+            width: 100%;
+        }
+
+        .connection-setup .random-session-drawer {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.25rem;
+            align-items: stretch;
+        }
+
+        .connection-setup .random-session-drawer .divider {
+            display: none;
+        }
+
+        .connection-setup .random-session-drawer .setup-option {
+            width: 100%;
+            max-width: none;
+            min-height: 180px;
+            max-height: none;
+        }
+
+        .connection-setup .personal-session {
+            min-height: 145px;
+        }
+
+        .connection-setup .join-form {
+            max-width: 100%;
         }
     }
 </style>

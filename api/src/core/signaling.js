@@ -3,8 +3,10 @@ import { WebSocketServer } from "ws";
 
 import { hasPaidCreditOrderByClerkUserId } from "../db/credit-orders.js";
 import { Green } from "../misc/console-text.js";
+import { verifyClipboardPersonalWsTicket } from "./clipboard-personal.js";
 
 const CLIPBOARD_SESSION_TTL_MS = 30 * 60 * 1000;
+const CLIPBOARD_PEER_ONLINE_WINDOW_MS = 45 * 1000;
 const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
 const CHAT_REQUIRE_PAID = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_REQUIRE_PAID || "").toLowerCase().trim(),
@@ -38,6 +40,10 @@ const CLIPBOARD_MESSAGE_TYPES = new Set([
     "keep_alive_ack",
 ]);
 const SYSTEM_MESSAGE_TYPES = new Set(["heartbeat", "ping", "pong"]);
+
+// clipboard sessions (random + personal)
+// sessionId -> { type, ownerClerkUserId?, creator, joiner, createdAt, updatedAt, maxPeers }
+const clipboardSessions = new Map();
 
 const isWsOpen = (ws) => !!ws && ws.readyState === ws.OPEN;
 
@@ -130,14 +136,85 @@ const isMatchCompatible = (filters, peerProfile) => {
     return true;
 };
 
+const isClipboardPeerOnline = (peer, now = Date.now()) => {
+    if (!peer || !isWsOpen(peer.ws)) return false;
+    return now - (peer.lastSeenAt || 0) <= CLIPBOARD_PEER_ONLINE_WINDOW_MS;
+};
+
+const getClipboardSessionOnlinePeers = (session, now = Date.now()) => {
+    if (!session) return 0;
+    let online = 0;
+    if (isClipboardPeerOnline(session.creator, now)) online += 1;
+    if (isClipboardPeerOnline(session.joiner, now)) online += 1;
+    return online;
+};
+
+export const getClipboardPersonalSessionRuntime = (sessionId) => {
+    const session = clipboardSessions.get(sessionId);
+    if (!session || session.type !== "personal") {
+        return {
+            hasActiveSession: false,
+            onlinePeers: 0,
+            maxPeers: 2,
+            expiresAt: null,
+        };
+    }
+
+    const onlinePeers = getClipboardSessionOnlinePeers(session);
+    return {
+        hasActiveSession: onlinePeers > 0,
+        onlinePeers,
+        maxPeers: session.maxPeers || 2,
+        expiresAt: session.createdAt + CLIPBOARD_SESSION_TTL_MS,
+    };
+};
+
+export const invalidateClipboardPersonalSession = (
+    sessionId,
+    reason = "PERSONAL_CODE_ROTATED",
+) => {
+    const session = clipboardSessions.get(sessionId);
+    if (!session || session.type !== "personal") {
+        return {
+            invalidated: false,
+            kickedPeers: 0,
+        };
+    }
+
+    const peers = [session.creator, session.joiner].filter(Boolean);
+    let kickedPeers = 0;
+
+    for (const peer of peers) {
+        if (!peer?.ws) continue;
+
+        if (isWsOpen(peer.ws)) {
+            sendJson(peer.ws, {
+                type: "error",
+                code: reason,
+                message: "Personal session has been invalidated",
+            });
+            kickedPeers += 1;
+        }
+
+        try {
+            peer.ws.close(4001, reason);
+        } catch {
+            // ignore
+        }
+    }
+
+    clipboardSessions.delete(sessionId);
+    return {
+        invalidated: true,
+        kickedPeers,
+    };
+};
+
 export const setupSignalingServer = (httpServer) => {
     const wss = new WebSocketServer({
         server: httpServer,
         path: "/ws",
     });
-
-    // clipboard sessions: sessionId -> { creator, joiner, createdAt }
-    const sessions = new Map();
 
     // random chat queue: [{ clerkUserId, ws, enqueuedAt, profile, filters }]
     const chatQueue = [];
@@ -507,9 +584,12 @@ export const setupSignalingServer = (httpServer) => {
     // Clean up expired clipboard sessions.
     setInterval(() => {
         const now = Date.now();
-        for (const [sessionId, session] of sessions.entries()) {
-            if (now - session.createdAt > CLIPBOARD_SESSION_TTL_MS) {
-                sessions.delete(sessionId);
+        for (const [sessionId, session] of clipboardSessions.entries()) {
+            const isExpired = now - session.createdAt > CLIPBOARD_SESSION_TTL_MS;
+            const hasOnlinePeers = getClipboardSessionOnlinePeers(session, now) > 0;
+
+            if (isExpired && !hasOnlinePeers) {
+                clipboardSessions.delete(sessionId);
                 console.log(`Cleaned up expired session: ${sessionId}`);
             }
         }
@@ -554,6 +634,7 @@ export const setupSignalingServer = (httpServer) => {
         );
 
         let sessionId = null;
+        let sessionType = "random";
         let userRole = null; // 'creator' | 'joiner'
         let connectionStartTime = Date.now();
         let lastPingTime = Date.now();
@@ -565,6 +646,19 @@ export const setupSignalingServer = (httpServer) => {
             authenticated: false,
             clerkUserId: null,
             hasPaidOrder: false,
+        };
+
+        const touchClipboardSessionPeer = () => {
+            if (!sessionId || !userRole) return;
+            const session = clipboardSessions.get(sessionId);
+            if (!session) return;
+
+            const peer = userRole === "creator" ? session.creator : session.joiner;
+            if (!peer || peer.ws !== ws) return;
+
+            const now = Date.now();
+            peer.lastSeenAt = now;
+            session.updatedAt = now;
         };
 
         const pingInterval = setInterval(() => {
@@ -608,6 +702,7 @@ export const setupSignalingServer = (httpServer) => {
         ws.on("pong", () => {
             lastPongTime = Date.now();
             missedPongs = 0;
+            touchClipboardSessionPeer();
         });
 
         ws.on("message", async (data) => {
@@ -617,6 +712,7 @@ export const setupSignalingServer = (httpServer) => {
                 const messageType =
                     typeof message?.type === "string" ? message.type : "";
                 trackWsTrafficType(messageType);
+                touchClipboardSessionPeer();
 
                 switch (messageType) {
                     case "create_session":
@@ -631,7 +727,7 @@ export const setupSignalingServer = (httpServer) => {
                         handleSignaling(ws, message, sessionId, userRole);
                         break;
                     case "disconnect":
-                        handleDisconnect(sessionId, userRole);
+                        handleDisconnect(sessionId, userRole, ws);
                         break;
                     case "keep_alive":
                         sendJson(ws, {
@@ -719,7 +815,7 @@ export const setupSignalingServer = (httpServer) => {
             handleChatSocketClose(ws);
 
             if (sessionId && userRole) {
-                handleDisconnect(sessionId, userRole);
+                handleDisconnect(sessionId, userRole, ws);
             }
         });
 
@@ -730,22 +826,148 @@ export const setupSignalingServer = (httpServer) => {
             );
         });
 
+        const sendClipboardError = (socket, code, message) => {
+            sendJson(socket, {
+                type: "error",
+                code,
+                message,
+            });
+        };
+
+        const buildPeer = ({
+            socket,
+            publicKey,
+            clerkUserId = null,
+            deviceId = null,
+        }) => ({
+            ws: socket,
+            publicKey,
+            clerkUserId,
+            deviceId,
+            lastSeenAt: Date.now(),
+        });
+
         function handleCreateSession(socket, message) {
+            const now = Date.now();
+            const isPersonal = message?.sessionType === "personal";
+
+            if (isPersonal) {
+                const verified = verifyClipboardPersonalWsTicket(message?.wsTicket);
+                if (!verified.ok) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Invalid personal session ticket");
+                    return;
+                }
+
+                const ticket = verified.payload;
+                if (ticket.action !== "create") {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket action mismatch");
+                    return;
+                }
+
+                if (message?.sessionId && message.sessionId !== ticket.sessionId) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket session mismatch");
+                    return;
+                }
+
+                if (message?.deviceId !== ticket.deviceId) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket device mismatch");
+                    return;
+                }
+
+                const targetSessionId = ticket.sessionId;
+                let personalSession = clipboardSessions.get(targetSessionId);
+
+                if (!personalSession) {
+                    personalSession = {
+                        type: "personal",
+                        ownerClerkUserId: ticket.clerkUserId,
+                        codeVersion: ticket.codeVersion,
+                        creator: null,
+                        joiner: null,
+                        maxPeers: 2,
+                        createdAt: now,
+                        updatedAt: now,
+                    };
+                    clipboardSessions.set(targetSessionId, personalSession);
+                }
+
+                if (
+                    personalSession.type !== "personal" ||
+                    personalSession.ownerClerkUserId !== ticket.clerkUserId
+                ) {
+                    sendClipboardError(socket, "PERSONAL_SESSION_FORBIDDEN", "Session owner mismatch");
+                    return;
+                }
+
+                if (
+                    isClipboardPeerOnline(personalSession.creator, now) &&
+                    personalSession.creator?.deviceId !== ticket.deviceId
+                ) {
+                    sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session has no free online slot");
+                    return;
+                }
+
+                sessionId = targetSessionId;
+                sessionType = "personal";
+                userRole = "creator";
+
+                personalSession.creator = buildPeer({
+                    socket,
+                    publicKey: message.publicKey,
+                    clerkUserId: ticket.clerkUserId,
+                    deviceId: ticket.deviceId,
+                });
+                personalSession.updatedAt = now;
+
+                sendJson(socket, {
+                    type: "session_created",
+                    sessionId,
+                    sessionType: "personal",
+                });
+
+                if (
+                    personalSession.joiner &&
+                    isClipboardPeerOnline(personalSession.joiner, now)
+                ) {
+                    sendJson(personalSession.joiner.ws, {
+                        type: "creator_reconnected",
+                        publicKey: message.publicKey,
+                    });
+
+                    sendJson(socket, {
+                        type: "peer_already_joined",
+                        publicKey: personalSession.joiner.publicKey,
+                    });
+                }
+
+                return;
+            }
+
             if (message.existingSessionId) {
-                const existingSession = sessions.get(message.existingSessionId);
-                if (existingSession && !existingSession.creator) {
+                const existingSession = clipboardSessions.get(message.existingSessionId);
+                if (
+                    existingSession &&
+                    existingSession.type === "random" &&
+                    !isClipboardPeerOnline(existingSession.creator, now)
+                ) {
                     sessionId = message.existingSessionId;
+                    sessionType = "random";
                     userRole = "creator";
-                    existingSession.creator = { ws: socket, publicKey: message.publicKey };
+                    existingSession.creator = buildPeer({
+                        socket,
+                        publicKey: message.publicKey,
+                    });
+                    existingSession.updatedAt = now;
 
                     sendJson(socket, {
                         type: "session_reconnected",
                         sessionId,
+                        sessionType: "random",
                     });
 
                     if (
                         existingSession.joiner &&
-                        isWsOpen(existingSession.joiner.ws)
+                        isClipboardPeerOnline(existingSession.joiner, now)
                     ) {
                         sendJson(existingSession.joiner.ws, {
                             type: "creator_reconnected",
@@ -763,49 +985,130 @@ export const setupSignalingServer = (httpServer) => {
             }
 
             sessionId = Math.random().toString(36).substring(2, 10);
+            sessionType = "random";
             userRole = "creator";
 
-            sessions.set(sessionId, {
-                creator: { ws: socket, publicKey: message.publicKey },
+            clipboardSessions.set(sessionId, {
+                type: "random",
+                ownerClerkUserId: null,
+                codeVersion: null,
+                creator: buildPeer({
+                    socket,
+                    publicKey: message.publicKey,
+                }),
                 joiner: null,
-                createdAt: Date.now(),
+                maxPeers: 2,
+                createdAt: now,
+                updatedAt: now,
             });
 
             sendJson(socket, {
                 type: "session_created",
                 sessionId,
+                sessionType: "random",
             });
         }
 
         function handleJoinSession(socket, message) {
-            const session = sessions.get(message.sessionId);
+            const now = Date.now();
+            const isPersonal = message?.sessionType === "personal";
+            let ticket = null;
+
+            if (isPersonal) {
+                const verified = verifyClipboardPersonalWsTicket(message?.wsTicket);
+                if (!verified.ok) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Invalid personal session ticket");
+                    return;
+                }
+
+                ticket = verified.payload;
+                if (ticket.action !== "join") {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket action mismatch");
+                    return;
+                }
+
+                if (message?.sessionId !== ticket.sessionId) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket session mismatch");
+                    return;
+                }
+
+                if (message?.deviceId !== ticket.deviceId) {
+                    sendClipboardError(socket, "WS_TICKET_INVALID", "Ticket device mismatch");
+                    return;
+                }
+            }
+
+            const targetSessionId = message?.sessionId;
+            const session = clipboardSessions.get(targetSessionId);
             if (!session) {
-                sendJson(socket, {
-                    type: "error",
-                    message: "Session does not exist or has expired",
-                });
+                sendClipboardError(
+                    socket,
+                    "SESSION_NOT_FOUND",
+                    "Session does not exist or has expired",
+                );
                 return;
             }
 
-            if (session.joiner && isWsOpen(session.joiner.ws)) {
-                sendJson(socket, {
-                    type: "error",
-                    message: "Session is full",
-                });
+            if (!isPersonal && session.type === "personal") {
+                sendClipboardError(
+                    socket,
+                    "PERSONAL_SESSION_FORBIDDEN",
+                    "Personal session requires authenticated ticket",
+                );
                 return;
             }
 
-            sessionId = message.sessionId;
+            if (isPersonal) {
+                if (
+                    session.type !== "personal" ||
+                    session.ownerClerkUserId !== ticket.clerkUserId
+                ) {
+                    sendClipboardError(
+                        socket,
+                        "PERSONAL_SESSION_FORBIDDEN",
+                        "Session owner mismatch",
+                    );
+                    return;
+                }
+            }
+
+            const joinerOnline = isClipboardPeerOnline(session.joiner, now);
+            if (joinerOnline) {
+                if (!isPersonal) {
+                    sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session is full");
+                    return;
+                }
+
+                if (
+                    session.joiner?.deviceId &&
+                    message?.deviceId &&
+                    session.joiner.deviceId !== message.deviceId
+                ) {
+                    sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session is full");
+                    return;
+                }
+            }
+
+            sessionId = targetSessionId;
+            sessionType = session.type || "random";
             userRole = "joiner";
-            session.joiner = { ws: socket, publicKey: message.publicKey };
+            session.joiner = buildPeer({
+                socket,
+                publicKey: message.publicKey,
+                clerkUserId: ticket?.clerkUserId || null,
+                deviceId: message?.deviceId || ticket?.deviceId || null,
+            });
+            session.updatedAt = now;
 
-            if (session.creator && isWsOpen(session.creator.ws)) {
+            if (session.creator && isClipboardPeerOnline(session.creator, now)) {
                 sendJson(session.creator.ws, {
                     type: "peer_joined",
                     publicKey: message.publicKey,
                 });
                 sendJson(socket, {
                     type: "session_joined",
+                    sessionType,
+                    sessionId,
                     publicKey: session.creator.publicKey,
                 });
                 return;
@@ -821,15 +1124,17 @@ export const setupSignalingServer = (httpServer) => {
             if (!currentSessionId || !currentUserRole) {
                 sendJson(socket, {
                     type: "error",
+                    code: "SESSION_NOT_JOINED",
                     message: "Not joined to any session",
                 });
                 return;
             }
 
-            const session = sessions.get(currentSessionId);
+            const session = clipboardSessions.get(currentSessionId);
             if (!session) {
                 sendJson(socket, {
                     type: "error",
+                    code: "SESSION_NOT_FOUND",
                     message: "Session does not exist",
                 });
                 return;
@@ -842,11 +1147,17 @@ export const setupSignalingServer = (httpServer) => {
             }
         }
 
-        function handleDisconnect(currentSessionId, currentUserRole) {
+        function handleDisconnect(currentSessionId, currentUserRole, currentSocket = null) {
             if (!currentSessionId) return;
 
-            const session = sessions.get(currentSessionId);
+            const session = clipboardSessions.get(currentSessionId);
             if (!session) return;
+
+            const ownPeer =
+                currentUserRole === "creator" ? session.creator : session.joiner;
+            if (currentSocket && ownPeer?.ws !== currentSocket) {
+                return;
+            }
 
             const peer =
                 currentUserRole === "creator" ? session.joiner : session.creator;
@@ -861,9 +1172,10 @@ export const setupSignalingServer = (httpServer) => {
             } else {
                 session.joiner = null;
             }
+            session.updatedAt = Date.now();
 
             if (!session.creator && !session.joiner) {
-                sessions.delete(currentSessionId);
+                clipboardSessions.delete(currentSessionId);
             }
         }
     });

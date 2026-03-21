@@ -106,6 +106,23 @@
         "file_receiving_error": "파일 수신 오류: {error}",
         "websocket_connection_error": "WebSocket 연결 오류",
         "session_creation_failed": "세션 생성 실패",
-        "session_join_failed": "세션 참여 실패"
+        "session_join_failed": "세션 참여 실패",
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
+    },
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "내 전용 세션 열기",
+        "join": "내 전용 세션 참가",
+        "opened_title": "내 전용 세션이 준비되었습니다",
+        "opened_hint": "같은 계정으로 로그인한 다른 기기에서 \"내 전용 세션 참가\"를 누르면 파일과 텍스트 전송을 시작할 수 있습니다."
     }
 }

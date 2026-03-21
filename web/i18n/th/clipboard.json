@@ -102,12 +102,29 @@
         "discard_chunk_cancelled": "ยกเลิกการถ่ายโอน ทิ้งข้อมูลไฟล์: fileId={fileId}, chunkIndex={chunkIndex}",
         "ignore_end_signal_cancelled": "ยกเลิกการถ่ายโอน เพิกเฉยสัญญาณจบไฟล์: {fileName}",
         "peer_cancelled_transmission": "อีกฝ่ายยกเลิกการส่งไฟล์",
-        "acknowledge_peer_cancel": "อีกฝ่ายยกเลิกการส่งไฟล์"
+        "acknowledge_peer_cancel": "อีกฝ่ายยกเลิกการส่งไฟล์",
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
     },
     "error": {
         "session_not_found": "ไม่พบเซสชันหรือหมดอายุ",
         "session_full": "เซสชันเต็ม",
         "connection_failed": "การเชื่อมต่อล้มเหลว",
         "encryption_failed": "การเข้ารหัสล้มเหลว"
+    },
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "เปิดเซสชันส่วนตัวของฉัน",
+        "join": "เข้าร่วมเซสชันส่วนตัวของฉัน",
+        "opened_title": "เซสชันส่วนตัวของฉันพร้อมแล้ว",
+        "opened_hint": "บนอุปกรณ์อีกเครื่องที่เข้าสู่ระบบด้วยบัญชีเดียวกัน ให้แตะ \"เข้าร่วมเซสชันส่วนตัวของฉัน\" เพื่อเริ่มถ่ายโอนไฟล์และข้อความ"
     }
 }

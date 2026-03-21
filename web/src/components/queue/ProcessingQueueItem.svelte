@@ -31,6 +31,8 @@
 
     import { goto } from "$app/navigation";
     import { clipboardState } from "$lib/clipboard/clipboard-manager";
+    import { get } from "svelte/store";
+    import { isSignedIn } from "$lib/state/clerk";
 
     const itemIcons = {
         file: IconFile,
@@ -94,7 +96,10 @@
         }));
         // Navigate to clipboard page
         const currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
-        await goto(`/${currentLang}/clipboard`);
+        const target = get(isSignedIn)
+            ? `/${currentLang}/clipboard?mode=personal&autostart=1`
+            : `/${currentLang}/clipboard`;
+        await goto(target);
     };
 
     type StatusText = {

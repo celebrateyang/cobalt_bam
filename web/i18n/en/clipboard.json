@@ -10,6 +10,18 @@
     "join_description": "Enter a session code to join an existing session",
     "join": "Join",
     "joining": "Joining...",
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "Open My Personal Session",
+        "join": "Join My Personal Session",
+        "opened_title": "My Personal Session Is Ready",
+        "opened_hint": "On your other device signed in with the same account, click \"Join My Personal Session\" to start transferring files and text."
+    },
     "enter_code": "Or enter session code",
     "scan_with_camera": "Scan QR to join",
     "scan_instruction": "Align the QR code within the frame",
@@ -102,7 +114,12 @@
         "discard_chunk_cancelled": "Transmission cancelled, discarding file chunk: fileId={fileId}, chunkIndex={chunkIndex}",
         "ignore_end_signal_cancelled": "Transmission cancelled, ignoring file end signal: {fileName}",
         "peer_cancelled_transmission": "Peer cancelled file transmission",
-        "acknowledge_peer_cancel": "Peer cancelled file transmission"
+        "acknowledge_peer_cancel": "Peer cancelled file transmission",
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
     },
     "error": {
         "session_not_found": "Session not found or expired",

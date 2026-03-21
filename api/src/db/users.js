@@ -3,10 +3,66 @@ import { env } from "../config.js";
 import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
 import { nanoid } from "nanoid";
+import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
+
+let clipboardPersonalSchemaPromise = null;
+
+export const ensureClipboardPersonalSchema = async () => {
+    if (clipboardPersonalSchemaPromise) {
+        return clipboardPersonalSchemaPromise;
+    }
+
+    clipboardPersonalSchemaPromise = (async () => {
+        await query(
+            `ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS clipboard_personal_code TEXT;`,
+        );
+        await query(
+            `ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS clipboard_personal_code_version INTEGER NOT NULL DEFAULT 1;`,
+        );
+        await query(
+            `ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS clipboard_personal_code_updated_at BIGINT;`,
+        );
+        await query(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_clipboard_personal_code
+             ON users(clipboard_personal_code)
+             WHERE clipboard_personal_code IS NOT NULL;`,
+        );
+
+        await query(`
+            CREATE TABLE IF NOT EXISTS user_clipboard_devices (
+                id BIGSERIAL PRIMARY KEY,
+                clerk_user_id TEXT NOT NULL,
+                device_id TEXT NOT NULL,
+                device_name TEXT,
+                platform TEXT NOT NULL DEFAULT 'unknown',
+                last_seen_at BIGINT NOT NULL,
+                last_ip TEXT,
+                last_user_agent TEXT,
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL,
+                UNIQUE (clerk_user_id, device_id)
+            );
+        `);
+
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_user_clipboard_devices_user_seen
+             ON user_clipboard_devices(clerk_user_id, last_seen_at DESC);`,
+        );
+    })()
+        .catch((error) => {
+            clipboardPersonalSchemaPromise = null;
+            throw error;
+        });
+
+    return clipboardPersonalSchemaPromise;
+};
 
 export const initUserDatabase = async () => {
     if (env.dbType && env.dbType !== "postgresql") {
@@ -304,6 +360,8 @@ export const initUserDatabase = async () => {
          ON CONFLICT (key) DO NOTHING;`,
     );
 
+    await ensureClipboardPersonalSchema();
+
     console.log("✅ User database initialized");
 };
 
@@ -413,6 +471,208 @@ export const getUserByClerkId = async (clerkUserId) => {
         clerkUserId,
     ]);
     return result.rows[0] || null;
+};
+
+const getNumericCodeVersion = (value) => {
+    const parsed = Number.parseInt(String(value ?? "1"), 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return 1;
+    }
+    return parsed;
+};
+
+const assignClipboardPersonalCodeWithRetry = async (
+    client,
+    userId,
+    codeVersion,
+    now,
+) => {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        const candidateCode = generateClipboardPersonalCode();
+        try {
+            const updateRes = await client.query(
+                `
+                UPDATE users
+                SET clipboard_personal_code = $2,
+                    clipboard_personal_code_version = $3,
+                    clipboard_personal_code_updated_at = $4,
+                    updated_at = $4
+                WHERE id = $1
+                RETURNING clipboard_personal_code, clipboard_personal_code_version, clipboard_personal_code_updated_at;
+                `,
+                [userId, candidateCode, codeVersion, now],
+            );
+
+            if (updateRes.rows[0]) {
+                return updateRes.rows[0];
+            }
+        } catch (error) {
+            if (!isUniqueViolation(error)) {
+                throw error;
+            }
+        }
+    }
+
+    throw new Error("Failed to assign unique clipboard personal code");
+};
+
+export const getOrCreateClipboardPersonalProfile = async (clerkUserId) => {
+    await ensureClipboardPersonalSchema();
+
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+
+        const userRes = await client.query(
+            `
+            SELECT id, clipboard_personal_code, clipboard_personal_code_version, clipboard_personal_code_updated_at
+            FROM users
+            WHERE clerk_user_id = $1
+            FOR UPDATE;
+            `,
+            [clerkUserId],
+        );
+
+        if (!userRes.rowCount) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        const row = userRes.rows[0];
+        const codeVersion = getNumericCodeVersion(row.clipboard_personal_code_version);
+
+        let profileRow = {
+            clipboard_personal_code: row.clipboard_personal_code,
+            clipboard_personal_code_version: codeVersion,
+            clipboard_personal_code_updated_at: row.clipboard_personal_code_updated_at,
+        };
+
+        if (!profileRow.clipboard_personal_code) {
+            profileRow = await assignClipboardPersonalCodeWithRetry(
+                client,
+                row.id,
+                codeVersion,
+                now,
+            );
+        }
+
+        await client.query("COMMIT");
+
+        return {
+            personalCode: profileRow.clipboard_personal_code,
+            codeVersion: getNumericCodeVersion(
+                profileRow.clipboard_personal_code_version,
+            ),
+            codeUpdatedAt: profileRow.clipboard_personal_code_updated_at,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const rotateClipboardPersonalCode = async (clerkUserId) => {
+    await ensureClipboardPersonalSchema();
+
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+
+        const userRes = await client.query(
+            `
+            SELECT id, clipboard_personal_code_version
+            FROM users
+            WHERE clerk_user_id = $1
+            FOR UPDATE;
+            `,
+            [clerkUserId],
+        );
+
+        if (!userRes.rowCount) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+
+        const row = userRes.rows[0];
+        const previousCodeVersion = getNumericCodeVersion(
+            row.clipboard_personal_code_version,
+        );
+        const nextCodeVersion = previousCodeVersion + 1;
+
+        const rotated = await assignClipboardPersonalCodeWithRetry(
+            client,
+            row.id,
+            nextCodeVersion,
+            now,
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            personalCode: rotated.clipboard_personal_code,
+            codeVersion: getNumericCodeVersion(
+                rotated.clipboard_personal_code_version,
+            ),
+            previousCodeVersion,
+            rotatedAt: now,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const touchClipboardPersonalDevice = async ({
+    clerkUserId,
+    deviceId,
+    deviceName = null,
+    platform = "unknown",
+    ip = null,
+    userAgent = null,
+}) => {
+    await ensureClipboardPersonalSchema();
+
+    const now = Date.now();
+    await query(
+        `
+        INSERT INTO user_clipboard_devices (
+            clerk_user_id,
+            device_id,
+            device_name,
+            platform,
+            last_seen_at,
+            last_ip,
+            last_user_agent,
+            created_at,
+            updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $5, $5)
+        ON CONFLICT (clerk_user_id, device_id)
+        DO UPDATE
+        SET device_name = EXCLUDED.device_name,
+            platform = EXCLUDED.platform,
+            last_seen_at = EXCLUDED.last_seen_at,
+            last_ip = EXCLUDED.last_ip,
+            last_user_agent = EXCLUDED.last_user_agent,
+            updated_at = EXCLUDED.updated_at;
+        `,
+        [clerkUserId, deviceId, deviceName, platform, now, ip, userAgent],
+    );
 };
 
 export const listUsers = async ({

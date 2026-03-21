@@ -9,6 +9,7 @@
 
     export let disabled = false;
     export let beta = false;
+    export let nolink = false;
 
     let focus = false;
     let copied = false;
@@ -33,7 +34,7 @@
     class:disabled
     aria-hidden={disabled}
 >
-    <SectionHeading {title} {sectionId} {beta} />
+    <SectionHeading {title} {sectionId} {beta} {nolink} />
     <slot></slot>
 </section>
 

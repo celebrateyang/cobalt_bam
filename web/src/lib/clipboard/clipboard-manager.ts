@@ -3,6 +3,11 @@ import { writable } from 'svelte/store';
 import { currentApiURL } from '$lib/api/api-url';
 import QRCode from 'qrcode';
 import { t } from '$lib/i18n/translations';
+import {
+    joinClipboardPersonalSession,
+    openClipboardPersonalSession,
+    type ClipboardPersonalSessionTicket,
+} from '$lib/api/clipboard-personal';
 
 // Types
 export interface FileItem {
@@ -41,6 +46,7 @@ const RETRY_DELAY = 1000; // 重传延迟
 // Store for reactive state
 export const clipboardState = writable({
     sessionId: '',
+    sessionType: 'random' as 'random' | 'personal',
     isConnected: false,
     isCreating: false,
     isJoining: false,
@@ -95,6 +101,8 @@ export class ClipboardManager {
         totalChunks: number;
         cleanupTimer?: ReturnType<typeof setTimeout>;
     }>();
+    private currentSessionType: 'random' | 'personal' = 'random';
+    private currentDeviceId: string | null = null;
 
     constructor() {
         this.loadStoredSession();
@@ -119,8 +127,12 @@ export class ClipboardManager {
                     clipboardState.update(state => ({
                         ...state,
                         sessionId: session.sessionId,
-                        isCreator: session.isCreator
+                        isCreator: session.isCreator,
+                        sessionType:
+                            session.sessionType === 'personal' ? 'personal' : 'random'
                     }));
+                    this.currentSessionType =
+                        session.sessionType === 'personal' ? 'personal' : 'random';
                 } catch (e) {
                     this.clearStoredSession();
                 }
@@ -128,17 +140,23 @@ export class ClipboardManager {
         }
     }
 
-    private saveSession(sessionId: string, isCreator: boolean): void {
+    private saveSession(
+        sessionId: string,
+        isCreator: boolean,
+        sessionType: 'random' | 'personal' = 'random',
+    ): void {
         if (typeof window !== 'undefined' && sessionId) {
             localStorage.setItem('clipboard_session', JSON.stringify({
                 sessionId,
                 isCreator,
+                sessionType,
                 timestamp: Date.now()
             }));
         }
     }
 
     private clearStoredSession(): void {
+        this.currentSessionType = 'random';
         if (typeof window !== 'undefined') {
             localStorage.removeItem('clipboard_session');
         }
@@ -411,6 +429,30 @@ export class ClipboardManager {
         // Generate new key pair for security
         await this.generateKeyPair();
         const publicKeyArray = Array.from(new Uint8Array(await this.exportPublicKey()));
+
+        if (this.currentSessionType === 'personal') {
+            const ticket = await this.requestPersonalSession(state.isCreator ? 'open' : 'join');
+            if (state.isCreator) {
+                this.ws.send(JSON.stringify({
+                    type: 'create_session',
+                    sessionType: 'personal',
+                    sessionId: ticket.sessionId,
+                    wsTicket: ticket.wsTicket,
+                    deviceId: this.currentDeviceId,
+                    publicKey: publicKeyArray,
+                }));
+            } else {
+                this.ws.send(JSON.stringify({
+                    type: 'join_session',
+                    sessionType: 'personal',
+                    sessionId: ticket.sessionId,
+                    wsTicket: ticket.wsTicket,
+                    deviceId: this.currentDeviceId,
+                    publicKey: publicKeyArray
+                }));
+            }
+            return;
+        }
 
         if (state.isCreator) {
             // Reconnect as creator
@@ -733,6 +775,70 @@ export class ClipboardManager {
         }, 3000);
     }
 
+    private getOrCreateDeviceId(): string {
+        const storageKey = 'clipboard_device_id';
+        const fallback = () => `web-${crypto.randomUUID()}`;
+
+        if (typeof window === 'undefined') {
+            return fallback();
+        }
+
+        const existing = localStorage.getItem(storageKey);
+        if (existing && existing.trim()) {
+            return existing.trim();
+        }
+
+        const generated = fallback();
+        localStorage.setItem(storageKey, generated);
+        return generated;
+    }
+
+    private getDeviceName(): string {
+        if (typeof navigator === 'undefined') {
+            return 'Unknown Web Device';
+        }
+
+        const ua = navigator.userAgent || '';
+        if (/iphone/i.test(ua)) return 'iPhone Browser';
+        if (/ipad/i.test(ua)) return 'iPad Browser';
+        if (/android/i.test(ua)) return 'Android Browser';
+        if (/macintosh|mac os x/i.test(ua)) return 'Mac Browser';
+        if (/windows/i.test(ua)) return 'Windows Browser';
+        if (/linux/i.test(ua)) return 'Linux Browser';
+        return 'Web Browser';
+    }
+
+    private getPlatform(): 'web' {
+        return 'web';
+    }
+
+    private async requestPersonalSession(
+        action: 'open' | 'join',
+    ): Promise<ClipboardPersonalSessionTicket> {
+        this.currentDeviceId = this.getOrCreateDeviceId();
+        const payload = {
+            deviceId: this.currentDeviceId,
+            deviceName: this.getDeviceName(),
+            platform: this.getPlatform(),
+        } as const;
+
+        const response = action === 'open'
+            ? await openClipboardPersonalSession(payload)
+            : await joinClipboardPersonalSession(payload);
+
+        if (response.status !== 'success') {
+            const code = response.error.code || 'UNKNOWN_ERROR';
+            const message = response.error.message || 'Failed to request personal session';
+            throw new Error(`${code}:${message}`);
+        }
+
+        if (!response.data) {
+            throw new Error('UNKNOWN_ERROR:Missing personal session payload');
+        }
+
+        return response.data;
+    }
+
     // Public API methods
     async createSession(): Promise<void> {
         try {
@@ -742,6 +848,7 @@ export class ClipboardManager {
 
             const publicKeyBuffer = await this.exportPublicKey();
             const publicKeyArray = Array.from(new Uint8Array(publicKeyBuffer));
+            this.currentSessionType = 'random';
 
             if (this.ws) {
                 this.ws.send(JSON.stringify({
@@ -755,6 +862,36 @@ export class ClipboardManager {
         }
     }
 
+    async openPersonalSession(): Promise<void> {
+        try {
+            clipboardState.update(state => ({ ...state, isCreating: true }));
+
+            const ticket = await this.requestPersonalSession('open');
+            await this.generateKeyPair();
+            await this.connectWebSocket();
+            const publicKeyArray = Array.from(new Uint8Array(await this.exportPublicKey()));
+
+            this.currentSessionType = 'personal';
+
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
+                    type: 'create_session',
+                    sessionType: 'personal',
+                    sessionId: ticket.sessionId,
+                    wsTicket: ticket.wsTicket,
+                    deviceId: this.currentDeviceId,
+                    publicKey: publicKeyArray,
+                }));
+            } else {
+                throw new Error('WebSocket not ready');
+            }
+        } catch (error) {
+            console.error('Error opening personal session:', error);
+            clipboardState.update(state => ({ ...state, isCreating: false }));
+            this.showError(t.get('clipboard.messages.open_personal_failed'));
+        }
+    }
+
     async joinSession(joinCode: string): Promise<void> {
         try {
             console.log('Starting join session process...');
@@ -765,6 +902,7 @@ export class ClipboardManager {
 
             const publicKeyBuffer = await this.exportPublicKey();
             const publicKeyArray = Array.from(new Uint8Array(publicKeyBuffer));
+            this.currentSessionType = 'random';
 
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                 const message = {
@@ -781,6 +919,36 @@ export class ClipboardManager {
         } catch (error) {
             console.error('Error joining session:', error);
             clipboardState.update(state => ({ ...state, isJoining: false }));
+        }
+    }
+
+    async joinPersonalSession(): Promise<void> {
+        try {
+            clipboardState.update(state => ({ ...state, isJoining: true }));
+
+            const ticket = await this.requestPersonalSession('join');
+            await this.generateKeyPair();
+            await this.connectWebSocket();
+
+            const publicKeyArray = Array.from(new Uint8Array(await this.exportPublicKey()));
+            this.currentSessionType = 'personal';
+
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
+                    type: 'join_session',
+                    sessionType: 'personal',
+                    sessionId: ticket.sessionId,
+                    wsTicket: ticket.wsTicket,
+                    deviceId: this.currentDeviceId,
+                    publicKey: publicKeyArray
+                }));
+            } else {
+                throw new Error('WebSocket not ready');
+            }
+        } catch (error) {
+            console.error('Error joining personal session:', error);
+            clipboardState.update(state => ({ ...state, isJoining: false }));
+            this.showError(t.get('clipboard.messages.join_personal_failed'));
         }
     }
 
@@ -863,6 +1031,7 @@ export class ClipboardManager {
         clipboardState.update(state => ({
             ...state,
             sessionId: '',
+            sessionType: 'random',
             isConnected: false,
             peerConnected: false,
             qrCodeUrl: '',
@@ -892,6 +1061,7 @@ export class ClipboardManager {
         this.peerIsSelectingFiles = false; // 重置对端文件选择状态
         this.cancelTransmission = false; // 重置取消传输标志
         this.currentSendingFileId = null; // 重置当前发送文件ID
+        this.currentSessionType = 'random';
         this.clearStoredSession();
     }
 
@@ -1368,29 +1538,42 @@ export class ClipboardManager {
 
         switch (message.type) {
             case 'session_created':
+                this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
                 clipboardState.update(state => ({
                     ...state,
                     sessionId: message.sessionId,
+                    sessionType: this.currentSessionType,
                     isCreating: false,
                     isCreator: true,
                     errorMessage: '',
                     showError: false
                 }));
                 await this.generateQRCode(message.sessionId);
-                this.saveSession(message.sessionId, true);
+                this.saveSession(message.sessionId, true, this.currentSessionType);
                 break;
 
             case 'session_joined':
                 console.log('Session joined successfully, setting up WebRTC...');
                 await this.importRemotePublicKey(message.publicKey);
                 await this.deriveSharedKey();
+                this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
+                const joinedSessionId =
+                    typeof message.sessionId === 'string' && message.sessionId
+                        ? message.sessionId
+                        : this.getCurrentState().sessionId;
                 clipboardState.update(state => ({
                     ...state,
+                    sessionId: joinedSessionId || state.sessionId,
+                    sessionType: this.currentSessionType,
+                    isCreator: false,
                     isJoining: false,
                     waitingForCreator: false,
                     errorMessage: '',
                     showError: false
                 }));
+                if (joinedSessionId) {
+                    this.saveSession(joinedSessionId, false, this.currentSessionType);
+                }
                 await this.setupWebRTC(false);
                 break;
 
@@ -1522,36 +1705,49 @@ export class ClipboardManager {
                 // 处理pong响应
                 console.log('🏓 收到pong响应');
                 break;
-
             case 'error':
                 console.error('Server error:', message);
 
-                // 忽略"Unknown message type"错误，不显示给用户
                 if (message.message === 'Unknown message type') {
-                    console.warn('⚠️ 忽略服务器"Unknown message type"错误');
-                    return; // 直接返回，不更新UI状态
+                    return;
                 }
 
-                let errorMessage = '连接错误';
+                let errorMessage = t.get('clipboard.messages.connection_error');
 
-                // 处理特定的错误消息
-                if (message.message) {
-                    switch (message.message) {
-                        case '会话不存在或已过期':
+                if (message.code) {
+                    switch (message.code) {
+                        case 'SESSION_NOT_FOUND':
                             errorMessage = t.get('clipboard.messages.session_expired');
-                            this.clearStoredSession(); // 清理本地存储的过期会话
+                            this.clearStoredSession();
                             break;
-                        case '会话已满':
+                        case 'SESSION_FULL_ONLINE':
                             errorMessage = t.get('clipboard.messages.session_full');
                             break;
-                        case '未知消息类型':
-                            errorMessage = t.get('clipboard.messages.protocol_error');
+                        case 'PERSONAL_CODE_ROTATED':
+                            errorMessage = t.get('clipboard.messages.personal_code_rotated');
+                            this.clearStoredSession();
                             break;
-                        case '消息格式错误':
-                            errorMessage = t.get('clipboard.messages.data_format_error');
+                        case 'WS_TICKET_INVALID':
+                            errorMessage = t.get('clipboard.messages.personal_ws_ticket_invalid');
+                            break;
+                        case 'PERSONAL_SESSION_FORBIDDEN':
+                            errorMessage = t.get('clipboard.messages.personal_session_forbidden');
                             break;
                         default:
-                            errorMessage = message.message;
+                            break;
+                    }
+                }
+
+                if (errorMessage === t.get('clipboard.messages.connection_error') && message.message) {
+                    if (message.message.includes('does not exist') || message.message.includes('expired')) {
+                        errorMessage = t.get('clipboard.messages.session_expired');
+                        this.clearStoredSession();
+                    } else if (message.message.includes('full')) {
+                        errorMessage = t.get('clipboard.messages.session_full');
+                    } else if (message.message.includes('format')) {
+                        errorMessage = t.get('clipboard.messages.data_format_error');
+                    } else {
+                        errorMessage = message.message;
                     }
                 }
 

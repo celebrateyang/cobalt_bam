@@ -102,12 +102,29 @@
         "discard_chunk_cancelled": "送信がキャンセルされました。ファイルチャンクを破棄します：fileId={fileId}、chunkIndex={chunkIndex}",
         "ignore_end_signal_cancelled": "送信がキャンセルされました。ファイル終了シグナルを無視します：{fileName}",
         "peer_cancelled_transmission": "ピアがファイル送信をキャンセルしました",
-        "acknowledge_peer_cancel": "ピアがファイル送信をキャンセルしました"
+        "acknowledge_peer_cancel": "ピアがファイル送信をキャンセルしました",
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
     },
     "error": {
         "session_not_found": "セッションが見つからないか期限切れです",
         "session_full": "セッションが満員です",
         "connection_failed": "接続に失敗しました",
         "encryption_failed": "暗号化に失敗しました"
+    },
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "自分専用セッションを開く",
+        "join": "自分専用セッションに参加",
+        "opened_title": "自分専用セッションの準備ができました",
+        "opened_hint": "同じアカウントでログインした別のデバイスで「自分専用セッションに参加」をタップすると、ファイルとテキストの転送を開始できます。"
     }
 }

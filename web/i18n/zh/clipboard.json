@@ -10,6 +10,18 @@
     "join_description": "输入会话码加入现有会话",
     "join": "加入",
     "joining": "加入中...",
+    "entry": {
+        "personal_transfer": "我的设备互传",
+        "personal_default_hint": "登录后可一键打开或加入固定会话。",
+        "open_random_session": "创建随机对话",
+        "hide_random_session": "收起随机对话"
+    },
+    "personal": {
+        "open": "打开我的专属会话",
+        "join": "加入我的专属会话",
+        "opened_title": "我的专属会话已就绪",
+        "opened_hint": "请在另一台已登录同一账号的设备上，点击“加入我的专属会话”，即可开始传输文件和文本。"
+    },
     "enter_code": "或者输入会话码",
     "session_active": "会话已激活",
     "session_id": "会话ID",
@@ -102,7 +114,12 @@
         "discard_chunk_cancelled": "传输已取消，丢弃文件数据块：fileId={fileId}，chunkIndex={chunkIndex}",
         "ignore_end_signal_cancelled": "传输已取消，忽略文件结束信号：{fileName}",
         "peer_cancelled_transmission": "对端取消了文件传输",
-        "acknowledge_peer_cancel": "对端取消了文件传输"
+        "acknowledge_peer_cancel": "对端取消了文件传输",
+        "personal_code_rotated": "会话码已重置，请重新打开固定会话。",
+        "personal_ws_ticket_invalid": "固定会话授权已过期，请重试。",
+        "personal_session_forbidden": "该固定会话仅允许同一账号加入。",
+        "open_personal_failed": "打开固定会话失败，请稍后重试。",
+        "join_personal_failed": "加入固定会话失败，请稍后重试。"
     },
     "error": {
         "session_not_found": "会话不存在或已过期",

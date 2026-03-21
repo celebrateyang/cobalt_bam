@@ -8,6 +8,7 @@
     import TextSharing from '$components/clipboard/TextSharing.svelte';
 // Import clipboard manager
     import { ClipboardManager, clipboardState, type FileItem } from '$lib/clipboard/clipboard-manager';
+    import { getClerkToken } from '$lib/state/clerk';
     // Types
     interface ReceivingFile {
         name: string;
@@ -25,6 +26,7 @@
     let isJoining = false;
     let isCreator = false;
     let peerConnected = false;
+    let sessionType: 'random' | 'personal' = 'random';
     let qrCodeUrl = '';
     let isLAN = false; // 新增：LAN状态
 
@@ -49,6 +51,7 @@
     let showError = false;
     let waitingForCreator = false;
     let showLinkCopied = false;
+    let hasSignedInSession = false;
 
     const COMPACT_VIEWPORT_MAX_WIDTH = 768;
     const HEADER_AUTO_COLLAPSE_DELAY_MS = 3000;
@@ -74,6 +77,7 @@
             isJoining = state.isJoining;
             isCreator = state.isCreator;
             peerConnected = state.peerConnected;
+            sessionType = state.sessionType;
             qrCodeUrl = state.qrCodeUrl;
             isLAN = state.isLAN; // 新增：订阅LAN状态
             activeTab = state.activeTab;
@@ -134,6 +138,14 @@
         if (joinCode.trim()) {
             clipboardManager?.joinSession(joinCode.trim());
         }
+    }
+
+    function handleOpenPersonalSession() {
+        void clipboardManager?.openPersonalSession();
+    }
+
+    function handleJoinPersonalSession() {
+        void clipboardManager?.joinPersonalSession();
     }
 
     function handleCleanup() {
@@ -286,6 +298,7 @@
         clipboardManager.clearError();
         
         if (typeof window !== 'undefined') {
+            hasSignedInSession = Boolean(await getClerkToken());
             const viewportQuery = window.matchMedia(`(max-width: ${COMPACT_VIEWPORT_MAX_WIDTH}px)`);
 
             const applyViewportMatch = (matches: boolean) => {
@@ -309,9 +322,18 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const sessionParam = urlParams.get('session');
+            const modeParam = (urlParams.get('mode') || '').toLowerCase();
+            const autoStartPersonal = urlParams.get('autostart') === '1';
+            const autoJoinPersonal = urlParams.get('autojoin') === '1';
             if (sessionParam) {
                 joinCode = sessionParam;
                 await clipboardManager.joinSession(joinCode);
+            } else if (modeParam === 'personal' && hasSignedInSession && (autoStartPersonal || autoJoinPersonal)) {
+                if (autoJoinPersonal) {
+                    await clipboardManager.joinPersonalSession();
+                } else {
+                    await clipboardManager.openPersonalSession();
+                }
             }
         }
     });
@@ -469,9 +491,13 @@
             {isJoining}
             {isCreator}
             {peerConnected}
+            {sessionType}
             {qrCodeUrl}
+            {hasSignedInSession}
             on:createSession={handleCreateSession}
             on:joinSession={handleJoinSession}
+            on:openPersonalSession={handleOpenPersonalSession}
+            on:joinPersonalSession={handleJoinPersonalSession}
             on:cleanup={handleCleanup}
             bind:joinCode
         />

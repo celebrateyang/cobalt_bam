@@ -56,5 +56,24 @@
         "file_count_plural": "{{count}} Dateien",
         "total_size": "Gesamtgröße: {{size}}",
         "download_all": "Alle herunterladen"
+    },
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "Meine persönliche Sitzung öffnen",
+        "join": "Meiner persönlichen Sitzung beitreten",
+        "opened_title": "Meine persönliche Sitzung ist bereit",
+        "opened_hint": "Melden Sie sich auf Ihrem anderen Gerät mit demselben Konto an und klicken Sie auf \"Meiner persönlichen Sitzung beitreten\", um Dateien und Text zu übertragen."
+    },
+    "messages": {
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
     }
 }

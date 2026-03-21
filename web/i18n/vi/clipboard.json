@@ -102,12 +102,29 @@
         "discard_chunk_cancelled": "Đã hủy truyền, loại bỏ phần file: fileId={fileId}, chunkIndex={chunkIndex}",
         "ignore_end_signal_cancelled": "Đã hủy truyền, bỏ qua tín hiệu kết thúc file: {fileName}",
         "peer_cancelled_transmission": "Đối tác đã hủy truyền file",
-        "acknowledge_peer_cancel": "Đối tác đã hủy truyền file"
+        "acknowledge_peer_cancel": "Đối tác đã hủy truyền file",
+        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
+        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
+        "personal_session_forbidden": "This personal session can only be joined by the same account.",
+        "open_personal_failed": "Failed to open personal session. Please try again.",
+        "join_personal_failed": "Failed to join personal session. Please try again."
     },
     "error": {
         "session_not_found": "Không tìm thấy phiên hoặc đã hết hạn",
         "session_full": "Phiên đã đầy",
         "connection_failed": "Kết nối thất bại",
         "encryption_failed": "Mã hóa thất bại"
+    },
+    "entry": {
+        "personal_transfer": "Transfer Between My Devices",
+        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "open_random_session": "Create Random Session",
+        "hide_random_session": "Hide Random Session"
+    },
+    "personal": {
+        "open": "Mở phiên cá nhân của tôi",
+        "join": "Tham gia phiên cá nhân của tôi",
+        "opened_title": "Phiên cá nhân của tôi đã sẵn sàng",
+        "opened_hint": "Trên thiết bị khác đã đăng nhập cùng tài khoản, hãy bấm \"Tham gia phiên cá nhân của tôi\" để bất đầu truyền tệp và văn bản."
     }
 }

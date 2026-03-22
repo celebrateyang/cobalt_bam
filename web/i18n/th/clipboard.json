@@ -119,7 +119,8 @@
         "personal_transfer": "Transfer Between My Devices",
         "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
         "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session"
+        "hide_random_session": "Hide Random Session",
+        "personal_login_upsell": "หากต้องการใช้งานโดยไม่ต้องสแกน QR ให้เข้าสู่ระบบและใช้เซสชันส่วนตัว จะง่ายกว่า"
     },
     "personal": {
         "open": "เปิดเซสชันส่วนตัวของฉัน",

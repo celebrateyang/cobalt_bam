@@ -108,7 +108,8 @@
         "personal_transfer": "Transfer Between My Devices",
         "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
         "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session"
+        "hide_random_session": "Hide Random Session",
+        "personal_login_upsell": "Vous voulez l'utiliser sans scanner de QR ? Connectez-vous et utilisez votre session personnelle, c'est plus simple."
     },
     "personal": {
         "open": "Ouvrir ma session personnelle",

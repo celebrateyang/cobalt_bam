@@ -119,7 +119,8 @@
         "personal_transfer": "Transfer Between My Devices",
         "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
         "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session"
+        "hide_random_session": "Hide Random Session",
+        "personal_login_upsell": "Muon dung ma khong can quet QR? Hay dang nhap va dung phien ca nhan, thao tac se don gian hon."
     },
     "personal": {
         "open": "Mở phiên cá nhân của tôi",

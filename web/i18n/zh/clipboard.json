@@ -14,7 +14,8 @@
         "personal_transfer": "我的设备互传",
         "personal_default_hint": "登录后可一键打开或加入固定会话。",
         "open_random_session": "创建随机对话",
-        "hide_random_session": "收起随机对话"
+        "hide_random_session": "收起随机对话",
+        "personal_login_upsell": "若要免扫码使用，可登录使用专属会话，操作更简单！"
     },
     "personal": {
         "open": "打开我的专属会话",

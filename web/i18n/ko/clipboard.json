@@ -117,7 +117,8 @@
         "personal_transfer": "Transfer Between My Devices",
         "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
         "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session"
+        "hide_random_session": "Hide Random Session",
+        "personal_login_upsell": "QR 스캔 없이 사용하려면 로그인 후 전용 세션을 사용하세요. 더 간단합니다."
     },
     "personal": {
         "open": "내 전용 세션 열기",

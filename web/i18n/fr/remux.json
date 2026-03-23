@@ -1,3 +1,49 @@
 {
-    "description": "le remuxage corrige souvent les problèmes de compatibilité avec les anciens logiciels. c'est rapide, sans perte, et tout est traité sur l'appareil."
+    "description": "le remux résout souvent les problèmes de compatibilité avec les anciens logiciels. c'est rapide, sans perte, et tout est traité sur votre appareil.",
+    "modes": {
+        "extract_audio": "extraire l'audio",
+        "convert_video": "convertir la vidéo"
+    },
+    "labels": {
+        "output_format": "format de sortie",
+        "bitrate": "débit",
+        "target_format": "format cible",
+        "mode": "mode",
+        "input": "entrée"
+    },
+    "mode": {
+        "fast": "rapide (copie d'abord)",
+        "compatible": "compatible (toujours transcoder)"
+    },
+    "buttons": {
+        "start": "démarrer le traitement",
+        "cancel": "annuler",
+        "save_file": "enregistrer le fichier",
+        "remove": "retirer",
+        "clear_done": "effacer les terminés"
+    },
+    "tips": {
+        "local_only": "les fichiers sont traités localement dans votre navigateur et ne sont pas envoyés au serveur."
+    },
+    "progress": {
+        "batch": "progression du lot",
+        "processing": "traitement"
+    },
+    "status": {
+        "queued": "en file d'attente",
+        "processing": "traitement",
+        "done": "terminé",
+        "error": "erreur"
+    },
+    "empty": {
+        "no_files": "aucun fichier dans la file d'attente pour l'instant. déposez un ou plusieurs fichiers pour commencer."
+    },
+    "errors": {
+        "cancelled": "traitement annulé.",
+        "out_of_memory": "le navigateur n'a plus de mémoire. essayez un fichier plus petit ou fermez d'autres onglets.",
+        "no_audio_stream": "ce fichier n'a pas de piste audio à extraire.",
+        "no_video_stream": "ce fichier n'a pas de flux vidéo à convertir.",
+        "no_storage": "ce navigateur ne peut pas fournir de stockage temporaire pour le traitement local.",
+        "generic": "le traitement a échoué. essayez un autre format ou passez en mode compatible."
+    }
 }

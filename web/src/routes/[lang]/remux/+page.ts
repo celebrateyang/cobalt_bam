@@ -1,4 +1,4 @@
-// Remux relies on browser-only APIs (File, Web Workers, WASM assets)
-// and cannot be rendered/prerendered in a Node.js environment.
-export const ssr = false;
+// Keep SSR enabled for SEO metadata.
+// Client-only processing logic loads browser-only modules lazily.
+export const ssr = true;
 export const prerender = false;

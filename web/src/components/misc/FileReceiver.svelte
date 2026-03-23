@@ -6,20 +6,35 @@
     import IconUpload from "@tabler/icons-svelte/IconUpload.svelte";
 
     export let file: File | undefined;
+    export let files: File[] | undefined;
     export let draggedOver = false;
     export let acceptTypes: string[];
     export let acceptExtensions: string[];
+    export let multiple = false;
 
     let fileInput: HTMLInputElement;
     const openFile = async () => {
         fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.accept = acceptTypes.join(",");
+        fileInput.multiple = multiple;
 
         fileInput.click();
         fileInput.onchange = async () => {
-            if (fileInput.files?.length === 1) {
-                file = fileInput.files[0];
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return;
+            }
+
+            const selected = Array.from(fileInput.files);
+            files = selected;
+
+            if (multiple) {
+                file = selected[0];
+                return selected;
+            }
+
+            if (selected.length === 1) {
+                file = selected[0];
                 return file;
             }
         };

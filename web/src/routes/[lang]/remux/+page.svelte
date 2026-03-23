@@ -77,7 +77,7 @@
     let cancelledByUser = false;
 
     let mode: ProcessingMode = "extract-audio";
-    let audioFormat: AudioOutputFormat = "m4a";
+    let audioFormat: AudioOutputFormat = "mp3";
     let audioBitrate = "128";
     let videoFormat: VideoOutputFormat = "mp4";
     let videoProfile: VideoProfile = "fast";

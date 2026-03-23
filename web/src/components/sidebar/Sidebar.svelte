@@ -13,6 +13,7 @@
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
+    import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
 
@@ -94,11 +95,9 @@
                 <SidebarTab tabName="history" tabLink={historyLink}>
                     <IconHistory />
                 </SidebarTab>
-                <!-- Remux page doesn't exist yet
                 <SidebarTab tabName="remux" tabLink={remuxLink} beta>
                     <IconRepeat />
                 </SidebarTab>
-                -->
                 <SidebarTab tabName="settings" tabLink={settingsLink}>
                     <IconSettings />
                 </SidebarTab>

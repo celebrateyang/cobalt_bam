@@ -1,3 +1,54 @@
 {
-    "description": "remuxing often fixes compatibility issues with old software. it's fast, lossless, and everything is processed on-device."
+    "description": "remuxing often fixes compatibility issues with old software. it's fast, lossless, and everything is processed on-device.",
+    "seo": {
+        "title": "video converter & audio extractor",
+        "description": "extract audio from video files and convert video formats like avi to mp4 directly in your browser. local processing, no upload.",
+        "keywords": "video converter, audio extractor, avi to mp4, extract audio from video, browser ffmpeg, local video processing"
+    },
+    "modes": {
+        "extract_audio": "extract audio",
+        "convert_video": "convert video"
+    },
+    "labels": {
+        "output_format": "output format",
+        "bitrate": "bitrate",
+        "target_format": "target format",
+        "mode": "mode",
+        "input": "input"
+    },
+    "mode": {
+        "fast": "fast (copy first)",
+        "compatible": "compatible (always transcode)"
+    },
+    "buttons": {
+        "start": "start processing",
+        "cancel": "cancel",
+        "save_file": "save file",
+        "remove": "remove",
+        "clear_done": "clear done"
+    },
+    "tips": {
+        "local_only": "files are processed locally in your browser and are not uploaded to the server."
+    },
+    "progress": {
+        "batch": "batch progress",
+        "processing": "processing"
+    },
+    "status": {
+        "queued": "queued",
+        "processing": "processing",
+        "done": "done",
+        "error": "error"
+    },
+    "empty": {
+        "no_files": "no files in queue yet. drop one or more files to begin."
+    },
+    "errors": {
+        "cancelled": "processing cancelled.",
+        "out_of_memory": "browser ran out of memory. try a smaller file or close other tabs.",
+        "no_audio_stream": "this file has no audio stream to extract.",
+        "no_video_stream": "this file has no video stream to convert.",
+        "no_storage": "this browser cannot provide temporary storage for local processing.",
+        "generic": "processing failed. try another format or switch to compatible mode."
+    }
 }

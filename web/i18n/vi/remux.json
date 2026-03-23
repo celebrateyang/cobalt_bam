@@ -1,3 +1,49 @@
 {
-    "description": "remuxing thường sửa các vấn đề tương thích với phần mềm cũ. nó nhanh, không mất mát và mọi thứ được xử lý trên thiết bị."
+    "description": "remux thường giúp khắc phục lỗi tương thích với phần mềm cũ. nó nhanh, không mất dữ liệu và mọi thứ được xử lý ngay trên thiết bị của bạn.",
+    "modes": {
+        "extract_audio": "trích xuất âm thanh",
+        "convert_video": "chuyển đổi video"
+    },
+    "labels": {
+        "output_format": "định dạng đầu ra",
+        "bitrate": "bitrate",
+        "target_format": "định dạng đích",
+        "mode": "chế độ",
+        "input": "đầu vào"
+    },
+    "mode": {
+        "fast": "nhanh (ưu tiên sao chép)",
+        "compatible": "tương thích (luôn mã hóa lại)"
+    },
+    "buttons": {
+        "start": "bắt đầu xử lý",
+        "cancel": "hủy",
+        "save_file": "lưu tệp",
+        "remove": "xóa",
+        "clear_done": "xóa mục đã xong"
+    },
+    "tips": {
+        "local_only": "tệp được xử lý cục bộ trong trình duyệt của bạn và không được tải lên máy chủ."
+    },
+    "progress": {
+        "batch": "tiến độ hàng loạt",
+        "processing": "đang xử lý"
+    },
+    "status": {
+        "queued": "đang chờ",
+        "processing": "đang xử lý",
+        "done": "hoàn tất",
+        "error": "lỗi"
+    },
+    "empty": {
+        "no_files": "chưa có tệp nào trong hàng đợi. hãy kéo thả một hoặc nhiều tệp để bắt đầu."
+    },
+    "errors": {
+        "cancelled": "đã hủy xử lý.",
+        "out_of_memory": "trình duyệt đã hết bộ nhớ. hãy thử tệp nhỏ hơn hoặc đóng các tab khác.",
+        "no_audio_stream": "tệp này không có luồng âm thanh để trích xuất.",
+        "no_video_stream": "tệp này không có luồng video để chuyển đổi.",
+        "no_storage": "trình duyệt này không thể cung cấp bộ nhớ tạm cho xử lý cục bộ.",
+        "generic": "xử lý thất bại. hãy thử định dạng khác hoặc chuyển sang chế độ tương thích."
+    }
 }

@@ -1,3 +1,54 @@
 {
-    "description": "混流通常可以解决旧版软件的兼容性问题。它快速、无损，且所有处理都在设备上进行。"
+    "description": "可从视频中提取音频，或将视频转换为其他格式。全部在本地浏览器处理，不上传服务器。",
+    "seo": {
+        "title": "视频格式转换与音频提取",
+        "description": "可将 AVI 转 MP4、提取音频为 MP3/M4A/WAV，全部在浏览器本地处理，不上传服务器。",
+        "keywords": "视频格式转换, 音频提取, AVI转MP4, MP4转换, 浏览器本地处理, 在线转码"
+    },
+    "modes": {
+        "extract_audio": "提取音频",
+        "convert_video": "转换视频"
+    },
+    "labels": {
+        "output_format": "输出格式",
+        "bitrate": "码率",
+        "target_format": "目标格式",
+        "mode": "模式",
+        "input": "输入"
+    },
+    "mode": {
+        "fast": "快速（优先直拷贝）",
+        "compatible": "兼容（始终转码）"
+    },
+    "buttons": {
+        "start": "开始处理",
+        "cancel": "取消",
+        "save_file": "保存文件",
+        "remove": "移除",
+        "clear_done": "清除已完成"
+    },
+    "tips": {
+        "local_only": "文件会在你的浏览器中本地处理，不会上传到服务器。"
+    },
+    "progress": {
+        "batch": "批量进度",
+        "processing": "处理中"
+    },
+    "status": {
+        "queued": "排队中",
+        "processing": "处理中",
+        "done": "已完成",
+        "error": "错误"
+    },
+    "empty": {
+        "no_files": "队列里还没有文件。拖拽一个或多个文件开始处理。"
+    },
+    "errors": {
+        "cancelled": "处理已取消。",
+        "out_of_memory": "浏览器内存不足。请尝试更小的文件或关闭其他标签页。",
+        "no_audio_stream": "该文件没有可提取的音频流。",
+        "no_video_stream": "该文件没有可转换的视频流。",
+        "no_storage": "当前浏览器无法提供本地处理所需的临时存储。",
+        "generic": "处理失败。请尝试其他格式或切换到兼容模式。"
+    }
 }

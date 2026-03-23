@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, tick } from 'svelte';
     import { t } from '$lib/i18n/translations';
+    import { signIn } from '$lib/state/clerk';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
     import ActionButton from '$components/buttons/ActionButton.svelte';
     import QrScanner from '$components/clipboard/QrScanner.svelte';
@@ -50,6 +51,15 @@
 
     function toggleRandomDrawer() {
         showRandomDrawer = !showRandomDrawer;
+    }
+
+    function handleDirectSignIn() {
+        if (typeof window === 'undefined') return;
+        const redirectUrl = window.location.href;
+        void signIn({
+            fallbackRedirectUrl: redirectUrl,
+            signUpFallbackRedirectUrl: redirectUrl,
+        });
     }
 
     function openScanner() {
@@ -203,6 +213,18 @@
             {/if}
 
             {#if shouldShowRandomSessionOptions}
+                {#if !hasSignedInSession}
+                    <div class="login-upsell-box">
+                        <p class="login-upsell-hint">{$t("clipboard.entry.personal_login_upsell")}</p>
+                        <button
+                            type="button"
+                            class="login-inline-action"
+                            on:click={handleDirectSignIn}
+                        >
+                            {$t("auth.sign_in")}
+                        </button>
+                    </div>
+                {/if}
                 <div class="random-session-drawer">
                     <div class="setup-option">
                         <h3>{$t("clipboard.create_session")}</h3>
@@ -461,6 +483,39 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .login-upsell-hint {
+        width: 100%;
+        margin: 0;
+        text-align: center;
+        color: var(--secondary);
+        font-size: 0.9rem;
+        line-height: 1.45;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .login-upsell-box {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .login-inline-action {
+        border: none;
+        background: transparent;
+        color: var(--accent);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 0;
+    }
+
+    .login-inline-action:hover {
+        color: var(--accent-hover);
     }
 
     .divider {

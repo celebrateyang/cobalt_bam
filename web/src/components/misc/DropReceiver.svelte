@@ -4,13 +4,25 @@
 
     export let draggedOver = false;
     export let file: File | undefined;
+    export let files: File[] | undefined;
+    export let multiple = false;
 
     const dropHandler = async (ev: DragEvent) => {
         draggedOver = false;
         ev.preventDefault();
 
-        if (ev?.dataTransfer?.files.length === 1) {
-            file = ev.dataTransfer.files[0];
+        const droppedFiles = ev?.dataTransfer?.files;
+        if (!droppedFiles || droppedFiles.length === 0) return;
+
+        if (multiple) {
+            files = Array.from(droppedFiles);
+            file = files[0];
+            return files;
+        }
+
+        if (droppedFiles.length === 1) {
+            file = droppedFiles[0];
+            files = [file];
             return file;
         }
     };

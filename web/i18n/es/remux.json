@@ -1,3 +1,49 @@
 {
-    "description": "la remezcla a menudo soluciona problemas de compatibilidad con software antiguo. es rápido, sin pérdidas, y todo se procesa en el dispositivo."
+    "description": "el remux suele resolver problemas de compatibilidad con software antiguo. es rápido, sin pérdidas y todo se procesa en tu dispositivo.",
+    "modes": {
+        "extract_audio": "extraer audio",
+        "convert_video": "convertir video"
+    },
+    "labels": {
+        "output_format": "formato de salida",
+        "bitrate": "tasa de bits",
+        "target_format": "formato de destino",
+        "mode": "modo",
+        "input": "entrada"
+    },
+    "mode": {
+        "fast": "rápido (copiar primero)",
+        "compatible": "compatible (siempre transcodificar)"
+    },
+    "buttons": {
+        "start": "iniciar procesamiento",
+        "cancel": "cancelar",
+        "save_file": "guardar archivo",
+        "remove": "eliminar",
+        "clear_done": "limpiar completados"
+    },
+    "tips": {
+        "local_only": "los archivos se procesan localmente en tu navegador y no se suben al servidor."
+    },
+    "progress": {
+        "batch": "progreso por lotes",
+        "processing": "procesando"
+    },
+    "status": {
+        "queued": "en cola",
+        "processing": "procesando",
+        "done": "completado",
+        "error": "error"
+    },
+    "empty": {
+        "no_files": "todavía no hay archivos en la cola. arrastra uno o más archivos para empezar."
+    },
+    "errors": {
+        "cancelled": "procesamiento cancelado.",
+        "out_of_memory": "el navegador se quedó sin memoria. prueba con un archivo más pequeño o cierra otras pestañas.",
+        "no_audio_stream": "este archivo no tiene pista de audio para extraer.",
+        "no_video_stream": "este archivo no tiene flujo de video para convertir.",
+        "no_storage": "este navegador no puede proporcionar almacenamiento temporal para el procesamiento local.",
+        "generic": "el procesamiento falló. prueba otro formato o cambia al modo compatible."
+    }
 }

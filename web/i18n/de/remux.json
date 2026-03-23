@@ -1,3 +1,49 @@
 {
-    "description": "Remuxing behebt oft Kompatibilitätsprobleme mit alter Software. Es ist schnell, verlustfrei und alles wird auf dem Gerät verarbeitet."
+    "description": "remuxing behebt oft kompatibilitätsprobleme mit alter software. es ist schnell, verlustfrei und alles wird auf dem gerät verarbeitet.",
+    "modes": {
+        "extract_audio": "audio extrahieren",
+        "convert_video": "video konvertieren"
+    },
+    "labels": {
+        "output_format": "ausgabeformat",
+        "bitrate": "bitrate",
+        "target_format": "zielformat",
+        "mode": "modus",
+        "input": "eingabe"
+    },
+    "mode": {
+        "fast": "schnell (zuerst kopieren)",
+        "compatible": "kompatibel (immer transkodieren)"
+    },
+    "buttons": {
+        "start": "verarbeitung starten",
+        "cancel": "abbrechen",
+        "save_file": "datei speichern",
+        "remove": "entfernen",
+        "clear_done": "fertige löschen"
+    },
+    "tips": {
+        "local_only": "dateien werden lokal in deinem browser verarbeitet und nicht an den server hochgeladen."
+    },
+    "progress": {
+        "batch": "stapel-fortschritt",
+        "processing": "verarbeite"
+    },
+    "status": {
+        "queued": "wartend",
+        "processing": "verarbeite",
+        "done": "fertig",
+        "error": "fehler"
+    },
+    "empty": {
+        "no_files": "noch keine dateien in der warteschlange. ziehe eine oder mehrere dateien hierher, um zu starten."
+    },
+    "errors": {
+        "cancelled": "verarbeitung abgebrochen.",
+        "out_of_memory": "der browser hat keinen speicher mehr. versuche eine kleinere datei oder schließe andere tabs.",
+        "no_audio_stream": "diese datei hat keine audiospur zum extrahieren.",
+        "no_video_stream": "diese datei hat keinen videostream zum konvertieren.",
+        "no_storage": "dieser browser kann keinen temporären speicher für die lokale verarbeitung bereitstellen.",
+        "generic": "verarbeitung fehlgeschlagen. versuche ein anderes format oder wechsle in den kompatiblen modus."
+    }
 }

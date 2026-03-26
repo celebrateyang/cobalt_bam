@@ -43,6 +43,7 @@
     }
     
     const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB file size limit
+    const RECEIVED_FILES_SCROLL_GUARD_COUNT = 200; // Desktop-only safety cap for very large lists
 
     function addSelectedFiles(candidateFiles: File[]): void {
         const oversizedFiles = candidateFiles.filter(file => file.size > MAX_FILE_SIZE);
@@ -211,35 +212,39 @@
             </div>
 
             {#if files.length > 0 && !sendingFiles}
-                <div class="file-list selected-files-list">
-                    <h5>{$t("clipboard.file_transfer.send_files")}</h5>
-                    {#each files as file, index (file.name + index)}
-                        <div class="file-item">
-                            <span class="file-name">{file.name}</span>
-                            <span class="file-size">({formatFileSize(file.size)})</span>
-                            <button
-                                class="remove-file"
-                                on:click={() => removeFile(index)}
-                                aria-label={$t("clipboard.file_transfer.remove")}
-                            >
-                                ×
-                            </button>
-                        </div>
-                    {/each}
+                <div class="selected-files-panel">
+                    <div class="file-list selected-files-list">
+                        <h5>{$t("clipboard.file_transfer.send_files")}</h5>
+                        {#each files as file, index (file.name + index)}
+                            <div class="file-item">
+                                <span class="file-name">{file.name}</span>
+                                <span class="file-size">({formatFileSize(file.size)})</span>
+                                <button
+                                    class="remove-file"
+                                    on:click={() => removeFile(index)}
+                                    aria-label={$t("clipboard.file_transfer.remove")}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        {/each}
+                    </div>
 
-                    {#if !peerConnected}
-                        <div class="connection-warning">
-                            {$t("clipboard.waiting_peer")}
-                        </div>
-                    {:else}
-                        <ActionButton
-                            id="confirm-send-files"
-                            disabled={files.length === 0 || isTransferring || sendingFiles}
-                            click={sendFiles}
-                        >
-                            {$t("clipboard.send")}
-                        </ActionButton>
-                    {/if}
+                    <div class="selected-files-footer">
+                        {#if !peerConnected}
+                            <div class="connection-warning">
+                                {$t("clipboard.waiting_peer")}
+                            </div>
+                        {:else}
+                            <ActionButton
+                                id="confirm-send-files"
+                                disabled={files.length === 0 || isTransferring || sendingFiles}
+                                click={sendFiles}
+                            >
+                                {$t("clipboard.send")}
+                            </ActionButton>
+                        {/if}
+                    </div>
                 </div>
             {/if}
 
@@ -296,7 +301,10 @@
             {/if}
             
             {#if receivedFiles.length > 0}
-                <div class="file-list">
+                <div
+                    class="file-list"
+                    class:desktop-scroll-guard={receivedFiles.length > RECEIVED_FILES_SCROLL_GUARD_COUNT}
+                >
                     {#each receivedFiles as file, index (file.name + index)}
                         <div class="file-item">
                             <span class="file-name">{file.name}</span>
@@ -480,6 +488,18 @@
         flex-direction: column;
         gap: 0.75rem;
         margin-top: 1rem;
+    }
+
+    .selected-files-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-height: 0;
+    }
+
+    .selected-files-footer {
+        display: flex;
+        justify-content: center;
     }
 
     .file-list h5 {
@@ -751,7 +771,6 @@
             flex-direction: row;
             gap: 2rem;
             padding: 0.5rem;
-            max-height: 75vh;
             align-items: stretch;
         }
         
@@ -772,8 +791,8 @@
         }
         
         .file-list {
-            max-height: 400px;
-            overflow-y: auto;
+            max-height: none;
+            overflow-y: visible;
         }
         
         /* PC端接收文件列表优化 - 网格布局 */
@@ -782,6 +801,13 @@
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 0.75rem;
             margin-top: 1rem;
+        }
+
+        .received-files .file-list.desktop-scroll-guard {
+            max-height: min(70vh, 920px);
+            overflow-y: auto;
+            align-content: start;
+            padding-right: 0.3rem;
         }
         
         /* PC端接收文件项优化 */
@@ -851,7 +877,6 @@
     @media (min-width: 1440px) {
         .file-transfer-section {
             gap: 2.5rem;
-            max-height: 80vh;
             padding: 1rem;
         }
         
@@ -860,7 +885,7 @@
         }
         
         .file-list {
-            max-height: 450px;
+            max-height: none;
         }
         
         /* 超大屏幕的网格布局优化 */
@@ -894,8 +919,7 @@
         .file-transfer-section {
             gap: 1.8rem;
             padding: 0.75rem;
-            max-height: 50vh;
-            overflow-y: auto;
+            overflow-y: visible;
         }
         
         .send-files, .received-files {
@@ -903,8 +927,8 @@
         }
         
         .file-list {
-            max-height: 280px;
-            overflow-y: auto;
+            max-height: none;
+            overflow-y: visible;
         }
     }
 
@@ -971,7 +995,7 @@
         }
 
         .send-files {
-            flex: 0 0 44%;
+            flex: 0 0 auto;
         }
 
         .received-files {
@@ -1094,7 +1118,7 @@
         }
 
         .send-files {
-            flex-basis: 42%;
+            flex: 0 0 auto;
         }
 
         .file-drop-zone {
@@ -1121,20 +1145,19 @@
         overflow-y: auto;
     }
 
-    .send-files :global(#confirm-send-files) {
-        align-self: center;
-        margin-top: 0.45rem;
+    .selected-files-footer :global(#confirm-send-files) {
+        width: 100%;
     }
 
     @media (max-width: 768px) {
         .selected-files-list {
-            max-height: 96px;
+            max-height: clamp(120px, 26dvh, 240px);
         }
     }
 
     @media (max-width: 480px) {
         .selected-files-list {
-            max-height: 84px;
+            max-height: clamp(100px, 22dvh, 200px);
         }
     }
 

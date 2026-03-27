@@ -110,6 +110,11 @@ jobs:
       - run:
           name: Upsert Polar secret
           command: |
+            DRY_RUN_FLAG="--dry-run=client"
+            if kubectl create secret generic --help 2>/dev/null | grep -q -- "--dry-run=false"; then
+              DRY_RUN_FLAG="--dry-run=true"
+            fi
+
             kubectl -n infra create secret generic polar-secret \
               --from-literal=POLAR_ACCESS_TOKEN="${POLAR_ACCESS_TOKEN}" \
               --from-literal=POLAR_WEBHOOK_SECRET="${POLAR_WEBHOOK_SECRET}" \
@@ -117,7 +122,7 @@ jobs:
               --from-literal=POLAR_PRODUCT_ID_USD_999="${POLAR_PRODUCT_ID_USD_999}" \
               --from-literal=POLAR_PRODUCT_ID_USD_1999="${POLAR_PRODUCT_ID_USD_1999}" \
               --from-literal=POLAR_PRODUCT_ID_USD_4999="${POLAR_PRODUCT_ID_USD_4999}" \
-              --dry-run=client -o yaml | kubectl apply -f -
+              ${DRY_RUN_FLAG} -o yaml | kubectl apply -f -
       - run:
           name: Deploy
           command: |

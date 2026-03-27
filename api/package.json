@@ -35,6 +35,7 @@
         "@datastructures-js/priority-queue": "^6.3.1",
         "@imput/psl": "^2.0.4",
         "@imput/version-info": "workspace:^",
+        "@polar-sh/sdk": "^0.46.7",
         "bcryptjs": "^2.4.3",
         "better-sqlite3": "^11.7.0",
         "content-disposition-header": "0.6.0",

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
+    import { browser } from "$app/environment";
     import { page } from "$app/stores";
 
     import { t } from "$lib/i18n/translations";
@@ -29,6 +30,7 @@
         amountFen: number;
         currency: string;
         unitPriceFen: number;
+        enabled?: boolean;
     };
 
     type CreditOrder = {
@@ -38,7 +40,10 @@
         currency: string;
         status: string;
         out_trade_no: string;
+        provider: "wechat" | "polar";
     };
+
+    type PaymentProvider = "wechat" | "polar";
 
     let autoAuthLaunched = false;
 
@@ -46,8 +51,6 @@
         if (clerkEnabled) {
             initClerk();
         }
-
-        void fetchCreditProducts();
 
         const wantsSignIn = $page.url.searchParams.get("signin") === "1";
         const wantsSignUp = $page.url.searchParams.get("signup") === "1";
@@ -134,7 +137,7 @@
         }
     };
 
-    $: if ($clerkUser) {
+    $: if (browser && $clerkUser) {
         void fetchPoints();
     } else {
         points = null;
@@ -177,19 +180,107 @@
         }
     };
 
-    const formatCny = (fen: number) => (fen / 100).toFixed(2);
+    const formatAmount = (fen: number, currency: string) => {
+        const value = Number(fen) / 100;
+        if (currency === "CNY") return `\u00A5${value.toFixed(2)}`;
+        try {
+            return new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency,
+            }).format(value);
+        } catch {
+            return `${value.toFixed(2)} ${currency}`;
+        }
+    };
+
+    const formatUnitPrice = (product: CreditProduct) => {
+        if (product.currency === "CNY" && product.unitPriceFen === 2) {
+            return t.get("auth.unit_price_2_fen");
+        }
+        if (product.currency === "CNY" && product.unitPriceFen === 1) {
+            return t.get("auth.unit_price_1_fen");
+        }
+        if (product.currency === "CNY" && product.unitPriceFen === 0.8) {
+            return t.get("auth.unit_price_0_8_fen");
+        }
+
+        const points = Number(product.points) || 1;
+        const unit = Number(product.amountFen) / 100 / points;
+        return `${unit.toFixed(4)} ${product.currency} / pt`;
+    };
 
     let creditProducts: CreditProduct[] = [];
     let creditProductsLoading = false;
     let creditProductsErrorKey = "";
+    let selectedPaymentProvider: PaymentProvider = "wechat";
+    let requestedProductsProvider: PaymentProvider | null = null;
+    let bestValueProductKey: string | null = null;
+    let recommendedValueProductKey: string | null = null;
+    let purchaseLoading = false;
+    let purchaseErrorKey = "";
+    let purchaseNoticeKey = "";
+    let activeOrder: CreditOrder | null = null;
+    let codeUrl = "";
+    let qrDataUrl = "";
+    let orderStatusLoading = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let polarHandledOrderId: number | null = null;
+
+    $: isChinese = $page.params.lang === "zh";
+    $: if (!isChinese && selectedPaymentProvider !== "polar") {
+        selectedPaymentProvider = "polar";
+        clearActiveOrder();
+    }
+    $: topupSubtitleKey =
+        selectedPaymentProvider === "polar"
+            ? "auth.topup_subtitle_polar"
+            : "auth.topup_subtitle_wechat";
+
+    const unitPriceFenPerPoint = (product: CreditProduct) => {
+        const points = Number(product.points);
+        const amountFen = Number(product.amountFen);
+        if (!Number.isFinite(points) || points <= 0) {
+            return Number.POSITIVE_INFINITY;
+        }
+        if (!Number.isFinite(amountFen) || amountFen < 0) {
+            return Number.POSITIVE_INFINITY;
+        }
+        return amountFen / points;
+    };
+
+    $: {
+        const ranked = [...creditProducts]
+            .filter(
+                (product) =>
+                    !product.key.startsWith("points_test_") &&
+                    product.enabled !== false,
+            )
+            .sort((a, b) => {
+                const unitDiff =
+                    unitPriceFenPerPoint(a) - unitPriceFenPerPoint(b);
+                if (Math.abs(unitDiff) > 1e-9) return unitDiff;
+                return Number(b.points) - Number(a.points);
+            });
+
+        bestValueProductKey = ranked[0]?.key ?? null;
+        recommendedValueProductKey = ranked[1]?.key ?? null;
+    }
 
     const fetchCreditProducts = async () => {
+        const provider = selectedPaymentProvider;
+        if (!provider) return;
+        if (creditProductsLoading) return;
+        if (requestedProductsProvider === provider) return;
+
+        requestedProductsProvider = provider;
         creditProductsLoading = true;
         creditProductsErrorKey = "";
 
         try {
             const apiBase = currentApiURL();
-            const res = await fetch(`${apiBase}/payments/credits/products`);
+            const res = await fetch(
+                `${apiBase}/payments/credits/products?provider=${provider}`,
+            );
             const data = await res.json().catch(() => ({}));
 
             if (!res.ok || data?.status !== "success") {
@@ -209,14 +300,9 @@
         }
     };
 
-    let purchaseLoading = false;
-    let purchaseErrorKey = "";
-    let activeOrder: CreditOrder | null = null;
-    let codeUrl = "";
-    let qrDataUrl = "";
-    let orderStatusLoading = false;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-    $: isChinese = $page.params.lang === "zh";
+    $: if (browser && selectedPaymentProvider) {
+        void fetchCreditProducts();
+    }
 
     const stopPolling = () => {
         if (!pollTimer) return;
@@ -229,7 +315,6 @@
         activeOrder = null;
         codeUrl = "";
         qrDataUrl = "";
-        purchaseErrorKey = "";
         orderStatusLoading = false;
     };
 
@@ -240,8 +325,12 @@
         }
     });
 
-    const fetchOrderStatus = async (orderId: number, sync = false) => {
-        if (!orderId) return;
+    const fetchOrderStatus = async (
+        orderId: number,
+        sync = false,
+        showWechatModal = true,
+    ): Promise<CreditOrder | null> => {
+        if (!orderId) return null;
 
         orderStatusLoading = true;
         try {
@@ -270,18 +359,23 @@
 
             const order = data?.data?.order as CreditOrder | undefined;
             if (order) {
-                activeOrder = order;
+                if (showWechatModal && order.provider === "wechat") {
+                    activeOrder = order;
+                }
                 if (order.status === "PAID") {
                     stopPolling();
                     lastPointsUserId = null;
                     void fetchPoints();
                 }
+                return order;
             }
         } catch (error) {
             console.debug("load order status failed", error);
         } finally {
             orderStatusLoading = false;
         }
+
+        return null;
     };
 
     const startPolling = (orderId: number) => {
@@ -296,6 +390,7 @@
 
         purchaseLoading = true;
         purchaseErrorKey = "";
+        purchaseNoticeKey = "";
 
         try {
             const token = await getClerkToken();
@@ -335,8 +430,118 @@
             console.debug("create wechat pay order failed", error);
         } finally {
             purchaseLoading = false;
+         }
+     };
+
+    const startPolarPay = async (productKey: string) => {
+        if (purchaseLoading) return;
+        if (!$clerkUser) return;
+
+        purchaseLoading = true;
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const returnUrl = `${window.location.origin}/${$page.params.lang}/account`;
+            const apiBase = currentApiURL();
+            const res = await fetch(`${apiBase}/payments/credits/polar/checkout`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productKey,
+                    successUrl: returnUrl,
+                    returnUrl,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                const error = new Error(
+                    data?.error?.message || "failed to create polar checkout",
+                ) as Error & { apiCode?: string };
+                error.apiCode = data?.error?.code;
+                throw error;
+            }
+
+            const checkoutUrl = data?.data?.polar?.checkoutUrl as string | undefined;
+            if (!checkoutUrl) {
+                throw new Error("missing checkout url");
+            }
+
+            purchaseNoticeKey = "auth.polar_redirecting";
+            window.location.assign(checkoutUrl);
+        } catch (error) {
+            const apiCode = (error as { apiCode?: string })?.apiCode;
+            purchaseErrorKey =
+                apiCode === "POLAR_PRODUCT_NOT_CONFIGURED"
+                    ? "auth.polar_not_ready"
+                    : "auth.payment_create_failed";
+            console.debug("create polar checkout failed", error);
+            purchaseLoading = false;
         }
     };
+
+    const selectPaymentProvider = (provider: PaymentProvider) => {
+        if (!isChinese) return;
+        if (provider === selectedPaymentProvider) return;
+
+        selectedPaymentProvider = provider;
+        requestedProductsProvider = null;
+        creditProducts = [];
+        creditProductsErrorKey = "";
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+        clearActiveOrder();
+    };
+
+    const sleep = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+
+    const syncPolarOrderAfterReturn = async (orderId: number) => {
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+
+        let paid = false;
+        for (let i = 0; i < 8; i += 1) {
+            const order = await fetchOrderStatus(orderId, true, false);
+            if (order?.status === "PAID") {
+                paid = true;
+                break;
+            }
+            await sleep(1000);
+        }
+
+        purchaseNoticeKey = paid
+            ? "auth.payment_success"
+            : "auth.polar_pending_notice";
+
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("polarOrderId");
+            url.searchParams.delete("polarResult");
+            window.history.replaceState({}, "", url.toString());
+        } catch {}
+    };
+
+    $: if (browser && $clerkLoaded && $clerkUser) {
+        const orderId = Number.parseInt(
+            $page.url.searchParams.get("polarOrderId") || "",
+            10,
+        );
+        if (
+            Number.isFinite(orderId) &&
+            orderId > 0 &&
+            polarHandledOrderId !== orderId
+        ) {
+            polarHandledOrderId = orderId;
+            void syncPolarOrderAfterReturn(orderId);
+        }
+    }
 </script>
 
 <svelte:head>
@@ -540,9 +745,30 @@
                         {$t("auth.topup_title")}
                     </div>
                     <div class="subtext topup-subtitle">
-                        {$t("auth.topup_subtitle")}
+                        {$t(topupSubtitleKey)}
                     </div>
                 </div>
+
+            {#if isChinese}
+                <div class="provider-switch" role="tablist">
+                    <button
+                        type="button"
+                        class="provider-option"
+                        class:active={selectedPaymentProvider === "wechat"}
+                        on:click={() => selectPaymentProvider("wechat")}
+                    >
+                        {$t("auth.wechat_pay")}
+                    </button>
+                    <button
+                        type="button"
+                        class="provider-option"
+                        class:active={selectedPaymentProvider === "polar"}
+                        on:click={() => selectPaymentProvider("polar")}
+                    >
+                        {$t("auth.international_pay")}
+                    </button>
+                </div>
+            {/if}
 
             {#if creditProductsLoading}
                 <div class="subtext">{$t("auth.loading")}</div>
@@ -552,9 +778,11 @@
                 <div class="products-grid">
                     {#each creditProducts as product (product.key)}
                         {@const isTest = product.key.startsWith("points_test_")}
-                        {@const isBest = !isTest && product.points >= 1000}
+                        {@const isBest = !isTest && product.key === bestValueProductKey}
                         {@const isRecommended =
-                            !isTest && !isBest && product.points >= 500}
+                            !isTest &&
+                            !isBest &&
+                            product.key === recommendedValueProductKey}
 
                         <div class="product-card">
                             <div class="product-main">
@@ -563,15 +791,7 @@
                                         {product.points} {$t("auth.points_label")}
                                     </div>
                                     <div class="subtext product-subtitle">
-                                        {#if product.unitPriceFen === 2}
-                                            {$t("auth.unit_price_2_fen")}
-                                        {:else if product.unitPriceFen === 1}
-                                            {$t("auth.unit_price_1_fen")}
-                                        {:else if product.unitPriceFen === 0.8}
-                                            {$t("auth.unit_price_0_8_fen")}
-                                        {:else}
-                                            --
-                                        {/if}
+                                        {formatUnitPrice(product)}
                                     </div>
                                 </div>
                                 <div class="product-right">
@@ -583,27 +803,29 @@
                                         <span class="badge rec">{$t("auth.badge_recommended")}</span>
                                     {/if}
                                     <div class="product-price">
-                                        ¥{formatCny(product.amountFen)}
+                                        {formatAmount(product.amountFen, product.currency)}
                                     </div>
                                 </div>
                             </div>
 
                             <div class="product-actions">
-                                <button
-                                    class="button elevated active"
-                                    disabled={purchaseLoading ||
-                                        activeOrder?.status === "CREATED"}
-                                    on:click={() => startWechatPay(product.key)}
-                                >
-                                    {$t("auth.wechat_pay")}
-                                </button>
-                                {#if $page.params.lang !== "zh"}
+                                {#if selectedPaymentProvider === "wechat"}
                                     <button
-                                        class="button elevated ghost"
-                                        disabled
-                                        title={$t("auth.polar_coming_soon")}
+                                        class="button elevated active"
+                                        disabled={purchaseLoading ||
+                                            activeOrder?.status === "CREATED"}
+                                        on:click={() => startWechatPay(product.key)}
                                     >
-                                        Polar
+                                        {$t("auth.wechat_pay")}
+                                    </button>
+                                {:else}
+                                    <button
+                                        class="button elevated active"
+                                        disabled={purchaseLoading || !product.enabled}
+                                        title={!product.enabled ? $t("auth.polar_not_ready") : ""}
+                                        on:click={() => startPolarPay(product.key)}
+                                    >
+                                        {$t("auth.polar_pay")}
                                     </button>
                                 {/if}
                             </div>
@@ -615,9 +837,12 @@
             {#if purchaseErrorKey}
                 <div class="subtext error">{$t(purchaseErrorKey)}</div>
             {/if}
+            {#if purchaseNoticeKey}
+                <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
+            {/if}
         </section>
 
-        {#if activeOrder}
+        {#if activeOrder && activeOrder.provider === "wechat"}
             <div
                 class="payment-overlay"
                 role="presentation"
@@ -632,7 +857,7 @@
                     </div>
 
                     <div class="subtext payment-subtitle">
-                        {$t("auth.order_total")}: ¥{formatCny(activeOrder.amount_fen)} · {activeOrder.points}
+                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)} · {activeOrder.points}
                         {$t("auth.points_label")}
                     </div>
 
@@ -1036,6 +1261,34 @@
         padding: 0;
     }
 
+    .provider-switch {
+        display: inline-flex;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+        width: fit-content;
+    }
+
+    .provider-option {
+        height: 34px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--subtext);
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .provider-option.active {
+        color: var(--text);
+        border-color: var(--surface-2);
+        background: var(--surface-1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+    }
+
     .products-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1152,6 +1405,10 @@
         box-shadow: none !important;
         border: 1px solid var(--surface-2) !important;
         color: var(--subtext) !important;
+    }
+
+    .notice {
+        color: var(--green);
     }
 
     .payment-overlay {

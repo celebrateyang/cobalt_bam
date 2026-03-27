@@ -265,6 +265,16 @@ const toHeaderRecord = (headers) => {
     return record;
 };
 
+const firstFiniteNumber = (...values) => {
+    for (const value of values) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+    return Number.NaN;
+};
+
 const isPolarCustomerEmailValidationError = (error) => {
     if (!(error instanceof PolarRequestError)) {
         return false;
@@ -448,8 +458,12 @@ router.post("/polar/webhook", async (req, res) => {
                 ? metadata.out_trade_no.trim()
                 : "";
 
-        const totalFenRaw = payload?.total_amount;
-        const totalFen = Number(totalFenRaw);
+        const totalFen = firstFiniteNumber(
+            payload?.amount,
+            payload?.total_amount,
+            payload?.checkout?.amount,
+            payload?.checkout?.total_amount,
+        );
         const providerTransactionId =
             typeof payload?.id === "string" ? payload.id : null;
         const parsedPaidAt = payload?.modified_at
@@ -458,9 +472,10 @@ router.post("/polar/webhook", async (req, res) => {
         const paidAt = Number.isFinite(parsedPaidAt) ? parsedPaidAt : Date.now();
 
         if (!outTradeNo || !Number.isFinite(totalFen)) {
-            console.error("Polar webhook missing out_trade_no or total_amount", {
+            console.error("Polar webhook missing out_trade_no or amount", {
                 outTradeNo,
-                totalFenRaw,
+                amount: payload?.amount,
+                total_amount: payload?.total_amount,
             });
             return res.status(200).json({
                 code: "SUCCESS",
@@ -881,7 +896,10 @@ if (!isClerkAuthConfigured) {
                         ]);
 
                         if (paidStatuses.has(checkoutStatus)) {
-                            const totalFenRaw = Number(checkout?.total_amount);
+                            const totalFenRaw = firstFiniteNumber(
+                                checkout?.amount,
+                                checkout?.total_amount,
+                            );
                             const totalFen = Number.isFinite(totalFenRaw)
                                 ? totalFenRaw
                                 : order.amount_fen;

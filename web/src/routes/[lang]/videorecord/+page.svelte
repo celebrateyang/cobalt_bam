@@ -391,6 +391,7 @@
     let teleprompterScrollTop = 0;
     let teleprompterLastTs = 0;
     let teleprompterRaf = 0;
+    let teleprompterControlsExpanded = false;
 
     let teleprompterTextEl: HTMLTextAreaElement;
     let teleprompterPanelEl: HTMLDivElement;
@@ -2080,25 +2081,9 @@
 
     const moveSlide = (dir: -1 | 1) => {
         saveCurrentSlide();
-        const from = activeSlide;
-        const to = from + dir;
+        const to = activeSlide + dir;
         if (to < 0 || to >= slides.length) return;
-
-        const next = [...slides];
-        const [item] = next.splice(from, 1);
-        next.splice(to, 0, item);
-        slides = next;
-
-        const bridgeNext = [...bridgeSlides];
-        const [sceneItem] = bridgeNext.splice(from, 1);
-        bridgeNext.splice(
-            to,
-            0,
-            sceneItem ?? { elements: [], appState: {}, files: {} },
-        );
-        bridgeSlides = bridgeNext;
-
-        activeSlide = to;
+        loadSlide(to);
     };
 
     const onSlideDragStart = (index: number) => {
@@ -2258,6 +2243,7 @@
             speed: teleprompterSpeed,
             opacity: teleprompterOpacity,
             fontSize: teleprompterFontSize,
+            text: teleprompterText,
         };
         window.localStorage.setItem(
             "videorecord.teleprompter",
@@ -2471,6 +2457,8 @@
                     teleprompterOpacity = saved.opacity;
                 if (typeof saved.fontSize === "number")
                     teleprompterFontSize = saved.fontSize;
+                if (typeof saved.text === "string")
+                    teleprompterText = saved.text;
             }
         } catch {
             // ignore storage parse errors
@@ -3652,11 +3640,6 @@
         return `${m}:${s}`;
     };
 
-    const resetTeleprompterPosition = () => {
-        teleprompterScrollTop = 0;
-        if (teleprompterTextEl) teleprompterTextEl.scrollTop = 0;
-    };
-
     const syncTeleprompterScrollFromElement = () => {
         if (!teleprompterTextEl) return;
         teleprompterScrollTop = teleprompterTextEl.scrollTop;
@@ -3728,6 +3711,10 @@
         }
 
         startTeleprompter();
+    };
+
+    const toggleTeleprompterControlsDrawer = () => {
+        teleprompterControlsExpanded = !teleprompterControlsExpanded;
     };
 
     const toggleTeleprompterPanel = () => {
@@ -3821,6 +3808,13 @@
     };
 
     $: if (teleprompterHydrated) {
+        teleprompterOffsetX;
+        teleprompterOffsetY;
+        teleprompterSpeed;
+        teleprompterOpacity;
+        teleprompterFontSize;
+        teleprompterText;
+        teleprompterControlsExpanded;
         persistTeleprompterPrefs();
     }
 
@@ -4716,59 +4710,79 @@
                     </button>
                 </div>
 
-                <div class="teleprompter-controls-card">
-                    <button
-                        class="teleprompter-play-btn"
-                        type="button"
-                        on:click={toggleTeleprompterPlayback}
-                        title={isTeleprompterRunning
-                            ? $t("videorecord.teleprompter.pause")
-                            : $t("videorecord.teleprompter.play")}
-                        aria-label={isTeleprompterRunning
-                            ? $t("videorecord.teleprompter.pause")
-                            : $t("videorecord.teleprompter.play")}
-                    >
-                        {#if isTeleprompterRunning}
-                            &#9208;
-                        {:else}
-                            &#9654;
-                        {/if}
-                    </button>
-
-                    <div class="teleprompter-slider-stack">
-                        <label class="teleprompter-slider-row">
-                            <span>{$t("videorecord.teleprompter.speed")}</span>
-                            <input
-                                type="range"
-                                min={teleprompterSpeedMin}
-                                max={teleprompterSpeedMax}
-                                step={teleprompterSpeedStep}
-                                bind:value={teleprompterSpeed}
-                            />
-                        </label>
-
-                        <label class="teleprompter-slider-row">
-                            <span>{$t("videorecord.teleprompter.opacity")}</span>
-                            <input
-                                type="range"
-                                min="20"
-                                max="100"
-                                step="2"
-                                bind:value={teleprompterOpacity}
-                            />
-                        </label>
-
-                        <label class="teleprompter-slider-row">
-                            <span>{$t("videorecord.teleprompter.font_size")}</span>
-                            <input
-                                type="range"
-                                min="14"
-                                max="52"
-                                step="1"
-                                bind:value={teleprompterFontSize}
-                            />
-                        </label>
+                <div
+                    class="teleprompter-controls-card"
+                    class:expanded={teleprompterControlsExpanded}
+                >
+                    <div class="teleprompter-controls-head">
+                        <button
+                            class="teleprompter-play-btn"
+                            type="button"
+                            on:click={toggleTeleprompterPlayback}
+                            title={isTeleprompterRunning
+                                ? $t("videorecord.teleprompter.pause")
+                                : $t("videorecord.teleprompter.play")}
+                            aria-label={isTeleprompterRunning
+                                ? $t("videorecord.teleprompter.pause")
+                                : $t("videorecord.teleprompter.play")}
+                        >
+                            {#if isTeleprompterRunning}
+                                &#9208;
+                            {:else}
+                                &#9654;
+                            {/if}
+                        </button>
+                        <button
+                            type="button"
+                            class="teleprompter-controls-toggle"
+                            on:click={toggleTeleprompterControlsDrawer}
+                            aria-expanded={teleprompterControlsExpanded}
+                            title={$t("videorecord.settings.title")}
+                            aria-label={$t("videorecord.settings.title")}
+                        >
+                            <span>{$t("videorecord.settings.title")}</span>
+                            <span class="teleprompter-controls-chevron" aria-hidden="true"
+                                >{teleprompterControlsExpanded ? "^" : "v"}</span
+                            >
+                        </button>
                     </div>
+
+                    {#if teleprompterControlsExpanded}
+                        <div class="teleprompter-slider-stack">
+                            <label class="teleprompter-slider-row">
+                                <span>{$t("videorecord.teleprompter.speed")}</span>
+                                <input
+                                    type="range"
+                                    min={teleprompterSpeedMin}
+                                    max={teleprompterSpeedMax}
+                                    step={teleprompterSpeedStep}
+                                    bind:value={teleprompterSpeed}
+                                />
+                            </label>
+
+                            <label class="teleprompter-slider-row">
+                                <span>{$t("videorecord.teleprompter.opacity")}</span>
+                                <input
+                                    type="range"
+                                    min="20"
+                                    max="100"
+                                    step="2"
+                                    bind:value={teleprompterOpacity}
+                                />
+                            </label>
+
+                            <label class="teleprompter-slider-row">
+                                <span>{$t("videorecord.teleprompter.font_size")}</span>
+                                <input
+                                    type="range"
+                                    min="14"
+                                    max="52"
+                                    step="1"
+                                    bind:value={teleprompterFontSize}
+                                />
+                            </label>
+                        </div>
+                    {/if}
                 </div>
 
                 <textarea
@@ -4779,7 +4793,6 @@
                     placeholder={teleprompterInputPlaceholder}
                     on:input={() => {
                         stopTeleprompter();
-                        resetTeleprompterPosition();
                     }}
                     on:scroll={() => {
                         if (isTeleprompterRunning) return;
@@ -5523,11 +5536,48 @@
 
     .teleprompter-controls-card {
         display: flex;
-        gap: 12px;
-        align-items: center;
+        flex-direction: column;
+        gap: 8px;
         background: #ededeb;
         border-radius: 12px;
+        padding: 8px 10px;
+    }
+
+    .teleprompter-controls-card.expanded {
         padding: 10px 12px;
+    }
+
+    .teleprompter-controls-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .teleprompter-controls-toggle {
+        flex: 1;
+        min-width: 0;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 12px;
+        border: 1px solid #d4d4d2;
+        border-radius: 10px;
+        background: #f6f6f4;
+        color: #4a4a4a;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .teleprompter-controls-toggle:hover {
+        background: #efefed;
+    }
+
+    .teleprompter-controls-chevron {
+        color: #666;
+        font-size: 12px;
     }
 
     .teleprompter-play-btn {
@@ -5549,11 +5599,11 @@
     }
 
     .teleprompter-slider-stack {
-        flex: 1;
-        min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 6px;
+        width: 100%;
+        padding-top: 2px;
     }
 
     .teleprompter-slider-row {

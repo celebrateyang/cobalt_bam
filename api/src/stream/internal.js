@@ -69,6 +69,20 @@ const normalizeCandidateUrls = (streamInfo) => {
     return unique;
 };
 
+const safeDestroyBody = (body) => {
+    if (!body?.destroy) return;
+
+    try {
+        // undici BodyReadable may emit an `error` during destroy() (e.g. UND_ERR_ABORTED).
+        // Ensure there's always at least one error listener before destroying, to avoid
+        // process-level "Unhandled 'error' event" crashes.
+        body.once("error", () => { });
+        body.destroy();
+    } catch {
+        // ignore destroy failures
+    }
+};
+
 async function* readChunks(streamInfo, size) {
     let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
@@ -441,11 +455,7 @@ async function handleGenericStream(streamInfo, res) {
                 );
 
                 if (status === 200) {
-                    try {
-                        fileResponse.body?.destroy?.();
-                    } catch {
-                        // ignore
-                    }
+                    safeDestroyBody(fileResponse.body);
 
                     return failWithStatus(
                         502,
@@ -464,11 +474,7 @@ async function handleGenericStream(streamInfo, res) {
                 switchToNextCandidate(attempt, `status_${status}`);
 
             if (canRetryWithCandidate) {
-                try {
-                    fileResponse.body?.destroy?.();
-                } catch {
-                    // ignore destroy failures
-                }
+                safeDestroyBody(fileResponse.body);
 
                 reportBilibiliStream(attemptRoute, "error", elapsedMs, 0);
 
@@ -480,11 +486,7 @@ async function handleGenericStream(streamInfo, res) {
                 !!streamInfo.transplant;
 
             if (canRetryWithTransplant) {
-                try {
-                    fileResponse.body?.destroy?.();
-                } catch {
-                    // ignore destroy failures
-                }
+                safeDestroyBody(fileResponse.body);
 
                 console.warn(
                     `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry status=${status} attempt=${attempt}/${maxAttempts}`,

@@ -34,6 +34,77 @@ import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
 
 let freebind;
+const twitterUpstreamFallbackErrors = new Set([
+    "content.post.age",
+    "content.post.private",
+]);
+const isUpstreamServer = (() => {
+    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+    return raw === "true" || raw === "1";
+})();
+
+const requestUpstreamCobalt = async (targetUrl) => {
+    if (!env.instagramUpstreamURL || isUpstreamServer) {
+        return null;
+    }
+
+    let endpoint;
+    try {
+        endpoint = new URL(env.instagramUpstreamURL);
+    } catch {
+        return null;
+    }
+
+    try {
+        if (new URL(env.apiURL).origin === endpoint.origin) {
+            return null;
+        }
+    } catch {}
+
+    endpoint.pathname = "/";
+    endpoint.search = "";
+    endpoint.hash = "";
+
+    const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    };
+
+    if (env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    const timeoutMs =
+        typeof env.instagramUpstreamTimeoutMs === "number"
+        && Number.isFinite(env.instagramUpstreamTimeoutMs)
+        && env.instagramUpstreamTimeoutMs > 0
+            ? env.instagramUpstreamTimeoutMs
+            : 12000;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            signal: controller.signal,
+            headers,
+            body: JSON.stringify({ url: String(targetUrl) }),
+        });
+
+        const body = await response.json().catch(() => null);
+        if (!body || typeof body !== "object" || typeof body.status !== "string") {
+            return null;
+        }
+
+        return { status: response.status, body };
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
 
 export default async function({ host, patternMatch, params, authType }) {
     const { url } = params;
@@ -301,6 +372,13 @@ export default async function({ host, patternMatch, params, authType }) {
             return createResponse("critical", {
                 code: `error.api.${r.error}`,
             })
+        }
+
+        if (host === "twitter" && twitterUpstreamFallbackErrors.has(r?.error)) {
+            const upstream = await requestUpstreamCobalt(url);
+            if (upstream) {
+                return upstream;
+            }
         }
 
         if (r.error) {

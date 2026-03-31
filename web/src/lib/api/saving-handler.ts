@@ -322,25 +322,6 @@ export const savingHandler = async ({
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
-    const targetUrl = (url || request?.url)?.toLowerCase();
-    if (targetUrl && (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be"))) {
-        downloadButtonState.set("idle");
-        createDialog({
-            id: "youtube-disabled",
-            type: "small",
-            meowbalt: "error",
-            bodyHtml: get(t)("error.api.youtube.disabled"),
-            buttons: [
-                {
-                    text: get(t)("button.gotit"),
-                    main: true,
-                    action: () => { },
-                },
-            ],
-        });
-        return null;
-    }
-
     const showError = (errorText: string) => {
         createDialog({
             id: "save-error",

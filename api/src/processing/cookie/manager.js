@@ -7,12 +7,17 @@ import * as cluster from '../../misc/cluster.js';
 import { isCluster } from '../../config.js';
 
 const WRITE_INTERVAL = 60000;
+const isUpstreamServer = (() => {
+    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+    return raw === "true" || raw === "1";
+})();
 const VALID_SERVICES = new Set([
     'instagram',
     'instagram_bearer',
     'reddit',
     'twitter',
     'youtube',
+    'youtube_oauth',
     'vimeo_bearer',
 ]);
 
@@ -64,6 +69,19 @@ const warnSuspiciousInstagramCookies = (cookiePath = "") => {
     }
 };
 
+const warnMissingYouTubeCookies = (cookiePath = "") => {
+    if (!isUpstreamServer) return;
+
+    const hasOAuth = Array.isArray(cookies.youtube_oauth) && cookies.youtube_oauth.length > 0;
+    const hasRegular = Array.isArray(cookies.youtube) && cookies.youtube.length > 0;
+
+    if (hasOAuth || hasRegular) return;
+
+    console.warn(`${Yellow('[!]')} youtube cookies are missing (youtube / youtube_oauth).`);
+    if (cookiePath) console.warn(`${Yellow('[!]')} cookie file: ${cookiePath}`);
+    console.warn(`${Yellow('[!]')} youtube downloads will fail until authentication cookies are provided.`);
+};
+
 function writeChanges(cookiePath) {
     if (!dirty) return;
     dirty = false;
@@ -82,6 +100,12 @@ const setupMain = async (cookiePath) => {
         cookies = await readFile(cookiePath, 'utf8');
         cookies = JSON.parse(cookies);
         for (const serviceName in cookies) {
+            if (!isUpstreamServer && ['youtube', 'youtube_oauth'].includes(serviceName)) {
+                console.warn(`${Yellow('[!]')} ignoring ${serviceName} on non-upstream node.`);
+                delete cookies[serviceName];
+                continue;
+            }
+
             if (!VALID_SERVICES.has(serviceName)) {
                 console.warn(`${Yellow('[!]')} ignoring unknown service in cookie file: ${serviceName}`);
             } else if (!Array.isArray(cookies[serviceName])) {
@@ -101,6 +125,7 @@ const setupMain = async (cookiePath) => {
         cluster.broadcast({ cookies });
 
         warnSuspiciousInstagramCookies(cookiePath);
+        warnMissingYouTubeCookies(cookiePath);
 
         console.log(`${Green('[✓]')} cookies loaded successfully from ${cookiePath}`);
     } catch (e) {

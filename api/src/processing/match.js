@@ -186,6 +186,22 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "youtube":
+                // In API mode, route all YouTube requests to upstream directly.
+                // This avoids using API node egress/cookies for YouTube extraction.
+                if (!isUpstreamServer) {
+                    const upstream = await requestUpstreamCobalt(url);
+                    if (upstream) {
+                        return upstream;
+                    }
+
+                    return createResponse("error", {
+                        code: "error.api.fetch.fail",
+                        context: {
+                            service: friendlyServiceName(host),
+                        },
+                    });
+                }
+
                 let fetchInfo = {
                     dispatcher,
                     id: patternMatch.id.slice(0, 11),
@@ -391,6 +407,15 @@ export default async function({ host, patternMatch, params, authType }) {
         }
 
         if (r.error) {
+            const normalizedError =
+                host === "youtube"
+                    ? ({
+                        "youtube.auth_required": "youtube.login",
+                        "youtube.no_session_tokens": "youtube.login",
+                        "youtube.api_error": "fetch.fail",
+                    }[r.error] || r.error)
+                    : r.error;
+
             let context;
             const retryAfterSeconds =
                 typeof r?.limit === "number" &&
@@ -399,7 +424,7 @@ export default async function({ host, patternMatch, params, authType }) {
                     ? Math.round(r.limit)
                     : 60;
 
-            switch(r.error) {
+            switch(normalizedError) {
                 case "content.too_long":
                     context = {
                         limit: parseFloat((env.durationLimit / 60).toFixed(2)),
@@ -425,7 +450,7 @@ export default async function({ host, patternMatch, params, authType }) {
             }
 
             return createResponse("error", {
-                code: `error.api.${r.error}`,
+                code: `error.api.${normalizedError}`,
                 context,
             })
         }

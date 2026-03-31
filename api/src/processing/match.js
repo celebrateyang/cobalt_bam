@@ -37,6 +37,8 @@ let freebind;
 const twitterUpstreamFallbackErrors = new Set([
     "content.post.age",
     "content.post.private",
+    "content.post.unavailable",
+    "fetch.empty",
 ]);
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
@@ -375,10 +377,17 @@ export default async function({ host, patternMatch, params, authType }) {
         }
 
         if (host === "twitter" && twitterUpstreamFallbackErrors.has(r?.error)) {
+            console.log(
+                `[twitter] local error=${r.error}, trying upstream fallback`
+            );
             const upstream = await requestUpstreamCobalt(url);
             if (upstream) {
+                console.log(
+                    `[twitter] upstream fallback success status=${upstream?.body?.status || "unknown"}`
+                );
                 return upstream;
             }
+            console.log("[twitter] upstream fallback unavailable, returning local error");
         }
 
         if (r.error) {

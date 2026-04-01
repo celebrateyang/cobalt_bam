@@ -4,8 +4,39 @@ import ipaddr from "ipaddr.js";
 import { apiSchema } from "./schema.js";
 import { createProxyTunnels, createStream } from "../stream/manage.js";
 
-const parseWithSchema = async (payload) => {
-    return apiSchema.safeParseAsync(payload).catch(() => ({ success: false }));
+const parseWithSchema = async (payload, stage = "unknown") => {
+    try {
+        const parsed = await apiSchema.safeParseAsync(payload);
+        if (parsed.success) {
+            return parsed;
+        }
+
+        const issues = Array.isArray(parsed.error?.issues)
+            ? parsed.error.issues.slice(0, 6).map((issue) => ({
+                path: Array.isArray(issue.path) ? issue.path.join(".") : "",
+                code: issue.code,
+                message: issue.message,
+                expected: issue.expected,
+                received: issue.received,
+            }))
+            : [];
+
+        return {
+            success: false,
+            debug: {
+                stage,
+                issues,
+            },
+        };
+    } catch (error) {
+        return {
+            success: false,
+            debug: {
+                stage,
+                exception: String(error?.message || error || "unknown"),
+            },
+        };
+    }
 };
 
 const sanitizeNullValues = (request) => {
@@ -44,6 +75,76 @@ const pickKnownSchemaKeys = (request) => {
     }
 
     return known;
+};
+
+const enumAllowlist = {
+    audioBitrate: new Set(["320", "256", "128", "96", "64", "8"]),
+    audioFormat: new Set(["best", "mp3", "ogg", "wav", "opus"]),
+    downloadMode: new Set(["auto", "audio", "mute"]),
+    filenameStyle: new Set(["classic", "pretty", "basic", "nerdy"]),
+    youtubeVideoCodec: new Set(["h264", "av1", "vp9"]),
+    youtubeVideoContainer: new Set(["auto", "mp4", "webm", "mkv"]),
+    videoQuality: new Set(["max", "4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"]),
+    localProcessing: new Set(["disabled", "preferred", "forced"]),
+};
+
+const booleanKeys = new Set([
+    "batch",
+    "disableMetadata",
+    "allowH265",
+    "convertGif",
+    "tiktokFullAudio",
+    "alwaysProxy",
+    "youtubeHLS",
+    "youtubeBetterAudio",
+]);
+
+const sanitizeInvalidKnownValues = (request) => {
+    if (!request || typeof request !== "object" || Array.isArray(request)) {
+        return request;
+    }
+
+    const sanitized = { ...request };
+
+    for (const [key, allowlist] of Object.entries(enumAllowlist)) {
+        if (!Object.prototype.hasOwnProperty.call(sanitized, key)) continue;
+        const value = sanitized[key];
+        if (value === undefined || value === null) {
+            delete sanitized[key];
+            continue;
+        }
+
+        if (!allowlist.has(String(value))) {
+            delete sanitized[key];
+        }
+    }
+
+    for (const key of booleanKeys) {
+        if (!Object.prototype.hasOwnProperty.call(sanitized, key)) continue;
+        if (typeof sanitized[key] !== "boolean") {
+            delete sanitized[key];
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sanitized, "url") && typeof sanitized.url !== "string") {
+        delete sanitized.url;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sanitized, "youtubeDubLang")) {
+        const v = sanitized.youtubeDubLang;
+        if (typeof v !== "string" || v.length < 2 || v.length > 8 || !/^[0-9a-zA-Z\-]+$/.test(v)) {
+            delete sanitized.youtubeDubLang;
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sanitized, "subtitleLang")) {
+        const v = sanitized.subtitleLang;
+        if (typeof v !== "string" || v.length < 2 || v.length > 8 || !/^[0-9a-zA-Z\-]+$/.test(v)) {
+            delete sanitized.subtitleLang;
+        }
+    }
+
+    return sanitized;
 };
 
 export function createResponse(responseType, responseData) {
@@ -170,14 +271,14 @@ export function normalizeRequest(request) {
     }
 
     return (async () => {
-        const firstPass = await parseWithSchema(request);
+        const firstPass = await parseWithSchema(request, "original");
         if (firstPass.success) {
             return firstPass;
         }
 
         const withoutNulls = sanitizeNullValues(request);
         if (withoutNulls !== request) {
-            const secondPass = await parseWithSchema(withoutNulls);
+            const secondPass = await parseWithSchema(withoutNulls, "drop_nulls");
             if (secondPass.success) {
                 return secondPass;
             }
@@ -185,13 +286,41 @@ export function normalizeRequest(request) {
 
         const knownOnly = pickKnownSchemaKeys(withoutNulls);
         if (knownOnly && knownOnly !== withoutNulls) {
-            const thirdPass = await parseWithSchema(knownOnly);
+            const thirdPass = await parseWithSchema(knownOnly, "known_keys_only");
             if (thirdPass.success) {
                 return thirdPass;
             }
+
+            const sanitizedKnown = sanitizeInvalidKnownValues(knownOnly);
+            if (sanitizedKnown && sanitizedKnown !== knownOnly) {
+                const fourthPass = await parseWithSchema(sanitizedKnown, "sanitize_invalid_values");
+                if (fourthPass.success) {
+                    return fourthPass;
+                }
+                return {
+                    success: false,
+                    debug: {
+                        firstPass: firstPass.debug,
+                        finalPass: fourthPass.debug,
+                    },
+                };
+            }
+
+            return {
+                success: false,
+                debug: {
+                    firstPass: firstPass.debug,
+                    finalPass: thirdPass.debug,
+                },
+            };
         }
 
-        return { success: false };
+        return {
+            success: false,
+            debug: {
+                firstPass: firstPass.debug,
+            },
+        };
     })();
 }
 

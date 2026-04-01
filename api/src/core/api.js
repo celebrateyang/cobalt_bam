@@ -415,17 +415,19 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.link.missing");
         }
 
-        const { success, data: normalizedRequest } = await normalizeRequest(request);
-        if (!success) {
+        const normalized = await normalizeRequest(request);
+        if (!normalized.success) {
             const requestType = request === null ? "null" : typeof request;
             const requestKeys = request && typeof request === "object" && !Array.isArray(request)
                 ? Object.keys(request).slice(0, 32).join(",")
                 : "n/a";
+            const debug = normalized?.debug ? JSON.stringify(normalized.debug) : "n/a";
             console.warn(
-                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys}`,
+                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys} debug=${debug}`,
             );
             return fail(res, "error.api.invalid_body");
         }
+        const normalizedRequest = normalized.data;
 
         const isBypassRequest = req.authType === "key";
         let pointsUser = null;

@@ -59,21 +59,13 @@ export function getHeaders(service) {
     const baseHeaders = Object.entries({ ...defaultHeaders, ...serviceHeaders[service] })
         .reduce((p, [key, val]) => ({ ...p, [key]: String(val) }), {});
 
-    // For YouTube, always try to add authentication cookies
+    // For YouTube, always add browser cookies when available.
     if (service === 'youtube') {
-
-
-        // First try OAuth cookies, then regular cookies
-        let cookie = getCookie('youtube_oauth');
-        if (!cookie) {
-
-            cookie = getCookie('youtube');
-        }
+        const cookie = getCookie('youtube');
 
         if (cookie) {
             const cookieStr = cookie.toString();
             baseHeaders.Cookie = cookieStr;
-
         }
     }
 

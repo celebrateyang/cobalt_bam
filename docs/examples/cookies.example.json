@@ -12,9 +12,6 @@
         "auth_token=<replace_this>; ct0=<replace_this>"
     ],
     "youtube": [
-        "SAPISID=<replace_this>; __Secure-1PAPISID=<replace_this>; __Secure-3PAPISID=<replace_this>"
-    ],
-    "youtube_oauth": [
-        "access_token=<replace_this>; refresh_token=<replace_this>; expires=<replace_with_iso_date>"
+        "VISITOR_INFO1_LIVE=<replace_this>; PREF=<replace_this>; LOGIN_INFO=<replace_this>; SID=<replace_this>; HSID=<replace_this>; SSID=<replace_this>; APISID=<replace_this>; SAPISID=<replace_this>; __Secure-1PSID=<replace_this>; __Secure-3PSID=<replace_this>; __Secure-1PAPISID=<replace_this>; __Secure-3PAPISID=<replace_this>"
     ]
 }

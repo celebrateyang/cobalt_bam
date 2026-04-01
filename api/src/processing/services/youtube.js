@@ -73,12 +73,16 @@ const getUrlAccessibilityScore = (rawUrl) => {
         let score = 0;
 
         const ipBypass = parsed.searchParams.get("ipbypass");
+        const hasIpParam = parsed.searchParams.has("ip");
         if (ipBypass === "yes" || ipBypass === "1" || ipBypass === "true") {
             score += 100;
         }
 
-        if (!parsed.searchParams.has("ip")) {
+        if (!hasIpParam) {
             score += 30;
+        } else if (!(ipBypass === "yes" || ipBypass === "1" || ipBypass === "true")) {
+            // IP-bound URLs usually 403 outside of upstream egress IP.
+            score -= 220;
         }
 
         const client = String(parsed.searchParams.get("c") || "").toUpperCase();
@@ -105,12 +109,8 @@ const cloneInnertube = async (customFetch, useSession) => {
     const shouldRefreshPlayer = lastRefreshedAt + PLAYER_REFRESH_PERIOD < new Date();
     console.log(`======> [cloneInnertube] Should refresh player: ${shouldRefreshPlayer}`);
 
-    // First try youtube_oauth cookies
-    let rawCookie = getCookie('youtube_oauth');
-    if (!rawCookie) {
-        console.log(`======> [cloneInnertube] No youtube_oauth cookies found, trying regular youtube cookies`);
-        rawCookie = getCookie('youtube');
-    }
+    // Use browser YouTube cookies by default.
+    const rawCookie = getCookie('youtube');
     
     const cookie = rawCookie?.toString();
     console.log(`======> [cloneInnertube] Cookie available: ${!!cookie}`);
@@ -240,11 +240,10 @@ export default async function (o) {
     console.log(`======> [youtube] Starting YouTube video processing for URL: ${o.url || o.id}`);
     
     // Check if cookies are available before proceeding
-    const oauthCookie = getCookie('youtube_oauth');
     const regularCookie = getCookie('youtube');
-    const hasCookies = !!(oauthCookie || regularCookie);
+    const hasCookies = !!regularCookie;
     
-    console.log(`======> [youtube] Cookie availability check - OAuth: ${!!oauthCookie}, Regular: ${!!regularCookie}, Has any: ${hasCookies}`);
+    console.log(`======> [youtube] Cookie availability check - Browser(youtube): ${hasCookies}`);
     
     if (!hasCookies) {
         console.log(`======> [youtube] ERROR: No YouTube authentication cookies found! All YouTube downloads require authentication.`);
@@ -335,7 +334,17 @@ export default async function (o) {
         !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang;
     const directRedirectInfoClients =
         !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang
-            ? ["ANDROID", "IOS", "WEB", "WEB_EMBEDDED"]
+            ? [
+                "ANDROID",
+                "IOS",
+                "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+                "TVHTML5_SIMPLY",
+                "TVHTML5",
+                "WEB",
+                "WEB_EMBEDDED",
+                "WEB_CREATOR",
+                "MWEB",
+            ]
             : [];
     const infoClients = [...new Set([
         innertubeClient,
@@ -347,6 +356,9 @@ export default async function (o) {
 
     let fallbackInfo;
     let fallbackClient;
+    let bestProgressiveClientInfo;
+    let bestProgressiveClient;
+    let bestProgressiveScore = Number.NEGATIVE_INFINITY;
 
     for (const client of infoClients) {
         try {
@@ -363,21 +375,46 @@ export default async function (o) {
             const progressiveFormats = Array.isArray(fetchedInfo.streaming_data?.formats)
                 ? fetchedInfo.streaming_data.formats
                 : [];
-            const hasResolvableProgressiveMuxed = progressiveFormats.some((format) => {
-                if (
-                    !format?.has_video
-                    || !format?.has_audio
-                    || typeof format?.mime_type !== "string"
-                    || !format.mime_type.includes("video/mp4")
-                ) {
-                    return false;
+            const progressiveCandidates = progressiveFormats
+                .filter((format) =>
+                    format?.has_video
+                    && format?.has_audio
+                    && typeof format?.mime_type === "string"
+                    && format.mime_type.includes("video/mp4")
+                )
+                .map((format) => {
+                    const resolvedUrl = resolveFormatUrl(format, useHLS, client, innertube);
+                    return {
+                        resolvedUrl,
+                        score: getUrlAccessibilityScore(resolvedUrl),
+                        itag: format?.itag,
+                    };
+                })
+                .filter((item) => typeof item.resolvedUrl === "string" && item.resolvedUrl.length > 0)
+                .sort((a, b) => b.score - a.score);
+
+            const bestCandidate = progressiveCandidates[0];
+            const hasResolvableProgressiveMuxed = !!bestCandidate;
+
+            if (bestCandidate && bestCandidate.score > bestProgressiveScore) {
+                bestProgressiveScore = bestCandidate.score;
+                bestProgressiveClientInfo = fetchedInfo;
+                bestProgressiveClient = client;
+                console.log(
+                    `======> [youtube] Progressive candidate updated: client=${client}, itag=${bestCandidate.itag ?? "n/a"}, score=${bestCandidate.score}`,
+                );
+            }
+
+            if (!hasResolvableProgressiveMuxed) {
+                if (!fallbackInfo) {
+                    fallbackInfo = fetchedInfo;
+                    fallbackClient = client;
                 }
+                console.log(`======> [youtube] Client ${client} has no resolvable progressive muxed stream, trying next client`);
+                continue;
+            }
 
-                const resolvedUrl = resolveFormatUrl(format, useHLS, client, innertube);
-                return typeof resolvedUrl === "string" && resolvedUrl.length > 0;
-            });
-
-            if (hasResolvableProgressiveMuxed) {
+            if (bestCandidate.score > -100) {
                 info = fetchedInfo;
                 innertubeClient = client;
                 console.log(`======> [youtube] Selected client ${client} with progressive muxed stream support`);
@@ -388,11 +425,19 @@ export default async function (o) {
                 fallbackInfo = fetchedInfo;
                 fallbackClient = client;
             }
-            console.log(`======> [youtube] Client ${client} has no resolvable progressive muxed stream, trying next client`);
+            console.log(`======> [youtube] Client ${client} progressive muxed URL appears IP-bound (score=${bestCandidate.score}), trying next client`);
         } catch (e) {
             lastInfoError = e;
             console.log(`======> [youtube] Failed to get video info with client ${client}: ${e?.message}`);
         }
+    }
+
+    if (!info && bestProgressiveClientInfo) {
+        info = bestProgressiveClientInfo;
+        innertubeClient = bestProgressiveClient;
+        console.log(
+            `======> [youtube] Falling back to best progressive client ${bestProgressiveClient} (score=${bestProgressiveScore})`,
+        );
     }
 
     if (!info && fallbackInfo) {

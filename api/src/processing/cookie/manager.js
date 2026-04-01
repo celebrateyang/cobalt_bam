@@ -72,14 +72,13 @@ const warnSuspiciousInstagramCookies = (cookiePath = "") => {
 const warnMissingYouTubeCookies = (cookiePath = "") => {
     if (!isUpstreamServer) return;
 
-    const hasOAuth = Array.isArray(cookies.youtube_oauth) && cookies.youtube_oauth.length > 0;
     const hasRegular = Array.isArray(cookies.youtube) && cookies.youtube.length > 0;
 
-    if (hasOAuth || hasRegular) return;
+    if (hasRegular) return;
 
-    console.warn(`${Yellow('[!]')} youtube cookies are missing (youtube / youtube_oauth).`);
+    console.warn(`${Yellow('[!]')} youtube browser cookies are missing (youtube).`);
     if (cookiePath) console.warn(`${Yellow('[!]')} cookie file: ${cookiePath}`);
-    console.warn(`${Yellow('[!]')} youtube downloads will fail until authentication cookies are provided.`);
+    console.warn(`${Yellow('[!]')} youtube downloads will fail until browser Cookie header is provided.`);
 };
 
 function writeChanges(cookiePath) {

@@ -45,7 +45,7 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 
-const requestUpstreamCobalt = async (targetUrl) => {
+const requestUpstreamCobalt = async (payload) => {
     if (!env.instagramUpstreamURL || isUpstreamServer) {
         return null;
     }
@@ -88,11 +88,27 @@ const requestUpstreamCobalt = async (targetUrl) => {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+        const requestBody = (() => {
+            if (payload instanceof URL) {
+                return { url: String(payload) };
+            }
+
+            if (payload && typeof payload === "object") {
+                const body = { ...payload };
+                if (body.url !== undefined) {
+                    body.url = String(body.url);
+                }
+                return body;
+            }
+
+            return { url: String(payload || "") };
+        })();
+
         const response = await fetch(endpoint, {
             method: "POST",
             signal: controller.signal,
             headers,
-            body: JSON.stringify({ url: String(targetUrl) }),
+            body: JSON.stringify(requestBody),
         });
 
         const body = await response.json().catch(() => null);
@@ -237,7 +253,7 @@ export default async function({ host, patternMatch, params, authType }) {
                 // In API mode, route all YouTube requests to upstream directly.
                 // This avoids using API node egress/cookies for YouTube extraction.
                 if (!isUpstreamServer) {
-                    const upstream = await requestUpstreamCobalt(url);
+                    const upstream = await requestUpstreamCobalt(params);
                     if (upstream) {
                         return upstream;
                     }
@@ -444,7 +460,7 @@ export default async function({ host, patternMatch, params, authType }) {
             console.log(
                 `[twitter] local error=${r.error}, trying upstream fallback`
             );
-            const upstream = await requestUpstreamCobalt(url);
+            const upstream = await requestUpstreamCobalt(params);
             if (upstream) {
                 console.log(
                     `[twitter] upstream fallback success status=${upstream?.body?.status || "unknown"}`

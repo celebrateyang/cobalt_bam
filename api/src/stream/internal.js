@@ -117,7 +117,7 @@ const safeDestroyBody = (body) => {
 };
 
 async function* readChunks(streamInfo, size) {
-    let read = 0n, chunksSinceTransplant = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
+    let read = 0n, chunksSinceTransplant = 0, forbiddenRetries = 0;    // console.log(`[readChunks] Starting chunk download - Total size: ${size}, URL: ${streamInfo.url}`);
     // console.log(`======> [readChunks] YouTube chunk download with authentication started`);
 
     while (read < size) {
@@ -127,19 +127,13 @@ async function* readChunks(streamInfo, size) {
         }
 
         const rangeStart = read;
-        const rangeEnd = read + CHUNK_SIZE;
+        const rangeEnd = min(size - 1n, read + CHUNK_SIZE - 1n);
         // console.log(`[readChunks] Requesting chunk: bytes=${rangeStart}-${rangeEnd}, read=${read}/${size}`);
-
-        const headers = {
-            ...getHeaders('youtube'),
-            Range: `bytes=${read}-${read + CHUNK_SIZE}`
-        };
-        // console.log(`======> [readChunks] Chunk request using authenticated headers: ${!!headers.Cookie}`);
 
         const chunk = await request(streamInfo.url, {
             headers: {
                 ...getHeaders(streamInfo.service),
-                Range: `bytes=${read}-${read + CHUNK_SIZE}`
+                Range: `bytes=${rangeStart}-${rangeEnd}`
             },
             dispatcher: streamInfo.dispatcher,
             signal: streamInfo.controller.signal,
@@ -149,10 +143,15 @@ async function* readChunks(streamInfo, size) {
         // console.log(`[readChunks] Chunk response: status=${chunk.statusCode}, content-length=${chunk.headers['content-length']}`);
         // console.log(`======> [readChunks] Authenticated chunk request result: status=${chunk.statusCode}`);
 
-        if (chunk.statusCode === 403 && chunksSinceTransplant >= 3 && streamInfo.originalRequest) {
+        if (chunk.statusCode === 403 && streamInfo.originalRequest) {
+            safeDestroyBody(chunk.body);
+            forbiddenRetries += 1;
             chunksSinceTransplant = 0;
-            // console.log(`[readChunks] 403 error after 3+ chunks, attempting fresh YouTube API call`);
-            // console.log(`======> [readChunks] 403 error detected, attempting fresh authenticated API call`);
+
+            if (forbiddenRetries > 4) {
+                throw new Error("youtube_chunk_forbidden");
+            }
+
             try {
                 // Import YouTube service dynamically
                 const handler = await import(`../processing/services/youtube.js`);
@@ -259,6 +258,10 @@ async function handleChunkedStream(streamInfo, res) {
         console.log(`[handleYoutubeStream] Cleanup called (status=${statusCode ?? "none"})`);
         if (!res.headersSent) {
             if (statusCode !== undefined) {
+                if (statusCode >= 400) {
+                    res.removeHeader("content-length");
+                    res.removeHeader("content-range");
+                }
                 res.status(statusCode);
                 res.setHeader("Cache-Control", "no-store");
             }

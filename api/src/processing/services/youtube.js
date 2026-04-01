@@ -205,6 +205,13 @@ export default async function (o) {
     let innertubeClient = o.innertubeClient || env.customInnertubeClient || "IOS";
     console.log(`======> [youtube] Using HLS: ${useHLS}, Client: ${innertubeClient}`);
 
+    // Force direct redirect flow for normal video downloads:
+    // disable HLS/merge path and require progressive MP4 direct URL.
+    if (!o.isAudioOnly && !o.isAudioMuted && useHLS) {
+        useHLS = false;
+        console.log(`======> [youtube] Disabled HLS for direct-redirect-only policy`);
+    }
+
     // HLS playlists from the iOS client don't contain the av1 video format.
     if (useHLS && o.codec === "av1") {
         useHLS = false;
@@ -599,6 +606,62 @@ export default async function (o) {
             cropCover: basicInfo.author.endsWith("- Topic"),
             duration,
         }
+    }
+
+    // Prefer progressive MP4 (audio+video in one stream) for normal video downloads.
+    // This avoids fragile server-side merge when upstream cannot reliably fetch youtube chunks.
+    if (!o.isAudioOnly && !o.isAudioMuted && !useHLS) {
+        const progressiveFormats = (info.streaming_data?.formats || [])
+            .filter((format) =>
+                format?.has_video &&
+                format?.has_audio &&
+                format?.content_length &&
+                typeof format?.mime_type === "string" &&
+                format.mime_type.includes("video/mp4"),
+            )
+            .sort((a, b) => Number(b.bitrate || 0) - Number(a.bitrate || 0));
+
+        if (progressiveFormats.length > 0) {
+            const qualityOf = (fmt) => normalizeQuality({
+                width: fmt?.width || 0,
+                height: fmt?.height || 0,
+            }) || 0;
+
+            const preferred =
+                progressiveFormats.find((fmt) => qualityOf(fmt) === quality)
+                || progressiveFormats.find((fmt) => qualityOf(fmt) <= quality)
+                || progressiveFormats[0];
+
+            if (preferred) {
+                let progressiveUrl = preferred.url;
+                if (!clientsWithNoCipher.includes(innertubeClient) && innertube && preferred.decipher) {
+                    progressiveUrl = preferred.decipher(innertube.session.player);
+                }
+
+                if (progressiveUrl) {
+                    const progressiveQuality = qualityOf(preferred);
+                    filenameAttributes.resolution = `${preferred.width}x${preferred.height}`;
+                    filenameAttributes.qualityLabel = `${progressiveQuality}p`;
+                    filenameAttributes.extension = "mp4";
+                    filenameAttributes.youtubeFormat = "h264";
+
+                    return {
+                        type: "proxy",
+                        forceRedirect: true,
+                        urls: progressiveUrl,
+                        filenameAttributes,
+                        fileMetadata,
+                        duration,
+                    };
+                }
+            }
+        }
+    }
+
+    if (!o.isAudioOnly && !o.isAudioMuted) {
+        // Direct redirect is mandatory for normal YouTube video downloads.
+        // If no progressive stream is available, fail fast instead of merge fallback.
+        return { error: "youtube.no_matching_format" };
     }
 
     if (video && audio) {

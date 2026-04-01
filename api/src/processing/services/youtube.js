@@ -7,7 +7,7 @@ import { getCookie } from "../cookie/manager.js";
 import { sanitizeString } from "../create-filename.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
-const MIN_GOOD_URL_SCORE = -100;
+const MIN_GOOD_URL_SCORE = -140;
 const MAX_CANDIDATE_LOGS = 10;
 
 const normalizeIp = (value) => {
@@ -343,6 +343,10 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
         if (Number.isFinite(parsed) && parsed > 0) return parsed;
         return DEFAULT_TIMEOUT_MS;
     })();
+    const forceIpv4 = (() => {
+        const raw = String(process.env.YTDLP_FORCE_IPV4 || "true").trim().toLowerCase();
+        return !["0", "false", "no", "off"].includes(raw);
+    })();
 
     const args = [
         ...runner.prefixArgs,
@@ -355,6 +359,10 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
         "--socket-timeout", "15",
         "--extractor-args", "youtube:player_client=android_vr,android,web",
     ];
+
+    if (forceIpv4) {
+        args.push("--force-ipv4");
+    }
 
     if (requestClientIp) {
         args.push("--add-header", `X-Forwarded-For:${requestClientIp}`);

@@ -45,6 +45,13 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 
+const normalizeForwardIp = (value) => {
+    if (typeof value !== "string") return "";
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    return trimmed.split(",")[0].trim().replace(/^::ffff:/, "");
+};
+
 const requestUpstreamCobalt = async (payload) => {
     if (!env.instagramUpstreamURL || isUpstreamServer) {
         return null;
@@ -75,6 +82,14 @@ const requestUpstreamCobalt = async (payload) => {
 
     if (env.instagramUpstreamApiKey) {
         headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    const forwardedIp = normalizeForwardIp(payload?.requestClientIp || "");
+    if (forwardedIp) {
+        headers["X-FSV-Client-IP"] = forwardedIp;
+        headers["CF-Connecting-IP"] = forwardedIp;
+        headers["X-Forwarded-For"] = forwardedIp;
+        headers["X-Real-IP"] = forwardedIp;
     }
 
     const timeoutMs =

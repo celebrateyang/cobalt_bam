@@ -397,27 +397,12 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
     }
 };
 
-export default async function youtube(o) {
-    const requestClientIp = normalizeIp(o.requestClientIp || "");
-    const cookieHeader = getCookie("youtube")?.toString() || "";
-    const targetQuality = o.quality === "max" ? 9000 : parseNumber(o.quality) || 1080;
-
-    console.log(
-        `======> [youtube] yt-dlp parse start id=${o.id} mode=${o.isAudioOnly ? "audio" : (o.isAudioMuted ? "mute" : "video")} quality=${targetQuality} client_ip=${requestClientIp || "n/a"} cookie=${cookieHeader ? "yes" : "no"}`,
-    );
-
-    const extracted = await runYtDlp({
-        id: o.id,
-        requestClientIp,
-        cookieHeader,
-    });
-
-    if (extracted.error) {
-        console.log(`======> [youtube] yt-dlp parse failed: ${extracted.message || extracted.error}`);
-        return { error: extracted.error };
-    }
-
-    const info = extracted.info;
+const buildYoutubeResult = ({
+    info,
+    o,
+    requestClientIp,
+    targetQuality,
+}) => {
     const allFormats = Array.isArray(info.formats) ? info.formats : [];
     const duration = parseNumber(info.duration);
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
@@ -513,4 +498,62 @@ export default async function youtube(o) {
         originalRequest,
         duration,
     };
+};
+
+export default async function youtube(o) {
+    const requestClientIp = normalizeIp(o.requestClientIp || "");
+    const browserCookieHeader = getCookie("youtube")?.toString() || "";
+    const targetQuality = o.quality === "max" ? 9000 : parseNumber(o.quality) || 1080;
+    const mode = o.isAudioOnly ? "audio" : (o.isAudioMuted ? "mute" : "video");
+
+    const attempts = [
+        {
+            name: "no_cookie",
+            cookieHeader: "",
+            requestClientIp,
+        },
+    ];
+
+    if (browserCookieHeader) {
+        // Cookie mode: avoid injecting client IP headers to reduce account risk.
+        attempts.push({
+            name: "browser_cookie",
+            cookieHeader: browserCookieHeader,
+            requestClientIp: "",
+        });
+    }
+
+    let lastError = "fetch.fail";
+    for (const attempt of attempts) {
+        console.log(
+            `======> [youtube] yt-dlp parse start id=${o.id} mode=${mode} quality=${targetQuality} client_ip=${attempt.requestClientIp || "n/a"} cookie=${attempt.cookieHeader ? "yes" : "no"} attempt=${attempt.name}`,
+        );
+
+        const extracted = await runYtDlp({
+            id: o.id,
+            requestClientIp: attempt.requestClientIp,
+            cookieHeader: attempt.cookieHeader,
+        });
+
+        if (extracted.error) {
+            console.log(`======> [youtube] yt-dlp parse failed: ${extracted.message || extracted.error}`);
+            lastError = extracted.error;
+            continue;
+        }
+
+        const built = buildYoutubeResult({
+            info: extracted.info,
+            o,
+            requestClientIp: attempt.requestClientIp,
+            targetQuality,
+        });
+
+        if (!built?.error) {
+            return built;
+        }
+
+        lastError = built.error;
+    }
+
+    return { error: lastError };
 }

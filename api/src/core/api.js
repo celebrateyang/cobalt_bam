@@ -472,7 +472,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         const requestId = Math.random().toString(36).slice(2, 10);
         const hasClerkTokenHeader = !!req.header("X-Clerk-Token");
         const requestClientIp = String(
-            req.header("cf-connecting-ip")
+            req.header("x-fsv-client-ip")
+            || req.header("cf-connecting-ip")
             || req.header("x-forwarded-for")
             || req.header("x-real-ip")
             || req.ip

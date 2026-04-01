@@ -304,11 +304,11 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
 
     const args = [
         ...runner.prefixArgs,
+        "--ignore-config",
         "--dump-single-json",
         "--no-playlist",
         "--skip-download",
         "--no-warnings",
-        "--no-call-home",
         "--retries", "2",
         "--socket-timeout", "15",
         "--extractor-args", "youtube:player_client=android_vr,android,web",

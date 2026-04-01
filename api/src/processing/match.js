@@ -108,6 +108,103 @@ const requestUpstreamCobalt = async (targetUrl) => {
     }
 };
 
+const isTunnelUrl = (value) => (
+    typeof value === "string"
+    && /^https?:\/\/[^/]+\/tunnel\?/i.test(value)
+);
+
+const wrapUpstreamUrlAsLocalTunnel = ({ url, host, filename, duration }) => {
+    const wrapped = createResponse("tunnel", {
+        type: "proxy",
+        url,
+        service: host,
+        filename,
+        duration,
+    });
+
+    return wrapped?.body?.url;
+};
+
+const normalizeYouTubeUpstreamResponse = ({ upstream, host }) => {
+    if (!upstream?.body || typeof upstream.body !== "object") {
+        return upstream;
+    }
+
+    const body = upstream.body;
+
+    if (body.status === "tunnel" && isTunnelUrl(body.url)) {
+        const localTunnel = wrapUpstreamUrlAsLocalTunnel({
+            url: body.url,
+            host,
+            filename: body.filename,
+            duration: body.duration,
+        });
+
+        if (localTunnel) {
+            console.log("[youtube] upstream tunnel rewritten to local tunnel proxy");
+            return {
+                ...upstream,
+                status: 200,
+                body: {
+                    ...body,
+                    status: "tunnel",
+                    url: localTunnel,
+                },
+            };
+        }
+    }
+
+    if (body.status === "redirect" && isTunnelUrl(body.url)) {
+        const localTunnel = wrapUpstreamUrlAsLocalTunnel({
+            url: body.url,
+            host,
+            filename: body.filename,
+            duration: body.duration,
+        });
+
+        if (localTunnel) {
+            console.log("[youtube] upstream redirect(tunnel) rewritten to local tunnel proxy");
+            return {
+                ...upstream,
+                status: 200,
+                body: {
+                    status: "tunnel",
+                    url: localTunnel,
+                    filename: body.filename,
+                    ...(typeof body.duration === "number" ? { duration: body.duration } : {}),
+                },
+            };
+        }
+    }
+
+    if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
+        const rewritten = body.tunnel.map((item) => {
+            if (!isTunnelUrl(item)) return item;
+
+            return wrapUpstreamUrlAsLocalTunnel({
+                url: item,
+                host,
+                filename: body?.output?.filename,
+            }) || item;
+        });
+
+        if (rewritten.some((item, idx) => item !== body.tunnel[idx])) {
+            console.log("[youtube] upstream local-processing tunnel list rewritten to local tunnel proxies");
+        }
+
+        return {
+            ...upstream,
+            status: 200,
+            body: {
+                ...body,
+                tunnel: rewritten,
+            },
+        };
+    }
+
+    return upstream;
+};
+
 export default async function({ host, patternMatch, params, authType }) {
     const { url } = params;
     assert(url instanceof URL);
@@ -191,7 +288,10 @@ export default async function({ host, patternMatch, params, authType }) {
                 if (!isUpstreamServer) {
                     const upstream = await requestUpstreamCobalt(url);
                     if (upstream) {
-                        return upstream;
+                        return normalizeYouTubeUpstreamResponse({
+                            upstream,
+                            host,
+                        });
                     }
 
                     return createResponse("error", {

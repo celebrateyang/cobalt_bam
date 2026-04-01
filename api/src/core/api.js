@@ -74,6 +74,7 @@ const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
 })();
+const serverRole = isUpstreamServer ? "upstream" : "api";
 
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -829,10 +830,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
                 Bright("url: ") + Bright(Cyan(env.apiURL)) + "\n" +
                 Bright("port: ") + env.apiPort + "\n" +
+                Bright("server role: ") + serverRole + "\n" +
+                Bright("is upstream: ") + String(isUpstreamServer) + "\n" +
 
                 "~~~~~~\n" +
                 Bright("📊 Logging enabled: ") + "Video download requests will be tracked\n"
             );
+            console.log(`[BOOT] server_role=${serverRole} is_upstream=${isUpstreamServer} api_url=${env.apiURL} port=${env.apiPort}`);
         }
 
         // 初始化社交媒体数据库

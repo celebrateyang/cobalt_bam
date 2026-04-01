@@ -437,8 +437,12 @@ export default async function (o) {
             (format.mime_type.includes(codecList[pCodec].videoCodec)
                 || format.mime_type.includes(codecList[pCodec].audioCodec));
 
+        const adaptiveFormats = Array.isArray(info.streaming_data?.adaptive_formats)
+            ? info.streaming_data.adaptive_formats
+            : [];
+
         // sort formats & weed out bad ones
-        info.streaming_data.adaptive_formats.sort((a, b) =>
+        adaptiveFormats.sort((a, b) =>
             Number(b.bitrate) - Number(a.bitrate)
         ).forEach(format => {
             Object.keys(codecList).forEach(yCodec => {
@@ -475,46 +479,57 @@ export default async function (o) {
             if (noBestMedia()) codec = "h264";
         }
 
-        // if there's no proper combo of av1, vp9, or h264, then give up
+        // if there's no proper adaptive combo, keep going for redirect fallback.
         if (noBestMedia()) {
-            return { error: "youtube.no_matching_format" };
-        }
-
-        audio = sorted_formats[codec].bestAudio;
-
-        if (audio?.audio_track && !audio?.is_original) {
-            audio = sorted_formats[codec].audio.find(i =>
-                i?.is_original
-            );
-        }
-
-        if (o.dubLang) {
-            const dubbedAudio = sorted_formats[codec].audio.find(i =>
-                i.language?.startsWith(o.dubLang) && i.audio_track
-            );
-
-            if (dubbedAudio && !dubbedAudio?.is_original) {
-                audio = dubbedAudio;
-                dubbedLanguage = dubbedAudio.language;
-            }
-        }
-
-        if (!o.isAudioOnly) {
-            const qual = (i) => {
-                return normalizeQuality({
-                    width: i.width,
-                    height: i.height,
-                })
+            if (o.isAudioOnly) {
+                return { error: "youtube.no_matching_format" };
             }
 
-            const bestQuality = qual(sorted_formats[codec].bestVideo);
-            const useBestQuality = quality >= bestQuality;
+            video =
+                adaptiveFormats.find((format) =>
+                    format?.has_video && (format?.url || format?.decipher)
+                ) || video;
+            audio =
+                adaptiveFormats.find((format) =>
+                    format?.has_audio && (format?.url || format?.decipher)
+                ) || audio;
+        } else {
+            audio = sorted_formats[codec].bestAudio;
 
-            video = useBestQuality
-                ? sorted_formats[codec].bestVideo
-                : sorted_formats[codec].video.find(i => qual(i) === quality);
+            if (audio?.audio_track && !audio?.is_original) {
+                audio = sorted_formats[codec].audio.find(i =>
+                    i?.is_original
+                );
+            }
 
-            if (!video) video = sorted_formats[codec].bestVideo;
+            if (o.dubLang) {
+                const dubbedAudio = sorted_formats[codec].audio.find(i =>
+                    i.language?.startsWith(o.dubLang) && i.audio_track
+                );
+
+                if (dubbedAudio && !dubbedAudio?.is_original) {
+                    audio = dubbedAudio;
+                    dubbedLanguage = dubbedAudio.language;
+                }
+            }
+
+            if (!o.isAudioOnly) {
+                const qual = (i) => {
+                    return normalizeQuality({
+                        width: i.width,
+                        height: i.height,
+                    })
+                }
+
+                const bestQuality = qual(sorted_formats[codec].bestVideo);
+                const useBestQuality = quality >= bestQuality;
+
+                video = useBestQuality
+                    ? sorted_formats[codec].bestVideo
+                    : sorted_formats[codec].video.find(i => qual(i) === quality);
+
+                if (!video) video = sorted_formats[codec].bestVideo;
+            }
         }
 
         if (o.subtitleLang && !o.isAudioOnly && info.captions?.caption_tracks?.length) {
@@ -608,105 +623,96 @@ export default async function (o) {
         }
     }
 
-    // Prefer progressive MP4 (audio+video in one stream) for normal video downloads.
-    // This avoids fragile server-side merge when upstream cannot reliably fetch youtube chunks.
-    if (!o.isAudioOnly && !o.isAudioMuted && !useHLS) {
-        const progressiveFormats = (info.streaming_data?.formats || [])
-            .filter((format) =>
-                format?.has_video &&
-                format?.has_audio &&
-                format?.content_length &&
-                typeof format?.mime_type === "string" &&
-                format.mime_type.includes("video/mp4"),
-            )
-            .sort((a, b) => Number(b.bitrate || 0) - Number(a.bitrate || 0));
+    if (!o.isAudioOnly) {
+        const resolveUrl = (format) => {
+            if (!format) return null;
+            if (useHLS) return format.uri || null;
 
-        if (progressiveFormats.length > 0) {
-            const qualityOf = (fmt) => normalizeQuality({
-                width: fmt?.width || 0,
-                height: fmt?.height || 0,
-            }) || 0;
+            if (!clientsWithNoCipher.includes(innertubeClient) && innertube && format.decipher) {
+                return format.decipher(innertube.session.player);
+            }
 
-            const preferred =
-                progressiveFormats.find((fmt) => qualityOf(fmt) === quality)
-                || progressiveFormats.find((fmt) => qualityOf(fmt) <= quality)
-                || progressiveFormats[0];
+            return format.url || null;
+        };
 
-            if (preferred) {
-                let progressiveUrl = preferred.url;
-                if (!clientsWithNoCipher.includes(innertubeClient) && innertube && preferred.decipher) {
-                    progressiveUrl = preferred.decipher(innertube.session.player);
-                }
+        let directUrl = null;
 
-                if (progressiveUrl) {
+        // Prefer progressive MP4 first when downloading normal video (with audio).
+        if (!o.isAudioMuted && !useHLS) {
+            const progressiveFormats = (info.streaming_data?.formats || [])
+                .filter((format) =>
+                    format?.has_video &&
+                    format?.has_audio &&
+                    format?.content_length &&
+                    typeof format?.mime_type === "string" &&
+                    format.mime_type.includes("video/mp4"),
+                )
+                .sort((a, b) => Number(b.bitrate || 0) - Number(a.bitrate || 0));
+
+            if (progressiveFormats.length > 0) {
+                const qualityOf = (fmt) => normalizeQuality({
+                    width: fmt?.width || 0,
+                    height: fmt?.height || 0,
+                }) || 0;
+
+                const preferred =
+                    progressiveFormats.find((fmt) => qualityOf(fmt) === quality)
+                    || progressiveFormats.find((fmt) => qualityOf(fmt) <= quality)
+                    || progressiveFormats[0];
+
+                directUrl = resolveUrl(preferred);
+                if (directUrl) {
                     const progressiveQuality = qualityOf(preferred);
                     filenameAttributes.resolution = `${preferred.width}x${preferred.height}`;
                     filenameAttributes.qualityLabel = `${progressiveQuality}p`;
                     filenameAttributes.extension = "mp4";
                     filenameAttributes.youtubeFormat = "h264";
-
-                    return {
-                        type: "proxy",
-                        forceRedirect: true,
-                        urls: progressiveUrl,
-                        filenameAttributes,
-                        fileMetadata,
-                        duration,
-                    };
                 }
             }
         }
-    }
 
-    if (!o.isAudioOnly && !o.isAudioMuted) {
-        // Direct redirect is mandatory for normal YouTube video downloads.
-        // If no progressive stream is available, fail fast instead of merge fallback.
-        return { error: "youtube.no_matching_format" };
-    }
+        // Fallback to video-only direct URL (still redirect, never merge).
+        if (!directUrl && video) {
+            directUrl = resolveUrl(video);
 
-    if (video && audio) {
-        let resolution;
+            if (directUrl) {
+                let resolution;
+                if (useHLS) {
+                    resolution = normalizeQuality(video.resolution);
+                    filenameAttributes.resolution = `${video.resolution.width}x${video.resolution.height}`;
+                    filenameAttributes.extension =
+                        o.container === "auto" ? hlsCodecList[codec].container : o.container;
+                } else {
+                    resolution = normalizeQuality({
+                        width: video.width,
+                        height: video.height,
+                    });
+                    filenameAttributes.resolution = `${video.width}x${video.height}`;
+                    filenameAttributes.extension =
+                        o.container === "auto" ? codecList[codec].container : o.container;
+                }
 
-        if (useHLS) {
-            resolution = normalizeQuality(video.resolution);
-            filenameAttributes.resolution = `${video.resolution.width}x${video.resolution.height}`;
-            filenameAttributes.extension = o.container === "auto" ? hlsCodecList[codec].container : o.container;
-
-            video = video.uri;
-            audio = audio.uri;
-        } else {
-            resolution = normalizeQuality({
-                width: video.width,
-                height: video.height,
-            });
-
-            filenameAttributes.resolution = `${video.width}x${video.height}`;
-            filenameAttributes.extension = o.container === "auto" ? codecList[codec].container : o.container;
-
-            if (!clientsWithNoCipher.includes(innertubeClient) && innertube) {
-                video = video.decipher(innertube.session.player);
-                audio = audio.decipher(innertube.session.player);
-            } else {
-                video = video.url;
-                audio = audio.url;
+                filenameAttributes.qualityLabel = `${resolution}p`;
+                filenameAttributes.youtubeFormat = codec;
             }
         }
 
-        filenameAttributes.qualityLabel = `${resolution}p`;
-        filenameAttributes.youtubeFormat = codec;
+        if (!directUrl && audio) {
+            directUrl = resolveUrl(audio);
+        }
 
-        return {
-            type: "merge",
-            urls: [
-                video,
-                audio,
-            ],
-            subtitles: subtitles?.url,
-            filenameAttributes,
-            fileMetadata,
-            isHLS: useHLS,
-            originalRequest,
-            duration,
+        if (directUrl) {
+            return {
+                type: "proxy",
+                forceRedirect: true,
+                urls: directUrl,
+                subtitles: subtitles?.url,
+                filenameAttributes,
+                fileMetadata,
+                isHLS: useHLS,
+                originalRequest,
+                duration,
+            };
         }
     }
 

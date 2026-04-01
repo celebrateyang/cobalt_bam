@@ -204,11 +204,6 @@ export default function({
                     break;
 
                 case "youtube":
-                    if (r.type === "merge") {
-                        return createResponse("error", {
-                            code: "error.api.youtube.no_matching_format",
-                        });
-                    }
                     params = { type: r.type };
                     break;
 

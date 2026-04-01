@@ -477,6 +477,7 @@ export default async function({ host, patternMatch, params, authType }) {
                         "youtube.auth_required": "youtube.login",
                         "youtube.no_session_tokens": "youtube.login",
                         "youtube.api_error": "fetch.fail",
+                        "youtube.no_matching_format": "fetch.fail",
                     }[r.error] || r.error)
                     : r.error;
 

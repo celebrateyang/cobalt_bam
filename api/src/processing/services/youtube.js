@@ -45,6 +45,25 @@ const hlsCodecList = {
 const clientsWithNoCipher = ['IOS', 'ANDROID', 'YTSTUDIO_ANDROID', 'YTMUSIC_ANDROID'];
 
 const videoQualities = [144, 240, 360, 480, 720, 1080, 1440, 2160, 4320];
+const isUpstreamServer = (() => {
+    const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
+    return raw === "true" || raw === "1";
+})();
+
+const resolveFormatUrl = (format, useHLS, innertubeClient, innertubeInstance) => {
+    if (!format) return null;
+    if (useHLS) return format.uri || null;
+
+    if (!clientsWithNoCipher.includes(innertubeClient) && innertubeInstance && format.decipher) {
+        try {
+            return format.decipher(innertubeInstance.session.player);
+        } catch {
+            return null;
+        }
+    }
+
+    return format.url || null;
+};
 
 const getUrlAccessibilityScore = (rawUrl) => {
     if (typeof rawUrl !== "string" || !rawUrl) return Number.NEGATIVE_INFINITY;
@@ -306,12 +325,29 @@ export default async function (o) {
     }
 
     let info;
-    try {
-        console.log(`======> [youtube] Getting basic video info for ID: ${o.id} with client: ${innertubeClient}`);
-        info = await yt.getBasicInfo(o.id, { client: innertubeClient });
-        console.log(`======> [youtube] Successfully retrieved video info with authentication`);
-    } catch (e) {
-        console.log(`======> [youtube] Failed to get video info: ${e.message}`);
+    let lastInfoError;
+    const infoClients = [...new Set([
+        innertubeClient,
+        "IOS",
+        "WEB",
+        "WEB_EMBEDDED",
+    ])];
+
+    for (const client of infoClients) {
+        try {
+            console.log(`======> [youtube] Getting basic video info for ID: ${o.id} with client: ${client}`);
+            info = await yt.getBasicInfo(o.id, { client });
+            innertubeClient = client;
+            console.log(`======> [youtube] Successfully retrieved video info with authentication using client: ${client}`);
+            break;
+        } catch (e) {
+            lastInfoError = e;
+            console.log(`======> [youtube] Failed to get video info with client ${client}: ${e?.message}`);
+        }
+    }
+
+    if (!info) {
+        const e = lastInfoError;
         if (e?.info) {
             let errorInfo;
             try { errorInfo = JSON.parse(e?.info); } catch {}
@@ -332,6 +368,51 @@ export default async function (o) {
     }
 
     if (!info) return { error: "fetch.fail" };
+
+    if (isUpstreamServer) {
+        const progressive = Array.isArray(info.streaming_data?.formats)
+            ? info.streaming_data.formats
+            : [];
+        const adaptive = Array.isArray(info.streaming_data?.adaptive_formats)
+            ? info.streaming_data.adaptive_formats
+            : [];
+
+        const resolvedCandidates = [...progressive, ...adaptive]
+            .map((format) => {
+                const resolvedUrl = resolveFormatUrl(
+                    format,
+                    useHLS,
+                    innertubeClient,
+                    innertube,
+                );
+                return {
+                    resolvedUrl,
+                    score: getUrlAccessibilityScore(resolvedUrl),
+                    itag: format?.itag,
+                    hasVideo: !!format?.has_video,
+                    hasAudio: !!format?.has_audio,
+                    quality: format?.quality_label || `${format?.width || "?"}x${format?.height || "?"}`,
+                    bitrate: Number(format?.bitrate || 0),
+                    mime: typeof format?.mime_type === "string"
+                        ? format.mime_type.split(";")[0]
+                        : "n/a",
+                };
+            })
+            .filter((item) => !!item.resolvedUrl)
+            .sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.bitrate - a.bitrate;
+            });
+
+        console.log(
+            `======> [youtube] Resolved URL candidates count=${resolvedCandidates.length} (progressive=${progressive.length}, adaptive=${adaptive.length}, client=${innertubeClient})`,
+        );
+        for (const [index, item] of resolvedCandidates.entries()) {
+            console.log(
+                `======> [youtube][candidate ${index + 1}/${resolvedCandidates.length}] itag=${item.itag ?? "n/a"} av=${item.hasVideo ? 1 : 0}${item.hasAudio ? 1 : 0} quality=${item.quality} bitrate=${item.bitrate || "n/a"} mime=${item.mime} score=${item.score} url=${item.resolvedUrl}`,
+            );
+        }
+    }
 
     const playability = info.playability_status;
     const basicInfo = info.basic_info;
@@ -661,16 +742,8 @@ export default async function (o) {
     }
 
     if (!o.isAudioOnly) {
-        const resolveUrl = (format) => {
-            if (!format) return null;
-            if (useHLS) return format.uri || null;
-
-            if (!clientsWithNoCipher.includes(innertubeClient) && innertube && format.decipher) {
-                return format.decipher(innertube.session.player);
-            }
-
-            return format.url || null;
-        };
+        const resolveUrl = (format) =>
+            resolveFormatUrl(format, useHLS, innertubeClient, innertube);
 
         let directUrl = null;
 

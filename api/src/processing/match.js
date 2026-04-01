@@ -88,20 +88,63 @@ const requestUpstreamCobalt = async (payload) => {
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-        const requestBody = (() => {
-            if (payload instanceof URL) {
-                return { url: String(payload) };
+        const buildUpstreamBody = (input) => {
+            if (input instanceof URL) {
+                return { url: String(input) };
             }
 
-            if (payload && typeof payload === "object") {
-                const body = { ...payload };
-                if (body.url !== undefined) {
-                    body.url = String(body.url);
+            if (!input || typeof input !== "object") {
+                return { url: String(input || "") };
+            }
+
+            const allowedKeys = new Set([
+                "url",
+                "audioBitrate",
+                "audioFormat",
+                "downloadMode",
+                "filenameStyle",
+                "youtubeVideoCodec",
+                "youtubeVideoContainer",
+                "videoQuality",
+                "localProcessing",
+                "batch",
+                "youtubeDubLang",
+                "subtitleLang",
+                "disableMetadata",
+                "allowH265",
+                "convertGif",
+                "tiktokFullAudio",
+                "alwaysProxy",
+                "youtubeHLS",
+                "youtubeBetterAudio",
+            ]);
+
+            const body = {};
+            for (const [key, value] of Object.entries(input)) {
+                if (!allowedKeys.has(key)) {
+                    continue;
                 }
-                return body;
+
+                if (value === undefined || value === null) {
+                    continue;
+                }
+
+                if (key === "url") {
+                    body.url = String(value);
+                } else {
+                    body[key] = value;
+                }
             }
 
-            return { url: String(payload || "") };
+            if (!body.url) {
+                body.url = String(input.url || "");
+            }
+
+            return body;
+        };
+
+        const requestBody = (() => {
+            return buildUpstreamBody(payload);
         })();
 
         const response = await fetch(endpoint, {

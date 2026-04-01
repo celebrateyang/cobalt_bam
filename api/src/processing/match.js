@@ -87,9 +87,6 @@ const requestUpstreamCobalt = async (payload) => {
     const forwardedIp = normalizeForwardIp(payload?.requestClientIp || "");
     if (forwardedIp) {
         headers["X-FSV-Client-IP"] = forwardedIp;
-        headers["CF-Connecting-IP"] = forwardedIp;
-        headers["X-Forwarded-For"] = forwardedIp;
-        headers["X-Real-IP"] = forwardedIp;
     }
 
     const timeoutMs =

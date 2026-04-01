@@ -45,6 +45,26 @@ const parseRangeSpanBytes = (rangeHeader) => {
     return end - start + 1;
 };
 
+const parseBigIntHeaderValue = (value) => {
+    if (value === undefined || value === null) return 0n;
+    const normalized = String(value).trim();
+    if (!normalized) return 0n;
+
+    try {
+        const parsed = BigInt(normalized);
+        return parsed > 0n ? parsed : 0n;
+    } catch {
+        return 0n;
+    }
+};
+
+const parseContentRangeTotal = (value) => {
+    if (!value) return 0n;
+    const match = /bytes\s+\d+-\d+\/(\d+)/i.exec(String(value));
+    if (!match) return 0n;
+    return parseBigIntHeaderValue(match[1]);
+};
+
 const toResponseHeaderValue = (value) => {
     if (Array.isArray(value)) return value[0];
     return value;
@@ -207,8 +227,12 @@ async function* readChunks(streamInfo, size) {
 
 async function handleChunkedStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
-    const cleanup = () => {
-        console.log(`[handleYoutubeStream] Cleanup called`);
+    const cleanup = (statusCode = 502) => {
+        console.log(`[handleYoutubeStream] Cleanup called (status=${statusCode})`);
+        if (!res.headersSent) {
+            res.status(statusCode);
+            res.setHeader("Cache-Control", "no-store");
+        }
         res.end();
         closeRequest(streamInfo.controller);
     };
@@ -217,7 +241,10 @@ async function handleChunkedStream(streamInfo, res) {
     console.log(`======> [handleYoutubeStream] YouTube stream processing initiated with authentication`);
 
     try {
-        let req, attempts = 3;
+        let attempts = 3;
+        let responseStatus = 0;
+        let responseContentType = null;
+        let size = 0n;
         console.log(`[handleYoutubeStream] Starting HEAD request with ${attempts} attempts`);
         console.log(`======> [handleYoutubeStream] Using authenticated headers for HEAD request`);
 
@@ -225,17 +252,56 @@ async function handleChunkedStream(streamInfo, res) {
             const headers = getHeaders('youtube');
             console.log(`======> [handleYoutubeStream] HEAD request headers prepared with auth: ${!!headers.Cookie}`);
 
-            req = await fetch(streamInfo.url, {
+            const headResponse = await fetch(streamInfo.url, {
                 headers: getHeaders(streamInfo.service),
                 method: 'HEAD',
                 dispatcher: streamInfo.dispatcher,
                 signal
             });
 
-            console.log(`[handleYoutubeStream] HEAD response: status=${req.status}, url=${req.url}`);
-            console.log(`======> [handleYoutubeStream] Authenticated HEAD request completed: status=${req.status}`);
+            responseStatus = headResponse.status;
+            streamInfo.url = headResponse.url;
+            responseContentType = headResponse.headers.get("content-type") || responseContentType;
+            size = parseBigIntHeaderValue(headResponse.headers.get("content-length"));
 
-            streamInfo.url = req.url; if (req.status === 403 && streamInfo.originalRequest && attempts > 0) {
+            console.log(`[handleYoutubeStream] HEAD response: status=${headResponse.status}, url=${headResponse.url}`);
+            console.log(`======> [handleYoutubeStream] Authenticated HEAD request completed: status=${headResponse.status}`);
+
+            if (headResponse.status === 200 && size > 0n) {
+                break;
+            }
+
+            // Some googlevideo URLs reject HEAD but allow Range GET.
+            if (streamInfo.service === "youtube") {
+                const probeResponse = await fetch(streamInfo.url, {
+                    headers: {
+                        ...getHeaders(streamInfo.service),
+                        Range: "bytes=0-0",
+                    },
+                    method: "GET",
+                    dispatcher: streamInfo.dispatcher,
+                    signal,
+                });
+
+                responseStatus = probeResponse.status;
+                streamInfo.url = probeResponse.url;
+                responseContentType = probeResponse.headers.get("content-type") || responseContentType;
+
+                const totalFromRange = parseContentRangeTotal(probeResponse.headers.get("content-range"));
+                size = totalFromRange || parseBigIntHeaderValue(probeResponse.headers.get("content-length"));
+
+                try {
+                    await probeResponse.body?.cancel();
+                } catch { }
+
+                console.log(`[handleYoutubeStream] Range probe response: status=${probeResponse.status}, size=${size}`);
+
+                if ((probeResponse.status === 206 || probeResponse.status === 200) && size > 0n) {
+                    break;
+                }
+            }
+
+            if (responseStatus === 403 && streamInfo.originalRequest && attempts > 0) {
                 console.log(`[handleYoutubeStream] Got 403, attempting fresh YouTube API call (attempts left: ${attempts})`);
                 try {
                     // Import YouTube service dynamically
@@ -291,15 +357,17 @@ async function handleChunkedStream(streamInfo, res) {
                         }
                     }
                 }
-            } else break;
+            } else {
+                break;
+            }
         }
 
-        const size = BigInt(req.headers.get('content-length'));
-        // console.log(`[handleYoutubeStream] Content length: ${size}, status: ${req.status}`);
+        // console.log(`[handleYoutubeStream] Content length: ${size}, status: ${responseStatus}`);
 
-        if (req.status !== 200 || !size) {
-            // console.log(`[handleYoutubeStream] Invalid response - status: ${req.status}, size: ${size}, calling cleanup`);
-            return cleanup();
+        if (responseStatus < 200 || responseStatus > 299 || !size) {
+            const status = responseStatus === 403 ? 403 : 502;
+            // console.log(`[handleYoutubeStream] Invalid response - status: ${responseStatus}, size: ${size}, calling cleanup`);
+            return cleanup(status);
         }
 
         // console.log(`[handleYoutubeStream] Creating generator for size: ${size}`);
@@ -317,19 +385,19 @@ async function handleChunkedStream(streamInfo, res) {
         // console.log(`[handleYoutubeStream] Created readable stream`);
 
         // Set response headers
-        for (const headerName of ['content-type', 'content-length']) {
-            const headerValue = req.headers.get(headerName);
-            if (headerValue) {
-                res.setHeader(headerName, headerValue);
-                // console.log(`[handleYoutubeStream] Set header ${headerName}: ${headerValue}`);
-            }
+        if (responseContentType) {
+            res.setHeader("content-type", responseContentType);
+        }
+
+        if (size > 0n) {
+            res.setHeader("content-length", size.toString());
         }
 
         // console.log(`[handleYoutubeStream] Starting pipe operation`);
         pipe(stream, res, cleanup);
     } catch (error) {
         // console.log(`[handleYoutubeStream] Error occurred: ${error}`);
-        cleanup();
+        cleanup(502);
     }
 }
 

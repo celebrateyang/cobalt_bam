@@ -46,6 +46,35 @@ const clientsWithNoCipher = ['IOS', 'ANDROID', 'YTSTUDIO_ANDROID', 'YTMUSIC_ANDR
 
 const videoQualities = [144, 240, 360, 480, 720, 1080, 1440, 2160, 4320];
 
+const getUrlAccessibilityScore = (rawUrl) => {
+    if (typeof rawUrl !== "string" || !rawUrl) return Number.NEGATIVE_INFINITY;
+
+    try {
+        const parsed = new URL(rawUrl);
+        let score = 0;
+
+        const ipBypass = parsed.searchParams.get("ipbypass");
+        if (ipBypass === "yes" || ipBypass === "1" || ipBypass === "true") {
+            score += 100;
+        }
+
+        if (!parsed.searchParams.has("ip")) {
+            score += 30;
+        }
+
+        const client = String(parsed.searchParams.get("c") || "").toUpperCase();
+        if (client.startsWith("ANDROID")) score += 20;
+        if (client.startsWith("IOS")) score -= 10;
+
+        const itag = Number(parsed.searchParams.get("itag"));
+        if ([18, 22].includes(itag)) score += 20;
+
+        return score;
+    } catch {
+        return Number.NEGATIVE_INFINITY;
+    }
+};
+
 const cloneInnertube = async (customFetch, useSession) => {
     console.log(`======> [cloneInnertube] Starting Innertube creation, useSession: ${useSession}`);
     
@@ -202,7 +231,15 @@ export default async function (o) {
     console.log(`======> [youtube] Processing with quality: ${quality}`);
 
     let useHLS = o.youtubeHLS;
-    let innertubeClient = o.innertubeClient || env.customInnertubeClient || "IOS";
+    const prefersDirectRedirectClient =
+        !o.isAudioOnly &&
+        !useHLS &&
+        !o.innertubeClient &&
+        !env.customInnertubeClient;
+    let innertubeClient =
+        o.innertubeClient
+        || env.customInnertubeClient
+        || (prefersDirectRedirectClient ? "ANDROID" : "IOS");
     console.log(`======> [youtube] Using HLS: ${useHLS}, Client: ${innertubeClient}`);
 
     // Force direct redirect flow for normal video downloads:
@@ -655,15 +692,35 @@ export default async function (o) {
                     height: fmt?.height || 0,
                 }) || 0;
 
-                const preferred =
-                    progressiveFormats.find((fmt) => qualityOf(fmt) === quality)
-                    || progressiveFormats.find((fmt) => qualityOf(fmt) <= quality)
-                    || progressiveFormats[0];
+                const candidates = progressiveFormats
+                    .map((format) => {
+                        const resolvedUrl = resolveUrl(format);
+                        return {
+                            format,
+                            resolvedUrl,
+                            quality: qualityOf(format),
+                            score: getUrlAccessibilityScore(resolvedUrl),
+                            bitrate: Number(format?.bitrate || 0),
+                        };
+                    })
+                    .filter((item) => !!item.resolvedUrl)
+                    .sort((a, b) => {
+                        if (b.score !== a.score) return b.score - a.score;
 
-                directUrl = resolveUrl(preferred);
-                if (directUrl) {
-                    const progressiveQuality = qualityOf(preferred);
-                    filenameAttributes.resolution = `${preferred.width}x${preferred.height}`;
+                        const aQualityDelta = Math.abs((a.quality || 0) - quality);
+                        const bQualityDelta = Math.abs((b.quality || 0) - quality);
+                        if (aQualityDelta !== bQualityDelta) return aQualityDelta - bQualityDelta;
+
+                        return b.bitrate - a.bitrate;
+                    });
+
+                const preferred = candidates[0];
+
+                directUrl = preferred?.resolvedUrl || null;
+                if (directUrl && preferred?.format) {
+                    const progressiveQuality = preferred.quality;
+                    const picked = preferred.format;
+                    filenameAttributes.resolution = `${picked.width}x${picked.height}`;
                     filenameAttributes.qualityLabel = `${progressiveQuality}p`;
                     filenameAttributes.extension = "mp4";
                     filenameAttributes.youtubeFormat = "h264";
@@ -673,21 +730,41 @@ export default async function (o) {
 
         // Fallback to video-only direct URL (still redirect, never merge).
         if (!directUrl && video) {
-            directUrl = resolveUrl(video);
+            const adaptiveFormats = Array.isArray(info.streaming_data?.adaptive_formats)
+                ? info.streaming_data.adaptive_formats
+                : [];
+            const videoCandidates = [video, ...adaptiveFormats.filter((fmt) => fmt?.has_video)]
+                .map((format) => {
+                    const resolvedUrl = resolveUrl(format);
+                    return {
+                        format,
+                        resolvedUrl,
+                        score: getUrlAccessibilityScore(resolvedUrl),
+                        bitrate: Number(format?.bitrate || 0),
+                    };
+                })
+                .filter((item) => !!item.resolvedUrl)
+                .sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return b.bitrate - a.bitrate;
+                });
 
-            if (directUrl) {
+            const picked = videoCandidates[0]?.format || null;
+            directUrl = videoCandidates[0]?.resolvedUrl || null;
+
+            if (directUrl && picked) {
                 let resolution;
                 if (useHLS) {
-                    resolution = normalizeQuality(video.resolution);
-                    filenameAttributes.resolution = `${video.resolution.width}x${video.resolution.height}`;
+                    resolution = normalizeQuality(picked.resolution);
+                    filenameAttributes.resolution = `${picked.resolution.width}x${picked.resolution.height}`;
                     filenameAttributes.extension =
                         o.container === "auto" ? hlsCodecList[codec].container : o.container;
                 } else {
                     resolution = normalizeQuality({
-                        width: video.width,
-                        height: video.height,
+                        width: picked.width,
+                        height: picked.height,
                     });
-                    filenameAttributes.resolution = `${video.width}x${video.height}`;
+                    filenameAttributes.resolution = `${picked.width}x${picked.height}`;
                     filenameAttributes.extension =
                         o.container === "auto" ? codecList[codec].container : o.container;
                 }
@@ -698,10 +775,35 @@ export default async function (o) {
         }
 
         if (!directUrl && audio) {
-            directUrl = resolveUrl(audio);
+            const adaptiveFormats = Array.isArray(info.streaming_data?.adaptive_formats)
+                ? info.streaming_data.adaptive_formats
+                : [];
+            const audioCandidates = [audio, ...adaptiveFormats.filter((fmt) => fmt?.has_audio)]
+                .map((format) => {
+                    const resolvedUrl = resolveUrl(format);
+                    return {
+                        resolvedUrl,
+                        score: getUrlAccessibilityScore(resolvedUrl),
+                        bitrate: Number(format?.bitrate || 0),
+                    };
+                })
+                .filter((item) => !!item.resolvedUrl)
+                .sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return b.bitrate - a.bitrate;
+                });
+
+            directUrl = audioCandidates[0]?.resolvedUrl || null;
         }
 
         if (directUrl) {
+            try {
+                const parsed = new URL(directUrl);
+                console.log(
+                    `======> [youtube] Redirect URL selected: host=${parsed.host}, itag=${parsed.searchParams.get("itag") || "n/a"}, client=${parsed.searchParams.get("c") || "n/a"}, ipbypass=${parsed.searchParams.get("ipbypass") || "no"}, has_ip=${parsed.searchParams.has("ip")}`,
+                );
+            } catch {}
+
             return {
                 type: "proxy",
                 forceRedirect: true,

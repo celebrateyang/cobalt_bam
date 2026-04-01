@@ -65,6 +65,19 @@ const parseContentRangeTotal = (value) => {
     return parseBigIntHeaderValue(match[1]);
 };
 
+const normalizeStatusCode = (input, fallback = 502) => {
+    if (typeof input === "number" && Number.isInteger(input) && input >= 100 && input <= 599) {
+        return input;
+    }
+
+    const numeric = Number(input);
+    if (Number.isInteger(numeric) && numeric >= 100 && numeric <= 599) {
+        return numeric;
+    }
+
+    return fallback;
+};
+
 const toResponseHeaderValue = (value) => {
     if (Array.isArray(value)) return value[0];
     return value;
@@ -204,22 +217,31 @@ async function* readChunks(streamInfo, size) {
         chunksSinceTransplant++;
 
         const expected = min(CHUNK_SIZE, size - read);
-        const received = BigInt(chunk.headers['content-length']);
+        const headerLength = parseBigIntHeaderValue(chunk.headers["content-length"]);
+        const headerRange = String(chunk.headers["content-range"] || "none");
+        const statusCode = Number(chunk.statusCode || 0);
 
-        console.log(`[readChunks] Chunk validation: expected=${expected}, received=${received}, threshold=${expected / 2n}`);
-
-        if (received < expected / 2n) {
-            console.log(`[readChunks] CRITICAL: Received size (${received}) < expected/2 (${expected / 2n}), closing controller`);
-            closeRequest(streamInfo.controller);
-        }
-
-        let chunkDataSize = 0;
+        let chunkDataSize = 0n;
         for await (const data of chunk.body) {
-            chunkDataSize += data.length;
+            chunkDataSize += BigInt(data.length || 0);
             yield data;
         }
 
-        console.log(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${received}, read progress=${read + received}/${size}`);
+        const received = chunkDataSize > 0n ? chunkDataSize : headerLength;
+        console.log(
+            `[readChunks] Chunk validation: status=${statusCode}, expected=${expected}, received=${received}, body_bytes=${chunkDataSize}, header_len=${headerLength}, content_range=${headerRange}`,
+        );
+
+        if (received <= 0n) {
+            throw new Error("youtube_chunk_empty");
+        }
+
+        // Ignore suspiciously tiny chunks unless this is the final expected tail.
+        if (received < expected / 2n && read + received < size) {
+            throw new Error("youtube_chunk_too_small");
+        }
+
+        console.log(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${headerLength}, read progress=${read + received}/${size}`);
         read += received;
     }
     console.log(`[readChunks] Download completed: total read=${read}/${size}`);
@@ -227,11 +249,19 @@ async function* readChunks(streamInfo, size) {
 
 async function handleChunkedStream(streamInfo, res) {
     const { signal } = streamInfo.controller;
-    const cleanup = (statusCode = 502) => {
-        console.log(`[handleYoutubeStream] Cleanup called (status=${statusCode})`);
+    let cleanedUp = false;
+    const cleanup = (statusLike, fallbackStatus = 502) => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        const statusCode = statusLike === undefined
+            ? undefined
+            : normalizeStatusCode(statusLike, fallbackStatus);
+        console.log(`[handleYoutubeStream] Cleanup called (status=${statusCode ?? "none"})`);
         if (!res.headersSent) {
-            res.status(statusCode);
-            res.setHeader("Cache-Control", "no-store");
+            if (statusCode !== undefined) {
+                res.status(statusCode);
+                res.setHeader("Cache-Control", "no-store");
+            }
         }
         res.end();
         closeRequest(streamInfo.controller);
@@ -394,10 +424,16 @@ async function handleChunkedStream(streamInfo, res) {
         }
 
         // console.log(`[handleYoutubeStream] Starting pipe operation`);
-        pipe(stream, res, cleanup);
+        pipe(stream, res, (error) => {
+            if (error) {
+                return cleanup(error, 502);
+            }
+
+            cleanup(undefined);
+        });
     } catch (error) {
         // console.log(`[handleYoutubeStream] Error occurred: ${error}`);
-        cleanup(502);
+        cleanup(error, 502);
     }
 }
 

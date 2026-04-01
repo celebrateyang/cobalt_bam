@@ -631,8 +631,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 }
             }
 
+            const resultErrorCode = result?.body?.error?.code ?? "n/a";
             console.log(
-                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
+                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} error_code=${resultErrorCode} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
             );
 
             console.log();

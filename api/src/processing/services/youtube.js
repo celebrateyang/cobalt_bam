@@ -9,7 +9,14 @@ import { getYouTubeSession } from "../helpers/youtube-session.js";
 
 const PLAYER_REFRESH_PERIOD = 1000 * 60 * 15; // ms
 
-let innertube, lastRefreshedAt;
+const innertubeCache = {
+    withCookie: null,
+    withoutCookie: null,
+};
+const innertubeRefreshedAt = {
+    withCookie: 0,
+    withoutCookie: 0,
+};
 
 const codecList = {
     h264: {
@@ -103,15 +110,17 @@ const getUrlAccessibilityScore = (rawUrl) => {
     }
 };
 
-const cloneInnertube = async (customFetch, useSession) => {
-    console.log(`======> [cloneInnertube] Starting Innertube creation, useSession: ${useSession}`);
-    
-    const shouldRefreshPlayer = lastRefreshedAt + PLAYER_REFRESH_PERIOD < new Date();
+const cloneInnertube = async (customFetch, useSession, options = {}) => {
+    const useBrowserCookie = options.useBrowserCookie !== false;
+    const cacheKey = useBrowserCookie ? "withCookie" : "withoutCookie";
+    console.log(
+        `======> [cloneInnertube] Starting Innertube creation, useSession: ${useSession}, useBrowserCookie: ${useBrowserCookie}`,
+    );
+
+    const shouldRefreshPlayer = innertubeRefreshedAt[cacheKey] + PLAYER_REFRESH_PERIOD < +new Date();
     console.log(`======> [cloneInnertube] Should refresh player: ${shouldRefreshPlayer}`);
 
-    // Use browser YouTube cookies by default.
-    const rawCookie = getCookie('youtube');
-    
+    const rawCookie = useBrowserCookie ? getCookie('youtube') : null;
     const cookie = rawCookie?.toString();
     console.log(`======> [cloneInnertube] Cookie available: ${!!cookie}`);
     if (cookie) {
@@ -121,7 +130,7 @@ const cloneInnertube = async (customFetch, useSession) => {
     const sessionTokens = getYouTubeSession();
     console.log(`======> [cloneInnertube] Session tokens available: ${!!sessionTokens}`);
     
-    const retrieve_player = Boolean(sessionTokens || cookie);
+    const retrieve_player = Boolean(sessionTokens || cookie || !useBrowserCookie);
     console.log(`======> [cloneInnertube] Will retrieve player: ${retrieve_player}`);
 
     if (useSession && env.ytSessionServer && !sessionTokens?.potoken) {
@@ -129,29 +138,31 @@ const cloneInnertube = async (customFetch, useSession) => {
         throw "no_session_tokens";
     }
 
-    if (!innertube || shouldRefreshPlayer) {
+    if (!innertubeCache[cacheKey] || shouldRefreshPlayer) {
         console.log(`======> [cloneInnertube] Creating new Innertube instance with cookie authentication`);
-        innertube = await Innertube.create({
+        innertubeCache[cacheKey] = await Innertube.create({
             fetch: customFetch,
             retrieve_player,
             cookie,
             po_token: useSession ? sessionTokens?.potoken : undefined,
             visitor_data: useSession ? sessionTokens?.visitor_data : undefined,
         });
-        lastRefreshedAt = +new Date();
+        innertubeRefreshedAt[cacheKey] = +new Date();
         console.log(`======> [cloneInnertube] Innertube instance created successfully`);
     }
 
+    const cachedInnertube = innertubeCache[cacheKey];
+
     const session = new Session(
-        innertube.session.context,
-        innertube.session.api_key,
-        innertube.session.api_version,
-        innertube.session.account_index,
-        innertube.session.config_data,
-        innertube.session.player,
+        cachedInnertube.session.context,
+        cachedInnertube.session.api_key,
+        cachedInnertube.session.api_version,
+        cachedInnertube.session.account_index,
+        cachedInnertube.session.config_data,
+        cachedInnertube.session.player,
         cookie,
-        customFetch ?? innertube.session.http.fetch,
-        innertube.session.cache,
+        customFetch ?? cachedInnertube.session.http.fetch,
+        cachedInnertube.session.cache,
         sessionTokens?.potoken
     );
 
@@ -314,7 +325,8 @@ export default async function (o) {
                 ...init,
                 dispatcher: o.dispatcher
             }),
-            useSession
+            useSession,
+            { useBrowserCookie: true }
         );
         console.log(`======> [youtube] Innertube instance created successfully with authentication`);
     } catch (e) {
@@ -327,6 +339,7 @@ export default async function (o) {
             return { error: "youtube.token_expired" }
         } else throw e;
     }
+    let activeInnertube = yt;
 
     let info;
     let lastInfoError;
@@ -337,9 +350,6 @@ export default async function (o) {
             ? [
                 "ANDROID",
                 "IOS",
-                "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-                "TVHTML5_SIMPLY",
-                "TVHTML5",
                 "WEB",
                 "WEB_EMBEDDED",
                 "WEB_CREATOR",
@@ -383,7 +393,7 @@ export default async function (o) {
                     && format.mime_type.includes("video/mp4")
                 )
                 .map((format) => {
-                    const resolvedUrl = resolveFormatUrl(format, useHLS, client, innertube);
+                    const resolvedUrl = resolveFormatUrl(format, useHLS, client, activeInnertube);
                     return {
                         resolvedUrl,
                         score: getUrlAccessibilityScore(resolvedUrl),
@@ -429,6 +439,80 @@ export default async function (o) {
         } catch (e) {
             lastInfoError = e;
             console.log(`======> [youtube] Failed to get video info with client ${client}: ${e?.message}`);
+        }
+    }
+
+    if (requiresProgressiveMuxedForRedirect && !info && bestProgressiveScore <= -100) {
+        console.log(
+            `======> [youtube] Authenticated candidates are IP-bound (bestScore=${bestProgressiveScore}), trying unauthenticated probe`,
+        );
+        try {
+            const ytNoCookie = await cloneInnertube(
+                (input, init) => fetch(input, {
+                    ...init,
+                    dispatcher: o.dispatcher
+                }),
+                false,
+                { useBrowserCookie: false }
+            );
+            const unauthClients = ["ANDROID", "IOS", "WEB", "MWEB"];
+            let unauthBestInfo;
+            let unauthBestClient;
+            let unauthBestScore = Number.NEGATIVE_INFINITY;
+            let unauthBestItag;
+
+            for (const client of unauthClients) {
+                try {
+                    console.log(`======> [youtube] Unauth probe getBasicInfo client=${client}`);
+                    const fetchedInfo = await ytNoCookie.getBasicInfo(o.id, { client });
+                    const progressiveFormats = Array.isArray(fetchedInfo.streaming_data?.formats)
+                        ? fetchedInfo.streaming_data.formats
+                        : [];
+                    const bestCandidate = progressiveFormats
+                        .filter((format) =>
+                            format?.has_video
+                            && format?.has_audio
+                            && typeof format?.mime_type === "string"
+                            && format.mime_type.includes("video/mp4")
+                        )
+                        .map((format) => {
+                            const resolvedUrl = resolveFormatUrl(format, useHLS, client, ytNoCookie);
+                            return {
+                                resolvedUrl,
+                                score: getUrlAccessibilityScore(resolvedUrl),
+                                itag: format?.itag,
+                            };
+                        })
+                        .filter((item) => typeof item.resolvedUrl === "string" && item.resolvedUrl.length > 0)
+                        .sort((a, b) => b.score - a.score)[0];
+
+                    if (bestCandidate && bestCandidate.score > unauthBestScore) {
+                        unauthBestScore = bestCandidate.score;
+                        unauthBestInfo = fetchedInfo;
+                        unauthBestClient = client;
+                        unauthBestItag = bestCandidate.itag;
+                        console.log(
+                            `======> [youtube] Unauth candidate updated: client=${client}, itag=${unauthBestItag ?? "n/a"}, score=${unauthBestScore}`,
+                        );
+                    }
+                } catch (e) {
+                    console.log(`======> [youtube] Unauth probe failed for client ${client}: ${e?.message}`);
+                }
+            }
+
+            if (unauthBestInfo && unauthBestScore > bestProgressiveScore) {
+                bestProgressiveScore = unauthBestScore;
+                bestProgressiveClientInfo = unauthBestInfo;
+                bestProgressiveClient = unauthBestClient;
+                activeInnertube = ytNoCookie;
+                console.log(
+                    `======> [youtube] Unauth probe selected better candidate: client=${unauthBestClient}, itag=${unauthBestItag ?? "n/a"}, score=${unauthBestScore}`,
+                );
+            } else {
+                console.log(`======> [youtube] Unauth probe did not improve candidate score`);
+            }
+        } catch (e) {
+            console.log(`======> [youtube] Unauth probe init failed: ${e?.message || e}`);
         }
     }
 
@@ -483,7 +567,7 @@ export default async function (o) {
                     format,
                     useHLS,
                     innertubeClient,
-                    innertube,
+                    activeInnertube,
                 );
                 return {
                     resolvedUrl,
@@ -812,8 +896,8 @@ export default async function (o) {
             urls = audio.uri;
         }
 
-        if (!clientsWithNoCipher.includes(innertubeClient) && innertube) {
-            urls = audio.decipher(innertube.session.player);
+        if (!clientsWithNoCipher.includes(innertubeClient) && activeInnertube) {
+            urls = audio.decipher(activeInnertube.session.player);
         }
 
         let cover = `https://i.ytimg.com/vi/${o.id}/maxresdefault.jpg`;
@@ -843,7 +927,7 @@ export default async function (o) {
 
     if (!o.isAudioOnly) {
         const resolveUrl = (format) =>
-            resolveFormatUrl(format, useHLS, innertubeClient, innertube);
+            resolveFormatUrl(format, useHLS, innertubeClient, activeInnertube);
 
         let directUrl = null;
         let selectedKind = null;
@@ -980,6 +1064,14 @@ export default async function (o) {
         }
 
         if (directUrl) {
+            const selectedScore = getUrlAccessibilityScore(directUrl);
+            if (selectedScore <= -100) {
+                console.log(
+                    `======> [youtube] Rejecting redirect URL due to low accessibility score=${selectedScore}; avoiding client-side 403`,
+                );
+                return { error: "youtube.no_matching_format" };
+            }
+
             try {
                 const parsed = new URL(directUrl);
                 console.log(

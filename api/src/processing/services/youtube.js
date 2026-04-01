@@ -331,6 +331,8 @@ export default async function (o) {
 
     let info;
     let lastInfoError;
+    const requiresProgressiveMuxedForRedirect =
+        !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang;
     const directRedirectInfoClients =
         !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang
             ? ["ANDROID", "IOS", "WEB", "WEB_EMBEDDED"]
@@ -343,17 +345,60 @@ export default async function (o) {
         "WEB_EMBEDDED",
     ])];
 
+    let fallbackInfo;
+    let fallbackClient;
+
     for (const client of infoClients) {
         try {
             console.log(`======> [youtube] Getting basic video info for ID: ${o.id} with client: ${client}`);
-            info = await yt.getBasicInfo(o.id, { client });
-            innertubeClient = client;
+            const fetchedInfo = await yt.getBasicInfo(o.id, { client });
             console.log(`======> [youtube] Successfully retrieved video info with authentication using client: ${client}`);
-            break;
+
+            if (!requiresProgressiveMuxedForRedirect) {
+                info = fetchedInfo;
+                innertubeClient = client;
+                break;
+            }
+
+            const progressiveFormats = Array.isArray(fetchedInfo.streaming_data?.formats)
+                ? fetchedInfo.streaming_data.formats
+                : [];
+            const hasResolvableProgressiveMuxed = progressiveFormats.some((format) => {
+                if (
+                    !format?.has_video
+                    || !format?.has_audio
+                    || typeof format?.mime_type !== "string"
+                    || !format.mime_type.includes("video/mp4")
+                ) {
+                    return false;
+                }
+
+                const resolvedUrl = resolveFormatUrl(format, useHLS, client, innertube);
+                return typeof resolvedUrl === "string" && resolvedUrl.length > 0;
+            });
+
+            if (hasResolvableProgressiveMuxed) {
+                info = fetchedInfo;
+                innertubeClient = client;
+                console.log(`======> [youtube] Selected client ${client} with progressive muxed stream support`);
+                break;
+            }
+
+            if (!fallbackInfo) {
+                fallbackInfo = fetchedInfo;
+                fallbackClient = client;
+            }
+            console.log(`======> [youtube] Client ${client} has no resolvable progressive muxed stream, trying next client`);
         } catch (e) {
             lastInfoError = e;
             console.log(`======> [youtube] Failed to get video info with client ${client}: ${e?.message}`);
         }
+    }
+
+    if (!info && fallbackInfo) {
+        info = fallbackInfo;
+        innertubeClient = fallbackClient;
+        console.log(`======> [youtube] Falling back to client ${fallbackClient} without progressive muxed stream`);
     }
 
     if (!info) {

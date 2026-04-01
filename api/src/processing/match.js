@@ -100,7 +100,55 @@ const requestUpstreamCobalt = async (targetUrl) => {
             return null;
         }
 
-        return { status: response.status, body };
+        const upstreamOrigin = endpoint.origin;
+        const normalizeTunnelUrl = (value) => {
+            if (typeof value !== "string") return value;
+
+            let parsed;
+            try {
+                parsed = new URL(value);
+            } catch {
+                return value;
+            }
+
+            if (parsed.pathname !== "/tunnel") {
+                return value;
+            }
+
+            return new URL(
+                parsed.pathname + parsed.search + parsed.hash,
+                upstreamOrigin,
+            ).toString();
+        };
+
+        const normalizedBody = (() => {
+            if (!body || typeof body !== "object") return body;
+
+            if (body.status === "tunnel" || body.status === "redirect") {
+                return {
+                    ...body,
+                    url: normalizeTunnelUrl(body.url),
+                };
+            }
+
+            if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
+                return {
+                    ...body,
+                    tunnel: body.tunnel.map((item) => normalizeTunnelUrl(item)),
+                };
+            }
+
+            if (body.status === "picker" && typeof body.audio === "string") {
+                return {
+                    ...body,
+                    audio: normalizeTunnelUrl(body.audio),
+                };
+            }
+
+            return body;
+        })();
+
+        return { status: response.status, body: normalizedBody };
     } catch {
         return null;
     } finally {

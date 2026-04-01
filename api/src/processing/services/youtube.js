@@ -58,7 +58,7 @@ const resolveFormatUrl = (format, useHLS, innertubeClient, innertubeInstance) =>
         try {
             return format.decipher(innertubeInstance.session.player);
         } catch {
-            return null;
+            return format.url || null;
         }
     }
 
@@ -263,7 +263,7 @@ export default async function (o) {
     let innertubeClient =
         o.innertubeClient
         || env.customInnertubeClient
-        || (prefersDirectRedirectClient ? "ANDROID_VR" : "IOS");
+        || (prefersDirectRedirectClient ? "ANDROID" : "IOS");
     console.log(`======> [youtube] Using HLS: ${useHLS}, Client: ${innertubeClient}`);
 
     // Force direct redirect flow for normal video downloads:
@@ -333,7 +333,7 @@ export default async function (o) {
     let lastInfoError;
     const directRedirectInfoClients =
         !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang
-            ? ["ANDROID_VR", "ANDROID", "WEB", "IOS", "WEB_EMBEDDED"]
+            ? ["ANDROID", "IOS", "WEB", "WEB_EMBEDDED"]
             : [];
     const infoClients = [...new Set([
         innertubeClient,

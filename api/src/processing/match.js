@@ -277,6 +277,7 @@ export default async function({ host, patternMatch, params, authType }) {
                     dubLang: params.youtubeDubLang,
                     youtubeHLS,
                     subtitleLang,
+                    requestClientIp: params.requestClientIp,
                 }
 
                 if (url.hostname === "music.youtube.com" || isAudioOnly) {

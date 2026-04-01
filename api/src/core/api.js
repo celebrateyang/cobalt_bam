@@ -455,6 +455,16 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
         const requestId = Math.random().toString(36).slice(2, 10);
         const hasClerkTokenHeader = !!req.header("X-Clerk-Token");
+        const requestClientIp = String(
+            req.header("cf-connecting-ip")
+            || req.header("x-forwarded-for")
+            || req.header("x-real-ip")
+            || req.ip
+            || "",
+        )
+            .split(",")[0]
+            .trim()
+            .replace(/^::ffff:/, "");
         console.log(
             `[DOWNLOAD AUTH] request_id=${requestId} url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
         );
@@ -510,7 +520,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             const result = await match({
                 host: parsed.host,
                 patternMatch: parsed.patternMatch,
-                params: normalizedRequest,
+                params: {
+                    ...normalizedRequest,
+                    requestClientIp,
+                },
                 authType,
             });
 

@@ -4,6 +4,48 @@ import ipaddr from "ipaddr.js";
 import { apiSchema } from "./schema.js";
 import { createProxyTunnels, createStream } from "../stream/manage.js";
 
+const parseWithSchema = async (payload) => {
+    return apiSchema.safeParseAsync(payload).catch(() => ({ success: false }));
+};
+
+const sanitizeNullValues = (request) => {
+    if (!request || typeof request !== "object" || Array.isArray(request)) {
+        return request;
+    }
+
+    const sanitized = {};
+    for (const [key, value] of Object.entries(request)) {
+        if (value === null) continue;
+        sanitized[key] = value;
+    }
+
+    return sanitized;
+};
+
+const pickKnownSchemaKeys = (request) => {
+    if (!request || typeof request !== "object" || Array.isArray(request)) {
+        return request;
+    }
+
+    const known = {};
+    const schemaShape = apiSchema?.shape || {};
+
+    for (const key of Object.keys(schemaShape)) {
+        if (!Object.prototype.hasOwnProperty.call(request, key)) {
+            continue;
+        }
+
+        const value = request[key];
+        if (value === undefined || value === null) {
+            continue;
+        }
+
+        known[key] = value;
+    }
+
+    return known;
+};
+
 export function createResponse(responseType, responseData) {
     const internalError = (code) => {
         return {
@@ -127,9 +169,30 @@ export function normalizeRequest(request) {
         request.localProcessing = request.localProcessing ? "preferred" : "disabled";
     }
 
-    return apiSchema.safeParseAsync(request).catch(() => (
-        { success: false }
-    ));
+    return (async () => {
+        const firstPass = await parseWithSchema(request);
+        if (firstPass.success) {
+            return firstPass;
+        }
+
+        const withoutNulls = sanitizeNullValues(request);
+        if (withoutNulls !== request) {
+            const secondPass = await parseWithSchema(withoutNulls);
+            if (secondPass.success) {
+                return secondPass;
+            }
+        }
+
+        const knownOnly = pickKnownSchemaKeys(withoutNulls);
+        if (knownOnly && knownOnly !== withoutNulls) {
+            const thirdPass = await parseWithSchema(knownOnly);
+            if (thirdPass.success) {
+                return thirdPass;
+            }
+        }
+
+        return { success: false };
+    })();
 }
 
 export function getIP(req, prefix = 56) {

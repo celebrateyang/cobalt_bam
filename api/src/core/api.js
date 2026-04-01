@@ -322,9 +322,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     });
 
     app.post(['/', '/expand'], apiLimiter);
-    app.use('/', express.json({ limit: 1024 }));
+    app.use('/', express.json({ limit: "32kb" }));
 
-    app.use('/', (err, _, res, next) => {
+    app.use('/', (err, req, res, next) => {
         if (!err) {
             return next();
         }
@@ -337,6 +337,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         if (!isBodyParserError) {
             return next(err);
         }
+
+        const contentLength = req.header("content-length") || "n/a";
+        const contentType = req.header("content-type") || "n/a";
+        const ip = String(req.ip || "").replace(/^::ffff:/, "");
+        console.warn(
+            `[REQUEST INVALID_BODY] path=${req.path} parser_error=${err.type || err.name || "unknown"} content_type=${contentType} content_length=${contentLength} ip=${ip}`,
+        );
 
         const { status, body } = createResponse("error", {
             code: "error.api.invalid_body",
@@ -410,6 +417,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
         const { success, data: normalizedRequest } = await normalizeRequest(request);
         if (!success) {
+            const requestType = request === null ? "null" : typeof request;
+            const requestKeys = request && typeof request === "object" && !Array.isArray(request)
+                ? Object.keys(request).slice(0, 32).join(",")
+                : "n/a";
+            console.warn(
+                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys}`,
+            );
             return fail(res, "error.api.invalid_body");
         }
 

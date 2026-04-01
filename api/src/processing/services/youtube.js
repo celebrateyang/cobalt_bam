@@ -85,6 +85,11 @@ const getUrlAccessibilityScore = (rawUrl) => {
         if (client.startsWith("ANDROID")) score += 20;
         if (client.startsWith("IOS")) score -= 10;
 
+        const rateBypass = parsed.searchParams.get("ratebypass");
+        if (rateBypass === "yes" || rateBypass === "1" || rateBypass === "true") {
+            score += 80;
+        }
+
         const itag = Number(parsed.searchParams.get("itag"));
         if ([18, 22].includes(itag)) score += 20;
 
@@ -258,7 +263,7 @@ export default async function (o) {
     let innertubeClient =
         o.innertubeClient
         || env.customInnertubeClient
-        || (prefersDirectRedirectClient ? "ANDROID" : "IOS");
+        || (prefersDirectRedirectClient ? "ANDROID_VR" : "IOS");
     console.log(`======> [youtube] Using HLS: ${useHLS}, Client: ${innertubeClient}`);
 
     // Force direct redirect flow for normal video downloads:
@@ -326,8 +331,13 @@ export default async function (o) {
 
     let info;
     let lastInfoError;
+    const directRedirectInfoClients =
+        !o.isAudioOnly && !o.isAudioMuted && !useHLS && !o.subtitleLang
+            ? ["ANDROID_VR", "ANDROID", "WEB", "IOS", "WEB_EMBEDDED"]
+            : [];
     const infoClients = [...new Set([
         innertubeClient,
+        ...directRedirectInfoClients,
         "IOS",
         "WEB",
         "WEB_EMBEDDED",
@@ -746,6 +756,7 @@ export default async function (o) {
             resolveFormatUrl(format, useHLS, innertubeClient, innertube);
 
         let directUrl = null;
+        let selectedKind = null;
 
         // Prefer progressive MP4 first when downloading normal video (with audio).
         if (!o.isAudioMuted && !useHLS) {
@@ -791,6 +802,7 @@ export default async function (o) {
 
                 directUrl = preferred?.resolvedUrl || null;
                 if (directUrl && preferred?.format) {
+                    selectedKind = "muxed";
                     const progressiveQuality = preferred.quality;
                     const picked = preferred.format;
                     filenameAttributes.resolution = `${picked.width}x${picked.height}`;
@@ -801,8 +813,14 @@ export default async function (o) {
             }
         }
 
-        // Fallback to video-only direct URL (still redirect, never merge).
-        if (!directUrl && video) {
+        // For normal video downloads, require progressive muxed streams only.
+        // Avoid silently falling back to mute video URLs.
+        if (!directUrl && !o.isAudioMuted) {
+            console.log(`======> [youtube] No progressive muxed URL available for redirect-only policy`);
+            return { error: "youtube.no_matching_format" };
+        }
+
+        if (!directUrl && o.isAudioMuted && video) {
             const adaptiveFormats = Array.isArray(info.streaming_data?.adaptive_formats)
                 ? info.streaming_data.adaptive_formats
                 : [];
@@ -826,6 +844,7 @@ export default async function (o) {
             directUrl = videoCandidates[0]?.resolvedUrl || null;
 
             if (directUrl && picked) {
+                selectedKind = "video";
                 let resolution;
                 if (useHLS) {
                     resolution = normalizeQuality(picked.resolution);
@@ -847,7 +866,7 @@ export default async function (o) {
             }
         }
 
-        if (!directUrl && audio) {
+        if (!directUrl && o.isAudioMuted && audio) {
             const adaptiveFormats = Array.isArray(info.streaming_data?.adaptive_formats)
                 ? info.streaming_data.adaptive_formats
                 : [];
@@ -867,13 +886,14 @@ export default async function (o) {
                 });
 
             directUrl = audioCandidates[0]?.resolvedUrl || null;
+            if (directUrl) selectedKind = "audio";
         }
 
         if (directUrl) {
             try {
                 const parsed = new URL(directUrl);
                 console.log(
-                    `======> [youtube] Redirect URL selected: host=${parsed.host}, itag=${parsed.searchParams.get("itag") || "n/a"}, client=${parsed.searchParams.get("c") || "n/a"}, ipbypass=${parsed.searchParams.get("ipbypass") || "no"}, has_ip=${parsed.searchParams.has("ip")}`,
+                    `======> [youtube] Redirect URL selected: kind=${selectedKind || "unknown"}, host=${parsed.host}, itag=${parsed.searchParams.get("itag") || "n/a"}, client=${parsed.searchParams.get("c") || "n/a"}, ipbypass=${parsed.searchParams.get("ipbypass") || "no"}, has_ip=${parsed.searchParams.has("ip")}`,
                 );
             } catch {}
 

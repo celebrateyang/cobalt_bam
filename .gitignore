@@ -30,3 +30,8 @@ wechatpay-secret.yaml
 urls.txt
 scripts/indexnow-submit.mjs
 api/src/cookies.json
+tmp/snapwc_captcha_state.json
+tmp/snapwc_captcha.png
+tmp/snapwc_parse_decoded.json
+tmp/snapwc_parse_result_spki.json
+tmp/snapwc_parse_result.json

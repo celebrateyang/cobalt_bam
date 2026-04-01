@@ -70,8 +70,9 @@ const normalizeTunnelUrl = (url?: string) => {
         }
 
         const apiOrigin = new URL(apiBase, window.location.origin).origin;
+        // Keep public external /tunnel links as-is (e.g. upstream instances),
+        // otherwise signed tunnel parameters can break if rewritten to another host.
         const shouldRewrite =
-            parsed.origin !== apiOrigin ||
             parsed.port === "9000" ||
             isPrivateHostname(parsed.hostname);
         if (shouldRewrite) {

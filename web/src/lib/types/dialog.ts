@@ -16,6 +16,9 @@ export type DialogPickerItem = {
     type?: 'photo' | 'video' | 'gif',
     url: string,
     thumb?: string,
+    kind?: 'video' | 'audio' | 'mute',
+    label?: string,
+    note?: string,
 }
 
 export type DialogBatchItem = {

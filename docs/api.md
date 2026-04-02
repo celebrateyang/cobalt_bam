@@ -82,6 +82,9 @@ notes:
 | `type`       | `string`  | `photo` / `video` / `gif`                                   |
 | `url`        | `string`  |                                                             |
 | `thumb`      | `string`  | **optional** thumbnail url                                  |
+| `kind`       | `string`  | **optional** `video` / `audio` / `mute` hint for UI         |
+| `label`      | `string`  | **optional** short quality label (for example `720p MP4`)    |
+| `note`       | `string`  | **optional** secondary note (for example file size)          |
 
 ### error response
 | key          | type     | values                                                      |

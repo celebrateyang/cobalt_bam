@@ -9,14 +9,22 @@
     import IconMovie from "@tabler/icons-svelte/IconMovie.svelte";
     import IconPhoto from "@tabler/icons-svelte/IconPhoto.svelte";
     import IconGif from "@tabler/icons-svelte/IconGif.svelte";
+    import IconMusic from "@tabler/icons-svelte/IconMusic.svelte";
 
     export let item: DialogPickerItem;
     export let number: number;
 
     let imageLoaded = false;
-    const isTunnel = new URL(item.url).pathname === "/tunnel";
+    const isTunnel = (() => {
+        try {
+            return new URL(item.url).pathname === "/tunnel";
+        } catch {
+            return false;
+        }
+    })();
 
     $: itemType = item.type ?? "photo";
+    $: itemKind = item.kind ?? "video";
 </script>
 
 <button
@@ -28,7 +36,9 @@
         })}
 >
     <div class="picker-type">
-        {#if itemType === "video"}
+        {#if itemKind === "audio"}
+            <IconMusic />
+        {:else if itemType === "video"}
             <IconMovie />
         {:else if itemType === "gif"}
             <IconGif />
@@ -46,6 +56,17 @@
         alt="{$t(`a11y.dialog.picker.item.${itemType}`)} {number}"
     />
     <Skeleton class="picker-image elevated" hidden={imageLoaded} />
+
+    {#if item.label || item.note}
+        <div class="picker-meta">
+            {#if item.label}
+                <div class="picker-label">{item.label}</div>
+            {/if}
+            {#if item.note}
+                <div class="picker-note">{item.note}</div>
+            {/if}
+        </div>
+    {/if}
 </button>
 
 <style>
@@ -111,5 +132,39 @@
     .picker-type :global(svg) {
         width: 22px;
         height: 22px;
+    }
+
+    .picker-meta {
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        bottom: 6px;
+        z-index: 9;
+        pointer-events: none;
+
+        background: rgba(0, 0, 0, 0.62);
+        color: var(--white);
+        border-radius: 7px;
+        padding: 6px 7px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .picker-label {
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 600;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .picker-note {
+        font-size: 10px;
+        line-height: 1.2;
+        opacity: 0.9;
+        text-align: left;
     }
 </style>

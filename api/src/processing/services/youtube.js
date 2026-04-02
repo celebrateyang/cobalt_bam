@@ -8,7 +8,9 @@ import { sanitizeString } from "../create-filename.js";
 
 const DEFAULT_TIMEOUT_MS = 45000;
 const MIN_GOOD_URL_SCORE = -140;
+const MIN_PICKER_URL_SCORE = -180;
 const MAX_CANDIDATE_LOGS = 10;
+const MAX_PICKER_ITEMS_PER_GROUP = 6;
 
 const normalizeIp = (value) => {
     if (typeof value !== "string") return "";
@@ -37,6 +39,20 @@ const parseHeight = (format) => {
     const note = typeof format?.format_note === "string" ? format.format_note : "";
     const match = note.match(/(\d{3,4})p/i);
     return match ? parseNumber(match[1]) : 0;
+};
+
+const parseFileSize = (format) => {
+    return parseNumber(format?.filesize || format?.filesize_approx);
+};
+
+const formatSizeLabel = (bytes) => {
+    const size = parseNumber(bytes);
+    if (size <= 0) return undefined;
+
+    const mb = size / (1024 * 1024);
+    if (mb >= 100) return `${mb.toFixed(0)}MB`;
+    if (mb >= 10) return `${mb.toFixed(1)}MB`;
+    return `${mb.toFixed(2)}MB`;
 };
 
 const getUrlAccessibilityScore = (rawUrl, requestClientIp) => {
@@ -332,6 +348,48 @@ const pickCandidate = ({
     return parsedFormats;
 };
 
+const logCandidates = (label, candidates) => {
+    console.log(`======> [youtube] candidate count mode=${label} total=${candidates.length}`);
+    for (let i = 0; i < Math.min(MAX_CANDIDATE_LOGS, candidates.length); i += 1) {
+        const candidate = candidates[i];
+        try {
+            const parsed = new URL(candidate.url);
+            console.log(
+                `======> [youtube][${label} ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} score=${candidate.score.toFixed(2)} access=${candidate.accessScore.toFixed(2)} c=${parsed.searchParams.get("c") || "n/a"} ip=${parsed.searchParams.get("ip") || "n/a"} ipbypass=${parsed.searchParams.get("ipbypass") || "no"}`,
+            );
+        } catch {
+            console.log(
+                `======> [youtube][${label} ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} score=${candidate.score.toFixed(2)} access=${candidate.accessScore.toFixed(2)}`,
+            );
+        }
+    }
+};
+
+const toPickerItem = ({ candidate, kind, thumb }) => {
+    const ext = String(candidate.ext || "mp4").toUpperCase();
+    const bitrate = Math.round(parseNumber(candidate.tbr));
+    const sizeLabel = formatSizeLabel(parseFileSize(candidate.format));
+    const height = parseNumber(candidate.height || candidate.format?.height);
+
+    let label;
+    if (kind === "audio") {
+        label = `${bitrate > 0 ? `${bitrate}kbps ` : ""}${ext}`.trim();
+    } else if (kind === "mute") {
+        label = `${height > 0 ? `${height}p ` : ""}${bitrate > 0 ? `${bitrate}kbps ` : ""}${ext} (mute)`.trim();
+    } else {
+        label = `${height > 0 ? `${height}p ` : ""}${bitrate > 0 ? `${bitrate}kbps ` : ""}${ext}`.trim();
+    }
+
+    return {
+        type: "video",
+        kind,
+        url: candidate.url,
+        thumb,
+        label,
+        note: sizeLabel,
+    };
+};
+
 const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
     const runner = await resolveYtDlpCommand();
     if (!runner) {
@@ -416,6 +474,7 @@ const buildYoutubeResult = ({
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
     const artist = String(info.channel || info.uploader || "").trim();
     const subtitles = pickSubtitleUrl(info, o.subtitleLang);
+    const thumbnail = String(info.thumbnail || info?.thumbnails?.[0]?.url || "").trim() || undefined;
 
     const mode = o.isAudioOnly ? "audioOnly" : (o.isAudioMuted ? "videoOnly" : "muxed");
     const candidates = pickCandidate({
@@ -425,19 +484,88 @@ const buildYoutubeResult = ({
         mode,
     });
 
-    console.log(`======> [youtube] candidate count mode=${mode} total=${candidates.length}`);
-    for (let i = 0; i < Math.min(MAX_CANDIDATE_LOGS, candidates.length); i += 1) {
-        const candidate = candidates[i];
-        try {
-            const parsed = new URL(candidate.url);
+    logCandidates(mode, candidates);
+    if (!o.isAudioOnly && !o.isAudioMuted) {
+        const muxedCandidates = candidates
+            .filter((entry) => entry.accessScore > MIN_PICKER_URL_SCORE);
+        const videoOnlyCandidates = pickCandidate({
+            formats: allFormats,
+            requestClientIp,
+            targetQuality,
+            mode: "videoOnly",
+        }).filter((entry) => entry.accessScore > MIN_PICKER_URL_SCORE);
+        const audioOnlyCandidates = pickCandidate({
+            formats: allFormats,
+            requestClientIp,
+            targetQuality,
+            mode: "audioOnly",
+        }).filter((entry) => entry.accessScore > MIN_PICKER_URL_SCORE);
+
+        logCandidates("videoOnly", videoOnlyCandidates);
+        logCandidates("audioOnly", audioOnlyCandidates);
+
+        const picker = [];
+        const seenUrls = new Set();
+        const addPickerItems = (list, kind) => {
+            for (const item of list.slice(0, MAX_PICKER_ITEMS_PER_GROUP)) {
+                if (!item?.url || seenUrls.has(item.url)) continue;
+                picker.push(toPickerItem({ candidate: item, kind, thumb: thumbnail }));
+                seenUrls.add(item.url);
+            }
+        };
+
+        addPickerItems(muxedCandidates, "video");
+        addPickerItems(videoOnlyCandidates, "mute");
+        addPickerItems(audioOnlyCandidates, "audio");
+
+        if (!picker.length) {
             console.log(
-                `======> [youtube][candidate ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} score=${candidate.score.toFixed(2)} access=${candidate.accessScore.toFixed(2)} c=${parsed.searchParams.get("c") || "n/a"} ip=${parsed.searchParams.get("ip") || "n/a"} ipbypass=${parsed.searchParams.get("ipbypass") || "no"}`,
+                `======> [youtube] no acceptable picker urls selected (best_access=${candidates[0]?.accessScore ?? "n/a"})`,
             );
-        } catch {
-            console.log(
-                `======> [youtube][candidate ${i + 1}] fmt=${candidate.format.format_id} ext=${candidate.ext} h=${candidate.height} tbr=${candidate.tbr} score=${candidate.score.toFixed(2)} access=${candidate.accessScore.toFixed(2)}`,
-            );
+            return { error: "youtube.no_matching_format" };
         }
+
+        const primary = muxedCandidates[0] || candidates[0] || videoOnlyCandidates[0] || audioOnlyCandidates[0];
+        const extension = String(primary?.ext || "mp4").toLowerCase();
+        const height = parseNumber(primary?.height || primary?.format?.height);
+        const width = parseNumber(primary?.format?.width);
+        const qualityLabel = height ? `${height}p` : undefined;
+        const resolution = width && height ? `${width}x${height}` : undefined;
+        const youtubeFormat = extension === "webm" ? "vp9" : "h264";
+
+        const fileMetadata = {
+            title,
+            artist: artist || undefined,
+        };
+
+        return {
+            picker,
+            audio: audioOnlyCandidates[0]?.url,
+            filename: sanitizeString(title),
+            audioFilename: sanitizeString(title),
+            subtitles,
+            filenameAttributes: {
+                service: "youtube",
+                id: o.id,
+                title,
+                author: artist,
+                resolution,
+                qualityLabel,
+                extension,
+                youtubeFormat,
+            },
+            fileMetadata,
+            originalRequest: {
+                ...o,
+                dispatcher: undefined,
+                itag: {
+                    video: primary?.format?.format_id || primary?.format?.itag,
+                    audio: audioOnlyCandidates[0]?.format?.format_id || audioOnlyCandidates[0]?.format?.itag,
+                },
+                innertubeClient: "yt-dlp",
+            },
+            duration,
+        };
     }
 
     const selected = candidates[0];

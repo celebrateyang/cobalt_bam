@@ -174,6 +174,13 @@ export default function({
                     params = { picker: r.picker };
                     break;
 
+                case "youtube":
+                    params = {
+                        picker: r.picker,
+                        url: r.audio,
+                    };
+                    break;
+
                 case "tiktok":
                     let audioStreamType = "audio";
                     if (r.bestAudio === "mp3" && audioFormat === "best") {
@@ -193,6 +200,10 @@ export default function({
                             audioBitrate
                         })
                     }
+                    break;
+
+                default:
+                    params = { picker: r.picker };
                     break;
             }
             break;

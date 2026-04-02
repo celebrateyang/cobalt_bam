@@ -209,6 +209,20 @@ const requestUpstreamCobalt = async (payload) => {
                 };
             }
 
+            if (body.status === "picker" && Array.isArray(body.picker)) {
+                return {
+                    ...body,
+                    audio: typeof body.audio === "string" ? normalizeTunnelUrl(body.audio) : body.audio,
+                    picker: body.picker.map((item) => {
+                        if (!item || typeof item !== "object") return item;
+                        return {
+                            ...item,
+                            url: normalizeTunnelUrl(item.url),
+                        };
+                    }),
+                };
+            }
+
             if (body.status === "picker" && typeof body.audio === "string") {
                 return {
                     ...body,

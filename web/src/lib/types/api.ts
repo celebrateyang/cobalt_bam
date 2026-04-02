@@ -29,6 +29,9 @@ type CobaltPickerResponse = {
         type: 'photo' | 'video' | 'gif',
         url: string,
         thumb?: string,
+        kind?: 'video' | 'audio' | 'mute',
+        label?: string,
+        note?: string,
     }[];
     audio?: string,
     audioFilename?: string,

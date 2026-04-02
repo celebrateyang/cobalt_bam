@@ -155,7 +155,11 @@
             return formatFileSize(info.resultFile?.size);
 
         case "error":
-            return !retrying ? $t(`error.${info.errorCode}`) : $t("queue.state.retrying");
+            if (retrying) return $t("queue.state.retrying");
+            if (hasResumeSnapshot && info.errorCode === "queue.fetch.stalled") {
+                return `${$t(`error.${info.errorCode}`)} ${$t("button.continue")}`;
+            }
+            return $t(`error.${info.errorCode}`);
 
         case "waiting":
             return $t("queue.state.waiting");

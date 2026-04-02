@@ -12,7 +12,8 @@ import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
 import { createSavePipeline } from "$lib/task-manager/queue";
-import { updateItem } from "$lib/state/task-manager/queue";
+import { queue, updateItem } from "$lib/state/task-manager/queue";
+import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
 import { finalizePointsHold } from "$lib/api/points";
@@ -137,6 +138,27 @@ const applyQueueMeta = (
         batchSessionId: queueMeta?.batchSessionId ?? current.batchSessionId,
         batchSelectionTotal: queueMeta?.batchSelectionTotal ?? current.batchSelectionTotal,
     }));
+};
+
+const resumableErrorCodes = new Set([
+    "queue.fetch.stalled",
+    "queue.fetch.network_error",
+    "queue.fetch.timeout",
+]);
+
+const findResumableTaskIdForUrl = (url?: string) => {
+    if (!url) return;
+
+    const queueSnapshot = get(queue);
+    for (const [taskId, item] of Object.entries(queueSnapshot)) {
+        if (item.state !== "error") continue;
+        if (!item.canRetry || !item.originalRequest?.url) continue;
+        if (item.originalRequest.url !== url) continue;
+        if (!item.errorCode || !resumableErrorCodes.has(item.errorCode)) continue;
+        if (!hasFetchResumeStateForTask(taskId)) continue;
+
+        return taskId;
+    }
 };
 
 const guessMimeTypeFromFilename = (filename: string) => {
@@ -342,6 +364,7 @@ export const savingHandler = async ({
     if (!request && !url) return null;
 
     const selectedRequest = request || buildSaveRequest(url!);
+    const effectiveTaskId = oldTaskId || findResumableTaskIdForUrl(selectedRequest.url);
 
     if (clerkEnabled) {
         const signedIn = await ensureSignedIn();
@@ -417,8 +440,8 @@ export const savingHandler = async ({
                 const holdId = response?.points?.holdId;
                 if (holdId) {
                     void finalizePointsHold(holdId, "redirect_download_started", {
-                        queueId: oldTaskId,
-                        itemId: oldTaskId,
+                        queueId: effectiveTaskId,
+                        itemId: effectiveTaskId,
                     }).catch(() => false);
                 }
 
@@ -453,9 +476,9 @@ export const savingHandler = async ({
                     },
                 } as any,
                 selectedRequest,
-                oldTaskId
+                effectiveTaskId
             );
-            applyQueueMeta(oldTaskId, response, queueMeta);
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
             return response;
         }
 
@@ -486,9 +509,9 @@ export const savingHandler = async ({
                     },
                 } as any,
                 selectedRequest,
-                oldTaskId
+                effectiveTaskId
             );
-            applyQueueMeta(oldTaskId, response, queueMeta);
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
             return response;
         }
 
@@ -519,8 +542,8 @@ export const savingHandler = async ({
         };
 
         try {
-            createSavePipeline(normalizedResponse, selectedRequest, oldTaskId);
-            applyQueueMeta(oldTaskId, response, queueMeta);
+            createSavePipeline(normalizedResponse, selectedRequest, effectiveTaskId);
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
         } catch (error) {
             console.error("Failed to create save pipeline:", error);
 
@@ -529,8 +552,8 @@ export const savingHandler = async ({
             if (holdId) {
                 import("$lib/api/points").then(({ releasePointsHold }) => {
                     releasePointsHold(holdId, "pipeline_creation_failed", {
-                        queueId: oldTaskId,
-                        itemId: oldTaskId,
+                        queueId: effectiveTaskId,
+                        itemId: effectiveTaskId,
                         errorCode: "pipeline_creation_failed",
                     }).catch(() => { });
                 });

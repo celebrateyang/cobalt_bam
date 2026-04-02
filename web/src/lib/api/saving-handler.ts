@@ -241,6 +241,8 @@ const ensureSignedIn = async () => {
     return false;
 };
 
+const isHomePageRoute = () => get(page)?.route?.id === "/[lang]";
+
 export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
     const getSetting = lazySettingGetter(get(settings));
 
@@ -309,6 +311,12 @@ const estimatePointsForUrl = async (url: string) => {
 
 const confirmPointsPreview = async (url: string) => {
     const { points, hasEstimate } = await estimatePointsForUrl(url);
+
+    // Home page: when points cannot be estimated, skip the extra confirmation
+    // and continue with the normal download flow.
+    if (!hasEstimate && isHomePageRoute()) {
+        return true;
+    }
 
     return new Promise<boolean>((resolve) => {
         createDialog({

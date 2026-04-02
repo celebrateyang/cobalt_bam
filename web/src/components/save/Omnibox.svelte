@@ -2,7 +2,7 @@
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
     import { browser } from "$app/environment";
-    import { SvelteComponent, tick } from "svelte";
+    import { onDestroy, tick } from "svelte";
 
     import { t } from "$lib/i18n/translations";
 
@@ -40,6 +40,18 @@
     import IconSparkles from "$components/icons/Sparkles.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
 
+    export let feedbackHref: string | null = null;
+    export let feedbackText: string | null = null;
+    export let onFeedbackClick:
+        | ((event: MouseEvent) => void | Promise<void>)
+        | null = null;
+    export let collectionGuideText: string | null = null;
+    export let batchGuideText: string | null = null;
+    export let collectionGuideBody: string | null = null;
+    export let batchGuideBody: string | null = null;
+    export let collectionGuidePlatforms: string[] = [];
+    export let batchGuidePlatforms: string[] = [];
+
     let linkInput: Optional<HTMLInputElement>;
 
     let isFocused = false;
@@ -64,6 +76,11 @@
     let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
     let batchLimitEnabled = true;
     let batchLimitExceeded = false;
+    let feedbackLinkWidth = 0;
+
+    type GuideKey = "collection" | "batch";
+    let activeGuide: GuideKey | null = null;
+    let guideHideTimer: ReturnType<typeof setTimeout> | null = null;
 
     const extractUrls = (text: string) => {
         const matches = text.match(/https?:\/\/[^\s]+/gi) ?? [];
@@ -566,57 +583,125 @@
                 break;
         }
     };
+
+    const handleFeedbackLinkClick = (event: MouseEvent) => {
+        if (!onFeedbackClick) return;
+        event.preventDefault();
+        void onFeedbackClick(event);
+    };
+
+    const clearGuideHideTimer = () => {
+        if (!guideHideTimer) return;
+        clearTimeout(guideHideTimer);
+        guideHideTimer = null;
+    };
+
+    const showGuidePopover = (guide: GuideKey) => {
+        clearGuideHideTimer();
+        activeGuide = guide;
+    };
+
+    const scheduleHideGuidePopover = () => {
+        clearGuideHideTimer();
+        guideHideTimer = setTimeout(() => {
+            activeGuide = null;
+            guideHideTimer = null;
+        }, 120);
+    };
+
+    const toggleGuidePopover = (guide: GuideKey) => {
+        clearGuideHideTimer();
+        activeGuide = activeGuide === guide ? null : guide;
+    };
+
+    $: activeGuideTitle =
+        activeGuide === "collection"
+            ? collectionGuideText
+            : activeGuide === "batch"
+              ? batchGuideText
+              : null;
+    $: activeGuideBody =
+        activeGuide === "collection"
+            ? collectionGuideBody
+            : activeGuide === "batch"
+              ? batchGuideBody
+              : null;
+    $: activeGuidePlatforms =
+        activeGuide === "collection"
+            ? collectionGuidePlatforms
+            : activeGuide === "batch"
+              ? batchGuidePlatforms
+              : [];
+    $: actionRightOffset =
+        feedbackHref && feedbackText ? Math.max(0, feedbackLinkWidth + 10) : 0;
+
+    onDestroy(() => {
+        clearGuideHideTimer();
+    });
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div id="omnibox">
-    <div
-        id="input-container"
-        class:focused={isFocused}
-        class:downloadable={isDownloadable}
-    >
+<div id="omnibox" style={`--feedback-offset:${actionRightOffset}px;`}>
+    <div class="input-row">
         <div
-            id="input-link-icon"
-            class:loading={isLoading || isBotCheckOngoing}
+            id="input-container"
+            class:focused={isFocused}
+            class:downloadable={isDownloadable}
         >
-            {#if isLoading || isBotCheckOngoing}
-                <IconLoader2 />
-            {:else}
-                <IconLink />
+            <div
+                id="input-link-icon"
+                class:loading={isLoading || isBotCheckOngoing}
+            >
+                {#if isLoading || isBotCheckOngoing}
+                    <IconLoader2 />
+                {:else}
+                    <IconLink />
+                {/if}
+            </div>
+
+            <input
+                id="link-area"
+                bind:value={$link}
+                bind:this={linkInput}
+                on:input={() => (isFocused = true)}
+                on:focus={() => (isFocused = true)}
+                on:blur={() => (isFocused = false)}
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                maxlength="8192"
+                placeholder={$t("save.input.placeholder")}
+                aria-label={isBotCheckOngoing
+                    ? $t("a11y.save.link_area.turnstile")
+                    : $t("a11y.save.link_area")}
+                data-form-type="other"
+                disabled={isDisabled}
+            />
+
+            {#if $link && !isLoading}
+                <ClearButton click={() => ($link = "")} />
+            {/if}
+            {#if isDownloadable}
+                <DownloadButton
+                    url={detectedUrls[0]}
+                    onDownload={submit}
+                    blocked={isBatchInput && batchLimitExceeded}
+                    bind:disabled={isDisabled}
+                    bind:loading={isLoading}
+                />
             {/if}
         </div>
 
-        <input
-            id="link-area"
-            bind:value={$link}
-            bind:this={linkInput}
-            on:input={() => (isFocused = true)}
-            on:focus={() => (isFocused = true)}
-            on:blur={() => (isFocused = false)}
-            spellcheck="false"
-            autocomplete="off"
-            autocapitalize="off"
-            maxlength="8192"
-            placeholder={$t("save.input.placeholder")}
-            aria-label={isBotCheckOngoing
-                ? $t("a11y.save.link_area.turnstile")
-                : $t("a11y.save.link_area")}
-            data-form-type="other"
-            disabled={isDisabled}
-        />
-
-        {#if $link && !isLoading}
-            <ClearButton click={() => ($link = "")} />
-        {/if}
-        {#if isDownloadable}
-            <DownloadButton
-                url={detectedUrls[0]}
-                onDownload={submit}
-                blocked={isBatchInput && batchLimitExceeded}
-                bind:disabled={isDisabled}
-                bind:loading={isLoading}
-            />
+        {#if feedbackHref && feedbackText}
+            <a
+                class="feedback-inline-link feedback-inline-link--desktop"
+                href={feedbackHref}
+                bind:clientWidth={feedbackLinkWidth}
+                on:click={handleFeedbackLinkClick}
+            >
+                {feedbackText}
+            </a>
         {/if}
     </div>
 
@@ -661,12 +746,111 @@
             </SettingsButton>
         </Switcher>
 
-        <ActionButton id="paste" click={pasteClipboard}>
-            <IconClipboard />
-            <span id="paste-desktop-text">{$t("save.paste")}</span>
-            <span id="paste-mobile-text">{$t("save.paste.long")}</span>
-        </ActionButton>
+        <div class="action-right">
+            {#if collectionGuideText || batchGuideText}
+                <div
+                    class="download-guides download-guides--desktop"
+                    aria-label="Download guides"
+                >
+                    {#if collectionGuideText}
+                        <button
+                            type="button"
+                            class="guide-inline-link"
+                            on:mouseenter={() => showGuidePopover("collection")}
+                            on:mouseleave={scheduleHideGuidePopover}
+                            on:focus={() => showGuidePopover("collection")}
+                            on:blur={scheduleHideGuidePopover}
+                            on:click={() => toggleGuidePopover("collection")}
+                        >
+                            {collectionGuideText}
+                        </button>
+                    {/if}
+                    {#if batchGuideText}
+                        <button
+                            type="button"
+                            class="guide-inline-link"
+                            on:mouseenter={() => showGuidePopover("batch")}
+                            on:mouseleave={scheduleHideGuidePopover}
+                            on:focus={() => showGuidePopover("batch")}
+                            on:blur={scheduleHideGuidePopover}
+                            on:click={() => toggleGuidePopover("batch")}
+                        >
+                            {batchGuideText}
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+
+            <ActionButton id="paste" click={pasteClipboard}>
+                <IconClipboard />
+                <span id="paste-desktop-text">{$t("save.paste")}</span>
+                <span id="paste-mobile-text">{$t("save.paste.long")}</span>
+            </ActionButton>
+        </div>
     </div>
+
+    <div class="mobile-help-links" aria-label="Mobile helper links">
+        {#if feedbackHref && feedbackText}
+            <a
+                class="mobile-help-link"
+                href={feedbackHref}
+                on:click={handleFeedbackLinkClick}
+            >
+                {feedbackText}
+            </a>
+        {/if}
+        {#if collectionGuideText}
+            <button
+                type="button"
+                class="mobile-help-link mobile-guide-link"
+                on:mouseenter={() => showGuidePopover("collection")}
+                on:mouseleave={scheduleHideGuidePopover}
+                on:focus={() => showGuidePopover("collection")}
+                on:blur={scheduleHideGuidePopover}
+                on:click={() => toggleGuidePopover("collection")}
+            >
+                {collectionGuideText}
+            </button>
+        {/if}
+        {#if batchGuideText}
+            <button
+                type="button"
+                class="mobile-help-link mobile-guide-link"
+                on:mouseenter={() => showGuidePopover("batch")}
+                on:mouseleave={scheduleHideGuidePopover}
+                on:focus={() => showGuidePopover("batch")}
+                on:blur={scheduleHideGuidePopover}
+                on:click={() => toggleGuidePopover("batch")}
+            >
+                {batchGuideText}
+            </button>
+        {/if}
+    </div>
+
+    {#if activeGuideTitle && activeGuideBody}
+        <div class="guide-popover-mask" aria-hidden="true"></div>
+        <div
+            class="guide-popover-area"
+            role="presentation"
+            on:mouseenter={clearGuideHideTimer}
+            on:mouseleave={scheduleHideGuidePopover}
+        >
+            <div class="guide-popover" role="status" aria-live="polite">
+                <div class="guide-popover-title">{activeGuideTitle}</div>
+                <div class="guide-popover-body">{activeGuideBody}</div>
+                {#if activeGuidePlatforms.length}
+                    <div
+                        class="guide-popover-platforms"
+                        aria-label="Supported platforms"
+                    >
+                        {#each activeGuidePlatforms as platform}
+                            <span class="guide-popover-chip">{platform}</span>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -677,6 +861,7 @@
         width: 100%;
         gap: 16px; /* Increased gap */
         margin: 0 auto; /* Center alignment */
+        position: relative;
     }
 
     .batch-hint {
@@ -690,6 +875,12 @@
     .batch-hint.error {
         color: var(--red);
         opacity: 1;
+    }
+
+    .input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     #input-container {
@@ -707,6 +898,20 @@
         flex: 1;
         background: var(--background);
         transition: all 0.2s ease;
+    }
+
+    .feedback-inline-link {
+        flex: 0 0 auto;
+        font-size: 12px;
+        line-height: 1.2;
+        color: var(--subtext);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .feedback-inline-link:hover {
+        color: var(--accent);
+        text-decoration: underline;
     }
 
     #input-container:hover {
@@ -802,9 +1007,131 @@
 
     #action-container {
         display: flex;
-        flex-direction: row;
+        align-items: center;
         justify-content: space-between;
-        padding: 0 10px; /* Indent actions slightly */
+        gap: 12px;
+        width: calc(100% - var(--feedback-offset, 0px));
+        min-height: 40px;
+        padding: 0;
+    }
+
+    .action-right {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-left: auto;
+        min-width: 0;
+    }
+
+    .download-guides {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+        min-width: 0;
+    }
+
+    .guide-inline-link {
+        font-size: 12px;
+        line-height: 1.2;
+        color: var(--subtext);
+        text-decoration: none;
+        white-space: nowrap;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .guide-inline-link:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .mobile-help-links {
+        display: none;
+    }
+
+    .mobile-help-link {
+        font-size: 12px;
+        line-height: 1.25;
+        color: var(--subtext);
+        text-decoration: none;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .mobile-help-link:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+
+    .mobile-help-link:visited {
+        color: var(--subtext);
+    }
+
+    .guide-popover-area {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: var(--feedback-offset, 0px);
+        width: calc(100% - var(--feedback-offset, 0px));
+        z-index: 20;
+        display: flex;
+        justify-content: flex-end;
+        padding: 0;
+        pointer-events: auto;
+    }
+
+    .guide-popover-mask {
+        display: none;
+    }
+
+    .guide-popover {
+        max-width: min(520px, 100%);
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: var(--surface-1);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        padding: 10px 12px;
+        color: var(--text);
+    }
+
+    .guide-popover-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-bottom: 4px;
+    }
+
+    .guide-popover-body {
+        font-size: 12.5px;
+        color: var(--subtext);
+        line-height: 1.45;
+    }
+
+    .guide-popover-platforms {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .guide-popover-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        border: 1px solid rgba(var(--accent-rgb), 0.2);
+        background: rgba(var(--accent-rgb), 0.09);
+        color: var(--text);
+        font-size: 11.5px;
+        line-height: 1;
+        padding: 5px 9px;
+        white-space: nowrap;
     }
 
     #paste-mobile-text {
@@ -815,6 +1142,95 @@
         #omnibox {
             max-width: 100%;
             gap: 12px;
+        }
+
+        .input-row {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feedback-inline-link--desktop,
+        .download-guides--desktop {
+            display: none;
+        }
+
+        #action-container {
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 8px;
+            padding: 0;
+            width: 100%;
+        }
+
+        #action-container :global(.switcher-parent),
+        #action-container :global(.switcher) {
+            width: 100%;
+        }
+
+        #action-container :global(.switcher .button) {
+            flex: 1 1 0;
+            justify-content: center;
+        }
+
+        .action-right {
+            width: 100%;
+            margin-left: 0;
+            justify-content: stretch;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .mobile-help-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            margin-top: -2px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .guide-popover-area {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            width: 100%;
+            padding: 0;
+        }
+
+        .guide-popover-mask {
+            display: block;
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--background);
+            opacity: 0.96;
+            z-index: 18;
+            pointer-events: none;
+        }
+
+        .guide-popover {
+            width: 100%;
+        }
+
+        #action-container :global(#button-paste) {
+            display: flex;
+            width: 100%;
+            min-width: 0;
+            justify-content: center;
+        }
+
+        #paste-mobile-text {
+            display: block;
+            white-space: nowrap;
+        }
+
+        #paste-desktop-text {
+            display: none;
         }
 
         #input-container {
@@ -828,23 +1244,12 @@
     }
 
     @media screen and (max-width: 440px) {
-        #action-container {
-            flex-direction: column;
-            gap: 8px;
-            padding: 0;
+        .mobile-help-links {
+            gap: 6px 12px;
         }
 
-        #action-container :global(.button) {
-            width: 100%;
-            justify-content: center;
-        }
-
-        #paste-mobile-text {
-            display: block;
-        }
-
-        #paste-desktop-text {
-            display: none;
+        .mobile-help-link {
+            font-size: 11.5px;
         }
     }
 </style>

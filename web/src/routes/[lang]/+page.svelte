@@ -9,11 +9,11 @@
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
 
-    import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
-    import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
-    import IconListCheck from "@tabler/icons-svelte/IconListCheck.svelte";
+    import IconVideoPlus from "@tabler/icons-svelte/IconVideoPlus.svelte";
+    import IconUsers from "@tabler/icons-svelte/IconUsers.svelte";
+    import IconArrowsLeftRight from "@tabler/icons-svelte/IconArrowsLeftRight.svelte";
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
     import { createDialog } from "$lib/state/dialogs";
@@ -109,18 +109,22 @@
         "twitter",
     ];
 
-    const platformLabels = {
-        bilibili: { zh: "B站", default: "Bilibili" },
-        douyin: { zh: "抖音", default: "Douyin" },
+    const capabilityPlatformLabels = {
+        bilibili: { zh: "B\u7AD9", default: "Bilibili" },
+        douyin: { zh: "\u6296\u97F3", default: "Douyin" },
         tiktok: { zh: "TikTok", default: "TikTok" },
-        kuaishou: { zh: "快手", default: "Kuaishou" },
+        kuaishou: { zh: "\u5FEB\u624B", default: "Kuaishou" },
         instagram: { zh: "Instagram", default: "Instagram" },
     } as const;
 
-    type CapabilityPlatform = keyof typeof platformLabels;
+    type CapabilityPlatform = keyof typeof capabilityPlatformLabels;
 
-    const collectionPlatforms: CapabilityPlatform[] = ["bilibili", "douyin", "tiktok"];
-    const batchPlatforms: CapabilityPlatform[] = [
+    const collectionGuidePlatforms: CapabilityPlatform[] = [
+        "bilibili",
+        "douyin",
+        "tiktok",
+    ];
+    const batchGuidePlatforms: CapabilityPlatform[] = [
         "douyin",
         "tiktok",
         "kuaishou",
@@ -128,10 +132,10 @@
         "bilibili",
     ];
 
-    const getPlatformLabel = (platform: CapabilityPlatform) =>
+    const getGuidePlatformLabel = (platform: CapabilityPlatform) =>
         currentLocale === "zh"
-            ? platformLabels[platform].zh
-            : platformLabels[platform].default;
+            ? capabilityPlatformLabels[platform].zh
+            : capabilityPlatformLabels[platform].default;
 
     const accountPath = () => `/${currentLocale}/account`;
 
@@ -175,6 +179,9 @@
         openFeedbackDialog();
         return true;
     };
+
+    const buildGuideLabel = (title: string) =>
+        currentLocale === "zh" ? `${title}\u8BF4\u660E` : `${title} guide`;
 
     const LOW_POINTS_THRESHOLD = 10;
     const lowPointsBalloonKeyForUser = (userId: string) =>
@@ -577,65 +584,52 @@
         {/if}
 
         <Meowbalt emotion="smile" />
-        <Omnibox />
-        <section
-            id="capabilities"
-            class="capabilities"
-            aria-label={$t("home.capabilities.aria")}
-        >
-            <div class="cap-card cap-card--collection">
-                <div class="cap-card-inner">
-                    <div class="cap-head">
-                        <div class="cap-icon"><IconStack2 size={20} /></div>
-                        <div class="cap-title">
-                            {$t("home.capabilities.collection.title")}
-                        </div>
-                    </div>
-
-                    <p class="cap-desc">{$t("home.capabilities.collection.desc")}</p>
-
-                    <div
-                        class="cap-chips"
-                        aria-label={$t("home.capabilities.platforms")}
-                    >
-                        {#each collectionPlatforms as platform}
-                            <span class="cap-chip">
-                                {getPlatformLabel(platform)}
-                            </span>
-                        {/each}
-                    </div>
-                </div>
-            </div>
-
-            <div class="cap-card cap-card--batch">
-                <div class="cap-card-inner">
-                    <div class="cap-head">
-                        <div class="cap-icon"><IconListCheck size={20} /></div>
-                        <div class="cap-title">
-                            {$t("home.capabilities.batch.title")}
-                        </div>
-                    </div>
-
-                    <p class="cap-desc">{$t("home.capabilities.batch.desc")}</p>
-
-                    <div
-                        class="cap-chips"
-                        aria-label={$t("home.capabilities.platforms")}
-                    >
-                        {#each batchPlatforms as platform}
-                            <span class="cap-chip">
-                                {getPlatformLabel(platform)}
-                            </span>
-                        {/each}
-                    </div>
-                </div>
-            </div>
-        </section>
+        <Omnibox
+            feedbackHref={buildFeedbackRedirectPath()}
+            feedbackText={$t("tabs.feature.feedback")}
+            onFeedbackClick={() => void openFeedback()}
+            collectionGuideText={buildGuideLabel($t("home.capabilities.collection.title"))}
+            batchGuideText={buildGuideLabel($t("home.capabilities.batch.title"))}
+            collectionGuideBody={$t("home.capabilities.collection.desc")}
+            batchGuideBody={$t("home.capabilities.batch.desc")}
+            collectionGuidePlatforms={collectionGuidePlatforms.map(getGuidePlatformLabel)}
+            batchGuidePlatforms={batchGuidePlatforms.map(getGuidePlatformLabel)}
+        />
         <!--<UserGuide/>-->
     </main>
 
     <!-- Feature Cards -->
     <section class="feature-cards">
+        <a href={`/${currentLocale}/videorecord`} class="feature-card">
+            <div class="icon-wrapper"><IconVideoPlus size={28} /></div>
+            <div class="card-content">
+                <h3>{$t("tabs.videorecord")}</h3>
+                <p class="card-desc">{$t("videorecord.seo.description")}</p>
+            </div>
+        </a>
+        <a href={`/${currentLocale}/random-chat`} class="feature-card">
+            <div class="icon-wrapper"><IconUsers size={28} /></div>
+            <div class="card-content">
+                <h3>{$t("tabs.random_video")}</h3>
+                <p class="card-desc">{$t("random-chat.meta.description")}</p>
+            </div>
+        </a>
+        <a href={`/${currentLocale}/remux`} class="feature-card">
+            <div class="icon-wrapper"><IconArrowsLeftRight size={28} /></div>
+            <div class="card-content">
+                <h3>{$t("tabs.remux")}</h3>
+                <p class="card-desc">{$t("remux.description")}</p>
+            </div>
+        </a>
+        <a href={`/${currentLocale}/clipboard`} class="feature-card">
+            <div class="icon-wrapper"><IconClipboard /></div>
+            <div class="card-content">
+                <h3>{$t("tabs.feature.file_transfer")}</h3>
+                <p class="card-desc">
+                    {$t("general.seo.transfer.description")}
+                </p>
+            </div>
+        </a>
         <a
             href={`/${currentLocale}/discover`}
             class="feature-card feature-card--discover"
@@ -645,22 +639,6 @@
                 <h3>{$t("tabs.feature.discover_trends")}</h3>
                 <p class="card-desc">
                     {$t("general.seo.discover.description")}
-                </p>
-            </div>
-        </a>
-        <button type="button" class="feature-card" on:click={openFeedback}>
-            <div class="icon-wrapper"><IconAlertTriangle size={28} /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.feature.feedback")}</h3>
-                <p class="card-desc">{$t("home.feedback.desc")}</p>
-            </div>
-        </button>
-        <a href={`/${currentLocale}/clipboard`} class="feature-card">
-            <div class="icon-wrapper"><IconClipboard /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.feature.file_transfer")}</h3>
-                <p class="card-desc">
-                    {$t("general.seo.transfer.description")}
                 </p>
             </div>
         </a>
@@ -781,224 +759,6 @@
         #cobalt-save {
             min-height: clamp(360px, 44vh, 440px);
             margin-bottom: 32px;
-        }
-    }
-
-    .capabilities {
-        width: 100%;
-        max-width: 860px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        position: relative;
-        padding: 2px;
-    }
-
-    .capabilities::before {
-        content: "";
-        position: absolute;
-        inset: -18px -14px -22px;
-        background:
-            radial-gradient(
-                480px circle at 24% 8%,
-                rgba(var(--accent-rgb), 0.11),
-                transparent 66%
-            ),
-            radial-gradient(
-                440px circle at 78% 72%,
-                rgba(47, 138, 249, 0.07),
-                transparent 66%
-            );
-        opacity: 0.24;
-        pointer-events: none;
-    }
-
-    :global(#cobalt[data-reduce-transparency="true"]) .capabilities::before {
-        opacity: 0.12;
-    }
-
-    .cap-card {
-        position: relative;
-        z-index: 1;
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-        transition:
-            transform 0.18s ease,
-            box-shadow 0.18s ease;
-        --cap-a-x: 18%;
-        --cap-b-x: 82%;
-        --cap-line: linear-gradient(
-            90deg,
-            rgba(var(--accent-rgb), 0.85),
-            rgba(47, 138, 249, 0.65),
-            rgba(var(--accent-rgb), 0.35)
-        );
-    }
-
-    .cap-card--batch {
-        --cap-a-x: 82%;
-        --cap-b-x: 18%;
-        --cap-line: linear-gradient(
-            90deg,
-            rgba(47, 138, 249, 0.7),
-            rgba(var(--accent-rgb), 0.78),
-            rgba(47, 138, 249, 0.35)
-        );
-    }
-
-    .cap-card::before {
-        content: "";
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        top: 10px;
-        height: 2px;
-        border-radius: 999px;
-        background: var(--cap-line);
-        opacity: 0.9;
-        pointer-events: none;
-        transform: translateZ(0);
-    }
-
-    @media (hover: hover) {
-        .cap-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
-        }
-    }
-
-    :global(#cobalt[data-reduce-motion="true"]) .cap-card {
-        transition: none;
-    }
-
-    :global(#cobalt[data-reduce-motion="true"]) .cap-card:hover {
-        transform: none;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-    }
-
-    .cap-card-inner {
-        height: 100%;
-        border-radius: 18px;
-        padding: 14px 14px 12px;
-        background: var(--button);
-        border: 1px solid var(--button-stroke);
-        color: var(--text);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .cap-card-inner::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            140deg,
-            rgba(var(--accent-rgb), 0.05),
-            transparent 60%
-        );
-        opacity: 0.7;
-        pointer-events: none;
-    }
-
-    :global([data-theme="dark"]) .cap-card-inner::before {
-        background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 60%);
-        opacity: 0.45;
-    }
-
-    .cap-card-inner::after {
-        content: "";
-        position: absolute;
-        inset: -60px;
-        background:
-            radial-gradient(
-                circle at var(--cap-a-x) 18%,
-                rgba(var(--accent-rgb), 0.18),
-                transparent 60%
-            ),
-            radial-gradient(
-                circle at var(--cap-b-x) 85%,
-                rgba(47, 138, 249, 0.12),
-                transparent 60%
-            );
-        opacity: 0.65;
-        pointer-events: none;
-        transform: translateZ(0);
-    }
-
-    .cap-head {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 6px;
-    }
-
-    .cap-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--accent-background);
-        border: 1px solid rgba(var(--accent-rgb), 0.22);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-        color: var(--accent);
-        flex-shrink: 0;
-    }
-
-    .cap-title {
-        font-weight: 700;
-        color: var(--text);
-        letter-spacing: 0.2px;
-        font-size: 14.5px;
-        line-height: 1.2;
-    }
-
-    .cap-desc {
-        position: relative;
-        z-index: 1;
-        margin: 0 0 10px 0;
-        color: var(--subtext);
-        line-height: 1.55;
-        font-size: 13.8px;
-    }
-
-    .cap-chips {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .cap-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text);
-        background: rgba(var(--accent-rgb), 0.1);
-        border: 1px solid rgba(var(--accent-rgb), 0.2);
-        box-shadow: none;
-        user-select: none;
-    }
-
-    @media (hover: hover) {
-        .cap-chip:hover {
-            background: rgba(var(--accent-rgb), 0.14);
-            border-color: rgba(var(--accent-rgb), 0.28);
-        }
-    }
-
-    @media (max-width: 720px) {
-        .capabilities {
-            grid-template-columns: 1fr;
-            max-width: 560px;
         }
     }
 
@@ -1264,34 +1024,22 @@
     }
 
     @media (max-width: 600px) {
+        #cobalt-save-container {
+            justify-content: flex-start;
+        }
+
         #cobalt-save {
             min-height: auto;
-            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 70px);
-            margin-bottom: 16px;
-            gap: 16px;
-        }
-
-        .capabilities {
-            gap: 10px;
-        }
-
-        .cap-card-inner {
-            padding: 12px 12px 10px;
-        }
-
-        .cap-desc {
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
-        .cap-title {
-            font-size: 14px;
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+            margin-bottom: 0;
+            gap: 8px;
         }
 
         .feature-cards {
             grid-template-columns: 1fr;
             gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            margin-top: -16px;
+            margin-bottom: 1rem;
         }
 
         .feature-card {

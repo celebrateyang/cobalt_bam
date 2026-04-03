@@ -604,21 +604,21 @@
             <div class="icon-wrapper"><IconVideoPlus size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.videorecord")}</h3>
-                <p class="card-desc">{$t("videorecord.seo.description")}</p>
+                <p class="card-desc">{$t("home.cards.videorecord.desc")}</p>
             </div>
         </a>
         <a href={`/${currentLocale}/random-chat`} class="feature-card">
             <div class="icon-wrapper"><IconUsers size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.random_video")}</h3>
-                <p class="card-desc">{$t("random-chat.meta.description")}</p>
+                <p class="card-desc">{$t("home.cards.random_video.desc")}</p>
             </div>
         </a>
         <a href={`/${currentLocale}/remux`} class="feature-card">
             <div class="icon-wrapper"><IconArrowsLeftRight size={28} /></div>
             <div class="card-content">
                 <h3>{$t("tabs.remux")}</h3>
-                <p class="card-desc">{$t("remux.description")}</p>
+                <p class="card-desc">{$t("home.cards.remux.desc")}</p>
             </div>
         </a>
         <a href={`/${currentLocale}/clipboard`} class="feature-card">
@@ -626,7 +626,7 @@
             <div class="card-content">
                 <h3>{$t("tabs.feature.file_transfer")}</h3>
                 <p class="card-desc">
-                    {$t("general.seo.transfer.description")}
+                    {$t("home.cards.file_transfer.desc")}
                 </p>
             </div>
         </a>
@@ -638,7 +638,7 @@
             <div class="card-content">
                 <h3>{$t("tabs.feature.discover_trends")}</h3>
                 <p class="card-desc">
-                    {$t("general.seo.discover.description")}
+                    {$t("home.cards.discover_trends.desc")}
                 </p>
             </div>
         </a>

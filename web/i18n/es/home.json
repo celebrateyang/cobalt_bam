@@ -34,5 +34,22 @@
             "name": "Guardador de videos de X (Twitter)",
             "desc": "Copie enlaces de tweets para extraer videos originales manteniendo la claridad."
         }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "Sin instalar nada. Empieza a grabar al instante y crea tutoriales claros en pocos minutos."
+        },
+        "random_video": {
+            "desc": "Conecta al instante con un usuario en l?nea y entra en un emocionante chat 1v1 de 10 minutos."
+        },
+        "remux": {
+            "desc": "Convierte videos al formato que quieras con un clic: exportaci?n r?pida y calidad n?tida."
+        },
+        "file_transfer": {
+            "desc": "Sin login ni app. Transfiere archivos entre m?vil y PC al instante, incluso archivos grandes."
+        },
+        "discover_trends": {
+            "desc": "Nuevos videos virales cada d?a. Abre colecciones en tendencia con un toque y descarga tus favoritos al momento."
+        }
     }
 }

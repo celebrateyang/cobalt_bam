@@ -57,5 +57,22 @@
             "name": "X (Twitter) Video Saver",
             "desc": "Copy tweet links to extract original videos while maintaining clarity."
         }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "No app needed. Start recording instantly and create polished tutorials in minutes."
+        },
+        "random_video": {
+            "desc": "Instantly match an online user and jump into a thrilling 10-minute 1v1 video chat."
+        },
+        "remux": {
+            "desc": "Convert videos to the format you want in one click with fast export and crisp quality."
+        },
+        "file_transfer": {
+            "desc": "No login, no install. Instantly transfer files between phone and computer, even large files."
+        },
+        "discover_trends": {
+            "desc": "Fresh viral videos every day. Open hot collections in one tap and download what you love right away."
+        }
     }
 }

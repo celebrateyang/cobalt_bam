@@ -34,5 +34,22 @@
             "name": "Lưu video X (Twitter)",
             "desc": "Sao chép liên kết tweet để trích xuất video gốc trong khi vẫn giữ nguyên độ rõ nét."
         }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "Kh?ng c?n c?i ??t. B?t ??u ghi m?n h?nh ngay v? t?o video h??ng d?n r? n?t ch? trong v?i ph?t."
+        },
+        "random_video": {
+            "desc": "Gh?p ng?u nhi?n ng??i d?ng ?ang online ngay l?p t?c v? b?t ??u chat video 1v1 10 ph?t ??y h?ng kh?i."
+        },
+        "remux": {
+            "desc": "Chuy?n video sang ??nh d?ng b?n mu?n ch? v?i 1 ch?m, xu?t nhanh v? h?nh ?nh v?n s?c n?t."
+        },
+        "file_transfer": {
+            "desc": "Kh?ng c?n ??ng nh?p, kh?ng c?n c?i app. Chuy?n file t?c th? gi?a ?i?n tho?i v? m?y t?nh, k? c? file l?n."
+        },
+        "discover_trends": {
+            "desc": "Video viral m?i m?i ng?y. M? b? s?u t?p hot ch? v?i 1 ch?m v? t?i ngay n?i dung b?n th?ch."
+        }
     }
 }

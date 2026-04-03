@@ -34,5 +34,22 @@
             "name": "X (Twitter) Video Saver",
             "desc": "Kopieren Sie Tweet-Links, um Originalvideos bei gleichbleibender Klarheit zu extrahieren."
         }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "Keine Installation n?tig. Starte sofort die Aufnahme und erstelle in Minuten starke Tutorials."
+        },
+        "random_video": {
+            "desc": "Verbinde dich sofort mit einem Online-User und starte einen aufregenden 10-Minuten 1v1-Videochat."
+        },
+        "remux": {
+            "desc": "Wandle Videos mit einem Klick ins gew?nschte Format um ? schnell exportiert, klar in der Qualit?t."
+        },
+        "file_transfer": {
+            "desc": "Kein Login, keine App. ?bertrage Dateien sofort zwischen Handy und PC ? auch gro?e Dateien."
+        },
+        "discover_trends": {
+            "desc": "T?glich neue Viral-Hits. ?ffne Trend-Sammlungen mit einem Tipp und lade Favoriten direkt herunter."
+        }
     }
 }

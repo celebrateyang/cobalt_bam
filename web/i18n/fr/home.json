@@ -34,5 +34,22 @@
             "name": "Sauvegarde vidéo X (Twitter)",
             "desc": "Copiez les liens de tweet pour extraire les vidéos originales tout en maintenant la clarté."
         }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "Aucune installation. Lance l?enregistrement instantan?ment et cr?e des tutoriels nets en quelques minutes."
+        },
+        "random_video": {
+            "desc": "Connecte-toi instantan?ment ? un utilisateur en ligne et d?marre un chat vid?o 1v1 de 10 minutes plein de surprises."
+        },
+        "remux": {
+            "desc": "Convertis tes vid?os au format voulu en un clic, avec export rapide et qualit? nette."
+        },
+        "file_transfer": {
+            "desc": "Sans compte, sans application. Transf?re instantan?ment des fichiers entre mobile et PC, m?me volumineux."
+        },
+        "discover_trends": {
+            "desc": "De nouveaux buzz chaque jour. Ouvre les collections tendance en un geste et t?l?charge imm?diatement ce que tu aimes."
+        }
     }
 }

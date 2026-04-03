@@ -60,19 +60,19 @@
     },
     "cards": {
         "videorecord": {
-            "desc": "No app needed. Start recording instantly and create polished tutorials in minutes."
+            "desc": "Create, move, and resize slides, then record whiteboard tutorials with camera overlay in your browser. No install required."
         },
         "random_video": {
-            "desc": "Instantly match an online user and jump into a thrilling 10-minute 1v1 video chat."
+            "desc": "Randomly match one online user for a 10-minute 1v1 video chat."
         },
         "remux": {
-            "desc": "Convert videos to the format you want in one click with fast export and crisp quality."
+            "desc": "remuxing often fixes compatibility issues with old software. it's fast, lossless, and everything is processed on-device."
         },
         "file_transfer": {
-            "desc": "No login, no install. Instantly transfer files between phone and computer, even large files."
+            "desc": "The best way to transfer files between devices without installing apps. Secure P2P file sharing, cross-platform clipboard sync. Fast, free, and private."
         },
         "discover_trends": {
-            "desc": "Fresh viral videos every day. Open hot collections in one tap and download what you love right away."
+            "desc": "Collection of the hottest videos on the web. Curated beauty videos, funny clips, and viral trends. Updated daily."
         }
     }
 }

@@ -37,19 +37,19 @@
     },
     "cards": {
         "videorecord": {
-            "desc": "Keine Installation n?tig. Starte sofort die Aufnahme und erstelle in Minuten starke Tutorials."
+            "desc": "Erstellen, verschieben und skalieren Sie Folien und zeichnen Sie dann Whiteboard-Tutorials mit Kamera-Overlay in Ihrem Browser auf. Keine Installation erforderlich."
         },
         "random_video": {
-            "desc": "Verbinde dich sofort mit einem Online-User und starte einen aufregenden 10-Minuten 1v1-Videochat."
+            "desc": "Finden Sie zufällig einen Online-Benutzer für einen 10-minütigen 1-gegen-1-Video-Chat."
         },
         "remux": {
-            "desc": "Wandle Videos mit einem Klick ins gew?nschte Format um ? schnell exportiert, klar in der Qualit?t."
+            "desc": "remuxing behebt oft kompatibilitätsprobleme mit alter software. es ist schnell, verlustfrei und alles wird auf dem gerät verarbeitet."
         },
         "file_transfer": {
-            "desc": "Kein Login, keine App. ?bertrage Dateien sofort zwischen Handy und PC ? auch gro?e Dateien."
+            "desc": "Der beste Weg, Dateien zwischen Geräten zu übertragen, ohne Apps zu installieren. Sichere P2P-Dateifreigabe, plattformübergreifende Zwischenablage-Synchronisation. Schnell, kostenlos und privat."
         },
         "discover_trends": {
-            "desc": "T?glich neue Viral-Hits. ?ffne Trend-Sammlungen mit einem Tipp und lade Favoriten direkt herunter."
+            "desc": "Sammlung der heißesten Videos im Web. Kuratierte Schönheitsvideos, lustige Clips und virale Trends. Täglich aktualisiert."
         }
     }
 }

@@ -37,19 +37,19 @@
     },
     "cards": {
         "videorecord": {
-            "desc": "Sin instalar nada. Empieza a grabar al instante y crea tutoriales claros en pocos minutos."
+            "desc": "Cree, mueva y cambie el tamaño de las diapositivas, luego grabe tutoriales de pizarra con la cámara superpuesta en su navegador. No se requiere instalación."
         },
         "random_video": {
-            "desc": "Conecta al instante con un usuario en l?nea y entra en un emocionante chat 1v1 de 10 minutos."
+            "desc": "Haga coincidir aleatoriamente a un usuario en línea para un chat de video 1 contra 1 de 10 minutos."
         },
         "remux": {
-            "desc": "Convierte videos al formato que quieras con un clic: exportaci?n r?pida y calidad n?tida."
+            "desc": "el remux suele resolver problemas de compatibilidad con software antiguo. es rápido, sin pérdidas y todo se procesa en tu dispositivo."
         },
         "file_transfer": {
-            "desc": "Sin login ni app. Transfiere archivos entre m?vil y PC al instante, incluso archivos grandes."
+            "desc": "La mejor manera de transferir archivos entre dispositivos sin instalar apps. Compartir archivos P2P seguro, sincronización de portapapeles multiplataforma. Rápido, gratis y privado."
         },
         "discover_trends": {
-            "desc": "Nuevos videos virales cada d?a. Abre colecciones en tendencia con un toque y descarga tus favoritos al momento."
+            "desc": "Colección de los videos más populares de la web. Videos de belleza seleccionados, clips divertidos y tendencias virales. Actualizado diariamente."
         }
     }
 }

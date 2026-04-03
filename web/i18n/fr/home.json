@@ -37,19 +37,19 @@
     },
     "cards": {
         "videorecord": {
-            "desc": "Aucune installation. Lance l?enregistrement instantan?ment et cr?e des tutoriels nets en quelques minutes."
+            "desc": "Créez, déplacez et redimensionnez des diapositives, puis enregistrez des didacticiels sur tableau blanc avec superposition de caméra dans votre navigateur. Aucune installation requise."
         },
         "random_video": {
-            "desc": "Connecte-toi instantan?ment ? un utilisateur en ligne et d?marre un chat vid?o 1v1 de 10 minutes plein de surprises."
+            "desc": "Faites correspondre au hasard un utilisateur en ligne pour un chat vidéo 1v1 de 10 minutes."
         },
         "remux": {
-            "desc": "Convertis tes vid?os au format voulu en un clic, avec export rapide et qualit? nette."
+            "desc": "le remux résout souvent les problèmes de compatibilité avec les anciens logiciels. c'est rapide, sans perte, et tout est traité sur votre appareil."
         },
         "file_transfer": {
-            "desc": "Sans compte, sans application. Transf?re instantan?ment des fichiers entre mobile et PC, m?me volumineux."
+            "desc": "La meilleure façon de transférer des fichiers entre appareils sans installer d'applications. Partage de fichiers P2P sécurisé, synchronisation du presse-papiers multiplateforme. Rapide, gratuit et privé."
         },
         "discover_trends": {
-            "desc": "De nouveaux buzz chaque jour. Ouvre les collections tendance en un geste et t?l?charge imm?diatement ce que tu aimes."
+            "desc": "Collection des vidéos les plus populaires sur le web. Vidéos de beauté sélectionnées, clips drôles et tendances virales. Mis à jour quotidiennement."
         }
     }
 }

@@ -91,6 +91,10 @@
 - When editing files with non-ASCII text (e.g., Chinese), always read/write as UTF-8.
 - Avoid PowerShell defaults that can introduce mojibake; prefer `python` with `encoding='utf-8'` or `apply_patch` to preserve Unicode.
 - If you add new UI strings, keep them ASCII unless you can guarantee UTF-8 encoding and the file already contains Unicode.
+- For `web/i18n/**/*.json`, DO NOT use `Get-Content` + `Set-Content`/`Out-File` rewrite flows. Use only:
+  - `apply_patch` for localized edits, or
+  - Python scripts that explicitly read/write with `encoding='utf-8'`.
+- After any i18n edit, run `pnpm -C web i18n:check-encoding` before finalizing changes.
 
 ### Encoding incident notes (2026-02)
 - Root cause: in Windows PowerShell, `Get-Content` on UTF-8-without-BOM files may be decoded with legacy codepage, then writing back as UTF-8 corrupts CJK text.
@@ -102,7 +106,7 @@
   2. If scripting is required, use Python with explicit `encoding='utf-8'` for both read and write.
   3. Avoid full-file rewrite if a localized patch is enough.
   4. After edits, run a quick mojibake scan:
-     - `rg -n "�|锟|\\uFFFD" <file>`
+     - `rg -n "�|\\uFFFD|锟|鎴|馃" <file>`
      - and spot-check known CJK UI strings.
 - If mojibake is detected:
   - stop further edits immediately,

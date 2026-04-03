@@ -37,19 +37,19 @@
     },
     "cards": {
         "videorecord": {
-            "desc": "Kh?ng c?n c?i ??t. B?t ??u ghi m?n h?nh ngay v? t?o video h??ng d?n r? n?t ch? trong v?i ph?t."
+            "desc": "Tạo, di chuyển và thay đổi kích thước các trang chiếu, sau đó ghi lại các hướng dẫn trên bảng trắng với lớp phủ camera trong trình duyệt của bạn. Không cần cài đặt."
         },
         "random_video": {
-            "desc": "Gh?p ng?u nhi?n ng??i d?ng ?ang online ngay l?p t?c v? b?t ??u chat video 1v1 10 ph?t ??y h?ng kh?i."
+            "desc": "Kết hợp ngẫu nhiên một người dùng trực tuyến để trò chuyện video 1v1 trong 10 phút."
         },
         "remux": {
-            "desc": "Chuy?n video sang ??nh d?ng b?n mu?n ch? v?i 1 ch?m, xu?t nhanh v? h?nh ?nh v?n s?c n?t."
+            "desc": "remux thường giúp khắc phục lỗi tương thích với phần mềm cũ. nó nhanh, không mất dữ liệu và mọi thứ được xử lý ngay trên thiết bị của bạn."
         },
         "file_transfer": {
-            "desc": "Kh?ng c?n ??ng nh?p, kh?ng c?n c?i app. Chuy?n file t?c th? gi?a ?i?n tho?i v? m?y t?nh, k? c? file l?n."
+            "desc": "Cách tốt nhất để chuyển file giữa các thiết bị mà không cần cài đặt ứng dụng. Chia sẻ file P2P an toàn, đồng bộ clipboard đa nền tảng. Nhanh, miễn phí và riêng tư."
         },
         "discover_trends": {
-            "desc": "Video viral m?i m?i ng?y. M? b? s?u t?p hot ch? v?i 1 ch?m v? t?i ngay n?i dung b?n th?ch."
+            "desc": "Bộ sưu tập các video hot nhất trên web. Video làm đẹp được tuyển chọn, clip hài hước và xu hướng viral. Cập nhật hàng ngày."
         }
     }
 }

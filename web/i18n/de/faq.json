@@ -74,7 +74,7 @@
         },
         "points_how": {
             "q": "Was sind Punkte und wie werden sie berechnet?",
-            "a": "Wenn Punkte aktiviert sind, verbrauchen Downloads Punkte nach Dauer: ca. 1 Punkt pro Minute (aufgerundet).\nWir prüfen das Guthaben vor dem Start. Bei zu wenig Guthaben wirst du zum Kauf aufgefordert."
+            "a": "Wenn Punkte aktiviert sind, verbrauchen Downloads Punkte nach Dauer: ca. 2 Punkte pro Minute (aufgerundet).\nWir prüfen das Guthaben vor dem Start. Bei zu wenig Guthaben wirst du zum Kauf aufgefordert."
         },
         "points_buy": {
             "q": "Wo sehe oder kaufe ich Punkte?",

@@ -74,7 +74,7 @@
         },
         "points_how": {
             "q": "Điểm là gì và tính như thế nào?",
-            "a": "Nếu bật điểm, tải xuống có thể tiêu tốn điểm theo thời lượng: khoảng 1 điểm/phút (làm tròn lên).\nHệ thống kiểm tra số dư trước khi bắt đầu, nếu không đủ sẽ gợi ý mua thêm."
+            "a": "Nếu bật điểm, tải xuống có thể tiêu tốn điểm theo thời lượng: khoảng 2 điểm/phút (làm tròn lên).\nHệ thống kiểm tra số dư trước khi bắt đầu, nếu không đủ sẽ gợi ý mua thêm."
         },
         "points_buy": {
             "q": "Xem/mua điểm ở đâu?",

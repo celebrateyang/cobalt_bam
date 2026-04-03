@@ -74,7 +74,7 @@
         },
         "points_how": {
             "q": "¿Qué son los puntos y cómo se cobran?",
-            "a": "Si los puntos están habilitados, las descargas pueden consumir puntos según la duración: aprox. 1 punto por minuto (redondeado hacia arriba).\nComprobamos tu saldo antes de iniciar. Si es insuficiente, se te pedirá comprar."
+            "a": "Si los puntos están habilitados, las descargas pueden consumir puntos según la duración: aprox. 2 puntos por minuto (redondeado hacia arriba).\nComprobamos tu saldo antes de iniciar. Si es insuficiente, se te pedirá comprar."
         },
         "points_buy": {
             "q": "¿Dónde puedo ver o comprar puntos?",

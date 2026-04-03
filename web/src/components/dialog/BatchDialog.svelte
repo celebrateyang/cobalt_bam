@@ -176,11 +176,11 @@
 
     const pointsForDuration = (durationSeconds: number | undefined) => {
         if (typeof durationSeconds !== "number" || !Number.isFinite(durationSeconds)) {
-            return 1;
+            return 2;
         }
 
-        if (durationSeconds <= 60) return 1;
-        return Math.ceil(durationSeconds / 60);
+        if (durationSeconds <= 60) return 2;
+        return Math.ceil(durationSeconds / 60) * 2;
     };
 
     const readDuration = (item: DialogBatchItem) => {

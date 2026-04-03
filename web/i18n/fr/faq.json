@@ -74,7 +74,7 @@
         },
         "points_how": {
             "q": "Que sont les points et comment sont-ils facturés ?",
-            "a": "Si les points sont activés, les téléchargements peuvent consommer des points selon la durée : env. 1 point par minute (arrondi au supérieur).\nNous vérifions le solde avant de commencer. S'il est insuffisant, un achat sera proposé."
+            "a": "Si les points sont activés, les téléchargements peuvent consommer des points selon la durée : env. 2 points par minute (arrondi au supérieur).\nNous vérifions le solde avant de commencer. S'il est insuffisant, un achat sera proposé."
         },
         "points_buy": {
             "q": "Où voir ou acheter des points ?",

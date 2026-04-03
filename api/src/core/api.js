@@ -87,10 +87,11 @@ const durationToPoints = (durationSeconds) => {
         !Number.isFinite(durationSeconds) ||
         durationSeconds <= 0
     ) {
-        return 1;
+        return 2;
     }
 
-    return Math.ceil(durationSeconds / 60);
+    const basePoints = Math.ceil(durationSeconds / 60);
+    return basePoints * 2;
 };
 
 const getClerkUserIdFromTokenHeader = async (req) => {

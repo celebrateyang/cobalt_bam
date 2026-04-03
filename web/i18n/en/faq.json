@@ -74,7 +74,7 @@
         },
         "points_how": {
             "q": "What are points and how are they charged?",
-            "a": "If points are enabled on this site, downloads may consume points based on media duration: about 1 point per minute (rounded up).\nWe check your balance before starting. If it's insufficient, you'll be prompted to purchase more."
+            "a": "If points are enabled on this site, downloads may consume points based on media duration: about 2 points per minute (rounded up).\nWe check your balance before starting. If it's insufficient, you'll be prompted to purchase more."
         },
         "points_buy": {
             "q": "Where can I check or buy points?",

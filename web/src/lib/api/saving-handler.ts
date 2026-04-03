@@ -282,8 +282,8 @@ const pointsForDuration = (durationSeconds: number | undefined) => {
         return null;
     }
 
-    if (durationSeconds <= 60) return 1;
-    return Math.ceil(durationSeconds / 60);
+    if (durationSeconds <= 60) return 2;
+    return Math.ceil(durationSeconds / 60) * 2;
 };
 
 const estimatePointsForUrl = async (url: string) => {

@@ -59,6 +59,20 @@ const WECHAT_CREDIT_PRODUCTS = [
         amountFen: 800,
         currency: "CNY",
     },
+    {
+        key: "points_2500",
+        points: 2500,
+        unitPriceFen: 0.8,
+        amountFen: 2000,
+        currency: "CNY",
+    },
+    {
+        key: "points_6250",
+        points: 6250,
+        unitPriceFen: 0.8,
+        amountFen: 5000,
+        currency: "CNY",
+    },
 ];
 
 const POLAR_CREDIT_PRODUCTS = [

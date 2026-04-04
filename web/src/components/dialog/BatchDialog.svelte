@@ -74,6 +74,8 @@
         "queue.fetch.stalled",
     ]);
     const queueTaskTimeoutMs = 30 * 60 * 1000;
+    const POINTS_PER_MINUTE = 2;
+    const MIN_POINTS_PER_DOWNLOAD = 2;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let rateLimitSkipNotified = false;
 
@@ -176,11 +178,11 @@
 
     const pointsForDuration = (durationSeconds: number | undefined) => {
         if (typeof durationSeconds !== "number" || !Number.isFinite(durationSeconds)) {
-            return 2;
+            return MIN_POINTS_PER_DOWNLOAD;
         }
 
-        if (durationSeconds <= 60) return 2;
-        return Math.ceil(durationSeconds / 60) * 2;
+        const baseMinutes = Math.max(1, Math.ceil(durationSeconds / 60));
+        return Math.max(MIN_POINTS_PER_DOWNLOAD, baseMinutes * POINTS_PER_MINUTE);
     };
 
     const readDuration = (item: DialogBatchItem) => {

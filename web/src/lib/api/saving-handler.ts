@@ -242,6 +242,8 @@ const ensureSignedIn = async () => {
 };
 
 const isHomePageRoute = () => get(page)?.route?.id === "/[lang]";
+const POINTS_PER_MINUTE = 2;
+const MIN_POINTS_PER_DOWNLOAD = 2;
 
 export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
     const getSetting = lazySettingGetter(get(settings));
@@ -282,8 +284,8 @@ const pointsForDuration = (durationSeconds: number | undefined) => {
         return null;
     }
 
-    if (durationSeconds <= 60) return 2;
-    return Math.ceil(durationSeconds / 60) * 2;
+    const baseMinutes = Math.max(1, Math.ceil(durationSeconds / 60));
+    return Math.max(MIN_POINTS_PER_DOWNLOAD, baseMinutes * POINTS_PER_MINUTE);
 };
 
 const estimatePointsForUrl = async (url: string) => {
@@ -303,7 +305,10 @@ const estimatePointsForUrl = async (url: string) => {
             return { points: null, hasEstimate: false };
         }
 
-        return { points, hasEstimate: true };
+        return {
+            points: Math.max(MIN_POINTS_PER_DOWNLOAD, Math.ceil(points)),
+            hasEstimate: true,
+        };
     } catch {
         return { points: null, hasEstimate: false };
     }

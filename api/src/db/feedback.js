@@ -24,11 +24,20 @@ export const initFeedbackDatabase = async () => {
             video_url TEXT NOT NULL,
             phenomenon TEXT NOT NULL,
             suggestion TEXT,
+            process_note TEXT,
+            processed_at BIGINT,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
     `);
+
+    await query(
+        `ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS process_note TEXT;`,
+    );
+    await query(
+        `ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS processed_at BIGINT;`,
+    );
 
     await query(
         `CREATE INDEX IF NOT EXISTS idx_user_feedback_user_id ON user_feedback(user_id, created_at DESC);`,
@@ -99,6 +108,7 @@ export const listFeedback = async ({
             f.video_url ILIKE ${searchParam}
             OR f.phenomenon ILIKE ${searchParam}
             OR COALESCE(f.suggestion, '') ILIKE ${searchParam}
+            OR COALESCE(f.process_note, '') ILIKE ${searchParam}
             OR f.clerk_user_id ILIKE ${searchParam}
             OR COALESCE(u.primary_email, '') ILIKE ${searchParam}
             OR COALESCE(u.full_name, '') ILIKE ${searchParam}
@@ -149,6 +159,8 @@ export const listFeedback = async ({
         video_url: row.video_url,
         phenomenon: row.phenomenon,
         suggestion: row.suggestion,
+        process_note: row.process_note ?? null,
+        processed_at: row.processed_at ?? null,
         created_at: row.created_at,
         updated_at: row.updated_at,
         user: {
@@ -169,5 +181,107 @@ export const listFeedback = async ({
             pages,
         },
     };
+};
+
+export const listFeedbackForUser = async ({
+    clerkUserId,
+    page = 1,
+    limit = 20,
+} = {}) => {
+    if (!clerkUserId) {
+        return {
+            feedback: [],
+            pagination: {
+                page: 1,
+                limit: 20,
+                total: 0,
+                pages: 0,
+            },
+        };
+    }
+
+    const pagination = normalizePagination({ page, limit });
+    const offset = (pagination.page - 1) * pagination.limit;
+
+    const countRes = await query(
+        `
+        SELECT COUNT(*)::bigint AS total
+        FROM user_feedback
+        WHERE clerk_user_id = $1
+        `,
+        [clerkUserId],
+    );
+
+    const totalRaw = countRes.rows?.[0]?.total ?? 0;
+    const total =
+        typeof totalRaw === "string" ? Number.parseInt(totalRaw, 10) : Number(totalRaw);
+
+    const rowsRes = await query(
+        `
+        SELECT
+            id,
+            user_id,
+            clerk_user_id,
+            video_url,
+            phenomenon,
+            suggestion,
+            process_note,
+            processed_at,
+            created_at,
+            updated_at
+        FROM user_feedback
+        WHERE clerk_user_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+        OFFSET $3
+        `,
+        [clerkUserId, pagination.limit, offset],
+    );
+
+    const feedback = (rowsRes.rows || []).map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        clerk_user_id: row.clerk_user_id,
+        video_url: row.video_url,
+        phenomenon: row.phenomenon,
+        suggestion: row.suggestion,
+        process_note: row.process_note ?? null,
+        processed_at: row.processed_at ?? null,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    }));
+
+    const pages = pagination.limit ? Math.ceil(total / pagination.limit) : 0;
+
+    return {
+        feedback,
+        pagination: {
+            page: pagination.page,
+            limit: pagination.limit,
+            total,
+            pages,
+        },
+    };
+};
+
+export const processFeedback = async ({ id, processNote }) => {
+    const now = Date.now();
+    const note = typeof processNote === "string" ? processNote.trim() : "";
+    const processedAt = note ? now : null;
+
+    const result = await query(
+        `
+        UPDATE user_feedback
+        SET
+            process_note = $2,
+            processed_at = $3,
+            updated_at = $4
+        WHERE id = $1
+        RETURNING *
+        `,
+        [id, note || null, processedAt, now],
+    );
+
+    return result.rows?.[0] ?? null;
 };
 

@@ -12,6 +12,8 @@
         video_url: string;
         phenomenon: string;
         suggestion: string | null;
+        process_note: string | null;
+        processed_at: number | string | null;
         created_at: number | string;
         updated_at: number | string;
         user?: {
@@ -22,6 +24,8 @@
     };
 
     let feedback: FeedbackItem[] = [];
+    let processDraftById: Record<number, string> = {};
+    let processingId: number | null = null;
     let loading = true;
     let error = "";
 
@@ -86,6 +90,10 @@
             }
 
             feedback = Array.isArray(data?.data?.feedback) ? data.data.feedback : [];
+            processDraftById = feedback.reduce<Record<number, string>>((acc, item) => {
+                acc[item.id] = item.process_note ?? "";
+                return acc;
+            }, {});
 
             const pagination = data?.data?.pagination || {};
             total = pagination.total ?? 0;
@@ -136,6 +144,52 @@
             await navigator.clipboard.writeText(text);
         } catch {
             // ignore
+        }
+    };
+
+    const saveProcessNote = async (item: FeedbackItem) => {
+        if (processingId) return;
+        processingId = item.id;
+        error = "";
+
+        try {
+            const token = getToken();
+            if (!token) {
+                goto(`/${lang}/console-manage-2025`);
+                return;
+            }
+
+            const processNote = (processDraftById[item.id] ?? "").trim();
+            const res = await fetch(
+                `${currentApiURL()}/user/admin/feedback/${item.id}/process`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        processNote,
+                    }),
+                },
+            );
+
+            if (res.status === 401) {
+                auth.logout();
+                goto(`/${lang}/console-manage-2025`);
+                return;
+            }
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "保存处理结果失败");
+            }
+
+            await loadFeedback();
+        } catch (e) {
+            error = e instanceof Error ? e.message : "网络错误";
+        } finally {
+            processingId = null;
         }
     };
 </script>
@@ -212,6 +266,7 @@
                         <th>视频链接</th>
                         <th>现象</th>
                         <th>建议</th>
+                        <th>处理结果</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -292,6 +347,25 @@
                                 <div class="text clamp">
                                     {item.suggestion || "-"}
                                 </div>
+                            </td>
+                            <td class="process-cell">
+                                <div class="process-time">
+                                    处理时间：{formatDate(item.processed_at)}
+                                </div>
+                                <textarea
+                                    class="process-input"
+                                    rows="3"
+                                    bind:value={processDraftById[item.id]}
+                                    placeholder="填写处理备注（用户可见）"
+                                ></textarea>
+                                <button
+                                    class="btn-primary btn-process"
+                                    type="button"
+                                    disabled={processingId === item.id}
+                                    on:click={() => void saveProcessNote(item)}
+                                >
+                                    {processingId === item.id ? "保存中..." : "保存处理结果"}
+                                </button>
                             </td>
                         </tr>
                     {/each}
@@ -585,6 +659,38 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         max-width: 360px;
+    }
+
+    .process-cell {
+        min-width: 280px;
+    }
+
+    .process-time {
+        font-size: 0.78rem;
+        color: var(--subtext);
+        margin-bottom: 8px;
+    }
+
+    .process-input {
+        width: 100%;
+        border: none;
+        border-radius: var(--border-radius);
+        background: var(--button);
+        color: var(--text);
+        box-shadow: var(--button-box-shadow);
+        padding: 10px;
+        resize: vertical;
+        min-height: 80px;
+        margin-bottom: 8px;
+    }
+
+    .process-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--blue) inset;
+    }
+
+    .btn-process {
+        width: 100%;
     }
 
     @media screen and (max-width: 768px) {

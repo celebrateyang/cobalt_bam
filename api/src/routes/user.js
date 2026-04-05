@@ -21,6 +21,7 @@ import {
     createPromotionSubmission,
     getPromotionTypeConfig,
     listPromotionSubmissions,
+    listPromotionSubmissionsForUser,
     reviewPromotionSubmission,
 } from "../db/promotion-submissions.js";
 import {
@@ -33,7 +34,12 @@ import {
     getDownloadedItemKeysForCollection,
     markDownloadedItemsForCollection,
 } from "../db/collection-memory.js";
-import { createFeedback, listFeedback } from "../db/feedback.js";
+import {
+    createFeedback,
+    listFeedback,
+    listFeedbackForUser,
+    processFeedback,
+} from "../db/feedback.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 import {
     buildClipboardPersonalSessionId,
@@ -300,6 +306,58 @@ router.get("/admin/feedback", requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error("GET /user/admin/feedback error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load feedback");
+    }
+});
+
+// Admin-only: add/update process note for feedback.
+router.post("/admin/feedback/:id/process", requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid feedback id");
+        }
+
+        const processNoteRaw = req.body?.processNote;
+        const processNote =
+            typeof processNoteRaw === "string" ? processNoteRaw.trim() : "";
+
+        if (processNote.length > 4000) {
+            return jsonError(
+                res,
+                400,
+                "INVALID_INPUT",
+                "processNote is too long",
+            );
+        }
+
+        const updated = await processFeedback({
+            id,
+            processNote,
+        });
+
+        if (!updated) {
+            return jsonError(
+                res,
+                404,
+                "NOT_FOUND",
+                "Feedback not found",
+            );
+        }
+
+        return res.json({
+            status: "success",
+            data: {
+                feedback: updated,
+            },
+        });
+    } catch (error) {
+        console.error("POST /user/admin/feedback/:id/process error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to process feedback",
+        );
     }
 });
 
@@ -583,6 +641,28 @@ if (!isClerkApiConfigured) {
         });
     });
 
+    router.get("/promotion-submissions/my", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
+    router.get("/feedback/my", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
     router.post("/admin/sync-all", requireAdminAuth, (_, res) => {
         res.status(501).json({
             status: "error",
@@ -706,6 +786,28 @@ if (!isClerkApiConfigured) {
         });
 
         router.post("/promotion-submissions", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
+        router.get("/promotion-submissions/my", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
+        router.get("/feedback/my", (_, res) => {
             res.status(501).json({
                 status: "error",
                 error: {
@@ -1596,6 +1698,42 @@ if (!isClerkApiConfigured) {
             }
         });
 
+        router.get("/promotion-submissions/my", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const page = req.query?.page;
+                const limit = req.query?.limit;
+
+                const result = await listPromotionSubmissionsForUser({
+                    clerkUserId: auth.userId,
+                    page,
+                    limit,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: result,
+                });
+            } catch (error) {
+                console.error("GET /user/promotion-submissions/my error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load promotion submissions",
+                );
+            }
+        });
+
         router.post("/promotion-submissions", async (req, res) => {
             try {
                 const auth = getAuth(req);
@@ -1693,6 +1831,42 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to submit promotion request",
+                );
+            }
+        });
+
+        router.get("/feedback/my", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const page = req.query?.page;
+                const limit = req.query?.limit;
+
+                const result = await listFeedbackForUser({
+                    clerkUserId: auth.userId,
+                    page,
+                    limit,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: result,
+                });
+            } catch (error) {
+                console.error("GET /user/feedback/my error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load feedback",
                 );
             }
         });

@@ -216,6 +216,93 @@ export const listPromotionSubmissions = async ({
     };
 };
 
+export const listPromotionSubmissionsForUser = async ({
+    clerkUserId,
+    page = 1,
+    limit = 20,
+} = {}) => {
+    if (!clerkUserId) {
+        return {
+            submissions: [],
+            pagination: {
+                page: 1,
+                limit: 20,
+                total: 0,
+                pages: 0,
+            },
+        };
+    }
+
+    const pagination = normalizePagination({ page, limit });
+    const offset = (pagination.page - 1) * pagination.limit;
+
+    const countRes = await query(
+        `
+        SELECT COUNT(*)::bigint AS total
+        FROM user_promotion_submissions
+        WHERE clerk_user_id = $1
+        `,
+        [clerkUserId],
+    );
+
+    const totalRaw = countRes.rows?.[0]?.total ?? 0;
+    const total =
+        typeof totalRaw === "string" ? Number.parseInt(totalRaw, 10) : Number(totalRaw);
+
+    const rowsRes = await query(
+        `
+        SELECT
+            id,
+            user_id,
+            clerk_user_id,
+            promotion_type,
+            access_method,
+            requested_points,
+            status,
+            awarded_points,
+            admin_note,
+            reviewed_by,
+            reviewed_at,
+            created_at,
+            updated_at
+        FROM user_promotion_submissions
+        WHERE clerk_user_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+        OFFSET $3
+        `,
+        [clerkUserId, pagination.limit, offset],
+    );
+
+    const submissions = (rowsRes.rows || []).map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        clerk_user_id: row.clerk_user_id,
+        promotion_type: row.promotion_type,
+        access_method: row.access_method,
+        requested_points: row.requested_points,
+        status: row.status,
+        awarded_points: row.awarded_points,
+        admin_note: row.admin_note ?? null,
+        reviewed_by: row.reviewed_by ?? null,
+        reviewed_at: row.reviewed_at ?? null,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    }));
+
+    const pages = pagination.limit ? Math.ceil(total / pagination.limit) : 0;
+
+    return {
+        submissions,
+        pagination: {
+            page: pagination.page,
+            limit: pagination.limit,
+            total,
+            pages,
+        },
+    };
+};
+
 export const reviewPromotionSubmission = async ({
     submissionId,
     reviewer,

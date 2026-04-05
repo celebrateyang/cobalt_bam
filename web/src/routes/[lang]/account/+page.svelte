@@ -22,6 +22,8 @@
     import IconUserPlus from "@tabler/icons-svelte/IconUserPlus.svelte";
     import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
+    import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
+    import IconBug from "@tabler/icons-svelte/IconBug.svelte";
     import QRCode from "qrcode";
 
     type CreditProduct = {
@@ -45,6 +47,27 @@
 
     type PaymentProvider = "wechat" | "polar";
     type PromotionType = "post" | "video";
+    type RecordsTab = "promotion" | "feedback";
+    type PromotionRecord = {
+        id: number;
+        promotion_type: string;
+        access_method: string;
+        requested_points: number;
+        status: "PENDING" | "APPROVED" | "REJECTED" | string;
+        awarded_points: number;
+        admin_note: string | null;
+        reviewed_at: number | string | null;
+        created_at: number | string;
+    };
+    type FeedbackRecord = {
+        id: number;
+        video_url: string;
+        phenomenon: string;
+        suggestion: string | null;
+        process_note: string | null;
+        processed_at: number | string | null;
+        created_at: number | string;
+    };
 
     let autoAuthLaunched = false;
 
@@ -109,6 +132,12 @@
     let promotionSubmitting = false;
     let promotionSubmitError = "";
     let promotionSubmitSuccess = "";
+    let activeRecordsTab: RecordsTab | null = null;
+    let recordsLoading = false;
+    let recordsError = "";
+    let promotionRecords: PromotionRecord[] = [];
+    let feedbackRecords: FeedbackRecord[] = [];
+    let lastRecordsUserId: string | null = null;
 
     const fetchPoints = async () => {
         const userId = $clerkUser?.id;
@@ -152,6 +181,10 @@
         promotionAccessMethod = "";
         promotionSubmitError = "";
         promotionSubmitSuccess = "";
+        promotionRecords = [];
+        feedbackRecords = [];
+        recordsError = "";
+        lastRecordsUserId = null;
     }
 
     $: referralLink =
@@ -237,6 +270,7 @@
                 : `Submitted successfully. ${points} points will be credited after approval.`;
             promotionAccessMethod = "";
             promotionType = "post";
+            void refreshRecords();
         } catch (error) {
             console.debug("submit promotion request failed", error);
             promotionSubmitError = isChinese
@@ -245,6 +279,95 @@
         } finally {
             promotionSubmitting = false;
         }
+    };
+
+    const fetchJson = async (url: string, token: string) => {
+        const res = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data?.status !== "success") {
+            throw new Error(data?.error?.message || "failed to load account records");
+        }
+        return data;
+    };
+
+    const refreshRecords = async () => {
+        const userId = $clerkUser?.id;
+        if (!userId) return;
+        if (recordsLoading) return;
+
+        recordsLoading = true;
+        recordsError = "";
+
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const [promotionData, feedbackData] = await Promise.all([
+                fetchJson(
+                    `${apiBase}/user/promotion-submissions/my?page=1&limit=50`,
+                    token,
+                ),
+                fetchJson(`${apiBase}/user/feedback/my?page=1&limit=50`, token),
+            ]);
+
+            promotionRecords = Array.isArray(promotionData?.data?.submissions)
+                ? promotionData.data.submissions
+                : [];
+            feedbackRecords = Array.isArray(feedbackData?.data?.feedback)
+                ? feedbackData.data.feedback
+                : [];
+            lastRecordsUserId = userId;
+        } catch (error) {
+            recordsError = isChinese
+                ? "加载记录失败，请稍后重试。"
+                : "Failed to load records. Please try again later.";
+            console.debug("load account records failed", error);
+        } finally {
+            recordsLoading = false;
+        }
+    };
+
+    $: if (browser && $clerkUser && lastRecordsUserId !== $clerkUser.id) {
+        void refreshRecords();
+    }
+
+    const goAccountHome = () => {
+        activeRecordsTab = null;
+    };
+
+    const openRecordsTab = (tab: RecordsTab) => {
+        activeRecordsTab = tab;
+        void refreshRecords();
+    };
+
+    const formatDateTime = (ts: number | string | null | undefined) => {
+        if (ts == null) return "-";
+        const raw = typeof ts === "string" ? Number.parseInt(ts, 10) : ts;
+        if (!Number.isFinite(raw)) return "-";
+
+        const ms = raw < 1e12 ? raw * 1000 : raw;
+        const d = new Date(ms);
+        if (Number.isNaN(d.getTime())) return "-";
+
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    };
+
+    const promotionTypeLabel = (value: string) => {
+        if (value === "post") return isChinese ? "发帖推广" : "Post";
+        if (value === "video") return isChinese ? "视频推广" : "Video";
+        return value;
+    };
+
+    const promotionStatusLabel = (value: string) => {
+        if (value === "PENDING") return isChinese ? "待审核" : "Pending";
+        if (value === "APPROVED") return isChinese ? "已通过" : "Approved";
+        if (value === "REJECTED") return isChinese ? "已驳回" : "Rejected";
+        return value;
     };
 
     const formatAmount = (fen: number, currency: string) => {
@@ -638,365 +761,510 @@
             <div class="skeleton-line short"></div>
         </section>
     {:else if $clerkUser}
-        <section class="card user-card">
-            <div class="account-summary">
-                <div class="user-row">
-                    {#if $clerkUser.imageUrl}
-                        <img
-                            class="avatar"
-                            src={$clerkUser.imageUrl}
-                            alt=""
-                            referrerpolicy="no-referrer"
-                        />
-                    {:else}
-                        <div class="avatar fallback" aria-hidden="true">
-                            <IconUserCircle size={28} />
-                        </div>
-                    {/if}
-
-                    <div class="user-meta">
-                        <div class="user-label">{$t("auth.signed_in_as")}</div>
-                        <div class="user-value">
-                            {$clerkUser.fullName ||
-                                $clerkUser.username ||
-                                $clerkUser.primaryEmailAddress?.emailAddress ||
-                                $clerkUser.id}
-                        </div>
-                    </div>
+        <div class="account-shell">
+            <aside class="records-sidebar">
+                <div class="records-sidebar-header">
+                    <div class="subtext records-subtitle">account</div>
+                    <h2 class="records-title">{isChinese ? "记录中心" : "Record Center"}</h2>
                 </div>
 
-                <div class="points-card">
-                    <div class="points-label">
-                        {$t("auth.points_label")}
-                    </div>
-                    {#if pointsLoading}
-                        <div class="points-value loading">...</div>
-                    {:else if pointsErrorKey}
-                        <div class="points-value error">{$t(pointsErrorKey)}</div>
-                    {:else if points !== null}
-                        <div class="points-value">{points}</div>
-                    {:else}
-                        <div class="points-value muted">--</div>
-                    {/if}
-                </div>
-            </div>
+                <nav class="records-nav">
+                    <div class="records-nav-title">{isChinese ? "支持" : "Support"}</div>
+                    <button
+                        type="button"
+                        class="records-menu-item"
+                        class:active={activeRecordsTab === null}
+                        on:click={goAccountHome}
+                    >
+                        <span class="records-menu-left">
+                            <span class="records-menu-icon">
+                                <IconUserCircle />
+                            </span>
+                            <span>{isChinese ? "账户首页" : "Account Home"}</span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="records-menu-item"
+                        class:active={activeRecordsTab === "promotion"}
+                        on:click={() => openRecordsTab("promotion")}
+                    >
+                        <span class="records-menu-left">
+                            <span class="records-menu-icon">
+                                <IconSpeakerphone />
+                            </span>
+                            <span>{isChinese ? "推广记录" : "Promotion Records"}</span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="records-menu-item"
+                        class:active={activeRecordsTab === "feedback"}
+                        on:click={() => openRecordsTab("feedback")}
+                    >
+                        <span class="records-menu-left">
+                            <span class="records-menu-icon">
+                                <IconBug />
+                            </span>
+                            <span>{isChinese ? "问题反馈" : "Feedback"}</span>
+                        </span>
+                    </button>
+                </nav>
+            </aside>
 
-            <div class="actions">
-                <button
-                    class="button elevated"
-                    on:click={() => openUserProfile()}
-                >
-                    <IconSettings size={18} />
-                    {$t("auth.manage")}
-                </button>
-                <button class="button elevated" on:click={signOut}>
-                    <IconLogout size={18} />
-                    {$t("auth.sign_out")}
-                </button>
-            </div>
-        </section>
-
-        <section class="card contact-card">
-            <details class="accordion">
-                <summary class="accordion-summary">
-                    <div>
-                        <div class="card-title">{$t("auth.contact_points_title")}</div>
-                        <div class="subtext card-subtitle">
-                            {$t("auth.contact_points_subtitle")}
-                        </div>
-                    </div>
-                </summary>
-
-                <div class="accordion-body">
-                    <div class="contact-grid">
-                        {#if isChinese}
-                            <div class="contact-item">
-                                <div class="contact-label">
-                                    {$t("auth.contact_points_wechat")}
+            <div class="account-main">
+                {#if activeRecordsTab !== null}
+                    <section class="card records-content">
+                        {#if recordsLoading}
+                            <div class="subtext">{isChinese ? "加载中..." : "Loading..."}</div>
+                        {:else if recordsError}
+                            <div class="subtext error">{recordsError}</div>
+                        {:else if activeRecordsTab === "promotion"}
+                            {#if promotionRecords.length === 0}
+                                <div class="subtext">
+                                    {isChinese ? "暂无推广记录" : "No promotion records yet"}
                                 </div>
-                                <img
-                                    class="contact-qr"
-                                    src="/account/wechat.png"
-                                    alt={$t("auth.contact_points_wechat_alt")}
-                                />
-                            </div>
-                        {:else}
-                            <div class="contact-item">
-                                <div class="contact-label">
-                                    {$t("auth.contact_points_line")}
-                                </div>
-                                <img
-                                    class="contact-qr"
-                                    src="/account/line.png"
-                                    alt={$t("auth.contact_points_line_alt")}
-                                />
-                            </div>
-                            <div class="contact-item">
-                                <div class="contact-label">
-                                    {$t("auth.contact_points_whatsapp")}
-                                </div>
-                                <img
-                                    class="contact-qr"
-                                    src="/account/whatsapp.png"
-                                    alt={$t("auth.contact_points_whatsapp_alt")}
-                                />
-                            </div>
-                        {/if}
-                    </div>
-
-                    <div class="subtext contact-note">
-                        {$t("auth.contact_points_note")}
-                    </div>
-                </div>
-            </details>
-        </section>
-
-        <section class="card referral-card">
-            <details class="accordion">
-                <summary class="accordion-summary">
-                    <div>
-                        <div class="card-title">{$t("auth.referral_title")}</div>
-                        <div class="subtext card-subtitle">
-                            {$t("auth.referral_subtitle")}
-                        </div>
-                    </div>
-                </summary>
-
-                <div class="accordion-body">
-                    <div class="referral-link-row">
-                        <div class="referral-link-label">
-                            {$t("auth.referral_link_label")}
-                        </div>
-                        {#if referralLink}
-                            <div class="referral-link-controls">
-                                <input
-                                    class="referral-link-input"
-                                    readonly
-                                    value={referralLink}
-                                    on:focus={selectReferralLinkOnFocus}
-                                />
-                                <button
-                                    class="button elevated"
-                                    on:click={() => void copyReferralLink()}
-                                    disabled={!referralLink}
-                                >
-                                    {#if referralCopyState === "copied"}
-                                        {$t("auth.referral_copied")}
-                                    {:else if referralCopyState === "failed"}
-                                        {$t("auth.referral_copy_failed")}
-                                    {:else}
-                                        {$t("auth.referral_copy")}
-                                    {/if}
-                                </button>
-                            </div>
-                        {:else}
-                            <div class="subtext">{$t("auth.loading")}</div>
-                        {/if}
-                    </div>
-
-                    <div class="subtext referral-rules">
-                        <div class="rules-title">{$t("auth.referral_rules_title")}</div>
-                        <div class="rules-list">
-                            <div>{$t("auth.referral_rule_1")}</div>
-                            <div>{$t("auth.referral_rule_2")}</div>
-                            <div>{$t("auth.referral_rule_3")}</div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-        </section>
-
-        <section class="card promotion-card">
-            <details class="accordion">
-                <summary class="accordion-summary">
-                    <div>
-                        <div class="card-title">
-                            {isChinese
-                                ? "宣传网站赚积分"
-                                : "Promote Website, Earn Points"}
-                        </div>
-                        <div class="subtext card-subtitle">
-                            {isChinese
-                                ? "发帖或发视频介绍网站，审核通过后可获得积分奖励。"
-                                : "Publish posts/videos introducing this site and earn points after review."}
-                        </div>
-                    </div>
-                </summary>
-
-                <div class="accordion-body">
-                    <div class="subtext promotion-rules-title">
-                        {isChinese ? "活动规则" : "Rules"}
-                    </div>
-                    <div class="promotion-rules-list">
-                        <div>
-                            {isChinese
-                                ? "1. 在任一平台发帖介绍本站（不少于80字，需包含网站链接），奖励 50 积分。"
-                                : "1. Publish a post on any platform (at least 80 words, must include the site link) to earn 50 points."}
-                        </div>
-                        <div>
-                            {isChinese
-                                ? "2. 发布介绍本站功能的视频（不少于1分钟）到任一平台，奖励 100 积分。"
-                                : "2. Publish a video introducing any site feature (at least 1 minute) on any platform to earn 100 points."}
-                        </div>
-                        <div>
-                            {isChinese
-                                ? "3. 完成后提交访问方式（链接/账号主页等），管理员审核通过后发放积分。"
-                                : "3. Submit access details (link/profile URL, etc.). Points are credited after admin approval."}
-                        </div>
-                    </div>
-
-                    <div class="promotion-form">
-                        <label class="promotion-label" for="promotion-type">
-                            {isChinese ? "任务类型" : "Task type"}
-                        </label>
-                        <select id="promotion-type" bind:value={promotionType}>
-                            <option value="post">
-                                {isChinese ? "发帖推广（50积分）" : "Post promotion (50 points)"}
-                            </option>
-                            <option value="video">
-                                {isChinese ? "视频推广（100积分）" : "Video promotion (100 points)"}
-                            </option>
-                        </select>
-
-                        <label class="promotion-label" for="promotion-access-method">
-                            {isChinese
-                                ? "访问方式（帖子链接 / 视频链接 / 账号主页 / 关键词）"
-                                : "Access details (post/video link, profile URL, keyword)"}
-                        </label>
-                        <textarea
-                            id="promotion-access-method"
-                            rows="3"
-                            bind:value={promotionAccessMethod}
-                            placeholder={isChinese
-                                ? "示例：https://xxx；平台账号：xxx；搜索关键词：xxx"
-                                : "Example: https://... ; account: ... ; search keyword: ..."}
-                        ></textarea>
-
-                        <button
-                            class="button elevated active"
-                            on:click={() => void submitPromotionRequest()}
-                            disabled={promotionSubmitting}
-                        >
-                            {#if promotionSubmitting}
-                                {isChinese ? "提交中..." : "Submitting..."}
                             {:else}
-                                {isChinese ? "提交审核" : "Submit for review"}
-                            {/if}
-                        </button>
-
-                        {#if promotionSubmitError}
-                            <div class="subtext error">{promotionSubmitError}</div>
-                        {/if}
-                        {#if promotionSubmitSuccess}
-                            <div class="subtext notice">{promotionSubmitSuccess}</div>
-                        {/if}
-                    </div>
-                </div>
-            </details>
-        </section>
-
-        <section class="card topup-card">
-                <div class="topup-header">
-                    <div class="topup-title">
-                        {$t("auth.topup_title")}
-                    </div>
-                    <div class="subtext topup-subtitle">
-                        {$t(topupSubtitleKey)}
-                    </div>
-                </div>
-
-            {#if isChinese}
-                <div class="provider-switch" role="tablist">
-                    <button
-                        type="button"
-                        class="provider-option"
-                        class:active={selectedPaymentProvider === "wechat"}
-                        on:click={() => selectPaymentProvider("wechat")}
-                    >
-                        {$t("auth.wechat_pay")}
-                    </button>
-                    <button
-                        type="button"
-                        class="provider-option"
-                        class:active={selectedPaymentProvider === "polar"}
-                        on:click={() => selectPaymentProvider("polar")}
-                    >
-                        {$t("auth.international_pay")}
-                    </button>
-                </div>
-            {/if}
-
-            {#if creditProductsLoading}
-                <div class="subtext">{$t("auth.loading")}</div>
-            {:else if creditProductsErrorKey}
-                <div class="subtext error">{$t(creditProductsErrorKey)}</div>
-            {:else}
-                <div class="products-grid">
-                    {#each creditProducts as product (product.key)}
-                        {@const isTest = product.key.startsWith("points_test_")}
-                        {@const isBest = !isTest && product.key === bestValueProductKey}
-                        {@const isRecommended =
-                            !isTest &&
-                            !isBest &&
-                            product.key === recommendedValueProductKey}
-
-                        <div class="product-card">
-                            <div class="product-main">
-                                <div class="product-left">
-                                    <div class="product-points">
-                                        {product.points} {$t("auth.points_label")}
-                                    </div>
-                                    <div class="subtext product-subtitle">
-                                        {formatUnitPrice(product)}
-                                    </div>
+                                <div class="records-table-wrap">
+                                    <table class="records-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{isChinese ? "提交时间" : "Submitted At"}</th>
+                                                <th>{isChinese ? "类型" : "Type"}</th>
+                                                <th>{isChinese ? "访问方式" : "Access Details"}</th>
+                                                <th>{isChinese ? "审核状态" : "Review Status"}</th>
+                                                <th>{isChinese ? "审核备注" : "Admin Note"}</th>
+                                                <th>{isChinese ? "审核时间" : "Reviewed At"}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each promotionRecords as item (item.id)}
+                                                <tr>
+                                                    <td class="mono">{formatDateTime(item.created_at)}</td>
+                                                    <td>{promotionTypeLabel(item.promotion_type)}</td>
+                                                    <td>
+                                                        <div class="records-text">{item.access_method}</div>
+                                                    </td>
+                                                    <td>
+                                                        <span class={`record-status ${item.status.toLowerCase()}`}>
+                                                            {promotionStatusLabel(item.status)}
+                                                        </span>
+                                                        {#if item.status === "APPROVED"}
+                                                            <div class="subtext records-mini">
+                                                                +{item.awarded_points || item.requested_points} {$t("auth.points_label")}
+                                                            </div>
+                                                        {/if}
+                                                    </td>
+                                                    <td>{item.admin_note || "-"}</td>
+                                                    <td class="mono">{formatDateTime(item.reviewed_at)}</td>
+                                                </tr>
+                                            {/each}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div class="product-right">
-                                    {#if isTest}
-                                        <span class="badge test">{$t("auth.badge_test")}</span>
-                                    {:else if isBest}
-                                        <span class="badge best">{$t("auth.badge_best")}</span>
-                                    {:else if isRecommended}
-                                        <span class="badge rec">{$t("auth.badge_recommended")}</span>
-                                    {/if}
-                                    <div class="product-price">
-                                        {formatAmount(product.amountFen, product.currency)}
+                            {/if}
+                        {:else}
+                            {#if feedbackRecords.length === 0}
+                                <div class="subtext">
+                                    {isChinese ? "暂无反馈记录" : "No feedback records yet"}
+                                </div>
+                            {:else}
+                                <div class="records-table-wrap">
+                                    <table class="records-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{isChinese ? "提交时间" : "Submitted At"}</th>
+                                                <th>{isChinese ? "视频链接" : "Video URL"}</th>
+                                                <th>{isChinese ? "问题现象" : "Issue"}</th>
+                                                <th>{isChinese ? "建议" : "Suggestion"}</th>
+                                                <th>{isChinese ? "处理备注" : "Process Note"}</th>
+                                                <th>{isChinese ? "处理时间" : "Processed At"}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each feedbackRecords as item (item.id)}
+                                                <tr>
+                                                    <td class="mono">{formatDateTime(item.created_at)}</td>
+                                                    <td class="records-url-cell">
+                                                        <a href={item.video_url} target="_blank" rel="noreferrer">
+                                                            {item.video_url}
+                                                        </a>
+                                                    </td>
+                                                    <td><div class="records-text">{item.phenomenon}</div></td>
+                                                    <td><div class="records-text">{item.suggestion || "-"}</div></td>
+                                                    <td><div class="records-text">{item.process_note || "-"}</div></td>
+                                                    <td class="mono">{formatDateTime(item.processed_at)}</td>
+                                                </tr>
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {/if}
+                        {/if}
+                    </section>
+                {:else}
+                    <section class="card user-card">
+                        <div class="account-summary">
+                            <div class="user-row">
+                                {#if $clerkUser.imageUrl}
+                                    <img
+                                        class="avatar"
+                                        src={$clerkUser.imageUrl}
+                                        alt=""
+                                        referrerpolicy="no-referrer"
+                                    />
+                                {:else}
+                                    <div class="avatar fallback" aria-hidden="true">
+                                        <IconUserCircle size={28} />
+                                    </div>
+                                {/if}
+
+                                <div class="user-meta">
+                                    <div class="user-label">{$t("auth.signed_in_as")}</div>
+                                    <div class="user-value">
+                                        {$clerkUser.fullName ||
+                                            $clerkUser.username ||
+                                            $clerkUser.primaryEmailAddress?.emailAddress ||
+                                            $clerkUser.id}
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="product-actions">
-                                {#if selectedPaymentProvider === "wechat"}
-                                    <button
-                                        class="button elevated active"
-                                        disabled={purchaseLoading ||
-                                            activeOrder?.status === "CREATED"}
-                                        on:click={() => startWechatPay(product.key)}
-                                    >
-                                        {$t("auth.wechat_pay")}
-                                    </button>
+                            <div class="points-card">
+                                <div class="points-label">
+                                    {$t("auth.points_label")}
+                                </div>
+                                {#if pointsLoading}
+                                    <div class="points-value loading">...</div>
+                                {:else if pointsErrorKey}
+                                    <div class="points-value error">{$t(pointsErrorKey)}</div>
+                                {:else if points !== null}
+                                    <div class="points-value">{points}</div>
                                 {:else}
-                                    <button
-                                        class="button elevated active"
-                                        disabled={purchaseLoading || !product.enabled}
-                                        title={!product.enabled ? $t("auth.polar_not_ready") : ""}
-                                        on:click={() => startPolarPay(product.key)}
-                                    >
-                                        {$t("auth.polar_pay")}
-                                    </button>
+                                    <div class="points-value muted">--</div>
                                 {/if}
                             </div>
                         </div>
-                    {/each}
-                </div>
-            {/if}
 
-            {#if purchaseErrorKey}
-                <div class="subtext error">{$t(purchaseErrorKey)}</div>
-            {/if}
-            {#if purchaseNoticeKey}
-                <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
-            {/if}
-        </section>
+                        <div class="actions">
+                            <button
+                                class="button elevated"
+                                on:click={() => openUserProfile()}
+                            >
+                                <IconSettings size={18} />
+                                {$t("auth.manage")}
+                            </button>
+                            <button class="button elevated" on:click={signOut}>
+                                <IconLogout size={18} />
+                                {$t("auth.sign_out")}
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="card contact-card">
+                        <details class="accordion">
+                            <summary class="accordion-summary">
+                                <div>
+                                    <div class="card-title">{$t("auth.contact_points_title")}</div>
+                                    <div class="subtext card-subtitle">
+                                        {$t("auth.contact_points_subtitle")}
+                                    </div>
+                                </div>
+                            </summary>
+
+                            <div class="accordion-body">
+                                <div class="contact-grid">
+                                    {#if isChinese}
+                                        <div class="contact-item">
+                                            <div class="contact-label">
+                                                {$t("auth.contact_points_wechat")}
+                                            </div>
+                                            <img
+                                                class="contact-qr"
+                                                src="/account/wechat.png"
+                                                alt={$t("auth.contact_points_wechat_alt")}
+                                            />
+                                        </div>
+                                    {:else}
+                                        <div class="contact-item">
+                                            <div class="contact-label">
+                                                {$t("auth.contact_points_line")}
+                                            </div>
+                                            <img
+                                                class="contact-qr"
+                                                src="/account/line.png"
+                                                alt={$t("auth.contact_points_line_alt")}
+                                            />
+                                        </div>
+                                        <div class="contact-item">
+                                            <div class="contact-label">
+                                                {$t("auth.contact_points_whatsapp")}
+                                            </div>
+                                            <img
+                                                class="contact-qr"
+                                                src="/account/whatsapp.png"
+                                                alt={$t("auth.contact_points_whatsapp_alt")}
+                                            />
+                                        </div>
+                                    {/if}
+                                </div>
+
+                                <div class="subtext contact-note">
+                                    {$t("auth.contact_points_note")}
+                                </div>
+                            </div>
+                        </details>
+                    </section>
+
+                    <section class="card referral-card">
+                        <details class="accordion">
+                            <summary class="accordion-summary">
+                                <div>
+                                    <div class="card-title">{$t("auth.referral_title")}</div>
+                                    <div class="subtext card-subtitle">
+                                        {$t("auth.referral_subtitle")}
+                                    </div>
+                                </div>
+                            </summary>
+
+                            <div class="accordion-body">
+                                <div class="referral-link-row">
+                                    <div class="referral-link-label">
+                                        {$t("auth.referral_link_label")}
+                                    </div>
+                                    {#if referralLink}
+                                        <div class="referral-link-controls">
+                                            <input
+                                                class="referral-link-input"
+                                                readonly
+                                                value={referralLink}
+                                                on:focus={selectReferralLinkOnFocus}
+                                            />
+                                            <button
+                                                class="button elevated"
+                                                on:click={() => void copyReferralLink()}
+                                                disabled={!referralLink}
+                                            >
+                                                {#if referralCopyState === "copied"}
+                                                    {$t("auth.referral_copied")}
+                                                {:else if referralCopyState === "failed"}
+                                                    {$t("auth.referral_copy_failed")}
+                                                {:else}
+                                                    {$t("auth.referral_copy")}
+                                                {/if}
+                                            </button>
+                                        </div>
+                                    {:else}
+                                        <div class="subtext">{$t("auth.loading")}</div>
+                                    {/if}
+                                </div>
+
+                                <div class="subtext referral-rules">
+                                    <div class="rules-title">{$t("auth.referral_rules_title")}</div>
+                                    <div class="rules-list">
+                                        <div>{$t("auth.referral_rule_1")}</div>
+                                        <div>{$t("auth.referral_rule_2")}</div>
+                                        <div>{$t("auth.referral_rule_3")}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </section>
+
+                    <section class="card promotion-card">
+                        <details class="accordion">
+                            <summary class="accordion-summary">
+                                <div>
+                                    <div class="card-title">
+                                        {isChinese
+                                            ? "宣传网站赚积分"
+                                            : "Promote Website, Earn Points"}
+                                    </div>
+                                    <div class="subtext card-subtitle">
+                                        {isChinese
+                                            ? "发帖或发视频介绍网站，审核通过后可获得积分奖励。"
+                                            : "Publish posts/videos introducing this site and earn points after review."}
+                                    </div>
+                                </div>
+                            </summary>
+
+                            <div class="accordion-body">
+                                <div class="subtext promotion-rules-title">
+                                    {isChinese ? "活动规则" : "Rules"}
+                                </div>
+                                <div class="promotion-rules-list">
+                                    <div>
+                                        {isChinese
+                                            ? "1. 在任一平台发帖介绍本站（不少于80字，需包含网站链接），奖励 50 积分。"
+                                            : "1. Publish a post on any platform (at least 80 words, must include the site link) to earn 50 points."}
+                                    </div>
+                                    <div>
+                                        {isChinese
+                                            ? "2. 发布介绍本站功能的视频（不少于1分钟）到任一平台，奖励 100 积分。"
+                                            : "2. Publish a video introducing any site feature (at least 1 minute) on any platform to earn 100 points."}
+                                    </div>
+                                    <div>
+                                        {isChinese
+                                            ? "3. 完成后提交访问方式（链接/账号主页等），管理员审核通过后发放积分。"
+                                            : "3. Submit access details (link/profile URL, etc.). Points are credited after admin approval."}
+                                    </div>
+                                </div>
+
+                                <div class="promotion-form">
+                                    <label class="promotion-label" for="promotion-type">
+                                        {isChinese ? "任务类型" : "Task type"}
+                                    </label>
+                                    <select id="promotion-type" bind:value={promotionType}>
+                                        <option value="post">
+                                            {isChinese ? "发帖推广（50积分）" : "Post promotion (50 points)"}
+                                        </option>
+                                        <option value="video">
+                                            {isChinese ? "视频推广（100积分）" : "Video promotion (100 points)"}
+                                        </option>
+                                    </select>
+
+                                    <label class="promotion-label" for="promotion-access-method">
+                                        {isChinese
+                                            ? "访问方式（帖子链接/ 视频链接 / 账号主页 / 关键词）"
+                                            : "Access details (post/video link, profile URL, keyword)"}
+                                    </label>
+                                    <textarea
+                                        id="promotion-access-method"
+                                        rows="3"
+                                        bind:value={promotionAccessMethod}
+                                        placeholder={isChinese
+                                            ? "示例：https://xxx；平台账号：xxx；搜索关键词：xxx"
+                                            : "Example: https://... ; account: ... ; search keyword: ..."}
+                                    ></textarea>
+
+                                    <button
+                                        class="button elevated active"
+                                        on:click={() => void submitPromotionRequest()}
+                                        disabled={promotionSubmitting}
+                                    >
+                                        {#if promotionSubmitting}
+                                            {isChinese ? "提交中..." : "Submitting..."}
+                                        {:else}
+                                            {isChinese ? "提交审核" : "Submit for review"}
+                                        {/if}
+                                    </button>
+
+                                    {#if promotionSubmitError}
+                                        <div class="subtext error">{promotionSubmitError}</div>
+                                    {/if}
+                                    {#if promotionSubmitSuccess}
+                                        <div class="subtext notice">{promotionSubmitSuccess}</div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </details>
+                    </section>
+
+                    <section class="card topup-card">
+                        <div class="topup-header">
+                            <div class="topup-title">
+                                {$t("auth.topup_title")}
+                            </div>
+                            <div class="subtext topup-subtitle">
+                                {$t(topupSubtitleKey)}
+                            </div>
+                        </div>
+
+                        {#if isChinese}
+                            <div class="provider-switch" role="tablist">
+                                <button
+                                    type="button"
+                                    class="provider-option"
+                                    class:active={selectedPaymentProvider === "wechat"}
+                                    on:click={() => selectPaymentProvider("wechat")}
+                                >
+                                    {$t("auth.wechat_pay")}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="provider-option"
+                                    class:active={selectedPaymentProvider === "polar"}
+                                    on:click={() => selectPaymentProvider("polar")}
+                                >
+                                    {$t("auth.international_pay")}
+                                </button>
+                            </div>
+                        {/if}
+
+                        {#if creditProductsLoading}
+                            <div class="subtext">{$t("auth.loading")}</div>
+                        {:else if creditProductsErrorKey}
+                            <div class="subtext error">{$t(creditProductsErrorKey)}</div>
+                        {:else}
+                            <div class="products-grid">
+                                {#each creditProducts as product (product.key)}
+                                    {@const isTest = product.key.startsWith("points_test_")}
+                                    {@const isBest = !isTest && product.key === bestValueProductKey}
+                                    {@const isRecommended =
+                                        !isTest &&
+                                        !isBest &&
+                                        product.key === recommendedValueProductKey}
+
+                                    <div class="product-card">
+                                        <div class="product-main">
+                                            <div class="product-left">
+                                                <div class="product-points">
+                                                    {product.points} {$t("auth.points_label")}
+                                                </div>
+                                                <div class="subtext product-subtitle">
+                                                    {formatUnitPrice(product)}
+                                                </div>
+                                            </div>
+                                            <div class="product-right">
+                                                {#if isTest}
+                                                    <span class="badge test">{$t("auth.badge_test")}</span>
+                                                {:else if isBest}
+                                                    <span class="badge best">{$t("auth.badge_best")}</span>
+                                                {:else if isRecommended}
+                                                    <span class="badge rec">{$t("auth.badge_recommended")}</span>
+                                                {/if}
+                                                <div class="product-price">
+                                                    {formatAmount(product.amountFen, product.currency)}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="product-actions">
+                                            {#if selectedPaymentProvider === "wechat"}
+                                                <button
+                                                    class="button elevated active"
+                                                    disabled={purchaseLoading ||
+                                                        activeOrder?.status === "CREATED"}
+                                                    on:click={() => startWechatPay(product.key)}
+                                                >
+                                                    {$t("auth.wechat_pay")}
+                                                </button>
+                                            {:else}
+                                                <button
+                                                    class="button elevated active"
+                                                    disabled={purchaseLoading || !product.enabled}
+                                                    title={!product.enabled ? $t("auth.polar_not_ready") : ""}
+                                                    on:click={() => startPolarPay(product.key)}
+                                                >
+                                                    {$t("auth.polar_pay")}
+                                                </button>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+
+                        {#if purchaseErrorKey}
+                            <div class="subtext error">{$t(purchaseErrorKey)}</div>
+                        {/if}
+                        {#if purchaseNoticeKey}
+                            <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
+                        {/if}
+                    </section>
+                {/if}
+            </div>
+        </div>
 
         {#if activeOrder && activeOrder.provider === "wechat"}
             <div
@@ -1404,6 +1672,213 @@
         line-height: 1.45;
     }
 
+    .account-shell {
+        --records-nav-width: 190px;
+        --records-padding: 30px;
+        display: grid;
+        grid-template-columns: var(--records-nav-width) 1fr;
+        gap: calc(var(--padding) * 1.5);
+        align-items: start;
+        width: min(1220px, calc(100vw - 2rem));
+        margin-left: 50%;
+        transform: translateX(-50%);
+        padding-left: var(--records-padding);
+    }
+
+    .account-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .records-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding-top: 0;
+        padding-bottom: var(--records-padding);
+        display: flex;
+        flex-direction: column;
+        gap: var(--padding);
+    }
+
+    .records-sidebar-header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .records-subtitle {
+        padding: 0;
+        letter-spacing: 0.2px;
+        opacity: 0.85;
+    }
+
+    .records-title {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--secondary);
+        letter-spacing: -0.3px;
+    }
+
+    .records-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-bottom: var(--padding);
+    }
+
+    .records-nav-title {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--gray);
+        padding-left: 8px;
+    }
+
+    .records-menu-item {
+        width: 100%;
+        min-height: 40px;
+        border-radius: var(--border-radius);
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--subtext);
+        font-weight: 600;
+        text-align: left;
+        padding: 8px 10px;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease;
+    }
+
+    .records-menu-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .records-menu-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border-radius: 5px;
+        background: var(--gray);
+        color: var(--white);
+        flex: 0 0 auto;
+    }
+
+    .records-menu-icon :global(svg) {
+        stroke-width: 1.6px;
+        width: 18px;
+        height: 18px;
+    }
+
+    .records-menu-item:hover {
+        background: var(--button-hover-transparent);
+    }
+
+    .records-menu-item.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: var(--button-text);
+        box-shadow: var(--button-box-shadow);
+    }
+
+    .records-menu-item.active .records-menu-icon {
+        background: var(--green);
+    }
+
+    .records-content {
+        min-width: 0;
+        border: 1px solid var(--surface-2);
+        border-radius: calc(var(--border-radius) + 6px);
+        background: var(--surface-1);
+        padding: 16px;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .records-table-wrap {
+        overflow: auto;
+        border-radius: 12px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+    }
+
+    .records-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 880px;
+    }
+
+    .records-table th,
+    .records-table td {
+        border-bottom: 1px solid var(--surface-2);
+        padding: 9px 10px;
+        vertical-align: top;
+    }
+
+    .records-table th {
+        text-align: left;
+        font-size: 12px;
+        color: var(--subtext);
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        position: sticky;
+        top: 0;
+        background: var(--surface-1);
+        z-index: 1;
+    }
+
+    .mono {
+        font-family: var(--monospace);
+    }
+
+    .records-text {
+        white-space: pre-wrap;
+        line-height: 1.4;
+        max-height: 130px;
+        overflow: auto;
+    }
+
+    .records-url-cell a {
+        color: var(--blue);
+        word-break: break-all;
+    }
+
+    .record-status {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid var(--surface-2);
+        color: var(--subtext);
+    }
+
+    .record-status.pending {
+        border-color: var(--yellow);
+        color: var(--yellow);
+    }
+
+    .record-status.approved {
+        border-color: var(--green);
+        color: var(--green);
+    }
+
+    .record-status.rejected {
+        border-color: var(--red);
+        color: var(--red);
+    }
+
+    .records-mini {
+        padding: 0;
+        margin-top: 4px;
+    }
+
     .account-summary {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -1753,6 +2228,35 @@
         }
         100% {
             background-position: -200% 0;
+        }
+    }
+
+    @media screen and (max-width: 750px) {
+        .account-shell {
+            grid-template-columns: 1fr;
+            padding-left: 0;
+            width: 100%;
+            margin-left: 0;
+            transform: none;
+        }
+
+        .account-main {
+            gap: 10px;
+        }
+
+        .records-sidebar {
+            position: static;
+            height: auto;
+            padding: var(--padding);
+            border: 1px solid var(--surface-2);
+            border-radius: calc(var(--border-radius) + 6px);
+            background: var(--surface-1);
+            margin-bottom: 10px;
+        }
+
+        .records-content {
+            margin-top: 0;
+            margin-bottom: 0;
         }
     }
 

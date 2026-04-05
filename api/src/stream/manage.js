@@ -129,12 +129,20 @@ export function createProxyTunnels(info) {
         requestIP: info?.requestIP,
     }
 
+    const streamSelectionHint =
+        info?.type === "audio"
+            ? "audio"
+            : (info?.type === "mute" ? "video" : undefined);
+
     for (const [index, url] of urls.entries()) {
         const tunnelOriginalRequest = info?.originalRequest
             ? {
                 ...info.originalRequest,
                 __streamIndex: index,
                 __streamCount: urls.length,
+                ...(streamSelectionHint
+                    ? { __streamSelection: streamSelectionHint }
+                    : {}),
             }
             : undefined;
         const tunnelUrlCandidates = (() => {
@@ -351,24 +359,44 @@ const transplantTunnel = async function (dispatcher) {
             ? response.urlCandidates
             : undefined;
         // console.log(`[transplant] Flattened URLs count: ${response.urls.length}`);
-        
-        if (this.originalRequest.isAudioOnly && response.urls.length > 1) {
-            response.urls = [response.urls[1]];
+
+        const applySelectionByKind = (kind) => {
+            if (!kind || response.urls.length <= 1) return false;
+
+            const wantedIndex = kind === "audio" ? 1 : 0;
+            if (wantedIndex >= response.urls.length) return false;
+
+            response.urls = [response.urls[wantedIndex]];
             if (response.urlCandidates) {
-                response.urlCandidates = [response.urlCandidates[1]];
+                response.urlCandidates = [response.urlCandidates[wantedIndex]];
             }
-            // console.log(`[transplant] Using audio-only URL (index 1)`);
-        } else if (this.originalRequest.isAudioMuted) {
-            response.urls = [response.urls[0]];
-            if (response.urlCandidates) {
-                response.urlCandidates = [response.urlCandidates[0]];
+            return true;
+        };
+
+        const selectionKind =
+            typeof this.originalRequest?.__streamSelection === "string"
+                ? this.originalRequest.__streamSelection
+                : undefined;
+
+        if (!applySelectionByKind(selectionKind)) {
+            if (this.originalRequest.isAudioOnly && response.urls.length > 1) {
+                response.urls = [response.urls[1]];
+                if (response.urlCandidates) {
+                    response.urlCandidates = [response.urlCandidates[1]];
+                }
+                // console.log(`[transplant] Using audio-only URL (index 1)`);
+            } else if (this.originalRequest.isAudioMuted) {
+                response.urls = [response.urls[0]];
+                if (response.urlCandidates) {
+                    response.urlCandidates = [response.urlCandidates[0]];
+                }
+                // console.log(`[transplant] Using muted video URL (index 0)`);
             }
-            // console.log(`[transplant] Using muted video URL (index 0)`);
         }
 
         const streamIndex = Number(this.originalRequest?.__streamIndex);
         if (Number.isInteger(streamIndex) && streamIndex >= 0) {
-            if (streamIndex >= response.urls.length) {
+            if (streamIndex >= response.urls.length && response.urls.length > 1) {
                 return;
             }
 

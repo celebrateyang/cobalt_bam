@@ -260,21 +260,21 @@
             <table class="feedback-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>时间</th>
-                        <th>用户</th>
-                        <th>视频链接</th>
-                        <th>现象</th>
-                        <th>建议</th>
-                        <th>处理结果</th>
+                        <th class="col-id">ID</th>
+                        <th class="col-time">时间</th>
+                        <th class="col-user">用户</th>
+                        <th class="col-url">视频链接</th>
+                        <th class="col-phenomenon">现象</th>
+                        <th class="col-suggestion">建议</th>
+                        <th class="col-process">处理结果</th>
                     </tr>
                 </thead>
                 <tbody>
                     {#each feedback as item (item.id)}
                         <tr>
-                            <td class="mono">{item.id}</td>
-                            <td class="mono">{formatDate(item.created_at)}</td>
-                            <td>
+                            <td class="mono col-id">{item.id}</td>
+                            <td class="mono col-time">{formatDate(item.created_at)}</td>
+                            <td class="col-user">
                                 <div class="user-cell">
                                     {#if item.user?.avatar_url}
                                         <img
@@ -294,7 +294,7 @@
                                         </div>
                                     {/if}
                                     <div class="user-meta">
-                                        <div class="name">
+                                        <div class="name" title={item.user?.full_name || "-"}>
                                             {item.user?.full_name || "-"}
                                         </div>
                                         <div class="sub-row">
@@ -321,9 +321,10 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="url-cell">
+                            <td class="url-cell col-url">
                                 <a
                                     class="mono url"
+                                    title={item.video_url}
                                     href={item.video_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -338,17 +339,17 @@
                                     复制
                                 </button>
                             </td>
-                            <td>
+                            <td class="col-phenomenon">
                                 <div class="text clamp">
                                     {item.phenomenon}
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-suggestion">
                                 <div class="text clamp">
                                     {item.suggestion || "-"}
                                 </div>
                             </td>
-                            <td class="process-cell">
+                            <td class="process-cell col-process">
                                 <div class="process-time">
                                     处理时间：{formatDate(item.processed_at)}
                                 </div>
@@ -525,6 +526,29 @@
         width: 100%;
         border-collapse: collapse;
         min-width: 1100px;
+        table-layout: fixed;
+    }
+
+    .feedback-table .col-id {
+        width: 54px;
+    }
+
+    .feedback-table .col-time,
+    .feedback-table .col-user,
+    .feedback-table .col-url {
+        width: 150px;
+    }
+
+    .feedback-table .col-suggestion {
+        width: 130px;
+    }
+
+    .feedback-table .col-phenomenon {
+        width: 180px;
+    }
+
+    .feedback-table .col-process {
+        width: 420px;
     }
 
     thead th {
@@ -560,7 +584,8 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 240px;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .avatar {
@@ -591,6 +616,9 @@
         font-weight: 700;
         color: var(--text);
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .sub {
@@ -599,7 +627,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 340px;
+        max-width: none;
     }
 
     .sub-row {
@@ -624,16 +652,19 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 320px;
-        max-width: 420px;
+        min-width: 0;
+        max-width: none;
     }
 
     .url {
         color: var(--blue);
+        flex: 1;
+        min-width: 0;
+        display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 340px;
+        max-width: none;
     }
 
     .btn-copy {
@@ -662,7 +693,7 @@
     }
 
     .process-cell {
-        min-width: 280px;
+        min-width: 420px;
     }
 
     .process-time {

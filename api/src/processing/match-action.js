@@ -23,6 +23,15 @@ export default function({
     alwaysProxy,
     localProcessing,
 }) {
+    const originalRequest =
+        r.originalRequest && typeof r.originalRequest === "object"
+            ? {
+                ...r.originalRequest,
+                isAudioOnly,
+                isAudioMuted,
+            }
+            : r.originalRequest;
+
     const shouldRedirectDouyinUrl = (url, options = {}) => {
         if (typeof url !== "string" || !url) return false;
 
@@ -61,7 +70,7 @@ export default function({
                     createFilename(r.filenameAttributes, filenameStyle, isAudioOnly, isAudioMuted) : r.filename,
             fileMetadata: !disableMetadata ? r.fileMetadata : false,
             requestIP,
-            originalRequest: r.originalRequest,
+            originalRequest,
             subtitles: r.subtitles,
             cover: !disableMetadata ? r.cover : false,
             cropCover: !disableMetadata ? r.cropCover : false,

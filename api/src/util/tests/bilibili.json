@@ -65,5 +65,18 @@
             "code": 200,
             "status": "tunnel"
         }
+    },
+    {
+        "name": "audio-only local processing",
+        "url": "https://www.bilibili.com/video/BV18i4y1m7xV/",
+        "params": {
+            "downloadMode": "audio",
+            "audioFormat": "mp3",
+            "localProcessing": "forced"
+        },
+        "expected": {
+            "code": 200,
+            "status": "local-processing"
+        }
     }
 ]

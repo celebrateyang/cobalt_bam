@@ -829,7 +829,7 @@
                                     <table class="records-table">
                                         <thead>
                                             <tr>
-                                                <th>{isChinese ? "提交时间" : "Submitted At"}</th>
+                                                <th class="col-time">{isChinese ? "提交时间" : "Submitted At"}</th>
                                                 <th>{isChinese ? "类型" : "Type"}</th>
                                                 <th>{isChinese ? "访问方式" : "Access Details"}</th>
                                                 <th>{isChinese ? "审核状态" : "Review Status"}</th>
@@ -840,7 +840,7 @@
                                         <tbody>
                                             {#each promotionRecords as item (item.id)}
                                                 <tr>
-                                                    <td class="mono">{formatDateTime(item.created_at)}</td>
+                                                    <td class="mono col-time">{formatDateTime(item.created_at)}</td>
                                                     <td>{promotionTypeLabel(item.promotion_type)}</td>
                                                     <td>
                                                         <div class="records-text">{item.access_method}</div>
@@ -873,8 +873,8 @@
                                     <table class="records-table">
                                         <thead>
                                             <tr>
-                                                <th>{isChinese ? "提交时间" : "Submitted At"}</th>
-                                                <th>{isChinese ? "视频链接" : "Video URL"}</th>
+                                                <th class="col-time">{isChinese ? "提交时间" : "Submitted At"}</th>
+                                                <th class="col-url">{isChinese ? "视频链接" : "Video URL"}</th>
                                                 <th>{isChinese ? "问题现象" : "Issue"}</th>
                                                 <th>{isChinese ? "建议" : "Suggestion"}</th>
                                                 <th>{isChinese ? "处理备注" : "Process Note"}</th>
@@ -884,9 +884,14 @@
                                         <tbody>
                                             {#each feedbackRecords as item (item.id)}
                                                 <tr>
-                                                    <td class="mono">{formatDateTime(item.created_at)}</td>
-                                                    <td class="records-url-cell">
-                                                        <a href={item.video_url} target="_blank" rel="noreferrer">
+                                                    <td class="mono col-time">{formatDateTime(item.created_at)}</td>
+                                                    <td class="records-url-cell col-url">
+                                                        <a
+                                                            href={item.video_url}
+                                                            title={item.video_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
                                                             {item.video_url}
                                                         </a>
                                                     </td>
@@ -1679,9 +1684,11 @@
         grid-template-columns: var(--records-nav-width) 1fr;
         gap: calc(var(--padding) * 1.5);
         align-items: start;
-        width: min(1220px, calc(100vw - 2rem));
-        margin-left: 50%;
-        transform: translateX(-50%);
+        width: min(1380px, calc(100vw - 90px));
+        margin-left: 0;
+        transform: none;
+        position: relative;
+        left: calc(50% - 50vw + 72px);
         padding-left: var(--records-padding);
     }
 
@@ -1811,6 +1818,12 @@
         width: 100%;
         border-collapse: collapse;
         min-width: 880px;
+        table-layout: fixed;
+    }
+
+    .records-table .col-time,
+    .records-table .col-url {
+        width: 170px;
     }
 
     .records-table th,
@@ -1846,7 +1859,14 @@
 
     .records-url-cell a {
         color: var(--blue);
-        word-break: break-all;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .records-url-cell {
+        min-width: 0;
     }
 
     .record-status {
@@ -2238,6 +2258,8 @@
             width: 100%;
             margin-left: 0;
             transform: none;
+            position: static;
+            left: 0;
         }
 
         .account-main {

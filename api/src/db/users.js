@@ -2,6 +2,7 @@ import { getClient, query, initPool } from "./pg-client.js";
 import { env } from "../config.js";
 import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
+import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
 import { nanoid } from "nanoid";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 
@@ -120,6 +121,7 @@ export const initUserDatabase = async () => {
 
     await initFeedbackDatabase();
     await initReferralDatabase();
+    await initPromotionSubmissionsDatabase();
 
     // ==================== Collection download memory ====================
     await query(`

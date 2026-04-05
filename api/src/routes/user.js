@@ -18,6 +18,12 @@ import {
     getReferrerProfileByReferralCode,
 } from "../db/referrals.js";
 import {
+    createPromotionSubmission,
+    getPromotionTypeConfig,
+    listPromotionSubmissions,
+    reviewPromotionSubmission,
+} from "../db/promotion-submissions.js";
+import {
     hasPaidCreditOrderByClerkUserId,
     listCreditOrders,
     listCreditOrdersForUser,
@@ -297,6 +303,148 @@ router.get("/admin/feedback", requireAdminAuth, async (req, res) => {
     }
 });
 
+// Admin-only: list promotion submissions (paginated)
+router.get("/admin/promotion-submissions", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const status = typeof req.query?.status === "string" ? req.query.status : "";
+
+        const result = await listPromotionSubmissions({
+            page,
+            limit,
+            search,
+            status,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/promotion-submissions error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to load promotion submissions",
+        );
+    }
+});
+
+// Admin-only: review a promotion submission and optionally award points.
+router.post(
+    "/admin/promotion-submissions/:id/review",
+    requireAdminAuth,
+    async (req, res) => {
+        try {
+            const id = Number.parseInt(req.params?.id, 10);
+            if (!Number.isFinite(id) || id <= 0) {
+                return jsonError(res, 400, "INVALID_INPUT", "Invalid submission id");
+            }
+
+            const actionRaw = req.body?.action;
+            const action = typeof actionRaw === "string" ? actionRaw.trim().toLowerCase() : "";
+            if (action !== "approve" && action !== "reject") {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_INPUT",
+                    "action must be 'approve' or 'reject'",
+                );
+            }
+
+            const rawAwardedPoints = req.body?.awardedPoints;
+            const awardedPoints =
+                rawAwardedPoints === undefined || rawAwardedPoints === null || rawAwardedPoints === ""
+                    ? undefined
+                    : typeof rawAwardedPoints === "string"
+                        ? Number.parseInt(rawAwardedPoints, 10)
+                        : rawAwardedPoints;
+
+            if (action === "approve") {
+                if (
+                    awardedPoints !== undefined &&
+                    (!Number.isFinite(awardedPoints) ||
+                        !Number.isInteger(awardedPoints) ||
+                        awardedPoints < 0)
+                ) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "awardedPoints must be a non-negative integer",
+                    );
+                }
+            }
+
+            const adminNoteRaw = req.body?.adminNote;
+            const adminNote =
+                typeof adminNoteRaw === "string" ? adminNoteRaw.trim() : "";
+            if (adminNote.length > 4000) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_INPUT",
+                    "adminNote is too long",
+                );
+            }
+
+            const result = await reviewPromotionSubmission({
+                submissionId: id,
+                reviewer: req.user?.username ?? req.user?.email ?? "admin",
+                action,
+                awardedPoints,
+                adminNote: adminNote || null,
+            });
+
+            if (!result.ok) {
+                if (result.code === "NOT_FOUND") {
+                    return jsonError(
+                        res,
+                        404,
+                        "NOT_FOUND",
+                        "Promotion submission not found",
+                    );
+                }
+
+                if (result.code === "ALREADY_REVIEWED") {
+                    return jsonError(
+                        res,
+                        409,
+                        "ALREADY_REVIEWED",
+                        "Promotion submission has already been reviewed",
+                    );
+                }
+
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_INPUT",
+                    "Invalid review request",
+                );
+            }
+
+            return res.json({
+                status: "success",
+                data: {
+                    submission: result.submission,
+                    userPointsAfter: result.userPointsAfter ?? null,
+                },
+            });
+        } catch (error) {
+            console.error("POST /user/admin/promotion-submissions/:id/review error:", error);
+            return jsonError(
+                res,
+                500,
+                "SERVER_ERROR",
+                "Failed to review promotion submission",
+            );
+        }
+    },
+);
+
 const updatePointsHandler = async (req, res) => {
     try {
         const id = Number.parseInt(req.params?.id, 10);
@@ -424,6 +572,17 @@ if (!isClerkApiConfigured) {
         });
     });
 
+    router.post("/promotion-submissions", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
     router.post("/admin/sync-all", requireAdminAuth, (_, res) => {
         res.status(501).json({
             status: "error",
@@ -536,6 +695,17 @@ if (!isClerkApiConfigured) {
         });
 
         router.post("/feedback", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
+        router.post("/promotion-submissions", (_, res) => {
             res.status(501).json({
                 status: "error",
                 error: {
@@ -1422,6 +1592,107 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to clear collection memory",
+                );
+            }
+        });
+
+        router.post("/promotion-submissions", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawPromotionType =
+                    req.body?.promotionType ??
+                    req.body?.type ??
+                    req.body?.promotion_type;
+                const promotionType =
+                    typeof rawPromotionType === "string"
+                        ? rawPromotionType.trim().toLowerCase()
+                        : "";
+
+                const rawAccessMethod =
+                    req.body?.accessMethod ??
+                    req.body?.access_method ??
+                    req.body?.access;
+                const accessMethod =
+                    typeof rawAccessMethod === "string" ? rawAccessMethod.trim() : "";
+
+                if (!promotionType) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "promotionType is required",
+                    );
+                }
+
+                const typeConfig = getPromotionTypeConfig(promotionType);
+                if (!typeConfig) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "promotionType must be 'post' or 'video'",
+                    );
+                }
+
+                if (!accessMethod) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "accessMethod is required",
+                    );
+                }
+
+                if (accessMethod.length > 4000) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "accessMethod is too long",
+                    );
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const created = await createPromotionSubmission({
+                    userId: user.id,
+                    clerkUserId: auth.userId,
+                    promotionType: typeConfig.key,
+                    accessMethod,
+                });
+
+                if (!created.ok) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "Invalid promotion submission",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        submission: created.submission,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/promotion-submissions error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to submit promotion request",
                 );
             }
         });

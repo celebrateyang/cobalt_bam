@@ -288,7 +288,9 @@ const pointsForDuration = (durationSeconds: number | undefined) => {
     return Math.max(MIN_POINTS_PER_DOWNLOAD, baseMinutes * POINTS_PER_MINUTE);
 };
 
-const estimatePointsForUrl = async (url: string) => {
+const estimatePointsForUrl = async (
+    url: string,
+): Promise<{ points: number | null; hasEstimate: boolean }> => {
     try {
         const expanded = await API.expand(url);
         if (!expanded || expanded.status === "error") {
@@ -305,10 +307,11 @@ const estimatePointsForUrl = async (url: string) => {
             return { points: null, hasEstimate: false };
         }
 
-        return {
-            points: Math.max(MIN_POINTS_PER_DOWNLOAD, Math.ceil(points)),
-            hasEstimate: true,
-        };
+        const normalizedPoints = Math.max(
+            MIN_POINTS_PER_DOWNLOAD,
+            Math.ceil(Number(points)),
+        );
+        return { points: normalizedPoints, hasEstimate: true };
     } catch {
         return { points: null, hasEstimate: false };
     }
@@ -316,6 +319,7 @@ const estimatePointsForUrl = async (url: string) => {
 
 const confirmPointsPreview = async (url: string) => {
     const { points, hasEstimate } = await estimatePointsForUrl(url);
+    const estimatedPoints = typeof points === "number" ? points : null;
 
     // Home page: when points cannot be estimated, skip the extra confirmation
     // and continue with the normal download flow.
@@ -328,8 +332,8 @@ const confirmPointsPreview = async (url: string) => {
             id: `points-preview-${Date.now()}`,
             type: "small",
             title: get(t)("dialog.points_preview.title"),
-            bodyText: hasEstimate
-                ? get(t)("dialog.points_preview.body", { required: points })
+            bodyText: estimatedPoints !== null
+                ? get(t)("dialog.points_preview.body", { required: estimatedPoints })
                 : get(t)("dialog.points_preview.unknown"),
             buttons: [
                 {

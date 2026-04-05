@@ -44,6 +44,7 @@
     };
 
     type PaymentProvider = "wechat" | "polar";
+    type PromotionType = "post" | "video";
 
     let autoAuthLaunched = false;
 
@@ -103,6 +104,11 @@
     let referralLink = "";
     let referralCopyState: "idle" | "copied" | "failed" = "idle";
     let referralCopyTimer: ReturnType<typeof setTimeout> | null = null;
+    let promotionType: PromotionType = "post";
+    let promotionAccessMethod = "";
+    let promotionSubmitting = false;
+    let promotionSubmitError = "";
+    let promotionSubmitSuccess = "";
 
     const fetchPoints = async () => {
         const userId = $clerkUser?.id;
@@ -143,6 +149,9 @@
         points = null;
         referralCode = null;
         lastPointsUserId = null;
+        promotionAccessMethod = "";
+        promotionSubmitError = "";
+        promotionSubmitSuccess = "";
     }
 
     $: referralLink =
@@ -177,6 +186,64 @@
                 referralCopyState = "idle";
                 referralCopyTimer = null;
             }, 1800);
+        }
+    };
+
+    const requestedPromotionPoints = (type: PromotionType) =>
+        type === "video" ? 100 : 50;
+
+    const submitPromotionRequest = async () => {
+        if (promotionSubmitting) return;
+        if (!$clerkUser) return;
+
+        const accessMethod = promotionAccessMethod.trim();
+        if (!accessMethod) {
+            promotionSubmitError = isChinese
+                ? "请填写访问方式（帖子链接/视频链接/账号主页等）。"
+                : "Please provide access details (post link/video link/profile URL).";
+            promotionSubmitSuccess = "";
+            return;
+        }
+
+        promotionSubmitting = true;
+        promotionSubmitError = "";
+        promotionSubmitSuccess = "";
+
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const res = await fetch(`${apiBase}/user/promotion-submissions`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    promotionType,
+                    accessMethod,
+                }),
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to submit promotion request");
+            }
+
+            const points = requestedPromotionPoints(promotionType);
+            promotionSubmitSuccess = isChinese
+                ? `提交成功，审核通过后将发放 ${points} 积分。`
+                : `Submitted successfully. ${points} points will be credited after approval.`;
+            promotionAccessMethod = "";
+            promotionType = "post";
+        } catch (error) {
+            console.debug("submit promotion request failed", error);
+            promotionSubmitError = isChinese
+                ? "提交失败，请稍后重试。"
+                : "Submission failed, please try again later.";
+        } finally {
+            promotionSubmitting = false;
         }
     };
 
@@ -739,6 +806,95 @@
             </details>
         </section>
 
+        <section class="card promotion-card">
+            <details class="accordion">
+                <summary class="accordion-summary">
+                    <div>
+                        <div class="card-title">
+                            {isChinese
+                                ? "宣传网站赚积分"
+                                : "Promote Website, Earn Points"}
+                        </div>
+                        <div class="subtext card-subtitle">
+                            {isChinese
+                                ? "发帖或发视频介绍网站，审核通过后可获得积分奖励。"
+                                : "Publish posts/videos introducing this site and earn points after review."}
+                        </div>
+                    </div>
+                </summary>
+
+                <div class="accordion-body">
+                    <div class="subtext promotion-rules-title">
+                        {isChinese ? "活动规则" : "Rules"}
+                    </div>
+                    <div class="promotion-rules-list">
+                        <div>
+                            {isChinese
+                                ? "1. 在任一平台发帖介绍本站（不少于80字，需包含网站链接），奖励 50 积分。"
+                                : "1. Publish a post on any platform (at least 80 words, must include the site link) to earn 50 points."}
+                        </div>
+                        <div>
+                            {isChinese
+                                ? "2. 发布介绍本站功能的视频（不少于1分钟）到任一平台，奖励 100 积分。"
+                                : "2. Publish a video introducing any site feature (at least 1 minute) on any platform to earn 100 points."}
+                        </div>
+                        <div>
+                            {isChinese
+                                ? "3. 完成后提交访问方式（链接/账号主页等），管理员审核通过后发放积分。"
+                                : "3. Submit access details (link/profile URL, etc.). Points are credited after admin approval."}
+                        </div>
+                    </div>
+
+                    <div class="promotion-form">
+                        <label class="promotion-label" for="promotion-type">
+                            {isChinese ? "任务类型" : "Task type"}
+                        </label>
+                        <select id="promotion-type" bind:value={promotionType}>
+                            <option value="post">
+                                {isChinese ? "发帖推广（50积分）" : "Post promotion (50 points)"}
+                            </option>
+                            <option value="video">
+                                {isChinese ? "视频推广（100积分）" : "Video promotion (100 points)"}
+                            </option>
+                        </select>
+
+                        <label class="promotion-label" for="promotion-access-method">
+                            {isChinese
+                                ? "访问方式（帖子链接 / 视频链接 / 账号主页 / 关键词）"
+                                : "Access details (post/video link, profile URL, keyword)"}
+                        </label>
+                        <textarea
+                            id="promotion-access-method"
+                            rows="3"
+                            bind:value={promotionAccessMethod}
+                            placeholder={isChinese
+                                ? "示例：https://xxx；平台账号：xxx；搜索关键词：xxx"
+                                : "Example: https://... ; account: ... ; search keyword: ..."}
+                        ></textarea>
+
+                        <button
+                            class="button elevated active"
+                            on:click={() => void submitPromotionRequest()}
+                            disabled={promotionSubmitting}
+                        >
+                            {#if promotionSubmitting}
+                                {isChinese ? "提交中..." : "Submitting..."}
+                            {:else}
+                                {isChinese ? "提交审核" : "Submit for review"}
+                            {/if}
+                        </button>
+
+                        {#if promotionSubmitError}
+                            <div class="subtext error">{promotionSubmitError}</div>
+                        {/if}
+                        {#if promotionSubmitSuccess}
+                            <div class="subtext notice">{promotionSubmitSuccess}</div>
+                        {/if}
+                    </div>
+                </div>
+            </details>
+        </section>
+
         <section class="card topup-card">
                 <div class="topup-header">
                     <div class="topup-title">
@@ -1198,6 +1354,54 @@
         gap: 4px;
         color: var(--subtext);
         line-height: 1.5;
+    }
+
+    .promotion-card {
+        gap: 14px;
+    }
+
+    .promotion-rules-title {
+        padding: 0;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .promotion-rules-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        color: var(--subtext);
+        line-height: 1.5;
+    }
+
+    .promotion-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .promotion-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--subtext);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .promotion-form select,
+    .promotion-form textarea {
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+        color: var(--text);
+        padding: 10px 12px;
+        width: 100%;
+    }
+
+    .promotion-form textarea {
+        resize: vertical;
+        min-height: 86px;
+        line-height: 1.45;
     }
 
     .account-summary {

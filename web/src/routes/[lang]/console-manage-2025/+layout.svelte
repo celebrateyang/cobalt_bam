@@ -11,9 +11,10 @@
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconUsersGroup from "@tabler/icons-svelte/IconUsersGroup.svelte";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
-    import IconBug from "@tabler/icons-svelte/IconBug.svelte";
-    import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
-    import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
+import IconBug from "@tabler/icons-svelte/IconBug.svelte";
+import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
+import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
+import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
 
     $: lang = $page.params.lang;
     $: pathname = $page.url.pathname;
@@ -81,6 +82,13 @@
                 </PageNavSection>
 
                 <PageNavSection sectionTitle="支持">
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/promotion"
+                        tabTitle="推广审核"
+                        iconColor="gray"
+                    >
+                        <IconSpeakerphone />
+                    </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/feedback"
                         tabTitle="问题反馈"

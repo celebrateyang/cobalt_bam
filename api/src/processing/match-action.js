@@ -162,9 +162,13 @@ export default function({
             if (Array.isArray(r.urls) && !r.isHLS) {
                 muteType = "proxy";
             }
+            const muteUrlCandidates = Array.isArray(r.urlCandidates)
+                ? r.urlCandidates[0]
+                : r.urlCandidates;
             params = {
                 type: muteType,
                 url: Array.isArray(r.urls) ? r.urls[0] : r.urls,
+                urlCandidates: muteUrlCandidates,
                 isHLS: r.isHLS
             }
             if (host === "reddit" && r.typeId === "redirect") {
@@ -317,9 +321,13 @@ export default function({
                 processType = "audio";
             }
 
+            const audioUrlCandidates = Array.isArray(r.urlCandidates)
+                ? r.urlCandidates[1]
+                : r.urlCandidates;
             params = {
                 type: processType,
                 url: Array.isArray(r.urls) ? r.urls[1] : r.urls,
+                urlCandidates: audioUrlCandidates,
 
                 audioBitrate,
                 audioCopy: copy,

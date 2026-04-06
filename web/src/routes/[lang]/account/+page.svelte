@@ -393,6 +393,9 @@
         if (product.currency === "CNY" && product.unitPriceFen === 0.8) {
             return t.get("auth.unit_price_0_8_fen");
         }
+        if (product.currency === "CNY" && product.unitPriceFen === 0.625) {
+            return "0.625 分/积分";
+        }
 
         const points = Number(product.points) || 1;
         const unit = Number(product.amountFen) / 100 / points;

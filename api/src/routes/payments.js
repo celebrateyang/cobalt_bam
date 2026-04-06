@@ -68,8 +68,8 @@ const WECHAT_CREDIT_PRODUCTS = [
     },
     {
         key: "points_6250",
-        points: 6250,
-        unitPriceFen: 0.8,
+        points: 8000,
+        unitPriceFen: 0.625,
         amountFen: 5000,
         currency: "CNY",
     },

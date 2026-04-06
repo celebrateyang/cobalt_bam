@@ -7,7 +7,6 @@
     import IconDotsVertical from "@tabler/icons-svelte/IconDotsVertical.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
-    import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
     import IconComet from "@tabler/icons-svelte/IconComet.svelte";
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
@@ -38,12 +37,6 @@
             icon: IconClipboard,
             link: `/${currentLang}/clipboard`,
             label: $t("tabs.clipboard"),
-        },
-        {
-            name: "history",
-            icon: IconHistory,
-            link: `/${currentLang}/history`,
-            label: $t("tabs.history"),
         },
         {
             name: "faq",

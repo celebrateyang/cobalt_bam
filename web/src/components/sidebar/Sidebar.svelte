@@ -12,7 +12,6 @@
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
-    import IconHistory from "@tabler/icons-svelte/IconHistory.svelte";
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
@@ -32,7 +31,6 @@
     $: videorecordLink = `/${currentLang}/videorecord`;
     $: discoverLink = `/${currentLang}/discover`;
     $: randomChatLink = `/${currentLang}/random-chat`;
-    $: historyLink = `/${currentLang}/history`;
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
     $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
@@ -91,9 +89,6 @@
                 </SidebarTab>
                 <SidebarTab tabName="random_video" tabLink={randomChatLink}>
                     <IconMessageCircle />
-                </SidebarTab>
-                <SidebarTab tabName="history" tabLink={historyLink}>
-                    <IconHistory />
                 </SidebarTab>
                 <SidebarTab tabName="remux" tabLink={remuxLink} beta>
                     <IconRepeat />

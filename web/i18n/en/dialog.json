@@ -33,6 +33,8 @@
   "batch.detect.body.parts": "detected multiple parts: {{ title }} ({{ count }} parts). batch download all parts?",
   "batch.detect.download_single": "download this only",
   "batch.detect.download_batch": "batch download",
+  "batch.manual_save_hint": "after items finish downloading in queue, click \"save\" manually for each video.",
+  "batch.keep_screen_on_hint": "on mobile, keep your phone screen on during downloading. lock screen may pause downloads.",
   "saving.title": "choose how to save",
   "saving.blocked": "bamboo download tried opening the file in a new tab, but your browser blocked it. you can allow pop-ups for bamboo download to prevent this from happening next time.",
   "saving.timeout": "bamboo download tried saving the file automatically, but your browser stopped it. you have to select a preferred method manually.",

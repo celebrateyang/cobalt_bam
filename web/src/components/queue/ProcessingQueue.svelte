@@ -24,8 +24,6 @@
     const popoverAction = () => {
         $queueVisible = !$queueVisible;
     };
-    const autoPersistAttempted = new Set<string>();
-    let autoPersistSweepRunning = false;
     let bulkSaving = false;
 
     $: queue = Object.entries($readableQueue);
@@ -115,44 +113,6 @@
     $: doneCount = queue.filter(([, item]) => item.state === "done" && Boolean(item.resultFile)).length;
     $: canBulkSave = doneCount > 0 && pendingCount === 0;
 
-    const isAutoPersistCandidate = (item: (typeof $readableQueue)[string]) =>
-        item.state === "done" &&
-        Boolean(item.resultFile);
-
-    const autoPersistDoneItems = async () => {
-        if (autoPersistSweepRunning || typeof window === "undefined") {
-            return;
-        }
-
-        autoPersistSweepRunning = true;
-        try {
-            const snapshot = Object.entries(get(readableQueue));
-
-            for (const [id, item] of snapshot) {
-                if (!isAutoPersistCandidate(item)) {
-                    continue;
-                }
-                if (!item.resultFile) {
-                    continue;
-                }
-
-                if (!autoPersistAttempted.has(id)) {
-                    try {
-                        openFile(new File([item.resultFile], item.filename, {
-                            type: item.mimeType,
-                        }));
-                        console.log(`[queue] autoPersist: triggered download id=${id}`);
-                    } catch (error) {
-                        console.error(`[queue] autoPersist: openFile failed id=${id}`, error);
-                    }
-                    autoPersistAttempted.add(id);
-                }
-            }
-        } finally {
-            autoPersistSweepRunning = false;
-        }
-    };
-
     const saveAllDownloaded = () => {
         if (bulkSaving || typeof window === "undefined") {
             return;
@@ -186,17 +146,6 @@
             }, 1200);
         }
     };
-
-    $: {
-        const existingIds = new Set(queue.map(([id]) => id));
-        for (const id of autoPersistAttempted) {
-            if (!existingIds.has(id)) {
-                autoPersistAttempted.delete(id);
-            }
-        }
-    }
-
-    $: void autoPersistDoneItems();
 
     onNavigate(() => {
         $queueVisible = false;

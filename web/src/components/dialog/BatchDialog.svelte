@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
+    import { device } from "$lib/device";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { clearCollectionMemory } from "$lib/api/collection-memory";
@@ -707,6 +708,17 @@
             </div>
         </div>
 
+        <div class="batch-notice" role="note">
+            <div class="batch-notice-line">
+                {$t("dialog.batch.manual_save_hint")}
+            </div>
+            {#if device.is.mobile}
+                <div class="batch-notice-line">
+                    {$t("dialog.batch.keep_screen_on_hint")}
+                </div>
+            {/if}
+        </div>
+
         <div class="batch-toolbar">
             {#if !viewingDownloaded}
                 <button
@@ -910,6 +922,22 @@
         display: flex;
         gap: calc(var(--padding) / 2);
         flex-wrap: wrap;
+    }
+
+    .batch-notice {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
+        background: color-mix(in srgb, var(--secondary) 10%, var(--surface-1));
+    }
+
+    .batch-notice-line {
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--secondary);
     }
 
     .toolbar-button {

@@ -20,7 +20,6 @@
     import IconCheck from "@tabler/icons-svelte/IconCheck.svelte";
     import IconReload from "@tabler/icons-svelte/IconReload.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
-    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconExclamationCircle from "@tabler/icons-svelte/IconExclamationCircle.svelte";
 
     import IconFile from "@tabler/icons-svelte/IconFile.svelte";
@@ -215,6 +214,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
     class="processing-item"
+    class:done={info.state === "done"}
     role="listitem"
     tabindex={$queueVisible ? 0 : -1}
     class:queue-hidden={!$queueVisible}
@@ -271,15 +271,16 @@
         {#if info.state === "done" && info.resultFile}
             <button
                 class="button action-button"
-                aria-label={$t("button.download")}
+                class:save-button={info.state === "done"}
+                aria-label={$t("button.save")}
                 on:click={() => download(info.resultFile)}
                 disabled={downloading}
                 class:downloading
             >
-                {#if !downloading}
-                    <IconDownload />
-                {:else}
+                {#if downloading}
                     <IconLoader2 />
+                {:else}
+                    {$t("button.save")}
                 {/if}
             </button>
             <button
@@ -469,6 +470,23 @@
             opacity: 1;
             transform: none;
         }
+
+        .processing-item.done .file-actions {
+            position: static;
+            right: auto;
+            background-color: transparent;
+            height: auto;
+            padding-left: 0;
+            transform: none;
+            opacity: 1;
+            mask-image: none;
+        }
+
+        :global([dir="rtl"]) .processing-item.done .file-actions {
+            left: auto;
+            right: auto;
+            padding-right: 0;
+        }
     }
 
     @media (hover: none) {
@@ -483,6 +501,12 @@
         height: auto;
         box-shadow: none;
         transition: opacity 0.2s;
+    }
+
+    .action-button.save-button {
+        padding: 8px 12px;
+        font-size: 12px;
+        line-height: 1;
     }
 
     .action-button :global(svg) {

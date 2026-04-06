@@ -68,6 +68,18 @@
             "q": "Les playlists/collections/séries sont‑elles prises en charge ?",
             "a": "Oui. Pour les liens compatibles, l'app détecte les collections/épisodes/playlists et propose une entrée en lot.\nSi elle ne détecte pas, collez chaque lien en mode lot."
         },
+        "batch_save_location": {
+            "q": "Où sont enregistrées les vidéos d'une collection une fois le téléchargement terminé ?",
+            "a": "Quand une tâche de collection est terminée, les vidéos apparaissent d'abord dans la file de téléchargement en haut à droite. Vous devez cliquer sur \"Enregistrer\" pour chaque élément afin d'écrire réellement le fichier sur votre appareil. Pour des raisons de sécurité du navigateur, le site ne peut pas enregistrer automatiquement sur le disque."
+        },
+        "batch_browser_restart": {
+            "q": "Les téléchargements de collection restent-ils après avoir fermé puis rouvert le navigateur ?",
+            "a": "Généralement non. Après redémarrage du navigateur, les données temporaires de la file peuvent être supprimées. Nous recommandons d'enregistrer chaque vidéo dès la fin de la file pour éviter toute perte. Ce comportement aide à limiter l'utilisation mémoire du navigateur."
+        },
+        "batch_browser_compatibility": {
+            "q": "Quels navigateurs sont moins adaptés aux téléchargements de collection ?",
+            "a": "Le navigateur Quark est actuellement connu pour une compatibilité limitée avec les téléchargements de collection, avec des arrêts ou des échecs d'enregistrement possibles. Nous recommandons d'utiliser la dernière version de Chrome."
+        },
         "need_login": {
             "q": "Pourquoi dois-je parfois me connecter ?",
             "a": "Les téléchargements basiques ne nécessitent généralement pas de compte.\nPour limiter les abus et le spam, des fonctions comme les rapports, les lots ou la facturation en points peuvent nécessiter une connexion."

@@ -68,6 +68,18 @@
             "q": "Werden Playlists/Sammlungen/Serien unterstützt?",
             "a": "Ja. Für unterstützte Links erkennt die App Sammlungen/Episoden/Playlists und bietet einen Batch-Einstieg.\nWenn nicht erkannt, füge jeden Link im Batch-Modus ein."
         },
+        "batch_save_location": {
+            "q": "Wo werden Sammlungs-Downloads nach Abschluss gespeichert?",
+            "a": "Nach Abschluss einer Sammlungsaufgabe erscheinen die Videos zuerst in der Download-Warteschlange oben rechts. Du musst bei jedem Eintrag auf \"Speichern\" klicken, damit die Datei wirklich auf deinem Gerät landet. Aus Sicherheitsgründen kann die Website nicht automatisch auf die Festplatte speichern."
+        },
+        "batch_browser_restart": {
+            "q": "Bleiben Sammlungs-Downloads nach dem Schließen und erneuten Öffnen des Browsers erhalten?",
+            "a": "In der Regel nein. Nach einem Browser-Neustart können temporäre Queue-Daten gelöscht werden. Speichere daher nach Abschluss der Queue jedes Video sofort manuell, um Datenverlust zu vermeiden. Dieses Verhalten reduziert die Speichernutzung des Browsers."
+        },
+        "batch_browser_compatibility": {
+            "q": "Welche Browser sind für Sammlungs-Downloads weniger geeignet?",
+            "a": "Beim Quark Browser sind aktuell Kompatibilitätsprobleme bei Sammlungs-Downloads bekannt, zum Beispiel Abbrüche oder fehlendes Speichern. Für stabile Ergebnisse empfehlen wir die neueste Chrome-Version."
+        },
         "need_login": {
             "q": "Warum muss ich mich manchmal anmelden?",
             "a": "Grundlegende Downloads benötigen normalerweise kein Konto.\nZur Missbrauchs- und Spamvermeidung können Funktionen wie Meldungen, Batch oder Punkte eine Anmeldung erfordern."

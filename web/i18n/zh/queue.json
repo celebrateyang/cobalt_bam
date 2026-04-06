@@ -15,5 +15,6 @@
     "stub": "队列为空",
     "waiting_notice": "当前已有 {{ count }} 个视频进入队列，请耐心等待下载",
     "success_notice": "当前已成功下载 {{ count }} 个视频",
-    "save_all_done": "一键保存已下载"
+    "save_all_done": "一键保存已下载",
+    "manual_save_warning": "请注意：视频下载完成后，请立即点击“保存”；浏览器重启后，下载会丢失！"
 }

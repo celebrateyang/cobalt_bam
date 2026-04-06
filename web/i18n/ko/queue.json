@@ -14,5 +14,6 @@
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
     "success_notice": "?? ???? ??? {{ count }}?? ????? ????????.",
-    "save_all_done": "Save all downloaded"
+    "save_all_done": "Save all downloaded",
+    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."
 }

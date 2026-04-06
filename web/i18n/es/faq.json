@@ -68,6 +68,18 @@
             "q": "¿Admite listas/colecciones/series?",
             "a": "Sí. Para enlaces compatibles, la app intentará detectar colecciones/episodios/listas y ofrecer una entrada de lote.\nSi no lo detecta, pega cada enlace en modo lote."
         },
+        "batch_save_location": {
+            "q": "¿Dónde se guardan los videos de una colección cuando termina la descarga?",
+            "a": "Cuando una tarea de colección termina, los videos primero aparecen en la cola de descargas de la esquina superior derecha. Debes pulsar \"Guardar\" en cada elemento para escribir el archivo en tu dispositivo. Por seguridad del navegador, el sitio no puede guardar automáticamente en disco."
+        },
+        "batch_browser_restart": {
+            "q": "¿Las descargas de colección siguen ahí después de cerrar y abrir el navegador?",
+            "a": "Normalmente no. Tras reiniciar el navegador, los datos temporales de la cola pueden limpiarse. Te recomendamos guardar cada video en cuanto termine la cola para evitar pérdidas. Este diseño ayuda a controlar el uso de memoria del navegador."
+        },
+        "batch_browser_compatibility": {
+            "q": "¿Qué navegadores son menos compatibles con las descargas de colección?",
+            "a": "Actualmente Quark Browser presenta compatibilidad limitada con descargas de colección y puede fallar al guardar o detenerse durante el proceso. Recomendamos usar la última versión de Chrome."
+        },
         "need_login": {
             "q": "¿Por qué a veces me pide iniciar sesión?",
             "a": "Las descargas básicas normalmente no requieren cuenta.\nPara reducir abuso y spam, funciones como reportes, tareas por lotes o puntos pueden requerir inicio de sesión."

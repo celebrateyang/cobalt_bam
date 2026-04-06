@@ -221,6 +221,11 @@
                 <ProcessingQueueStub />
             {/if}
         </div>
+        {#if doneCount > 0}
+            <p class="queue-save-warning">
+                {$t("queue.manual_save_warning")}
+            </p>
+        {/if}
     </PopoverContainer>
 </div>
 
@@ -312,6 +317,15 @@
         max-height: 65vh;
         overflow-y: scroll;
         overflow-x: hidden;
+    }
+
+    .queue-save-warning {
+        margin: 0;
+        padding: 0 0 12px;
+        color: #ff4d4f;
+        font-size: 16px;
+        line-height: 1.45;
+        font-weight: 600;
     }
 
     @media screen and (max-width: 535px) {

@@ -68,6 +68,18 @@
             "q": "Có hỗ trợ playlist/bộ sưu tập/series không?",
             "a": "Có. Với link hỗ trợ, ứng dụng sẽ cố gắng nhận diện bộ sưu tập/tập/playlist và cung cấp chế độ batch.\nNếu không nhận diện, hãy dán từng link vào chế độ batch."
         },
+        "batch_save_location": {
+            "q": "Video tải theo bộ sưu tập sẽ được lưu ở đâu sau khi hoàn tất?",
+            "a": "Sau khi tác vụ bộ sưu tập hoàn tất, video sẽ xuất hiện trước trong hàng đợi tải xuống ở góc trên bên phải. Bạn cần bấm \"Lưu\" cho từng mục thì tệp mới được ghi vào thiết bị. Do cơ chế bảo mật của trình duyệt, trang web không thể tự động lưu thẳng xuống đĩa."
+        },
+        "batch_browser_restart": {
+            "q": "Đóng rồi mở lại trình duyệt thì các tải xuống bộ sưu tập còn không?",
+            "a": "Thường là không. Sau khi khởi động lại trình duyệt, dữ liệu tạm trong hàng đợi có thể bị xóa. Bạn nên lưu từng video ngay khi hàng đợi hoàn tất để tránh mất dữ liệu. Cơ chế này giúp giảm mức sử dụng bộ nhớ của trình duyệt."
+        },
+        "batch_browser_compatibility": {
+            "q": "Trình duyệt nào chưa thân thiện với tải xuống bộ sưu tập?",
+            "a": "Hiện tại Quark Browser được ghi nhận là kém tương thích với tải xuống bộ sưu tập, có thể bị dừng giữa chừng hoặc không lưu được. Khuyến nghị dùng Chrome bản mới nhất để ổn định hơn."
+        },
         "need_login": {
             "q": "Vì sao đôi khi cần đăng nhập?",
             "a": "Tải cơ bản thường không cần tài khoản.\nĐể giảm spam/lạm dụng, các chức năng như báo lỗi, batch hoặc tính điểm có thể yêu cầu đăng nhập."

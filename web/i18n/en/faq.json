@@ -68,6 +68,18 @@
             "q": "Do you support playlists/collections/series downloads?",
             "a": "Yes. For supported links, the app will try to detect collections/episodes/playlists and offer a batch entry.\nIf it fails to detect, paste each item link into batch mode."
         },
+        "batch_save_location": {
+            "q": "Where are collection downloads saved after they finish?",
+            "a": "After a collection task finishes, videos first appear in the download queue at the top right. You must click \"Save\" on each item to write files to your device. For browser security reasons, the site cannot auto-save files to disk."
+        },
+        "batch_browser_restart": {
+            "q": "Will collection downloads still exist after I close and reopen the browser?",
+            "a": "Usually no. After a browser restart, temporary queue data may be cleared. We recommend saving each item to disk immediately after the queue completes to avoid losing content. This behavior helps control browser memory usage."
+        },
+        "batch_browser_compatibility": {
+            "q": "Which browsers are less friendly for collection downloads?",
+            "a": "Quark Browser is currently known to be less compatible with collection downloads and may fail to save or pause unexpectedly. We recommend using the latest Chrome for better reliability."
+        },
         "need_login": {
             "q": "Why does it sometimes ask me to sign in?",
             "a": "Basic downloads usually don't require an account.\nTo reduce abuse and spam, features like issue reports, batch tasks, or points billing may require sign-in."

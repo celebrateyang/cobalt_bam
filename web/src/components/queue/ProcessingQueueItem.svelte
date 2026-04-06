@@ -285,7 +285,7 @@
             </button>
             <button
                 class="button action-button"
-                aria-label="Send to other device"
+                aria-label="传到其他设备"
                 title="Send to other device"
                 on:click={() => transfer(info.resultFile)}
             >

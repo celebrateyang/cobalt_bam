@@ -14,5 +14,6 @@
     },
     "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",
     "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen.",
-    "save_all_done": "Save all downloaded"
+    "save_all_done": "Save all downloaded",
+    "manual_save_warning": "Wichtig: Nach jedem Download bitte sofort auf \"Speichern\" klicken. Nach Browser-Neustart kann der Queue-Download verloren gehen."
 }

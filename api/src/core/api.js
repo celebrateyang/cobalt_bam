@@ -70,6 +70,30 @@ const sanitizeLogHeaderValue = (value, maxLength) => {
     return trimmed;
 };
 
+const resolveDownloadLogEmail = ({ req, pointsUser, fallbackEmail } = {}) => {
+    const headerEmail = sanitizeLogHeaderValue(req?.header("X-Clerk-Email"), 256);
+    if (headerEmail) return headerEmail;
+
+    const storedEmail = sanitizeLogHeaderValue(pointsUser?.primary_email, 256);
+    if (storedEmail) return storedEmail;
+
+    const fallback = sanitizeLogHeaderValue(fallbackEmail, 256);
+    if (fallback) return fallback;
+
+    return "unknown";
+};
+
+const logDownloadSubmission = ({ email, url }) => {
+    const normalizedUrl =
+        typeof url === "string" ? url.trim().slice(0, 8192) : "";
+    if (!normalizedUrl) return;
+
+    const normalizedEmail = sanitizeLogHeaderValue(email, 256) ?? "unknown";
+    console.log(
+        `[DOWNLOAD SUBMIT] email=${normalizedEmail} url=${normalizedUrl}`,
+    );
+};
+
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
@@ -386,6 +410,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.link.missing");
         }
 
+        const email = resolveDownloadLogEmail({ req });
+        logDownloadSubmission({ email, url: request.url });
+
         try {
             const result = await expandURL(request.url);
 
@@ -429,6 +456,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.invalid_body");
         }
         const normalizedRequest = normalized.data;
+        let email = resolveDownloadLogEmail({ req });
+        logDownloadSubmission({ email, url: normalizedRequest.url });
 
         const isBypassRequest = req.authType === "key";
         let pointsUser = null;
@@ -454,9 +483,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
                 pointsUser = await getUserByClerkId(auth.clerkUserId);
                 if (!pointsUser) {
+                    const fallbackPrimaryEmail = sanitizeLogHeaderValue(
+                        req.header("X-Clerk-Email"),
+                        256,
+                    );
                     pointsUser = await upsertUserFromClerk({
                         clerkUserId: auth.clerkUserId,
-                        primaryEmail: null,
+                        primaryEmail: fallbackPrimaryEmail,
                         fullName: null,
                         avatarUrl: null,
                     });
@@ -487,8 +520,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             `[DOWNLOAD AUTH] request_id=${requestId} url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
         );
 
-        const clientEmail = sanitizeLogHeaderValue(req.header("X-Clerk-Email"), 256);
-        const email = clientEmail ?? "unknown";
+        email = resolveDownloadLogEmail({ req, pointsUser, fallbackEmail: email });
         if (env.downloadDedupeTTL > 0) {
             try {
                 const dedupeIdentity = resolveDedupeIdentity(req, clerkUserId);

@@ -47,7 +47,7 @@
         },
         "youtube": {
             "name": "YouTube 视频下载",
-            "desc": "请观看视频教程：如何使用篡改猴实现油管视频下载。"
+            "desc": "已支持直接下载 YouTube 视频与音频，复制链接后粘贴即可。支持 Shorts 与多种清晰度选项。"
         },
         "facebook": {
             "name": "Facebook 视频下载",

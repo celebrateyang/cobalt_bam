@@ -42,7 +42,7 @@
         },
         "youtube_supported": {
             "q": "Does it support YouTube downloads?",
-            "a": "Direct YouTube parsing is disabled on this site.\nIf you need YouTube downloads, use the on-site guide for a browser script/plugin workflow."
+            "a": "Yes. YouTube downloads are now supported directly. Just paste a YouTube link and download normally without browser scripts or plugins. If a specific link fails, please retry later or send feedback."
         },
         "mobile_ios": {
             "q": "Does it work on mobile? How do I save on iOS?",

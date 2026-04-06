@@ -11,7 +11,7 @@
     "notification": {
         "title": "通知",
         "close": "关闭通知",
-        "youtube_restriction": "新上线【发现】功能，探索各平台优质视频 2025/11/28"
+        "youtube_restriction": "现已支持 YouTube 直接下载。若个别链接暂时无法解析，请稍后重试或反馈链接。"
     },
     "promotions": {
         "mindsou": {

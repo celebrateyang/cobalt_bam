@@ -316,23 +316,13 @@
     ];
     $: siteUrl = `https://${fallbackHost}`;
     $: canonicalUrl = `${siteUrl}/${currentLocale}`;
-    const stripYouTube = (value: string) => {
-        if (!value) return value;
-        let v = value.replace(/YouTube[, ]?\s*/gi, "");
-        v = v.replace(/youtube[, ]?\s*/gi, "");
-        v = v.replace(/[, ]\s*[, ]+/g, ",");
-        v = v.replace(/^\s*[, ]\s*/, "");
-        v = v.replace(/\s{2,}/g, " ").trim();
-        return v;
-    };
-
-    $: seoName = stripYouTube($t("general.cobalt"));
-    $: seoTitle = stripYouTube($t("general.seo.home.title"));
-    $: seoDescription = stripYouTube($t("general.seo.home.description"));
-    $: seoKeywords = stripYouTube($t("general.seo.home.keywords"));
-    $: embedDescription = stripYouTube($t("general.embed.description"));
-    $: guideDescription1 = stripYouTube($t("general.guide.description1"));
-    $: guideDescription2 = stripYouTube($t("general.guide.description2"));
+    $: seoName = $t("general.cobalt");
+    $: seoTitle = $t("general.seo.home.title");
+    $: seoDescription = $t("general.seo.home.description");
+    $: seoKeywords = $t("general.seo.home.keywords");
+    $: embedDescription = $t("general.embed.description");
+    $: guideDescription1 = $t("general.guide.description1");
+    $: guideDescription2 = $t("general.guide.description2");
     $: jsonLd = canonicalUrl
         ? {
               "@context": "https://schema.org",
@@ -572,12 +562,7 @@
                     <span class="notification-text">
                         {$t("general.notification.title")}
                         <br />
-                        {@html $t(
-                            "general.notification.youtube_restriction",
-                        ).replace(
-                            "https://www.bilibili.com/video/BV1Bp4EzeEJo",
-                            '<a href="https://www.bilibili.com/video/BV1Bp4EzeEJo" target="_blank" rel="noopener noreferrer" class="notification-link">https://www.bilibili.com/video/BV1Bp4EzeEJo</a>',
-                        )}
+                        {$t("general.notification.youtube_restriction")}
                     </span>
                 </div>
             </div>

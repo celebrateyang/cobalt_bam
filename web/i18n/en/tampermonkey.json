@@ -8,7 +8,7 @@
     "hero": {
         "badge": "Bilibili tutorial",
         "title": "Download YouTube videos with a Tampermonkey userscript",
-        "summary": "Follow my Bilibili walkthrough to install Tampermonkey and add a YouTube download script. Works alongside freesavevideo.online when direct downloads are blocked.",
+        "summary": "Follow my Bilibili walkthrough to install Tampermonkey and add a YouTube download script. This remains an optional advanced/backup workflow.",
         "primary_cta": "Try the downloader",
         "secondary_cta": "Watch on Bilibili"
     },
@@ -65,7 +65,7 @@
     },
     "cta": {
         "title": "Need a backup downloader?",
-        "subtitle": "Use freesavevideo.online for TikTok, Instagram, Facebook, and more while keeping the Tampermonkey script for YouTube.",
+        "subtitle": "Use freesavevideo.online directly for TikTok, Instagram, Facebook, and more. For YouTube, this Tampermonkey flow is optional.",
         "primary": "Go to downloader",
         "secondary": "Rewatch the tutorial"
     },

@@ -47,7 +47,7 @@
         },
         "youtube": {
             "name": "YouTube Video Downloader",
-            "desc": "Please watch the video tutorial: how to use Tampermonkey to download YouTube videos."
+            "desc": "Direct YouTube video and audio downloads are now supported. Paste a link and download instantly. Supports Shorts and multiple quality options."
         },
         "facebook": {
             "name": "Facebook Video Downloader",

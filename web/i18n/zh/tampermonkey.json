@@ -1,14 +1,14 @@
 {
     "seo": {
         "title": "Tampermonkey YouTube 下载脚本教程（B站）| 油猴脚本下载 YouTube",
-        "description": "逐步讲解如何安装 Tampermonkey、添加 YouTube 下载脚本，并附上我的 B 站视频。当直接下载受限时，作为补充方案。",
+        "description": "逐步讲解如何安装 Tampermonkey、添加 YouTube 下载脚本，并附上我的 B 站视频。该方案可作为高级/备用下载方式。",
         "keywords": "tampermonkey youtube 下载, 油猴 youtube 下载, youtube 下载脚本, B站 教程, 油猴脚本下载 youtube",
         "brand": "Freesavevideo.online"
     },
     "hero": {
         "badge": "B站教程",
         "title": "用 Tampermonkey 油猴脚本下载 YouTube 视频",
-        "summary": "跟着我的 B 站视频走一遍：安装 Tampermonkey + 添加下载脚本，当直接下载被限制时，用这个方法补充。",
+        "summary": "跟着我的 B 站视频走一遍：安装 Tampermonkey + 添加下载脚本。即使网站已支持直连下载，这个方案仍可作为备用。",
         "primary_cta": "立即去下载",
         "secondary_cta": "查看 B 站视频"
     },
@@ -65,7 +65,7 @@
     },
     "cta": {
         "title": "需要备用下载方案？",
-        "subtitle": "TikTok、Instagram、Facebook 等平台请用 freesavevideo.online，YouTube 则保留油猴脚本。",
+        "subtitle": "TikTok、Instagram、Facebook 等平台可直接使用 freesavevideo.online；YouTube 如需脚本方案也可参考本页。",
         "primary": "打开下载器",
         "secondary": "再看一遍教程"
     },

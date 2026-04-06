@@ -12,7 +12,7 @@
     "notification": {
         "title": "Notice:",
         "close": "Close notification",
-        "youtube_restriction": "YouTube downloads are not supported, but you can refer to this video for download instructions: https://www.bilibili.com/video/BV1Bp4EzeEJo"
+        "youtube_restriction": "YouTube direct downloads are now supported. If a specific link fails to parse, please retry later or send feedback."
     },
     "promotions": {
         "mindsou": {
@@ -38,9 +38,9 @@
         }
     },
     "pwa": {
-            "install_prompt": "This website supports installation to desktop",
-            "install": "Install",
-            "close": "Close"
+        "install_prompt": "This website supports installation to desktop",
+        "install": "Install",
+        "close": "Close"
     },
     "seo": {
         "home": {

@@ -98,6 +98,59 @@ let localeSyncPromise: Promise<void> | null = null;
 let lastSyncedUserId: string | null = null;
 let syncPromise: Promise<void> | null = null;
 
+const META_COMPLETE_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
+const META_COMPLETE_REGISTRATION_TRACKED_PREFIX =
+    "meta_complete_registration_tracked:";
+
+const toEpochMs = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        return value;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            return parsed;
+        }
+    }
+
+    return null;
+};
+
+const trackMetaCompleteRegistration = (
+    clerkUserId: string,
+    createdAtRaw: unknown,
+) => {
+    if (!browser) return;
+
+    const createdAt = toEpochMs(createdAtRaw);
+    if (!createdAt) return;
+
+    if (Math.abs(Date.now() - createdAt) > META_COMPLETE_REGISTRATION_WINDOW_MS) {
+        return;
+    }
+
+    const dedupeKey = `${META_COMPLETE_REGISTRATION_TRACKED_PREFIX}${clerkUserId}`;
+    try {
+        if (window.localStorage.getItem(dedupeKey) === "1") {
+            return;
+        }
+    } catch {
+        // Ignore storage errors in strict privacy mode.
+    }
+
+    const fbq = (window as { fbq?: (...args: unknown[]) => void }).fbq;
+    if (typeof fbq !== "function") return;
+
+    fbq("track", "CompleteRegistration");
+
+    try {
+        window.localStorage.setItem(dedupeKey, "1");
+    } catch {
+        // Ignore storage errors in strict privacy mode.
+    }
+};
+
 const syncClerkLocale = async (instance: ClerkInstance) => {
     const desiredKey = getClerkLocaleKey();
 
@@ -141,11 +194,17 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
             if (!token) return;
 
             const apiBase = currentApiURL();
-            await fetch(`${apiBase}/user/me`, {
+            const response = await fetch(`${apiBase}/user/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             }).catch(() => null);
+
+            if (response?.ok) {
+                const payload = await response.json().catch(() => null);
+                const createdAt = payload?.data?.user?.created_at;
+                trackMetaCompleteRegistration(userId, createdAt);
+            }
 
             lastSyncedUserId = userId;
         } catch (error) {

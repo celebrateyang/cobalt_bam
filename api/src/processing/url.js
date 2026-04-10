@@ -75,7 +75,13 @@ function aliasURL(url) {
         case "douyin":
             if (url.hostname === 'v.douyin.com' && parts.length === 2) {
                 url = new URL(`https://douyin.com/_shortLink/${parts[1]}`);
+            } else if (url.hostname === "m.douyin.com") {
+                url.hostname = "www.douyin.com";
             }
+            break;
+
+        case "iesdouyin":
+            url.hostname = "www.douyin.com";
             break;
 
         case "kuaishou":

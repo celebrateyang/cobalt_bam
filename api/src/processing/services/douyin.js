@@ -78,7 +78,8 @@ const looksLikeWafChallenge = (html) => {
     );
 };
 
-const getUpstreamTargetUrl = ({ videoId, shortLink }) => {
+const getUpstreamTargetUrl = ({ videoId, shortLink, resolvedUrl }) => {
+    if (typeof resolvedUrl === "string" && resolvedUrl) return resolvedUrl;
     if (videoId) return `https://www.douyin.com/video/${videoId}`;
     if (shortLink) return `https://douyin.com/_shortLink/${shortLink}`;
     return null;
@@ -360,6 +361,30 @@ const resolveShortLinkFinalUrl = async (shortLink) => {
     return res.url;
 };
 
+const extractResolvedDouyinId = (urlString) => {
+    if (!urlString) return null;
+
+    let url;
+    try {
+        url = new URL(urlString);
+    } catch {
+        return null;
+    }
+
+    const pathMatch =
+        url.pathname.match(/^\/share\/(?:slides|video|note)\/(\d+)/) ||
+        url.pathname.match(/^\/(?:video|note)\/(\d+)/);
+
+    if (pathMatch?.[1]) {
+        return pathMatch[1];
+    }
+
+    const mid = url.searchParams.get("mid");
+    if (mid) return mid;
+
+    return null;
+};
+
 const toSeconds = (value) => {
     if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
     return value > 1000 ? Math.round(value / 1000) : Math.round(value);
@@ -432,6 +457,9 @@ const isAwemeOnlyPayload = (item) => {
     const allPlayAreAweme = hasPlayUrls
         ? playUrls.every((url) => /\/aweme\/v1\/play(?:wm)?\//i.test(String(url)))
         : false;
+    const hasDirectPlayUri =
+        typeof item?.video?.play_addr?.uri === "string" &&
+        /^https?:\/\//i.test(item.video.play_addr.uri);
 
     const hasDownloadAddr =
         Array.isArray(item?.video?.download_addr?.url_list) &&
@@ -445,7 +473,7 @@ const isAwemeOnlyPayload = (item) => {
                 entry.play_addr.url_list.length > 0,
         );
 
-    return hasPlayUrls && allPlayAreAweme && !hasDownloadAddr && !hasBitrate;
+    return hasPlayUrls && allPlayAreAweme && !hasDirectPlayUri && !hasDownloadAddr && !hasBitrate;
 };
 
 const probeContentLength = async (url, timeoutMs = PAGE_TIMEOUT_MS) => {
@@ -1102,6 +1130,11 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
     }
 
     if (videoUri) {
+        const directVideoUri = normalizeMediaUrlCandidate(videoUri);
+        if (directVideoUri) {
+            pushIntoBucket(directVideoUri);
+        }
+
         pushIntoBucket(
             `https://aweme.snssdk.com/aweme/v1/play/?video_id=${videoUri}&ratio=1080p&line=0`,
         );
@@ -1117,21 +1150,20 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
 
 export default async function(obj) {
     let videoId = obj.id;
+    let resolvedTargetUrl = null;
 
     if (!videoId && obj.shortLink) {
         try {
             const finalUrl = await resolveShortLinkFinalUrl(obj.shortLink);
-            // https://www.douyin.com/video/73123456789...
-            // or https://www.iesdouyin.com/share/video/73123456789...
-            
-            const match = finalUrl.match(/\/video\/(\d+)/) || finalUrl.match(/mid=(\d+)/) || finalUrl.match(/\/share\/video\/(\d+)/);
-            if (match) {
-                videoId = match[1];
-            }
+            resolvedTargetUrl = finalUrl;
+            videoId = extractResolvedDouyinId(finalUrl);
         } catch (e) {
             console.error("Douyin shortlink fetch failed:", e);
 
-            const upstreamTargetUrl = getUpstreamTargetUrl({ shortLink: obj.shortLink });
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
+            });
             if (upstreamTargetUrl) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
@@ -1262,7 +1294,11 @@ export default async function(obj) {
                 };
             }
 
-            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
+            });
             if (upstreamTargetUrl) {
                 console.warn("Douyin WAF challenge detected, trying upstream cobalt", {
                     targetUrl: upstreamTargetUrl,
@@ -1341,7 +1377,11 @@ export default async function(obj) {
                 };
             }
 
-            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
+            });
             if (upstreamTargetUrl) {
                 console.warn("Douyin WAF challenge detected, trying upstream cobalt", {
                     targetUrl: upstreamTargetUrl,
@@ -1426,7 +1466,11 @@ export default async function(obj) {
                 };
             }
 
-            const upstreamTargetUrl = getUpstreamTargetUrl({ videoId, shortLink: obj.shortLink });
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
+            });
             if (upstreamTargetUrl && !isUpstreamServer) {
                 console.warn("[douyin] no item list after local retries, trying upstream cobalt", {
                     videoId,
@@ -1556,6 +1600,7 @@ export default async function(obj) {
                     const upstreamTargetUrl = getUpstreamTargetUrl({
                         videoId,
                         shortLink: obj.shortLink,
+                        resolvedUrl: resolvedTargetUrl,
                     });
 
                     if (upstreamTargetUrl) {
@@ -1672,6 +1717,7 @@ export default async function(obj) {
             const upstreamTargetUrl = getUpstreamTargetUrl({
                 videoId,
                 shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
             });
             if (upstreamTargetUrl) {
                 console.warn("[douyin] direct media fallback condition met, trying upstream cobalt", {

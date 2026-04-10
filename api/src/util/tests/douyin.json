@@ -1,0 +1,20 @@
+[
+    {
+        "name": "short link slides share",
+        "url": "https://v.douyin.com/UNCzQqhJ3SI",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "note link",
+        "url": "https://www.douyin.com/note/7505833844370607414",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    }
+]

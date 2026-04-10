@@ -306,8 +306,8 @@ const extractDouyinVideoId = (urlString) => {
     const path = url.pathname;
 
     const match =
-        path.match(/^\/(?:video|note)\/(\d+)/) ||
-        path.match(/^\/share\/(?:video|note)\/(\d+)/);
+        path.match(/^\/share\/(?:slides|video|note)\/(\d+)/) ||
+        path.match(/^\/(?:video|note)\/(\d+)/);
 
     if (match?.[1]) return match[1];
 

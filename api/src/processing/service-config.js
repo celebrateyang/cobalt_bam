@@ -28,6 +28,9 @@ export const services = {
         patterns: [
             "video/:id",
             "note/:id",
+            "share/video/:id",
+            "share/note/:id",
+            "share/slides/:id",
             "_shortLink/:shortLink"
         ],
         subdomains: ["v", "www"],

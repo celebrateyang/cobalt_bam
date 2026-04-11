@@ -9,6 +9,139 @@ import { convertLanguageCode } from "../../misc/language-codes.js";
 const shortDomain = "https://vt.tiktok.com/";
 const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
 
+const normalizeUrlCandidate = (value) => {
+    if (typeof value !== "string") return "";
+    const url = value.trim();
+    if (!url || !/^https?:\/\//i.test(url)) return "";
+    return url;
+};
+
+const collectUrlCandidates = (value) => {
+    if (typeof value === "string") {
+        const normalized = normalizeUrlCandidate(value);
+        return normalized ? [normalized] : [];
+    }
+
+    if (Array.isArray(value)) {
+        return value
+            .map(normalizeUrlCandidate)
+            .filter(Boolean);
+    }
+
+    if (value && typeof value === "object") {
+        if (Array.isArray(value.UrlList)) {
+            return collectUrlCandidates(value.UrlList);
+        }
+
+        if (Array.isArray(value.urlList)) {
+            return collectUrlCandidates(value.urlList);
+        }
+    }
+
+    return [];
+};
+
+const classifyVideoCandidate = (url, source) => {
+    if (/\/aweme\/v1\/play\//i.test(url) || /(?:\?|&)is_play_url=1(?:&|$)/i.test(url)) {
+        return "api-play";
+    }
+
+    if (source.includes("download")) {
+        return "download";
+    }
+
+    if (source.startsWith("embed")) {
+        return "embed";
+    }
+
+    return "direct-play";
+};
+
+const buildVideoCandidateSet = ({ detail, isEmbed, preferH265 }) => {
+    const buckets = {
+        preferredApiPlay: [],
+        preferredDirectPlay: [],
+        fallbackApiPlay: [],
+        fallbackDirectPlay: [],
+        embedPlay: [],
+        download: [],
+    };
+    const seen = new Set();
+
+    const pushCandidate = (rawValue, source, options = {}) => {
+        for (const url of collectUrlCandidates(rawValue)) {
+            if (seen.has(url)) continue;
+            seen.add(url);
+
+            const kind = classifyVideoCandidate(url, source);
+            const preferredCodec = options.preferredCodec === true;
+
+            if (kind === "download") {
+                buckets.download.push({ url, source, kind });
+                continue;
+            }
+
+            if (kind === "embed") {
+                buckets.embedPlay.push({ url, source, kind });
+                continue;
+            }
+
+            if (kind === "api-play") {
+                if (preferredCodec) {
+                    buckets.preferredApiPlay.push({ url, source, kind });
+                } else {
+                    buckets.fallbackApiPlay.push({ url, source, kind });
+                }
+                continue;
+            }
+
+            if (preferredCodec) {
+                buckets.preferredDirectPlay.push({ url, source, kind });
+            } else {
+                buckets.fallbackDirectPlay.push({ url, source, kind });
+            }
+        }
+    };
+
+    if (isEmbed) {
+        pushCandidate(detail?.itemInfos?.video?.urls, "embed.video.urls");
+        pushCandidate(detail?.itemInfos?.video?.playAddr, "embed.video.playAddr");
+        pushCandidate(detail?.itemInfos?.video?.playUrl, "embed.video.playUrl");
+        pushCandidate(detail?.itemInfos?.video?.downloadAddr, "embed.video.downloadAddr");
+    } else {
+        const bitrateInfo = Array.isArray(detail?.video?.bitrateInfo)
+            ? detail.video.bitrateInfo
+            : [];
+
+        for (const bitrate of bitrateInfo) {
+            const codecType = String(bitrate?.CodecType || "").toLowerCase();
+            const preferredCodec =
+                preferH265 === true
+                    ? codecType.includes("h265")
+                    : !codecType.includes("h265");
+
+            pushCandidate(
+                bitrate?.PlayAddr?.UrlList,
+                `legacy.bitrateInfo.${codecType || "unknown"}`,
+                { preferredCodec },
+            );
+        }
+
+        pushCandidate(detail?.video?.PlayAddrStruct?.UrlList, "legacy.playAddrStruct");
+        pushCandidate(detail?.video?.playAddr, "legacy.playAddr");
+        pushCandidate(detail?.video?.downloadAddr, "legacy.downloadAddr");
+    }
+
+    return [
+        ...buckets.preferredApiPlay,
+        ...buckets.preferredDirectPlay,
+        ...buckets.fallbackApiPlay,
+        ...buckets.fallbackDirectPlay,
+        ...buckets.embedPlay,
+        ...buckets.download,
+    ];
+};
+
 const toSeconds = (value) => {
     if (value == null) return undefined;
 
@@ -183,16 +316,16 @@ export default async function(obj) {
 
     images = isEmbed ? detail?.itemInfos?.imagePostInfo?.images : detail.imagePost?.images;
 
-    let playAddr = isEmbed
-        ? detail?.itemInfos?.video?.urls?.[0]
-        : detail.video?.playAddr;
-
-    if (obj.h265) {
-        if (!isEmbed) {
-            const h265PlayAddr = detail?.video?.bitrateInfo?.find(b => b.CodecType.includes("h265"))?.PlayAddr.UrlList[0]
-            playAddr = h265PlayAddr || playAddr
-        }
-    }
+    const videoCandidates = buildVideoCandidateSet({
+        detail,
+        isEmbed,
+        preferH265: obj.h265 === true,
+    });
+    const primaryVideoCandidate = videoCandidates[0];
+    const playAddr = primaryVideoCandidate?.url;
+    const videoUrlCandidates = videoCandidates
+        .slice(1)
+        .map((candidate) => candidate.url);
 
     if (!obj.isAudioOnly && !images) {
         video = playAddr;
@@ -227,11 +360,17 @@ export default async function(obj) {
         }
         return {
             urls: video,
+            urlCandidates: videoUrlCandidates.length ? videoUrlCandidates : undefined,
             subtitles,
             fileMetadata,
             filename: videoFilename,
             headers: { cookie },
             duration,
+            tiktokVideoSource: primaryVideoCandidate?.source,
+            tiktokVideoSourceKind: primaryVideoCandidate?.kind,
+            tiktokUsedEmbedFallback: isEmbed,
+            tiktokPreferUpstream:
+                isEmbed === true || primaryVideoCandidate?.kind === "download",
         }
     }
 

@@ -40,6 +40,12 @@ const twitterUpstreamFallbackErrors = new Set([
     "content.post.unavailable",
     "fetch.empty",
 ]);
+const tiktokUpstreamFallbackErrors = new Set([
+    "fetch.fail",
+    "fetch.empty",
+    "content.post.unavailable",
+    "content.post.age",
+]);
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
@@ -518,6 +524,34 @@ export default async function({ host, patternMatch, params, authType }) {
         if (r.isAudioOnly) {
             isAudioOnly = true;
             isAudioMuted = false;
+        }
+
+        if (
+            host === "tiktok"
+            && !isUpstreamServer
+            && !isAudioOnly
+            && !isAudioMuted
+            && !r?.picker
+        ) {
+            const shouldTryUpstream =
+                tiktokUpstreamFallbackErrors.has(r?.error)
+                || r?.tiktokPreferUpstream === true;
+
+            if (shouldTryUpstream) {
+                console.log(
+                    `[tiktok] local result error=${r?.error || "none"} source=${r?.tiktokVideoSourceKind || "unknown"} embed=${r?.tiktokUsedEmbedFallback === true} -> trying upstream fallback`
+                );
+
+                const upstream = await requestUpstreamCobalt(params);
+                if (upstream) {
+                    console.log(
+                        `[tiktok] upstream fallback success status=${upstream?.body?.status || "unknown"}`
+                    );
+                    return upstream;
+                }
+
+                console.log("[tiktok] upstream fallback unavailable, returning local result");
+            }
         }
 
         if (r.error && r.critical) {

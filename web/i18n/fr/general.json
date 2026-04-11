@@ -15,16 +15,16 @@
         "youtube_restriction": "Les téléchargements YouTube ne sont pas pris en charge, mais vous pouvez vous référer à cette vidéo pour les instructions de téléchargement : https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
-        "mindsou": {
-            "title": "Discutez avec des inconnus basés sur des idées similaires, pas de conversations gênantes",
+        "finditbuddy": {
+            "title": "FinditBuddy vous aide a memoriser ou sont ranges vos objets et a les retrouver plus tard",
             "features": {
-                "1": "1. Publiez vos pensées de votre esprit à tout moment",
-                "2": "2. Correspondance parfaite, correspondance sémantique, correspondance complémentaire",
-                "3": "3. Cliquez sur les utilisateurs correspondants pour commencer à discuter",
-                "4": "4. Notifications par email de correspondance hors ligne",
-                "5": "5. Contenu à durée limitée et protection de la vie privée, destruction automatique pour réduire la charge d'information"
+                "1": "Enregistrez intelligemment l emplacement de chaque objet",
+                "2": "Notez en quelques secondes la piece, l etagere, la boite et des details utiles",
+                "3": "Recherchez par nom d objet lorsque vous avez oublie ou il se trouve",
+                "4": "Gardez vos espaces de rangement du quotidien bien organises",
+                "5": "Passez moins de temps a chercher des objets egares"
             },
-            "visit": "Visiter Mindsou"
+            "visit": "Visiter FinditBuddy"
         },
         "yumcheck": {
             "title": "Analyse des ingrédients alimentaires, requête et analyse automatiques par photo",

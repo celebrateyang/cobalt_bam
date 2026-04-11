@@ -15,16 +15,16 @@
         "youtube_restriction": "YouTubeのダウンロードはサポートされていませんが、ダウンロード手順についてはこちらの動画を参照してください：https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
-        "mindsou": {
-            "title": "似たアイデアを持つ見知らぬ人とチャット、気まずい会話なし",
+        "finditbuddy": {
+            "title": "FinditBuddy helps you remember where things are and find them later",
             "features": {
-                "1": "1. いつでも心の中の考えを投稿",
-                "2": "2. 完璧なマッチ、セマンティックマッチ、補完マッチ",
-                "3": "3. マッチしたユーザーをクリックしてチャット開始",
-                "4": "4. オフラインマッチングメール通知",
-                "5": "5. 期間限定コンテンツとプライバシー保護、自動削除で情報負担を軽減"
+                "1": "Smartly record where each item is placed",
+                "2": "Save room, shelf, box, and note details in seconds",
+                "3": "Search by item name when you forget where it was stored",
+                "4": "Keep home storage organized for daily essentials",
+                "5": "Spend less time looking for misplaced things"
             },
-            "visit": "Mindsouを訪問"
+            "visit": "Visit FinditBuddy"
         },
         "yumcheck": {
             "title": "食品成分分析、写真自動クエリと分析",

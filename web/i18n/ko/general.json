@@ -15,16 +15,16 @@
         "youtube_restriction": "YouTube 다운로드는 지원되지 않지만 다운로드 지침은 이 영상을 참조할 수 있습니다: https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
-        "mindsou": {
-            "title": "비슷한 생각을 가진 낯선 사람과 채팅, 어색한 대화 없음",
+        "finditbuddy": {
+            "title": "FinditBuddy helps you remember where things are and find them later",
             "features": {
-                "1": "1. 언제든지 마음속의 생각을 게시하세요",
-                "2": "2. 완벽한 매칭, 의미론적 매칭, 보완적 매칭",
-                "3": "3. 매칭된 사용자를 클릭하여 채팅 시작",
-                "4": "4. 오프라인 매칭 이메일 알림",
-                "5": "5. 기간 제한 콘텐츠 및 개인정보 보호, 자동 파괴로 정보 부담 감소"
+                "1": "Smartly record where each item is placed",
+                "2": "Save room, shelf, box, and note details in seconds",
+                "3": "Search by item name when you forget where it was stored",
+                "4": "Keep home storage organized for daily essentials",
+                "5": "Spend less time looking for misplaced things"
             },
-            "visit": "Mindsou 방문"
+            "visit": "Visit FinditBuddy"
         },
         "yumcheck": {
             "title": "식품 성분 분석, 사진 자동 조회 및 분석",

@@ -2,6 +2,18 @@
     "cobalt": "кобальт",
     "meowbalt": "мяубальт",
     "beta": "бета",
-
-    "embed.description": "сохраняй то, что любишь: без рекламы, трекеров и прочей чепухи. кобальт создан с любовью, а не с целью заработать."
+    "embed.description": "сохраняй то, что любишь: без рекламы, трекеров и прочей чепухи. кобальт создан с любовью, а не с целью заработать.",
+    "promotions": {
+        "finditbuddy": {
+            "title": "FinditBuddy helps you remember where things are and find them later",
+            "features": {
+                "1": "Smartly record where each item is placed",
+                "2": "Save room, shelf, box, and note details in seconds",
+                "3": "Search by item name when you forget where it was stored",
+                "4": "Keep home storage organized for daily essentials",
+                "5": "Spend less time looking for misplaced things"
+            },
+            "visit": "Visit FinditBuddy"
+        }
+    }
 }

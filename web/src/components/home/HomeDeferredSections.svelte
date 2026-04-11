@@ -16,7 +16,7 @@
     export let embedDescription: string;
     export let seoKeywords: string;
 
-    let showMindsou = false;
+    let showFinditbuddy = false;
     let showYumcheck = false;
 
     const platformHref = (slug: string) =>
@@ -83,37 +83,33 @@
 </section>
 
 <section id="promotions">
-    <section id="mindsou">
+    <section id="finditbuddy">
         <button
             type="button"
             class="accordion-header"
-            aria-expanded={showMindsou}
-            on:click={() => (showMindsou = !showMindsou)}
+            aria-expanded={showFinditbuddy}
+            on:click={() => (showFinditbuddy = !showFinditbuddy)}
         >
-            <img
-                src="/popularize/mindsou_logo.png"
-                alt="Mindsou Logo"
-                class="section-icon"
-            />
-            <span>{$t("general.promotions.mindsou.title")}</span>
-            <span class="arrow">{showMindsou ? "▲" : "▼"}</span>
+            <span class="section-icon section-badge" aria-hidden="true">FB</span>
+            <span>{$t("general.promotions.finditbuddy.title")}</span>
+            <span class="arrow">{showFinditbuddy ? "▲" : "▼"}</span>
         </button>
-        {#if showMindsou}
+        {#if showFinditbuddy}
             <div class="details" role="region">
                 <ul>
-                    <li>{$t("general.promotions.mindsou.features.1")}</li>
-                    <li>{$t("general.promotions.mindsou.features.2")}</li>
-                    <li>{$t("general.promotions.mindsou.features.3")}</li>
-                    <li>{$t("general.promotions.mindsou.features.4")}</li>
-                    <li>{$t("general.promotions.mindsou.features.5")}</li>
+                    <li>{$t("general.promotions.finditbuddy.features.1")}</li>
+                    <li>{$t("general.promotions.finditbuddy.features.2")}</li>
+                    <li>{$t("general.promotions.finditbuddy.features.3")}</li>
+                    <li>{$t("general.promotions.finditbuddy.features.4")}</li>
+                    <li>{$t("general.promotions.finditbuddy.features.5")}</li>
                 </ul>
                 <a
                     class="button"
-                    href="https://mindsou.online"
+                    href="https://finditbuddy.online"
                     target="_blank"
                     rel="noopener noreferrer"
                 >
-                    {$t("general.promotions.mindsou.visit")}
+                    {$t("general.promotions.finditbuddy.visit")}
                 </a>
             </div>
         {/if}
@@ -371,7 +367,7 @@
         margin-bottom: var(--padding);
     }
 
-    #promotions > section#mindsou,
+    #promotions > section#finditbuddy,
     #promotions > section#yumcheck {
         background-color: var(--popup-bg);
         color: var(--primary);
@@ -383,7 +379,7 @@
     }
 
     @media (prefers-color-scheme: light) {
-        #promotions > section#mindsou,
+        #promotions > section#finditbuddy,
         #promotions > section#yumcheck {
             background-color: var(--sidebar-bg);
             color: #ffffff;
@@ -406,7 +402,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-        #promotions > section#mindsou,
+        #promotions > section#finditbuddy,
         #promotions > section#yumcheck {
             color: #ffffff;
         }
@@ -420,6 +416,20 @@
         width: auto;
         height: 24px;
         margin: 0;
+    }
+
+    .section-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        background: rgba(255, 255, 255, 0.18);
+        flex-shrink: 0;
     }
 
     #promotions > section .section-icon {

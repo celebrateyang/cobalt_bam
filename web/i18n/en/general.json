@@ -15,16 +15,16 @@
         "youtube_restriction": "YouTube direct downloads are now supported. If a specific link fails to parse, please retry later or send feedback."
     },
     "promotions": {
-        "mindsou": {
-            "title": "Chat with strangers based on similar ideas, no awkward conversations",
+        "finditbuddy": {
+            "title": "FinditBuddy helps you remember where things are and find them later",
             "features": {
-                "1": "1. Post your thoughts from your mind at any moment",
-                "2": "2. Perfect match, semantic match, complementary match",
-                "3": "3. Click on matched users to start chatting",
-                "4": "4. Offline matching email notifications",
-                "5": "5. Limited-time content & privacy protection, auto-destroy to reduce information burden"
+                "1": "Smartly record where each item is placed",
+                "2": "Save room, shelf, box, and note details in seconds",
+                "3": "Search by item name when you forget where it was stored",
+                "4": "Keep home storage organized for daily essentials",
+                "5": "Spend less time looking for misplaced things"
             },
-            "visit": "Visit Mindsou"
+            "visit": "Visit FinditBuddy"
         },
         "yumcheck": {
             "title": "Food ingredient analysis, photo automatic query and analysis",

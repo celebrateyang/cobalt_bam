@@ -15,16 +15,16 @@
         "youtube_restriction": "Không hỗ trợ tải YouTube, nhưng bạn có thể tham khảo video này để biết hướng dẫn tải: https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
-        "mindsou": {
-            "title": "Trò chuyện với người lạ dựa trên sở thích tương tự, không còn câu chuyện ngượng ngùng",
+        "finditbuddy": {
+            "title": "FinditBuddy giup ban ghi nho vi tri cat do va tim lai khi quen",
             "features": {
-                "1": "1. Đăng suy nghĩ của bạn từ tâm trí bất cứ lúc nào",
-                "2": "2. Ghép đôi hoàn hảo, ghép đôi ngữ nghĩa, ghép đôi bổ sung",
-                "3": "3. Nhấp vào người dùng được ghép đôi để bắt đầu trò chuyện",
-                "4": "4. Thông báo email ghép đôi ngoại tuyến",
-                "5": "5. Nội dung có thời hạn & bảo vệ quyền riêng tư, tự động hủy để giảm gánh nặng thông tin"
+                "1": "Ghi lai thong minh vi tri cua tung mon do",
+                "2": "Luu nhanh phong, ke, hop va ghi chu lien quan",
+                "3": "Tim theo ten mon do khi ban quen noi da cat",
+                "4": "Giup sap xep noi luu tru do dung hang ngay gon gang hon",
+                "5": "Giam thoi gian tim kiem nhung mon do de sai cho"
             },
-            "visit": "Truy cập Mindsou"
+            "visit": "Mo FinditBuddy"
         },
         "yumcheck": {
             "title": "Phân tích thành phần thực phẩm, tự động truy vấn và phân tích qua ảnh",

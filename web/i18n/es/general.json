@@ -15,16 +15,16 @@
         "youtube_restriction": "Las descargas de YouTube no están soportadas, pero puedes consultar este video para instrucciones de descarga: https://www.bilibili.com/video/BV1Bp4EzeEJo"
     },
     "promotions": {
-        "mindsou": {
-            "title": "Chatea con extraños basándote en ideas similares, sin conversaciones incómodas",
+        "finditbuddy": {
+            "title": "FinditBuddy te ayuda a recordar donde guardaste las cosas y encontrarlas despues",
             "features": {
-                "1": "1. Publica tus pensamientos en cualquier momento",
-                "2": "2. Coincidencia perfecta, coincidencia semántica, coincidencia complementaria",
-                "3": "3. Haz clic en usuarios coincidentes para empezar a chatear",
-                "4": "4. Notificaciones por email de coincidencias sin conexión",
-                "5": "5. Contenido temporal y protección de privacidad, autodestrucción para reducir la carga de información"
+                "1": "Registra de forma inteligente donde colocas cada objeto",
+                "2": "Guarda en segundos habitacion, estante, caja y notas",
+                "3": "Busca por nombre del objeto cuando olvides donde quedo",
+                "4": "Mantiene organizados los lugares donde guardas tus cosas diarias",
+                "5": "Pierde menos tiempo buscando objetos extraviados"
             },
-            "visit": "Visitar Mindsou"
+            "visit": "Visitar FinditBuddy"
         },
         "yumcheck": {
             "title": "Análisis de ingredientes alimenticios, consulta automática y análisis por foto",

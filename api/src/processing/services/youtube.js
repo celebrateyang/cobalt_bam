@@ -569,7 +569,8 @@ const buildYoutubeResult = ({
     }
 
     const selected = candidates[0];
-    if (!selected || selected.accessScore <= MIN_GOOD_URL_SCORE) {
+    const requiresClientSafeRedirect = !o.isAudioOnly;
+    if (!selected || (requiresClientSafeRedirect && selected.accessScore <= MIN_GOOD_URL_SCORE)) {
         console.log(
             `======> [youtube] no acceptable redirect url selected (best_access=${selected?.accessScore ?? "n/a"})`,
         );
@@ -604,9 +605,8 @@ const buildYoutubeResult = ({
         return {
             type: "proxy",
             isAudioOnly: true,
-            forceRedirect: true,
             urls: selected.url,
-            filename: `${sanitizeString(title)}.${audioExt}`,
+            audioFilename: sanitizeString(title),
             fileMetadata,
             bestAudio,
             subtitles,

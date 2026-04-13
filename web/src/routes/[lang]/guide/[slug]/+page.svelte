@@ -31,6 +31,15 @@
     $: downloadHubUrl = `/${data.lang}/download`;
     $: relatedGuides = getRelatedGuideLinks(data.slug, 4);
     $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 4);
+    $: showDouyinTutorialVideo = data.slug === 'douyin-download-guide';
+    const douyinTutorialEmbedUrl =
+        'https://player.bilibili.com/player.html?bvid=BV1sLB7BSEWu&page=1';
+    $: douyinTutorialTitle = isZh
+        ? '\u89c6\u9891\u6559\u7a0b\uff1a\u5982\u4f55\u83b7\u53d6\u6b63\u786e\u7684\u6296\u97f3\u89c6\u9891\u94fe\u63a5'
+        : 'Video tutorial: how to copy the correct Douyin video link';
+    $: douyinTutorialBody = isZh
+        ? '\u5982\u679c\u4f60\u590d\u5236\u5230\u7684\u662f search \u6216 jingxuan \u9875\u9762\uff0c\u53ef\u4ee5\u5148\u770b\u4e0b\u9762\u7684\u6f14\u793a\uff0c\u6309\u6d41\u7a0b\u6253\u5f00\u5177\u4f53\u89c6\u9891\u540e\u518d\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002'
+        : 'If you copied a search or jingxuan page instead of a video share link, this tutorial shows how to open the actual video first and copy the right URL.';
 
     const ctaLabel = isZh ? '去下载' : 'Download Now';
     const ctaHint = isZh ? '跳转到下载页面' : 'Open the downloader';
@@ -121,6 +130,23 @@
                 </ol>
             </div>
         </section>
+
+        {#if showDouyinTutorialVideo}
+            <section class="card tutorial-video">
+                <div class="tutorial-video-copy">
+                    <h2>{douyinTutorialTitle}</h2>
+                    <p>{douyinTutorialBody}</p>
+                </div>
+                <div class="tutorial-video-frame">
+                    <iframe
+                        src={douyinTutorialEmbedUrl}
+                        title={douyinTutorialTitle}
+                        loading="lazy"
+                        allowfullscreen
+                    ></iframe>
+                </div>
+            </section>
+        {/if}
 
         <section class="grid">
             <section class="card tips">
@@ -357,6 +383,37 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: calc(var(--padding) / 1.25);
+    }
+
+    .tutorial-video {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .tutorial-video-copy p {
+        margin: 8px 0 0;
+        color: var(--secondary);
+        opacity: 0.85;
+        line-height: 1.6;
+    }
+
+    .tutorial-video-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: calc(var(--border-radius) * 1.1);
+        border: 1px solid var(--button-stroke);
+        background: #000;
+    }
+
+    .tutorial-video-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
     }
 
     .card {

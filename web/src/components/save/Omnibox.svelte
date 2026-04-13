@@ -165,6 +165,60 @@
         }
     };
 
+    const getCurrentLang = () =>
+        $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+
+    const getDouyinGuidePath = () =>
+        `/${getCurrentLang()}/guide/douyin-download-guide`;
+
+    const getDouyinGuideUrl = () => {
+        const guidePath = getDouyinGuidePath();
+        return browser ? new URL(guidePath, $page.url.origin).toString() : guidePath;
+    };
+
+    const isDouyinSearchOrJingxuanUrl = (url: string) => {
+        if (!isDouyinUrl(url)) return false;
+
+        try {
+            const parsed = new URL(url);
+            const target = `${parsed.pathname}${parsed.search}${parsed.hash}`.toLowerCase();
+            return target.includes("search") || target.includes("jingxuan");
+        } catch {
+            return false;
+        }
+    };
+
+    const showDouyinGuideDialog = () => {
+        const isZh = getCurrentLang() === "zh";
+        const guidePath = getDouyinGuidePath();
+        const guideUrl = getDouyinGuideUrl();
+
+        createDialog({
+            id: "douyin-search-guide",
+            type: "small",
+            icon: "warn-red",
+            leftAligned: true,
+            title: isZh
+                ? "\u8fd9\u4e0d\u662f\u53ef\u4e0b\u8f7d\u7684\u6296\u97f3\u89c6\u9891\u94fe\u63a5"
+                : "This Douyin link is not a direct video link",
+            bodyHtml: isZh
+                ? `\u4f60\u7c98\u8d34\u7684\u662f\u6296\u97f3 <code>search</code> \u6216 <code>jingxuan</code> \u9875\u9762\u5730\u5740\uff0c\u4e0d\u662f\u5177\u4f53\u89c6\u9891\u7684\u5206\u4eab\u94fe\u63a5\u3002<br /><br />\u8bf7\u5148\u6253\u5f00\u5177\u4f53\u89c6\u9891\uff0c\u518d\u70b9\u201c\u5206\u4eab\u201d\u590d\u5236\u94fe\u63a5\u3002<br /><br />\u6559\u7a0b\u5730\u5740\uff1a<br /><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideUrl}</a>`
+                : `You pasted a Douyin <code>search</code> or <code>jingxuan</code> page URL instead of a specific video share link.<br /><br />Open the actual video first, then use Douyin's share action to copy the link.<br /><br />Guide:<br /><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideUrl}</a>`,
+            buttons: [
+                {
+                    text: isZh ? "\u53bb\u770b\u6559\u7a0b" : "Open guide",
+                    main: true,
+                    action: () => goto(guidePath),
+                },
+                {
+                    text: $t("button.gotit"),
+                    main: false,
+                    action: () => {},
+                },
+            ],
+        });
+    };
+
     const isTikTokVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -245,48 +299,54 @@
         downloadButtonState.set("think");
 
         try {
-        // Multiple links => batch dialog immediately (platform-agnostic).
-        if (isBatchInput) {
-            if (batchLimitExceeded) {
-                showBatchLimitDialog(detectedUrls.length);
+            const blockedDouyinGuideUrl = detectedUrls.find(isDouyinSearchOrJingxuanUrl);
+            if (blockedDouyinGuideUrl) {
+                showDouyinGuideDialog();
                 return;
             }
 
-            openBatchDialog(
-                detectedUrls.map((url) => ({ url })),
-                $t("dialog.batch.title")
-            );
-            return;
-        }
+            // Multiple links => batch dialog immediately (platform-agnostic).
+            if (isBatchInput) {
+                if (batchLimitExceeded) {
+                    showBatchLimitDialog(detectedUrls.length);
+                    return;
+                }
 
-        const url = detectedUrls[0];
-        if (!url) return;
+                openBatchDialog(
+                    detectedUrls.map((url) => ({ url })),
+                    $t("dialog.batch.title")
+                );
+                return;
+            }
 
-        // Only expand for services that support collection/playlist detection.
-        if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
-            handedOffToSavingHandler = true;
-            return savingHandler({ url });
-        }
+            const url = detectedUrls[0];
+            if (!url) return;
 
-        let expanded: Optional<CobaltExpandResponse>;
-        try {
-            expanded = await API.expand(url);
-        } catch {
-            handedOffToSavingHandler = true;
-            return savingHandler({ url });
-        }
-        if (!expanded || expanded.status === "error") {
-            handedOffToSavingHandler = true;
-            return savingHandler({ url });
-        }
+            // Only expand for services that support collection/playlist detection.
+            if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
+                handedOffToSavingHandler = true;
+                return savingHandler({ url });
+            }
 
-        const items = expanded.items ?? [];
-        const hasBatch = expanded.kind !== "single" && items.length > 1;
+            let expanded: Optional<CobaltExpandResponse>;
+            try {
+                expanded = await API.expand(url);
+            } catch {
+                handedOffToSavingHandler = true;
+                return savingHandler({ url });
+            }
+            if (!expanded || expanded.status === "error") {
+                handedOffToSavingHandler = true;
+                return savingHandler({ url });
+            }
 
-        if (!hasBatch) {
-            handedOffToSavingHandler = true;
-            return savingHandler({ url });
-        }
+            const items = expanded.items ?? [];
+            const hasBatch = expanded.kind !== "single" && items.length > 1;
+
+            if (!hasBatch) {
+                handedOffToSavingHandler = true;
+                return savingHandler({ url });
+            }
 
         const batchItems: DialogBatchItem[] = items.map((item) => ({
             url: item.url,

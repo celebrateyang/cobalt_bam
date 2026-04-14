@@ -10,14 +10,13 @@
     "services.title": "dịch vụ được hỗ trợ",
     "services.title_show": "hiển thị dịch vụ được hỗ trợ",
     "services.title_hide": "ẩn dịch vụ được hỗ trợ",
-    "services.disclaimer": "freesavevideo không liên kết với bất kỳ dịch vụ nào được liệt kê ở trên.",
-
+    "services.disclaimer": "FreeSaveVideo không liên kết với bất kỳ dịch vụ nào được liệt kê ở trên.",
     "tutorial.title": "cách lưu trên ios?",
     "tutorial.intro": "để lưu phương tiện tiện lợi trên ios, bạn sẽ cần sử dụng phím tắt siri đi kèm từ trang chia sẻ.",
     "tutorial.step.1": "thêm phím tắt siri đi kèm:",
-    "tutorial.step.2": "nhấn nút \"chia sẻ\" trong hộp thoại lưu của cobalt.",
+    "tutorial.step.2": "nhấn nút \"chia sẻ\" trong hộp thoại lưu của FreeSaveVideo.",
     "tutorial.step.3": "chọn phím tắt tương ứng trong trang chia sẻ.",
-    "tutorial.outro": "các phím tắt này sẽ chỉ hoạt động từ ứng dụng cobalt, chia sẻ liên kết từ các ứng dụng khác sẽ không hoạt động.",
+    "tutorial.outro": "các phím tắt này sẽ chỉ hoạt động từ ứng dụng FreeSaveVideo, chia sẻ liên kết từ các ứng dụng khác sẽ không hoạt động.",
     "tutorial.shortcut.photos": "lưu vào ảnh",
     "tutorial.shortcut.files": "lưu vào file"
 }

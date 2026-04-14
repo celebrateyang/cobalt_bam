@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-estos términos son aplicables solo cuando se usa la instancia oficial de freesavevideo.
+estos términos son aplicables solo cuando se usa la instancia oficial de FreeSaveVideo.
 en otros casos, es posible que necesites contactar al anfitrión para obtener información precisa.
 </section>
 
@@ -48,7 +48,7 @@ el uso justo y los créditos benefician a todos.
     sectionId="abuse"
 />
 
-no tenemos forma de detectar comportamiento abusivo automáticamente, ya que freesavevideo es 100% anónimo.
+no tenemos forma de detectar comportamiento abusivo automáticamente, ya que FreeSaveVideo es 100% anónimo.
 
 
 ten en cuenta que este correo electrónico no está destinado a soporte de usuarios.

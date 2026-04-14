@@ -1,26 +1,26 @@
 {
-  "title": "🌟 Khám Phá Video Tuyệt Vời",
-  "subtitle": "Nội dung cao cấp từ các nhà sáng tạo hàng đầu toàn cầu",
-  "filter": {
-    "all": "Tất Cả Nền Tảng"
-  },
-  "status": {
-    "loading": "Đang tải...",
-    "error": "Tải thất bại",
-    "empty": {
-      "title": "Không có video",
-      "description": "Chưa có nội dung video nào được thêm"
+    "title": "🌟 Khám Phá Video Tuyệt Vời",
+    "subtitle": "Nội dung cao cấp từ các nhà sáng tạo hàng đầu toàn cầu",
+    "filter": {
+        "all": "Tất Cả Nền Tảng"
+    },
+    "status": {
+        "loading": "Đang tải...",
+        "error": "Tải thất bại",
+        "empty": {
+            "title": "Không có video",
+            "description": "Chưa có nội dung video nào được thêm"
+        }
+    },
+    "account": {
+        "videoCount": "{{count}} video"
+    },
+    "action": {
+        "copy": "📋 Sao chép",
+        "copied": "✓ Đã sao chép",
+        "copyTitle": "Sao chép địa chỉ video",
+        "copyFailed": "Sao chép thất bại:",
+        "manualCopy": "Không thể sao chép tự động, vui lòng sao chép thủ công:\n{{url}}",
+        "closeDialog": "Nhấp \"OK\" để đóng thông báo này"
     }
-  },
-  "account": {
-    "videoCount": "{{count}} video"
-  },
-  "action": {
-    "copy": "📋 Sao chép",
-    "copied": "✓ Đã sao chép",
-    "copyTitle": "Sao chép địa chỉ video",
-    "copyFailed": "Sao chép thất bại:",
-    "manualCopy": "Không thể sao chép tự động, vui lòng sao chép thủ công:\n{{url}}",
-    "closeDialog": "Nhấp \"OK\" để đóng thông báo này"
-  }
 }

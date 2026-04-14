@@ -2,8 +2,8 @@
     "title": "Câu hỏi thường gặp (FAQ)",
     "description": "Giải đáp về tải không logo, định dạng, điểm và khắc phục lỗi.",
     "seo": {
-        "title": "FAQ | Bamboo Download - Trình tải video không logo",
-        "description": "FAQ Bamboo Download: tải Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
+        "title": "FAQ | FreeSaveVideo - Trình tải video không logo",
+        "description": "FAQ FreeSaveVideo: tải Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
         "keywords": "FAQ tải video,trình tải Douyin,trình tải Bilibili,trình tải Kuaishou,trình tải Xiaohongshu,trình tải TikTok,tải không logo,tải hàng loạt,tính điểm"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Bamboo Download là gì?",
-            "a": "Bamboo Download là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook và nhiều nền tảng khác."
+            "q": "FreeSaveVideo là gì?",
+            "a": "FreeSaveVideo là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook và nhiều nền tảng khác."
         },
         "how_to_use": {
             "q": "Cách tải video (không logo)?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "Có tải nội dung riêng tư/trả phí/đòi đăng nhập không?",
-            "a": "Không. Bamboo Download chỉ xử lý nội dung công khai.\nHãy tôn trọng bản quyền."
+            "a": "Không. FreeSaveVideo chỉ xử lý nội dung công khai.\nHãy tôn trọng bản quyền."
         },
         "privacy_logs": {
             "q": "Bạn có lưu link hoặc file của tôi không? Có an toàn không?",

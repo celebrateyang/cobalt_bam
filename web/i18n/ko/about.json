@@ -1,19 +1,15 @@
 {
-    "page.general": "bamboo download이 무엇인가요?",
+    "page.general": "FreeSaveVideo이 무엇인가요?",
     "page.faq": "FAQ",
-
     "page.community": "커뮤니티 & 지원",
-
     "page.privacy": "개인정보 보호정책",
     "page.terms": "이용약관 및 윤리",
     "page.credits": "감사 & 라이선스",
-
     "community.discord": "커뮤니티 디스코드 서버",
     "community.twitter": "트위터 소식 계정",
     "community.github": "깃허브 저장소",
     "community.email": "지원 이메일",
     "community.telegram": "텔레그램 소식 채널",
-
     "heading.general": "일반 약관",
     "heading.licenses": "라이선스",
     "heading.summary": "좋아하는 것을 저장하는 가장 좋은 방법",

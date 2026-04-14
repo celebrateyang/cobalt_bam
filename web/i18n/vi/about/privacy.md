@@ -11,9 +11,9 @@
     sectionId="general"
 />
 
-chính sách bảo mật của bamboo_download rất đơn giản: chúng tôi không thu thập hoặc lưu trữ bất kỳ thứ gì về bạn. những gì bạn làm hoàn toàn là việc của bạn, không phải của chúng tôi hoặc bất kỳ ai khác.
+chính sách bảo mật của FreeSaveVideo rất đơn giản: chúng tôi không thu thập hoặc lưu trữ bất kỳ thứ gì về bạn. những gì bạn làm hoàn toàn là việc của bạn, không phải của chúng tôi hoặc bất kỳ ai khác.
 
-các điều khoản này chỉ áp dụng khi sử dụng phiên bản bamboo_download chính thức. trong các trường hợp khác, bạn có thể cần liên hệ với người lưu trữ để biết thông tin chính xác.
+các điều khoản này chỉ áp dụng khi sử dụng phiên bản FreeSaveVideo chính thức. trong các trường hợp khác, bạn có thể cần liên hệ với người lưu trữ để biết thông tin chính xác.
 </section>
 
 <section id="local">
@@ -31,9 +31,9 @@ các công cụ sử dụng xử lý trên thiết bị hoạt động ngoại t
     sectionId="saving"
 />
 
-khi sử dụng chức năng lưu, trong một số trường hợp bamboo_download sẽ mã hóa & lưu trữ tạm thời thông tin cần thiết cho truyền. nó được lưu trữ trong RAM của máy chủ xử lý trong 90 giây và xóa vĩnh viễn sau đó. không ai có quyền truy cập vào nó, thậm chí cả chủ sở hữu phiên bản, miễn là họ không sửa đổi hình ảnh bamboo_download chính thức.
+khi sử dụng chức năng lưu, trong một số trường hợp FreeSaveVideo sẽ mã hóa & lưu trữ tạm thời thông tin cần thiết cho truyền. nó được lưu trữ trong RAM của máy chủ xử lý trong 90 giây và xóa vĩnh viễn sau đó. không ai có quyền truy cập vào nó, thậm chí cả chủ sở hữu phiên bản, miễn là họ không sửa đổi hình ảnh FreeSaveVideo chính thức.
 
-các file được xử lý/truyền không bao giờ được lưu vào bộ nhớ cache ở bất kỳ đâu. mọi thứ đều được truyền trực tiếp. chức năng lưu của bamboo_download về cơ bản là một dịch vụ proxy ưa thích.
+các file được xử lý/truyền không bao giờ được lưu vào bộ nhớ cache ở bất kỳ đâu. mọi thứ đều được truyền trực tiếp. chức năng lưu của FreeSaveVideo về cơ bản là một dịch vụ proxy ưa thích.
 </section>
 
 <section id="encryption">
@@ -52,7 +52,7 @@ dữ liệu đường hầm được lưu trữ tạm thời được mã hóa b
     sectionId="plausible"
 />
 
-vì quyền riêng tư, chúng tôi sử dụng [phân tích lưu lượng ẩn danh của plausible](https://plausible.io/) để có số lượng người dùng bamboo_download hoạt động gần đúng. không có thông tin nhận dạng nào về bạn hoặc các yêu cầu của bạn được lưu trữ. tất cả dữ liệu đều được ẩn danh và tổng hợp. phiên bản plausible mà chúng tôi sử dụng được lưu trữ & quản lý bởi chúng tôi.
+vì quyền riêng tư, chúng tôi sử dụng [phân tích lưu lượng ẩn danh của plausible](https://plausible.io/) để có số lượng người dùng FreeSaveVideo hoạt động gần đúng. không có thông tin nhận dạng nào về bạn hoặc các yêu cầu của bạn được lưu trữ. tất cả dữ liệu đều được ẩn danh và tổng hợp. phiên bản plausible mà chúng tôi sử dụng được lưu trữ & quản lý bởi chúng tôi.
 
 plausible không sử dụng cookie và tuân thủ hoàn toàn GDPR, CCPA và PECR.
 

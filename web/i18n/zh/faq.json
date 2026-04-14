@@ -2,8 +2,8 @@
     "title": "常见问题（FAQ）",
     "description": "关于无水印下载、批量解析、画质/格式、积分计费与故障排查的常见答疑。",
     "seo": {
-        "title": "竹子下载常见问题 FAQ | 抖音/B站/快手/小红书/TikTok 无水印下载",
-        "description": "竹子下载 FAQ：抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 视频下载常见问题。了解无水印、批量下载、格式清晰度、积分计费与解析失败排查。",
+        "title": "FreeSaveVideo 常见问题 FAQ | 抖音/B站/快手/小红书/TikTok 无水印下载",
+        "description": "FreeSaveVideo FAQ：抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 视频下载常见问题。了解无水印、批量下载、格式清晰度、积分计费与解析失败排查。",
         "keywords": "常见问题,抖音无水印下载,B站视频下载,快手去水印,小红书保存视频,TikTok下载,Instagram下载,Twitter下载,批量下载,积分计费,解析失败"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "竹子下载是什么？",
-            "a": "竹子下载是一款在线媒体下载工具。\n复制分享链接，粘贴即可解析并下载视频/音频。\n支持抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 等平台。"
+            "q": "FreeSaveVideo 是什么？",
+            "a": "FreeSaveVideo 是一款在线媒体下载工具。\n复制分享链接，粘贴即可解析并下载视频/音频。\n支持抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 等平台。"
         },
         "how_to_use": {
             "q": "如何下载视频（无水印）？",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "能下载私密/付费/需要登录的视频吗？",
-            "a": "不支持。竹子下载只处理公开可访问的内容。\n请尊重版权与创作者权益，合理使用下载内容。"
+            "a": "不支持。FreeSaveVideo 只处理公开可访问的内容。\n请尊重版权与创作者权益，合理使用下载内容。"
         },
         "privacy_logs": {
             "q": "会保存我粘贴的链接或下载文件吗？安全吗？",

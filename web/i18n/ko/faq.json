@@ -2,8 +2,8 @@
     "title": "자주 묻는 질문(FAQ)",
     "description": "무워터마크 다운로드, 형식, 포인트, 문제 해결에 대한 답변.",
     "seo": {
-        "title": "FAQ | Bamboo Download - 무워터마크 영상 다운로더",
-        "description": "Bamboo Download FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법.",
+        "title": "FAQ | FreeSaveVideo - 무워터마크 영상 다운로더",
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법.",
         "keywords": "FAQ,영상 다운로더,Douyin 다운로더,Bilibili 다운로더,Kuaishou 다운로더,Xiaohongshu 다운로더,TikTok 다운로더,무워터마크 다운로드,배치 다운로드,포인트 과금"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Bamboo Download는 무엇인가요?",
-            "a": "Bamboo Download는 온라인 미디어 다운로더입니다.\n공유 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nDouyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook 등을 지원합니다."
+            "q": "FreeSaveVideo는 무엇인가요?",
+            "a": "FreeSaveVideo는 온라인 미디어 다운로더입니다.\n공유 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nDouyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook 등을 지원합니다."
         },
         "how_to_use": {
             "q": "영상(무워터마크)을 어떻게 다운로드하나요?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "비공개/유료/로그인 필요 콘텐츠도 되나요?",
-            "a": "아니요. Bamboo Download는 공개 콘텐츠만 처리합니다.\n저작권을 존중해주세요."
+            "a": "아니요. FreeSaveVideo는 공개 콘텐츠만 처리합니다.\n저작권을 존중해주세요."
         },
         "privacy_logs": {
             "q": "링크나 파일을 저장하나요? 안전한가요?",

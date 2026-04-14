@@ -1,6 +1,6 @@
 {
     "seo": {
-        "title": "白板视频录制器 - 在线录制课件讲解视频 | freesavevideo",
+        "title": "白板视频录制器 - 在线录制课件讲解视频 | FreeSaveVideo",
         "description": "录制口播视频(有提词器)，教学视频(有白板，摄像头画中画)。无需安装。",
         "keywords": "白板录屏,课件录制,在线视频录制,excalidraw 录制,教程录屏",
         "app_name": "白板视频录制器"
@@ -175,8 +175,8 @@
         "resume_unsupported": "当前浏览器不支持恢复录制。"
     },
     "embed": {
-        "create_prompt": "?????????https://...?",
-        "edit_prompt": "??????",
-        "invalid_url_alert": "??? http(s) ?????"
+        "create_prompt": "FreeSaveVideoFreeSaveVideo?https://...?",
+        "edit_prompt": "FreeSaveVideo??",
+        "invalid_url_alert": "??? http(s) FreeSaveVideo?"
     }
 }

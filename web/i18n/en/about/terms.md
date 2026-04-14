@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-these terms are applicable only when using the official freesavevideo instance.
+these terms are applicable only when using the official FreeSaveVideo instance.
 in other cases, you may need to contact the hoster for accurate info.
 </section>
 
@@ -48,7 +48,7 @@ fair use and credits benefit everyone.
     sectionId="abuse"
 />
 
-we have no way of detecting abusive behavior automatically, as freesavevideo is 100% anonymous.
+we have no way of detecting abusive behavior automatically, as FreeSaveVideo is 100% anonymous.
 
 
 please note that this email is not intended for user support.

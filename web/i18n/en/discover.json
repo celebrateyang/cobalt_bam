@@ -1,61 +1,61 @@
 {
-  "title": "🌟 Discover Amazing Videos",
-  "subtitle": "Premium content from top global creators",
-  "filter": {
-    "all": "All Platforms"
-  },
-  "section": {
-    "trending": "Trending",
-    "pinned": "Pinned",
-    "featured": "Featured",
-    "latest": "Latest"
-  },
-  "status": {
-    "loading": "Loading...",
-    "parsing": "Parsing/Queued",
-    "still_parsing": "Still parsing, please wait a moment",
-    "error": "Load failed",
-    "empty": {
-      "title": "No videos",
-      "description": "No video content added yet"
-    }
-  },
-  "account": {
-    "videoCount": "{{count}} videos"
-  },
-  "action": {
-    "copy": "📋 Copy",
-    "copied": "✓ Copied",
-    "copyTitle": "Copy video address",
-    "copyFailed": "Copy failed:",
-    "manualCopy": "Cannot copy automatically, please copy manually:\n{{url}}",
-    "closeDialog": "Click \"OK\" to close this message",
-    "creator_batch": "More from creator",
-    "creator_batch_title": "{{name}} · Batch",
-    "load_more": "Load more"
-  },
-  "menu": {
-    "resources": "Discover Resources",
-    "beauty": "Discover Beauty"
-  },
-  "resources": {
-    "title": "Discover Resources",
-    "subtitle": "Browse categories and download from available links",
-    "empty": {
-      "title": "No resources yet",
-      "description": "No categories or links have been added"
+    "title": "🌟 Discover Amazing Videos",
+    "subtitle": "Premium content from top global creators",
+    "filter": {
+        "all": "All Platforms"
     },
-    "empty_links": {
-      "title": "No links",
-      "description": "This category has no downloadable links yet"
+    "section": {
+        "trending": "Trending",
+        "pinned": "Pinned",
+        "featured": "Featured",
+        "latest": "Latest"
     },
-    "select": {
-      "title": "Select a category",
-      "description": "Choose a category on the left to view links"
+    "status": {
+        "loading": "Loading...",
+        "parsing": "Parsing/Queued",
+        "still_parsing": "Still parsing, please wait a moment",
+        "error": "Load failed",
+        "empty": {
+            "title": "No videos",
+            "description": "No video content added yet"
+        }
+    },
+    "account": {
+        "videoCount": "{{count}} videos"
     },
     "action": {
-      "downloading": "Downloading..."
+        "copy": "📋 Copy",
+        "copied": "✓ Copied",
+        "copyTitle": "Copy video address",
+        "copyFailed": "Copy failed:",
+        "manualCopy": "Cannot copy automatically, please copy manually:\n{{url}}",
+        "closeDialog": "Click \"OK\" to close this message",
+        "creator_batch": "More from creator",
+        "creator_batch_title": "{{name}} · Batch",
+        "load_more": "Load more"
     },
-    "batch_limit_hint": "Batch limit: {{max}}"
-  }
+    "menu": {
+        "resources": "Discover Resources",
+        "beauty": "Discover Beauty"
+    },
+    "resources": {
+        "title": "Discover Resources",
+        "subtitle": "Browse categories and download from available links",
+        "empty": {
+            "title": "No resources yet",
+            "description": "No categories or links have been added"
+        },
+        "empty_links": {
+            "title": "No links",
+            "description": "This category has no downloadable links yet"
+        },
+        "select": {
+            "title": "Select a category",
+            "description": "Choose a category on the left to view links"
+        },
+        "action": {
+            "downloading": "Downloading..."
+        },
+        "batch_limit_hint": "Batch limit: {{max}}"
+    }
 }

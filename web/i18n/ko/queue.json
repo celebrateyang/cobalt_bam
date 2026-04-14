@@ -13,7 +13,7 @@
         "waiting": "대기 중"
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
-    "success_notice": "?? ???? ??? {{ count }}?? ????? ????????.",
+    "success_notice": "?? FreeSaveVideo ??? {{ count }}?? FreeSaveVideo? FreeSaveVideoFreeSaveVideo.",
     "save_all_done": "Save all downloaded",
     "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."
 }

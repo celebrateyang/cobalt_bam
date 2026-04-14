@@ -1,9 +1,9 @@
 {
     "banner.title": "这个网站很好，赞赏赞赏!",
-    "banner.subtitle": "捐赠给 Imput 或与朋友分享\nCobalt 的乐趣",
-    "body.motivation": "Cobalt 帮助制作人、教育者、视频创作者以及许多其他人做他们热爱的事情。这是一种不同的服务，充满了爱，而非为了盈利。",
-    "body.no_bullshit": "我们相信互联网不必可怕，这就是为什么 Cobalt 永远不会有广告或其他恶意内容。这是我们坚守的承诺。我们所做的一切都以隐私、可访问性和易用性为核心，使 Cobalt 可供所有人使用。",
-    "body.keep_going": "如果您觉得 Cobalt 有用，请考虑支持我们的工作！您可以通过捐赠或与朋友分享 Cobalt 来帮助我们。我们非常感谢每一笔捐款，这将帮助我们继续开发 Cobalt 及其他项目。",
+    "banner.subtitle": "捐赠给 Imput 或与朋友分享\nFreeSaveVideo 的乐趣",
+    "body.motivation": "FreeSaveVideo 帮助制作人、教育者、视频创作者以及许多其他人做他们热爱的事情。这是一种不同的服务，充满了爱，而非为了盈利。",
+    "body.no_bullshit": "我们相信互联网不必可怕，这就是为什么 FreeSaveVideo 永远不会有广告或其他恶意内容。这是我们坚守的承诺。我们所做的一切都以隐私、可访问性和易用性为核心，使 FreeSaveVideo 可供所有人使用。",
+    "body.keep_going": "如果您觉得 FreeSaveVideo 有用，请考虑支持我们的工作！您可以通过捐赠或与朋友分享 FreeSaveVideo 来帮助我们。我们非常感谢每一笔捐款，这将帮助我们继续开发 FreeSaveVideo 及其他项目。",
     "card.once": "一次性捐赠",
     "card.recurring": "定期捐赠",
     "card.custom": "自定义金额（从 $2 起）",
@@ -22,7 +22,7 @@
     "card.option.8629": "一小块土地",
     "card.option.9433": "豪华热水浴缸",
     "card.custom.submit": "捐赠自定义金额",
-    "share.title": "与朋友分享 Cobalt",
+    "share.title": "与朋友分享 FreeSaveVideo",
     "alternative.title": "其他捐赠方式",
     "alt.copy": "{{ value }}。加密钱包地址。按下复制。",
     "alt.open": "{{ value }}。按下打开。"

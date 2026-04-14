@@ -1,26 +1,26 @@
 {
-  "title": "🌟 Découvrez des vidéos incroyables",
-  "subtitle": "Contenu premium de créateurs mondiaux de premier plan",
-  "filter": {
-    "all": "Toutes les plateformes"
-  },
-  "status": {
-    "loading": "Chargement...",
-    "error": "Échec du chargement",
-    "empty": {
-      "title": "Aucune vidéo",
-      "description": "Aucun contenu vidéo ajouté pour le moment"
+    "title": "🌟 Découvrez des vidéos incroyables",
+    "subtitle": "Contenu premium de créateurs mondiaux de premier plan",
+    "filter": {
+        "all": "Toutes les plateformes"
+    },
+    "status": {
+        "loading": "Chargement...",
+        "error": "Échec du chargement",
+        "empty": {
+            "title": "Aucune vidéo",
+            "description": "Aucun contenu vidéo ajouté pour le moment"
+        }
+    },
+    "account": {
+        "videoCount": "{{count}} vidéos"
+    },
+    "action": {
+        "copy": "📋 Copier",
+        "copied": "✓ Copié",
+        "copyTitle": "Copier l'adresse de la vidéo",
+        "copyFailed": "Échec de la copie :",
+        "manualCopy": "Impossible de copier automatiquement, veuillez copier manuellement :\n{{url}}",
+        "closeDialog": "Cliquez sur \"OK\" pour fermer ce message"
     }
-  },
-  "account": {
-    "videoCount": "{{count}} vidéos"
-  },
-  "action": {
-    "copy": "📋 Copier",
-    "copied": "✓ Copié",
-    "copyTitle": "Copier l'adresse de la vidéo",
-    "copyFailed": "Échec de la copie :",
-    "manualCopy": "Impossible de copier automatiquement, veuillez copier manuellement :\n{{url}}",
-    "closeDialog": "Cliquez sur \"OK\" pour fermer ce message"
-  }
 }

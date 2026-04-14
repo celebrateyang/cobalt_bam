@@ -11,9 +11,9 @@
     sectionId="general"
 />
 
-la política de privacidad de bamboo_download es simple: no recopilamos ni almacenamos nada sobre ti. lo que haces es únicamente tu asunto, no el nuestro ni el de nadie más.
+la política de privacidad de FreeSaveVideo es simple: no recopilamos ni almacenamos nada sobre ti. lo que haces es únicamente tu asunto, no el nuestro ni el de nadie más.
 
-estos términos son aplicables solo cuando se usa la instancia oficial de bamboo_download. en otros casos, es posible que necesites contactar al anfitrión para obtener información precisa.
+estos términos son aplicables solo cuando se usa la instancia oficial de FreeSaveVideo. en otros casos, es posible que necesites contactar al anfitrión para obtener información precisa.
 </section>
 
 <section id="local">
@@ -31,9 +31,9 @@ las herramientas que usan procesamiento en el dispositivo funcionan sin conexió
     sectionId="saving"
 />
 
-cuando se usa la funcionalidad de guardado, en algunos casos bamboo_download encriptará y almacenará temporalmente la información necesaria para la canalización. se almacena en la RAM del servidor de procesamiento durante 90 segundos y se purga irreversiblemente después. nadie tiene acceso a ella, ni siquiera los propietarios de instancias, siempre y cuando no modifiquen la imagen oficial de bamboo_download.
+cuando se usa la funcionalidad de guardado, en algunos casos FreeSaveVideo encriptará y almacenará temporalmente la información necesaria para la canalización. se almacena en la RAM del servidor de procesamiento durante 90 segundos y se purga irreversiblemente después. nadie tiene acceso a ella, ni siquiera los propietarios de instancias, siempre y cuando no modifiquen la imagen oficial de FreeSaveVideo.
 
-los archivos procesados/canalizados nunca se almacenan en caché en ningún lugar. todo se canaliza en vivo. la funcionalidad de guardado de bamboo_download es esencialmente un servicio de proxy elegante.
+los archivos procesados/canalizados nunca se almacenan en caché en ningún lugar. todo se canaliza en vivo. la funcionalidad de guardado de FreeSaveVideo es esencialmente un servicio de proxy elegante.
 </section>
 
 <section id="encryption">
@@ -52,7 +52,7 @@ los datos de túnel almacenados temporalmente se encriptan usando el estándar A
     sectionId="plausible"
 />
 
-por el bien de la privacidad, usamos [análisis de tráfico anónimo de plausible](https://plausible.io/) para obtener un número aproximado de usuarios activos de bamboo_download. nunca se almacena información identificable sobre ti o tus solicitudes. todos los datos se anonimizan y agregan. la instancia de plausible que usamos está alojada y gestionada por nosotros.
+por el bien de la privacidad, usamos [análisis de tráfico anónimo de plausible](https://plausible.io/) para obtener un número aproximado de usuarios activos de FreeSaveVideo. nunca se almacena información identificable sobre ti o tus solicitudes. todos los datos se anonimizan y agregan. la instancia de plausible que usamos está alojada y gestionada por nosotros.
 
 plausible no usa cookies y es totalmente compatible con GDPR, CCPA y PECR.
 

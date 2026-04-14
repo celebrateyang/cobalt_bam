@@ -11,9 +11,9 @@
     sectionId="general"
 />
 
-la politique de confidentialité de bamboo_download est simple : nous ne collectons ni ne stockons rien à votre sujet. ce que vous faites relève uniquement de votre responsabilité, pas de la nôtre ni de celle de quiconque.
+la politique de confidentialité de FreeSaveVideo est simple : nous ne collectons ni ne stockons rien à votre sujet. ce que vous faites relève uniquement de votre responsabilité, pas de la nôtre ni de celle de quiconque.
 
-ces conditions ne sont applicables que lors de l'utilisation de l'instance officielle bamboo_download. dans d'autres cas, vous devrez peut-être contacter l'hébergeur pour obtenir des informations précises.
+ces conditions ne sont applicables que lors de l'utilisation de l'instance officielle FreeSaveVideo. dans d'autres cas, vous devrez peut-être contacter l'hébergeur pour obtenir des informations précises.
 </section>
 
 <section id="local">
@@ -31,9 +31,9 @@ les outils qui utilisent le traitement sur l'appareil fonctionnent hors ligne, l
     sectionId="saving"
 />
 
-lors de l'utilisation de la fonctionnalité d'enregistrement, dans certains cas, bamboo_download chiffrera et stockera temporairement les informations nécessaires à la tunnelisation. elles sont stockées dans la RAM du serveur de traitement pendant 90 secondes et purgées irréversiblement par la suite. personne n'y a accès, même les propriétaires d'instance, tant qu'ils ne modifient pas l'image officielle bamboo_download.
+lors de l'utilisation de la fonctionnalité d'enregistrement, dans certains cas, FreeSaveVideo chiffrera et stockera temporairement les informations nécessaires à la tunnelisation. elles sont stockées dans la RAM du serveur de traitement pendant 90 secondes et purgées irréversiblement par la suite. personne n'y a accès, même les propriétaires d'instance, tant qu'ils ne modifient pas l'image officielle FreeSaveVideo.
 
-les fichiers traités/tunnelisés ne sont jamais mis en cache nulle part. tout est tunnelisé en direct. la fonctionnalité d'enregistrement de bamboo_download est essentiellement un service proxy sophistiqué.
+les fichiers traités/tunnelisés ne sont jamais mis en cache nulle part. tout est tunnelisé en direct. la fonctionnalité d'enregistrement de FreeSaveVideo est essentiellement un service proxy sophistiqué.
 </section>
 
 <section id="encryption">
@@ -52,7 +52,7 @@ les données de tunnel temporairement stockées sont chiffrées à l'aide de la 
     sectionId="plausible"
 />
 
-par souci de confidentialité, nous utilisons [les analyses de trafic anonymes de plausible](https://plausible.io/) pour obtenir un nombre approximatif d'utilisateurs actifs de bamboo_download. aucune information identifiable sur vous ou vos demandes n'est jamais stockée. toutes les données sont anonymisées et agrégées. l'instance plausible que nous utilisons est hébergée et gérée par nous.
+par souci de confidentialité, nous utilisons [les analyses de trafic anonymes de plausible](https://plausible.io/) pour obtenir un nombre approximatif d'utilisateurs actifs de FreeSaveVideo. aucune information identifiable sur vous ou vos demandes n'est jamais stockée. toutes les données sont anonymisées et agrégées. l'instance plausible que nous utilisons est hébergée et gérée par nous.
 
 plausible n'utilise pas de cookies et est entièrement conforme au RGPD, CCPA et PECR.
 

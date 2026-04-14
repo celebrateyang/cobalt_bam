@@ -1,6 +1,6 @@
 {
     "import.no_data": "文件中没有要加载的内容。您确定这是正确的文件吗？",
-    "import.invalid": "您的文件没有有效的 Cobalt 设置。您确定这是正确的文件吗？",
+    "import.invalid": "您的文件没有有效的 FreeSaveVideo 设置。您确定这是正确的文件吗？",
     "import.hash_invalid": "文件校验和无效。请确认这是正确的文件。",
     "import.unknown": "无法从文件加载数据。它可能已损坏或格式错误。以下是我收到的错误信息：\n\n{{ value }}",
     "settings.invalid": "设置文件包含不支持的设置，加载已中止。",
@@ -27,7 +27,7 @@
     "api.youtube.login": "无法获取此视频，因为 YouTube 将我标记为机器人。这可能是由于处理实例没有任何活跃的账户令牌。请稍后重试，如果仍然无法解决，请告知实例拥有者此错误！",
     "api.youtube.token_expired": "无法获取此视频，因为 YouTube 令牌已过期，且无法刷新。请稍后重试，如果仍然无法解决，请告知实例拥有者此错误！",
     "remux.corrupted": "无法读取该文件的元数据，可能已损坏。",
-    "remux.out_of_resources": "Cobalt 设备资源不足，无法继续处理。这与您的浏览器限制有关。请刷新或重新打开应用并重试。某些设备只能处理较小的文件。",
+    "remux.out_of_resources": "FreeSaveVideo 设备资源不足，无法继续处理。这与您的浏览器限制有关。请刷新或重新打开应用并重试。某些设备只能处理较小的文件。",
     "tunnel.probe": "无法验证您是否可以下载此文件。请稍后再试！",
     "captcha_ongoing": "仍在检查您是否不是机器人。等待加载图标消失后再试。\n\n如果等待时间过长，请告知我们！我们使用 Cloudflare Turnstile 进行机器人保护，有时会错误阻止用户。",
     "api.auth.jwt.missing": "无法确认您是否是人类，因为处理服务器没有收到人类访问令牌。请稍后重试或刷新页面！",

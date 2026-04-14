@@ -1,12 +1,12 @@
 {
-    "cobalt": "bamboo download, Download Videos - TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou",
-    "meowbalt": "bamboo download",
+    "cobalt": "FreeSaveVideo",
+    "meowbalt": "FreeSaveVideo",
     "beta": "stable",
     "or": "or",
     "embed.description": "Download videos  from TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou. Easy and fast video downloads.",
     "guide": {
-        "title": "Freesavevideo.online Online Video Downloader Guide",
-        "description1": "Use Freesavevideo.online, the leading online video downloader to download videos and music. No extra software is required; you can save your favorite media directly from the web. Our intuitive platform makes video downloading simple and efficient.",
+        "title": "FreeSaveVideo Online Video Downloader Guide",
+        "description1": "Use FreeSaveVideo, the leading online video downloader to download videos and music. No extra software is required; you can save your favorite media directly from the web. Our intuitive platform makes video downloading simple and efficient.",
         "description2": "Easily access and download various content, from popular movies and TV shows to exciting sports clips. Simply paste the video URL into the designated field and click the download button."
     },
     "notification": {
@@ -44,8 +44,8 @@
     },
     "seo": {
         "home": {
-            "title": "Bamboo Downloader - Download, Record, Chat, Transfer & Convert",
-            "description": "Bamboo Downloader lets you download videos, record video, start random video chats, transfer files, and convert video formats. Supports TikTok, Instagram, Facebook, Bilibili, Douyin, Kuaishou, YouTube, and more.",
+            "title": "FreeSaveVideo - Download, Record, Chat, Transfer & Convert",
+            "description": "FreeSaveVideo lets you download videos, record video, start random video chats, transfer files, and convert video formats. Supports TikTok, Instagram, Facebook, Bilibili, Douyin, Kuaishou, YouTube, and more.",
             "keywords": "video downloader, online video downloader, douyin downloader, tiktok downloader no watermark, instagram video saver, bilibili video downloader"
         },
         "transfer": {

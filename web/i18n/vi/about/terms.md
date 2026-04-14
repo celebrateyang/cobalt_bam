@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-các điều khoản này chỉ áp dụng khi sử dụng phiên bản freesavevideo chính thức.
+các điều khoản này chỉ áp dụng khi sử dụng phiên bản FreeSaveVideo chính thức.
 trong các trường hợp khác, bạn có thể cần liên hệ với người lưu trữ để biết thông tin chính xác.
 </section>
 
@@ -48,7 +48,7 @@ sử dụng hợp lý và ghi công mang lại lợi ích cho tất cả mọi n
     sectionId="abuse"
 />
 
-chúng tôi không có cách nào để phát hiện hành vi lạm dụng tự động, vì freesavevideo hoàn toàn ẩn danh.
+chúng tôi không có cách nào để phát hiện hành vi lạm dụng tự động, vì FreeSaveVideo hoàn toàn ẩn danh.
 
 
 vui lòng lưu ý rằng email này không dành cho hỗ trợ người dùng.

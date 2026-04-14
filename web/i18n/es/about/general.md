@@ -11,7 +11,7 @@
     sectionId="summary"
 />
 
-bamboo download te ayuda a guardar cualquier cosa de tus sitios web favoritos: video, audio, fotos o gifs. 隆solo pega el enlace y estar谩s listo para rockear!
+FreeSaveVideo te ayuda a guardar cualquier cosa de tus sitios web favoritos: video, audio, fotos o gifs. 隆solo pega el enlace y estar谩s listo para rockear!
 
 sin anuncios, rastreadores, muros de pago u otra basura. solo una aplicaci贸n web conveniente que funciona en cualquier lugar, cuando la necesites.
 </section>
@@ -27,14 +27,14 @@ sin anuncios, rastreadores, muros de pago u otra basura. solo una aplicaci贸n w
 todas las solicitudes al backend son an贸nimas y toda la informaci贸n sobre t煤neles est谩 encriptada.
 tenemos una pol铆tica estricta de cero registros y no rastreamos *nada* sobre personas individuales.
 
-cuando una solicitud necesita procesamiento adicional, bamboo download procesa archivos sobre la marcha.
+cuando una solicitud necesita procesamiento adicional, FreeSaveVideo procesa archivos sobre la marcha.
 se hace canalizando partes procesadas directamente al cliente, sin guardar nunca nada en el disco.
 por ejemplo, este m茅todo se usa cuando el servicio de origen proporciona canales de video y audio como archivos separados.
 
 adicionalmente, puedes [habilitar la canalizaci贸n forzada](../../settings/privacy#tunnel) para proteger tu privacidad.
-cuando est谩 habilitado, bamboo download canalizar谩 todos los archivos descargados.
+cuando est谩 habilitado, FreeSaveVideo canalizar谩 todos los archivos descargados.
 nadie sabr谩 desde d贸nde descargas algo, ni siquiera tu proveedor de red.
-todo lo que ver谩n es que est谩s usando una instancia de bamboo download.
+todo lo que ver谩n es que est谩s usando una instancia de FreeSaveVideo.
 </section>
 
 

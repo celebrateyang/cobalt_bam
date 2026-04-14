@@ -1,19 +1,15 @@
 {
     "page.general": "ดาวน์โหลด Bamboo คืออะไร?",
     "page.faq": "คำถามที่พบบ่อย",
-
     "page.community": "ชุมชนและการสนับสนุน",
-
     "page.privacy": "นโยบายความเป็นส่วนตัว",
     "page.terms": "ข้อกำหนดและจริยธรรม",
     "page.credits": "ขอบคุณและใบอนุญาต",
-
     "community.discord": "เซิร์ฟเวอร์ Discord ชุมชน",
     "community.twitter": "บัญชีข่าวบน Twitter",
     "community.github": "ที่เก็บ GitHub",
     "community.email": "อีเมลสนับสนุน",
     "community.telegram": "ช่องข่าวบน Telegram",
-
     "heading.general": "ข้อกำหนดทั่วไป",
     "heading.licenses": "ใบอนุญาต",
     "heading.summary": "วิธีที่ดีที่สุดในการบันทึกสิ่งที่คุณรัก",

@@ -2030,7 +2030,7 @@ export class ClipboardManager {
 
             setTimeout(() => {
                 if (this.dataChannel?.readyState === 'open') {
-                    console.log('� Third confirmation: peerConnected = true');
+                    console.log('Third confirmation: peerConnected = true');
                     clipboardState.update(state => ({ ...state, peerConnected: true }));
                 }
             }, 1000);

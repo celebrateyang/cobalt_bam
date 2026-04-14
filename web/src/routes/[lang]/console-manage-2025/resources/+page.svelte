@@ -297,7 +297,7 @@
 </script>
 
 <svelte:head>
-    <title>资源管理 - 竹子下载</title>
+    <title>资源管理 - FreeSaveVideo</title>
 </svelte:head>
 
 <div class="resources-admin">

@@ -11,7 +11,7 @@
     sectionId="summary"
 />
 
-bamboo download helps you save anything from your favorite websites: video, audio, photos or gifs. just paste the link and you're ready to rock!
+FreeSaveVideo helps you save anything from your favorite websites: video, audio, photos or gifs. just paste the link and you're ready to rock!
 
 no ads, trackers, paywalls, or other nonsense. just a convenient web app that works anywhere, whenever you need it.
 </section>
@@ -26,14 +26,14 @@ no ads, trackers, paywalls, or other nonsense. just a convenient web app that wo
 all requests to the backend are anonymous and all information about tunnels is encrypted.
 we have a strict zero log policy and don't track *anything* about individual people.
 
-when a request needs additional processing, bamboo download processes files on-the-fly.
+when a request needs additional processing, FreeSaveVideo processes files on-the-fly.
 it's done by tunneling processed parts directly to the client, without ever saving anything to disk.
 for example, this method is used when the source service provides video and audio channels as separate files.
 
 additionally, you can [enable forced tunneling](../../settings/privacy#tunnel) to protect your privacy.
-when enabled, bamboo download will tunnel all downloaded files.
+when enabled, FreeSaveVideo will tunnel all downloaded files.
 no one will know where you download something from, even your network provider.
-all they'll see is that you're using a bamboo download instance.
+all they'll see is that you're using a FreeSaveVideo instance.
 </section>
 
 

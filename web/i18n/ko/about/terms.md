@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-이 약관은 공식 freesavevideo 인스턴스를 사용할 때만 적용됩니다.
+이 약관은 공식 FreeSaveVideo 인스턴스를 사용할 때만 적용됩니다.
 다른 경우에는 정확한 정보를 위해 호스터에게 연락해야 할 수 있습니다.
 </section>
 
@@ -48,7 +48,7 @@
     sectionId="abuse"
 />
 
-freesavevideo는 100% 익명이므로 악용 행위를 자동으로 감지할 방법이 없습니다.
+FreeSaveVideo는 100% 익명이므로 악용 행위를 자동으로 감지할 방법이 없습니다.
 
 
 이 이메일은 사용자 지원을 위한 것이 아닙니다.

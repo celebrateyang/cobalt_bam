@@ -57,7 +57,7 @@
         donateLinks[currentLocale as keyof typeof donateLinks] ??
         donateLinks.en;
 
-    let showNotification = false; // ?????????????????
+    let showNotification = false; // notification is hidden by default
     const fallbackHost = env.HOST || "freesavevideo.online";
     const clerkRuntimeEnabled = Boolean(env.CLERK_PUBLISHABLE_KEY);
     let clerkRuntimePromise: Promise<ClerkRuntimeModule> | null = null;
@@ -529,7 +529,7 @@
     <meta property="og:image" content={`https://${fallbackHost}/og-share-v2.png`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Bamboo Downloader share preview" />
+    <meta property="og:image:alt" content="FreeSaveVideo share preview" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />

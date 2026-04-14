@@ -16,7 +16,7 @@
     import CobaltQr from "$components/icons/CobaltQR.svelte";
     import CopyIcon from "$components/misc/CopyIcon.svelte";
 
-    const cobaltUrl = "https://cobalt.tools/";
+    const shareUrl = "https://freesavevideo.online/";
 
     let copied = false;
 
@@ -51,7 +51,7 @@
                 id="action-button-copy"
                 class="action-button"
                 on:click={async () => {
-                    copyURL(cobaltUrl);
+                    copyURL(shareUrl);
                     copied = true;
                 }}
                 aria-label={copied ? $t("button.copied") : ""}
@@ -66,7 +66,7 @@
                 <button
                     id="action-button-share"
                     class="action-button"
-                    on:click={async () => shareURL(cobaltUrl)}
+                    on:click={async () => shareURL(shareUrl)}
                 >
                     <div class="action-button-icon">
                         <IconShare2 />
@@ -104,7 +104,7 @@
         class="donate-card-subtitle share-footer-link"
         class:centered={expanded}
     >
-        cobalt.tools
+        freesavevideo.online
     </div>
 </DonateCardContainer>
 

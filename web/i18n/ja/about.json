@@ -1,19 +1,15 @@
 {
-    "page.general": "bamboo downloadとは？",
+    "page.general": "FreeSaveVideoとは？",
     "page.faq": "よくある質問",
-
     "page.community": "コミュニティとサポート",
-
     "page.privacy": "プライバシーポリシー",
     "page.terms": "利用規約と倫理",
     "page.credits": "謝辞とライセンス",
-
     "community.discord": "コミュニティDiscordサーバー",
     "community.twitter": "Twitterのニュースアカウント",
     "community.github": "GitHubリポジトリ",
     "community.email": "サポートメール",
     "community.telegram": "Telegramのニュースチャンネル",
-
     "heading.general": "一般条項",
     "heading.licenses": "ライセンス",
     "heading.summary": "好きなものを保存する最良の方法",

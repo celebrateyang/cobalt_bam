@@ -1,28 +1,23 @@
 {
     "meta.title": "Random 1v1 Video Chat",
     "meta.description": "Randomly match one online user for a 10-minute 1v1 video chat.",
-
     "header.title": "Random 1v1 Video Chat",
     "header.subtitle": "Signed-in users can join. Each session ends automatically in 10 minutes.",
-
     "brand.title": "FreeSaveVideo Random",
     "brand.subtitle": "1v1 video chat",
     "brand.searching_users": "Searching online users...",
     "brand.users_online": "Users are online now",
-
     "notice.clerk_disabled": "Clerk is not enabled in this environment.",
     "notice.checking_eligibility": "Checking login eligibility...",
     "notice.signin_required": "Please sign in first.",
     "notice.paid_required": "No paid order found. Please complete a payment first.",
     "notice.not_eligible": "You are not eligible to use random chat at the moment.",
-
     "error.check_eligibility_failed": "Failed to check chat eligibility",
     "error.manager_not_initialized": "Chat manager not initialized",
     "error.missing_clerk_token": "Missing Clerk token",
     "error.start_matching_failed": "Failed to start matching",
     "error.next_match_failed": "Failed to match next user",
     "error.toggle_fullscreen_failed": "Failed to toggle fullscreen",
-
     "action.sign_in": "Sign In",
     "action.go_to_account": "Go to Account",
     "action.exit_fullscreen": "Exit Fullscreen",
@@ -32,40 +27,31 @@
     "action.stop": "Stop",
     "action.next": "Next",
     "action.close": "Close",
-
     "connection.connected": "Connected",
     "connection.disconnected": "Disconnected",
-
     "status.in_call": "In call",
     "status.searching": "Searching...",
     "status.ready": "Ready",
-
     "field.i_am": "I am",
     "field.target_gender": "Target gender",
     "field.country": "Country",
     "field.language": "Language",
-
     "language.auto": "Auto",
-
     "settings.title": "Chat Settings",
     "settings.auto_next": "Auto queue next match",
     "settings.mirror_local": "Mirror local preview",
     "settings.mute_remote": "Mute remote audio by default",
     "settings.show_safety": "Show safety reminder",
-
     "safety.main": "Keep your face visible and avoid sharing personal contact details.",
     "safety.time_limit": "Sessions are time-limited to 10 minutes.",
     "peer_profile": "Peer profile",
     "last_session_ended": "Last session ended",
-
     "gender.self.unspecified": "Unspecified",
     "gender.self.male": "Male",
     "gender.self.female": "Female",
-
     "gender.target.any": "Any",
     "gender.target.male": "Male",
     "gender.target.female": "Female",
-
     "country.any": "Any",
     "country.us": "United States",
     "country.cn": "China",

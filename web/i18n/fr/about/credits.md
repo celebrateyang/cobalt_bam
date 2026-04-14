@@ -13,7 +13,7 @@
 />
 
 un énorme merci à nos briseurs de trucs pour avoir testé les mises à jour en avant-première et s'être assurés qu'elles sont stables.
-ils nous ont également aidés à livrer cobalt 10 !
+ils nous ont également aidés à livrer FreeSaveVideo 10 !
 <BetaTesters />
 
 tous les liens sont externes et mènent à leurs sites web personnels ou réseaux sociaux.
@@ -25,9 +25,9 @@ tous les liens sont externes et mènent à leurs sites web personnels ou réseau
     sectionId="meowbalt"
 />
 
-meowbalt est la mascotte rapide de cobalt. c'est un chat extrêmement expressif qui adore internet rapide.
+meowbalt est la mascotte rapide de FreeSaveVideo. c'est un chat extrêmement expressif qui adore internet rapide.
 
-tous les superbes dessins de meowbalt que vous voyez dans cobalt ont été réalisés par [GlitchyPSI](https://glitchypsi.xyz/).
+tous les superbes dessins de meowbalt que vous voyez dans FreeSaveVideo ont été réalisés par [GlitchyPSI](https://glitchypsi.xyz/).
 il est également le concepteur original du personnage.
 
 vous ne pouvez pas utiliser ou modifier les œuvres d'art de GlitchyPSI de meowbalt sans son autorisation explicite.
@@ -41,9 +41,9 @@ vous ne pouvez pas utiliser ou modifier le design du personnage meowbalt commerc
     sectionId="licenses"
 />
 
-le serveur de traitement cobalt est open source et sous licence [AGPL-3.0]({docs.apiLicense}).
+le serveur de traitement FreeSaveVideo est open source et sous licence [AGPL-3.0]({docs.apiLicense}).
 
-l'interface cobalt est [source first](https://sourcefirst.com/) et sous licence [CC-BY-NC-SA 4.0]({docs.webLicense}).
+l'interface FreeSaveVideo est [source first](https://sourcefirst.com/) et sous licence [CC-BY-NC-SA 4.0]({docs.webLicense}).
 nous avons décidé d'utiliser cette licence pour empêcher les escrocs de profiter de notre travail
 et de créer des clones malveillants qui trompent les gens et nuisent à notre identité publique.
 

@@ -11,9 +11,9 @@
     sectionId="general"
 />
 
-Die Datenschutzrichtlinie von bamboo_download ist einfach: Wir sammeln oder speichern nichts über Sie. Was Sie tun, ist ausschließlich Ihre Angelegenheit, nicht unsere oder die von jemand anderem.
+Die Datenschutzrichtlinie von FreeSaveVideo ist einfach: Wir sammeln oder speichern nichts über Sie. Was Sie tun, ist ausschließlich Ihre Angelegenheit, nicht unsere oder die von jemand anderem.
 
-Diese Bedingungen gelten nur bei Verwendung der offiziellen bamboo_download-Instanz. In anderen Fällen müssen Sie möglicherweise den Hoster für genaue Informationen kontaktieren.
+Diese Bedingungen gelten nur bei Verwendung der offiziellen FreeSaveVideo-Instanz. In anderen Fällen müssen Sie möglicherweise den Hoster für genaue Informationen kontaktieren.
 </section>
 
 <section id="local">
@@ -31,9 +31,9 @@ Tools, die geräteinterne Verarbeitung verwenden, funktionieren offline, lokal u
     sectionId="saving"
 />
 
-Bei Verwendung der Speicherfunktion wird bamboo_download in einigen Fällen Informationen verschlüsseln und vorübergehend speichern, die für das Tunneling benötigt werden. Sie werden für 90 Sekunden im RAM des Verarbeitungsservers gespeichert und danach unwiderruflich gelöscht. Niemand hat Zugriff darauf, nicht einmal Instanzbesitzer, solange sie das offizielle bamboo_download-Image nicht ändern.
+Bei Verwendung der Speicherfunktion wird FreeSaveVideo in einigen Fällen Informationen verschlüsseln und vorübergehend speichern, die für das Tunneling benötigt werden. Sie werden für 90 Sekunden im RAM des Verarbeitungsservers gespeichert und danach unwiderruflich gelöscht. Niemand hat Zugriff darauf, nicht einmal Instanzbesitzer, solange sie das offizielle FreeSaveVideo-Image nicht ändern.
 
-Verarbeitete/getunnelte Dateien werden niemals zwischengespeichert. Alles wird live getunnelt. Die Speicherfunktion von bamboo_download ist im Wesentlichen ein ausgefallener Proxy-Dienst.
+Verarbeitete/getunnelte Dateien werden niemals zwischengespeichert. Alles wird live getunnelt. Die Speicherfunktion von FreeSaveVideo ist im Wesentlichen ein ausgefallener Proxy-Dienst.
 </section>
 
 <section id="encryption">
@@ -52,7 +52,7 @@ Vorübergehend gespeicherte Tunneldaten werden mit dem AES-256-Standard verschl�
     sectionId="plausible"
 />
 
-Aus Datenschutzgründen verwenden wir [Plausibles anonyme Traffic-Analyse](https://plausible.io/), um eine ungefähre Anzahl aktiver bamboo_download-Benutzer zu erhalten. Es werden keine identifizierbaren Informationen über Sie oder Ihre Anfragen gespeichert. Alle Daten werden anonymisiert und aggregiert. Die von uns verwendete Plausible-Instanz wird von uns gehostet und verwaltet.
+Aus Datenschutzgründen verwenden wir [Plausibles anonyme Traffic-Analyse](https://plausible.io/), um eine ungefähre Anzahl aktiver FreeSaveVideo-Benutzer zu erhalten. Es werden keine identifizierbaren Informationen über Sie oder Ihre Anfragen gespeichert. Alle Daten werden anonymisiert und aggregiert. Die von uns verwendete Plausible-Instanz wird von uns gehostet und verwaltet.
 
 Plausible verwendet keine Cookies und ist vollständig GDPR-, CCPA- und PECR-konform.
 

@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t('history.title')} - 竹子下载</title>
+    <title>{$t('history.title')} - FreeSaveVideo</title>
     <meta name="description" content={$t('history.title')} />
 </svelte:head>
 

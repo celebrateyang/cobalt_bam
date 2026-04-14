@@ -1,12 +1,12 @@
 {
-    "cobalt": "bamboo download、無料で動画をダウンロード - YouTube、TikTok、Bilibili、Instagram、Facebook、Twitter",
-    "meowbalt": "bamboo download",
+    "cobalt": "FreeSaveVideo",
+    "meowbalt": "FreeSaveVideo",
     "beta": "ベータ版",
     "or": "または",
     "embed.description": "YouTube、TikTok、Bilibili、Instagram、Facebook、Twitterから無料で動画をダウンロードします。登録不要。簡単で高速な動画ダウンロード。",
     "guide": {
-        "title": "Freesavevideo.online オンライン動画ダウンローダーガイド",
-        "description1": "主要なオンライン動画ダウンローダーであるFreesavevideo.onlineを使用して、動画と音楽をダウンロードできます。追加のソフトウェアは不要で、Webから直接お気に入りのメディアを保存できます。直感的なプラットフォームにより、動画のダウンロードがシンプルかつ効率的になります。",
+        "title": "FreeSaveVideo オンライン動画ダウンローダーガイド",
+        "description1": "主要なオンライン動画ダウンローダーであるFreeSaveVideoを使用して、動画と音楽をダウンロードできます。追加のソフトウェアは不要で、Webから直接お気に入りのメディアを保存できます。直感的なプラットフォームにより、動画のダウンロードがシンプルかつ効率的になります。",
         "description2": "人気の映画やテレビ番組からエキサイティングなスポーツクリップまで、さまざまなコンテンツに簡単にアクセスしてダウンロードできます。動画のURLを指定されたフィールドに貼り付け、ダウンロードボタンをクリックするだけです。"
     },
     "notification": {
@@ -44,8 +44,8 @@
     },
     "seo": {
         "home": {
-            "title": "Bamboo Downloader - Download, Record, Chat, Transfer & Convert",
-            "description": "Bamboo Downloader lets you download videos, record video, start random video chats, transfer files, and convert video formats. Supports TikTok, Instagram, Facebook, Bilibili, Douyin, Kuaishou, YouTube, and more.",
+            "title": "FreeSaveVideo - Download, Record, Chat, Transfer & Convert",
+            "description": "FreeSaveVideo lets you download videos, record video, start random video chats, transfer files, and convert video formats. Supports TikTok, Instagram, Facebook, Bilibili, Douyin, Kuaishou, YouTube, and more.",
             "keywords": "動画ダウンローダー、オンライン動画ダウンローダー、YouTubeダウンローダー、TikTokダウンローダー透かしなし、Instagram動画セーバー、無料動画ダウンローダー"
         },
         "transfer": {

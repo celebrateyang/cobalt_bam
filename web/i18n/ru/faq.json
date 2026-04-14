@@ -2,8 +2,8 @@
     "title": "Часто задаваемые вопросы (FAQ)",
     "description": "Ответы о скачивании без водяных знаков, форматах, поинтах и решении проблем.",
     "seo": {
-        "title": "FAQ | Bamboo Download — загрузчик видео без водяных знаков",
-        "description": "FAQ Bamboo Download: загрузки Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения.",
+        "title": "FAQ | FreeSaveVideo — загрузчик видео без водяных знаков",
+        "description": "FAQ FreeSaveVideo: загрузки Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения.",
         "keywords": "FAQ загрузчик видео,Douyin загрузчик,Bilibili загрузчик,Kuaishou загрузчик,Xiaohongshu загрузчик,TikTok загрузчик,без водяных знаков,пакетная загрузка,списание поинтов"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Что такое Bamboo Download?",
-            "a": "Bamboo Download — это онлайн‑загрузчик медиа.\nВставьте ссылку, выберите режим и скачайте файл.\nПоддерживаются Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook и другие."
+            "q": "Что такое FreeSaveVideo?",
+            "a": "FreeSaveVideo — это онлайн‑загрузчик медиа.\nВставьте ссылку, выберите режим и скачайте файл.\nПоддерживаются Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook и другие."
         },
         "how_to_use": {
             "q": "Как скачать видео (без водяного знака)?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "Можно скачать приватный/платный/требующий вход контент?",
-            "a": "Нет. Bamboo Download работает только с публичным контентом.\nПожалуйста, уважайте авторские права."
+            "a": "Нет. FreeSaveVideo работает только с публичным контентом.\nПожалуйста, уважайте авторские права."
         },
         "privacy_logs": {
             "q": "Вы храните мои ссылки или файлы? Это безопасно?",

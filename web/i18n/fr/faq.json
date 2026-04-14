@@ -2,8 +2,8 @@
     "title": "Questions fréquentes (FAQ)",
     "description": "Réponses sur les téléchargements sans filigrane, formats, points et dépannage.",
     "seo": {
-        "title": "FAQ | Bamboo Download - Téléchargeur de vidéos sans filigrane",
-        "description": "FAQ Bamboo Download : téléchargements Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Filigrane, mode lot, formats, points et solutions.",
+        "title": "FAQ | FreeSaveVideo - Téléchargeur de vidéos sans filigrane",
+        "description": "FAQ FreeSaveVideo : téléchargements Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook. Filigrane, mode lot, formats, points et solutions.",
         "keywords": "FAQ téléchargeur vidéo,téléchargeur Douyin,téléchargeur Bilibili,téléchargeur Kuaishou,téléchargeur Xiaohongshu,téléchargeur TikTok,téléchargement sans filigrane,téléchargement en lot,facturation par points"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Qu'est‑ce que Bamboo Download ?",
-            "a": "Bamboo Download est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook et plus."
+            "q": "Qu'est‑ce que FreeSaveVideo ?",
+            "a": "FreeSaveVideo est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook et plus."
         },
         "how_to_use": {
             "q": "Comment télécharger une vidéo (sans filigrane) ?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "Peut‑on télécharger du contenu privé/payant/avec connexion ?",
-            "a": "Non. Bamboo Download ne gère que le contenu public.\nRespectez les droits d'auteur."
+            "a": "Non. FreeSaveVideo ne gère que le contenu public.\nRespectez les droits d'auteur."
         },
         "privacy_logs": {
             "q": "Stockez-vous mes liens ou fichiers ? Est-ce sûr ?",

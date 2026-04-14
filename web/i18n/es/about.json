@@ -1,19 +1,15 @@
 {
-    "page.general": "¿qué es bamboo download?",
+    "page.general": "¿qué es FreeSaveVideo?",
     "page.faq": "FAQ",
-
     "page.community": "comunidad y soporte",
-
     "page.privacy": "política de privacidad",
     "page.terms": "términos y ética",
     "page.credits": "agradecimientos y licencias",
-
     "community.discord": "servidor de discord de la comunidad",
     "community.twitter": "cuenta de noticias en twitter",
     "community.github": "repositorio de github",
     "community.email": "email de soporte",
     "community.telegram": "canal de noticias en telegram",
-
     "heading.general": "términos generales",
     "heading.licenses": "licencias",
     "heading.summary": "la mejor manera de guardar lo que amas",

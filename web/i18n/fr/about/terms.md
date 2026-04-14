@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-ces conditions ne sont applicables que lors de l'utilisation de l'instance officielle freesavevideo.
+ces conditions ne sont applicables que lors de l'utilisation de l'instance officielle FreeSaveVideo.
 dans d'autres cas, vous devrez peut-être contacter l'hébergeur pour obtenir des informations précises.
 </section>
 
@@ -48,7 +48,7 @@ l'usage équitable et les crédits profitent à tous.
     sectionId="abuse"
 />
 
-nous n'avons aucun moyen de détecter automatiquement les comportements abusifs, car freesavevideo est 100% anonyme.
+nous n'avons aucun moyen de détecter automatiquement les comportements abusifs, car FreeSaveVideo est 100% anonyme.
 
 
 veuillez noter que cet email n'est pas destiné à l'assistance utilisateur.

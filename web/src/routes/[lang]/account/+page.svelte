@@ -738,7 +738,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("auth.title")} - 竹子下载</title>
+    <title>{$t("auth.title")} - FreeSaveVideo</title>
     <meta name="description" content={$t("auth.subtitle")} />
 </svelte:head>
 

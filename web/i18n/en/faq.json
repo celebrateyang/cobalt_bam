@@ -2,8 +2,8 @@
     "title": "Frequently Asked Questions (FAQ)",
     "description": "Answers about watermark-free downloads, formats, points, and troubleshooting.",
     "seo": {
-        "title": "FAQ | Bamboo Download - Watermark-free video downloader",
-        "description": "Bamboo Download FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about watermark-free files, batch mode, formats, points, and common fixes.",
+        "title": "FAQ | FreeSaveVideo - Watermark-free video downloader",
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about watermark-free files, batch mode, formats, points, and common fixes.",
         "keywords": "video downloader FAQ,Douyin downloader,Bilibili downloader,Kuaishou downloader,Xiaohongshu downloader,TikTok downloader,watermark-free download,batch download,points billing"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "What is Bamboo Download?",
-            "a": "Bamboo Download is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook, and more."
+            "q": "What is FreeSaveVideo?",
+            "a": "FreeSaveVideo is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook, and more."
         },
         "how_to_use": {
             "q": "How do I download a video (watermark-free)?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "Can it download private/paid/login-required content?",
-            "a": "No. Bamboo Download only handles publicly accessible content.\nPlease respect copyright and creators' rights."
+            "a": "No. FreeSaveVideo only handles publicly accessible content.\nPlease respect copyright and creators' rights."
         },
         "privacy_logs": {
             "q": "Do you store my links or files? Is it safe?",

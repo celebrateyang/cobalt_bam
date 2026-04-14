@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-    <title>管理员登录 - 竹子下载</title>
+    <title>管理员登录 - FreeSaveVideo</title>
 </svelte:head>
 
 <div class="admin-container">
@@ -53,7 +53,7 @@
         <div class="logo-section">
             <div class="logo-icon">🎬</div>
             <h1 class="title">管理后台</h1>
-            <p class="subtitle">竹子下载 管理后台</p>
+            <p class="subtitle">FreeSaveVideo 管理后台</p>
         </div>
 
         <form on:submit|preventDefault={handleLogin}>

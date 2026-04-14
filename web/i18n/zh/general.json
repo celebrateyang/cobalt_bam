@@ -1,11 +1,11 @@
 {
-    "cobalt": "竹子下载，免费视频下载 - B站、YouTube、TikTok、Instagram、Facebook、Twitter 无水印解析",
-    "meowbalt": "竹子下载",
+    "cobalt": "FreeSaveVideo",
+    "meowbalt": "FreeSaveVideo",
     "beta": "正式版",
     "embed.description": "从YouTube、TikTok、Bilibili、Instagram、Facebook 和 Twitter 免费下载视频。无需注册，快速无水印下载。",
     "guide": {
-        "title": "使用竹子下载在线视频下载指南",
-        "description1": "使用竹子下载，这是一款领先的在线视频下载器，可下载视频和音乐。无需额外软件，直接在线保存喜欢的媒体。界面简单，流程高效。",
+        "title": "使用 FreeSaveVideo 在线视频下载指南",
+        "description1": "使用 FreeSaveVideo，这是一款领先的在线视频下载器，可下载视频和音乐。无需额外软件，直接在线保存喜欢的媒体。界面简单，流程高效。",
         "description2": "轻松获取各种内容：热门电影、流行剧集、体育集锦或创作者作品。只需将视频 URL 粘贴到输入框并点击下载按钮。"
     },
     "notification": {
@@ -43,8 +43,8 @@
     },
     "seo": {
         "home": {
-            "title": "竹子下载 - 下载、录制、聊天、传输、转换",
-            "description": "竹子下载支持视频下载、视频录制、随机视频聊天、文件传输和视频格式转换，覆盖 TikTok、Instagram、Facebook、Bilibili、抖音、快手、YouTube 等平台。",
+            "title": "FreeSaveVideo - 下载、录制、聊天、传输、转换",
+            "description": "FreeSaveVideo 支持视频下载、视频录制、随机视频聊天、文件传输和视频格式转换，覆盖 TikTok、Instagram、Facebook、Bilibili、抖音、快手、YouTube 等平台。",
             "keywords": "抖音无水印下载,B站视频下载,快手去水印,小红书保存视频,YouTube 下载器,免费视频下载,在线下载工具,在线下载视频"
         },
         "transfer": {

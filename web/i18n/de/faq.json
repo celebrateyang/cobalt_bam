@@ -2,8 +2,8 @@
     "title": "Häufige Fragen (FAQ)",
     "description": "Antworten zu wasserzeichenfreien Downloads, Formaten, Punkten und Fehlerbehebung.",
     "seo": {
-        "title": "FAQ | Bamboo Download - Wasserzeichenfreier Video-Downloader",
-        "description": "Bamboo Download FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
+        "title": "FAQ | FreeSaveVideo - Wasserzeichenfreier Video-Downloader",
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
         "keywords": "FAQ Video-Downloader,Douyin Downloader,Bilibili Downloader,Kuaishou Downloader,Xiaohongshu Downloader,TikTok Downloader,wasserzeichenfrei herunterladen,Batch-Download,Punkte-Abrechnung"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Was ist Bamboo Download?",
-            "a": "Bamboo Download ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook und mehr."
+            "q": "Was ist FreeSaveVideo?",
+            "a": "FreeSaveVideo ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook und mehr."
         },
         "how_to_use": {
             "q": "Wie lade ich ein Video (ohne Wasserzeichen) herunter?",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "Kann man private/bezahlte/loginpflichtige Inhalte herunterladen?",
-            "a": "Nein. Bamboo Download verarbeitet nur öffentlich zugängliche Inhalte.\nBitte Urheberrecht respektieren."
+            "a": "Nein. FreeSaveVideo verarbeitet nur öffentlich zugängliche Inhalte.\nBitte Urheberrecht respektieren."
         },
         "privacy_logs": {
             "q": "Speichert ihr meine Links oder Dateien? Ist es sicher?",

@@ -85,6 +85,10 @@
         margin: calc(var(--padding) / 2);
     }
 
+    .small-dialog.align-left {
+        max-width: 400px;
+    }
+
     .small-dialog.meowbalt-visible {
         padding-top: calc(var(--padding) * 4);
     }
@@ -123,8 +127,60 @@
         line-height: 1.7;
         color: var(--gray);
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
         user-select: text;
         -webkit-user-select: text;
+    }
+
+    .body-text :global(p) {
+        margin: 0;
+    }
+
+    .body-text :global(a) {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .body-text :global(a:hover) {
+        text-decoration: underline;
+    }
+
+    .body-text :global(code) {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: var(--button-elevated);
+        border: 1px solid var(--button-stroke);
+        font-size: 0.92em;
+        line-height: 1.4;
+    }
+
+    .body-text :global(.guide-dialog-copy) {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .body-text :global(.guide-dialog-link-card) {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--button-stroke);
+        background: var(--button-elevated);
+    }
+
+    .body-text :global(.guide-dialog-link-label) {
+        font-size: 11.5px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--subtext);
     }
 
     .body-text:focus-visible,

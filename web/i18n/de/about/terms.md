@@ -9,7 +9,7 @@
     sectionId="general"
 />
 
-Diese Bedingungen gelten nur bei Verwendung der offiziellen freesavevideo-Instanz.
+Diese Bedingungen gelten nur bei Verwendung der offiziellen FreeSaveVideo-Instanz.
 In anderen Fällen müssen Sie möglicherweise den Hoster für genaue Informationen kontaktieren.
 </section>
 
@@ -48,7 +48,7 @@ Fair Use und Credits kommen allen zugute.
     sectionId="abuse"
 />
 
-Wir haben keine Möglichkeit, missbräuchliches Verhalten automatisch zu erkennen, da freesavevideo zu 100% anonym ist.
+Wir haben keine Möglichkeit, missbräuchliches Verhalten automatisch zu erkennen, da FreeSaveVideo zu 100% anonym ist.
 
 
 Bitte beachten Sie, dass diese E-Mail nicht für Benutzersupport gedacht ist.

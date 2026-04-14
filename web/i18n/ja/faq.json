@@ -2,8 +2,8 @@
     "title": "よくある質問（FAQ）",
     "description": "無水印ダウンロード、形式、ポイント、トラブル対応の回答。",
     "seo": {
-        "title": "FAQ | Bamboo Download - 無水印動画ダウンローダー",
-        "description": "Bamboo Download FAQ：Douyin/TikTok、Bilibili、Kuaishou、小红书、Instagram、X(Twitter)、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。",
+        "title": "FAQ | FreeSaveVideo - 無水印動画ダウンローダー",
+        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Kuaishou、小红书、Instagram、X(Twitter)、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。",
         "keywords": "FAQ,動画ダウンローダー,Douyinダウンロード,Bilibiliダウンロード,Kuaishouダウンロード,小红书ダウンロード,TikTokダウンロード,無水印ダウンロード,バッチダウンロード,ポイント課金"
     },
     "toc": {
@@ -29,8 +29,8 @@
     },
     "items": {
         "what_is": {
-            "q": "Bamboo Downloadとは？",
-            "a": "Bamboo Downloadはオンラインのメディアダウンローダーです。\n共有リンクを貼り付け、モードを選んでダウンロードします。\nDouyin/TikTok、Bilibili、Kuaishou、小红书、Instagram、X(Twitter)、Facebook などに対応。"
+            "q": "FreeSaveVideoとは？",
+            "a": "FreeSaveVideoはオンラインのメディアダウンローダーです。\n共有リンクを貼り付け、モードを選んでダウンロードします。\nDouyin/TikTok、Bilibili、Kuaishou、小红书、Instagram、X(Twitter)、Facebook などに対応。"
         },
         "how_to_use": {
             "q": "動画を（無水印で）ダウンロードするには？",
@@ -102,7 +102,7 @@
         },
         "private_paid": {
             "q": "非公開/有料/ログイン必須の内容は？",
-            "a": "いいえ。Bamboo Downloadは公開コンテンツのみ対応です。\n著作権と権利者を尊重してください。"
+            "a": "いいえ。FreeSaveVideoは公開コンテンツのみ対応です。\n著作権と権利者を尊重してください。"
         },
         "privacy_logs": {
             "q": "リンクやファイルは保存されますか？安全ですか？",

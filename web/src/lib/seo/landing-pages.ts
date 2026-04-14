@@ -23,8 +23,8 @@ export type SeoLandingPage = {
     locales: Record<string, SeoLandingLocaleContent>;
 };
 
-export const EN_BRAND = 'bamboo download';
-export const ZH_BRAND = '竹子下载';
+export const EN_BRAND = 'FreeSaveVideo';
+export const ZH_BRAND = 'FreeSaveVideo';
 
 const fallbackFaqs: Record<string, SeoLandingFaqItem[]> = {
     en: [

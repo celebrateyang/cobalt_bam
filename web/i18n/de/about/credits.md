@@ -13,7 +13,7 @@
 />
 
 Großes Dankeschön an unsere Thing Breaker, die Updates früh testen und sicherstellen, dass sie stabil sind.
-Sie haben uns auch geholfen, cobalt 10 auszuliefern!
+Sie haben uns auch geholfen, FreeSaveVideo 10 auszuliefern!
 <BetaTesters />
 
 Alle Links sind extern und führen zu ihren persönlichen Websites oder sozialen Medien.
@@ -25,9 +25,9 @@ Alle Links sind extern und führen zu ihren persönlichen Websites oder sozialen
     sectionId="meowbalt"
 />
 
-meowbalt ist cobalts schnelles Maskottchen. Er ist eine äußerst ausdrucksstarke Katze, die schnelles Internet liebt.
+meowbalt ist FreeSaveVideo's schnelles Maskottchen. Er ist eine äußerst ausdrucksstarke Katze, die schnelles Internet liebt.
 
-Alle erstaunlichen Zeichnungen von meowbalt, die Sie in cobalt sehen, wurden von [GlitchyPSI](https://glitchypsi.xyz/) gemacht.
+Alle erstaunlichen Zeichnungen von meowbalt, die Sie in FreeSaveVideo sehen, wurden von [GlitchyPSI](https://glitchypsi.xyz/) gemacht.
 Er ist auch der ursprüngliche Designer der Figur.
 
 Sie können GlitchyPSIs Kunstwerke von meowbalt nicht ohne seine ausdrückliche Genehmigung verwenden oder ändern.
@@ -41,9 +41,9 @@ Sie können das meowbalt-Charakterdesign nicht kommerziell oder in einer Form ve
     sectionId="licenses"
 />
 
-Der cobalt-Verarbeitungsserver ist Open Source und unter [AGPL-3.0]({docs.apiLicense}) lizenziert.
+Der FreeSaveVideo-Verarbeitungsserver ist Open Source und unter [AGPL-3.0]({docs.apiLicense}) lizenziert.
 
-Das cobalt-Frontend ist [source first](https://sourcefirst.com/) und unter [CC-BY-NC-SA 4.0]({docs.webLicense}) lizenziert.
+Das FreeSaveVideo-Frontend ist [source first](https://sourcefirst.com/) und unter [CC-BY-NC-SA 4.0]({docs.webLicense}) lizenziert.
 Wir haben uns für diese Lizenz entschieden, um Betrüger daran zu hindern, von unserer Arbeit zu profitieren
 & bösartige Klone zu erstellen, die Menschen täuschen und unsere öffentliche Identität schädigen.
 

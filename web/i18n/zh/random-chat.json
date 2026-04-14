@@ -1,28 +1,23 @@
 {
     "meta.title": "随机 1v1 视频聊天",
     "meta.description": "随机秒连在线用户，立即开聊 10 分钟 1v1 音视频心动速配。",
-
     "header.title": "随机 1v1 视频聊天",
     "header.subtitle": "登录用户可使用。每次会话 10 分钟自动结束。",
-
     "brand.title": "FreeSaveVideo 随机聊天",
     "brand.subtitle": "1v1 视频聊天",
     "brand.searching_users": "正在搜索在线用户...",
     "brand.users_online": "当前有用户在线",
-
     "notice.clerk_disabled": "当前环境未启用 Clerk。",
     "notice.checking_eligibility": "正在检查登录资格...",
     "notice.signin_required": "请先登录。",
     "notice.paid_required": "未找到已付款订单，请先完成支付。",
     "notice.not_eligible": "你当前暂不具备随机聊天资格。",
-
     "error.check_eligibility_failed": "检查聊天资格失败",
     "error.manager_not_initialized": "聊天管理器未初始化",
     "error.missing_clerk_token": "缺少 Clerk Token",
     "error.start_matching_failed": "开始匹配失败",
     "error.next_match_failed": "匹配下一位失败",
     "error.toggle_fullscreen_failed": "切换全屏失败",
-
     "action.sign_in": "登录",
     "action.go_to_account": "前往账户",
     "action.exit_fullscreen": "退出全屏",
@@ -32,40 +27,31 @@
     "action.stop": "停止",
     "action.next": "下一位",
     "action.close": "关闭",
-
     "connection.connected": "已连接",
     "connection.disconnected": "未连接",
-
     "status.in_call": "通话中",
     "status.searching": "匹配中...",
     "status.ready": "就绪",
-
     "field.i_am": "我是",
     "field.target_gender": "目标性别",
     "field.country": "国家",
     "field.language": "语言",
-
     "language.auto": "自动",
-
     "settings.title": "聊天设置",
     "settings.auto_next": "自动进入下一次匹配",
     "settings.mirror_local": "镜像本地预览",
     "settings.mute_remote": "默认静音对方音频",
     "settings.show_safety": "显示安全提示",
-
     "safety.main": "请保持面部在镜头中，并避免泄露个人联系方式。",
     "safety.time_limit": "每次会话时长限制为 10 分钟。",
     "peer_profile": "对方资料",
     "last_session_ended": "上次会话结束原因",
-
     "gender.self.unspecified": "未填写",
     "gender.self.male": "男",
     "gender.self.female": "女",
-
     "gender.target.any": "不限",
     "gender.target.male": "男",
     "gender.target.female": "女",
-
     "country.any": "不限",
     "country.us": "美国",
     "country.cn": "中国",

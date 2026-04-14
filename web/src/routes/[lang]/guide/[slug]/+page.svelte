@@ -98,6 +98,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}

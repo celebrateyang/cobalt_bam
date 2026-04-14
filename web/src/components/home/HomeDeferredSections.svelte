@@ -12,9 +12,6 @@
     export let guideDescription1: string;
     export let guideDescription2: string;
 
-    let showFinditbuddy = false;
-    let showYumcheck = false;
-
     const platformHref = (slug: string) =>
         homePlatformToDownloadSlug[slug]
             ? `/${currentLocale}/download/${homePlatformToDownloadSlug[slug]}`
@@ -71,75 +68,6 @@
             <p>{$t("home.capabilities.audio.desc")}</p>
         </article>
     </div>
-</section>
-
-<section id="promotions">
-    <section id="finditbuddy">
-        <button
-            type="button"
-            class="accordion-header"
-            aria-expanded={showFinditbuddy}
-            on:click={() => (showFinditbuddy = !showFinditbuddy)}
-        >
-            <span class="section-icon section-badge" aria-hidden="true">FB</span>
-            <span>{$t("general.promotions.finditbuddy.title")}</span>
-            <span class="arrow">{showFinditbuddy ? "▲" : "▼"}</span>
-        </button>
-        {#if showFinditbuddy}
-            <div class="details" role="region">
-                <ul>
-                    <li>{$t("general.promotions.finditbuddy.features.1")}</li>
-                    <li>{$t("general.promotions.finditbuddy.features.2")}</li>
-                    <li>{$t("general.promotions.finditbuddy.features.3")}</li>
-                    <li>{$t("general.promotions.finditbuddy.features.4")}</li>
-                    <li>{$t("general.promotions.finditbuddy.features.5")}</li>
-                </ul>
-                <a
-                    class="button"
-                    href="https://finditbuddy.online"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    {$t("general.promotions.finditbuddy.visit")}
-                </a>
-            </div>
-        {/if}
-    </section>
-
-    <section id="yumcheck">
-        <button
-            type="button"
-            class="accordion-header"
-            aria-expanded={showYumcheck}
-            on:click={() => (showYumcheck = !showYumcheck)}
-        >
-            <img
-                src="/popularize/yumcheck.ico"
-                alt="YumCheck Logo"
-                class="section-icon"
-            />
-            <span>{$t("general.promotions.yumcheck.title")}</span>
-            <span class="arrow">{showYumcheck ? "▲" : "▼"}</span>
-        </button>
-        {#if showYumcheck}
-            <div class="details" role="region">
-                <ul>
-                    <li>{$t("general.promotions.yumcheck.features.1")}</li>
-                    <li>{$t("general.promotions.yumcheck.features.2")}</li>
-                    <li>{$t("general.promotions.yumcheck.features.3")}</li>
-                    <li>{$t("general.promotions.yumcheck.features.4")}</li>
-                </ul>
-                <a
-                    class="button"
-                    href="https://yumcheck.online"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    {$t("general.promotions.yumcheck.visit")}
-                </a>
-            </div>
-        {/if}
-    </section>
 </section>
 
 <style>
@@ -265,145 +193,6 @@
         font-size: 14px;
     }
 
-    ul {
-        list-style: disc;
-        padding-left: var(--padding);
-    }
-
-    a {
-        text-decoration: none;
-        color: var(--blue);
-    }
-
-    .button {
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: var(--secondary);
-        color: var(--primary);
-        border-radius: var(--border-radius);
-        text-align: center;
-    }
-
-    #promotions {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--padding);
-        padding: var(--padding) 0;
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 460px;
-    }
-
-    #promotions > section {
-        display: flex;
-        flex-direction: column;
-        padding: var(--padding);
-        background-color: var(--popup-bg);
-        border-radius: var(--border-radius);
-        width: 100%;
-        max-width: 640px;
-        box-sizing: border-box;
-        gap: 12px;
-        transition: background-color 0.2s ease;
-    }
-
-    .accordion-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        padding: var(--padding);
-        background: var(--popup-bg);
-        border-radius: var(--border-radius);
-        transition: background-color 0.2s;
-        gap: 8px;
-    }
-
-    .accordion-header:hover {
-        background: var(--secondary-bg);
-    }
-
-    .arrow {
-        font-size: 0.9rem;
-    }
-
-    .details {
-        padding: calc(var(--padding) / 2) var(--padding);
-        background: var(--popup-bg);
-        border-bottom-left-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
-        margin-bottom: var(--padding);
-    }
-
-    #promotions > section#finditbuddy,
-    #promotions > section#yumcheck {
-        background-color: var(--popup-bg);
-        color: var(--primary);
-    }
-
-    #promotions > section#yumcheck .accordion-header {
-        justify-content: center;
-        text-align: center;
-    }
-
-    @media (prefers-color-scheme: light) {
-        #promotions > section#finditbuddy,
-        #promotions > section#yumcheck {
-            background-color: var(--sidebar-bg);
-            color: #ffffff;
-        }
-
-        #promotions .accordion-header,
-        #promotions .details {
-            background: transparent;
-            color: inherit;
-        }
-
-        #promotions .accordion-header:hover {
-            background-color: #5c8f24;
-        }
-
-        #promotions a.button {
-            background-color: #ffffff;
-            color: var(--sidebar-bg);
-        }
-    }
-
-    @media (prefers-color-scheme: dark) {
-        #promotions > section#finditbuddy,
-        #promotions > section#yumcheck {
-            color: #ffffff;
-        }
-
-        #promotions a.button {
-            color: #ffffff;
-        }
-    }
-
-    .section-icon {
-        width: auto;
-        height: 24px;
-        margin: 0;
-    }
-
-    .section-badge {
-        width: 32px;
-        height: 32px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        background: rgba(255, 255, 255, 0.18);
-        flex-shrink: 0;
-    }
-
-    #promotions > section .section-icon {
-        max-width: 100%;
-    }
-
     @media (max-width: 600px) {
         .seo-section {
             padding: 0 14px;
@@ -434,10 +223,6 @@
 
         .platform-card {
             padding: 12px;
-        }
-
-        #promotions {
-            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
         }
     }
 </style>

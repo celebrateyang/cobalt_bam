@@ -64,6 +64,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
     <script type="application/ld+json">
         {JSON.stringify(breadcrumbJsonLd)}
     </script>

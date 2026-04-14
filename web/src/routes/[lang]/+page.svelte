@@ -302,12 +302,14 @@
             label: $t("tabs.random_video"),
         },
     ];
+    $: homeHubHeading =
+        currentLocale === "zh" ? "热门平台视频下载与指南" : "Popular Video Downloader Links";
     const homeInternalLinks = getHubDownloadLinks(8);
     const homeGuideLinks = getHubGuideLinks(4);
     const homeLinkLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform} 下载` : `${platform} downloader`;
+        currentLocale === "zh" ? `${platform}视频下载` : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform} 指南` : `${platform} guide`;
+        currentLocale === "zh" ? `${platform}下载指南` : `How to download ${platform} videos`;
     $: faqItems = [
         {
             q:
@@ -349,14 +351,36 @@
     $: embedDescription = $t("general.embed.description");
     $: guideDescription1 = $t("general.guide.description1");
     $: guideDescription2 = $t("general.guide.description2");
-    $: jsonLd = canonicalUrl
+    $: websiteJsonLd = siteUrl
         ? {
               "@context": "https://schema.org",
               "@type": "WebSite",
-              url: canonicalUrl,
-              inLanguage: currentLocale,
+              "@id": `${siteUrl}/#website`,
+              url: siteUrl,
               name: seoName,
               description: seoDescription,
+              potentialAction: {
+                  "@type": "ViewAction",
+                  target: canonicalUrl,
+              },
+          }
+        : null;
+    $: pageJsonLd = canonicalUrl
+        ? {
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              "@id": `${canonicalUrl}#webpage`,
+              url: canonicalUrl,
+              name: seoTitle,
+              isPartOf: {
+                  "@id": `${siteUrl}/#website`,
+              },
+              inLanguage: currentLocale,
+              description: seoDescription,
+              primaryImageOfPage: {
+                  "@type": "ImageObject",
+                  url: `https://${fallbackHost}/og-share-v2.png`,
+              },
           }
         : null;
     $: faqJsonLd = canonicalUrl
@@ -376,11 +400,17 @@
     $: appJsonLd = canonicalUrl
         ? {
               "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
+              "@type": "WebApplication",
+              "@id": `${canonicalUrl}#app`,
+              url: canonicalUrl,
               name: seoName,
               description: seoDescription,
               applicationCategory: "MultimediaApplication",
+              applicationSubCategory: "Video Downloader",
               operatingSystem: "Any",
+              browserRequirements: "Requires JavaScript and a modern web browser.",
+              isAccessibleForFree: true,
+              featureList: heroCapabilities.map((item) => item.title),
               offers: {
                   "@type": "Offer",
                   price: "0",
@@ -388,7 +418,7 @@
               },
           }
         : null;
-    $: structuredData = [jsonLd, faqJsonLd, appJsonLd].filter(Boolean);
+    $: structuredData = [websiteJsonLd, pageJsonLd, faqJsonLd, appJsonLd].filter(Boolean);
 
     let HomeDeferredSections: HomeDeferredSectionsComponent | null = null;
     let deferredSectionsTarget: HTMLElement | null = null;
@@ -555,11 +585,12 @@
     <meta property="og:image" content={`https://${fallbackHost}/og-share-v2.png`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="FreeSaveVideo share preview" />
+    <meta property="og:image:alt" content="FreeSaveVideo online video downloader preview" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v2.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo online video downloader preview" />
     {#if structuredData.length}
         {#each structuredData as ld}
             {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`}
@@ -623,17 +654,17 @@
         <!--<UserGuide/>-->
     </main>
 
-    <section class="home-internal-hub" aria-label="Internal links">
-        <h2>{currentLocale === "zh" ? "快速入口" : "Quick links"}</h2>
+    <section class="home-internal-hub" aria-label={homeHubHeading}>
+        <h2>{homeHubHeading}</h2>
         <div class="home-internal-links">
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
-                {currentLocale === "zh" ? "下载目录" : "Download directory"}
+                {currentLocale === "zh" ? "视频下载目录" : "Video download directory"}
             </a>
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
-                {currentLocale === "zh" ? "下载指南中心" : "Guide hub"}
+                {currentLocale === "zh" ? "视频下载指南" : "Video download guides"}
             </a>
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
-                FAQ
+                {currentLocale === "zh" ? "下载常见问题" : "Video download FAQ"}
             </a>
             {#each homeInternalLinks as item}
                 <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>

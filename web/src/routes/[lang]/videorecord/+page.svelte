@@ -4451,10 +4451,12 @@
     <meta property="og:description" content={seoDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:image" content={`https://${fallbackHost}/og.png`} />
+    <meta property="og:image:alt" content="FreeSaveVideo video downloader preview" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
     {@html `<script type="application/ld+json">${JSON.stringify(seoJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 

@@ -76,6 +76,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`${siteUrl}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
     {#if jsonLd}
         <script type="application/ld+json">
             {JSON.stringify(jsonLd)}

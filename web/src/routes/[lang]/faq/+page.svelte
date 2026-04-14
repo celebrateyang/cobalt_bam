@@ -143,11 +143,13 @@
     <meta property="og:description" content={metaDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:image" content={`${siteUrl}/og.png`} />
+    <meta property="og:image:alt" content="FreeSaveVideo video downloader preview" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={metaTitle} />
     <meta name="twitter:description" content={metaDescription} />
     <meta name="twitter:image" content={`${siteUrl}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
 
     {#if faqJsonLd}
         <script type="application/ld+json">

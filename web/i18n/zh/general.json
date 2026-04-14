@@ -4,9 +4,9 @@
     "beta": "正式版",
     "embed.description": "从YouTube、TikTok、Bilibili、Instagram、Facebook 和 Twitter 免费下载视频。无需注册，快速无水印下载。",
     "guide": {
-        "title": "使用 FreeSaveVideo 在线视频下载指南",
-        "description1": "使用 FreeSaveVideo，这是一款领先的在线视频下载器，可下载视频和音乐。无需额外软件，直接在线保存喜欢的媒体。界面简单，流程高效。",
-        "description2": "轻松获取各种内容：热门电影、流行剧集、体育集锦或创作者作品。只需将视频 URL 粘贴到输入框并点击下载按钮。"
+        "title": "如何使用 FreeSaveVideo 在线下载视频",
+        "description1": "FreeSaveVideo 支持免安装在线下载视频。粘贴支持平台的链接后，即可保存高清视频，并在可用时优先获取无水印版本。",
+        "description2": "除了单条链接下载，还支持批次下载、合集与 Playlist 解析，并可在保存前切换音频提取或静音模式。"
     },
     "notification": {
         "title": "通知",
@@ -45,7 +45,7 @@
         "home": {
             "title": "FreeSaveVideo - 在线视频下载器",
             "description": "使用 FreeSaveVideo 在线下载无水印视频。粘贴抖音、TikTok、B站、小红书、Instagram、Facebook、YouTube 等链接即可下载，支持批次下载、合集解析、音频提取和静音模式。",
-            "keywords": "??????,???????,???????,B?????,TikTok??,????,????,????"
+            "keywords": "在线视频下载器, 无水印视频下载, 抖音视频下载, B站视频下载, TikTok无水印下载, 批次下载, 合集下载, Playlist下载"
         },
         "transfer": {
             "title": "免费资料传输 - 无需App | P2P 极速快传 | 手机电脑互传",

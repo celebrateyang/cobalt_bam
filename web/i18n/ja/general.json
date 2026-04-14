@@ -5,9 +5,9 @@
     "or": "または",
     "embed.description": "YouTube、TikTok、Bilibili、Instagram、Facebook、Twitterから無料で動画をダウンロードします。登録不要。簡単で高速な動画ダウンロード。",
     "guide": {
-        "title": "FreeSaveVideo オンライン動画ダウンローダーガイド",
-        "description1": "主要なオンライン動画ダウンローダーであるFreeSaveVideoを使用して、動画と音楽をダウンロードできます。追加のソフトウェアは不要で、Webから直接お気に入りのメディアを保存できます。直感的なプラットフォームにより、動画のダウンロードがシンプルかつ効率的になります。",
-        "description2": "人気の映画やテレビ番組からエキサイティングなスポーツクリップまで、さまざまなコンテンツに簡単にアクセスしてダウンロードできます。動画のURLを指定されたフィールドに貼り付け、ダウンロードボタンをクリックするだけです。"
+        "title": "FreeSaveVideo で動画をオンライン保存する方法",
+        "description1": "FreeSaveVideo ならソフトをインストールせずに動画をオンライン保存できます。対応サービスのリンクを貼り付けるだけで、可能な場合は透かしなしの HD 動画を保存できます。",
+        "description2": "単一リンクだけでなく、一括ダウンロード、合集や playlist ページの解析にも対応し、保存前に音声のみやミュートへ切り替えられます。"
     },
     "notification": {
         "title": "お知らせ：",
@@ -46,7 +46,7 @@
         "home": {
             "title": "FreeSaveVideo - オンライン動画ダウンローダー",
             "description": "FreeSaveVideo で透かしなし動画をオンライン保存。Douyin、TikTok、Bilibili、小紅書、Instagram、Facebook、YouTube などのリンクを貼るだけ。一括ダウンロード、合集 / playlist、音声のみ、ミュート保存に対応。",
-            "keywords": "??????????????, ???????????, Douyin ???????, TikTok ???????, Bilibili ???????, ????????, playlist ???????"
+            "keywords": "オンライン動画ダウンローダー, 透かしなし動画ダウンロード, Douyin ダウンローダー, TikTok 動画保存, Bilibili 動画ダウンロード, 一括ダウンロード, playlist ダウンローダー"
         },
         "transfer": {
             "title": "無料オンラインファイル転送 - アプリ不要 | P2P共有 | クロスデバイス",

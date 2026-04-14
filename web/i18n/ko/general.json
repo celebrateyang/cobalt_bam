@@ -5,9 +5,9 @@
     "or": "또는",
     "embed.description": "YouTube, TikTok, Bilibili, Instagram, Facebook, Twitter에서 무료로 동영상을 다운로드하세요. 등록이 필요 없습니다. 쉽고 빠른 동영상 다운로드.",
     "guide": {
-        "title": "FreeSaveVideo 온라인 동영상 다운로더 가이드",
-        "description1": "FreeSaveVideo을 사용하여 동영상과 음악을 다운로드하세요. 추가 소프트웨어가 필요 없으며 웹에서 직접 좋아하는 미디어를 저장할 수 있습니다. 우리의 직관적인 플랫폼은 동영상 다운로드를 간단하고 효율적으로 만듭니다.",
-        "description2": "인기 영화 및 TV 프로그램부터 흥미진진한 스포츠 클립까지 다양한 콘텐츠에 쉽게 액세스하고 다운로드하세요. 지정된 필드에 동영상 URL을 붙여넣고 다운로드 버튼을 클릭하기만 하면 됩니다."
+        "title": "FreeSaveVideo로 온라인에서 동영상을 저장하는 방법",
+        "description1": "FreeSaveVideo를 사용하면 소프트웨어 설치 없이 온라인에서 동영상을 다운로드할 수 있습니다. 지원 플랫폼 링크를 붙여넣으면 가능할 때 워터마크 없는 HD 영상을 저장할 수 있습니다.",
+        "description2": "단일 링크뿐 아니라 일괄 다운로드와 모음집 또는 플레이리스트 페이지도 처리할 수 있고, 저장 전에 오디오 전용이나 음소거 모드로 전환할 수 있습니다."
     },
     "notification": {
         "title": "공지:",
@@ -46,7 +46,7 @@
         "home": {
             "title": "FreeSaveVideo - 온라인 동영상 다운로더",
             "description": "FreeSaveVideo로 워터마크 없는 동영상을 온라인에서 다운로드하세요. Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube 등의 링크를 붙여넣기만 하면 됩니다. 일괄 다운로드, 모음집, 오디오 전용, 음소거 모드를 지원합니다.",
-            "keywords": "??? ??? ????, ???? ?? ????, Douyin ????, TikTok ????, Bilibili ????, ?? ????, ?????? ????"
+            "keywords": "온라인 동영상 다운로더, 워터마크 없는 동영상 다운로드, Douyin 다운로더, TikTok 동영상 저장, Bilibili 동영상 다운로드, 일괄 다운로드, 플레이리스트 다운로더"
         },
         "transfer": {
             "title": "무료 온라인 파일 전송 - 앱 필요 없음 | P2P 공유 | 기기 간",

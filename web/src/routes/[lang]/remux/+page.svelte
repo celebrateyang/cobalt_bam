@@ -545,6 +545,7 @@
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
+    <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
     {#if seoJsonLd}
         {@html `<script type="application/ld+json">${JSON.stringify(seoJsonLd).replace(/</g, "\\u003c")}</script>`}
     {/if}

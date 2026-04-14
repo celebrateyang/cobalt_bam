@@ -3,6 +3,11 @@
     "meowbalt": "FreeSaveVideo",
     "beta": "бета",
     "embed.description": "сохраняй то, что любишь: без рекламы, трекеров и прочей чепухи. кобальт создан с любовью, а не с целью заработать.",
+    "guide": {
+        "title": "Как скачивать видео онлайн с FreeSaveVideo",
+        "description1": "FreeSaveVideo помогает скачивать видео онлайн без установки программ. Вставьте ссылку из поддерживаемого сервиса, чтобы сохранить HD-видео без водяного знака, если это доступно.",
+        "description2": "Поддерживаются одиночные ссылки, пакетная загрузка, страницы коллекций и playlist, а перед сохранением можно переключиться в режим только аудио или без звука."
+    },
     "promotions": {
         "finditbuddy": {
             "title": "FinditBuddy helps you remember where things are and find them later",
@@ -20,7 +25,7 @@
         "home": {
             "title": "FreeSaveVideo - онлайн загрузчик видео",
             "description": "Скачивайте видео без водяных знаков онлайн через FreeSaveVideo. Вставьте ссылку из Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube и других сервисов. Поддерживаются пакетная загрузка, коллекции, только аудио и беззвучный режим.",
-            "keywords": "?????? ????????? ?????, ??????? ????? ??? ???????? ?????, Douyin downloader, TikTok downloader, Bilibili downloader, ???????? ????????, playlist downloader"
+            "keywords": "онлайн загрузчик видео, скачать видео без водяных знаков, Douyin downloader, TikTok downloader, Bilibili downloader, пакетная загрузка, playlist downloader"
         }
     }
 }

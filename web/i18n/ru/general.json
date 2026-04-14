@@ -15,5 +15,12 @@
             },
             "visit": "Visit FinditBuddy"
         }
+    },
+    "seo": {
+        "home": {
+            "title": "FreeSaveVideo - онлайн загрузчик видео",
+            "description": "Скачивайте видео без водяных знаков онлайн через FreeSaveVideo. Вставьте ссылку из Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube и других сервисов. Поддерживаются пакетная загрузка, коллекции, только аудио и беззвучный режим.",
+            "keywords": "?????? ????????? ?????, ??????? ????? ??? ???????? ?????, Douyin downloader, TikTok downloader, Bilibili downloader, ???????? ????????, playlist downloader"
+        }
     }
 }

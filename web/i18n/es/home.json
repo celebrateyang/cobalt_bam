@@ -51,5 +51,38 @@
         "discover_trends": {
             "desc": "Colección de los videos más populares de la web. Videos de belleza seleccionados, clips divertidos y tendencias virales. Actualizado diariamente."
         }
+    },
+    "hero": {
+        "eyebrow": "Descargador de videos online",
+        "title": "Descarga videos online sin marcas de agua",
+        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
+        "trust": "Las plataformas compatibles incluyen descarga por lotes, colecciones / playlists, modo solo audio y modo sin sonido."
+    },
+    "tools": {
+        "title": "Mas herramientas",
+        "description": "Necesitas algo mas que descargar? Estas herramientas siguen a un clic sin robar protagonismo a la portada."
+    },
+    "capabilities": {
+        "supported": {
+            "title": "100+ sitios compatibles",
+            "desc": "Funciona en plataformas de video populares tanto en movil como en escritorio."
+        },
+        "collection": {
+            "title": "Descarga de colecciones / playlists",
+            "desc": "Detecta automaticamente colecciones, temporadas y playlists y prepara todo el lote cuando es compatible."
+        },
+        "batch": {
+            "title": "Descarga por lotes",
+            "desc": "Pega varios enlaces separados por espacios o saltos de linea y procesalos juntos."
+        },
+        "watermark": {
+            "title": "Descarga sin marca de agua",
+            "desc": "Guarda archivos limpios cuando la plataforma ofrece una fuente sin marca de agua."
+        },
+        "audio": {
+            "title": "Solo audio y modo silencioso",
+            "desc": "Cambia entre automatico, solo audio y modo sin sonido antes de descargar."
+        },
+        "aria": "Download capabilities"
     }
 }

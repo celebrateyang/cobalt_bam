@@ -3,16 +3,27 @@
         "desc": "Report download issues and suggestions."
     },
     "capabilities": {
-        "aria": "Download capabilities",
-        "platforms": "Platforms",
+        "supported": {
+            "title": "100+ supported sites",
+            "desc": "Works on popular video platforms across mobile and desktop."
+        },
         "collection": {
             "title": "Collection / playlist download",
-            "desc": "Auto-detect and download mixes, seasons, and playlists."
+            "desc": "Auto-detect collection, season, and playlist links and queue the full set when supported."
         },
         "batch": {
             "title": "Batch download",
-            "desc": "Paste multiple links at once and download in one go."
-        }
+            "desc": "Paste multiple links separated by spaces or line breaks and process them together."
+        },
+        "watermark": {
+            "title": "Watermark-free download",
+            "desc": "Save clean video files when the platform provides no-watermark sources."
+        },
+        "audio": {
+            "title": "Audio-only and mute mode",
+            "desc": "Switch between auto, audio-only, and mute mode before downloading."
+        },
+        "aria": "Download capabilities"
     },
     "points_balloon": {
         "aria": "Low points reminder",
@@ -74,5 +85,15 @@
         "discover_trends": {
             "desc": "Collection of the hottest videos on the web. Curated beauty videos, funny clips, and viral trends. Updated daily."
         }
+    },
+    "hero": {
+        "eyebrow": "Online video downloader",
+        "title": "Download Videos Online Without Watermarks",
+        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube, and more to download HD videos in a few clicks.",
+        "trust": "Batch downloads, collection / playlist parsing, audio-only mode, and mute mode are built in for supported services."
+    },
+    "tools": {
+        "title": "More tools",
+        "description": "Need more than downloading? These tools stay one tap away without taking over the homepage."
     }
 }

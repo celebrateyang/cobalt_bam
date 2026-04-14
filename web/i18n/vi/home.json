@@ -51,5 +51,38 @@
         "discover_trends": {
             "desc": "Bộ sưu tập các video hot nhất trên web. Video làm đẹp được tuyển chọn, clip hài hước và xu hướng viral. Cập nhật hàng ngày."
         }
+    },
+    "hero": {
+        "eyebrow": "Trinh tai video truc tuyen",
+        "title": "Tai video truc tuyen khong watermark",
+        "subtitle": "Dan lien ket tu Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube va nhieu nen tang khac de tai video HD chi trong vai buoc.",
+        "trust": "Cac dich vu duoc ho tro co san tai hang loat, bo suu tap / playlist, che do chi audio va che do tat tieng."
+    },
+    "tools": {
+        "title": "Cong cu khac",
+        "description": "Neu ban can hon ca tai video, cac cong cu nay van de tim thay ma khong lam loang chu de SEO cua trang chu."
+    },
+    "capabilities": {
+        "supported": {
+            "title": "100+ trang duoc ho tro",
+            "desc": "Hoat dong tren cac nen tang video pho bien ca tren di dong va may tinh."
+        },
+        "collection": {
+            "title": "Tai bo suu tap / playlist",
+            "desc": "Tu dong nhan dien bo suu tap, mua va lien ket playlist, sau do xep hang toan bo khi duoc ho tro."
+        },
+        "batch": {
+            "title": "Tai hang loat",
+            "desc": "Dan nhieu lien ket, ngan cach bang dau cach hoac xuong dong, roi xu ly cung luc."
+        },
+        "watermark": {
+            "title": "Tai khong watermark",
+            "desc": "Luu file video sach khi nen tang cung cap nguon khong watermark."
+        },
+        "audio": {
+            "title": "Chi audio va che do tat tieng",
+            "desc": "Chuyen giua tu dong, chi audio va tat tieng truoc khi tai xuong."
+        },
+        "aria": "Download capabilities"
     }
 }

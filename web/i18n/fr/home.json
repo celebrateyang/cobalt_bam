@@ -51,5 +51,38 @@
         "discover_trends": {
             "desc": "Collection des vidéos les plus populaires sur le web. Vidéos de beauté sélectionnées, clips drôles et tendances virales. Mis à jour quotidiennement."
         }
+    },
+    "hero": {
+        "eyebrow": "Telechargeur video en ligne",
+        "title": "Telechargez des videos en ligne sans filigrane",
+        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
+        "trust": "Les services compatibles proposent le telechargement par lots, les collections / playlists, l audio seul et le mode muet."
+    },
+    "tools": {
+        "title": "Autres outils",
+        "description": "Besoin de plus que du telechargement ? Ces outils restent accessibles sans brouiller le theme SEO de la page d accueil."
+    },
+    "capabilities": {
+        "supported": {
+            "title": "100+ sites pris en charge",
+            "desc": "Fonctionne sur les plateformes video populaires sur mobile et ordinateur."
+        },
+        "collection": {
+            "title": "Telechargement de collections / playlists",
+            "desc": "Detecte automatiquement les collections, saisons et playlists et prepare la file complete quand c est pris en charge."
+        },
+        "batch": {
+            "title": "Telechargement par lots",
+            "desc": "Collez plusieurs liens separes par des espaces ou des retours a la ligne et traitez-les ensemble."
+        },
+        "watermark": {
+            "title": "Telechargement sans filigrane",
+            "desc": "Enregistre des fichiers propres lorsque la plateforme fournit une source sans filigrane."
+        },
+        "audio": {
+            "title": "Audio seul et mode muet",
+            "desc": "Passez entre auto, audio seul et mode muet avant le telechargement."
+        },
+        "aria": "Download capabilities"
     }
 }

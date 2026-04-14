@@ -51,5 +51,38 @@
         "discover_trends": {
             "desc": "Sammlung der heißesten Videos im Web. Kuratierte Schönheitsvideos, lustige Clips und virale Trends. Täglich aktualisiert."
         }
+    },
+    "hero": {
+        "eyebrow": "Online-Video-Downloader",
+        "title": "Videos online ohne Wasserzeichen herunterladen",
+        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
+        "trust": "Batch-Downloads, Sammlungen / Playlists, Nur-Audio und Stumm-Modus sind fuer unterstuetzte Dienste direkt integriert."
+    },
+    "tools": {
+        "title": "Weitere Tools",
+        "description": "Brauchst du mehr als Downloads? Diese Tools bleiben einen Klick entfernt, ohne die Startseite zu ueberladen."
+    },
+    "capabilities": {
+        "supported": {
+            "title": "100+ unterstuetzte Seiten",
+            "desc": "Funktioniert auf beliebten Videoplattformen auf Mobilgeraeten und Desktop."
+        },
+        "collection": {
+            "title": "Sammlung / Playlist herunterladen",
+            "desc": "Erkennt Sammlungen, Staffeln und Playlists automatisch und stellt die komplette Liste bereit, wenn unterstuetzt."
+        },
+        "batch": {
+            "title": "Batch-Download",
+            "desc": "Fuege mehrere Links mit Leerzeichen oder Zeilenumbruechen getrennt ein und verarbeite sie gemeinsam."
+        },
+        "watermark": {
+            "title": "Download ohne Wasserzeichen",
+            "desc": "Speichert saubere Videodateien, wenn die Plattform eine no-watermark Quelle anbietet."
+        },
+        "audio": {
+            "title": "Nur-Audio und Stumm-Modus",
+            "desc": "Wechsle vor dem Download zwischen Auto, Nur-Audio und Stumm-Modus."
+        },
+        "aria": "Download capabilities"
     }
 }

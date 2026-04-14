@@ -702,7 +702,11 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div id="omnibox" style={`--feedback-offset:${actionRightOffset}px;`}>
+<div
+    id="omnibox"
+    class:guide-open={Boolean(activeGuideTitle && activeGuideBody)}
+    style={`--feedback-offset:${actionRightOffset}px;`}
+>
     <div class="input-row">
         <div
             id="input-container"
@@ -808,35 +812,61 @@
 
         <div class="action-right">
             {#if collectionGuideText || batchGuideText}
-                <div
-                    class="download-guides download-guides--desktop"
-                    aria-label="Download guides"
-                >
-                    {#if collectionGuideText}
-                        <button
-                            type="button"
-                            class="guide-inline-link"
-                            on:mouseenter={() => showGuidePopover("collection")}
+                <div class="guide-popover-anchor guide-popover-anchor--desktop">
+                    <div
+                        class="download-guides download-guides--desktop"
+                        aria-label="Download guides"
+                    >
+                        {#if collectionGuideText}
+                            <button
+                                type="button"
+                                class="guide-inline-link"
+                                on:mouseenter={() => showGuidePopover("collection")}
+                                on:mouseleave={scheduleHideGuidePopover}
+                                on:focus={() => showGuidePopover("collection")}
+                                on:blur={scheduleHideGuidePopover}
+                                on:click={() => toggleGuidePopover("collection")}
+                            >
+                                {collectionGuideText}
+                            </button>
+                        {/if}
+                        {#if batchGuideText}
+                            <button
+                                type="button"
+                                class="guide-inline-link"
+                                on:mouseenter={() => showGuidePopover("batch")}
+                                on:mouseleave={scheduleHideGuidePopover}
+                                on:focus={() => showGuidePopover("batch")}
+                                on:blur={scheduleHideGuidePopover}
+                                on:click={() => toggleGuidePopover("batch")}
+                            >
+                                {batchGuideText}
+                            </button>
+                        {/if}
+                    </div>
+
+                    {#if activeGuideTitle && activeGuideBody}
+                        <div
+                            class="guide-popover-area guide-popover-area--desktop"
+                            role="presentation"
+                            on:mouseenter={clearGuideHideTimer}
                             on:mouseleave={scheduleHideGuidePopover}
-                            on:focus={() => showGuidePopover("collection")}
-                            on:blur={scheduleHideGuidePopover}
-                            on:click={() => toggleGuidePopover("collection")}
                         >
-                            {collectionGuideText}
-                        </button>
-                    {/if}
-                    {#if batchGuideText}
-                        <button
-                            type="button"
-                            class="guide-inline-link"
-                            on:mouseenter={() => showGuidePopover("batch")}
-                            on:mouseleave={scheduleHideGuidePopover}
-                            on:focus={() => showGuidePopover("batch")}
-                            on:blur={scheduleHideGuidePopover}
-                            on:click={() => toggleGuidePopover("batch")}
-                        >
-                            {batchGuideText}
-                        </button>
+                            <div class="guide-popover" role="status" aria-live="polite">
+                                <div class="guide-popover-title">{activeGuideTitle}</div>
+                                <div class="guide-popover-body">{activeGuideBody}</div>
+                                {#if activeGuidePlatforms.length}
+                                    <div
+                                        class="guide-popover-platforms"
+                                        aria-label="Supported platforms"
+                                    >
+                                        {#each activeGuidePlatforms as platform}
+                                            <span class="guide-popover-chip">{platform}</span>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
                     {/if}
                 </div>
             {/if}
@@ -888,26 +918,26 @@
     </div>
 
     {#if activeGuideTitle && activeGuideBody}
-        <div class="guide-popover-mask" aria-hidden="true"></div>
         <div
-            class="guide-popover-area"
-            role="presentation"
+            class="guide-popover-anchor guide-popover-anchor--mobile"
             on:mouseenter={clearGuideHideTimer}
             on:mouseleave={scheduleHideGuidePopover}
         >
-            <div class="guide-popover" role="status" aria-live="polite">
-                <div class="guide-popover-title">{activeGuideTitle}</div>
-                <div class="guide-popover-body">{activeGuideBody}</div>
-                {#if activeGuidePlatforms.length}
-                    <div
-                        class="guide-popover-platforms"
-                        aria-label="Supported platforms"
-                    >
-                        {#each activeGuidePlatforms as platform}
-                            <span class="guide-popover-chip">{platform}</span>
-                        {/each}
-                    </div>
-                {/if}
+            <div class="guide-popover-area guide-popover-area--mobile" role="presentation">
+                <div class="guide-popover" role="status" aria-live="polite">
+                    <div class="guide-popover-title">{activeGuideTitle}</div>
+                    <div class="guide-popover-body">{activeGuideBody}</div>
+                    {#if activeGuidePlatforms.length}
+                        <div
+                            class="guide-popover-platforms"
+                            aria-label="Supported platforms"
+                        >
+                            {#each activeGuidePlatforms as platform}
+                                <span class="guide-popover-chip">{platform}</span>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
     {/if}
@@ -922,6 +952,10 @@
         gap: 16px; /* Increased gap */
         margin: 0 auto; /* Center alignment */
         position: relative;
+    }
+
+    #omnibox.guide-open {
+        padding-bottom: 104px;
     }
 
     .batch-hint {
@@ -1093,6 +1127,12 @@
         min-width: 0;
     }
 
+    .guide-popover-anchor {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
     .guide-inline-link {
         font-size: 12px;
         line-height: 1.2;
@@ -1137,27 +1177,29 @@
 
     .guide-popover-area {
         position: absolute;
-        top: calc(100% + 6px);
-        right: var(--feedback-offset, 0px);
-        width: calc(100% - var(--feedback-offset, 0px));
-        z-index: 20;
+        top: calc(100% + 8px);
+        right: 0;
+        width: auto;
+        z-index: 32;
         display: flex;
         justify-content: flex-end;
         padding: 0;
         pointer-events: auto;
     }
 
-    .guide-popover-mask {
+    .guide-popover-anchor--mobile {
         display: none;
     }
 
     .guide-popover {
-        max-width: min(520px, 100%);
-        border: 1px solid var(--surface-2);
-        border-radius: 12px;
-        background: var(--surface-1);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-        padding: 10px 12px;
+        width: min(420px, calc(100vw - 48px));
+        border: 1px solid rgba(var(--accent-rgb), 0.14);
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--background) 94%, white 6%);
+        box-shadow:
+            0 18px 36px rgba(0, 0, 0, 0.10),
+            0 6px 14px rgba(0, 0, 0, 0.05);
+        padding: 12px 14px;
         color: var(--text);
     }
 
@@ -1204,14 +1246,24 @@
             gap: 12px;
         }
 
+        #omnibox.guide-open {
+            padding-bottom: 112px;
+        }
+
         .input-row {
             flex-direction: column;
             gap: 8px;
         }
 
         .feedback-inline-link--desktop,
-        .download-guides--desktop {
+        .guide-popover-anchor--desktop {
             display: none;
+        }
+
+        .guide-popover-anchor--mobile {
+            position: relative;
+            display: block;
+            width: 100%;
         }
 
         #action-container {
@@ -1253,24 +1305,9 @@
         }
 
         .guide-popover-area {
-            position: absolute;
-            top: calc(100% + 4px);
-            right: 0;
+            top: calc(100% + 6px);
             width: 100%;
             padding: 0;
-        }
-
-        .guide-popover-mask {
-            display: block;
-            position: absolute;
-            top: calc(100% + 4px);
-            right: 0;
-            width: 100%;
-            height: 100vh;
-            background: var(--background);
-            opacity: 0.96;
-            z-index: 18;
-            pointer-events: none;
         }
 
         .guide-popover {

@@ -9,12 +9,8 @@
         name: string;
         desc: string;
     }>;
-    export let seoTitle: string;
-    export let seoDescription: string;
     export let guideDescription1: string;
     export let guideDescription2: string;
-    export let embedDescription: string;
-    export let seoKeywords: string;
 
     let showFinditbuddy = false;
     let showYumcheck = false;
@@ -50,11 +46,6 @@
     </div>
 </section>
 
-<section class="seo-hero seo-section">
-    <h1>{seoTitle}</h1>
-    <p>{seoDescription}</p>
-</section>
-
 <section class="seo-body seo-section">
     <div class="seo-text">
         <h2>{$t("general.guide.title")}</h2>
@@ -64,20 +55,20 @@
 
     <div class="seo-grid">
         <article class="seo-card">
-            <h3>{$t("tabs.feature.media_downloader")}</h3>
-            <p>{seoDescription}</p>
+            <h3>{$t("home.capabilities.watermark.title")}</h3>
+            <p>{$t("home.capabilities.watermark.desc")}</p>
         </article>
         <article class="seo-card">
-            <h3>{$t("tabs.feature.file_transfer")}</h3>
-            <p>{$t("general.seo.transfer.description")}</p>
+            <h3>{$t("home.capabilities.collection.title")}</h3>
+            <p>{$t("home.capabilities.collection.desc")}</p>
         </article>
         <article class="seo-card">
-            <h3>{$t("tabs.feature.discover_trends")}</h3>
-            <p>{$t("general.seo.discover.description")}</p>
+            <h3>{$t("home.capabilities.batch.title")}</h3>
+            <p>{$t("home.capabilities.batch.desc")}</p>
         </article>
         <article class="seo-card">
-            <h3>{embedDescription}</h3>
-            <p>{seoKeywords}</p>
+            <h3>{$t("home.capabilities.audio.title")}</h3>
+            <p>{$t("home.capabilities.audio.desc")}</p>
         </article>
     </div>
 </section>
@@ -160,29 +151,6 @@
         box-sizing: border-box;
         content-visibility: auto;
         contain-intrinsic-size: 1px 680px;
-    }
-
-    .seo-hero {
-        padding: 22px 20px;
-        border-radius: 16px;
-        background: var(--surface-1);
-        border: 1px solid var(--surface-2);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
-    }
-
-    .seo-hero h1 {
-        margin: 0 0 10px;
-        font-size: clamp(22px, 3vw, 30px);
-        line-height: 1.25;
-        color: var(--secondary);
-    }
-
-    .seo-hero p {
-        margin: 0;
-        font-size: 15px;
-        color: var(--secondary-600);
-        line-height: 1.55;
-        max-width: 900px;
     }
 
     .seo-body {
@@ -440,18 +408,6 @@
         .seo-section {
             padding: 0 14px;
             margin: 16px auto;
-        }
-
-        .seo-hero {
-            padding: 16px;
-        }
-
-        .seo-hero h1 {
-            font-size: clamp(18px, 5vw, 24px);
-        }
-
-        .seo-hero p {
-            font-size: 14px;
         }
 
         .seo-grid {

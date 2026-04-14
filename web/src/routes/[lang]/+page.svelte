@@ -6,14 +6,8 @@
     import { browser } from "$app/environment";
 
     import Omnibox from "$components/save/Omnibox.svelte";
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
 
-    import IconClipboard from "$components/icons/Clipboard.svelte";
-    import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
-    import IconVideoPlus from "@tabler/icons-svelte/IconVideoPlus.svelte";
-    import IconUsers from "@tabler/icons-svelte/IconUsers.svelte";
-    import IconArrowsLeftRight from "@tabler/icons-svelte/IconArrowsLeftRight.svelte";
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
     import { createDialog } from "$lib/state/dialogs";
@@ -276,6 +270,38 @@
         name: $t(`home.platforms.${slug}.name`),
         desc: $t(`home.platforms.${slug}.desc`),
     }));
+    $: heroCapabilities = [
+        {
+            title: $t("home.capabilities.supported.title"),
+        },
+        {
+            title: $t("home.capabilities.collection.title"),
+        },
+        {
+            title: $t("home.capabilities.batch.title"),
+        },
+        {
+            title: $t("home.capabilities.audio.title"),
+        },
+    ];
+    $: moreTools = [
+        {
+            href: `/${currentLocale}/videorecord`,
+            label: $t("tabs.videorecord"),
+        },
+        {
+            href: `/${currentLocale}/clipboard`,
+            label: $t("tabs.feature.file_transfer"),
+        },
+        {
+            href: `/${currentLocale}/remux`,
+            label: $t("tabs.remux"),
+        },
+        {
+            href: `/${currentLocale}/random-chat`,
+            label: $t("tabs.random_video"),
+        },
+    ];
     const homeInternalLinks = getHubDownloadLinks(8);
     const homeGuideLinks = getHubGuideLinks(4);
     const homeLinkLabel = (platform: string) =>
@@ -572,7 +598,17 @@
             </div>
         {/if}
 
-        <Meowbalt emotion="smile" />
+        <section class="download-hero" aria-labelledby="home-download-title">
+            <h1 id="home-download-title">{$t("home.hero.title")}</h1>
+            <p class="hero-subtitle">{$t("home.hero.subtitle")}</p>
+
+            <div class="hero-capability-list" aria-label={$t("home.capabilities.aria")}>
+                {#each heroCapabilities as item}
+                    <span class="hero-capability-chip">{item.title}</span>
+                {/each}
+            </div>
+        </section>
+
         <Omnibox
             feedbackHref={buildFeedbackRedirectPath()}
             feedbackText={$t("tabs.feature.feedback")}
@@ -586,52 +622,6 @@
         />
         <!--<UserGuide/>-->
     </main>
-
-    <!-- Feature Cards -->
-    <section class="feature-cards">
-        <a href={`/${currentLocale}/videorecord`} class="feature-card">
-            <div class="icon-wrapper"><IconVideoPlus size={28} /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.videorecord")}</h3>
-                <p class="card-desc">{$t("home.cards.videorecord.desc")}</p>
-            </div>
-        </a>
-        <a href={`/${currentLocale}/random-chat`} class="feature-card">
-            <div class="icon-wrapper"><IconUsers size={28} /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.random_video")}</h3>
-                <p class="card-desc">{$t("home.cards.random_video.desc")}</p>
-            </div>
-        </a>
-        <a href={`/${currentLocale}/remux`} class="feature-card">
-            <div class="icon-wrapper"><IconArrowsLeftRight size={28} /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.remux")}</h3>
-                <p class="card-desc">{$t("home.cards.remux.desc")}</p>
-            </div>
-        </a>
-        <a href={`/${currentLocale}/clipboard`} class="feature-card">
-            <div class="icon-wrapper"><IconClipboard /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.feature.file_transfer")}</h3>
-                <p class="card-desc">
-                    {$t("home.cards.file_transfer.desc")}
-                </p>
-            </div>
-        </a>
-        <a
-            href={`/${currentLocale}/discover`}
-            class="feature-card feature-card--discover"
-        >
-            <div class="icon-wrapper"><IconVideo size={28} /></div>
-            <div class="card-content">
-                <h3>{$t("tabs.feature.discover_trends")}</h3>
-                <p class="card-desc">
-                    {$t("home.cards.discover_trends.desc")}
-                </p>
-            </div>
-        </a>
-    </section>
 
     <section class="home-internal-hub" aria-label="Internal links">
         <h2>{currentLocale === "zh" ? "快速入口" : "Quick links"}</h2>
@@ -658,6 +648,18 @@
         </div>
     </section>
 
+    <section class="more-tools-strip" aria-label={$t("home.tools.title")}>
+        <div class="more-tools-copy">
+            <h2>{$t("home.tools.title")}</h2>
+            <p>{$t("home.tools.description")}</p>
+        </div>
+        <div class="more-tools-links">
+            {#each moreTools as item}
+                <a class="more-tools-link" href={item.href}>{item.label}</a>
+            {/each}
+        </div>
+    </section>
+
     <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
     {#if HomeDeferredSections}
         <svelte:component
@@ -665,12 +667,8 @@
             {currentLocale}
             {canonicalUrl}
             {platformCards}
-            {seoTitle}
-            {seoDescription}
             {guideDescription1}
             {guideDescription2}
-            {embedDescription}
-            {seoKeywords}
         />
     {:else}
         <div class="deferred-sections-placeholder" aria-hidden="true"></div>
@@ -736,18 +734,17 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         width: 100%;
-        /* Optimized spacing - reduced from 65vh */
-        min-height: 50vh;
-        gap: 20px;
-        margin-bottom: 32px;
+        min-height: auto;
+        gap: 14px;
+        margin-bottom: 24px;
     }
 
     @media (min-width: 900px) {
         #cobalt-save {
-            min-height: clamp(360px, 44vh, 440px);
-            margin-bottom: 32px;
+            min-height: auto;
+            margin-bottom: 24px;
         }
     }
 
@@ -859,96 +856,65 @@
         line-height: 1;
     }
 
-    /* Feature Cards */
-    .feature-cards {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
+    .download-hero {
         width: 100%;
-        max-width: 1120px;
-        margin: 0 auto 2rem;
-        padding: 0 var(--padding);
-        opacity: 0.95;
-    }
-
-    .feature-cards {
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 680px;
-    }
-
-    .feature-card {
+        max-width: 860px;
         display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        padding: 1.5rem;
-        background: var(--surface-1);
-        border-radius: var(--border-radius);
-        text-decoration: none;
-        color: var(--text);
-        cursor: pointer;
-        text-align: left;
-        font: inherit;
-        appearance: none;
-        transition:
-            background 0.2s,
-            border-color 0.2s;
-        border: 1px solid transparent;
-        contain: layout paint style;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        margin-top: 8px;
     }
 
-    .feature-card:hover {
-        background: var(--surface-2);
-        border-color: var(--accent);
+    .download-hero h1 {
+        margin: 0;
+        max-width: 860px;
+        font-size: clamp(2rem, 4.2vw, 3.1rem);
+        line-height: 1.12;
+        letter-spacing: -0.03em;
+        color: var(--secondary);
+        text-wrap: balance;
     }
 
-    .feature-card.active {
-        border-color: var(--accent);
-        background: var(--surface-2);
+    .hero-subtitle {
+        margin: 0;
+        max-width: 760px;
+        font-size: clamp(0.98rem, 1.55vw, 1.08rem);
+        line-height: 1.6;
+        color: var(--secondary-600);
+        text-wrap: balance;
     }
 
-    .icon-wrapper {
-        color: var(--accent);
-        flex-shrink: 0;
+    .hero-capability-list {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        margin-top: 4px;
+    }
+
+    .hero-capability-chip {
+        margin: 0;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: var(--surface-3);
-        border-radius: 50%;
-    }
-
-    .card-content {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    .card-content h3 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.1rem;
+        min-height: 36px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(var(--accent-rgb), 0.16);
+        background: rgba(var(--accent-rgb), 0.07);
+        color: var(--secondary);
+        font-size: 0.92rem;
         font-weight: 600;
-    }
-
-    .card-desc {
-        margin: 0;
-        font-size: 0.9rem;
-        opacity: 0.8;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        line-height: 1.4;
-    }
-
-    .feature-card--discover {
-        align-items: center;
-        grid-column: 1 / -1;
+        line-height: 1.3;
     }
 
     .home-internal-hub {
         width: 100%;
         max-width: 1120px;
-        margin: 0 auto 1.4rem;
+        margin: 0 auto 1.1rem;
         padding: 0 var(--padding);
         box-sizing: border-box;
         display: flex;
@@ -998,6 +964,67 @@
         font-weight: 600;
     }
 
+    .more-tools-strip {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto 1.25rem;
+        padding: 0 var(--padding);
+        box-sizing: border-box;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px 18px;
+    }
+
+    .more-tools-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .more-tools-copy h2 {
+        margin: 0;
+        font-size: clamp(16px, 2vw, 20px);
+        color: var(--secondary);
+    }
+
+    .more-tools-copy p {
+        margin: 0;
+        color: var(--secondary-600);
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+
+    .more-tools-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .more-tools-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--surface-2);
+        background: transparent;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.9rem;
+        line-height: 1.2;
+        transition:
+            background-color 0.2s,
+            border-color 0.2s;
+    }
+
+    .more-tools-link:hover {
+        background: var(--surface-1);
+        border-color: var(--accent);
+    }
+
     .deferred-sections-anchor {
         width: 100%;
         height: 1px;
@@ -1019,24 +1046,29 @@
 
         #cobalt-save {
             min-height: auto;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
             margin-bottom: 0;
-            gap: 8px;
+            gap: 12px;
         }
 
-        .feature-cards {
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
-            margin-top: -16px;
-            margin-bottom: 1rem;
+        .download-hero h1 {
+            font-size: clamp(1.75rem, 8vw, 2.45rem);
         }
 
-        .feature-card {
-            padding: 1rem;
+        .download-hero {
+            gap: 12px;
+        }
+
+        .hero-capability-list {
+            justify-content: flex-start;
         }
 
         .home-internal-hub {
             margin-bottom: 1rem;
+        }
+
+        .more-tools-strip {
+            margin-bottom: 1.2rem;
         }
 
         .deferred-sections-placeholder {

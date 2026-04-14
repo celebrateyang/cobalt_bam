@@ -11,9 +11,29 @@ export const guidePages: GuidePage[] = [
         platform: 'TikTok',
     },
     {
+        slug: 'tiktok-collection-download-guide',
+        landingSlug: 'tiktok-collection-download',
+        platform: 'TikTok Playlist',
+    },
+    {
+        slug: 'tiktok-mp3-download-guide',
+        landingSlug: 'tiktok-mp3-download',
+        platform: 'TikTok MP3',
+    },
+    {
         slug: 'douyin-download-guide',
         landingSlug: 'douyin-no-watermark',
         platform: 'Douyin',
+    },
+    {
+        slug: 'douyin-collection-download-guide',
+        landingSlug: 'douyin-collection-download',
+        platform: 'Douyin Collection',
+    },
+    {
+        slug: 'douyin-mp3-download-guide',
+        landingSlug: 'douyin-mp3-download',
+        platform: 'Douyin MP3',
     },
     {
         slug: 'kuaishou-download-guide',

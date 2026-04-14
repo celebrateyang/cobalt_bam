@@ -769,49 +769,49 @@ export const seoLandingPages: SeoLandingPage[] = [
         slug: 'tiktok-no-watermark',
         locales: {
             zh: zh({
-                metaTitle: `TikTok无水印下载（高清/批量）- ${ZH_BRAND}`,
+                metaTitle: `下载TikTok视频 - 免费无水印在线下载器 | ${ZH_BRAND}`,
                 metaDescription:
-                    'TikTok无水印下载工具：复制链接→粘贴→一键保存。支持高清、原声、批量解析，免安装在线使用。',
+                    'FreeSaveVideo 支持在线下载 TikTok 视频，无需安装软件。粘贴链接即可保存高清无水印视频，支持批次下载、合集解析、音频提取与静音模式。',
                 metaKeywords: [
+                    '下载tiktok视频',
                     'tiktok无水印下载',
-                    'tiktok去水印',
                     'tiktok视频下载',
                     'tiktok下载器',
                     'tiktok保存视频',
-                    'TikTok downloader no watermark',
+                    'tiktok去水印',
                 ],
-                h1: 'TikTok无水印下载',
-                lede: '3步保存 TikTok 视频/图集：复制链接 → 粘贴 → 下载。',
-                stepsTitle: '如何下载 TikTok 无水印视频',
+                h1: 'TikTok视频无水印下载',
+                lede: '复制 TikTok 视频链接后即可在线解析下载，支持手机和电脑浏览器直接使用。',
+                stepsTitle: '如何下载 TikTok 视频',
                 steps: [
                     '在 TikTok 打开视频，点击“分享”并复制链接。',
                     '把链接粘贴到下方输入框，点击下载。',
-                    '选择清晰度/是否原声，保存到本地相册或文件。',
+                    '选择清晰度、原声/静音或音频模式后保存到本地。',
                 ],
                 featuresTitle: '功能亮点',
                 features: [
-                    '无水印/高清下载，适合剪辑与收藏。',
-                    '支持视频、图集与音频（以解析结果为准）。',
-                    '批量解析多个链接（适合攒素材）。',
-                    '免安装，手机/电脑浏览器都能用。',
+                    '支持下载 TikTok 无水印视频，高清选项以解析结果为准。',
+                    '支持批次下载、合集解析与音频提取。',
+                    '可切换自动、音频或静音模式，适合不同保存场景。',
+                    '免安装，手机/电脑浏览器都能直接使用。',
                 ],
                 faqTitle: '常见问题',
                 faqs: [
                     {
-                        q: 'TikTok 无水印下载安全吗？',
-                        a: '无需安装 App，直接在网页完成解析与下载；建议仅保存你有权使用的公开内容。',
+                        q: '怎么下载 TikTok 视频到手机？',
+                        a: '在 TikTok 视频页点击“分享”复制链接，回到本页粘贴后点击下载，即可将视频保存到手机相册或文件中。',
                     },
                     {
-                        q: '下载失败/一直转圈怎么办？',
-                        a: '先确认链接是否可在浏览器正常打开；再换网络或稍后重试。部分地区/账号内容可能受限制。',
+                        q: 'TikTok 视频下载后一定是无水印吗？',
+                        a: '如果源站提供无水印资源，解析结果会优先显示无水印版本；个别内容可能受平台限制。',
                     },
                     {
-                        q: '可以批量下载吗？',
-                        a: '支持一次粘贴多条链接进行批量解析（数量限制以页面提示为准）。',
+                        q: '可以批量下载或下载合集吗？',
+                        a: '支持一次粘贴多条 TikTok 链接进行批次解析；合集或 playlist 是否可整组下载，以页面解析结果为准。',
                     },
                     {
-                        q: '会不会被封号？',
-                        a: '我们不进行账号登录与自动操作；但频繁下载同一内容仍可能触发平台风控，建议合理使用。',
+                        q: '为什么有些 TikTok 链接解析失败？',
+                        a: '部分视频可能受地区、账号权限或平台风控限制。建议确认链接可在浏览器打开，再换网络或稍后重试。',
                     },
                 ],
             }),
@@ -859,46 +859,255 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
-        slug: 'douyin-no-watermark',
+        slug: 'tiktok-collection-download',
         locales: {
             zh: zh({
-                metaTitle: `抖音无水印下载（高清/批量）- ${ZH_BRAND}`,
+                metaTitle: `TikTok合集下载 - 批量保存视频/Playlist | ${ZH_BRAND}`,
                 metaDescription:
-                    '抖音无水印下载：复制分享链接→粘贴→一键保存。支持高清画质、原声、批量解析，手机电脑都能用。',
+                    '在线下载 TikTok 合集、批次视频和 playlist 链接。粘贴一个或多个 TikTok 链接即可统一解析，支持高清视频、音频提取与免安装使用。',
                 metaKeywords: [
-                    '抖音无水印下载',
-                    '抖音去水印',
-                    '抖音视频下载',
-                    '抖音链接解析',
-                    '抖音保存视频',
+                    'tiktok合集下载',
+                    'tiktok批量下载',
+                    'tiktok playlist 下载',
+                    'tiktok批次下载',
+                    'tiktok视频批量保存',
                 ],
-                h1: '抖音无水印下载',
-                lede: '无需安装，复制抖音链接即可在线解析下载。',
-                stepsTitle: '抖音去水印保存步骤',
+                h1: 'TikTok合集 / Playlist 下载',
+                lede: '支持一次解析 TikTok 合集、playlist 或多条视频链接，适合批量保存视频素材。',
+                stepsTitle: '如何下载 TikTok 合集或批量视频',
                 steps: [
-                    '在抖音打开视频，点击“分享”复制链接。',
-                    '把链接粘贴到下方输入框，点击下载。',
-                    '保存到本地相册/文件，并按需选择画质或音频。',
+                    '复制 TikTok 合集、playlist 或多条视频分享链接。',
+                    '将一个或多个链接粘贴到下方输入框，点击下载。',
+                    '等待解析完成后，按需保存整组视频、音频或单条文件。',
                 ],
                 featuresTitle: '功能亮点',
                 features: [
-                    '无水印/高清下载，适合二次剪辑与收藏。',
-                    '支持批量解析多个抖音链接。',
-                    '免安装，打开网页即可用。',
+                    '支持 TikTok 合集、playlist 和多链接批量解析。',
+                    '可按解析结果保存高清视频、音频或静音版本。',
+                    '免安装，手机和电脑浏览器均可使用。',
                 ],
                 faqTitle: '常见问题',
                 faqs: [
                     {
-                        q: '抖音链接怎么复制？',
-                        a: '在视频页点击“分享”→“复制链接”，再粘贴到本页输入框。',
+                        q: 'TikTok 可以批量下载多个视频吗？',
+                        a: '可以。你可以一次粘贴多条 TikTok 链接进行批量解析，具体数量限制以页面提示为准。',
                     },
                     {
-                        q: '解析失败怎么办？',
-                        a: '部分内容可能触发风控或访问受限；可换网络、刷新页面或稍后重试。',
+                        q: 'TikTok playlist 或合集一定能整组下载吗？',
+                        a: '是否能完整识别合集或 playlist，取决于链接结构和平台返回的数据。若支持，页面会直接展示整组下载结果。',
                     },
                     {
-                        q: '能下载图文/合集吗？',
-                        a: '是否支持取决于页面解析结果；如不支持可反馈链接便于适配。',
+                        q: '批量下载时可以提取音频吗？',
+                        a: '可以。如解析结果提供音频资源，你可以切换到音频模式后再保存。',
+                    },
+                    {
+                        q: '为什么部分 TikTok 链接没有被识别出来？',
+                        a: '可能是链接失效、内容权限受限，或平台暂时限制了解析。建议确认链接可在浏览器打开，再换网络或稍后重试。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `TikTok Playlist Downloader (Batch Video Save) - ${EN_BRAND}`,
+                metaDescription:
+                    'Download TikTok playlists, collection links, or multiple videos at once. Paste one or more TikTok links to batch save videos online with no app install.',
+                metaKeywords: [
+                    'tiktok playlist downloader',
+                    'tiktok batch download',
+                    'download tiktok collection',
+                    'save multiple tiktok videos',
+                    'tiktok multi downloader',
+                ],
+                h1: 'TikTok Playlist and Batch Downloader',
+                lede: 'Paste playlist, collection, or multiple TikTok links to save videos in one run.',
+                stepsTitle: 'How to batch download TikTok videos',
+                steps: [
+                    'Copy a TikTok playlist, collection, or multiple share links.',
+                    'Paste the links into the box below and start parsing.',
+                    'Save the available video or audio files after parsing finishes.',
+                ],
+                featuresTitle: 'Highlights',
+                features: [
+                    'Batch parsing for TikTok links and supported playlists.',
+                    'Video, audio-only, and mute options when available.',
+                    'Browser-based workflow with no app install.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Can I download multiple TikTok videos at once?',
+                        a: 'Yes. Paste multiple TikTok links and the page will parse them together as a batch.',
+                    },
+                    {
+                        q: 'Will every TikTok playlist be detected automatically?',
+                        a: 'Not always. Detection depends on the link type and the source response returned by TikTok.',
+                    },
+                    {
+                        q: 'Can I extract audio from batch results?',
+                        a: 'If audio resources are available, you can switch to audio mode before saving.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'TikTok',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'tiktok playlist downloader',
+                    'tiktok batch download',
+                    'download tiktok collection',
+                    'save multiple tiktok videos',
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'tiktok-mp3-download',
+        locales: {
+            zh: zh({
+                metaTitle: `TikTok MP3 下载 - 在线提取视频音频 | ${ZH_BRAND}`,
+                metaDescription:
+                    '在线提取 TikTok 视频音频并保存为可用的 MP3/音频资源。粘贴 TikTok 链接即可解析下载，无需安装软件，支持手机和电脑浏览器。',
+                metaKeywords: [
+                    'tiktok mp3 下载',
+                    'tiktok音频下载',
+                    'tiktok音频提取',
+                    'tiktok转mp3',
+                    'tiktok音乐下载',
+                ],
+                h1: 'TikTok 音频 / MP3 下载',
+                lede: '复制 TikTok 视频链接后即可在线提取音频，适合保存背景音乐、对白或素材配乐。',
+                stepsTitle: '如何下载 TikTok 音频',
+                steps: [
+                    '在 TikTok 打开视频，点击“分享”复制链接。',
+                    '把链接粘贴到下方输入框，点击下载。',
+                    '在解析结果中选择音频或 MP3 选项并保存到本地。',
+                ],
+                featuresTitle: '功能亮点',
+                features: [
+                    '支持从 TikTok 视频中提取可用音频资源。',
+                    '适合保存背景音乐、配音和短视频原声。',
+                    '无需安装软件，手机和电脑浏览器均可使用。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: 'TikTok 视频可以直接提取 MP3 吗？',
+                        a: '如果解析结果中提供音频资源，你可以直接选择音频或 MP3 选项进行保存。',
+                    },
+                    {
+                        q: '为什么有些 TikTok 视频没有音频下载选项？',
+                        a: '部分视频的音频资源可能受版权、平台策略或链接类型限制，若未提供音频结果则无法单独提取。',
+                    },
+                    {
+                        q: '手机上也能下载 TikTok 音频吗？',
+                        a: '可以。网页支持手机浏览器访问，复制链接后粘贴到本页即可提取并保存音频。',
+                    },
+                    {
+                        q: '下载的 TikTok 音频格式能选吗？',
+                        a: '格式取决于解析结果和源资源。若有多个可选项，会在下载结果中显示。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `TikTok MP3 Downloader - Extract Audio Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Extract TikTok audio online from public video links. Paste a TikTok URL to download available MP3 or audio options in your browser.',
+                metaKeywords: [
+                    'tiktok mp3 downloader',
+                    'download tiktok audio',
+                    'tiktok to mp3',
+                    'extract tiktok sound',
+                ],
+                h1: 'TikTok MP3 and Audio Downloader',
+                lede: 'Paste a TikTok video link to extract available audio in your browser.',
+                stepsTitle: 'How to download TikTok audio',
+                steps: [
+                    'Copy the TikTok video share link.',
+                    'Paste it into the box below and start parsing.',
+                    'Choose the available audio option and save it.',
+                ],
+                featuresTitle: 'Highlights',
+                features: [
+                    'Extract audio from public TikTok videos when available.',
+                    'Good for saving music, voice clips, and source audio.',
+                    'No app install required.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Can I convert TikTok videos to MP3 online?',
+                        a: 'If the source returns audio resources, the page will show an available audio option you can save.',
+                    },
+                    {
+                        q: 'Why do some TikTok videos have no audio option?',
+                        a: 'Audio availability depends on the source response, copyright restrictions, and link type.',
+                    },
+                    {
+                        q: 'Does it work on mobile?',
+                        a: 'Yes. Paste a TikTok link in your mobile browser and save the available audio result.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'TikTok',
+                kind: 'audio',
+                contentKey: 'audio',
+                keywords: [
+                    'tiktok mp3 downloader',
+                    'download tiktok audio',
+                    'tiktok to mp3',
+                    'extract tiktok sound',
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'douyin-no-watermark',
+        locales: {
+            zh: zh({
+                metaTitle: `抖音视频下载 - 免费无水印在线下载器 | ${ZH_BRAND}`,
+                metaDescription:
+                    '使用 FreeSaveVideo 在线下载抖音视频，支持无水印保存、批次下载、合集解析、音频提取与静音模式，无需安装 App。',
+                metaKeywords: [
+                    '抖音视频下载',
+                    '抖音无水印下载',
+                    '抖音保存视频',
+                    '抖音去水印',
+                    '抖音链接解析',
+                    '抖音批量下载',
+                ],
+                h1: '抖音视频无水印下载',
+                lede: '复制抖音分享链接即可在线下载视频，支持手机和电脑浏览器直接使用。',
+                stepsTitle: '如何下载抖音视频',
+                steps: [
+                    '在抖音打开视频，点击“分享”复制链接。',
+                    '把链接粘贴到下方输入框，点击下载。',
+                    '保存到本地相册/文件，并按需选择画质、音频或静音模式。',
+                ],
+                featuresTitle: '功能亮点',
+                features: [
+                    '支持抖音无水印视频下载，高清选项以解析结果为准。',
+                    '支持批次下载、合集解析与多链接统一处理。',
+                    '支持音频提取和静音模式，适合保存不同素材。',
+                    '免安装，打开网页即可使用。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: '怎么下载抖音视频到相册？',
+                        a: '在抖音视频页点击“分享”复制链接，粘贴到本页输入框后点击下载，即可将视频保存到手机相册或文件中。',
+                    },
+                    {
+                        q: '抖音视频下载后会有水印吗？',
+                        a: '如果解析结果中提供无水印资源，页面会优先展示无水印下载选项；个别内容可能受平台限制。',
+                    },
+                    {
+                        q: '可以批量下载或下载抖音合集吗？',
+                        a: '支持一次粘贴多条抖音链接进行批次解析；合集和分组内容是否支持整组下载，以页面解析结果为准。',
+                    },
+                    {
+                        q: '抖音链接解析失败怎么办？',
+                        a: '请先确认链接能在浏览器中打开。若仍失败，可能是平台风控、网络环境或内容权限限制，建议换网络或稍后重试。',
                     },
                 ],
             }),
@@ -952,42 +1161,253 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
-        slug: 'bilibili-video-download',
+        slug: 'douyin-mp3-download',
         locales: {
             zh: zh({
-                metaTitle: `Bilibili视频下载（高清/音频）- ${ZH_BRAND}`,
+                metaTitle: `抖音 MP3 下载 - 在线提取视频音频 | ${ZH_BRAND}`,
                 metaDescription:
-                    'Bilibili视频下载：复制链接→粘贴→一键保存。支持高清视频与音频提取（以解析结果为准），免安装在线使用。',
+                    '在线提取抖音视频音频并保存为可用的 MP3/音频资源。粘贴抖音链接即可解析下载，无需安装 App，支持手机和电脑浏览器。',
                 metaKeywords: [
-                    'bilibili视频下载',
-                    'b站视频下载',
-                    'b站下载器',
-                    'bilibili链接解析',
-                    'b站保存视频',
+                    '抖音mp3下载',
+                    '抖音音频下载',
+                    '抖音音频提取',
+                    '抖音转mp3',
+                    '抖音音乐下载',
                 ],
-                h1: 'Bilibili视频下载',
-                lede: '复制Bilibili链接，在线解析并保存视频或音频。',
-                stepsTitle: '如何下载 Bilibili 视频',
+                h1: '抖音音频 / MP3 下载',
+                lede: '复制抖音视频链接后即可在线提取音频，适合保存背景音乐、对白或短视频原声。',
+                stepsTitle: '如何下载抖音音频',
                 steps: [
-                    '在 Bilibili 打开视频，点击“分享”复制链接。',
+                    '在抖音打开视频，点击“分享”复制链接。',
                     '把链接粘贴到下方输入框，点击下载。',
-                    '选择清晰度或音频（如可用）并保存到本地。',
+                    '在解析结果中选择音频或 MP3 选项并保存到本地。',
                 ],
                 featuresTitle: '功能亮点',
                 features: [
-                    '支持高清视频与音频提取（以解析结果为准）。',
-                    '免安装，网页直接用。',
-                    '手机/电脑浏览器均可用。',
+                    '支持从抖音视频中提取可用音频资源。',
+                    '适合保存背景音乐、配音和短视频原声。',
+                    '免安装，网页直接使用，手机和电脑均可访问。',
                 ],
                 faqTitle: '常见问题',
                 faqs: [
                     {
-                        q: '付费/会员视频可以下载吗？',
-                        a: '仅支持公开可访问内容；付费或权限受限内容无法解析。',
+                        q: '抖音视频可以直接提取 MP3 吗？',
+                        a: '如果解析结果中提供音频资源，你可以直接选择音频或 MP3 选项保存到本地。',
                     },
                     {
-                        q: '解析失败怎么办？',
-                        a: '请确认链接可在浏览器正常打开；必要时换网络或稍后重试。',
+                        q: '为什么有些抖音视频没有音频下载选项？',
+                        a: '部分视频的音频资源可能受版权、平台策略或链接类型限制，若未提供音频结果则无法单独提取。',
+                    },
+                    {
+                        q: '手机上也能下载抖音音频吗？',
+                        a: '可以。网页支持手机浏览器访问，复制抖音链接后粘贴到本页即可提取并保存音频。',
+                    },
+                    {
+                        q: '下载的抖音音频格式能选吗？',
+                        a: '格式取决于解析结果和源资源。若有多个可选项，会在下载结果中显示。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `Douyin MP3 Downloader - Extract Audio Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Extract Douyin audio online from public video links. Paste a Douyin URL to download available MP3 or audio options in your browser.',
+                metaKeywords: [
+                    'douyin mp3 downloader',
+                    'download douyin audio',
+                    'douyin to mp3',
+                    'extract douyin sound',
+                ],
+                h1: 'Douyin MP3 and Audio Downloader',
+                lede: 'Paste a Douyin video link to extract available audio in your browser.',
+                stepsTitle: 'How to download Douyin audio',
+                steps: [
+                    'Copy the Douyin video share link.',
+                    'Paste it into the box below and start parsing.',
+                    'Choose the available audio option and save it.',
+                ],
+                featuresTitle: 'Highlights',
+                features: [
+                    'Extract audio from public Douyin videos when available.',
+                    'Good for saving music, voice clips, and source audio.',
+                    'No app install required.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Can I convert Douyin videos to MP3 online?',
+                        a: 'If the source returns audio resources, the page will show an available audio option you can save.',
+                    },
+                    {
+                        q: 'Why do some Douyin videos have no audio option?',
+                        a: 'Audio availability depends on the source response, copyright restrictions, and link type.',
+                    },
+                    {
+                        q: 'Does it work on mobile?',
+                        a: 'Yes. Paste a Douyin link in your mobile browser and save the available audio result.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Douyin',
+                kind: 'audio',
+                contentKey: 'audio',
+                keywords: [
+                    'douyin mp3 downloader',
+                    'download douyin audio',
+                    'douyin to mp3',
+                    'extract douyin sound',
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'douyin-collection-download',
+        locales: {
+            zh: zh({
+                metaTitle: `抖音合集下载 - 批量解析视频合集 | ${ZH_BRAND}`,
+                metaDescription:
+                    '在线下载抖音合集、批次视频和多条分享链接。粘贴一个或多个抖音链接即可统一解析，支持高清视频、音频提取和免安装使用。',
+                metaKeywords: [
+                    '抖音合集下载',
+                    '抖音批量下载',
+                    '抖音批次下载',
+                    '抖音视频批量保存',
+                    '抖音playlist下载',
+                ],
+                h1: '抖音合集 / 批次下载',
+                lede: '支持解析抖音合集链接和多条视频链接，适合批量保存视频素材到手机或电脑。',
+                stepsTitle: '如何下载抖音合集或批量视频',
+                steps: [
+                    '复制抖音合集、分组内容或多条视频分享链接。',
+                    '将一个或多个链接粘贴到下方输入框，点击下载。',
+                    '解析完成后按需保存整组视频、音频或单条文件。',
+                ],
+                featuresTitle: '功能亮点',
+                features: [
+                    '支持抖音合集、批次链接和多视频统一解析。',
+                    '支持高清视频、音频提取与静音模式，具体以解析结果为准。',
+                    '免安装，网页直接使用，手机和电脑浏览器均可访问。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: '抖音可以批量下载多个视频吗？',
+                        a: '可以。你可以一次粘贴多条抖音分享链接进行批量解析，具体数量限制以页面提示为准。',
+                    },
+                    {
+                        q: '抖音合集一定能整组下载吗？',
+                        a: '是否能完整识别合集内容，取决于分享链接结构和平台返回的数据。若支持，页面会直接展示整组下载结果。',
+                    },
+                    {
+                        q: '批量下载时可以同时提取音频吗？',
+                        a: '可以。如解析结果提供音频资源，你可以切换到音频模式后再统一保存。',
+                    },
+                    {
+                        q: '为什么部分抖音链接没有被识别？',
+                        a: '可能是链接失效、内容权限受限，或平台暂时限制了解析。建议确认链接可在浏览器打开，再换网络或稍后重试。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `Douyin Collection Downloader (Batch Video Save) - ${EN_BRAND}`,
+                metaDescription:
+                    'Download Douyin collection links or batch save multiple videos online. Paste one or more Douyin share links to parse them together in your browser.',
+                metaKeywords: [
+                    'douyin collection downloader',
+                    'douyin batch download',
+                    'download douyin playlist',
+                    'save multiple douyin videos',
+                ],
+                h1: 'Douyin Collection and Batch Downloader',
+                lede: 'Paste collection or multiple Douyin links to save videos in one run.',
+                stepsTitle: 'How to batch download Douyin videos',
+                steps: [
+                    'Copy a Douyin collection link or multiple share links.',
+                    'Paste the links into the box below and start parsing.',
+                    'Save the available video or audio files after parsing finishes.',
+                ],
+                featuresTitle: 'Highlights',
+                features: [
+                    'Batch parsing for Douyin links and supported collections.',
+                    'Video, audio-only, and mute options when available.',
+                    'No app install required.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Can I download multiple Douyin videos at once?',
+                        a: 'Yes. Paste multiple Douyin links and the page will parse them together as a batch.',
+                    },
+                    {
+                        q: 'Will every Douyin collection be detected automatically?',
+                        a: 'Not always. Detection depends on the shared link format and the source response returned by Douyin.',
+                    },
+                    {
+                        q: 'Can I extract audio from batch results?',
+                        a: 'If audio resources are available, you can switch to audio mode before saving.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Douyin',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'douyin collection downloader',
+                    'douyin batch download',
+                    'download douyin playlist',
+                    'save multiple douyin videos',
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'bilibili-video-download',
+        locales: {
+            zh: zh({
+                metaTitle: `B站视频下载 - 在线保存哔哩哔哩视频 | ${ZH_BRAND}`,
+                metaDescription:
+                    '在线下载 B站视频，支持普通投稿、部分合集/分P解析与音频提取。复制哔哩哔哩链接后粘贴即可保存高清视频。',
+                metaKeywords: [
+                    'b站视频下载',
+                    '哔哩哔哩视频下载',
+                    'bilibili视频下载',
+                    'b站下载器',
+                    'b站保存视频',
+                    'bilibili链接解析',
+                ],
+                h1: 'B站视频下载',
+                lede: '复制 B站视频链接后即可在线解析下载，支持视频保存与音频提取。',
+                stepsTitle: '如何下载 B站视频',
+                steps: [
+                    '在 Bilibili 打开视频，点击“分享”复制链接。',
+                    '把链接粘贴到下方输入框，点击下载。',
+                    '选择清晰度、分P结果或音频（如可用）并保存到本地。',
+                ],
+                featuresTitle: '功能亮点',
+                features: [
+                    '支持 B站高清视频下载与音频提取，具体以解析结果为准。',
+                    '部分视频支持分P、合集或课程条目识别。',
+                    '免安装，网页直接使用，手机和电脑均可用。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: '怎么下载 B站视频到本地？',
+                        a: '在 B站视频页点击“分享”复制链接，粘贴到本页输入框后点击下载，即可保存视频或音频到本地。',
+                    },
+                    {
+                        q: 'B站分P或合集视频可以下载吗？',
+                        a: '部分分P、合集或课程内容可以识别并展示下载选项，具体以页面解析结果为准。',
+                    },
+                    {
+                        q: '会员或付费视频可以下载吗？',
+                        a: '不可以。仅支持公开可访问内容，付费、会员专享或权限受限的视频无法解析。',
+                    },
+                    {
+                        q: 'B站视频解析失败怎么办？',
+                        a: '请确认链接可在浏览器正常打开；如仍失败，可能是内容权限、地区限制或网络问题，建议稍后重试。',
                     },
                 ],
             }),
@@ -1044,39 +1464,48 @@ export const seoLandingPages: SeoLandingPage[] = [
         slug: 'kuaishou-no-watermark',
         locales: {
             zh: zh({
-                metaTitle: `快手无水印下载（高清/批量）- ${ZH_BRAND}`,
+                metaTitle: `快手视频下载 - 免费无水印在线保存 | ${ZH_BRAND}`,
                 metaDescription:
-                    '快手无水印下载：复制链接→粘贴→一键保存。支持高清画质、批量解析，免安装在线使用。',
+                    '在线下载快手视频，支持无水印保存、批量解析与手机浏览器直接使用。复制快手链接即可快速下载。',
                 metaKeywords: [
-                    '快手无水印下载',
-                    '快手去水印',
                     '快手视频下载',
-                    '快手链接解析',
+                    '快手无水印下载',
                     '快手保存视频',
+                    '快手去水印',
+                    '快手链接解析',
+                    '快手批量下载',
                 ],
-                h1: '快手无水印下载',
-                lede: '在线解析快手链接，快速保存到手机或电脑。',
-                stepsTitle: '快手去水印保存步骤',
+                h1: '快手视频无水印下载',
+                lede: '复制快手视频链接后即可在线解析下载，支持手机与电脑浏览器直接使用。',
+                stepsTitle: '如何下载快手视频',
                 steps: [
                     '在快手打开视频，点击“分享”复制链接。',
                     '粘贴链接到下方输入框，点击下载。',
-                    '选择清晰度（如可用）并保存到本地。',
+                    '选择清晰度或可用下载选项后保存到本地。',
                 ],
                 featuresTitle: '功能亮点',
                 features: [
-                    '无水印/高清下载（以解析结果为准）。',
-                    '支持批量解析多个链接。',
-                    '免安装，网页直接用。',
+                    '支持快手无水印下载，高清画质以解析结果为准。',
+                    '支持批量解析多个快手链接，适合整理素材。',
+                    '免安装，网页直接使用，安卓和 iPhone 都能访问。',
                 ],
                 faqTitle: '常见问题',
                 faqs: [
                     {
-                        q: '快手无水印下载需要登录吗？',
-                        a: '一般无需登录即可解析公开内容；如遇限制可尝试更换链接或稍后重试。',
+                        q: '怎么下载快手视频到手机？',
+                        a: '在快手视频页点击“分享”复制链接，回到本页粘贴后点击下载，即可保存到手机相册或文件。',
                     },
                     {
-                        q: '为什么会解析到水印版本？',
-                        a: '不同视频/账号可能只提供带水印资源；可更换清晰度选项或反馈链接。',
+                        q: '快手视频下载后一定无水印吗？',
+                        a: '如果源站返回无水印资源，页面会优先显示无水印版本；个别内容可能只提供带水印选项。',
+                    },
+                    {
+                        q: '支持批量下载快手视频吗？',
+                        a: '支持一次粘贴多条快手链接进行批量解析，具体数量限制以页面提示为准。',
+                    },
+                    {
+                        q: '快手链接解析失败怎么办？',
+                        a: '请确认复制的是公开可访问的分享链接；若仍失败，可能是平台限制或网络问题，建议稍后重试。',
                     },
                 ],
             }),
@@ -1123,39 +1552,48 @@ export const seoLandingPages: SeoLandingPage[] = [
         slug: 'xiaohongshu-video-download',
         locales: {
             zh: zh({
-                metaTitle: `小红书视频下载（去水印/高清）- ${ZH_BRAND}`,
+                metaTitle: `小红书视频下载 - 在线去水印保存视频 | ${ZH_BRAND}`,
                 metaDescription:
-                    '小红书视频下载：复制分享链接→粘贴→一键保存。支持去水印与高清画质（以解析结果为准），免安装在线使用。',
+                    '使用 FreeSaveVideo 在线下载小红书视频，支持去除站内水印并保存高清视频与原声音频，无需安装软件。',
                 metaKeywords: [
                     '小红书视频下载',
                     '小红书去水印',
                     '小红书保存视频',
+                    '小红书视频保存',
                     '小红书链接解析',
                     'xhs视频下载',
                 ],
                 h1: '小红书视频下载',
-                lede: '复制小红书分享链接，在线解析并保存到本地。',
-                stepsTitle: '小红书视频保存步骤',
+                lede: '复制小红书分享链接后即可在线解析下载，适合保存视频素材到手机或电脑。',
+                stepsTitle: '如何下载小红书视频',
                 steps: [
                     '在小红书打开笔记，点击“分享”复制链接。',
                     '粘贴链接到下方输入框，点击下载。',
-                    '保存视频到本地相册/文件。',
+                    '保存视频到本地相册/文件，并按解析结果选择可用资源。',
                 ],
                 featuresTitle: '功能亮点',
                 features: [
-                    '支持视频链接解析与保存。',
-                    '无需安装 App，网页直接用。',
-                    '支持批量解析多个链接（如可用）。',
+                    '支持小红书视频下载与去水印保存，高清资源以解析结果为准。',
+                    '无需安装 App，网页直接使用，手机和电脑都可访问。',
+                    '支持批量解析多个小红书链接（如可用）。',
                 ],
                 faqTitle: '常见问题',
                 faqs: [
                     {
-                        q: '小红书链接粘贴后没有反应？',
-                        a: '请确认复制的是“分享链接”，且链接可在浏览器打开；若仍失败可换网络或稍后重试。',
+                        q: '怎么下载小红书视频到相册？',
+                        a: '在小红书笔记页点击“分享”复制链接，回到本页粘贴后点击下载，即可将视频保存到相册或文件中。',
                     },
                     {
-                        q: '能下载图文里的图片吗？',
-                        a: '是否支持取决于内容类型与解析结果；粘贴链接后可查看可下载项。',
+                        q: '小红书视频下载后会有水印吗？',
+                        a: '如果解析结果提供去水印资源，页面会优先展示可直接保存的视频版本；个别内容可能受平台限制。',
+                    },
+                    {
+                        q: '能下载小红书图文里的图片吗？',
+                        a: '是否支持取决于内容类型与解析结果；粘贴链接后可以查看当前笔记支持下载的视频或图片资源。',
+                    },
+                    {
+                        q: '小红书链接解析失败怎么办？',
+                        a: '请确认复制的是可公开访问的分享链接，并保证链接能在浏览器打开；如仍失败，建议换网络或稍后重试。',
                     },
                 ],
             }),

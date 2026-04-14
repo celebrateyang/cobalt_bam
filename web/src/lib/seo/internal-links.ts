@@ -28,6 +28,16 @@ const crossLinkEntries: CrossLinkEntry[] = [
         guideSlug: 'tiktok-download-guide',
     },
     {
+        platform: 'TikTok Playlist',
+        downloadSlug: 'tiktok-collection-download',
+        guideSlug: 'tiktok-collection-download-guide',
+    },
+    {
+        platform: 'TikTok MP3',
+        downloadSlug: 'tiktok-mp3-download',
+        guideSlug: 'tiktok-mp3-download-guide',
+    },
+    {
         platform: 'Bilibili',
         downloadSlug: 'bilibili-video-download',
         guideSlug: 'bilibili-download-guide',
@@ -89,11 +99,50 @@ const crossLinkEntries: CrossLinkEntry[] = [
         platform: 'SoundCloud',
         downloadSlug: 'soundcloud-audio-download',
     },
+    {
+        platform: 'Douyin Collection',
+        downloadSlug: 'douyin-collection-download',
+        guideSlug: 'douyin-collection-download-guide',
+    },
+    {
+        platform: 'Douyin MP3',
+        downloadSlug: 'douyin-mp3-download',
+        guideSlug: 'douyin-mp3-download-guide',
+    },
 ];
 
 const entryByDownloadSlug = new Map(
     crossLinkEntries.map((entry) => [entry.downloadSlug, entry]),
 );
+
+const strategicDownloadOrder = [
+    'douyin-no-watermark',
+    'tiktok-no-watermark',
+    'bilibili-video-download',
+    'xiaohongshu-video-download',
+    'kuaishou-no-watermark',
+    'douyin-collection-download',
+    'tiktok-collection-download',
+    'douyin-mp3-download',
+    'tiktok-mp3-download',
+    'instagram-reels-download',
+    'instagram-video-download',
+    'youtube-shorts-download',
+    'facebook-video-download',
+    'twitter-x-video-download',
+    'snapchat-video-download',
+    'pinterest-video-download',
+    'reddit-video-download',
+    'vimeo-video-download',
+    'soundcloud-audio-download',
+] as const;
+
+const strategicDownloadPriority = new Map(
+    strategicDownloadOrder.map((slug, index) => [slug, index]),
+);
+
+const getDownloadPriorityValue = (slug: string) =>
+    strategicDownloadPriority.get(slug) ?? strategicDownloadPriority.size + 100;
 
 export const homePlatformToDownloadSlug: Record<string, string> = Object.fromEntries(
     crossLinkEntries
@@ -113,22 +162,67 @@ export const featuredGuideLinks: FeaturedGuideLink[] = crossLinkEntries
         platform: entry.platform,
     }));
 
+export const getDownloadPriority = (slug: string): number => getDownloadPriorityValue(slug);
+
+export const getGuidePriority = (slug: string): number => {
+    const linkedEntry = crossLinkEntries.find((entry) => entry.guideSlug === slug);
+    return linkedEntry
+        ? getDownloadPriorityValue(linkedEntry.downloadSlug)
+        : strategicDownloadPriority.size + 100;
+};
+
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'tiktok-no-watermark': [
+        'tiktok-collection-download',
+        'tiktok-mp3-download',
         'douyin-no-watermark',
         'kuaishou-no-watermark',
         'xiaohongshu-video-download',
         'instagram-reels-download',
         'youtube-shorts-download',
-        'snapchat-video-download',
+    ],
+    'tiktok-collection-download': [
+        'tiktok-no-watermark',
+        'tiktok-mp3-download',
+        'douyin-collection-download',
+        'douyin-no-watermark',
+        'kuaishou-no-watermark',
+        'instagram-reels-download',
+        'youtube-shorts-download'
+    ],
+    'tiktok-mp3-download': [
+        'tiktok-no-watermark',
+        'tiktok-collection-download',
+        'douyin-mp3-download',
+        'douyin-no-watermark',
+        'soundcloud-audio-download',
+        'youtube-shorts-download',
     ],
     'douyin-no-watermark': [
+        'douyin-collection-download',
+        'douyin-mp3-download',
         'tiktok-no-watermark',
         'kuaishou-no-watermark',
         'bilibili-video-download',
         'xiaohongshu-video-download',
-        'snapchat-video-download',
-        'instagram-reels-download',
+        'instagram-reels-download'
+    ],
+    'douyin-collection-download': [
+        'douyin-no-watermark',
+        'douyin-mp3-download',
+        'tiktok-collection-download',
+        'tiktok-no-watermark',
+        'kuaishou-no-watermark',
+        'bilibili-video-download',
+        'xiaohongshu-video-download',
+    ],
+    'douyin-mp3-download': [
+        'douyin-no-watermark',
+        'douyin-collection-download',
+        'tiktok-mp3-download',
+        'tiktok-no-watermark',
+        'soundcloud-audio-download',
+        'bilibili-video-download',
     ],
     'bilibili-video-download': [
         'douyin-no-watermark',
@@ -246,6 +340,7 @@ const prioritizeDownloads = (
 
     const orderedCandidates = [
         ...(anchorSlug ? topicalRelatedDownloadSlugs[anchorSlug] ?? [] : []),
+        ...strategicDownloadOrder,
         ...featuredDownloadLinks.map((item) => item.slug),
     ];
 
@@ -275,12 +370,15 @@ export const getRelatedDownloadLinks = (
 ): FeaturedDownloadLink[] => prioritizeDownloads(currentDownloadSlug, limit);
 
 export const getHubGuideLinks = (limit = 6): FeaturedGuideLink[] =>
-    featuredGuideLinks.slice(0, limit);
+    [...featuredGuideLinks]
+        .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
+        .slice(0, limit);
 
 export const getRelatedGuideLinks = (
     currentGuideSlug: string,
     limit = 4,
 ): FeaturedGuideLink[] =>
-    featuredGuideLinks
+    [...featuredGuideLinks]
         .filter((item) => item.slug !== currentGuideSlug)
+        .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
         .slice(0, limit);

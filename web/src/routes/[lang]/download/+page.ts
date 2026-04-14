@@ -1,6 +1,7 @@
 ﻿import type { PageLoad } from './$types';
 
 import { guidePages } from '$lib/seo/guide-pages';
+import { getDownloadPriority } from '$lib/seo/internal-links';
 import {
     getSeoLandingLocale,
     getSeoLandingPage,
@@ -30,7 +31,10 @@ export const load: PageLoad = async ({ params }) => {
             };
         })
         .filter(Boolean)
-        .sort((a, b) => a.h1.localeCompare(b.h1, params.lang));
+        .sort((a, b) => {
+            const priorityDiff = getDownloadPriority(a.slug) - getDownloadPriority(b.slug);
+            return priorityDiff !== 0 ? priorityDiff : a.h1.localeCompare(b.h1, params.lang);
+        });
 
     return {
         lang: params.lang,

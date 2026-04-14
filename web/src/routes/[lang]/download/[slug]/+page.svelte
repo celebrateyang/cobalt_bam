@@ -23,6 +23,12 @@
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: downloadIndexUrl = `/${data.lang}/download`;
     $: homeUrl = `/${data.lang}`;
+    $: downloadHubLabel = isZh ? '热门平台视频下载目录' : 'Popular video downloader directory';
+    $: currentGuideLabel = isZh
+        ? `${localeContent.h1}使用指南`
+        : `How to use ${localeContent.h1}`;
+    $: guideHubLabel = isZh ? '热门平台下载指南' : 'Popular download guides';
+    $: faqLabel = isZh ? '视频下载常见问题' : 'Video download FAQ';
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -147,18 +153,18 @@
                     <h3>{isZh ? '核心入口' : 'Core pages'}</h3>
                     <div class="related-links">
                         <a class="related-link related-link--primary" href={downloadIndexUrl}>
-                            {isZh ? '下载目录' : 'Download directory'}
+                            {downloadHubLabel}
                         </a>
                         {#if guideUrl}
                             <a class="related-link" href={guideUrl}>
-                                {isZh ? '查看该平台指南' : 'Read the platform guide'}
+                                {currentGuideLabel}
                             </a>
                         {/if}
                         <a class="related-link" href={guideIndexUrl}>
-                            {isZh ? '浏览全部指南' : 'Browse all guides'}
+                            {guideHubLabel}
                         </a>
                         <a class="related-link" href={faqUrl}>
-                            {isZh ? '打开 FAQ' : 'Open FAQ'}
+                            {faqLabel}
                         </a>
                     </div>
                 </section>

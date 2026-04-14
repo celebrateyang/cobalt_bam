@@ -1,6 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
-    import { getSeoLandingLocale, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
+    import { getGuidePage } from '$lib/seo/guide-pages';
+    import { getSeoLandingLocale, getSeoLandingPage, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
     import { getRelatedDownloadLinks, getRelatedGuideLinks } from '$lib/seo/internal-links';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
@@ -31,6 +32,21 @@
     $: downloadHubUrl = `/${data.lang}/download`;
     $: relatedGuides = getRelatedGuideLinks(data.slug, 4);
     $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 4);
+    $: downloadHubLabel = isZh ? '热门平台视频下载目录' : 'Popular video downloader directory';
+    $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
+    $: guideHubLabel = isZh ? '热门平台下载指南' : 'Popular download guides';
+    $: faqLabel = isZh ? '视频下载常见问题' : 'Video download FAQ';
+    const relatedGuideLabel = (slug: string, platform: string) => {
+        const guide = getGuidePage(slug);
+        const landing = guide ? getSeoLandingPage(guide.landingSlug) : null;
+        const label = landing ? getSeoLandingLocale(landing, data.lang).h1 : platform;
+        return isZh ? `${label}指南` : `How to download ${label}`;
+    };
+    const relatedDownloadLabel = (slug: string, platform: string) => {
+        const landing = getSeoLandingPage(slug);
+        const label = landing ? getSeoLandingLocale(landing, data.lang).h1 : platform;
+        return isZh ? label : label;
+    };
     $: showDouyinTutorialVideo = data.slug === 'douyin-download-guide';
     const douyinTutorialEmbedUrl =
         'https://player.bilibili.com/player.html?bvid=BV1sLB7BSEWu&page=1';
@@ -189,25 +205,25 @@
             <h2>{isZh ? '延伸链接' : 'Related links'}</h2>
             <div class="related-links">
                 <a class="related-link related-link--primary" href={downloadHubUrl}>
-                    Download directory
+                    {downloadHubLabel}
                 </a>
                 <a class="related-link related-link--primary" href={downloadUrl}>
-                    {isZh ? '打开对应下载页' : 'Open downloader page'}
+                    {currentDownloadLabel}
                 </a>
                 <a class="related-link related-link--primary" href={guideIndexUrl}>
-                    {isZh ? '浏览全部下载指南' : 'Browse all guides'}
+                    {guideHubLabel}
                 </a>
                 <a class="related-link related-link--primary" href={faqUrl}>
-                    {isZh ? '查看常见问题' : 'Open FAQ'}
+                    {faqLabel}
                 </a>
                 {#each relatedGuides as guide}
                     <a class="related-link" href={`/${data.lang}/guide/${guide.slug}`}>
-                        {guide.platform} {isZh ? '指南' : 'guide'}
+                        {relatedGuideLabel(guide.slug, guide.platform)}
                     </a>
                 {/each}
                 {#each relatedDownloads as item}
                     <a class="related-link" href={`/${data.lang}/download/${item.slug}`}>
-                        {item.platform} {isZh ? '下载页' : 'download page'}
+                        {relatedDownloadLabel(item.slug, item.platform)}
                     </a>
                 {/each}
             </div>

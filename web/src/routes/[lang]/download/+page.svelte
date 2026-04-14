@@ -78,7 +78,7 @@
         <SupportedServices />
     </div>
 
-    <main class="container" tabindex="-1" data-first-focus>
+    <main class="container" tabindex="-1" data-first-focus data-focus-ring-hidden>
         <section class="hero card">
             <p class="eyebrow">{isZh ? '平台聚合页' : 'Platform index'}</p>
             <h1>{pageTitle}</h1>

@@ -89,7 +89,7 @@
         <SupportedServices />
     </div>
 
-    <main class="container" tabindex="-1" data-first-focus>
+    <main class="container" tabindex="-1" data-first-focus data-focus-ring-hidden>
         <section class="hero">
             <div class="hero-copy">
                 <h1>{localeContent.h1}</h1>

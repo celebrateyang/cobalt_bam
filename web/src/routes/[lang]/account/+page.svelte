@@ -130,7 +130,9 @@
     };
 
     const getRequestedAccountSection = (): AccountSection | null => {
-        const raw = $page.url.searchParams.get("section");
+        if (!browser) return null;
+
+        const raw = new URLSearchParams(window.location.search).get("section");
         if (
             raw === "topup" ||
             raw === "referral" ||

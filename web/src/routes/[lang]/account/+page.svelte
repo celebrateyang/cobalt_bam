@@ -1739,11 +1739,33 @@
     .promotion-form select,
     .promotion-form textarea {
         border-radius: 14px;
-        border: 1px solid var(--surface-2);
-        background: var(--surface-0);
+        border: 1.5px solid var(--input-border);
+        background-color: var(--background);
         color: var(--text);
         padding: 10px 12px;
         width: 100%;
+        font: inherit;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+        transition:
+            border-color 120ms ease,
+            box-shadow 120ms ease,
+            background-color 120ms ease;
+    }
+
+    .promotion-form select:hover,
+    .promotion-form textarea:hover {
+        border-color: var(--muted-strong);
+    }
+
+    .promotion-form select:focus,
+    .promotion-form textarea:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px var(--blue) inset;
+        outline: none;
+    }
+
+    .promotion-form textarea::placeholder {
+        color: var(--subtext);
     }
 
     .promotion-form textarea {

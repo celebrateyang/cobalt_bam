@@ -21,7 +21,7 @@
     "batch.memory.cleared.title": "已清除记忆",
     "batch.memory.cleared.body": "已清除该合集的下载记忆，下次打开会重新显示全部条目。",
     "batch.points_insufficient.title": "积分不足",
-    "batch.points_insufficient.body": "本次下载需要 {{ required }} 积分，但你当前只有 {{ current }} 积分。请先充值再继续。",
+    "batch.points_insufficient.body": "本次下载需要 {{ required }} 积分，但你当前只有 {{ current }} 积分。你可以通过以下方式获得积分。",
     "batch.points_check_failed": "无法验证积分，请稍后重试。",
     "batch.points_preview": "本次下载将扣除 {{ required }} 积分",
     "batch.points_preview.loading": "正在计算积分...",

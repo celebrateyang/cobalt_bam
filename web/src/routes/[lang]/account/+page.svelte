@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, tick } from "svelte";
     import { browser } from "$app/environment";
     import { page } from "$app/stores";
 
@@ -48,6 +48,7 @@
     type PaymentProvider = "wechat" | "polar";
     type PromotionType = "post" | "video";
     type RecordsTab = "promotion" | "feedback";
+    type AccountSection = "topup" | "referral" | "promotion" | "contact";
     type PromotionRecord = {
         id: number;
         promotion_type: string;
@@ -70,6 +71,15 @@
     };
 
     let autoAuthLaunched = false;
+    let topupSectionEl: HTMLElement | null = null;
+    let referralSectionEl: HTMLElement | null = null;
+    let promotionSectionEl: HTMLElement | null = null;
+    let contactSectionEl: HTMLElement | null = null;
+    let contactAccordionOpen = false;
+    let referralAccordionOpen = false;
+    let promotionAccordionOpen = false;
+    let requestedAccountSection: AccountSection | null = null;
+    let lastFocusedSectionKey = "";
 
     onMount(() => {
         if (clerkEnabled) {
@@ -119,6 +129,35 @@
         };
     };
 
+    const getRequestedAccountSection = (): AccountSection | null => {
+        const raw = $page.url.searchParams.get("section");
+        if (
+            raw === "topup" ||
+            raw === "referral" ||
+            raw === "promotion" ||
+            raw === "contact"
+        ) {
+            return raw;
+        }
+        return null;
+    };
+
+    const scrollToRequestedAccountSection = async (section: AccountSection) => {
+        await tick();
+
+        const sectionMap: Record<AccountSection, HTMLElement | null> = {
+            topup: topupSectionEl,
+            referral: referralSectionEl,
+            promotion: promotionSectionEl,
+            contact: contactSectionEl,
+        };
+
+        sectionMap[section]?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+    };
+
     let points: number | null = null;
     let pointsErrorKey = "";
     let pointsLoading = false;
@@ -138,6 +177,33 @@
     let promotionRecords: PromotionRecord[] = [];
     let feedbackRecords: FeedbackRecord[] = [];
     let lastRecordsUserId: string | null = null;
+
+    $: requestedAccountSection = getRequestedAccountSection();
+
+    $: if (requestedAccountSection === "contact") {
+        contactAccordionOpen = true;
+    }
+
+    $: if (requestedAccountSection === "referral") {
+        referralAccordionOpen = true;
+    }
+
+    $: if (requestedAccountSection === "promotion") {
+        promotionAccordionOpen = true;
+    }
+
+    $: {
+        const sectionToFocus = requestedAccountSection;
+        const focusKey =
+            browser && $clerkUser?.id && sectionToFocus
+                ? `${$clerkUser.id}:${sectionToFocus}`
+                : "";
+
+        if (focusKey && focusKey !== lastFocusedSectionKey) {
+            lastFocusedSectionKey = focusKey;
+            void scrollToRequestedAccountSection(sectionToFocus);
+        }
+    }
 
     const fetchPoints = async () => {
         const userId = $clerkUser?.id;
@@ -178,6 +244,10 @@
         points = null;
         referralCode = null;
         lastPointsUserId = null;
+        contactAccordionOpen = false;
+        referralAccordionOpen = false;
+        promotionAccordionOpen = false;
+        lastFocusedSectionKey = "";
         promotionAccessMethod = "";
         promotionSubmitError = "";
         promotionSubmitSuccess = "";
@@ -969,8 +1039,8 @@
                         </div>
                     </section>
 
-                    <section class="card contact-card">
-                        <details class="accordion">
+                    <section class="card contact-card" bind:this={contactSectionEl}>
+                        <details class="accordion" bind:open={contactAccordionOpen}>
                             <summary class="accordion-summary">
                                 <div>
                                     <div class="card-title">{$t("auth.contact_points_title")}</div>
@@ -1024,8 +1094,8 @@
                         </details>
                     </section>
 
-                    <section class="card referral-card">
-                        <details class="accordion">
+                    <section class="card referral-card" bind:this={referralSectionEl}>
+                        <details class="accordion" bind:open={referralAccordionOpen}>
                             <summary class="accordion-summary">
                                 <div>
                                     <div class="card-title">{$t("auth.referral_title")}</div>
@@ -1079,8 +1149,8 @@
                         </details>
                     </section>
 
-                    <section class="card promotion-card">
-                        <details class="accordion">
+                    <section class="card promotion-card" bind:this={promotionSectionEl}>
+                        <details class="accordion" bind:open={promotionAccordionOpen}>
                             <summary class="accordion-summary">
                                 <div>
                                     <div class="card-title">
@@ -1168,7 +1238,7 @@
                         </details>
                     </section>
 
-                    <section class="card topup-card">
+                    <section class="card topup-card" bind:this={topupSectionEl}>
                         <div class="topup-header">
                             <div class="topup-title">
                                 {$t("auth.topup_title")}

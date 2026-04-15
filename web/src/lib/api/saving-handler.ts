@@ -1,5 +1,4 @@
 import { page } from "$app/stores";
-import { goto } from "$app/navigation";
 
 import env from "$lib/env";
 import API from "$lib/api/api";
@@ -18,6 +17,11 @@ import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
 import { finalizePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
+import {
+    fetchCurrentUserPointsProfile,
+    isFirstDownloadGraceEligible,
+    showPointsInsufficientDialog,
+} from "$lib/points/ui";
 import {
     checkSignedIn,
     clerkEnabled,
@@ -41,11 +45,6 @@ type SavingHandlerArgs = {
     },
     suppressErrors?: string[],
 }
-
-const accountPath = () => {
-    const lang = get(page)?.params?.lang || "en";
-    return `/${lang}/account`;
-};
 
 const isPrivateHostname = (hostname: string) => {
     const host = hostname.toLowerCase();
@@ -200,33 +199,6 @@ const guessMimeTypeFromFilename = (filename: string) => {
     }
 };
 
-const showPointsInsufficient = (currentPoints: number, requiredPoints: number) => {
-    createDialog({
-        id: "points-insufficient",
-        type: "small",
-        meowbalt: "error",
-        title: get(t)("dialog.batch.points_insufficient.title"),
-        bodyText: get(t)("dialog.batch.points_insufficient.body", {
-            current: currentPoints,
-            required: requiredPoints,
-        }),
-        buttons: [
-            {
-                text: get(t)("button.cancel"),
-                main: false,
-                action: () => { },
-            },
-            {
-                text: get(t)("button.buy_points"),
-                main: true,
-                action: () => {
-                    void goto(accountPath());
-                },
-            },
-        ],
-    });
-};
-
 const ensureSignedIn = async () => {
     if (get(isSignedIn)) return true;
 
@@ -318,8 +290,19 @@ const estimatePointsForUrl = async (
 };
 
 const confirmPointsPreview = async (url: string) => {
-    const { points, hasEstimate } = await estimatePointsForUrl(url);
+    const [{ points, hasEstimate }, pointsProfile] = await Promise.all([
+        estimatePointsForUrl(url),
+        fetchCurrentUserPointsProfile(),
+    ]);
     const estimatedPoints = typeof points === "number" ? points : null;
+    const currentPoints =
+        typeof pointsProfile?.points === "number" ? pointsProfile.points : null;
+    const gap =
+        estimatedPoints !== null && currentPoints !== null
+            ? Math.max(0, estimatedPoints - currentPoints)
+            : null;
+    const graceEligible =
+        gap !== null && isFirstDownloadGraceEligible(pointsProfile, gap);
 
     // Home page: when points cannot be estimated, skip the extra confirmation
     // and continue with the normal download flow.
@@ -327,14 +310,31 @@ const confirmPointsPreview = async (url: string) => {
         return true;
     }
 
+    let bodyText = get(t)("dialog.points_preview.unknown");
+    if (estimatedPoints !== null && currentPoints !== null && gap !== null) {
+        bodyText = get(t)("dialog.points_preview.balance", {
+            current: currentPoints,
+            required: estimatedPoints,
+            gap,
+        });
+
+        if (graceEligible && gap > 0) {
+            bodyText += `\n${get(t)("dialog.points_preview.first_grace", {
+                required: gap,
+            })}`;
+        }
+    } else if (estimatedPoints !== null) {
+        bodyText = get(t)("dialog.points_preview.body", {
+            required: estimatedPoints,
+        });
+    }
+
     return new Promise<boolean>((resolve) => {
         createDialog({
             id: `points-preview-${Date.now()}`,
             type: "small",
             title: get(t)("dialog.points_preview.title"),
-            bodyText: estimatedPoints !== null
-                ? get(t)("dialog.points_preview.body", { required: estimatedPoints })
-                : get(t)("dialog.points_preview.unknown"),
+            bodyText,
             buttons: [
                 {
                     text: get(t)("button.cancel"),
@@ -425,7 +425,7 @@ export const savingHandler = async ({
             const current = Number(response.error?.context?.current);
             const required = Number(response.error?.context?.required);
             if (Number.isFinite(current) && Number.isFinite(required)) {
-                showPointsInsufficient(current, required);
+                showPointsInsufficientDialog(current, required);
                 return response;
             }
         }

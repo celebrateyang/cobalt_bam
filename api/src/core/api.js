@@ -31,6 +31,7 @@ import { verifyToken } from "@clerk/express";
 import {
     consumeUserPoints,
     createPointsHold,
+    FIRST_DOWNLOAD_GRACE_MAX_POINTS,
     getUserByClerkId,
     upsertUserFromClerk,
 } from "../db/users.js";
@@ -637,6 +638,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         const updated = await consumeUserPoints(
                             pointsUser.id,
                             pointsRequired,
+                            {
+                                allowFirstDownloadGrace: true,
+                                maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+                                markDownloadSuccess: true,
+                            },
                         );
                         if (!updated) {
                             pointsOutcome = "insufficient";
@@ -649,10 +655,14 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             });
                         }
 
-                        pointsOutcome = "consumed";
-                        pointsAfter = updated.points;
+                        const chargeMeta = updated.chargeMeta ?? {};
+                        pointsOutcome = chargeMeta.usedFirstDownloadGrace
+                            ? "consumed_with_grace"
+                            : "consumed";
+                        pointsBefore = chargeMeta.pointsBefore ?? pointsBefore;
+                        pointsAfter = chargeMeta.pointsAfter ?? updated.points;
                         console.log(
-                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=consumed before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} email=${email}`,
+                            `[DOWNLOAD POINTS] request_id=${requestId} url=${normalizedRequest.url} result=${pointsOutcome} before=${pointsBefore} after=${pointsAfter} required=${pointsRequired} charged=${chargeMeta.chargedPoints ?? pointsRequired} grace_points=${chargeMeta.gracePoints ?? 0} email=${email}`,
                         );
                     } catch (error) {
                         console.error("Failed to consume points:", error);

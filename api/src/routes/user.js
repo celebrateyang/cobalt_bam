@@ -1356,6 +1356,7 @@ if (!isClerkApiConfigured) {
                     userId: user.id,
                     holdId,
                     reason: req.body?.reason ?? null,
+                    markDownloadSuccess: true,
                 });
 
                 console.log(

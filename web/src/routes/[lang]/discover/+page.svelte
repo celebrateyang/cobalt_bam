@@ -5,6 +5,7 @@
 
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
+    import { showPointsInsufficientDialog as openPointsInsufficientDialog } from "$lib/points/ui";
     import {
         videos,
         resources,
@@ -767,8 +768,6 @@
         }
     };
 
-    const accountPath = () => `/${locale || "en"}/account`;
-
     const recordGuestView = (videoId: number) => {
         if (guestViewedVideoIds.has(videoId)) return;
         const next = new Set(guestViewedVideoIds);
@@ -827,30 +826,7 @@
     };
 
     const showPointsInsufficientDialog = (currentPoints = 0, requiredPoints = VIEW_POINT_COST) => {
-        createDialog({
-            id: `discover-points-insufficient-${Date.now()}`,
-            type: "small",
-            meowbalt: "error",
-            title: $t("dialog.batch.points_insufficient.title"),
-            bodyText: $t("dialog.batch.points_insufficient.body", {
-                current: currentPoints,
-                required: requiredPoints,
-            }),
-            buttons: [
-                {
-                    text: $t("button.cancel"),
-                    main: false,
-                    action: () => {},
-                },
-                {
-                    text: $t("button.buy_points"),
-                    main: true,
-                    action: () => {
-                        void goto(accountPath());
-                    },
-                },
-            ],
-        });
+        openPointsInsufficientDialog(currentPoints, requiredPoints);
     };
 
     const getViewAccessToken = async (attempts = 4, delayMs = 120) => {

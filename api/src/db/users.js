@@ -9,6 +9,7 @@ import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
+export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 30;
 
 let clipboardPersonalSchemaPromise = null;
 
@@ -84,6 +85,11 @@ export const initUserDatabase = async () => {
             avatar_url TEXT,
             last_seen_at BIGINT,
             points INTEGER NOT NULL DEFAULT 20,
+            download_success_count INTEGER NOT NULL DEFAULT 0,
+            first_download_grace_eligible BOOLEAN NOT NULL DEFAULT true,
+            first_download_grace_used BOOLEAN NOT NULL DEFAULT false,
+            first_download_grace_used_at BIGINT,
+            first_download_grace_extra_points INTEGER NOT NULL DEFAULT 0,
             referral_code TEXT,
             is_disabled BOOLEAN DEFAULT false,
             created_at BIGINT NOT NULL,
@@ -99,6 +105,38 @@ export const initUserDatabase = async () => {
 
     // Migration: ensure default points for new users is correct
     await query(`ALTER TABLE users ALTER COLUMN points SET DEFAULT 20;`);
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS download_success_count INTEGER NOT NULL DEFAULT 0;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS first_download_grace_eligible BOOLEAN NOT NULL DEFAULT false;`,
+    );
+    await query(
+        `ALTER TABLE users ALTER COLUMN first_download_grace_eligible SET DEFAULT true;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS first_download_grace_used BOOLEAN NOT NULL DEFAULT false;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS first_download_grace_used_at BIGINT;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS first_download_grace_extra_points INTEGER NOT NULL DEFAULT 0;`,
+    );
+    await query(
+        `ALTER TABLE users ALTER COLUMN download_success_count SET DEFAULT 0;`,
+    );
+    await query(
+        `ALTER TABLE users ALTER COLUMN first_download_grace_used SET DEFAULT false;`,
+    );
+    await query(
+        `ALTER TABLE users ALTER COLUMN first_download_grace_extra_points SET DEFAULT 0;`,
+    );
 
     // Migration: referral codes (invite links)
     await query(
@@ -881,6 +919,7 @@ export const finalizePointsHold = async ({
     userId,
     holdId,
     reason = null,
+    markDownloadSuccess = false,
 } = {}) => {
     const client = await getClient();
     const now = Date.now();
@@ -957,11 +996,13 @@ export const finalizePointsHold = async ({
             `
             UPDATE users
             SET points = points - $2,
-                updated_at = $3
+                updated_at = $3,
+                download_success_count = COALESCE(download_success_count, 0) +
+                    CASE WHEN $4 THEN 1 ELSE 0 END
             WHERE id = $1
             RETURNING *;
             `,
-            [userId, hold.points, now],
+            [userId, hold.points, now, markDownloadSuccess],
         );
 
         await client.query(
@@ -1065,7 +1106,15 @@ export const releasePointsHold = async ({
     }
 };
 
-export const consumeUserPoints = async (id, points) => {
+export const consumeUserPoints = async (
+    id,
+    points,
+    {
+        allowFirstDownloadGrace = false,
+        maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+        markDownloadSuccess = false,
+    } = {},
+) => {
     const client = await getClient();
     const now = Date.now();
 
@@ -1074,7 +1123,16 @@ export const consumeUserPoints = async (id, points) => {
         await expireUserPointsHolds(client, id, now);
 
         const userRes = await client.query(
-            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            `
+            SELECT
+                points,
+                download_success_count,
+                first_download_grace_eligible,
+                first_download_grace_used
+            FROM users
+            WHERE id = $1
+            FOR UPDATE;
+            `,
             [id],
         );
         if (!userRes.rowCount) {
@@ -1083,27 +1141,83 @@ export const consumeUserPoints = async (id, points) => {
         }
 
         const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
+        const downloadSuccessCount = Number(
+            userRes.rows?.[0]?.download_success_count ?? 0,
+        );
+        const firstDownloadGraceUsed =
+            userRes.rows?.[0]?.first_download_grace_used === true;
+        const firstDownloadGraceEligible =
+            userRes.rows?.[0]?.first_download_grace_eligible === true;
         const heldPoints = await getActiveHoldPoints(client, id, now);
         const available = userPoints - heldPoints;
+        const normalizedMaxGracePoints = Math.max(
+            0,
+            Number(maxGracePoints) || 0,
+        );
+        const gracePoints = Math.max(0, points - available);
+        const useFirstDownloadGrace =
+            allowFirstDownloadGrace &&
+            firstDownloadGraceEligible &&
+            !firstDownloadGraceUsed &&
+            downloadSuccessCount === 0 &&
+            heldPoints <= 0 &&
+            gracePoints > 0 &&
+            gracePoints <= normalizedMaxGracePoints;
 
-        if (!Number.isFinite(available) || available < points) {
+        if (
+            !Number.isFinite(available) ||
+            (available < points && !useFirstDownloadGrace)
+        ) {
             await client.query("ROLLBACK");
             return null;
         }
+
+        const chargedPoints = useFirstDownloadGrace
+            ? Math.max(0, Math.min(points, available))
+            : points;
 
         const result = await client.query(
             `
             UPDATE users
             SET points = points - $2,
-                updated_at = $3
+                updated_at = $3,
+                download_success_count = COALESCE(download_success_count, 0) +
+                    CASE WHEN $4 THEN 1 ELSE 0 END,
+                first_download_grace_used = CASE
+                    WHEN $5 THEN true
+                    ELSE first_download_grace_used
+                END,
+                first_download_grace_used_at = CASE
+                    WHEN $5 THEN $3
+                    ELSE first_download_grace_used_at
+                END,
+                first_download_grace_extra_points = COALESCE(first_download_grace_extra_points, 0) + $6
             WHERE id = $1
             RETURNING *;
             `,
-            [id, points, now],
+            [
+                id,
+                chargedPoints,
+                now,
+                markDownloadSuccess,
+                useFirstDownloadGrace,
+                useFirstDownloadGrace ? gracePoints : 0,
+            ],
         );
 
         await client.query("COMMIT");
-        return result.rows[0] || null;
+
+        const updatedUser = result.rows[0] || null;
+        if (!updatedUser) return null;
+
+        updatedUser.chargeMeta = {
+            chargedPoints,
+            gracePoints: useFirstDownloadGrace ? gracePoints : 0,
+            pointsBefore: userPoints,
+            pointsAfter: updatedUser.points ?? null,
+            usedFirstDownloadGrace: useFirstDownloadGrace,
+        };
+        return updatedUser;
     } catch (error) {
         try {
             await client.query("ROLLBACK");

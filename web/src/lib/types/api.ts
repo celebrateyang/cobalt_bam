@@ -14,6 +14,8 @@ export type CobaltErrorResponse = {
         context?: {
             service?: string,
             limit?: number,
+            current?: number,
+            required?: number,
         }
     },
 };

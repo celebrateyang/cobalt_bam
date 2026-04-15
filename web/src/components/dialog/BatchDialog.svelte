@@ -1,12 +1,12 @@
 <script lang="ts">
     import { page } from "$app/stores";
-    import { goto } from "$app/navigation";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
     import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { clearCollectionMemory } from "$lib/api/collection-memory";
+    import { showPointsInsufficientDialog as openPointsInsufficientDialog } from "$lib/points/ui";
     import { createDialog } from "$lib/state/dialogs";
     import { queue as queueStore } from "$lib/state/task-manager/queue";
     import {
@@ -172,11 +172,6 @@
         totalToRun = 0;
     };
 
-    const accountPath = () => {
-        const lang = $page.params.lang || "en";
-        return `/${lang}/account`;
-    };
-
     const pointsForDuration = (durationSeconds: number | undefined) => {
         if (typeof durationSeconds !== "number" || !Number.isFinite(durationSeconds)) {
             return MIN_POINTS_PER_DOWNLOAD;
@@ -222,32 +217,8 @@
     };
 
     const showPointsInsufficient = (currentPoints: number, requiredPoints: number) => {
-        createDialog({
-            id: "batch-points-insufficient",
-            type: "small",
-            meowbalt: "error",
-            title: $t("dialog.batch.points_insufficient.title"),
-            bodyText: $t("dialog.batch.points_insufficient.body", {
-                current: currentPoints,
-                required: requiredPoints,
-            }),
-            buttons: [
-                {
-                    text: $t("button.cancel"),
-                    main: false,
-                    action: () => {},
-                },
-                {
-                    text: $t("button.buy_points"),
-                    main: true,
-                    action: () => {
-                        close?.();
-                        setTimeout(() => {
-                            void goto(accountPath());
-                        }, 200);
-                    },
-                },
-            ],
+        openPointsInsufficientDialog(currentPoints, requiredPoints, () => {
+            close?.();
         });
     };
 

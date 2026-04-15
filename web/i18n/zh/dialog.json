@@ -69,6 +69,8 @@
     "points_preview": {
         "title": "确认下载",
         "body": "预计扣除 {{ required }} 积分，确认下载吗？",
+        "balance": "你当前有 {{ current }} 积分，本次下载需要 {{ required }} 积分，还差 {{ gap }} 积分。",
+        "first_grace": "这是你的首次下载，系统可自动补差 {{ required }} 积分，本次仍可继续。",
         "unknown": "暂无法预估，按实际扣除。是否继续下载？"
     }
 }

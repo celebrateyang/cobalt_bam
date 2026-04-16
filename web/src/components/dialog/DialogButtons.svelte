@@ -14,12 +14,11 @@
 
 <style>
     .popup-buttons {
-        display: flex;
-        flex-direction: row;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
         width: 100%;
         gap: calc(var(--padding) / 2);
-        overflow: scroll;
-        border-radius: var(--border-radius);
+        overflow: visible;
         min-height: 40px;
     }
 </style>

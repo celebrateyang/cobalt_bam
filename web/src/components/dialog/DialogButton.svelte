@@ -43,6 +43,8 @@
         height: auto;
         min-height: 40px;
         line-height: 1.25;
+        white-space: normal;
+        word-break: break-word;
         transition: 0.2s opacity;
     }
 

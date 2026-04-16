@@ -350,7 +350,8 @@
     .processing-info {
         display: flex;
         flex-direction: column;
-        width: 100%;
+        flex: 1;
+        min-width: 0;
         font-size: 13px;
         gap: 4px;
         font-weight: 500;
@@ -365,11 +366,15 @@
     .file-title {
         display: flex;
         flex-direction: row;
+        min-width: 0;
         gap: 4px;
         line-break: anywhere;
     }
 
     .filename {
+        display: block;
+        flex: 1;
+        min-width: 0;
         overflow: hidden;
         white-space: pre;
         text-overflow: ellipsis;
@@ -423,6 +428,7 @@
     }
 
     .file-actions {
+        flex-shrink: 0;
         gap: 4px;
     }
 

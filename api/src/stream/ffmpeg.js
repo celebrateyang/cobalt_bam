@@ -54,6 +54,31 @@ const getCommand = (args) => {
     return [ffmpeg, args]
 }
 
+const buildInputArgs = (url, streamInfo) => {
+    if (streamInfo?.isHLS) {
+        const args = [
+            '-protocol_whitelist', 'file,http,https,tcp,tls,crypto',
+            '-allowed_extensions', 'ALL',
+        ];
+
+        if (streamInfo?.service === 'cctv') {
+            args.push(
+                '-fflags', '+discardcorrupt',
+                '-err_detect', 'ignore_err',
+            );
+        }
+
+        args.push(
+            '-f', 'hls',
+            '-i', url,
+        );
+
+        return args;
+    }
+
+    return ['-i', url];
+}
+
 const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
     let process;
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
@@ -107,7 +132,7 @@ const remux = async (streamInfo, res) => {
     console.log('[ffmpeg.remux] URLs:', urls);
     console.log('[ffmpeg.remux] URLs length:', urls.length);
 
-    const args = urls.flatMap(url => ['-i', url]);
+    const args = urls.flatMap(url => buildInputArgs(url, streamInfo));
 
     // if the stream type is merge, we expect two URLs
     if (streamInfo.type === 'merge' && urls.length !== 2) {
@@ -135,16 +160,35 @@ const remux = async (streamInfo, res) => {
         );
     }
 
-    args.push(
-        '-c:v', 'copy',
-        ...(streamInfo.type === 'mute' ? ['-an'] : ['-c:a', 'copy'])
-    );
+    const shouldTranscodeCorruptCctv =
+        streamInfo.service === 'cctv' &&
+        streamInfo.isHLS === true &&
+        urls.length === 1;
+
+    if (shouldTranscodeCorruptCctv) {
+        args.push(
+            '-c:v', 'libx264',
+            '-preset', 'veryfast',
+            '-crf', '21',
+            ...(streamInfo.type === 'mute' ? ['-an'] : ['-c:a', 'aac', '-b:a', '192k'])
+        );
+    } else {
+        args.push(
+            '-c:v', 'copy',
+            ...(streamInfo.type === 'mute' ? ['-an'] : ['-c:a', 'copy'])
+        );
+    }
 
     if (format === 'mp4') {
         args.push('-movflags', 'faststart+frag_keyframe+empty_moov');
     }
 
-    if (streamInfo.type !== 'mute' && streamInfo.isHLS && hlsExceptions.has(streamInfo.service)) {
+    if (
+        !shouldTranscodeCorruptCctv &&
+        streamInfo.type !== 'mute' &&
+        streamInfo.isHLS &&
+        hlsExceptions.has(streamInfo.service)
+    ) {
         if (streamInfo.service === 'youtube' && format === 'webm') {
             args.push('-c:a', 'libopus');
         } else {
@@ -166,7 +210,7 @@ const remux = async (streamInfo, res) => {
 
 const convertAudio = async (streamInfo, res) => {
     const args = [
-        '-i', streamInfo.urls,
+        ...buildInputArgs(streamInfo.urls, streamInfo),
         '-vn',
         ...(streamInfo.audioCopy ? ['-c:a', 'copy'] : ['-b:a', `${streamInfo.audioBitrate}k`]),
     ];

@@ -6,6 +6,12 @@ export const testers = {
         pattern.comShortLink?.length <= 16 ||
         pattern.tvId?.length <= 24,
 
+    "cctv": pattern =>
+        pattern.year?.length === 4 &&
+        pattern.month?.length <= 2 &&
+        pattern.day?.length <= 2 &&
+        pattern.id?.length <= 48,
+
     "bsky": pattern =>
         pattern.user?.length <= 128 && pattern.post?.length <= 128,
 

@@ -1,7 +1,7 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube"]);
+export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv"]);
 
 export const services = {
     bilibili: {
@@ -14,6 +14,12 @@ export const services = {
             "_tv/video/:tvId"
         ],
         subdomains: ["m"],
+    },
+    cctv: {
+        patterns: [
+            ":year/:month/:day/:id.shtml",
+        ],
+        subdomains: ["tv"],
     },
     bsky: {
         patterns: [

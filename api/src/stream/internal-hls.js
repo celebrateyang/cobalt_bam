@@ -1,6 +1,8 @@
 import HLS from "hls-parser";
-import { createInternalStream } from "./manage.js";
+import { createInternalStream, createStream } from "./manage.js";
 import { request } from "undici";
+
+const CCTV_SEGMENT_TTL_SEC = 60 * 60;
 
 function getURL(url) {
     try {
@@ -23,7 +25,24 @@ function transformObject(streamInfo, hlsObject) {
     }
 
     if (fullUrl.hostname !== '127.0.0.1') {
-        hlsObject.uri = createInternalStream(fullUrl.toString(), streamInfo);
+        const isNestedHls = /\.m3u8(?:$|\?)/i.test(fullUrl.pathname + fullUrl.search);
+        if (streamInfo.service === "cctv") {
+            hlsObject.uri = createStream({
+                type: "proxy",
+                url: fullUrl.toString(),
+                service: streamInfo.service,
+                headers: streamInfo.headers instanceof Map
+                    ? Object.fromEntries(streamInfo.headers)
+                    : streamInfo.headers,
+                requestIP: streamInfo.requestIP,
+                isHLS: isNestedHls,
+                bypassTunnelRateLimit: true,
+                lifespanSec: CCTV_SEGMENT_TTL_SEC,
+                filename: isNestedHls ? "playlist.m3u8" : "segment.ts",
+            });
+        } else {
+            hlsObject.uri = createInternalStream(fullUrl.toString(), streamInfo);
+        }
 
         if (hlsObject.map) {
             hlsObject.map = transformObject(streamInfo, hlsObject.map);

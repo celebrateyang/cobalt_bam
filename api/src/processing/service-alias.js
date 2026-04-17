@@ -1,4 +1,5 @@
 const friendlyNames = {
+    cctv: "CCTV",
     bsky: "bluesky",
     twitch: "twitch clips",
     douyin: "Douyin",

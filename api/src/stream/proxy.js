@@ -74,14 +74,19 @@ const getRouteInfo = (rawUrl) => {
     }
 };
 
+const shouldStripRangeForHls = (streamInfo) => {
+    return streamInfo?.isHLS === true;
+};
+
 export default async function (streamInfo, res) {
     const shouldFastFailBilibili = shouldApplyBilibiliFastFail(streamInfo);
     const abortController = new AbortController();
     const startedAt = Date.now();
     const routeInfo = getRouteInfo(streamInfo.urls);
     const tunnelId = streamInfo.tunnelId || "unknown";
-    const rangeHeader = streamInfo.range || "none";
-    const requestedRangeSpanBytes = parseRangeSpanBytes(streamInfo.range);
+    const upstreamRange = shouldStripRangeForHls(streamInfo) ? undefined : streamInfo.range;
+    const rangeHeader = upstreamRange || "none";
+    const requestedRangeSpanBytes = parseRangeSpanBytes(upstreamRange);
     let upstreamStatusCode;
     let upstreamContentLength;
     let upstreamContentRange;
@@ -162,7 +167,7 @@ export default async function (streamInfo, res) {
             headers: {
                 ...getHeaders(streamInfo.service),
                 ...(streamInfo.headers || {}),
-                Range: streamInfo.range
+                Range: upstreamRange
             },
             signal: abortController.signal,
             maxRedirections: 16,
@@ -187,7 +192,7 @@ export default async function (streamInfo, res) {
             }
         }
 
-        const requestedRange = typeof streamInfo.range === "string" && streamInfo.range.length > 0;
+        const requestedRange = typeof upstreamRange === "string" && upstreamRange.length > 0;
         if (requestedRange && statusCode !== 206 && statusCode !== 416) {
             console.warn(
                 `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=range_status_mismatch requested_range=${rangeHeader} upstream_status=${statusCode} upstream_content_range=${upstreamContentRange ?? "none"} upstream_len=${upstreamContentLength ?? "n/a"} route=${routeInfo.route}`,

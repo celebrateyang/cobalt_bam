@@ -54,6 +54,13 @@ const pickRandomCandidateUrl = (primaryUrl, rawCandidates) => {
 };
 
 export function createStream(obj) {
+    const lifespanSec =
+        typeof obj?.lifespanSec === "number" &&
+        Number.isFinite(obj.lifespanSec) &&
+        obj.lifespanSec > 0
+            ? Math.max(1, Math.round(obj.lifespanSec))
+            : env.streamLifespan;
+
     const normalizedCandidates =
         typeof obj.url === "string"
             ? normalizeUrlCandidateList(obj.url, obj.urlCandidates)
@@ -62,7 +69,7 @@ export function createStream(obj) {
     const streamID = nanoid(),
         iv = randomBytes(16).toString('base64url'),
         secret = randomBytes(32).toString('base64url'),
-        exp = new Date().getTime() + env.streamLifespan * 1000,
+        exp = new Date().getTime() + lifespanSec * 1000,
         hmac = hashHmac(`${streamID},${exp},${iv},${secret}`, 'stream').toString('base64url'),
         streamData = {
             exp: exp,
@@ -81,6 +88,7 @@ export function createStream(obj) {
             audioFormat: obj.audioFormat,
 
             isHLS: obj.isHLS || false,
+            bypassTunnelRateLimit: obj.bypassTunnelRateLimit === true,
             originalRequest: obj.originalRequest,
             urlCandidates: normalizedCandidates.length > 1 ? normalizedCandidates : undefined,
 
@@ -94,7 +102,7 @@ export function createStream(obj) {
     streamCache.set(
         streamID,
         encryptStream(streamData, iv, secret),
-        env.streamLifespan
+        lifespanSec
     );
 
     let streamLink = new URL('/tunnel', env.apiURL);
@@ -445,6 +453,7 @@ function wrapStream(streamInfo) {
                 url: url,
                 urlCandidates: streamInfo.urlCandidates,
                 service: streamInfo.service,
+                isHLS: streamInfo.isHLS,
                 filename: streamInfo.filename,
                 headers: streamInfo.headers,
                 requestIP: streamInfo.requestIP,
@@ -468,6 +477,7 @@ function wrapStream(streamInfo) {
                     url: singleUrl,
                     urlCandidates: tunnelUrlCandidates,
                     service: streamInfo.service,
+                    isHLS: streamInfo.isHLS,
                     filename: streamInfo.filename,
                     headers: streamInfo.headers,
                     requestIP: streamInfo.requestIP,

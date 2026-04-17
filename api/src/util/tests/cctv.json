@@ -1,0 +1,11 @@
+[
+    {
+        "name": "tv.cctv.com vod page",
+        "url": "https://tv.cctv.com/2026/04/16/VIDEnJtM9YImth9DiCjlUzBC260416.shtml?spm=C28340.PdNvWY0LYxCP.EEFvxiFXcLF9.7",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    }
+]

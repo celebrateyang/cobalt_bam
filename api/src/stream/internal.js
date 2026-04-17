@@ -45,6 +45,11 @@ const parseRangeSpanBytes = (rangeHeader) => {
     return end - start + 1;
 };
 
+const shouldStripRangeForHls = (streamInfo) => {
+    if (streamInfo?.isHLS !== true) return false;
+    return /\.m3u8(?:$|\?)/i.test(String(streamInfo.url || ""));
+};
+
 const parseBigIntHeaderValue = (value) => {
     if (value === undefined || value === null) return 0n;
     const normalized = String(value).trim();
@@ -506,6 +511,10 @@ async function handleGenericStream(streamInfo, res) {
     const maxAttempts = baseAttempts + Math.max(0, candidateUrls.length - 1);
 
     const rawHeaders = Object.fromEntries(streamInfo.headers || []);
+    if (shouldStripRangeForHls(streamInfo)) {
+        delete rawHeaders.range;
+        delete rawHeaders.Range;
+    }
     const rangeHeader = String(rawHeaders.range || rawHeaders.Range || "none");
     const requestedRange = rangeHeader !== "none";
     const requestedSpan = parseRangeSpanBytes(rangeHeader);

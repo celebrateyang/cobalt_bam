@@ -793,7 +793,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
     });
 
-    app.get('/tunnel', apiTunnelLimiter, async (req, res) => {
+    app.get('/tunnel', async (req, res) => {
         const id = String(req.query.id);
         const exp = String(req.query.exp);
         const sig = String(req.query.sig);
@@ -815,6 +815,22 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         const streamInfo = await verifyStream(id, sig, exp, sec, iv);
         if (!streamInfo?.service) {
             return res.status(streamInfo.status).end();
+        }
+
+        if (streamInfo.bypassTunnelRateLimit !== true) {
+            const passed = await new Promise((resolve) => {
+                apiTunnelLimiter(req, res, (error) => {
+                    if (error) {
+                        resolve(false);
+                        return;
+                    }
+                    resolve(true);
+                });
+            });
+
+            if (!passed || res.headersSent) {
+                return;
+            }
         }
 
         streamInfo.tunnelId = id;

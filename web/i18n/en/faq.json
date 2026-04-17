@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "What is FreeSaveVideo?",
-            "a": "FreeSaveVideo is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook, and more."
+            "a": "FreeSaveVideo is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, CCTV, Instagram, X(Twitter), Facebook, and more."
         },
         "how_to_use": {
             "q": "How do I download a video (watermark-free)?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Which platforms and link types are supported?",
-            "a": "This site covers 100+ services. Common ones include Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), and Facebook.\nAvailable quality, audio, and extra files depend on the platform and the original post."
+            "a": "This site covers 100+ services. Common ones include Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, CCTV, Instagram, X(Twitter), and Facebook.\nAvailable quality, audio, and extra files depend on the platform and the original post."
         },
         "youtube_supported": {
             "q": "Does it support YouTube downloads?",

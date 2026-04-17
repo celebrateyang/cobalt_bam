@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo 是什么？",
-            "a": "FreeSaveVideo 是一款在线媒体下载工具。\n复制分享链接，粘贴即可解析并下载视频/音频。\n支持抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 等平台。"
+            "a": "FreeSaveVideo 是一款在线媒体下载工具。\n复制分享链接，粘贴即可解析并下载视频/音频。\n支持抖音/TikTok、B站、快手、小红书、CCTV、Instagram、X(Twitter)、Facebook 等平台。"
         },
         "how_to_use": {
             "q": "如何下载视频（无水印）？",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "支持哪些平台/链接类型？",
-            "a": "覆盖 100+ 站点，常见包括：抖音/TikTok、B站、快手、小红书、Instagram、X(Twitter)、Facebook 等。\n不同平台支持的清晰度/音频/封面等可能不同；以解析结果为准。"
+            "a": "覆盖 100+ 站点，常见包括：抖音/TikTok、B站、快手、小红书、CCTV、Instagram、X(Twitter)、Facebook 等。\n不同平台支持的清晰度/音频/封面等可能不同；以解析结果为准。"
         },
         "youtube_supported": {
             "q": "支持 YouTube 下载吗？",

@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
-        "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
+        "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Xiaohongshu, CCTV, YouTube, Instagram, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Supports domestic and international versions of TikTok/Douyin. One-click watermark removal, keeping HD audio and video."
@@ -89,7 +89,7 @@
     "hero": {
         "eyebrow": "Online video downloader",
         "title": "Download Videos Online Without Watermarks",
-        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube, and more to download HD videos in a few clicks.",
+        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Xiaohongshu, CCTV, Instagram, Facebook, YouTube, and more to download HD videos in a few clicks.",
         "trust": "Batch downloads, collection / playlist parsing, audio-only mode, and mute mode are built in for supported services."
     },
     "tools": {

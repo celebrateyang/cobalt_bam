@@ -70,6 +70,7 @@
         "title": "Confirm download",
         "body": "Estimated {{ required }} points will be deducted. Continue?",
         "balance": "You have {{ current }} points. This download needs {{ required }} points. Gap: {{ gap }}.",
+        "balance_enough": "You have {{ current }} points. This download needs {{ required }} points.",
         "first_grace": "Your first download can use an automatic grace cover for the missing {{ required }} points, so you can continue.",
         "unknown": "Unable to estimate points; actual deduction applies. Continue?"
     }

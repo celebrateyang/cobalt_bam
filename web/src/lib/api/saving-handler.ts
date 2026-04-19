@@ -312,11 +312,16 @@ const confirmPointsPreview = async (url: string) => {
 
     let bodyText = get(t)("dialog.points_preview.unknown");
     if (estimatedPoints !== null && currentPoints !== null && gap !== null) {
-        bodyText = get(t)("dialog.points_preview.balance", {
-            current: currentPoints,
-            required: estimatedPoints,
-            gap,
-        });
+        bodyText = get(t)(
+            gap > 0
+                ? "dialog.points_preview.balance"
+                : "dialog.points_preview.balance_enough",
+            {
+                current: currentPoints,
+                required: estimatedPoints,
+                gap,
+            }
+        );
 
         if (graceEligible && gap > 0) {
             bodyText += `\n${get(t)("dialog.points_preview.first_grace", {

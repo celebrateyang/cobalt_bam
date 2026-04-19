@@ -46,8 +46,8 @@
     "api.youtube.decipher": "YouTube가 해독 알고리즘을 업데이트하여 동영상에 대한 정보를 추출할 수 없습니다.\n\n몇 초 후에 다시 시도하되, 문제가 계속되면 지원을 요청하세요.",
     "api.youtube.login": "YouTube가 저를 봇으로 분류했기 때문에 이 동영상을 가져올 수 없습니다. 이는 처리 인스턴스에 활성 계정 토큰이 없기 때문일 수 있습니다. 몇 초 후에 다시 시도하되, 여전히 작동하지 않으면 이 오류에 대해 인스턴스 소유자에게 알리세요!",
     "api.youtube.token_expired": "YouTube 토큰이 만료되어 새로 고칠 수 없었기 때문에 이 동영상을 가져올 수 없습니다. 몇 초 후에 다시 시도하되, 여전히 작동하지 않으면 이 오류에 대해 인스턴스 소유자에게 알리세요!",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "다운로드 대기열을 시작하지 못했습니다",
+    "queue.refresh_required": "이 문제는 보통 프론트엔드 업데이트 후 오래된 캐시가 남아 있을 때 발생합니다. 페이지를 새로고침(Ctrl+F5)한 뒤 다시 시도해 주세요.",
+    "queue.generic_error": "다운로드 워커를 시작하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
+    "queue.worker_didnt_start": "다운로드 워커가 제시간에 시작되지 않았습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요."
 }

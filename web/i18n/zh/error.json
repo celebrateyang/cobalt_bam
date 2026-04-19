@@ -57,8 +57,8 @@
     "queue.ffmpeg.no_input_format": "无法确定输入格式。",
     "queue.ffmpeg.no_audio_channel": "视频没有音频通道。",
     "queue.ffmpeg.no_input_type": "输入文件没有类型。",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "下载队列启动失败",
+    "queue.refresh_required": "这通常发生在前端更新后浏览器仍使用旧缓存时。请刷新页面（Ctrl+F5）后再试。",
+    "queue.generic_error": "下载工作进程启动失败。请刷新页面后重试。",
+    "queue.worker_didnt_start": "下载工作进程未能及时启动。请刷新页面后重试。"
 }

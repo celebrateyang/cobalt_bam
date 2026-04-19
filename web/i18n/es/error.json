@@ -46,8 +46,8 @@
     "api.youtube.decipher": "youtube actualizó su algoritmo de descifrado y no pude extraer la información sobre el video.\n\nintenta de nuevo en unos segundos, pero si el problema persiste, contáctanos para soporte.",
     "api.youtube.login": "no pude obtener este video porque youtube me etiquetó como bot. esto es potencialmente causado por la instancia de procesamiento que no tiene tokens de cuenta activos. intenta de nuevo en unos segundos, pero si aún no funciona, ¡dile al propietario de la instancia sobre este error!",
     "api.youtube.token_expired": "no pude obtener este video porque el token de youtube expiró y no pude renovarlo. intenta de nuevo en unos segundos, pero si aún no funciona, ¡dile al propietario de la instancia sobre este error!",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "No se pudo iniciar la cola de descarga",
+    "queue.refresh_required": "Esto suele ocurrir después de una actualización del frontend con caché desactualizada. Recarga la página (Ctrl+F5) e inténtalo de nuevo.",
+    "queue.generic_error": "No se pudo iniciar el proceso de descarga. Recarga la página e inténtalo de nuevo.",
+    "queue.worker_didnt_start": "El proceso de descarga no se inició a tiempo. Recarga la página e inténtalo de nuevo."
 }

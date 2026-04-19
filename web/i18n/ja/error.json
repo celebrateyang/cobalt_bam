@@ -46,8 +46,8 @@
     "api.youtube.decipher": "YouTubeがデシファーアルゴリズムを更新したため、動画に関する情報を抽出できませんでした。\n\n数秒後にもう一度試してください。問題が解決しない場合は、サポートにお問い合わせください。",
     "api.youtube.login": "YouTubeが私をボットとしてラベル付けしたため、この動画を取得できませんでした。これは、処理インスタンスにアクティブなアカウントトークンがないことが原因である可能性があります。数秒後にもう一度試してください。まだ機能しない場合は、このエラーについてインスタンスの所有者に伝えてください！",
     "api.youtube.token_expired": "YouTubeトークンの期限が切れ、更新できなかったため、この動画を取得できませんでした。数秒後にもう一度試してください。まだ機能しない場合は、このエラーについてインスタンスの所有者に伝えてください！",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "ダウンロードキューの起動に失敗しました",
+    "queue.refresh_required": "これは通常、フロントエンド更新後に古いキャッシュが残っているときに発生します。ページを再読み込み（Ctrl+F5）して、もう一度お試しください。",
+    "queue.generic_error": "ダウンロードワーカーの起動に失敗しました。ページを再読み込みして、もう一度お試しください。",
+    "queue.worker_didnt_start": "ダウンロードワーカーが時間内に起動しませんでした。ページを再読み込みして、もう一度お試しください。"
 }

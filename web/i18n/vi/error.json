@@ -46,8 +46,8 @@
     "api.youtube.decipher": "youtube đã cập nhật thuật toán giải mã của nó và tôi không thể trích xuất thông tin về video.\n\nthử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, liên hệ chúng tôi để được hỗ trợ.",
     "api.youtube.login": "không thể lấy video này vì youtube đã gắn nhãn tôi là bot. điều này có thể do phiên bản xử lý không có token tài khoản hoạt động nào. thử lại sau vài giây, nhưng nếu vẫn không hoạt động, hãy cho chủ sở hữu phiên bản biết về lỗi này!",
     "api.youtube.token_expired": "không thể lấy video này vì token youtube đã hết hạn và tôi không thể làm mới nó. thử lại sau vài giây, nhưng nếu vẫn không hoạt động, hãy cho chủ sở hữu phiên bản biết về lỗi này!",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "không thể khởi động hàng đợi tải xuống",
+    "queue.refresh_required": "lỗi này thường xảy ra sau khi giao diện được cập nhật nhưng trình duyệt vẫn dùng bộ nhớ đệm cũ. hãy làm mới trang (Ctrl+F5) rồi thử lại.",
+    "queue.generic_error": "không thể khởi động tiến trình tải xuống. hãy làm mới trang rồi thử lại.",
+    "queue.worker_didnt_start": "tiến trình tải xuống không khởi động kịp thời. hãy làm mới trang rồi thử lại."
 }

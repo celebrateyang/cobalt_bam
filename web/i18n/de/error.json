@@ -46,8 +46,8 @@
     "api.youtube.decipher": "YouTube hat seinen Entschlüsselungsalgorithmus aktualisiert und ich konnte die Informationen über das Video nicht extrahieren.\n\nVersuchen Sie es in ein paar Sekunden erneut, aber wenn das Problem anhält, kontaktieren Sie uns für Support.",
     "api.youtube.login": "Dieses Video konnte nicht abgerufen werden, da YouTube mich als Bot markiert hat. Dies wird möglicherweise dadurch verursacht, dass die Verarbeitungsinstanz keine aktiven Konto-Token hat. Versuchen Sie es in ein paar Sekunden erneut, aber wenn es immer noch nicht funktioniert, informieren Sie den Instanzbesitzer über diesen Fehler!",
     "api.youtube.token_expired": "Dieses Video konnte nicht abgerufen werden, da das YouTube-Token abgelaufen ist und ich es nicht erneuern konnte. Versuchen Sie es in ein paar Sekunden erneut, aber wenn es immer noch nicht funktioniert, informieren Sie den Instanzbesitzer über diesen Fehler!",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "Download-Warteschlange konnte nicht gestartet werden",
+    "queue.refresh_required": "Das passiert meist nach einem Frontend-Update mit veraltetem Cache. Aktualisiere die Seite (Strg+F5) und versuche es erneut.",
+    "queue.generic_error": "Der Download-Worker konnte nicht gestartet werden. Aktualisiere die Seite und versuche es erneut.",
+    "queue.worker_didnt_start": "Der Download-Worker konnte nicht rechtzeitig gestartet werden. Aktualisiere die Seite und versuche es erneut."
 }

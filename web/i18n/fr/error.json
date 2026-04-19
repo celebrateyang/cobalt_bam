@@ -46,8 +46,8 @@
     "api.youtube.decipher": "youtube a mis à jour son algorithme de déchiffrement et je n'ai pas pu extraire les informations sur la vidéo.\n\nréessayez dans quelques secondes, mais si le problème persiste, contactez-nous pour obtenir de l'aide.",
     "api.youtube.login": "impossible d'obtenir cette vidéo car youtube m'a étiqueté comme un robot. cela est potentiellement causé par l'instance de traitement n'ayant pas de jetons de compte actifs. réessayez dans quelques secondes, mais si cela ne fonctionne toujours pas, informez le propriétaire de l'instance de cette erreur !",
     "api.youtube.token_expired": "impossible d'obtenir cette vidéo car le jeton youtube a expiré et je n'ai pas pu le rafraîchir. réessayez dans quelques secondes, mais si cela ne fonctionne toujours pas, informez le propriétaire de l'instance de cette erreur !",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "la file de téléchargement n'a pas pu démarrer",
+    "queue.refresh_required": "cela se produit généralement après une mise à jour du frontend avec un cache obsolète. rafraîchissez la page (Ctrl+F5) et réessayez.",
+    "queue.generic_error": "le processus de téléchargement n'a pas pu démarrer. rafraîchissez la page et réessayez.",
+    "queue.worker_didnt_start": "le processus de téléchargement n'a pas démarré à temps. rafraîchissez la page et réessayez."
 }

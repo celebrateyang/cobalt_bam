@@ -39,8 +39,8 @@
     "api.youtube.decipher": "YouTube อัปเดตอัลกอริทึมถอดรหัสของพวกเขา และฉันไม่สามารถดึงข้อมูลเกี่ยวกับวิดีโอได้\n\nลองใหม่อีกครั้งในไม่กี่วินาที แต่หากปัญหายังคงอยู่ โปรดติดต่อเราสำหรับการสนับสนุน",
     "api.youtube.login": "ไม่สามารถรับวิดีโอนี้ได้เนื่องจาก YouTube ระบุว่าฉันเป็นบอท ซึ่งอาจเกิดจากอินสแตนซ์การประมวลผลที่ไม่มีโทเค็นบัญชีที่ใช้งานอยู่ ลองใหม่อีกครั้งในไม่กี่วินาที แต่หากยังไม่ได้ผล โปรดแจ้งเจ้าของอินสแตนซ์เกี่ยวกับข้อผิดพลาดนี้!",
     "api.youtube.token_expired": "ไม่สามารถรับวิดีโอนี้ได้เนื่องจากโทเค็น YouTube หมดอายุและฉันไม่สามารถรีเฟรชมันได้ ลองใหม่อีกครั้งในไม่กี่วินาที แต่หากยังไม่ได้ผล โปรดแจ้งเจ้าของอินสแตนซ์เกี่ยวกับข้อผิดพลาดนี้!",
-    "queue.refresh_required_title": "download queue failed to start",
-    "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
-    "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.refresh_required_title": "ไม่สามารถเริ่มคิวดาวน์โหลดได้",
+    "queue.refresh_required": "ปัญหานี้มักเกิดขึ้นหลังจากมีการอัปเดตฟรอนต์เอนด์แต่เบราว์เซอร์ยังใช้แคชเก่าอยู่ โปรดรีเฟรชหน้า (Ctrl+F5) แล้วลองใหม่อีกครั้ง",
+    "queue.generic_error": "ไม่สามารถเริ่มตัวประมวลผลการดาวน์โหลดได้ โปรดรีเฟรชหน้าแล้วลองใหม่อีกครั้ง",
+    "queue.worker_didnt_start": "ตัวประมวลผลการดาวน์โหลดไม่เริ่มทำงานภายในเวลาที่กำหนด โปรดรีเฟรชหน้าแล้วลองใหม่อีกครั้ง"
 }

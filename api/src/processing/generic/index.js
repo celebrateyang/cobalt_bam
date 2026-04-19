@@ -3,13 +3,35 @@ import { env } from "../../config.js";
 import htmlProbe from "./html-probe.js";
 import extractWithYtDlp from "./yt-dlp.js";
 
+const normalizeInputUrl = (value) => {
+    if (value instanceof URL) {
+        return value.toString();
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed || "";
+    }
+
+    if (value == null) {
+        return "";
+    }
+
+    try {
+        return String(value).trim();
+    } catch {
+        return "";
+    }
+};
+
 export const canAttemptGenericURL = (value) => {
-    if (typeof value !== "string" || !value.trim()) {
+    const normalized = normalizeInputUrl(value);
+    if (!normalized) {
         return false;
     }
 
     try {
-        const parsed = new URL(value);
+        const parsed = new URL(normalized);
         return ["http:", "https:"].includes(parsed.protocol);
     } catch {
         return false;
@@ -18,7 +40,7 @@ export const canAttemptGenericURL = (value) => {
 
 export const getGenericServiceHost = (value) => {
     try {
-        return new URL(value).hostname;
+        return new URL(normalizeInputUrl(value)).hostname;
     } catch {
         return "generic";
     }
@@ -29,7 +51,7 @@ const shouldTryHtmlProbe = (request) => {
 };
 
 export default async function extractGeneric(request) {
-    const url = String(request?.url || "");
+    const url = normalizeInputUrl(request?.url);
     if (!canAttemptGenericURL(url)) {
         return { error: "link.invalid" };
     }

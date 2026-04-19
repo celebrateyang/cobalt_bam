@@ -1,10 +1,48 @@
 import { resolveRedirectingURL } from "../url.js";
 import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
+import extractGeneric from "../generic/index.js";
 
 const https = (url) => {
     return url.replace(/^http:/i, 'https:');
 }
+
+const canonicalNoteUrl = (noteId, xsecToken) => {
+    return `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(xsecToken)}`;
+};
+
+const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly }) => {
+    if (!noteId || !xsecToken) return null;
+
+    const fallback = await extractGeneric({
+        url: canonicalNoteUrl(noteId, xsecToken),
+        videoQuality: "1080",
+        audioFormat: "mp3",
+        audioBitrate: "128",
+        downloadMode: isAudioOnly ? "audio" : "auto",
+        filenameStyle: "basic",
+        disableMetadata: false,
+        convertGif: true,
+        alwaysProxy: true,
+        localProcessing: "disabled",
+        batch: false,
+    }).catch(() => null);
+
+    if (!fallback || fallback.error) {
+        return null;
+    }
+
+    return {
+        ...fallback,
+        service: "xiaohongshu",
+        filenameAttributes: fallback.filenameAttributes
+            ? {
+                ...fallback.filenameAttributes,
+                service: "xiaohongshu",
+            }
+            : fallback.filenameAttributes,
+    };
+};
 
 export default async function ({ id, token, shareType, shareId, h265, isAudioOnly, dispatcher }) {
     let noteId = id;
@@ -22,7 +60,8 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
 
     if (!noteId || !xsecToken) return { error: "fetch.short_link" };
 
-    const res = await fetch(`https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${xsecToken}`, {
+    const noteUrl = canonicalNoteUrl(noteId, xsecToken);
+    const res = await fetch(noteUrl, {
         headers: {
             "user-agent": genericUserAgent,
         },
@@ -30,6 +69,14 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     });
 
     const html = await res.text();
+    const redirectedToUnavailable = (() => {
+        try {
+            const finalUrl = new URL(res.url || noteUrl);
+            return finalUrl.pathname === "/404";
+        } catch {
+            return false;
+        }
+    })();
 
     let note;
     try {
@@ -44,12 +91,21 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
         if (!noteInfo) throw "no note detail map";
 
         const currentNote = noteInfo[noteId];
-        if (!currentNote) throw "no current note in detail map";
+        if (!currentNote) {
+            if (redirectedToUnavailable) {
+                return { error: "content.post.unavailable" };
+            }
+            throw "no current note in detail map";
+        }
 
         note = currentNote.note;
     } catch {}
 
-    if (!note) return { error: "fetch.empty" };
+    if (!note) {
+        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+        if (fallback) return fallback;
+        return { error: redirectedToUnavailable ? "content.post.unavailable" : "fetch.empty" };
+    }
 
     const video = note.video;
     const images = note.imageList;
@@ -72,7 +128,11 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
             }
         }
 
-        if (!videoURL) return { error: "fetch.empty" };
+        if (!videoURL) {
+            const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+            if (fallback) return fallback;
+            return { error: "fetch.empty" };
+        }
 
         return {
             urls: https(videoURL),
@@ -82,6 +142,8 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     }
 
     if (!images || images.length === 0) {
+        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+        if (fallback) return fallback;
         return { error: "fetch.empty" };
     }
 

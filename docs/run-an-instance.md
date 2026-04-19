@@ -37,6 +37,7 @@ requirements:
 - node.js >= 18
 - git
 - pnpm
+- `yt-dlp` (recommended for YouTube and generic fallback extraction when running outside Docker)
 
 1. clone the repo: `git clone https://github.com/imputnet/cobalt`.
 2. go to api/src directory: `cd cobalt/api/src`.
@@ -45,6 +46,8 @@ requirements:
 5. add needed environment variables to `.env` file. only `API_URL` is required to run cobalt.
     - if you don't know what api url to use for local development, use `http://localhost:9000/`.
 6. run cobalt: `pnpm start`.
+
+if you're running outside Docker and want YouTube or the generic fallback extractor to work reliably, install `yt-dlp` and make sure it's available in `PATH`. if it's installed somewhere custom, set `YTDLP_BIN` to the executable path.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):
@@ -77,12 +80,18 @@ sudo service nscd start
 | `INSTAGRAM_UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value (sent as `Authorization: Api-Key ...`) for `INSTAGRAM_UPSTREAM_URL`. |
 | `INSTAGRAM_UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. |
 | `DOUYIN_UPSTREAM_MIN_BYTES` | `8388608` | `16777216` | route large Douyin files (bytes) through upstream fallback (default 8 MB). |
+| `GENERIC_EXTRACTOR_ENABLED` | `1` | `0` | enables the generic unsupported-site fallback extractor. |
+| `GENERIC_USE_UPSTREAM` | `1` | `0` | tries upstream before local generic extraction when `INSTAGRAM_UPSTREAM_URL` is configured. |
+| `GENERIC_HTML_PROBE_TIMEOUT_MS` | `3000` | `5000` | timeout in ms for the lightweight generic HTML probe stage. |
+| `GENERIC_YTDLP_TIMEOUT_MS` | `35000` | `45000` | timeout in ms for generic `yt-dlp` extraction. |
+| `GENERIC_FORCE_TUNNEL` | `1` | `0` | forces generic fallback downloads through cobalt tunnels instead of redirecting. |
 | `PROCESSING_PRIORITY` | not used  | `10`                    | changes `nice` value* for ffmpeg subprocess. available only on unix systems. |
 | `FREEBIND_CIDR`       | ➖        | `2001:db8::/32`         | IPv6 prefix used for randomly assigning addresses to cobalt requests. only supported on linux systems. see below for more info. |
 | `RATELIMIT_WINDOW`    | `60`      | `120`                   | rate limit time window in **seconds**. |
 | `RATELIMIT_MAX`       | `20`      | `30`                    | max requests per time window. requests above this amount will be blocked for the rate limit window duration. |
 | `DURATION_LIMIT`      | `10800`   | `18000`                 | max allowed video duration in **seconds**. |
 | `TUNNEL_LIFESPAN`     | `90`      | `120`                   | the duration for which tunnel info is stored in ram, **in seconds**. |
+| `YTDLP_BIN`           | not used  | `/usr/local/bin/yt-dlp` | optional path to a custom `yt-dlp` binary when not available in `PATH`. |
 
 \* the higher the nice value, the lower the priority. [read more here](https://en.wikipedia.org/wiki/Nice_(Unix)).
 

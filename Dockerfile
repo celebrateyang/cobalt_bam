@@ -19,7 +19,16 @@ FROM base AS api
 WORKDIR /app
 
 # 安装 curl
-RUN apt-get update && apt-get install -y curl unzip vim
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        python3 \
+        python3-pip \
+        unzip \
+        vim && \
+    pip3 install --no-cache-dir yt-dlp && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /prod/api /app
 COPY --from=build /app/.git /app/.git

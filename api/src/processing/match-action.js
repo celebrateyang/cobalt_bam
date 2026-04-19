@@ -65,7 +65,7 @@ export default function({
             url: r.urls,
             urlCandidates: r.urlCandidates,
             headers: r.headers,
-            service: host,
+            service: r.service || host,
             filename: r.filenameAttributes ?
                     createFilename(r.filenameAttributes, filenameStyle, isAudioOnly, isAudioMuted) : r.filename,
             fileMetadata: !disableMetadata ? r.fileMetadata : false,
@@ -160,6 +160,9 @@ export default function({
         case "muteVideo":
             let muteType = "mute";
             if (Array.isArray(r.urls) && !r.isHLS) {
+                muteType = "proxy";
+            }
+            if (host === "generic" && r.videoOnly === true) {
                 muteType = "proxy";
             }
             const muteUrlCandidates = Array.isArray(r.urlCandidates)
@@ -285,6 +288,16 @@ export default function({
                 case "snapchat":
                 case "twitch":
                     responseType = "redirect";
+                    break;
+
+                case "generic":
+                    if (Array.isArray(r.urls)) {
+                        params = { type: "merge", isHLS: r.isHLS };
+                    } else if (r.isHLS || r.subtitles) {
+                        params = { type: "remux", isHLS: r.isHLS };
+                    } else {
+                        params = { type: "proxy" };
+                    }
                     break;
             }
             break;

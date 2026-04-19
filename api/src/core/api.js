@@ -7,6 +7,7 @@ import { getCommit, getBranch, getRemote, getVersion } from "@imput/version-info
 import jwt from "../security/jwt.js";
 import stream from "../stream/stream.js";
 import match from "../processing/match.js";
+import matchAction from "../processing/match-action.js";
 
 import { env } from "../config.js";
 import { extract } from "../processing/url.js";
@@ -21,6 +22,10 @@ import { verifyStream } from "../stream/manage.js";
 import { createResponse, normalizeRequest, getIP } from "../processing/request.js";
 import { getHeaders } from "../stream/shared.js";
 import { expandURL } from "../processing/expand.js";
+import extractGeneric, {
+    canAttemptGenericURL,
+    getGenericServiceHost,
+} from "../processing/generic/index.js";
 import { setupTunnelHandler } from "./itunnel.js";
 import { setupSignalingServer } from "./signaling.js";
 
@@ -100,6 +105,7 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 const serverRole = isUpstreamServer ? "upstream" : "api";
+const genericFallbackErrors = new Set(["link.invalid", "link.unsupported"]);
 
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -160,6 +166,180 @@ const resolveDedupeIdentity = (req, clerkUserId) => {
     }
 
     return `ip:${getIP(req)}`;
+};
+
+const normalizeUpstreamTunnelUrl = (value, upstreamOrigin) => {
+    if (typeof value !== "string") return value;
+
+    let parsed;
+    try {
+        parsed = new URL(value);
+    } catch {
+        return value;
+    }
+
+    if (parsed.pathname !== "/tunnel") {
+        return value;
+    }
+
+    return new URL(
+        parsed.pathname + parsed.search + parsed.hash,
+        upstreamOrigin,
+    ).toString();
+};
+
+const normalizeUpstreamBody = (body, upstreamOrigin) => {
+    if (!body || typeof body !== "object") return body;
+
+    if (body.status === "tunnel" || body.status === "redirect") {
+        return {
+            ...body,
+            url: normalizeUpstreamTunnelUrl(body.url, upstreamOrigin),
+        };
+    }
+
+    if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
+        return {
+            ...body,
+            tunnel: body.tunnel.map((item) => normalizeUpstreamTunnelUrl(item, upstreamOrigin)),
+        };
+    }
+
+    if (body.status === "picker") {
+        return {
+            ...body,
+            audio: typeof body.audio === "string"
+                ? normalizeUpstreamTunnelUrl(body.audio, upstreamOrigin)
+                : body.audio,
+            picker: Array.isArray(body.picker)
+                ? body.picker.map((item) => {
+                    if (!item || typeof item !== "object") return item;
+                    return {
+                        ...item,
+                        url: normalizeUpstreamTunnelUrl(item.url, upstreamOrigin),
+                    };
+                })
+                : body.picker,
+        };
+    }
+
+    return body;
+};
+
+const requestGenericUpstream = async ({ payload, requestClientIp }) => {
+    if (!env.genericUseUpstream || !env.instagramUpstreamURL || isUpstreamServer) {
+        return null;
+    }
+
+    let endpoint;
+    try {
+        endpoint = new URL(env.instagramUpstreamURL);
+    } catch {
+        return null;
+    }
+
+    try {
+        if (new URL(env.apiURL).origin === endpoint.origin) {
+            return null;
+        }
+    } catch {}
+
+    endpoint.pathname = "/";
+    endpoint.search = "";
+    endpoint.hash = "";
+
+    const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    };
+
+    if (env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    }
+
+    if (requestClientIp) {
+        headers["X-FSV-Client-IP"] = requestClientIp;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+        () => controller.abort(),
+        Math.max(env.instagramUpstreamTimeoutMs, env.genericYtDlpTimeoutMs),
+    );
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            signal: controller.signal,
+            headers,
+            body: JSON.stringify(payload),
+        });
+
+        const body = await response.json().catch(() => null);
+        if (!body || typeof body !== "object" || typeof body.status !== "string") {
+            return null;
+        }
+
+        return {
+            status: response.status,
+            body: normalizeUpstreamBody(body, endpoint.origin),
+        };
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+const attemptGenericFallback = async ({ request, requestClientIp }) => {
+    const genericHost = getGenericServiceHost(request.url);
+
+    if (!env.genericExtractorEnabled || !canAttemptGenericURL(request.url)) {
+        return null;
+    }
+
+    const upstream = await requestGenericUpstream({
+        payload: request,
+        requestClientIp,
+    });
+    if (upstream?.body?.status && upstream.body.status !== "error") {
+        console.log(
+            `[GENERIC RESULT] extractor=upstream host=${genericHost} status=${upstream.body.status}`,
+        );
+        return upstream;
+    }
+
+    const extracted = await extractGeneric(request);
+    if (extracted?.error) {
+        const errorCode = extracted.error === "link.invalid"
+            ? "error.api.link.invalid"
+            : "error.api.fetch.fail";
+        const context = errorCode === "error.api.link.invalid"
+            ? undefined
+            : { service: genericHost };
+
+        return createResponse("error", {
+            code: errorCode,
+            context,
+        });
+    }
+
+    return matchAction({
+        r: extracted,
+        host: "generic",
+        isBatchRequest: request.batch === true,
+        audioFormat: request.audioFormat,
+        isAudioOnly: request.downloadMode === "audio",
+        isAudioMuted: request.downloadMode === "mute",
+        disableMetadata: request.disableMetadata,
+        filenameStyle: request.filenameStyle,
+        convertGif: request.convertGif,
+        requestIP: undefined,
+        audioBitrate: request.audioBitrate,
+        alwaysProxy: request.alwaysProxy || env.genericForceTunnel || request.localProcessing === "forced",
+        localProcessing: request.localProcessing,
+    });
 };
 
 export const runAPI = async (express, app, __dirname, isPrimary = true) => {
@@ -556,27 +736,40 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.link.invalid");
         }
 
-        if ("error" in parsed) {
-            // console.log(`[DOWNLOAD REQUEST] Failed - Parse error for URL: ${normalizedRequest.url}, Error: ${parsed.error}`);
-            let context;
-            if (parsed?.context) {
-                context = parsed.context;
-            }
-            return fail(res, `error.api.${parsed.error}`, context);
-        }
-
-        // console.log(`[DOWNLOAD REQUEST] Successfully parsed URL: ${normalizedRequest.url}, Service: ${parsed.host}`);
-
         try {
-            const result = await match({
-                host: parsed.host,
-                patternMatch: parsed.patternMatch,
-                params: {
-                    ...normalizedRequest,
-                    requestClientIp,
-                },
-                authType,
-            });
+            let result;
+
+            if ("error" in parsed) {
+                if (genericFallbackErrors.has(parsed.error)) {
+                    result = await attemptGenericFallback({
+                        request: {
+                            ...normalizedRequest,
+                            requestClientIp,
+                        },
+                        requestClientIp,
+                    });
+                }
+
+                if (!result) {
+                    let context;
+                    if (parsed?.context) {
+                        context = parsed.context;
+                    } else if (genericFallbackErrors.has(parsed.error) && canAttemptGenericURL(normalizedRequest.url)) {
+                        context = { service: getGenericServiceHost(normalizedRequest.url) };
+                    }
+                    return fail(res, `error.api.${parsed.error}`, context);
+                }
+            } else {
+                result = await match({
+                    host: parsed.host,
+                    patternMatch: parsed.patternMatch,
+                    params: {
+                        ...normalizedRequest,
+                        requestClientIp,
+                    },
+                    authType,
+                });
+            }
 
             const resultBodyStatus = result?.body?.status ?? "unknown";
             const isBatchRequest = normalizedRequest?.batch === true;

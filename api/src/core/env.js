@@ -200,6 +200,26 @@ export const loadEnvs = (env = process.env) => {
         ytSessionInnertubeClient: env.YOUTUBE_SESSION_INNERTUBE_CLIENT,
         ytAllowBetterAudio: env.YOUTUBE_ALLOW_BETTER_AUDIO !== "0",
 
+        genericExtractorEnabled: env.GENERIC_EXTRACTOR_ENABLED !== "0",
+        genericUseUpstream: env.GENERIC_USE_UPSTREAM !== "0",
+        genericHtmlProbeTimeoutMs: (() => {
+            const raw = env.GENERIC_HTML_PROBE_TIMEOUT_MS;
+            if (raw == null || raw === "") return 3000;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 3000;
+            return parsed;
+        })(),
+        genericYtDlpTimeoutMs: (() => {
+            const raw = env.GENERIC_YTDLP_TIMEOUT_MS;
+            if (raw == null || raw === "") return 35000;
+
+            const parsed = parseInt(raw);
+            if (!Number.isFinite(parsed) || parsed <= 0) return 35000;
+            return parsed;
+        })(),
+        genericForceTunnel: env.GENERIC_FORCE_TUNNEL !== "0",
+
         // "never" | "session" | "always"
         forceLocalProcessing: env.FORCE_LOCAL_PROCESSING ?? "never",
 

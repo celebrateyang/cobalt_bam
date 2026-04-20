@@ -118,6 +118,7 @@ jobs:
             kubectl -n infra create secret generic polar-secret \
               --from-literal=POLAR_ACCESS_TOKEN="${POLAR_ACCESS_TOKEN}" \
               --from-literal=POLAR_WEBHOOK_SECRET="${POLAR_WEBHOOK_SECRET}" \
+              --from-literal=POLAR_PRODUCT_ID_USD_199="${POLAR_PRODUCT_ID_USD_199}" \
               --from-literal=POLAR_PRODUCT_ID_USD_499="${POLAR_PRODUCT_ID_USD_499}" \
               --from-literal=POLAR_PRODUCT_ID_USD_999="${POLAR_PRODUCT_ID_USD_999}" \
               --from-literal=POLAR_PRODUCT_ID_USD_1999="${POLAR_PRODUCT_ID_USD_1999}" \

@@ -143,6 +143,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.polar.secretName | quote }}
                   key: POLAR_WEBHOOK_SECRET
+            - name: POLAR_PRODUCT_ID_USD_199
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.polar.secretName | quote }}
+                  key: POLAR_PRODUCT_ID_USD_199
             - name: POLAR_PRODUCT_ID_USD_499
               valueFrom:
                 secretKeyRef:

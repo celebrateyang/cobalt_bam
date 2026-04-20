@@ -450,15 +450,13 @@ export default async function(obj) {
         );
     };
 
-    if (obj.password || browserCookie) {
-        const playerConfig = await getPlayerConfig(obj.id, obj.password, browserCookie).catch(() => {});
-        const playerResponse = playerConfig
-            ? await getResponseFromPlayerConfig(playerConfig, obj, quality)
-            : undefined;
+    const playerConfig = await getPlayerConfig(obj.id, obj.password, browserCookie).catch(() => {});
+    const playerResponse = playerConfig
+        ? await getResponseFromPlayerConfig(playerConfig, obj, quality)
+        : undefined;
 
-        if (playerResponse && !playerResponse.error) {
-            return buildFinalResponse(playerConfig, playerResponse);
-        }
+    if (playerResponse && !playerResponse.error) {
+        return buildFinalResponse(playerConfig, playerResponse);
     }
 
     const bearerToken = await getBearer();

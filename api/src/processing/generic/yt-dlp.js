@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
 
+import { getCookie } from "../cookie/manager.js";
+
 const DEFAULT_TIMEOUT_MS = 35000;
 const MAX_CANDIDATE_LOGS = 8;
 
@@ -42,6 +44,14 @@ const isSupportedUrl = (value) => {
         return ["http:", "https:"].includes(parsed.protocol);
     } catch {
         return false;
+    }
+};
+
+const getHost = (value) => {
+    try {
+        return new URL(value).hostname.toLowerCase();
+    } catch {
+        return "";
     }
 };
 
@@ -302,8 +312,18 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
         "--no-warnings",
         "--retries", "2",
         "--socket-timeout", "15",
-        url,
     ];
+
+    const host = getHost(url);
+    if (host === "vimeo.com" || host === "player.vimeo.com" || host.endsWith(".vimeo.com")) {
+        const browserCookie = getCookie("vimeo")?.toString();
+        if (browserCookie) {
+            args.push("--add-header", `Cookie:${browserCookie}`);
+            args.push("--add-header", "Referer:https://vimeo.com/");
+        }
+    }
+
+    args.push(url);
 
     const result = await runProcess(
         runner.command,

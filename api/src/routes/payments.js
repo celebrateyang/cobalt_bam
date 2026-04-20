@@ -77,6 +77,15 @@ const WECHAT_CREDIT_PRODUCTS = [
 
 const POLAR_CREDIT_PRODUCTS = [
     {
+        key: "polar_usd_199",
+        points: 150,
+        amountFen: 199,
+        currency: "USD",
+        unitPriceFen: 1.327,
+        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_199",
+        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_199 || "").trim(),
+    },
+    {
         key: "polar_usd_499",
         points: 1100,
         amountFen: 499,

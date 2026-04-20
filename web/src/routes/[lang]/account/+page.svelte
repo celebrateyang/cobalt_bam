@@ -501,6 +501,9 @@
             ? "auth.topup_subtitle_polar"
             : "auth.topup_subtitle_wechat";
 
+    const POLAR_BEST_VALUE_PRODUCT_KEY = "polar_usd_999";
+    const POLAR_RECOMMENDED_PRODUCT_KEY = "polar_usd_499";
+
     const unitPriceFenPerPoint = (product: CreditProduct) => {
         const points = Number(product.points);
         const amountFen = Number(product.amountFen);
@@ -527,8 +530,28 @@
                 return Number(b.points) - Number(a.points);
             });
 
-        bestValueProductKey = ranked[0]?.key ?? null;
-        recommendedValueProductKey = ranked[1]?.key ?? null;
+        if (selectedPaymentProvider === "polar") {
+            const fallbackBest = ranked[0]?.key ?? null;
+            const fallbackRecommended =
+                ranked.find((product) => product.key !== fallbackBest)?.key ?? null;
+
+            bestValueProductKey =
+                ranked.some((product) => product.key === POLAR_BEST_VALUE_PRODUCT_KEY)
+                    ? POLAR_BEST_VALUE_PRODUCT_KEY
+                    : fallbackBest;
+
+            recommendedValueProductKey =
+                ranked.some(
+                    (product) =>
+                        product.key === POLAR_RECOMMENDED_PRODUCT_KEY &&
+                        product.key !== bestValueProductKey,
+                )
+                    ? POLAR_RECOMMENDED_PRODUCT_KEY
+                    : fallbackRecommended;
+        } else {
+            bestValueProductKey = ranked[0]?.key ?? null;
+            recommendedValueProductKey = ranked[1]?.key ?? null;
+        }
     }
 
     const fetchCreditProducts = async () => {

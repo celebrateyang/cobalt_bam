@@ -71,7 +71,17 @@ const getRequestHost = (payload) => {
             return payload.hostname.toLowerCase();
         }
 
-        const raw = typeof payload?.url === "string" ? payload.url : String(payload || "");
+        if (payload && typeof payload === "object") {
+            if (payload.url instanceof URL) {
+                return payload.url.hostname.toLowerCase();
+            }
+
+            if (typeof payload.url === "string") {
+                return new URL(payload.url).hostname.toLowerCase();
+            }
+        }
+
+        const raw = String(payload || "");
         return new URL(raw).hostname.toLowerCase();
     } catch {
         return "";
@@ -618,7 +628,6 @@ export default async function({ host, patternMatch, params, authType }) {
 
         if (host === "vimeo" && !isUpstreamServer) {
             const shouldTryUpstream =
-                r?.isHLS === true ||
                 vimeoUpstreamFallbackErrors.has(r?.error);
 
             if (shouldTryUpstream) {

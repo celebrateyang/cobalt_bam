@@ -27,6 +27,7 @@ if you need help with installing docker, follow *only the first step* of these t
     ```
 
 if you want your instance to support services that require authentication to view public content, create `cookies.json` file in the same directory as `docker-compose.yml`. example cookies file [can be found here](examples/cookies.example.json).
+for vimeo, adding `vimeo_bearer` (`access_token=<token>`) lets cobalt prefer Vimeo's direct file links and keep downloads on redirect instead of tunneling through your server when possible.
 
 cobalt package will update automatically thanks to watchtower.
 

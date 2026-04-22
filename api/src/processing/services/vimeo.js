@@ -2,6 +2,7 @@ import HLS from "hls-parser";
 import { env, genericUserAgent } from "../../config.js";
 import { merge } from '../../misc/utils.js';
 import { getCookie } from "../cookie/manager.js";
+import extractWithYtDlp from "../generic/yt-dlp.js";
 
 const resolutionMatch = {
     "3840": 2160,
@@ -413,11 +414,82 @@ const getResponseFromPlayerConfig = async (config, obj, quality) => {
     }
 }
 
+const getResponseFromApi = async (obj, quality) => {
+    const bearerToken = await getBearer();
+    if (!bearerToken) {
+        return;
+    }
+
+    let info = await requestApiInfo(bearerToken, obj.id, obj.password);
+
+    // auth error, try to refresh the token
+    if (info?.error_code === 8003) {
+        const newBearer = await getBearer(true);
+        if (!newBearer) {
+            return;
+        }
+
+        info = await requestApiInfo(newBearer, obj.id, obj.password);
+    }
+
+    // if there's still no info, then let other fallbacks try first
+    if (!info || info.error_code) {
+        return;
+    }
+
+    let response;
+    if (obj.isAudioOnly) {
+        response = await getHLS(info.config_url, { ...obj, quality });
+    }
+
+    if (!response) response = await getDirectLink(info, quality, obj.subtitleLang);
+    if (!response) response = { error: "fetch.empty" };
+
+    return { info, response };
+}
+
+const getResponseFromYtDlp = async (obj) => {
+    const originalURL = buildOriginalVideoURL(obj.id, obj.password);
+    const ytDlp = await extractWithYtDlp({
+        url: originalURL.toString(),
+        quality: obj.quality,
+        downloadMode: obj.isAudioOnly
+            ? "audio"
+            : obj.isAudioMuted
+                ? "mute"
+                : "auto",
+    });
+
+    if (ytDlp?.error) {
+        return;
+    }
+
+    const normalized = {
+        ...ytDlp,
+        fileMetadata: {
+            title: ytDlp.fileMetadata?.title,
+            artist: ytDlp.fileMetadata?.artist,
+        },
+        filenameAttributes: {
+            ...ytDlp.filenameAttributes,
+            service: "vimeo",
+            id: obj.id,
+            title: ytDlp.fileMetadata?.title || ytDlp.title,
+            author: ytDlp.fileMetadata?.artist || ytDlp.uploader,
+        },
+    };
+
+    return normalized;
+}
+
 export default async function(obj) {
     let quality = obj.quality === "max" ? 9000 : Number(obj.quality);
     if (quality < 240) quality = 240;
     if (!quality || obj.isAudioOnly) quality = 9000;
     const browserCookie = getCookie("vimeo")?.toString();
+    const hasBearerCookie = Boolean(
+        bearer || getCookie("vimeo_bearer")?.values?.()?.access_token
+    );
 
     const buildFinalResponse = (info, response) => {
         const fileMetadata = {
@@ -450,6 +522,21 @@ export default async function(obj) {
         );
     };
 
+    const ytDlpResult = await getResponseFromYtDlp(obj).catch(() => {});
+    if (ytDlpResult && !ytDlpResult.error) {
+        return ytDlpResult;
+    }
+
+    // Upstream-style behavior: if a Vimeo bearer token is configured,
+    // prefer the API path because it can return direct file links.
+    let apiResult;
+    if (hasBearerCookie) {
+        apiResult = await getResponseFromApi(obj, quality);
+        if (apiResult?.response && !apiResult.response.error) {
+            return buildFinalResponse(apiResult.info, apiResult.response);
+        }
+    }
+
     const playerConfig = await getPlayerConfig(obj.id, obj.password, browserCookie).catch(() => {});
     const playerResponse = playerConfig
         ? await getResponseFromPlayerConfig(playerConfig, obj, quality)
@@ -459,38 +546,17 @@ export default async function(obj) {
         return buildFinalResponse(playerConfig, playerResponse);
     }
 
-    const bearerToken = await getBearer();
-    if (!bearerToken) {
-        return { error: "fetch.fail" };
+    if (!apiResult) {
+        apiResult = await getResponseFromApi(obj, quality);
     }
 
-    let info = await requestApiInfo(bearerToken, obj.id, obj.password);
-    let response;
-
-    // auth error, try to refresh the token
-    if (info?.error_code === 8003) {
-        const newBearer = await getBearer(true);
-        if (!newBearer) {
-            return { error: "fetch.fail" };
-        }
-        info = await requestApiInfo(newBearer, obj.id, obj.password);
+    if (apiResult?.response && !apiResult.response.error) {
+        return buildFinalResponse(apiResult.info, apiResult.response);
     }
 
-    // if there's still no info, then return a generic error
-    if (!info || info.error_code) {
-        return { error: "fetch.empty" };
+    if (playerResponse?.error) {
+        return playerResponse;
     }
 
-    if (obj.isAudioOnly) {
-        response = await getHLS(info.config_url, { ...obj, quality });
-    }
-
-    if (!response) response = await getDirectLink(info, quality, obj.subtitleLang);
-    if (!response) response = { error: "fetch.empty" };
-
-    if (response.error) {
-        return response;
-    }
-
-    return buildFinalResponse(info, response);
+    return apiResult?.response || { error: "fetch.empty" };
 }

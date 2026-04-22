@@ -11,5 +11,8 @@
     ],
     "twitter": [
         "auth_token=<replace_this>; ct0=<replace_this>"
+    ],
+    "vimeo_bearer": [
+        "access_token=<replace_this>"
     ]
 }

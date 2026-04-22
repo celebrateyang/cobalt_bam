@@ -5,6 +5,7 @@
 - `web/`: SvelteKit frontend (Cloudflare Pages adapter + Pages Functions)
 - `cobalt-chart/`: Helm chart for API (GKE)
 - `docs/`: API docs + ops docs (`docs/api.md`, `docs/discover-ops.md`, websocket docs)
+- Upstream code reference: when the user says "upstream code", treat the local git branch `sync-api-from-upstream` as the canonical upstream-synced reference unless they explicitly mean the deployed upstream server runtime instead.
 
 ## Supported languages
 - `de` (German)

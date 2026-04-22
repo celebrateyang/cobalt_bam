@@ -11,6 +11,9 @@
     "twitter": [
         "auth_token=<replace_this>; ct0=<replace_this>"
     ],
+    "vimeo_bearer": [
+        "access_token=<replace_this>"
+    ],
     "youtube": [
         "VISITOR_INFO1_LIVE=<replace_this>; PREF=<replace_this>; LOGIN_INFO=<replace_this>; SID=<replace_this>; HSID=<replace_this>; SSID=<replace_this>; APISID=<replace_this>; SAPISID=<replace_this>; __Secure-1PSID=<replace_this>; __Secure-3PSID=<replace_this>; __Secure-1PAPISID=<replace_this>; __Secure-3PAPISID=<replace_this>"
     ]

@@ -47,6 +47,11 @@ const tiktokUpstreamFallbackErrors = new Set([
     "content.post.unavailable",
     "content.post.age",
 ]);
+const vimeoUpstreamFallbackErrors = new Set([
+    "fetch.fail",
+    "fetch.empty",
+    "content.video.unavailable",
+]);
 const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
@@ -560,6 +565,28 @@ export default async function({ host, patternMatch, params, authType }) {
                 }
 
                 console.log("[tiktok] upstream fallback unavailable, returning local result");
+            }
+        }
+
+        if (host === "vimeo" && !isUpstreamServer) {
+            const shouldTryUpstream =
+                r?.isHLS === true ||
+                vimeoUpstreamFallbackErrors.has(r?.error);
+
+            if (shouldTryUpstream) {
+                console.log(
+                    `[vimeo] local result error=${r?.error || "none"} hls=${r?.isHLS === true} -> trying upstream fallback`
+                );
+
+                const upstream = await requestUpstreamCobalt(params);
+                if (upstream?.body?.status && upstream.body.status !== "error") {
+                    console.log(
+                        `[vimeo] upstream fallback success status=${upstream?.body?.status || "unknown"}`
+                    );
+                    return upstream;
+                }
+
+                console.log("[vimeo] upstream fallback unavailable, returning local result");
             }
         }
 

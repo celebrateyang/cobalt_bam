@@ -78,6 +78,10 @@ const shouldStripRangeForHls = (streamInfo) => {
     return streamInfo?.isHLS === true;
 };
 
+const shouldStripContentLengthForHls = (streamInfo) => {
+    return streamInfo?.isHLS === true;
+};
+
 export default async function (streamInfo, res) {
     const shouldFastFailBilibili = shouldApplyBilibiliFastFail(streamInfo);
     const abortController = new AbortController();
@@ -186,7 +190,11 @@ export default async function (streamInfo, res) {
         upstreamAcceptRanges = headers["accept-ranges"];
         res.status(statusCode);
 
+        const stripContentLength = shouldStripContentLengthForHls(streamInfo);
         for (const headerName of ['accept-ranges', 'content-type', 'content-length', 'content-range']) {
+            if (stripContentLength && headerName === 'content-length') {
+                continue;
+            }
             if (headers[headerName]) {
                 res.setHeader(headerName, headers[headerName]);
             }

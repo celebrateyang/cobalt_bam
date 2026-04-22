@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { env } from "../config.js";
 import { createResponse } from "../processing/request.js";
+import { createStream } from "../stream/manage.js";
 
 import { testers } from "./service-patterns.js";
 import matchAction from "./match-action.js";
@@ -62,6 +63,37 @@ const normalizeForwardIp = (value) => {
     const trimmed = value.trim();
     if (!trimmed) return "";
     return trimmed.split(",")[0].trim().replace(/^::ffff:/, "");
+};
+
+const getRequestHost = (payload) => {
+    try {
+        if (payload instanceof URL) {
+            return payload.hostname.toLowerCase();
+        }
+
+        const raw = typeof payload?.url === "string" ? payload.url : String(payload || "");
+        return new URL(raw).hostname.toLowerCase();
+    } catch {
+        return "";
+    }
+};
+
+const shouldWrapUpstreamTunnelLocally = (payload, value) => {
+    if (typeof value !== "string") return false;
+
+    let parsed;
+    try {
+        parsed = new URL(value);
+    } catch {
+        return false;
+    }
+
+    if (parsed.pathname !== "/tunnel") {
+        return false;
+    }
+
+    const requestHost = getRequestHost(payload);
+    return requestHost === "vimeo.com" || requestHost.endsWith(".vimeo.com");
 };
 
 const requestUpstreamCobalt = async (payload) => {
@@ -204,13 +236,29 @@ const requestUpstreamCobalt = async (payload) => {
             ).toString();
         };
 
+        const wrapUpstreamTunnel = (value, filename, serviceHint) => {
+            const normalizedValue = normalizeTunnelUrl(value);
+            if (!shouldWrapUpstreamTunnelLocally(payload, normalizedValue)) {
+                return normalizedValue;
+            }
+
+            return createStream({
+                type: "proxy",
+                url: normalizedValue,
+                service: serviceHint || "upstream",
+                filename: typeof filename === "string" && filename.trim()
+                    ? filename
+                    : "download.bin",
+            });
+        };
+
         const normalizedBody = (() => {
             if (!body || typeof body !== "object") return body;
 
             if (body.status === "tunnel" || body.status === "redirect") {
                 return {
                     ...body,
-                    url: normalizeTunnelUrl(body.url),
+                    url: wrapUpstreamTunnel(body.url, body.filename, body.service),
                 };
             }
 

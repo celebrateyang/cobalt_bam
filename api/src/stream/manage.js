@@ -437,6 +437,22 @@ const transplantTunnel = async function (dispatcher) {
     }
 }
 
+const isFfmpegStreamType = (type) => ['merge', 'remux', 'mute'].includes(type);
+
+const shouldUseInternalFfmpegInputs = (streamInfo) =>
+    isFfmpegStreamType(streamInfo?.type) &&
+    streamInfo?.service === 'vimeo.com' &&
+    streamInfo?.isHLS === true;
+
+const buildIndexedOriginalRequest = (originalRequest, index, total) =>
+    originalRequest
+        ? {
+            ...originalRequest,
+            __streamIndex: index,
+            __streamCount: total,
+        }
+        : undefined;
+
 function wrapStream(streamInfo) {
     const url = streamInfo.urls;
 
@@ -444,9 +460,11 @@ function wrapStream(streamInfo) {
         streamInfo.transplant = transplantTunnel.bind(streamInfo);
     }
 
-    // For FFmpeg operations (merge/remux/mute), create external tunnel URLs
-    // that FFmpeg can access from outside the Node.js process
-    if (['merge', 'remux', 'mute'].includes(streamInfo.type)) {
+    const useInternalFfmpegInputs = shouldUseInternalFfmpegInputs(streamInfo);
+
+    // FFmpeg usually reads from signed public tunnels, but Vimeo HLS merge/remux
+    // works more reliably through localhost itunnels to avoid auth failures.
+    if (isFfmpegStreamType(streamInfo.type) && !useInternalFfmpegInputs) {
         if (typeof url === 'string') {
             streamInfo.urls = createStream({
                 type: 'proxy',
@@ -460,17 +478,16 @@ function wrapStream(streamInfo) {
                 originalRequest: streamInfo.originalRequest,
             });
         } else if (Array.isArray(url)) {
+            const total = streamInfo.urls.length;
             streamInfo.urls = streamInfo.urls.map((singleUrl, index) => {
                 const tunnelUrlCandidates = Array.isArray(streamInfo.urlCandidates)
                     ? streamInfo.urlCandidates[index]
                     : undefined;
-                const tunnelOriginalRequest = streamInfo.originalRequest
-                    ? {
-                        ...streamInfo.originalRequest,
-                        __streamIndex: index,
-                        __streamCount: streamInfo.urls.length,
-                    }
-                    : undefined;
+                const tunnelOriginalRequest = buildIndexedOriginalRequest(
+                    streamInfo.originalRequest,
+                    index,
+                    total,
+                );
 
                 return createStream({
                     type: 'proxy',
@@ -505,6 +522,11 @@ function wrapStream(streamInfo) {
                     selected.url,
                     {
                         ...streamInfo,
+                        originalRequest: buildIndexedOriginalRequest(
+                            streamInfo.originalRequest,
+                            Number(idx),
+                            streamInfo.urls.length,
+                        ),
                         urlCandidates: selected.candidates,
                     },
                 );

@@ -25,6 +25,18 @@ const transplantRetryableStatuses = new Set([
     503,
     504,
 ]);
+const forbiddenResponseHeaders = new Set([
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "proxy-connection",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+    "host",
+]);
 
 const getTargetForLog = (rawUrl) => {
     try {
@@ -626,9 +638,18 @@ async function handleGenericStream(streamInfo, res) {
             const isHls = isHlsResponse(fileResponse, streamInfo);
 
             for (const [name, value] of Object.entries(fileResponse.headers)) {
-                if (!isHls || name.toLowerCase() !== 'content-length') {
-                    res.setHeader(name, value);
+                const normalizedName = name.toLowerCase();
+                if (forbiddenResponseHeaders.has(normalizedName)) {
+                    continue;
                 }
+
+                // HLS playlists are rewritten before being returned, so Node/Express
+                // should recalculate the final response length on its own.
+                if (isHls && normalizedName === "content-length") {
+                    continue;
+                }
+
+                res.setHeader(name, value);
             }
 
             if (status < 200 || status > 299) {

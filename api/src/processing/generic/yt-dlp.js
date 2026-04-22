@@ -243,6 +243,16 @@ const collectCandidates = (formats = []) => {
             const videoCodec = String(format?.vcodec || "").toLowerCase();
             const audioCodec = String(format?.acodec || "").toLowerCase();
             const protocol = String(format?.protocol || "").toLowerCase();
+            const audioExt = String(format?.audio_ext || "").toLowerCase();
+            const videoExt = String(format?.video_ext || "").toLowerCase();
+            const resolution = String(format?.resolution || "").toLowerCase();
+            const hasVideo =
+                (videoCodec !== "" && videoCodec !== "none")
+                || (videoExt !== "" && videoExt !== "none");
+            const hasAudio =
+                (audioCodec !== "" && audioCodec !== "none")
+                || (audioExt !== "" && audioExt !== "none")
+                || resolution === "audio only";
 
             return {
                 url,
@@ -251,8 +261,8 @@ const collectCandidates = (formats = []) => {
                 width: parseNumber(format?.width),
                 tbr: parseNumber(format?.tbr || format?.vbr || format?.abr),
                 fileSize: parseNumber(format?.filesize || format?.filesize_approx),
-                hasVideo: videoCodec !== "" && videoCodec !== "none",
-                hasAudio: audioCodec !== "" && audioCodec !== "none",
+                hasVideo,
+                hasAudio,
                 isHLS: protocol.includes("m3u8"),
                 isDash: protocol.includes("dash") || protocol.includes("http_dash_segments"),
                 protocol,
@@ -320,6 +330,43 @@ const pickBestHlsVideo = ({ candidates, requestedQuality }) => {
             score:
                 getQualityScore(candidate.height, requestedQuality)
                 + Math.min(candidate.tbr, 8000) / 10,
+        }))
+        .sort((a, b) => b.score - a.score)[0];
+};
+
+const getHlsFamilyKey = (formatId) => {
+    const raw = String(formatId || "");
+    if (!raw.startsWith("hls-")) return raw;
+
+    const withoutAudio = raw.replace(/-audio(?:-.+)?$/i, "");
+    return withoutAudio.replace(/-\d+$/i, "");
+};
+
+const pickBestHlsAudio = ({ candidates, preferredFamily }) => {
+    const preferred = candidates
+        .filter((candidate) => candidate.hasAudio && !candidate.hasVideo && candidate.isHLS)
+        .filter((candidate) => !preferredFamily || getHlsFamilyKey(candidate.formatId) === preferredFamily)
+        .map((candidate) => ({
+            ...candidate,
+            score:
+                Math.min(candidate.tbr, 2000) / 8
+                + (candidate.ext === "m4a" ? 25 : 0)
+                + (candidate.ext === "mp4" ? 20 : 0),
+        }))
+        .sort((a, b) => b.score - a.score)[0];
+
+    if (preferred) {
+        return preferred;
+    }
+
+    return candidates
+        .filter((candidate) => candidate.hasAudio && !candidate.hasVideo && candidate.isHLS)
+        .map((candidate) => ({
+            ...candidate,
+            score:
+                Math.min(candidate.tbr, 2000) / 8
+                + (candidate.ext === "m4a" ? 25 : 0)
+                + (candidate.ext === "mp4" ? 20 : 0),
         }))
         .sort((a, b) => b.score - a.score)[0];
 };
@@ -430,16 +477,21 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
         const videoOnly = pickBestVideoOnly({ candidates, requestedQuality });
         const audioOnly = pickBestAudioOnly({ candidates });
         const hlsVideo = pickBestHlsVideo({ candidates, requestedQuality });
+        const hlsAudio = pickBestHlsAudio({
+            candidates,
+            preferredFamily: getHlsFamilyKey(hlsVideo?.formatId),
+        });
 
         logCandidates("direct", directVideo ? [directVideo] : []);
         logCandidates("videoOnly", videoOnly ? [videoOnly] : []);
         logCandidates("audioOnly", audioOnly ? [audioOnly] : []);
         logCandidates("hls", hlsVideo ? [hlsVideo] : []);
+        logCandidates("hlsAudio", hlsAudio ? [hlsAudio] : []);
 
         const base = buildResponseBase({ info, url });
 
         if (downloadMode === "audio") {
-            const selected = audioOnly || directVideo || hlsVideo;
+            const selected = audioOnly || hlsAudio || directVideo || hlsVideo;
             if (!selected) {
                 return { error: "fetch.fail", message: "no audio candidate" };
             }
@@ -494,6 +546,22 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
                             : "mkv",
                     height: videoOnly.height,
                 }),
+            };
+        }
+
+        if (hlsVideo && hlsAudio) {
+            return {
+                ...base,
+                urls: [hlsVideo.url, hlsAudio.url],
+                bestAudio: normalizeAudioExt(hlsAudio.ext),
+                filenameAttributes: buildFilenameAttributes({
+                    originUrl: url,
+                    title: base.title,
+                    uploader: base.uploader,
+                    extension: "mp4",
+                    height: hlsVideo.height,
+                }),
+                isHLS: true,
             };
         }
 

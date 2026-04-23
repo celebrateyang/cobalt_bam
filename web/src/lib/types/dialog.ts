@@ -68,6 +68,8 @@ type BatchDialog = Dialog & {
     collectionKey?: string,
     collectionSourceUrl?: string,
     downloadMode?: DownloadModeOption,
+    selectedUrls?: string[],
+    autoStart?: boolean,
 };
 
 type FeedbackDialog = Dialog & {

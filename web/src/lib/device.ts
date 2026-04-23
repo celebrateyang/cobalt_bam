@@ -1,6 +1,9 @@
 import { browser } from "$app/environment";
-
-const PWA_INSTALLED_KEY = "pwa-installed";
+import {
+    hasStoredInstallMarker,
+    isStandaloneMode,
+    persistInstallMarker,
+} from "$lib/pwa/install";
 
 const app = {
     is: {
@@ -47,13 +50,11 @@ if (browser) {
     const iOS = iPhone || iPad;
     const android = ua.includes("android") || ua.includes("diordna");
 
-    const installedDisplayMode = window.matchMedia('(display-mode: standalone)').matches;
-    const iosStandalone = (navigator as any).standalone === true;
-    const storedInstall = localStorage.getItem(PWA_INSTALLED_KEY) === "true";
-    const installed = installedDisplayMode || iosStandalone || storedInstall;
+    const storedInstall = hasStoredInstallMarker();
+    const installed = isStandaloneMode() || storedInstall;
 
-    if (installed && !storedInstall) {
-        localStorage.setItem(PWA_INSTALLED_KEY, "true");
+    if (installed) {
+        persistInstallMarker();
     }
 
     app.is = {

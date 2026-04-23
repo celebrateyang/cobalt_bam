@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { onDestroy, onMount, tick } from "svelte";
     import { browser } from "$app/environment";
     import { page } from "$app/stores";
@@ -80,6 +81,8 @@
     let promotionAccordionOpen = false;
     let requestedAccountSection: AccountSection | null = null;
     let lastFocusedSectionKey = "";
+    let paymentResumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastPaymentResumeKey = "";
 
     onMount(() => {
         if (clerkEnabled) {
@@ -99,18 +102,25 @@
         }
     });
 
-    const getSafeRedirectUrl = () => {
+    const getSafeRedirectPath = () => {
         const raw = $page.url.searchParams.get("redirect");
-        if (!raw) return $page.url.href;
-        if (!raw.startsWith("/") || raw.startsWith("//")) return $page.url.href;
+        if (!raw) return null;
+        if (!raw.startsWith("/") || raw.startsWith("//")) return null;
 
         try {
             const url = new URL(raw, $page.url.origin);
-            if (url.origin !== $page.url.origin) return $page.url.href;
-            return url.toString();
+            if (url.origin !== $page.url.origin) return null;
+            return `${url.pathname}${url.search}${url.hash}`;
         } catch {
-            return $page.url.href;
+            return null;
         }
+    };
+
+    const getSafeRedirectUrl = () => {
+        const redirectPath = getSafeRedirectPath();
+        if (!redirectPath) return $page.url.href;
+
+        return new URL(redirectPath, $page.url.origin).toString();
     };
 
     const getRedirectForSignIn = () => {
@@ -611,7 +621,35 @@
         if (referralCopyTimer) {
             clearTimeout(referralCopyTimer);
         }
+        if (paymentResumeTimer) {
+            clearTimeout(paymentResumeTimer);
+        }
     });
+
+    const maybeResumeAfterPayment = (orderId: number) => {
+        const redirectPath = getSafeRedirectPath();
+        if (!redirectPath) return false;
+
+        const currentPath = `${$page.url.pathname}${$page.url.search}${$page.url.hash}`;
+        if (redirectPath === currentPath) return false;
+
+        const resumeKey = `${orderId}:${redirectPath}`;
+        if (resumeKey === lastPaymentResumeKey) {
+            return true;
+        }
+
+        lastPaymentResumeKey = resumeKey;
+        if (paymentResumeTimer) {
+            clearTimeout(paymentResumeTimer);
+        }
+
+        paymentResumeTimer = setTimeout(() => {
+            paymentResumeTimer = null;
+            void goto(redirectPath);
+        }, 700);
+
+        return true;
+    };
 
     const fetchOrderStatus = async (
         orderId: number,
@@ -652,8 +690,10 @@
                 }
                 if (order.status === "PAID") {
                     stopPolling();
+                    purchaseNoticeKey = "auth.payment_success";
                     lastPointsUserId = null;
                     void fetchPoints();
+                    maybeResumeAfterPayment(order.id);
                 }
                 return order;
             }
@@ -679,6 +719,7 @@
         purchaseLoading = true;
         purchaseErrorKey = "";
         purchaseNoticeKey = "";
+        lastPaymentResumeKey = "";
 
         try {
             const token = await getClerkToken();
@@ -728,6 +769,7 @@
         purchaseLoading = true;
         purchaseErrorKey = "";
         purchaseNoticeKey = "";
+        lastPaymentResumeKey = "";
 
         try {
             const token = await getClerkToken();
@@ -807,6 +849,10 @@
         purchaseNoticeKey = paid
             ? "auth.payment_success"
             : "auth.polar_pending_notice";
+
+        if (paid) {
+            maybeResumeAfterPayment(orderId);
+        }
 
         try {
             const url = new URL(window.location.href);

@@ -14,7 +14,17 @@
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
     import API from "$lib/api/api";
-    import { clerkEnabled } from "$lib/state/clerk";
+    import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
+    import {
+        clearPendingLaunchIntent,
+        markPendingLaunchAutostartHandled,
+        readPendingLaunchIntent,
+        savePendingLaunchIntent,
+    } from "$lib/pwa/launch-intent";
+    import {
+        clearPendingBatchIntent,
+        readPendingBatchIntent,
+    } from "$lib/pwa/batch-intent";
     import {
         clearCollectionMemory,
         getCollectionDownloadedItemKeys,
@@ -77,6 +87,13 @@
     let batchLimitEnabled = true;
     let batchLimitExceeded = false;
     let feedbackLinkWidth = 0;
+    let pendingLaunchUrl = "";
+    let pendingLaunchAutostart = false;
+    let pendingLaunchHydrated = false;
+    let pendingLaunchAttemptInFlight = false;
+    let launchUrlCleanupPending = false;
+    let capturedLaunchParams = "";
+    let pendingBatchRestoreHandled = false;
 
     type GuideKey = "collection" | "batch";
     let activeGuide: GuideKey | null = null;
@@ -167,6 +184,86 @@
 
     const getCurrentLang = () =>
         $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+
+    const replaceUrlWithoutLaunchParams = () => {
+        const nextUrl = new URL($page.url.toString());
+        nextUrl.hash = "";
+        nextUrl.searchParams.delete("u");
+
+        const nextPath = `${nextUrl.pathname}${nextUrl.search}`;
+        const currentPath = `${$page.url.pathname}${$page.url.search}`;
+        const currentHash = $page.url.hash || "";
+
+        if (nextPath === currentPath && !currentHash) return;
+
+        void goto(nextPath, {
+            replaceState: true,
+            noScroll: true,
+            keepFocus: true,
+        });
+    };
+
+    const hydratePendingLaunchIntent = () => {
+        if (!browser || pendingLaunchHydrated) return;
+
+        const intent = readPendingLaunchIntent();
+        pendingLaunchUrl = intent?.url ?? "";
+        pendingLaunchAutostart = intent?.autostart === true;
+        pendingLaunchHydrated = true;
+    };
+
+    const rememberPendingLaunch = (url: string, autostart: boolean) => {
+        pendingLaunchUrl = url;
+        pendingLaunchAutostart = autostart;
+        savePendingLaunchIntent(url, { autostart });
+    };
+
+    const clearPendingLaunchAutostart = () => {
+        pendingLaunchAutostart = false;
+        markPendingLaunchAutostartHandled();
+    };
+
+    const maybeCleanupLaunchUrl = () => {
+        if (!launchUrlCleanupPending) return;
+
+        launchUrlCleanupPending = false;
+        replaceUrlWithoutLaunchParams();
+    };
+
+    const maybeAutoSubmitPendingLaunch = async () => {
+        if (
+            pendingLaunchAttemptInFlight ||
+            !pendingLaunchAutostart ||
+            $dialogs.length > 0 ||
+            isDisabled ||
+            isLoading ||
+            isBotCheckOngoing
+        ) {
+            return;
+        }
+
+        const launchInput = $link || pendingLaunchUrl;
+        if (!extractUrls(launchInput).length || batchLimitExceeded) {
+            clearPendingLaunchAutostart();
+            maybeCleanupLaunchUrl();
+            return;
+        }
+
+        pendingLaunchAttemptInFlight = true;
+
+        try {
+            if (!$link) {
+                $link = launchInput;
+            }
+
+            await tick();
+            await submit();
+        } finally {
+            pendingLaunchAttemptInFlight = false;
+            clearPendingLaunchAutostart();
+            maybeCleanupLaunchUrl();
+        }
+    };
 
     const getDouyinGuidePath = () =>
         `/${getCurrentLang()}/guide/douyin-download-guide`;
@@ -271,6 +368,8 @@
         collectionKey?: string,
         collectionSourceUrl?: string,
         memoryInfo?: BatchDialogMemoryInfo,
+        selectedUrls?: string[],
+        autoStart?: boolean,
     ) => {
         if (batchLimitEnabled && items.length > batchMaxItems) {
             showBatchLimitDialog(items.length);
@@ -286,6 +385,8 @@
             collectionTotalCount: memoryInfo?.collectionTotalCount,
             collectionKey,
             collectionSourceUrl,
+            selectedUrls,
+            autoStart,
         });
     };
 
@@ -555,20 +656,67 @@
         }
     };
 
+    $: if (browser && !pendingLaunchHydrated) {
+        hydratePendingLaunchIntent();
+    }
+
     $: linkFromHash = $page.url.hash.replace("#", "") || "";
     $: linkFromQuery = (browser ? $page.url.searchParams.get("u") : 0) || "";
+    $: rawLaunchParams = `${linkFromHash}::${linkFromQuery}`;
 
-    $: if (linkFromHash || linkFromQuery) {
+    $: if (!linkFromHash && !linkFromQuery) {
+        capturedLaunchParams = "";
+    }
+
+    $: if (browser && (linkFromHash || linkFromQuery) && rawLaunchParams !== capturedLaunchParams) {
+        capturedLaunchParams = rawLaunchParams;
+        launchUrlCleanupPending = true;
+
         if (extractUrls(linkFromHash).length > 0) {
             $link = linkFromHash;
+            rememberPendingLaunch(linkFromHash, true);
         } else if (extractUrls(linkFromQuery).length > 0) {
             $link = linkFromQuery;
+            rememberPendingLaunch(linkFromQuery, true);
+        } else {
+            pendingLaunchUrl = "";
+            pendingLaunchAutostart = false;
+            clearPendingLaunchIntent();
+            maybeCleanupLaunchUrl();
         }
+    }
 
-        // clear hash and query to prevent bookmarking unwanted links
-        const currentLang =
-            $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
-        goto(`/${currentLang}`, { replaceState: true });
+    $: if (browser && pendingLaunchHydrated && pendingLaunchUrl && !$link) {
+        $link = pendingLaunchUrl;
+    }
+
+    $: if (browser && pendingLaunchHydrated && pendingLaunchAutostart) {
+        void maybeAutoSubmitPendingLaunch();
+    }
+
+    $: if (browser) {
+        const batchIntent = readPendingBatchIntent();
+        const currentPath = `${$page.url.pathname}${$page.url.search}${$page.url.hash}`;
+
+        if (!batchIntent) {
+            pendingBatchRestoreHandled = false;
+        } else if (
+            !pendingBatchRestoreHandled &&
+            batchIntent.returnPath === currentPath &&
+            ($isSignedIn || !clerkEnabled)
+        ) {
+            pendingBatchRestoreHandled = true;
+            clearPendingBatchIntent();
+            openBatchDialog(
+                batchIntent.items,
+                batchIntent.title,
+                batchIntent.collectionKey,
+                batchIntent.collectionSourceUrl,
+                undefined,
+                batchIntent.selectedUrls,
+                batchIntent.autostart,
+            );
+        }
     }
 
     $: if ($cachedInfo?.info?.cobalt?.turnstileSitekey) {

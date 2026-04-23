@@ -7,6 +7,10 @@
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { clearCollectionMemory } from "$lib/api/collection-memory";
     import { showPointsInsufficientDialog as openPointsInsufficientDialog } from "$lib/points/ui";
+    import {
+        clearPendingBatchIntent,
+        savePendingBatchIntent,
+    } from "$lib/pwa/batch-intent";
     import { createDialog } from "$lib/state/dialogs";
     import { queue as queueStore } from "$lib/state/task-manager/queue";
     import {
@@ -42,6 +46,8 @@
     export let collectionKey: string | undefined = undefined;
     export let collectionSourceUrl: string | undefined = undefined;
     export let downloadMode: DownloadModeOption | undefined = undefined;
+    export let selectedUrls: string[] = [];
+    export let autoStart = false;
 
     let close: () => void;
 
@@ -79,6 +85,7 @@
     const MIN_POINTS_PER_DOWNLOAD = 2;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let rateLimitSkipNotified = false;
+    let autoStartConsumed = false;
 
     const waitForQueueItemDone = (taskId: string) =>
         new Promise<"done" | "error" | "missing" | "timeout" | "cancelled">((resolve) => {
@@ -154,14 +161,39 @@
     const computeItemsKey = (batchItems: DialogBatchItem[]) =>
         batchItems.map((item) => item.url).join("\n");
 
+    const currentReturnPath = () =>
+        `${$page.url.pathname}${$page.url.search}${$page.url.hash}`;
+
+    const persistCurrentBatchIntent = (autostartIntent: boolean) => {
+        const selectedItems = items.filter((_, index) => selected[index]);
+        if (!selectedItems.length) return;
+
+        savePendingBatchIntent({
+            title: title || undefined,
+            items,
+            selectedUrls: selectedItems.map((item) => item.url),
+            collectionKey,
+            collectionSourceUrl,
+            downloadMode,
+            returnPath: currentReturnPath(),
+            autostart: autostartIntent,
+        });
+    };
+
     const resetStateForItems = () => {
-        selected = items.map(() => true);
+        const selectedUrlSet = new Set(
+            Array.isArray(selectedUrls) && selectedUrls.length
+                ? selectedUrls
+                : items.map((item) => item.url),
+        );
+        selected = items.map((item) => selectedUrlSet.has(item.url));
         running = false;
         pointsCheckLoading = false;
         cancelRequested = false;
         progress = 0;
         totalToRun = 0;
         clearPointsPreviewState();
+        autoStartConsumed = false;
     };
 
     const resetRunState = () => {
@@ -217,9 +249,10 @@
     };
 
     const showPointsInsufficient = (currentPoints: number, requiredPoints: number) => {
+        persistCurrentBatchIntent(true);
         openPointsInsufficientDialog(currentPoints, requiredPoints, () => {
             close?.();
-        });
+        }, `${$page.url.pathname}${$page.url.search}${$page.url.hash}`);
     };
 
     const showPointsError = () => {
@@ -338,6 +371,19 @@
         }
     }
 
+    $: if (
+        autoStart &&
+        !autoStartConsumed &&
+        !running &&
+        !pointsCheckLoading &&
+        !viewingDownloaded &&
+        selectedCount() > 0 &&
+        (!clerkEnabled || (pointsPreviewReady && !pointsPreviewLoading))
+    ) {
+        autoStartConsumed = true;
+        void downloadSelected();
+    }
+
     const toggleDownloadedView = () => {
         viewingDownloaded = !viewingDownloaded;
         if (viewingDownloaded) {
@@ -402,6 +448,7 @@
         if (clerkEnabled && (!pointsPreviewReady || pointsPreviewLoading)) return;
 
         if (!$isSignedIn) {
+            persistCurrentBatchIntent(true);
             const alreadySignedIn = await checkSignedIn();
             if (!alreadySignedIn) {
                 // Close native <dialog> first (it sits in the browser top-layer and can cover Clerk).
@@ -441,6 +488,7 @@
         }
 
         running = true;
+        clearPendingBatchIntent();
         cancelPointsPreview();
         cancelRequested = false;
         progress = 0;
@@ -591,6 +639,7 @@
     const downloadSingle = async (url: string) => {
         if (running) return;
         if (!$isSignedIn) {
+            persistCurrentBatchIntent(true);
             const alreadySignedIn = await checkSignedIn();
             if (!alreadySignedIn) {
                 close?.();

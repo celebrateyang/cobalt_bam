@@ -17,6 +17,7 @@ import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
 import { finalizePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
+import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import {
     fetchCurrentUserPointsProfile,
     isFirstDownloadGraceEligible,
@@ -216,6 +217,19 @@ const ensureSignedIn = async () => {
 const isHomePageRoute = () => get(page)?.route?.id === "/[lang]";
 const POINTS_PER_MINUTE = 2;
 const MIN_POINTS_PER_DOWNLOAD = 2;
+
+const getCurrentRedirectPath = () => {
+    const currentPage = get(page)?.url;
+    if (currentPage) {
+        return `${currentPage.pathname}${currentPage.search}${currentPage.hash}`;
+    }
+
+    if (typeof window !== "undefined") {
+        return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    }
+
+    return null;
+};
 
 export const buildSaveRequest = (url: string): CobaltSaveRequestBody => {
     const getSetting = lazySettingGetter(get(settings));
@@ -430,7 +444,16 @@ export const savingHandler = async ({
             const current = Number(response.error?.context?.current);
             const required = Number(response.error?.context?.required);
             if (Number.isFinite(current) && Number.isFinite(required)) {
-                showPointsInsufficientDialog(current, required);
+                if (selectedRequest?.url) {
+                    savePendingLaunchIntent(selectedRequest.url, { autostart: true });
+                }
+
+                showPointsInsufficientDialog(
+                    current,
+                    required,
+                    null,
+                    getCurrentRedirectPath(),
+                );
                 return response;
             }
         }

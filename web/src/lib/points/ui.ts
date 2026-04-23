@@ -19,22 +19,44 @@ export type CurrentUserPointsProfile = {
     firstDownloadGraceUsed: boolean;
 };
 
-export const accountPath = (section?: PointsHelpSection) => {
+const normalizeRedirectPath = (redirectPath?: string | null) => {
+    if (!redirectPath || typeof redirectPath !== "string") return null;
+    if (!redirectPath.startsWith("/") || redirectPath.startsWith("//")) return null;
+    return redirectPath;
+};
+
+export const accountPath = (
+    section?: PointsHelpSection,
+    redirectPath?: string | null,
+) => {
     const lang = get(page)?.params?.lang || "en";
-    if (!section) return `/${lang}/account`;
-    return `/${lang}/account?section=${encodeURIComponent(section)}`;
+    const basePath = `/${lang}/account`;
+    const params = new URLSearchParams();
+
+    if (section) {
+        params.set("section", section);
+    }
+
+    const normalizedRedirectPath = normalizeRedirectPath(redirectPath);
+    if (normalizedRedirectPath) {
+        params.set("redirect", normalizedRedirectPath);
+    }
+
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
 };
 
 const navigateToAccountSection = async (
     section: PointsHelpSection,
     onBeforeNavigate?: (() => void) | null,
+    redirectPath?: string | null,
 ) => {
     onBeforeNavigate?.();
     const delayMs = onBeforeNavigate ? 200 : 0;
     if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-    await goto(accountPath(section));
+    await goto(accountPath(section, redirectPath));
 };
 
 export const fetchCurrentUserPointsProfile =
@@ -80,6 +102,7 @@ export const showPointsInsufficientDialog = (
     currentPoints: number,
     requiredPoints: number,
     onBeforeNavigate?: (() => void) | null,
+    redirectPath?: string | null,
 ) => {
     createDialog({
         id: `points-insufficient-${Date.now()}`,
@@ -95,28 +118,28 @@ export const showPointsInsufficientDialog = (
                 text: get(t)("button.free_points"),
                 main: false,
                 action: () => {
-                    void navigateToAccountSection("contact", onBeforeNavigate);
+                    void navigateToAccountSection("contact", onBeforeNavigate, redirectPath);
                 },
             },
             {
                 text: get(t)("button.invite_points"),
                 main: false,
                 action: () => {
-                    void navigateToAccountSection("referral", onBeforeNavigate);
+                    void navigateToAccountSection("referral", onBeforeNavigate, redirectPath);
                 },
             },
             {
                 text: get(t)("button.promotion_points"),
                 main: false,
                 action: () => {
-                    void navigateToAccountSection("promotion", onBeforeNavigate);
+                    void navigateToAccountSection("promotion", onBeforeNavigate, redirectPath);
                 },
             },
             {
                 text: get(t)("button.buy_points"),
                 main: true,
                 action: () => {
-                    void navigateToAccountSection("topup", onBeforeNavigate);
+                    void navigateToAccountSection("topup", onBeforeNavigate, redirectPath);
                 },
             },
         ],

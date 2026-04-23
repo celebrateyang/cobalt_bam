@@ -225,7 +225,9 @@
             <svelte:component this={ProcessingQueueComponent} />
         {/if}
         <div id="content">
-            <PwaInstallBanner />
+            {#if !app.is.installed}
+                <PwaInstallBanner />
+            {/if}
             {#if shouldRenderTurnstile}
                 <Turnstile />
             {/if}

@@ -202,6 +202,12 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
         return {
             ...body,
             tunnel: body.tunnel.map((item) => normalizeUpstreamTunnelUrl(item, upstreamOrigin)),
+            fallback: body.fallback?.url
+                ? {
+                    ...body.fallback,
+                    url: normalizeUpstreamTunnelUrl(body.fallback.url, upstreamOrigin),
+                }
+                : body.fallback,
         };
     }
 

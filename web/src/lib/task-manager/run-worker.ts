@@ -4,6 +4,7 @@ import { queue, itemError } from "$lib/state/task-manager/queue";
 
 import { runFFmpegWorker } from "$lib/task-manager/runners/ffmpeg";
 import { runFetchWorker } from "$lib/task-manager/runners/fetch";
+import { runHlsFetchWorker } from "$lib/task-manager/runners/hls-fetch";
 
 import type { CobaltPipelineItem } from "$lib/types/workers";
 
@@ -59,6 +60,15 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
                 workerArgs.url,
                 workerArgs.tuning,
                 workerArgs.resume,
+            );
+            break;
+
+        case "hls-fetch":
+            await runHlsFetchWorker(
+                workerId,
+                parentId,
+                workerArgs.url,
+                workerArgs.mimeType,
             );
             break;
     }

@@ -561,6 +561,12 @@ export const savingHandler = async ({
             tunnel: Array.isArray(response.tunnel)
                 ? response.tunnel.map((url) => normalizeTunnelUrl(url) || url)
                 : response.tunnel,
+            fallback: response.fallback?.url
+                ? {
+                    ...response.fallback,
+                    url: normalizeTunnelUrl(response.fallback.url) || response.fallback.url,
+                }
+                : response.fallback,
         };
 
         try {

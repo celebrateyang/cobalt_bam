@@ -58,6 +58,15 @@ type CobaltFetchPipelineItem = CobaltPipelineItemBase & {
     },
 }
 
+type CobaltHlsFetchPipelineItem = CobaltPipelineItemBase & {
+    worker: "hls-fetch",
+    workerArgs: {
+        url: string,
+        mimeType?: string,
+    },
+}
+
 export type CobaltPipelineItem = CobaltEncodePipelineItem
                                | CobaltRemuxPipelineItem
-                               | CobaltFetchPipelineItem;
+                               | CobaltFetchPipelineItem
+                               | CobaltHlsFetchPipelineItem;

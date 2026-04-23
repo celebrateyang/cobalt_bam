@@ -63,11 +63,11 @@ export const schedule = () => {
                     break;
                 }
 
-                if (worker.worker === "fetch") {
+                if (worker.worker === "fetch" || worker.worker === "hls-fetch") {
                     const hasRunningFetchWorker = Object.values(get(currentTasks))
                         .some((taskItem) => (
                             taskItem.parentId === task.id &&
-                            taskItem.type === "fetch"
+                            (taskItem.type === "fetch" || taskItem.type === "hls-fetch")
                         ));
 
                     if (hasRunningFetchWorker) {

@@ -233,14 +233,32 @@ export function addItem(item: CobaltQueueItem) {
 
 export function itemError(id: UUID, workerId: UUID, error: string) {
     console.log(`[queue] itemError: id=${id} workerId=${workerId} error=${error}`);
-    maybeShowQueueRefreshHint(error);
 
+    let switchedToFallback = false;
     update(queueData => {
         if (queueData[id]) {
-            const holdId = queueData[id].points?.holdId;
+            const item = queueData[id];
+            const holdId = item.points?.holdId;
             console.log(`[queue] itemError: item found, holdId=${holdId ?? 'none'}`);
 
-            queueData[id] = clearPipelineCache(queueData[id]);
+            if (item.fallback?.pipeline?.length && !item.fallback.used) {
+                queueData[id] = clearPipelineCache(item);
+                queueData[id] = {
+                    ...queueData[id],
+                    state: "waiting",
+                    pipeline: item.fallback.pipeline,
+                    fallback: {
+                        ...item.fallback,
+                        used: true,
+                        errorCode: error,
+                    },
+                    errorCode: undefined,
+                };
+                switchedToFallback = true;
+                return queueData;
+            }
+
+            queueData[id] = clearPipelineCache(item);
 
             queueData[id] = {
                 ...queueData[id],
@@ -255,6 +273,10 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
 
     removeWorkerFromQueue(workerId);
     schedule();
+    if (switchedToFallback) {
+        return;
+    }
+    maybeShowQueueRefreshHint(error);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
     void releaseQueueHold(id, "queue_error", error);
 }

@@ -5,6 +5,7 @@ enum CobaltResponseType {
     Picker = 'picker',
     Redirect = 'redirect',
     Tunnel = 'tunnel',
+    LocalProcessing = 'local-processing',
 }
 
 export type CobaltErrorResponse = {
@@ -46,6 +47,38 @@ type CobaltRedirectResponse = {
 type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
 } & CobaltPartialURLResponse;
+
+export type CobaltLocalProcessingResponse = {
+    status: CobaltResponseType.LocalProcessing,
+    type: 'proxy' | 'merge' | 'remux' | 'mute' | 'audio' | 'gif',
+    service?: string,
+    tunnel: string[],
+    output: {
+        type: string,
+        filename: string,
+        metadata?: CobaltFileMetadata,
+        subtitles?: boolean,
+    },
+    audio?: {
+        copy?: boolean,
+        format?: string,
+        bitrate?: string,
+        cover?: boolean,
+        cropCover?: boolean,
+    },
+    source?: {
+        kind: 'hls',
+        urls: string[],
+        subtitles?: string,
+        cover?: string,
+    },
+    fallback?: {
+        type: 'tunnel',
+        url: string,
+        filename: string,
+    },
+    isHLS?: boolean,
+};
 
 type CobaltDuration = {
     duration?: number,
@@ -115,6 +148,7 @@ export type CobaltPointsInfo = {
 export type CobaltAPIResponse = (CobaltErrorResponse
                               | CobaltPickerResponse
                               | CobaltRedirectResponse
-                              | CobaltTunnelResponse) & CobaltDuration & {
+                              | CobaltTunnelResponse
+                              | CobaltLocalProcessingResponse) & CobaltDuration & {
                                   points?: CobaltPointsInfo;
                               };

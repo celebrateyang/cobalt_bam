@@ -78,7 +78,7 @@ const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
 }
 
 const makeAudioArgs = (info: CobaltLocalProcessingResponse) => {
-    if (!info.audio) {
+    if (!info.audio?.format) {
         return;
     }
 
@@ -127,6 +127,53 @@ const makeGifArgs = () => {
     ];
 }
 
+const buildFallbackPipeline = (parentId: string, url: string): CobaltPipelineItem[] => ([{
+    worker: "fetch",
+    workerId: uuid(),
+    parentId,
+    workerArgs: {
+        url,
+    },
+}]);
+
+const getDirectInputSources = (info: CobaltLocalProcessingResponse) => {
+    if (info.source?.kind !== "hls" || !Array.isArray(info.source.urls)) {
+        return;
+    }
+
+    const sources = [...info.source.urls];
+
+    if (info.source.subtitles) {
+        sources.push(info.source.subtitles);
+    }
+
+    if (info.source.cover) {
+        sources.push(info.source.cover);
+    }
+
+    return sources.reverse();
+};
+
+const getDirectSourceMimeType = (info: CobaltLocalProcessingResponse, source: string) => {
+    if (!info.source?.urls?.length) {
+        return "video/mp4";
+    }
+
+    if (info.type === "audio") {
+        return "audio/mp4";
+    }
+
+    if (info.type === "mute") {
+        return "video/mp4";
+    }
+
+    if (info.source.urls.length === 1) {
+        return "video/mp4";
+    }
+
+    return source === info.source.urls[0] ? "video/mp4" : "audio/mp4";
+};
+
 const showError = (errorCode: string) => {
     return createDialog({
         id: "pipeline-error",
@@ -167,26 +214,56 @@ export const createSavePipeline = (
         }
         : undefined;
 
-    // reverse is needed for audio (second item) to be downloaded first
-    const tunnels = info.tunnel.reverse();
+    const directSources = getDirectInputSources(info);
 
-    for (const tunnel of tunnels) {
-        const fetchSlot = pipeline.length;
-        pipeline.push({
-            worker: "fetch",
-            workerId: uuid(),
-            parentId,
-            workerArgs: {
-                url: tunnel,
-                tuning: fetchTuning,
-                resume: isBilibili
-                    ? {
-                        enabled: true,
-                        slot: fetchSlot,
-                    }
-                    : undefined,
-            },
-        });
+    if (directSources?.length) {
+        for (const source of directSources) {
+            const isSubtitle = source === info.source?.subtitles;
+            const isCover = source === info.source?.cover;
+
+            if (isSubtitle || isCover) {
+                pipeline.push({
+                    worker: "fetch",
+                    workerId: uuid(),
+                    parentId,
+                    workerArgs: {
+                        url: source,
+                    },
+                });
+            } else {
+                pipeline.push({
+                    worker: "hls-fetch",
+                    workerId: uuid(),
+                    parentId,
+                    workerArgs: {
+                        url: source,
+                        mimeType: getDirectSourceMimeType(info, source),
+                    },
+                });
+            }
+        }
+    } else {
+        // reverse is needed for audio (second item) to be downloaded first
+        const tunnels = info.tunnel.reverse();
+
+        for (const tunnel of tunnels) {
+            const fetchSlot = pipeline.length;
+            pipeline.push({
+                worker: "fetch",
+                workerId: uuid(),
+                parentId,
+                workerArgs: {
+                    url: tunnel,
+                    tuning: fetchTuning,
+                    resume: isBilibili
+                        ? {
+                            enabled: true,
+                            slot: fetchSlot,
+                        }
+                        : undefined,
+                },
+            });
+        }
     }
 
     if (info.type !== "proxy") {
@@ -238,6 +315,11 @@ export const createSavePipeline = (
         filename: info.output.filename,
         mimeType: info.output.type,
         mediaType: getMediaType(info.output.type) || "file",
+        fallback: info.fallback?.url
+            ? {
+                pipeline: buildFallbackPipeline(parentId, info.fallback.url),
+            }
+            : undefined,
     });
 
     openQueuePopover();

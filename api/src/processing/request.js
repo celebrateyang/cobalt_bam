@@ -199,10 +199,31 @@ export function createResponse(responseType, responseData) {
                 break;
 
             case "local-processing":
+                const shouldExposeDirectSource =
+                    responseData?.frontendProcessing === "hls" &&
+                    responseData?.isHLS === true;
+
                 response = {
                     type: responseData?.type,
                     service: responseData?.service,
                     tunnel: createProxyTunnels(responseData),
+                    source: shouldExposeDirectSource
+                        ? {
+                            kind: "hls",
+                            urls: Array.isArray(responseData?.url)
+                                ? responseData.url
+                                : [responseData?.url].filter(Boolean),
+                            subtitles: responseData?.subtitles || undefined,
+                            cover: responseData?.cover || undefined,
+                        }
+                        : undefined,
+                    fallback: shouldExposeDirectSource
+                        ? {
+                            type: "tunnel",
+                            url: createStream(responseData),
+                            filename: responseData?.filename,
+                        }
+                        : undefined,
 
                     output: {
                         type: mime.getType(responseData?.filename) || undefined,

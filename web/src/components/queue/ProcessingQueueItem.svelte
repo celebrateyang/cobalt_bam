@@ -40,6 +40,10 @@
         image: IconPhoto,
     };
 
+    const getWorkerStatusKey = (worker: string) => (
+        worker === "hls-fetch" ? "fetch" : worker
+    );
+
     type Props = {
         id: UUID;
         info: CobaltQueueItem;
@@ -127,7 +131,9 @@
                                    .reduce((s, p) => s + (p?.size ?? 0), 0);
             }
 
-            const runningText = [...running].map(task => $t(`queue.state.running.${task}`)).join(", ");
+            const runningText = [...running]
+                .map(task => $t(`queue.state.running.${getWorkerStatusKey(task)}`))
+                .join(", ");
 
             if (runningWorkers.length && totalSize > 0) {
                 const formattedSize = formatFileSize(totalSize);
@@ -145,7 +151,7 @@
             });
 
             if (firstUnstarted) {
-                return $t(`queue.state.starting.${firstUnstarted.worker}`);
+                return $t(`queue.state.starting.${getWorkerStatusKey(firstUnstarted.worker)}`);
             }
 
             return runningText;

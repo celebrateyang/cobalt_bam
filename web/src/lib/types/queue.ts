@@ -34,6 +34,11 @@ type CobaltQueueItemBase = {
     collectionMemory?: CobaltQueueItemCollectionMemory;
     batchSessionId?: string;
     batchSelectionTotal?: number;
+    fallback?: {
+        pipeline: CobaltPipelineItem[];
+        used?: boolean;
+        errorCode?: string;
+    };
 };
 
 export type CobaltQueueItemWaiting = CobaltQueueItemBase & {

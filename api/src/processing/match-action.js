@@ -361,14 +361,22 @@ export default function({
         params.type = "proxy";
     }
 
-    // TODO: add support for HLS
-    // (very painful)
-    if (!params.isHLS && responseType !== "picker") {
+    const canUseBrowserHlsProcessing =
+        host === "vimeo" &&
+        params.isHLS === true &&
+        alwaysProxy !== true &&
+        responseType !== "picker" &&
+        new Set(["merge", "remux", "mute", "audio"]).has(params.type);
+
+    if ((canUseBrowserHlsProcessing || !params.isHLS) && responseType !== "picker") {
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);
 
-        if (localProcessing === "forced" || isPreferredWithExtra) {
+        if (canUseBrowserHlsProcessing || localProcessing === "forced" || isPreferredWithExtra) {
             responseType = "local-processing";
+            if (canUseBrowserHlsProcessing) {
+                params.frontendProcessing = "hls";
+            }
         }
     }
 

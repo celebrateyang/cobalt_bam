@@ -276,6 +276,12 @@ const requestUpstreamCobalt = async (payload) => {
                 return {
                     ...body,
                     tunnel: body.tunnel.map((item) => normalizeTunnelUrl(item)),
+                    fallback: body.fallback?.url
+                        ? {
+                            ...body.fallback,
+                            url: wrapUpstreamTunnel(body.fallback.url, body.fallback.filename, body.service),
+                        }
+                        : body.fallback,
                 };
             }
 

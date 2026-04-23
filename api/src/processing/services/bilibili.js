@@ -194,38 +194,76 @@ const toSeconds = (value) =>
         ? Math.round(value / 1000)
         : undefined;
 
-async function com_download(id, partId) {
-    const url = new URL(`https://bilibili.com/video/${id}`);
+const BILIBILI_COM_HEADERS = Object.freeze({
+    "user-agent": genericUserAgent,
+    referer: "https://www.bilibili.com/",
+});
 
-    if (partId) {
-        url.searchParams.set('p', partId);
-    }
+const fetchComVideoMeta = async (id) => {
+    const url = new URL("https://api.bilibili.com/x/web-interface/view");
+    url.searchParams.set("bvid", id);
 
-    const html = await fetch(url, {
-        headers: {
-            "user-agent": genericUserAgent
-        }
+    const payload = await fetch(url, {
+        headers: BILIBILI_COM_HEADERS,
     })
-    .then(r => r.text())
-    .catch(() => {});
+        .then((response) => response.json())
+        .catch(() => null);
 
-    if (!html) {
-        return { error: "fetch.fail" }
+    if (payload?.code !== 0 || !payload?.data) {
+        return null;
     }
 
-    if (!(html.includes('<script>window.__playinfo__=') && html.includes('"video_codecid"'))) {
+    return payload.data;
+};
+
+const fetchComPlayInfo = async ({ id, cid }) => {
+    const url = new URL("https://api.bilibili.com/x/player/playurl");
+    url.searchParams.set("bvid", id);
+    url.searchParams.set("cid", String(cid));
+    url.searchParams.set("fnval", "4048");
+    url.searchParams.set("qn", "64");
+    url.searchParams.set("fourk", "1");
+
+    const payload = await fetch(url, {
+        headers: {
+            ...BILIBILI_COM_HEADERS,
+            referer: `https://www.bilibili.com/video/${id}/`,
+        },
+    })
+        .then((response) => response.json())
+        .catch(() => null);
+
+    if (payload?.code !== 0 || !payload?.data) {
+        return null;
+    }
+
+    return payload.data;
+};
+
+async function com_download(id, partId) {
+    const meta = await fetchComVideoMeta(id);
+    if (!meta) {
+        return { error: "fetch.fail" };
+    }
+
+    const selectedPage = partId
+        ? meta.pages?.find((page) => String(page?.page) === String(partId))
+        : null;
+    const cid = selectedPage?.cid || meta.cid;
+    if (!cid) {
         return { error: "fetch.empty" };
     }
 
-    const streamData = JSON.parse(
-        html.split('<script>window.__playinfo__=')[1].split('</script>')[0]
-    );
+    const playInfo = await fetchComPlayInfo({ id, cid });
+    if (!playInfo?.dash) {
+        return { error: "fetch.empty" };
+    }
 
-    if (streamData.data.timelength > env.durationLimit * 1000) {
+    if (playInfo.timelength > env.durationLimit * 1000) {
         return { error: "content.too_long" };
     }
 
-    const [ video, audio ] = extractBestQuality(streamData.data.dash);
+    const [ video, audio ] = extractBestQuality(playInfo.dash);
     if (!video || !audio) {
         return { error: "fetch.empty" };
     }
@@ -240,7 +278,7 @@ async function com_download(id, partId) {
         urlCandidates: [video.candidates, audio.candidates],
         audioFilename: `${filenameBase}_audio`,
         filename: `${filenameBase}_${video.width}x${video.height}.mp4`,
-        duration: toSeconds(streamData.data.timelength),
+        duration: toSeconds(playInfo.timelength),
     };
 }
 

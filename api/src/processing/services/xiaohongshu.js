@@ -11,6 +11,77 @@ const canonicalNoteUrl = (noteId, xsecToken) => {
     return `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(xsecToken)}`;
 };
 
+const pickBestStreamVariant = (variants = []) => {
+    if (!Array.isArray(variants) || variants.length === 0) {
+        return null;
+    }
+
+    return variants.reduce((best, current) => {
+        const bestBitrate = Number(best?.videoBitrate || best?.avgBitrate || 0);
+        const currentBitrate = Number(current?.videoBitrate || current?.avgBitrate || 0);
+        return currentBitrate > bestBitrate ? current : best;
+    });
+};
+
+const getLivePhotoVideoUrl = ({ image, h265, isAudioOnly }) => {
+    const stream = image?.stream;
+    if (!stream || typeof stream !== "object") {
+        return null;
+    }
+
+    const preferredCodecs = [];
+    if (h265 && !isAudioOnly) {
+        preferredCodecs.push("h265");
+    }
+
+    preferredCodecs.push("h264", "av1", "h266");
+
+    for (const codec of preferredCodecs) {
+        const selected = pickBestStreamVariant(stream?.[codec]);
+        if (selected?.masterUrl) {
+            return https(selected.masterUrl);
+        }
+    }
+
+    return null;
+};
+
+const buildImagePickerItem = ({
+    image,
+    index,
+    filenameBase,
+    h265,
+    isAudioOnly,
+}) => {
+    const imageUrl = https(image.urlDefault);
+    const livePhotoUrl = getLivePhotoVideoUrl({ image, h265, isAudioOnly });
+
+    if (livePhotoUrl) {
+        return {
+            type: "video",
+            thumb: imageUrl,
+            url: createStream({
+                service: "xiaohongshu",
+                type: "proxy",
+                url: livePhotoUrl,
+                filename: `${filenameBase}_${index + 1}.mp4`,
+            }),
+            label: `Live ${index + 1}`,
+            note: "Live Photo",
+        };
+    }
+
+    return {
+        type: "photo",
+        url: createStream({
+            service: "xiaohongshu",
+            type: "proxy",
+            url: imageUrl,
+            filename: `${filenameBase}_${index + 1}.jpg`,
+        })
+    };
+};
+
 const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly }) => {
     if (!noteId || !xsecToken) return null;
 
@@ -148,6 +219,22 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     }
 
     if (images.length === 1) {
+        const livePhotoUrl = getLivePhotoVideoUrl({
+            image: images[0],
+            h265,
+            isAudioOnly,
+        });
+
+        if (livePhotoUrl) {
+            return {
+                urls: livePhotoUrl,
+                filename: `${filenameBase}.mp4`,
+                audioFilename: `${filenameBase}_audio`,
+            };
+        }
+    }
+
+    if (images.length === 1) {
         return {
             isPhoto: true,
             urls: https(images[0].urlDefault),
@@ -155,17 +242,13 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
         }
     }
 
-    const picker = images.map((image, i) => {
-        return {
-            type: "photo",
-            url: createStream({
-                service: "xiaohongshu",
-                type: "proxy",
-                url: https(image.urlDefault),
-                filename: `${filenameBase}_${i + 1}.jpg`,
-            })
-        }
-    });
+    const picker = images.map((image, i) => buildImagePickerItem({
+        image,
+        index: i,
+        filenameBase,
+        h265,
+        isAudioOnly,
+    }));
 
     return { picker };
 }

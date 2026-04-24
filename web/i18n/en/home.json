@@ -9,7 +9,7 @@
         },
         "collection": {
             "title": "Collection / playlist download",
-            "desc": "Auto-detect collection, season, and playlist links and queue the full set when supported."
+            "desc": "Auto-detect collection, season, and playlist links and queue the full set when supported. Example links: Bilibili multi-part or collection pages, TikTok playlist links, and YouTube playlist links such as https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V"
         },
         "batch": {
             "title": "Batch download",

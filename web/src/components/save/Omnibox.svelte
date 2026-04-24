@@ -153,6 +153,33 @@
         }
     };
 
+    const isYouTubePlaylistCandidateUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            const host = parsed.hostname;
+            const listId = parsed.searchParams.get("list")?.trim();
+
+            if (
+                !(
+                    host === "youtu.be" ||
+                    host === "youtube.com" ||
+                    host.endsWith(".youtube.com")
+                )
+            ) {
+                return false;
+            }
+
+            if (!listId) return false;
+            if (listId === "WL" || listId.startsWith("RD") || listId.startsWith("RL")) {
+                return false;
+            }
+
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
     const isBilibiliVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -328,6 +355,32 @@
         }
     };
 
+    const isYouTubeVideoPage = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            const host = parsed.hostname;
+
+            if (
+                !(
+                    host === "youtu.be" ||
+                    host === "youtube.com" ||
+                    host.endsWith(".youtube.com")
+                )
+            ) {
+                return false;
+            }
+
+            return (
+                host === "youtu.be" ||
+                parsed.pathname === "/watch" ||
+                parsed.pathname.startsWith("/shorts/") ||
+                parsed.pathname.startsWith("/live/")
+            );
+        } catch {
+            return false;
+        }
+    };
+
     $: detectedUrls = extractUrls($link);
     $: isDownloadable = detectedUrls.length > 0;
     $: isBatchInput = detectedUrls.length > 1;
@@ -423,8 +476,13 @@
             const url = detectedUrls[0];
             if (!url) return;
 
-            // Only expand for services that support collection/playlist detection.
-            if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
+            // Only expand for services or URL shapes that support collection/playlist detection.
+            if (
+                !isBilibiliUrl(url) &&
+                !isDouyinUrl(url) &&
+                !isTikTokUrl(url) &&
+                !isYouTubePlaylistCandidateUrl(url)
+            ) {
                 handedOffToSavingHandler = true;
                 return savingHandler({ url });
             }
@@ -521,7 +579,10 @@
 
         if (batchLimitEnabled && visibleBatchItems.length > batchMaxItems) {
             const canFallbackToSingle =
-                isBilibiliVideoPage(url) || isDouyinVideoPage(url) || isTikTokVideoPage(url);
+                isBilibiliVideoPage(url) ||
+                isDouyinVideoPage(url) ||
+                isTikTokVideoPage(url) ||
+                isYouTubeVideoPage(url);
 
             const subsetCounts = (() => {
                 const limit = batchMaxItems;
@@ -589,7 +650,12 @@
         }
 
         // If user pasted an explicit collection URL, go straight to batch list.
-        if (!isBilibiliVideoPage(url) && !isDouyinVideoPage(url) && !isTikTokVideoPage(url)) {
+        if (
+            !isBilibiliVideoPage(url) &&
+            !isDouyinVideoPage(url) &&
+            !isTikTokVideoPage(url) &&
+            !isYouTubeVideoPage(url)
+        ) {
             openBatchDialog(
                 visibleBatchItems,
                 expanded.title || $t("dialog.batch.title"),
@@ -604,7 +670,8 @@
         const isCollection =
             expanded.kind === "bilibili-ugc-season" ||
             expanded.kind === "douyin-mix" ||
-            expanded.kind === "tiktok-playlist";
+            expanded.kind === "tiktok-playlist" ||
+            expanded.kind === "youtube-playlist";
         const promptBody =
             isCollection
                 ? $t("dialog.batch.detect.body.collection", {

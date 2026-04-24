@@ -9,7 +9,7 @@
         },
         "collection": {
             "title": "合集 / Playlist 下载",
-            "desc": "自动识别合集、分P和 Playlist 链接，整组下载。"
+            "desc": "自动识别合集、分P和 Playlist 链接，整组下载。支持示例：B站分P / 合集链接、TikTok playlist 链接、YouTube playlist 链接 https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V"
         },
         "batch": {
             "title": "批次下载",

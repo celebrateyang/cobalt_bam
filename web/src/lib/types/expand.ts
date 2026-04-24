@@ -15,7 +15,8 @@ export type CobaltExpandOkResponse = {
         | "bilibili-ugc-season"
         | "bilibili-multi-page"
         | "douyin-mix"
-        | "tiktok-playlist";
+        | "tiktok-playlist"
+        | "youtube-playlist";
     title?: string;
     collectionKey?: string;
     items: CobaltExpandItem[];

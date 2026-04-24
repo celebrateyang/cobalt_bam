@@ -472,6 +472,33 @@
         }
     };
 
+    const isYouTubePlaylistCandidateUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            const host = parsed.hostname;
+            const listId = parsed.searchParams.get("list")?.trim();
+
+            if (
+                !(
+                    host === "youtu.be" ||
+                    host === "youtube.com" ||
+                    host.endsWith(".youtube.com")
+                )
+            ) {
+                return false;
+            }
+
+            if (!listId) return false;
+            if (listId === "WL" || listId.startsWith("RD") || listId.startsWith("RL")) {
+                return false;
+            }
+
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
     const buildResourceRequest = (url: string, mode: ResourceDownloadMode) => {
         const request = buildSaveRequest(url);
         request.downloadMode = mode === "audio" ? "audio" : "auto";
@@ -1014,7 +1041,12 @@
             const url = link.url;
             const downloadMode = mode === "audio" ? "audio" : "auto";
 
-            if (!isBilibiliUrl(url) && !isDouyinUrl(url) && !isTikTokUrl(url)) {
+            if (
+                !isBilibiliUrl(url) &&
+                !isDouyinUrl(url) &&
+                !isTikTokUrl(url) &&
+                !isYouTubePlaylistCandidateUrl(url)
+            ) {
                 await savingHandler({ request: buildResourceRequest(url, mode) });
                 return;
             }

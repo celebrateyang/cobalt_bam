@@ -109,6 +109,7 @@
         tiktok: { zh: "TikTok", default: "TikTok" },
         kuaishou: { zh: "\u5FEB\u624B", default: "Kuaishou" },
         instagram: { zh: "Instagram", default: "Instagram" },
+        youtube: { zh: "YouTube", default: "YouTube" },
     } as const;
 
     type CapabilityPlatform = keyof typeof capabilityPlatformLabels;
@@ -117,6 +118,7 @@
         "bilibili",
         "douyin",
         "tiktok",
+        "youtube",
     ];
     const batchGuidePlatforms: CapabilityPlatform[] = [
         "douyin",

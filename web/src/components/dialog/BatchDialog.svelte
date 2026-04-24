@@ -838,6 +838,50 @@
         </div>
 
         <div class="batch-footer">
+            <div class="batch-footer-actions">
+                <button
+                    class="button elevated footer-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={() => close()}
+                >
+                    {$t("button.cancel")}
+                </button>
+
+                {#if running}
+                    <button
+                        class="button elevated footer-button red"
+                        on:click={() => (cancelRequested = true)}
+                    >
+                        <IconPlayerStop />
+                        {$t("dialog.batch.stop")}
+                    </button>
+                {:else}
+                    {#if viewingDownloaded}
+                        <button
+                            class="button elevated footer-button active"
+                            disabled={running || pointsCheckLoading}
+                            on:click={toggleDownloadedView}
+                        >
+                            {$t("dialog.batch.view_pending")}
+                        </button>
+                    {:else}
+                        <button
+                            class="button elevated footer-button active"
+                            disabled={
+                                selectedCount() === 0 ||
+                                pointsCheckLoading ||
+                                (clerkEnabled &&
+                                    (!pointsPreviewReady || pointsPreviewLoading))
+                            }
+                            on:click={downloadSelected}
+                        >
+                            <IconDownload />
+                            {$t("dialog.batch.download_selected")}
+                        </button>
+                    {/if}
+                {/if}
+            </div>
+
             {#if !viewingDownloaded && clerkEnabled && selectedCount() > 0}
                 <div class="points-preview" aria-live="polite">
                     {#if pointsPreviewLoading || !pointsPreviewReady}
@@ -848,47 +892,6 @@
                         })}
                     {/if}
                 </div>
-            {/if}
-            <button
-                class="button elevated footer-button"
-                disabled={running || pointsCheckLoading}
-                on:click={() => close()}
-            >
-                {$t("button.cancel")}
-            </button>
-
-            {#if running}
-                <button
-                    class="button elevated footer-button red"
-                    on:click={() => (cancelRequested = true)}
-                >
-                    <IconPlayerStop />
-                    {$t("dialog.batch.stop")}
-                </button>
-            {:else}
-                {#if viewingDownloaded}
-                    <button
-                        class="button elevated footer-button active"
-                        disabled={running || pointsCheckLoading}
-                        on:click={toggleDownloadedView}
-                    >
-                        {$t("dialog.batch.view_pending")}
-                    </button>
-                {:else}
-                    <button
-                        class="button elevated footer-button active"
-                        disabled={
-                            selectedCount() === 0 ||
-                            pointsCheckLoading ||
-                            (clerkEnabled &&
-                                (!pointsPreviewReady || pointsPreviewLoading))
-                        }
-                        on:click={downloadSelected}
-                    >
-                        <IconDownload />
-                        {$t("dialog.batch.download_selected")}
-                    </button>
-                {/if}
             {/if}
         </div>
     </div>
@@ -1065,17 +1068,26 @@
 
     .batch-footer {
         display: flex;
+        flex-direction: column;
+        gap: calc(var(--padding) / 2);
+        width: 100%;
+    }
+
+    .batch-footer-actions {
+        display: flex;
         gap: calc(var(--padding) / 2);
         justify-content: flex-end;
-        flex-wrap: wrap;
     }
 
     .points-preview {
-        margin-right: auto;
         font-size: 12px;
         color: var(--gray);
         display: flex;
         align-items: center;
+        justify-content: flex-end;
+        line-height: 1.35;
+        text-align: right;
+        width: 100%;
     }
 
     .footer-button {
@@ -1103,9 +1115,30 @@
             width: calc(100% - var(--padding));
         }
 
+        .batch-footer-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            width: 100%;
+        }
+
         .footer-button {
             min-width: 0;
-            flex: 1;
+            width: 100%;
+            padding: 0 10px;
+            gap: 6px;
+            line-height: 1.1;
+            text-align: center;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            min-height: 44px;
+            height: auto;
+        }
+
+        .points-preview {
+            justify-content: center;
+            text-align: center;
+            order: 2;
+            padding: 0 4px;
         }
     }
 </style>

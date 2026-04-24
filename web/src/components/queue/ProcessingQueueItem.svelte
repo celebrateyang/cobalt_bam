@@ -519,6 +519,24 @@
         padding: 8px 12px;
         font-size: 12px;
         line-height: 1;
+        color: var(--background);
+        background-color: var(--secondary);
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary) 42%, transparent);
+        animation: save-pulse 1.45s ease-in-out infinite;
+        will-change: transform, box-shadow;
+    }
+
+    .action-button.save-button:hover,
+    .action-button.save-button:focus-visible {
+        animation-play-state: paused;
+        transform: translateY(-1px);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 18%, transparent);
+    }
+
+    .action-button.save-button.downloading,
+    .action-button.save-button:disabled {
+        animation: none;
+        transform: none;
     }
 
     .action-button :global(svg) {
@@ -552,5 +570,25 @@
     .processing-item:last-child {
         padding-bottom: 16px;
         border: none;
+    }
+
+    @keyframes save-pulse {
+        0%,
+        100% {
+            transform: none;
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary) 36%, transparent);
+        }
+
+        48% {
+            transform: translateY(-1px);
+            box-shadow: 0 0 0 6px color-mix(in srgb, var(--secondary) 0%, transparent);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .action-button.save-button {
+            animation: none;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 18%, transparent);
+        }
     }
 </style>

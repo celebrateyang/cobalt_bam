@@ -19,6 +19,7 @@
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
 
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
+    import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     const popoverAction = () => {
@@ -222,9 +223,14 @@
             {/if}
         </div>
         {#if doneCount > 0}
-            <p class="queue-save-warning">
-                {$t("queue.manual_save_warning")}
-            </p>
+            <div class="queue-save-warning" role="note">
+                <span class="warning-icon" aria-hidden="true">
+                    <IconAlertTriangle />
+                </span>
+                <p>
+                    {$t("queue.manual_save_warning")}
+                </p>
+            </div>
         {/if}
     </PopoverContainer>
 </div>
@@ -320,12 +326,49 @@
     }
 
     .queue-save-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 32%, transparent);
+        border-left: 4px solid var(--secondary);
+        border-radius: 8px;
+        background:
+            linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--secondary) 12%, transparent),
+                color-mix(in srgb, var(--button) 94%, transparent)
+            );
+        color: color-mix(in srgb, var(--text) 78%, var(--secondary));
+        box-shadow: 0 8px 22px color-mix(in srgb, var(--secondary) 10%, transparent);
+    }
+
+    .queue-save-warning p {
         margin: 0;
-        padding: 0 0 12px;
-        color: #ff4d4f;
-        font-size: 16px;
+        font-size: 13px;
         line-height: 1.45;
         font-weight: 600;
+        letter-spacing: 0;
+    }
+
+    .warning-icon {
+        display: flex;
+        flex: 0 0 auto;
+        justify-content: center;
+        align-items: center;
+        width: 22px;
+        height: 22px;
+        margin-top: 1px;
+        border-radius: 50%;
+        background-color: color-mix(in srgb, var(--secondary) 15%, var(--button));
+        color: var(--secondary);
+    }
+
+    .warning-icon :global(svg) {
+        width: 15px;
+        height: 15px;
+        stroke-width: 2.2px;
     }
 
     @media screen and (max-width: 535px) {
@@ -333,6 +376,11 @@
             --holder-padding: 8px;
             padding-top: 4px;
             top: env(safe-area-inset-top);
+        }
+
+        .queue-save-warning {
+            margin-bottom: 10px;
+            padding: 9px 10px;
         }
     }
 </style>

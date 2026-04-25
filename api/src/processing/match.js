@@ -3,6 +3,7 @@ import { strict as assert } from "node:assert";
 import { env } from "../config.js";
 import { createResponse } from "../processing/request.js";
 import { createStream } from "../stream/manage.js";
+import { requestUpstream } from "./upstream/request.js";
 
 import { testers } from "./service-patterns.js";
 import matchAction from "./match-action.js";
@@ -58,13 +59,6 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 
-const normalizeForwardIp = (value) => {
-    if (typeof value !== "string") return "";
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    return trimmed.split(",")[0].trim().replace(/^::ffff:/, "");
-};
-
 const getRequestHost = (payload) => {
     try {
         if (payload instanceof URL) {
@@ -107,125 +101,30 @@ const shouldWrapUpstreamTunnelLocally = (payload, value) => {
 };
 
 const requestUpstreamCobalt = async (payload) => {
-    if (!env.instagramUpstreamURL || isUpstreamServer) {
+    if (isUpstreamServer) {
         return null;
-    }
-
-    let endpoint;
-    try {
-        endpoint = new URL(env.instagramUpstreamURL);
-    } catch {
-        return null;
-    }
-
-    try {
-        if (new URL(env.apiURL).origin === endpoint.origin) {
-            return null;
-        }
-    } catch {}
-
-    endpoint.pathname = "/";
-    endpoint.search = "";
-    endpoint.hash = "";
-
-    const headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-    };
-
-    if (env.instagramUpstreamApiKey) {
-        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-    }
-
-    const forwardedIp = normalizeForwardIp(payload?.requestClientIp || "");
-    if (forwardedIp) {
-        headers["X-FSV-Client-IP"] = forwardedIp;
     }
 
     const timeoutMs =
-        typeof env.instagramUpstreamTimeoutMs === "number"
-        && Number.isFinite(env.instagramUpstreamTimeoutMs)
-        && env.instagramUpstreamTimeoutMs > 0
-            ? env.instagramUpstreamTimeoutMs
+        typeof env.upstreamTimeoutMs === "number"
+        && Number.isFinite(env.upstreamTimeoutMs)
+        && env.upstreamTimeoutMs > 0
+            ? env.upstreamTimeoutMs
             : 12000;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const upstream = await requestUpstream({
+        payload,
+        service: getRequestHost(payload) || "download",
+        timeoutMs,
+    });
+
+    if (!upstream?.body) {
+        return null;
+    }
 
     try {
-        const buildUpstreamBody = (input) => {
-            if (input instanceof URL) {
-                return { url: String(input) };
-            }
-
-            if (!input || typeof input !== "object") {
-                return { url: String(input || "") };
-            }
-
-            const allowedKeys = new Set([
-                "url",
-                "audioBitrate",
-                "audioFormat",
-                "downloadMode",
-                "filenameStyle",
-                "youtubeVideoCodec",
-                "youtubeVideoContainer",
-                "videoQuality",
-                "localProcessing",
-                "batch",
-                "youtubeDubLang",
-                "subtitleLang",
-                "disableMetadata",
-                "allowH265",
-                "convertGif",
-                "tiktokFullAudio",
-                "alwaysProxy",
-                "youtubeHLS",
-                "youtubeBetterAudio",
-            ]);
-
-            const body = {};
-            for (const [key, value] of Object.entries(input)) {
-                if (!allowedKeys.has(key)) {
-                    continue;
-                }
-
-                if (value === undefined || value === null) {
-                    continue;
-                }
-
-                if (key === "url") {
-                    body.url = String(value);
-                } else {
-                    body[key] = value;
-                }
-            }
-
-            if (!body.url) {
-                body.url = String(input.url || "");
-            }
-
-            return body;
-        };
-
-        const requestBody = (() => {
-            return buildUpstreamBody(payload);
-        })();
-
-        const response = await fetch(endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers,
-            body: JSON.stringify(requestBody),
-        });
-
-        const body = await response.json().catch(() => null);
-        if (!body || typeof body !== "object" || typeof body.status !== "string") {
-            return null;
-        }
-
-        const upstreamOrigin = endpoint.origin;
+        const body = upstream.body;
+        const upstreamOrigin = upstream.upstreamOrigin;
         const normalizeTunnelUrl = (value) => {
             if (typeof value !== "string") return value;
 
@@ -309,11 +208,9 @@ const requestUpstreamCobalt = async (payload) => {
             return body;
         })();
 
-        return { status: response.status, body: normalizedBody };
+        return { status: upstream.status, body: normalizedBody };
     } catch {
         return null;
-    } finally {
-        clearTimeout(timeout);
     }
 };
 

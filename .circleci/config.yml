@@ -127,6 +127,8 @@ jobs:
       - run:
           name: Deploy
           command: |
+            UPSTREAM_URLS_VALUE="${UPSTREAM_URLS:-https://api3.freesavevideo.online}"
+            UPSTREAM_URLS_HELM="${UPSTREAM_URLS_VALUE//,/\\,}"
             helm upgrade --install cobalt ./cobalt-chart -n infra \
               --set image.repository=${IMAGE} \
               --set image.tag=<< parameters.tag_prefix >>-${CIRCLE_SHA1} \
@@ -140,6 +142,12 @@ jobs:
               --set admin.password="${ADMIN_PASSWORD}" \
               --set admin.email=${ADMIN_EMAIL} \
               --set jwt.secret="${JWT_SECRET}" \
+              --set-string upstream.urls="${UPSTREAM_URLS_HELM}" \
+              --set-string upstream.apiKey="${UPSTREAM_API_KEY:-$INSTAGRAM_UPSTREAM_API_KEY}" \
+              --set-string upstream.timeoutMs="${UPSTREAM_TIMEOUT_MS:-12000}" \
+              --set-string upstream.maxAttempts="${UPSTREAM_MAX_ATTEMPTS:-2}" \
+              --set-string upstream.circuitFailures="${UPSTREAM_CIRCUIT_FAILURES:-3}" \
+              --set-string upstream.circuitCooldownMs="${UPSTREAM_CIRCUIT_COOLDOWN_MS:-60000}" \
               --set-string instagram.upstreamApiKey="${INSTAGRAM_UPSTREAM_API_KEY}" \
               --set polar.enabled=true \
               --set-string polar.secretName="polar-secret" \

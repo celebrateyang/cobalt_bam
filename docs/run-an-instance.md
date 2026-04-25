@@ -89,12 +89,18 @@ sudo service nscd start
 | `CORS_WILDCARD`       | `1`       | `0`                     | toggles cross-origin resource sharing. <br> `0`: disabled. `1`: enabled. |
 | `CORS_URL`            | not used  | `https://cobalt.tools`  | cross-origin resource sharing url. api will be available only from this url if `CORS_WILDCARD` is set to `0`. |
 | `COOKIE_PATH`         | not used  | `/cookies.json`         | path for cookie file relative to main folder. |
+| `UPSTREAM_URLS` | not used | `https://api3.example.com,https://api4.example.com` | comma-separated cobalt upstream pool used by download fallbacks and generic upstream extraction. supersedes `INSTAGRAM_UPSTREAM_URL` when set. |
+| `UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value sent to upstream nodes. supersedes `INSTAGRAM_UPSTREAM_API_KEY` when set. |
+| `UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. supersedes `INSTAGRAM_UPSTREAM_TIMEOUT_MS` when set. |
+| `UPSTREAM_MAX_ATTEMPTS` | `2` | `1` | maximum upstream nodes to try for one request. single-node pools are tried once. |
+| `UPSTREAM_CIRCUIT_FAILURES` | `3` | `3` | consecutive node-level failures before an upstream is temporarily removed from selection. |
+| `UPSTREAM_CIRCUIT_COOLDOWN_MS` | `60000` | `120000` | cooldown before a failed upstream node can be tried again. |
 | `INSTAGRAM_UPSTREAM_URL` | not used | `https://example.ngrok-free.app/` | fallback cobalt instance used when instagram/bilibili/douyin extraction fails locally (e.g. WAF/rate-limits), and optionally for Instagram creator sync (Discover/admin). |
 | `INSTAGRAM_UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value (sent as `Authorization: Api-Key ...`) for `INSTAGRAM_UPSTREAM_URL`. |
 | `INSTAGRAM_UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. |
 | `DOUYIN_UPSTREAM_MIN_BYTES` | `8388608` | `16777216` | route large Douyin files (bytes) through upstream fallback (default 8 MB). |
 | `GENERIC_EXTRACTOR_ENABLED` | `1` | `0` | enables the generic unsupported-site fallback extractor. |
-| `GENERIC_USE_UPSTREAM` | `1` | `0` | tries upstream before local generic extraction when `INSTAGRAM_UPSTREAM_URL` is configured. |
+| `GENERIC_USE_UPSTREAM` | `1` | `0` | tries upstream before local generic extraction when `UPSTREAM_URLS` or `INSTAGRAM_UPSTREAM_URL` is configured. |
 | `GENERIC_HTML_PROBE_TIMEOUT_MS` | `3000` | `5000` | timeout in ms for the lightweight generic HTML probe stage. |
 | `GENERIC_YTDLP_TIMEOUT_MS` | `35000` | `45000` | timeout in ms for generic `yt-dlp` extraction. |
 | `GENERIC_FORCE_TUNNEL` | `1` | `0` | forces generic fallback downloads through cobalt tunnels instead of redirecting. |
@@ -113,14 +119,25 @@ When a Douyin file is larger than `DOUYIN_UPSTREAM_MIN_BYTES`, the main server c
 
 Flow (high level):
 - main server detects a large Douyin file.
-- main server calls upstream (via `INSTAGRAM_UPSTREAM_URL`) to resolve the media.
+- main server calls upstream (via `UPSTREAM_URLS`, or legacy `INSTAGRAM_UPSTREAM_URL`) to resolve the media.
 - upstream returns a direct CDN URL.
 - main server uses upstream `/relay` to fetch the CDN media with proper headers and streams it back to the user.
 
 Notes:
 - `/relay` is available only on upstream instances (`IS_UPSTREAM_SERVER=true`).
-- if `INSTAGRAM_UPSTREAM_API_KEY` is set, `/relay` requires `Authorization: Api-Key ...`.
+- if `UPSTREAM_API_KEY` or `INSTAGRAM_UPSTREAM_API_KEY` is set, `/relay` requires `Authorization: Api-Key ...`.
 - direct browser downloads from Douyin CDN can return 403 without proper Referer/UA, so the relay path keeps the request server-side.
+
+#### Upstream pool health
+When multiple upstream URLs are configured, the API tracks node-level failures and temporarily removes unhealthy nodes after `UPSTREAM_CIRCUIT_FAILURES` consecutive network/timeout/5xx failures. The admin-protected `GET /upstreams/health` endpoint returns the current pool state, including circuit status, consecutive failures, latency, and last success/failure times.
+
+To add more upstream servers in production, prefer setting the CircleCI project environment variable instead of editing `.circleci/config.yml`:
+
+```txt
+UPSTREAM_URLS=https://api3.freesavevideo.online,https://api4.freesavevideo.online
+```
+
+The deploy job uses that environment variable when present, otherwise it falls back to the chart default single upstream (`https://api3.freesavevideo.online`).
 
 #### FREEBIND_CIDR
 setting a `FREEBIND_CIDR` allows cobalt to pick a random IP for every download and use it for all

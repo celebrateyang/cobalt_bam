@@ -1,4 +1,5 @@
 import { env } from "../../config.js";
+import { requestUpstream } from "../upstream/request.js";
 
 // Mobile UA is required for the share page logic to work without X-Bogus
 // Verified working as of Dec 2025
@@ -16,6 +17,8 @@ const isUpstreamServer = (() => {
     const raw = String(process.env.IS_UPSTREAM_SERVER || "").toLowerCase().trim();
     return raw === "true" || raw === "1";
 })();
+
+const hasConfiguredUpstream = () => Array.isArray(env.upstreamURLs) && env.upstreamURLs.length > 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -88,7 +91,7 @@ const getUpstreamTargetUrl = ({ videoId, shortLink, resolvedUrl }) => {
 const logUpstreamUsed = (reason, { videoId, shortLink, targetUrl, status }) => {
     let upstreamOrigin;
     try {
-        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
+        upstreamOrigin = new URL(env.upstreamURLs?.[0] || env.instagramUpstreamURL).origin;
     } catch {
         upstreamOrigin = "unknown";
     }
@@ -144,45 +147,11 @@ const normalizeUpstreamTunnelUrl = (url, endpointOrigin) => {
 };
 
 const requestUpstreamCobalt = async (targetUrl, options = {}) => {
-    // Reuse INSTAGRAM_UPSTREAM_* for Douyin as well.
-    if (!env.instagramUpstreamURL) return null;
-
-    let upstreamOrigin;
-    try {
-        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
-    } catch {
-        upstreamOrigin = "invalid";
-    }
-
-    try {
-        if (upstreamOrigin !== "invalid" && upstreamOrigin === new URL(env.apiURL).origin) {
-            console.warn("[douyin] upstream skipped (same origin)", { upstream: upstreamOrigin });
-            return null;
-        }
-    } catch {
-        // ignore
-    }
-
-    const endpoint = new URL(env.instagramUpstreamURL);
-    endpoint.pathname = "/";
-    endpoint.search = "";
-    endpoint.hash = "";
-
-    const headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-    };
-
-    if (env.instagramUpstreamApiKey) {
-        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-    }
-
     const configuredTimeoutMs =
-        typeof env.instagramUpstreamTimeoutMs === "number" &&
-        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
-        env.instagramUpstreamTimeoutMs > 0
-            ? env.instagramUpstreamTimeoutMs
+        typeof env.upstreamTimeoutMs === "number" &&
+        Number.isFinite(env.upstreamTimeoutMs) &&
+        env.upstreamTimeoutMs > 0
+            ? env.upstreamTimeoutMs
             : 15000;
 
     const quickAttemptCap = Math.min(11000, Math.max(8000, configuredTimeoutMs - 1000));
@@ -196,26 +165,23 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
 
     for (let attempt = 0; attempt < timeoutPlan.length; attempt++) {
         const timeoutMs = timeoutPlan[attempt];
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
             console.log("[douyin] upstream request", {
-                upstream: upstreamOrigin,
                 targetUrl,
                 attempt: `${attempt + 1}/${timeoutPlan.length}`,
                 timeoutMs,
                 mode: options?.quickMode ? "quick" : "normal",
             });
 
-            const res = await fetch(endpoint, {
-                method: "POST",
-                signal: controller.signal,
-                headers,
-                body: JSON.stringify({ url: String(targetUrl) }),
+            const upstream = await requestUpstream({
+                payload: { url: String(targetUrl) },
+                service: "douyin",
+                timeoutMs,
+                buildBody: () => ({ url: String(targetUrl) }),
             });
 
-            const payload = await res.json().catch(() => null);
+            const payload = upstream?.body;
             const duration =
                 typeof payload?.duration === "number" &&
                 Number.isFinite(payload.duration)
@@ -223,16 +189,16 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
                     : undefined;
 
             console.log("[douyin] upstream response", {
-                upstream: upstreamOrigin,
-                http: res.status,
-                ok: res.ok,
+                upstream: upstream?.upstreamOrigin || "none",
+                http: upstream?.status || 0,
+                ok: Boolean(upstream),
                 status: payload?.status,
                 error: payload?.error?.code,
                 hasUrl: Boolean(payload?.url),
                 attempt: `${attempt + 1}/${timeoutPlan.length}`,
             });
 
-            if (!res.ok || !payload || typeof payload !== "object") {
+            if (!upstream || !payload || typeof payload !== "object") {
                 if (attempt < timeoutPlan.length - 1) {
                     await sleep(250 + attempt * 200);
                     continue;
@@ -261,7 +227,7 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
             // Some upstreams incorrectly label tunnel URLs as `status=redirect`.
             // Detect by URL shape and force relay-mode handling.
             if (payload.status === "tunnel" || isTunnelLikeUrl) {
-                const rewritten = normalizeUpstreamTunnelUrl(payload.url, endpoint.origin);
+                const rewritten = normalizeUpstreamTunnelUrl(payload.url, upstream.upstreamOrigin);
                 if (rewritten) {
                     normalizedUrl = rewritten;
                     if (rewritten !== payload.url) {
@@ -273,13 +239,13 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
                 }
 
                 try {
-                    const relay = new URL("/relay", endpoint.origin);
+                    const relay = new URL("/relay", upstream.upstreamOrigin);
                     relay.searchParams.set("service", "douyin");
                     relay.searchParams.set("url", normalizedUrl);
                     relayUrl = relay.toString();
 
                     console.log("[douyin] upstream tunnel relay prepared", {
-                        upstream: upstreamOrigin,
+                        upstream: upstream.upstreamOrigin,
                         relay: relayUrl,
                         originalStatus: payload.status,
                         tunnelLike: isTunnelLikeUrl,
@@ -308,8 +274,6 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
                 continue;
             }
             return null;
-        } finally {
-            clearTimeout(timeout);
         }
     }
 
@@ -1057,8 +1021,8 @@ const buildRelayHeaders = () => {
         "ngrok-skip-browser-warning": "true",
     };
 
-    if (env.instagramUpstreamApiKey) {
-        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
+    if (env.upstreamApiKey || env.instagramUpstreamApiKey) {
+        headers.Authorization = `Api-Key ${env.upstreamApiKey || env.instagramUpstreamApiKey}`;
     }
 
     return headers;
@@ -1593,7 +1557,7 @@ export default async function(obj) {
                 const shouldPrioritizeUpstream =
                     quickProbeUnresolved &&
                     !isUpstreamServer &&
-                    Boolean(env.instagramUpstreamURL) &&
+                    hasConfiguredUpstream() &&
                     discoverMeta?.sawWaf === true;
 
                 if (shouldPrioritizeUpstream) {
@@ -1700,7 +1664,7 @@ export default async function(obj) {
             typeof directProbeStatusCode === "number" &&
             directProbeStatusCode >= 400;
 
-        if (!env.instagramUpstreamURL && shouldFallbackByDirectStatus) {
+        if (!hasConfiguredUpstream() && shouldFallbackByDirectStatus) {
             console.warn("[douyin] direct media probe failed and upstream is not configured", {
                 videoId,
                 directStatusCode: directProbeStatusCode,
@@ -1713,7 +1677,7 @@ export default async function(obj) {
             return { error: "fetch.fail" };
         }
 
-        if (env.instagramUpstreamURL && shouldFallbackByDirectStatus) {
+        if (hasConfiguredUpstream() && shouldFallbackByDirectStatus) {
             const upstreamTargetUrl = getUpstreamTargetUrl({
                 videoId,
                 shortLink: obj.shortLink,

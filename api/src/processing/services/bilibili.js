@@ -1,5 +1,6 @@
 import { genericUserAgent, env } from "../../config.js";
 import { resolveRedirectingURL } from "../url.js";
+import { requestUpstream } from "../upstream/request.js";
 import {
     pickBilibiliRoutePlan,
     reportBilibiliRouteRequestEvent,
@@ -8,21 +9,7 @@ import {
 // TO-DO: higher quality downloads (currently requires an account)
 
 const shouldUseUpstream = () => {
-    if (!env.instagramUpstreamURL) return false;
-
-    try {
-        // avoid accidental recursion if upstream points to self
-        const upstream = new URL(env.instagramUpstreamURL).origin;
-
-        try {
-            const self = new URL(env.apiURL).origin;
-            return upstream !== self;
-        } catch {
-            return true;
-        }
-    } catch {
-        return false;
-    }
+    return Array.isArray(env.upstreamURLs) && env.upstreamURLs.length > 0;
 };
 
 const STREAM_RETRY_UPSTREAM_TIMEOUT_MS = 8000;
@@ -50,9 +37,9 @@ const collectCandidateUrls = (entry) => {
     return unique;
 };
 
-const rewriteUpstreamTunnelUrl = (rawUrl) => {
+const rewriteUpstreamTunnelUrl = (rawUrl, upstreamOrigin) => {
     try {
-        const upstreamBase = new URL(env.instagramUpstreamURL);
+        const upstreamBase = new URL(upstreamOrigin);
         const url = new URL(String(rawUrl));
         url.protocol = upstreamBase.protocol;
         // `url.host = upstreamBase.host` does not always clear an existing
@@ -78,11 +65,11 @@ const resolveUpstreamTimeoutMs = (overrideMs) => {
     }
 
     if (
-        typeof env.instagramUpstreamTimeoutMs === "number" &&
-        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
-        env.instagramUpstreamTimeoutMs > 0
+        typeof env.upstreamTimeoutMs === "number" &&
+        Number.isFinite(env.upstreamTimeoutMs) &&
+        env.upstreamTimeoutMs > 0
     ) {
-        return env.instagramUpstreamTimeoutMs;
+        return env.upstreamTimeoutMs;
     }
 
     return 12000;
@@ -91,52 +78,25 @@ const resolveUpstreamTimeoutMs = (overrideMs) => {
 const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fallback" } = {}) => {
     if (!shouldUseUpstream()) return null;
 
-    const endpoint = new URL(env.instagramUpstreamURL);
-    endpoint.pathname = "/";
-    endpoint.search = "";
-    endpoint.hash = "";
-
-    let upstreamOrigin;
-    try {
-        upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
-    } catch {}
-
-    const headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-    };
-
-    if (env.instagramUpstreamApiKey) {
-        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-    }
-
     const timeoutMs = resolveUpstreamTimeoutMs(timeoutOverrideMs);
-
-    const controller = new AbortController();
     const startedAt = Date.now();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-        if (upstreamOrigin) {
-            console.log(`[bilibili] upstream ${reason} -> ${upstreamOrigin}`);
-        } else {
-            console.log(`[bilibili] upstream ${reason}`);
-        }
+        console.log(`[bilibili] upstream ${reason}`);
 
-        const res = await fetch(endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers,
-            body: JSON.stringify({
+        const upstream = await requestUpstream({
+            payload: { url: String(url), localProcessing: "forced" },
+            service: "bilibili",
+            timeoutMs,
+            buildBody: () => ({
                 url: String(url),
                 localProcessing: "forced",
             }),
         });
 
-        const payload = await res.json().catch(() => null);
-        if (!res.ok) {
-            console.log(`[bilibili] upstream response status=${res.status} reason=${reason}`);
+        const payload = upstream?.body;
+        if (!upstream) {
+            console.log(`[bilibili] upstream unavailable reason=${reason}`);
             return null;
         }
         if (!payload || typeof payload !== "object") return null;
@@ -150,7 +110,7 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
         }
 
         return {
-            tunnels: payload.tunnel.map(rewriteUpstreamTunnelUrl),
+            tunnels: payload.tunnel.map((item) => rewriteUpstreamTunnelUrl(item, upstream.upstreamOrigin)),
             filename: payload.output?.filename || payload.filename,
             duration: payload.duration,
         };
@@ -159,8 +119,6 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
             `[bilibili] upstream request failed reason=${reason} elapsed_ms=${Date.now() - startedAt} message=${error?.message || "unknown"}`,
         );
         return null;
-    } finally {
-        clearTimeout(timeout);
     }
 };
 

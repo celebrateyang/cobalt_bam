@@ -26,8 +26,11 @@ import extractGeneric, {
     canAttemptGenericURL,
     getGenericServiceHost,
 } from "../processing/generic/index.js";
+import { requestUpstream } from "../processing/upstream/request.js";
 import { setupTunnelHandler } from "./itunnel.js";
 import { setupSignalingServer } from "./signaling.js";
+import { getUpstreamHealthSnapshot } from "../processing/upstream/pool.js";
+import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 import * as APIKeys from "../security/api-keys.js";
 import * as Cookies from "../processing/cookie/manager.js";
@@ -233,69 +236,23 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
 };
 
 const requestGenericUpstream = async ({ payload, requestClientIp }) => {
-    if (!env.genericUseUpstream || !env.instagramUpstreamURL || isUpstreamServer) {
+    if (!env.genericUseUpstream || isUpstreamServer) {
         return null;
     }
 
-    let endpoint;
-    try {
-        endpoint = new URL(env.instagramUpstreamURL);
-    } catch {
-        return null;
-    }
+    const upstream = await requestUpstream({
+        payload,
+        requestClientIp,
+        service: "generic",
+        timeoutMs: Math.max(env.upstreamTimeoutMs, env.genericYtDlpTimeoutMs),
+    });
 
-    try {
-        if (new URL(env.apiURL).origin === endpoint.origin) {
-            return null;
-        }
-    } catch {}
+    if (!upstream?.body) return null;
 
-    endpoint.pathname = "/";
-    endpoint.search = "";
-    endpoint.hash = "";
-
-    const headers = {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
+    return {
+        status: upstream.status,
+        body: normalizeUpstreamBody(upstream.body, upstream.upstreamOrigin),
     };
-
-    if (env.instagramUpstreamApiKey) {
-        headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-    }
-
-    if (requestClientIp) {
-        headers["X-FSV-Client-IP"] = requestClientIp;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(
-        () => controller.abort(),
-        Math.max(env.instagramUpstreamTimeoutMs, env.genericYtDlpTimeoutMs),
-    );
-
-    try {
-        const response = await fetch(endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers,
-            body: JSON.stringify(payload),
-        });
-
-        const body = await response.json().catch(() => null);
-        if (!body || typeof body !== "object" || typeof body.status !== "string") {
-            return null;
-        }
-
-        return {
-            status: response.status,
-            body: normalizeUpstreamBody(body, endpoint.origin),
-        };
-    } catch {
-        return null;
-    } finally {
-        clearTimeout(timeout);
-    }
 };
 
 const attemptGenericFallback = async ({ request, requestClientIp }) => {
@@ -918,9 +875,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return res.sendStatus(404);
         }
 
-        if (env.instagramUpstreamApiKey) {
+        if (env.upstreamApiKey || env.instagramUpstreamApiKey) {
             const authHeader = req.header("Authorization") || "";
-            if (authHeader !== `Api-Key ${env.instagramUpstreamApiKey}`) {
+            if (authHeader !== `Api-Key ${env.upstreamApiKey || env.instagramUpstreamApiKey}`) {
                 return res.sendStatus(401);
             }
         }
@@ -1065,6 +1022,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             timestamp: new Date().toISOString(),
             path: '/ws'
         });
+    })
+
+    app.get('/upstreams/health', requireAdminAuth, (_, res) => {
+        res.status(200).json(getUpstreamHealthSnapshot());
     })
 
     app.get('/favicon.ico', (req, res) => {

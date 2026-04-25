@@ -14,6 +14,22 @@ const httpProxyVariables = ["NO_PROXY", "HTTP_PROXY", "HTTPS_PROXY"].flatMap(
     k => [k, k.toLowerCase()]
 );
 
+const parsePositiveInt = (raw, fallback) => {
+    if (raw == null || raw === "") return fallback;
+
+    const parsed = parseInt(raw);
+    if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+    return parsed;
+};
+
+const parseUpstreamURLs = (env) => {
+    const raw = env.UPSTREAM_URLS || env.INSTAGRAM_UPSTREAM_URL || "";
+    return String(raw)
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+};
+
 const changeCallbacks = {};
 
 const onEnvChanged = (changes) => {
@@ -81,16 +97,22 @@ export const loadEnvs = (env = process.env) => {
         })(),
 
         cookiePath: env.COOKIE_PATH,
-        instagramUpstreamURL: env.INSTAGRAM_UPSTREAM_URL,
-        instagramUpstreamApiKey: env.INSTAGRAM_UPSTREAM_API_KEY,
-        instagramUpstreamTimeoutMs: (() => {
-            const raw = env.INSTAGRAM_UPSTREAM_TIMEOUT_MS;
-            if (raw == null || raw === '') return 12000;
-
-            const parsed = parseInt(raw);
-            if (!Number.isFinite(parsed) || parsed <= 0) return 12000;
-            return parsed;
-        })(),
+        upstreamURLs: parseUpstreamURLs(env),
+        upstreamApiKey: env.UPSTREAM_API_KEY || env.INSTAGRAM_UPSTREAM_API_KEY,
+        upstreamTimeoutMs: parsePositiveInt(
+            env.UPSTREAM_TIMEOUT_MS ?? env.INSTAGRAM_UPSTREAM_TIMEOUT_MS,
+            12000,
+        ),
+        upstreamMaxAttempts: parsePositiveInt(env.UPSTREAM_MAX_ATTEMPTS, 2),
+        upstreamCircuitFailures: parsePositiveInt(env.UPSTREAM_CIRCUIT_FAILURES, 3),
+        upstreamCircuitCooldownMs: parsePositiveInt(env.UPSTREAM_CIRCUIT_COOLDOWN_MS, 60000),
+        upstreamHealthCheckIntervalMs: parsePositiveInt(env.UPSTREAM_HEALTH_CHECK_INTERVAL_MS, 30000),
+        instagramUpstreamURL: env.INSTAGRAM_UPSTREAM_URL || parseUpstreamURLs(env)[0],
+        instagramUpstreamApiKey: env.INSTAGRAM_UPSTREAM_API_KEY || env.UPSTREAM_API_KEY,
+        instagramUpstreamTimeoutMs: parsePositiveInt(
+            env.INSTAGRAM_UPSTREAM_TIMEOUT_MS ?? env.UPSTREAM_TIMEOUT_MS,
+            12000,
+        ),
         // Minimum Douyin file size (bytes) to route through upstream fallback.
         douyinUpstreamMinBytes: (() => {
             const raw = env.DOUYIN_UPSTREAM_MIN_BYTES;
@@ -272,16 +294,16 @@ export const validateEnvs = async (env) => {
         throw new Error('freebind is not available when external proxy is enabled')
     }
 
-    if (env.instagramUpstreamURL) {
+    for (const upstreamURL of env.upstreamURLs) {
         let upstream;
         try {
-            upstream = new URL(env.instagramUpstreamURL);
+            upstream = new URL(upstreamURL);
         } catch {
-            throw new Error('INSTAGRAM_UPSTREAM_URL is invalid (must be a valid http(s) URL)');
+            throw new Error('UPSTREAM_URLS is invalid (must contain valid http(s) URLs)');
         }
 
         if (!['http:', 'https:'].includes(upstream.protocol)) {
-            throw new Error('INSTAGRAM_UPSTREAM_URL is invalid (must be a valid http(s) URL)');
+            throw new Error('UPSTREAM_URLS is invalid (must contain valid http(s) URLs)');
         }
     }
 

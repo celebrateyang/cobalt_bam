@@ -393,7 +393,7 @@ const loginLimiter = rateLimit({
 });
 
 const requireInstagramUpstreamKey = (req, res, next) => {
-    const expectedKey = env.instagramUpstreamApiKey;
+    const expectedKey = env.upstreamApiKey || env.instagramUpstreamApiKey;
     if (!expectedKey) return next();
 
     const auth = String(req.headers.authorization || "");

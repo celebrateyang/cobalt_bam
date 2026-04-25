@@ -3,6 +3,7 @@ import { resolveRedirectingURL } from "../url.js";
 import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
+import { requestUpstream } from "../upstream/request.js";
 
 const INSTAGRAM_DEBUG = /^(1|true|yes)$/i.test(process.env.DEBUG_INSTAGRAM || "");
 const truncate = (value, max = 250) => {
@@ -139,60 +140,32 @@ export default function instagram(obj) {
     };
 
     const requestUpstreamCobalt = async (postUrl) => {
-        if (!env.instagramUpstreamURL) return null;
-
-        try {
-            if (new URL(env.instagramUpstreamURL).origin === new URL(env.apiURL).origin) {
-                return null;
-            }
-        } catch {}
-
-        const endpoint = new URL(env.instagramUpstreamURL);
-        endpoint.pathname = "/";
-        endpoint.search = "";
-        endpoint.hash = "";
-
-        const headers = {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-        };
-
-        if (env.instagramUpstreamApiKey) {
-            headers.Authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-        }
-
         const timeoutMs =
-            typeof env.instagramUpstreamTimeoutMs === "number" &&
-            Number.isFinite(env.instagramUpstreamTimeoutMs) &&
-            env.instagramUpstreamTimeoutMs > 0
-                ? env.instagramUpstreamTimeoutMs
+            typeof env.upstreamTimeoutMs === "number" &&
+            Number.isFinite(env.upstreamTimeoutMs) &&
+            env.upstreamTimeoutMs > 0
+                ? env.upstreamTimeoutMs
                 : 12000;
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
             const start = Date.now();
-            logUpstream("-> request", "POST", urlForLog(endpoint), `target=${urlForLog(postUrl)}`);
-
-            const res = await fetch(endpoint, {
-                method: "POST",
-                signal: controller.signal,
-                headers,
-                body: JSON.stringify({ url: String(postUrl) }),
+            const upstream = await requestUpstream({
+                payload: { url: String(postUrl) },
+                service: "instagram",
+                timeoutMs,
+                acceptResponse: ({ body }) =>
+                    body?.status === "redirect" && typeof body?.url === "string",
             });
-
-            const payload = await res.json().catch(() => null);
+            const payload = upstream?.body;
             logUpstream(
                 "<- response",
-                `http=${res.status}`,
+                `http=${upstream?.status || "?"}`,
+                `upstream=${upstream?.upstreamOrigin || "none"}`,
                 `time=${Date.now() - start}ms`,
                 `status=${payload?.status || "?"}`,
                 `has_url=${payload?.url ? "yes" : "no"}`
             );
 
-            if (!res.ok) return null;
             if (!payload || typeof payload !== "object") return null;
             if (payload.status !== "redirect") return null;
             if (!payload.url) return null;
@@ -209,8 +182,6 @@ export default function instagram(obj) {
                 cause ? `${String(e)}; cause=${cause}` : String(e)
             );
             return null;
-        } finally {
-            clearTimeout(timeout);
         }
     };
 
@@ -857,7 +828,7 @@ export default function instagram(obj) {
         } catch {}
 
         if (!hasData(data)) {
-            if (env.instagramUpstreamURL) {
+            if (Array.isArray(env.upstreamURLs) && env.upstreamURLs.length > 0) {
                 const upstreamUrl = `https://www.instagram.com/p/${id}/`;
                 log("getPost", "no data, trying upstream", urlForLog(upstreamUrl));
 

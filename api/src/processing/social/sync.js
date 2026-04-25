@@ -1,4 +1,5 @@
 import { env, genericUserAgent } from "../../config.js";
+import { requestUpstream } from "../upstream/request.js";
 import { upsertVideoFromSync, updateAccount } from "../../db/social-media.js";
 import { getCookie, updateCookie } from "../cookie/manager.js";
 
@@ -433,7 +434,7 @@ export const fetchInstagramCreatorItemsDirect = async (username, options) => {
 };
 
 const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
-    if (!env.instagramUpstreamURL) return null;
+    if (!Array.isArray(env.upstreamURLs) || env.upstreamURLs.length === 0) return null;
 
     const logId =
         options?.logId !== undefined && options?.logId !== null
@@ -441,47 +442,18 @@ const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
             : "";
     const logPrefix = logId ? `[social-sync:${logId}]` : "[social-sync]";
 
-    try {
-        const upstreamOrigin = new URL(env.instagramUpstreamURL).origin;
-        const apiOrigin = new URL(env.apiURL).origin;
-        if (upstreamOrigin === apiOrigin) {
-            console.log(
-                `${logPrefix} instagram upstream skipped (same origin) url=${upstreamOrigin}`,
-            );
-            return null;
-        }
-    } catch {}
-
-    const endpoint = new URL(env.instagramUpstreamURL);
-    endpoint.pathname = "/social/internal/instagram/items";
-    endpoint.search = "";
-    endpoint.hash = "";
-
     const timeoutMs =
-        typeof env.instagramUpstreamTimeoutMs === "number" &&
-        Number.isFinite(env.instagramUpstreamTimeoutMs) &&
-        env.instagramUpstreamTimeoutMs > 0
-            ? env.instagramUpstreamTimeoutMs
+        typeof env.upstreamTimeoutMs === "number" &&
+        Number.isFinite(env.upstreamTimeoutMs) &&
+        env.upstreamTimeoutMs > 0
+            ? env.upstreamTimeoutMs
             : 12000;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         const startedAt = Date.now();
         console.log(
-            `${logPrefix} instagram upstream -> items username=${username} url=${endpoint.origin}`,
+            `${logPrefix} instagram upstream -> items username=${username}`,
         );
-
-        const headers = {
-            accept: "application/json",
-            "content-type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-        };
-
-        if (env.instagramUpstreamApiKey) {
-            headers.authorization = `Api-Key ${env.instagramUpstreamApiKey}`;
-        }
 
         const body = {
             username,
@@ -489,21 +461,23 @@ const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
             pinnedLimit: options?.pinnedLimit,
         };
 
-        const res = await fetch(endpoint, {
-            method: "POST",
-            signal: controller.signal,
-            headers,
-            body: JSON.stringify(body),
+        const upstream = await requestUpstream({
+            payload: body,
+            service: "social-instagram",
+            path: "/social/internal/instagram/items",
+            timeoutMs,
+            requireStatus: false,
+            buildBody: () => body,
         });
 
-        if (!res.ok) {
+        if (!upstream) {
             console.log(
-                `${logPrefix} instagram upstream <- items status=${res.status} time=${Date.now() - startedAt}ms`,
+                `${logPrefix} instagram upstream <- items unavailable time=${Date.now() - startedAt}ms`,
             );
             return null;
         }
 
-        const json = await safeJson(res);
+        const json = upstream.body;
         const items = json?.data?.items;
         if (!Array.isArray(items)) {
             console.log(
@@ -521,8 +495,6 @@ const fetchInstagramCreatorItemsFromUpstream = async (username, options) => {
         const message = error instanceof Error ? error.message : String(error);
         console.log(`${logPrefix} instagram upstream !! items error=${message}`);
         return null;
-    } finally {
-        clearTimeout(timeout);
     }
 };
 

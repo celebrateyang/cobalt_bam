@@ -43,6 +43,24 @@ spec:
               env:
                 - name: API_URL
                   value: https://api.freesavevideo.online/
+                {{- with .Values.upstream }}
+                {{- if .urls }}
+                - name: UPSTREAM_URLS
+                  value: {{ .urls | quote }}
+                {{- if .apiKey }}
+                - name: UPSTREAM_API_KEY
+                  value: {{ .apiKey | quote }}
+                {{- end }}
+                - name: UPSTREAM_TIMEOUT_MS
+                  value: {{ .timeoutMs | default 12000 | quote }}
+                - name: UPSTREAM_MAX_ATTEMPTS
+                  value: {{ .maxAttempts | default 2 | quote }}
+                - name: UPSTREAM_CIRCUIT_FAILURES
+                  value: {{ .circuitFailures | default 3 | quote }}
+                - name: UPSTREAM_CIRCUIT_COOLDOWN_MS
+                  value: {{ .circuitCooldownMs | default 60000 | quote }}
+                {{- end }}
+                {{- end }}
                 {{- with .Values.instagram }}
                 {{- if .upstreamUrl }}
                 - name: INSTAGRAM_UPSTREAM_URL

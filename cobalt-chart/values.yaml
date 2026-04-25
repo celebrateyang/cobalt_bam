@@ -17,6 +17,13 @@ tunnelLifespanSeconds: 1800
 # Tunnel request rate limit per client IP per minute.
 tunnelRateLimitMax: 120
 
+upstream:
+  urls: "https://api3.freesavevideo.online"
+  timeoutMs: 12000
+  maxAttempts: 2
+  circuitFailures: 3
+  circuitCooldownMs: 60000
+
 instagram:
   # 亚马逊服务器
   # upstreamUrl: "http://api1.freesavevideo.online:9000"

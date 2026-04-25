@@ -98,9 +98,29 @@ let localeSyncPromise: Promise<void> | null = null;
 let lastSyncedUserId: string | null = null;
 let syncPromise: Promise<void> | null = null;
 
+const CLERK_INIT_TIMEOUT_MS = 12000;
 const META_COMPLETE_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
 const META_COMPLETE_REGISTRATION_TRACKED_PREFIX =
     "meta_complete_registration_tracked:";
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    try {
+        return await Promise.race([
+            promise,
+            new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(() => {
+                    reject(new Error(`${label} timed out`));
+                }, timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    }
+};
 
 const toEpochMs = (value: unknown): number | null => {
     if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -219,36 +239,55 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
 
 export const initClerk = async () => {
     if (!browser) return null;
-    if (!env.CLERK_PUBLISHABLE_KEY) return null;
+    const publishableKey = env.CLERK_PUBLISHABLE_KEY;
+    if (!publishableKey) return null;
 
     if (initPromise) {
         return initPromise;
     }
 
     initPromise = (async () => {
-        const { Clerk } = await import("@clerk/clerk-js");
-        const instance = new Clerk(env.CLERK_PUBLISHABLE_KEY);
+        try {
+            const { Clerk } = await withTimeout(
+                import("@clerk/clerk-js"),
+                CLERK_INIT_TIMEOUT_MS,
+                "Clerk SDK import",
+            );
+            const instance = new Clerk(publishableKey);
 
-        await syncClerkLocale(instance);
+            await withTimeout(
+                syncClerkLocale(instance),
+                CLERK_INIT_TIMEOUT_MS,
+                "Clerk load",
+            );
 
-        clerk.set(instance);
-        clerkLoaded.set(true);
+            clerk.set(instance);
+            clerkLoaded.set(true);
 
-        clerkUser.set(instance.user as unknown as ClerkUser | null);
-        clerkSession.set(instance.session as unknown as ClerkSession | null);
+            clerkUser.set(instance.user as unknown as ClerkUser | null);
+            clerkSession.set(instance.session as unknown as ClerkSession | null);
 
-        await syncUserToAPI(instance);
+            await syncUserToAPI(instance);
 
-        instance.addListener((resources) => {
-            clerkUser.set(resources.user as unknown as ClerkUser | null);
-            clerkSession.set(resources.session as unknown as ClerkSession | null);
+            instance.addListener((resources) => {
+                clerkUser.set(resources.user as unknown as ClerkUser | null);
+                clerkSession.set(resources.session as unknown as ClerkSession | null);
 
-            if (resources.user) {
-                void syncUserToAPI(instance);
-            }
-        });
+                if (resources.user) {
+                    void syncUserToAPI(instance);
+                }
+            });
 
-        return instance;
+            return instance;
+        } catch (error) {
+            console.debug("Clerk init failed", error);
+            clerk.set(null);
+            clerkUser.set(null);
+            clerkSession.set(null);
+            clerkLoaded.set(true);
+            initPromise = null;
+            return null;
+        }
     })();
 
     return initPromise;

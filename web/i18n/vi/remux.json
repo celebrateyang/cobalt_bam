@@ -45,5 +45,10 @@
         "no_video_stream": "tệp này không có luồng video để chuyển đổi.",
         "no_storage": "trình duyệt này không thể cung cấp bộ nhớ tạm cho xử lý cục bộ.",
         "generic": "xử lý thất bại. hãy thử định dạng khác hoặc chuyển sang chế độ tương thích."
+    },
+    "seo": {
+        "title": "chuyen doi video va tach am thanh",
+        "description": "Tach am thanh tu tep video va chuyen cac dinh dang nhu AVI sang MP4 ngay trong trinh duyet. Xu ly cuc bo, khong can tai len.",
+        "keywords": "chuyen doi video, tach am thanh, AVI sang MP4, MP4 sang MP3, chuyen doi MP3 mien phi, chuyen doi am thanh online, chuyen video sang MP3, khong can cai dat"
     }
 }

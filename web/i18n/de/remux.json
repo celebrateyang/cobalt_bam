@@ -45,5 +45,10 @@
         "no_video_stream": "diese datei hat keinen videostream zum konvertieren.",
         "no_storage": "dieser browser kann keinen temporären speicher für die lokale verarbeitung bereitstellen.",
         "generic": "verarbeitung fehlgeschlagen. versuche ein anderes format oder wechsle in den kompatiblen modus."
+    },
+    "seo": {
+        "title": "Videokonverter & Audio-Extraktor",
+        "description": "Extrahiere Audio aus Videodateien und konvertiere Formate wie AVI zu MP4 direkt im Browser. Lokale Verarbeitung, kein Upload.",
+        "keywords": "Videokonverter, Audio extrahieren, AVI zu MP4, MP4 zu MP3, kostenloser MP3 Konverter, Online Audio Konverter, Video in MP3 umwandeln, ohne Installation"
     }
 }

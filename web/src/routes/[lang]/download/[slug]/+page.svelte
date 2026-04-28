@@ -23,12 +23,12 @@
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: downloadIndexUrl = `/${data.lang}/download`;
     $: homeUrl = `/${data.lang}`;
-    $: downloadHubLabel = isZh ? '热门平台视频下载目录' : 'Popular video downloader directory';
+    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentGuideLabel = isZh
-        ? `${localeContent.h1}使用指南`
+        ? `${localeContent.h1}\u4f7f\u7528\u6307\u5357`
         : `How to use ${localeContent.h1}`;
-    $: guideHubLabel = isZh ? '热门平台下载指南' : 'Popular download guides';
-    $: faqLabel = isZh ? '视频下载常见问题' : 'Video download FAQ';
+    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';
+    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : 'Video download FAQ';
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -54,19 +54,40 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isZh ? '首页' : 'Home',
+                      name: isZh ? '\u9996\u9875' : 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isZh ? '下载' : 'Download',
+                      name: isZh ? '\u4e0b\u8f7d' : 'Download',
                       item: `https://${fallbackHost}/${data.lang}/download`,
                   },
               ],
           }
         : null;
-    $: structuredData = [faqJsonLd, breadcrumbJsonLd].filter(Boolean);
+    $: howToJsonLd = canonicalUrl
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'HowTo',
+              name: localeContent.stepsTitle,
+              description: localeContent.lede,
+              totalTime: 'PT1M',
+              tool: [
+                  {
+                      '@type': 'HowToTool',
+                      name: 'FreeSaveVideo',
+                  },
+              ],
+              step: localeContent.steps.map((step, index) => ({
+                  '@type': 'HowToStep',
+                  position: index + 1,
+                  name: step,
+                  text: step,
+              })),
+          }
+        : null;
+    $: structuredData = [faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
 </script>
 
 <svelte:head>
@@ -107,9 +128,9 @@
         </section>
 
         <nav class="crumb-links" aria-label="Breadcrumb">
-            <a href={homeUrl}>{isZh ? '首页' : 'Home'}</a>
+            <a href={homeUrl}>{isZh ? '\u9996\u9875' : 'Home'}</a>
             <span>/</span>
-            <a href={downloadIndexUrl}>{isZh ? '下载' : 'Download'}</a>
+            <a href={downloadIndexUrl}>{isZh ? '\u4e0b\u8f7d' : 'Download'}</a>
             <span>/</span>
             <span class="crumb-current">{localeContent.h1}</span>
         </nav>
@@ -147,10 +168,10 @@
         </section>
 
         <section class="card related">
-            <h2>{isZh ? '相关页面' : 'Related links'}</h2>
+            <h2>{isZh ? '\u76f8\u5173\u9875\u9762' : 'Related links'}</h2>
             <div class="related-grid">
                 <section class="related-column">
-                    <h3>{isZh ? '核心入口' : 'Core pages'}</h3>
+                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : 'Core pages'}</h3>
                     <div class="related-links">
                         <a class="related-link related-link--primary" href={downloadIndexUrl}>
                             {downloadHubLabel}
@@ -170,7 +191,7 @@
                 </section>
 
                 <section class="related-column">
-                    <h3>{isZh ? '同类下载页' : 'Similar downloads'}</h3>
+                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : 'Similar downloads'}</h3>
                     <div class="related-links">
                         {#each data.relatedPages.slice(0, 4) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}

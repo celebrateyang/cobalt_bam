@@ -18,11 +18,11 @@
     $: localeContent = getSeoLandingLocale(data.landing, data.lang);
     $: isZh = data.lang === 'zh';
     $: guideTitle = isZh
-        ? `${localeContent.h1}指南`
+        ? `${localeContent.h1}\u6307\u5357`
         : `Guide to ${localeContent.h1}`;
     $: pageTitle = `${guideTitle} - ${isZh ? ZH_BRAND : EN_BRAND}`;
     $: pageDesc = isZh
-        ? `一步步了解如何下载 ${data.guide.platform} 内容，并查看常见问题与使用建议。`
+        ? `\u4e00\u6b65\u6b65\u4e86\u89e3\u5982\u4f55\u4e0b\u8f7d ${data.guide.platform} \u5185\u5bb9\uff0c\u5e76\u67e5\u770b\u5e38\u89c1\u95ee\u9898\u4e0e\u4f7f\u7528\u5efa\u8bae\u3002`
         : `Step-by-step guide to download ${data.guide.platform} content with tips and FAQs.`;
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/guide/${data.slug}`;
@@ -32,15 +32,15 @@
     $: downloadHubUrl = `/${data.lang}/download`;
     $: relatedGuides = getRelatedGuideLinks(data.slug, 4);
     $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 4);
-    $: downloadHubLabel = isZh ? '热门平台视频下载目录' : 'Popular video downloader directory';
+    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
-    $: guideHubLabel = isZh ? '热门平台下载指南' : 'Popular download guides';
-    $: faqLabel = isZh ? '视频下载常见问题' : 'Video download FAQ';
+    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';
+    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : 'Video download FAQ';
     const relatedGuideLabel = (slug: string, platform: string) => {
         const guide = getGuidePage(slug);
         const landing = guide ? getSeoLandingPage(guide.landingSlug) : null;
         const label = landing ? getSeoLandingLocale(landing, data.lang).h1 : platform;
-        return isZh ? `${label}指南` : `How to download ${label}`;
+        return isZh ? `${label}\u6307\u5357` : `How to download ${label}`;
     };
     const relatedDownloadLabel = (slug: string, platform: string) => {
         const landing = getSeoLandingPage(slug);
@@ -57,8 +57,8 @@
         ? '\u5982\u679c\u4f60\u590d\u5236\u5230\u7684\u662f search \u6216 jingxuan \u9875\u9762\uff0c\u53ef\u4ee5\u5148\u770b\u4e0b\u9762\u7684\u6f14\u793a\uff0c\u6309\u6d41\u7a0b\u6253\u5f00\u5177\u4f53\u89c6\u9891\u540e\u518d\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002'
         : 'If you copied a search or jingxuan page instead of a video share link, this tutorial shows how to open the actual video first and copy the right URL.';
 
-    const ctaLabel = isZh ? '去下载' : 'Download Now';
-    const ctaHint = isZh ? '跳转到下载页面' : 'Open the downloader';
+    const ctaLabel = isZh ? '\u53bb\u4e0b\u8f7d' : 'Download Now';
+    const ctaHint = isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : 'Open the downloader';
 
     $: faqJsonLd = canonicalUrl
         ? {
@@ -82,13 +82,13 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isZh ? '首页' : 'Home',
+                      name: isZh ? '\u9996\u9875' : 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isZh ? '指南' : 'Guide',
+                      name: isZh ? '\u6307\u5357' : 'Guide',
                       item: `https://${fallbackHost}/${data.lang}/guide`,
                   },
                   {
@@ -100,7 +100,22 @@
               ],
           }
         : null;
-    $: structuredData = [faqJsonLd, breadcrumbJsonLd].filter(Boolean);
+    $: howToJsonLd = canonicalUrl
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'HowTo',
+              name: guideTitle,
+              description: pageDesc,
+              totalTime: 'PT1M',
+              step: localeContent.steps.map((step, index) => ({
+                  '@type': 'HowToStep',
+                  position: index + 1,
+                  name: step,
+                  text: step,
+              })),
+          }
+        : null;
+    $: structuredData = [faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
 </script>
 
 <svelte:head>
@@ -130,7 +145,7 @@
     <main class="container">
         <section class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">{isZh ? '下载指南' : 'Download guide'}</p>
+                <p class="eyebrow">{isZh ? '\u4e0b\u8f7d\u6307\u5357' : 'Download guide'}</p>
                 <h1>{guideTitle}</h1>
                 <p class="lede">{localeContent.lede}</p>
                 <div class="cta-row">
@@ -175,15 +190,15 @@
                 </ul>
             </section>
             <section class="card details">
-                <h2>{isZh ? '使用说明' : 'Usage notes'}</h2>
+                <h2>{isZh ? '\u4f7f\u7528\u8bf4\u660e' : 'Usage notes'}</h2>
                 <p>
                     {isZh
-                        ? '复制链接后直接粘贴到下载页即可解析。解析结果以平台返回的资源为准。'
+                        ? '\u590d\u5236\u94fe\u63a5\u540e\u76f4\u63a5\u7c98\u8d34\u5230\u4e0b\u8f7d\u9875\u5373\u53ef\u89e3\u6790\u3002\u89e3\u6790\u7ed3\u679c\u4ee5\u5e73\u53f0\u8fd4\u56de\u7684\u8d44\u6e90\u4e3a\u51c6\u3002'
                         : 'Copy the link and paste it into the downloader. Results depend on what the platform provides.'}
                 </p>
                 <p>
                     {isZh
-                        ? '如果链接无法解析，请确认内容可公开访问，必要时更换网络或稍后再试。'
+                        ? '\u5982\u679c\u94fe\u63a5\u65e0\u6cd5\u89e3\u6790\uff0c\u8bf7\u786e\u8ba4\u5185\u5bb9\u53ef\u516c\u5f00\u8bbf\u95ee\uff0c\u5fc5\u8981\u65f6\u66f4\u6362\u7f51\u7edc\u6216\u7a0d\u540e\u518d\u8bd5\u3002'
                         : 'If a link fails, confirm it is publicly accessible and try again later or switch networks.'}
                 </p>
             </section>
@@ -202,7 +217,7 @@
         </section>
 
         <section class="card related">
-            <h2>{isZh ? '延伸链接' : 'Related links'}</h2>
+            <h2>{isZh ? '\u5ef6\u4f38\u94fe\u63a5' : 'Related links'}</h2>
             <div class="related-links">
                 <a class="related-link related-link--primary" href={downloadHubUrl}>
                     {downloadHubLabel}

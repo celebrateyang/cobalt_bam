@@ -2,14 +2,18 @@
     import { t } from "$lib/i18n/translations";
     import { getServerInfo } from "$lib/api/server-info";
     import cachedInfo from "$lib/state/server-info";
+    import { additionalSupportedServices, capabilityServices } from "$lib/seo/capabilities";
 
     import Skeleton from "$components/misc/Skeleton.svelte";
     import IconPlus from "@tabler/icons-svelte/IconPlus.svelte";
 
-    let services: string[] = [];
+    let services: string[] = [
+        ...capabilityServices.map((service) => service.name),
+        ...additionalSupportedServices,
+    ];
 
     let expanded = false;
-    let loaded = false;
+    let loaded = true;
 
     const loadInfo = async () => {
         await getServerInfo();

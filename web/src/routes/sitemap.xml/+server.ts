@@ -10,6 +10,7 @@ const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
 // paths to include in sitemap
 const pages = [
     '',
+    'free-video-tools',
     'clipboard',
     'random-chat',
     'discover',
@@ -40,6 +41,14 @@ for (const file of Object.keys(aboutFiles)) {
 function generateSitemap(): string {
     const urls: string[] = [];
     const now = new Date().toISOString();
+
+    urls.push(`
+    <url>
+        <loc>${site}/capabilities.json</loc>
+        <lastmod>${now}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>`);
 
     for (const lang of languages) {
         // top-level pages

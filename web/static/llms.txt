@@ -1,48 +1,62 @@
 # FreeSaveVideo
 
-> FreeSaveVideo is a browser-based media downloader and toolkit with localized pages, platform-specific landing pages, guides, and FAQs.
+> FreeSaveVideo is a browser-based media downloader and media toolkit for public online videos, local media conversion, whiteboard recording, cross-device transfer, discovery, and random 1v1 video chat.
 
 ## Canonical Site
 - https://freesavevideo.online/
 
-## Discovery
-- Robots: https://freesavevideo.online/robots.txt
+## Machine-Readable Files
+- Capabilities JSON: https://freesavevideo.online/capabilities.json
 - Sitemap: https://freesavevideo.online/sitemap.xml
+- Robots: https://freesavevideo.online/robots.txt
 - LLM file: https://freesavevideo.online/llms.txt
 - LLM alias: https://freesavevideo.online/llm.txt
 - Well-known alias: https://freesavevideo.online/.well-known/llms.txt
 
-## Language Entry Points
-- de: https://freesavevideo.online/de
-- en: https://freesavevideo.online/en
-- es: https://freesavevideo.online/es
-- fr: https://freesavevideo.online/fr
-- ja: https://freesavevideo.online/ja
-- ko: https://freesavevideo.online/ko
-- ru: https://freesavevideo.online/ru
-- th: https://freesavevideo.online/th
-- vi: https://freesavevideo.online/vi
-- zh: https://freesavevideo.online/zh
+## What FreeSaveVideo Does
+- Downloads publicly accessible online videos and media links when supported by the source platform.
+- Supports batch downloads, collection/playlist parsing, audio-only mode, and mute mode for supported services.
+- Provides local browser tools for MP4 to MP3, audio extraction, M4A/WAV export, AVI to MP4, and MP4/WebM conversion.
+- Provides a whiteboard and teleprompter recorder with camera/microphone capture and MP4/WebM export.
+- Provides browser-based file/text transfer between devices.
+- Provides Discover pages for public video discovery and a random 1v1 video chat feature.
 
-## Key Public Pages
-- FAQ (en): https://freesavevideo.online/en/faq
-- FAQ (zh): https://freesavevideo.online/zh/faq
-- Guide index (en): https://freesavevideo.online/en/guide
-- Guide index (zh): https://freesavevideo.online/zh/guide
-- Discover (en): https://freesavevideo.online/en/discover
-- Discover (zh): https://freesavevideo.online/zh/discover
+## Supported Service Summary
+Core supported platforms include YouTube, TikTok, Douyin, Bilibili, Kuaishou, Xiaohongshu, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
+
+Different platforms expose different capabilities. Some support video, audio, no-watermark output, stories, reels, GIFs, images, multi-part videos, collections, or playlist parsing. See `/capabilities.json` for the most concise machine-readable service map.
+
+## Important Public Pages
+- Product overview: https://freesavevideo.online/en/free-video-tools
+- Chinese product overview: https://freesavevideo.online/zh/free-video-tools
+- Download directory: https://freesavevideo.online/en/download
+- Chinese download directory: https://freesavevideo.online/zh/download
+- Guide index: https://freesavevideo.online/en/guide
+- FAQ: https://freesavevideo.online/en/faq
+- Video converter/audio extractor: https://freesavevideo.online/en/remux
+- Whiteboard recorder: https://freesavevideo.online/en/videorecord
+- File transfer: https://freesavevideo.online/en/clipboard
+- Discover: https://freesavevideo.online/en/discover
+- Random video chat: https://freesavevideo.online/en/random-chat
 
 ## Core Download Landing Pages
 - https://freesavevideo.online/en/download/tiktok-no-watermark
+- https://freesavevideo.online/en/download/tiktok-collection-download
+- https://freesavevideo.online/en/download/tiktok-mp3-download
 - https://freesavevideo.online/en/download/douyin-no-watermark
+- https://freesavevideo.online/en/download/douyin-collection-download
+- https://freesavevideo.online/en/download/douyin-mp3-download
+- https://freesavevideo.online/en/download/bilibili-video-download
 - https://freesavevideo.online/en/download/kuaishou-no-watermark
 - https://freesavevideo.online/en/download/xiaohongshu-video-download
-- https://freesavevideo.online/en/download/bilibili-video-download
 - https://freesavevideo.online/en/download/instagram-video-download
 - https://freesavevideo.online/en/download/facebook-video-download
 - https://freesavevideo.online/en/download/twitter-x-video-download
+- https://freesavevideo.online/en/download/youtube-shorts-download
 - https://freesavevideo.online/en/download/pinterest-video-download
 - https://freesavevideo.online/en/download/snapchat-video-download
+- https://freesavevideo.online/en/download/vimeo-video-download
+- https://freesavevideo.online/en/download/soundcloud-audio-download
 
 ## API
 - Base URL: https://api.freesavevideo.online/
@@ -52,3 +66,5 @@
 ## Policy Notes
 - Public informational pages are intended to be indexed and retrieved.
 - Private or admin-only pages are not intended for search indexing.
+- FreeSaveVideo supports public content only. Users should respect copyrights, creator rights, and platform rules.
+- Local media tools process files in the browser where possible and do not require uploading private local files to the API server.

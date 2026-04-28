@@ -4,6 +4,7 @@
     import { onDestroy, onMount } from "svelte";
 
     import { currentApiURL } from "$lib/api/api-url";
+    import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
     import type {
         ChatMatchProfile,
@@ -59,7 +60,22 @@
     let countdown = "10:00";
     let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
+    const fallbackHost = env.HOST || "freesavevideo.online";
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+    $: canonicalUrl = `https://${fallbackHost}/${currentLang}/random-chat`;
+    $: randomChatJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "@id": `${canonicalUrl}#app`,
+        name: "FreeSaveVideo Random 1v1 Video Chat",
+        url: canonicalUrl,
+        applicationCategory: "SocialNetworkingApplication",
+        applicationSubCategory: "Random Video Chat",
+        operatingSystem: "Any",
+        isAccessibleForFree: true,
+        description: String($t("random-chat.meta.description")),
+        featureList: ["1v1 video matching", "10-minute sessions", "WebRTC media", "country and language preferences"],
+    };
 
     const updateChatPref = <K extends keyof RandomChatPreferences>(
         key: K,
@@ -450,6 +466,7 @@
         name="description"
         content={$t("random-chat.meta.description")}
     />
+    {@html `<script type="application/ld+json">${JSON.stringify(randomChatJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 
 <div class="random-chat-page">

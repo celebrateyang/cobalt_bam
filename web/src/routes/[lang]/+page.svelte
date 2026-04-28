@@ -303,44 +303,48 @@
             href: `/${currentLocale}/random-chat`,
             label: $t("tabs.random_video"),
         },
+        {
+            href: `/${currentLocale}/free-video-tools`,
+            label: currentLocale === "zh" ? "FreeSaveVideo \u4ecb\u7ecd" : "FreeSaveVideo overview",
+        },
     ];
     $: homeHubHeading =
-        currentLocale === "zh" ? "热门平台视频下载与指南" : "Popular Video Downloader Links";
+        currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u4e0e\u6307\u5357" : "Popular Video Downloader Links";
     const homeInternalLinks = getHubDownloadLinks(8);
     const homeGuideLinks = getHubGuideLinks(4);
     const homeLinkLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform}视频下载` : `${platform} video downloader`;
+        currentLocale === "zh" ? `${platform}\u89c6\u9891\u4e0b\u8f7d` : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform}下载指南` : `How to download ${platform} videos`;
+        currentLocale === "zh" ? `${platform}\u4e0b\u8f7d\u6307\u5357` : `How to download ${platform} videos`;
     $: faqItems = [
         {
             q:
                 currentLocale === "zh"
-                    ? "如何下载抖音、B站、快手、小红书等平台的视频？"
+                    ? "\u5982\u4f55\u4e0b\u8f7d\u6296\u97f3\u3001B\u7ad9\u3001\u5feb\u624b\u3001\u5c0f\u7ea2\u4e66\u7b49\u5e73\u53f0\u7684\u89c6\u9891\uff1f"
                     : "How to download videos from Douyin, Bilibili, Kuaishou or Xiaohongshu?",
             a:
                 currentLocale === "zh"
-                    ? "复制视频链接，粘贴到输入框，保持“自动”模式，点击“解析链接”即可生成无水印下载地址。"
+                    ? "\u590d\u5236\u89c6\u9891\u94fe\u63a5\uff0c\u7c98\u8d34\u5230\u8f93\u5165\u6846\uff0c\u4fdd\u6301\u81ea\u52a8\u6a21\u5f0f\uff0c\u70b9\u51fb\u4e0b\u8f7d\u5373\u53ef\u751f\u6210\u53ef\u7528\u7684\u4e0b\u8f7d\u7ed3\u679c\u3002"
                     : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link.",
         },
         {
             q:
                 currentLocale === "zh"
-                    ? "可以批量解析或切换音频/静音吗？"
+                    ? "\u53ef\u4ee5\u6279\u91cf\u89e3\u6790\u6216\u5207\u6362\u97f3\u9891\u3001\u9759\u97f3\u6a21\u5f0f\u5417\uff1f"
                     : "Can I batch process or grab audio-only files?",
             a:
                 currentLocale === "zh"
-                    ? "支持批量解析入口，下载模式可在自动、音频、静音间切换。长视频会展示进度和速度。"
+                    ? "\u652f\u6301\u6279\u91cf\u89e3\u6790\u5165\u53e3\uff0c\u4e0b\u8f7d\u6a21\u5f0f\u53ef\u5728\u81ea\u52a8\u3001\u97f3\u9891\u548c\u9759\u97f3\u4e4b\u95f4\u5207\u6362\u3002\u957f\u89c6\u9891\u4f1a\u5c55\u793a\u8fdb\u5ea6\u548c\u901f\u5ea6\u3002"
                     : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress.",
         },
         {
             q:
                 currentLocale === "zh"
-                    ? "手机也能用吗，会不会有水印？"
+                    ? "\u624b\u673a\u4e5f\u80fd\u7528\u5417\uff0c\u4f1a\u4e0d\u4f1a\u6709\u6c34\u5370\uff1f"
                     : "Is it mobile-friendly and watermark-free?",
             a:
                 currentLocale === "zh"
-                    ? "完全网页版，手机/平板/电脑都可直接使用，解析后输出无水印高清文件。"
+                    ? "\u5b8c\u5168\u7f51\u9875\u7248\uff0c\u624b\u673a\u3001\u5e73\u677f\u548c\u7535\u8111\u90fd\u53ef\u76f4\u63a5\u4f7f\u7528\uff1b\u65e0\u6c34\u5370\u8f93\u51fa\u4ee5\u5e73\u53f0\u53ef\u7528\u8d44\u6e90\u4e3a\u51c6\u3002"
                     : "It runs in the browser on mobile/desktop and returns watermark-free HD files.",
         },
     ];
@@ -660,13 +664,13 @@
         <h2>{homeHubHeading}</h2>
         <div class="home-internal-links">
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
-                {currentLocale === "zh" ? "视频下载目录" : "Video download directory"}
+                {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : "Video download directory"}
             </a>
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
-                {currentLocale === "zh" ? "视频下载指南" : "Video download guides"}
+                {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : "Video download guides"}
             </a>
             <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
-                {currentLocale === "zh" ? "下载常见问题" : "Video download FAQ"}
+                {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : "Video download FAQ"}
             </a>
             {#each homeInternalLinks as item}
                 <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>

@@ -2503,7 +2503,92 @@ export const seoLandingSlugs = seoLandingPages.map((page) => page.slug);
 export const getSeoLandingPage = (slug: string): SeoLandingPage | undefined =>
     seoLandingPages.find((page) => page.slug === slug);
 
+const zhLandingMeta: Record<string, { platform: string; kind: 'video' | 'audio' | 'collection' | 'reels' }> = {
+    'tiktok-no-watermark': { platform: 'TikTok', kind: 'video' },
+    'tiktok-collection-download': { platform: 'TikTok playlist', kind: 'collection' },
+    'tiktok-mp3-download': { platform: 'TikTok', kind: 'audio' },
+    'douyin-no-watermark': { platform: 'Douyin', kind: 'video' },
+    'douyin-mp3-download': { platform: 'Douyin', kind: 'audio' },
+    'douyin-collection-download': { platform: 'Douyin collection', kind: 'collection' },
+    'bilibili-video-download': { platform: 'Bilibili', kind: 'video' },
+    'kuaishou-no-watermark': { platform: 'Kuaishou', kind: 'video' },
+    'xiaohongshu-video-download': { platform: 'Xiaohongshu', kind: 'video' },
+    'instagram-reels-download': { platform: 'Instagram Reels', kind: 'reels' },
+    'youtube-shorts-download': { platform: 'YouTube Shorts', kind: 'video' },
+    'facebook-video-download': { platform: 'Facebook', kind: 'video' },
+    'instagram-video-download': { platform: 'Instagram', kind: 'video' },
+    'twitter-x-video-download': { platform: 'X/Twitter', kind: 'video' },
+    'reddit-video-download': { platform: 'Reddit', kind: 'video' },
+    'pinterest-video-download': { platform: 'Pinterest', kind: 'video' },
+    'snapchat-video-download': { platform: 'Snapchat', kind: 'video' },
+    'vimeo-video-download': { platform: 'Vimeo', kind: 'video' },
+    'soundcloud-audio-download': { platform: 'SoundCloud', kind: 'audio' },
+};
+
+const cleanZhLandingLocale = (page: SeoLandingPage): SeoLandingLocaleContent | null => {
+    const meta = zhLandingMeta[page.slug];
+    if (!meta) return null;
+
+    const isAudio = meta.kind === 'audio';
+    const isCollection = meta.kind === 'collection';
+    const noun = isAudio ? '\u97f3\u9891' : isCollection ? '\u5408\u96c6 / playlist' : '\u89c6\u9891';
+    const h1 = `${meta.platform}${noun}\u4e0b\u8f7d`;
+    const lede = isAudio
+        ? `\u7c98\u8d34 ${meta.platform} \u94fe\u63a5\uff0c\u5728\u7ebf\u89e3\u6790\u5e76\u4fdd\u5b58\u53ef\u7528\u97f3\u9891\u3002`
+        : isCollection
+          ? `\u7c98\u8d34 ${meta.platform} \u94fe\u63a5\uff0c\u6279\u91cf\u89e3\u6790\u5e76\u4fdd\u5b58\u53ef\u7528\u5185\u5bb9\u3002`
+          : `\u7c98\u8d34 ${meta.platform} \u94fe\u63a5\uff0c\u5728\u7ebf\u89e3\u6790\u5e76\u4fdd\u5b58\u53ef\u7528\u89c6\u9891\u3002`;
+
+    return {
+        metaTitle: `${h1} - ${ZH_BRAND}`,
+        metaDescription: `${h1}\uff1a\u590d\u5236\u94fe\u63a5\u3001\u7c98\u8d34\u5230 FreeSaveVideo\u3001\u4fdd\u5b58\u53ef\u7528\u7ed3\u679c\u3002\u652f\u6301\u516c\u5f00\u53ef\u8bbf\u95ee\u5185\u5bb9\uff0c\u514d\u5b89\u88c5\u5728\u7ebf\u4f7f\u7528\u3002`,
+        metaKeywords: [
+            `${meta.platform}\u4e0b\u8f7d`,
+            `${meta.platform}${noun}\u4e0b\u8f7d`,
+            `${meta.platform}\u94fe\u63a5\u89e3\u6790`,
+            'FreeSaveVideo',
+        ],
+        h1,
+        lede,
+        stepsTitle: `\u5982\u4f55\u4e0b\u8f7d ${meta.platform} ${noun}`,
+        steps: [
+            `\u6253\u5f00 ${meta.platform} \u5185\u5bb9\u5e76\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002`,
+            '\u5c06\u94fe\u63a5\u7c98\u8d34\u5230\u4e0b\u65b9\u8f93\u5165\u6846\uff0c\u70b9\u51fb\u4e0b\u8f7d\u3002',
+            '\u9009\u62e9\u53ef\u7528\u7684\u89c6\u9891\u3001\u97f3\u9891\u6216\u6279\u91cf\u7ed3\u679c\u5e76\u4fdd\u5b58\u3002',
+        ],
+        featuresTitle: '\u529f\u80fd\u4eae\u70b9',
+        features: [
+            '\u652f\u6301\u516c\u5f00\u53ef\u8bbf\u95ee\u5185\u5bb9\u89e3\u6790\u3002',
+            '\u652f\u6301\u624b\u673a\u548c\u7535\u8111\u6d4f\u89c8\u5668\u4f7f\u7528\uff0c\u65e0\u9700\u5b89\u88c5 App\u3002',
+            '\u53ef\u4e0e\u6279\u91cf\u4e0b\u8f7d\u3001\u97f3\u9891\u63d0\u53d6\u548c\u672c\u5730\u5de5\u5177\u914d\u5408\u4f7f\u7528\u3002',
+        ],
+        faqTitle: '\u5e38\u89c1\u95ee\u9898',
+        faqs: [
+            {
+                q: '\u9700\u8981\u5b89\u88c5 App \u5417\uff1f',
+                a: '\u4e0d\u9700\u8981\uff0c\u76f4\u63a5\u5728\u6d4f\u89c8\u5668\u4e2d\u6253\u5f00 FreeSaveVideo \u5373\u53ef\u4f7f\u7528\u3002',
+            },
+            {
+                q: '\u53ef\u4ee5\u4e0b\u8f7d\u79c1\u5bc6\u5185\u5bb9\u5417\uff1f',
+                a: '\u4e0d\u53ef\u4ee5\u3002FreeSaveVideo \u4ec5\u652f\u6301\u516c\u5f00\u53ef\u8bbf\u95ee\u7684\u5185\u5bb9\u3002',
+            },
+            {
+                q: '\u89e3\u6790\u7ed3\u679c\u4e3a\u4ec0\u4e48\u4f1a\u4e0d\u540c\uff1f',
+                a: '\u4e0d\u540c\u5e73\u53f0\u548c\u94fe\u63a5\u7c7b\u578b\u63d0\u4f9b\u7684\u8d44\u6e90\u4e0d\u540c\uff0c\u8bf7\u4ee5\u9875\u9762\u5b9e\u9645\u89e3\u6790\u7ed3\u679c\u4e3a\u51c6\u3002',
+            },
+        ],
+        disclaimer:
+            '\u4ec5\u652f\u6301\u4e0b\u8f7d\u516c\u5f00\u53ef\u8bbf\u95ee\u5185\u5bb9\uff1b\u8bf7\u5c0a\u91cd\u7248\u6743\u3001\u521b\u4f5c\u8005\u6743\u5229\u548c\u5e73\u53f0\u89c4\u5219\u3002',
+    };
+};
+
 export const getSeoLandingLocale = (
     page: SeoLandingPage,
     lang: string,
-): SeoLandingLocaleContent => page.locales[lang] ?? page.locales.en;
+): SeoLandingLocaleContent => {
+    if (lang === 'zh') {
+        const clean = cleanZhLandingLocale(page);
+        if (clean) return clean;
+    }
+    return page.locales[lang] ?? page.locales.en;
+};

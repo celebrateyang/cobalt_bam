@@ -1,6 +1,7 @@
 <script lang="ts">
     import { t } from '$lib/i18n/translations';
     import { onDestroy, onMount, tick } from 'svelte';
+    import { page } from '$app/stores';
 // Import clipboard components
     import FileTransfer from '$components/clipboard/FileTransfer.svelte';
     import SessionManager from '$components/clipboard/SessionManager.svelte';
@@ -9,6 +10,7 @@
 // Import clipboard manager
     import { ClipboardManager, clipboardState, type FileItem } from '$lib/clipboard/clipboard-manager';
     import { getClerkToken } from '$lib/state/clerk';
+    import env from '$lib/env';
     // Types
     interface ReceivingFile {
         name: string;
@@ -38,6 +40,22 @@
     let receivedFiles: FileItem[] = [];
     let textContent = '';
     let receivedText = '';
+    const fallbackHost = env.HOST || 'freesavevideo.online';
+    $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+    $: canonicalUrl = `https://${fallbackHost}/${currentLang}/clipboard`;
+    $: transferJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        '@id': `${canonicalUrl}#app`,
+        name: 'FreeSaveVideo File Transfer',
+        url: canonicalUrl,
+        applicationCategory: 'UtilitiesApplication',
+        applicationSubCategory: 'File Transfer',
+        operatingSystem: 'Any',
+        isAccessibleForFree: true,
+        description: String($t('general.seo.transfer.description')),
+        featureList: ['cross-device file transfer', 'text sharing', 'QR code join', 'WebRTC data channel'],
+    };
     let dragover = false;
     let sendingFiles = false;    let receivingFiles = false;
     let transferProgress = 0;
@@ -351,6 +369,7 @@
     <meta name="keywords" content={$t("general.seo.transfer.keywords")} />
     <meta property="og:title" content={$t("general.seo.transfer.title")} />
     <meta property="og:description" content={$t("general.seo.transfer.description")} />
+    {@html `<script type="application/ld+json">${JSON.stringify(transferJsonLd).replace(/</g, '\\u003c')}</script>`}
 </svelte:head>
 
 

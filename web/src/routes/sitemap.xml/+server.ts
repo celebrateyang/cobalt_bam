@@ -6,6 +6,7 @@ import { guideSlugs } from '$lib/seo/guide-pages';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
+const excludedPathPatterns = [/^\/[^/]+\/donate(?:\/|$)/];
 
 // paths to include in sitemap
 const pages = [
@@ -38,6 +39,9 @@ for (const file of Object.keys(aboutFiles)) {
     aboutPagesByLang.set(lang, set);
 }
 
+const shouldExcludePath = (path: string) =>
+    excludedPathPatterns.some((pattern) => pattern.test(path));
+
 function generateSitemap(): string {
     const urls: string[] = [];
     const now = new Date().toISOString();
@@ -54,6 +58,7 @@ function generateSitemap(): string {
         // top-level pages
         for (const page of pages) {
             const path = page ? `/${lang}/${page}` : `/${lang}`;
+            if (shouldExcludePath(path)) continue;
             const priority = page === '' ? '1.0' : '0.8';
             const changefreq = page === '' ? 'daily' : 'weekly';
 
@@ -70,9 +75,11 @@ function generateSitemap(): string {
         for (const aboutPage of aboutPages) {
             const available = aboutPagesByLang.get(lang);
             if (!available || !available.has(aboutPage)) continue;
+            const path = `/${lang}/about/${aboutPage}`;
+            if (shouldExcludePath(path)) continue;
             urls.push(`
     <url>
-        <loc>${site}/${lang}/about/${aboutPage}</loc>
+        <loc>${site}${path}</loc>
         <lastmod>${now}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>

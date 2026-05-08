@@ -1,0 +1,410 @@
+{
+  "updatedAt": "2026-05-08",
+  "productFaqs": [
+    {
+      "q": "Wo werden heruntergeladene Dateien gespeichert?",
+      "a": "Direkte Downloads werden im Standard-Download-Ordner Ihres Browsers gespeichert. Klicken Sie bei Warteschlangen-Downloads nach Abschluss auf „Speichern“, um die Datei lokal zu speichern."
+    },
+    {
+      "q": "Wie mache ich nach einer Warteschlangenunterbrechung weiter?",
+      "a": "Wenn eine Warteschlangenaufgabe unterbrochen wird, klicken Sie auf „Weiter“, um an der Unterbrechungsstelle fortzufahren."
+    },
+    {
+      "q": "Warum unterscheidet sich die Videoqualität von meinen Erwartungen?",
+      "a": "Ausgabequalität und -format werden durch Einstellungen gesteuert. Aktualisieren Sie zuerst die Einstellungen und analysieren Sie dann dieselbe URL erneut."
+    },
+    {
+      "q": "Welche Zusatztools sind ohne Punkte kostenlos?",
+      "a": "Zufälliger Video-Chat, Formatkonvertierung, Entdecken, Whiteboard-Aufzeichnung und Dateiübertragung sind ohne Punkte verfügbar."
+    },
+    {
+      "q": "Was ist Ihr Hauptvorteil gegenüber anderen Download-Tools?",
+      "a": "FreeSaveVideo ist auf Stabilität, Wiederholungsversuche und Wiederaufnahmeunterstützung bei komplexen Verbindungen und instabilen Netzwerken ausgelegt."
+    }
+  ],
+  "productTips": [
+    "Der Direktmodus speichert im Standardordner Ihres Browsers. Im Warteschlangenmodus muss nach Abschluss auf „Speichern“ geklickt werden.",
+    "Wenn eine Warteschlangenaufgabe unterbrochen wird, klicken Sie auf „Weiter“, um an der Unterbrechungsstelle fortzufahren.",
+    "Legen Sie Qualität und Format in den Einstellungen fest, bevor Sie Links erneut analysieren."
+  ],
+  "productAdvantages": [
+    "Stabil bei Spitzenlast und robust bei komplexen Verbindungen.",
+    "Mehrere Werkzeuge sind ohne Punkte verfügbar."
+  ],
+  "releaseNotes": [
+    "Es wurde eine klare Anleitung zum Speichern direkt gegenüber der Warteschlange hinzugefügt.",
+    "Erweiterte Anleitung zum Fortsetzen der Warteschlange rund um „Weiter“.",
+    "Qualitätseinstellungen und Abdeckung kostenloser Tools hinzugefügt."
+  ],
+  "freeTools": [
+    {
+      "title": "Zufälliger Video-Chat",
+      "desc": "Keine Punkte erforderlich",
+      "path": "random-chat"
+    },
+    {
+      "title": "Konvertierung des Videoformats",
+      "desc": "Keine Punkte erforderlich",
+      "path": "remux"
+    },
+    {
+      "title": "Inhalte entdecken",
+      "desc": "Keine Punkte erforderlich",
+      "path": "discover"
+    },
+    {
+      "title": "Whiteboard-Aufnahme",
+      "desc": "Keine Punkte erforderlich",
+      "path": "videorecord"
+    },
+    {
+      "title": "Dateiübertragung",
+      "desc": "Keine Punkte erforderlich",
+      "path": "clipboard"
+    }
+  ],
+  "platformFaqs": {
+    "tiktok": [
+      {
+        "q": "Was soll ich tun, wenn eine TikTok-URL fehlschlägt?",
+        "a": "Verwenden Sie eine Post-Share-URL (keine Profil-URL), versuchen Sie es erneut und wechseln Sie dann bei Bedarf das Netzwerk."
+      },
+      {
+        "q": "Warum ist die TikTok-Qualität schlechter als erwartet?",
+        "a": "Passen Sie die Qualitätseinstellungen an und analysieren Sie erneut. Die endgültigen Optionen hängen vom Quellmedium ab."
+      },
+      {
+        "q": "Warum gibt ein TikTok-Diashow-Link keine Medien zurück?",
+        "a": "Bei einigen Diashow-Beiträgen und musikgeschützten Assets sind nur begrenzt herunterladbare Medien verfügbar. Versuchen Sie es mit einer anderen Beitrags-URL oder verwenden Sie Wiederholungsversuche in der Warteschlange."
+      },
+      {
+        "q": "Warum zeigt TikTok kein Ergebnis für einen kopierten Profillink an?",
+        "a": "Profillinks sind keine direkten Medienseiten. Öffnen Sie einen bestimmten Beitrag und kopieren Sie seine Freigabe-URL zum Parsen."
+      }
+    ],
+    "douyin": [
+      {
+        "q": "Warum wird mein Douyin-Link nicht heruntergeladen?",
+        "a": "Verwenden Sie eine Post-Share-URL, keine Such-/Erkennungs-URLs."
+      },
+      {
+        "q": "Wie soll ich mit unterbrochenen Aufgaben in der Douyin-Warteschlange umgehen?",
+        "a": "Klicken Sie bei Aufgaben in der Douyin-Warteschlange auf „Weiter“, um nach Unterbrechungen fortzufahren, und klicken Sie nach Abschluss auf „Speichern“."
+      },
+      {
+        "q": "Warum zeigt Douyin bei manchen Links \"keine Berechtigung\" oder leere Ergebnisse?",
+        "a": "Einige geteilte Links verweisen auf eingeschraenkte oder regional limitierte Beitraege. Oeffnen Sie den Originalbeitrag, pruefen Sie den oeffentlichen Zugriff und analysieren Sie dann im Warteschlangenmodus erneut."
+      }
+    ],
+    "instagram": [
+      {
+        "q": "Ist ein gelegentlicher Instagram-Ausfall zu erwarten?",
+        "a": "Es kann zu vorübergehenden Schwankungen auf der Quellenseite kommen. Versuchen Sie es erneut und bestätigen Sie den öffentlichen Zugriff."
+      },
+      {
+        "q": "Warum schlägt ein Instagram-Story-Link nach einiger Zeit fehl?",
+        "a": "Geschichten können schnell ablaufen. Verwenden Sie eine aktuell verfügbare öffentliche Story-URL und analysieren Sie sie so schnell wie möglich."
+      },
+      {
+        "q": "Warum gibt Instagram keine Medien für private Inhalte zurück?",
+        "a": "Private Inhalte sind zum Parsen nicht öffentlich zugänglich. Verwenden Sie stattdessen öffentlich zugängliche Beitrags-URLs."
+      }
+    ],
+    "youtube": [
+      {
+        "q": "Warum ist die YouTube-Analyse langsam?",
+        "a": "Lange Videos und Verkehrsspitzen verlängern die Analysezeit. Der Warteschlangenmodus wird empfohlen."
+      },
+      {
+        "q": "Warum kann ich einen YouTube-Livestream nicht sofort herunterladen?",
+        "a": "Livestreams und neue Uploads müssen möglicherweise zunächst auf der Quellenseite verarbeitet werden. Versuchen Sie es später noch einmal oder stellen Sie die Aufgabe in die Warteschlange und fahren Sie fort, wenn sie unterbrochen wird."
+      },
+      {
+        "q": "Warum wird eine YouTube-URL analysiert, es werden jedoch nur begrenzte Optionen angezeigt?",
+        "a": "Die verfügbaren Optionen hängen von den Quellmetadaten, den Regionsregeln und der Formatverfügbarkeit ab. Passen Sie die Ausgabeeinstellungen an und analysieren Sie sie erneut."
+      }
+    ],
+    "bilibili": [
+      {
+        "q": "Wo ist meine Bilibili-Datei nach Abschluss der Warteschlange?",
+        "a": "Der Warteschlangenmodus erfordert nach Abschluss der Aufgabe einen expliziten Speichern-Klick."
+      },
+      {
+        "q": "Warum laedt Bilibili bei Mehrteil-Inhalten nur einen Teil herunter?",
+        "a": "Manche Links verweisen nur auf ein einzelnes Segment. Kopieren Sie die genaue Segment-URL und laden Sie bei Bedarf jedes Segment separat in der Warteschlange."
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "q": "Warum ist der Download von Xiaohongshu instabil?",
+        "a": "Verwenden Sie den Warteschlangenmodus und fahren Sie fort. Die Medienverfügbarkeit auf Quellenseite kann variieren."
+      },
+      {
+        "q": "Warum liefert Xiaohongshu nur Audio oder fehlende Videooptionen?",
+        "a": "Einige Notes stellen nur begrenzte Medienvarianten bereit. Passen Sie Qualitaets- oder Formateinstellungen an, analysieren Sie den Link erneut und versuchen Sie es spaeter noch einmal."
+      }
+    ],
+    "facebook": [
+      {
+        "q": "Warum kann ich meine Facebook-Datei nicht finden?",
+        "a": "Direktmodus speichert im Browserordner; Der Warteschlangenmodus erfordert nach Abschluss ein Speichern."
+      }
+    ],
+    "generic": [
+      {
+        "q": "Was sollte ich zuerst überprüfen, wenn das Parsen fehlschlägt?",
+        "a": "Überprüfen Sie den Zugriff auf die öffentliche URL, überprüfen Sie die Einstellungen und versuchen Sie es dann im Warteschlangenmodus erneut."
+      }
+    ]
+  },
+  "platformPlaybooks": {
+    "tiktok": {
+      "heading": "Hinweise zum TikTok-Workflow",
+      "notes": [
+        "Verwenden Sie bestimmte Beitrags-URLs.",
+        "Versuchen Sie es einmal erneut und wechseln Sie dann das Netzwerk.",
+        "Bevorzugen Sie den Warteschlangenmodus für längere Medien."
+      ],
+      "checklist": [
+        "Öffentliche Beitrags-URL bestätigt",
+        "Qualitätseinstellungen konfiguriert",
+        "Wird nach Abschluss der Warteschlange gespeichert"
+      ]
+    },
+    "douyin": {
+      "heading": "Hinweise zum Douyin-Workflow",
+      "notes": [
+        "Vermeiden Sie Such-/Erkennungs-URLs.",
+        "Benutzen Sie „Fortfahren“ bei Unterbrechung.",
+        "Passen Sie die Qualitätseinstellungen vor dem erneuten Parsen an."
+      ],
+      "checklist": [
+        "Spezifische Beitrags-URL bestätigt",
+        "Direkt- oder Warteschlangenmodus ausgewählt",
+        "Letzter Speicherschritt abgeschlossen"
+      ]
+    },
+    "instagram": {
+      "heading": "Notizen zum Instagram-Workflow",
+      "notes": [
+        "Quellenseitige Schwankungen sind möglich.",
+        "Die Optionen hängen vom Quellmedium ab.",
+        "Der Warteschlangenmodus verbessert die Stabilität."
+      ],
+      "checklist": [
+        "Öffentlicher Zugang überprüft",
+        "Bei Bedarf wird der Warteschlangenmodus verwendet",
+        "Dateispeicherort bestätigt"
+      ]
+    },
+    "youtube": {
+      "heading": "Hinweise zum YouTube-Workflow",
+      "notes": [
+        "Lange Videos werden möglicherweise langsam analysiert.",
+        "Legen Sie die Audiopräferenz fest, bevor Sie erneut analysieren.",
+        "Verwenden Sie „Fortfahren“, um vollständige Neustarts zu vermeiden."
+      ],
+      "checklist": [
+        "Video-URL bestätigt",
+        "Ausgabepräferenz festgelegt",
+        "Wird nach Abschluss der Warteschlange gespeichert"
+      ]
+    },
+    "bilibili": {
+      "heading": "Hinweise zum Bilibili-Workflow",
+      "notes": [
+        "Im Direktmodus wird im Browserordner gespeichert.",
+        "Der Warteschlangenmodus erfordert explizites Speichern.",
+        "Nach Qualitätsänderungen erneut analysieren."
+      ],
+      "checklist": [
+        "Öffentliche URL bestätigt",
+        "Modus und Einstellungen überprüft",
+        "Endgültiger Dateipfad überprüft"
+      ]
+    },
+    "xiaohongshu": {
+      "heading": "Hinweise zum Xiaohongshu-Workflow",
+      "notes": [
+        "Verwenden Sie den Warteschlangenmodus in instabilen Netzwerken.",
+        "Die Anzahl der Optionen hängt von der Quelle ab.",
+        "Versuchen Sie es später noch einmal, wenn die Quelle begrenzt ist."
+      ],
+      "checklist": [
+        "Öffentliche URL bestätigt",
+        "Warteschlangenmodus ausgewählt",
+        "Speichervorgang abgeschlossen"
+      ]
+    },
+    "facebook": {
+      "heading": "Notizen zum Facebook-Workflow",
+      "notes": [
+        "Überprüfen Sie zuerst den Direkt- oder Warteschlangenmodus.",
+        "Die Warteschlange muss abgeschlossen und gespeichert werden.",
+        "„Fortfahren“ setzt unterbrochene Aufgaben fort."
+      ],
+      "checklist": [
+        "Öffentliche URL bestätigt",
+        "Modus ist klar",
+        "Speicherpfad überprüft"
+      ]
+    },
+    "generic": {
+      "heading": "Allgemeine Hinweise zum Arbeitsablauf",
+      "notes": [
+        "Verwenden Sie öffentliche, gemeinsam nutzbare URLs.",
+        "Warteschlange + Fortsetzen in instabilen Netzwerken.",
+        "Stellen Sie die Qualität ein, bevor Sie erneut analysieren."
+      ],
+      "checklist": [
+        "Die URL ist gültig und öffentlich",
+        "Die Einstellungen entsprechen der Zielausgabe",
+        "Endgültiger Dateispeicherort bestätigt"
+      ]
+    }
+  },
+  "platformFailureCases": {
+    "tiktok": [
+      {
+        "title": "Profil-URL anstelle der Beitrags-URL verwendet",
+        "symptoms": "Keine herunterladbaren Medien oder generischen Analysefehler.",
+        "fixes": [
+          "Kopieren Sie die genaue URL der Beitragsfreigabe.",
+          "Versuchen Sie bei Bedarf die Analyse nach dem Netzwerkwechsel erneut.",
+          "Verwenden Sie den Warteschlangenmodus für lange Downloads."
+        ]
+      },
+      {
+        "title": "Profil-Link oder Diashow-Randfall",
+        "symptoms": "Parse gibt ein leeres Ergebnis oder eingeschränkte Medienoptionen zurück.",
+        "fixes": [
+          "Verwenden Sie anstelle von Profillinks eine bestimmte Beitragsfreigabe-URL.",
+          "Versuchen Sie es im Warteschlangenmodus in instabilen Netzwerken erneut.",
+          "Wechseln Sie zu einem anderen öffentlichen Beitrag, wenn Quellressourcen eingeschränkt sind."
+        ]
+      }
+    ],
+    "douyin": [
+      {
+        "title": "Such-/Erkennungs-URL kopiert",
+        "symptoms": "Kein Ergebnis oder instabiles Parsen trotz gültig aussehender URL.",
+        "fixes": [
+          "Öffnen Sie die Beitragsdetails und kopieren Sie die Beitrags-Freigabe-URL.",
+          "Erneut im Warteschlangenmodus analysieren.",
+          "Fortsetzen mit „Bei Unterbrechung fortfahren“."
+        ]
+      },
+      {
+        "title": "Eingeschraenkter Beitrag oder regional begrenzter Freigabelink",
+        "symptoms": "Link oeffnet sich inkonsistent oder die Analyse liefert keine Berechtigung / leeres Ergebnis.",
+        "fixes": [
+          "Pruefen Sie, ob der Beitrag in Ihrem aktuellen Netzwerk oeffentlich zugaenglich ist.",
+          "Kopieren Sie die Freigabe-URL direkt von der konkreten Beitragsseite.",
+          "Nutzen Sie den Warteschlangenmodus und \"Weiter\", wenn das Netzwerk instabil ist."
+        ]
+      }
+    ],
+    "instagram": [
+      {
+        "title": "Vorübergehende quellenseitige Fluktuation",
+        "symptoms": "Zeitweilige Analysefehler.",
+        "fixes": [
+          "Nach kurzer Zeit erneut versuchen.",
+          "Bestätigen Sie die öffentliche Zugänglichkeit.",
+          "Verwenden Sie den Warteschlangenmodus für Wiederholungsversuche."
+        ]
+      },
+      {
+        "title": "Story abgelaufen oder privater Inhalt",
+        "symptoms": "Keine herunterladbaren Medien trotz gültig aussehender URL.",
+        "fixes": [
+          "Bestätigen Sie, dass die Geschichte noch live ist.",
+          "Verwenden Sie nach Möglichkeit öffentliche Beitrags-URLs.",
+          "Versuchen Sie es schnell noch einmal, bevor der temporäre Inhalt abläuft."
+        ]
+      }
+    ],
+    "youtube": [
+      {
+        "title": "Lange Videoanalyseverzögerung",
+        "symptoms": "Langsamer Fortschritt beim Parsen oder Herunterladen.",
+        "fixes": [
+          "Halten Sie die Warteschlangenaufgabe am Laufen.",
+          "Bei Unterbrechung mit Weiter fortfahren.",
+          "Verwenden Sie die Audioeinstellung, wenn nur Audio benötigt wird."
+        ]
+      },
+      {
+        "title": "Livestream oder neuer Upload nicht bereit",
+        "symptoms": "Das Parsen gelingt langsam oder gibt unvollständige Optionen zurück.",
+        "fixes": [
+          "Warten Sie, bis die quellseitige Verarbeitung abgeschlossen ist, und versuchen Sie es erneut.",
+          "Verwenden Sie den Warteschlangenmodus für lange Aufgaben.",
+          "Fahren Sie mit Fortfahren fort, wenn eine Netzwerkunterbrechung auftritt."
+        ]
+      }
+    ],
+    "bilibili": [
+      {
+        "title": "Warteschlange abgeschlossen, aber keine lokale Datei",
+        "symptoms": "Der Status „Aufgabe erledigt“ wird angezeigt, aber die Datei fehlt.",
+        "fixes": [
+          "Klicken Sie nach Abschluss der Warteschlange auf Speichern.",
+          "Überprüfen Sie den Browserordner nur für den Direktmodus.",
+          "Überprüfen Sie den endgültigen Speicherort."
+        ]
+      },
+      {
+        "title": "Mehrteiliger Beitrag wurde nur einem Segment zugeordnet",
+        "symptoms": "Das Download-Ergebnis enthaelt nur eine Folge oder ein Fragment.",
+        "fixes": [
+          "Oeffnen Sie die genaue Segmentseite und kopieren Sie diese Freigabe-URL.",
+          "Fuegen Sie jedes Segment separat zur Warteschlange hinzu, wenn Sie die vollstaendige Sammlung benoetigen.",
+          "Stellen Sie sicher, dass jede Aufgabe abgeschlossen ist und klicken Sie auf \"Speichern\"."
+        ]
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "title": "Instabiler Durchsatz",
+        "symptoms": "Geschwindigkeitseinbußen oder unterbrochene Aufgaben.",
+        "fixes": [
+          "Wechseln Sie in den Warteschlangenmodus.",
+          "Setzen Sie den Vorgang am Haltepunkt mit „Weiter“ fort.",
+          "Versuchen Sie es später noch einmal, wenn die Quellenmedien begrenzt sind."
+        ]
+      },
+      {
+        "title": "Begrenzte Medienvarianten in der Quellen-Note",
+        "symptoms": "Es erscheinen nur Teilformate oder Videooptionen fehlen.",
+        "fixes": [
+          "Analysieren Sie erneut nach Anpassung von Qualitaets- und Formateinstellungen.",
+          "Versuchen Sie es spaeter erneut, wenn sich die Quellenmedien aktualisiert haben.",
+          "Verwenden Sie den Warteschlangenmodus fuer stabilere Abschluesse."
+        ]
+      }
+    ],
+    "facebook": [
+      {
+        "title": "Direkte oder Warteschlangenverwirrung",
+        "symptoms": "Der Download scheint abgeschlossen zu sein, aber die Datei wurde nicht gefunden.",
+        "fixes": [
+          "Im Direktmodus wird im Browserordner gespeichert.",
+          "Der Warteschlangenmodus erfordert eine Speicheraktion.",
+          "Überprüfen Sie den Warteschlangenstatus und den lokalen Pfad."
+        ]
+      }
+    ],
+    "generic": [
+      {
+        "title": "Fehler beim Parsen einer gültig aussehenden URL",
+        "symptoms": "Es wurde wiederholt keine Ausgabe zurückgegeben.",
+        "fixes": [
+          "Bestätigen Sie, dass die URL auf öffentliche spezifische Inhalte verweist.",
+          "Passen Sie die Einstellungen an und analysieren Sie sie erneut.",
+          "Verwenden Sie den Warteschlangenmodus mit Lebenslauf."
+        ]
+      }
+    ]
+  }
+}

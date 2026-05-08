@@ -1,0 +1,410 @@
+{
+  "updatedAt": "2026-05-08",
+  "productFaqs": [
+    {
+      "q": "Où sont enregistrés les fichiers téléchargés ?",
+      "a": "Les téléchargements directs sont enregistrés dans le dossier de téléchargement par défaut de votre navigateur. Pour les téléchargements en file d'attente, cliquez sur \"Enregistrer\" une fois terminé pour stocker le fichier localement."
+    },
+    {
+      "q": "Comment continuer après une interruption de la file d'attente ?",
+      "a": "Si une tâche en file d'attente est interrompue, cliquez sur \"Continuer\" pour reprendre à partir du point d'interruption."
+    },
+    {
+      "q": "Pourquoi la qualité vidéo est-elle différente de ce à quoi je m'attendais ?",
+      "a": "La qualité et le format de sortie sont contrôlés par les paramètres. Mettez d'abord à jour les paramètres, puis réanalysez la même URL."
+    },
+    {
+      "q": "Quels outils supplémentaires sont gratuits sans points ?",
+      "a": "Le chat vidéo aléatoire, la conversion de format, la découverte, l'enregistrement sur tableau blanc et le transfert de fichiers sont disponibles sans points."
+    },
+    {
+      "q": "Quel est votre principal avantage par rapport aux autres outils de téléchargement ?",
+      "a": "FreeSaveVideo est conçu pour la stabilité, les tentatives et la prise en charge de la reprise sur des liens complexes et des réseaux instables."
+    }
+  ],
+  "productTips": [
+    "Le mode direct enregistre dans le dossier par défaut de votre navigateur. Le mode file d'attente nécessite de cliquer sur \"Enregistrer\" une fois terminé.",
+    "Si une tâche en file d'attente est interrompue, cliquez sur \"Continuer\" pour reprendre à partir du point d'interruption.",
+    "Définissez la qualité et le format dans les paramètres avant de réanalyser les liens."
+  ],
+  "productAdvantages": [
+    "Stable en cas de pointe de trafic et robuste sur des liaisons complexes.",
+    "Plusieurs outils sont disponibles sans points."
+  ],
+  "releaseNotes": [
+    "Ajout de conseils clairs sur le flux de sauvegarde direct contre file d'attente.",
+    "Guidage de reprise de la file d'attente étendue autour de Continuer.",
+    "Ajout de paramètres de qualité et d'une couverture d'outils gratuits."
+  ],
+  "freeTools": [
+    {
+      "title": "Chat vidéo aléatoire",
+      "desc": "Aucun point requis",
+      "path": "random-chat"
+    },
+    {
+      "title": "Conversion de format vidéo",
+      "desc": "Aucun point requis",
+      "path": "remux"
+    },
+    {
+      "title": "Exploration de contenu",
+      "desc": "Aucun point requis",
+      "path": "discover"
+    },
+    {
+      "title": "Enregistrement sur tableau blanc",
+      "desc": "Aucun point requis",
+      "path": "videorecord"
+    },
+    {
+      "title": "Transfert de fichiers",
+      "desc": "Aucun point requis",
+      "path": "clipboard"
+    }
+  ],
+  "platformFaqs": {
+    "tiktok": [
+      {
+        "q": "Que dois-je faire si une URL TikTok échoue ?",
+        "a": "Utilisez une URL de partage de publication (et non une URL de profil), réessayez, puis changez de réseau si nécessaire."
+      },
+      {
+        "q": "Pourquoi la qualité de TikTok est-elle inférieure aux attentes ?",
+        "a": "Ajustez les paramètres de qualité et analysez à nouveau. Les options finales dépendent du média source."
+      },
+      {
+        "q": "Pourquoi un lien de diaporama TikTok ne renvoie-t-il pas de média ?",
+        "a": "Certaines publications de diaporamas et ressources musicales protégées exposent des médias téléchargeables limités. Essayez une autre URL de publication ou utilisez les tentatives de file d'attente."
+      },
+      {
+        "q": "Pourquoi TikTok n'affiche-t-il aucun résultat pour un lien de profil copié ?",
+        "a": "Les liens de profil ne sont pas des pages multimédias directes. Ouvrez une publication spécifique et copiez son URL de partage pour l'analyser."
+      }
+    ],
+    "douyin": [
+      {
+        "q": "Pourquoi mon lien Douyin ne se télécharge-t-il pas ?",
+        "a": "Utilisez une URL de partage de publication, pas des URL de recherche/découverte."
+      },
+      {
+        "q": "Comment dois-je gérer les tâches interrompues de la file d’attente Douyin ?",
+        "a": "Pour les tâches de la file d'attente Douyin, cliquez sur « Continuer » pour reprendre après les interruptions, puis cliquez sur « Enregistrer » une fois terminées."
+      },
+      {
+        "q": "Pourquoi Douyin affiche \"pas d'autorisation\" ou un resultat vide sur certains liens ?",
+        "a": "Certains liens partages pointent vers des publications limitees ou restreintes par region. Ouvrez la publication d'origine, verifiez l'acces public, puis relancez l'analyse en mode file d'attente."
+      }
+    ],
+    "instagram": [
+      {
+        "q": "Faut-il s’attendre à des échecs occasionnels sur Instagram ?",
+        "a": "Une fluctuation temporaire du côté de la source peut se produire. Réessayez et confirmez l’accès public."
+      },
+      {
+        "q": "Pourquoi un lien Instagram Story échoue-t-il après un certain temps ?",
+        "a": "Les histoires peuvent expirer rapidement. Utilisez une URL d'histoire publique actuellement disponible et analysez-la dès que possible."
+      },
+      {
+        "q": "Pourquoi Instagram ne renvoie aucun média pour le contenu privé ?",
+        "a": "Le contenu privé n'est pas accessible publiquement pour l'analyse. Utilisez plutôt des URL de publication accessibles au public."
+      }
+    ],
+    "youtube": [
+      {
+        "q": "Pourquoi l'analyse de YouTube est-elle lente ?",
+        "a": "Les longues vidéos et les pics de trafic augmentent le temps d'analyse. Le mode file d'attente est recommandé."
+      },
+      {
+        "q": "Pourquoi ne puis-je pas télécharger immédiatement une diffusion en direct YouTube ?",
+        "a": "Les flux en direct et les nouveaux téléchargements peuvent nécessiter d'abord un traitement côté source. Réessayez plus tard ou mettez la tâche en file d'attente et reprenez-la si elle est interrompue."
+      },
+      {
+        "q": "Pourquoi une URL YouTube est-elle analysée mais affiche-t-elle des options limitées ?",
+        "a": "Les options disponibles dépendent des métadonnées sources, des règles régionales et de la disponibilité du format. Ajustez les paramètres de sortie et analysez à nouveau."
+      }
+    ],
+    "bilibili": [
+      {
+        "q": "Où se trouve mon fichier Bilibili une fois la file d'attente terminée ?",
+        "a": "Le mode file d'attente nécessite un clic explicite sur Enregistrer une fois la tâche terminée."
+      },
+      {
+        "q": "Pourquoi Bilibili ne telecharge qu'une seule partie pour un contenu multi-parties ?",
+        "a": "Certains liens pointent seulement vers un segment unique. Copiez l'URL exacte du segment voulu et, si necessaire, ajoutez chaque segment separement dans la file d'attente."
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "q": "Pourquoi le téléchargement de Xiaohongshu est-il instable ?",
+        "a": "Utilisez le mode file d'attente et continuez. La disponibilité des médias côté source peut varier."
+      },
+      {
+        "q": "Pourquoi Xiaohongshu renvoie seulement l'audio ou des options video manquantes ?",
+        "a": "Certaines notes exposent des variantes media limitees. Ajustez la qualite ou le format, reanalysez le meme lien, puis reessayez plus tard si besoin."
+      }
+    ],
+    "facebook": [
+      {
+        "q": "Pourquoi ne puis-je pas trouver mon fichier Facebook ?",
+        "a": "Le mode direct enregistre dans le dossier du navigateur ; le mode file d'attente nécessite une sauvegarde une fois terminé."
+      }
+    ],
+    "generic": [
+      {
+        "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
+        "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
+      }
+    ]
+  },
+  "platformPlaybooks": {
+    "tiktok": {
+      "heading": "Notes sur le flux de travail TikTok",
+      "notes": [
+        "Utilisez des URL de publication spécifiques.",
+        "Réessayez une fois, puis changez de réseau.",
+        "Préférez le mode file d’attente pour les médias plus longs."
+      ],
+      "checklist": [
+        "URL de la publication publique confirmée",
+        "Paramètres de qualité configurés",
+        "Enregistré après la fin de la file d'attente"
+      ]
+    },
+    "douyin": {
+      "heading": "Notes sur le flux de travail Douyin",
+      "notes": [
+        "Évitez les URL de recherche/découverte.",
+        "Utilisez Continuer en cas d'interruption.",
+        "Ajustez les paramètres de qualité avant de réanalyser."
+      ],
+      "checklist": [
+        "URL de publication spécifique confirmée",
+        "Mode direct ou file d'attente sélectionné",
+        "Étape de sauvegarde finale terminée"
+      ]
+    },
+    "instagram": {
+      "heading": "Notes de flux de travail Instagram",
+      "notes": [
+        "Des fluctuations du côté de la source sont possibles.",
+        "Les options dépendent du média source.",
+        "Le mode file d'attente améliore la stabilité."
+      ],
+      "checklist": [
+        "Accès public vérifié",
+        "Mode file d'attente utilisé en cas de besoin",
+        "Emplacement du fichier confirmé"
+      ]
+    },
+    "youtube": {
+      "heading": "Notes sur le flux de travail YouTube",
+      "notes": [
+        "Les longues vidéos peuvent être analysées lentement.",
+        "Définissez les préférences audio avant d’analyser à nouveau.",
+        "Utilisez Continuer pour éviter les redémarrages complets."
+      ],
+      "checklist": [
+        "URL de la vidéo confirmée",
+        "Ensemble de préférences de sortie",
+        "Enregistré après la fin de la file d'attente"
+      ]
+    },
+    "bilibili": {
+      "heading": "Notes sur le flux de travail Bilibili",
+      "notes": [
+        "Le mode direct enregistre dans le dossier du navigateur.",
+        "Le mode file d'attente nécessite une sauvegarde explicite.",
+        "Ré-analyser après les changements de qualité."
+      ],
+      "checklist": [
+        "URL publique confirmée",
+        "Mode et paramètres vérifiés",
+        "Chemin du fichier final vérifié"
+      ]
+    },
+    "xiaohongshu": {
+      "heading": "Notes sur le flux de travail de Xiaohongshu",
+      "notes": [
+        "Utilisez le mode file d'attente sur les réseaux instables.",
+        "Le nombre d’options dépend de la source.",
+        "Réessayez plus tard si la source est limitée."
+      ],
+      "checklist": [
+        "URL publique confirmée",
+        "Mode file d'attente sélectionné",
+        "Flux de sauvegarde terminé"
+      ]
+    },
+    "facebook": {
+      "heading": "Notes de flux de travail Facebook",
+      "notes": [
+        "Vérifiez d'abord le mode direct ou file d'attente.",
+        "La file d'attente doit être complétée et sauvegardée.",
+        "Continuer reprend les tâches interrompues."
+      ],
+      "checklist": [
+        "URL publique confirmée",
+        "Le mode est clair",
+        "Enregistrer le chemin vérifié"
+      ]
+    },
+    "generic": {
+      "heading": "Notes générales sur le flux de travail",
+      "notes": [
+        "Utilisez des URL publiques partageables.",
+        "File d'attente + reprise sur réseaux instables.",
+        "Définissez la qualité avant d’analyser à nouveau."
+      ],
+      "checklist": [
+        "L'URL est valide et publique",
+        "Les paramètres correspondent à la sortie cible",
+        "Emplacement final du fichier confirmé"
+      ]
+    }
+  },
+  "platformFailureCases": {
+    "tiktok": [
+      {
+        "title": "URL du profil utilisée à la place de l'URL de la publication",
+        "symptoms": "Aucun support téléchargeable ni échec d'analyse générique.",
+        "fixes": [
+          "Copiez l'URL exacte du partage de publication.",
+          "Réessayez l'analyse après le changement de réseau si nécessaire.",
+          "Utilisez le mode file d'attente pour les téléchargements longs."
+        ]
+      },
+      {
+        "title": "Lien de profil ou cas de bord du diaporama",
+        "symptoms": "Parse renvoie un résultat vide ou des options multimédias limitées.",
+        "fixes": [
+          "Utilisez une URL de partage de publication spécifique au lieu de liens de profil.",
+          "Réessayez en mode file d'attente sur des réseaux instables.",
+          "Basculez vers une autre publication publique lorsque les ressources sources sont restreintes."
+        ]
+      }
+    ],
+    "douyin": [
+      {
+        "title": "URL de recherche/découverte copiée",
+        "symptoms": "Aucun résultat ou analyse instable malgré une URL d'apparence valide.",
+        "fixes": [
+          "Ouvrez les détails de la publication et copiez l'URL de partage de la publication.",
+          "Analysez à nouveau avec le mode file d'attente.",
+          "Reprendre avec Continuer en cas d'interruption."
+        ]
+      },
+      {
+        "title": "Publication restreinte ou lien partage limite par region",
+        "symptoms": "Le lien s'ouvre de facon incoherente ou l'analyse renvoie pas d'autorisation / resultat vide.",
+        "fixes": [
+          "Verifiez que la publication est publiquement accessible sur votre reseau actuel.",
+          "Copiez l'URL de partage depuis la page exacte de la publication.",
+          "Utilisez le mode file d'attente et \"Continuer\" si le reseau est instable."
+        ]
+      }
+    ],
+    "instagram": [
+      {
+        "title": "Fluctuation temporaire côté source",
+        "symptoms": "Échecs d’analyse intermittents.",
+        "fixes": [
+          "Réessayez après un court intervalle.",
+          "Confirmez l’accessibilité publique.",
+          "Utilisez le mode file d'attente pour les tentatives."
+        ]
+      },
+      {
+        "title": "Histoire expirée ou contenu privé",
+        "symptoms": "Aucun média téléchargeable malgré une URL d'apparence valide.",
+        "fixes": [
+          "Confirmez que l'histoire est toujours en direct.",
+          "Utilisez des URL de publication publiques lorsque cela est possible.",
+          "Réessayez rapidement avant l'expiration du contenu temporaire."
+        ]
+      }
+    ],
+    "youtube": [
+      {
+        "title": "Long délai d'analyse vidéo",
+        "symptoms": "Progression lente pendant l'analyse ou le téléchargement.",
+        "fixes": [
+          "Gardez la tâche de file d'attente en cours d'exécution.",
+          "Reprendre avec Continuer en cas d'interruption.",
+          "Utilisez les préférences audio lorsque seul l’audio est nécessaire."
+        ]
+      },
+      {
+        "title": "La diffusion en direct ou le nouveau téléchargement n'est pas prêt",
+        "symptoms": "L'analyse réussit lentement ou renvoie des options incomplètes.",
+        "fixes": [
+          "Attendez la fin du traitement côté source et réessayez.",
+          "Utilisez le mode file d'attente pour les tâches longues.",
+          "Reprenez avec Continuer si une interruption du réseau se produit."
+        ]
+      }
+    ],
+    "bilibili": [
+      {
+        "title": "File d'attente terminée mais pas de fichier local",
+        "symptoms": "L'état de la tâche terminée est affiché mais le fichier est manquant.",
+        "fixes": [
+          "Cliquez sur Enregistrer une fois la file d'attente terminée.",
+          "Vérifiez le dossier du navigateur uniquement pour le mode direct.",
+          "Vérifiez l'emplacement de sauvegarde final."
+        ]
+      },
+      {
+        "title": "Publication multi-parties associee a un seul segment",
+        "symptoms": "Le resultat de telechargement contient seulement un episode ou un fragment.",
+        "fixes": [
+          "Ouvrez la page du segment exact et copiez cette URL de partage.",
+          "Ajoutez chaque segment separement dans la file d'attente pour une collection complete.",
+          "Confirmez la fin de chaque tache et cliquez sur \"Enregistrer\"."
+        ]
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "title": "Débit instable",
+        "symptoms": "Chutes de vitesse ou tâches interrompues.",
+        "fixes": [
+          "Passez en mode file d'attente.",
+          "Reprendre à partir du point d'arrêt avec Continuer.",
+          "Réessayez plus tard si le support côté source est limité."
+        ]
+      },
+      {
+        "title": "Variantes media limitees dans la note source",
+        "symptoms": "Seuls des formats partiels apparaissent, ou les options video sont absentes.",
+        "fixes": [
+          "Relancez l'analyse apres ajustement de la qualite et du format.",
+          "Reessayez plus tard lorsque les ressources source sont actualisees.",
+          "Utilisez le mode file d'attente pour ameliorer la stabilite de completion."
+        ]
+      }
+    ],
+    "facebook": [
+      {
+        "title": "Confusion directe et file d'attente",
+        "symptoms": "Le téléchargement semble terminé mais le fichier est introuvable.",
+        "fixes": [
+          "Le mode direct enregistre dans le dossier du navigateur.",
+          "Le mode file d’attente nécessite une action Enregistrer.",
+          "Vérifiez l'état de la file d'attente et le chemin local."
+        ]
+      }
+    ],
+    "generic": [
+      {
+        "title": "Échec de l'analyse d'une URL d'apparence valide",
+        "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
+        "fixes": [
+          "Confirmez que l'URL pointe vers un contenu public spécifique.",
+          "Ajustez les paramètres et réanalysez.",
+          "Utilisez le mode file d'attente avec reprise."
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
+    import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
 
     import Omnibox from '$components/save/Omnibox.svelte';
     import SupportedServices from '$components/save/SupportedServices.svelte';
@@ -20,6 +21,7 @@
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download/${data.slug}`;
     $: guideUrl = data.guideSlug ? `/${data.lang}/guide/${data.guideSlug}` : null;
     $: faqUrl = `/${data.lang}/faq`;
+    $: discoverUrl = `/${data.lang}/discover`;
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: downloadIndexUrl = `/${data.lang}/download`;
     $: homeUrl = `/${data.lang}`;
@@ -29,14 +31,41 @@
         : `How to use ${localeContent.h1}`;
     $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';
     $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : 'Video download FAQ';
+    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : 'Trending video discovery';
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
+    $: runtimeContent = getSeoRuntimeContent(data.lang);
+    $: contentUpdatedAt = runtimeContent.updatedAt;
+    $: platformKey = getPlatformKey(data.slug);
+    $: productFaqs = runtimeContent.productFaqs;
+    $: productTips = runtimeContent.productTips;
+    $: productAdvantages = runtimeContent.productAdvantages;
+    $: releaseNotes = runtimeContent.releaseNotes;
+    $: platformFaqs = runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
+    $: platformPlaybook =
+        runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
+    $: platformFailureCases =
+        runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: freeTools = runtimeContent.freeTools.map((tool) => ({
+        title: tool.title,
+        desc: tool.desc,
+        href: `/${data.lang}/${tool.path}`,
+    }));
+    $: mergedFaqs = (() => {
+        const ordered = [...platformFaqs, ...productFaqs, ...localeContent.faqs];
+        const seen = new Set<string>();
+        return ordered.filter((item) => {
+            if (seen.has(item.q)) return false;
+            seen.add(item.q);
+            return true;
+        });
+    })();
     $: faqJsonLd = canonicalUrl
         ? {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
-              mainEntity: localeContent.faqs.map((item) => ({
+              mainEntity: mergedFaqs.map((item) => ({
                   '@type': 'Question',
                   name: item.q,
                   acceptedAnswer: {
@@ -155,10 +184,83 @@
             </section>
         </section>
 
+        <section class="card practical">
+            <h2>{isZh ? '实用下载提示' : 'Practical download tips'}</h2>
+            <div class="practical-grid">
+                <section>
+                    <h3>{isZh ? '下载与保存' : 'Download and save flow'}</h3>
+                    <ul class="feature-list">
+                        {#each productTips as tip}
+                            <li>{tip}</li>
+                        {/each}
+                    </ul>
+                </section>
+                <section>
+                    <h3>{isZh ? '平台优势' : 'Platform advantages'}</h3>
+                    <ul class="feature-list">
+                        {#each productAdvantages as item}
+                            <li>{item}</li>
+                        {/each}
+                    </ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{isZh ? '按平台排查常见问题' : 'Platform-specific troubleshooting'}</h2>
+            <div class="faq-list">
+                {#each platformFaqs as item}
+                    <details class="faq-item">
+                        <summary>{item.q}</summary>
+                        <p>{item.a}</p>
+                    </details>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{platformPlaybook.heading}</h2>
+            <div class="practical-grid">
+                <section>
+                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : 'Key guidance'}</h3>
+                    <ul class="feature-list">
+                        {#each platformPlaybook.notes as note}
+                            <li>{note}</li>
+                        {/each}
+                    </ul>
+                </section>
+                <section>
+                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : 'Success checklist'}</h3>
+                    <ul class="feature-list">
+                        {#each platformPlaybook.checklist as item}
+                            <li>{item}</li>
+                        {/each}
+                    </ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : 'Failure cases and fix paths'}</h2>
+            <div class="case-grid">
+                {#each platformFailureCases as failure}
+                    <article class="failure-case">
+                        <h3>{failure.title}</h3>
+                        <p class="case-symptoms">{failure.symptoms}</p>
+                        <ol class="case-fixes">
+                            {#each failure.fixes as step}
+                                <li>{step}</li>
+                            {/each}
+                        </ol>
+                    </article>
+                {/each}
+            </div>
+        </section>
+
         <section class="card faq">
             <h2>{localeContent.faqTitle}</h2>
             <div class="faq-list">
-                {#each localeContent.faqs as item}
+                {#each mergedFaqs as item}
                     <details class="faq-item">
                         <summary>{item.q}</summary>
                         <p>{item.a}</p>
@@ -187,13 +289,16 @@
                         <a class="related-link" href={faqUrl}>
                             {faqLabel}
                         </a>
+                        <a class="related-link" href={discoverUrl}>
+                            {discoverLabel}
+                        </a>
                     </div>
                 </section>
 
                 <section class="related-column">
                     <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : 'Similar downloads'}</h3>
                     <div class="related-links">
-                        {#each data.relatedPages.slice(0, 4) as related}
+                        {#each data.relatedPages.slice(0, 6) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
                             <a
                                 class="related-link related-link--download"
@@ -207,6 +312,31 @@
                     </div>
                 </section>
             </div>
+        </section>
+
+        <section class="card related">
+            <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : 'Free tools without points'}</h2>
+            <div class="related-links">
+                {#each freeTools as tool}
+                    <a class="related-link related-link--download" href={tool.href}>
+                        <span class="related-link-title">{tool.title}</span>
+                        <span class="related-link-desc">{tool.desc}</span>
+                    </a>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card updates">
+            <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
+            <p class="update-meta">
+                {isZh ? '最后更新：' : 'Last updated: '}
+                <time datetime={contentUpdatedAt}>{contentUpdatedAt}</time>
+            </p>
+            <ul class="feature-list">
+                {#each releaseNotes as note}
+                    <li>{note}</li>
+                {/each}
+            </ul>
         </section>
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
@@ -330,6 +460,58 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: calc(var(--padding) / 1.25);
+    }
+
+    .practical-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .practical-grid h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: rgba(var(--accent-rgb), 0.9);
+    }
+
+    .case-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .failure-case {
+        border: 1px solid var(--button-stroke);
+        border-radius: 12px;
+        background: var(--button-elevated);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+    }
+
+    .failure-case h3 {
+        margin: 0;
+        font-size: 0.98rem;
+        color: var(--secondary);
+    }
+
+    .case-symptoms {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .case-fixes {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+        color: var(--secondary);
+        opacity: 0.92;
+        line-height: 1.55;
     }
 
     .step-list,
@@ -486,6 +668,16 @@
     .related-link-desc {
         font-size: 0.83rem;
         opacity: 0.82;
+    }
+
+    .updates .feature-list {
+        margin-top: 0;
+    }
+
+    .update-meta {
+        margin: 0 0 10px;
+        color: var(--subtext);
+        font-size: 0.9rem;
     }
 
     .disclaimer {

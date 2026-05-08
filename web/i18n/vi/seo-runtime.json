@@ -1,0 +1,410 @@
+{
+  "updatedAt": "2026-05-08",
+  "productFaqs": [
+    {
+      "q": "Các tập tin tải xuống được lưu ở đâu?",
+      "a": "Tải xuống trực tiếp được lưu vào thư mục tải xuống mặc định của trình duyệt của bạn. Để tải xuống hàng đợi, hãy nhấp vào \"Lưu\" sau khi hoàn thành để lưu trữ tệp cục bộ."
+    },
+    {
+      "q": "Làm cách nào để tiếp tục sau khi hàng đợi bị gián đoạn?",
+      "a": "Nếu tác vụ xếp hàng bị gián đoạn, hãy nhấp vào \"Tiếp tục\" để tiếp tục từ điểm bị gián đoạn."
+    },
+    {
+      "q": "Tại sao chất lượng video lại khác với những gì tôi mong đợi?",
+      "a": "Chất lượng và định dạng đầu ra được kiểm soát bởi cài đặt. Trước tiên hãy cập nhật cài đặt, sau đó phân tích lại cùng một URL."
+    },
+    {
+      "q": "Những công cụ bổ sung nào miễn phí mà không có điểm?",
+      "a": "Trò chuyện video ngẫu nhiên, chuyển đổi định dạng, khám phá, ghi bảng trắng và truyền tệp có sẵn mà không cần tính điểm."
+    },
+    {
+      "q": "Ưu điểm chính của bạn so với các công cụ tải xuống khác là gì?",
+      "a": "FreeSaveVideo được thiết kế để hỗ trợ tính ổn định, thử lại và tiếp tục trên các liên kết phức tạp và mạng không ổn định."
+    }
+  ],
+  "productTips": [
+    "Chế độ trực tiếp lưu vào thư mục mặc định của trình duyệt của bạn. Chế độ xếp hàng yêu cầu nhấp vào \"Lưu\" sau khi hoàn thành.",
+    "Nếu tác vụ xếp hàng bị gián đoạn, hãy nhấp vào \"Tiếp tục\" để tiếp tục từ điểm bị gián đoạn.",
+    "Đặt chất lượng và định dạng trong cài đặt trước khi phân tích lại liên kết."
+  ],
+  "productAdvantages": [
+    "Ổn định dưới lưu lượng cao điểm và mạnh mẽ trên các liên kết phức tạp.",
+    "Nhiều công cụ có sẵn mà không cần điểm."
+  ],
+  "releaseNotes": [
+    "Đã thêm hướng dẫn luồng lưu trực tiếp so với hàng đợi rõ ràng.",
+    "Hướng dẫn tiếp tục hàng đợi mở rộng xung quanh Tiếp tục.",
+    "Đã thêm cài đặt chất lượng và phạm vi sử dụng công cụ miễn phí."
+  ],
+  "freeTools": [
+    {
+      "title": "Trò chuyện video ngẫu nhiên",
+      "desc": "Không cần điểm",
+      "path": "random-chat"
+    },
+    {
+      "title": "Chuyển đổi định dạng video",
+      "desc": "Không cần điểm",
+      "path": "remux"
+    },
+    {
+      "title": "Khám phá nội dung",
+      "desc": "Không cần điểm",
+      "path": "discover"
+    },
+    {
+      "title": "Ghi hình bảng trắng",
+      "desc": "Không cần điểm",
+      "path": "videorecord"
+    },
+    {
+      "title": "Truyền tập tin",
+      "desc": "Không cần điểm",
+      "path": "clipboard"
+    }
+  ],
+  "platformFaqs": {
+    "tiktok": [
+      {
+        "q": "Tôi nên làm gì nếu URL TikTok không thành công?",
+        "a": "Sử dụng URL chia sẻ bài đăng (không phải URL hồ sơ), thử lại, sau đó chuyển mạng nếu cần."
+      },
+      {
+        "q": "Tại sao chất lượng TikTok thấp hơn mong đợi?",
+        "a": "Điều chỉnh cài đặt chất lượng và phân tích lại. Các tùy chọn cuối cùng phụ thuộc vào phương tiện nguồn."
+      },
+      {
+        "q": "Tại sao liên kết trình chiếu TikTok không trả về phương tiện?",
+        "a": "Một số bài đăng trình chiếu và nội dung được bảo vệ bằng âm nhạc hiển thị phương tiện có thể tải xuống hạn chế. Hãy thử một URL bài đăng khác hoặc sử dụng thử lại hàng đợi."
+      },
+      {
+        "q": "Tại sao TikTok không hiển thị kết quả cho liên kết hồ sơ được sao chép?",
+        "a": "Liên kết hồ sơ không phải là các trang truyền thông trực tiếp. Mở một bài đăng cụ thể và sao chép URL chia sẻ của nó để phân tích cú pháp."
+      }
+    ],
+    "douyin": [
+      {
+        "q": "Tại sao link Douyin của tôi không tải được?",
+        "a": "Sử dụng URL chia sẻ bài đăng, không phải URL tìm kiếm/khám phá."
+      },
+      {
+        "q": "Tôi nên xử lý các tác vụ trong hàng đợi Douyin bị gián đoạn như thế nào?",
+        "a": "Đối với các tác vụ trong hàng đợi Douyin, hãy nhấp vào \"Tiếp tục\" để tiếp tục sau khi bị gián đoạn, sau đó nhấp vào \"Lưu\" sau khi hoàn thành."
+      },
+      {
+        "q": "Vì sao một số liên kết Douyin báo \"không có quyền\" hoặc trả về kết quả trống?",
+        "a": "Một số liên kết chia sẻ trỏ tới bài đăng bị hạn chế hoặc giới hạn theo khu vực. Hãy mở bài gốc, xác nhận truy cập công khai, rồi phân tích lại ở chế độ hàng đợi."
+      }
+    ],
+    "instagram": [
+      {
+        "q": "Thỉnh thoảng Instagram có bị lỗi không?",
+        "a": "Biến động phía nguồn tạm thời có thể xảy ra. Hãy thử lại và xác nhận quyền truy cập công khai."
+      },
+      {
+        "q": "Tại sao liên kết Instagram Story không thành công sau một thời gian?",
+        "a": "Câu chuyện có thể hết hạn nhanh chóng. Sử dụng URL câu chuyện công khai hiện có và phân tích nó càng sớm càng tốt."
+      },
+      {
+        "q": "Tại sao Instagram không trả lại phương tiện nào cho nội dung riêng tư?",
+        "a": "Nội dung riêng tư không thể truy cập công khai để phân tích cú pháp. Thay vào đó, hãy sử dụng URL bài đăng có thể truy cập công khai."
+      }
+    ],
+    "youtube": [
+      {
+        "q": "Tại sao phân tích cú pháp YouTube chậm?",
+        "a": "Video dài và lưu lượng truy cập cao nhất làm tăng thời gian phân tích. Chế độ xếp hàng được khuyến khích."
+      },
+      {
+        "q": "Tại sao tôi không thể tải xuống luồng trực tiếp trên YouTube ngay lập tức?",
+        "a": "Sự kiện phát trực tiếp và video mới tải lên có thể cần được xử lý từ phía nguồn trước tiên. Thử lại sau hoặc xếp hàng nhiệm vụ và tiếp tục nếu bị gián đoạn."
+      },
+      {
+        "q": "Tại sao URL YouTube phân tích cú pháp nhưng hiển thị các tùy chọn hạn chế?",
+        "a": "Các tùy chọn có sẵn tùy thuộc vào siêu dữ liệu nguồn, quy tắc khu vực và tính khả dụng của định dạng. Điều chỉnh cài đặt đầu ra và phân tích lại."
+      }
+    ],
+    "bilibili": [
+      {
+        "q": "Tệp Bilibili của tôi ở đâu sau khi hoàn thành hàng đợi?",
+        "a": "Chế độ hàng đợi cần có nhấp chuột Lưu rõ ràng sau khi hoàn thành nhiệm vụ."
+      },
+      {
+        "q": "Vì sao nội dung nhiều phần trên Bilibili chỉ tải được một phần?",
+        "a": "Một số liên kết chỉ trỏ tới một phân đoạn. Hãy sao chép đúng URL phân đoạn bạn cần và thêm từng phân đoạn vào hàng đợi riêng khi cần."
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "q": "Tại sao tải xuống Xiaohongshu không ổn định?",
+        "a": "Sử dụng chế độ xếp hàng và Tiếp tục. Tính khả dụng của phương tiện truyền thông phía nguồn có thể khác nhau."
+      },
+      {
+        "q": "Vì sao Xiaohongshu chỉ trả về âm thanh hoặc thiếu tùy chọn video?",
+        "a": "Một số ghi chú chỉ cung cấp biến thể media hạn chế. Hãy chỉnh chất lượng hoặc định dạng, phân tích lại cùng liên kết và thử lại sau nếu cần."
+      }
+    ],
+    "facebook": [
+      {
+        "q": "Tại sao tôi không thể tìm thấy tập tin Facebook của mình?",
+        "a": "Chế độ trực tiếp lưu vào thư mục trình duyệt; chế độ xếp hàng yêu cầu Lưu sau khi hoàn thành."
+      }
+    ],
+    "generic": [
+      {
+        "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
+        "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
+      }
+    ]
+  },
+  "platformPlaybooks": {
+    "tiktok": {
+      "heading": "Ghi chú quy trình làm việc của TikTok",
+      "notes": [
+        "Sử dụng URL bài đăng cụ thể.",
+        "Thử lại một lần rồi chuyển mạng.",
+        "Thích chế độ xếp hàng cho phương tiện dài hơn."
+      ],
+      "checklist": [
+        "URL bài đăng công khai đã được xác nhận",
+        "Đã định cấu hình cài đặt chất lượng",
+        "Đã lưu sau khi hoàn thành hàng đợi"
+      ]
+    },
+    "douyin": {
+      "heading": "Ghi chú quy trình làm việc của Douyin",
+      "notes": [
+        "Tránh các URL tìm kiếm/khám phá.",
+        "Sử dụng Tiếp tục khi bị gián đoạn.",
+        "Điều chỉnh cài đặt chất lượng trước khi phân tích lại."
+      ],
+      "checklist": [
+        "URL bài đăng cụ thể đã được xác nhận",
+        "Đã chọn chế độ trực tiếp và hàng đợi",
+        "Bước Lưu cuối cùng đã hoàn tất"
+      ]
+    },
+    "instagram": {
+      "heading": "Ghi chú quy trình làm việc trên Instagram",
+      "notes": [
+        "Có thể xảy ra biến động phía nguồn.",
+        "Các tùy chọn phụ thuộc vào phương tiện nguồn.",
+        "Chế độ xếp hàng cải thiện tính ổn định."
+      ],
+      "checklist": [
+        "Đã xác minh quyền truy cập công khai",
+        "Chế độ xếp hàng được sử dụng khi cần thiết",
+        "Vị trí tệp đã được xác nhận"
+      ]
+    },
+    "youtube": {
+      "heading": "Ghi chú quy trình làm việc của YouTube",
+      "notes": [
+        "Video dài có thể phân tích cú pháp chậm.",
+        "Đặt tùy chọn âm thanh trước khi phân tích cú pháp lại.",
+        "Sử dụng Tiếp tục để tránh khởi động lại hoàn toàn."
+      ],
+      "checklist": [
+        "URL video đã được xác nhận",
+        "Đã đặt tùy chọn đầu ra",
+        "Đã lưu sau khi hoàn thành hàng đợi"
+      ]
+    },
+    "bilibili": {
+      "heading": "Ghi chú quy trình làm việc của Bilibili",
+      "notes": [
+        "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
+        "Chế độ xếp hàng cần Lưu rõ ràng.",
+        "Phân tích lại sau khi thay đổi chất lượng."
+      ],
+      "checklist": [
+        "URL công khai đã được xác nhận",
+        "Đã kiểm tra chế độ và cài đặt",
+        "Đã xác minh đường dẫn tệp cuối cùng"
+      ]
+    },
+    "xiaohongshu": {
+      "heading": "Ghi chú quy trình làm việc của Xiaohongshu",
+      "notes": [
+        "Sử dụng chế độ xếp hàng trên các mạng không ổn định.",
+        "Số lượng tùy chọn phụ thuộc vào nguồn.",
+        "Hãy thử lại sau nếu nguồn bị hạn chế."
+      ],
+      "checklist": [
+        "URL công khai đã được xác nhận",
+        "Đã chọn chế độ xếp hàng",
+        "Lưu luồng đã hoàn tất"
+      ]
+    },
+    "facebook": {
+      "heading": "Ghi chú quy trình làm việc của Facebook",
+      "notes": [
+        "Trước tiên hãy kiểm tra chế độ trực tiếp và hàng đợi.",
+        "Hàng đợi cần hoàn thành cộng với Lưu.",
+        "Tiếp tục tiếp tục các nhiệm vụ bị gián đoạn."
+      ],
+      "checklist": [
+        "URL công khai đã được xác nhận",
+        "Chế độ rõ ràng",
+        "Đã kiểm tra đường dẫn lưu"
+      ]
+    },
+    "generic": {
+      "heading": "Ghi chú quy trình công việc chung",
+      "notes": [
+        "Sử dụng các URL có thể chia sẻ công khai.",
+        "Xếp hàng + tiếp tục trên mạng không ổn định.",
+        "Đặt chất lượng trước khi phân tích cú pháp lại."
+      ],
+      "checklist": [
+        "URL hợp lệ và công khai",
+        "Cài đặt phù hợp với đầu ra mục tiêu",
+        "Đã xác nhận vị trí tệp cuối cùng"
+      ]
+    }
+  },
+  "platformFailureCases": {
+    "tiktok": [
+      {
+        "title": "URL hồ sơ được sử dụng thay vì URL bài đăng",
+        "symptoms": "Không có phương tiện có thể tải xuống hoặc lỗi phân tích cú pháp chung.",
+        "fixes": [
+          "Sao chép URL chia sẻ bài đăng chính xác.",
+          "Thử lại phân tích cú pháp sau khi chuyển đổi mạng nếu cần.",
+          "Sử dụng chế độ xếp hàng để tải xuống lâu."
+        ]
+      },
+      {
+        "title": "Liên kết hồ sơ hoặc trường hợp cạnh trình chiếu",
+        "symptoms": "Phân tích cú pháp trả về kết quả trống hoặc tùy chọn phương tiện bị hạn chế.",
+        "fixes": [
+          "Sử dụng URL chia sẻ bài đăng cụ thể thay vì liên kết hồ sơ.",
+          "Thử lại ở chế độ xếp hàng trên mạng không ổn định.",
+          "Chuyển sang bài đăng công khai khác khi nội dung nguồn bị hạn chế."
+        ]
+      }
+    ],
+    "douyin": [
+      {
+        "title": "Đã sao chép URL tìm kiếm/khám phá",
+        "symptoms": "Không có kết quả hoặc phân tích cú pháp không ổn định mặc dù URL có vẻ hợp lệ.",
+        "fixes": [
+          "Mở chi tiết bài đăng và sao chép URL chia sẻ bài đăng.",
+          "Phân tích lại bằng chế độ xếp hàng.",
+          "Tiếp tục với Tiếp tục khi bị gián đoạn."
+        ]
+      },
+      {
+        "title": "Bài đăng bị giới hạn hoặc liên kết chia sẻ giới hạn theo khu vực",
+        "symptoms": "Liên kết mở không ổn định hoặc phân tích trả về không có quyền / kết quả trống.",
+        "fixes": [
+          "Xác nhận bài đăng có thể truy cập công khai trong mạng hiện tại.",
+          "Sao chép lại URL chia sẻ từ đúng trang bài đăng cụ thể.",
+          "Dùng chế độ hàng đợi và \"Tiếp tục\" khi mạng không ổn định."
+        ]
+      }
+    ],
+    "instagram": [
+      {
+        "title": "Biến động phía nguồn tạm thời",
+        "symptoms": "Lỗi phân tích cú pháp không liên tục.",
+        "fixes": [
+          "Thử lại sau khoảng thời gian ngắn.",
+          "Xác nhận khả năng tiếp cận công cộng.",
+          "Sử dụng chế độ xếp hàng để thử lại."
+        ]
+      },
+      {
+        "title": "Câu chuyện đã hết hạn hoặc nội dung riêng tư",
+        "symptoms": "Không có phương tiện có thể tải xuống mặc dù URL có vẻ hợp lệ.",
+        "fixes": [
+          "Xác nhận câu chuyện vẫn còn tồn tại.",
+          "Sử dụng URL bài đăng công khai khi có thể.",
+          "Hãy thử lại nhanh chóng trước khi nội dung tạm thời hết hạn."
+        ]
+      }
+    ],
+    "youtube": [
+      {
+        "title": "Độ trễ phân tích video dài",
+        "symptoms": "Tiến trình chậm trong quá trình phân tích cú pháp hoặc tải xuống.",
+        "fixes": [
+          "Giữ nhiệm vụ xếp hàng chạy.",
+          "Tiếp tục với Continue nếu bị gián đoạn.",
+          "Sử dụng tùy chọn âm thanh khi chỉ cần âm thanh."
+        ]
+      },
+      {
+        "title": "Phát trực tiếp hoặc tải lên mới chưa sẵn sàng",
+        "symptoms": "Phân tích cú pháp thành công chậm hoặc trả về các tùy chọn không đầy đủ.",
+        "fixes": [
+          "Đợi quá trình xử lý phía nguồn hoàn tất và thử lại.",
+          "Sử dụng chế độ xếp hàng cho các tác vụ dài.",
+          "Tiếp tục với Tiếp tục nếu mạng bị gián đoạn."
+        ]
+      }
+    ],
+    "bilibili": [
+      {
+        "title": "Hàng đợi đã hoàn thành nhưng không có tệp cục bộ",
+        "symptoms": "Trạng thái hoàn thành nhiệm vụ được hiển thị nhưng tệp bị thiếu.",
+        "fixes": [
+          "Nhấp vào Lưu sau khi hoàn thành hàng đợi.",
+          "Chỉ kiểm tra thư mục trình duyệt cho chế độ trực tiếp.",
+          "Xác minh vị trí lưu cuối cùng."
+        ]
+      },
+      {
+        "title": "Bài nhiều phần bị ánh xạ vào một phân đoạn duy nhất",
+        "symptoms": "Kết quả tải xuống chỉ có một tập hoặc một đoạn.",
+        "fixes": [
+          "Mở đúng trang phân đoạn và sao chép URL chia sẻ đó.",
+          "Nếu cần đủ bộ, hãy thêm từng phân đoạn thành tác vụ hàng đợi riêng.",
+          "Sau khi mỗi tác vụ hoàn tất, bấm \"Lưu\" để ghi tệp cục bộ."
+        ]
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "title": "Thông lượng không ổn định",
+        "symptoms": "Tốc độ giảm hoặc nhiệm vụ bị gián đoạn.",
+        "fixes": [
+          "Chuyển sang chế độ xếp hàng.",
+          "Tiếp tục từ điểm dừng với Tiếp tục.",
+          "Hãy thử lại sau nếu phương tiện phía nguồn bị hạn chế."
+        ]
+      },
+      {
+        "title": "Biến thể media bị giới hạn từ ghi chú nguồn",
+        "symptoms": "Chỉ xuất hiện một phần định dạng hoặc thiếu tùy chọn video.",
+        "fixes": [
+          "Phân tích lại sau khi điều chỉnh chất lượng và định dạng.",
+          "Thử lại sau khi tài nguyên phía nguồn được làm mới.",
+          "Dùng chế độ hàng đợi để tăng độ ổn định khi hoàn tất tác vụ."
+        ]
+      }
+    ],
+    "facebook": [
+      {
+        "title": "Nhầm lẫn trực tiếp và hàng đợi",
+        "symptoms": "Quá trình tải xuống có vẻ hoàn tất nhưng không tìm thấy tệp.",
+        "fixes": [
+          "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
+          "Chế độ xếp hàng yêu cầu hành động Lưu.",
+          "Kiểm tra trạng thái hàng đợi và đường dẫn cục bộ."
+        ]
+      }
+    ],
+    "generic": [
+      {
+        "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
+        "symptoms": "Không có đầu ra được trả lại nhiều lần.",
+        "fixes": [
+          "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
+          "Điều chỉnh cài đặt và phân tích lại.",
+          "Sử dụng chế độ xếp hàng với sơ yếu lý lịch."
+        ]
+      }
+    ]
+  }
+}

@@ -3,6 +3,7 @@
     import { getGuidePage } from '$lib/seo/guide-pages';
     import { getSeoLandingLocale, getSeoLandingPage, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
     import { getRelatedDownloadLinks, getRelatedGuideLinks } from '$lib/seo/internal-links';
+    import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
@@ -29,13 +30,15 @@
     $: downloadUrl = `https://${fallbackHost}/${data.lang}/download/${data.guide.landingSlug}`;
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: faqUrl = `/${data.lang}/faq`;
+    $: discoverUrl = `/${data.lang}/discover`;
     $: downloadHubUrl = `/${data.lang}/download`;
-    $: relatedGuides = getRelatedGuideLinks(data.slug, 4);
-    $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 4);
+    $: relatedGuides = getRelatedGuideLinks(data.slug, 6);
+    $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 6);
     $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
     $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';
     $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : 'Video download FAQ';
+    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : 'Trending video discovery';
     const relatedGuideLabel = (slug: string, platform: string) => {
         const guide = getGuidePage(slug);
         const landing = guide ? getSeoLandingPage(guide.landingSlug) : null;
@@ -59,12 +62,37 @@
 
     const ctaLabel = isZh ? '\u53bb\u4e0b\u8f7d' : 'Download Now';
     const ctaHint = isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : 'Open the downloader';
-
+    $: runtimeContent = getSeoRuntimeContent(data.lang);
+    $: contentUpdatedAt = runtimeContent.updatedAt;
+    $: platformKey = getPlatformKey(data.slug);
+    $: productFaqs = runtimeContent.productFaqs;
+    $: productTips = runtimeContent.productTips;
+    $: productAdvantages = runtimeContent.productAdvantages;
+    $: releaseNotes = runtimeContent.releaseNotes;
+    $: platformFaqs = runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
+    $: platformPlaybook =
+        runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
+    $: platformFailureCases =
+        runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: freeTools = runtimeContent.freeTools.map((tool) => ({
+        title: tool.title,
+        desc: tool.desc,
+        href: `/${data.lang}/${tool.path}`,
+    }));
+    $: mergedFaqs = (() => {
+        const ordered = [...platformFaqs, ...productFaqs, ...localeContent.faqs];
+        const seen = new Set<string>();
+        return ordered.filter((item) => {
+            if (seen.has(item.q)) return false;
+            seen.add(item.q);
+            return true;
+        });
+    })();
     $: faqJsonLd = canonicalUrl
         ? {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
-              mainEntity: localeContent.faqs.map((item) => ({
+              mainEntity: mergedFaqs.map((item) => ({
                   '@type': 'Question',
                   name: item.q,
                   acceptedAnswer: {
@@ -204,10 +232,83 @@
             </section>
         </section>
 
+        <section class="card practical">
+            <h2>{isZh ? '产品能力与使用建议' : 'Product strengths and usage notes'}</h2>
+            <div class="practical-grid">
+                <section>
+                    <h3>{isZh ? '下载与保存' : 'Download and save flow'}</h3>
+                    <ul>
+                        {#each productTips as tip}
+                            <li>{tip}</li>
+                        {/each}
+                    </ul>
+                </section>
+                <section>
+                    <h3>{isZh ? '平台优势' : 'Platform advantages'}</h3>
+                    <ul>
+                        {#each productAdvantages as item}
+                            <li>{item}</li>
+                        {/each}
+                    </ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{isZh ? '按平台排查常见问题' : 'Platform-specific troubleshooting'}</h2>
+            <div class="faq-list">
+                {#each platformFaqs as item}
+                    <details class="faq-item">
+                        <summary>{item.q}</summary>
+                        <p>{item.a}</p>
+                    </details>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{platformPlaybook.heading}</h2>
+            <div class="practical-grid">
+                <section>
+                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : 'Key guidance'}</h3>
+                    <ul>
+                        {#each platformPlaybook.notes as note}
+                            <li>{note}</li>
+                        {/each}
+                    </ul>
+                </section>
+                <section>
+                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : 'Success checklist'}</h3>
+                    <ul>
+                        {#each platformPlaybook.checklist as item}
+                            <li>{item}</li>
+                        {/each}
+                    </ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="card practical">
+            <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : 'Failure cases and fix paths'}</h2>
+            <div class="case-grid">
+                {#each platformFailureCases as failure}
+                    <article class="failure-case">
+                        <h3>{failure.title}</h3>
+                        <p class="case-symptoms">{failure.symptoms}</p>
+                        <ol class="case-fixes">
+                            {#each failure.fixes as step}
+                                <li>{step}</li>
+                            {/each}
+                        </ol>
+                    </article>
+                {/each}
+            </div>
+        </section>
+
         <section class="card faq">
             <h2>{localeContent.faqTitle}</h2>
             <div class="faq-list">
-                {#each localeContent.faqs as item}
+                {#each mergedFaqs as item}
                     <details class="faq-item">
                         <summary>{item.q}</summary>
                         <p>{item.a}</p>
@@ -231,6 +332,9 @@
                 <a class="related-link related-link--primary" href={faqUrl}>
                     {faqLabel}
                 </a>
+                <a class="related-link related-link--primary" href={discoverUrl}>
+                    {discoverLabel}
+                </a>
                 {#each relatedGuides as guide}
                     <a class="related-link" href={`/${data.lang}/guide/${guide.slug}`}>
                         {relatedGuideLabel(guide.slug, guide.platform)}
@@ -242,6 +346,31 @@
                     </a>
                 {/each}
             </div>
+        </section>
+
+        <section class="card related">
+            <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : 'Free tools without points'}</h2>
+            <div class="related-links">
+                {#each freeTools as tool}
+                    <a class="related-link" href={tool.href}>
+                        <span>{tool.title}</span>
+                        <span class="related-link-desc">{tool.desc}</span>
+                    </a>
+                {/each}
+            </div>
+        </section>
+
+        <section class="card updates">
+            <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
+            <p class="update-meta">
+                {isZh ? '最后更新：' : 'Last updated: '}
+                <time datetime={contentUpdatedAt}>{contentUpdatedAt}</time>
+            </p>
+            <ul>
+                {#each releaseNotes as note}
+                    <li>{note}</li>
+                {/each}
+            </ul>
         </section>
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
@@ -417,6 +546,68 @@
         gap: calc(var(--padding) / 1.25);
     }
 
+    .practical-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .practical-grid h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: rgba(var(--accent-rgb), 0.9);
+    }
+
+    .practical-grid ul {
+        margin: 0;
+        padding: 0 0 0 18px;
+        color: var(--secondary);
+        opacity: 0.9;
+        line-height: 1.6;
+        display: grid;
+        gap: 8px;
+    }
+
+    .case-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+    }
+
+    .failure-case {
+        border: 1px solid var(--button-stroke);
+        border-radius: 12px;
+        background: var(--button-elevated);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+    }
+
+    .failure-case h3 {
+        margin: 0;
+        font-size: 0.98rem;
+        color: var(--secondary);
+    }
+
+    .case-symptoms {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .case-fixes {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+        color: var(--secondary);
+        opacity: 0.92;
+        line-height: 1.55;
+    }
+
     .tutorial-video {
         display: flex;
         flex-direction: column;
@@ -502,6 +693,22 @@
         margin-bottom: 0;
     }
 
+    .updates ul {
+        margin: 0;
+        padding: 0 0 0 18px;
+        color: var(--secondary);
+        opacity: 0.9;
+        line-height: 1.6;
+        display: grid;
+        gap: 8px;
+    }
+
+    .update-meta {
+        margin: 0 0 10px;
+        color: var(--subtext);
+        font-size: 0.9rem;
+    }
+
     .faq-list {
         display: grid;
         gap: 12px;
@@ -548,7 +755,8 @@
 
     .related-link {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         min-height: 40px;
         padding: 10px 12px;
         border-radius: 12px;
@@ -557,6 +765,11 @@
         color: var(--secondary);
         text-decoration: none;
         line-height: 1.45;
+    }
+
+    .related-link-desc {
+        font-size: 0.83rem;
+        opacity: 0.82;
     }
 
     .related-link:hover {

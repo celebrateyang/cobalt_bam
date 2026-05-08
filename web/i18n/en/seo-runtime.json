@@ -1,0 +1,410 @@
+{
+  "updatedAt": "2026-05-08",
+  "productFaqs": [
+    {
+      "q": "Where are downloaded files saved?",
+      "a": "Direct downloads are saved to your browser default download folder. For queue downloads, click \"Save\" after completion to store the file locally."
+    },
+    {
+      "q": "How do I continue after a queue interruption?",
+      "a": "If a queue task is interrupted, click \"Continue\" to resume from the interruption point."
+    },
+    {
+      "q": "Why is video quality different from what I expected?",
+      "a": "Output quality and format are controlled by settings. Update settings first, then re-parse the same URL."
+    },
+    {
+      "q": "Which extra tools are free without points?",
+      "a": "Random video chat, format conversion, discover, whiteboard recording, and file transfer are available without points."
+    },
+    {
+      "q": "What is your main advantage over other download tools?",
+      "a": "FreeSaveVideo is designed for stability, retries, and resume support on complex links and unstable networks."
+    }
+  ],
+  "productTips": [
+    "Direct mode saves to your browser default folder. Queue mode requires clicking \"Save\" after completion.",
+    "If a queue task is interrupted, click \"Continue\" to resume from the interruption point.",
+    "Set quality and format in settings before re-parsing links."
+  ],
+  "productAdvantages": [
+    "Stable under peak traffic and robust on complex links.",
+    "Multiple tools are available without points."
+  ],
+  "releaseNotes": [
+    "Added clear direct-vs-queue save flow guidance.",
+    "Expanded queue resume guidance around Continue.",
+    "Added quality settings and free-tools coverage."
+  ],
+  "freeTools": [
+    {
+      "title": "Random video chat",
+      "desc": "No points required",
+      "path": "random-chat"
+    },
+    {
+      "title": "Video format conversion",
+      "desc": "No points required",
+      "path": "remux"
+    },
+    {
+      "title": "Discover",
+      "desc": "No points required",
+      "path": "discover"
+    },
+    {
+      "title": "Whiteboard recording",
+      "desc": "No points required",
+      "path": "videorecord"
+    },
+    {
+      "title": "File transfer",
+      "desc": "No points required",
+      "path": "clipboard"
+    }
+  ],
+  "platformFaqs": {
+    "tiktok": [
+      {
+        "q": "What should I do if a TikTok URL fails?",
+        "a": "Use a post share URL (not profile URL), retry, then switch networks if needed."
+      },
+      {
+        "q": "Why is TikTok quality lower than expected?",
+        "a": "Adjust quality settings and parse again. Final options depend on source media."
+      },
+      {
+        "q": "Why does a TikTok slideshow link fail to return media?",
+        "a": "Some slideshow posts and music-protected assets expose limited downloadable media. Try another post URL or use queue retries."
+      },
+      {
+        "q": "Why does TikTok show no result for a copied profile link?",
+        "a": "Profile links are not direct media pages. Open a specific post and copy its share URL for parsing."
+      }
+    ],
+    "douyin": [
+      {
+        "q": "Why does my Douyin link not download?",
+        "a": "Use a post share URL, not search/discovery URLs."
+      },
+      {
+        "q": "How should I handle interrupted Douyin queue tasks?",
+        "a": "For Douyin queue tasks, click \"Continue\" to resume after interruptions, then click \"Save\" after completion."
+      },
+      {
+        "q": "Why does Douyin show no permission or blank results on some links?",
+        "a": "Some shared links point to restricted or region-limited posts. Open the original post page, confirm public access, then parse again in queue mode."
+      }
+    ],
+    "instagram": [
+      {
+        "q": "Is occasional Instagram failure expected?",
+        "a": "Temporary source-side fluctuation can happen. Retry and confirm public access."
+      },
+      {
+        "q": "Why does an Instagram Story link fail after some time?",
+        "a": "Stories can expire quickly. Use a currently available public story URL and parse it as soon as possible."
+      },
+      {
+        "q": "Why does Instagram return no media for private content?",
+        "a": "Private content is not publicly accessible for parsing. Use publicly accessible post URLs instead."
+      }
+    ],
+    "youtube": [
+      {
+        "q": "Why is YouTube parsing slow?",
+        "a": "Long videos and traffic peaks increase parse time. Queue mode is recommended."
+      },
+      {
+        "q": "Why can't I download a YouTube live stream immediately?",
+        "a": "Live streams and fresh uploads may need source-side processing first. Retry later or queue the task and resume if interrupted."
+      },
+      {
+        "q": "Why does a YouTube URL parse but show limited options?",
+        "a": "Available options depend on source metadata, region rules, and format availability. Adjust output settings and parse again."
+      }
+    ],
+    "bilibili": [
+      {
+        "q": "Where is my Bilibili file after queue completion?",
+        "a": "Queue mode needs an explicit Save click after task completion."
+      },
+      {
+        "q": "Why does Bilibili multi-part content download only one part?",
+        "a": "Some links point to only one segment. Copy the exact segment URL you need, and queue each segment separately when required."
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "q": "Why is Xiaohongshu download unstable?",
+        "a": "Use queue mode and Continue. Source-side media availability can vary."
+      },
+      {
+        "q": "Why does Xiaohongshu return audio-only or missing video options?",
+        "a": "Some notes expose limited media variants. Adjust quality or format settings, then re-parse the same link and retry later if needed."
+      }
+    ],
+    "facebook": [
+      {
+        "q": "Why can I not find my Facebook file?",
+        "a": "Direct mode saves to browser folder; queue mode requires Save after completion."
+      }
+    ],
+    "generic": [
+      {
+        "q": "What should I check first when parsing fails?",
+        "a": "Verify public URL access, check settings, then retry with queue mode."
+      }
+    ]
+  },
+  "platformPlaybooks": {
+    "tiktok": {
+      "heading": "TikTok workflow notes",
+      "notes": [
+        "Use specific post URLs.",
+        "Retry once, then switch network.",
+        "Prefer queue mode for longer media."
+      ],
+      "checklist": [
+        "Public post URL confirmed",
+        "Quality settings configured",
+        "Saved after queue completion"
+      ]
+    },
+    "douyin": {
+      "heading": "Douyin workflow notes",
+      "notes": [
+        "Avoid search/discovery URLs.",
+        "Use Continue on interruption.",
+        "Adjust quality settings before re-parse."
+      ],
+      "checklist": [
+        "Specific post URL confirmed",
+        "Direct vs queue mode selected",
+        "Final Save step completed"
+      ]
+    },
+    "instagram": {
+      "heading": "Instagram workflow notes",
+      "notes": [
+        "Source-side fluctuation is possible.",
+        "Options depend on source media.",
+        "Queue mode improves stability."
+      ],
+      "checklist": [
+        "Public access verified",
+        "Queue mode used when needed",
+        "File location confirmed"
+      ]
+    },
+    "youtube": {
+      "heading": "YouTube workflow notes",
+      "notes": [
+        "Long videos may parse slowly.",
+        "Set audio preference before parsing again.",
+        "Use Continue to avoid full restarts."
+      ],
+      "checklist": [
+        "Video URL confirmed",
+        "Output preference set",
+        "Saved after queue completion"
+      ]
+    },
+    "bilibili": {
+      "heading": "Bilibili workflow notes",
+      "notes": [
+        "Direct mode saves to browser folder.",
+        "Queue mode needs explicit Save.",
+        "Re-parse after quality changes."
+      ],
+      "checklist": [
+        "Public URL confirmed",
+        "Mode and settings checked",
+        "Final file path verified"
+      ]
+    },
+    "xiaohongshu": {
+      "heading": "Xiaohongshu workflow notes",
+      "notes": [
+        "Use queue mode on unstable networks.",
+        "Option count depends on source.",
+        "Retry later if source is limited."
+      ],
+      "checklist": [
+        "Public URL confirmed",
+        "Queue mode selected",
+        "Save flow completed"
+      ]
+    },
+    "facebook": {
+      "heading": "Facebook workflow notes",
+      "notes": [
+        "Check direct vs queue mode first.",
+        "Queue needs completion plus Save.",
+        "Continue resumes interrupted tasks."
+      ],
+      "checklist": [
+        "Public URL confirmed",
+        "Mode is clear",
+        "Save path checked"
+      ]
+    },
+    "generic": {
+      "heading": "General workflow notes",
+      "notes": [
+        "Use public shareable URLs.",
+        "Queue + resume on unstable networks.",
+        "Set quality before parsing again."
+      ],
+      "checklist": [
+        "URL is valid and public",
+        "Settings match target output",
+        "Final file location confirmed"
+      ]
+    }
+  },
+  "platformFailureCases": {
+    "tiktok": [
+      {
+        "title": "Profile URL used instead of post URL",
+        "symptoms": "No downloadable media or generic parse failure.",
+        "fixes": [
+          "Copy the exact post share URL.",
+          "Retry parse after network switch if needed.",
+          "Use queue mode for long downloads."
+        ]
+      },
+      {
+        "title": "Profile link or slideshow edge case",
+        "symptoms": "Parse returns empty result or limited media options.",
+        "fixes": [
+          "Use a specific post share URL instead of profile links.",
+          "Retry in queue mode on unstable networks.",
+          "Switch to another public post when source assets are restricted."
+        ]
+      }
+    ],
+    "douyin": [
+      {
+        "title": "Search/discovery URL copied",
+        "symptoms": "No result or unstable parsing despite valid-looking URL.",
+        "fixes": [
+          "Open post details and copy post share URL.",
+          "Parse again with queue mode.",
+          "Resume with Continue on interruption."
+        ]
+      },
+      {
+        "title": "Restricted post or region-limited share link",
+        "symptoms": "Link opens inconsistently or parsing returns no permission / empty result.",
+        "fixes": [
+          "Verify the post is publicly accessible in your current network.",
+          "Copy the share URL from the exact post page.",
+          "Use queue mode and Continue when network conditions are unstable."
+        ]
+      }
+    ],
+    "instagram": [
+      {
+        "title": "Temporary source-side fluctuation",
+        "symptoms": "Intermittent parse failures.",
+        "fixes": [
+          "Retry after short interval.",
+          "Confirm public accessibility.",
+          "Use queue mode for retries."
+        ]
+      },
+      {
+        "title": "Story expired or private content",
+        "symptoms": "No downloadable media despite valid-looking URL.",
+        "fixes": [
+          "Confirm the story is still live.",
+          "Use public post URLs when possible.",
+          "Retry quickly before temporary content expires."
+        ]
+      }
+    ],
+    "youtube": [
+      {
+        "title": "Long video parse delay",
+        "symptoms": "Slow progress during parse or download.",
+        "fixes": [
+          "Keep queue task running.",
+          "Resume with Continue if interrupted.",
+          "Use audio preference when only audio is needed."
+        ]
+      },
+      {
+        "title": "Live stream or fresh upload not ready",
+        "symptoms": "Parsing succeeds slowly or returns incomplete options.",
+        "fixes": [
+          "Wait for source-side processing to finish and retry.",
+          "Use queue mode for long tasks.",
+          "Resume with Continue if network interruption happens."
+        ]
+      }
+    ],
+    "bilibili": [
+      {
+        "title": "Queue completed but no local file",
+        "symptoms": "Task done state is shown but file is missing.",
+        "fixes": [
+          "Click Save after queue completion.",
+          "Check browser folder only for direct mode.",
+          "Verify final save location."
+        ]
+      },
+      {
+        "title": "Multi-part post mapped to a single segment",
+        "symptoms": "Download result includes only one episode or fragment.",
+        "fixes": [
+          "Open the exact segment page and copy that share URL.",
+          "Queue each segment separately for a complete collection.",
+          "Confirm each task finishes and click Save for local files."
+        ]
+      }
+    ],
+    "xiaohongshu": [
+      {
+        "title": "Unstable throughput",
+        "symptoms": "Speed drops or interrupted tasks.",
+        "fixes": [
+          "Switch to queue mode.",
+          "Resume from breakpoint with Continue.",
+          "Retry later if source-side media is limited."
+        ]
+      },
+      {
+        "title": "Limited media variants from source note",
+        "symptoms": "Only partial formats appear, or video options are missing.",
+        "fixes": [
+          "Re-parse after adjusting quality and format settings.",
+          "Retry later when source-side assets refresh.",
+          "Use queue mode to improve completion stability."
+        ]
+      }
+    ],
+    "facebook": [
+      {
+        "title": "Direct vs queue confusion",
+        "symptoms": "Download appears complete but file is not found.",
+        "fixes": [
+          "Direct mode saves to browser folder.",
+          "Queue mode requires Save action.",
+          "Check queue state and local path."
+        ]
+      }
+    ],
+    "generic": [
+      {
+        "title": "Valid-looking URL parse failure",
+        "symptoms": "No output returned repeatedly.",
+        "fixes": [
+          "Confirm URL points to public specific content.",
+          "Adjust settings and re-parse.",
+          "Use queue mode with resume."
+        ]
+      }
+    ]
+  }
+}

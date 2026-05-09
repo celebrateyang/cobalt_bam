@@ -163,7 +163,7 @@
         return ordered.length === list.length ? ordered : list;
     };
 
-    let activeTab: DiscoverTab = "beauty";
+    let activeTab: DiscoverTab = "resources";
 
     let featuredVideos: SocialVideo[] = [];
     let latestVideos: SocialVideo[] = [];
@@ -1248,11 +1248,7 @@
                         <section class="resource-detail">
                             {#if selectedResource}
                                 <div class="resource-path">{resourcePathLabel}</div>
-                                {#if batchLimitEnabled && Number.isFinite(batchMaxItems)}
-                                    <div class="resource-limit-hint">
-                                        {$t("discover.resources.batch_limit_hint", { max: batchMaxItems })}
-                                    </div>
-                                {/if}
+                                
                                 {#if selectedLinks.length === 0}
                                     <div class="resource-empty-links">
                                         <h3>{$t("discover.resources.empty_links.title")}</h3>

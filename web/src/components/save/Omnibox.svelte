@@ -5,6 +5,7 @@
     import { onDestroy, tick } from "svelte";
 
     import { t } from "$lib/i18n/translations";
+    import { device } from "$lib/device";
 
     import dialogs, { createDialog } from "$lib/state/dialogs";
 
@@ -96,8 +97,41 @@
     let pendingBatchRestoreHandled = false;
 
     type GuideKey = "collection" | "batch";
+    type WechatNoticeCopy = {
+        title: string;
+        body: string;
+        copyAction: string;
+        copiedTitle: string;
+        copiedBody: string;
+        copyFailedTitle: string;
+        copyFailedBody: string;
+    };
+
+    const wechatNoticeCopies: Record<string, WechatNoticeCopy> = {
+        zh: {
+            title: "\u5fae\u4fe1\u5185\u7f6e\u6d4f\u89c8\u5668\u517c\u5bb9\u6027\u63d0\u793a",
+            body: "\u4f60\u6b63\u5728\u4f7f\u7528\u5fae\u4fe1\u5185\u7f6e\u6d4f\u89c8\u5668\uff0c\u4e0b\u8f7d\u6309\u94ae\u548c Google \u767b\u5f55\u53ef\u80fd\u53d7\u9650\u3002\u5efa\u8bae\u5728 Chrome \u6216 Edge \u4e2d\u6253\u5f00\u672c\u7ad9\u518d\u8fdb\u884c\u4e0b\u8f7d\u3002",
+            copyAction: "\u590d\u5236\u5f53\u524d\u94fe\u63a5",
+            copiedTitle: "\u94fe\u63a5\u5df2\u590d\u5236",
+            copiedBody: "\u8bf7\u5728\u5fae\u4fe1\u53f3\u4e0a\u89d2\u9009\u62e9\u201c\u5728\u6d4f\u89c8\u5668\u6253\u5f00\u201d\uff0c\u5e76\u5728 Chrome \u6216 Edge \u4e2d\u7c98\u8d34\u94fe\u63a5\u8bbf\u95ee\u3002",
+            copyFailedTitle: "\u590d\u5236\u5931\u8d25",
+            copyFailedBody: "\u8bf7\u624b\u52a8\u590d\u5236\u5f53\u524d\u9875\u9762\u94fe\u63a5\uff0c\u7136\u540e\u5728 Chrome \u6216 Edge \u4e2d\u6253\u5f00\u3002",
+        },
+        en: {
+            title: "WeChat browser compatibility notice",
+            body: "You are using the WeChat in-app browser. Downloads and Google sign-in can be blocked here. Please open this site in Chrome or Edge.",
+            copyAction: "Copy this page link",
+            copiedTitle: "Link copied",
+            copiedBody: "In WeChat, tap the top-right menu and choose Open in Browser, then paste this link in Chrome or Edge.",
+            copyFailedTitle: "Copy failed",
+            copyFailedBody: "Please copy the current page URL manually, then open it in Chrome or Edge.",
+        },
+    };
+
     let activeGuide: GuideKey | null = null;
     let guideHideTimer: ReturnType<typeof setTimeout> | null = null;
+    let isWechatBrowser = false;
+    let currentWechatNotice: WechatNoticeCopy = wechatNoticeCopies.en;
 
     const extractUrls = (text: string) => {
         const matches = text.match(/https?:\/\/[^\s]+/gi) ?? [];
@@ -211,6 +245,47 @@
 
     const getCurrentLang = () =>
         $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+
+    const getWechatNoticeCopy = () => {
+        const lang = getCurrentLang();
+        return wechatNoticeCopies[lang] ?? wechatNoticeCopies.en;
+    };
+
+    const copyPageLinkForExternalBrowser = async () => {
+        if (!browser) return;
+
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            createDialog({
+                id: "wechat-copy-success",
+                type: "small",
+                title: currentWechatNotice.copiedTitle,
+                bodyText: currentWechatNotice.copiedBody,
+                buttons: [
+                    {
+                        text: $t("button.gotit"),
+                        main: true,
+                        action: () => {},
+                    },
+                ],
+            });
+        } catch {
+            createDialog({
+                id: "wechat-copy-failed",
+                type: "small",
+                meowbalt: "error",
+                title: currentWechatNotice.copyFailedTitle,
+                bodyText: currentWechatNotice.copyFailedBody,
+                buttons: [
+                    {
+                        text: $t("button.gotit"),
+                        main: true,
+                        action: () => {},
+                    },
+                ],
+            });
+        }
+    };
 
     const replaceUrlWithoutLaunchParams = () => {
         const nextUrl = new URL($page.url.toString());
@@ -387,6 +462,8 @@
     $: batchMaxItems = resolveBatchMaxItems($cachedInfo?.info?.cobalt?.batchMaxItems);
     $: batchLimitEnabled = Number.isFinite(batchMaxItems) && batchMaxItems > 0;
     $: batchLimitExceeded = batchLimitEnabled && detectedUrls.length > batchMaxItems;
+    $: isWechatBrowser = browser && device.browser.wechat;
+    $: currentWechatNotice = getWechatNoticeCopy();
 
     const showBatchLimitDialog = (count: number) => {
         if (!batchLimitEnabled) return;
@@ -997,6 +1074,22 @@
         </div>
     {/if}
 
+    {#if isWechatBrowser}
+        <div class="wechat-browser-notice" role="alert">
+            <p class="wechat-browser-notice-title">{currentWechatNotice.title}</p>
+            <p class="wechat-browser-notice-text">{currentWechatNotice.body}</p>
+            <div class="wechat-browser-notice-actions">
+                <button
+                    type="button"
+                    class="wechat-browser-notice-action"
+                    on:click={() => void copyPageLinkForExternalBrowser()}
+                >
+                    {currentWechatNotice.copyAction}
+                </button>
+            </div>
+        </div>
+    {/if}
+
     <div id="action-container">
         <Switcher>
             <SettingsButton
@@ -1184,6 +1277,50 @@
     .batch-hint.error {
         color: var(--red);
         opacity: 1;
+    }
+
+    .wechat-browser-notice {
+        margin-top: -4px;
+        border-radius: 12px;
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        background: rgba(245, 158, 11, 0.12);
+        color: var(--text);
+        padding: 10px 12px;
+    }
+
+    .wechat-browser-notice-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .wechat-browser-notice-text {
+        margin: 4px 0 0;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: var(--secondary-600);
+    }
+
+    .wechat-browser-notice-actions {
+        margin-top: 10px;
+    }
+
+    .wechat-browser-notice-action {
+        appearance: none;
+        border: 1px solid rgba(245, 158, 11, 0.65);
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        line-height: 1.2;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .wechat-browser-notice-action:hover {
+        background: rgba(245, 158, 11, 0.28);
     }
 
     .input-row {

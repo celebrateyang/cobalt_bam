@@ -22,6 +22,7 @@ const device = {
     browser: {
         chrome: false,
         webkit: false,
+        wechat: false,
     },
     prefers: {
         language: "en",
@@ -76,7 +77,8 @@ if (browser) {
                 && ua.includes("safari/")
                 // this is the version of webkit that's hardcoded into chrome
                 // and indicates that the browser is not actually webkit
-                && !ua.includes("applewebkit/537.36")
+                && !ua.includes("applewebkit/537.36"),
+        wechat: ua.includes("micromessenger"),
     };
 
     device.prefers = {

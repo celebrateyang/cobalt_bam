@@ -18,5 +18,12 @@
     "tutorial.step.3": "공유 시트에서 해당 단축키를 선택하세요.",
     "tutorial.outro": "이 단축키는 FreeSaveVideo 앱에서만 작동하며 다른 앱에서 링크를 공유하면 작동하지 않습니다.",
     "tutorial.shortcut.photos": "사진으로",
-    "tutorial.shortcut.files": "파일로"
+    "tutorial.shortcut.files": "파일로",
+    "wechat.notice.title": "WeChat 브라우저 호환성 안내",
+    "wechat.notice.body": "현재 WeChat 인앱 브라우저를 사용 중입니다. 여기서는 다운로드와 Google 로그인이 제한될 수 있습니다. Chrome 또는 Edge에서 이 사이트를 열어 주세요.",
+    "wechat.notice.copy_action": "이 사이트 링크를 복사해 다른 브라우저에서 열기",
+    "wechat.notice.copied_title": "링크가 복사되었습니다",
+    "wechat.notice.copied_body": "WeChat 오른쪽 상단 메뉴에서 \"브라우저에서 열기\"를 선택한 뒤, Chrome 또는 Edge에 링크를 붙여 넣어 주세요.",
+    "wechat.notice.copy_failed_title": "복사에 실패했습니다",
+    "wechat.notice.copy_failed_body": "현재 페이지 URL을 수동으로 복사한 뒤 Chrome 또는 Edge에서 열어 주세요."
 }

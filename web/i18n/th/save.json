@@ -18,5 +18,12 @@
     "tutorial.step.3": "เลือกทางลัดที่เกี่ยวข้องในเมนูแชร์",
     "tutorial.outro": "ทางลัดเหล่านี้จะทำงานเฉพาะจากแอป FreeSaveVideo เท่านั้น การแชร์ลิงก์จากแอปอื่นจะไม่ทำงาน",
     "tutorial.shortcut.photos": "ไปยังรูปภาพ",
-    "tutorial.shortcut.files": "ไปยังไฟล์"
+    "tutorial.shortcut.files": "ไปยังไฟล์",
+    "wechat.notice.title": "ประกาศความเข้ากันได้ของเบราว์เซอร์ WeChat",
+    "wechat.notice.body": "คุณกำลังใช้เบราว์เซอร์ในแอป WeChat การดาวน์โหลดและการเข้าสู่ระบบด้วย Google อาจถูกบล็อกได้ กรุณาเปิดเว็บไซต์นี้ใน Chrome หรือ Edge",
+    "wechat.notice.copy_action": "คัดลอกลิงก์เว็บไซต์นี้ แล้วเปิดในเบราว์เซอร์อื่น",
+    "wechat.notice.copied_title": "คัดลอกลิงก์แล้ว",
+    "wechat.notice.copied_body": "ใน WeChat ให้แตะเมนูมุมขวาบน แล้วเลือก \"เปิดในเบราว์เซอร์\" จากนั้นวางลิงก์ใน Chrome หรือ Edge",
+    "wechat.notice.copy_failed_title": "คัดลอกไม่สำเร็จ",
+    "wechat.notice.copy_failed_body": "กรุณาคัดลอก URL หน้านี้ด้วยตนเอง แล้วเปิดใน Chrome หรือ Edge"
 }

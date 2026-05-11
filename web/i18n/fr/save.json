@@ -18,5 +18,12 @@
     "tutorial.step.3": "sélectionnez le raccourci respectif dans la feuille de partage.",
     "tutorial.outro": "ces raccourcis ne fonctionneront que depuis l'application FreeSaveVideo, le partage de liens depuis d'autres applications ne fonctionnera pas.",
     "tutorial.shortcut.photos": "vers photos",
-    "tutorial.shortcut.files": "vers fichiers"
+    "tutorial.shortcut.files": "vers fichiers",
+    "wechat.notice.title": "Avis de compatibilité du navigateur WeChat",
+    "wechat.notice.body": "Vous utilisez le navigateur intégré de WeChat. Les téléchargements et la connexion Google peuvent y être bloqués. Ouvrez ce site dans Chrome ou Edge.",
+    "wechat.notice.copy_action": "Copier le lien du site et l’ouvrir dans un autre navigateur",
+    "wechat.notice.copied_title": "Lien copié",
+    "wechat.notice.copied_body": "Dans WeChat, appuyez sur le menu en haut à droite puis choisissez « Ouvrir dans le navigateur », puis collez le lien dans Chrome ou Edge.",
+    "wechat.notice.copy_failed_title": "Échec de la copie",
+    "wechat.notice.copy_failed_body": "Copiez manuellement l’URL de cette page, puis ouvrez-la dans Chrome ou Edge."
 }

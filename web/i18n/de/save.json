@@ -18,5 +18,12 @@
     "tutorial.step.3": "Wählen Sie den entsprechenden Kurzbefehl im Teilen-Blatt aus.",
     "tutorial.outro": "Diese Kurzbefehle funktionieren nur in der FreeSaveVideo-App, das Teilen von Links aus anderen Apps funktioniert nicht.",
     "tutorial.shortcut.photos": "zu Fotos",
-    "tutorial.shortcut.files": "zu Dateien"
+    "tutorial.shortcut.files": "zu Dateien",
+    "wechat.notice.title": "Kompatibilitätshinweis für den WeChat-Browser",
+    "wechat.notice.body": "Du verwendest den integrierten WeChat-Browser. Downloads und Google-Anmeldung können hier blockiert sein. Öffne diese Seite bitte in Chrome oder Edge.",
+    "wechat.notice.copy_action": "Link dieser Website kopieren und in einem anderen Browser öffnen",
+    "wechat.notice.copied_title": "Link kopiert",
+    "wechat.notice.copied_body": "Tippe in WeChat oben rechts auf das Menü und wähle „Im Browser öffnen“, dann füge den Link in Chrome oder Edge ein.",
+    "wechat.notice.copy_failed_title": "Kopieren fehlgeschlagen",
+    "wechat.notice.copy_failed_body": "Bitte kopiere die URL dieser Seite manuell und öffne sie in Chrome oder Edge."
 }

@@ -20,5 +20,12 @@
     "tutorial.outro": "these shortcuts will work only from the FreeSaveVideo app, sharing links from other apps will not work.",
     "tutorial.shortcut.photos": "to photos",
     "tutorial.shortcut.files": "to files",
-    "batch.too_many": "too many links: {{ count }} (max {{ max }})"
+    "batch.too_many": "too many links: {{ count }} (max {{ max }})",
+    "wechat.notice.title": "WeChat browser compatibility notice",
+    "wechat.notice.body": "You are using the WeChat in-app browser. Downloads and Google sign-in can be blocked here. Please open this site in Chrome or Edge.",
+    "wechat.notice.copy_action": "Copy this site link and open in another browser",
+    "wechat.notice.copied_title": "Link copied",
+    "wechat.notice.copied_body": "In WeChat, tap the top-right menu and choose Open in Browser, then paste this link in Chrome or Edge.",
+    "wechat.notice.copy_failed_title": "Copy failed",
+    "wechat.notice.copy_failed_body": "Please copy the current page URL manually, then open it in Chrome or Edge."
 }

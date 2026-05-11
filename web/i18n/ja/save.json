@@ -18,5 +18,12 @@
     "tutorial.step.3": "共有シートで対応するショートカットを選択します。",
     "tutorial.outro": "これらのショートカットはFreeSaveVideoアプリからのみ機能し、他のアプリからのリンクの共有は機能しません。",
     "tutorial.shortcut.photos": "写真へ",
-    "tutorial.shortcut.files": "ファイルへ"
+    "tutorial.shortcut.files": "ファイルへ",
+    "wechat.notice.title": "WeChat内蔵ブラウザーの互換性に関するお知らせ",
+    "wechat.notice.body": "現在WeChatの内蔵ブラウザーを使用しています。ここではダウンロードやGoogleログインが制限される場合があります。ChromeまたはEdgeでこのサイトを開いてください。",
+    "wechat.notice.copy_action": "このサイトのリンクをコピーして、他のブラウザーで開く",
+    "wechat.notice.copied_title": "リンクをコピーしました",
+    "wechat.notice.copied_body": "WeChat右上のメニューから「ブラウザーで開く」を選び、ChromeまたはEdgeにリンクを貼り付けてください。",
+    "wechat.notice.copy_failed_title": "コピーに失敗しました",
+    "wechat.notice.copy_failed_body": "このページのURLを手動でコピーして、ChromeまたはEdgeで開いてください。"
 }

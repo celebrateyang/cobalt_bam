@@ -20,5 +20,12 @@
     "tutorial.step.3": "在共享菜单中选择相应的快捷指令。",
     "tutorial.outro": "这些快捷指令只能在 FreeSaveVideo 应用中使用，从其他应用分享链接将不起作用。",
     "tutorial.shortcut.photos": "保存到照片",
-    "tutorial.shortcut.files": "保存到文件"
+    "tutorial.shortcut.files": "保存到文件",
+    "wechat.notice.title": "微信内置浏览器兼容性提示",
+    "wechat.notice.body": "你正在使用微信内置浏览器，下载按钮和 Google 登录可能受限。建议在 Chrome 或 Edge 中打开本站再进行下载。",
+    "wechat.notice.copy_action": "复制本站链接，并在其他浏览器打开",
+    "wechat.notice.copied_title": "链接已复制",
+    "wechat.notice.copied_body": "请在微信右上角选择“在浏览器打开”，并在 Chrome 或 Edge 中粘贴链接访问。",
+    "wechat.notice.copy_failed_title": "复制失败",
+    "wechat.notice.copy_failed_body": "请手动复制当前页面链接，然后在 Chrome 或 Edge 中打开。"
 }

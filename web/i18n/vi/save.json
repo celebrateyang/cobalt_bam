@@ -18,5 +18,12 @@
     "tutorial.step.3": "chọn phím tắt tương ứng trong trang chia sẻ.",
     "tutorial.outro": "các phím tắt này sẽ chỉ hoạt động từ ứng dụng FreeSaveVideo, chia sẻ liên kết từ các ứng dụng khác sẽ không hoạt động.",
     "tutorial.shortcut.photos": "lưu vào ảnh",
-    "tutorial.shortcut.files": "lưu vào file"
+    "tutorial.shortcut.files": "lưu vào file",
+    "wechat.notice.title": "Thông báo tương thích trình duyệt WeChat",
+    "wechat.notice.body": "Bạn đang dùng trình duyệt tích hợp trong WeChat. Tải xuống và đăng nhập Google có thể bị chặn tại đây. Vui lòng mở trang này bằng Chrome hoặc Edge.",
+    "wechat.notice.copy_action": "Sao chép liên kết trang này và mở bằng trình duyệt khác",
+    "wechat.notice.copied_title": "Đã sao chép liên kết",
+    "wechat.notice.copied_body": "Trong WeChat, nhấn menu góc trên bên phải và chọn \"Mở bằng trình duyệt\", sau đó dán liên kết vào Chrome hoặc Edge.",
+    "wechat.notice.copy_failed_title": "Sao chép thất bại",
+    "wechat.notice.copy_failed_body": "Vui lòng sao chép URL của trang này thủ công rồi mở bằng Chrome hoặc Edge."
 }

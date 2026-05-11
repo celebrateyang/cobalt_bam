@@ -10,5 +10,12 @@
     "services.title": "поддерживаемые сервисы",
     "services.title_show": "показать поддерживаемые сервисы",
     "services.title_hide": "скрыть поддерживаемые сервисы",
-    "services.disclaimer": "кобальт не аффилирован ни с одним из перечисленных выше сервисов.\n\nдеятельность meta platforms (владельца facebook и instagram) запрещена на территории РФ и признана экстремистской."
+    "services.disclaimer": "кобальт не аффилирован ни с одним из перечисленных выше сервисов.\n\nдеятельность meta platforms (владельца facebook и instagram) запрещена на территории РФ и признана экстремистской.",
+    "wechat.notice.title": "Уведомление о совместимости браузера WeChat",
+    "wechat.notice.body": "Вы используете встроенный браузер WeChat. Здесь загрузки и вход через Google могут быть заблокированы. Откройте этот сайт в Chrome или Edge.",
+    "wechat.notice.copy_action": "Скопировать ссылку сайта и открыть в другом браузере",
+    "wechat.notice.copied_title": "Ссылка скопирована",
+    "wechat.notice.copied_body": "В WeChat нажмите меню в правом верхнем углу и выберите «Открыть в браузере», затем вставьте ссылку в Chrome или Edge.",
+    "wechat.notice.copy_failed_title": "Не удалось скопировать",
+    "wechat.notice.copy_failed_body": "Скопируйте URL этой страницы вручную и откройте его в Chrome или Edge."
 }

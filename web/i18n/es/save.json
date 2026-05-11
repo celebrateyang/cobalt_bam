@@ -18,5 +18,12 @@
     "tutorial.step.3": "selecciona el atajo respectivo en la hoja de compartir.",
     "tutorial.outro": "estos atajos solo funcionarán desde la aplicación de FreeSaveVideo, compartir enlaces desde otras aplicaciones no funcionará.",
     "tutorial.shortcut.photos": "a fotos",
-    "tutorial.shortcut.files": "a archivos"
+    "tutorial.shortcut.files": "a archivos",
+    "wechat.notice.title": "Aviso de compatibilidad del navegador de WeChat",
+    "wechat.notice.body": "Estás usando el navegador integrado de WeChat. Las descargas y el inicio de sesión con Google pueden bloquearse aquí. Abre este sitio en Chrome o Edge.",
+    "wechat.notice.copy_action": "Copiar enlace del sitio y abrirlo en otro navegador",
+    "wechat.notice.copied_title": "Enlace copiado",
+    "wechat.notice.copied_body": "En WeChat, toca el menú de la esquina superior derecha y elige \"Abrir en el navegador\", luego pega el enlace en Chrome o Edge.",
+    "wechat.notice.copy_failed_title": "Error al copiar",
+    "wechat.notice.copy_failed_body": "Copia manualmente la URL de esta página y ábrela en Chrome o Edge."
 }

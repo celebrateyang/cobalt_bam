@@ -17,6 +17,13 @@
         signUp,
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
+    import { siriShortcuts } from "$lib/env";
+    import {
+        createShortcutToken,
+        listShortcutTokens,
+        revokeShortcutToken,
+        type ShortcutTokenItem,
+    } from "$lib/api/shortcut-tokens";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
     import IconLogin from "@tabler/icons-svelte/IconLogin.svelte";
@@ -25,6 +32,7 @@
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
     import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
     import IconBug from "@tabler/icons-svelte/IconBug.svelte";
+    import IconDeviceMobile from "@tabler/icons-svelte/IconDeviceMobile.svelte";
     import QRCode from "qrcode";
 
     type CreditProduct = {
@@ -48,8 +56,13 @@
 
     type PaymentProvider = "wechat" | "polar";
     type PromotionType = "post" | "video";
-    type RecordsTab = "promotion" | "feedback";
-    type AccountSection = "topup" | "referral" | "promotion" | "contact";
+    type RecordsTab = "promotion" | "feedback" | "shortcut";
+    type AccountSection =
+        | "topup"
+        | "referral"
+        | "promotion"
+        | "contact"
+        | "shortcut";
     type PromotionRecord = {
         id: number;
         promotion_type: string;
@@ -147,7 +160,8 @@
             raw === "topup" ||
             raw === "referral" ||
             raw === "promotion" ||
-            raw === "contact"
+            raw === "contact" ||
+            raw === "shortcut"
         ) {
             return raw;
         }
@@ -162,6 +176,7 @@
             referral: referralSectionEl,
             promotion: promotionSectionEl,
             contact: contactSectionEl,
+            shortcut: null,
         };
 
         sectionMap[section]?.scrollIntoView({
@@ -189,6 +204,17 @@
     let promotionRecords: PromotionRecord[] = [];
     let feedbackRecords: FeedbackRecord[] = [];
     let lastRecordsUserId: string | null = null;
+    let shortcutTokens: ShortcutTokenItem[] = [];
+    let shortcutTokensLoading = false;
+    let shortcutTokensError = "";
+    let lastShortcutTokensUserId: string | null = null;
+    let creatingShortcutToken = false;
+    let revokingShortcutTokenId: number | null = null;
+    let shortcutActionError = "";
+    let shortcutActionNotice = "";
+    let latestShortcutToken = "";
+    let latestShortcutTokenCopyState: "idle" | "copied" | "failed" = "idle";
+    let latestShortcutTokenCopyTimer: ReturnType<typeof setTimeout> | null = null;
 
     $: requestedAccountSection = getRequestedAccountSection();
 
@@ -204,6 +230,10 @@
         promotionAccordionOpen = true;
     }
 
+    $: if (requestedAccountSection === "shortcut") {
+        activeRecordsTab = "shortcut";
+    }
+
     $: {
         const sectionToFocus = requestedAccountSection;
         const focusKey =
@@ -211,7 +241,7 @@
                 ? `${$clerkUser.id}:${sectionToFocus}`
                 : "";
 
-        if (focusKey && focusKey !== lastFocusedSectionKey) {
+        if (focusKey && sectionToFocus && focusKey !== lastFocusedSectionKey) {
             lastFocusedSectionKey = focusKey;
             void scrollToRequestedAccountSection(sectionToFocus);
         }
@@ -267,6 +297,20 @@
         feedbackRecords = [];
         recordsError = "";
         lastRecordsUserId = null;
+        shortcutTokens = [];
+        shortcutTokensLoading = false;
+        shortcutTokensError = "";
+        lastShortcutTokensUserId = null;
+        creatingShortcutToken = false;
+        revokingShortcutTokenId = null;
+        shortcutActionError = "";
+        shortcutActionNotice = "";
+        latestShortcutToken = "";
+        latestShortcutTokenCopyState = "idle";
+        if (latestShortcutTokenCopyTimer) {
+            clearTimeout(latestShortcutTokenCopyTimer);
+            latestShortcutTokenCopyTimer = null;
+        }
     }
 
     $: referralLink =
@@ -418,12 +462,131 @@
         void refreshRecords();
     }
 
+    const getShortcutTokenStatus = (token: ShortcutTokenItem) => {
+        if (token.revokedAt) return "revoked";
+        if (token.expiresAt && token.expiresAt <= Date.now()) return "expired";
+        return "active";
+    };
+
+    const loadShortcutTokens = async (force = false) => {
+        const userId = $clerkUser?.id;
+        if (!userId) return;
+        if (shortcutTokensLoading) return;
+        if (!force && lastShortcutTokensUserId === userId) return;
+
+        shortcutTokensLoading = true;
+        shortcutTokensError = "";
+        shortcutActionError = "";
+
+        const result = await listShortcutTokens();
+        if (!result.ok) {
+            shortcutTokensError = "auth.shortcut_load_failed";
+            shortcutTokensLoading = false;
+            return;
+        }
+
+        shortcutTokens = Array.isArray(result.data?.tokens)
+            ? result.data.tokens
+            : [];
+        lastShortcutTokensUserId = userId;
+        shortcutTokensLoading = false;
+    };
+
+    $: if (
+        browser &&
+        $clerkUser &&
+        lastShortcutTokensUserId !== $clerkUser.id
+    ) {
+        void loadShortcutTokens();
+    }
+
+    const createNewShortcutToken = async () => {
+        if (creatingShortcutToken) return;
+        creatingShortcutToken = true;
+        shortcutActionError = "";
+        shortcutActionNotice = "";
+
+        const result = await createShortcutToken({
+            platform: "ios_shortcuts",
+        });
+
+        if (!result.ok) {
+            shortcutActionError = "auth.shortcut_create_failed";
+            creatingShortcutToken = false;
+            return;
+        }
+
+        latestShortcutToken = result.data?.token ?? "";
+        latestShortcutTokenCopyState = "idle";
+        shortcutActionNotice = "auth.shortcut_create_success";
+        lastShortcutTokensUserId = null;
+        await loadShortcutTokens(true);
+        creatingShortcutToken = false;
+    };
+
+    const copyLatestShortcutToken = async () => {
+        if (!latestShortcutToken) return;
+
+        if (latestShortcutTokenCopyTimer) {
+            clearTimeout(latestShortcutTokenCopyTimer);
+            latestShortcutTokenCopyTimer = null;
+        }
+
+        try {
+            if (!navigator.clipboard?.writeText) {
+                throw new Error("clipboard API unavailable");
+            }
+            await navigator.clipboard.writeText(latestShortcutToken);
+            latestShortcutTokenCopyState = "copied";
+        } catch {
+            latestShortcutTokenCopyState = "failed";
+        } finally {
+            latestShortcutTokenCopyTimer = setTimeout(() => {
+                latestShortcutTokenCopyState = "idle";
+                latestShortcutTokenCopyTimer = null;
+            }, 1800);
+        }
+    };
+
+    const revokeExistingShortcutToken = async (tokenId: number) => {
+        if (revokingShortcutTokenId) return;
+        if (!browser) return;
+
+        const confirmed = window.confirm(t.get("auth.shortcut_revoke_confirm"));
+        if (!confirmed) return;
+
+        revokingShortcutTokenId = tokenId;
+        shortcutActionError = "";
+        shortcutActionNotice = "";
+
+        const result = await revokeShortcutToken(tokenId);
+        if (!result.ok) {
+            shortcutActionError = "auth.shortcut_revoke_failed";
+            revokingShortcutTokenId = null;
+            return;
+        }
+
+        shortcutActionNotice = "auth.shortcut_revoke_success";
+        lastShortcutTokensUserId = null;
+        await loadShortcutTokens(true);
+        revokingShortcutTokenId = null;
+    };
+
+    const formatShortcutTokenDate = (ts: number | null) => {
+        if (!Number.isFinite(ts) || ts == null) return "-";
+        return formatDateTime(ts);
+    };
+
     const goAccountHome = () => {
         activeRecordsTab = null;
     };
 
     const openRecordsTab = (tab: RecordsTab) => {
         activeRecordsTab = tab;
+        if (tab === "shortcut") {
+            void loadShortcutTokens(true);
+            return;
+        }
         void refreshRecords();
     };
 
@@ -620,6 +783,9 @@
         stopPolling();
         if (referralCopyTimer) {
             clearTimeout(referralCopyTimer);
+        }
+        if (latestShortcutTokenCopyTimer) {
+            clearTimeout(latestShortcutTokenCopyTimer);
         }
         if (paymentResumeTimer) {
             clearTimeout(paymentResumeTimer);
@@ -943,6 +1109,19 @@
                     <button
                         type="button"
                         class="records-menu-item"
+                        class:active={activeRecordsTab === "shortcut"}
+                        on:click={() => openRecordsTab("shortcut")}
+                    >
+                        <span class="records-menu-left">
+                            <span class="records-menu-icon">
+                                <IconDeviceMobile />
+                            </span>
+                            <span>{$t("auth.shortcut_menu_label")}</span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="records-menu-item"
                         class:active={activeRecordsTab === "feedback"}
                         on:click={() => openRecordsTab("feedback")}
                     >
@@ -958,6 +1137,120 @@
 
             <div class="account-main">
                 {#if activeRecordsTab !== null}
+                    {#if activeRecordsTab === "shortcut"}
+                        <section class="card shortcut-records">
+                            <div class="shortcut-records-title">{$t("auth.shortcut_title")}</div>
+                            <div class="subtext shortcut-help">
+                                {$t("auth.shortcut_subtitle")}
+                            </div>
+
+                            <div class="shortcut-toolbar">
+                                <button
+                                    class="button elevated active"
+                                    on:click={() => void createNewShortcutToken()}
+                                    disabled={creatingShortcutToken}
+                                >
+                                    {#if creatingShortcutToken}
+                                        {$t("auth.shortcut_generating")}
+                                    {:else}
+                                        {$t("auth.shortcut_generate")}
+                                    {/if}
+                                </button>
+                                <a
+                                    class="button elevated"
+                                    href={siriShortcuts.photos}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {$t("auth.shortcut_install")}
+                                </a>
+                            </div>
+
+                            <div class="subtext shortcut-help">
+                                {$t("auth.shortcut_help")}
+                            </div>
+
+                            {#if latestShortcutToken}
+                                <div class="shortcut-token-once">
+                                    <div class="shortcut-token-once-title">
+                                        {$t("auth.shortcut_token_once_title")}
+                                    </div>
+                                    <div class="shortcut-token-once-row">
+                                        <input
+                                            class="shortcut-token-input"
+                                            readonly
+                                            value={latestShortcutToken}
+                                            on:focus={selectReferralLinkOnFocus}
+                                        />
+                                        <button
+                                            class="button elevated"
+                                            on:click={() => void copyLatestShortcutToken()}
+                                        >
+                                            {#if latestShortcutTokenCopyState === "copied"}
+                                                {$t("auth.referral_copied")}
+                                            {:else if latestShortcutTokenCopyState === "failed"}
+                                                {$t("auth.referral_copy_failed")}
+                                            {:else}
+                                                {$t("auth.shortcut_copy_token")}
+                                            {/if}
+                                        </button>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {#if shortcutActionError}
+                                <div class="subtext error">{$t(shortcutActionError)}</div>
+                            {/if}
+                            {#if shortcutActionNotice}
+                                <div class="subtext notice">{$t(shortcutActionNotice)}</div>
+                            {/if}
+
+                            <div class="shortcut-token-list">
+                                <div class="shortcut-token-list-title">
+                                    {$t("auth.shortcut_token_list_title")}
+                                </div>
+
+                                {#if shortcutTokensLoading}
+                                    <div class="subtext">{$t("auth.loading")}</div>
+                                {:else if shortcutTokensError}
+                                    <div class="subtext error">{$t(shortcutTokensError)}</div>
+                                {:else if shortcutTokens.length === 0}
+                                    <div class="subtext">{$t("auth.shortcut_no_tokens")}</div>
+                                {:else}
+                                    {#each shortcutTokens as token (token.id)}
+                                        {@const tokenStatus = getShortcutTokenStatus(token)}
+                                        <div class="shortcut-token-item">
+                                            <div class="shortcut-token-main">
+                                                <div class="shortcut-token-line">
+                                                    <span class="shortcut-token-preview">{token.tokenPreview}</span>
+                                                    <span class={`shortcut-token-status ${tokenStatus}`}>
+                                                        {$t(`auth.shortcut_status_${tokenStatus}`)}
+                                                    </span>
+                                                </div>
+                                                <div class="subtext shortcut-token-meta">
+                                                    {$t("auth.shortcut_created_at")}: {formatShortcutTokenDate(token.createdAt)}
+                                                    | {$t("auth.shortcut_last_used_at")}: {formatShortcutTokenDate(token.lastUsedAt)}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                class="button elevated"
+                                                disabled={tokenStatus !== "active" ||
+                                                    revokingShortcutTokenId === token.id}
+                                                on:click={() => void revokeExistingShortcutToken(token.id)}
+                                            >
+                                                {#if revokingShortcutTokenId === token.id}
+                                                    {$t("auth.shortcut_revoking")}
+                                                {:else}
+                                                    {$t("auth.shortcut_revoke")}
+                                                {/if}
+                                            </button>
+                                        </div>
+                                    {/each}
+                                {/if}
+                            </div>
+                        </section>
+                    {:else}
                     <section class="card records-content">
                         {#if recordsLoading}
                             <div class="subtext">{isChinese ? "加载中..." : "Loading..."}</div>
@@ -1051,6 +1344,7 @@
                             {/if}
                         {/if}
                     </section>
+                    {/if}
                 {:else}
                     <section class="card user-card">
                         <div class="account-summary">
@@ -1777,6 +2071,147 @@
         gap: 14px;
     }
 
+    .shortcut-records {
+        gap: 14px;
+    }
+
+    .shortcut-records-title {
+        font-weight: 900;
+        color: var(--text);
+        letter-spacing: -0.01em;
+    }
+
+    .shortcut-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .shortcut-help {
+        padding: 0;
+        line-height: 1.5;
+    }
+
+    .shortcut-token-once {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+    }
+
+    .shortcut-token-once-title {
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.01em;
+    }
+
+    .shortcut-token-once-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .shortcut-token-input {
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+        color: var(--text);
+        padding: 0 12px;
+        font-weight: 700;
+        width: 100%;
+        min-width: 0;
+        font-family: var(--mono-font);
+    }
+
+    .shortcut-token-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .shortcut-token-list-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--subtext);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .shortcut-token-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-0);
+    }
+
+    .shortcut-token-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .shortcut-token-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .shortcut-token-preview {
+        font-family: var(--mono-font);
+        font-weight: 700;
+        color: var(--text);
+        word-break: break-all;
+    }
+
+    .shortcut-token-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--surface-2);
+        color: var(--subtext);
+        background: var(--surface-1);
+    }
+
+    .shortcut-token-status.active {
+        color: #0c7b42;
+        border-color: rgba(12, 123, 66, 0.3);
+        background: rgba(12, 123, 66, 0.08);
+    }
+
+    .shortcut-token-status.revoked {
+        color: #8e4b00;
+        border-color: rgba(142, 75, 0, 0.3);
+        background: rgba(142, 75, 0, 0.08);
+    }
+
+    .shortcut-token-status.expired {
+        color: #8b1a1a;
+        border-color: rgba(139, 26, 26, 0.3);
+        background: rgba(139, 26, 26, 0.08);
+    }
+
+    .shortcut-token-meta {
+        padding: 0;
+        line-height: 1.45;
+    }
+
     .promotion-rules-title {
         padding: 0;
         font-weight: 800;
@@ -2488,6 +2923,11 @@
 
         .actions :global(button) {
             flex: 1;
+        }
+
+        .shortcut-token-once-row,
+        .shortcut-token-item {
+            grid-template-columns: 1fr;
         }
     }
 </style>

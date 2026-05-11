@@ -3,9 +3,12 @@ import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 
 import {
     consumeUserPoints,
+    createShortcutTokenForUser,
     getOrCreateClipboardPersonalProfile,
     getUserByClerkId,
+    listShortcutTokensByUserId,
     finalizePointsHold,
+    revokeShortcutTokenById,
     listUsers,
     releasePointsHold,
     rotateClipboardPersonalCode,
@@ -60,6 +63,14 @@ const requirePaidForRandomChat = ["1", "true", "yes", "on"].includes(
 );
 
 const REFERRAL_CLAIM_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SHORTCUT_TOKEN_DEFAULT_TTL_DAYS = 365;
+const SHORTCUT_TOKEN_MAX_TTL_DAYS = 3650;
+const SHORTCUT_TOKEN_PLATFORMS = new Set([
+    "ios_shortcuts",
+    "iphone",
+    "ipad",
+    "ios",
+]);
 
 const mapClerkUser = (clerkUser) => {
     const primaryEmail =
@@ -171,6 +182,49 @@ const parseClipboardDeviceInput = (body = {}) => {
         deviceId: rawDeviceId,
         deviceName: rawDeviceName || null,
         platform,
+    };
+};
+
+const parseShortcutTokenInput = (body = {}) => {
+    const tokenName =
+        typeof body?.tokenName === "string" ? body.tokenName.trim() : "";
+    const rawPlatform =
+        typeof body?.platform === "string"
+            ? body.platform.trim().toLowerCase()
+            : "";
+    const rawTtlDays =
+        body?.ttlDays === undefined || body?.ttlDays === null || body?.ttlDays === ""
+            ? SHORTCUT_TOKEN_DEFAULT_TTL_DAYS
+            : typeof body.ttlDays === "string"
+                ? Number.parseInt(body.ttlDays, 10)
+                : body.ttlDays;
+
+    if (tokenName.length > 64) {
+        return { ok: false, message: "tokenName too long (max 64 chars)" };
+    }
+
+    if (
+        !Number.isFinite(rawTtlDays) ||
+        !Number.isInteger(rawTtlDays) ||
+        rawTtlDays <= 0 ||
+        rawTtlDays > SHORTCUT_TOKEN_MAX_TTL_DAYS
+    ) {
+        return {
+            ok: false,
+            message: `ttlDays must be an integer between 1 and ${SHORTCUT_TOKEN_MAX_TTL_DAYS}`,
+        };
+    }
+
+    const platform = SHORTCUT_TOKEN_PLATFORMS.has(rawPlatform)
+        ? rawPlatform
+        : "ios_shortcuts";
+    const ttlDays = rawTtlDays;
+
+    return {
+        ok: true,
+        tokenName: tokenName || null,
+        platform,
+        expiresAt: Date.now() + ttlDays * 24 * 60 * 60 * 1000,
     };
 };
 
@@ -859,6 +913,165 @@ if (!isClerkApiConfigured) {
                         message: "Failed to load user profile",
                     },
                 });
+            }
+        });
+
+        router.get("/shortcut/tokens", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                const tokens = await listShortcutTokensByUserId(user.id);
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        tokens: tokens.map((token) => ({
+                            id: token.id,
+                            tokenPreview: token.token_preview,
+                            tokenName: token.token_name,
+                            platform: token.platform,
+                            createdAt: token.created_at,
+                            updatedAt: token.updated_at,
+                            lastUsedAt: token.last_used_at,
+                            expiresAt: token.expires_at,
+                            revokedAt: token.revoked_at,
+                            isActive:
+                                token.revoked_at == null &&
+                                (token.expires_at == null ||
+                                    token.expires_at > Date.now()),
+                        })),
+                    },
+                });
+            } catch (error) {
+                console.error("GET /user/shortcut/tokens error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load shortcut tokens",
+                );
+            }
+        });
+
+        router.post("/shortcut/tokens", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const parsed = parseShortcutTokenInput(req.body);
+                if (!parsed.ok) {
+                    return jsonError(res, 422, "INVALID_INPUT", parsed.message);
+                }
+
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                const created = await createShortcutTokenForUser({
+                    userId: user.id,
+                    tokenName: parsed.tokenName,
+                    platform: parsed.platform,
+                    expiresAt: parsed.expiresAt,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        token: created.token,
+                        tokenMeta: {
+                            id: created.meta?.id ?? null,
+                            tokenPreview: created.meta?.token_preview ?? null,
+                            tokenName: created.meta?.token_name ?? null,
+                            platform: created.meta?.platform ?? null,
+                            createdAt: created.meta?.created_at ?? null,
+                            expiresAt: created.meta?.expires_at ?? null,
+                        },
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/shortcut/tokens error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to create shortcut token",
+                );
+            }
+        });
+
+        router.post("/shortcut/tokens/revoke", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const rawTokenId = req.body?.tokenId;
+                const tokenId =
+                    typeof rawTokenId === "string"
+                        ? Number.parseInt(rawTokenId, 10)
+                        : rawTokenId;
+
+                if (
+                    !Number.isFinite(tokenId) ||
+                    !Number.isInteger(tokenId) ||
+                    tokenId <= 0
+                ) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "tokenId must be a positive integer",
+                    );
+                }
+
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                const revoked = await revokeShortcutTokenById({
+                    userId: user.id,
+                    tokenId,
+                });
+                if (!revoked) {
+                    return jsonError(
+                        res,
+                        404,
+                        "TOKEN_NOT_FOUND",
+                        "Shortcut token not found",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        tokenId: revoked.id,
+                        revokedAt: revoked.revoked_at,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/shortcut/tokens/revoke error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to revoke shortcut token",
+                );
             }
         });
 

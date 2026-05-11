@@ -4,6 +4,7 @@ import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
 import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
 import { nanoid } from "nanoid";
+import { createHash, randomBytes } from "node:crypto";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 
 const generateReferralCode = () => nanoid(10);
@@ -12,6 +13,23 @@ const isUniqueViolation = (error) =>
 export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 30;
 
 let clipboardPersonalSchemaPromise = null;
+let shortcutTokenSchemaPromise = null;
+
+const hashShortcutToken = (token) =>
+    createHash("sha256").update(String(token)).digest("hex");
+
+const generateShortcutToken = () => {
+    const random = randomBytes(24).toString("base64url");
+    return `fsvs_${random}`;
+};
+
+const normalizeTokenPreview = (token) => {
+    const str = String(token);
+    if (str.length <= 12) {
+        return str;
+    }
+    return `${str.slice(0, 8)}...${str.slice(-4)}`;
+};
 
 export const ensureClipboardPersonalSchema = async () => {
     if (clipboardPersonalSchemaPromise) {
@@ -64,6 +82,45 @@ export const ensureClipboardPersonalSchema = async () => {
         });
 
     return clipboardPersonalSchemaPromise;
+};
+
+export const ensureShortcutTokenSchema = async () => {
+    if (shortcutTokenSchemaPromise) {
+        return shortcutTokenSchemaPromise;
+    }
+
+    shortcutTokenSchemaPromise = (async () => {
+        await query(`
+            CREATE TABLE IF NOT EXISTS user_shortcut_tokens (
+                id BIGSERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                token_preview TEXT NOT NULL,
+                token_name TEXT,
+                platform TEXT NOT NULL DEFAULT 'ios_shortcuts',
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL,
+                last_used_at BIGINT,
+                expires_at BIGINT,
+                revoked_at BIGINT,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        `);
+
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_user_shortcut_tokens_user
+             ON user_shortcut_tokens(user_id, created_at DESC);`,
+        );
+        await query(
+            `CREATE INDEX IF NOT EXISTS idx_user_shortcut_tokens_lookup
+             ON user_shortcut_tokens(token_hash, revoked_at, expires_at);`,
+        );
+    })().catch((error) => {
+        shortcutTokenSchemaPromise = null;
+        throw error;
+    });
+
+    return shortcutTokenSchemaPromise;
 };
 
 export const initUserDatabase = async () => {
@@ -511,6 +568,139 @@ export const getUserByClerkId = async (clerkUserId) => {
         clerkUserId,
     ]);
     return result.rows[0] || null;
+};
+
+export const createShortcutTokenForUser = async ({
+    userId,
+    tokenName = null,
+    platform = "ios_shortcuts",
+    expiresAt = null,
+} = {}) => {
+    await ensureShortcutTokenSchema();
+
+    const now = Date.now();
+    const token = generateShortcutToken();
+    const tokenHash = hashShortcutToken(token);
+    const preview = normalizeTokenPreview(token);
+
+    const result = await query(
+        `
+        INSERT INTO user_shortcut_tokens (
+            user_id,
+            token_hash,
+            token_preview,
+            token_name,
+            platform,
+            created_at,
+            updated_at,
+            expires_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $6, $7)
+        RETURNING id, token_preview, token_name, platform, created_at, expires_at;
+        `,
+        [userId, tokenHash, preview, tokenName, platform, now, expiresAt],
+    );
+
+    return {
+        token,
+        meta: result.rows[0] || null,
+    };
+};
+
+export const listShortcutTokensByUserId = async (userId) => {
+    await ensureShortcutTokenSchema();
+
+    const result = await query(
+        `
+        SELECT
+            id,
+            token_preview,
+            token_name,
+            platform,
+            created_at,
+            updated_at,
+            last_used_at,
+            expires_at,
+            revoked_at
+        FROM user_shortcut_tokens
+        WHERE user_id = $1
+        ORDER BY created_at DESC;
+        `,
+        [userId],
+    );
+
+    return result.rows;
+};
+
+export const revokeShortcutTokenById = async ({ userId, tokenId } = {}) => {
+    await ensureShortcutTokenSchema();
+
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE user_shortcut_tokens
+        SET revoked_at = COALESCE(revoked_at, $3),
+            updated_at = $3
+        WHERE id = $1
+          AND user_id = $2
+        RETURNING id, revoked_at;
+        `,
+        [tokenId, userId, now],
+    );
+
+    return result.rows[0] || null;
+};
+
+export const getUserByShortcutToken = async (rawToken) => {
+    await ensureShortcutTokenSchema();
+
+    if (typeof rawToken !== "string" || !rawToken.trim()) {
+        return null;
+    }
+
+    const tokenHash = hashShortcutToken(rawToken.trim());
+    const now = Date.now();
+
+    const result = await query(
+        `
+        SELECT
+            t.id AS token_id,
+            t.user_id AS token_user_id,
+            t.expires_at AS token_expires_at,
+            u.*
+        FROM user_shortcut_tokens t
+        INNER JOIN users u ON u.id = t.user_id
+        WHERE t.token_hash = $1
+          AND t.revoked_at IS NULL
+          AND (t.expires_at IS NULL OR t.expires_at > $2)
+        LIMIT 1;
+        `,
+        [tokenHash, now],
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+        return null;
+    }
+
+    return {
+        user: row,
+        tokenId: row.token_id,
+    };
+};
+
+export const touchShortcutTokenLastUsed = async (tokenId) => {
+    await ensureShortcutTokenSchema();
+
+    const now = Date.now();
+    await query(
+        `
+        UPDATE user_shortcut_tokens
+        SET last_used_at = $2,
+            updated_at = $2
+        WHERE id = $1;
+        `,
+        [tokenId, now],
+    );
 };
 
 const getNumericCodeVersion = (value) => {

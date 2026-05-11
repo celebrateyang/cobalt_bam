@@ -41,6 +41,8 @@ import {
     createPointsHold,
     FIRST_DOWNLOAD_GRACE_MAX_POINTS,
     getUserByClerkId,
+    getUserByShortcutToken,
+    touchShortcutTokenLastUsed,
     upsertUserFromClerk,
 } from "../db/users.js";
 
@@ -130,21 +132,49 @@ const durationToPoints = (durationSeconds) => {
 
 const getClerkUserIdFromTokenHeader = async (req) => {
     const token = sanitizeLogHeaderValue(req.header("X-Clerk-Token"), 8192);
-    if (!token) {
+    if (token) {
+        try {
+            const payload = await verifyToken(token, {
+                secretKey: process.env.CLERK_SECRET_KEY,
+            });
+
+            const clerkUserId = typeof payload?.sub === "string" ? payload.sub : null;
+            if (!clerkUserId) {
+                return { ok: false, reason: "invalid" };
+            }
+
+            return { ok: true, clerkUserId, source: "clerk" };
+        } catch {
+            return { ok: false, reason: "invalid" };
+        }
+    }
+
+    const shortcutToken = sanitizeLogHeaderValue(
+        req.header("X-Shortcut-Token"),
+        8192,
+    );
+    if (!shortcutToken) {
         return { ok: false, reason: "missing" };
     }
 
     try {
-        const payload = await verifyToken(token, {
-            secretKey: process.env.CLERK_SECRET_KEY,
-        });
-
-        const clerkUserId = typeof payload?.sub === "string" ? payload.sub : null;
-        if (!clerkUserId) {
+        const shortcut = await getUserByShortcutToken(shortcutToken);
+        if (!shortcut?.user?.clerk_user_id) {
             return { ok: false, reason: "invalid" };
         }
 
-        return { ok: true, clerkUserId };
+        try {
+            await touchShortcutTokenLastUsed(shortcut.tokenId);
+        } catch {
+            // fail-open: token usage timestamp update should not block requests
+        }
+
+        return {
+            ok: true,
+            clerkUserId: shortcut.user.clerk_user_id,
+            source: "shortcut",
+            localUser: shortcut.user,
+        };
     } catch {
         return { ok: false, reason: "invalid" };
     }
@@ -378,6 +408,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "Content-Type",
         "Authorization",
         "X-Clerk-Token",
+        "X-Shortcut-Token",
         "X-Clerk-Email",
         "xrequestid",
         "XRequestId",
@@ -420,7 +451,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     app.use('/user', userRouter);
     app.use('/payments', paymentsRouter);
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/shortcut/instagram/download'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {
             return fail(res, "error.api.header.accept");
         }
@@ -430,7 +461,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/shortcut/instagram/download'], (req, res, next) => {
         if (!env.apiKeyURL) {
             return next();
         }
@@ -458,8 +489,15 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         return next();
     });
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/shortcut/instagram/download'], (req, res, next) => {
         if (!env.sessionEnabled || req.rateLimitKey) {
+            return next();
+        }
+
+        if (
+            req.path === "/shortcut/instagram/download" &&
+            sanitizeLogHeaderValue(req.header("X-Shortcut-Token"), 8192)
+        ) {
             return next();
         }
 
@@ -490,7 +528,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand'], apiLimiter);
+    app.post(['/', '/expand', '/shortcut/instagram/download'], apiLimiter);
     app.use('/', express.json({ limit: "32kb" }));
 
     app.use('/', (err, req, res, next) => {
@@ -580,7 +618,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
     });
 
-    app.post('/', async (req, res) => {
+    const handleDownload = async (
+        req,
+        res,
+        { shortcutInstagramOnly = false } = {},
+    ) => {
         const request = req.body;
 
         if (!request.url) {
@@ -595,7 +637,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 : "n/a";
             const debug = normalized?.debug ? JSON.stringify(normalized.debug) : "n/a";
             console.warn(
-                `[REQUEST INVALID_BODY] path=/ reason=schema_reject request_type=${requestType} keys=${requestKeys} debug=${debug}`,
+                `[REQUEST INVALID_BODY] path=${req.path} reason=schema_reject request_type=${requestType} keys=${requestKeys} debug=${debug}`,
             );
             return fail(res, "error.api.invalid_body");
         }
@@ -603,7 +645,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         let email = resolveDownloadLogEmail({ req });
         logDownloadSubmission({ email, url: normalizedRequest.url });
 
-        const isBypassRequest = req.authType === "key";
+        const isBypassRequest =
+            req.authType === "key" && shortcutInstagramOnly !== true;
         let pointsUser = null;
         let clerkUserId = null;
         if (isClerkAuthConfigured && !isBypassRequest && !isUpstreamServer) {
@@ -625,7 +668,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 }
                 req.authType ??= "clerk";
 
-                pointsUser = await getUserByClerkId(auth.clerkUserId);
+                pointsUser = auth.localUser ?? await getUserByClerkId(auth.clerkUserId);
                 if (!pointsUser) {
                     const fallbackPrimaryEmail = sanitizeLogHeaderValue(
                         req.header("X-Clerk-Email"),
@@ -649,6 +692,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
         const requestId = Math.random().toString(36).slice(2, 10);
         const hasClerkTokenHeader = !!req.header("X-Clerk-Token");
+        const hasShortcutTokenHeader = !!req.header("X-Shortcut-Token");
         const requestClientIp = String(
             req.header("x-fsv-client-ip")
             || req.header("cf-connecting-ip")
@@ -661,7 +705,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             .trim()
             .replace(/^::ffff:/, "");
         console.log(
-            `[DOWNLOAD AUTH] request_id=${requestId} url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
+            `[DOWNLOAD AUTH] request_id=${requestId} url=${normalizedRequest.url} clerk_configured=${isClerkAuthConfigured} authType=${req.authType ?? "none"} bypass=${isBypassRequest} upstream=${isUpstreamServer} has_clerk_token=${hasClerkTokenHeader} has_shortcut_token=${hasShortcutTokenHeader} clerk_user_id=${clerkUserId ?? "n/a"}`,
         );
 
         email = resolveDownloadLogEmail({ req, pointsUser, fallbackEmail: email });
@@ -699,10 +743,22 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return fail(res, "error.api.link.invalid");
         }
 
+        if (
+            shortcutInstagramOnly &&
+            !("error" in parsed) &&
+            parsed.host !== "instagram"
+        ) {
+            return fail(res, "error.api.link.unsupported");
+        }
+
         try {
             let result;
 
             if ("error" in parsed) {
+                if (shortcutInstagramOnly) {
+                    return fail(res, `error.api.${parsed.error}`, parsed?.context);
+                }
+
                 if (genericFallbackErrors.has(parsed.error)) {
                     result = await attemptGenericFallback({
                         request: {
@@ -856,6 +912,14 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             );
             fail(res, "error.api.generic");
         }
+    };
+
+    app.post("/", async (req, res) => {
+        return handleDownload(req, res);
+    });
+
+    app.post("/shortcut/instagram/download", async (req, res) => {
+        return handleDownload(req, res, { shortcutInstagramOnly: true });
     });
 
     app.use('/tunnel', cors({

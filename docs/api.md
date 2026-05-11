@@ -104,6 +104,37 @@ notes:
 | `service`    | `string` | **optional**, stating which service was being downloaded from                                                  |
 | `limit`      | `number` | **optional** number providing the ratelimit maximum number of requests, or maximum downloadable video duration |
 
+## iOS shortcuts auth + download
+this flow lets ios shortcuts call the downloader while reusing existing clerk user identity and points logic.
+
+### create/list/revoke shortcut tokens (authenticated user)
+- `GET /user/shortcut/tokens`
+- `POST /user/shortcut/tokens`
+- `POST /user/shortcut/tokens/revoke`
+
+`POST /user/shortcut/tokens` request body:
+| key         | type      | required | description |
+|:------------|:----------|:---------|:------------|
+| `tokenName` | `string`  | no       | label for this token (max 64 chars) |
+| `platform`  | `string`  | no       | `ios_shortcuts` (default), `ios`, `iphone`, `ipad` |
+| `ttlDays`   | `integer` | no       | token lifetime in days, default `365`, max `3650` |
+
+success response contains a one-time plaintext `token` and token metadata.
+
+### shortcut download endpoint
+- `POST /shortcut/instagram/download`
+- headers:
+  - `Accept: application/json`
+  - `Content-Type: application/json`
+  - `X-Shortcut-Token: <token from /user/shortcut/tokens>`
+- body:
+  - same shape as `POST /` (at minimum `{ "url": "https://www.instagram.com/..." }`)
+- behavior:
+  - only instagram links are accepted on this endpoint.
+  - user identity is resolved from `X-Shortcut-Token`.
+  - points check/deduction follows the same logic as normal `POST /`.
+  - response format is the same as `POST /` (`tunnel`, `redirect`, `picker`, `error`, etc).
+
 ## points hold flow (batch downloads)
 when `batch=true`, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
 

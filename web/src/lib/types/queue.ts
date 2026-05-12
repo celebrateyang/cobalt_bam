@@ -34,6 +34,7 @@ type CobaltQueueItemBase = {
     collectionMemory?: CobaltQueueItemCollectionMemory;
     batchSessionId?: string;
     batchSelectionTotal?: number;
+    saveRequested?: boolean;
     fallback?: {
         pipeline: CobaltPipelineItem[];
         used?: boolean;

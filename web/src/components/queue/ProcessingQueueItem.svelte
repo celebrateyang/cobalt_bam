@@ -6,7 +6,7 @@
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
 
-    import { removeItem } from "$lib/state/task-manager/queue";
+    import { removeItem, updateItem } from "$lib/state/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
@@ -76,6 +76,10 @@
                 type: info.mimeType,
             }),
         });
+        updateItem(id, (item) => ({
+            ...item,
+            saveRequested: true,
+        }));
 
         setTimeout(() => {
             /*
@@ -221,6 +225,7 @@
 <div
     class="processing-item"
     class:done={info.state === "done"}
+    class:saved={info.saveRequested}
     role="listitem"
     tabindex={$queueVisible ? 0 : -1}
     class:queue-hidden={!$queueVisible}
@@ -278,13 +283,18 @@
             <button
                 class="button action-button"
                 class:save-button={info.state === "done"}
-                aria-label={$t("button.save")}
+                class:saved={info.saveRequested}
+                aria-label={$t(info.saveRequested ? "queue.save_clicked" : "button.save")}
+                aria-pressed={info.saveRequested}
                 on:click={() => download(info.resultFile)}
                 disabled={downloading}
                 class:downloading
             >
                 {#if downloading}
                     <IconLoader2 />
+                {:else if info.saveRequested}
+                    <IconCheck />
+                    <span>{$t("queue.save_clicked")}</span>
                 {:else}
                     {$t("button.save")}
                 {/if}
@@ -341,6 +351,18 @@
         padding: 8px 0;
         gap: 8px;
         border-bottom: 1.5px var(--button-elevated) solid;
+        border-radius: 6px;
+        box-sizing: border-box;
+        transition:
+            background-color 0.18s ease,
+            border-color 0.18s ease,
+            padding 0.18s ease;
+    }
+
+    .processing-item.saved {
+        padding-left: 8px;
+        border-left: 3px solid var(--secondary);
+        background-color: color-mix(in srgb, var(--secondary) 10%, transparent);
     }
 
     .processing-type {
@@ -526,11 +548,27 @@
         will-change: transform, box-shadow;
     }
 
+    .action-button.save-button.saved {
+        gap: 5px;
+        color: var(--secondary);
+        background-color: color-mix(in srgb, var(--secondary) 13%, var(--button));
+        box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--secondary) 45%, transparent);
+        animation: none;
+        will-change: auto;
+    }
+
     .action-button.save-button:hover,
     .action-button.save-button:focus-visible {
         animation-play-state: paused;
         transform: translateY(-1px);
         box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 18%, transparent);
+    }
+
+    .action-button.save-button.saved:hover,
+    .action-button.save-button.saved:focus-visible {
+        box-shadow:
+            inset 0 0 0 1.5px color-mix(in srgb, var(--secondary) 52%, transparent),
+            0 0 0 4px color-mix(in srgb, var(--secondary) 16%, transparent);
     }
 
     .action-button.save-button.downloading,

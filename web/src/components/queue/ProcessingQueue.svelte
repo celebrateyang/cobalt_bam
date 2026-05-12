@@ -10,7 +10,11 @@
     import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
-    import { clearQueue, queue as readableQueue } from "$lib/state/task-manager/queue";
+    import {
+        clearQueue,
+        queue as readableQueue,
+        updateItem,
+    } from "$lib/state/task-manager/queue";
 
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
@@ -136,6 +140,10 @@
                     openFile(new File([item.resultFile], item.filename, {
                         type: item.mimeType,
                     }));
+                    updateItem(id, (current) => ({
+                        ...current,
+                        saveRequested: true,
+                    }));
                     console.log(`[queue] bulkSave: triggered download id=${id}`);
                 } catch (error) {
                     console.error(`[queue] bulkSave: openFile failed id=${id}`, error);
@@ -215,7 +223,7 @@
         </div>
 
         <div id="processing-list" role="list" aria-labelledby="queue-title">
-            {#each queue as [id, item]}
+            {#each queue as [id, item] (id)}
                 <ProcessingQueueItem {id} info={item} />
             {/each}
             {#if queue.length === 0}

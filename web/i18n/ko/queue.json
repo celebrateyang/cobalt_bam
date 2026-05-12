@@ -15,5 +15,6 @@
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
     "success_notice": "?? FreeSaveVideo ??? {{ count }}?? FreeSaveVideo? FreeSaveVideoFreeSaveVideo.",
     "save_all_done": "Save all downloaded",
+    "save_clicked": "저장 클릭됨",
     "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."
 }

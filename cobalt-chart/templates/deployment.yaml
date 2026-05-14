@@ -76,9 +76,19 @@ spec:
             - name: COOKIE_PATH
               value: src/cookies.json
             {{- with .Values.upstream }}
+            {{- if or .urls .globalUrls .cnUrls }}
             {{- if .urls }}
             - name: UPSTREAM_URLS
               value: {{ .urls | quote }}
+            {{- end }}
+            {{- if .globalUrls }}
+            - name: UPSTREAM_GLOBAL_URLS
+              value: {{ .globalUrls | quote }}
+            {{- end }}
+            {{- if .cnUrls }}
+            - name: UPSTREAM_CN_URLS
+              value: {{ .cnUrls | quote }}
+            {{- end }}
             {{- if .apiKey }}
             - name: UPSTREAM_API_KEY
               value: {{ .apiKey | quote }}
@@ -91,6 +101,8 @@ spec:
               value: {{ .circuitFailures | default 3 | quote }}
             - name: UPSTREAM_CIRCUIT_COOLDOWN_MS
               value: {{ .circuitCooldownMs | default 60000 | quote }}
+            - name: UPSTREAM_HEALTH_CHECK_INTERVAL_MS
+              value: {{ .healthCheckIntervalMs | default 600000 | quote }}
             {{- end }}
             {{- end }}
             {{- with .Values.instagram }}

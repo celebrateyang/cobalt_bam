@@ -29,7 +29,10 @@ import extractGeneric, {
 import { requestUpstream } from "../processing/upstream/request.js";
 import { setupTunnelHandler } from "./itunnel.js";
 import { setupSignalingServer } from "./signaling.js";
-import { getUpstreamHealthSnapshot } from "../processing/upstream/pool.js";
+import {
+    getUpstreamHealthSnapshot,
+    startUpstreamHealthChecks,
+} from "../processing/upstream/pool.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 
 import * as APIKeys from "../security/api-keys.js";
@@ -1087,6 +1090,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 Bright("📊 Logging enabled: ") + "Video download requests will be tracked\n"
             );
             console.log(`[BOOT] server_role=${serverRole} is_upstream=${isUpstreamServer} api_url=${env.apiURL} port=${env.apiPort}`);
+            if (!isUpstreamServer) {
+                startUpstreamHealthChecks();
+            }
         }
 
         // 初始化社交媒体数据库

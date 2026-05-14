@@ -5,6 +5,11 @@ const state = {
     cursor: 0,
 };
 
+const REGION_CN = "cn";
+const REGION_GLOBAL = "global";
+let healthCheckTimer = null;
+let healthCheckRunning = false;
+
 const normalizeURL = (raw) => {
     try {
         const url = new URL(String(raw));
@@ -22,7 +27,22 @@ const nowIso = (value) =>
         ? new Date(value).toISOString()
         : null;
 
-const createNode = (rawUrl, existing) => {
+const inferRegion = (endpoint) => {
+    try {
+        const hostname = new URL(endpoint).hostname.toLowerCase();
+        const match = hostname.match(/^api(\d+)\./);
+        if (!match) return REGION_GLOBAL;
+
+        const nodeNumber = Number(match[1]);
+        if (!Number.isFinite(nodeNumber)) return REGION_GLOBAL;
+
+        return nodeNumber % 2 === 0 ? REGION_CN : REGION_GLOBAL;
+    } catch {
+        return REGION_GLOBAL;
+    }
+};
+
+const createNode = (rawUrl, existing, region) => {
     const endpoint = normalizeURL(rawUrl);
     if (!endpoint) return null;
 
@@ -30,6 +50,7 @@ const createNode = (rawUrl, existing) => {
     return {
         url: endpoint,
         origin: parsed.origin,
+        region: region || existing?.region || inferRegion(endpoint),
         healthy: existing?.healthy ?? true,
         consecutiveFailures: existing?.consecutiveFailures ?? 0,
         inFlight: existing?.inFlight ?? 0,
@@ -42,23 +63,38 @@ const createNode = (rawUrl, existing) => {
 };
 
 const configuredURLs = () => {
-    const seen = new Set();
-    const urls = [];
+    const nodes = new Map();
+
+    const add = (raw, explicitRegion) => {
+        const normalized = normalizeURL(raw);
+        if (!normalized) return;
+
+        const existing = nodes.get(normalized);
+        nodes.set(normalized, {
+            url: normalized,
+            region: explicitRegion || existing?.region || inferRegion(normalized),
+        });
+    };
 
     for (const raw of env.upstreamURLs || []) {
-        const normalized = normalizeURL(raw);
-        if (!normalized || seen.has(normalized)) continue;
-        seen.add(normalized);
-        urls.push(normalized);
+        add(raw);
     }
 
-    return urls;
+    for (const raw of env.upstreamGlobalURLs || []) {
+        add(raw, REGION_GLOBAL);
+    }
+
+    for (const raw of env.upstreamCnURLs || []) {
+        add(raw, REGION_CN);
+    }
+
+    return [...nodes.values()];
 };
 
 export const refreshUpstreamPool = () => {
     const previous = new Map(state.nodes.map((node) => [node.url, node]));
     state.nodes = configuredURLs()
-        .map((url) => createNode(url, previous.get(url)))
+        .map(({ url, region }) => createNode(url, previous.get(url), region))
         .filter(Boolean);
 
     if (state.cursor >= state.nodes.length) {
@@ -70,6 +106,8 @@ refreshUpstreamPool();
 
 env.subscribe?.([
     "upstreamURLs",
+    "upstreamGlobalURLs",
+    "upstreamCnURLs",
     "upstreamCircuitFailures",
     "upstreamCircuitCooldownMs",
 ], refreshUpstreamPool);
@@ -92,12 +130,18 @@ const canTryNode = (node, now) => {
     return false;
 };
 
-export const selectUpstreamNode = (excluded = new Set()) => {
+export const selectUpstreamNode = (excluded = new Set(), { regions } = {}) => {
     refreshUpstreamPool();
 
     const now = Date.now();
+    const allowedRegions = Array.isArray(regions) && regions.length > 0
+        ? new Set(regions)
+        : null;
     const candidates = state.nodes.filter(
-        (node) => !excluded.has(node.url) && canTryNode(node, now),
+        (node) =>
+            !excluded.has(node.url) &&
+            canTryNode(node, now) &&
+            (!allowedRegions || allowedRegions.has(node.region)),
     );
 
     if (candidates.length === 0) return null;
@@ -158,6 +202,120 @@ export const markUpstreamFailure = (node, reason) => {
     }
 };
 
+const resolveHealthCheckIntervalMs = () =>
+    typeof env.upstreamHealthCheckIntervalMs === "number" &&
+    Number.isFinite(env.upstreamHealthCheckIntervalMs) &&
+    env.upstreamHealthCheckIntervalMs > 0
+        ? env.upstreamHealthCheckIntervalMs
+        : 600000;
+
+const resolveHealthCheckTimeoutMs = () =>
+    typeof env.upstreamTimeoutMs === "number" &&
+    Number.isFinite(env.upstreamTimeoutMs) &&
+    env.upstreamTimeoutMs > 0
+        ? env.upstreamTimeoutMs
+        : 12000;
+
+const truncateReason = (value, max = 160) => {
+    const text = String(value || "unknown");
+    return text.length > max ? `${text.slice(0, max)}...` : text;
+};
+
+const checkUpstreamNodeHealth = async (node, reason) => {
+    if (!node || isSelfOrigin(node.origin)) return;
+
+    const endpoint = new URL("/health", node.url);
+    const timeoutMs = resolveHealthCheckTimeoutMs();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const startedAt = Date.now();
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "GET",
+            signal: controller.signal,
+            headers: {
+                Accept: "application/json",
+                "ngrok-skip-browser-warning": "true",
+            },
+        });
+        const elapsedMs = Date.now() - startedAt;
+        await response.arrayBuffer().catch(() => undefined);
+
+        if (response.ok) {
+            markUpstreamSuccess(node, elapsedMs);
+            console.log(
+                `[UPSTREAM HEALTH] reason=${reason} upstream=${node.origin} region=${node.region} status=ok http=${response.status} elapsed_ms=${elapsedMs}`,
+            );
+            return;
+        }
+
+        markUpstreamFailure(node, `health_http_${response.status}`);
+        console.warn(
+            `[UPSTREAM HEALTH] reason=${reason} upstream=${node.origin} region=${node.region} status=fail http=${response.status} elapsed_ms=${elapsedMs}`,
+        );
+    } catch (error) {
+        const elapsedMs = Date.now() - startedAt;
+        const code = error?.code || error?.name || error?.cause?.code;
+        const message = error?.message || String(error);
+        const failureReason = truncateReason(["health", code, message].filter(Boolean).join(":"));
+        markUpstreamFailure(node, failureReason);
+        console.warn(
+            `[UPSTREAM HEALTH] reason=${reason} upstream=${node.origin} region=${node.region} status=fail reason=${failureReason} elapsed_ms=${elapsedMs}`,
+        );
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+export const runUpstreamHealthCheck = async (reason = "manual") => {
+    refreshUpstreamPool();
+
+    if (healthCheckRunning) return;
+
+    const nodes = state.nodes.filter((node) => !isSelfOrigin(node.origin));
+    if (nodes.length === 0) return;
+
+    healthCheckRunning = true;
+    try {
+        await Promise.allSettled(
+            nodes.map((node) => checkUpstreamNodeHealth(node, reason)),
+        );
+    } finally {
+        healthCheckRunning = false;
+    }
+};
+
+export const startUpstreamHealthChecks = ({ immediate = true } = {}) => {
+    if (healthCheckTimer) return;
+
+    refreshUpstreamPool();
+    if (state.nodes.length === 0) {
+        console.log("[UPSTREAM HEALTH] disabled: no upstream nodes configured");
+        return;
+    }
+
+    const intervalMs = resolveHealthCheckIntervalMs();
+    healthCheckTimer = setInterval(() => {
+        void runUpstreamHealthCheck("interval");
+    }, intervalMs);
+    healthCheckTimer.unref?.();
+
+    console.log(
+        `[UPSTREAM HEALTH] enabled interval_ms=${intervalMs} nodes=${state.nodes.length}`,
+    );
+
+    if (immediate) {
+        void runUpstreamHealthCheck("startup");
+    }
+};
+
+export const stopUpstreamHealthChecks = () => {
+    if (!healthCheckTimer) return;
+    clearInterval(healthCheckTimer);
+    healthCheckTimer = null;
+};
+
 export const getUpstreamHealthSnapshot = () => {
     refreshUpstreamPool();
 
@@ -166,6 +324,7 @@ export const getUpstreamHealthSnapshot = () => {
         const circuitOpen = node.circuitOpenUntil > now;
         return {
             url: node.origin,
+            region: node.region,
             healthy: node.healthy && !circuitOpen,
             circuitOpen,
             inFlight: node.inFlight,

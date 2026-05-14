@@ -8,6 +8,7 @@
 
     type UpstreamNode = {
         url: string;
+        region?: "cn" | "global" | string;
         healthy: boolean;
         circuitOpen: boolean;
         inFlight: number;
@@ -206,6 +207,7 @@
                         <thead>
                             <tr>
                                 <th>URL</th>
+                                <th>Region</th>
                                 <th>Status</th>
                                 <th>Latency</th>
                                 <th>In flight</th>
@@ -219,6 +221,11 @@
                             {#each upstreams as node (node.url)}
                                 <tr>
                                     <td class="url-cell">{node.url}</td>
+                                    <td>
+                                        <span class="region-pill" class:is-cn={node.region === "cn"}>
+                                            {node.region || "global"}
+                                        </span>
+                                    </td>
                                     <td>
                                         <span
                                             class="status-pill"
@@ -413,6 +420,23 @@
         font-size: 0.78rem;
         font-weight: 800;
         background: rgba(120, 120, 120, 0.14);
+    }
+
+    .region-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 58px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        background: rgba(59, 130, 246, 0.16);
+        color: var(--button-text);
+    }
+
+    .region-pill.is-cn {
+        background: rgba(34, 197, 94, 0.16);
     }
 
     .status-pill.is-healthy {

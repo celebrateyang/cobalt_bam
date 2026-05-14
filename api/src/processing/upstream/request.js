@@ -108,6 +108,80 @@ const logResultStatus = (payload) => {
     return payload.status || payload.error?.code || "?";
 };
 
+const cnServiceTokens = new Set([
+    "bilibili",
+    "cctv",
+    "douyin",
+    "kuaishou",
+    "xiaohongshu",
+]);
+
+const cnHostFragments = [
+    "bilibili.com",
+    "bilibili.tv",
+    "cctv.com",
+    "cntv.cn",
+    "douyin.com",
+    "iesdouyin.com",
+    "kuaishou.com",
+    "v.kuaishou.com",
+    "xiaohongshu.com",
+];
+
+const globalHostFragments = [
+    "facebook.com",
+    "fb.watch",
+    "instagram.com",
+    "reddit.com",
+    "tiktok.com",
+    "twitter.com",
+    "x.com",
+    "youtube.com",
+    "youtu.be",
+];
+
+const normalizeRouteToken = (value) =>
+    String(value || "")
+        .toLowerCase()
+        .replace(/^www\./, "");
+
+const includesAny = (value, fragments) =>
+    fragments.some((fragment) => value === fragment || value.endsWith(`.${fragment}`));
+
+const resolveRegionPlan = ({ service, targetHost, path }) => {
+    const serviceToken = normalizeRouteToken(service);
+    const hostToken = normalizeRouteToken(targetHost);
+    const routeToken = `${serviceToken} ${hostToken} ${normalizeRouteToken(path)}`;
+
+    if (
+        cnServiceTokens.has(serviceToken) ||
+        includesAny(hostToken, cnHostFragments) ||
+        [...cnServiceTokens].some((token) => routeToken.includes(token))
+    ) {
+        return {
+            name: "cn-first",
+            groups: [["cn"], ["global"]],
+        };
+    }
+
+    if (
+        includesAny(hostToken, globalHostFragments) ||
+        globalHostFragments.some((fragment) => routeToken.includes(fragment)) ||
+        serviceToken === "generic" ||
+        serviceToken === "social-instagram"
+    ) {
+        return {
+            name: "global-only",
+            groups: [["global"]],
+        };
+    }
+
+    return {
+        name: "global-default",
+        groups: [["global"]],
+    };
+};
+
 export const requestUpstream = async ({
     payload,
     requestClientIp,
@@ -125,98 +199,122 @@ export const requestUpstream = async ({
     const attempts = resolveMaxAttempts(maxAttempts);
     const excluded = new Set();
     const targetHost = targetHostForLog(payload);
+    const regionPlan = resolveRegionPlan({ service, targetHost, path });
+    let attemptNo = 0;
+    let lastErrorResult = null;
 
-    for (let attempt = 1; attempt <= attempts; attempt++) {
-        const node = selectUpstreamNode(excluded);
-        if (!node) return null;
+    for (const regions of regionPlan.groups) {
+        for (let groupAttempt = 1; groupAttempt <= attempts; groupAttempt++) {
+            if (attemptNo >= attempts) break;
 
-        excluded.add(node.url);
-        node.inFlight += 1;
+            const node = selectUpstreamNode(excluded, { regions });
+            if (!node) break;
 
-        const endpoint = new URL(path, node.url);
-        const effectiveTimeoutMs = resolveTimeoutMs(timeoutMs);
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), effectiveTimeoutMs);
-        const startedAt = Date.now();
+            attemptNo += 1;
+            excluded.add(node.url);
+            node.inFlight += 1;
 
-        const headers = {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-            ...extraHeaders,
-        };
+            const endpoint = new URL(path, node.url);
+            const effectiveTimeoutMs = resolveTimeoutMs(timeoutMs);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), effectiveTimeoutMs);
+            const startedAt = Date.now();
 
-        if (env.upstreamApiKey) {
-            headers.Authorization = `Api-Key ${env.upstreamApiKey}`;
-        }
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true",
+                ...extraHeaders,
+            };
 
-        const forwardedIp = normalizeForwardIp(requestClientIp || payload?.requestClientIp || "");
-        if (forwardedIp) {
-            headers["X-FSV-Client-IP"] = forwardedIp;
-        }
-
-        try {
-            console.log(
-                `[UPSTREAM REQUEST] service=${service} attempt=${attempt}/${attempts} upstream=${node.origin} target_host=${targetHost} timeout_ms=${effectiveTimeoutMs}`,
-            );
-
-            const response = await fetch(endpoint, {
-                method: "POST",
-                signal: controller.signal,
-                headers,
-                body: JSON.stringify(buildBody(payload)),
-            });
-
-            const body = await response.json().catch(() => null);
-            const elapsedMs = Date.now() - startedAt;
-
-            if (
-                !body ||
-                typeof body !== "object" ||
-                (requireStatus && typeof body.status !== "string")
-            ) {
-                markUpstreamFailure(node, `invalid_json:http_${response.status}`);
-                console.warn(
-                    `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} reason=invalid_json http=${response.status} elapsed_ms=${elapsedMs}`,
-                );
-                continue;
+            if (env.upstreamApiKey) {
+                headers.Authorization = `Api-Key ${env.upstreamApiKey}`;
             }
 
-            if (!response.ok) {
-                if (isFailoverStatus(response.status)) {
-                    markUpstreamFailure(node, `http_${response.status}`);
+            const forwardedIp = normalizeForwardIp(requestClientIp || payload?.requestClientIp || "");
+            if (forwardedIp) {
+                headers["X-FSV-Client-IP"] = forwardedIp;
+            }
+
+            try {
+                console.log(
+                    `[UPSTREAM REQUEST] service=${service} policy=${regionPlan.name} regions=${regions.join("|")} attempt=${attemptNo} upstream=${node.origin} region=${node.region} target_host=${targetHost} timeout_ms=${effectiveTimeoutMs}`,
+                );
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    signal: controller.signal,
+                    headers,
+                    body: JSON.stringify(buildBody(payload)),
+                });
+
+                const body = await response.json().catch(() => null);
+                const elapsedMs = Date.now() - startedAt;
+
+                if (
+                    !body ||
+                    typeof body !== "object" ||
+                    (requireStatus && typeof body.status !== "string")
+                ) {
+                    markUpstreamFailure(node, `invalid_json:http_${response.status}`);
+                    console.warn(
+                        `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=invalid_json http=${response.status} elapsed_ms=${elapsedMs}`,
+                    );
                     continue;
                 }
-                return null;
+
+                if (!response.ok) {
+                    if (isFailoverStatus(response.status)) {
+                        markUpstreamFailure(node, `http_${response.status}`);
+                        continue;
+                    }
+                    return null;
+                }
+
+                markUpstreamSuccess(node, elapsedMs);
+                console.log(
+                    `[UPSTREAM RESULT] service=${service} upstream=${node.origin} region=${node.region} http=${response.status} status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
+                );
+
+                if (acceptResponse && !acceptResponse({ response, body, node })) {
+                    console.warn(
+                        `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=response_not_accepted status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
+                    );
+                    continue;
+                }
+
+                if (requireStatus && body.status === "error") {
+                    lastErrorResult = {
+                        status: response.status,
+                        body,
+                        upstreamOrigin: node.origin,
+                        upstreamUrl: node.url,
+                    };
+                    console.warn(
+                        `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=body_error status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
+                    );
+                    continue;
+                }
+
+                return {
+                    status: response.status,
+                    body,
+                    upstreamOrigin: node.origin,
+                    upstreamUrl: node.url,
+                };
+            } catch (error) {
+                const elapsedMs = Date.now() - startedAt;
+                const reason = errorReason(error);
+                markUpstreamFailure(node, reason);
+                console.warn(
+                    `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=${reason} elapsed_ms=${elapsedMs}`,
+                );
+            } finally {
+                clearTimeout(timeout);
+                node.inFlight = Math.max(0, node.inFlight - 1);
             }
-
-            markUpstreamSuccess(node, elapsedMs);
-            console.log(
-                `[UPSTREAM RESULT] service=${service} upstream=${node.origin} http=${response.status} status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
-            );
-
-            if (acceptResponse && !acceptResponse({ response, body, node })) {
-                return null;
-            }
-
-            return {
-                status: response.status,
-                body,
-                upstreamOrigin: node.origin,
-                upstreamUrl: node.url,
-            };
-        } catch (error) {
-            const elapsedMs = Date.now() - startedAt;
-            const reason = errorReason(error);
-            markUpstreamFailure(node, reason);
-            console.warn(
-                `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} reason=${reason} elapsed_ms=${elapsedMs}`,
-            );
-        } finally {
-            clearTimeout(timeout);
-            node.inFlight = Math.max(0, node.inFlight - 1);
         }
     }
 
-    return null;
+    return lastErrorResult;
 };

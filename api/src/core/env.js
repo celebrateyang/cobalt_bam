@@ -30,6 +30,12 @@ const parseUpstreamURLs = (env) => {
         .filter(Boolean);
 };
 
+const parseURLList = (raw) =>
+    String(raw || "")
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
 const changeCallbacks = {};
 
 const onEnvChanged = (changes) => {
@@ -98,6 +104,8 @@ export const loadEnvs = (env = process.env) => {
 
         cookiePath: env.COOKIE_PATH,
         upstreamURLs: parseUpstreamURLs(env),
+        upstreamGlobalURLs: parseURLList(env.UPSTREAM_GLOBAL_URLS),
+        upstreamCnURLs: parseURLList(env.UPSTREAM_CN_URLS),
         upstreamApiKey: env.UPSTREAM_API_KEY || env.INSTAGRAM_UPSTREAM_API_KEY,
         upstreamTimeoutMs: parsePositiveInt(
             env.UPSTREAM_TIMEOUT_MS ?? env.INSTAGRAM_UPSTREAM_TIMEOUT_MS,
@@ -106,7 +114,7 @@ export const loadEnvs = (env = process.env) => {
         upstreamMaxAttempts: parsePositiveInt(env.UPSTREAM_MAX_ATTEMPTS, 2),
         upstreamCircuitFailures: parsePositiveInt(env.UPSTREAM_CIRCUIT_FAILURES, 3),
         upstreamCircuitCooldownMs: parsePositiveInt(env.UPSTREAM_CIRCUIT_COOLDOWN_MS, 60000),
-        upstreamHealthCheckIntervalMs: parsePositiveInt(env.UPSTREAM_HEALTH_CHECK_INTERVAL_MS, 30000),
+        upstreamHealthCheckIntervalMs: parsePositiveInt(env.UPSTREAM_HEALTH_CHECK_INTERVAL_MS, 600000),
         instagramUpstreamURL: env.INSTAGRAM_UPSTREAM_URL || parseUpstreamURLs(env)[0],
         instagramUpstreamApiKey: env.INSTAGRAM_UPSTREAM_API_KEY || env.UPSTREAM_API_KEY,
         instagramUpstreamTimeoutMs: parsePositiveInt(
@@ -294,7 +302,11 @@ export const validateEnvs = async (env) => {
         throw new Error('freebind is not available when external proxy is enabled')
     }
 
-    for (const upstreamURL of env.upstreamURLs) {
+    for (const upstreamURL of [
+        ...env.upstreamURLs,
+        ...env.upstreamGlobalURLs,
+        ...env.upstreamCnURLs,
+    ]) {
         let upstream;
         try {
             upstream = new URL(upstreamURL);

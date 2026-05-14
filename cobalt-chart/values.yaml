@@ -19,10 +19,13 @@ tunnelRateLimitMax: 120
 
 upstream:
   urls: "https://api3.freesavevideo.online"
+  globalUrls: ""
+  cnUrls: ""
   timeoutMs: 12000
   maxAttempts: 2
   circuitFailures: 3
   circuitCooldownMs: 60000
+  healthCheckIntervalMs: 600000
 
 instagram:
   # 亚马逊服务器

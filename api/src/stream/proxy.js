@@ -2,6 +2,7 @@ import { Agent, request } from "undici";
 import { create as contentDisposition } from "content-disposition-header";
 
 import { destroyInternalStream } from "./manage.js";
+import { tunnelDebugLog, tunnelDebugWarn } from "./debug-log.js";
 import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
 
 const defaultAgent = new Agent();
@@ -109,7 +110,7 @@ export default async function (streamInfo, res) {
             upstreamStatusCode || upstreamContentLength
                 ? ` upstream_status=${upstreamStatusCode ?? "n/a"} upstream_len=${upstreamContentLength ?? "n/a"} upstream_range=${upstreamContentRange ?? "n/a"} upstream_accept_ranges=${upstreamAcceptRanges ?? "n/a"}`
                 : "";
-        console.log(
+        tunnelDebugLog(
             `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=${reason} status=${res.statusCode ?? "n/a"} elapsed_ms=${elapsedMs} bytes_forwarded=${bytesForwarded} avg_kbps=${avgKbps}${range}${upstream}${extra}`,
         );
     };
@@ -131,7 +132,7 @@ export default async function (streamInfo, res) {
         const restartIdleTimer = () => {
             if (idleTimer) clearTimeout(idleTimer);
             idleTimer = setTimeout(() => {
-                console.warn(
+                tunnelDebugWarn(
                     `[TUNNEL] id=${tunnelId} service=bilibili type=proxy reason=upstream_idle_timeout elapsed_ms=${Date.now() - startedAt} range=${rangeHeader}`,
                 );
                 closeRequest(abortController);
@@ -140,7 +141,7 @@ export default async function (streamInfo, res) {
 
         const maxRequestMs = estimateBilibiliMaxRequestMs(upstreamContentLength);
         maxRequestTimer = setTimeout(() => {
-            console.warn(
+            tunnelDebugWarn(
                 `[TUNNEL] id=${tunnelId} service=bilibili type=proxy reason=upstream_request_timeout elapsed_ms=${Date.now() - startedAt} limit_ms=${maxRequestMs} range=${rangeHeader} route=${routeInfo.route}`,
             );
             closeRequest(abortController);
@@ -202,20 +203,20 @@ export default async function (streamInfo, res) {
 
         const requestedRange = typeof upstreamRange === "string" && upstreamRange.length > 0;
         if (requestedRange && statusCode !== 206 && statusCode !== 416) {
-            console.warn(
+            tunnelDebugWarn(
                 `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=range_status_mismatch requested_range=${rangeHeader} upstream_status=${statusCode} upstream_content_range=${upstreamContentRange ?? "none"} upstream_len=${upstreamContentLength ?? "n/a"} route=${routeInfo.route}`,
             );
         }
 
         if (statusCode === 206 && !upstreamContentRange) {
-            console.warn(
+            tunnelDebugWarn(
                 `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=missing_content_range requested_range=${rangeHeader} upstream_status=206 upstream_len=${upstreamContentLength ?? "n/a"} route=${routeInfo.route}`,
             );
         }
 
         const upstreamLenNum = Number(upstreamContentLength);
         if (requestedRange && Number.isFinite(upstreamLenNum) && upstreamLenNum === 0) {
-            console.warn(
+            tunnelDebugWarn(
                 `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=zero_length_range requested_range=${rangeHeader} requested_span=${requestedRangeSpanBytes ?? "n/a"} upstream_status=${statusCode} route=${routeInfo.route}`,
             );
         }
@@ -228,32 +229,32 @@ export default async function (streamInfo, res) {
             }
         });
         stream.once("end", () => {
-            console.log(
+            tunnelDebugLog(
                 `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=upstream_end elapsed_ms=${Date.now() - startedAt}`,
             );
         });
         stream.once("close", () => {
-            console.log(
+            tunnelDebugLog(
                 `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=upstream_close elapsed_ms=${Date.now() - startedAt}`,
             );
         });
         stream.once("error", (error) => {
-            console.warn(
+            tunnelDebugWarn(
                 `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=upstream_error elapsed_ms=${Date.now() - startedAt} message=${error?.message ?? "unknown"}`,
             );
         });
 
         setupBilibiliTimers(stream);
 
-        console.log(
+        tunnelDebugLog(
             `[TUNNEL ROUTE] id=${tunnelId} service=${streamInfo.service} type=proxy route=${routeInfo.route} target=${routeInfo.protocol}//${routeInfo.host}${routeInfo.path} nested_tunnel=${routeInfo.isTunnelTarget} range=${rangeHeader}`,
         );
-        console.log(
+        tunnelDebugLog(
             `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=start status=${statusCode} range=${rangeHeader} requested_span=${requestedRangeSpanBytes ?? "n/a"} upstream_len=${upstreamContentLength ?? "n/a"} upstream_content_range=${upstreamContentRange ?? "n/a"} route=${routeInfo.route}`,
         );
         pipe(stream, res, shutdown);
     } catch (error) {
-        console.warn(
+        tunnelDebugWarn(
             `[TUNNEL] id=${tunnelId} service=${streamInfo.service} type=proxy reason=error elapsed_ms=${Date.now() - startedAt} message=${error?.message ?? "unknown"} route=${routeInfo.route} range=${rangeHeader}`,
         );
         shutdown();

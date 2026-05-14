@@ -113,6 +113,7 @@ sudo service nscd start
 | `RATELIMIT_MAX`       | `20`      | `30`                    | max requests per time window. requests above this amount will be blocked for the rate limit window duration. |
 | `DURATION_LIMIT`      | `10800`   | `18000`                 | max allowed video duration in **seconds**. |
 | `TUNNEL_LIFESPAN`     | `90`      | `120`                   | the duration for which tunnel info is stored in ram, **in seconds**. |
+| `TUNNEL_DEBUG_LOGS`   | not used  | `true`                  | enables verbose `[TUNNEL]` and `[ITUNNEL]` stream debugging logs. leave unset in production unless investigating tunnel behavior. |
 | `YTDLP_BIN`           | not used  | `/usr/local/bin/yt-dlp` | optional path to a custom `yt-dlp` binary when not available in `PATH`. |
 
 \* the higher the nice value, the lower the priority. [read more here](https://en.wikipedia.org/wiki/Nice_(Unix)).

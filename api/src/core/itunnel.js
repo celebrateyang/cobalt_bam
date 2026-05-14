@@ -1,5 +1,6 @@
 import stream from "../stream/stream.js";
 import { getInternalTunnel } from "../stream/manage.js";
+import { tunnelDebugLog } from "../stream/debug-log.js";
 import { setTunnelPort } from "../config.js";
 import { Green } from "../misc/console-text.js";
 import express from "express";
@@ -104,7 +105,7 @@ const streamTunnel = (req, res) => {
     streamInfo.headers = mergeHeadersCaseInsensitive(streamInfo.headers, req.headers);
     streamInfo.internalTunnelId = tunnelId;
 
-    console.log(
+    tunnelDebugLog(
         `[ITUNNEL OPEN] id=${tunnelId} service=${streamInfo.service} range=${req.headers["range"] || "none"} target=${getTargetForLog(streamInfo.url)}`,
     );
 

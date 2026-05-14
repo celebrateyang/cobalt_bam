@@ -1,6 +1,7 @@
 import { request } from "undici";
 import { Readable } from "node:stream";
 import { closeRequest, getHeaders, pipe } from "./shared.js";
+import { tunnelDebugLog, tunnelDebugWarn } from "./debug-log.js";
 import { handleHlsPlaylist, isHlsResponse, probeInternalHLSTunnel } from "./internal-hls.js";
 import {
     classifyBilibiliStreamRoute,
@@ -224,7 +225,7 @@ async function* readChunks(streamInfo, size) {
                         // console.log(`[readChunks] Transplant successful, retrying`);
                         continue;
                     } catch (transplantError) {
-                        console.log(`[readChunks] Both fresh API and transplant failed:`, transplantError);
+                        tunnelDebugLog(`[readChunks] Both fresh API and transplant failed:`, transplantError);
                     }
                 }
             }
@@ -244,7 +245,7 @@ async function* readChunks(streamInfo, size) {
         }
 
         const received = chunkDataSize > 0n ? chunkDataSize : headerLength;
-        console.log(
+        tunnelDebugLog(
             `[readChunks] Chunk validation: status=${statusCode}, expected=${expected}, received=${received}, body_bytes=${chunkDataSize}, header_len=${headerLength}, content_range=${headerRange}`,
         );
 
@@ -257,10 +258,10 @@ async function* readChunks(streamInfo, size) {
             throw new Error("youtube_chunk_too_small");
         }
 
-        console.log(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${headerLength}, read progress=${read + received}/${size}`);
+        tunnelDebugLog(`[readChunks] Chunk processed: data size=${chunkDataSize}, header size=${headerLength}, read progress=${read + received}/${size}`);
         read += received;
     }
-    console.log(`[readChunks] Download completed: total read=${read}/${size}`);
+    tunnelDebugLog(`[readChunks] Download completed: total read=${read}/${size}`);
 }
 
 async function handleChunkedStream(streamInfo, res) {
@@ -272,7 +273,7 @@ async function handleChunkedStream(streamInfo, res) {
         const statusCode = statusLike === undefined
             ? undefined
             : normalizeStatusCode(statusLike, fallbackStatus);
-        console.log(`[handleYoutubeStream] Cleanup called (status=${statusCode ?? "none"})`);
+        tunnelDebugLog(`[handleYoutubeStream] Cleanup called (status=${statusCode ?? "none"})`);
         if (!res.headersSent) {
             if (statusCode !== undefined) {
                 if (statusCode >= 400) {
@@ -287,20 +288,20 @@ async function handleChunkedStream(streamInfo, res) {
         closeRequest(streamInfo.controller);
     };
 
-    console.log(`[handleYoutubeStream] Starting YouTube stream for URL: ${streamInfo.url}`);
-    console.log(`======> [handleYoutubeStream] YouTube stream processing initiated with authentication`);
+    tunnelDebugLog(`[handleYoutubeStream] Starting YouTube stream for URL: ${streamInfo.url}`);
+    tunnelDebugLog(`======> [handleYoutubeStream] YouTube stream processing initiated with authentication`);
 
     try {
         let attempts = 3;
         let responseStatus = 0;
         let responseContentType = null;
         let size = 0n;
-        console.log(`[handleYoutubeStream] Starting HEAD request with ${attempts} attempts`);
-        console.log(`======> [handleYoutubeStream] Using authenticated headers for HEAD request`);
+        tunnelDebugLog(`[handleYoutubeStream] Starting HEAD request with ${attempts} attempts`);
+        tunnelDebugLog(`======> [handleYoutubeStream] Using authenticated headers for HEAD request`);
 
         while (attempts--) {
             const headers = getHeaders('youtube');
-            console.log(`======> [handleYoutubeStream] HEAD request headers prepared with auth: ${!!headers.Cookie}`);
+            tunnelDebugLog(`======> [handleYoutubeStream] HEAD request headers prepared with auth: ${!!headers.Cookie}`);
 
             const headResponse = await fetch(streamInfo.url, {
                 headers: getHeaders(streamInfo.service),
@@ -314,8 +315,8 @@ async function handleChunkedStream(streamInfo, res) {
             responseContentType = headResponse.headers.get("content-type") || responseContentType;
             size = parseBigIntHeaderValue(headResponse.headers.get("content-length"));
 
-            console.log(`[handleYoutubeStream] HEAD response: status=${headResponse.status}, url=${headResponse.url}`);
-            console.log(`======> [handleYoutubeStream] Authenticated HEAD request completed: status=${headResponse.status}`);
+            tunnelDebugLog(`[handleYoutubeStream] HEAD response: status=${headResponse.status}, url=${headResponse.url}`);
+            tunnelDebugLog(`======> [handleYoutubeStream] Authenticated HEAD request completed: status=${headResponse.status}`);
 
             if (headResponse.status === 200 && size > 0n) {
                 break;
@@ -344,7 +345,7 @@ async function handleChunkedStream(streamInfo, res) {
                     await probeResponse.body?.cancel();
                 } catch { }
 
-                console.log(`[handleYoutubeStream] Range probe response: status=${probeResponse.status}, size=${size}`);
+                tunnelDebugLog(`[handleYoutubeStream] Range probe response: status=${probeResponse.status}, size=${size}`);
 
                 if ((probeResponse.status === 206 || probeResponse.status === 200) && size > 0n) {
                     break;
@@ -352,18 +353,18 @@ async function handleChunkedStream(streamInfo, res) {
             }
 
             if (responseStatus === 403 && streamInfo.originalRequest && attempts > 0) {
-                console.log(`[handleYoutubeStream] Got 403, attempting fresh YouTube API call (attempts left: ${attempts})`);
+                tunnelDebugLog(`[handleYoutubeStream] Got 403, attempting fresh YouTube API call (attempts left: ${attempts})`);
                 try {
                     // Import YouTube service dynamically
                     const handler = await import(`../processing/services/youtube.js`);
-                    console.log(`[handleYoutubeStream] Calling YouTube service for fresh URLs`);
+                    tunnelDebugLog(`[handleYoutubeStream] Calling YouTube service for fresh URLs`);
 
                     const response = await handler.default({
                         ...streamInfo.originalRequest,
                         dispatcher: streamInfo.dispatcher
                     });
 
-                    console.log(`[handleYoutubeStream] Fresh API response:`, {
+                    tunnelDebugLog(`[handleYoutubeStream] Fresh API response:`, {
                         hasUrls: !!response.urls,
                         urlsLength: response.urls ? [response.urls].flat().length : 0,
                         error: response.error,
@@ -376,20 +377,20 @@ async function handleChunkedStream(streamInfo, res) {
                         // Update the URL for this stream based on audio/video selection
                         if (streamInfo.originalRequest.isAudioOnly && response.urls.length > 1) {
                             streamInfo.url = response.urls[1];
-                            console.log(`[handleYoutubeStream] Updated to fresh audio URL`);
+                            tunnelDebugLog(`[handleYoutubeStream] Updated to fresh audio URL`);
                         } else if (streamInfo.originalRequest.isAudioMuted) {
                             streamInfo.url = response.urls[0];
-                            console.log(`[handleYoutubeStream] Updated to fresh video URL`);
+                            tunnelDebugLog(`[handleYoutubeStream] Updated to fresh video URL`);
                         } else {
                             // For video streams, use the first URL
                             streamInfo.url = response.urls[0];
-                            console.log(`[handleYoutubeStream] Updated to fresh video URL`);
+                            tunnelDebugLog(`[handleYoutubeStream] Updated to fresh video URL`);
                         }
 
-                        console.log(`[handleYoutubeStream] Fresh URL obtained, retrying HEAD request`);
+                        tunnelDebugLog(`[handleYoutubeStream] Fresh URL obtained, retrying HEAD request`);
                         continue; // Retry with fresh URL
                     } else {
-                        console.log(`[handleYoutubeStream] Fresh API call failed, falling back to transplant`);
+                        tunnelDebugLog(`[handleYoutubeStream] Fresh API call failed, falling back to transplant`);
                         if (streamInfo.transplant) {
                             await streamInfo.transplant(streamInfo.dispatcher);
                             // console.log(`[handleYoutubeStream] Transplant completed as fallback`);
@@ -467,7 +468,7 @@ async function handleGenericStream(streamInfo, res) {
             res.status(statusCode);
             res.setHeader("Cache-Control", "no-store");
         }
-        console.warn(
+        tunnelDebugWarn(
             `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=${reason} status=${statusCode} elapsed_ms=${Date.now() - startedAt}${extra}`,
         );
         closeRequest(streamInfo.controller);
@@ -513,7 +514,7 @@ async function handleGenericStream(streamInfo, res) {
 
         candidateIndex += 1;
         streamInfo.url = candidateUrls[candidateIndex];
-        console.warn(
+        tunnelDebugWarn(
             `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=candidate_retry attempt=${attempt} detail=${detail} next_target=${getTargetForLog(streamInfo.url)} candidate_index=${candidateIndex + 1}/${candidateUrls.length}`,
         );
         return true;
@@ -531,7 +532,7 @@ async function handleGenericStream(streamInfo, res) {
     const requestedRange = rangeHeader !== "none";
     const requestedSpan = parseRangeSpanBytes(rangeHeader);
 
-    console.log(
+    tunnelDebugLog(
         `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=prepare target=${getTargetForLog(streamInfo.url)} range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} max_attempts=${maxAttempts} candidates=${candidateUrls.length}`,
     );
 
@@ -561,24 +562,24 @@ async function handleGenericStream(streamInfo, res) {
             const contentLengthNum = Number(contentLengthHeader);
             const elapsedMs = Date.now() - requestStartedAt;
 
-            console.log(
+            tunnelDebugLog(
                 `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=response attempt=${attempt}/${maxAttempts} status=${status} elapsed_ms=${elapsedMs} range=${rangeHeader} content_length=${contentLengthHeader ?? "n/a"} content_range=${contentRangeHeader ?? "n/a"} accept_ranges=${acceptRangesHeader ?? "n/a"} target=${target}`,
             );
 
             if (requestedRange && status !== 206 && status !== 416) {
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=range_status_mismatch range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} status=${status} content_range=${contentRangeHeader ?? "none"} content_length=${contentLengthHeader ?? "n/a"} target=${target}`,
                 );
             }
 
             if (status === 206 && !contentRangeHeader) {
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=missing_content_range range=${rangeHeader} content_length=${contentLengthHeader ?? "n/a"} target=${target}`,
                 );
             }
 
             if (requestedRange && Number.isFinite(contentLengthNum) && contentLengthNum === 0) {
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL ANALYZE] id=${internalId} service=${streamInfo.service} reason=zero_length_range range=${rangeHeader} requested_span=${requestedSpan ?? "n/a"} status=${status} target=${target}`,
                 );
 
@@ -616,7 +617,7 @@ async function handleGenericStream(streamInfo, res) {
             if (canRetryWithTransplant) {
                 safeDestroyBody(fileResponse.body);
 
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry status=${status} attempt=${attempt}/${maxAttempts}`,
                 );
 
@@ -653,7 +654,7 @@ async function handleGenericStream(streamInfo, res) {
             }
 
             if (status < 200 || status > 299) {
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=non_2xx status=${status} elapsed_ms=${Date.now() - startedAt} target=${target}`,
                 );
                 reportBilibiliStream(
@@ -674,7 +675,7 @@ async function handleGenericStream(streamInfo, res) {
                     endLogged = true;
                     const totalElapsedMs = Math.max(1, Date.now() - startedAt);
                     const avgKbps = ((bytesForwarded * 8) / (totalElapsedMs / 1000) / 1024).toFixed(1);
-                    console.log(
+                    tunnelDebugLog(
                         `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=${reason} status=${status} elapsed_ms=${totalElapsedMs} bytes_forwarded=${bytesForwarded} avg_kbps=${avgKbps} range=${rangeHeader} target=${target}`,
                     );
 
@@ -727,7 +728,7 @@ async function handleGenericStream(streamInfo, res) {
                 !!streamInfo.transplant && attempt < maxAttempts;
 
             if (canRetryWithTransplant) {
-                console.warn(
+                tunnelDebugWarn(
                     `[ITUNNEL] service=${streamInfo.service} reason=transplant_retry error=request_failed attempt=${attempt}/${maxAttempts}`,
                 );
 
@@ -746,7 +747,7 @@ async function handleGenericStream(streamInfo, res) {
                 }
             }
 
-            console.warn(
+            tunnelDebugWarn(
                 `[ITUNNEL] id=${internalId} service=${streamInfo.service} reason=error attempt=${attempt}/${maxAttempts} elapsed_ms=${Date.now() - startedAt} message=${error?.message || "unknown"} target=${target} range=${rangeHeader}`,
             );
             const message = String(error?.message || "").toLowerCase();

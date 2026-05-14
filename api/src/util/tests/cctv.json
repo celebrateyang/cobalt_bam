@@ -7,5 +7,14 @@
             "code": 200,
             "status": "tunnel"
         }
+    },
+    {
+        "name": "news.cctv.com embedded videos page",
+        "url": "https://news.cctv.com/2026/02/09/ARTIns7O45QHw7wd4ePab6yc260209.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "picker"
+        }
     }
 ]

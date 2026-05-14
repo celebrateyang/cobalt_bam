@@ -1,15 +1,29 @@
 import HLS from "hls-parser";
 
 import { env, genericUserAgent } from "../../config.js";
+import { createStream } from "../../stream/manage.js";
 
 const CCTV_REFERER = "https://tv.cctv.com/";
 const GUID_REGEX = /var\s+guid\s*=\s*"([0-9a-f]{32})"/i;
+const GUID_PATTERNS = [
+    /var\s+guid(?:_\d+)?\s*=\s*"([0-9a-f]{32})"/gi,
+    /creat\w*Player\w*\(\s*["'][^"']+["']\s*,\s*["']([0-9a-f]{32})["']/gi,
+];
 const CCTV_HLS_BITRATES = [2000, 1200, 850, 450];
 const CCTV_HIGH_QUALITY_BANDWIDTH = 1200000;
 
 const requestHeaders = {
     "user-agent": genericUserAgent,
     referer: CCTV_REFERER,
+};
+
+const requestHeadersForPage = (pageUrl) => {
+    if (!(pageUrl instanceof URL)) return requestHeaders;
+
+    return {
+        ...requestHeaders,
+        referer: `${pageUrl.protocol}//${pageUrl.hostname}/`,
+    };
 };
 
 const toDuration = (value) => {
@@ -91,6 +105,29 @@ const requestJSON = async (url) => {
 const extractGuid = (html) => {
     if (typeof html !== "string" || !html) return null;
     return html.match(GUID_REGEX)?.[1] || null;
+};
+
+const extractGuids = (html) => {
+    if (typeof html !== "string" || !html) return [];
+
+    const guids = [];
+    const pushGuid = (guid) => {
+        if (typeof guid !== "string") return;
+        const normalized = guid.toLowerCase();
+        if (!/^[0-9a-f]{32}$/.test(normalized)) return;
+        if (!guids.includes(normalized)) guids.push(normalized);
+    };
+
+    pushGuid(extractGuid(html));
+
+    for (const pattern of GUID_PATTERNS) {
+        pattern.lastIndex = 0;
+        for (const match of html.matchAll(pattern)) {
+            pushGuid(match[1]);
+        }
+    }
+
+    return guids;
 };
 
 const collectUniqueCandidates = (candidates) => {
@@ -213,16 +250,7 @@ const pickVariantUrl = async (manifestUrl, quality, manifestLabel) => {
     }
 };
 
-export default async function cctv({ id, quality, url }) {
-    const pageUrl = url instanceof URL
-        ? url
-        : new URL(`https://tv.cctv.com/${id || ""}`);
-
-    const html = await requestText(pageUrl);
-    if (!html) return { error: "fetch.fail" };
-
-    const guid = extractGuid(html);
-    if (!guid) return { error: "fetch.empty" };
+const getVideo = async ({ guid, quality, headers }) => {
     const infoUrl = new URL("https://vdn.apps.cntv.cn/api/getHttpVideoInfo.do");
     infoUrl.searchParams.set("pid", guid);
 
@@ -245,18 +273,70 @@ export default async function cctv({ id, quality, url }) {
     if (!manifestCandidates.length) return { error: "fetch.empty" };
 
     const selectedManifest = manifestCandidates[0];
-    const manifestUrl = selectedManifest.url;
-    const streamUrl = await pickVariantUrl(manifestUrl, quality, selectedManifest.label);
+    const streamUrl = await pickVariantUrl(
+        selectedManifest.url,
+        quality,
+        selectedManifest.label
+    );
 
     return {
+        guid,
         urls: streamUrl,
         isHLS: true,
         duration,
         filename: `cctv_${guid}.mp4`,
         audioFilename: `cctv_${guid}_audio`,
-        headers: requestHeaders,
+        headers,
+        thumb: videoInfo?.image || videoInfo?.video?.chapters?.[0]?.image,
         fileMetadata: videoInfo?.title
             ? { title: String(videoInfo.title).trim() }
             : undefined,
     };
+};
+
+const buildPicker = (videos) =>
+    videos.map((video, index) => ({
+        type: "video",
+        url: createStream({
+            type: "remux",
+            url: video.urls,
+            service: "cctv",
+            filename: video.filename,
+            headers: video.headers,
+            fileMetadata: video.fileMetadata,
+            isHLS: true,
+        }),
+        thumb: video.thumb,
+        label: `Video ${index + 1}`,
+        note: video.fileMetadata?.title,
+    }));
+
+export default async function cctv({ id, quality, url }) {
+    const pageUrl = url instanceof URL
+        ? url
+        : new URL(`https://tv.cctv.com/${id || ""}`);
+    const headers = requestHeadersForPage(pageUrl);
+
+    const html = await requestText(pageUrl);
+    if (!html) return { error: "fetch.fail" };
+
+    const guids = extractGuids(html);
+    if (!guids.length) return { error: "fetch.empty" };
+
+    const videos = [];
+    let lastError;
+
+    for (const guid of guids) {
+        const video = await getVideo({ guid, quality, headers });
+        if (video.error) {
+            lastError = video.error;
+            continue;
+        }
+        videos.push(video);
+    }
+
+    if (!videos.length) return { error: lastError || "fetch.empty" };
+    if (videos.length === 1) return videos[0];
+
+    return { picker: buildPicker(videos) };
 }

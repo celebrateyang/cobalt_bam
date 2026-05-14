@@ -14,6 +14,7 @@
 import IconBug from "@tabler/icons-svelte/IconBug.svelte";
 import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
 import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
+import IconServer2 from "@tabler/icons-svelte/IconServer2.svelte";
 import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
 
     $: lang = $page.params.lang;
@@ -82,6 +83,13 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
                 </PageNavSection>
 
                 <PageNavSection sectionTitle="支持">
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/upstreams"
+                        tabTitle="Upstreams"
+                        iconColor="blue"
+                    >
+                        <IconServer2 />
+                    </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/promotion"
                         tabTitle="推广审核"

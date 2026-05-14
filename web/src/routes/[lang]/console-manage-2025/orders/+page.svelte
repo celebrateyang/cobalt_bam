@@ -208,7 +208,7 @@
         <div class="search">
             <input
                 type="text"
-                placeholder="搜索订单号 / 邮箱 / 姓名 / Clerk ID"
+                placeholder="搜索订单号 / 邮箱 / 姓名"
                 bind:value={search}
                 on:keydown={(e) => e.key === "Enter" && handleSearch()}
             />
@@ -352,25 +352,26 @@
                                             src={o.user.avatar_url}
                                             alt={o.user?.full_name ||
                                                 o.user?.primary_email ||
-                                                o.clerk_user_id}
+                                                "用户"}
                                         />
                                     {:else}
                                         <div class="avatar placeholder">
                                             {(o.user?.full_name ||
                                                 o.user?.primary_email ||
-                                                o.clerk_user_id)
+                                                "U")
                                                 ?.charAt(0)
                                                 ?.toUpperCase() || "U"}
                                         </div>
                                     {/if}
                                     <div class="user-meta">
-                                        <div class="name">
-                                            {o.user?.full_name ||
-                                                o.user?.primary_email ||
-                                                "-"}
+                                        <div
+                                            class="name email mono selectable"
+                                            title={o.user?.primary_email || ""}
+                                        >
+                                            {o.user?.primary_email || "-"}
                                         </div>
-                                        <div class="sub mono">
-                                            #{o.user_id} · {o.clerk_user_id}
+                                        <div class="sub">
+                                            #{o.user_id} · {o.user?.full_name || "-"}
                                         </div>
                                     </div>
                                 </div>

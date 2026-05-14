@@ -10,7 +10,9 @@
 
         <script>
             window.deferredPrompt = null;
-            window.__disableThirdPartyAnalytics = /^\/zh(?:\/|$)/.test(window.location.pathname);
+            window.__isZhPath = /^\/zh(?:\/|$)/.test(window.location.pathname);
+            window.__disableMetaPixel = window.__isZhPath;
+            window.__disableThirdPartyAds = window.__isZhPath;
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 window.deferredPrompt = e;
@@ -18,7 +20,7 @@
         </script>
         <!-- Meta Pixel Code -->
         <script>
-            if (!window.__disableThirdPartyAnalytics) {
+            if (!window.__disableMetaPixel) {
                 !function(f,b,e,v,n,t,s)
                 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
                 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -69,7 +71,6 @@
             };
 
             const bootLateThirdPartyScripts = () => {
-                if (window.__disableThirdPartyAnalytics) return;
                 if (window.__lateThirdPartyBooted) return;
                 window.__lateThirdPartyBooted = true;
 
@@ -77,10 +78,12 @@
                     window.gtag("config", "G-9LGPCDJK2R");
                 });
 
-                loadScript(
-                    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7122886750315936",
-                    { crossorigin: "anonymous" },
-                );
+                if (!window.__disableThirdPartyAds) {
+                    loadScript(
+                        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7122886750315936",
+                        { crossorigin: "anonymous" },
+                    );
+                }
             };
 
             const scheduleLateScripts = () => {

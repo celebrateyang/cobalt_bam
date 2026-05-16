@@ -57,7 +57,7 @@ export const capabilityServices: CapabilityService[] = [
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: true,
-        landingSlug: 'youtube-shorts-download',
+        landingSlug: 'youtube-download',
         notes: ['Supports watch, embed, Shorts-style links, video and audio options when available.'],
     },
     {

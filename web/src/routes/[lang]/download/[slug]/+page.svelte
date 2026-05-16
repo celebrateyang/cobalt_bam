@@ -92,6 +92,12 @@
                       name: isZh ? '\u4e0b\u8f7d' : 'Download',
                       item: `https://${fallbackHost}/${data.lang}/download`,
                   },
+                  {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: localeContent.h1,
+                      item: canonicalUrl,
+                  },
               ],
           }
         : null;
@@ -116,7 +122,33 @@
               })),
           }
         : null;
-    $: structuredData = [faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
+    $: webPageJsonLd = canonicalUrl
+        ? {
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              name: pageTitle,
+              description: pageDesc,
+              url: canonicalUrl,
+              inLanguage: data.lang,
+              isPartOf: {
+                  '@type': 'WebSite',
+                  name: 'FreeSaveVideo',
+                  url: `https://${fallbackHost}/${data.lang}`,
+              },
+              mainEntity: {
+                  '@type': 'WebApplication',
+                  name: localeContent.h1,
+                  applicationCategory: 'MultimediaApplication',
+                  operatingSystem: isZh ? '\u6d4f\u89c8\u5668' : 'Web browser',
+                  offers: {
+                      '@type': 'Offer',
+                      price: '0',
+                      priceCurrency: 'USD',
+                  },
+              },
+          }
+        : null;
+    $: structuredData = [webPageJsonLd, faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
 </script>
 
 <svelte:head>
@@ -366,7 +398,7 @@
 
     .container {
         width: 100%;
-        max-width: 980px;
+        max-width: 1120px;
         display: flex;
         flex-direction: column;
         gap: calc(var(--padding) / 1.1);
@@ -374,13 +406,13 @@
 
     .services {
         width: 100%;
-        max-width: 980px;
+        max-width: 1120px;
     }
 
     .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-        gap: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
         padding: 22px;
         border-radius: calc(var(--border-radius) * 1.6);
         border: 1px solid var(--button-stroke);
@@ -390,6 +422,11 @@
             var(--button)
         );
         box-shadow: var(--button-box-shadow);
+    }
+
+    .hero-copy {
+        width: 100%;
+        max-width: 760px;
     }
 
     .hero-copy h1 {
@@ -409,13 +446,13 @@
     }
 
     .hero-omnibox {
-        background: var(--button);
+        width: 100%;
+        box-sizing: border-box;
+        background: transparent;
         border-radius: calc(var(--border-radius) * 1.25);
-        padding: 14px;
-        border: 1px solid var(--button-stroke);
-        box-shadow:
-            var(--button-box-shadow),
-            0 0 14px rgba(0, 0, 0, 0.08);
+        padding: 6px 0 0;
+        border: 0;
+        box-shadow: none;
     }
 
     .crumb-links {
@@ -692,7 +729,6 @@
 
     @media screen and (max-width: 700px) {
         .hero {
-            grid-template-columns: 1fr;
             padding: 18px;
         }
 
@@ -701,7 +737,7 @@
         }
 
         .hero-omnibox {
-            padding: 12px;
+            padding: 4px 0 0;
         }
 
         .crumb-links {

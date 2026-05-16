@@ -56,6 +56,11 @@ export const guidePages: GuidePage[] = [
         platform: 'Instagram',
     },
     {
+        slug: 'youtube-download-guide',
+        landingSlug: 'youtube-download',
+        platform: 'YouTube',
+    },
+    {
         slug: 'facebook-download-guide',
         landingSlug: 'facebook-video-download',
         platform: 'Facebook',

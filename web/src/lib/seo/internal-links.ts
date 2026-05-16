@@ -85,6 +85,12 @@ const crossLinkEntries: CrossLinkEntry[] = [
     },
     {
         platform: 'YouTube',
+        downloadSlug: 'youtube-download',
+        guideSlug: 'youtube-download-guide',
+        homeKey: 'youtube',
+    },
+    {
+        platform: 'YouTube Shorts',
         downloadSlug: 'youtube-shorts-download',
     },
     {
@@ -127,6 +133,7 @@ const strategicDownloadOrder = [
     'tiktok-mp3-download',
     'instagram-reels-download',
     'instagram-video-download',
+    'youtube-download',
     'youtube-shorts-download',
     'facebook-video-download',
     'twitter-x-video-download',
@@ -179,7 +186,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'kuaishou-no-watermark',
         'xiaohongshu-video-download',
         'instagram-reels-download',
-        'youtube-shorts-download',
+        'youtube-download',
     ],
     'tiktok-collection-download': [
         'tiktok-no-watermark',
@@ -188,7 +195,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'douyin-no-watermark',
         'kuaishou-no-watermark',
         'instagram-reels-download',
-        'youtube-shorts-download'
+        'youtube-download'
     ],
     'tiktok-mp3-download': [
         'tiktok-no-watermark',
@@ -196,7 +203,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'douyin-mp3-download',
         'douyin-no-watermark',
         'soundcloud-audio-download',
-        'youtube-shorts-download',
+        'youtube-download',
     ],
     'douyin-no-watermark': [
         'douyin-collection-download',
@@ -228,7 +235,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'douyin-no-watermark',
         'kuaishou-no-watermark',
         'xiaohongshu-video-download',
-        'youtube-shorts-download',
+        'youtube-download',
         'twitter-x-video-download',
         'vimeo-video-download',
     ],
@@ -254,9 +261,19 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'snapchat-video-download',
         'facebook-video-download',
         'pinterest-video-download',
+        'youtube-download',
         'youtube-shorts-download',
     ],
+    'youtube-download': [
+        'youtube-shorts-download',
+        'vimeo-video-download',
+        'facebook-video-download',
+        'twitter-x-video-download',
+        'reddit-video-download',
+        'soundcloud-audio-download',
+    ],
     'youtube-shorts-download': [
+        'youtube-download',
         'tiktok-no-watermark',
         'douyin-no-watermark',
         'instagram-reels-download',
@@ -270,7 +287,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'pinterest-video-download',
         'reddit-video-download',
         'snapchat-video-download',
-        'youtube-shorts-download',
+        'youtube-download',
     ],
     'instagram-video-download': [
         'instagram-reels-download',
@@ -310,9 +327,11 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'douyin-no-watermark',
         'facebook-video-download',
         'pinterest-video-download',
+        'youtube-download',
         'youtube-shorts-download',
     ],
     'vimeo-video-download': [
+        'youtube-download',
         'youtube-shorts-download',
         'facebook-video-download',
         'twitter-x-video-download',
@@ -321,6 +340,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'instagram-video-download',
     ],
     'soundcloud-audio-download': [
+        'youtube-download',
         'youtube-shorts-download',
         'twitter-x-video-download',
         'reddit-video-download',

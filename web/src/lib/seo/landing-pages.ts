@@ -1709,6 +1709,460 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
+        slug: 'youtube-download',
+        locales: {
+            zh: zh({
+                metaTitle: `YouTube\u89c6\u9891\u4e0b\u8f7d\uff08HD / \u97f3\u9891\uff09- ${ZH_BRAND}`,
+                metaDescription:
+                    'YouTube\u89c6\u9891\u4e0b\u8f7d\uff1a\u590d\u5236\u89c6\u9891\u6216 Playlist \u94fe\u63a5\u3001\u7c98\u8d34\u5230 FreeSaveVideo\u3001\u4fdd\u5b58\u53ef\u7528\u89c6\u9891\u6216\u97f3\u9891\u7ed3\u679c\u3002\u652f\u6301\u53ef\u7528\u7684\u64ad\u653e\u5217\u8868\u6279\u91cf\u4e0b\u8f7d\u3002',
+                metaKeywords: [
+                    'youtube\u4e0b\u8f7d',
+                    'youtube\u89c6\u9891\u4e0b\u8f7d',
+                    'youtube playlist\u4e0b\u8f7d',
+                    'youtube\u64ad\u653e\u5217\u8868\u4e0b\u8f7d',
+                    'youtube downloader',
+                    'youtube\u97f3\u9891\u63d0\u53d6',
+                    'youtube mp4\u4e0b\u8f7d',
+                ],
+                h1: 'YouTube\u89c6\u9891\u4e0b\u8f7d',
+                lede: '\u7c98\u8d34 YouTube \u89c6\u9891\u6216 Playlist \u94fe\u63a5\uff0c\u5728\u7ebf\u89e3\u6790\u5e76\u4fdd\u5b58\u53ef\u7528\u7684\u89c6\u9891\u3001\u97f3\u9891\u6216\u6279\u91cf\u7ed3\u679c\u3002',
+                stepsTitle: '\u5982\u4f55\u4e0b\u8f7d YouTube \u89c6\u9891',
+                steps: [
+                    '\u6253\u5f00 YouTube \u89c6\u9891\u9875\u9762\u6216 Playlist \u64ad\u653e\u5217\u8868\u5e76\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002',
+                    '\u5c06\u94fe\u63a5\u7c98\u8d34\u5230\u4e0b\u65b9\u8f93\u5165\u6846\uff0c\u70b9\u51fb\u4e0b\u8f7d\u3002',
+                    '\u9009\u62e9\u53ef\u7528\u7684\u5355\u4e2a\u89c6\u9891\u3001\u6e05\u6670\u5ea6\u3001\u97f3\u9891\u6216 Playlist \u6279\u91cf\u7ed3\u679c\u5e76\u4fdd\u5b58\u3002',
+                ],
+                featuresTitle: '\u529f\u80fd\u4eae\u70b9',
+                features: [
+                    '\u652f\u6301 YouTube \u516c\u5f00\u53ef\u8bbf\u95ee\u89c6\u9891\u94fe\u63a5\u89e3\u6790\u3002',
+                    '\u652f\u6301\u53ef\u89e3\u6790\u7684 YouTube Playlist \u94fe\u63a5\uff0c\u53ef\u5c06\u64ad\u653e\u5217\u8868\u4f5c\u4e3a\u6279\u91cf\u4efb\u52a1\u5904\u7406\u3002',
+                    '\u53ef\u7528\u65f6\u63d0\u4f9b\u591a\u79cd\u6e05\u6670\u5ea6\u548c\u97f3\u9891\u9009\u9879\u3002',
+                    '\u652f\u6301\u624b\u673a\u548c\u7535\u8111\u6d4f\u89c8\u5668\uff0c\u65e0\u9700\u5b89\u88c5 App\u3002',
+                ],
+                faqTitle: '\u5e38\u89c1\u95ee\u9898',
+                faqs: [
+                    {
+                        q: '\u53ef\u4ee5\u4e0b\u8f7d YouTube Shorts \u5417\uff1f',
+                        a: '\u53ef\u4ee5\u5c1d\u8bd5\u7c98\u8d34 Shorts \u94fe\u63a5\uff1b\u5982\u679c\u4f60\u53ea\u5173\u6ce8 Shorts\uff0c\u4e5f\u53ef\u4ee5\u4f7f\u7528 YouTube Shorts \u4e13\u95e8\u9875\u9762\u3002',
+                    },
+                    {
+                        q: '\u80fd\u4e0b\u8f7d\u97f3\u9891\u5417\uff1f',
+                        a: '\u5982\u679c\u89e3\u6790\u7ed3\u679c\u63d0\u4f9b\u97f3\u9891\u9009\u9879\uff0c\u4f60\u53ef\u4ee5\u9009\u62e9\u97f3\u9891\u6216\u81ea\u52a8\u6a21\u5f0f\u4fdd\u5b58\u3002',
+                    },
+                    {
+                        q: '\u53ef\u4ee5\u4e0b\u8f7d YouTube Playlist \u5417\uff1f',
+                        a: '\u53ef\u4ee5\u5c1d\u8bd5\u7c98\u8d34\u5e26 list \u53c2\u6570\u7684\u516c\u5f00 Playlist \u94fe\u63a5\u3002\u5982\u679c\u9875\u9762\u68c0\u6d4b\u5230\u53ef\u7528\u7684\u64ad\u653e\u5217\u8868\u9879\u76ee\uff0c\u4f1a\u4ee5\u6279\u91cf\u4efb\u52a1\u7684\u65b9\u5f0f\u5904\u7406\u3002',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `YouTube Downloader - Download YouTube Videos in HD | ${EN_BRAND}`,
+                metaDescription:
+                    'Download YouTube videos and supported playlists online with FreeSaveVideo. Paste a YouTube link and save available HD MP4, audio, or batch results.',
+                metaKeywords: [
+                    'youtube downloader',
+                    'youtube video downloader',
+                    'youtube video download',
+                    'download youtube videos',
+                    'download youtube videos in hd',
+                    'youtube playlist downloader',
+                    'download youtube playlist',
+                    'youtube batch downloader',
+                    'youtube audio download',
+                    'youtube mp4 download',
+                    'free youtube downloader',
+                ],
+                h1: 'YouTube Video Downloader',
+                lede: 'Free YouTube downloader for saving available HD MP4 video, audio, or supported playlist batch results in your browser. Paste a YouTube link, choose a result, and download without installing an app.',
+                stepsTitle: 'How to download YouTube videos',
+                steps: [
+                    'Open the YouTube video or playlist and copy the share link.',
+                    'Paste the YouTube URL into the downloader below and click Download.',
+                    'Choose an available MP4 quality, audio option, or detected playlist batch result, then save to your device.',
+                ],
+                featuresTitle: 'Best YouTube downloader features',
+                features: [
+                    'Download publicly accessible YouTube videos as MP4 when a downloadable result is available.',
+                    'Supported YouTube playlist links can be detected as batch tasks, giving FreeSaveVideo a stronger workflow for multi-video saving.',
+                    'HD quality options, including 1080p-style results, appear when the source and parser provide them.',
+                    'Audio-only results can be selected when available, making the page useful for YouTube audio download workflows.',
+                    'Works on Android, iPhone, Windows, macOS, and desktop browsers without installing an app or signing up.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Is FreeSaveVideo a free YouTube video downloader?',
+                        a: 'Yes. You can paste a public YouTube link and check available download results in the browser without creating an account.',
+                    },
+                    {
+                        q: 'Can I download YouTube videos in HD MP4?',
+                        a: 'When the parsed result includes HD video formats, choose the MP4 quality you prefer before saving. Available quality depends on the original video and the current parser result.',
+                    },
+                    {
+                        q: 'Can I download a YouTube playlist?',
+                        a: 'You can paste a public YouTube playlist URL that includes a list parameter. When FreeSaveVideo detects supported playlist items, it can handle them as a batch download task.',
+                    },
+                    {
+                        q: 'Can I download YouTube Shorts?',
+                        a: 'You can try Shorts links here, or use the dedicated YouTube Shorts downloader page.',
+                    },
+                    {
+                        q: 'Can I download audio only?',
+                        a: 'If the parsed result includes audio options, select audio or keep automatic mode before saving.',
+                    },
+                    {
+                        q: 'Where are downloaded YouTube files saved?',
+                        a: 'Most browsers save files to the Downloads folder unless you choose another location in your browser or system settings.',
+                    },
+                ],
+            }),
+            es: wrapGenericLocale('es', {
+                metaTitle: `Descargador de YouTube - Videos HD y playlists | ${EN_BRAND}`,
+                metaDescription:
+                    'Descarga videos de YouTube y playlists compatibles online. Pega un enlace y guarda resultados disponibles en HD MP4, audio o lote.',
+                metaKeywords: [
+                    'descargador de youtube',
+                    'descargar videos de youtube',
+                    'descargar playlist de youtube',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'Descargador de videos de YouTube',
+                lede: 'Descarga videos, audio o playlists compatibles de YouTube desde el navegador. Pega el enlace, elige un resultado disponible y guarda sin instalar una app.',
+                stepsTitle: 'Cómo descargar videos de YouTube',
+                steps: [
+                    'Abre el video o la playlist de YouTube y copia el enlace.',
+                    'Pega la URL de YouTube en el descargador y pulsa Descargar.',
+                    'Elige una calidad MP4, una opción de audio o un resultado por lotes detectado y guarda el archivo.',
+                ],
+                featuresTitle: 'Funciones del descargador de YouTube',
+                features: [
+                    'Descarga videos públicos de YouTube como MP4 cuando haya un resultado disponible.',
+                    'Las playlists compatibles pueden detectarse como tareas por lotes para guardar varios videos.',
+                    'Las opciones HD y de audio aparecen cuando la fuente y el analizador las proporcionan.',
+                    'Funciona en Android, iPhone, Windows, macOS y navegadores de escritorio sin registro.',
+                ],
+                faqTitle: 'Preguntas frecuentes',
+                faqs: [
+                    {
+                        q: '¿Puedo descargar una playlist de YouTube?',
+                        a: 'Puedes pegar una URL pública de playlist con el parámetro list. Si FreeSaveVideo detecta elementos compatibles, los procesa como tarea por lotes.',
+                    },
+                    {
+                        q: '¿Puedo descargar YouTube en MP4 HD?',
+                        a: 'Cuando el resultado incluya formatos HD, elige la calidad MP4 disponible antes de guardar.',
+                    },
+                    {
+                        q: '¿Puedo descargar solo audio?',
+                        a: 'Si el resultado incluye audio, selecciona la opción de audio o usa el modo automático antes de guardar.',
+                    },
+                ],
+            }),
+            fr: wrapGenericLocale('fr', {
+                metaTitle: `Téléchargeur YouTube - Vidéos HD et playlists | ${EN_BRAND}`,
+                metaDescription:
+                    'Téléchargez des vidéos YouTube et des playlists compatibles en ligne. Collez un lien et enregistrez les résultats HD MP4, audio ou par lot disponibles.',
+                metaKeywords: [
+                    'téléchargeur youtube',
+                    'télécharger vidéo youtube',
+                    'télécharger playlist youtube',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'Téléchargeur de vidéos YouTube',
+                lede: 'Téléchargez des vidéos, de l’audio ou des playlists YouTube compatibles depuis le navigateur. Collez un lien, choisissez un résultat disponible et enregistrez sans installer d’application.',
+                stepsTitle: 'Comment télécharger des vidéos YouTube',
+                steps: [
+                    'Ouvrez la vidéo ou la playlist YouTube et copiez le lien.',
+                    'Collez l’URL YouTube dans le téléchargeur ci-dessous puis cliquez sur Télécharger.',
+                    'Choisissez une qualité MP4, une option audio ou un résultat de playlist détecté, puis enregistrez.',
+                ],
+                featuresTitle: 'Fonctions du téléchargeur YouTube',
+                features: [
+                    'Téléchargez les vidéos YouTube publiques en MP4 lorsqu’un résultat est disponible.',
+                    'Les playlists compatibles peuvent être détectées comme tâches par lot pour enregistrer plusieurs vidéos.',
+                    'Les options HD et audio apparaissent lorsque la source et l’analyseur les fournissent.',
+                    'Fonctionne sur Android, iPhone, Windows, macOS et navigateurs de bureau sans inscription.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Puis-je télécharger une playlist YouTube ?',
+                        a: 'Vous pouvez coller une URL de playlist publique contenant le paramètre list. Si FreeSaveVideo détecte des éléments compatibles, ils sont traités en tâche par lot.',
+                    },
+                    {
+                        q: 'Puis-je télécharger YouTube en MP4 HD ?',
+                        a: 'Lorsque le résultat contient des formats HD, choisissez la qualité MP4 disponible avant d’enregistrer.',
+                    },
+                    {
+                        q: 'Puis-je télécharger uniquement l’audio ?',
+                        a: 'Si le résultat propose de l’audio, sélectionnez l’option audio ou gardez le mode automatique avant d’enregistrer.',
+                    },
+                ],
+            }),
+            de: wrapGenericLocale('de', {
+                metaTitle: `YouTube Downloader - HD-Videos und Playlists | ${EN_BRAND}`,
+                metaDescription:
+                    'Lade YouTube-Videos und unterstützte Playlists online herunter. Link einfügen und verfügbare HD-MP4-, Audio- oder Batch-Ergebnisse speichern.',
+                metaKeywords: [
+                    'youtube downloader',
+                    'youtube video herunterladen',
+                    'youtube playlist herunterladen',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'YouTube Video Downloader',
+                lede: 'Speichere YouTube-Videos, Audio oder unterstützte Playlist-Batches direkt im Browser. Link einfügen, verfügbares Ergebnis wählen und ohne App herunterladen.',
+                stepsTitle: 'So lädst du YouTube-Videos herunter',
+                steps: [
+                    'Öffne das YouTube-Video oder die Playlist und kopiere den Link.',
+                    'Füge die YouTube-URL unten ein und klicke auf Download.',
+                    'Wähle eine verfügbare MP4-Qualität, Audio-Option oder erkannte Playlist-Batch-Aufgabe und speichere sie.',
+                ],
+                featuresTitle: 'Funktionen des YouTube Downloaders',
+                features: [
+                    'Öffentlich zugängliche YouTube-Videos können als MP4 gespeichert werden, wenn ein Ergebnis verfügbar ist.',
+                    'Unterstützte YouTube-Playlist-Links können als Batch-Aufgaben für mehrere Videos erkannt werden.',
+                    'HD- und Audio-Optionen erscheinen, wenn Quelle und Parser sie bereitstellen.',
+                    'Funktioniert auf Android, iPhone, Windows, macOS und Desktop-Browsern ohne Anmeldung.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Kann ich eine YouTube-Playlist herunterladen?',
+                        a: 'Du kannst eine öffentliche Playlist-URL mit list-Parameter einfügen. Wenn FreeSaveVideo unterstützte Einträge erkennt, werden sie als Batch-Aufgabe verarbeitet.',
+                    },
+                    {
+                        q: 'Kann ich YouTube-Videos als HD-MP4 herunterladen?',
+                        a: 'Wenn das Ergebnis HD-Formate enthält, wähle vor dem Speichern die verfügbare MP4-Qualität.',
+                    },
+                    {
+                        q: 'Kann ich nur Audio herunterladen?',
+                        a: 'Wenn Audio-Optionen verfügbar sind, wähle Audio oder nutze den Automatikmodus vor dem Speichern.',
+                    },
+                ],
+            }),
+            ja: wrapGenericLocale('ja', {
+                metaTitle: `YouTubeダウンローダー - HD動画とプレイリスト | ${EN_BRAND}`,
+                metaDescription:
+                    'YouTube動画と対応プレイリストをオンラインで保存。リンクを貼り付けて、利用可能なHD MP4、音声、または一括結果をダウンロードできます。',
+                metaKeywords: [
+                    'youtube ダウンローダー',
+                    'youtube 動画 ダウンロード',
+                    'youtube playlist ダウンロード',
+                    'youtube プレイリスト ダウンロード',
+                    'youtube mp4',
+                    'youtube 音声 ダウンロード',
+                ],
+                h1: 'YouTube動画ダウンローダー',
+                lede: 'YouTube動画、音声、対応プレイリストの一括結果をブラウザで保存できます。リンクを貼り付け、利用可能な結果を選び、アプリ不要でダウンロードできます。',
+                stepsTitle: 'YouTube動画をダウンロードする方法',
+                steps: [
+                    'YouTube動画またはプレイリストを開き、共有リンクをコピーします。',
+                    '下のダウンローダーにYouTube URLを貼り付け、ダウンロードをクリックします。',
+                    '利用可能なMP4画質、音声オプション、または検出されたプレイリスト一括結果を選んで保存します。',
+                ],
+                featuresTitle: 'YouTubeダウンローダーの機能',
+                features: [
+                    '公開されているYouTube動画は、利用可能な場合にMP4として保存できます。',
+                    '対応するYouTubeプレイリストリンクは、複数動画の一括タスクとして検出できます。',
+                    'ソースと解析結果が提供する場合、HD画質や音声オプションを選べます。',
+                    'Android、iPhone、Windows、macOS、デスクトップブラウザで、登録なしに使えます。',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'YouTubeプレイリストをダウンロードできますか？',
+                        a: 'listパラメータを含む公開プレイリストURLを貼り付けられます。対応項目が検出されると、一括ダウンロードタスクとして処理されます。',
+                    },
+                    {
+                        q: 'YouTube動画をHD MP4で保存できますか？',
+                        a: '解析結果にHD形式が含まれる場合、保存前に利用可能なMP4画質を選べます。',
+                    },
+                    {
+                        q: '音声だけを保存できますか？',
+                        a: '音声オプションがある場合は、保存前に音声を選択するか自動モードを利用できます。',
+                    },
+                ],
+            }),
+            ko: wrapGenericLocale('ko', {
+                metaTitle: `YouTube 다운로더 - HD 동영상과 플레이리스트 | ${EN_BRAND}`,
+                metaDescription:
+                    'YouTube 동영상과 지원되는 플레이리스트를 온라인에서 다운로드하세요. 링크를 붙여넣고 사용 가능한 HD MP4, 오디오 또는 일괄 결과를 저장할 수 있습니다.',
+                metaKeywords: [
+                    'youtube 다운로더',
+                    'youtube 동영상 다운로드',
+                    'youtube playlist 다운로드',
+                    'youtube 플레이리스트 다운로드',
+                    'youtube mp4',
+                    'youtube 오디오 다운로드',
+                ],
+                h1: 'YouTube 동영상 다운로더',
+                lede: '브라우저에서 YouTube 동영상, 오디오 또는 지원되는 플레이리스트 일괄 결과를 저장하세요. 링크를 붙여넣고 사용 가능한 결과를 선택하면 앱 설치 없이 다운로드할 수 있습니다.',
+                stepsTitle: 'YouTube 동영상 다운로드 방법',
+                steps: [
+                    'YouTube 동영상 또는 플레이리스트를 열고 공유 링크를 복사합니다.',
+                    '아래 다운로더에 YouTube URL을 붙여넣고 다운로드를 클릭합니다.',
+                    '사용 가능한 MP4 화질, 오디오 옵션 또는 감지된 플레이리스트 일괄 결과를 선택해 저장합니다.',
+                ],
+                featuresTitle: 'YouTube 다운로더 기능',
+                features: [
+                    '공개 YouTube 동영상은 다운로드 가능한 결과가 있을 때 MP4로 저장할 수 있습니다.',
+                    '지원되는 YouTube 플레이리스트 링크는 여러 동영상을 위한 일괄 작업으로 감지될 수 있습니다.',
+                    '소스와 파서가 제공하는 경우 HD 화질과 오디오 옵션이 표시됩니다.',
+                    'Android, iPhone, Windows, macOS 및 데스크톱 브라우저에서 가입 없이 작동합니다.',
+                ],
+                faqTitle: '자주 묻는 질문',
+                faqs: [
+                    {
+                        q: 'YouTube 플레이리스트를 다운로드할 수 있나요?',
+                        a: 'list 파라미터가 포함된 공개 플레이리스트 URL을 붙여넣을 수 있습니다. FreeSaveVideo가 지원되는 항목을 감지하면 일괄 다운로드 작업으로 처리합니다.',
+                    },
+                    {
+                        q: 'YouTube 동영상을 HD MP4로 다운로드할 수 있나요?',
+                        a: '결과에 HD 형식이 포함되어 있으면 저장하기 전에 사용 가능한 MP4 화질을 선택하세요.',
+                    },
+                    {
+                        q: '오디오만 다운로드할 수 있나요?',
+                        a: '오디오 옵션이 포함된 경우 저장하기 전에 오디오를 선택하거나 자동 모드를 사용할 수 있습니다.',
+                    },
+                ],
+            }),
+            ru: wrapGenericLocale('ru', {
+                metaTitle: `Загрузчик YouTube - HD-видео и плейлисты | ${EN_BRAND}`,
+                metaDescription:
+                    'Скачивайте видео YouTube и поддерживаемые плейлисты онлайн. Вставьте ссылку и сохраните доступные HD MP4, аудио или пакетные результаты.',
+                metaKeywords: [
+                    'youtube загрузчик',
+                    'скачать видео youtube',
+                    'скачать плейлист youtube',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'Загрузчик видео YouTube',
+                lede: 'Сохраняйте видео YouTube, аудио или поддерживаемые плейлисты пакетно прямо в браузере. Вставьте ссылку, выберите доступный результат и скачайте без установки приложения.',
+                stepsTitle: 'Как скачать видео YouTube',
+                steps: [
+                    'Откройте видео или плейлист YouTube и скопируйте ссылку.',
+                    'Вставьте URL YouTube в загрузчик ниже и нажмите Скачать.',
+                    'Выберите доступное качество MP4, аудио или найденный пакетный результат плейлиста и сохраните файл.',
+                ],
+                featuresTitle: 'Возможности загрузчика YouTube',
+                features: [
+                    'Публичные видео YouTube можно сохранить как MP4, если доступен результат скачивания.',
+                    'Поддерживаемые ссылки на плейлисты YouTube могут определяться как пакетные задачи для нескольких видео.',
+                    'HD-качество и аудио появляются, когда источник и парсер предоставляют такие варианты.',
+                    'Работает на Android, iPhone, Windows, macOS и в настольных браузерах без регистрации.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Можно скачать плейлист YouTube?',
+                        a: 'Можно вставить публичную ссылку на плейлист с параметром list. Если FreeSaveVideo найдет поддерживаемые элементы, он обработает их как пакетную задачу.',
+                    },
+                    {
+                        q: 'Можно скачать YouTube в HD MP4?',
+                        a: 'Если результат содержит HD-форматы, выберите доступное качество MP4 перед сохранением.',
+                    },
+                    {
+                        q: 'Можно скачать только аудио?',
+                        a: 'Если доступны аудиоварианты, выберите аудио или оставьте автоматический режим перед сохранением.',
+                    },
+                ],
+            }),
+            th: wrapGenericLocale('th', {
+                metaTitle: `ตัวดาวน์โหลด YouTube - วิดีโอ HD และเพลย์ลิสต์ | ${EN_BRAND}`,
+                metaDescription:
+                    'ดาวน์โหลดวิดีโอ YouTube และเพลย์ลิสต์ที่รองรับแบบออนไลน์ วางลิงก์แล้วบันทึกผลลัพธ์ HD MP4, เสียง หรือแบบชุดที่พร้อมใช้งาน',
+                metaKeywords: [
+                    'ดาวน์โหลด youtube',
+                    'ดาวน์โหลดวิดีโอ youtube',
+                    'ดาวน์โหลด playlist youtube',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'ตัวดาวน์โหลดวิดีโอ YouTube',
+                lede: 'บันทึกวิดีโอ YouTube, เสียง หรือผลลัพธ์เพลย์ลิสต์แบบชุดที่รองรับจากเบราว์เซอร์ วางลิงก์ เลือกผลลัพธ์ที่มี แล้วดาวน์โหลดโดยไม่ต้องติดตั้งแอป',
+                stepsTitle: 'วิธีดาวน์โหลดวิดีโอ YouTube',
+                steps: [
+                    'เปิดวิดีโอหรือเพลย์ลิสต์ YouTube แล้วคัดลอกลิงก์แชร์',
+                    'วาง URL YouTube ในตัวดาวน์โหลดด้านล่าง แล้วกดดาวน์โหลด',
+                    'เลือกคุณภาพ MP4, ตัวเลือกเสียง หรือผลลัพธ์เพลย์ลิสต์แบบชุดที่ตรวจพบ แล้วบันทึกลงอุปกรณ์',
+                ],
+                featuresTitle: 'คุณสมบัติของตัวดาวน์โหลด YouTube',
+                features: [
+                    'ดาวน์โหลดวิดีโอ YouTube แบบสาธารณะเป็น MP4 เมื่อมีผลลัพธ์ที่ดาวน์โหลดได้',
+                    'ลิงก์เพลย์ลิสต์ YouTube ที่รองรับสามารถตรวจจับเป็นงานแบบชุดสำหรับหลายวิดีโอได้',
+                    'ตัวเลือก HD และเสียงจะแสดงเมื่อแหล่งข้อมูลและตัวแยกวิเคราะห์รองรับ',
+                    'ใช้งานได้บน Android, iPhone, Windows, macOS และเบราว์เซอร์เดสก์ท็อปโดยไม่ต้องสมัคร',
+                ],
+                faqTitle: 'คำถามที่พบบ่อย',
+                faqs: [
+                    {
+                        q: 'ดาวน์โหลดเพลย์ลิสต์ YouTube ได้ไหม?',
+                        a: 'คุณสามารถวาง URL เพลย์ลิสต์สาธารณะที่มีพารามิเตอร์ list ได้ หาก FreeSaveVideo ตรวจพบรายการที่รองรับ ระบบจะประมวลผลเป็นงานดาวน์โหลดแบบชุด',
+                    },
+                    {
+                        q: 'ดาวน์โหลด YouTube เป็น HD MP4 ได้ไหม?',
+                        a: 'เมื่อผลลัพธ์มีรูปแบบ HD ให้เลือกคุณภาพ MP4 ที่มีอยู่ก่อนบันทึก',
+                    },
+                    {
+                        q: 'ดาวน์โหลดเฉพาะเสียงได้ไหม?',
+                        a: 'หากผลลัพธ์มีตัวเลือกเสียง ให้เลือกเสียงหรือใช้โหมดอัตโนมัติก่อนบันทึก',
+                    },
+                ],
+            }),
+            vi: wrapGenericLocale('vi', {
+                metaTitle: `Trình tải YouTube - Video HD và playlist | ${EN_BRAND}`,
+                metaDescription:
+                    'Tải video YouTube và playlist được hỗ trợ trực tuyến. Dán liên kết và lưu kết quả HD MP4, âm thanh hoặc tải hàng loạt khi có sẵn.',
+                metaKeywords: [
+                    'trình tải youtube',
+                    'tải video youtube',
+                    'tải playlist youtube',
+                    'youtube playlist downloader',
+                    'youtube mp4',
+                    'youtube audio',
+                ],
+                h1: 'Trình tải video YouTube',
+                lede: 'Lưu video YouTube, âm thanh hoặc kết quả playlist hàng loạt được hỗ trợ ngay trong trình duyệt. Dán liên kết, chọn kết quả có sẵn và tải xuống không cần cài app.',
+                stepsTitle: 'Cách tải video YouTube',
+                steps: [
+                    'Mở video hoặc playlist YouTube và sao chép liên kết chia sẻ.',
+                    'Dán URL YouTube vào trình tải bên dưới rồi bấm Tải xuống.',
+                    'Chọn chất lượng MP4, tùy chọn âm thanh hoặc kết quả playlist hàng loạt được phát hiện, sau đó lưu về thiết bị.',
+                ],
+                featuresTitle: 'Tính năng của trình tải YouTube',
+                features: [
+                    'Tải video YouTube công khai dưới dạng MP4 khi có kết quả tải xuống.',
+                    'Liên kết playlist YouTube được hỗ trợ có thể được phát hiện như tác vụ hàng loạt cho nhiều video.',
+                    'Tùy chọn HD và âm thanh xuất hiện khi nguồn và bộ phân tích cung cấp.',
+                    'Hoạt động trên Android, iPhone, Windows, macOS và trình duyệt máy tính mà không cần đăng ký.',
+                ],
+                faqTitle: 'Câu hỏi thường gặp',
+                faqs: [
+                    {
+                        q: 'Có thể tải playlist YouTube không?',
+                        a: 'Bạn có thể dán URL playlist công khai có tham số list. Khi FreeSaveVideo phát hiện các mục được hỗ trợ, chúng sẽ được xử lý như tác vụ tải hàng loạt.',
+                    },
+                    {
+                        q: 'Có thể tải YouTube ở dạng HD MP4 không?',
+                        a: 'Khi kết quả có định dạng HD, hãy chọn chất lượng MP4 có sẵn trước khi lưu.',
+                    },
+                    {
+                        q: 'Có thể chỉ tải âm thanh không?',
+                        a: 'Nếu kết quả có tùy chọn âm thanh, hãy chọn âm thanh hoặc giữ chế độ tự động trước khi lưu.',
+                    },
+                ],
+            }),
+        },
+    },
+    {
         slug: 'youtube-shorts-download',
         locales: {
             zh: zh({
@@ -2514,6 +2968,7 @@ const zhLandingMeta: Record<string, { platform: string; kind: 'video' | 'audio' 
     'kuaishou-no-watermark': { platform: 'Kuaishou', kind: 'video' },
     'xiaohongshu-video-download': { platform: 'Xiaohongshu', kind: 'video' },
     'instagram-reels-download': { platform: 'Instagram Reels', kind: 'reels' },
+    'youtube-download': { platform: 'YouTube', kind: 'video' },
     'youtube-shorts-download': { platform: 'YouTube Shorts', kind: 'video' },
     'facebook-video-download': { platform: 'Facebook', kind: 'video' },
     'instagram-video-download': { platform: 'Instagram', kind: 'video' },

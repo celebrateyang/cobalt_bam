@@ -48,6 +48,14 @@ function generateSitemap(): string {
 
     urls.push(`
     <url>
+        <loc>${site}/</loc>
+        <lastmod>${now}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>`);
+
+    urls.push(`
+    <url>
         <loc>${site}/capabilities.json</loc>
         <lastmod>${now}</lastmod>
         <changefreq>weekly</changefreq>

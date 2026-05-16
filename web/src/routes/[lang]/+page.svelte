@@ -432,6 +432,17 @@
     let deferredSectionsLoading = false;
     let deferredWorkArmed = false;
     let pointsFetchArmed = false;
+    let homeInternalOpen = true;
+    let moreToolsOpen = true;
+    let homeDeferredOpen = true;
+    const disclosureLabel = (open: boolean) =>
+        open
+            ? currentLocale === "zh"
+                ? "\u6536\u8d77"
+                : "Collapse"
+            : currentLocale === "zh"
+              ? "\u5c55\u5f00"
+              : "Open";
 
     const loadDeferredSections = async () => {
         if (deferredSectionsLoading || HomeDeferredSections) return;
@@ -496,10 +507,15 @@
     onMount(() => {
         const needsImmediateClerk = Boolean($page.url.searchParams.get("feedback"));
         const feedbackRequested = Boolean($page.url.searchParams.get("feedback"));
+        const isCompactHome = window.matchMedia("(max-width: 600px)").matches;
         let cancelClerkInit = () => {};
         let cancelHomeArm = () => {};
         let cancelDeferredLoad = () => {};
         let cancelNotificationInit = () => {};
+
+        homeInternalOpen = !isCompactHome;
+        moreToolsOpen = !isCompactHome;
+        homeDeferredOpen = !isCompactHome;
 
         if (clerkRuntimeEnabled) {
             if (needsImmediateClerk) {
@@ -654,11 +670,11 @@
         <!--<UserGuide/>-->
     </main>
 
-    <details class="seo-disclosure home-internal-disclosure">
+    <details class="seo-disclosure home-internal-disclosure" bind:open={homeInternalOpen}>
         <summary>
             <span>{homeHubHeading}</span>
             <span class="seo-disclosure-hint">
-                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+                {disclosureLabel(homeInternalOpen)}
             </span>
         </summary>
         <section class="home-internal-hub" aria-label={homeHubHeading}>
@@ -686,11 +702,11 @@
         </section>
     </details>
 
-    <details class="seo-disclosure more-tools-disclosure">
+    <details class="seo-disclosure more-tools-disclosure" bind:open={moreToolsOpen}>
         <summary>
             <span>{$t("home.tools.title")}</span>
             <span class="seo-disclosure-hint">
-                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+                {disclosureLabel(moreToolsOpen)}
             </span>
         </summary>
         <section class="more-tools-strip" aria-label={$t("home.tools.title")}>
@@ -705,13 +721,13 @@
         </section>
     </details>
 
-    <details class="seo-disclosure home-deferred-disclosure">
+    <details class="seo-disclosure home-deferred-disclosure" bind:open={homeDeferredOpen}>
         <summary>
             <span>
                 {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : "Supported platforms and download notes"}
             </span>
             <span class="seo-disclosure-hint">
-                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+                {disclosureLabel(homeDeferredOpen)}
             </span>
         </summary>
         <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>

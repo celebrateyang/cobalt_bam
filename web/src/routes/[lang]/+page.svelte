@@ -638,12 +638,6 @@
         <section class="download-hero" aria-labelledby="home-download-title">
             <h1 id="home-download-title">{$t("home.hero.title")}</h1>
             <p class="hero-subtitle">{$t("home.hero.subtitle")}</p>
-
-            <div class="hero-capability-list" aria-label={$t("home.capabilities.aria")}>
-                {#each heroCapabilities as item}
-                    <span class="hero-capability-chip">{item.title}</span>
-                {/each}
-            </div>
         </section>
 
         <Omnibox
@@ -660,56 +654,80 @@
         <!--<UserGuide/>-->
     </main>
 
-    <section class="home-internal-hub" aria-label={homeHubHeading}>
-        <h2>{homeHubHeading}</h2>
-        <div class="home-internal-links">
-            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
-                {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : "Video download directory"}
-            </a>
-            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
-                {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : "Video download guides"}
-            </a>
-            <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
-                {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : "Video download FAQ"}
-            </a>
-            {#each homeInternalLinks as item}
-                <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
-                    {homeLinkLabel(item.platform)}
+    <details class="seo-disclosure home-internal-disclosure">
+        <summary>
+            <span>{homeHubHeading}</span>
+            <span class="seo-disclosure-hint">
+                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+            </span>
+        </summary>
+        <section class="home-internal-hub" aria-label={homeHubHeading}>
+            <div class="home-internal-links">
+                <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : "Video download directory"}
                 </a>
-            {/each}
-            {#each homeGuideLinks as item}
-                <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
-                    {homeGuideLabel(item.platform)}
+                <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : "Video download guides"}
                 </a>
-            {/each}
-        </div>
-    </section>
+                <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : "Video download FAQ"}
+                </a>
+                {#each homeInternalLinks as item}
+                    <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
+                        {homeLinkLabel(item.platform)}
+                    </a>
+                {/each}
+                {#each homeGuideLinks as item}
+                    <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
+                        {homeGuideLabel(item.platform)}
+                    </a>
+                {/each}
+            </div>
+        </section>
+    </details>
 
-    <section class="more-tools-strip" aria-label={$t("home.tools.title")}>
-        <div class="more-tools-copy">
-            <h2>{$t("home.tools.title")}</h2>
-            <p>{$t("home.tools.description")}</p>
-        </div>
-        <div class="more-tools-links">
-            {#each moreTools as item}
-                <a class="more-tools-link" href={item.href}>{item.label}</a>
-            {/each}
-        </div>
-    </section>
+    <details class="seo-disclosure more-tools-disclosure">
+        <summary>
+            <span>{$t("home.tools.title")}</span>
+            <span class="seo-disclosure-hint">
+                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+            </span>
+        </summary>
+        <section class="more-tools-strip" aria-label={$t("home.tools.title")}>
+            <div class="more-tools-copy">
+                <p>{$t("home.tools.description")}</p>
+            </div>
+            <div class="more-tools-links">
+                {#each moreTools as item}
+                    <a class="more-tools-link" href={item.href}>{item.label}</a>
+                {/each}
+            </div>
+        </section>
+    </details>
 
-    <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
-    {#if HomeDeferredSections}
-        <svelte:component
-            this={HomeDeferredSections}
-            {currentLocale}
-            {canonicalUrl}
-            {platformCards}
-            {guideDescription1}
-            {guideDescription2}
-        />
-    {:else}
-        <div class="deferred-sections-placeholder" aria-hidden="true"></div>
-    {/if}
+    <details class="seo-disclosure home-deferred-disclosure">
+        <summary>
+            <span>
+                {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : "Supported platforms and download notes"}
+            </span>
+            <span class="seo-disclosure-hint">
+                {currentLocale === "zh" ? "\u5c55\u5f00" : "Open"}
+            </span>
+        </summary>
+        <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
+        {#if HomeDeferredSections}
+            <svelte:component
+                this={HomeDeferredSections}
+                {currentLocale}
+                {canonicalUrl}
+                {platformCards}
+                {guideDescription1}
+                {guideDescription2}
+            />
+        {:else}
+            <div class="deferred-sections-placeholder" aria-hidden="true"></div>
+        {/if}
+    </details>
     {#if showLowPointsBalloon}
         <div class="low-points-balloon-wrapper" aria-label={$t("home.points_balloon.aria")}>
             <button
@@ -899,15 +917,15 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         text-align: center;
-        margin-top: 8px;
+        margin-top: 4px;
     }
 
     .download-hero h1 {
         margin: 0;
         max-width: 860px;
-        font-size: clamp(2rem, 4.2vw, 3.1rem);
+        font-size: clamp(2rem, 3.8vw, 2.85rem);
         line-height: 1.12;
         letter-spacing: -0.03em;
         color: var(--secondary);
@@ -923,36 +941,71 @@
         text-wrap: balance;
     }
 
-    .hero-capability-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+    .seo-disclosure {
         width: 100%;
-        margin-top: 4px;
+        max-width: 1120px;
+        margin: 0 auto 10px;
+        padding: 0 var(--padding);
+        box-sizing: border-box;
     }
 
-    .hero-capability-chip {
-        margin: 0;
-        display: inline-flex;
+    .seo-disclosure summary {
+        min-height: 44px;
+        display: flex;
         align-items: center;
-        justify-content: center;
-        min-height: 36px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(var(--accent-rgb), 0.16);
-        background: rgba(var(--accent-rgb), 0.07);
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 14px;
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: var(--surface-1);
         color: var(--secondary);
-        font-size: 0.92rem;
-        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 700;
         line-height: 1.3;
+        list-style: none;
+        transition:
+            border-color 0.2s,
+            background-color 0.2s;
+    }
+
+    .seo-disclosure summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .seo-disclosure summary::after {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        flex: 0 0 auto;
+        transition: transform 0.2s;
+    }
+
+    .seo-disclosure[open] summary {
+        background: rgba(var(--accent-rgb), 0.08);
+        border-color: rgba(var(--accent-rgb), 0.26);
+    }
+
+    .seo-disclosure[open] summary::after {
+        transform: rotate(225deg);
+    }
+
+    .seo-disclosure-hint {
+        margin-left: auto;
+        color: var(--subtext);
+        font-size: 0.82rem;
+        font-weight: 500;
     }
 
     .home-internal-hub {
         width: 100%;
-        max-width: 1120px;
-        margin: 0 auto 1.1rem;
-        padding: 0 var(--padding);
+        max-width: none;
+        margin: 10px auto 0;
+        padding: 0;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -960,6 +1013,7 @@
     }
 
     .home-internal-hub h2 {
+        display: none;
         margin: 0;
         font-size: clamp(18px, 2.2vw, 22px);
         color: var(--secondary);
@@ -1003,9 +1057,9 @@
 
     .more-tools-strip {
         width: 100%;
-        max-width: 1120px;
-        margin: 0 auto 1.25rem;
-        padding: 0 var(--padding);
+        max-width: none;
+        margin: 10px auto 0;
+        padding: 0;
         box-sizing: border-box;
         display: flex;
         flex-wrap: wrap;
@@ -1021,6 +1075,7 @@
     }
 
     .more-tools-copy h2 {
+        display: none;
         margin: 0;
         font-size: clamp(16px, 2vw, 20px);
         color: var(--secondary);
@@ -1064,16 +1119,16 @@
 
     .deferred-sections-anchor {
         width: 100%;
-        height: 1px;
+        height: 0;
     }
 
     .deferred-sections-placeholder {
         width: 100%;
         max-width: 1100px;
-        margin: 0 auto 8px;
-        min-height: 160px;
+        margin: 0 auto;
+        min-height: 1px;
         content-visibility: auto;
-        contain-intrinsic-size: 1px 360px;
+        contain-intrinsic-size: 1px 1px;
     }
 
     @media (max-width: 600px) {
@@ -1089,27 +1144,32 @@
         }
 
         .download-hero h1 {
-            font-size: clamp(1.75rem, 8vw, 2.45rem);
+            font-size: clamp(1.65rem, 7.4vw, 2.2rem);
         }
 
         .download-hero {
-            gap: 12px;
+            gap: 8px;
+            margin-top: 2px;
         }
 
-        .hero-capability-list {
-            justify-content: flex-start;
+        .hero-subtitle {
+            font-size: 0.96rem;
+            line-height: 1.55;
         }
 
-        .home-internal-hub {
-            margin-bottom: 1rem;
+        .seo-disclosure {
+            margin-bottom: 8px;
+            padding: 0 14px;
         }
 
-        .more-tools-strip {
-            margin-bottom: 1.2rem;
+        .seo-disclosure summary {
+            min-height: 42px;
+            padding: 9px 12px;
+            font-size: 0.92rem;
         }
 
         .deferred-sections-placeholder {
-            min-height: 120px;
+            min-height: 1px;
         }
     }
 

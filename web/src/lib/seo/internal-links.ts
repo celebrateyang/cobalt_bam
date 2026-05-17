@@ -50,6 +50,11 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'kuaishou',
     },
     {
+        platform: 'NAVER',
+        downloadSlug: 'naver-video-download',
+        homeKey: 'naver',
+    },
+    {
         platform: 'Xiaohongshu',
         downloadSlug: 'xiaohongshu-video-download',
         guideSlug: 'xiaohongshu-download-guide',
@@ -127,6 +132,7 @@ const strategicDownloadOrder = [
     'bilibili-video-download',
     'xiaohongshu-video-download',
     'kuaishou-no-watermark',
+    'naver-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',
     'douyin-mp3-download',
@@ -144,8 +150,8 @@ const strategicDownloadOrder = [
     'soundcloud-audio-download',
 ] as const;
 
-const strategicDownloadPriority = new Map(
-    strategicDownloadOrder.map((slug, index) => [slug, index]),
+const strategicDownloadPriority: Map<string, number> = new Map(
+	strategicDownloadOrder.map((slug, index) => [slug, index]),
 );
 
 const getDownloadPriorityValue = (slug: string) =>
@@ -242,14 +248,24 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'kuaishou-no-watermark': [
         'douyin-no-watermark',
         'tiktok-no-watermark',
+        'naver-video-download',
         'xiaohongshu-video-download',
         'bilibili-video-download',
         'instagram-reels-download',
         'snapchat-video-download',
     ],
+    'naver-video-download': [
+        'youtube-shorts-download',
+        'tiktok-no-watermark',
+        'instagram-reels-download',
+        'kuaishou-no-watermark',
+        'youtube-download',
+        'vimeo-video-download',
+    ],
     'xiaohongshu-video-download': [
         'douyin-no-watermark',
         'kuaishou-no-watermark',
+        'naver-video-download',
         'bilibili-video-download',
         'instagram-video-download',
         'instagram-reels-download',
@@ -274,6 +290,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     ],
     'youtube-shorts-download': [
         'youtube-download',
+        'naver-video-download',
         'tiktok-no-watermark',
         'douyin-no-watermark',
         'instagram-reels-download',

@@ -3,8 +3,8 @@
     "description": "Answers about watermark-free downloads, formats, points, and troubleshooting.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Watermark-free video downloader",
-        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about watermark-free files, batch mode, formats, points, and common fixes.",
-        "keywords": "video downloader FAQ,Douyin downloader,Bilibili downloader,Kuaishou downloader,Xiaohongshu downloader,TikTok downloader,watermark-free download,batch download,points billing"
+        "description": "FreeSaveVideo FAQ for Douyin/TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about no-watermark saving, batch downloads, formats, points, and troubleshooting.",
+        "keywords": "FAQ,Douyin downloader,Bilibili downloader,Kuaishou downloader,NAVER downloader,naver.me download,Xiaohongshu downloader,TikTok downloader,no watermark download,batch download,points"
     },
     "toc": {
         "title": "Quick links"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "What is FreeSaveVideo?",
-            "a": "FreeSaveVideo is an online media downloader.\nPaste a share link, choose a mode, and download the file.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, CCTV, Instagram, X(Twitter), Facebook, and more."
+            "a": "FreeSaveVideo is an online media downloader.\nPaste a share link, choose a mode, and download.\nIt supports Douyin/TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, and more."
         },
         "how_to_use": {
             "q": "How do I download a video (watermark-free)?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Which platforms and link types are supported?",
-            "a": "This site covers 100+ services. Common ones include Douyin/TikTok, Bilibili, Kuaishou, Xiaohongshu, CCTV, Instagram, X(Twitter), and Facebook.\nAvailable quality, audio, and extra files depend on the platform and the original post."
+            "a": "100+ services are supported, including Douyin/TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, and more.\nQuality, audio, and extra files depend on the platform and source post."
         },
         "youtube_supported": {
             "q": "Does it support YouTube downloads?",

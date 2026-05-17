@@ -113,6 +113,18 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports short-video, video, and share links.'],
     },
     {
+        id: 'naver',
+        name: 'NAVER',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: 'naver-video-download',
+        notes: ['Supports public NAVER Shorts, naver.me share links, and m.naver.com/shorts media links.'],
+    },
+    {
         id: 'xiaohongshu',
         name: 'Xiaohongshu',
         category: 'media',

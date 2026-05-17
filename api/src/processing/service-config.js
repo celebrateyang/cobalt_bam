@@ -108,6 +108,18 @@ export const services = {
             "audio/listen/:audioId",
         ]
     },
+    naver: {
+        patterns: [
+            "_shortLink/:shortLink",
+            "shorts?mediaId=:mediaId",
+            "shorts?mediaId=:mediaId&serviceType=:serviceType",
+            "shorts?mediaId=:mediaId&serviceType=:serviceType&mediaType=:mediaType",
+            "contents?mediaId=:mediaId",
+            "contents?mediaId=:mediaId&serviceType=:serviceType",
+            "contents?mediaId=:mediaId&serviceType=:serviceType&mediaType=:mediaType",
+        ],
+        subdomains: ["m", "clip"],
+    },
     reddit: {
         patterns: [
             "comments/:id",

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Descarga sin marca de agua de plataformas populares",
-        "description": "Soporta más de 100 sitios populares, incluidos TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analice y descargue archivos HD directamente en dispositivos móviles y PC.",
+        "description": "Soporta más de 100 sitios populares, incluidos TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analice y descargue archivos HD directamente en dispositivos móviles y PC.",
         "douyin": {
             "name": "Descargador de TikTok/Douyin",
             "desc": "Soporta versiones nacionales e internacionales de TikTok/Douyin. Eliminación de marca de agua con un clic, manteniendo audio y video en HD."
@@ -33,6 +33,10 @@
         "twitter": {
             "name": "Guardador de videos de X (Twitter)",
             "desc": "Copie enlaces de tweets para extraer videos originales manteniendo la claridad."
+        },
+        "naver": {
+            "name": "NAVER Video Downloader",
+            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
         }
     },
     "cards": {
@@ -55,7 +59,7 @@
     "hero": {
         "eyebrow": "Descargador de videos online",
         "title": "Descarga videos online sin marcas de agua",
-        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
+        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
         "trust": "Las plataformas compatibles incluyen descarga por lotes, colecciones / playlists, modo solo audio y modo sin sonido."
     },
     "tools": {

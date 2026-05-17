@@ -274,6 +274,7 @@ export default function({
                     break;
 
                 case "ok":
+                case "naver":
                 case "xiaohongshu":
                 case "newgrounds":
                 case "kuaishou":

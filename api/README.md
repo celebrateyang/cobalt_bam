@@ -23,6 +23,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | instagram         | ✅            | ✅         | ✅         | ➖         | ➖              |
 | facebook          | ✅            | ❌         | ✅         | ➖         | ➖              |
 | loom              | ✅            | ❌         | ✅         | ✅         | ➖              |
+| naver             | ✅            | ✅         | ✅         | ✅         | ✅              |
 | newgrounds        | ✅            | ✅         | ✅         | ✅         | ✅              |
 | ok.ru             | ✅            | ❌         | ✅         | ✅         | ✅              |
 | pinterest         | ✅            | ✅         | ✅         | ➖         | ➖              |
@@ -51,6 +52,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | :--------  | :-----                                                                                                               |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
 | facebook   | supports public accessible videos content only.                                                                      |
+| naver      | supports public Naver Shorts share links and media-id links.                                                        |
 | pinterest  | supports photos, gifs, videos and stories.                                                                           |
 | reddit     | supports gifs and videos.                                                                                            |
 | snapchat   | supports spotlights and stories. lets you pick what to save from stories.                                            |

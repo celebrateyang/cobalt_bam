@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",
-        "description": "Hỗ trợ hơn 100 trang web phổ biến bao gồm TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, v.v. Phân tích và tải xuống các tệp HD trực tiếp trên điện thoại di động và PC.",
+        "description": "Hỗ trợ hơn 100 trang web phổ biến bao gồm TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, v.v. Phân tích và tải xuống các tệp HD trực tiếp trên điện thoại di động và PC.",
         "douyin": {
             "name": "Trình tải xuống TikTok/Douyin",
             "desc": "Hỗ trợ các phiên bản TikTok/Douyin trong nước và quốc tế. Xóa hình mờ bằng một cú nhấp chuột, giữ nguyên âm thanh và video HD."
@@ -33,6 +33,10 @@
         "twitter": {
             "name": "Lưu video X (Twitter)",
             "desc": "Sao chép liên kết tweet để trích xuất video gốc trong khi vẫn giữ nguyên độ rõ nét."
+        },
+        "naver": {
+            "name": "NAVER Video Downloader",
+            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
         }
     },
     "cards": {
@@ -55,7 +59,7 @@
     "hero": {
         "eyebrow": "Trinh tai video truc tuyen",
         "title": "Tai video truc tuyen khong watermark",
-        "subtitle": "Dan lien ket tu Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube va nhieu nen tang khac de tai video HD chi trong vai buoc.",
+        "subtitle": "Dan lien ket tu Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube va nhieu nen tang khac de tai video HD chi trong vai buoc.",
         "trust": "Cac dich vu duoc ho tro co san tai hang loat, bo suu tap / playlist, che do chi audio va che do tat tieng."
     },
     "tools": {

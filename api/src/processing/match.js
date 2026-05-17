@@ -35,6 +35,7 @@ import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
 import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
+import naver from "./services/naver.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -485,6 +486,13 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "newgrounds":
                 r = await newgrounds({
+                    ...patternMatch,
+                    quality: params.videoQuality,
+                });
+                break;
+
+            case "naver":
+                r = await naver({
                     ...patternMatch,
                     quality: params.videoQuality,
                 });

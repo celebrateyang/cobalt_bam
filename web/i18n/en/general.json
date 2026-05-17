@@ -3,10 +3,10 @@
     "meowbalt": "FreeSaveVideo",
     "beta": "stable",
     "or": "or",
-    "embed.description": "Download videos  from TikTok,Instagram,twitter,Bilibili,Douyin,kuaishou. Easy and fast video downloads.",
+    "embed.description": "Download videos for free from YouTube, TikTok, Bilibili, NAVER, Instagram, Facebook and Twitter. No registration required. Fast, watermark-free downloads.",
     "guide": {
         "title": "How to Download Videos Online with FreeSaveVideo",
-        "description1": "FreeSaveVideo lets you download videos online without installing software. Paste a link from supported platforms to save HD videos with no watermark when available.",
+        "description1": "FreeSaveVideo lets you download online videos without installing software. Paste a supported platform link, including NAVER / Korean Naver links, and save available HD video when possible.",
         "description2": "You can process single links, batch downloads, collection and playlist pages, then switch to audio-only or mute mode before saving."
     },
     "notification": {
@@ -45,8 +45,8 @@
     "seo": {
         "home": {
             "title": "FreeSaveVideo - Online Video Downloader",
-            "description": "Download watermark-free videos online with FreeSaveVideo. Paste links from Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube, and more. Supports batch downloads, collection links, audio-only, and mute mode.",
-            "keywords": "online video downloader, watermark-free video downloader, douyin downloader, tiktok downloader no watermark, bilibili video downloader, batch video downloader, playlist downloader"
+            "description": "Download watermark-free videos online with FreeSaveVideo. Paste Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube and other links to save videos, batch tasks, audio, and muted clips.",
+            "keywords": "online video downloader, watermark-free video download, NAVER video downloader, naver.me download, Douyin downloader, TikTok video saver, Bilibili video downloader, batch download, playlist downloader"
         },
         "transfer": {
             "title": "Free Online File Transfer - No App Needed | P2P Share | Cross-Device",

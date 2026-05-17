@@ -96,6 +96,7 @@
         "douyin",
         "bilibili",
         "kuaishou",
+        "naver",
         "xiaohongshu",
         "instagram",
         "youtube",
@@ -108,6 +109,7 @@
         douyin: { zh: "\u6296\u97F3", default: "Douyin" },
         tiktok: { zh: "TikTok", default: "TikTok" },
         kuaishou: { zh: "\u5FEB\u624B", default: "Kuaishou" },
+        naver: { zh: "NAVER", default: "NAVER" },
         instagram: { zh: "Instagram", default: "Instagram" },
         youtube: { zh: "YouTube", default: "YouTube" },
     } as const;

@@ -1,0 +1,22 @@
+[
+    {
+        "name": "invalid short video id",
+        "url": "https://www.kuaishou.com/short-video/abcdefghijklmnopqrstuvwxyz1234567",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.link.unsupported"
+        }
+    },
+    {
+        "name": "invalid short link",
+        "url": "https://v.kuaishou.com/abcdefghijklmnopqrstuvwxyz1234567",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.link.unsupported"
+        }
+    }
+]

@@ -1549,6 +1549,159 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
+        slug: 'naver-video-download',
+        locales: {
+            zh: zh({
+                metaTitle: `NAVER视频下载 - 在线保存Naver Shorts / 네이버视频 | ${ZH_BRAND}`,
+                metaDescription:
+                    'FreeSaveVideo 支持 NAVER（네이버）公开短视频下载。粘贴 naver.me 分享链接或 m.naver.com/shorts 链接，即可在线解析并保存可用 MP4 视频。',
+                metaKeywords: [
+                    'naver视频下载',
+                    'naver shorts下载',
+                    'naver.me下载',
+                    'm.naver.com视频下载',
+                    '네이버 동영상 다운로드',
+                    '네이버 숏폼 다운로드',
+                ],
+                h1: 'NAVER（네이버）视频下载',
+                lede: '粘贴 naver.me 分享链接或 m.naver.com/shorts 视频链接，在线解析并保存可用的 NAVER Shorts / 네이버 视频。',
+                stepsTitle: '如何下载 NAVER 视频',
+                steps: [
+                    '在 NAVER / 네이버 中打开公开视频，复制 naver.me 分享链接或 m.naver.com/shorts 链接。',
+                    '将链接粘贴到下方输入框，点击下载。',
+                    '选择可用清晰度后保存 MP4 文件到手机或电脑。',
+                ],
+                featuresTitle: '功能亮点',
+                features: [
+                    '支持公开可访问的 NAVER Shorts / 네이버 숏폼视频链接。',
+                    '支持 naver.me 分享短链和 m.naver.com/shorts?mediaId=... 链接。',
+                    '可用时提供 HD / 1080p MP4 结果，具体以原视频返回为准。',
+                    '网页直接使用，无需安装 App。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: 'NAVER 的正式名称怎么写？',
+                        a: '品牌英文通常写作 NAVER，韩语用户常写 네이버；韩国公司名可写 네이버(주) / NAVER Corporation。',
+                    },
+                    {
+                        q: '支持 naver.me 链接吗？',
+                        a: '支持。复制 NAVER 分享得到的 naver.me 短链后，粘贴到本页即可尝试解析公开视频。',
+                    },
+                    {
+                        q: '为什么 m.naver.com/shorts 首页不能下载？',
+                        a: '单纯的 shorts 首页没有具体 mediaId，无法定位视频；需要复制某个具体视频的分享链接。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `NAVER Video Downloader - Save Naver Shorts Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public NAVER (네이버) videos online. Paste a naver.me share link or m.naver.com/shorts media link and save available MP4 results in your browser.',
+                metaKeywords: [
+                    'naver video downloader',
+                    'download naver video',
+                    'naver shorts download',
+                    'naver.me downloader',
+                    'm.naver.com shorts downloader',
+                    '네이버 동영상 다운로드',
+                ],
+                h1: 'NAVER Video Downloader',
+                lede: 'Paste a public NAVER / 네이버 Shorts link, including naver.me and m.naver.com/shorts URLs, then save available MP4 results in your browser.',
+                stepsTitle: 'How to download NAVER videos',
+                steps: [
+                    'Open the public NAVER video or Shorts post and copy the share link.',
+                    'Paste the naver.me or m.naver.com/shorts URL into the downloader below.',
+                    'Choose an available quality and save the MP4 file to your device.',
+                ],
+                featuresTitle: 'NAVER downloader features',
+                features: [
+                    'Supports public NAVER Shorts / 네이버 숏폼 video links.',
+                    'Handles naver.me share links and m.naver.com/shorts mediaId URLs.',
+                    'HD and 1080p MP4 results appear when the source provides them.',
+                    'Works in the browser without installing the NAVER app.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'What is the official name of Naver?',
+                        a: 'The brand is commonly styled as NAVER. Korean users write 네이버, and the company is NAVER Corporation / 네이버(주).',
+                    },
+                    {
+                        q: 'Can I download naver.me links?',
+                        a: 'Yes. Paste a public naver.me share link and FreeSaveVideo will resolve it to the underlying NAVER media when available.',
+                    },
+                    {
+                        q: 'Why does m.naver.com/shorts fail without a mediaId?',
+                        a: 'The Shorts index page does not identify one video. Copy the share link for a specific video instead.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'NAVER',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'naver video downloader',
+                    'download naver video',
+                    'naver shorts download',
+                    'naver.me downloader',
+                    'm.naver.com shorts downloader',
+                ],
+            }),
+            ko: ko({
+                metaTitle: `NAVER 동영상 다운로드 - 네이버 숏폼 저장 | ${EN_BRAND}`,
+                metaDescription:
+                    '네이버 동영상 다운로드: naver.me 공유 링크 또는 m.naver.com/shorts 링크를 붙여넣고 공개 NAVER(네이버) 숏폼 영상을 MP4로 저장하세요. 앱 설치 없이 브라우저에서 바로 사용합니다.',
+                metaKeywords: [
+                    '네이버 동영상 다운로드',
+                    'NAVER 동영상 다운로드',
+                    '네이버 숏폼 다운로드',
+                    '네이버 쇼츠 다운로드',
+                    'naver.me 다운로드',
+                    'm.naver.com shorts 다운로드',
+                    '네이버 영상 저장',
+                    '네이버 동영상 저장',
+                    'NAVER video downloader',
+                ],
+                h1: 'NAVER 동영상 다운로드',
+                lede: 'naver.me 공유 링크나 m.naver.com/shorts 링크를 붙여넣고 공개 네이버 숏폼 영상을 MP4로 저장하세요. 별도 앱 설치 없이 모바일과 PC 브라우저에서 사용할 수 있습니다.',
+                stepsTitle: '네이버 동영상 다운로드 방법',
+                steps: [
+                    'NAVER(네이버)에서 공개 숏폼 동영상을 열고 공유 링크를 복사합니다.',
+                    '복사한 naver.me 또는 m.naver.com/shorts 링크를 아래 입력창에 붙여넣고 다운로드를 누릅니다.',
+                    '사용 가능한 화질을 선택한 뒤 MP4 파일을 기기에 저장합니다.',
+                ],
+                featuresTitle: '네이버 다운로드 지원',
+                features: [
+                    '공개 NAVER Shorts / 네이버 숏폼 동영상 링크를 지원합니다.',
+                    'naver.me 공유 짧은 링크와 m.naver.com/shorts?mediaId=... 링크를 처리합니다.',
+                    '원본에서 제공되는 경우 HD 및 1080p MP4 결과를 표시합니다.',
+                    '한국어 검색에 맞춘 네이버 동영상 저장 페이지로 모바일과 데스크톱에서 바로 사용할 수 있습니다.',
+                ],
+                faqTitle: '자주 묻는 질문',
+                faqs: [
+                    {
+                        q: '네이버의 공식 명칭은 무엇인가요?',
+                        a: '브랜드 표기는 NAVER가 공식적으로 널리 쓰이며, 한국어로는 네이버라고 씁니다. 회사명은 NAVER Corporation 또는 네이버(주)로 표기됩니다.',
+                    },
+                    {
+                        q: 'naver.me 링크도 다운로드할 수 있나요?',
+                        a: '네. 네이버 앱이나 웹에서 공유한 naver.me 링크를 붙여넣으면 실제 m.naver.com/shorts 영상 정보를 찾아 다운로드를 시도합니다.',
+                    },
+                    {
+                        q: 'm.naver.com/shorts 링크는 모두 지원되나요?',
+                        a: '특정 영상의 mediaId가 포함된 링크를 지원합니다. 단순 Shorts 홈 주소처럼 영상 ID가 없는 링크는 다운로드할 대상을 알 수 없습니다.',
+                    },
+                    {
+                        q: '비공개 네이버 영상도 저장할 수 있나요?',
+                        a: '아니요. 공개적으로 접근 가능한 NAVER / 네이버 콘텐츠만 지원합니다.',
+                    },
+                ],
+            }),
+        },
+    },
+    {
         slug: 'xiaohongshu-video-download',
         locales: {
             zh: zh({

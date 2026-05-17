@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Téléchargement sans filigrane depuis des plateformes populaires",
-        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, Kuaishou, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analysez et téléchargez des fichiers HD directement sur mobile et PC.",
+        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook, etc. Analysez et téléchargez des fichiers HD directement sur mobile et PC.",
         "douyin": {
             "name": "Téléchargeur TikTok/Douyin",
             "desc": "Prend en charge les versions nationales et internationales de TikTok/Douyin. Suppression du filigrane en un clic, conservant l'audio et la vidéo HD."
@@ -33,6 +33,10 @@
         "twitter": {
             "name": "Sauvegarde vidéo X (Twitter)",
             "desc": "Copiez les liens de tweet pour extraire les vidéos originales tout en maintenant la clarté."
+        },
+        "naver": {
+            "name": "NAVER Video Downloader",
+            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
         }
     },
     "cards": {
@@ -55,7 +59,7 @@
     "hero": {
         "eyebrow": "Telechargeur video en ligne",
         "title": "Telechargez des videos en ligne sans filigrane",
-        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Xiaohongshu, Instagram, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
+        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
         "trust": "Les services compatibles proposent le telechargement par lots, les collections / playlists, l audio seul et le mode muet."
     },
     "tools": {

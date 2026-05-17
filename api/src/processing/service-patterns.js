@@ -45,6 +45,10 @@ export const testers = {
         pattern.id?.length <= 12 ||
         pattern.audioId?.length <= 12,
 
+    "naver": pattern =>
+        pattern.shortLink?.length <= 32 ||
+        /^[0-9A-F]{16,64}$/i.test(pattern.mediaId || ""),
+
     "ok": pattern =>
         pattern.id?.length <= 16,
 

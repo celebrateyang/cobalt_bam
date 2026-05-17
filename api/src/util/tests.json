@@ -1416,6 +1416,35 @@
             }
         }
     ],
+    "naver": [
+        {
+            "name": "shorts share link",
+            "url": "https://naver.me/IGsJHLhh",
+            "params": {},
+            "expected": {
+                "code": 200,
+                "status": "tunnel"
+            }
+        },
+        {
+            "name": "shorts media id link",
+            "url": "https://m.naver.com/shorts/?mediaId=6044E8894952692BF1C3ED51FD7A4A9AC4E9&serviceType=MOMENT&mediaType=VOD",
+            "params": {},
+            "expected": {
+                "code": 200,
+                "status": "tunnel"
+            }
+        },
+        {
+            "name": "shorts index without media id",
+            "url": "https://m.naver.com/shorts",
+            "params": {},
+            "expected": {
+                "code": 400,
+                "status": "error"
+            }
+        }
+    ],
     "bsky": [
         {
             "name": "horizontal video",

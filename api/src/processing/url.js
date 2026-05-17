@@ -90,6 +90,14 @@ function aliasURL(url) {
             }
             break;
 
+        case "naver":
+            if (host.tld === "me" && parts.length === 2) {
+                url = new URL(`https://naver.com/_shortLink/${
+                    encodeURIComponent(parts[1])
+                }`);
+            }
+            break;
+
         case "facebook":
         case "fb":
             if (url.searchParams.get('v')) {
@@ -180,6 +188,21 @@ function cleanURL(url) {
         case "xiaohongshu":
             if (url.searchParams.get('xsec_token')) {
                 limitQuery('xsec_token');
+            }
+            break;
+        case "naver":
+            if (url.searchParams.get("mediaId") || url.searchParams.get("seedMediaId")) {
+                const mediaId = url.searchParams.get("mediaId") || url.searchParams.get("seedMediaId");
+                const serviceType = url.searchParams.get("serviceType");
+                const mediaType = url.searchParams.get("mediaType");
+                const cleaned = new URLSearchParams();
+
+                cleaned.set("mediaId", mediaId);
+                if (serviceType) cleaned.set("serviceType", serviceType);
+                if (mediaType) cleaned.set("mediaType", mediaType);
+
+                url.search = `?${cleaned.toString()}`;
+                stripQuery = false;
             }
             break;
     }

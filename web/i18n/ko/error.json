@@ -49,5 +49,6 @@
     "queue.refresh_required_title": "다운로드 대기열을 시작하지 못했습니다",
     "queue.refresh_required": "이 문제는 보통 프론트엔드 업데이트 후 오래된 캐시가 남아 있을 때 발생합니다. 페이지를 새로고침(Ctrl+F5)한 뒤 다시 시도해 주세요.",
     "queue.generic_error": "다운로드 워커를 시작하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
-    "queue.worker_didnt_start": "다운로드 워커가 제시간에 시작되지 않았습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요."
+    "queue.worker_didnt_start": "다운로드 워커가 제시간에 시작되지 않았습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

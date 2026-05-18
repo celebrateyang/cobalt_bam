@@ -43,8 +43,10 @@ import { verifyToken } from "@clerk/express";
 import {
     consumeUserPoints,
     createPointsHold,
+    completeMemberDownloadUsage,
     FIRST_DOWNLOAD_GRACE_MAX_POINTS,
     getUserByClerkId,
+    reserveMemberDownloadUsage,
     upsertUserFromClerk,
 } from "../db/users.js";
 
@@ -648,6 +650,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             }
         }
         const requestId = Math.random().toString(36).slice(2, 10);
+        let membershipReservation = null;
         const requestClientIp = String(
             req.header("x-fsv-client-ip")
             || req.header("cf-connecting-ip")
@@ -678,6 +681,34 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 // fail open if dedupe storage is unavailable
             }
         }
+        if (pointsUser) {
+            try {
+                membershipReservation = await reserveMemberDownloadUsage({
+                    userId: pointsUser.id,
+                    requestId,
+                    sourceUrl: normalizedRequest.url,
+                    isBatch: normalizedRequest?.batch === true,
+                    metadata: {
+                        stage: "request_reserved",
+                    },
+                });
+                if (
+                    membershipReservation?.membership &&
+                    !membershipReservation.allowed
+                ) {
+                    console.warn(
+                        `[DOWNLOAD MEMBER_LIMIT] request_id=${requestId} email=${email} reason=${membershipReservation.reason} daily=${membershipReservation.membership.usage.dailySuccessfulDownloads}/${membershipReservation.membership.limits.dailySuccessfulDownloads} monthly=${membershipReservation.membership.usage.monthlySuccessfulDownloads}/${membershipReservation.membership.limits.monthlySuccessfulDownloads}`,
+                    );
+                    return fail(res, "error.api.membership.limit.exceeded", {
+                        reason: membershipReservation.reason,
+                        membership: membershipReservation.membership,
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to reserve membership usage:", error);
+                return fail(res, "error.api.points.unavailable");
+            }
+        }
         const requestTime = new Date().toISOString();
         const authType = req.authType ?? "none";
         const startedAtMs = Date.now();
@@ -695,6 +726,20 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
         if (!parsed) {
             // console.log(`[DOWNLOAD REQUEST] Failed - Invalid URL: ${normalizedRequest.url}`);
+            if (membershipReservation?.usageEvent?.id) {
+                try {
+                    await completeMemberDownloadUsage({
+                        usageEventId: membershipReservation.usageEvent.id,
+                        status: "failed",
+                        metadata: {
+                            bodyStatus: "error",
+                            errorCode: "error.api.link.invalid",
+                        },
+                    });
+                } catch (usageError) {
+                    console.error("Failed to release member usage reservation:", usageError);
+                }
+            }
             return fail(res, "error.api.link.invalid");
         }
 
@@ -741,12 +786,56 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             let pointsAfter = null;
             let pointsHoldId = null;
             let pointsHoldExpiresAt = null;
+            let membershipPlan = null;
+            let membershipLimit = null;
+
+            if (
+                membershipReservation?.usageEvent?.id &&
+                resultBodyStatus === "error"
+            ) {
+                try {
+                    await completeMemberDownloadUsage({
+                        usageEventId: membershipReservation.usageEvent.id,
+                        status: "failed",
+                        service: result?.body?.service ?? parsed.host,
+                        metadata: {
+                            bodyStatus: resultBodyStatus,
+                            errorCode: result?.body?.error?.code ?? null,
+                        },
+                    });
+                } catch (usageError) {
+                    console.error("Failed to release member usage reservation:", usageError);
+                }
+            }
 
             if (pointsUser && resultBodyStatus !== "error") {
                 pointsRequired = durationToPoints(result?.body?.duration);
                 pointsBefore = pointsUser.points;
 
-                if (isBatchRequest) {
+                if (
+                    membershipReservation?.allowed &&
+                    membershipReservation.membership
+                ) {
+                    pointsOutcome = "member";
+                    membershipPlan = membershipReservation.membership.planKey;
+                    try {
+                        await completeMemberDownloadUsage({
+                            usageEventId: membershipReservation.usageEvent?.id,
+                            status: "success",
+                            service: result?.body?.service ?? parsed.host,
+                            durationSeconds: result?.body?.duration,
+                            pointsEquivalent: pointsRequired,
+                            metadata: {
+                                bodyStatus: resultBodyStatus,
+                            },
+                        });
+                        membershipLimit = `${membershipReservation.membership.usage.dailySuccessfulDownloads}/${membershipReservation.membership.limits.dailySuccessfulDownloads},${membershipReservation.membership.usage.monthlySuccessfulDownloads}/${membershipReservation.membership.limits.monthlySuccessfulDownloads}`;
+                    } catch (error) {
+                        console.error("Failed to record member usage:", error);
+                        pointsOutcome = "error";
+                        return fail(res, "error.api.points.unavailable");
+                    }
+                } else if (isBatchRequest) {
                     pointsOutcome = "hold";
                     const holdExpiresAt =
                         Date.now() + env.pointsHoldTtlSeconds * 1000;
@@ -813,7 +902,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
             const resultErrorCode = result?.body?.error?.code ?? "n/a";
             console.log(
-                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} error_code=${resultErrorCode} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
+                `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} error_code=${resultErrorCode} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} membership_plan=${membershipPlan ?? "n/a"} membership_usage=${membershipLimit ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
             );
 
             if (isBatchRequest && result?.body && pointsOutcome !== "skipped") {
@@ -830,6 +919,19 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             res.status(result.status).json(result.body);
         } catch (error) {
             // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);
+            if (membershipReservation?.usageEvent?.id) {
+                try {
+                    await completeMemberDownloadUsage({
+                        usageEventId: membershipReservation.usageEvent.id,
+                        status: "failed",
+                        metadata: {
+                            bodyStatus: "exception",
+                        },
+                    });
+                } catch (usageError) {
+                    console.error("Failed to release member usage reservation:", usageError);
+                }
+            }
             console.log(
                 `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} result=exception elapsed_ms=${Date.now() - startedAtMs}`,
             );

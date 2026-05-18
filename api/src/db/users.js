@@ -3,6 +3,7 @@ import { env } from "../config.js";
 import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
 import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
+import { ensureMembershipOrdersSchema } from "./membership-orders.js";
 import { nanoid } from "nanoid";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 
@@ -393,6 +394,37 @@ export const initUserDatabase = async () => {
         `CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);`,
     );
 
+    await query(`
+        CREATE TABLE IF NOT EXISTS member_usage_events (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            subscription_id INTEGER,
+            request_id TEXT,
+            service TEXT,
+            source_url TEXT,
+            duration_seconds INTEGER,
+            points_equivalent INTEGER,
+            is_batch BOOLEAN DEFAULT false,
+            status TEXT NOT NULL DEFAULT 'success',
+            completed_at BIGINT,
+            created_at BIGINT NOT NULL,
+            metadata JSONB,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL
+        );
+    `);
+
+    await query(
+        `ALTER TABLE member_usage_events ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'success';`,
+    );
+    await query(
+        `ALTER TABLE member_usage_events ADD COLUMN IF NOT EXISTS completed_at BIGINT;`,
+    );
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_member_usage_user_created_at ON member_usage_events(user_id, created_at DESC);`,
+    );
+
     // Seed: core entitlement for future gating
     await query(
         `INSERT INTO entitlements (key, description)
@@ -400,6 +432,34 @@ export const initUserDatabase = async () => {
          ON CONFLICT (key) DO NOTHING;`,
     );
 
+    await query(
+        `INSERT INTO entitlements (key, description)
+         VALUES ('member_download', 'Allows downloads without consuming points within fair-use limits')
+         ON CONFLICT (key) DO NOTHING;`,
+    );
+
+    await query(
+        `INSERT INTO plans (key, name, description, is_active, created_at, updated_at)
+         VALUES
+            ('member_monthly', 'Monthly Member', 'Monthly membership for downloads without points', true, $1, $1),
+            ('member_yearly', 'Yearly Member', 'Yearly membership for downloads without points', true, $1, $1)
+         ON CONFLICT (key) DO UPDATE
+         SET name = EXCLUDED.name,
+             description = EXCLUDED.description,
+             is_active = EXCLUDED.is_active,
+             updated_at = EXCLUDED.updated_at;`,
+        [Date.now()],
+    );
+
+    await query(
+        `INSERT INTO plan_entitlements (plan_id, entitlement_key)
+         SELECT p.id, 'member_download'
+         FROM plans p
+         WHERE p.key IN ('member_monthly', 'member_yearly')
+         ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
+    );
+
+    await ensureMembershipOrdersSchema();
     await ensureClipboardPersonalSchema();
 
     console.log("✅ User database initialized");
@@ -1228,4 +1288,355 @@ export const consumeUserPoints = async (
     } finally {
         client.release();
     }
+};
+
+export const MEMBER_DOWNLOAD_LIMITS = Object.freeze({
+    dailySuccessfulDownloads: 100,
+    monthlySuccessfulDownloads: 2000,
+});
+
+const CHINA_TIME_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+const startOfChinaDay = (now = Date.now()) => {
+    const shifted = new Date(now + CHINA_TIME_OFFSET_MS);
+    return Date.UTC(
+        shifted.getUTCFullYear(),
+        shifted.getUTCMonth(),
+        shifted.getUTCDate(),
+    ) - CHINA_TIME_OFFSET_MS;
+};
+
+const startOfChinaMonth = (now = Date.now()) => {
+    const shifted = new Date(now + CHINA_TIME_OFFSET_MS);
+    return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), 1) -
+        CHINA_TIME_OFFSET_MS;
+};
+
+const normalizeMembershipRow = (row, usage = null) => {
+    if (!row) return null;
+
+    const limits = {
+        dailySuccessfulDownloads: MEMBER_DOWNLOAD_LIMITS.dailySuccessfulDownloads,
+        monthlySuccessfulDownloads: MEMBER_DOWNLOAD_LIMITS.monthlySuccessfulDownloads,
+    };
+    const usageCounts = usage || {
+        dailySuccessfulDownloads: 0,
+        monthlySuccessfulDownloads: 0,
+    };
+
+    return {
+        active: true,
+        subscriptionId: row.subscription_id,
+        planId: row.plan_id,
+        planKey: row.plan_key,
+        planName: row.plan_name,
+        provider: row.provider,
+        status: row.status,
+        currentPeriodStart: row.current_period_start,
+        currentPeriodEnd: row.current_period_end,
+        limits,
+        usage: usageCounts,
+        limitExceeded:
+            usageCounts.dailySuccessfulDownloads >= limits.dailySuccessfulDownloads ||
+            usageCounts.monthlySuccessfulDownloads >= limits.monthlySuccessfulDownloads,
+    };
+};
+
+export const getActiveMembershipForUser = async (userId, now = Date.now()) => {
+    const result = await query(
+        `
+        SELECT
+            s.id AS subscription_id,
+            s.plan_id,
+            s.provider,
+            s.status,
+            s.current_period_start,
+            s.current_period_end,
+            p.key AS plan_key,
+            p.name AS plan_name
+        FROM subscriptions s
+        JOIN plans p ON p.id = s.plan_id
+        JOIN plan_entitlements pe ON pe.plan_id = p.id
+        WHERE s.user_id = $1
+          AND s.status = 'active'
+          AND p.is_active = true
+          AND pe.entitlement_key = 'member_download'
+          AND (s.current_period_end IS NULL OR s.current_period_end > $2)
+        ORDER BY COALESCE(s.current_period_end, 9223372036854775807) DESC, s.id DESC
+        LIMIT 1;
+        `,
+        [userId, now],
+    );
+
+    const row = result.rows[0] || null;
+    if (!row) return null;
+
+    const usage = await getMembershipUsageCounts(userId, now);
+    return normalizeMembershipRow(row, usage);
+};
+
+export const getMembershipUsageCounts = async (userId, now = Date.now()) => {
+    const dayStart = startOfChinaDay(now);
+    const monthStart = startOfChinaMonth(now);
+
+    const result = await query(
+        `
+        SELECT
+            COUNT(*) FILTER (WHERE created_at >= $2)::int AS daily_count,
+            COUNT(*) FILTER (WHERE created_at >= $3)::int AS monthly_count
+        FROM member_usage_events
+        WHERE user_id = $1;
+        `,
+        [userId, dayStart, monthStart],
+    );
+
+    const row = result.rows[0] || {};
+    return {
+        dailySuccessfulDownloads: Number(row.daily_count || 0),
+        monthlySuccessfulDownloads: Number(row.monthly_count || 0),
+    };
+};
+
+export const checkMembershipDownloadAllowance = async (
+    userId,
+    now = Date.now(),
+) => {
+    const membership = await getActiveMembershipForUser(userId, now);
+    if (!membership) {
+        return { allowed: false, reason: "not_member", membership: null };
+    }
+
+    if (
+        membership.usage.dailySuccessfulDownloads >=
+        membership.limits.dailySuccessfulDownloads
+    ) {
+        return { allowed: false, reason: "daily_limit", membership };
+    }
+
+    if (
+        membership.usage.monthlySuccessfulDownloads >=
+        membership.limits.monthlySuccessfulDownloads
+    ) {
+        return { allowed: false, reason: "monthly_limit", membership };
+    }
+
+    return { allowed: true, reason: null, membership };
+};
+
+export const reserveMemberDownloadUsage = async ({
+    userId,
+    requestId = null,
+    sourceUrl = null,
+    isBatch = false,
+    metadata = null,
+}) => {
+    const client = await getClient();
+    const now = Date.now();
+    const dayStart = startOfChinaDay(now);
+    const monthStart = startOfChinaMonth(now);
+
+    try {
+        await client.query("BEGIN");
+
+        const membershipResult = await client.query(
+            `
+            SELECT
+                s.id AS subscription_id,
+                s.plan_id,
+                s.provider,
+                s.status,
+                s.current_period_start,
+                s.current_period_end,
+                p.key AS plan_key,
+                p.name AS plan_name
+            FROM subscriptions s
+            JOIN plans p ON p.id = s.plan_id
+            JOIN plan_entitlements pe ON pe.plan_id = p.id
+            WHERE s.user_id = $1
+              AND s.status = 'active'
+              AND p.is_active = true
+              AND pe.entitlement_key = 'member_download'
+              AND (s.current_period_end IS NULL OR s.current_period_end > $2)
+            ORDER BY COALESCE(s.current_period_end, 9223372036854775807) DESC, s.id DESC
+            LIMIT 1
+            FOR UPDATE OF s;
+            `,
+            [userId, now],
+        );
+
+        const membershipRow = membershipResult.rows[0] || null;
+        if (!membershipRow) {
+            await client.query("ROLLBACK");
+            return { allowed: false, reason: "not_member", membership: null };
+        }
+
+        const usageResult = await client.query(
+            `
+            SELECT
+                COUNT(*) FILTER (WHERE created_at >= $2)::int AS daily_count,
+                COUNT(*) FILTER (WHERE created_at >= $3)::int AS monthly_count
+            FROM member_usage_events
+            WHERE user_id = $1
+              AND status IN ('reserved', 'success');
+            `,
+            [userId, dayStart, monthStart],
+        );
+        const usageRow = usageResult.rows[0] || {};
+        const usage = {
+            dailySuccessfulDownloads: Number(usageRow.daily_count || 0),
+            monthlySuccessfulDownloads: Number(usageRow.monthly_count || 0),
+        };
+        const membership = normalizeMembershipRow(membershipRow, usage);
+
+        if (
+            usage.dailySuccessfulDownloads >=
+            membership.limits.dailySuccessfulDownloads
+        ) {
+            await client.query("ROLLBACK");
+            return { allowed: false, reason: "daily_limit", membership };
+        }
+
+        if (
+            usage.monthlySuccessfulDownloads >=
+            membership.limits.monthlySuccessfulDownloads
+        ) {
+            await client.query("ROLLBACK");
+            return { allowed: false, reason: "monthly_limit", membership };
+        }
+
+        const insertResult = await client.query(
+            `
+            INSERT INTO member_usage_events (
+                user_id,
+                subscription_id,
+                request_id,
+                source_url,
+                is_batch,
+                status,
+                created_at,
+                metadata
+            ) VALUES ($1,$2,$3,$4,$5,'reserved',$6,$7)
+            RETURNING *;
+            `,
+            [
+                userId,
+                membership.subscriptionId,
+                requestId,
+                sourceUrl,
+                isBatch === true,
+                now,
+                metadata,
+            ],
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            allowed: true,
+            reason: null,
+            membership: normalizeMembershipRow(membershipRow, {
+                dailySuccessfulDownloads: usage.dailySuccessfulDownloads + 1,
+                monthlySuccessfulDownloads: usage.monthlySuccessfulDownloads + 1,
+            }),
+            usageEvent: insertResult.rows[0] || null,
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const completeMemberDownloadUsage = async ({
+    usageEventId,
+    status = "success",
+    service = null,
+    durationSeconds = null,
+    pointsEquivalent = null,
+    metadata = null,
+}) => {
+    if (!usageEventId) return null;
+
+    const now = Date.now();
+    const normalizedStatus = status === "success" ? "success" : "failed";
+    const result = await query(
+        `
+        UPDATE member_usage_events
+        SET status = $2,
+            service = COALESCE($3, service),
+            duration_seconds = $4,
+            points_equivalent = $5,
+            completed_at = $6,
+            metadata = COALESCE($7, metadata)
+        WHERE id = $1
+        RETURNING *;
+        `,
+        [
+            usageEventId,
+            normalizedStatus,
+            service,
+            Number.isFinite(Number(durationSeconds))
+                ? Math.max(0, Math.round(Number(durationSeconds)))
+                : null,
+            Number.isFinite(Number(pointsEquivalent))
+                ? Math.max(0, Math.round(Number(pointsEquivalent)))
+                : null,
+            now,
+            metadata,
+        ],
+    );
+
+    return result.rows[0] || null;
+};
+
+export const recordMemberDownloadUsage = async ({
+    userId,
+    subscriptionId = null,
+    requestId = null,
+    service = null,
+    sourceUrl = null,
+    durationSeconds = null,
+    pointsEquivalent = null,
+    isBatch = false,
+    metadata = null,
+}) => {
+    const now = Date.now();
+    const result = await query(
+        `
+        INSERT INTO member_usage_events (
+            user_id,
+            subscription_id,
+            request_id,
+            service,
+            source_url,
+            duration_seconds,
+            points_equivalent,
+            is_batch,
+            created_at,
+            metadata
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        RETURNING *;
+        `,
+        [
+            userId,
+            subscriptionId,
+            requestId,
+            service,
+            sourceUrl,
+            Number.isFinite(Number(durationSeconds))
+                ? Math.max(0, Math.round(Number(durationSeconds)))
+                : null,
+            Number.isFinite(Number(pointsEquivalent))
+                ? Math.max(0, Math.round(Number(pointsEquivalent)))
+                : null,
+            isBatch === true,
+            now,
+            metadata,
+        ],
+    );
+
+    return result.rows[0] || null;
 };

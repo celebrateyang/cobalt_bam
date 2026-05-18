@@ -62,5 +62,6 @@
     "queue.refresh_required_title": "download queue failed to start",
     "queue.refresh_required": "this usually happens after a frontend update with stale cache. refresh the page (Ctrl+F5) and try again.",
     "queue.generic_error": "download worker failed to start. refresh the page and try again.",
-    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again."
+    "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again.",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

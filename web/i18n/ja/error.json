@@ -49,5 +49,6 @@
     "queue.refresh_required_title": "ダウンロードキューの起動に失敗しました",
     "queue.refresh_required": "これは通常、フロントエンド更新後に古いキャッシュが残っているときに発生します。ページを再読み込み（Ctrl+F5）して、もう一度お試しください。",
     "queue.generic_error": "ダウンロードワーカーの起動に失敗しました。ページを再読み込みして、もう一度お試しください。",
-    "queue.worker_didnt_start": "ダウンロードワーカーが時間内に起動しませんでした。ページを再読み込みして、もう一度お試しください。"
+    "queue.worker_didnt_start": "ダウンロードワーカーが時間内に起動しませんでした。ページを再読み込みして、もう一度お試しください。",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

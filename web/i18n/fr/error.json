@@ -49,5 +49,6 @@
     "queue.refresh_required_title": "la file de téléchargement n'a pas pu démarrer",
     "queue.refresh_required": "cela se produit généralement après une mise à jour du frontend avec un cache obsolète. rafraîchissez la page (Ctrl+F5) et réessayez.",
     "queue.generic_error": "le processus de téléchargement n'a pas pu démarrer. rafraîchissez la page et réessayez.",
-    "queue.worker_didnt_start": "le processus de téléchargement n'a pas démarré à temps. rafraîchissez la page et réessayez."
+    "queue.worker_didnt_start": "le processus de téléchargement n'a pas démarré à temps. rafraîchissez la page et réessayez.",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

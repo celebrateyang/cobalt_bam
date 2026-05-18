@@ -46,6 +46,46 @@
         provider: "wechat" | "polar";
     };
 
+    type Membership = {
+        active: boolean;
+        planKey: string;
+        planName?: string;
+        currentPeriodEnd: number | null;
+        limits?: {
+            dailySuccessfulDownloads?: number;
+            monthlySuccessfulDownloads?: number;
+        };
+        usage?: {
+            dailySuccessfulDownloads?: number;
+            monthlySuccessfulDownloads?: number;
+        };
+    } | null;
+
+    type MembershipProduct = {
+        key: string;
+        planKey: string;
+        durationDays: number;
+        amountFen: number;
+        currency: string;
+        enabled?: boolean;
+    };
+
+    type MembershipOrder = {
+        id: number;
+        amount_fen: number;
+        currency: string;
+        status: string;
+        out_trade_no: string;
+        provider: "wechat";
+        product_key: string;
+        plan_key: string;
+        duration_days: number;
+    };
+
+    type ActivePaymentOrder =
+        | (CreditOrder & { kind: "credit" })
+        | (MembershipOrder & { kind: "membership" });
+
     type PaymentProvider = "wechat" | "polar";
     type PromotionType = "post" | "video";
     type RecordsTab = "promotion" | "feedback";
@@ -171,6 +211,7 @@
     };
 
     let points: number | null = null;
+    let membership: Membership = null;
     let pointsErrorKey = "";
     let pointsLoading = false;
     let lastPointsUserId: string | null = null;
@@ -240,6 +281,7 @@
             }
 
             points = data.data?.user?.points ?? null;
+            membership = data.data?.user?.membership ?? null;
             referralCode = data.data?.user?.referral_code ?? null;
             lastPointsUserId = userId;
         } catch (error) {
@@ -254,6 +296,7 @@
         void fetchPoints();
     } else {
         points = null;
+        membership = null;
         referralCode = null;
         lastPointsUserId = null;
         contactAccordionOpen = false;
@@ -484,17 +527,41 @@
         return `${unit.toFixed(4)} ${product.currency} / pt`;
     };
 
+    const membershipPlanLabel = (planKey: string | undefined | null) => {
+        if (planKey === "member_yearly") return $t("auth.membership_yearly");
+        return $t("auth.membership_monthly");
+    };
+
+    const formatMembershipPeriod = (value: number | null | undefined) => {
+        if (!value) return "--";
+        return formatDateTime(value);
+    };
+
+    const formatMembershipProductSubtitle = (product: MembershipProduct) => {
+        const perMonth =
+            product.key === "member_yearly"
+                ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
+                : `${formatAmount(product.amountFen, product.currency)} / ${$t("auth.membership_month_short")}`;
+        return product.key === "member_yearly"
+            ? $t("auth.membership_yearly_subtitle", { price: perMonth })
+            : $t("auth.membership_monthly_subtitle");
+    };
+
     let creditProducts: CreditProduct[] = [];
+    let membershipProducts: MembershipProduct[] = [];
     let creditProductsLoading = false;
+    let membershipProductsLoading = false;
     let creditProductsErrorKey = "";
+    let membershipProductsErrorKey = "";
     let selectedPaymentProvider: PaymentProvider = "wechat";
     let requestedProductsProvider: PaymentProvider | null = null;
+    let requestedMembershipProducts = false;
     let bestValueProductKey: string | null = null;
     let recommendedValueProductKey: string | null = null;
     let purchaseLoading = false;
     let purchaseErrorKey = "";
     let purchaseNoticeKey = "";
-    let activeOrder: CreditOrder | null = null;
+    let activeOrder: ActivePaymentOrder | null = null;
     let codeUrl = "";
     let qrDataUrl = "";
     let orderStatusLoading = false;
@@ -598,8 +665,45 @@
         }
     };
 
+    const fetchMembershipProducts = async () => {
+        if (!isChinese) return;
+        if (membershipProductsLoading) return;
+        if (requestedMembershipProducts) return;
+
+        requestedMembershipProducts = true;
+        membershipProductsLoading = true;
+        membershipProductsErrorKey = "";
+
+        try {
+            const apiBase = currentApiURL();
+            const res = await fetch(
+                `${apiBase}/payments/memberships/products?provider=wechat`,
+            );
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(
+                    data?.error?.message || "failed to load membership products",
+                );
+            }
+
+            membershipProducts = Array.isArray(data?.data?.products)
+                ? data.data.products
+                : [];
+        } catch (error) {
+            membershipProductsErrorKey = "auth.membership_products_load_failed";
+            console.debug("load membership products failed", error);
+        } finally {
+            membershipProductsLoading = false;
+        }
+    };
+
     $: if (browser && selectedPaymentProvider) {
         void fetchCreditProducts();
+    }
+
+    $: if (browser && isChinese) {
+        void fetchMembershipProducts();
     }
 
     const stopPolling = () => {
@@ -686,7 +790,7 @@
             const order = data?.data?.order as CreditOrder | undefined;
             if (order) {
                 if (showWechatModal && order.provider === "wechat") {
-                    activeOrder = order;
+                    activeOrder = { ...order, kind: "credit" };
                 }
                 if (order.status === "PAID") {
                     stopPolling();
@@ -706,9 +810,67 @@
         return null;
     };
 
+    const fetchMembershipOrderStatus = async (
+        orderId: number,
+        sync = false,
+    ): Promise<MembershipOrder | null> => {
+        if (!orderId) return null;
+
+        orderStatusLoading = true;
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const url = new URL(
+                `${apiBase}/payments/memberships/orders/${orderId}`,
+                window.location.origin,
+            );
+            if (sync) {
+                url.searchParams.set("sync", "1");
+            }
+            const res = await fetch(url.toString(), {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(
+                    data?.error?.message ||
+                        "failed to load membership order status",
+                );
+            }
+
+            const order = data?.data?.order as MembershipOrder | undefined;
+            if (order) {
+                activeOrder = { ...order, kind: "membership" };
+                if (order.status === "PAID") {
+                    stopPolling();
+                    purchaseNoticeKey = "auth.membership_payment_success";
+                    lastPointsUserId = null;
+                    void fetchPoints();
+                }
+                return order;
+            }
+        } catch (error) {
+            console.debug("load membership order status failed", error);
+        } finally {
+            orderStatusLoading = false;
+        }
+
+        return null;
+    };
+
     const startPolling = (orderId: number) => {
         stopPolling();
-        pollTimer = setInterval(() => void fetchOrderStatus(orderId), 2000);
+        pollTimer = setInterval(() => {
+            if (activeOrder?.kind === "membership") {
+                void fetchMembershipOrderStatus(orderId);
+            } else {
+                void fetchOrderStatus(orderId);
+            }
+        }, 2000);
     };
 
     const startWechatPay = async (productKey: string) => {
@@ -745,7 +907,7 @@
                 throw new Error("invalid create order response");
             }
 
-            activeOrder = order;
+            activeOrder = { ...order, kind: "credit" };
             codeUrl = receivedCodeUrl;
             qrDataUrl = await QRCode.toDataURL(receivedCodeUrl, {
                 width: 220,
@@ -759,8 +921,61 @@
             console.debug("create wechat pay order failed", error);
         } finally {
             purchaseLoading = false;
-         }
-     };
+        }
+    };
+
+    const startMembershipWechatPay = async (productKey: string) => {
+        if (purchaseLoading) return;
+        if (!$clerkUser) return;
+        if (activeOrder?.status === "CREATED") return;
+
+        purchaseLoading = true;
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+        lastPaymentResumeKey = "";
+
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const res = await fetch(`${apiBase}/payments/memberships/wechat/native`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ productKey }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(
+                    data?.error?.message || "failed to create membership order",
+                );
+            }
+
+            const order = data?.data?.order as MembershipOrder | undefined;
+            const receivedCodeUrl = data?.data?.wechat?.codeUrl as string | undefined;
+            if (!order?.id || !receivedCodeUrl) {
+                throw new Error("invalid create membership order response");
+            }
+
+            activeOrder = { ...order, kind: "membership" };
+            codeUrl = receivedCodeUrl;
+            qrDataUrl = await QRCode.toDataURL(receivedCodeUrl, {
+                width: 220,
+                margin: 1,
+                color: { dark: "#000000", light: "#ffffff" },
+            });
+
+            startPolling(order.id);
+        } catch (error) {
+            purchaseErrorKey = "auth.payment_create_failed";
+            console.debug("create membership wechat pay order failed", error);
+        } finally {
+            purchaseLoading = false;
+        }
+    };
 
     const startPolarPay = async (productKey: string) => {
         if (purchaseLoading) return;
@@ -1079,19 +1294,43 @@
                                 </div>
                             </div>
 
-                            <div class="points-card">
-                                <div class="points-label">
-                                    {$t("auth.points_label")}
+                            <div class="account-metrics">
+                                <div class="points-card">
+                                    <div class="points-label">
+                                        {$t("auth.points_label")}
+                                    </div>
+                                    {#if pointsLoading}
+                                        <div class="points-value loading">...</div>
+                                    {:else if pointsErrorKey}
+                                        <div class="points-value error">{$t(pointsErrorKey)}</div>
+                                    {:else if points !== null}
+                                        <div class="points-value">{points}</div>
+                                    {:else}
+                                        <div class="points-value muted">--</div>
+                                    {/if}
                                 </div>
-                                {#if pointsLoading}
-                                    <div class="points-value loading">...</div>
-                                {:else if pointsErrorKey}
-                                    <div class="points-value error">{$t(pointsErrorKey)}</div>
-                                {:else if points !== null}
-                                    <div class="points-value">{points}</div>
-                                {:else}
-                                    <div class="points-value muted">--</div>
-                                {/if}
+
+                                <div class="points-card membership-status-card">
+                                    <div class="points-label">{$t("auth.membership_label")}</div>
+                                    {#if pointsLoading}
+                                        <div class="points-value loading">...</div>
+                                    {:else if membership?.active}
+                                        <div class="points-value membership-active">
+                                            {membershipPlanLabel(membership.planKey)}
+                                        </div>
+                                        <div class="subtext membership-status-subtitle">
+                                            {$t("auth.membership_valid_until", {
+                                                date: formatMembershipPeriod(
+                                                    membership.currentPeriodEnd,
+                                                ),
+                                            })}
+                                        </div>
+                                    {:else}
+                                        <div class="points-value muted">
+                                            {$t("auth.membership_inactive")}
+                                        </div>
+                                    {/if}
+                                </div>
                             </div>
                         </div>
 
@@ -1109,6 +1348,8 @@
                             </button>
                         </div>
                     </section>
+
+
 
                     <section class="card contact-card" bind:this={contactSectionEl}>
                         <details class="accordion" bind:open={contactAccordionOpen}>
@@ -1411,6 +1652,129 @@
                             <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
                         {/if}
                     </section>
+
+                    {#if isChinese}
+                        <section class="card membership-card">
+                            <div class="topup-header">
+                                <div class="topup-title">
+                                    {$t("auth.membership_title")}
+                                </div>
+                                <div class="subtext topup-subtitle">
+                                    {$t("auth.membership_subtitle")}
+                                </div>
+                            </div>
+
+                            {#if membership?.active}
+                                <div class="membership-current">
+                                    <div>
+                                        <div class="membership-current-title">
+                                            {$t("auth.membership_current", {
+                                                plan: membershipPlanLabel(membership.planKey),
+                                            })}
+                                        </div>
+                                        <div class="subtext membership-current-subtitle">
+                                            {$t("auth.membership_valid_until", {
+                                                date: formatMembershipPeriod(
+                                                    membership.currentPeriodEnd,
+                                                ),
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div class="membership-usage">
+                                        <span>
+                                            {$t("auth.membership_daily_usage", {
+                                                used:
+                                                    membership.usage
+                                                        ?.dailySuccessfulDownloads ?? 0,
+                                                limit:
+                                                    membership.limits
+                                                        ?.dailySuccessfulDownloads ?? 0,
+                                            })}
+                                        </span>
+                                        <span>
+                                            {$t("auth.membership_monthly_usage", {
+                                                used:
+                                                    membership.usage
+                                                        ?.monthlySuccessfulDownloads ?? 0,
+                                                limit:
+                                                    membership.limits
+                                                        ?.monthlySuccessfulDownloads ?? 0,
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {#if membershipProductsLoading}
+                                <div class="subtext">{$t("auth.loading")}</div>
+                            {:else if membershipProductsErrorKey}
+                                <div class="subtext error">
+                                    {$t(membershipProductsErrorKey)}
+                                </div>
+                            {:else}
+                                <div class="products-grid membership-products-grid">
+                                    {#each membershipProducts as product (product.key)}
+                                        <div class="product-card membership-product-card">
+                                            <div class="product-main">
+                                                <div class="product-left">
+                                                    <div class="product-points">
+                                                        {membershipPlanLabel(product.planKey)}
+                                                    </div>
+                                                    <div class="subtext product-subtitle">
+                                                        {formatMembershipProductSubtitle(product)}
+                                                    </div>
+                                                </div>
+                                                <div class="product-right">
+                                                    {#if product.key === "member_yearly"}
+                                                        <span class="badge best">
+                                                            {$t("auth.badge_best")}
+                                                        </span>
+                                                    {:else}
+                                                        <span class="badge rec">
+                                                            {$t("auth.badge_recommended")}
+                                                        </span>
+                                                    {/if}
+                                                    <div class="product-price">
+                                                        {formatAmount(
+                                                            product.amountFen,
+                                                            product.currency,
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="membership-benefits">
+                                                <span>{$t("auth.membership_benefit_no_points")}</span>
+                                                <span>{$t("auth.membership_benefit_fair_use")}</span>
+                                            </div>
+
+                                            <div class="product-actions">
+                                                <button
+                                                    class="button elevated active"
+                                                    disabled={purchaseLoading ||
+                                                        activeOrder?.status === "CREATED" ||
+                                                        product.enabled === false}
+                                                    on:click={() =>
+                                                        startMembershipWechatPay(
+                                                            product.key,
+                                                        )}
+                                                >
+                                                    {$t("auth.wechat_pay")}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+
+                            {#if purchaseErrorKey}
+                                <div class="subtext error">{$t(purchaseErrorKey)}</div>
+                            {/if}
+                            {#if purchaseNoticeKey}
+                                <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
+                            {/if}
+                        </section>
+                    {/if}
                 {/if}
             </div>
         </div>
@@ -1430,15 +1794,23 @@
                     </div>
 
                     <div class="subtext payment-subtitle">
-                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)} · {activeOrder.points}
-                        {$t("auth.points_label")}
+                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
+                        {#if activeOrder.kind === "credit"}
+                            - {activeOrder.points} {$t("auth.points_label")}
+                        {:else}
+                            - {membershipPlanLabel(activeOrder.plan_key)}
+                        {/if}
                     </div>
 
                     <div class="payment-body">
                         <div class="payment-qr">
                             {#if activeOrder.status === "PAID"}
                                 <div class="payment-success">
-                                    {$t("auth.payment_success")}
+                                    {$t(
+                                        activeOrder.kind === "membership"
+                                            ? "auth.membership_payment_success"
+                                            : "auth.payment_success",
+                                    )}
                                 </div>
                             {:else if qrDataUrl}
                                 <img
@@ -1480,7 +1852,15 @@
                                 <button
                                     class="button elevated"
                                     on:click={() =>
-                                        void fetchOrderStatus(activeOrder.id, true)}
+                                        activeOrder.kind === "membership"
+                                            ? void fetchMembershipOrderStatus(
+                                                  activeOrder.id,
+                                                  true,
+                                              )
+                                            : void fetchOrderStatus(
+                                                  activeOrder.id,
+                                                  true,
+                                              )}
                                     disabled={orderStatusLoading}
                                 >
                                     {$t("auth.check_status")}
@@ -2072,6 +2452,13 @@
         gap: 14px;
     }
 
+    .account-metrics {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
     .points-card {
         min-width: 120px;
         padding: 12px 14px;
@@ -2088,6 +2475,10 @@
         gap: 2px;
         align-items: flex-end;
         text-align: right;
+    }
+
+    .membership-status-card {
+        min-width: 190px;
     }
 
     .points-label {
@@ -2113,6 +2504,74 @@
         color: var(--red);
         font-size: 14px;
         font-weight: 700;
+    }
+
+    .points-value.membership-active {
+        color: var(--green);
+        font-size: 18px;
+    }
+
+    .membership-status-subtitle {
+        padding: 0;
+        font-size: 12px;
+    }
+
+    .membership-current {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid var(--surface-2);
+        background: var(--surface-1);
+    }
+
+    .membership-current-title {
+        color: var(--text);
+        font-weight: 900;
+    }
+
+    .membership-current-subtitle {
+        padding: 0;
+        margin-top: 4px;
+    }
+
+    .membership-usage {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        color: var(--subtext);
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .membership-products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .membership-product-card {
+        min-height: 178px;
+    }
+
+    .membership-benefits {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .membership-benefits span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--surface-2);
+        color: var(--subtext);
+        font-size: 12px;
+        font-weight: 800;
     }
 
     .topup-title {
@@ -2459,6 +2918,18 @@
 
         .account-summary {
             grid-template-columns: 1fr;
+        }
+
+        .account-metrics,
+        .membership-current,
+        .membership-usage {
+            align-items: stretch;
+            text-align: left;
+        }
+
+        .account-metrics,
+        .membership-current {
+            flex-direction: column;
         }
 
         .points-card {

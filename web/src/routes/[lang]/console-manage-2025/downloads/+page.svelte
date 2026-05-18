@@ -96,6 +96,12 @@
         return item.error_message || item.error_code || item.body_status || "-";
     }
 
+    function cleanUrl(value: string | null | undefined) {
+        const trimmed = String(value || "").trim();
+        const unquoted = trimmed.replace(/^["']+|["']+$/g, "");
+        return unquoted || "#";
+    }
+
     function rangeStart() {
         return Date.now() - rangeHours * 60 * 60 * 1000;
     }
@@ -328,7 +334,6 @@
                             </button>
                         </th>
                         <th>User</th>
-                        <th>Website</th>
                         <th>URL</th>
                         <th aria-sort={getAriaSort("status")} class="sortable">
                             <button
@@ -371,22 +376,18 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="host-cell">
-                                    <span class="mono">{item.source_host || "-"}</span>
-                                    <span class="sub">{item.service || "-"}</span>
-                                </div>
-                            </td>
-                            <td>
                                 <a
                                     class="url-cell selectable"
-                                    href={item.source_url}
+                                    href={cleanUrl(item.source_url)}
                                     target="_blank"
                                     rel="noreferrer"
-                                    title={item.source_url}
+                                    title={cleanUrl(item.source_url)}
                                 >
-                                    {item.source_url}
+                                    {cleanUrl(item.source_url)}
                                 </a>
-                                <div class="sub mono">{item.request_id}</div>
+                                <div class="sub mono">
+                                    {item.service || item.source_host || "-"} / {item.request_id}
+                                </div>
                             </td>
                             <td>
                                 <span class={`status-badge status-${item.status}`}>
@@ -615,7 +616,6 @@
         text-underline-offset: 2px;
     }
 
-    .host-cell,
     .user-cell {
         min-width: 0;
     }

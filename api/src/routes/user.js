@@ -30,6 +30,7 @@ import {
     listCreditOrders,
     listCreditOrdersForUser,
 } from "../db/credit-orders.js";
+import { listDownloadAttempts } from "../db/download-attempts.js";
 import {
     clearCollectionMemoryForUser,
     getDownloadedItemKeysForCollection,
@@ -288,6 +289,46 @@ router.get("/admin/orders", requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error("GET /user/admin/orders error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load orders");
+    }
+});
+
+// Admin-only: list download attempts (paginated)
+router.get("/admin/download-attempts", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const status = typeof req.query?.status === "string" ? req.query.status : "";
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const host = typeof req.query?.host === "string" ? req.query.host : "";
+        const from = req.query?.from;
+        const to = req.query?.to;
+        const sort = typeof req.query?.sort === "string" ? req.query.sort : "submitted_at";
+        const order = typeof req.query?.order === "string" ? req.query.order : "desc";
+
+        const result = await listDownloadAttempts({
+            page,
+            limit,
+            status,
+            search,
+            host,
+            from,
+            to,
+            sort,
+            order,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/download-attempts error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to load download attempts",
+        );
     }
 });
 

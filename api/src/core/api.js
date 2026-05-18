@@ -49,6 +49,11 @@ import {
     reserveMemberDownloadUsage,
     upsertUserFromClerk,
 } from "../db/users.js";
+import {
+    completeDownloadAttempt,
+    createDownloadAttempt,
+    DOWNLOAD_ATTEMPT_STATUS,
+} from "../db/download-attempts.js";
 
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
@@ -96,6 +101,104 @@ const resolveDownloadLogEmail = ({ req, pointsUser, fallbackEmail } = {}) => {
     if (fallback) return fallback;
 
     return "unknown";
+};
+
+const readableDownloadErrors = new Map([
+    ["error.api.auth.clerk.missing", "User authentication is required for this download."],
+    ["error.api.auth.clerk.invalid", "User authentication is invalid or expired."],
+    ["error.api.fetch.empty", "No downloadable media was found at this URL."],
+    ["error.api.fetch.fail", "The target site could not be fetched or returned an unusable response."],
+    ["error.api.generic", "The download request failed because of an unexpected server error."],
+    ["error.api.invalid_body", "The submitted request body is invalid."],
+    ["error.api.link.invalid", "The submitted URL is invalid or unsupported."],
+    ["error.api.link.missing", "No URL was submitted."],
+    ["error.api.link.unsupported", "This URL is not supported yet."],
+    ["error.api.member.limit.exceeded", "The membership download limit has been reached."],
+    ["error.api.membership.limit.exceeded", "The membership download limit has been reached."],
+    ["error.api.points.insufficient", "The user does not have enough points for this download."],
+    ["error.api.points.unavailable", "Points service is temporarily unavailable."],
+    ["error.api.rate_exceeded", "The same download was submitted too frequently."],
+    ["error.api.user.disabled", "This user account is disabled."],
+]);
+
+const getReadableDownloadError = (code, fallback = "The download request failed.") => {
+    if (!code) return fallback;
+    return readableDownloadErrors.get(code) || fallback;
+};
+
+const getUrlHost = (url) => {
+    try {
+        return new URL(url).host || null;
+    } catch {
+        return null;
+    }
+};
+
+const toNullableInteger = (value) => {
+    if (value == null) return null;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? Math.trunc(numeric) : null;
+};
+
+const auditDropped = Symbol("download-attempt-audit-dropped");
+const maxDownloadAttemptAuditQueue = 500;
+const downloadAttemptAuditQueue = [];
+let downloadAttemptAuditActive = false;
+
+const runNextDownloadAttemptAuditTask = () => {
+    if (downloadAttemptAuditActive) return;
+    const next = downloadAttemptAuditQueue.shift();
+    if (!next) return;
+
+    downloadAttemptAuditActive = true;
+    next.task()
+        .then(next.resolve, next.reject)
+        .finally(() => {
+            downloadAttemptAuditActive = false;
+            runNextDownloadAttemptAuditTask();
+        });
+};
+
+const queueDownloadAttemptAuditTask = (task, label) => {
+    if (downloadAttemptAuditQueue.length >= maxDownloadAttemptAuditQueue) {
+        console.warn(`[download-attempts] ${label} dropped: audit queue full`);
+        return Promise.resolve(auditDropped);
+    }
+
+    return new Promise((resolve, reject) => {
+        downloadAttemptAuditQueue.push({ task, resolve, reject });
+        runNextDownloadAttemptAuditTask();
+    });
+};
+
+const scheduleDownloadAttemptCreate = (payload) => {
+    return queueDownloadAttemptAuditTask(
+        () => createDownloadAttempt(payload),
+        "create",
+    ).catch((error) => {
+        console.error("[download-attempts] create failed:", error);
+        return null;
+    });
+};
+
+const scheduleDownloadAttemptComplete = (createTask, payload) => {
+    const afterCreate =
+        createTask && typeof createTask.then === "function"
+            ? createTask
+            : Promise.resolve();
+
+    return afterCreate
+        .then((createResult) => {
+            if (createResult === auditDropped) return null;
+            return queueDownloadAttemptAuditTask(
+                () => completeDownloadAttempt(payload),
+                "complete",
+            );
+        })
+        .catch((error) => {
+            console.error("[download-attempts] complete failed:", error);
+            return null;
+        });
 };
 
 const logDownloadRequest = ({ email, url, requestId, time }) => {
@@ -604,6 +707,44 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
         const normalizedRequest = normalized.data;
         let email = resolveDownloadLogEmail({ req });
+        const requestId = Math.random().toString(36).slice(2, 10);
+        const requestTime = new Date().toISOString();
+        const startedAtMs = Date.now();
+        let downloadAttemptCreateTask = null;
+
+        const recordEarlyDownloadFailure = (code, context = null) => {
+            const { status } = createResponse("error", { code, context });
+            const completedAt = Date.now();
+            downloadAttemptCreateTask = scheduleDownloadAttemptCreate({
+                requestId,
+                userId: pointsUser?.id ?? null,
+                clerkUserId,
+                email,
+                sourceUrl: normalizedRequest.url,
+                sourceHost: getUrlHost(normalizedRequest.url),
+                submittedAt: startedAtMs,
+                metadata: {
+                    authType: req.authType ?? "none",
+                    isBatch: normalizedRequest?.batch === true,
+                    stage: "early_failure",
+                },
+            });
+            scheduleDownloadAttemptComplete(
+                downloadAttemptCreateTask,
+                {
+                    requestId,
+                    status: DOWNLOAD_ATTEMPT_STATUS.failed,
+                    service: context?.service ?? getUrlHost(normalizedRequest.url),
+                    httpStatus: status,
+                    bodyStatus: "error",
+                    errorCode: code,
+                    errorMessage: getReadableDownloadError(code),
+                    pointsOutcome: "skipped",
+                    completedAt,
+                    elapsedMs: completedAt - startedAtMs,
+                },
+            );
+        };
 
         const isBypassRequest = req.authType === "key";
         let pointsUser = null;
@@ -611,12 +752,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         if (isClerkAuthConfigured && !isBypassRequest && !isUpstreamServer) {
             const auth = await getClerkUserIdFromTokenHeader(req);
             if (!auth.ok) {
-                return fail(
-                    res,
-                    auth.reason === "missing"
-                        ? "error.api.auth.clerk.missing"
-                        : "error.api.auth.clerk.invalid",
-                );
+                const code = auth.reason === "missing"
+                    ? "error.api.auth.clerk.missing"
+                    : "error.api.auth.clerk.invalid";
+                recordEarlyDownloadFailure(code);
+                return fail(res, code);
             }
 
             clerkUserId = auth.clerkUserId;
@@ -642,14 +782,20 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 }
 
                 if (pointsUser?.is_disabled) {
+                    email = resolveDownloadLogEmail({
+                        req,
+                        pointsUser,
+                        fallbackEmail: email,
+                    });
+                    recordEarlyDownloadFailure("error.api.user.disabled");
                     return fail(res, "error.api.user.disabled");
                 }
             } catch (error) {
                 console.error("Failed to load user for points enforcement:", error);
+                recordEarlyDownloadFailure("error.api.points.unavailable");
                 return fail(res, "error.api.points.unavailable");
             }
         }
-        const requestId = Math.random().toString(36).slice(2, 10);
         let membershipReservation = null;
         const requestClientIp = String(
             req.header("x-fsv-client-ip")
@@ -664,6 +810,54 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             .replace(/^::ffff:/, "");
 
         email = resolveDownloadLogEmail({ req, pointsUser, fallbackEmail: email });
+        logDownloadRequest({
+            email,
+            url: normalizedRequest.url,
+            requestId,
+            time: requestTime,
+        });
+        downloadAttemptCreateTask = scheduleDownloadAttemptCreate({
+            requestId,
+            userId: pointsUser?.id ?? null,
+            clerkUserId,
+            email,
+            sourceUrl: normalizedRequest.url,
+            sourceHost: getUrlHost(normalizedRequest.url),
+            submittedAt: startedAtMs,
+            metadata: {
+                authType: req.authType ?? "none",
+                isBatch: normalizedRequest?.batch === true,
+            },
+        });
+
+        const failDownload = async (code, context, extra = {}) => {
+            const { status, body } = createResponse("error", { code, context });
+            const completedAt = Date.now();
+            scheduleDownloadAttemptComplete(
+                downloadAttemptCreateTask,
+                {
+                    requestId,
+                    status: extra.status || DOWNLOAD_ATTEMPT_STATUS.failed,
+                    service:
+                        extra.service ??
+                        context?.service ??
+                        getUrlHost(normalizedRequest.url),
+                    httpStatus: status,
+                    bodyStatus: "error",
+                    errorCode: code,
+                    errorMessage: getReadableDownloadError(code),
+                    pointsOutcome: extra.pointsOutcome ?? "skipped",
+                    pointsRequired: toNullableInteger(extra.pointsRequired),
+                    pointsBefore: toNullableInteger(extra.pointsBefore),
+                    pointsAfter: toNullableInteger(extra.pointsAfter),
+                    completedAt,
+                    elapsedMs: completedAt - startedAtMs,
+                    metadata: extra.metadata ?? null,
+                },
+            );
+            return res.status(status).json(body);
+        };
+
         if (env.downloadDedupeTTL > 0) {
             try {
                 const dedupeIdentity = resolveDedupeIdentity(req, clerkUserId);
@@ -674,6 +868,22 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     const { body } = createResponse("error", {
                         code: "error.api.rate_exceeded",
                     });
+                    const completedAt = Date.now();
+                    scheduleDownloadAttemptComplete(
+                        downloadAttemptCreateTask,
+                        {
+                            requestId,
+                            status: DOWNLOAD_ATTEMPT_STATUS.failed,
+                            service: getUrlHost(normalizedRequest.url),
+                            httpStatus: 429,
+                            bodyStatus: "error",
+                            errorCode: "error.api.rate_exceeded",
+                            errorMessage: getReadableDownloadError("error.api.rate_exceeded"),
+                            pointsOutcome: "skipped",
+                            completedAt,
+                            elapsedMs: completedAt - startedAtMs,
+                        },
+                    );
                     return res.status(429).json(body);
                 }
                 await downloadDedupe.set(dedupeKey, "1", env.downloadDedupeTTL);
@@ -699,25 +909,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     console.warn(
                         `[DOWNLOAD MEMBER_LIMIT] request_id=${requestId} email=${email} reason=${membershipReservation.reason} daily=${membershipReservation.membership.usage.dailySuccessfulDownloads}/${membershipReservation.membership.limits.dailySuccessfulDownloads} monthly=${membershipReservation.membership.usage.monthlySuccessfulDownloads}/${membershipReservation.membership.limits.monthlySuccessfulDownloads}`,
                     );
-                    return fail(res, "error.api.membership.limit.exceeded", {
+                    return failDownload("error.api.membership.limit.exceeded", {
                         reason: membershipReservation.reason,
                         membership: membershipReservation.membership,
                     });
                 }
             } catch (error) {
                 console.error("Failed to reserve membership usage:", error);
-                return fail(res, "error.api.points.unavailable");
+                return failDownload("error.api.points.unavailable");
             }
         }
-        const requestTime = new Date().toISOString();
         const authType = req.authType ?? "none";
-        const startedAtMs = Date.now();
-        logDownloadRequest({
-            email,
-            url: normalizedRequest.url,
-            requestId,
-            time: requestTime,
-        });
 
         const parsed = extract(
             normalizedRequest.url,
@@ -740,7 +942,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     console.error("Failed to release member usage reservation:", usageError);
                 }
             }
-            return fail(res, "error.api.link.invalid");
+            return failDownload("error.api.link.invalid");
         }
 
         try {
@@ -764,7 +966,24 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     } else if (genericFallbackErrors.has(parsed.error) && canAttemptGenericURL(normalizedRequest.url)) {
                         context = { service: getGenericServiceHost(normalizedRequest.url) };
                     }
-                    return fail(res, `error.api.${parsed.error}`, context);
+                    if (membershipReservation?.usageEvent?.id) {
+                        try {
+                            await completeMemberDownloadUsage({
+                                usageEventId: membershipReservation.usageEvent.id,
+                                status: "failed",
+                                service: context?.service ?? parsed?.host,
+                                metadata: {
+                                    bodyStatus: "error",
+                                    errorCode: `error.api.${parsed.error}`,
+                                },
+                            });
+                        } catch (usageError) {
+                            console.error("Failed to release member usage reservation:", usageError);
+                        }
+                    }
+                    return failDownload(`error.api.${parsed.error}`, context, {
+                        service: context?.service ?? parsed?.host,
+                    });
                 }
             } else {
                 result = await match({
@@ -833,7 +1052,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     } catch (error) {
                         console.error("Failed to record member usage:", error);
                         pointsOutcome = "error";
-                        return fail(res, "error.api.points.unavailable");
+                        return failDownload("error.api.points.unavailable", null, {
+                            pointsOutcome,
+                            service: result?.body?.service ?? parsed.host,
+                        });
                     }
                 } else if (isBatchRequest) {
                     pointsOutcome = "hold";
@@ -850,10 +1072,20 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
                         if (!hold.ok) {
                             pointsOutcome = "insufficient";
-                            return fail(res, "error.api.points.insufficient", {
-                                current: hold.current ?? pointsUser.points,
-                                required: pointsRequired,
-                            });
+                            return failDownload(
+                                "error.api.points.insufficient",
+                                {
+                                    current: hold.current ?? pointsUser.points,
+                                    required: pointsRequired,
+                                },
+                                {
+                                    pointsOutcome,
+                                    pointsRequired,
+                                    pointsBefore,
+                                    pointsAfter,
+                                    service: result?.body?.service ?? parsed.host,
+                                },
+                            );
                         }
 
                         pointsOutcome = "held";
@@ -864,7 +1096,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     } catch (error) {
                         console.error("Failed to hold points:", error);
                         pointsOutcome = "error";
-                        return fail(res, "error.api.points.unavailable");
+                        return failDownload("error.api.points.unavailable", null, {
+                            pointsOutcome,
+                            pointsRequired,
+                            pointsBefore,
+                            pointsAfter,
+                            service: result?.body?.service ?? parsed.host,
+                        });
                     }
                 } else {
                     pointsOutcome = "attempt";
@@ -880,10 +1118,20 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         );
                         if (!updated) {
                             pointsOutcome = "insufficient";
-                            return fail(res, "error.api.points.insufficient", {
-                                current: pointsUser.points,
-                                required: pointsRequired,
-                            });
+                            return failDownload(
+                                "error.api.points.insufficient",
+                                {
+                                    current: pointsUser.points,
+                                    required: pointsRequired,
+                                },
+                                {
+                                    pointsOutcome,
+                                    pointsRequired,
+                                    pointsBefore,
+                                    pointsAfter,
+                                    service: result?.body?.service ?? parsed.host,
+                                },
+                            );
                         }
 
                         const chargeMeta = updated.chargeMeta ?? {};
@@ -895,7 +1143,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     } catch (error) {
                         console.error("Failed to consume points:", error);
                         pointsOutcome = "error";
-                        return fail(res, "error.api.points.unavailable");
+                        return failDownload("error.api.points.unavailable", null, {
+                            pointsOutcome,
+                            pointsRequired,
+                            pointsBefore,
+                            pointsAfter,
+                            service: result?.body?.service ?? parsed.host,
+                        });
                     }
                 }
             }
@@ -903,6 +1157,43 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             const resultErrorCode = result?.body?.error?.code ?? "n/a";
             console.log(
                 `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} http_status=${result.status} body_status=${resultBodyStatus} error_code=${resultErrorCode} service=${result?.body?.service ?? parsed.host} points_outcome=${pointsOutcome} points_required=${pointsRequired ?? "n/a"} points_before=${pointsBefore ?? "n/a"} points_after=${pointsAfter ?? "n/a"} membership_plan=${membershipPlan ?? "n/a"} membership_usage=${membershipLimit ?? "n/a"} elapsed_ms=${Date.now() - startedAtMs}`,
+            );
+
+            const completedAt = Date.now();
+            const isDownloadSuccess =
+                resultBodyStatus !== "error" &&
+                Number.isFinite(Number(result?.status)) &&
+                Number(result.status) < 400;
+            const normalizedErrorCode =
+                resultErrorCode && resultErrorCode !== "n/a"
+                    ? resultErrorCode
+                    : null;
+            scheduleDownloadAttemptComplete(
+                downloadAttemptCreateTask,
+                {
+                    requestId,
+                    status: isDownloadSuccess
+                        ? DOWNLOAD_ATTEMPT_STATUS.success
+                        : DOWNLOAD_ATTEMPT_STATUS.failed,
+                    service: result?.body?.service ?? parsed.host,
+                    httpStatus: toNullableInteger(result?.status),
+                    bodyStatus: resultBodyStatus,
+                    errorCode: normalizedErrorCode,
+                    errorMessage: normalizedErrorCode
+                        ? getReadableDownloadError(normalizedErrorCode)
+                        : null,
+                    pointsOutcome,
+                    pointsRequired: toNullableInteger(pointsRequired),
+                    pointsBefore: toNullableInteger(pointsBefore),
+                    pointsAfter: toNullableInteger(pointsAfter),
+                    completedAt,
+                    elapsedMs: completedAt - startedAtMs,
+                    metadata: {
+                        membershipPlan,
+                        membershipUsage: membershipLimit,
+                        isBatch: isBatchRequest,
+                    },
+                },
             );
 
             if (isBatchRequest && result?.body && pointsOutcome !== "skipped") {
@@ -934,6 +1225,25 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             }
             console.log(
                 `[DOWNLOAD RESULT] request_id=${requestId} url=${normalizedRequest.url} email=${email} result=exception elapsed_ms=${Date.now() - startedAtMs}`,
+            );
+            const completedAt = Date.now();
+            scheduleDownloadAttemptComplete(
+                downloadAttemptCreateTask,
+                {
+                    requestId,
+                    status: DOWNLOAD_ATTEMPT_STATUS.exception,
+                    service: getUrlHost(normalizedRequest.url),
+                    httpStatus: 500,
+                    bodyStatus: "exception",
+                    errorCode: "error.api.generic",
+                    errorMessage: getReadableDownloadError("error.api.generic"),
+                    pointsOutcome: "skipped",
+                    completedAt,
+                    elapsedMs: completedAt - startedAtMs,
+                    metadata: {
+                        message: error?.message ?? "unknown",
+                    },
+                },
             );
             fail(res, "error.api.generic");
         }

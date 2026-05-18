@@ -1,0 +1,59 @@
+{{- if .Values.downloadAttemptCleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: download-attempts-cleanup
+  namespace: infra
+  labels:
+    {{- include "cobalt-chart.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.downloadAttemptCleanup.schedule | quote }}
+  concurrencyPolicy: {{ .Values.downloadAttemptCleanup.concurrencyPolicy | default "Forbid" | quote }}
+  successfulJobsHistoryLimit: {{ .Values.downloadAttemptCleanup.successfulJobsHistoryLimit | default 1 }}
+  failedJobsHistoryLimit: {{ .Values.downloadAttemptCleanup.failedJobsHistoryLimit | default 3 }}
+  startingDeadlineSeconds: {{ .Values.downloadAttemptCleanup.startingDeadlineSeconds | default 600 }}
+  suspend: {{ .Values.downloadAttemptCleanup.suspend | default false }}
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            {{- include "cobalt-chart.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: Never
+          containers:
+            - name: download-attempts-cleanup
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["node", "src/util/cleanup-download-attempts.js"]
+              env:
+                - name: DB_TYPE
+                  value: {{ .Values.database.type | quote }}
+                - name: DB_HOST
+                  value: {{ .Values.database.host | quote }}
+                - name: DB_PORT
+                  value: {{ .Values.database.port | quote }}
+                - name: DB_USER
+                  value: {{ .Values.database.user | quote }}
+                - name: DB_PASSWORD
+                  value: {{ .Values.database.password | quote }}
+                - name: DB_NAME
+                  value: {{ .Values.database.name | quote }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

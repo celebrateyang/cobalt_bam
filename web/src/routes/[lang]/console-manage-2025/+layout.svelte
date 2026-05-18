@@ -11,6 +11,7 @@
     import IconVideo from "@tabler/icons-svelte/IconVideo.svelte";
     import IconUsersGroup from "@tabler/icons-svelte/IconUsersGroup.svelte";
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
+    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
 import IconBug from "@tabler/icons-svelte/IconBug.svelte";
 import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
 import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
@@ -79,6 +80,13 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
                         iconColor="gray"
                     >
                         <IconCoin />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/downloads"
+                        tabTitle="Downloads"
+                        iconColor="blue"
+                    >
+                        <IconDownload />
                     </PageNavTab>
                 </PageNavSection>
 

@@ -209,3 +209,13 @@ pointsHoldCleanup:
   failedJobsHistoryLimit: 3
   startingDeadlineSeconds: 600
   suspend: false
+
+downloadAttemptCleanup:
+  enabled: true
+  # Keep the operational download audit table close to its 2-day retention window.
+  schedule: "30 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  suspend: false

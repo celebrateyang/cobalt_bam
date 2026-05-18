@@ -10,6 +10,12 @@ import {
     markCreditOrderPaid,
     updateCreditOrderProviderData,
 } from "../db/credit-orders.js";
+import {
+    createMembershipOrder,
+    getMembershipOrderById,
+    markMembershipOrderPaid,
+    updateMembershipOrderProviderData,
+} from "../db/membership-orders.js";
 
 import {
     createWechatNativeTransaction,
@@ -29,6 +35,23 @@ import {
 } from "../payments/polar.js";
 
 const router = express.Router();
+
+const WECHAT_MEMBERSHIP_PRODUCTS = [
+    {
+        key: "member_monthly",
+        planKey: "member_monthly",
+        durationDays: 30,
+        amountFen: 6000,
+        currency: "CNY",
+    },
+    {
+        key: "member_yearly",
+        planKey: "member_yearly",
+        durationDays: 365,
+        amountFen: 60000,
+        currency: "CNY",
+    },
+];
 
 const WECHAT_CREDIT_PRODUCTS = [
     {
@@ -127,6 +150,8 @@ const getWechatProductByKey = (key) =>
     WECHAT_CREDIT_PRODUCTS.find((p) => p.key === key);
 const getPolarProductByKey = (key) =>
     POLAR_CREDIT_PRODUCTS.find((p) => p.key === key);
+const getWechatMembershipProductByKey = (key) =>
+    WECHAT_MEMBERSHIP_PRODUCTS.find((p) => p.key === key);
 
 const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
@@ -186,6 +211,21 @@ const buildPublicProducts = (provider) => {
         key: product.key,
         points: product.points,
         unitPriceFen: product.unitPriceFen,
+        amountFen: product.amountFen,
+        currency: product.currency,
+        enabled: true,
+    }));
+};
+
+const buildPublicMembershipProducts = (provider) => {
+    if (provider !== "wechat") {
+        return [];
+    }
+
+    return WECHAT_MEMBERSHIP_PRODUCTS.map((product) => ({
+        key: product.key,
+        planKey: product.planKey,
+        durationDays: product.durationDays,
         amountFen: product.amountFen,
         currency: product.currency,
         enabled: true,
@@ -328,6 +368,17 @@ router.get("/credits/products", (req, res) => {
     });
 });
 
+router.get("/memberships/products", (req, res) => {
+    const provider = normalizeProvider(req.query?.provider, "wechat");
+    res.json({
+        status: "success",
+        data: {
+            provider,
+            products: buildPublicMembershipProducts(provider),
+        },
+    });
+});
+
 router.post("/wechat/notify", async (req, res) => {
     try {
         if (!isWechatPayConfigured()) {
@@ -409,22 +460,32 @@ router.post("/wechat/notify", async (req, res) => {
             });
         }
 
-        const result = await markCreditOrderPaid({
-            outTradeNo,
-            providerTransactionId: transactionId,
-            paidAt,
-            rawNotify: {
-                headers: {
-                    "Wechatpay-Serial": serial,
-                    "Wechatpay-Signature": signature,
-                    "Wechatpay-Timestamp": timestamp,
-                    "Wechatpay-Nonce": nonce,
-                },
-                event: req.body,
-                transaction,
+        const rawNotify = {
+            headers: {
+                "Wechatpay-Serial": serial,
+                "Wechatpay-Signature": signature,
+                "Wechatpay-Timestamp": timestamp,
+                "Wechatpay-Nonce": nonce,
             },
-            totalFen,
-        });
+            event: req.body,
+            transaction,
+        };
+        const isMembershipOrder = String(outTradeNo).startsWith("mbr_");
+        const result = isMembershipOrder
+            ? await markMembershipOrderPaid({
+                  outTradeNo,
+                  providerTransactionId: transactionId,
+                  paidAt,
+                  rawNotify,
+                  totalFen,
+              })
+            : await markCreditOrderPaid({
+                  outTradeNo,
+                  providerTransactionId: transactionId,
+                  paidAt,
+                  rawNotify,
+                  totalFen,
+              });
 
         if (!result.ok && result.code === "ORDER_NOT_FOUND") {
             console.error("WeChat Pay notify: order not found", outTradeNo);
@@ -438,6 +499,14 @@ router.post("/wechat/notify", async (req, res) => {
             console.error("WeChat Pay notify: amount mismatch", {
                 outTradeNo,
                 totalFen,
+            });
+        } else if (!result.ok && result.code === "PLAN_NOT_FOUND") {
+            console.error("WeChat Pay notify: membership plan not found", {
+                outTradeNo,
+            });
+            return res.status(500).json({
+                code: "FAIL",
+                message: "plan not found",
             });
         }
 
@@ -567,7 +636,25 @@ if (!isClerkAuthConfigured) {
         );
     });
 
+    router.post("/memberships/wechat/native", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
     router.get("/credits/orders/:id", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
+    router.get("/memberships/orders/:id", (_, res) => {
         return jsonError(
             res,
             501,
@@ -653,6 +740,92 @@ if (!isClerkAuthConfigured) {
                 500,
                 "SERVER_ERROR",
                 "Failed to create payment",
+            );
+        }
+    });
+
+    router.post("/memberships/wechat/native", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+
+            if (!isWechatPayConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "WECHATPAY_NOT_CONFIGURED",
+                    "WeChat Pay is not configured on this server",
+                );
+            }
+
+            const productKey = req.body?.productKey;
+            const product = getWechatMembershipProductByKey(productKey);
+            if (!product) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid membership product",
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+            const outTradeNo = `mbr_${nanoid(20)}`;
+            const createdOrder = await createMembershipOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "wechat",
+                productKey: product.key,
+                planKey: product.planKey,
+                durationDays: product.durationDays,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+            });
+
+            const description =
+                product.key === "member_yearly"
+                    ? "Yearly membership"
+                    : "Monthly membership";
+            const wechat = await createWechatNativeTransaction({
+                outTradeNo,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                description,
+                attach: JSON.stringify({
+                    membershipOrderId: createdOrder.id,
+                    productKey: product.key,
+                    clerkUserId: user.clerk_user_id,
+                }),
+            });
+
+            const order = await updateMembershipOrderProviderData(
+                createdOrder.id,
+                {
+                    code_url: wechat.codeUrl,
+                },
+            );
+
+            res.json({
+                status: "success",
+                data: {
+                    order,
+                    wechat: {
+                        codeUrl: wechat.codeUrl,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/memberships/wechat/native error:", error);
+            return jsonError(
+                res,
+                500,
+                "SERVER_ERROR",
+                "Failed to create membership payment",
             );
         }
     });
@@ -969,6 +1142,106 @@ if (!isClerkAuthConfigured) {
                 500,
                 "SERVER_ERROR",
                 "Failed to load order",
+            );
+        }
+    });
+
+    router.get("/memberships/orders/:id", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+
+            const id = Number.parseInt(req.params.id, 10);
+            if (!Number.isFinite(id)) {
+                return jsonError(res, 400, "INVALID_ID", "Invalid order id");
+            }
+
+            const order = await getMembershipOrderById(id);
+            if (!order || order.clerk_user_id !== auth.userId) {
+                return jsonError(res, 404, "NOT_FOUND", "Order not found");
+            }
+
+            const shouldSync =
+                req.query?.sync === "1" ||
+                req.query?.sync === "true" ||
+                req.query?.sync === "yes";
+
+            let resolvedOrder = order;
+
+            if (
+                shouldSync &&
+                order.provider === "wechat" &&
+                order.status !== "PAID" &&
+                isWechatPayConfigured()
+            ) {
+                try {
+                    const transaction = await queryWechatTransactionByOutTradeNo(
+                        order.out_trade_no,
+                    );
+
+                    const configMchId = process.env.WECHATPAY_MCH_ID;
+                    const configAppId = process.env.WECHATPAY_APP_ID;
+                    if (
+                        (configMchId &&
+                            transaction?.mchid &&
+                            transaction.mchid !== configMchId) ||
+                        (configAppId &&
+                            transaction?.appid &&
+                            transaction.appid !== configAppId)
+                    ) {
+                        console.error("WeChat Pay membership sync merchant/app mismatch", {
+                            mchid: transaction?.mchid,
+                            appid: transaction?.appid,
+                        });
+                    } else if (transaction?.trade_state === "SUCCESS") {
+                        const totalFen = transaction?.amount?.total;
+                        const parsedPaidAt = transaction?.success_time
+                            ? Date.parse(transaction.success_time)
+                            : Number.NaN;
+                        const paidAt = Number.isFinite(parsedPaidAt)
+                            ? parsedPaidAt
+                            : Date.now();
+
+                        if (typeof totalFen === "number") {
+                            const result = await markMembershipOrderPaid({
+                                outTradeNo: order.out_trade_no,
+                                providerTransactionId:
+                                    transaction?.transaction_id,
+                                paidAt,
+                                rawNotify: {
+                                    source: "query",
+                                    transaction,
+                                },
+                                totalFen,
+                            });
+
+                            if (result?.order) {
+                                resolvedOrder = result.order;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(
+                        "WeChat Pay sync membership order status failed:",
+                        order?.out_trade_no,
+                        error,
+                    );
+                }
+            }
+
+            return res.json({
+                status: "success",
+                data: { order: resolvedOrder },
+            });
+        } catch (error) {
+            console.error("GET /payments/memberships/orders/:id error:", error);
+            return jsonError(
+                res,
+                500,
+                "SERVER_ERROR",
+                "Failed to load membership order",
             );
         }
     });

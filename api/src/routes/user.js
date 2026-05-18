@@ -4,6 +4,7 @@ import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import {
     consumeUserPoints,
     getOrCreateClipboardPersonalProfile,
+    getActiveMembershipForUser,
     getUserByClerkId,
     finalizePointsHold,
     listUsers,
@@ -843,11 +844,15 @@ if (!isClerkApiConfigured) {
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                const membership = await getActiveMembershipForUser(user.id);
 
                 res.json({
                     status: "success",
                     data: {
-                        user,
+                        user: {
+                            ...user,
+                            membership,
+                        },
                     },
                 });
             } catch (error) {

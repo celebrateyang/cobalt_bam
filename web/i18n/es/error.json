@@ -49,5 +49,6 @@
     "queue.refresh_required_title": "No se pudo iniciar la cola de descarga",
     "queue.refresh_required": "Esto suele ocurrir después de una actualización del frontend con caché desactualizada. Recarga la página (Ctrl+F5) e inténtalo de nuevo.",
     "queue.generic_error": "No se pudo iniciar el proceso de descarga. Recarga la página e inténtalo de nuevo.",
-    "queue.worker_didnt_start": "El proceso de descarga no se inició a tiempo. Recarga la página e inténtalo de nuevo."
+    "queue.worker_didnt_start": "El proceso de descarga no se inició a tiempo. Recarga la página e inténtalo de nuevo.",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

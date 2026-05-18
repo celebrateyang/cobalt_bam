@@ -60,5 +60,6 @@
     "queue.refresh_required_title": "下载队列启动失败",
     "queue.refresh_required": "这通常发生在前端更新后浏览器仍使用旧缓存时。请刷新页面（Ctrl+F5）后再试。",
     "queue.generic_error": "下载工作进程启动失败。请刷新页面后重试。",
-    "queue.worker_didnt_start": "下载工作进程未能及时启动。请刷新页面后重试。"
+    "queue.worker_didnt_start": "下载工作进程未能及时启动。请刷新页面后重试。",
+    "api.membership.limit.exceeded": "会员合理使用额度已用完，请稍后再试。"
 }

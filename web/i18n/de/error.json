@@ -49,5 +49,6 @@
     "queue.refresh_required_title": "Download-Warteschlange konnte nicht gestartet werden",
     "queue.refresh_required": "Das passiert meist nach einem Frontend-Update mit veraltetem Cache. Aktualisiere die Seite (Strg+F5) und versuche es erneut.",
     "queue.generic_error": "Der Download-Worker konnte nicht gestartet werden. Aktualisiere die Seite und versuche es erneut.",
-    "queue.worker_didnt_start": "Der Download-Worker konnte nicht rechtzeitig gestartet werden. Aktualisiere die Seite und versuche es erneut."
+    "queue.worker_didnt_start": "Der Download-Worker konnte nicht rechtzeitig gestartet werden. Aktualisiere die Seite und versuche es erneut.",
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
 }

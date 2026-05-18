@@ -186,6 +186,7 @@
         `low-points-balloon-dismissed:${userId}`;
 
     let userPoints: number | null = null;
+    let userMembershipActive = false;
     let pointsLoading = false;
     let lastPointsUserId: string | null = null;
 
@@ -226,10 +227,13 @@
                 throw new Error(data?.error?.message || "failed to load points");
             }
 
-            userPoints = data.data?.user?.points ?? null;
+            const user = data.data?.user;
+            userPoints = user?.points ?? null;
+            userMembershipActive = user?.membership?.active === true;
             lastPointsUserId = userId;
         } catch (error) {
             userPoints = null;
+            userMembershipActive = false;
             console.debug("load points failed", error);
         } finally {
             pointsLoading = false;
@@ -255,6 +259,7 @@
         void fetchUserPoints();
     } else {
         userPoints = null;
+        userMembershipActive = false;
         lastPointsUserId = null;
         lowPointsBalloonDismissed = false;
         lowPointsBalloonDismissKey = null;
@@ -265,6 +270,7 @@
         browser &&
         signedInState &&
         !pointsLoading &&
+        !userMembershipActive &&
         userPoints !== null &&
         userPoints < LOW_POINTS_THRESHOLD &&
         !lowPointsBalloonDismissed;

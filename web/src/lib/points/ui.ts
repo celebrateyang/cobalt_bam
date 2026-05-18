@@ -14,6 +14,7 @@ export type PointsHelpSection = "topup" | "referral" | "promotion" | "contact";
 
 export type CurrentUserPointsProfile = {
     points: number | null;
+    membershipActive: boolean;
     downloadSuccessCount: number;
     firstDownloadGraceEligible: boolean;
     firstDownloadGraceUsed: boolean;
@@ -79,6 +80,7 @@ export const fetchCurrentUserPointsProfile =
         return {
             points:
                 typeof user?.points === "number" ? user.points : null,
+            membershipActive: user?.membership?.active === true,
             downloadSuccessCount: Number(user?.download_success_count ?? 0) || 0,
             firstDownloadGraceEligible:
                 user?.first_download_grace_eligible === true,

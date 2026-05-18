@@ -308,6 +308,11 @@ const confirmPointsPreview = async (url: string) => {
         estimatePointsForUrl(url),
         fetchCurrentUserPointsProfile(),
     ]);
+
+    if (pointsProfile?.membershipActive) {
+        return true;
+    }
+
     const estimatedPoints = typeof points === "number" ? points : null;
     const currentPoints =
         typeof pointsProfile?.points === "number" ? pointsProfile.points : null;

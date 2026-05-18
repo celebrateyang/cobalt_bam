@@ -3,10 +3,12 @@
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
-    import { currentApiURL } from "$lib/api/api-url";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { clearCollectionMemory } from "$lib/api/collection-memory";
-    import { showPointsInsufficientDialog as openPointsInsufficientDialog } from "$lib/points/ui";
+    import {
+        fetchCurrentUserPointsProfile,
+        showPointsInsufficientDialog as openPointsInsufficientDialog,
+    } from "$lib/points/ui";
     import {
         clearPendingBatchIntent,
         savePendingBatchIntent,
@@ -16,7 +18,6 @@
     import {
         checkSignedIn,
         clerkEnabled,
-        getClerkToken,
         isSignedIn,
         signIn,
     } from "$lib/state/clerk";
@@ -271,28 +272,17 @@
         });
     };
 
-    const fetchUserPoints = async () => {
-        const token = await getClerkToken();
-        if (!token) throw new Error("missing token");
-
-        const apiBase = currentApiURL();
-        const res = await fetch(`${apiBase}/user/me`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || data?.status !== "success") {
-            throw new Error(data?.error?.message || "failed to load points");
+    const fetchUserPointsProfile = async () => {
+        const profile = await fetchCurrentUserPointsProfile();
+        if (!profile) {
+            throw new Error("failed to load points");
         }
 
-        const points = data?.data?.user?.points;
-        if (!Number.isFinite(points)) {
+        if (!profile.membershipActive && !Number.isFinite(profile.points)) {
             throw new Error("invalid points");
         }
 
-        return points as number;
+        return profile;
     };
 
     const prepareBatch = async (selectedItems: DialogBatchItem[]) => {
@@ -470,15 +460,18 @@
         let currentPoints = 0;
         if (requiredPoints > 0) {
             pointsCheckLoading = true;
+            let membershipActive = false;
             try {
-                currentPoints = await fetchUserPoints();
+                const profile = await fetchUserPointsProfile();
+                membershipActive = profile.membershipActive;
+                currentPoints = Number(profile.points ?? 0);
             } catch {
                 pointsCheckLoading = false;
                 showPointsError();
                 return;
             }
 
-            if (currentPoints < requiredPoints) {
+            if (!membershipActive && currentPoints < requiredPoints) {
                 pointsCheckLoading = false;
                 showPointsInsufficient(currentPoints, requiredPoints);
                 return;
@@ -660,14 +653,17 @@
 
         if (requiredPoints > 0) {
             let currentPoints;
+            let membershipActive = false;
             try {
-                currentPoints = await fetchUserPoints();
+                const profile = await fetchUserPointsProfile();
+                membershipActive = profile.membershipActive;
+                currentPoints = Number(profile.points ?? 0);
             } catch {
                 showPointsError();
                 return;
             }
 
-            if (currentPoints < requiredPoints) {
+            if (!membershipActive && currentPoints < requiredPoints) {
                 showPointsInsufficient(currentPoints, requiredPoints);
                 return;
             }

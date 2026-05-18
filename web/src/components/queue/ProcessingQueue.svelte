@@ -8,6 +8,7 @@
     import { clearFileStorage } from "$lib/storage/opfs";
 
     import { getProgress } from "$lib/task-manager/queue";
+    import { pwaInstallBannerHeight } from "$lib/state/pwa-install-banner";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import {
@@ -172,7 +173,11 @@
     });
 </script>
 
-<div id="processing-queue">
+<div
+    id="processing-queue"
+    class:pwa-banner-visible={$pwaInstallBannerHeight > 0}
+    style={`--pwa-install-banner-height: ${$pwaInstallBannerHeight}px;`}
+>
     <ProcessingStatus
         progress={totalProgress * 100}
         {indeterminate}
@@ -247,6 +252,7 @@
     #processing-queue {
         --holder-padding: 12px;
         position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + var(--holder-padding));
         right: 0;
         display: flex;
         flex-direction: column;
@@ -256,6 +262,15 @@
         pointer-events: none;
         padding: var(--holder-padding);
         width: calc(100% - var(--holder-padding) * 2);
+        transition: top 0.2s ease;
+    }
+
+    #processing-queue.pwa-banner-visible {
+        top: calc(
+            env(safe-area-inset-top, 0px)
+            + var(--pwa-install-banner-height)
+            + var(--holder-padding)
+        );
     }
 
     #processing-queue :global(#processing-popover) {
@@ -383,7 +398,15 @@
         #processing-queue {
             --holder-padding: 8px;
             padding-top: 4px;
-            top: env(safe-area-inset-top);
+            top: calc(env(safe-area-inset-top, 0px) + 4px);
+        }
+
+        #processing-queue.pwa-banner-visible {
+            top: calc(
+                env(safe-area-inset-top, 0px)
+                + var(--pwa-install-banner-height)
+                + 4px
+            );
         }
 
         .queue-save-warning {

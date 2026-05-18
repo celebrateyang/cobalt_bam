@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { t } from "$lib/i18n/translations";
+    import { pwaInstallBannerHeight } from "$lib/state/pwa-install-banner";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import IconDeviceDesktop from "@tabler/icons-svelte/IconDeviceDesktop.svelte";
     import {
@@ -12,6 +13,9 @@
 
     let deferredPrompt: any;
     let showBanner = false;
+    let bannerHeight = 0;
+
+    $: $pwaInstallBannerHeight = showBanner ? bannerHeight : 0;
 
     const isInstalled = () =>
         isStandaloneMode() || hasStoredInstallMarker();
@@ -60,6 +64,7 @@
 
         return () => {
             cancelled = true;
+            pwaInstallBannerHeight.set(0);
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
             window.removeEventListener('appinstalled', handleAppInstalled);
         };
@@ -79,7 +84,7 @@
 </script>
 
 {#if showBanner}
-    <div class="pwa-banner">
+    <div class="pwa-banner" bind:clientHeight={bannerHeight}>
         <div class="content">
             <div class="icon-wrapper">
                 <IconDeviceDesktop size={20} />

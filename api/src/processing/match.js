@@ -30,6 +30,7 @@ import dailymotion from "./services/dailymotion.js";
 import snapchat from "./services/snapchat.js";
 import loom from "./services/loom.js";
 import facebook from "./services/facebook.js";
+import haokan from "./services/haokan.js";
 import bluesky from "./services/bluesky.js";
 import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
@@ -464,6 +465,14 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await facebook({
                     ...patternMatch,
                     dispatcher
+                });
+                break;
+
+            case "haokan":
+                r = await haokan({
+                    ...patternMatch,
+                    quality: params.videoQuality,
+                    url,
                 });
                 break;
 

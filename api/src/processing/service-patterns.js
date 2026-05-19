@@ -28,6 +28,10 @@ export const testers = {
         pattern.id?.length <= 20 && !pattern.shareType ||
         pattern.id?.length <= 20 && pattern.shareType?.length === 1,
 
+    "haokan": pattern =>
+        pattern.vid?.length <= 32 ||
+        pattern.context?.length <= 1024,
+
     "instagram": pattern =>
         pattern.postId?.length <= 48 ||
         pattern.shareId?.length <= 16 ||

@@ -16,6 +16,7 @@
         "test": "node src/util/test",
         "social:sync-enabled": "node src/util/sync-enabled-accounts.js",
         "social:thumb-expiry": "node src/util/analyze-thumbnail-expiry.js",
+        "douyin:probe-user": "node src/util/probe-douyin-user.js",
         "downloads:cleanup-attempts": "node src/util/cleanup-download-attempts.js",
         "points:cleanup-holds": "node src/util/cleanup-points-holds.js",
         "token:jwt": "node src/util/generate-jwt-secret",

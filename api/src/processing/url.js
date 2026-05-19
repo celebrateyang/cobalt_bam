@@ -149,9 +149,21 @@ function aliasURL(url) {
     return url;
 }
 
+function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (
+        host.sld === "baidu" &&
+        host.tld === "com" &&
+        ["haokan", "sv"].includes(host.subdomain)
+    ) {
+        return "haokan";
+    }
+
+    return host.sld;
+}
+
 function cleanURL(url) {
     assert(url instanceof URL);
-    const host = psl.parse(url.hostname).sld;
+    const host = serviceNameForURL(url);
 
     let stripQuery = true;
 
@@ -183,6 +195,13 @@ function cleanURL(url) {
         case "twitter":
             if (url.searchParams.get('post_id')) {
                 limitQuery('post_id');
+            }
+            break;
+        case "haokan":
+            if (url.searchParams.get("vid")) {
+                limitQuery("vid");
+            } else if (url.searchParams.get("context")) {
+                limitQuery("context");
             }
             break;
         case "xiaohongshu":
@@ -223,15 +242,21 @@ function getHostIfValid(url) {
     const host = psl.parse(url.hostname);
     if (host.error) return;
 
-    const service = services[host.sld];
+    const serviceName = serviceNameForURL(url, host);
+    const service = services[serviceName];
     if (!service) return;
+
+    if (serviceName === "haokan") {
+        return serviceName;
+    }
+
     if ((service.tld ?? 'com') !== host.tld) return;
 
     const anySubdomainAllowed = service.subdomains === '*';
     const validSubdomain = [null, 'www', ...(service.subdomains ?? [])].includes(host.subdomain);
     if (!validSubdomain && !anySubdomainAllowed) return;
 
-    return host.sld;
+    return serviceName;
 }
 
 export function normalizeURL(url) {

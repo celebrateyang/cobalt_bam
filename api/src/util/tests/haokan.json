@@ -1,0 +1,21 @@
+[
+    {
+        "name": "regular video",
+        "url": "https://haokan.baidu.com/v?vid=6025915872568991194&tab=recommend",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "invalid vid",
+        "url": "https://haokan.baidu.com/v?vid=abcdefghijklmnopqrstuvwxyz1234567",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.link.unsupported"
+        }
+    }
+]

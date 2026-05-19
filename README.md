@@ -34,6 +34,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | bluesky           | ✅            | ✅         | ✅         | ➖         | ➖              |
 | dailymotion       | ✅            | ✅         | ✅         | ✅         | ✅              |
 | instagram         | ✅            | ✅         | ✅         | ➖         | ➖              |
+| haokan            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | facebook          | ✅            | ❌         | ✅         | ➖         | ➖              |
 | loom              | ✅            | ❌         | ✅         | ✅         | ➖              |
 | naver             | ✅            | ✅         | ✅         | ✅         | ✅              |
@@ -64,6 +65,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | :--------  | :-----                                                                                                               |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
 | facebook   | supports public accessible videos content only.                                                                      |
+| haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |
 | naver      | supports public Naver Shorts share links and media-id links.                                                        |
 | pinterest  | supports photos, gifs, videos and stories.                                                                           |
 | reddit     | supports gifs and videos.                                                                                            |

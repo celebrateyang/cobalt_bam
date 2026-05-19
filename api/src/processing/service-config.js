@@ -52,6 +52,15 @@ export const services = {
         subdomains: ["web", "m"],
         altDomains: ["fb.watch"],
     },
+    haokan: {
+        patterns: [
+            "v?vid=:vid",
+            "v?vid=:vid&tab=:tab",
+            "videoui/page/videoland?context=:context",
+            "videoui/page/videoland?isBdboxShare=:isBdboxShare&context=:context&pd=:pd",
+        ],
+        tld: "com",
+    },
     instagram: {
         patterns: [
             "p/:postId",

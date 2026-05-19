@@ -83,7 +83,7 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
                     </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/downloads"
-                        tabTitle="Downloads"
+                        tabTitle="下载管理"
                         iconColor="blue"
                     >
                         <IconDownload />
@@ -93,7 +93,7 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
                 <PageNavSection sectionTitle="支持">
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/upstreams"
-                        tabTitle="Upstreams"
+                        tabTitle="集群监控"
                         iconColor="blue"
                     >
                         <IconServer2 />

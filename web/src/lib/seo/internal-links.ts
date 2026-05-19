@@ -55,6 +55,11 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'naver',
     },
     {
+        platform: 'Toutiao',
+        downloadSlug: 'toutiao-video-download',
+        homeKey: 'toutiao',
+    },
+    {
         platform: 'Xiaohongshu',
         downloadSlug: 'xiaohongshu-video-download',
         guideSlug: 'xiaohongshu-download-guide',
@@ -133,6 +138,7 @@ const strategicDownloadOrder = [
     'xiaohongshu-video-download',
     'kuaishou-no-watermark',
     'naver-video-download',
+    'toutiao-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',
     'douyin-mp3-download',
@@ -255,6 +261,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'snapchat-video-download',
     ],
     'naver-video-download': [
+        'toutiao-video-download',
         'youtube-shorts-download',
         'tiktok-no-watermark',
         'instagram-reels-download',
@@ -262,9 +269,18 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'youtube-download',
         'vimeo-video-download',
     ],
+    'toutiao-video-download': [
+        'douyin-no-watermark',
+        'kuaishou-no-watermark',
+        'bilibili-video-download',
+        'xiaohongshu-video-download',
+        'naver-video-download',
+        'youtube-download',
+    ],
     'xiaohongshu-video-download': [
         'douyin-no-watermark',
         'kuaishou-no-watermark',
+        'toutiao-video-download',
         'naver-video-download',
         'bilibili-video-download',
         'instagram-video-download',

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",
-        "description": "Ho tro hon 100 trang pho bien, gom TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook va nhieu nen tang khac. Phan tich va tai file HD truc tiep tren dien thoai va PC.",
+        "description": "Ho tro hon 100 trang pho bien, gom TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook va nhieu nen tang khac. Phan tich va tai file HD truc tiep tren dien thoai va PC.",
         "douyin": {
             "name": "Trình tải xuống TikTok/Douyin",
             "desc": "Hỗ trợ các phiên bản TikTok/Douyin trong nước và quốc tế. Xóa hình mờ bằng một cú nhấp chuột, giữ nguyên âm thanh và video HD."
@@ -17,6 +17,10 @@
         "haokan": {
             "name": "Trinh tai video Haokan",
             "desc": "Luu video cong khai tu Haokan/Baidu thanh cac phien ban MP4 co san, bao gom HD khi nguon ho tro."
+        },
+        "toutiao": {
+            "name": "Trinh tai video Toutiao",
+            "desc": "Dan lien video Toutiao cong khai de luu cac tuy chon chat luong MP4 co san, bao gom HD khi nguon cung cap."
         },
         "xiaohongshu": {
             "name": "Lưu video Xiaohongshu",

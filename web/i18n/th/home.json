@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "ดาวน์โหลดไม่มีลายน้ำจากแพลตฟอร์มยอดนิยม",
-        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
+        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
         "douyin": {
             "name": "ดาวน์โหลด TikTok/Douyin",
             "desc": "รองรับ TikTok/Douyin ทั้งเวอร์ชันในประเทศและต่างประเทศ ลบลายน้ำในคลิกเดียว คงคุณภาพเสียงและวิดีโอระดับ HD"
@@ -17,6 +17,10 @@
         "haokan": {
             "name": "ตัวดาวน์โหลดวิดีโอ Haokan",
             "desc": "บันทึกวิดีโอสาธารณะจาก Haokan/Baidu เป็นไฟล์ MP4 คุณภาพที่มีให้ รวมถึง HD เมื่อแหล่งวิดีโอรองรับ"
+        },
+        "toutiao": {
+            "name": "ตัวดาวน์โหลดวิดีโอ Toutiao",
+            "desc": "วางลิงก์วิดีโอ Toutiao สาธารณะเพื่อบันทึกคุณภาพ MP4 ที่มีให้ รวมถึง HD เมื่อแหล่งต้นทางรองรับ"
         },
         "xiaohongshu": {
             "name": "บันทึกวิดีโอ Xiaohongshu",

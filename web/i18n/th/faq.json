@@ -3,8 +3,8 @@
     "description": "คำตอบเกี่ยวกับการดาวน์โหลดแบบไม่มีลายน้ำ รูปแบบ คะแนน และการแก้ปัญหา.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - โปรแกรมดาวน์โหลดวิดีโอไร้ลายน้ำ",
-        "description": "FreeSaveVideo FAQ: ดาวน์โหลด Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook พร้อมคำตอบเรื่องไร้ลายน้ำ โหมดแบตช์ รูปแบบ คะแนน และการแก้ปัญหา.",
-        "keywords": "FAQ ดาวน์โหลดวิดีโอ,ดาวน์โหลด Douyin,ดาวน์โหลด Bilibili,ดาวน์โหลด Kuaishou,ดาวน์โหลด Xiaohongshu,ดาวน์โหลด TikTok,ดาวน์โหลดไร้ลายน้ำ,ดาวน์โหลดแบบแบตช์,การคิดคะแนน,Haokan downloader,ดาวน์โหลดวิดีโอ Haokan"
+        "description": "FreeSaveVideo FAQ: ดาวน์โหลด Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook พร้อมคำตอบเรื่องไร้ลายน้ำ โหมดแบตช์ รูปแบบ คะแนน และการแก้ปัญหา.",
+        "keywords": "FAQ ดาวน์โหลดวิดีโอ, ดาวน์โหลด Douyin, ดาวน์โหลด Bilibili, ดาวน์โหลด Kuaishou, ดาวน์โหลด Xiaohongshu, ดาวน์โหลด TikTok, ดาวน์โหลดไร้ลายน้ำ, ดาวน์โหลดแบบแบตช์, การคิดคะแนน, Haokan downloader, ดาวน์โหลดวิดีโอ Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download"
     },
     "toc": {
         "title": "ลิงก์ด่วน"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo คืออะไร?",
-            "a": "FreeSaveVideo คือเครื่องมือดาวน์โหลดสื่อออนไลน์\nวางลิงก์แชร์ เลือกโหมด แล้วดาวน์โหลดไฟล์\nรองรับ Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook และอื่น ๆ"
+            "a": "FreeSaveVideo คือเครื่องมือดาวน์โหลดสื่อออนไลน์\nวางลิงก์แชร์ เลือกโหมด แล้วดาวน์โหลดไฟล์\nรองรับ Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook และอื่น ๆ"
         },
         "how_to_use": {
             "q": "จะดาวน์โหลดวิดีโอ (ไร้ลายน้ำ) ได้อย่างไร?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "รองรับแพลตฟอร์มและลิงก์แบบไหนบ้าง?",
-            "a": "รองรับกว่า 100 บริการ โดยทั่วไปเช่น Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook\nคุณภาพ/เสียง/ไฟล์เสริมขึ้นอยู่กับแพลตฟอร์มและโพสต์ต้นฉบับ"
+            "a": "รองรับกว่า 100 บริการ โดยทั่วไปเช่น Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook\nคุณภาพ/เสียง/ไฟล์เสริมขึ้นอยู่กับแพลตฟอร์มและโพสต์ต้นฉบับ"
         },
         "youtube_supported": {
             "q": "รองรับ YouTube ไหม?",

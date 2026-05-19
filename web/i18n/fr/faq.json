@@ -3,8 +3,8 @@
     "description": "Réponses sur les téléchargements sans filigrane, formats, points et dépannage.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Téléchargeur de vidéos sans filigrane",
-        "description": "FAQ FreeSaveVideo : téléchargements Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook. Filigrane, mode lot, formats, points et solutions.",
-        "keywords": "FAQ téléchargeur vidéo,téléchargeur Douyin,téléchargeur Bilibili,téléchargeur Kuaishou,téléchargeur Xiaohongshu,téléchargeur TikTok,téléchargement sans filigrane,téléchargement en lot,facturation par points,Haokan downloader, telecharger video Haokan"
+        "description": "FAQ FreeSaveVideo : téléchargements Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook. Filigrane, mode lot, formats, points et solutions.",
+        "keywords": "FAQ téléchargeur vidéo, téléchargeur Douyin, téléchargeur Bilibili, téléchargeur Kuaishou, téléchargeur Xiaohongshu, téléchargeur TikTok, téléchargement sans filigrane, téléchargement en lot, facturation par points, Haokan downloader, telecharger video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download"
     },
     "toc": {
         "title": "Liens rapides"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Qu'est‑ce que FreeSaveVideo ?",
-            "a": "FreeSaveVideo est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook et plus."
+            "a": "FreeSaveVideo est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook et plus."
         },
         "how_to_use": {
             "q": "Comment télécharger une vidéo (sans filigrane) ?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Quelles plateformes et quels liens sont pris en charge ?",
-            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter) et Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original."
+            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) et Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original."
         },
         "youtube_supported": {
             "q": "YouTube est-il pris en charge ?",

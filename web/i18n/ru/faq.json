@@ -3,8 +3,8 @@
     "description": "Ответы о скачивании без водяных знаков, форматах, поинтах и решении проблем.",
     "seo": {
         "title": "FAQ | FreeSaveVideo — загрузчик видео без водяных знаков",
-        "description": "FAQ FreeSaveVideo: загрузки Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения.",
-        "keywords": "FAQ загрузчик видео,Douyin загрузчик,Bilibili загрузчик,Kuaishou загрузчик,Xiaohongshu загрузчик,TikTok загрузчик,без водяных знаков,пакетная загрузка,списание поинтов,Haokan downloader,скачать видео Haokan"
+        "description": "FAQ FreeSaveVideo: загрузки Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения.",
+        "keywords": "FAQ загрузчик видео, Douyin загрузчик, Bilibili загрузчик, Kuaishou загрузчик, Xiaohongshu загрузчик, TikTok загрузчик, без водяных знаков, пакетная загрузка, списание поинтов, Haokan downloader, скачать видео Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download"
     },
     "toc": {
         "title": "Быстрые ссылки"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Что такое FreeSaveVideo?",
-            "a": "FreeSaveVideo — это онлайн‑загрузчик медиа.\nВставьте ссылку, выберите режим и скачайте файл.\nПоддерживаются Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook и другие."
+            "a": "FreeSaveVideo — это онлайн‑загрузчик медиа.\nВставьте ссылку, выберите режим и скачайте файл.\nПоддерживаются Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook и другие."
         },
         "how_to_use": {
             "q": "Как скачать видео (без водяного знака)?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Какие платформы и типы ссылок поддерживаются?",
-            "a": "Сайт поддерживает 100+ сервисов. Частые: Douyin/TikTok, Bilibili, Kuaishou, Haokan, Xiaohongshu, Instagram, X(Twitter), Facebook.\nКачество, аудио и дополнительные файлы зависят от платформы и исходного поста."
+            "a": "Сайт поддерживает 100+ сервисов. Частые: Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook.\nКачество, аудио и дополнительные файлы зависят от платформы и исходного поста."
         },
         "youtube_supported": {
             "q": "Поддерживается ли YouTube?",

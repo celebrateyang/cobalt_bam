@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Скачивание без водяных знаков с популярных платформ",
-        "description": "Поддерживает 100+ популярных сайтов, включая TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook и другие. Анализируйте и скачивайте HD-файлы на телефоне и ПК.",
+        "description": "Поддерживает 100+ популярных сайтов, включая TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook и другие. Анализируйте и скачивайте HD-файлы на телефоне и ПК.",
         "douyin": {
             "name": "Скачать из TikTok/Douyin",
             "desc": "Поддержка отечественных и международных версий TikTok/Douyin. Удаление водяных знаков в один клик, сохранение HD аудио и видео."
@@ -17,6 +17,10 @@
         "haokan": {
             "name": "Загрузчик видео Haokan",
             "desc": "Сохраняйте публичные видео Haokan/Baidu в доступных MP4-вариантах, включая HD, если он есть у источника."
+        },
+        "toutiao": {
+            "name": "Загрузчик видео Toutiao",
+            "desc": "Вставьте публичную ссылку на видео Toutiao и сохраните доступные варианты MP4, включая HD, если источник их предоставляет."
         },
         "xiaohongshu": {
             "name": "Сохранить видео из Xiaohongshu",

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
-        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
+        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
@@ -17,6 +17,10 @@
         "haokan": {
             "name": "Haokan Video Downloader",
             "desc": "Speichere oeffentliche Haokan/Baidu-Videos als verfuegbare MP4-Qualitaeten, einschliesslich HD, wenn die Quelle sie anbietet."
+        },
+        "toutiao": {
+            "name": "Toutiao Video Downloader",
+            "desc": "Füge einen öffentlichen Toutiao-Videolink ein und speichere verfügbare MP4-Qualitäten, inklusive HD, wenn die Quelle sie anbietet."
         },
         "xiaohongshu": {
             "name": "Xiaohongshu Video Saver",

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "인기 플랫폼 워터마크 없는 다운로드",
-        "description": "TikTok, Bilibili, Kuaishou, Haokan, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
+        "description": "TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
         "douyin": {
             "name": "TikTok/Douyin 다운로더",
             "desc": "국내외 버전의 TikTok/Douyin을 지원합니다. 원클릭 워터마크 제거, HD 오디오 및 비디오 유지."
@@ -17,6 +17,10 @@
         "haokan": {
             "name": "Haokan 동영상 다운로더",
             "desc": "공개 Haokan/Baidu 동영상 링크에서 사용 가능한 MP4 화질을 저장합니다."
+        },
+        "toutiao": {
+            "name": "Toutiao 비디오 다운로더",
+            "desc": "공개 Toutiao 비디오 링크를 붙여넣고 사용 가능한 MP4 화질을 저장하세요. 원본이 제공하면 HD 옵션도 표시됩니다."
         },
         "xiaohongshu": {
             "name": "Xiaohongshu 동영상 저장",

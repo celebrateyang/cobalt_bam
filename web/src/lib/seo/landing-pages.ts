@@ -765,6 +765,67 @@ const buildGenericLocales = (params: GenericLocaleParams) => ({
 });
 
 export const seoLandingPages: SeoLandingPage[] = [
+
+    {
+        slug: 'toutiao-video-download',
+        locales: {
+            en: en({
+                metaTitle: `Toutiao Video Downloader - Save Toutiao MP4 Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public Toutiao videos online. Paste a www.toutiao.com or m.toutiao.com video link and save available MP4 quality options in your browser.',
+                metaKeywords: [
+                    'toutiao video downloader',
+                    'download toutiao video',
+                    'toutiao mp4 download',
+                    'www.toutiao.com video download',
+                    'm.toutiao.com video download',
+                    'jinri toutiao video download',
+                ],
+                h1: 'Toutiao Video Downloader',
+                lede: 'Paste a public Toutiao video link, including www.toutiao.com/video and m.toutiao.com/video URLs, then save available MP4 results in your browser.',
+                stepsTitle: 'How to download Toutiao videos',
+                steps: [
+                    'Open the public Toutiao video page and copy the share link.',
+                    'Paste the www.toutiao.com or m.toutiao.com video URL into the downloader below.',
+                    'Choose an available quality option and save the MP4 file to your device.',
+                ],
+                featuresTitle: 'Toutiao downloader features',
+                features: [
+                    'Supports public Toutiao video pages and mobile share pages.',
+                    'Returns available MP4 quality variants such as 360p, 480p, or 720p when the source provides them.',
+                    'Works in the browser without installing the Toutiao app.',
+                    'Uses the same download queue and audio/mute options as other supported platforms.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Can I download private Toutiao videos?',
+                        a: 'No. Only publicly accessible Toutiao video pages can be parsed and downloaded.',
+                    },
+                    {
+                        q: 'Why does a Toutiao link fail?',
+                        a: 'The video may be unavailable, restricted, or missing playable MP4 variants. Try another public link or retry later.',
+                    },
+                    {
+                        q: 'Can I choose HD quality?',
+                        a: 'Yes, when Toutiao provides multiple MP4 variants. The available quality list depends on the original video.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Toutiao',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'toutiao video downloader',
+                    'download toutiao video',
+                    'toutiao mp4 download',
+                    'www.toutiao.com video download',
+                    'm.toutiao.com video download',
+                ],
+            }),
+        },
+    },
     {
         slug: 'tiktok-no-watermark',
         locales: {

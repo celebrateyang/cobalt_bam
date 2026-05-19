@@ -136,6 +136,18 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports public NAVER Shorts, naver.me share links, and m.naver.com/shorts media links.'],
     },
     {
+        id: 'toutiao',
+        name: 'Toutiao',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: 'toutiao-video-download',
+        notes: ['Supports public Toutiao video pages and available MP4 quality variants.'],
+    },
+    {
         id: 'xiaohongshu',
         name: 'Xiaohongshu',
         category: 'media',

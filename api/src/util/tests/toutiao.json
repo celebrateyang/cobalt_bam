@@ -1,0 +1,32 @@
+[
+    {
+        "name": "regular video",
+        "url": "https://www.toutiao.com/video/7629698273762083363/?log_from=cfa10da9d2c538_1779176762883",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "mobile video",
+        "url": "https://m.toutiao.com/video/7629698273762083363/",
+        "params": {
+            "videoQuality": "480"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "invalid id",
+        "url": "https://www.toutiao.com/video/abcdefghijklmnopqrstuvwxyz/",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.link.unsupported"
+        }
+    }
+]

@@ -202,6 +202,13 @@ export const services = {
         ],
         subdomains: ["vt", "vm", "m", "t"],
     },
+    toutiao: {
+        patterns: [
+            "video/:id",
+            "item/:id",
+        ],
+        subdomains: ["m"],
+    },
     tumblr: {
         patterns: [
             "post/:id",

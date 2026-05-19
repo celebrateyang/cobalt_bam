@@ -88,6 +88,9 @@ export const testers = {
         pattern.postId?.length <= 21 ||
         pattern.shortLink?.length <= 21,
 
+    "toutiao": pattern =>
+        pattern.id?.length <= 24,
+
     "tumblr": pattern =>
         pattern.id?.length < 21 ||
         (pattern.id?.length < 21 && pattern.user?.length <= 32),

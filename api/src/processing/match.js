@@ -37,6 +37,7 @@ import newgrounds from "./services/newgrounds.js";
 import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
 import naver from "./services/naver.js";
+import toutiao from "./services/toutiao.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -362,6 +363,14 @@ export default async function({ host, patternMatch, params, authType }) {
                     h265: params.allowH265,
                     alwaysProxy: params.alwaysProxy,
                     subtitleLang,
+                });
+                break;
+
+            case "toutiao":
+                r = await toutiao({
+                    ...patternMatch,
+                    quality: params.videoQuality,
+                    url,
                 });
                 break;
 

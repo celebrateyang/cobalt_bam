@@ -97,6 +97,19 @@
   - Python scripts that explicitly read/write with `encoding='utf-8'`.
 - After any i18n edit, run `pnpm -C web i18n:check-encoding` before finalizing changes.
 
+### Safe copywriting edit workflow (must-follow)
+- Treat PowerShell command text itself as unsafe for non-ASCII. Even when Python reads/writes files with `encoding='utf-8'`, non-ASCII literals embedded in a PowerShell here-string can be converted to `?` before Python receives them.
+- For multi-locale or non-ASCII copy edits, use one of these safe approaches:
+  1. Prefer `apply_patch` for small targeted edits.
+  2. If a script is needed, keep the script source ASCII-only and represent non-ASCII text as Unicode escapes such as `\u597d\u770b\u89c6\u9891`, or load the copy from an existing UTF-8 file instead of embedding literal CJK/JP/KR/RU/TH text in the shell command.
+  3. In Python, always use `Path(...).read_text(encoding='utf-8')` and `write_text(..., encoding='utf-8')`, and `json.dumps(..., ensure_ascii=False, indent=4)` for JSON.
+- After scripted i18n edits, run all of:
+  - `pnpm -C web i18n:check-encoding`
+  - `rg -n "\?\?|�|\\uFFFD|锟|鎴|馃" web/i18n`
+  - Spot-check the exact changed keys with Python using `value.encode("unicode_escape").decode()` for non-Latin locales, so terminal codepages cannot hide corruption.
+- If the encoding check reports repeated `?` or missing expected script characters, stop feature work immediately. Restore or rewrite only the corrupted keys using an ASCII-only Python script with Unicode escapes, then rerun the checks before continuing.
+- Do not ignore encoding warnings just because the build passes; a clean `pnpm -C web i18n:check-encoding` is required for any copy/i18n change.
+
 ### Encoding incident notes (2026-02)
 - Root cause: in Windows PowerShell, `Get-Content` on UTF-8-without-BOM files may be decoded with legacy codepage, then writing back as UTF-8 corrupts CJK text.
 - DO NOT use this pattern on CJK files:

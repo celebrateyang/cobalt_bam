@@ -113,6 +113,17 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports short-video, video, and share links.'],
     },
     {
+        id: 'haokan',
+        name: 'Haokan',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        notes: ['Supports public Haokan/Baidu video pages and available MP4 quality variants.'],
+    },
+    {
         id: 'naver',
         name: 'NAVER',
         category: 'video',

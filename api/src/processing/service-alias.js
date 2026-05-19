@@ -3,6 +3,7 @@ const friendlyNames = {
     bsky: "bluesky",
     twitch: "twitch clips",
     douyin: "Douyin",
+    haokan: "Haokan",
     kuaishou: "Kuaishou",
     naver: "Naver"
 }

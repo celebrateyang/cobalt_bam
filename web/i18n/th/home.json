@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "ดาวน์โหลดไม่มีลายน้ำจากแพลตฟอร์มยอดนิยม",
-        "description": "รองรับกว่า 100 เว็บไซต์ยอดนิยม รวมถึง TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook ฯลฯ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้โดยตรงบนมือถือและพีซี",
+        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
         "douyin": {
             "name": "ดาวน์โหลด TikTok/Douyin",
             "desc": "รองรับ TikTok/Douyin ทั้งเวอร์ชันในประเทศและต่างประเทศ ลบลายน้ำในคลิกเดียว คงคุณภาพเสียงและวิดีโอระดับ HD"
@@ -13,6 +13,10 @@
         "kuaishou": {
             "name": "ลบลายน้ำ Kuaishou",
             "desc": "คัดลอกลิงก์ Kuaishou เพื่อวิเคราะห์ การดาวน์โหลดแบบกลุ่มมีประสิทธิภาพมากกว่า"
+        },
+        "haokan": {
+            "name": "ตัวดาวน์โหลดวิดีโอ Haokan",
+            "desc": "บันทึกวิดีโอสาธารณะจาก Haokan/Baidu เป็นไฟล์ MP4 คุณภาพที่มีให้ รวมถึง HD เมื่อแหล่งวิดีโอรองรับ"
         },
         "xiaohongshu": {
             "name": "บันทึกวิดีโอ Xiaohongshu",
@@ -59,7 +63,7 @@
     "hero": {
         "eyebrow": "โปรแกรมดาวน์โหลดวิดีโอออนไลน์",
         "title": "ดาวน์โหลดวิดีโอออนไลน์แบบไม่มีลายน้ำ",
-        "subtitle": "วางลิงก์จาก Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube และอีกมากมาย เพื่อดาวน์โหลดวิดีโอ HD ได้อย่างรวดเร็ว",
+        "subtitle": "วางลิงก์จาก Douyin, TikTok, Bilibili, Haokan, NAVER, Xiaohongshu, Instagram, Facebook, YouTube และแพลตฟอร์มอื่นๆ เพื่อดาวน์โหลดวิดีโอ HD ได้ในไม่กี่คลิก",
         "trust": "บริการที่รองรับสามารถใช้การดาวน์โหลดหลายลิงก์ ชุดรวม / playlist โหมดเสียงอย่างเดียว และโหมดปิดเสียงได้ทันที"
     },
     "tools": {

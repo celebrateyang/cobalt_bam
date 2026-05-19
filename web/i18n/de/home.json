@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
-        "description": "Unterstützt über 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Handy und PC herunter.",
+        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
@@ -13,6 +13,10 @@
         "kuaishou": {
             "name": "Kuaishou Wasserzeichen-Entferner",
             "desc": "Kopieren Sie Kuaishou-Links zum Analysieren. Batch-Download ist effizienter."
+        },
+        "haokan": {
+            "name": "Haokan Video Downloader",
+            "desc": "Speichere oeffentliche Haokan/Baidu-Videos als verfuegbare MP4-Qualitaeten, einschliesslich HD, wenn die Quelle sie anbietet."
         },
         "xiaohongshu": {
             "name": "Xiaohongshu Video Saver",
@@ -59,7 +63,7 @@
     "hero": {
         "eyebrow": "Online-Video-Downloader",
         "title": "Videos online ohne Wasserzeichen herunterladen",
-        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
+        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Haokan, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
         "trust": "Batch-Downloads, Sammlungen / Playlists, Nur-Audio und Stumm-Modus sind fuer unterstuetzte Dienste direkt integriert."
     },
     "tools": {

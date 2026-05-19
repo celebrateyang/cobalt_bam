@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "인기 플랫폼 워터마크 없는 다운로드",
-        "description": "TikTok, Bilibili, Kuaishou, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일 및 PC에서 HD 파일을 직접 분석하고 다운로드하세요.",
+        "description": "TikTok, Bilibili, Kuaishou, Haokan, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
         "douyin": {
             "name": "TikTok/Douyin 다운로더",
             "desc": "국내외 버전의 TikTok/Douyin을 지원합니다. 원클릭 워터마크 제거, HD 오디오 및 비디오 유지."
@@ -13,6 +13,10 @@
         "kuaishou": {
             "name": "Kuaishou 워터마크 제거기",
             "desc": "Kuaishou 링크를 복사하여 분석하세요. 일괄 다운로드가 더 효율적입니다."
+        },
+        "haokan": {
+            "name": "Haokan 동영상 다운로더",
+            "desc": "공개 Haokan/Baidu 동영상 링크에서 사용 가능한 MP4 화질을 저장합니다."
         },
         "xiaohongshu": {
             "name": "Xiaohongshu 동영상 저장",
@@ -59,7 +63,7 @@
     "hero": {
         "eyebrow": "온라인 동영상 다운로더",
         "title": "워터마크 없는 동영상을 온라인으로 다운로드",
-        "subtitle": "Douyin, TikTok, Bilibili, NAVER, Xiaohongshu, Instagram, Facebook, YouTube 등의 링크를 붙여넣으면 HD 영상을 빠르게 저장할 수 있습니다.",
+        "subtitle": "Douyin, TikTok, Bilibili, Haokan, NAVER, Xiaohongshu, Instagram, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
         "trust": "지원되는 서비스에서는 일괄 다운로드, 모음집 / 플레이리스트, 오디오 전용, 음소거 모드를 바로 사용할 수 있습니다."
     },
     "tools": {

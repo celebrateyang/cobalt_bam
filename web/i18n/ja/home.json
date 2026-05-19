@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "人気プラットフォームから透かしなしでダウンロード",
-        "description": "TikTok、Bilibili, NAVER、快手、小紅書、YouTube、Instagram、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
+        "description": "TikTok、Bilibili、Haokan、NAVER、快手、小紅書、YouTube、Instagram、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
         "douyin": {
             "name": "TikTok/抖音ダウンローダー",
             "desc": "国内外のTikTok/抖音に対応。ワンクリックで透かしを削除し、HD音声と画質を維持します。"
@@ -13,6 +13,10 @@
         "kuaishou": {
             "name": "快手透かし削除",
             "desc": "快手のリンクをコピーして解析。一括ダウンロードで効率アップ。"
+        },
+        "haokan": {
+            "name": "Haokan動画ダウンローダー",
+            "desc": "Haokan/Baidu の公開動画リンクから、利用可能な MP4 画質を保存できます。"
         },
         "xiaohongshu": {
             "name": "小紅書動画保存",
@@ -59,7 +63,7 @@
     "hero": {
         "eyebrow": "オンライン動画ダウンローダー",
         "title": "透かしなし動画をオンラインでダウンロード",
-        "subtitle": "Douyin、TikTok、Bilibili, NAVER、小紅書、Instagram、Facebook、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
+        "subtitle": "Douyin、TikTok、Bilibili、Haokan、NAVER、小紅書、Instagram、Facebook、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
         "trust": "対応サービスでは一括ダウンロード、合集 / playlist、音声のみ、ミュート保存をそのまま使えます。"
     },
     "tools": {

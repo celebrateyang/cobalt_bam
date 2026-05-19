@@ -910,13 +910,19 @@ const expandBilibili = async (inputUrl) => {
     }
 
     // space.bilibili.com/:mid/channel/collectiondetail?sid=:sid
+    // space.bilibili.com/:mid/lists/:sid
     if (url.hostname === "space.bilibili.com") {
         const parts = url.pathname.split("/").filter(Boolean);
         const mid = parts?.[0];
         const channelPage = parts?.slice(1).join("/") || "";
-        const sid = url.searchParams.get("sid");
+        const listPageSid = parts?.[1] === "lists" ? parts?.[2] : undefined;
+        const sid = url.searchParams.get("sid") || listPageSid;
 
-        if (mid && sid && channelPage === "channel/collectiondetail") {
+        if (
+            mid &&
+            sid &&
+            (channelPage === "channel/collectiondetail" || parts?.[1] === "lists")
+        ) {
             const season = await bilibiliUgcSeasonFromSpace({
                 mid,
                 seasonId: sid,

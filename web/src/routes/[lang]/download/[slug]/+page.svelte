@@ -144,6 +144,14 @@
                   applicationCategory: 'MultimediaApplication',
                   operatingSystem: isZh ? '\u6d4f\u89c8\u5668' : 'Web browser',
                   featureList: localeContent.features,
+                  knowsAbout: [
+                      localeContent.h1,
+                      ...localeContent.metaKeywords,
+                      'public video download',
+                      'batch download',
+                      'playlist download',
+                      'audio extraction',
+                  ],
                   offers: {
                       '@type': 'Offer',
                       price: '0',

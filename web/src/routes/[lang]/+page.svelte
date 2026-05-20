@@ -431,10 +431,23 @@
               browserRequirements: "Requires JavaScript and a modern web browser.",
               isAccessibleForFree: true,
               featureList: heroCapabilities.map((item) => item.title),
+              knowsAbout: [
+                  "public online video download",
+                  "batch video download",
+                  "playlist download",
+                  "collection parsing",
+                  "audio extraction",
+                  "MP4 to MP3",
+                  "browser media tools",
+              ],
               offers: {
                   "@type": "Offer",
                   price: "0",
                   priceCurrency: "USD",
+              },
+              potentialAction: {
+                  "@type": "UseAction",
+                  target: canonicalUrl,
               },
           }
         : null;

@@ -245,6 +245,15 @@ export const services = {
         ],
         subdomains: ["player"],
     },
+    weibo: {
+        patterns: [
+            "_shortLink/:shortLink",
+            "show/:oid",
+            "show?fid=:fid",
+            "tv/show/:oid",
+        ],
+        subdomains: ["video", "h5.video"],
+    },
     vk: {
         patterns: [
             "video:ownerId_:videoId",

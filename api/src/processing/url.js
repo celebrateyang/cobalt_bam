@@ -98,6 +98,14 @@ function aliasURL(url) {
             }
             break;
 
+        case "t":
+            if (url.hostname === "t.cn" && parts.length === 2) {
+                url = new URL(`https://weibo.com/_shortLink/${
+                    encodeURIComponent(parts[1])
+                }`);
+            }
+            break;
+
         case "facebook":
         case "fb":
             if (url.searchParams.get('v')) {
@@ -222,6 +230,11 @@ function cleanURL(url) {
 
                 url.search = `?${cleaned.toString()}`;
                 stripQuery = false;
+            }
+            break;
+        case "weibo":
+            if (url.searchParams.get("fid")) {
+                limitQuery("fid");
             }
             break;
     }

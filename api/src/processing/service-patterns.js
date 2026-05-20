@@ -104,6 +104,17 @@ export const testers = {
     "vimeo": pattern =>
         pattern.id?.length <= 11 && (!pattern.password || pattern.password.length < 16),
 
+    "weibo": pattern => {
+        let id = String(pattern.oid || pattern.fid || "");
+        try {
+            id = decodeURIComponent(id);
+        } catch {
+            // keep the raw id for validation
+        }
+        return pattern.shortLink?.length <= 32 ||
+            /^1034:\d{8,24}$/.test(id);
+    },
+
     "vk": pattern =>
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10) ||
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10 && pattern.videoId?.accessKey <= 18),

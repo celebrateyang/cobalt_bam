@@ -6,7 +6,8 @@ const friendlyNames = {
     haokan: "Haokan",
     kuaishou: "Kuaishou",
     naver: "Naver",
-    toutiao: "Toutiao"
+    toutiao: "Toutiao",
+    weibo: "Weibo"
 }
 
 export const friendlyServiceName = (service) => {

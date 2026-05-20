@@ -38,6 +38,7 @@ import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
 import naver from "./services/naver.js";
 import toutiao from "./services/toutiao.js";
+import weibo from "./services/weibo.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -368,6 +369,14 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "toutiao":
                 r = await toutiao({
+                    ...patternMatch,
+                    quality: params.videoQuality,
+                    url,
+                });
+                break;
+
+            case "weibo":
+                r = await weibo({
                     ...patternMatch,
                     quality: params.videoQuality,
                     url,

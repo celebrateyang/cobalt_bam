@@ -277,6 +277,7 @@ export default function({
                 case "haokan":
                 case "naver":
                 case "toutiao":
+                case "weibo":
                 case "xiaohongshu":
                 case "newgrounds":
                 case "kuaishou":

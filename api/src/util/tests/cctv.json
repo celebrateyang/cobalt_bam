@@ -25,5 +25,14 @@
             "code": 200,
             "status": "tunnel"
         }
+    },
+    {
+        "name": "ydyl.cctv.com htmlVideoCode page",
+        "url": "https://ydyl.cctv.com/2026/01/06/ARTIGRVPMz145o3XdJ28soTg260106.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
     }
 ]

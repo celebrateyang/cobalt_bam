@@ -8,6 +8,7 @@ const GUID_REGEX = /var\s+guid\s*=\s*"([0-9a-f]{32})"/i;
 const GUID_PATTERNS = [
     /var\s+guid(?:_\d+)?\s*=\s*"([0-9a-f]{32})"/gi,
     /creat\w*Player\w*\(\s*["'][^"']+["']\s*,\s*["']([0-9a-f]{32})["']/gi,
+    /\[!--begin:htmlVideoCode--\]\s*([0-9a-f]{32})\s*,/gi,
 ];
 const CCTV_HLS_BITRATES = [2000, 1200, 850, 450];
 const CCTV_HIGH_QUALITY_BANDWIDTH = 1200000;

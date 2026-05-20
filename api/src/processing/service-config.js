@@ -207,8 +207,10 @@ export const services = {
         patterns: [
             "video/:id",
             "item/:id",
+            ":shortLink",
         ],
         subdomains: ["m"],
+        altDomains: ["toutiaoimg.cn"],
     },
     tumblr: {
         patterns: [

@@ -162,6 +162,10 @@ function serviceNameForURL(url, host = psl.parse(url.hostname)) {
         return "cctv";
     }
 
+    if (host.domain === "toutiaoimg.cn") {
+        return "toutiao";
+    }
+
     if (
         host.sld === "baidu" &&
         host.tld === "com" &&

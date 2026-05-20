@@ -20,6 +20,15 @@
         }
     },
     {
+        "name": "toutiaoimg mobile share link",
+        "url": "https://m.toutiaoimg.cn/a7377337579349213735",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
         "name": "invalid id",
         "url": "https://www.toutiao.com/video/abcdefghijklmnopqrstuvwxyz/",
         "params": {},

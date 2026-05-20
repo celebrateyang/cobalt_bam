@@ -130,7 +130,7 @@ const fetchArticleInfo = async (candidates, expectedId) => {
 
         return {
             articleInfo,
-            pageUrl: candidate,
+            pageUrl: new URL(response.url || candidate.toString()),
         };
     }
 

@@ -89,7 +89,8 @@ export const testers = {
         pattern.shortLink?.length <= 21,
 
     "toutiao": pattern =>
-        pattern.id?.length <= 24,
+        pattern.id?.length <= 24 ||
+        pattern.shortLink?.length <= 32,
 
     "tumblr": pattern =>
         pattern.id?.length < 21 ||

@@ -13,7 +13,7 @@
         "waiting": "đang chờ"
     },
     "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong.",
-    "success_notice": "?? t?i xu?ng th?nh c?ng {{ count }} video trong l? n?y.",
+    "success_notice": "Đã tải xuống thành công {{ count }} video trong lô này.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Da bam luu",
     "manual_save_warning": "Quan trong: sau khi tai xong, hay bam \"Luu\" ngay. Sau khi khoi dong lai trinh duyet, muc tai trong hang doi co the bi mat."

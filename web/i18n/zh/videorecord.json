@@ -175,8 +175,8 @@
         "resume_unsupported": "当前浏览器不支持恢复录制。"
     },
     "embed": {
-        "create_prompt": "FreeSaveVideoFreeSaveVideo?https://...?",
-        "edit_prompt": "FreeSaveVideo??",
-        "invalid_url_alert": "??? http(s) FreeSaveVideo?"
+        "create_prompt": "请输入要嵌入的网站地址（https://...）",
+        "edit_prompt": "编辑嵌入网址",
+        "invalid_url_alert": "请输入以 http(s) 开头的链接"
     }
 }

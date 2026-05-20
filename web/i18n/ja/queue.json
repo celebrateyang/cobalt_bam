@@ -13,7 +13,7 @@
         "waiting": "待機中"
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
-    "success_notice": "FreeSaveVideo?? {{ count }} FreeSaveVideoFreeSaveVideoFreeSaveVideoFreeSaveVideo???",
+    "success_notice": "このバッチで {{ count }} 本の動画を正常にダウンロードしました。",
     "save_all_done": "Save all downloaded",
     "save_clicked": "保存クリック済み",
     "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."

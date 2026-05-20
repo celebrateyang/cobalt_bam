@@ -33,6 +33,7 @@
     "api.content.video.age": "この動画は年齢制限があるため、匿名でアクセスできません。別の動画を試してください！",
     "api.content.video.region": "この動画は地域制限されており、処理サーバーは別の場所にあります。別の動画を試してください！",
     "api.youtube.disabled": "YouTubeのダウンロードはYouTube側の制限により一時的に無効になっています。私たちはすでにそれらを回避する方法を探しています。<br><br>YouTube動画をダウンロードするためのプラグインを手動でインストールできます。チュートリアルについては、<a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">このビデオをご覧ください</a>。",
+    "api.youtube.link.unsupported": "まだ YouTube のチャンネルページには対応していません。YouTube の個別動画または playlist のリンクをコピーして、もう一度お試しください。",
     "api.content.post.unavailable": "この投稿について何も見つかりませんでした。公開範囲が制限されているか、まったく存在しない可能性があります。リンクが機能することを確認して、数秒後にもう一度試してください！",
     "api.content.post.private": "この投稿はプライベートアカウントからのものなので、アクセスできません。正しいリンクを貼り付けましたか？",
     "api.content.post.age": "この投稿は年齢制限があるため、匿名でアクセスできません。正しいリンクを貼り付けましたか？",

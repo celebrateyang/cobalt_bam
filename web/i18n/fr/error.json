@@ -33,6 +33,7 @@
     "api.content.video.age": "cette vidéo est soumise à une restriction d'âge, donc je ne peux pas y accéder anonymement. essayez-en une autre !",
     "api.content.video.region": "cette vidéo est verrouillée par région, et le serveur de traitement est dans un autre endroit. essayez-en une autre !",
     "api.youtube.disabled": "le téléchargement youtube est temporairement désactivé en raison de restrictions du côté de youtube. nous cherchons déjà des moyens de les contourner.<br><br>vous pouvez installer manuellement un plugin pour télécharger des vidéos youtube. pour le tutoriel, veuillez <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">regarder cette vidéo</a>.",
+    "api.youtube.link.unsupported": "Les pages de chaine YouTube ne sont pas encore prises en charge. Copiez le lien d une video YouTube precise ou d une playlist, puis reessayez.",
     "api.content.post.unavailable": "impossible de trouver quoi que ce soit sur ce post. sa visibilité peut être limitée ou il peut ne pas exister du tout. assurez-vous que votre lien fonctionne et réessayez dans quelques secondes !",
     "api.content.post.private": "ce post provient d'un compte privé, donc je ne peux pas y accéder. avez-vous collé le bon lien ?",
     "api.content.post.age": "ce post est soumis à une restriction d'âge, donc je ne peux pas y accéder anonymement. avez-vous collé le bon lien ?",

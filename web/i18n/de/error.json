@@ -33,6 +33,7 @@
     "api.content.video.age": "Dieses Video ist altersbeschränkt, daher kann ich nicht anonym darauf zugreifen. Versuchen Sie ein anderes!",
     "api.content.video.region": "Dieses Video ist regional gesperrt und der Verarbeitungsserver befindet sich an einem anderen Ort. Versuchen Sie ein anderes!",
     "api.youtube.disabled": "YouTube-Downloads sind aufgrund von Einschränkungen seitens YouTube vorübergehend deaktiviert. Wir suchen bereits nach Möglichkeiten, diese zu umgehen.<br><br>Sie können manuell ein Plugin installieren, um YouTube-Videos herunterzuladen. Für die Anleitung sehen Sie sich bitte <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">dieses Video an</a>.",
+    "api.youtube.link.unsupported": "YouTube-Kanalseiten werden noch nicht unterstuetzt. Kopiere bitte den Link zu einem konkreten YouTube-Video oder zu einer Playlist und versuche es erneut.",
     "api.content.post.unavailable": "Es konnte nichts über diesen Beitrag gefunden werden. Seine Sichtbarkeit könnte eingeschränkt sein oder er existiert möglicherweise überhaupt nicht. Stellen Sie sicher, dass Ihr Link funktioniert, und versuchen Sie es in ein paar Sekunden erneut!",
     "api.content.post.private": "Dieser Beitrag stammt von einem privaten Konto, daher kann ich nicht darauf zugreifen. Haben Sie den richtigen Link eingefügt?",
     "api.content.post.age": "Dieser Beitrag ist altersbeschränkt, daher kann ich nicht anonym darauf zugreifen. Haben Sie den richtigen Link eingefügt?",

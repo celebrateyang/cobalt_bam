@@ -19,6 +19,7 @@
     "api.content.video.age": "该视频有年龄限制，因此我无法匿名访问。请尝试其他视频！",
     "api.content.video.region": "该视频有地区限制，而处理服务器位于不同位置。请尝试其他视频！",
     "api.youtube.disabled": "YouTube 下载服务暂时不可用，请稍后重试。",
+    "api.youtube.link.unsupported": "暂不支持 YouTube 频道主页。请复制具体的 YouTube 视频地址或 playlist 地址，然后再试一次。",
     "api.content.post.unavailable": "无法找到该帖子的相关信息。其可见性可能受限，或帖子不存在。请确认链接是否有效，并在几秒钟后再试！",
     "api.content.post.private": "该帖子来自私人账号，因此我无法访问。您粘贴的链接正确吗？",
     "api.content.post.age": "该帖子有年龄限制，因此我无法匿名访问。您粘贴的链接正确吗？",

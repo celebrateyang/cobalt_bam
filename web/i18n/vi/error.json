@@ -33,6 +33,7 @@
     "api.content.video.age": "video này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. thử video khác!",
     "api.content.video.region": "video này bị khóa khu vực và máy chủ xử lý ở một vị trí khác. thử video khác!",
     "api.youtube.disabled": "tải youtube tạm thời bị tắt do hạn chế từ phía youtube. chúng tôi đang tìm cách giải quyết.<br><br>bạn có thể cài đặt plugin thủ công để tải video youtube. để biết hướng dẫn, vui lòng <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">xem video này</a>.",
+    "api.youtube.link.unsupported": "Chua ho tro trang kenh YouTube. Hay sao chep lien ket cua mot video YouTube cu the hoac playlist, roi thu lai.",
     "api.content.post.unavailable": "không thể tìm thấy gì về bài đăng này. khả năng hiển thị của nó có thể bị hạn chế hoặc nó có thể không tồn tại. đảm bảo liên kết của bạn hoạt động và thử lại sau vài giây!",
     "api.content.post.private": "bài đăng này từ một tài khoản riêng tư, nên tôi không thể truy cập. bạn đã dán đúng liên kết chưa?",
     "api.content.post.age": "bài đăng này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. bạn đã dán đúng liên kết chưa?",

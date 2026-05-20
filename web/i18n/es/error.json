@@ -33,6 +33,7 @@
     "api.content.video.age": "este video tiene restricción de edad, así que no puedo acceder a él anónimamente. ¡intenta otro!",
     "api.content.video.region": "este video está bloqueado por región, y el servidor de procesamiento está en una ubicación diferente. ¡intenta otro!",
     "api.youtube.disabled": "la descarga de youtube está temporalmente deshabilitada debido a restricciones del lado de youtube. ya estamos buscando maneras de evitarlas.<br><br>puedes instalar manualmente un plugin para descargar videos de youtube. para el tutorial, por favor <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">mira este video</a>.",
+    "api.youtube.link.unsupported": "Las paginas de canal de YouTube aun no son compatibles. Copia el enlace de un video concreto de YouTube o de una playlist e intentalo de nuevo.",
     "api.content.post.unavailable": "no pude encontrar nada sobre esta publicación. su visibilidad puede estar limitada o puede no existir en absoluto. ¡asegúrate de que tu enlace funcione e intenta de nuevo en unos segundos!",
     "api.content.post.private": "esta publicación es de una cuenta privada, así que no puedo acceder a ella. ¿has pegado el enlace correcto?",
     "api.content.post.age": "esta publicación tiene restricción de edad, así que no puedo acceder a ella anónimamente. ¿has pegado el enlace correcto?",

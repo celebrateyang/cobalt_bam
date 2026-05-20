@@ -324,6 +324,15 @@ export function extract(url, enabledServices = env.enabledServices) {
     }
 
     if (!patternMatch) {
+        if (host === "youtube") {
+            return {
+                error: "youtube.link.unsupported",
+                context: {
+                    service: friendlyServiceName(host),
+                }
+            };
+        }
+
         return {
             error: "link.unsupported",
             context: {

@@ -161,6 +161,20 @@
         "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
         "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
       }
+    ],
+    "weibo": [
+      {
+        "q": "How do I copy a Weibo video URL?",
+        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
+      },
+      {
+        "q": "Can I paste a t.cn short link?",
+        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
+      },
+      {
+        "q": "Why does a Weibo link fail?",
+        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -279,6 +293,19 @@
         "L'URL est valide et publique",
         "Les paramètres correspondent à la sortie cible",
         "Emplacement final du fichier confirmé"
+      ]
+    },
+    "weibo": {
+      "heading": "Weibo video download checklist",
+      "notes": [
+        "Use Copy video address from the Weibo video player when possible.",
+        "A copied t.cn short link can be pasted directly.",
+        "If parsing fails, reopen the original video and copy the address again."
+      ],
+      "checklist": [
+        "The Weibo video is public and playable",
+        "You copied a video address, not a profile or comment page",
+        "The result shows an available MP4 option"
       ]
     }
   },
@@ -433,6 +460,17 @@
           "Confirmez que l'URL pointe vers un contenu public spécifique.",
           "Ajustez les paramètres et réanalysez.",
           "Utilisez le mode file d'attente avec reprise."
+        ]
+      }
+    ],
+    "weibo": [
+      {
+        "title": "A profile, comment page, or expired link was copied",
+        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
+        "fixes": [
+          "Go back to the specific video page and choose Copy video address.",
+          "Confirm the video is still public and playable.",
+          "If the short link expired, copy the video address again and retry."
         ]
       }
     ]

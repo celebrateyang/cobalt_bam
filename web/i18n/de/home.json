@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
-        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, Toutiao, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
+        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
@@ -21,6 +21,10 @@
         "toutiao": {
             "name": "Toutiao Video Downloader",
             "desc": "Füge einen öffentlichen Toutiao-Videolink ein und speichere verfügbare MP4-Qualitäten, inklusive HD, wenn die Quelle sie anbietet."
+        },
+        "weibo": {
+            "name": "Weibo Video Downloader",
+            "desc": "Kopiere die Weibo-Videoadresse oder einen t.cn-Kurzlink, um verfuegbare MP4-Qualitaeten zu extrahieren."
         },
         "xiaohongshu": {
             "name": "Xiaohongshu Video Saver",
@@ -67,7 +71,7 @@
     "hero": {
         "eyebrow": "Online-Video-Downloader",
         "title": "Videos online ohne Wasserzeichen herunterladen",
-        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Haokan, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
+        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
         "trust": "Batch-Downloads, Sammlungen / Playlists, Nur-Audio und Stumm-Modus sind fuer unterstuetzte Dienste direkt integriert."
     },
     "tools": {

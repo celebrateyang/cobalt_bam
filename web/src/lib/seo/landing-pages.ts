@@ -766,6 +766,110 @@ const buildGenericLocales = (params: GenericLocaleParams) => ({
 
 export const seoLandingPages: SeoLandingPage[] = [
 
+
+    {
+        slug: 'weibo-video-download',
+        locales: {
+            zh: zh({
+                metaTitle: `\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D - \u590D\u5236\u5FAE\u535A\u89C6\u9891\u5730\u5740\u5728\u7EBF\u4FDD\u5B58 | ${ZH_BRAND}`,
+                metaDescription:
+                    '\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D\u6559\u7A0B\uFF1A\u5728\u5FAE\u535A\u89C6\u9891\u64AD\u653E\u9875\u70B9\u51FB\u201C\u590D\u5236\u89C6\u9891\u5730\u5740\u201D\uFF0C\u5C06\u590D\u5236\u5230\u7684\u94FE\u63A5\u7C98\u8D34\u5230 FreeSaveVideo\uFF0C\u5373\u53EF\u5728\u7EBF\u89E3\u6790\u5E76\u4FDD\u5B58\u53EF\u7528 MP4\u3002',
+                metaKeywords: [
+                    '\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D',
+                    '\u5FAE\u535A\u89C6\u9891\u600E\u4E48\u4E0B\u8F7D',
+                    '\u5FAE\u535A\u590D\u5236\u89C6\u9891\u5730\u5740',
+                    '\u5FAE\u535A\u89C6\u9891\u94FE\u63A5\u63D0\u53D6',
+                    '\u5FAE\u535A\u89C6\u9891\u4FDD\u5B58\u5230\u672C\u5730',
+                    't.cn \u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D',
+                    'Weibo video downloader',
+                ],
+                h1: '\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D',
+                lede: '\u5728\u5FAE\u535A\u6253\u5F00\u60F3\u4FDD\u5B58\u7684\u89C6\u9891\uFF0C\u70B9\u51FB\u89C6\u9891\u753B\u9762\u91CC\u7684\u201C\u590D\u5236\u89C6\u9891\u5730\u5740\u201D\uFF0C\u7136\u540E\u628A\u590D\u5236\u5230\u7684\u94FE\u63A5\u7C98\u8D34\u5230\u4E0B\u65B9\u8F93\u5165\u6846\uFF0C\u5728\u7EBF\u89E3\u6790\u5E76\u4FDD\u5B58\u53EF\u7528 MP4\u3002',
+                stepsTitle: '\u5982\u4F55\u590D\u5236\u5FAE\u535A\u89C6\u9891 URL \u5E76\u4E0B\u8F7D',
+                steps: [
+                    '\u5728\u5FAE\u535A\u6253\u5F00\u76EE\u6807\u89C6\u9891\uFF0C\u786E\u8BA4\u89C6\u9891\u53EF\u4EE5\u6B63\u5E38\u64AD\u653E\u3002',
+                    '\u70B9\u51FB\u89C6\u9891\u753B\u9762\u4E2D\u7684\u201C\u590D\u5236\u89C6\u9891\u5730\u5740\u201D\uFF0C\u6216\u4F7F\u7528\u5FAE\u535A\u5206\u4EAB\u83DC\u5355\u590D\u5236\u89C6\u9891\u94FE\u63A5\u3002',
+                    '\u5C06\u590D\u5236\u5230\u7684 t.cn \u77ED\u94FE\u63A5\u6216\u5FAE\u535A\u89C6\u9891\u9875\u94FE\u63A5\u7C98\u8D34\u5230 FreeSaveVideo\uFF0C\u70B9\u51FB\u4E0B\u8F7D\u5E76\u4FDD\u5B58\u53EF\u7528\u7ED3\u679C\u3002',
+                ],
+                featuresTitle: '\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D\u529F\u80FD',
+                features: [
+                    '\u652F\u6301\u5FAE\u535A\u89C6\u9891\u9875\u548C\u5FAE\u535A\u590D\u5236\u51FA\u7684 t.cn \u77ED\u94FE\u63A5\u3002',
+                    '\u81EA\u52A8\u63D0\u53D6\u6E90\u7AD9\u8FD4\u56DE\u7684\u53EF\u7528 MP4 \u6E05\u6670\u5EA6\uFF0C\u5E38\u89C1\u7ED3\u679C\u5305\u62EC 480P\u3001720P \u6216 1080P\u3002',
+                    '\u65E0\u9700\u5B89\u88C5\u5FAE\u535A App \u6216\u6D4F\u89C8\u5668\u63D2\u4EF6\uFF0C\u624B\u673A\u548C\u7535\u8111\u6D4F\u89C8\u5668\u90FD\u53EF\u4EE5\u4F7F\u7528\u3002',
+                    '\u9002\u5408\u4FDD\u5B58\u516C\u5F00\u89C6\u9891\u7D20\u6750\u3001\u65B0\u95FB\u89C6\u9891\u548C\u516C\u5F00\u5206\u4EAB\u7684\u89C6\u9891\u94FE\u63A5\u3002',
+                ],
+                faqTitle: '\u5FAE\u535A\u89C6\u9891\u4E0B\u8F7D\u5E38\u89C1\u95EE\u9898',
+                faqs: [
+                    {
+                        q: '\u5FAE\u535A\u89C6\u9891\u5730\u5740\u5728\u54EA\u91CC\u590D\u5236\uFF1F',
+                        a: '\u5728\u5FAE\u535A\u89C6\u9891\u64AD\u653E\u9875\uFF0C\u628A\u9F20\u6807\u79FB\u5230\u89C6\u9891\u753B\u9762\u4E0A\uFF0C\u70B9\u51FB\u201C\u590D\u5236\u89C6\u9891\u5730\u5740\u201D\uFF1B\u4E5F\u53EF\u4EE5\u5728\u5206\u4EAB\u83DC\u5355\u4E2D\u590D\u5236\u89C6\u9891\u94FE\u63A5\u3002\u590D\u5236\u540E\u7C98\u8D34\u5230 FreeSaveVideo \u5373\u53EF\u3002',
+                    },
+                    {
+                        q: '\u590D\u5236\u51FA\u6765\u662F t.cn \u77ED\u94FE\u63A5\u53EF\u4EE5\u7528\u5417\uFF1F',
+                        a: '\u53EF\u4EE5\u3002\u5FAE\u535A\u5E38\u4F1A\u590D\u5236\u51FA t.cn \u77ED\u94FE\u63A5\uFF0C\u76F4\u63A5\u7C98\u8D34\u5373\u53EF\u89E3\u6790\u3002',
+                    },
+                    {
+                        q: '\u4E3A\u4EC0\u4E48\u5FAE\u535A\u89C6\u9891\u89E3\u6790\u5931\u8D25\uFF1F',
+                        a: '\u8BF7\u786E\u8BA4\u94FE\u63A5\u6307\u5411\u516C\u5F00\u53EF\u64AD\u653E\u7684\u89C6\u9891\uFF0C\u800C\u4E0D\u662F\u8BC4\u8BBA\u9875\u3001\u4E2A\u4EBA\u4E3B\u9875\u3001\u79C1\u5BC6\u6216\u5DF2\u5220\u9664\u5185\u5BB9\u3002\u82E5\u6E90\u7AD9\u8FD4\u56DE\u7684\u5730\u5740\u8FC7\u671F\uFF0C\u91CD\u65B0\u590D\u5236\u4E00\u6B21\u89C6\u9891\u5730\u5740\u518D\u8BD5\u3002',
+                    },
+                    {
+                        q: '\u53EF\u4EE5\u4E0B\u8F7D\u79C1\u5BC6\u6216\u4ED8\u8D39\u5FAE\u535A\u89C6\u9891\u5417\uFF1F',
+                        a: '\u4E0D\u53EF\u4EE5\u3002FreeSaveVideo \u53EA\u652F\u6301\u516C\u5F00\u53EF\u8BBF\u95EE\u7684\u89C6\u9891\u94FE\u63A5\uFF0C\u8BF7\u9075\u5B88\u7248\u6743\u3001\u521B\u4F5C\u8005\u6743\u76CA\u548C\u5E73\u53F0\u89C4\u5219\u3002',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `Weibo Video Downloader - Save Weibo MP4 Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public Weibo videos online. Copy the Weibo video address or t.cn short link, paste it into FreeSaveVideo, and save available MP4 results in your browser.',
+                metaKeywords: [
+                    'weibo video downloader',
+                    'download weibo video',
+                    'weibo mp4 download',
+                    'copy weibo video address',
+                    't.cn video download',
+                    'save weibo video online',
+                ],
+                h1: 'Weibo Video Downloader',
+                lede: 'Open the Weibo video you want to save, copy the video address from the player or share menu, then paste the link below to extract available MP4 results.',
+                stepsTitle: 'How to copy a Weibo video URL and download it',
+                steps: [
+                    'Open the public Weibo video page and make sure the video plays normally.',
+                    'Click Copy video address on the video player, or copy the video link from the Weibo share menu.',
+                    'Paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo, then download an available result.',
+                ],
+                featuresTitle: 'Weibo downloader features',
+                features: [
+                    'Supports public Weibo video pages and t.cn short links copied from Weibo.',
+                    'Extracts available MP4 quality variants such as 480p, 720p, or 1080p when the source provides them.',
+                    'Works in mobile and desktop browsers without installing the Weibo app or a browser extension.',
+                    'Useful for saving public video references, news clips, and publicly shared Weibo videos.',
+                ],
+                faqTitle: 'Weibo download FAQ',
+                faqs: [
+                    {
+                        q: 'Where do I copy the Weibo video address?',
+                        a: 'Open the Weibo video page, hover over or tap the video player, and choose Copy video address. You can also use the share menu when it provides a video link.',
+                    },
+                    {
+                        q: 'Can I paste a t.cn short link?',
+                        a: 'Yes. Weibo often copies t.cn short links. Paste the copied link directly into FreeSaveVideo.',
+                    },
+                    {
+                        q: 'Why does a Weibo link fail?',
+                        a: 'Make sure the link points to a public playable video, not a profile, comment page, private post, or deleted item. If the source URL expired, copy the video address again.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Weibo',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: ['weibo video downloader', 'download weibo video', 'weibo mp4 download'],
+            }),
+        },
+    },
+
     {
         slug: 'toutiao-video-download',
         locales: {

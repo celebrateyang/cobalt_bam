@@ -149,6 +149,18 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports public Toutiao video pages and available MP4 quality variants.'],
     },
     {
+        id: 'weibo',
+        name: 'Weibo',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: 'weibo-video-download',
+        notes: ['Supports public Weibo video pages and t.cn video short links copied from the Weibo player.'],
+    },
+    {
         id: 'xiaohongshu',
         name: 'Xiaohongshu',
         category: 'media',

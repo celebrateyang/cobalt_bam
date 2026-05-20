@@ -22,6 +22,10 @@
             "name": "Toutiao 動画ダウンローダー",
             "desc": "公開 Toutiao 動画リンクを貼り付け、利用可能な MP4 画質を保存。ソースが提供する場合は HD も選べます。"
         },
+        "weibo": {
+            "name": "Weibo Video Downloader",
+            "desc": "Copy the Weibo video address or t.cn short link to extract available MP4 quality options."
+        },
         "xiaohongshu": {
             "name": "小紅書動画保存",
             "desc": "アプリ内の透かしを削除し、カバー画像とオリジナルのHD音声を保持します。"

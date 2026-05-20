@@ -161,6 +161,20 @@
         "q": "파싱 ​​실패 시 가장 먼저 확인해야 할 사항은 무엇인가요?",
         "a": "공개 URL 액세스를 확인하고 설정을 확인한 후 대기열 모드로 다시 시도하세요."
       }
+    ],
+    "weibo": [
+      {
+        "q": "How do I copy a Weibo video URL?",
+        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
+      },
+      {
+        "q": "Can I paste a t.cn short link?",
+        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
+      },
+      {
+        "q": "Why does a Weibo link fail?",
+        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -279,6 +293,19 @@
         "URL이 유효하고 공개되어 있습니다.",
         "설정이 목표 출력과 일치합니다.",
         "최종 파일 위치 확인됨"
+      ]
+    },
+    "weibo": {
+      "heading": "Weibo video download checklist",
+      "notes": [
+        "Use Copy video address from the Weibo video player when possible.",
+        "A copied t.cn short link can be pasted directly.",
+        "If parsing fails, reopen the original video and copy the address again."
+      ],
+      "checklist": [
+        "The Weibo video is public and playable",
+        "You copied a video address, not a profile or comment page",
+        "The result shows an available MP4 option"
       ]
     }
   },
@@ -433,6 +460,17 @@
           "URL이 공개 특정 콘텐츠를 가리키는지 확인하세요.",
           "설정을 조정하고 다시 구문 분석하세요.",
           "이력서와 함께 대기열 모드를 사용합니다."
+        ]
+      }
+    ],
+    "weibo": [
+      {
+        "title": "A profile, comment page, or expired link was copied",
+        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
+        "fixes": [
+          "Go back to the specific video page and choose Copy video address.",
+          "Confirm the video is still public and playable.",
+          "If the short link expired, copy the video address again and retry."
         ]
       }
     ]

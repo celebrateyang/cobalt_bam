@@ -179,6 +179,20 @@
         "q": "Can I use Haokan links from Baidu search results?",
         "a": "Yes, if the result opens a public Haokan video page such as haokan.baidu.com/v?vid=... rather than an app download page or a search listing."
       }
+    ],
+    "weibo": [
+      {
+        "q": "How do I copy a Weibo video URL?",
+        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
+      },
+      {
+        "q": "Can I paste a t.cn short link?",
+        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
+      },
+      {
+        "q": "Why does a Weibo link fail?",
+        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -310,6 +324,19 @@
         "Public Haokan video page confirmed",
         "haokan.baidu.com/v?vid=... URL copied",
         "MP4 result saved from the browser"
+      ]
+    },
+    "weibo": {
+      "heading": "Weibo video download checklist",
+      "notes": [
+        "Use Copy video address from the Weibo video player when possible.",
+        "A copied t.cn short link can be pasted directly.",
+        "If parsing fails, reopen the original video and copy the address again."
+      ],
+      "checklist": [
+        "The Weibo video is public and playable",
+        "You copied a video address, not a profile or comment page",
+        "The result shows an available MP4 option"
       ]
     }
   },
@@ -484,6 +511,17 @@
           "Confirm the video is public and still online.",
           "Retry once in queue mode if the network is unstable.",
           "Try another public Haokan video when source assets are limited."
+        ]
+      }
+    ],
+    "weibo": [
+      {
+        "title": "A profile, comment page, or expired link was copied",
+        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
+        "fixes": [
+          "Go back to the specific video page and choose Copy video address.",
+          "Confirm the video is still public and playable.",
+          "If the short link expired, copy the video address again and retry."
         ]
       }
     ]

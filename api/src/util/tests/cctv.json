@@ -16,5 +16,14 @@
             "code": 200,
             "status": "picker"
         }
+    },
+    {
+        "name": "12371.cn vod page",
+        "url": "https://www.12371.cn/2019/11/23/VIDE1574466961184574.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
     }
 ]

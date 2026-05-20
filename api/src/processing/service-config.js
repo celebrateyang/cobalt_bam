@@ -20,6 +20,7 @@ export const services = {
             ":year/:month/:day/:id.shtml",
         ],
         subdomains: ["tv", "news"],
+        altDomains: ["12371.cn"],
     },
     bsky: {
         patterns: [

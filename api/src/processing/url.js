@@ -158,6 +158,10 @@ function aliasURL(url) {
 }
 
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (host.domain === "12371.cn") {
+        return "cctv";
+    }
+
     if (
         host.sld === "baidu" &&
         host.tld === "com" &&
@@ -258,6 +262,10 @@ function getHostIfValid(url) {
     const serviceName = serviceNameForURL(url, host);
     const service = services[serviceName];
     if (!service) return;
+
+    if (service.altDomains?.includes(host.domain) || service.altDomains?.includes(url.hostname)) {
+        return serviceName;
+    }
 
     if (serviceName === "haokan") {
         return serviceName;

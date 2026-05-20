@@ -127,7 +127,9 @@
               '@context': 'https://schema.org',
               '@type': 'WebPage',
               name: pageTitle,
+              alternateName: localeContent.h1,
               description: pageDesc,
+              keywords: pageKeywords,
               url: canonicalUrl,
               inLanguage: data.lang,
               isPartOf: {
@@ -138,12 +140,18 @@
               mainEntity: {
                   '@type': 'WebApplication',
                   name: localeContent.h1,
+                  description: pageDesc,
                   applicationCategory: 'MultimediaApplication',
                   operatingSystem: isZh ? '\u6d4f\u89c8\u5668' : 'Web browser',
+                  featureList: localeContent.features,
                   offers: {
                       '@type': 'Offer',
                       price: '0',
                       priceCurrency: 'USD',
+                  },
+                  potentialAction: {
+                      '@type': 'UseAction',
+                      target: canonicalUrl,
                   },
               },
           }

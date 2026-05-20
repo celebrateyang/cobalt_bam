@@ -101,13 +101,28 @@
     let guideHideTimer: ReturnType<typeof setTimeout> | null = null;
     let isWechatBrowser = false;
 
+    const HTTP_TO_HTTPS_SHORTLINK_HOSTS = new Set([
+        "t.cn",
+    ]);
+
+    const normalizeDetectedUrl = (url: URL) => {
+        if (
+            url.protocol === "http:" &&
+            HTTP_TO_HTTPS_SHORTLINK_HOSTS.has(url.hostname.toLowerCase())
+        ) {
+            url.protocol = "https:";
+        }
+
+        return url;
+    };
+
     const extractUrls = (text: string) => {
         const matches = text.match(/https?:\/\/[^\s]+/gi) ?? [];
         const urls: string[] = [];
 
         for (const match of matches) {
             try {
-                const parsed = new URL(match);
+                const parsed = normalizeDetectedUrl(new URL(match));
                 if (parsed.protocol !== "https:") continue;
                 urls.push(parsed.toString());
             } catch {

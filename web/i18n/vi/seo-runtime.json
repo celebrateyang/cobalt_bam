@@ -155,6 +155,12 @@
         "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
         "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
       }
+    ],
+    "toutiao": [
+      {
+        "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
+        "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -250,6 +256,19 @@
       ]
     },
     "generic": {
+      "heading": "Ghi chú quy trình công việc chung",
+      "notes": [
+        "Sử dụng các URL có thể chia sẻ công khai.",
+        "Xếp hàng + tiếp tục trên mạng không ổn định.",
+        "Đặt chất lượng trước khi phân tích cú pháp lại."
+      ],
+      "checklist": [
+        "URL hợp lệ và công khai",
+        "Cài đặt phù hợp với đầu ra mục tiêu",
+        "Đã xác nhận vị trí tệp cuối cùng"
+      ]
+    },
+    "toutiao": {
       "heading": "Ghi chú quy trình công việc chung",
       "notes": [
         "Sử dụng các URL có thể chia sẻ công khai.",
@@ -396,6 +415,17 @@
       }
     ],
     "generic": [
+      {
+        "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
+        "symptoms": "Không có đầu ra được trả lại nhiều lần.",
+        "fixes": [
+          "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
+          "Điều chỉnh cài đặt và phân tích lại.",
+          "Sử dụng chế độ xếp hàng với sơ yếu lý lịch."
+        ]
+      }
+    ],
+    "toutiao": [
       {
         "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
         "symptoms": "Không có đầu ra được trả lại nhiều lần.",

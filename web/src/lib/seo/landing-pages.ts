@@ -769,10 +769,58 @@ export const seoLandingPages: SeoLandingPage[] = [
     {
         slug: 'toutiao-video-download',
         locales: {
+            zh: zh({
+                metaTitle: `下载头条视频 - 今日头条视频解析提取工具 | ${ZH_BRAND}`,
+                metaDescription:
+                    '免费在线下载头条视频，支持今日头条视频解析提取、视频链接提取下载和 MP4 清晰度选择。复制头条里的视频链接，粘贴即可保存。',
+                metaKeywords: [
+                    '下载头条视频',
+                    '头条视频下载',
+                    '今日头条视频解析提取',
+                    '头条里的视频怎么下载',
+                    '视频链接提取下载',
+                    '头条视频保存到本地',
+                    'Toutiao video downloader',
+                ],
+                h1: '下载头条视频',
+                lede: '将今日头条公开视频链接粘贴到下方，在线解析并提取可用的 MP4 下载结果。适合查找“头条里的视频怎么下载”、“今日头条视频解析提取”和“视频链接提取下载”的场景。',
+                stepsTitle: '如何下载头条里的视频',
+                steps: [
+                    '打开今日头条或 www.toutiao.com 上的公开视频页，复制分享链接或页面地址。',
+                    '把头条视频链接粘贴到下载框，点击下载开始解析提取。',
+                    '在解析结果中选择可用清晰度，将 MP4 视频保存到手机或电脑。',
+                ],
+                featuresTitle: '头条视频解析下载功能',
+                features: [
+                    '支持今日头条公开视频页和移动端分享链接。',
+                    '可提取源站返回的 MP4 视频资源，有多个清晰度时会显示可选项。',
+                    '不需要安装头条 App 或电脑软件，手机和电脑浏览器都能使用。',
+                    '适合单个视频保存、视频链接提取和本地素材备份。',
+                ],
+                faqTitle: '头条视频下载常见问题',
+                faqs: [
+                    {
+                        q: '头条里的视频怎么下载？',
+                        a: '打开公开的今日头条视频页，复制分享链接或页面 URL，粘贴到 FreeSaveVideo 即可尝试解析并下载可用的 MP4 结果。',
+                    },
+                    {
+                        q: '今日头条视频解析提取失败怎么办？',
+                        a: '请先确认链接是公开可访问的具体视频页。如果视频已下架、有地区或权限限制，或源站没有返回可下载的 MP4 资源，解析可能会失败。',
+                    },
+                    {
+                        q: '可以下载私密或付费的头条视频吗？',
+                        a: '不可以。FreeSaveVideo 只支持公开可访问的头条视频链接，请遵守版权、创作者权利和平台规则。',
+                    },
+                    {
+                        q: '头条视频能选择高清吗？',
+                        a: '如果源站提供多个 MP4 版本，页面会展示可用清晰度。最终能下载哪些清晰度以实际解析结果为准。',
+                    },
+                ],
+            }),
             en: en({
                 metaTitle: `Toutiao Video Downloader - Save Toutiao MP4 Online | ${EN_BRAND}`,
                 metaDescription:
-                    'Download public Toutiao videos online. Paste a www.toutiao.com or m.toutiao.com video link and save available MP4 quality options in your browser.',
+                    'Download public Toutiao videos online. Paste a www.toutiao.com or m.toutiao.com video link to extract available MP4 quality options in your browser.',
                 metaKeywords: [
                     'toutiao video downloader',
                     'download toutiao video',
@@ -782,10 +830,10 @@ export const seoLandingPages: SeoLandingPage[] = [
                     'jinri toutiao video download',
                 ],
                 h1: 'Toutiao Video Downloader',
-                lede: 'Paste a public Toutiao video link, including www.toutiao.com/video and m.toutiao.com/video URLs, then save available MP4 results in your browser.',
+                lede: 'Paste a public Toutiao video link, including www.toutiao.com/video and m.toutiao.com/video URLs, then extract available MP4 results in your browser.',
                 stepsTitle: 'How to download Toutiao videos',
                 steps: [
-                    'Open the public Toutiao video page and copy the share link.',
+                    'Open the public Toutiao video page and copy the share link or page URL.',
                     'Paste the www.toutiao.com or m.toutiao.com video URL into the downloader below.',
                     'Choose an available quality option and save the MP4 file to your device.',
                 ],
@@ -794,9 +842,9 @@ export const seoLandingPages: SeoLandingPage[] = [
                     'Supports public Toutiao video pages and mobile share pages.',
                     'Returns available MP4 quality variants such as 360p, 480p, or 720p when the source provides them.',
                     'Works in the browser without installing the Toutiao app.',
-                    'Uses the same download queue and audio/mute options as other supported platforms.',
+                    'Fits single-video saving, link extraction, and local media backup workflows.',
                 ],
-                faqTitle: 'FAQ',
+                faqTitle: 'Toutiao download FAQ',
                 faqs: [
                     {
                         q: 'Can I download private Toutiao videos?',
@@ -804,7 +852,7 @@ export const seoLandingPages: SeoLandingPage[] = [
                     },
                     {
                         q: 'Why does a Toutiao link fail?',
-                        a: 'The video may be unavailable, restricted, or missing playable MP4 variants. Try another public link or retry later.',
+                        a: 'The video may be unavailable, restricted, removed, or missing playable MP4 variants. Try another public link or retry later.',
                     },
                     {
                         q: 'Can I choose HD quality?',
@@ -812,16 +860,140 @@ export const seoLandingPages: SeoLandingPage[] = [
                     },
                 ],
             }),
-            ...buildGenericLocales({
-                platform: 'Toutiao',
-                kind: 'video',
-                contentKey: 'video',
-                keywords: [
-                    'toutiao video downloader',
-                    'download toutiao video',
-                    'toutiao mp4 download',
-                    'www.toutiao.com video download',
-                    'm.toutiao.com video download',
+            es: es({
+                metaTitle: `Descargador de videos de Toutiao - Guardar MP4 online | ${EN_BRAND}`,
+                metaDescription:
+                    'Descarga videos publicos de Toutiao online. Pega un enlace de www.toutiao.com o m.toutiao.com y guarda las opciones MP4 disponibles.',
+                metaKeywords: ['descargar video toutiao', 'descargador toutiao', 'toutiao mp4', 'guardar video toutiao'],
+                h1: 'Descargador de videos de Toutiao',
+                lede: 'Pega un enlace publico de Toutiao y extrae las opciones MP4 disponibles directamente en el navegador.',
+                stepsTitle: 'Como descargar videos de Toutiao',
+                steps: ['Copia el enlace publico del video de Toutiao.', 'Pegalo en el descargador de abajo.', 'Elige una calidad disponible y guarda el MP4.'],
+                featuresTitle: 'Funciones para Toutiao',
+                features: ['Compatible con paginas publicas y enlaces moviles de Toutiao.', 'Muestra calidades MP4 disponibles cuando la fuente las ofrece.', 'Funciona sin instalar la app de Toutiao.'],
+                faqTitle: 'Preguntas frecuentes',
+                faqs: [
+                    { q: 'Puedo descargar videos privados?', a: 'No. Solo se admiten videos publicos de Toutiao.' },
+                    { q: 'Por que falla un enlace?', a: 'Puede estar eliminado, restringido o no ofrecer variantes MP4 descargables.' },
+                ],
+            }),
+            fr: fr({
+                metaTitle: `Telechargeur de videos Toutiao - MP4 en ligne | ${EN_BRAND}`,
+                metaDescription:
+                    'Telechargez des videos Toutiao publiques en ligne. Collez un lien www.toutiao.com ou m.toutiao.com et enregistrez les MP4 disponibles.',
+                metaKeywords: ['telecharger video toutiao', 'toutiao mp4', 'telechargeur toutiao', 'extraire video toutiao'],
+                h1: 'Telechargeur de videos Toutiao',
+                lede: 'Collez un lien video Toutiao public pour extraire les resultats MP4 disponibles dans le navigateur.',
+                stepsTitle: 'Comment telecharger une video Toutiao',
+                steps: ['Copiez le lien public de la video Toutiao.', 'Collez-le dans le champ de telechargement ci-dessous.', 'Choisissez une qualite disponible et enregistrez le MP4.'],
+                featuresTitle: 'Fonctions Toutiao',
+                features: ['Prend en charge les pages publiques et liens mobiles Toutiao.', 'Affiche les qualites MP4 disponibles lorsque la source les fournit.', 'Aucune installation de l app Toutiao requise.'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: 'Les videos privees sont-elles prises en charge ?', a: 'Non. Seules les videos Toutiao publiques peuvent etre analysees.' },
+                    { q: 'Pourquoi un lien echoue ?', a: 'La video peut etre retiree, restreinte ou sans variante MP4 telechargeable.' },
+                ],
+            }),
+            de: de({
+                metaTitle: `Toutiao Video Downloader - MP4 online speichern | ${EN_BRAND}`,
+                metaDescription:
+                    'Lade offentliche Toutiao-Videos online herunter. Fuge einen www.toutiao.com- oder m.toutiao.com-Link ein und speichere verfugbare MP4-Optionen.',
+                metaKeywords: ['toutiao video herunterladen', 'toutiao downloader', 'toutiao mp4 download', 'toutiao video speichern'],
+                h1: 'Toutiao Video Downloader',
+                lede: 'Fuge einen offentlichen Toutiao-Videolink ein und extrahiere verfugbare MP4-Ergebnisse direkt im Browser.',
+                stepsTitle: 'So ladst du Toutiao-Videos herunter',
+                steps: ['Kopiere den offentlichen Toutiao-Videolink.', 'Fuge ihn unten in den Downloader ein.', 'Wahle eine verfugbare Qualitat und speichere die MP4-Datei.'],
+                featuresTitle: 'Toutiao-Funktionen',
+                features: ['Unterstutzt offentliche Toutiao-Seiten und mobile Links.', 'Zeigt MP4-Qualitaten an, wenn die Quelle sie anbietet.', 'Funktioniert ohne Installation der Toutiao-App.'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: 'Kann ich private Toutiao-Videos herunterladen?', a: 'Nein. Es werden nur offentlich erreichbare Toutiao-Videos unterstutzt.' },
+                    { q: 'Warum schlagt ein Link fehl?', a: 'Das Video kann entfernt, eingeschrankt oder ohne herunterladbare MP4-Variante sein.' },
+                ],
+            }),
+            ja: ja({
+                metaTitle: `Toutiao 動画ダウンローダー - MP4 保存 | ${EN_BRAND}`,
+                metaDescription:
+                    '公開 Toutiao 動画をオンラインで保存。www.toutiao.com または m.toutiao.com のリンクを貼り付け、利用可能な MP4 を抽出します。',
+                metaKeywords: ['Toutiao 動画ダウンロード', 'Toutiao MP4 保存', 'Toutiao ダウンローダー'],
+                h1: 'Toutiao 動画ダウンローダー',
+                lede: '公開 Toutiao 動画リンクを貼り付け、利用可能な MP4 結果をブラウザで抽出します。',
+                stepsTitle: 'Toutiao 動画の保存方法',
+                steps: ['公開 Toutiao 動画のリンクをコピーします。', '下のダウンローダーに貼り付けます。', '利用可能な画質を選んで MP4 を保存します。'],
+                featuresTitle: 'Toutiao 対応機能',
+                features: ['公開ページとモバイル共有リンクに対応。', 'ソースが提供する MP4 画質を表示。', 'Toutiao アプリのインストールは不要。'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: '非公開動画は保存できますか？', a: 'いいえ。公開された Toutiao 動画のみ対応します。' },
+                    { q: 'リンクの解析に失敗する理由は？', a: '動画が削除、制限、または MP4 リソース未提供の可能性があります。' },
+                ],
+            }),
+            ko: ko({
+                metaTitle: `Toutiao 비디오 다운로더 - MP4 저장 | ${EN_BRAND}`,
+                metaDescription:
+                    '공개 Toutiao 비디오를 온라인으로 저장하세요. www.toutiao.com 또는 m.toutiao.com 링크를 붙여넣고 사용 가능한 MP4 옵션을 추출합니다.',
+                metaKeywords: ['Toutiao 비디오 다운로드', 'Toutiao MP4 저장', 'Toutiao downloader'],
+                h1: 'Toutiao 비디오 다운로더',
+                lede: '공개 Toutiao 비디오 링크를 붙여넣고 브라우저에서 사용 가능한 MP4 결과를 추출하세요.',
+                stepsTitle: 'Toutiao 비디오 다운로드 방법',
+                steps: ['공개 Toutiao 비디오 링크를 복사합니다.', '아래 다운로더에 링크를 붙여넣습니다.', '사용 가능한 화질을 선택하고 MP4를 저장합니다.'],
+                featuresTitle: 'Toutiao 지원 기능',
+                features: ['공개 Toutiao 페이지와 모바일 공유 링크를 지원합니다.', '원본이 제공하는 MP4 화질 옵션을 표시합니다.', 'Toutiao 앱 설치 없이 브라우저에서 작동합니다.'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: '비공개 Toutiao 비디오도 다운로드할 수 있나요?', a: '아니요. 공개된 Toutiao 비디오만 지원합니다.' },
+                    { q: '링크 분석이 실패하는 이유는?', a: '비디오가 삭제되었거나 제한되었거나 MP4 자원이 제공되지 않을 수 있습니다.' },
+                ],
+            }),
+            ru: ru({
+                metaTitle: `Загрузчик видео Toutiao - MP4 онлайн | ${EN_BRAND}`,
+                metaDescription:
+                    'Скачивайте публичные видео Toutiao онлайн. Вставьте ссылку www.toutiao.com или m.toutiao.com и сохраните доступные MP4.',
+                metaKeywords: ['Toutiao видео скачать', 'Toutiao MP4', 'Toutiao downloader'],
+                h1: 'Загрузчик видео Toutiao',
+                lede: 'Вставьте публичную ссылку Toutiao, чтобы извлечь доступные MP4-результаты в браузере.',
+                stepsTitle: 'Как скачать видео Toutiao',
+                steps: ['Скопируйте публичную ссылку на видео Toutiao.', 'Вставьте ее в поле загрузчика ниже.', 'Выберите качество и сохраните MP4.'],
+                featuresTitle: 'Возможности Toutiao',
+                features: ['Поддерживает публичные страницы Toutiao и мобильные ссылки.', 'Показывает MP4-качества, если они есть у источника.', 'Работает без установки приложения Toutiao.'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: 'Можно ли скачать приватные видео?', a: 'Нет. Поддерживаются только публичные видео Toutiao.' },
+                    { q: 'Почему ссылка не разбирается?', a: 'Видео могло быть удалено, ограничено или не иметь MP4-вариантов.' },
+                ],
+            }),
+            th: th({
+                metaTitle: `ตัวดาวน์โหลดวิดีโอ Toutiao - MP4 ออนไลน์ | ${EN_BRAND}`,
+                metaDescription:
+                    'ดาวน์โหลดวิดีโอ Toutiao สาธารณะออนไลน์ วางลิงก์ www.toutiao.com หรือ m.toutiao.com และบันทึก MP4 ที่มีให้',
+                metaKeywords: ['Toutiao video downloader', 'Toutiao MP4 download', 'ดาวน์โหลด Toutiao'],
+                h1: 'ตัวดาวน์โหลดวิดีโอ Toutiao',
+                lede: 'วางลิงก์วิดีโอ Toutiao สาธารณะเพื่อดึงผลลัพธ์ MP4 ในเบราว์เซอร์',
+                stepsTitle: 'วิธีดาวน์โหลดวิดีโอ Toutiao',
+                steps: ['คัดลอกลิงก์ Toutiao สาธารณะ', 'วางลิงก์ลงในกล่องดาวน์โหลด', 'เลือกคุณภาพที่มีและบันทึก MP4'],
+                featuresTitle: 'คุณสมบัติ Toutiao',
+                features: ['รองรับหน้าวิดีโอ Toutiao สาธารณะ', 'แสดงตัวเลือก MP4 เมื่อแหล่งต้นทางมีให้', 'ใช้ได้โดยไม่ต้องติดตั้งแอป Toutiao'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: 'ดาวน์โหลดวิดีโอส่วนตัวได้ไหม?', a: 'ไม่ได้ รองรับเฉพาะวิดีโอ Toutiao สาธารณะ' },
+                    { q: 'ทำไมลิงก์จึงล้มเหลว?', a: 'วิดีโออาจถูกลบ ถูกจำกัด หรือไม่มี MP4 ให้ดึง' },
+                ],
+            }),
+            vi: vi({
+                metaTitle: `Trinh tai video Toutiao - Luu MP4 online | ${EN_BRAND}`,
+                metaDescription:
+                    'Tai video Toutiao cong khai online. Dan lien ket www.toutiao.com hoac m.toutiao.com de trich xuat va luu cac tuy chon MP4 co san.',
+                metaKeywords: ['tai video toutiao', 'toutiao mp4 download', 'trinh tai toutiao', 'luu video toutiao'],
+                h1: 'Trinh tai video Toutiao',
+                lede: 'Dan lien ket video Toutiao cong khai de trich xuat cac ket qua MP4 co san ngay trong trinh duyet.',
+                stepsTitle: 'Cach tai video Toutiao',
+                steps: ['Sao chep lien ket video Toutiao cong khai.', 'Dan lien ket vao trinh tai ben duoi.', 'Chon chat luong co san va luu tep MP4.'],
+                featuresTitle: 'Tinh nang Toutiao',
+                features: ['Ho tro trang video cong khai va lien ket chia se di dong Toutiao.', 'Hien thi cac tuy chon MP4 khi nguon cung cap.', 'Khong can cai dat ung dung Toutiao.'],
+                faqTitle: 'FAQ',
+                faqs: [
+                    { q: 'Co the tai video rieng tu khong?', a: 'Khong. Chi ho tro video Toutiao cong khai.' },
+                    { q: 'Vi sao lien ket that bai?', a: 'Video co the da bi xoa, bi gioi han hoac khong co bien the MP4 de tai.' },
                 ],
             }),
         },

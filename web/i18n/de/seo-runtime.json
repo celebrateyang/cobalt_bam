@@ -155,6 +155,12 @@
         "q": "Was sollte ich zuerst überprüfen, wenn das Parsen fehlschlägt?",
         "a": "Überprüfen Sie den Zugriff auf die öffentliche URL, überprüfen Sie die Einstellungen und versuchen Sie es dann im Warteschlangenmodus erneut."
       }
+    ],
+    "toutiao": [
+      {
+        "q": "Was sollte ich zuerst überprüfen, wenn das Parsen fehlschlägt?",
+        "a": "Überprüfen Sie den Zugriff auf die öffentliche URL, überprüfen Sie die Einstellungen und versuchen Sie es dann im Warteschlangenmodus erneut."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -250,6 +256,19 @@
       ]
     },
     "generic": {
+      "heading": "Allgemeine Hinweise zum Arbeitsablauf",
+      "notes": [
+        "Verwenden Sie öffentliche, gemeinsam nutzbare URLs.",
+        "Warteschlange + Fortsetzen in instabilen Netzwerken.",
+        "Stellen Sie die Qualität ein, bevor Sie erneut analysieren."
+      ],
+      "checklist": [
+        "Die URL ist gültig und öffentlich",
+        "Die Einstellungen entsprechen der Zielausgabe",
+        "Endgültiger Dateispeicherort bestätigt"
+      ]
+    },
+    "toutiao": {
       "heading": "Allgemeine Hinweise zum Arbeitsablauf",
       "notes": [
         "Verwenden Sie öffentliche, gemeinsam nutzbare URLs.",
@@ -396,6 +415,17 @@
       }
     ],
     "generic": [
+      {
+        "title": "Fehler beim Parsen einer gültig aussehenden URL",
+        "symptoms": "Es wurde wiederholt keine Ausgabe zurückgegeben.",
+        "fixes": [
+          "Bestätigen Sie, dass die URL auf öffentliche spezifische Inhalte verweist.",
+          "Passen Sie die Einstellungen an und analysieren Sie sie erneut.",
+          "Verwenden Sie den Warteschlangenmodus mit Lebenslauf."
+        ]
+      }
+    ],
+    "toutiao": [
       {
         "title": "Fehler beim Parsen einer gültig aussehenden URL",
         "symptoms": "Es wurde wiederholt keine Ausgabe zurückgegeben.",

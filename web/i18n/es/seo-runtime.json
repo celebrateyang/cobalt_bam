@@ -155,6 +155,12 @@
         "q": "¿Qué debo comprobar primero cuando falla el análisis?",
         "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
       }
+    ],
+    "toutiao": [
+      {
+        "q": "¿Qué debo comprobar primero cuando falla el análisis?",
+        "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -250,6 +256,19 @@
       ]
     },
     "generic": {
+      "heading": "Notas generales sobre el flujo de trabajo",
+      "notes": [
+        "Utilice URL públicas para compartir.",
+        "Cola + reanudación en redes inestables.",
+        "Establezca la calidad antes de volver a analizar."
+      ],
+      "checklist": [
+        "La URL es válida y pública.",
+        "La configuración coincide con la salida objetivo",
+        "Ubicación final del archivo confirmada"
+      ]
+    },
+    "toutiao": {
       "heading": "Notas generales sobre el flujo de trabajo",
       "notes": [
         "Utilice URL públicas para compartir.",
@@ -396,6 +415,17 @@
       }
     ],
     "generic": [
+      {
+        "title": "Error al analizar una URL que parece válida",
+        "symptoms": "No se devolvió ningún resultado repetidamente.",
+        "fixes": [
+          "Confirme que la URL apunta a contenido público específico.",
+          "Ajuste la configuración y vuelva a analizar.",
+          "Utilice el modo de cola con currículum."
+        ]
+      }
+    ],
+    "toutiao": [
       {
         "title": "Error al analizar una URL que parece válida",
         "symptoms": "No se devolvió ningún resultado repetidamente.",

@@ -155,6 +155,16 @@
         "q": "What should I check first when parsing fails?",
         "a": "Verify public URL access, check settings, then retry with queue mode."
       }
+    ],
+    "toutiao": [
+      {
+        "q": "What should I check when a Toutiao link fails?",
+        "a": "Make sure the URL points to a public Toutiao video detail page, not a search page, feed page, or comment page."
+      },
+      {
+        "q": "Why are HD options missing?",
+        "a": "Available quality options depend on the MP4 variants returned by Toutiao for that video."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -260,6 +270,19 @@
         "URL is valid and public",
         "Settings match target output",
         "Final file location confirmed"
+      ]
+    },
+    "toutiao": {
+      "heading": "Toutiao download workflow notes",
+      "notes": [
+        "Use the public video detail page or mobile share link.",
+        "Avoid pasting Toutiao search results or feed pages.",
+        "Check the parsed quality list before saving."
+      ],
+      "checklist": [
+        "URL points to a public Toutiao video",
+        "The source video still plays",
+        "An MP4 option appears in the result"
       ]
     }
   },
@@ -403,6 +426,17 @@
           "Confirm URL points to public specific content.",
           "Adjust settings and re-parse.",
           "Use queue mode with resume."
+        ]
+      }
+    ],
+    "toutiao": [
+      {
+        "title": "Toutiao URL opens but parsing fails",
+        "symptoms": "The page is reachable, but no downloadable result is returned.",
+        "fixes": [
+          "Confirm the URL is a specific video page.",
+          "Try the mobile app share link or the canonical web URL.",
+          "Retry with another public video if the source is removed or restricted."
         ]
       }
     ]

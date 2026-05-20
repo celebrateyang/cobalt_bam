@@ -155,6 +155,12 @@
         "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
         "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
       }
+    ],
+    "toutiao": [
+      {
+        "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
+        "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -250,6 +256,19 @@
       ]
     },
     "generic": {
+      "heading": "Notes générales sur le flux de travail",
+      "notes": [
+        "Utilisez des URL publiques partageables.",
+        "File d'attente + reprise sur réseaux instables.",
+        "Définissez la qualité avant d’analyser à nouveau."
+      ],
+      "checklist": [
+        "L'URL est valide et publique",
+        "Les paramètres correspondent à la sortie cible",
+        "Emplacement final du fichier confirmé"
+      ]
+    },
+    "toutiao": {
       "heading": "Notes générales sur le flux de travail",
       "notes": [
         "Utilisez des URL publiques partageables.",
@@ -396,6 +415,17 @@
       }
     ],
     "generic": [
+      {
+        "title": "Échec de l'analyse d'une URL d'apparence valide",
+        "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
+        "fixes": [
+          "Confirmez que l'URL pointe vers un contenu public spécifique.",
+          "Ajustez les paramètres et réanalysez.",
+          "Utilisez le mode file d'attente avec reprise."
+        ]
+      }
+    ],
+    "toutiao": [
       {
         "title": "Échec de l'analyse d'une URL d'apparence valide",
         "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",

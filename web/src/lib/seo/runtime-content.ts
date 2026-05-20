@@ -15,6 +15,7 @@ type PlatformKey =
     | 'instagram'
     | 'youtube'
     | 'naver'
+    | 'toutiao'
     | 'bilibili'
     | 'xiaohongshu'
     | 'facebook'
@@ -58,6 +59,7 @@ export const getPlatformKey = (slug: string): PlatformKey => {
     if (slug.includes('instagram')) return 'instagram';
     if (slug.includes('youtube')) return 'youtube';
     if (slug.includes('naver')) return 'naver';
+    if (slug.includes('toutiao')) return 'toutiao';
     if (slug.includes('bilibili')) return 'bilibili';
     if (slug.includes('xiaohongshu')) return 'xiaohongshu';
     if (slug.includes('facebook')) return 'facebook';

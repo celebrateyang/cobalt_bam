@@ -60,6 +60,11 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'toutiao',
     },
     {
+        platform: 'Haokan',
+        downloadSlug: 'haokan-video-download',
+        homeKey: 'haokan',
+    },
+    {
         platform: 'Xiaohongshu',
         downloadSlug: 'xiaohongshu-video-download',
         guideSlug: 'xiaohongshu-download-guide',
@@ -139,6 +144,7 @@ const strategicDownloadOrder = [
     'kuaishou-no-watermark',
     'naver-video-download',
     'toutiao-video-download',
+    'haokan-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',
     'douyin-mp3-download',
@@ -246,6 +252,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'bilibili-video-download': [
         'douyin-no-watermark',
         'kuaishou-no-watermark',
+        'haokan-video-download',
         'xiaohongshu-video-download',
         'youtube-download',
         'twitter-x-video-download',
@@ -254,6 +261,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'kuaishou-no-watermark': [
         'douyin-no-watermark',
         'tiktok-no-watermark',
+        'haokan-video-download',
         'naver-video-download',
         'xiaohongshu-video-download',
         'bilibili-video-download',
@@ -262,6 +270,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     ],
     'naver-video-download': [
         'toutiao-video-download',
+        'haokan-video-download',
         'youtube-shorts-download',
         'tiktok-no-watermark',
         'instagram-reels-download',
@@ -270,8 +279,18 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'vimeo-video-download',
     ],
     'toutiao-video-download': [
+        'haokan-video-download',
         'douyin-no-watermark',
         'kuaishou-no-watermark',
+        'bilibili-video-download',
+        'xiaohongshu-video-download',
+        'naver-video-download',
+        'youtube-download',
+    ],
+    'haokan-video-download': [
+        'toutiao-video-download',
+        'kuaishou-no-watermark',
+        'douyin-no-watermark',
         'bilibili-video-download',
         'xiaohongshu-video-download',
         'naver-video-download',
@@ -280,6 +299,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'xiaohongshu-video-download': [
         'douyin-no-watermark',
         'kuaishou-no-watermark',
+        'haokan-video-download',
         'toutiao-video-download',
         'naver-video-download',
         'bilibili-video-download',

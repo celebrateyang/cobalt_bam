@@ -121,6 +121,7 @@ export const capabilityServices: CapabilityService[] = [
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: false,
+        landingSlug: 'haokan-video-download',
         notes: ['Supports public Haokan/Baidu video pages and available MP4 quality variants.'],
     },
     {

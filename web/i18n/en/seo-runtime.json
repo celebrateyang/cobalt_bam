@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-08",
+  "updatedAt": "2026-05-20",
   "productFaqs": [
     {
       "q": "Where are downloaded files saved?",
@@ -165,6 +165,20 @@
         "q": "Why are HD options missing?",
         "a": "Available quality options depend on the MP4 variants returned by Toutiao for that video."
       }
+    ],
+    "haokan": [
+      {
+        "q": "How do I download Haokan videos to my phone?",
+        "a": "Copy the public haokan.baidu.com video URL, paste it into FreeSaveVideo, then save an available MP4 result from your mobile browser."
+      },
+      {
+        "q": "Is this the same as installing the Haokan app?",
+        "a": "No. FreeSaveVideo extracts downloadable results from public video links. It does not provide Haokan app installers, recovery, or local player rankings."
+      },
+      {
+        "q": "Can I use Haokan links from Baidu search results?",
+        "a": "Yes, if the result opens a public Haokan video page such as haokan.baidu.com/v?vid=... rather than an app download page or a search listing."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -283,6 +297,19 @@
         "URL points to a public Toutiao video",
         "The source video still plays",
         "An MP4 option appears in the result"
+      ]
+    },
+    "haokan": {
+      "heading": "Haokan download workflow notes",
+      "notes": [
+        "Use the exact public haokan.baidu.com video URL, not a search results page.",
+        "Save an available MP4 variant when parsing succeeds.",
+        "Treat app install, app recovery, and player ranking searches as different intents from video link extraction."
+      ],
+      "checklist": [
+        "Public Haokan video page confirmed",
+        "haokan.baidu.com/v?vid=... URL copied",
+        "MP4 result saved from the browser"
       ]
     }
   },
@@ -437,6 +464,26 @@
           "Confirm the URL is a specific video page.",
           "Try the mobile app share link or the canonical web URL.",
           "Retry with another public video if the source is removed or restricted."
+        ]
+      }
+    ],
+    "haokan": [
+      {
+        "title": "Search result or app install page copied",
+        "symptoms": "Parsing returns no media because the URL is not a direct Haokan video page.",
+        "fixes": [
+          "Open the specific Haokan video before copying the URL.",
+          "Use haokan.baidu.com/v?vid=... links when available.",
+          "Do not paste Haokan app installer, recovery, or player-ranking pages."
+        ]
+      },
+      {
+        "title": "Video is restricted or unavailable",
+        "symptoms": "The page opens, but no downloadable MP4 option is returned.",
+        "fixes": [
+          "Confirm the video is public and still online.",
+          "Retry once in queue mode if the network is unstable.",
+          "Try another public Haokan video when source assets are limited."
         ]
       }
     ]

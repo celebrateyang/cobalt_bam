@@ -1694,6 +1694,129 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
+        slug: 'haokan-video-download',
+        locales: {
+            zh: {
+                ...zh({
+                metaTitle: `\u597d\u770b\u89c6\u9891\u4e0b\u8f7d_\u5982\u4f55\u4e0b\u8f7d\u597d\u770b\u89c6\u9891\u5230\u624b\u673a | ${ZH_BRAND}`,
+                metaDescription:
+                    '\u597d\u770b\u89c6\u9891\u4e0b\u8f7d\u6559\u7a0b\uff1a\u590d\u5236 haokan.baidu.com \u89c6\u9891\u94fe\u63a5\uff0c\u7c98\u8d34\u5230 FreeSaveVideo \u5373\u53ef\u5728\u7ebf\u63d0\u53d6\u53ef\u7528 MP4\uff0c\u9002\u5408\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d\u3001\u89c6\u9891\u4e0b\u8f7d\u5230\u624b\u673a\u548c\u672c\u5730\u4fdd\u5b58\u573a\u666f\u3002',
+                metaKeywords: [
+                    '\u597d\u770b\u89c6\u9891\u4e0b\u8f7d',
+                    '\u5982\u4f55\u4e0b\u8f7d\u597d\u770b\u89c6\u9891',
+                    '\u597d\u770b\u89c6\u9891\u89c6\u9891\u4e0b\u8f7d',
+                    '\u767e\u5ea6\u597d\u770b\u89c6\u9891\u4e0b\u8f7d',
+                    '\u597d\u770b\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d',
+                    '\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d',
+                    '\u89c6\u9891\u4e0b\u8f7d\u5230\u624b\u673a',
+                    '\u4e0b\u8f7d\u300a\u597d\u770b\u89c6\u9891\u300b',
+                    '\u597d\u770b\u89c6\u9891\u6700\u65b0\u7248\u4e0b\u8f7dapp\u5b89\u88c5',
+                    '\u6062\u590d\u597d\u770b\u89c6\u9891',
+                    'm3u8\u683c\u5f0f\u8f6c\u6362\u5de5\u5177',
+                    '\u672c\u5730\u89c6\u9891\u4e0b\u8f7d\u5b89\u88c5',
+                    '\u64ad\u653e\u5668\u5341\u5927\u6392\u540d',
+                    '\u4f18\u9177\u4e0b\u8f7d',
+                    '\u4f18\u9177\u89c6\u9891',
+                ],
+                h1: '\u597d\u770b\u89c6\u9891\u4e0b\u8f7d',
+                lede: '\u7c98\u8d34 haokan.baidu.com \u597d\u770b\u89c6\u9891\u94fe\u63a5\uff0c\u5728\u7ebf\u89e3\u6790\u5e76\u4fdd\u5b58\u53ef\u7528 MP4 \u6e05\u6670\u5ea6\u3002\u9002\u5408\u60f3\u628a\u597d\u770b\u89c6\u9891\u4e0b\u8f7d\u5230\u624b\u673a\u6216\u7535\u8111\u3001\u672c\u5730\u4fdd\u5b58\u516c\u5f00\u89c6\u9891\u7684\u573a\u666f\u3002',
+                stepsTitle: '\u5982\u4f55\u4e0b\u8f7d\u597d\u770b\u89c6\u9891',
+                steps: [
+                    '\u5728\u597d\u770b\u89c6\u9891\u6216\u767e\u5ea6\u9875\u9762\u6253\u5f00\u516c\u5f00\u89c6\u9891\uff0c\u590d\u5236\u6d4f\u89c8\u5668\u5730\u5740\u680f\u91cc\u7684 haokan.baidu.com/v?vid=... \u94fe\u63a5\u3002',
+                    '\u628a\u94fe\u63a5\u7c98\u8d34\u5230\u4e0b\u65b9\u8f93\u5165\u6846\uff0c\u4fdd\u6301\u81ea\u52a8\u6a21\u5f0f\uff0c\u70b9\u51fb\u4e0b\u8f7d\u5f00\u59cb\u89e3\u6790\u3002',
+                    '\u9009\u62e9\u53ef\u7528\u6e05\u6670\u5ea6\uff0c\u628a MP4 \u4fdd\u5b58\u5230\u624b\u673a\u6216\u7535\u8111\uff1b\u5982\u679c\u5904\u7406\u7684\u662f\u5176\u4ed6\u7ad9\u70b9 m3u8 \u94fe\u63a5\uff0c\u53ef\u518d\u4f7f\u7528\u683c\u5f0f\u8f6c\u6362\u5de5\u5177\u3002',
+                ],
+                featuresTitle: '\u597d\u770b\u89c6\u9891\u89e3\u6790\u4e0b\u8f7d\u529f\u80fd',
+                features: [
+                    '\u652f\u6301\u516c\u5f00\u7684 haokan.baidu.com \u597d\u770b\u89c6\u9891\u9875\u548c\u767e\u5ea6\u89c6\u9891\u94fe\u63a5\u3002',
+                    '\u53ef\u63d0\u53d6\u6e90\u7ad9\u8fd4\u56de\u7684 MP4 \u89c6\u9891\u8d44\u6e90\uff0c\u6709\u591a\u4e2a\u6e05\u6670\u5ea6\u65f6\u4f1a\u663e\u793a\u53ef\u9009\u9879\u3002',
+                    '\u4e0d\u9700\u5b89\u88c5\u597d\u770b\u89c6\u9891 App \u6216\u64ad\u653e\u5668\uff0c\u5b89\u5353\u3001iPhone \u548c\u7535\u8111\u6d4f\u89c8\u5668\u90fd\u80fd\u4f7f\u7528\u3002',
+                    '\u9002\u5408\u5355\u4e2a\u89c6\u9891\u4fdd\u5b58\u3001\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d\u548c\u516c\u5f00\u7d20\u6750\u5907\u4efd\u3002',
+                ],
+                faqTitle: '\u597d\u770b\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898',
+                faqs: [
+                    {
+                        q: '\u5982\u4f55\u4e0b\u8f7d\u597d\u770b\u89c6\u9891\u5230\u624b\u673a\uff1f',
+                        a: '\u5148\u590d\u5236\u597d\u770b\u89c6\u9891\u7684\u516c\u5f00\u9875\u9762\u94fe\u63a5\uff0c\u56de\u5230 FreeSaveVideo \u7c98\u8d34\u89e3\u6790\uff0c\u7136\u540e\u70b9\u51fb\u53ef\u7528 MP4 \u7ed3\u679c\u4fdd\u5b58\u5230\u624b\u673a\u4e0b\u8f7d\u6587\u4ef6\u5939\u6216\u76f8\u518c\u3002',
+                    },
+                    {
+                        q: '\u652f\u6301\u4e0b\u8f7d\u300a\u597d\u770b\u89c6\u9891\u300bApp \u91cc\u7684\u89c6\u9891\u5417\uff1f',
+                        a: '\u53ea\u8981 App \u91cc\u7684\u89c6\u9891\u80fd\u5206\u4eab\u6216\u6253\u5f00\u4e3a\u516c\u5f00 haokan.baidu.com \u94fe\u63a5\uff0c\u5c31\u53ef\u4ee5\u5c1d\u8bd5\u7c98\u8d34\u89e3\u6790\u3002\u79c1\u5bc6\u3001\u4ed8\u8d39\u6216\u4ec5 App \u5185\u53ef\u89c1\u5185\u5bb9\u4e0d\u652f\u6301\u3002',
+                    },
+                    {
+                        q: '\u4e3a\u4ec0\u4e48\u641c\u5230\u7684\u662f\u597d\u770b\u89c6\u9891app\u6700\u65b0\u7248\u4e0b\u8f7d\uff0c\u800c\u4e0d\u662f\u89c6\u9891\u4e0b\u8f7d\uff1f',
+                        a: '\u8fd9\u4e24\u4e2a\u9700\u6c42\u4e0d\u4e00\u6837\uff1aApp \u4e0b\u8f7d\u662f\u5b89\u88c5\u8f6f\u4ef6\uff0cFreeSaveVideo \u5904\u7406\u7684\u662f\u516c\u5f00\u597d\u770b\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d\uff0c\u4e0d\u63d0\u4f9b App \u5b89\u88c5\u5305\u6216\u6062\u590d\u670d\u52a1\u3002',
+                    },
+                    {
+                        q: 'm3u8\u683c\u5f0f\u8f6c\u6362\u5de5\u5177\u548c\u597d\u770b\u89c6\u9891\u4e0b\u8f7d\u6709\u4ec0\u4e48\u5173\u7cfb\uff1f',
+                        a: '\u597d\u770b\u89c6\u9891\u901a\u5e38\u4f1a\u8fd4\u56de\u53ef\u4fdd\u5b58\u7684 MP4 \u7ed3\u679c\u3002\u5982\u679c\u4f60\u5904\u7406\u7684\u662f\u5176\u4ed6\u7ad9\u70b9\u7684 m3u8 \u94fe\u63a5\uff0c\u53ef\u4ee5\u5148\u7528\u4e0b\u8f7d\u6216\u683c\u5f0f\u8f6c\u6362\u5de5\u5177\u8f6c\u6210\u672c\u5730 MP4\u3002',
+                    },
+                    {
+                        q: '\u80fd\u6062\u590d\u597d\u770b\u89c6\u9891\u6216\u672c\u5730\u89c6\u9891\u5417\uff1f',
+                        a: '\u4e0d\u80fd\u3002FreeSaveVideo \u662f\u89c6\u9891\u94fe\u63a5\u63d0\u53d6\u4e0b\u8f7d\u5de5\u5177\uff0c\u4e0d\u662f\u597d\u770b\u89c6\u9891\u6062\u590d\u3001\u672c\u5730\u89c6\u9891\u4e0b\u8f7d\u5b89\u88c5\u6216\u64ad\u653e\u5668\u6392\u540d\u5de5\u5177\u3002',
+                    },
+                ],
+                }),
+                disclaimer:
+                    '\u4ec5\u652f\u6301\u4e0b\u8f7d\u516c\u5f00\u53ef\u8bbf\u95ee\u7684\u597d\u770b\u89c6\u9891\u5185\u5bb9\uff1b\u8bf7\u5c0a\u91cd\u7248\u6743\u3001\u521b\u4f5c\u8005\u6743\u5229\u548c\u5e73\u53f0\u89c4\u5219\u3002',
+            },
+            en: en({
+                metaTitle: `Haokan Video Downloader - Save Baidu Haokan MP4 Online | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public Haokan videos online. Paste a haokan.baidu.com video URL to extract available MP4 quality options and save Baidu Haokan videos to your phone or computer.',
+                metaKeywords: [
+                    'haokan video downloader',
+                    'download haokan video',
+                    'baidu haokan video download',
+                    'haokan.baidu.com video download',
+                    'save haokan mp4',
+                    'video link extractor',
+                ],
+                h1: 'Haokan Video Downloader',
+                lede: 'Paste a public haokan.baidu.com video URL, extract available MP4 quality options, and save Baidu Haokan videos in your browser.',
+                stepsTitle: 'How to download Haokan videos',
+                steps: [
+                    'Open the public Haokan video page and copy the haokan.baidu.com/v?vid=... URL.',
+                    'Paste the Haokan link into the downloader below and start parsing.',
+                    'Choose an available MP4 quality option and save the file to your phone or computer.',
+                ],
+                featuresTitle: 'Haokan downloader features',
+                features: [
+                    'Supports public Haokan and Baidu video pages.',
+                    'Extracts available MP4 quality variants when the source provides them.',
+                    'Works in the browser without installing the Haokan app or a separate player.',
+                    'Useful for single-video saving, link extraction, and public media backup.',
+                ],
+                faqTitle: 'Haokan download FAQ',
+                faqs: [
+                    {
+                        q: 'Can I download Haokan videos to my phone?',
+                        a: 'Yes. Copy the public Haokan page URL, paste it here, then save an available MP4 result through your mobile browser.',
+                    },
+                    {
+                        q: 'Does this install the Haokan app?',
+                        a: 'No. FreeSaveVideo downloads public video links; it does not provide Haokan app installers, app recovery, or local player rankings.',
+                    },
+                    {
+                        q: 'Why does a Haokan link fail?',
+                        a: 'The video may be private, removed, region-restricted, or missing downloadable MP4 variants. Try another public Haokan video URL.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Haokan',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'haokan video downloader',
+                    'download haokan video',
+                    'baidu haokan video download',
+                    'haokan mp4 download',
+                ],
+            }),
+        },
+    },
+    {
         slug: 'kuaishou-no-watermark',
         locales: {
             zh: zh({

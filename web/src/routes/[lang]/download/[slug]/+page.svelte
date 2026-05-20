@@ -377,6 +377,14 @@
 
 <style>
     .page {
+        --download-surface: color-mix(in srgb, var(--popup-bg) 94%, #ffffff);
+        --download-panel: color-mix(in srgb, var(--popup-bg) 86%, #ffffff);
+        --download-panel-hover: color-mix(in srgb, var(--button-hover) 70%, #ffffff);
+        --download-border: color-mix(in srgb, var(--button-stroke) 72%, rgba(0, 0, 0, 0.1));
+        --download-heading: var(--text);
+        --download-copy: var(--text);
+        --download-muted: var(--subtext);
+        --download-accent: var(--secondary-600);
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -416,11 +424,7 @@
         padding: 22px;
         border-radius: calc(var(--border-radius) * 1.6);
         border: 1px solid var(--button-stroke);
-        background: linear-gradient(
-            135deg,
-            rgba(var(--accent-rgb), 0.16),
-            var(--button)
-        );
+        background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.11), var(--download-surface));
         box-shadow: var(--button-box-shadow);
     }
 
@@ -434,13 +438,12 @@
         line-height: 1.15;
         margin: 0;
         letter-spacing: -0.02em;
-        color: var(--secondary);
+        color: var(--download-heading);
     }
 
     .lede {
         margin: 10px 0 0 0;
-        color: var(--secondary);
-        opacity: 0.85;
+        color: var(--download-muted);
         font-size: 15.5px;
         line-height: 1.6;
     }
@@ -465,7 +468,7 @@
     }
 
     .crumb-links a {
-        color: var(--secondary);
+        color: var(--download-accent);
         text-decoration: none;
     }
 
@@ -478,7 +481,7 @@
     }
 
     .card {
-        background: var(--button);
+        background: var(--download-surface);
         border-radius: calc(var(--border-radius) * 1.25);
         padding: calc(var(--padding) / 1.25);
         box-shadow:
@@ -490,7 +493,7 @@
         margin: 0 0 10px 0;
         font-size: 18px;
         letter-spacing: -0.01em;
-        color: var(--secondary);
+        color: var(--download-heading);
     }
 
     .section-grid {
@@ -510,7 +513,7 @@
         font-size: 14px;
         letter-spacing: 0.02em;
         text-transform: uppercase;
-        color: rgba(var(--accent-rgb), 0.9);
+        color: var(--download-accent);
     }
 
     .case-grid {
@@ -520,9 +523,9 @@
     }
 
     .failure-case {
-        border: 1px solid var(--button-stroke);
+        border: 1px solid var(--download-border);
         border-radius: 12px;
-        background: var(--button-elevated);
+        background: var(--download-panel);
         padding: 12px;
         display: grid;
         gap: 8px;
@@ -531,12 +534,12 @@
     .failure-case h3 {
         margin: 0;
         font-size: 0.98rem;
-        color: var(--secondary);
+        color: var(--download-heading);
     }
 
     .case-symptoms {
         margin: 0;
-        color: var(--subtext);
+        color: var(--download-muted);
         font-size: 0.9rem;
         line-height: 1.5;
     }
@@ -546,8 +549,7 @@
         padding-left: 18px;
         display: grid;
         gap: 6px;
-        color: var(--secondary);
-        opacity: 0.92;
+        color: var(--download-copy);
         line-height: 1.55;
     }
 
@@ -557,8 +559,7 @@
         padding: 0;
         display: grid;
         gap: 10px;
-        color: var(--secondary);
-        opacity: 0.92;
+        color: var(--download-copy);
         line-height: 1.6;
     }
 
@@ -575,8 +576,8 @@
         align-items: start;
         padding: 12px 12px;
         border-radius: 14px;
-        background: var(--button-elevated);
-        border: 1px solid var(--button-stroke);
+        background: var(--download-panel);
+        border: 1px solid var(--download-border);
     }
 
     .step-list li::before {
@@ -587,7 +588,7 @@
         place-items: center;
         border-radius: 10px;
         background: rgba(var(--accent-rgb), 0.2);
-        color: var(--secondary);
+        color: var(--download-accent);
         font-weight: 700;
     }
 
@@ -618,16 +619,16 @@
     }
 
     .faq-item {
-        background: var(--button-elevated);
+        background: var(--download-panel);
         border-radius: calc(var(--border-radius));
         padding: 12px 14px;
-        border: 1px solid var(--button-stroke);
+        border: 1px solid var(--download-border);
     }
 
     .faq-item summary {
         cursor: pointer;
         font-weight: 600;
-        color: var(--secondary);
+        color: var(--download-heading);
         list-style: none;
         outline: none;
     }
@@ -638,8 +639,7 @@
 
     .faq-item p {
         margin: 8px 0 0 0;
-        color: var(--secondary);
-        opacity: 0.85;
+        color: var(--download-muted);
         line-height: 1.6;
     }
 
@@ -660,7 +660,7 @@
         font-size: 14px;
         letter-spacing: 0.02em;
         text-transform: uppercase;
-        color: rgba(var(--accent-rgb), 0.9);
+        color: var(--download-accent);
     }
 
     .related-links {
@@ -677,15 +677,15 @@
         min-height: 40px;
         padding: 10px 12px;
         border-radius: 12px;
-        border: 1px solid var(--button-stroke);
-        background: var(--button-elevated);
-        color: var(--secondary);
+        border: 1px solid var(--download-border);
+        background: var(--download-panel);
+        color: var(--download-copy);
         text-decoration: none;
         line-height: 1.45;
     }
 
     .related-link:hover {
-        background: var(--button-hover);
+        background: var(--download-panel-hover);
     }
 
     .related-link--primary {
@@ -713,15 +713,14 @@
 
     .update-meta {
         margin: 0 0 10px;
-        color: var(--subtext);
+        color: var(--download-muted);
         font-size: 0.9rem;
     }
 
     .disclaimer {
         margin: 4px 0 0;
         padding: 0 2px;
-        color: var(--secondary);
-        opacity: 0.7;
+        color: var(--download-muted);
         font-size: 13px;
         line-height: 1.6;
         text-align: center;

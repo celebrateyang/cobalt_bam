@@ -62,5 +62,8 @@
     "queue.refresh_required": "这通常发生在前端更新后浏览器仍使用旧缓存时。请刷新页面（Ctrl+F5）后再试。",
     "queue.generic_error": "下载工作进程启动失败。请刷新页面后重试。",
     "queue.worker_didnt_start": "下载工作进程未能及时启动。请刷新页面后重试。",
-    "api.membership.limit.exceeded": "会员合理使用额度已用完，请稍后再试。"
+    "api.membership.limit.exceeded": "会员合理使用额度已用完，请稍后再试。",
+    "api.upstream.timeout": "当前 YouTube 解析节点繁忙或响应超时，请稍等 1 分钟后再试。",
+    "api.upstream.circuit_open": "YouTube 解析节点刚刚出现短暂失败，正在冷却中，请稍等 1 分钟后再试。",
+    "api.upstream.unavailable": "当前没有可用的 YouTube 解析节点，请稍后再试。"
 }

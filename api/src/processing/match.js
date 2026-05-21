@@ -120,6 +120,7 @@ const requestUpstreamCobalt = async (payload) => {
         payload,
         service: getRequestHost(payload) || "download",
         timeoutMs,
+        returnFailureResponse: true,
     });
 
     if (!upstream?.body) {

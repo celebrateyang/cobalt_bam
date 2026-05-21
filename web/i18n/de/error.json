@@ -51,5 +51,8 @@
     "queue.refresh_required": "Das passiert meist nach einem Frontend-Update mit veraltetem Cache. Aktualisiere die Seite (Strg+F5) und versuche es erneut.",
     "queue.generic_error": "Der Download-Worker konnte nicht gestartet werden. Aktualisiere die Seite und versuche es erneut.",
     "queue.worker_didnt_start": "Der Download-Worker konnte nicht rechtzeitig gestartet werden. Aktualisiere die Seite und versuche es erneut.",
-    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
+    "api.upstream.timeout": "Der YouTube-Verarbeitungsknoten ist gerade ausgelastet oder hat zu langsam geantwortet. Bitte warte etwa 1 Minute und versuche es erneut.",
+    "api.upstream.circuit_open": "Der YouTube-Verarbeitungsknoten hatte gerade einen kurzen Fehler und kuehlt ab. Bitte warte etwa 1 Minute und versuche es erneut.",
+    "api.upstream.unavailable": "Im Moment ist kein YouTube-Verarbeitungsknoten verfuegbar. Bitte versuche es spaeter erneut."
 }

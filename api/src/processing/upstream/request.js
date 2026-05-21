@@ -1,6 +1,8 @@
 import { env } from "../../config.js";
 import {
+    getUpstreamNodes,
     hasUpstreams,
+    isSelfOrigin,
     markUpstreamFailure,
     markUpstreamSuccess,
     selectUpstreamNode,
@@ -101,6 +103,74 @@ const errorReason = (error) => {
     return truncate([code, message].filter(Boolean).join(":"));
 };
 
+const classifyFetchError = (error) => {
+    const reason = errorReason(error);
+    const name = String(error?.name || "");
+    const code = String(error?.code || error?.cause?.code || "");
+    const message = String(error?.message || error || "");
+
+    if (
+        name === "AbortError" ||
+        code === "ABORT_ERR" ||
+        message.toLowerCase().includes("aborted")
+    ) {
+        return {
+            code: "upstream.timeout",
+            reason,
+        };
+    }
+
+    return {
+        code: "upstream.unavailable",
+        reason,
+    };
+};
+
+const summarizeSelectionBlockers = (excluded, regions) => {
+    const now = Date.now();
+    const allowedRegions = Array.isArray(regions) && regions.length > 0
+        ? new Set(regions)
+        : null;
+    const candidates = getUpstreamNodes().filter(
+        (node) =>
+            !excluded.has(node.url) &&
+            !isSelfOrigin(node.origin) &&
+            (!allowedRegions || allowedRegions.has(node.region)),
+    );
+    const circuitOpenNodes = candidates.filter((node) => node.circuitOpenUntil > now);
+    const retryAt = circuitOpenNodes
+        .map((node) => node.circuitOpenUntil)
+        .filter((value) => Number.isFinite(value) && value > now)
+        .sort((a, b) => a - b)[0];
+
+    return {
+        total: candidates.length,
+        circuitOpen: circuitOpenNodes.length,
+        retryAfterSeconds: retryAt ? Math.max(1, Math.ceil((retryAt - now) / 1000)) : 60,
+    };
+};
+
+const createFailureResponse = ({ code, service, reason, retryAfterSeconds }) => ({
+    status: 503,
+    body: {
+        status: "error",
+        service,
+        error: {
+            code: `error.api.${code}`,
+            context: {
+                service,
+                retryAfterSeconds,
+                reason,
+            },
+        },
+    },
+    upstreamFailure: {
+        code,
+        reason,
+        retryAfterSeconds,
+    },
+});
+
 const isFailoverStatus = (status) => status >= 500 || [502, 503, 504].includes(status);
 
 const logResultStatus = (payload) => {
@@ -193,8 +263,18 @@ export const requestUpstream = async ({
     headers: extraHeaders = {},
     acceptResponse,
     requireStatus = true,
+    returnFailureResponse = false,
 } = {}) => {
-    if (!hasUpstreams()) return null;
+    if (!hasUpstreams()) {
+        return returnFailureResponse
+            ? createFailureResponse({
+                code: "upstream.unavailable",
+                service,
+                reason: "no_upstreams_configured",
+                retryAfterSeconds: 60,
+            })
+            : null;
+    }
 
     const attempts = resolveMaxAttempts(maxAttempts);
     const excluded = new Set();
@@ -208,7 +288,18 @@ export const requestUpstream = async ({
             if (attemptNo >= attempts) break;
 
             const node = selectUpstreamNode(excluded, { regions });
-            if (!node) break;
+            if (!node) {
+                const blockers = summarizeSelectionBlockers(excluded, regions);
+                if (!lastErrorResult && blockers.circuitOpen > 0) {
+                    lastErrorResult = createFailureResponse({
+                        code: "upstream.circuit_open",
+                        service,
+                        reason: "circuit_open",
+                        retryAfterSeconds: blockers.retryAfterSeconds,
+                    });
+                }
+                break;
+            }
 
             attemptNo += 1;
             excluded.add(node.url);
@@ -304,8 +395,17 @@ export const requestUpstream = async ({
                 };
             } catch (error) {
                 const elapsedMs = Date.now() - startedAt;
-                const reason = errorReason(error);
+                const failure = classifyFetchError(error);
+                const reason = failure.reason;
                 markUpstreamFailure(node, reason);
+                if (returnFailureResponse || !lastErrorResult) {
+                    lastErrorResult = createFailureResponse({
+                        code: failure.code,
+                        service,
+                        reason,
+                        retryAfterSeconds: Math.max(1, Math.ceil(effectiveTimeoutMs / 1000)),
+                    });
+                }
                 console.warn(
                     `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=${reason} elapsed_ms=${elapsedMs}`,
                 );
@@ -316,5 +416,9 @@ export const requestUpstream = async ({
         }
     }
 
-    return lastErrorResult;
+    if (returnFailureResponse && lastErrorResult?.upstreamFailure) {
+        return lastErrorResult;
+    }
+
+    return lastErrorResult?.upstreamFailure ? null : lastErrorResult;
 };

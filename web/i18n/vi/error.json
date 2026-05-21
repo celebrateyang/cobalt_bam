@@ -51,5 +51,8 @@
     "queue.refresh_required": "lỗi này thường xảy ra sau khi giao diện được cập nhật nhưng trình duyệt vẫn dùng bộ nhớ đệm cũ. hãy làm mới trang (Ctrl+F5) rồi thử lại.",
     "queue.generic_error": "không thể khởi động tiến trình tải xuống. hãy làm mới trang rồi thử lại.",
     "queue.worker_didnt_start": "tiến trình tải xuống không khởi động kịp thời. hãy làm mới trang rồi thử lại.",
-    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
+    "api.upstream.timeout": "Nut xu ly YouTube dang ban hoac phan hoi qua lau. Vui long doi khoang 1 phut roi thu lai.",
+    "api.upstream.circuit_open": "Nut xu ly YouTube vua gap loi tam thoi va dang trong thoi gian ha nhiet. Vui long doi khoang 1 phut roi thu lai.",
+    "api.upstream.unavailable": "Hien khong co nut xu ly YouTube nao kha dung. Vui long thu lai sau."
 }

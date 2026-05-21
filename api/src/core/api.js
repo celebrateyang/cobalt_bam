@@ -119,6 +119,9 @@ const readableDownloadErrors = new Map([
     ["error.api.points.insufficient", "The user does not have enough points for this download."],
     ["error.api.points.unavailable", "Points service is temporarily unavailable."],
     ["error.api.rate_exceeded", "The same download was submitted too frequently."],
+    ["error.api.upstream.circuit_open", "The upstream processing node is in circuit cooldown after recent failures. Ask the user to retry in about 1 minute."],
+    ["error.api.upstream.timeout", "The upstream processing node timed out before it could fetch the media. Ask the user to retry in about 1 minute."],
+    ["error.api.upstream.unavailable", "No upstream processing node is currently available. Ask the user to retry later."],
     ["error.api.user.disabled", "This user account is disabled."],
 ]);
 

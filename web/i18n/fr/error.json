@@ -51,5 +51,8 @@
     "queue.refresh_required": "cela se produit généralement après une mise à jour du frontend avec un cache obsolète. rafraîchissez la page (Ctrl+F5) et réessayez.",
     "queue.generic_error": "le processus de téléchargement n'a pas pu démarrer. rafraîchissez la page et réessayez.",
     "queue.worker_didnt_start": "le processus de téléchargement n'a pas démarré à temps. rafraîchissez la page et réessayez.",
-    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later."
+    "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
+    "api.upstream.timeout": "Le noeud de traitement YouTube est occupe ou a mis trop de temps a repondre. Attendez environ 1 minute, puis reessayez.",
+    "api.upstream.circuit_open": "Le noeud de traitement YouTube vient d avoir une erreur temporaire et refroidit. Attendez environ 1 minute, puis reessayez.",
+    "api.upstream.unavailable": "Aucun noeud de traitement YouTube n est disponible pour le moment. Reessayez plus tard."
 }

@@ -44,5 +44,8 @@
     "queue.generic_error": "ไม่สามารถเริ่มตัวประมวลผลการดาวน์โหลดได้ โปรดรีเฟรชหน้าแล้วลองใหม่อีกครั้ง",
     "queue.worker_didnt_start": "ตัวประมวลผลการดาวน์โหลดไม่เริ่มทำงานภายในเวลาที่กำหนด โปรดรีเฟรชหน้าแล้วลองใหม่อีกครั้ง",
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
-    "api.youtube.link.unsupported": "ยังไม่รองรับหน้าช่อง YouTube โปรดคัดลอกลิงก์วิดีโอ YouTube รายการใดรายการหนึ่งหรือ playlist แล้วลองใหม่อีกครั้ง"
+    "api.youtube.link.unsupported": "ยังไม่รองรับหน้าช่อง YouTube โปรดคัดลอกลิงก์วิดีโอ YouTube รายการใดรายการหนึ่งหรือ playlist แล้วลองใหม่อีกครั้ง",
+    "api.upstream.timeout": "โหนดประมวลผล YouTube กำลังยุ่งหรือตอบสนองช้าเกินไป โปรดรอประมาณ 1 นาทีแล้วลองใหม่",
+    "api.upstream.circuit_open": "โหนดประมวลผล YouTube เพิ่งล้มเหลวชั่วคราวและกำลังพักการใช้งาน โปรดรอประมาณ 1 นาทีแล้วลองใหม่",
+    "api.upstream.unavailable": "ตอนนี้ไม่มีโหนดประมวลผล YouTube ที่ใช้ได้ โปรดลองใหม่ในภายหลัง"
 }

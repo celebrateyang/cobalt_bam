@@ -42,6 +42,9 @@ export const testers = {
         pattern.shortLink?.length <= 16 ||
         pattern.shareToken?.length <= 32,
 
+    "kugou": pattern =>
+        pattern.id?.length <= 32,
+
     "loom": pattern =>
         pattern.id?.length <= 32,
 

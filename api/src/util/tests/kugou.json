@@ -1,0 +1,11 @@
+[
+    {
+        "name": "mixsong",
+        "url": "https://www.kugou.com/mixsong/j3cfp99.html",
+        "params": {},
+        "expected": {
+            "status": "tunnel",
+            "code": 200
+        }
+    }
+]

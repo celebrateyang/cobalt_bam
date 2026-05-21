@@ -133,6 +133,17 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports short-video, video, and share links.'],
     },
     {
+        id: 'kugou',
+        name: 'Kugou Music',
+        category: 'audio',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        notes: ['Supports public Kugou Music mixsong links when downloadable audio is available.'],
+    },
+    {
         id: 'haokan',
         name: 'Haokan',
         category: 'video',

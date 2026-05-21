@@ -36,6 +36,7 @@ import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
 import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
+import kugou from "./services/kugou.js";
 import naver from "./services/naver.js";
 import toutiao from "./services/toutiao.js";
 import weibo from "./services/weibo.js";
@@ -464,6 +465,10 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "kuaishou":
                 r = await kuaishou(patternMatch);
+                break;
+
+            case "kugou":
+                r = await kugou(patternMatch);
                 break;
 
             case "snapchat":

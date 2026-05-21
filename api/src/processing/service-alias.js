@@ -5,6 +5,7 @@ const friendlyNames = {
     douyin: "Douyin",
     haokan: "Haokan",
     kuaishou: "Kuaishou",
+    kugou: "Kugou Music",
     naver: "Naver",
     toutiao: "Toutiao",
     weibo: "Weibo"

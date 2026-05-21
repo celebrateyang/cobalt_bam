@@ -95,6 +95,12 @@ export const services = {
         ],
         subdomains: ["v", "www"],
     },
+    kugou: {
+        patterns: [
+            "mixsong/:id.html",
+        ],
+        subdomains: ["m"],
+    },
     loom: {
         patterns: ["share/:id", "embed/:id"],
     },

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
-        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
+        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
@@ -71,7 +71,7 @@
     "hero": {
         "eyebrow": "Online-Video-Downloader",
         "title": "Videos online ohne Wasserzeichen herunterladen",
-        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
+        "subtitle": "Fuege einen Link von Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube und mehr ein und lade HD-Videos in wenigen Schritten herunter.",
         "trust": "Batch-Downloads, Sammlungen / Playlists, Nur-Audio und Stumm-Modus sind fuer unterstuetzte Dienste direkt integriert."
     },
     "tools": {

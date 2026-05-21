@@ -3,7 +3,7 @@
     "description": "Giải đáp về tải không logo, định dạng, điểm và khắc phục lỗi.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Trình tải video không logo",
-        "description": "FAQ FreeSaveVideo: tải Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
+        "description": "FAQ FreeSaveVideo: tải Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
         "keywords": "FAQ tải video, trình tải Douyin, trình tải Bilibili, trình tải Kuaishou, trình tải Xiaohongshu, trình tải TikTok, tải không logo, tải hàng loạt, tính điểm, Haokan downloader, tai video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download"
     },
     "toc": {
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo là gì?",
-            "a": "FreeSaveVideo là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook và nhiều nền tảng khác."
+            "a": "FreeSaveVideo là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook và nhiều nền tảng khác."
         },
         "how_to_use": {
             "q": "Cách tải video (không logo)?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Hỗ trợ nền tảng và loại link nào?",
-            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Kuaishou, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc."
+            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc."
         },
         "youtube_supported": {
             "q": "Có hỗ trợ YouTube không?",

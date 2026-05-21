@@ -333,6 +333,15 @@ export function extract(url, enabledServices = env.enabledServices) {
             };
         }
 
+        if (host === "douyin" && url.pathname.startsWith("/user/")) {
+            return {
+                error: "douyin.user.unsupported",
+                context: {
+                    service: friendlyServiceName(host),
+                }
+            };
+        }
+
         return {
             error: "link.unsupported",
             context: {

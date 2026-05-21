@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "支持哪些平台/链接类型？",
-            "a": "覆盖 100+ 站点，常见包括：抖音/TikTok、B站、快手、酷狗音乐、小红书、微博、CCTV、油管、Instagram、X(Twitter)、Facebook 等。\n不同平台支持的清晰度/音频/封面等可能不同；以解析结果为准。"
+            "a": "覆盖 100+ 站点，常见包括：抖音/TikTok、B站、快手、酷狗音乐、小红书、微博、好看、今日头条、12371、CCTV、油管、Instagram、X(Twitter)、Facebook 等。\n不同平台支持的清晰度/音频/封面等可能不同；以解析结果为准。"
         },
         "youtube_supported": {
             "q": "支持 YouTube 下载吗？",

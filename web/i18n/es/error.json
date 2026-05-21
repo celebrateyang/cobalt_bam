@@ -17,6 +17,7 @@
     "api.generic": "algo salió mal y no pude obtener nada para ti. intenta de nuevo en unos segundos, pero si el problema persiste, ¡háznoslo saber e intentaremos ayudar!",
     "api.unknown_response": "no se pudo analizar la respuesta del servidor. esto podría deberse a una incompatibilidad de versiones. ¿estás seguro de que estás en la última versión de FreeSaveVideo?",
     "api.service.unsupported": "este servicio aún no es compatible. ¿has pegado el enlace correcto?",
+    "api.douyin.user.unsupported": "Las paginas de perfil de Douyin aun no son compatibles. Abre el video concreto, copia el enlace de ese video y vuelve a intentarlo.",
     "api.service.disabled": "este servicio es compatible con FreeSaveVideo, pero está deshabilitado en esta instancia. ¡intenta un enlace de otro servicio!",
     "api.link.invalid": "tu enlace no es válido o este servicio aún no es compatible. ¿has pegado el enlace correcto?",
     "api.link.unsupported": "{{ service }} es compatible, pero no pude reconocer tu enlace. ¿has pegado el correcto?",

@@ -17,6 +17,7 @@
     "api.generic": "quelque chose s'est mal passé et je n'ai rien pu obtenir pour vous. réessayez dans quelques secondes, mais si le problème persiste, faites-le nous savoir et nous essaierons d'aider !",
     "api.unknown_response": "impossible d'analyser la réponse du serveur. cela pourrait être causé par une incompatibilité de version. êtes-vous sûr d'être sur la dernière version de FreeSaveVideo ?",
     "api.service.unsupported": "ce service n'est pas encore pris en charge. avez-vous collé le bon lien ?",
+    "api.douyin.user.unsupported": "Les pages de profil Douyin ne sont pas encore prises en charge. Ouvrez la video precise, copiez son lien, puis reessayez.",
     "api.service.disabled": "ce service est pris en charge par FreeSaveVideo, mais il est désactivé sur cette instance. essayez un lien d'un autre service !",
     "api.link.invalid": "votre lien n'est pas valide ou ce service n'est pas encore pris en charge. avez-vous collé le bon lien ?",
     "api.link.unsupported": "{{ service }} est pris en charge, mais je n'ai pas pu reconnaître votre lien. avez-vous collé le bon ?",

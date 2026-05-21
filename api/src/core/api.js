@@ -114,6 +114,7 @@ const readableDownloadErrors = new Map([
     ["error.api.link.missing", "No URL was submitted."],
     ["error.api.link.unsupported", "This URL is not supported yet."],
     ["error.api.douyin.user.unsupported", "Douyin profile pages are not supported. Ask the user to copy and submit the URL of a specific Douyin video."],
+    ["error.api.youtube.login", "YouTube could not be processed because the upstream node may need refreshed YouTube cookies or account tokens. Ask the user to try again later."],
     ["error.api.youtube.link.unsupported", "YouTube channel pages are not supported. Ask the user to submit a specific video URL or playlist URL."],
     ["error.api.member.limit.exceeded", "The membership download limit has been reached."],
     ["error.api.membership.limit.exceeded", "The membership download limit has been reached."],

@@ -105,6 +105,35 @@ const shouldWrapUpstreamTunnelLocally = (payload, value) => {
     return requestHost === "vimeo.com" || requestHost.endsWith(".vimeo.com");
 };
 
+const normalizeUpstreamErrorBody = (payload, body) => {
+    if (!body || typeof body !== "object" || body.status !== "error") {
+        return body;
+    }
+
+    const requestHost = getRequestHost(payload);
+    const errorCode = body.error?.code;
+    const errorService = String(body.error?.context?.service || body.service || "").toLowerCase();
+    const isYouTubeRequest = requestHost === "youtube.com" || requestHost.endsWith(".youtube.com");
+    const isYouTubeError = errorService === "youtube" || errorService === "youtube.com";
+
+    if (
+        isYouTubeRequest
+        && isYouTubeError
+        && errorCode === "error.api.fetch.fail"
+    ) {
+        return {
+            ...body,
+            error: {
+                ...body.error,
+                code: "error.api.youtube.login",
+                context: undefined,
+            },
+        };
+    }
+
+    return body;
+};
+
 const requestUpstreamCobalt = async (payload) => {
     if (isUpstreamServer) {
         return null;
@@ -214,7 +243,7 @@ const requestUpstreamCobalt = async (payload) => {
             return body;
         })();
 
-        return { status: upstream.status, body: normalizedBody };
+        return { status: upstream.status, body: normalizeUpstreamErrorBody(payload, normalizedBody) };
     } catch {
         return null;
     }

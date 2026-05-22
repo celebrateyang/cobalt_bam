@@ -6,7 +6,7 @@ import settings from "$lib/state/settings";
 import lazySettingGetter from "$lib/settings/lazy-get";
 
 import { get } from "svelte/store";
-import { t } from "$lib/i18n/translations";
+import { loadTranslations, t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
@@ -212,6 +212,12 @@ const ensureSignedIn = async () => {
         signUpFallbackRedirectUrl: currentUrl,
     });
     return false;
+};
+
+const translateApiError = async (code: string, context?: Record<string, unknown>) => {
+    const lang = get(page)?.params?.lang || "en";
+    await loadTranslations(lang, "error");
+    return get(t)(code, context);
 };
 
 const isHomePageRoute = () => get(page)?.route?.id === "/[lang]";
@@ -466,7 +472,7 @@ export const savingHandler = async ({
         downloadButtonState.set("error");
         if (!suppressErrors?.includes(response.error.code)) {
             showError(
-                get(t)(response.error.code, response?.error?.context)
+                await translateApiError(response.error.code, response?.error?.context)
             );
         }
         return response;

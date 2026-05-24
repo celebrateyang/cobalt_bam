@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "获取中",
-            "remux": "混流中"
+            "remux": "混流中",
+            "encode": "编码中"
         },
         "starting": {
             "fetch": "开始获取",
-            "remux": "开始混流"
+            "remux": "开始混流",
+            "encode": "开始编码"
         },
         "retrying": "重试中",
         "waiting": "等待中"

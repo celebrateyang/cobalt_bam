@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "fetching",
-            "remux": "remuxing"
+            "remux": "remuxing",
+            "encode": "encoding"
         },
         "starting": {
             "fetch": "starting fetch",
-            "remux": "starting remux"
+            "remux": "starting remux",
+            "encode": "starting encode"
         },
         "retrying": "retrying",
         "waiting": "waiting"

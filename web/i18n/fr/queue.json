@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "récupération",
-            "remux": "remuxage"
+            "remux": "remuxage",
+            "encode": "encodage"
         },
         "starting": {
             "fetch": "démarrage de la récupération",
-            "remux": "démarrage du remuxage"
+            "remux": "démarrage du remuxage",
+            "encode": "démarrage de l'encodage"
         },
         "retrying": "nouvelle tentative",
         "waiting": "en attente"

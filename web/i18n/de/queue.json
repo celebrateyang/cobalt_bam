@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "Abrufen",
-            "remux": "Remuxen"
+            "remux": "Remuxen",
+            "encode": "Kodieren"
         },
         "starting": {
             "fetch": "Abruf starten",
-            "remux": "Remux starten"
+            "remux": "Remux starten",
+            "encode": "Kodierung starten"
         },
         "retrying": "Wiederholen",
         "waiting": "Warten"

@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "đang tìm nạp",
-            "remux": "đang remux"
+            "remux": "đang remux",
+            "encode": "đang mã hóa"
         },
         "starting": {
             "fetch": "bắt đầu tìm nạp",
-            "remux": "bắt đầu remux"
+            "remux": "bắt đầu remux",
+            "encode": "bắt đầu mã hóa"
         },
         "retrying": "đang thử lại",
         "waiting": "đang chờ"

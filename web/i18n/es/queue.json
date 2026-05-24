@@ -3,11 +3,13 @@
     "state": {
         "running": {
             "fetch": "obteniendo",
-            "remux": "remezclando"
+            "remux": "remezclando",
+            "encode": "codificando"
         },
         "starting": {
             "fetch": "iniciando obtención",
-            "remux": "iniciando remezcla"
+            "remux": "iniciando remezcla",
+            "encode": "iniciando codificación"
         },
         "retrying": "reintentando",
         "waiting": "esperando"

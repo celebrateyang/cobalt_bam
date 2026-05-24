@@ -42,6 +42,7 @@
 
     const SUPPORTED_PLATFORMS = new Set(["tiktok", "instagram"]);
     const LATEST_PAGE_SIZE = 24;
+    const BLIND_BOX_PAGE_SIZE = 20;
     const DEFAULT_BATCH_MAX_ITEMS = 20;
     const FREE_VIDEO_LIMIT = 8;
     const VIEW_POINT_COST = 1;
@@ -167,7 +168,7 @@
         return ordered.length === list.length ? ordered : list;
     };
 
-    let activeTab: DiscoverTab = "resources";
+    let activeTab: DiscoverTab = "blind-box";
 
     let featuredVideos: SocialVideo[] = [];
     let latestVideos: SocialVideo[] = [];
@@ -219,6 +220,9 @@
     let blindBoxError = "";
     let blindBoxLoaded = false;
     let blindBoxDownloadingId: number | null = null;
+    let blindBoxPage = 1;
+    let blindBoxPages = 0;
+    let blindBoxTotal = 0;
 
     let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
     let batchLimitEnabled = true;
@@ -597,8 +601,11 @@
 
     $: if (isBrowser) {
         const requestedTab = $page.url.searchParams.get("tab");
-        if (requestedTab === "blind-box" && activeTab !== "blind-box") {
-            activeTab = "blind-box";
+        if (
+            (requestedTab === "blind-box" || requestedTab === "resources") &&
+            activeTab !== requestedTab
+        ) {
+            activeTab = requestedTab;
         }
     }
 
@@ -686,7 +693,7 @@
         return `还剩 ${Math.max(1, minutes)} 分钟`;
     }
 
-    async function loadBlindBoxLinks() {
+    async function loadBlindBoxLinks(nextPage = blindBoxPage) {
         blindBoxLoading = true;
         blindBoxError = "";
         blindBoxLoaded = true;
@@ -695,22 +702,41 @@
             const signedIn = await checkSignedIn();
             if (!signedIn) {
                 blindBoxLinks = [];
+                blindBoxPage = 1;
+                blindBoxPages = 0;
+                blindBoxTotal = 0;
                 blindBoxError = "请先登录后再开盲盒。";
                 return;
             }
 
-            const response = await curiousCat.blindBoxLinks(24);
+            const response = await curiousCat.blindBoxLinks({
+                page: nextPage,
+                limit: BLIND_BOX_PAGE_SIZE,
+            });
             if (response.status !== "success" || !response.data) {
                 throw new Error(response.error?.message || "盲盒链接加载失败");
             }
 
             blindBoxLinks = response.data.links || [];
+            const pagination = response.data.pagination;
+            blindBoxPage = pagination?.page || nextPage;
+            blindBoxPages = pagination?.pages || 0;
+            blindBoxTotal = pagination?.total || blindBoxLinks.length;
         } catch (e) {
             blindBoxLinks = [];
+            blindBoxPages = 0;
+            blindBoxTotal = 0;
             blindBoxError = e instanceof Error ? e.message : "盲盒链接加载失败";
         } finally {
             blindBoxLoading = false;
         }
+    }
+
+    function goBlindBoxPage(nextPage: number) {
+        if (blindBoxLoading) return;
+        if (nextPage < 1) return;
+        if (blindBoxPages && nextPage > blindBoxPages) return;
+        void loadBlindBoxLinks(nextPage);
     }
 
     function confirmBlindBox(link: BlindBoxLink) {
@@ -720,7 +746,7 @@
                 type: "small",
                 title: "确认打开盲盒",
                 bodyText:
-                    `将消耗积分下载这个盲盒链接。\n\n${link.url}\n\n链接内容未知，下载失败时按当前积分规则处理。是否继续？`,
+                    `将消耗积分下载这个盲盒链接。\n\n${link.url}\n\n链接内容未知，下载将扣除相应积分。是否继续？`,
                 buttons: [
                     {
                         text: "取消",
@@ -1279,27 +1305,19 @@
     <aside class="discover-menu">
         <button
             class="menu-button"
-            class:active={activeTab === "resources"}
-            type="button"
-            on:click={() => (activeTab = "resources")}
-        >
-            {$t("discover.menu.resources")}
-        </button>
-        <button
-            class="menu-button"
-            class:active={activeTab === "beauty"}
-            type="button"
-            on:click={() => (activeTab = "beauty")}
-        >
-            {$t("discover.menu.beauty")}
-        </button>
-        <button
-            class="menu-button"
             class:active={activeTab === "blind-box"}
             type="button"
             on:click={() => (activeTab = "blind-box")}
         >
             开盲盒
+        </button>
+        <button
+            class="menu-button"
+            class:active={activeTab === "resources"}
+            type="button"
+            on:click={() => (activeTab = "resources")}
+        >
+            {$t("discover.menu.resources")}
         </button>
     </aside>
 
@@ -1424,13 +1442,20 @@
                     <div class="header-content">
                         <h1 class="title">开盲盒</h1>
                         <p class="subtitle">
-                            这些是其他用户成功下载过的链接，只显示链接，不显示是谁下载的。
+                            这里藏着每天刷新的惊喜链接，点开前谁也不知道会遇见什么。来碰碰运气，挖一挖今天的宝藏吧。
                         </p>
                     </div>
                 </header>
 
                 {#if blindBoxError}
                     <div class="error-banner">{blindBoxError}</div>
+                {/if}
+
+                {#if blindBoxTotal > 0}
+                    <div class="blind-box-pager blind-box-pager--top">
+                        <span>{blindBoxTotal} 个盲盒链接</span>
+                        <span>{blindBoxPage} / {blindBoxPages || 1}</span>
+                    </div>
                 {/if}
 
                 {#if blindBoxLoading}
@@ -1464,10 +1489,29 @@
                                 >
                                     {blindBoxDownloadingId === link.id
                                         ? "提交中"
-                                        : "消耗积分打开"}
+                                        : "下了看看"}
                                 </button>
                             </article>
                         {/each}
+                    </div>
+                    <div class="blind-box-pager">
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            disabled={blindBoxLoading || blindBoxPage <= 1}
+                            on:click={() => goBlindBoxPage(blindBoxPage - 1)}
+                        >
+                            上一页
+                        </button>
+                        <span>{blindBoxPage} / {blindBoxPages || 1}</span>
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            disabled={blindBoxLoading || (blindBoxPages ? blindBoxPage >= blindBoxPages : true)}
+                            on:click={() => goBlindBoxPage(blindBoxPage + 1)}
+                        >
+                            下一页
+                        </button>
                     </div>
                 {/if}
             </div>
@@ -1997,6 +2041,23 @@
         flex-direction: column;
         gap: 12px;
         width: 100%;
+    }
+
+    .blind-box-pager {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--gray);
+        font-size: 0.9rem;
+        margin-top: 16px;
+    }
+
+    .blind-box-pager--top {
+        justify-content: space-between;
+        margin-top: 0;
+        margin-bottom: 12px;
     }
 
     .blind-box-item {

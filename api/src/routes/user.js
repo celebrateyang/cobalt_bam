@@ -1178,14 +1178,16 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const links = await listBlindBoxLinks({
+                const result = await listBlindBoxLinks({
+                    page: req.query?.page,
                     limit: req.query?.limit,
                 });
 
                 return res.json({
                     status: "success",
                     data: {
-                        links,
+                        links: result.links,
+                        pagination: result.pagination,
                         lifetimeHours: 48,
                     },
                 });

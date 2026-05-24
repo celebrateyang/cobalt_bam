@@ -188,7 +188,13 @@
         if (!selected) return;
 
         if (selected.action_type === "modal") {
-            detailOpen = true;
+            if (selected.image_url || selected.copy_text) {
+                detailOpen = true;
+                return;
+            }
+
+            close();
+            await goto(resolveTarget(selected.target_url));
             return;
         }
 
@@ -210,7 +216,6 @@
             }
         } catch (error) {
             console.debug("Curious cat activities failed to load", error);
-        } finally {
         }
     };
 

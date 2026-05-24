@@ -32,6 +32,13 @@ export type BlindBoxLink = {
     remaining_ms: number;
 };
 
+export type BlindBoxPagination = {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+};
+
 type ApiResponse<T> = {
     status: "success" | "error";
     data?: T;
@@ -136,9 +143,13 @@ export const curiousCat = {
         authedUserRequest<{ activities: CuriousCatActivity[] }>(
             "/user/curious-cat/activities",
         ),
-    blindBoxLinks: async (limit = 20) =>
-        authedUserRequest<{ links: BlindBoxLink[]; lifetimeHours: number }>(
-            `/user/blind-box/links?limit=${encodeURIComponent(String(limit))}`,
+    blindBoxLinks: async ({ page = 1, limit = 20 } = {}) =>
+        authedUserRequest<{
+            links: BlindBoxLink[];
+            pagination?: BlindBoxPagination;
+            lifetimeHours: number;
+        }>(
+            `/user/blind-box/links?page=${encodeURIComponent(String(page))}&limit=${encodeURIComponent(String(limit))}`,
         ),
 };
 

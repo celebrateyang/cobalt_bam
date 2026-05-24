@@ -17,6 +17,11 @@ const clampLimit = (value, fallback = 20, max = 100) => {
     return Math.min(Math.max(safe, 1), max);
 };
 
+const normalizePage = (value) => {
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+};
+
 const normalizeActivityPayload = (payload = {}) => {
     const actionType = String(payload.action_type || payload.actionType || "")
         .trim()
@@ -243,10 +248,26 @@ export const deleteCuriousCatActivity = async (id) => {
     return result.rows[0] || null;
 };
 
-export const listBlindBoxLinks = async ({ limit = 20, lifetimeHours = 48 } = {}) => {
-    if (!isPostgresEnabled()) return [];
+export const listBlindBoxLinks = async ({
+    page = 1,
+    limit = 20,
+    lifetimeHours = 48,
+} = {}) => {
+    if (!isPostgresEnabled()) {
+        return {
+            links: [],
+            pagination: {
+                page: 1,
+                limit: clampLimit(limit, 20, 50),
+                total: 0,
+                pages: 0,
+            },
+        };
+    }
 
     const safeLimit = clampLimit(limit, 20, 50);
+    const safePage = normalizePage(page);
+    const offset = (safePage - 1) * safeLimit;
     const safeLifetimeHours =
         Number.isFinite(Number(lifetimeHours)) && Number(lifetimeHours) > 0
             ? Number(lifetimeHours)
@@ -257,24 +278,34 @@ export const listBlindBoxLinks = async ({ limit = 20, lifetimeHours = 48 } = {})
 
     const result = await query(
         `
-        SELECT DISTINCT ON (source_url)
-            id,
-            source_url,
-            source_host,
-            service,
-            COALESCE(completed_at, submitted_at) AS completed_at
-        FROM download_attempts
-        WHERE status = $1
-          AND source_url IS NOT NULL
-          AND source_url <> ''
-          AND COALESCE(completed_at, submitted_at) >= $2
-        ORDER BY source_url, COALESCE(completed_at, submitted_at) DESC, id DESC
-        LIMIT $3;
+        WITH latest_unique AS (
+            SELECT DISTINCT ON (source_url)
+                id,
+                source_url,
+                source_host,
+                service,
+                COALESCE(completed_at, submitted_at) AS completed_at
+            FROM download_attempts
+            WHERE status = $1
+              AND source_url IS NOT NULL
+              AND source_url <> ''
+              AND COALESCE(completed_at, submitted_at) >= $2
+            ORDER BY source_url, COALESCE(completed_at, submitted_at) DESC, id DESC
+        ),
+        counted AS (
+            SELECT COUNT(*) OVER() AS total, *
+            FROM latest_unique
+        )
+        SELECT *
+        FROM counted
+        ORDER BY completed_at ASC, id ASC
+        LIMIT $3 OFFSET $4;
         `,
-        [DOWNLOAD_ATTEMPT_STATUS.success, cutoff, safeLimit],
+        [DOWNLOAD_ATTEMPT_STATUS.success, cutoff, safeLimit, offset],
     );
 
-    return result.rows
+    const total = Number(result.rows[0]?.total || 0);
+    const links = result.rows
         .map((row) => {
             const completedAt = Number(row.completed_at);
             const expiresAt = completedAt + lifetimeMs;
@@ -288,5 +319,15 @@ export const listBlindBoxLinks = async ({ limit = 20, lifetimeHours = 48 } = {})
             };
         })
         .filter((row) => row.remaining_ms > 0)
-        .sort((a, b) => b.remaining_ms - a.remaining_ms);
+        .sort((a, b) => a.remaining_ms - b.remaining_ms);
+
+    return {
+        links,
+        pagination: {
+            page: safePage,
+            limit: safeLimit,
+            total,
+            pages: safeLimit ? Math.ceil(total / safeLimit) : 0,
+        },
+    };
 };

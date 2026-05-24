@@ -739,6 +739,18 @@
         void loadBlindBoxLinks(nextPage);
     }
 
+    function normalizeBlindBoxUrl(url: string) {
+        let normalized = String(url || "").trim();
+        while (
+            normalized.length >= 2 &&
+            ((normalized.startsWith('"') && normalized.endsWith('"')) ||
+                (normalized.startsWith("'") && normalized.endsWith("'")))
+        ) {
+            normalized = normalized.slice(1, -1).trim();
+        }
+        return normalized;
+    }
+
     function confirmBlindBox(link: BlindBoxLink) {
         return new Promise<boolean>((resolve) => {
             createDialog({
@@ -746,7 +758,7 @@
                 type: "small",
                 title: "确认打开盲盒",
                 bodyText:
-                    `将消耗积分下载这个盲盒链接。\n\n${link.url}\n\n链接内容未知，下载将扣除相应积分。是否继续？`,
+                    `将消耗积分下载这个盲盒链接。\n\n${normalizeBlindBoxUrl(link.url)}\n\n链接内容未知，下载将扣除相应积分。是否继续？`,
                 buttons: [
                     {
                         text: "取消",
@@ -764,7 +776,8 @@
     }
 
     async function handleBlindBoxDownload(link: BlindBoxLink) {
-        if (!link?.url || blindBoxDownloadingId) return;
+        const url = normalizeBlindBoxUrl(link?.url || "");
+        if (!url || blindBoxDownloadingId) return;
 
         const signedIn = await checkSignedIn();
         if (!signedIn) {
@@ -780,7 +793,7 @@
 
         blindBoxDownloadingId = link.id;
         try {
-            await savingHandler({ url: link.url, skipPoints: true });
+            await savingHandler({ url, skipPoints: true });
         } finally {
             blindBoxDownloadingId = null;
         }

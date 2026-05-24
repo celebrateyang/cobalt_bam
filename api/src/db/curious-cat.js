@@ -22,6 +22,18 @@ const normalizePage = (value) => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 };
 
+const normalizeBlindBoxUrl = (value) => {
+    let url = String(value || "").trim();
+    while (
+        url.length >= 2 &&
+        ((url.startsWith('"') && url.endsWith('"')) ||
+            (url.startsWith("'") && url.endsWith("'")))
+    ) {
+        url = url.slice(1, -1).trim();
+    }
+    return url;
+};
+
 const normalizeActivityPayload = (payload = {}) => {
     const actionType = String(payload.action_type || payload.actionType || "")
         .trim()
@@ -311,7 +323,7 @@ export const listBlindBoxLinks = async ({
             const expiresAt = completedAt + lifetimeMs;
             return {
                 id: row.id,
-                url: row.source_url,
+                url: normalizeBlindBoxUrl(row.source_url),
                 host: row.source_host,
                 service: row.service,
                 expires_at: expiresAt,

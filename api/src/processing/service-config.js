@@ -286,6 +286,11 @@ export const services = {
         ],
         altDomains: ["xhslink.com"],
     },
+    zhshjn: {
+        patterns: [
+            "vodplay/:id-:sid-:nid.html",
+        ],
+    },
     youtube: {
         patterns: [
             "watch?v=:id",

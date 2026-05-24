@@ -127,6 +127,11 @@ export const testers = {
         pattern.id?.length <= 24 && pattern.token?.length <= 64 ||
         pattern.shareId?.length <= 24 && pattern.shareType?.length === 1,
 
+    "zhshjn": pattern =>
+        pattern.id?.length <= 16 &&
+        pattern.sid?.length <= 4 &&
+        pattern.nid?.length <= 4,
+
     "youtube": pattern =>
         pattern.id?.length <= 11,
 }

@@ -8,7 +8,8 @@ const friendlyNames = {
     kugou: "Kugou Music",
     naver: "Naver",
     toutiao: "Toutiao",
-    weibo: "Weibo"
+    weibo: "Weibo",
+    zhshjn: "zhshjn"
 }
 
 export const friendlyServiceName = (service) => {

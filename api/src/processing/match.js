@@ -40,6 +40,7 @@ import kugou from "./services/kugou.js";
 import naver from "./services/naver.js";
 import toutiao from "./services/toutiao.js";
 import weibo from "./services/weibo.js";
+import zhshjn from "./services/zhshjn.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -543,6 +544,13 @@ export default async function({ host, patternMatch, params, authType }) {
                     h265: params.allowH265,
                     isAudioOnly,
                     dispatcher,
+                });
+                break;
+
+            case "zhshjn":
+                r = await zhshjn({
+                    ...patternMatch,
+                    url,
                 });
                 break;
 

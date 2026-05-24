@@ -1,0 +1,11 @@
+[
+    {
+        "name": "vodplay m3u8 redirect",
+        "url": "https://www.zhshjn.com/vodplay/107811-1-1.html",
+        "params": {},
+        "expected": {
+            "status": "redirect",
+            "code": 200
+        }
+    }
+]

@@ -18,7 +18,7 @@ import Store from "../store/store.js";
 import { randomizeCiphers } from "../misc/randomize-ciphers.js";
 import { verifyTurnstileToken } from "../security/turnstile.js";
 import { friendlyServiceName } from "../processing/service-alias.js";
-import { verifyStream } from "../stream/manage.js";
+import { createStream, verifyStream } from "../stream/manage.js";
 import { createResponse, normalizeRequest, getIP } from "../processing/request.js";
 import { getHeaders } from "../stream/shared.js";
 import { expandURL } from "../processing/expand.js";
@@ -306,24 +306,58 @@ const normalizeUpstreamTunnelUrl = (value, upstreamOrigin) => {
     ).toString();
 };
 
+const wrapUpstreamTunnelUrl = (value, upstreamOrigin, { filename, service } = {}) => {
+    const normalizedUrl = normalizeUpstreamTunnelUrl(value, upstreamOrigin);
+    if (typeof normalizedUrl !== "string") return normalizedUrl;
+
+    let parsed;
+    try {
+        parsed = new URL(normalizedUrl);
+    } catch {
+        return normalizedUrl;
+    }
+
+    if (parsed.pathname !== "/tunnel") {
+        return normalizedUrl;
+    }
+
+    return createStream({
+        type: "proxy",
+        url: normalizedUrl,
+        service: service || "generic-upstream",
+        filename: typeof filename === "string" && filename.trim()
+            ? filename
+            : "download.bin",
+    });
+};
+
 const normalizeUpstreamBody = (body, upstreamOrigin) => {
     if (!body || typeof body !== "object") return body;
 
     if (body.status === "tunnel" || body.status === "redirect") {
         return {
             ...body,
-            url: normalizeUpstreamTunnelUrl(body.url, upstreamOrigin),
+            url: wrapUpstreamTunnelUrl(body.url, upstreamOrigin, {
+                filename: body.filename,
+                service: body.service,
+            }),
         };
     }
 
     if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
         return {
             ...body,
-            tunnel: body.tunnel.map((item) => normalizeUpstreamTunnelUrl(item, upstreamOrigin)),
+            tunnel: body.tunnel.map((item) => wrapUpstreamTunnelUrl(item, upstreamOrigin, {
+                filename: body.output?.filename || body.filename,
+                service: body.service,
+            })),
             fallback: body.fallback?.url
                 ? {
                     ...body.fallback,
-                    url: normalizeUpstreamTunnelUrl(body.fallback.url, upstreamOrigin),
+                    url: wrapUpstreamTunnelUrl(body.fallback.url, upstreamOrigin, {
+                        filename: body.fallback.filename || body.output?.filename || body.filename,
+                        service: body.service,
+                    }),
                 }
                 : body.fallback,
         };
@@ -333,14 +367,20 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
         return {
             ...body,
             audio: typeof body.audio === "string"
-                ? normalizeUpstreamTunnelUrl(body.audio, upstreamOrigin)
+                ? wrapUpstreamTunnelUrl(body.audio, upstreamOrigin, {
+                    filename: body.filename,
+                    service: body.service,
+                })
                 : body.audio,
             picker: Array.isArray(body.picker)
                 ? body.picker.map((item) => {
                     if (!item || typeof item !== "object") return item;
                     return {
                         ...item,
-                        url: normalizeUpstreamTunnelUrl(item.url, upstreamOrigin),
+                        url: wrapUpstreamTunnelUrl(item.url, upstreamOrigin, {
+                            filename: item.filename || body.filename,
+                            service: item.service || body.service,
+                        }),
                     };
                 })
                 : body.picker,

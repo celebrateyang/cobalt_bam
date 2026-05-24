@@ -882,11 +882,14 @@ const expandBilibili = async (inputUrl) => {
         const data = view?.code === 0 ? view?.data : null;
 
         if (data) {
-            const season = bilibiliUgcSeasonFromView(data);
-            if (season) return season;
-
+            // On Bilibili video pages, the visible right-side list can be the
+            // current BV's multi-page list even when the BV belongs to a small
+            // outer UGC season. Prefer what the pasted video URL can download.
             const multi = bilibiliMultiPageFromView(data);
             if (multi) return multi;
+
+            const season = bilibiliUgcSeasonFromView(data);
+            if (season) return season;
 
             const canonicalBvid = data?.bvid || id;
             return {

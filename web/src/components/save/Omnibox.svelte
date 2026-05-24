@@ -365,25 +365,54 @@
         }
     };
 
-    const showDouyinGuideDialog = () => {
+    const isDouyinUserUrl = (url: string) => {
+        if (!isDouyinUrl(url)) return false;
+
+        try {
+            const parsed = new URL(url);
+            return (
+                parsed.pathname.startsWith("/user/") ||
+                parsed.pathname.startsWith("/share/user/")
+            );
+        } catch {
+            return false;
+        }
+    };
+
+    const getDouyinGuideReason = (url: string) => {
+        if (isDouyinUserUrl(url)) return "user";
+        if (isDouyinSearchOrJingxuanUrl(url)) return "browse";
+        return null;
+    };
+
+    const showDouyinGuideDialog = (reason: "user" | "browse") => {
         const isZh = getCurrentLang() === "zh";
         const guidePath = getDouyinGuidePath();
         const guideUrl = getDouyinGuideUrl();
+        const title = isZh
+            ? "\u8fd9\u4e0d\u662f\u53ef\u4e0b\u8f7d\u7684\u6296\u97f3\u89c6\u9891\u94fe\u63a5"
+            : "This Douyin link is not a direct video link";
+        const guideLinkText = isZh
+            ? "\u5b66\u4e60\u5982\u4f55\u83b7\u53d6\u6296\u97f3\u89c6\u9891\u5730\u5740"
+            : "Learn how to get a Douyin video link";
+        const bodyHtml = isZh
+            ? reason === "user"
+                ? `<div class="guide-dialog-copy"><p>\u4f60\u7c98\u8d34\u7684\u662f\u6296\u97f3\u7528\u6237\u4e3b\u9875\u5730\u5740\uff0c\u4e0d\u662f\u5177\u4f53\u89c6\u9891\u7684\u5206\u4eab\u94fe\u63a5\u3002</p><p>\u8bf7\u5148\u6253\u5f00\u60f3\u4e0b\u8f7d\u7684\u90a3\u4e2a\u89c6\u9891\uff0c\u518d\u590d\u5236\u8be5\u89c6\u9891\u7684\u5206\u4eab\u94fe\u63a5\u3002</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">\u6559\u7a0b\u5730\u5740</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideLinkText}</a></div></div>`
+                : `<div class="guide-dialog-copy"><p>\u4f60\u7c98\u8d34\u7684\u662f\u6296\u97f3 <code>search</code> \u6216 <code>jingxuan</code> \u9875\u9762\u5730\u5740\uff0c\u4e0d\u662f\u5177\u4f53\u89c6\u9891\u7684\u5206\u4eab\u94fe\u63a5\u3002</p><p>\u8bf7\u5148\u6253\u5f00\u5177\u4f53\u89c6\u9891\uff0c\u518d\u70b9\u201c\u5206\u4eab\u201d\u590d\u5236\u94fe\u63a5\u3002</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">\u6559\u7a0b\u5730\u5740</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideLinkText}</a></div></div>`
+            : reason === "user"
+              ? `<div class="guide-dialog-copy"><p>You pasted a Douyin profile page URL instead of a specific video share link.</p><p>Open the video you want to download first, then copy that video's share link.</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">Guide</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideLinkText}</a></div></div>`
+              : `<div class="guide-dialog-copy"><p>You pasted a Douyin <code>search</code> or <code>jingxuan</code> page URL instead of a specific video share link.</p><p>Open the actual video first, then use Douyin's share action to copy the link.</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">Guide</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">${guideLinkText}</a></div></div>`;
 
         createDialog({
             id: "douyin-search-guide",
             type: "small",
             icon: "warn-red",
             leftAligned: true,
-            title: isZh
-                ? "\u8fd9\u4e0d\u662f\u53ef\u4e0b\u8f7d\u7684\u6296\u97f3\u89c6\u9891\u94fe\u63a5"
-                : "This Douyin link is not a direct video link",
-            bodyHtml: isZh
-                ? `<div class="guide-dialog-copy"><p>\u4f60\u7c98\u8d34\u7684\u662f\u6296\u97f3 <code>search</code> \u6216 <code>jingxuan</code> \u9875\u9762\u5730\u5740\uff0c\u4e0d\u662f\u5177\u4f53\u89c6\u9891\u7684\u5206\u4eab\u94fe\u63a5\u3002</p><p>\u8bf7\u5148\u6253\u5f00\u5177\u4f53\u89c6\u9891\uff0c\u518d\u70b9\u201c\u5206\u4eab\u201d\u590d\u5236\u94fe\u63a5\u3002</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">\u6559\u7a0b\u5730\u5740</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">\u67e5\u770b\u6296\u97f3\u53d6\u94fe\u6559\u7a0b</a></div></div>`
-                : `<div class="guide-dialog-copy"><p>You pasted a Douyin <code>search</code> or <code>jingxuan</code> page URL instead of a specific video share link.</p><p>Open the actual video first, then use Douyin's share action to copy the link.</p><div class="guide-dialog-link-card"><span class="guide-dialog-link-label">Guide</span><a href="${guideUrl}" target="_blank" rel="noopener noreferrer">Open the Douyin link-copy tutorial</a></div></div>`,
+            title,
+            bodyHtml,
             buttons: [
                 {
-                    text: isZh ? "\u53bb\u770b\u6559\u7a0b" : "Open guide",
+                    text: guideLinkText,
                     main: true,
                     action: () => goto(guidePath),
                 },
@@ -507,9 +536,9 @@
         downloadButtonState.set("think");
 
         try {
-            const blockedDouyinGuideUrl = detectedUrls.find(isDouyinSearchOrJingxuanUrl);
+            const blockedDouyinGuideUrl = detectedUrls.find((url) => getDouyinGuideReason(url));
             if (blockedDouyinGuideUrl) {
-                showDouyinGuideDialog();
+                showDouyinGuideDialog(getDouyinGuideReason(blockedDouyinGuideUrl) || "browse");
                 return;
             }
 

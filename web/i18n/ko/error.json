@@ -55,5 +55,6 @@
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
     "api.upstream.timeout": "현재 YouTube 분석 노드가 바빠서 응답이 시간을 초과했습니다. 약 1분 후 다시 시도해 주세요.",
     "api.upstream.circuit_open": "YouTube 분석 노드에서 일시적인 실패가 발생해 잠시 쿨다운 중입니다. 약 1분 후 다시 시도해 주세요.",
-    "api.upstream.unavailable": "현재 사용할 수 있는 YouTube 분석 노드가 없습니다. 잠시 후 다시 시도해 주세요."
+    "api.upstream.unavailable": "현재 사용할 수 있는 YouTube 분석 노드가 없습니다. 잠시 후 다시 시도해 주세요.",
+    "api.bilibili.space.unsupported": "Bilibili 스페이스의 컬렉션 목록 페이지는 아직 직접 지원하지 않습니다. 컬렉션 안의 개별 동영상을 열고 그 동영상 링크를 복사한 다음 다시 시도해 주세요."
 }

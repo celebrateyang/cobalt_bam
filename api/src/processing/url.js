@@ -300,6 +300,18 @@ export function extract(url, enabledServices = env.enabledServices) {
     const host = getHostIfValid(url);
 
     if (!host) {
+        if (
+            url.hostname === "space.bilibili.com" &&
+            /^\/\d+\/lists\/?$/.test(url.pathname)
+        ) {
+            return {
+                error: "bilibili.space.unsupported",
+                context: {
+                    service: friendlyServiceName("bilibili"),
+                }
+            };
+        }
+
         return { error: "link.invalid" };
     }
 
@@ -336,6 +348,19 @@ export function extract(url, enabledServices = env.enabledServices) {
         if (host === "douyin" && url.pathname.startsWith("/user/")) {
             return {
                 error: "douyin.user.unsupported",
+                context: {
+                    service: friendlyServiceName(host),
+                }
+            };
+        }
+
+        if (
+            host === "bilibili" &&
+            url.hostname === "space.bilibili.com" &&
+            /^\/\d+\/lists\/?$/.test(url.pathname)
+        ) {
+            return {
+                error: "bilibili.space.unsupported",
                 context: {
                     service: friendlyServiceName(host),
                 }

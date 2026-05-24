@@ -55,5 +55,6 @@
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
     "api.upstream.timeout": "Le noeud de traitement YouTube est occupe ou a mis trop de temps a repondre. Attendez environ 1 minute, puis reessayez.",
     "api.upstream.circuit_open": "Le noeud de traitement YouTube vient d avoir une erreur temporaire et refroidit. Attendez environ 1 minute, puis reessayez.",
-    "api.upstream.unavailable": "Aucun noeud de traitement YouTube n est disponible pour le moment. Reessayez plus tard."
+    "api.upstream.unavailable": "Aucun noeud de traitement YouTube n est disponible pour le moment. Reessayez plus tard.",
+    "api.bilibili.space.unsupported": "Les pages de collections d un espace Bilibili ne sont pas encore prises en charge directement. Ouvrez une video precise dans la collection, copiez son lien, puis reessayez."
 }

@@ -55,5 +55,6 @@
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
     "api.upstream.timeout": "Nut xu ly YouTube dang ban hoac phan hoi qua lau. Vui long doi khoang 1 phut roi thu lai.",
     "api.upstream.circuit_open": "Nut xu ly YouTube vua gap loi tam thoi va dang trong thoi gian ha nhiet. Vui long doi khoang 1 phut roi thu lai.",
-    "api.upstream.unavailable": "Hien khong co nut xu ly YouTube nao kha dung. Vui long thu lai sau."
+    "api.upstream.unavailable": "Hien khong co nut xu ly YouTube nao kha dung. Vui long thu lai sau.",
+    "api.bilibili.space.unsupported": "Chua ho tro truc tiep trang danh sach bo suu tap trong Bilibili space. Hay mo mot video cu the trong bo suu tap, sao chep lien ket video do, roi thu lai."
 }

@@ -1,3 +1,4 @@
 {
-    "api.douyin.user.unsupported": "Stranicy profilya Douyin poka ne podderzhivayutsya. Otkroyte konkretnoe video, skopiruyte ssylku na nego i poprobuyte snova."
+    "api.douyin.user.unsupported": "Stranicy profilya Douyin poka ne podderzhivayutsya. Otkroyte konkretnoe video, skopiruyte ssylku na nego i poprobuyte snova.",
+    "api.bilibili.space.unsupported": "Stranicy spiskov kollekcij Bilibili space poka ne podderzhivayutsya napryamuyu. Otkroyte konkretnoe video v kollekcii, skopiruyte ego ssylku i poprobuyte snova."
 }

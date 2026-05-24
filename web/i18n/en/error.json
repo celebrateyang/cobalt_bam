@@ -68,5 +68,6 @@
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
     "api.upstream.timeout": "The YouTube processing node is busy right now. Please wait about 1 minute and try again.",
     "api.upstream.circuit_open": "The YouTube processing node is cooling down after a temporary failure. Please wait about 1 minute and try again.",
-    "api.upstream.unavailable": "No YouTube processing node is available right now. Please try again later."
+    "api.upstream.unavailable": "No YouTube processing node is available right now. Please try again later.",
+    "api.bilibili.space.unsupported": "Bilibili space collection pages are not supported yet. Open one video inside the collection, copy that video link, and try again."
 }

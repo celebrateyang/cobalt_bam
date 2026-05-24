@@ -17,6 +17,7 @@ import IconFolder from "@tabler/icons-svelte/IconFolder.svelte";
 import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
 import IconServer2 from "@tabler/icons-svelte/IconServer2.svelte";
 import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
+import IconCat from "@tabler/icons-svelte/IconCat.svelte";
 
     $: lang = $page.params.lang;
     $: pathname = $page.url.pathname;
@@ -104,6 +105,13 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
                         iconColor="gray"
                     >
                         <IconSpeakerphone />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/curious-cat"
+                        tabTitle="好奇猫活动"
+                        iconColor="green"
+                    >
+                        <IconCat />
                     </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/feedback"

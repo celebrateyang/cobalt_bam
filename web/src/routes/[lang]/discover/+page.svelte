@@ -5,7 +5,11 @@
 
     import { t } from "$lib/i18n/translations";
     import { currentApiURL } from "$lib/api/api-url";
-    import { showPointsInsufficientDialog as openPointsInsufficientDialog } from "$lib/points/ui";
+    import { curiousCat, type BlindBoxLink } from "$lib/api/curious-cat";
+    import {
+        accountPath,
+        showPointsInsufficientDialog as openPointsInsufficientDialog,
+    } from "$lib/points/ui";
     import {
         videos,
         resources,
@@ -26,7 +30,7 @@
     } from "$lib/state/clerk";
     import type { DialogBatchItem } from "$lib/types/dialog";
 
-    type DiscoverTab = "resources" | "beauty";
+    type DiscoverTab = "resources" | "beauty" | "blind-box";
     type ResourceDownloadMode = "audio" | "video";
 
     type ResourceListItem = {
@@ -210,6 +214,11 @@
     let resourcePathLabel = "";
 
     let beautyLoaded = false;
+    let blindBoxLinks: BlindBoxLink[] = [];
+    let blindBoxLoading = false;
+    let blindBoxError = "";
+    let blindBoxLoaded = false;
+    let blindBoxDownloadingId: number | null = null;
 
     let batchMaxItems: number = DEFAULT_BATCH_MAX_ITEMS;
     let batchLimitEnabled = true;
@@ -586,9 +595,20 @@
 
     const isBrowser = typeof window !== "undefined";
 
+    $: if (isBrowser) {
+        const requestedTab = $page.url.searchParams.get("tab");
+        if (requestedTab === "blind-box" && activeTab !== "blind-box") {
+            activeTab = "blind-box";
+        }
+    }
+
     $: if (isBrowser && activeTab === "beauty" && !beautyLoaded) {
         beautyLoaded = true;
         void loadAll();
+    }
+
+    $: if (isBrowser && activeTab === "blind-box" && !blindBoxLoaded) {
+        void loadBlindBoxLinks();
     }
 
     $: if (isBrowser && activeTab === "resources" && locale && locale !== resourceLoadedLocale) {
@@ -650,6 +670,93 @@
             resourceError = e instanceof Error ? e.message : $t("discover.status.error");
         } finally {
             resourceLoading = false;
+        }
+    }
+
+    function formatBlindBoxRemaining(ms: number) {
+        if (!Number.isFinite(ms) || ms <= 0) return "即将过期";
+        const hours = Math.floor(ms / (60 * 60 * 1000));
+        const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+        if (hours >= 24) {
+            const days = Math.floor(hours / 24);
+            const restHours = hours % 24;
+            return restHours > 0 ? `还剩 ${days} 天 ${restHours} 小时` : `还剩 ${days} 天`;
+        }
+        if (hours > 0) return `还剩 ${hours} 小时 ${minutes} 分钟`;
+        return `还剩 ${Math.max(1, minutes)} 分钟`;
+    }
+
+    async function loadBlindBoxLinks() {
+        blindBoxLoading = true;
+        blindBoxError = "";
+        blindBoxLoaded = true;
+
+        try {
+            const signedIn = await checkSignedIn();
+            if (!signedIn) {
+                blindBoxLinks = [];
+                blindBoxError = "请先登录后再开盲盒。";
+                return;
+            }
+
+            const response = await curiousCat.blindBoxLinks(24);
+            if (response.status !== "success" || !response.data) {
+                throw new Error(response.error?.message || "盲盒链接加载失败");
+            }
+
+            blindBoxLinks = response.data.links || [];
+        } catch (e) {
+            blindBoxLinks = [];
+            blindBoxError = e instanceof Error ? e.message : "盲盒链接加载失败";
+        } finally {
+            blindBoxLoading = false;
+        }
+    }
+
+    function confirmBlindBox(link: BlindBoxLink) {
+        return new Promise<boolean>((resolve) => {
+            createDialog({
+                id: `blind-box-confirm-${link.id}-${Date.now()}`,
+                type: "small",
+                title: "确认打开盲盒",
+                bodyText:
+                    `将消耗积分下载这个盲盒链接。\n\n${link.url}\n\n链接内容未知，下载失败时按当前积分规则处理。是否继续？`,
+                buttons: [
+                    {
+                        text: "取消",
+                        main: false,
+                        action: () => resolve(false),
+                    },
+                    {
+                        text: "继续打开",
+                        main: true,
+                        action: () => resolve(true),
+                    },
+                ],
+            });
+        });
+    }
+
+    async function handleBlindBoxDownload(link: BlindBoxLink) {
+        if (!link?.url || blindBoxDownloadingId) return;
+
+        const signedIn = await checkSignedIn();
+        if (!signedIn) {
+            await signIn({
+                fallbackRedirectUrl: `/${locale}/discover?tab=blind-box`,
+                signUpFallbackRedirectUrl: `/${locale}/discover?tab=blind-box`,
+            });
+            return;
+        }
+
+        const approved = await confirmBlindBox(link);
+        if (!approved) return;
+
+        blindBoxDownloadingId = link.id;
+        try {
+            await savingHandler({ url: link.url, skipPoints: true });
+        } finally {
+            blindBoxDownloadingId = null;
         }
     }
 
@@ -1186,6 +1293,14 @@
         >
             {$t("discover.menu.beauty")}
         </button>
+        <button
+            class="menu-button"
+            class:active={activeTab === "blind-box"}
+            type="button"
+            on:click={() => (activeTab = "blind-box")}
+        >
+            开盲盒
+        </button>
     </aside>
 
     <div class="discover-main">
@@ -1300,6 +1415,59 @@
                                 </div>
                             {/if}
                         </section>
+                    </div>
+                {/if}
+            </div>
+        {:else if activeTab === "blind-box"}
+            <div class="discover-container discover-container--blind-box">
+                <header class="header header--resource">
+                    <div class="header-content">
+                        <h1 class="title">开盲盒</h1>
+                        <p class="subtitle">
+                            这些是其他用户成功下载过的链接，只显示链接，不显示是谁下载的。
+                        </p>
+                    </div>
+                </header>
+
+                {#if blindBoxError}
+                    <div class="error-banner">{blindBoxError}</div>
+                {/if}
+
+                {#if blindBoxLoading}
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>正在寻找盲盒链接</p>
+                    </div>
+                {:else if blindBoxLinks.length === 0}
+                    <div class="empty-state">
+                        <h3>暂时没有盲盒</h3>
+                        <p>等有用户成功下载后，这里会自动出现新的链接。</p>
+                    </div>
+                {:else}
+                    <div class="blind-box-list">
+                        {#each blindBoxLinks as link (link.id)}
+                            <article class="blind-box-item">
+                                <div class="blind-box-body">
+                                    <div class="blind-box-url">{link.url}</div>
+                                    <div class="blind-box-meta">
+                                        <span>{formatBlindBoxRemaining(link.remaining_ms)}</span>
+                                        {#if link.host}
+                                            <span>{link.host}</span>
+                                        {/if}
+                                    </div>
+                                </div>
+                                <button
+                                    class="btn-primary blind-box-action"
+                                    type="button"
+                                    disabled={blindBoxDownloadingId === link.id}
+                                    on:click={() => handleBlindBoxDownload(link)}
+                                >
+                                    {blindBoxDownloadingId === link.id
+                                        ? "提交中"
+                                        : "消耗积分打开"}
+                                </button>
+                            </article>
+                        {/each}
                     </div>
                 {/if}
             </div>
@@ -1818,6 +1986,58 @@
         opacity: 0.9;
     }
 
+    .discover-container--blind-box {
+        align-items: stretch;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .blind-box-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .blind-box-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border-radius: calc(var(--border-radius) * 1.2);
+        background: var(--popup-bg);
+        box-shadow: 0 0 0 1.5px var(--popup-stroke) inset;
+    }
+
+    .blind-box-body {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .blind-box-url {
+        color: var(--button-text);
+        font-weight: 700;
+        font-size: 0.92rem;
+        line-height: 1.4;
+        word-break: break-all;
+    }
+
+    .blind-box-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--gray);
+        font-size: 0.8rem;
+    }
+
+    .blind-box-action {
+        min-width: 126px;
+    }
+
     .resource-empty-links {
         text-align: center;
         padding: calc(var(--padding) * 1.5) 0;
@@ -1916,6 +2136,10 @@
         .resource-link {
             flex-direction: column;
             align-items: stretch;
+        }
+
+        .blind-box-item {
+            grid-template-columns: 1fr;
         }
 
         .resource-link-actions {

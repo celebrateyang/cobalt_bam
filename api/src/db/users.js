@@ -5,6 +5,7 @@ import { initReferralDatabase } from "./referrals.js";
 import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
 import { ensureMembershipOrdersSchema } from "./membership-orders.js";
 import { initDownloadAttemptsDatabase } from "./download-attempts.js";
+import { initCuriousCatDatabase } from "./curious-cat.js";
 import { nanoid } from "nanoid";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 
@@ -163,6 +164,7 @@ export const initUserDatabase = async () => {
     await initReferralDatabase();
     await initPromotionSubmissionsDatabase();
     await initDownloadAttemptsDatabase();
+    await initCuriousCatDatabase();
 
     // ==================== Collection download memory ====================
     await query(`

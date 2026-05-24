@@ -27,6 +27,7 @@
     import NotchSticker from "$components/misc/NotchSticker.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
     import PwaInstallBanner from "$components/misc/PwaInstallBanner.svelte";
+    import CuriousCat from "$components/curious-cat/CuriousCat.svelte";
 
     export let data;
 
@@ -224,6 +225,7 @@
         {#if ProcessingQueueComponent}
             <svelte:component this={ProcessingQueueComponent} />
         {/if}
+        <CuriousCat />
         <div id="content">
             {#if !app.is.installed}
                 <PwaInstallBanner />

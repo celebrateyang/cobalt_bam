@@ -32,6 +32,13 @@ import {
 } from "../db/credit-orders.js";
 import { listDownloadAttempts } from "../db/download-attempts.js";
 import {
+    createCuriousCatActivity,
+    deleteCuriousCatActivity,
+    listBlindBoxLinks,
+    listCuriousCatActivities,
+    updateCuriousCatActivity,
+} from "../db/curious-cat.js";
+import {
     clearCollectionMemoryForUser,
     getDownloadedItemKeysForCollection,
     markDownloadedItemsForCollection,
@@ -328,6 +335,145 @@ router.get("/admin/download-attempts", requireAdminAuth, async (req, res) => {
             500,
             "SERVER_ERROR",
             "Failed to load download attempts",
+        );
+    }
+});
+
+router.get("/admin/curious-cat/activities", requireAdminAuth, async (_, res) => {
+    try {
+        const activities = await listCuriousCatActivities({
+            includeInactive: true,
+        });
+
+        return res.json({
+            status: "success",
+            data: { activities },
+        });
+    } catch (error) {
+        console.error("GET /user/admin/curious-cat/activities error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to load curious cat activities",
+        );
+    }
+});
+
+const validateCuriousCatActivityInput = (body = {}) => {
+    const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const title = typeof body?.title === "string" ? body.title.trim() : "";
+    const activityBody = typeof body?.body === "string" ? body.body.trim() : "";
+    const buttonText =
+        typeof body?.button_text === "string"
+            ? body.button_text.trim()
+            : typeof body?.buttonText === "string"
+                ? body.buttonText.trim()
+                : "";
+
+    if (!name || !title || !activityBody || !buttonText) {
+        return {
+            ok: false,
+            message: "name, title, body and buttonText are required",
+        };
+    }
+
+    if (name.length > 120 || title.length > 160 || buttonText.length > 80) {
+        return {
+            ok: false,
+            message: "name, title or buttonText is too long",
+        };
+    }
+
+    if (activityBody.length > 4000) {
+        return {
+            ok: false,
+            message: "body is too long",
+        };
+    }
+
+    return { ok: true };
+};
+
+router.post("/admin/curious-cat/activities", requireAdminAuth, async (req, res) => {
+    try {
+        const validation = validateCuriousCatActivityInput(req.body);
+        if (!validation.ok) {
+            return jsonError(res, 400, "INVALID_INPUT", validation.message);
+        }
+
+        const activity = await createCuriousCatActivity(req.body);
+
+        return res.json({
+            status: "success",
+            data: { activity },
+        });
+    } catch (error) {
+        console.error("POST /user/admin/curious-cat/activities error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to create curious cat activity",
+        );
+    }
+});
+
+router.put("/admin/curious-cat/activities/:id", requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid activity id");
+        }
+
+        const validation = validateCuriousCatActivityInput(req.body);
+        if (!validation.ok) {
+            return jsonError(res, 400, "INVALID_INPUT", validation.message);
+        }
+
+        const activity = await updateCuriousCatActivity(id, req.body);
+        if (!activity) {
+            return jsonError(res, 404, "NOT_FOUND", "Activity not found");
+        }
+
+        return res.json({
+            status: "success",
+            data: { activity },
+        });
+    } catch (error) {
+        console.error("PUT /user/admin/curious-cat/activities/:id error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to update curious cat activity",
+        );
+    }
+});
+
+router.delete("/admin/curious-cat/activities/:id", requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid activity id");
+        }
+
+        const activity = await deleteCuriousCatActivity(id);
+        if (!activity) {
+            return jsonError(res, 404, "NOT_FOUND", "Activity not found");
+        }
+
+        return res.json({
+            status: "success",
+            data: { activity },
+        });
+    } catch (error) {
+        console.error("DELETE /user/admin/curious-cat/activities/:id error:", error);
+        return jsonError(
+            res,
+            500,
+            "SERVER_ERROR",
+            "Failed to delete curious cat activity",
         );
     }
 });
@@ -661,6 +807,28 @@ if (!isClerkApiConfigured) {
         });
     });
 
+    router.get("/curious-cat/activities", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
+    router.get("/blind-box/links", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
     router.post("/feedback", (_, res) => {
         res.status(501).json({
             status: "error",
@@ -816,6 +984,28 @@ if (!isClerkApiConfigured) {
             });
         });
 
+        router.get("/curious-cat/activities", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
+        router.get("/blind-box/links", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
         router.post("/feedback", (_, res) => {
             res.status(501).json({
                 status: "error",
@@ -943,6 +1133,69 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to verify chat eligibility",
+                );
+            }
+        });
+
+        router.get("/curious-cat/activities", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const activities = await listCuriousCatActivities();
+
+                return res.json({
+                    status: "success",
+                    data: { activities },
+                });
+            } catch (error) {
+                console.error("GET /user/curious-cat/activities error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load curious cat activities",
+                );
+            }
+        });
+
+        router.get("/blind-box/links", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const links = await listBlindBoxLinks({
+                    limit: req.query?.limit,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        links,
+                        lifetimeHours: 48,
+                    },
+                });
+            } catch (error) {
+                console.error("GET /user/blind-box/links error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load blind box links",
                 );
             }
         });

@@ -16,6 +16,8 @@ const BILIBILI_HEADERS = Object.freeze({
     accept: "application/json, text/plain, */*",
 });
 
+const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
+
 // Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.
 // Verified working as of Dec 2025.
 const DOUYIN_MOBILE_UA =
@@ -743,6 +745,88 @@ const bilibiliUgcSeasonFromView = (data) => {
     };
 };
 
+const bilibiliUgcSeasonPagesFromView = async (data) => {
+    const season = data?.ugc_season;
+    if (!season?.sections?.length) return;
+
+    const seasonId = toStringId(season?.id);
+    const episodes = uniqBy(
+        season.sections.flatMap((section) => section?.episodes ?? []),
+        (ep) => ep?.bvid,
+    ).filter((ep) => ep?.bvid);
+
+    if (episodes.length <= 1 || episodes.length > BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT) {
+        return;
+    }
+
+    const currentBvid = toStringId(data?.bvid);
+    const episodeViews = await Promise.all(
+        episodes.map(async (ep) => {
+            if (ep.bvid === currentBvid) {
+                return { ep, data };
+            }
+
+            const view = await bilibiliView({ id: ep.bvid });
+            return {
+                ep,
+                data: view?.code === 0 ? view?.data : null,
+            };
+        }),
+    );
+
+    const items = [];
+    let expandedPages = false;
+
+    for (const { ep, data: episodeData } of episodeViews) {
+        const bvid = toStringId(episodeData?.bvid || ep?.bvid);
+        if (!bvid) continue;
+
+        const episodeTitle = episodeData?.title || ep?.title || ep?.arc?.title;
+        const pages = episodeData?.pages;
+
+        if (Array.isArray(pages) && pages.length > 1) {
+            expandedPages = true;
+            for (const page of pages) {
+                if (typeof page?.page !== "number") continue;
+
+                const pageTitle = page?.part;
+                items.push({
+                    itemKey: `bilibili:video:${bvid}:p=${page.page}`,
+                    url: `https://www.bilibili.com/video/${bvid}?p=${page.page}`,
+                    title: episodeTitle && pageTitle
+                        ? `${episodeTitle} - ${pageTitle}`
+                        : pageTitle || episodeTitle,
+                    duration: toSeconds(page?.duration),
+                });
+            }
+            continue;
+        }
+
+        items.push({
+            itemKey: `bilibili:video:${bvid}`,
+            url: `https://www.bilibili.com/video/${bvid}`,
+            title: episodeTitle,
+            duration: toSeconds(
+                episodeData?.duration ?? ep?.page?.duration ?? ep?.duration ?? ep?.arc?.duration,
+            ),
+        });
+    }
+
+    const uniqueItems = uniqBy(items, (i) => i.url);
+
+    if (!expandedPages || uniqueItems.length <= 1) return;
+
+    return {
+        service: "bilibili",
+        kind: "bilibili-ugc-season-pages",
+        collectionKey: seasonId
+            ? buildCollectionKey("bilibili", "ugc-season-pages", seasonId)
+            : undefined,
+        title: season.title,
+        items: uniqueItems,
+    };
+};
+
 const bilibiliMultiPageFromView = (data) => {
     const pages = data?.pages;
     const bvid = data?.bvid;
@@ -882,9 +966,12 @@ const expandBilibili = async (inputUrl) => {
         const data = view?.code === 0 ? view?.data : null;
 
         if (data) {
-            // On Bilibili video pages, the visible right-side list can be the
-            // current BV's multi-page list even when the BV belongs to a small
-            // outer UGC season. Prefer what the pasted video URL can download.
+            // Small UGC seasons can contain a few large multi-page videos.
+            // Expand those nested pages for video URLs, but keep large space/list
+            // collection URLs at the outer-video level to avoid huge queues.
+            const seasonPages = await bilibiliUgcSeasonPagesFromView(data);
+            if (seasonPages) return seasonPages;
+
             const multi = bilibiliMultiPageFromView(data);
             if (multi) return multi;
 

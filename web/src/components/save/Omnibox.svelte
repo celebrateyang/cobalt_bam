@@ -723,6 +723,7 @@
         const promptTitle = $t("dialog.batch.detect.title");
         const isCollection =
             expanded.kind === "bilibili-ugc-season" ||
+            expanded.kind === "bilibili-ugc-season-pages" ||
             expanded.kind === "douyin-mix" ||
             expanded.kind === "tiktok-playlist" ||
             expanded.kind === "youtube-playlist";

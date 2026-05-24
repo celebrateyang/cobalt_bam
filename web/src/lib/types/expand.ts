@@ -13,6 +13,7 @@ export type CobaltExpandOkResponse = {
     kind:
         | "single"
         | "bilibili-ugc-season"
+        | "bilibili-ugc-season-pages"
         | "bilibili-multi-page"
         | "douyin-mix"
         | "tiktok-playlist"

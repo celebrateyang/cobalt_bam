@@ -417,6 +417,39 @@
                 </tbody>
             </table>
         </div>
+        <div class="pager pager-bottom">
+            <span class="meta">{total} rows</span>
+            <label class="filter">
+                <span>Per page</span>
+                <select
+                    bind:value={limit}
+                    on:change={() => void handleLimitChange(limit)}
+                    disabled={loading}
+                >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                </select>
+            </label>
+            <button
+                class="btn-secondary"
+                type="button"
+                disabled={loading || pageNum <= 1}
+                on:click={() => void goToPage(pageNum - 1)}
+            >
+                Prev
+            </button>
+            <span class="meta">{total === 0 ? "0 / 0" : `${pageNum} / ${pages}`}</span>
+            <button
+                class="btn-secondary"
+                type="button"
+                disabled={loading || (pages ? pageNum >= pages : true)}
+                on:click={() => void goToPage(pageNum + 1)}
+            >
+                Next
+            </button>
+        </div>
     {/if}
 </div>
 
@@ -459,6 +492,11 @@
         align-items: center;
         gap: 10px;
         flex-wrap: wrap;
+    }
+
+    .pager-bottom {
+        justify-content: flex-end;
+        margin-top: var(--padding);
     }
 
     input,

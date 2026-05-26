@@ -196,12 +196,12 @@
 </script>
 
 <svelte:head>
-    <title>订单管理 - 管理后台</title>
+    <title>积分订单 - 管理后台</title>
 </svelte:head>
 
 <div class="admin-container">
     <header class="admin-header">
-        <h1>订单管理</h1>
+        <h1>积分订单</h1>
     </header>
 
     <div class="toolbar">

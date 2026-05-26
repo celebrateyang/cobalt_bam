@@ -77,8 +77,15 @@ import IconCat from "@tabler/icons-svelte/IconCat.svelte";
                     </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/orders"
-                        tabTitle="订单管理"
+                        tabTitle="积分订单"
                         iconColor="gray"
+                    >
+                        <IconCoin />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/membership-orders"
+                        tabTitle="会员订单"
+                        iconColor="green"
                     >
                         <IconCoin />
                     </PageNavTab>

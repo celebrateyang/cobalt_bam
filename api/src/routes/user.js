@@ -30,6 +30,7 @@ import {
     listCreditOrders,
     listCreditOrdersForUser,
 } from "../db/credit-orders.js";
+import { listMembershipOrders } from "../db/membership-orders.js";
 import { listDownloadAttempts } from "../db/download-attempts.js";
 import {
     createCuriousCatActivity,
@@ -296,6 +297,40 @@ router.get("/admin/orders", requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error("GET /user/admin/orders error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load orders");
+    }
+});
+
+// Admin-only: list membership orders (paginated)
+router.get("/admin/membership-orders", requireAdminAuth, async (req, res) => {
+    try {
+        const page = req.query?.page;
+        const limit = req.query?.limit;
+        const userId = req.query?.userId;
+        const status = typeof req.query?.status === "string" ? req.query.status : "";
+        const provider =
+            typeof req.query?.provider === "string" ? req.query.provider : "";
+        const search = typeof req.query?.search === "string" ? req.query.search : "";
+        const sort = typeof req.query?.sort === "string" ? req.query.sort : "created_at";
+        const order = typeof req.query?.order === "string" ? req.query.order : "desc";
+
+        const result = await listMembershipOrders({
+            page,
+            limit,
+            userId,
+            status,
+            provider,
+            search,
+            sort,
+            order,
+        });
+
+        res.json({
+            status: "success",
+            data: result,
+        });
+    } catch (error) {
+        console.error("GET /user/admin/membership-orders error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load membership orders");
     }
 });
 

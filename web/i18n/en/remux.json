@@ -1,5 +1,15 @@
 {
     "description": "remuxing often fixes compatibility issues with old software. it's fast, lossless, and everything is processed on-device.",
+    "hero": {
+        "title": "convert video and extract audio",
+        "subtitle": "turn MP4 into MP3 or convert between common video formats"
+    },
+    "steps": {
+        "upload": "choose files",
+        "upload_hint": "click to select or drop files below; batch selection is supported",
+        "choose_output": "choose output",
+        "process_download": "convert and download"
+    },
     "seo": {
         "title": "video converter & audio extractor",
         "description": "extract audio from video files and convert video formats like avi to mp4 directly in your browser. local processing, no upload.",
@@ -22,17 +32,27 @@
     },
     "buttons": {
         "start": "start processing",
+        "start_extract": "extract",
+        "start_convert": "convert to",
         "cancel": "cancel",
-        "save_file": "save file",
+        "save_file": "download file",
         "remove": "remove",
         "clear_done": "clear done"
     },
     "tips": {
-        "local_only": "files are processed locally in your browser and are not uploaded to the server."
+        "local_only": "files are processed locally in your browser and are not uploaded to the server.",
+        "format_mp3": "MP3 offers the widest playback and sharing compatibility.",
+        "format_m4a": "M4A usually keeps good quality in a smaller file.",
+        "format_wav": "WAV is uncompressed audio and produces a larger file.",
+        "keep_open": "the page may briefly stop responding while processing. keep it open; larger files may take a minute or longer."
     },
     "progress": {
         "batch": "batch progress",
-        "processing": "processing"
+        "processing": "processing",
+        "preparing": "preparing conversion; first start may take a few seconds...",
+        "extracting": "extracting",
+        "converting": "converting to",
+        "complete_ready": "conversion complete, ready to download"
     },
     "status": {
         "queued": "queued",

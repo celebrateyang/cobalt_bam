@@ -1,5 +1,15 @@
 {
     "description": "리먹싱은 오래된 소프트웨어와의 호환성 문제를 자주 해결해 줍니다. 빠르고 무손실이며 모든 처리는 기기에서 로컬로 진행됩니다.",
+    "hero": {
+        "title": "동영상 변환 및 오디오 추출",
+        "subtitle": "MP4를 MP3로 바꾸거나 일반적인 동영상 형식으로 변환하세요"
+    },
+    "steps": {
+        "upload": "파일 선택",
+        "upload_hint": "클릭하거나 아래 영역에 드래그하세요. 여러 파일을 추가할 수 있습니다",
+        "choose_output": "출력 방식 선택",
+        "process_download": "변환 후 다운로드"
+    },
     "modes": {
         "extract_audio": "오디오 추출",
         "convert_video": "비디오 변환"
@@ -17,17 +27,27 @@
     },
     "buttons": {
         "start": "처리 시작",
+        "start_extract": "추출 시작",
+        "start_convert": "변환 시작",
         "cancel": "취소",
-        "save_file": "파일 저장",
+        "save_file": "파일 다운로드",
         "remove": "제거",
         "clear_done": "완료 항목 지우기"
     },
     "tips": {
-        "local_only": "파일은 브라우저에서 로컬로 처리되며 서버로 업로드되지 않습니다."
+        "local_only": "파일은 브라우저에서 로컬로 처리되며 서버로 업로드되지 않습니다.",
+        "format_mp3": "MP3는 재생과 공유에 가장 널리 호환됩니다.",
+        "format_m4a": "M4A는 보통 더 작은 파일로 좋은 음질을 유지합니다.",
+        "format_wav": "WAV는 비압축 오디오이므로 파일이 커집니다.",
+        "keep_open": "처리 중에는 페이지가 잠시 응답하지 않을 수 있습니다. 이 페이지를 열어 두세요. 큰 파일은 시간이 더 걸릴 수 있습니다."
     },
     "progress": {
         "batch": "배치 진행률",
-        "processing": "처리 중"
+        "processing": "처리 중",
+        "preparing": "변환을 준비 중입니다. 처음 시작할 때 몇 초가 걸릴 수 있습니다...",
+        "extracting": "추출 중",
+        "converting": "변환 중",
+        "complete_ready": "변환이 완료되었습니다. 다운로드할 수 있습니다"
     },
     "status": {
         "queued": "대기 중",

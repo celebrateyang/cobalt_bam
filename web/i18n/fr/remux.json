@@ -1,5 +1,15 @@
 {
     "description": "le remux résout souvent les problèmes de compatibilité avec les anciens logiciels. c'est rapide, sans perte, et tout est traité sur votre appareil.",
+    "hero": {
+        "title": "convertir une vidéo et extraire l'audio",
+        "subtitle": "convertissez un MP4 en MP3 ou changez de format vidéo courant"
+    },
+    "steps": {
+        "upload": "choisir des fichiers",
+        "upload_hint": "cliquez ou déposez des fichiers ci-dessous; la sélection multiple est possible",
+        "choose_output": "choisir la sortie",
+        "process_download": "convertir et télécharger"
+    },
     "modes": {
         "extract_audio": "extraire l'audio",
         "convert_video": "convertir la vidéo"
@@ -17,17 +27,27 @@
     },
     "buttons": {
         "start": "démarrer le traitement",
+        "start_extract": "extraire",
+        "start_convert": "convertir en",
         "cancel": "annuler",
-        "save_file": "enregistrer le fichier",
+        "save_file": "télécharger le fichier",
         "remove": "retirer",
         "clear_done": "effacer les terminés"
     },
     "tips": {
-        "local_only": "les fichiers sont traités localement dans votre navigateur et ne sont pas envoyés au serveur."
+        "local_only": "les fichiers sont traités localement dans votre navigateur et ne sont pas envoyés au serveur.",
+        "format_mp3": "MP3 offre la meilleure compatibilité pour la lecture et le partage.",
+        "format_m4a": "M4A conserve généralement une bonne qualité dans un fichier plus petit.",
+        "format_wav": "WAV est non compressé et produit un fichier plus volumineux.",
+        "keep_open": "La page peut cesser de répondre brièvement pendant le traitement. Gardez-la ouverte; les gros fichiers peuvent prendre plus de temps."
     },
     "progress": {
         "batch": "progression du lot",
-        "processing": "traitement"
+        "processing": "traitement",
+        "preparing": "préparation de la conversion; le premier démarrage peut prendre quelques secondes...",
+        "extracting": "extraction",
+        "converting": "conversion en",
+        "complete_ready": "conversion terminée, prête au téléchargement"
     },
     "status": {
         "queued": "en file d'attente",

@@ -1,5 +1,15 @@
 {
     "description": "remuxing behebt oft kompatibilitätsprobleme mit alter software. es ist schnell, verlustfrei und alles wird auf dem gerät verarbeitet.",
+    "hero": {
+        "title": "video konvertieren und audio extrahieren",
+        "subtitle": "wandle MP4 in MP3 um oder konvertiere gängige Videoformate"
+    },
+    "steps": {
+        "upload": "Dateien auswählen",
+        "upload_hint": "klicken oder Dateien unten ablegen; mehrere Dateien sind möglich",
+        "choose_output": "Ausgabe auswählen",
+        "process_download": "konvertieren und herunterladen"
+    },
     "modes": {
         "extract_audio": "audio extrahieren",
         "convert_video": "video konvertieren"
@@ -17,17 +27,27 @@
     },
     "buttons": {
         "start": "verarbeitung starten",
+        "start_extract": "extrahieren als",
+        "start_convert": "konvertieren in",
         "cancel": "abbrechen",
-        "save_file": "datei speichern",
+        "save_file": "datei herunterladen",
         "remove": "entfernen",
         "clear_done": "fertige löschen"
     },
     "tips": {
-        "local_only": "dateien werden lokal in deinem browser verarbeitet und nicht an den server hochgeladen."
+        "local_only": "dateien werden lokal in deinem browser verarbeitet und nicht an den server hochgeladen.",
+        "format_mp3": "MP3 bietet die beste Kompatibilität für Wiedergabe und Teilen.",
+        "format_m4a": "M4A bietet meist gute Qualität bei kleinerer Datei.",
+        "format_wav": "WAV ist unkomprimiert und erzeugt größere Dateien.",
+        "keep_open": "Während der Verarbeitung kann die Seite kurzzeitig nicht reagieren. Lasse sie geöffnet; größere Dateien können länger dauern."
     },
     "progress": {
         "batch": "stapel-fortschritt",
-        "processing": "verarbeite"
+        "processing": "verarbeite",
+        "preparing": "Konvertierung wird vorbereitet; der erste Start kann einige Sekunden dauern...",
+        "extracting": "extrahiere",
+        "converting": "konvertiere in",
+        "complete_ready": "konvertierung abgeschlossen, bereit zum herunterladen"
     },
     "status": {
         "queued": "wartend",

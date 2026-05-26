@@ -9,17 +9,26 @@ export default class LibAVWrapper {
     libav: Promise<LibAVInstance> | null;
     concurrency: number;
     onProgress?: FFmpegProgressCallback;
+    debugEnabled: boolean;
+    debugStartedAt: number;
 
     constructor(onProgress?: FFmpegProgressCallback) {
         this.libav = null;
         this.concurrency = (typeof navigator !== "undefined") ? Math.min(4, navigator.hardwareConcurrency || 0) : 1;
         this.onProgress = onProgress;
+        this.debugEnabled = false;
+        this.debugStartedAt = Date.now();
     }
 
     init(options: any = {}) {
         if (typeof navigator === 'undefined') return;
 
         const variant = options?.variant || 'remux';
+        const yesthreads = options?.yesthreads ?? true;
+        const nothreads = options?.nothreads ?? !yesthreads;
+        this.debugEnabled = options?.debug === true;
+        const libavOptions = { ...options };
+        delete libavOptions.debug;
         let constructor: typeof LibAV.LibAV;
 
         if (variant === 'remux') {
@@ -31,31 +40,46 @@ export default class LibAVWrapper {
         }
 
         if (this.concurrency && !this.libav) {
+            this.#debug("init", {
+                variant,
+                yesthreads,
+                nothreads,
+                concurrency: this.concurrency,
+                crossOriginIsolated: typeof crossOriginIsolated !== "undefined"
+                    ? crossOriginIsolated
+                    : undefined,
+            });
             this.libav = constructor({
-                ...options,
+                ...libavOptions,
                 variant: undefined,
                 base: '/_libav',
-                // 启用 WebAssembly 线程 (需 COOP/COEP headers 支持)
-                nothreads: false,
-                yesthreads: true
+                nothreads,
+                yesthreads
             });
         }
     }
 
     async terminate() {
         if (this.libav) {
+            this.#debug("terminate:waiting-for-libav");
             const libav = await this.libav;
+            this.#debug("terminate:ready");
             libav.terminate();
+            this.#debug("terminate:done");
         }
     }
 
     async probe(blob: Blob) {
         if (!this.libav) throw new Error("LibAV wasn't initialized");
+        this.#debug("probe:waiting-for-libav", { bytes: blob.size, type: blob.type || "unknown" });
         const libav = await this.libav;
+        this.#debug("probe:libav-ready");
 
         await libav.mkreadaheadfile('input', blob);
+        this.#debug("probe:input-ready");
 
         try {
+            this.#debug("probe:ffprobe-start");
             await libav.ffprobe([
                 '-v', 'quiet',
                 '-print_format', 'json',
@@ -64,20 +88,33 @@ export default class LibAVWrapper {
                 'input',
                 '-o', 'output.json'
             ]);
+            this.#debug("probe:ffprobe-done");
 
             const copy = await libav.readFile('output.json');
             const text = new TextDecoder().decode(copy);
             await libav.unlink('output.json');
 
-            return JSON.parse(text) as FfprobeData;
+            const result = JSON.parse(text) as FfprobeData;
+            this.#debug("probe:result-ready", {
+                duration: result.format?.duration,
+                streams: result.streams?.map((stream) => stream.codec_type),
+            });
+            return result;
         } finally {
             await libav.unlinkreadaheadfile('input');
+            this.#debug("probe:cleanup-done");
         }
     }
 
     async render({ files, output, args }: RenderParams) {
         if (!this.libav) throw new Error("LibAV wasn't initialized");
+        this.#debug("render:waiting-for-libav", {
+            output,
+            inputBytes: files.reduce((total, file) => total + file.size, 0),
+            args,
+        });
         const libav = await this.libav;
+        this.#debug("render:libav-ready");
 
         if (!(output.format && output.type)) {
             throw new Error("output's format or type is missing");
@@ -87,6 +124,7 @@ export default class LibAVWrapper {
         const ffInputs = [];
         const pendingWrites = new Set<Promise<void>>();
         let writeError: unknown = null;
+        let reportedOutputWrite = false;
 
         try {
             for (let i = 0; i < files.length; i++) {
@@ -95,12 +133,18 @@ export default class LibAVWrapper {
                 await libav.mkreadaheadfile(`input${i}`, file);
                 ffInputs.push('-i', `input${i}`);
             }
+            this.#debug("render:inputs-ready", { count: files.length });
 
             await libav.mkwriterdev(outputName);
             await libav.mkwriterdev('progress.txt');
+            this.#debug("render:writers-ready", { outputName });
 
             const totalInputSize = files.reduce((a, b) => a + b.size, 0);
             const storage = await Storage.init(totalInputSize);
+            this.#debug("render:storage-ready", {
+                implementation: storage.constructor.name,
+                expectedBytes: totalInputSize,
+            });
 
             libav.onwrite = (name, pos, data) => {
                 if (name === 'progress.txt') {
@@ -113,6 +157,14 @@ export default class LibAVWrapper {
                 }
 
                 if (name !== outputName) return;
+
+                if (!reportedOutputWrite) {
+                    reportedOutputWrite = true;
+                    this.#debug("render:first-output-write", {
+                        offset: pos,
+                        bytes: data.length,
+                    });
+                }
 
                 let writeTask: Promise<void> | null = null;
                 writeTask = Promise.resolve(storage.write(data, pos))
@@ -135,6 +187,7 @@ export default class LibAVWrapper {
                 pendingWrites.add(writeTask);
             };
 
+            this.#debug("render:ffmpeg-start");
             await libav.ffmpeg([
                 '-nostdin', '-y',
                 '-loglevel', 'error',
@@ -144,6 +197,7 @@ export default class LibAVWrapper {
                 ...args,
                 outputName
             ]);
+            this.#debug("render:ffmpeg-done", { pendingWrites: pendingWrites.size });
 
             if (pendingWrites.size > 0) {
                 await Promise.allSettled(Array.from(pendingWrites));
@@ -153,6 +207,7 @@ export default class LibAVWrapper {
             }
 
             let file = Storage.retype(await storage.res(), output.type);
+            this.#debug("render:storage-result", { bytes: file.size });
             if (file.size === 0) {
                 try {
                     const directOutput = await libav.readFile(outputName);
@@ -168,9 +223,11 @@ export default class LibAVWrapper {
             }
             if (file.size === 0) {
                 await storage.destroy().catch(() => undefined);
+                this.#debug("render:no-output");
                 return;
             }
 
+            this.#debug("render:done", { bytes: file.size, type: file.type });
             return file;
         } finally {
             try {
@@ -182,6 +239,7 @@ export default class LibAVWrapper {
                         libav.unlinkreadaheadfile(`input${i}`)
                     ));
             } catch { /* catch & ignore */ }
+            this.#debug("render:cleanup-done");
         }
     }
 
@@ -230,5 +288,14 @@ export default class LibAVWrapper {
         };
 
         this.onProgress(progress);
+    }
+
+    #debug(stage: string, details?: Record<string, unknown>) {
+        if (!this.debugEnabled) return;
+
+        console.info(
+            `[REMUX DEBUG] libav +${Date.now() - this.debugStartedAt}ms ${stage}`,
+            details ?? "",
+        );
     }
 }

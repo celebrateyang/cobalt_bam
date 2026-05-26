@@ -1,5 +1,15 @@
 {
     "description": "remux thường giúp khắc phục lỗi tương thích với phần mềm cũ. nó nhanh, không mất dữ liệu và mọi thứ được xử lý ngay trên thiết bị của bạn.",
+    "hero": {
+        "title": "chuyển đổi video và tách âm thanh",
+        "subtitle": "chuyển MP4 thành MP3 hoặc đổi giữa các định dạng video phổ biến"
+    },
+    "steps": {
+        "upload": "chọn tệp",
+        "upload_hint": "nhấp để chọn hoặc kéo thả tệp vào bên dưới; có thể thêm nhiều tệp",
+        "choose_output": "chọn đầu ra",
+        "process_download": "chuyển đổi và tải xuống"
+    },
     "modes": {
         "extract_audio": "trích xuất âm thanh",
         "convert_video": "chuyển đổi video"
@@ -17,17 +27,27 @@
     },
     "buttons": {
         "start": "bắt đầu xử lý",
+        "start_extract": "tách",
+        "start_convert": "chuyển sang",
         "cancel": "hủy",
-        "save_file": "lưu tệp",
+        "save_file": "tải tệp xuống",
         "remove": "xóa",
         "clear_done": "xóa mục đã xong"
     },
     "tips": {
-        "local_only": "tệp được xử lý cục bộ trong trình duyệt của bạn và không được tải lên máy chủ."
+        "local_only": "tệp được xử lý cục bộ trong trình duyệt của bạn và không được tải lên máy chủ.",
+        "format_mp3": "MP3 có khả năng tương thích tốt nhất để phát và chia sẻ.",
+        "format_m4a": "M4A thường giữ chất lượng tốt trong tệp nhỏ hơn.",
+        "format_wav": "WAV không nén âm thanh nên tệp đầu ra sẽ lớn hơn.",
+        "keep_open": "Trang có thể tạm thời không phản hồi trong khi xử lý. Hãy giữ trang này mở; tệp lớn có thể mất nhiều thời gian hơn."
     },
     "progress": {
         "batch": "tiến độ hàng loạt",
-        "processing": "đang xử lý"
+        "processing": "đang xử lý",
+        "preparing": "đang chuẩn bị chuyển đổi; lần khởi động đầu có thể mất vài giây...",
+        "extracting": "đang tách",
+        "converting": "đang chuyển sang",
+        "complete_ready": "chuyển đổi hoàn tất, sẵn sàng tải xuống"
     },
     "status": {
         "queued": "đang chờ",

@@ -1,5 +1,15 @@
 {
     "description": "可从视频中提取音频，或将视频转换为其他格式。全部在本地浏览器处理，不上传服务器。",
+    "hero": {
+        "title": "视频转音频与格式转换",
+        "subtitle": "将 MP4 转为 MP3，或在常见视频格式之间转换"
+    },
+    "steps": {
+        "upload": "选择文件",
+        "upload_hint": "点击选择或拖拽文件到下方区域，可批量添加",
+        "choose_output": "选择输出方式",
+        "process_download": "开始转换并下载"
+    },
     "seo": {
         "title": "视频格式转换与音频提取",
         "description": "可将 AVI 转 MP4、提取音频为 MP3/M4A/WAV，全部在浏览器本地处理，不上传服务器。",
@@ -22,17 +32,27 @@
     },
     "buttons": {
         "start": "开始处理",
+        "start_extract": "开始提取",
+        "start_convert": "开始转换为",
         "cancel": "取消",
-        "save_file": "保存文件",
+        "save_file": "下载文件",
         "remove": "移除",
         "clear_done": "清除已完成"
     },
     "tips": {
-        "local_only": "文件会在你的浏览器中本地处理，不会上传到服务器。"
+        "local_only": "文件会在你的浏览器中本地处理，不会上传到服务器。",
+        "format_mp3": "MP3 兼容性最好，适合播放和分享。",
+        "format_m4a": "M4A 通常能以较小文件保留较好音质。",
+        "format_wav": "WAV 为无压缩音频，输出文件会比较大。",
+        "keep_open": "转换期间页面可能短暂无响应，请保持此页面打开。较大文件可能需要几十秒或更久。"
     },
     "progress": {
         "batch": "批量进度",
-        "processing": "处理中"
+        "processing": "处理中",
+        "preparing": "正在准备转换，首次启动可能需要几秒...",
+        "extracting": "正在提取",
+        "converting": "正在转换为",
+        "complete_ready": "转换完成，可以下载"
     },
     "status": {
         "queued": "排队中",

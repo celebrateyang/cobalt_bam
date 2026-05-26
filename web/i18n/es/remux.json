@@ -1,5 +1,15 @@
 {
     "description": "el remux suele resolver problemas de compatibilidad con software antiguo. es rápido, sin pérdidas y todo se procesa en tu dispositivo.",
+    "hero": {
+        "title": "convierte video y extrae audio",
+        "subtitle": "convierte MP4 a MP3 o cambia entre formatos de video habituales"
+    },
+    "steps": {
+        "upload": "elige archivos",
+        "upload_hint": "haz clic o arrastra archivos abajo; puedes agregar varios",
+        "choose_output": "elige la salida",
+        "process_download": "convierte y descarga"
+    },
     "modes": {
         "extract_audio": "extraer audio",
         "convert_video": "convertir video"
@@ -17,17 +27,27 @@
     },
     "buttons": {
         "start": "iniciar procesamiento",
+        "start_extract": "extraer",
+        "start_convert": "convertir a",
         "cancel": "cancelar",
-        "save_file": "guardar archivo",
+        "save_file": "descargar archivo",
         "remove": "eliminar",
         "clear_done": "limpiar completados"
     },
     "tips": {
-        "local_only": "los archivos se procesan localmente en tu navegador y no se suben al servidor."
+        "local_only": "los archivos se procesan localmente en tu navegador y no se suben al servidor.",
+        "format_mp3": "MP3 ofrece la mayor compatibilidad para reproducir y compartir.",
+        "format_m4a": "M4A suele mantener buena calidad en un archivo más pequeño.",
+        "format_wav": "WAV es audio sin comprimir y produce un archivo mayor.",
+        "keep_open": "La página puede dejar de responder brevemente durante el proceso. Manténla abierta; los archivos grandes pueden tardar más."
     },
     "progress": {
         "batch": "progreso por lotes",
-        "processing": "procesando"
+        "processing": "procesando",
+        "preparing": "preparando la conversión; el primer inicio puede tardar unos segundos...",
+        "extracting": "extrayendo",
+        "converting": "convirtiendo a",
+        "complete_ready": "conversión completada, lista para descargar"
     },
     "status": {
         "queued": "en cola",

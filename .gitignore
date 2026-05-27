@@ -35,3 +35,6 @@ tmp/snapwc_captcha.png
 tmp/snapwc_parse_decoded.json
 tmp/snapwc_parse_result_spki.json
 tmp/snapwc_parse_result.json
+
+# local unattended Windows upstream node setup
+ops/windows/upstream-node/

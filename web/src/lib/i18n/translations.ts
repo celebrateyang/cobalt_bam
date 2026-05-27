@@ -35,6 +35,7 @@ const config: Config<{
     current?: number;
     required?: number;
     gap?: number;
+    size?: string;
 }> = {
     fallbackLocale: defaultLocale,
     translations: Object.keys(parsedLocfiles).reduce((obj, lang) => {

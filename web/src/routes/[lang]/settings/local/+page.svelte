@@ -7,6 +7,7 @@
     import SettingsButton from "$components/buttons/SettingsButton.svelte";
     import SettingsToggle from "$components/buttons/SettingsToggle.svelte";
     import SettingsCategory from "$components/settings/SettingsCategory.svelte";
+    import LocalFileStorage from "$components/settings/LocalFileStorage.svelte";
 </script>
 
 <SettingsCategory sectionId="media-processing" title={$t("settings.local.saving")} beta>
@@ -21,6 +22,10 @@
             </SettingsButton>
         {/each}
     </Switcher>
+</SettingsCategory>
+
+<SettingsCategory sectionId="browser-storage" title={$t("settings.local.storage")}>
+    <LocalFileStorage />
 </SettingsCategory>
 
 {#if env.ENABLE_WEBCODECS}

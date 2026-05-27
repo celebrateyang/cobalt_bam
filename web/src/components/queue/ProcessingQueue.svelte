@@ -1,12 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { beforeNavigate, onNavigate } from "$app/navigation";
 
     import { openFile } from "$lib/download";
-    import { clearFileStorage } from "$lib/storage/opfs";
-
     import { getProgress } from "$lib/task-manager/queue";
     import { pwaInstallBannerHeight } from "$lib/state/pwa-install-banner";
     import { queueVisible } from "$lib/state/queue-visibility";
@@ -159,11 +156,6 @@
 
     onNavigate(() => {
         $queueVisible = false;
-    });
-
-    onMount(() => {
-        // clear old files from storage on first page load
-        clearFileStorage();
     });
 
     beforeNavigate((event) => {

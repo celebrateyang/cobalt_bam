@@ -2,6 +2,35 @@ import { AbstractStorage } from "./storage";
 import { uuid } from "$lib/util";
 
 const COBALT_PROCESSING_DIR = "cobalt-processing-data";
+export const FILE_STORAGE_CHANGE_EVENT = "cobalt-file-storage-change";
+
+export type FileStorageUsage = {
+    available: boolean;
+    bytes: number;
+    files: number;
+};
+
+const emptyStorageUsage = (available: boolean): FileStorageUsage => ({
+    available,
+    bytes: 0,
+    files: 0,
+});
+
+type IterableDirectoryHandle = FileSystemDirectoryHandle & {
+    values: () => AsyncIterable<FileSystemFileHandle | FileSystemDirectoryHandle>;
+};
+
+const notifyStorageChanged = () => {
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(FILE_STORAGE_CHANGE_EVENT));
+    }
+};
+
+const canAccessOPFSDirectory = () => {
+    return typeof navigator !== "undefined" &&
+        "storage" in navigator &&
+        "getDirectory" in navigator.storage;
+};
 
 export class OPFSStorage extends AbstractStorage {
     #root;
@@ -105,13 +134,50 @@ export class OPFSStorage extends AbstractStorage {
     }
 }
 
+const measureDirectory = async (dir: FileSystemDirectoryHandle): Promise<FileStorageUsage> => {
+    const usage = emptyStorageUsage(true);
+
+    for await (const handle of (dir as IterableDirectoryHandle).values()) {
+        if (handle.kind === "file") {
+            const file = await handle.getFile();
+            usage.bytes += file.size;
+            usage.files += 1;
+            continue;
+        }
+
+        const nested = await measureDirectory(handle);
+        usage.bytes += nested.bytes;
+        usage.files += nested.files;
+    }
+
+    return usage;
+};
+
+export const getFileStorageUsage = async (): Promise<FileStorageUsage> => {
+    if (!canAccessOPFSDirectory()) {
+        return emptyStorageUsage(false);
+    }
+
+    const root = await navigator.storage.getDirectory();
+    try {
+        const cobaltDir = await root.getDirectoryHandle(COBALT_PROCESSING_DIR);
+        return await measureDirectory(cobaltDir);
+    } catch (error) {
+        if (error instanceof DOMException && error.name === "NotFoundError") {
+            return emptyStorageUsage(true);
+        }
+        throw error;
+    }
+};
+
 export const removeFromFileStorage = async (filename: string) => {
-    if (await OPFSStorage.isAvailable()) {
+    if (canAccessOPFSDirectory()) {
         const root = await navigator.storage.getDirectory();
 
         try {
             const cobaltDir = await root.getDirectoryHandle(COBALT_PROCESSING_DIR);
             await cobaltDir.removeEntry(filename);
+            notifyStorageChanged();
         } catch {
             // catch and ignore
         }
@@ -119,12 +185,23 @@ export const removeFromFileStorage = async (filename: string) => {
 }
 
 export const clearFileStorage = async () => {
-    if (await OPFSStorage.isAvailable()) {
-        const root = await navigator.storage.getDirectory();
-        try {
-            await root.removeEntry(COBALT_PROCESSING_DIR, { recursive: true });
-        } catch {
-            // ignore the error because the dir might be missing and that's okay!
+    if (!canAccessOPFSDirectory()) {
+        return false;
+    }
+
+    const root = await navigator.storage.getDirectory();
+    try {
+        await root.removeEntry(COBALT_PROCESSING_DIR, { recursive: true });
+        notifyStorageChanged();
+        return true;
+    } catch (error) {
+        const usage = await getFileStorageUsage().catch(() => null);
+        if (usage?.files === 0) {
+            notifyStorageChanged();
+            return true;
         }
+
+        console.warn("[storage] unable to clear local processing files", error);
+        return false;
     }
 }

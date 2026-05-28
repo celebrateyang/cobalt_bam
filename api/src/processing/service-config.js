@@ -213,6 +213,7 @@ export const services = {
         patterns: [
             "video/:id",
             "item/:id",
+            "is/:shortLink",
             ":shortLink",
         ],
         subdomains: ["m"],

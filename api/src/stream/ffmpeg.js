@@ -54,6 +54,12 @@ const getCommand = (args) => {
     return [ffmpeg, args]
 }
 
+const toRawHeaders = (headers) =>
+    Object.entries(headers || {})
+        .filter(([, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => `${key}: ${value}\r\n`)
+        .join('');
+
 const buildInputArgs = (url, streamInfo) => {
     if (streamInfo?.isHLS) {
         const args = [
@@ -66,6 +72,11 @@ const buildInputArgs = (url, streamInfo) => {
                 '-fflags', '+discardcorrupt',
                 '-err_detect', 'ignore_err',
             );
+        }
+
+        const rawHeaders = toRawHeaders(streamInfo?.headers);
+        if (rawHeaders) {
+            args.push('-headers', rawHeaders);
         }
 
         args.push(

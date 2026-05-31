@@ -444,6 +444,11 @@ const shouldUseInternalFfmpegInputs = (streamInfo) =>
     streamInfo?.service === 'vimeo.com' &&
     streamInfo?.isHLS === true;
 
+const shouldUseDirectFfmpegInputs = (streamInfo) =>
+    isFfmpegStreamType(streamInfo?.type) &&
+    streamInfo?.service === 'cctv' &&
+    streamInfo?.isHLS === true;
+
 const buildIndexedOriginalRequest = (originalRequest, index, total) =>
     originalRequest
         ? {
@@ -461,10 +466,17 @@ function wrapStream(streamInfo) {
     }
 
     const useInternalFfmpegInputs = shouldUseInternalFfmpegInputs(streamInfo);
+    const useDirectFfmpegInputs = shouldUseDirectFfmpegInputs(streamInfo);
 
     // FFmpeg usually reads from signed public tunnels, but Vimeo HLS merge/remux
     // works more reliably through localhost itunnels to avoid auth failures.
-    if (isFfmpegStreamType(streamInfo.type) && !useInternalFfmpegInputs) {
+    // CCTV HLS is already resolved locally and can be read from the CDN without
+    // sending the manifest through the public API domain and back into this pod.
+    if (
+        isFfmpegStreamType(streamInfo.type) &&
+        !useInternalFfmpegInputs &&
+        !useDirectFfmpegInputs
+    ) {
         if (typeof url === 'string') {
             streamInfo.urls = createStream({
                 type: 'proxy',
@@ -502,7 +514,7 @@ function wrapStream(streamInfo) {
                 });
             });
         }
-    } else {
+    } else if (!useDirectFfmpegInputs) {
         // For other types, use internal streams as before
         if (typeof url === 'string') {
             const selected = pickRandomCandidateUrl(url, streamInfo.urlCandidates);

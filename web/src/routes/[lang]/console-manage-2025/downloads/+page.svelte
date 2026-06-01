@@ -245,14 +245,12 @@
     async function openVideo(item: DownloadAttempt) {
         if (!canOpenVideo(item) || mediaLoadingId === item.id) return;
 
-        const popup = window.open("", "_blank");
         mediaLoadingId = item.id;
         mediaErrors = { ...mediaErrors, [item.id]: "" };
 
         try {
             const token = getToken();
             if (!token) {
-                popup?.close();
                 goto(`/${lang}/console-manage-2025`);
                 return;
             }
@@ -272,13 +270,7 @@
 
             const url = cleanUrl(data.data.url);
             mediaUrls = { ...mediaUrls, [item.id]: url };
-            if (popup) {
-                popup.location.href = url;
-            } else {
-                window.open(url, "_blank", "noopener,noreferrer");
-            }
         } catch (e) {
-            popup?.close();
             mediaErrors = {
                 ...mediaErrors,
                 [item.id]: e instanceof Error ? e.message : "refresh failed",
@@ -468,7 +460,11 @@
                                             disabled={mediaLoadingId === item.id}
                                             on:click={() => void openVideo(item)}
                                         >
-                                            {mediaLoadingId === item.id ? "Refreshing..." : "Open video"}
+                                            {mediaLoadingId === item.id
+                                                ? "Refreshing..."
+                                                : mediaUrls[item.id]
+                                                  ? "Refresh URL"
+                                                  : "Generate video URL"}
                                         </button>
                                         {#if mediaUrls[item.id]}
                                             <a
@@ -478,7 +474,7 @@
                                                 rel="noreferrer"
                                                 title={mediaUrls[item.id]}
                                             >
-                                                accessible URL
+                                                Open video
                                             </a>
                                         {/if}
                                         {#if mediaErrors[item.id]}

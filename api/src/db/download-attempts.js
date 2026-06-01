@@ -184,6 +184,25 @@ export const completeDownloadAttempt = async ({
     return result.rows[0] || null;
 };
 
+export const getDownloadAttemptById = async (id) => {
+    if (!isPostgresEnabled()) return null;
+
+    const parsedId = Number.parseInt(String(id), 10);
+    if (!Number.isFinite(parsedId) || parsedId <= 0) return null;
+
+    const result = await query(
+        `
+        SELECT *
+        FROM download_attempts
+        WHERE id = $1
+        LIMIT 1;
+        `,
+        [parsedId],
+    );
+
+    return result.rows[0] || null;
+};
+
 export const cleanupOldDownloadAttempts = async ({ retentionDays = 2 } = {}) => {
     if (!isPostgresEnabled()) return { deleted: 0, cutoff: null };
 

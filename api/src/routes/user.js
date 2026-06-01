@@ -31,7 +31,10 @@ import {
     listCreditOrdersForUser,
 } from "../db/credit-orders.js";
 import { listMembershipOrders } from "../db/membership-orders.js";
-import { listDownloadAttempts } from "../db/download-attempts.js";
+import {
+    getDownloadAttemptById,
+    listDownloadAttempts,
+} from "../db/download-attempts.js";
 import {
     createCuriousCatActivity,
     deleteCuriousCatActivity,
@@ -59,6 +62,9 @@ import {
     getClipboardPersonalSessionRuntime,
     invalidateClipboardPersonalSession,
 } from "../core/signaling.js";
+import { extract } from "../processing/url.js";
+import weibo from "../processing/services/weibo.js";
+import { createStream } from "../stream/manage.js";
 
 const router = express.Router();
 
@@ -371,6 +377,51 @@ router.get("/admin/download-attempts", requireAdminAuth, async (req, res) => {
             "SERVER_ERROR",
             "Failed to load download attempts",
         );
+    }
+});
+
+router.get("/admin/download-attempts/:id/media-url", requireAdminAuth, async (req, res) => {
+    try {
+        const attempt = await getDownloadAttemptById(req.params.id);
+        if (!attempt) {
+            return jsonError(res, 404, "NOT_FOUND", "Download attempt not found");
+        }
+
+        if (attempt.status !== "success") {
+            return jsonError(res, 409, "NOT_READY", "Only successful downloads have a media URL");
+        }
+
+        const parsed = extract(attempt.source_url);
+        if (parsed?.host !== "weibo") {
+            return jsonError(res, 400, "UNSUPPORTED_SERVICE", "Media URL refresh is currently available for Weibo downloads only");
+        }
+
+        const media = await weibo({
+            ...parsed.patternMatch,
+            quality: "max",
+            url: attempt.source_url,
+        });
+        if (!media?.urls || media?.error) {
+            return jsonError(res, 502, "MEDIA_REFRESH_FAILED", "Failed to refresh the Weibo video URL");
+        }
+
+        return res.json({
+            status: "success",
+            data: {
+                url: createStream({
+                    type: "proxy",
+                    url: media.urls,
+                    headers: media.headers,
+                    service: "weibo",
+                    filename: media.filename || "weibo-video.mp4",
+                    lifespanSec: 10 * 60,
+                }),
+                expires_in: 10 * 60,
+            },
+        });
+    } catch (error) {
+        console.error("GET /user/admin/download-attempts/:id/media-url error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to refresh media URL");
     }
 });
 

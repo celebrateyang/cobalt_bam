@@ -52,6 +52,9 @@
     let pages = 0;
     let sort: SortKey = "submitted_at";
     let order: SortOrder = "desc";
+    let mediaUrls: Record<number, string> = {};
+    let mediaLoadingId: number | null = null;
+    let mediaErrorId: number | null = null;
 
     $: lang = $page.params.lang;
 
@@ -100,6 +103,25 @@
         const trimmed = String(value || "").trim();
         const unquoted = trimmed.replace(/^["']+|["']+$/g, "");
         return unquoted || "#";
+    }
+
+    function displaySourceUrl(value: string | null | undefined) {
+        const url = cleanUrl(value);
+
+        try {
+            const parsed = new URL(url);
+            const match = parsed.pathname.match(/^\/_shortLink\/([^/]+)\/?$/);
+            if (
+                match?.[1] &&
+                ["douyin.com", "www.douyin.com"].includes(parsed.hostname)
+            ) {
+                return `https://v.douyin.com/${encodeURIComponent(decodeURIComponent(match[1]))}/`;
+            }
+        } catch {
+            // Keep the stored source URL when it cannot be parsed.
+        }
+
+        return url;
     }
 
     function rangeStart() {
@@ -214,6 +236,53 @@
 
         pageNum = 1;
         await loadAttempts();
+    }
+
+    function canOpenVideo(item: DownloadAttempt) {
+        return item.status === "success" && item.service === "weibo";
+    }
+
+    async function openVideo(item: DownloadAttempt) {
+        if (!canOpenVideo(item) || mediaLoadingId === item.id) return;
+
+        const popup = window.open("", "_blank");
+        mediaLoadingId = item.id;
+        mediaErrorId = null;
+
+        try {
+            const token = getToken();
+            if (!token) {
+                popup?.close();
+                goto(`/${lang}/console-manage-2025`);
+                return;
+            }
+
+            const res = await fetch(
+                `${currentApiURL()}/user/admin/download-attempts/${item.id}/media-url`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success" || !data?.data?.url) {
+                throw new Error(data?.error?.message || "Failed to refresh video URL");
+            }
+
+            const url = cleanUrl(data.data.url);
+            mediaUrls = { ...mediaUrls, [item.id]: url };
+            if (popup) {
+                popup.location.href = url;
+            } else {
+                window.open(url, "_blank", "noopener,noreferrer");
+            }
+        } catch {
+            popup?.close();
+            mediaErrorId = item.id;
+        } finally {
+            mediaLoadingId = null;
+        }
     }
 </script>
 
@@ -378,16 +447,42 @@
                             <td>
                                 <a
                                     class="url-cell selectable"
-                                    href={cleanUrl(item.source_url)}
+                                    href={displaySourceUrl(item.source_url)}
                                     target="_blank"
                                     rel="noreferrer"
-                                    title={cleanUrl(item.source_url)}
+                                    title={displaySourceUrl(item.source_url)}
                                 >
-                                    {cleanUrl(item.source_url)}
+                                    {displaySourceUrl(item.source_url)}
                                 </a>
                                 <div class="sub mono">
                                     {item.service || item.source_host || "-"} / {item.request_id}
                                 </div>
+                                {#if canOpenVideo(item)}
+                                    <div class="media-actions">
+                                        <button
+                                            class="media-trigger"
+                                            type="button"
+                                            disabled={mediaLoadingId === item.id}
+                                            on:click={() => void openVideo(item)}
+                                        >
+                                            {mediaLoadingId === item.id ? "Refreshing..." : "Open video"}
+                                        </button>
+                                        {#if mediaUrls[item.id]}
+                                            <a
+                                                class="media-url selectable"
+                                                href={mediaUrls[item.id]}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                title={mediaUrls[item.id]}
+                                            >
+                                                accessible URL
+                                            </a>
+                                        {/if}
+                                        {#if mediaErrorId === item.id}
+                                            <span class="media-error">refresh failed</span>
+                                        {/if}
+                                    </div>
+                                {/if}
                             </td>
                             <td>
                                 <span class={`status-badge status-${item.status}`}>
@@ -652,6 +747,40 @@
     .url-cell {
         text-decoration: underline;
         text-underline-offset: 2px;
+    }
+
+    .media-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+        font-size: 0.78rem;
+    }
+
+    .media-trigger {
+        border: none;
+        border-radius: 4px;
+        background: var(--primary);
+        color: var(--button-text);
+        padding: 3px 7px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+    }
+
+    .media-trigger:disabled {
+        opacity: 0.5;
+        cursor: wait;
+    }
+
+    .media-url {
+        color: var(--text);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .media-error {
+        color: var(--red);
     }
 
     .user-cell {

@@ -1040,8 +1040,10 @@ const expandDouyin = async (inputUrl) => {
         };
     }
 
-    // Explicit mix detail URLs can be expanded directly.
-    const mixMatch = url.pathname.match(/^\/share\/mix\/detail\/(\d+)\/?$/);
+    // Explicit mix detail and collection URLs can be expanded directly.
+    const mixMatch = url.pathname.match(
+        /^\/(?:share\/mix\/detail|collection)\/(\d+)(?:\/\d+)?\/?$/,
+    );
     if (mixMatch?.[1]) {
         const mixId = mixMatch[1];
         const [title, items] = await Promise.all([

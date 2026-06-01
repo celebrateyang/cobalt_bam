@@ -54,7 +54,7 @@
     let order: SortOrder = "desc";
     let mediaUrls: Record<number, string> = {};
     let mediaLoadingId: number | null = null;
-    let mediaErrorId: number | null = null;
+    let mediaErrors: Record<number, string> = {};
 
     $: lang = $page.params.lang;
 
@@ -247,7 +247,7 @@
 
         const popup = window.open("", "_blank");
         mediaLoadingId = item.id;
-        mediaErrorId = null;
+        mediaErrors = { ...mediaErrors, [item.id]: "" };
 
         try {
             const token = getToken();
@@ -277,9 +277,12 @@
             } else {
                 window.open(url, "_blank", "noopener,noreferrer");
             }
-        } catch {
+        } catch (e) {
             popup?.close();
-            mediaErrorId = item.id;
+            mediaErrors = {
+                ...mediaErrors,
+                [item.id]: e instanceof Error ? e.message : "refresh failed",
+            };
         } finally {
             mediaLoadingId = null;
         }
@@ -478,8 +481,8 @@
                                                 accessible URL
                                             </a>
                                         {/if}
-                                        {#if mediaErrorId === item.id}
-                                            <span class="media-error">refresh failed</span>
+                                        {#if mediaErrors[item.id]}
+                                            <span class="media-error">{mediaErrors[item.id]}</span>
                                         {/if}
                                     </div>
                                 {/if}

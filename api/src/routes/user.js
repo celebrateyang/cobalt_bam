@@ -105,6 +105,11 @@ const jsonError = (res, status, code, message) => {
     });
 };
 
+const cleanStoredSourceUrl = (value) =>
+    String(value || "")
+        .trim()
+        .replace(/^["']+|["']+$/g, "");
+
 const sanitizeLogValue = (value, maxLength = 200) => {
     if (value === null || value === undefined) {
         return null;
@@ -391,7 +396,8 @@ router.get("/admin/download-attempts/:id/media-url", requireAdminAuth, async (re
             return jsonError(res, 409, "NOT_READY", "Only successful downloads have a media URL");
         }
 
-        const parsed = extract(attempt.source_url);
+        const sourceUrl = cleanStoredSourceUrl(attempt.source_url);
+        const parsed = extract(sourceUrl);
         if (parsed?.host !== "weibo") {
             return jsonError(res, 400, "UNSUPPORTED_SERVICE", "Media URL refresh is currently available for Weibo downloads only");
         }
@@ -399,7 +405,7 @@ router.get("/admin/download-attempts/:id/media-url", requireAdminAuth, async (re
         const media = await weibo({
             ...parsed.patternMatch,
             quality: "max",
-            url: attempt.source_url,
+            url: sourceUrl,
         });
         if (!media?.urls || media?.error) {
             return jsonError(res, 502, "MEDIA_REFRESH_FAILED", "Failed to refresh the Weibo video URL");

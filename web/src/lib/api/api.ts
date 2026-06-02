@@ -21,6 +21,11 @@ const sanitizeLogHeaderValue = (value: unknown, maxLength: number) => {
     return trimmed;
 };
 
+const createTraceId = () => {
+    return globalThis.crypto?.randomUUID?.()
+        || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 const getClerkEmailHeaderValue = () => {
     const user = get(clerkUser);
 
@@ -115,6 +120,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
     const authorization = await getAuthorization();
     const clerkEmail = getClerkEmailHeaderValue();
     const clerkToken = await getClerkToken();
+    const traceId = createTraceId();
 
     if (authorization && typeof authorization !== "string") {
         return authorization;
@@ -131,7 +137,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
     const response: Optional<CobaltAPIResponse> = await fetch(api, {
         method: "POST",
         redirect: "manual",
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(30000),
         body: JSON.stringify(requestBody),
         headers: {
             "Accept": "application/json",
@@ -139,6 +145,7 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
             ...extraHeaders,
             ...(clerkEmail ? { "X-Clerk-Email": clerkEmail } : {}),
             ...(clerkToken ? { "X-Clerk-Token": clerkToken } : {}),
+            "X-FSV-Trace-ID": traceId,
         },
     })
     .then(r => r.json())

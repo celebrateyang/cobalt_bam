@@ -63,6 +63,10 @@ spec:
                 {{- end }}
                 - name: UPSTREAM_TIMEOUT_MS
                   value: {{ .timeoutMs | default 12000 | quote }}
+                - name: UPSTREAM_YOUTUBE_HEADERS_TIMEOUT_MS
+                  value: {{ .youtubeHeadersTimeoutMs | default 20000 | quote }}
+                - name: UPSTREAM_BODY_TIMEOUT_MS
+                  value: {{ .bodyTimeoutMs | default 5000 | quote }}
                 - name: UPSTREAM_MAX_ATTEMPTS
                   value: {{ .maxAttempts | default 2 | quote }}
                 - name: UPSTREAM_CIRCUIT_FAILURES

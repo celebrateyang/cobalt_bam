@@ -604,8 +604,10 @@ const buildFilenameAttributes = ({
     };
 };
 
-const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
+const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
+    const runnerStartedAt = Date.now();
     const runner = await resolveYtDlpCommand();
+    const runnerWaitMs = Date.now() - runnerStartedAt;
     if (!runner) {
         return { error: "fetch.fail", message: "yt-dlp executable not found" };
     }
@@ -652,16 +654,31 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader }) => {
 
         args.push(`https://www.youtube.com/watch?v=${id}`);
 
+        const startedAt = Date.now();
+        console.log(
+            `[YOUTUBE STAGE] trace_id=${traceId || "n/a"} event=ytdlp_start id=${id} runner_wait_ms=${runnerWaitMs} timeout_ms=${timeoutMs}`,
+        );
         const result = await runProcess(runner.command, args, timeoutMs);
+        const elapsedMs = Date.now() - startedAt;
         if (result.error || result.timedOut || result.code !== 0) {
             const message = result.error?.message || result.stderr || result.stdout || "";
+            console.warn(
+                `[YOUTUBE STAGE] trace_id=${traceId || "n/a"} event=ytdlp_fail id=${id} elapsed_ms=${elapsedMs} timed_out=${result.timedOut === true} exit_code=${result.code ?? "n/a"}`,
+            );
             return {
-                error: parseYtDlpError(message),
+                error: result.timedOut ? "youtube.timeout" : parseYtDlpError(message),
                 message,
             };
         }
 
+        console.log(
+            `[YOUTUBE STAGE] trace_id=${traceId || "n/a"} event=ytdlp_process_complete id=${id} elapsed_ms=${elapsedMs}`,
+        );
+        const jsonStartedAt = Date.now();
         const parsed = parseYtDlpJson(result.stdout);
+        console.log(
+            `[YOUTUBE STAGE] trace_id=${traceId || "n/a"} event=ytdlp_json_complete id=${id} json_ms=${Date.now() - jsonStartedAt} stdout_bytes=${Buffer.byteLength(result.stdout || "", "utf8")}`,
+        );
         if (!parsed || typeof parsed !== "object") {
             return {
                 error: "fetch.fail",
@@ -878,6 +895,7 @@ const buildYoutubeResult = ({
 };
 
 export default async function youtube(o) {
+    const startedAt = Date.now();
     const requestClientIp = normalizeIp(o.requestClientIp || "");
     const browserCookieHeader = getCookie("youtube")?.toString() || "";
     const targetQuality = o.quality === "max" ? 9000 : parseNumber(o.quality) || 1080;
@@ -903,13 +921,14 @@ export default async function youtube(o) {
     let lastError = "fetch.fail";
     for (const attempt of attempts) {
         console.log(
-            `======> [youtube] yt-dlp parse start id=${o.id} mode=${mode} quality=${targetQuality} client_ip=${attempt.requestClientIp || "n/a"} cookie=${attempt.cookieHeader ? "yes" : "no"} attempt=${attempt.name}`,
+            `======> [youtube] trace_id=${o.traceId || "n/a"} event=parse_attempt_start id=${o.id} mode=${mode} quality=${targetQuality} client_ip=${attempt.requestClientIp || "n/a"} cookie=${attempt.cookieHeader ? "yes" : "no"} attempt=${attempt.name} wait_ms=${Number.isFinite(o.traceReceivedAtMs) ? Date.now() - o.traceReceivedAtMs : "n/a"}`,
         );
 
         const extracted = await runYtDlp({
             id: o.id,
             requestClientIp: attempt.requestClientIp,
             cookieHeader: attempt.cookieHeader,
+            traceId: o.traceId,
         });
 
         if (extracted.error) {
@@ -918,6 +937,7 @@ export default async function youtube(o) {
             continue;
         }
 
+        const buildStartedAt = Date.now();
         const built = buildYoutubeResult({
             info: extracted.info,
             o,
@@ -926,6 +946,9 @@ export default async function youtube(o) {
         });
 
         if (!built?.error) {
+            console.log(
+                `[YOUTUBE STAGE] trace_id=${o.traceId || "n/a"} event=parse_complete id=${o.id} build_ms=${Date.now() - buildStartedAt} elapsed_ms=${Date.now() - startedAt}`,
+            );
             return built;
         }
 

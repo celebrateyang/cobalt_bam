@@ -88,6 +88,11 @@ const getRequestHost = (payload) => {
     }
 };
 
+const isYouTubeHost = (host) =>
+    host === "youtu.be"
+    || host === "youtube.com"
+    || host.endsWith(".youtube.com");
+
 const shouldWrapUpstreamTunnelLocally = (payload, value) => {
     if (typeof value !== "string") return false;
 
@@ -150,7 +155,10 @@ const requestUpstreamCobalt = async (payload) => {
     const upstream = await requestUpstream({
         payload,
         service: getRequestHost(payload) || "download",
-        timeoutMs,
+        timeoutMs: isYouTubeHost(getRequestHost(payload))
+            ? Math.max(timeoutMs, env.upstreamYoutubeHeadersTimeoutMs)
+            : timeoutMs,
+        bodyTimeoutMs: env.upstreamBodyTimeoutMs,
         returnFailureResponse: true,
     });
 
@@ -364,6 +372,8 @@ export default async function({ host, patternMatch, params, authType }) {
                     youtubeHLS,
                     subtitleLang,
                     requestClientIp: params.requestClientIp,
+                    traceId: params.traceId,
+                    traceReceivedAtMs: params.traceReceivedAtMs,
                 }
 
                 if (url.hostname === "music.youtube.com" || isAudioOnly) {
@@ -656,6 +666,7 @@ export default async function({ host, patternMatch, params, authType }) {
                         "youtube.no_session_tokens": "youtube.login",
                         "youtube.api_error": "fetch.fail",
                         "youtube.no_matching_format": "fetch.fail",
+                        "youtube.timeout": "youtube.timeout",
                     }[r.error] || r.error)
                     : r.error;
 

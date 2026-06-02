@@ -56,5 +56,8 @@
     "api.upstream.timeout": "現在 YouTube 解析ノードが混み合っているか、応答がタイムアウトしました。1 分ほど待ってからもう一度お試しください。",
     "api.upstream.circuit_open": "YouTube 解析ノードで一時的な失敗が発生し、クールダウン中です。1 分ほど待ってからもう一度お試しください。",
     "api.upstream.unavailable": "現在利用できる YouTube 解析ノードがありません。少し後でもう一度お試しください。",
-    "api.bilibili.space.unsupported": "Bilibiliスペースのコレクション一覧ページはまだ直接対応していません。コレクション内の個別動画を開き、その動画リンクをコピーしてもう一度お試しください。"
+    "api.bilibili.space.unsupported": "Bilibiliスペースのコレクション一覧ページはまだ直接対応していません。コレクション内の個別動画を開き、その動画リンクをコピーしてもう一度お試しください。",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

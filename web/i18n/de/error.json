@@ -56,5 +56,8 @@
     "api.upstream.timeout": "Der YouTube-Verarbeitungsknoten ist gerade ausgelastet oder hat zu langsam geantwortet. Bitte warte etwa 1 Minute und versuche es erneut.",
     "api.upstream.circuit_open": "Der YouTube-Verarbeitungsknoten hatte gerade einen kurzen Fehler und kuehlt ab. Bitte warte etwa 1 Minute und versuche es erneut.",
     "api.upstream.unavailable": "Im Moment ist kein YouTube-Verarbeitungsknoten verfuegbar. Bitte versuche es spaeter erneut.",
-    "api.bilibili.space.unsupported": "Bilibili-Space-Sammlungsseiten werden noch nicht direkt unterstuetzt. Oeffne ein konkretes Video in der Sammlung, kopiere den Videolink und versuche es erneut."
+    "api.bilibili.space.unsupported": "Bilibili-Space-Sammlungsseiten werden noch nicht direkt unterstuetzt. Oeffne ein konkretes Video in der Sammlung, kopiere den Videolink und versuche es erneut.",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

@@ -1,5 +1,6 @@
 import cors from "cors";
 import http from "node:http";
+import { randomUUID } from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { setGlobalDispatcher, EnvHttpProxyAgent, request as undiciRequest } from "undici";
 import { getCommit, getBranch, getRemote, getVersion } from "@imput/version-info";
@@ -123,8 +124,11 @@ const readableDownloadErrors = new Map([
     ["error.api.points.unavailable", "Points service is temporarily unavailable."],
     ["error.api.rate_exceeded", "The same download was submitted too frequently."],
     ["error.api.upstream.circuit_open", "The upstream processing node is in circuit cooldown after recent failures. Ask the user to retry in about 1 minute."],
-    ["error.api.upstream.timeout", "The upstream processing node timed out before it could fetch the media. Ask the user to retry in about 1 minute."],
+    ["error.api.upstream.timeout", "The upstream processing node did not respond in time. This may be a temporary tunnel or processing delay. Ask the user to retry shortly."],
+    ["error.api.upstream.network", "The upstream processing node could not be reached reliably. Ask the user to retry shortly."],
+    ["error.api.upstream.incomplete", "The upstream processing node returned an incomplete response. Ask the user to retry shortly."],
     ["error.api.upstream.unavailable", "No upstream processing node is currently available. Ask the user to retry later."],
+    ["error.api.youtube.timeout", "YouTube extraction itself exceeded its processing limit. Ask the user to retry later."],
     ["error.api.user.disabled", "This user account is disabled."],
 ]);
 
@@ -538,6 +542,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "xrequestid",
         "XRequestId",
         "X-Request-Id",
+        "X-FSV-Trace-ID",
     ];
 
     app.use('/social', cors({
@@ -547,7 +552,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             'Ratelimit-Limit',
             'Ratelimit-Policy',
             'Ratelimit-Remaining',
-            'Ratelimit-Reset'
+            'Ratelimit-Reset',
+            'X-FSV-Trace-ID',
+            'X-FSV-App-Elapsed-Ms',
+            'Server-Timing'
         ],
         ...corsConfig,
     }));
@@ -559,10 +567,50 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             'Ratelimit-Limit',
             'Ratelimit-Policy',
             'Ratelimit-Remaining',
-            'Ratelimit-Reset'
+            'Ratelimit-Reset',
+            'X-FSV-Trace-ID',
+            'X-FSV-App-Elapsed-Ms',
+            'Server-Timing'
         ],
         ...corsConfig,
     }));
+
+    app.use((req, res, next) => {
+        const incomingTraceId = sanitizeLogHeaderValue(req.header("X-FSV-Trace-ID"), 128);
+        const traceId = incomingTraceId || randomUUID();
+        const receivedAt = Date.now();
+        req.traceId = traceId;
+        req.fsvReceivedAt = receivedAt;
+        res.setHeader("X-FSV-Trace-ID", traceId);
+
+        const originalWriteHead = res.writeHead;
+        res.writeHead = function(...args) {
+            if (!res.headersSent) {
+                const appElapsedMs = Date.now() - receivedAt;
+                res.setHeader("X-FSV-App-Elapsed-Ms", String(appElapsedMs));
+                res.setHeader("Server-Timing", `fsv_app;dur=${appElapsedMs}`);
+                if (req.method === "POST" && req.path === "/") {
+                    console.log(
+                        `[DOWNLOAD STAGE] trace_id=${traceId} event=response_start role=${serverRole} app_elapsed_ms=${appElapsedMs}`,
+                    );
+                }
+            }
+            return originalWriteHead.apply(this, args);
+        };
+
+        if (req.method === "POST" && req.path === "/") {
+            console.log(
+                `[DOWNLOAD STAGE] trace_id=${traceId} event=request_received role=${serverRole}`,
+            );
+            res.on("finish", () => {
+                console.log(
+                    `[DOWNLOAD STAGE] trace_id=${traceId} event=response_complete role=${serverRole} http_status=${res.statusCode} app_elapsed_ms=${Date.now() - receivedAt}`,
+                );
+            });
+        }
+
+        next();
+    });
 
     app.use(
         express.json({
@@ -754,7 +802,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
         const normalizedRequest = normalized.data;
         let email = resolveDownloadLogEmail({ req });
-        const requestId = Math.random().toString(36).slice(2, 10);
+        const requestId = req.traceId || randomUUID();
         const requestTime = new Date().toISOString();
         const startedAtMs = Date.now();
         let downloadAttemptCreateTask = null;
@@ -1039,6 +1087,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     params: {
                         ...normalizedRequest,
                         requestClientIp,
+                        traceId: requestId,
+                        traceReceivedAtMs: req.fsvReceivedAt,
                     },
                     authType,
                 });

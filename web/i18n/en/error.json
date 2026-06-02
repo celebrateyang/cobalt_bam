@@ -66,8 +66,11 @@
     "queue.generic_error": "download worker failed to start. refresh the page and try again.",
     "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again.",
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
-    "api.upstream.timeout": "The YouTube processing node is busy right now. Please wait about 1 minute and try again.",
+    "api.upstream.timeout": "The processing node did not respond in time. This may be a temporary link fluctuation or service congestion, not a problem with your video. Please try again shortly.",
     "api.upstream.circuit_open": "The YouTube processing node is cooling down after a temporary failure. Please wait about 1 minute and try again.",
     "api.upstream.unavailable": "No YouTube processing node is available right now. Please try again later.",
-    "api.bilibili.space.unsupported": "Bilibili space collection pages are not supported yet. Open one video inside the collection, copy that video link, and try again."
+    "api.bilibili.space.unsupported": "Bilibili space collection pages are not supported yet. Open one video inside the collection, copy that video link, and try again.",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

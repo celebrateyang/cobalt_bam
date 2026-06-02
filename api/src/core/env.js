@@ -111,6 +111,11 @@ export const loadEnvs = (env = process.env) => {
             env.UPSTREAM_TIMEOUT_MS ?? env.INSTAGRAM_UPSTREAM_TIMEOUT_MS,
             12000,
         ),
+        upstreamYoutubeHeadersTimeoutMs: parsePositiveInt(
+            env.UPSTREAM_YOUTUBE_HEADERS_TIMEOUT_MS,
+            20000,
+        ),
+        upstreamBodyTimeoutMs: parsePositiveInt(env.UPSTREAM_BODY_TIMEOUT_MS, 5000),
         upstreamMaxAttempts: parsePositiveInt(env.UPSTREAM_MAX_ATTEMPTS, 2),
         upstreamCircuitFailures: parsePositiveInt(env.UPSTREAM_CIRCUIT_FAILURES, 3),
         upstreamCircuitCooldownMs: parsePositiveInt(env.UPSTREAM_CIRCUIT_COOLDOWN_MS, 60000),

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { env } from "../../config.js";
 import {
     getUpstreamNodes,
@@ -87,6 +89,18 @@ const resolveTimeoutMs = (overrideMs) => {
     return env.upstreamTimeoutMs || env.instagramUpstreamTimeoutMs || 12000;
 };
 
+const resolveBodyTimeoutMs = (overrideMs) => {
+    if (
+        typeof overrideMs === "number" &&
+        Number.isFinite(overrideMs) &&
+        overrideMs > 0
+    ) {
+        return overrideMs;
+    }
+
+    return env.upstreamBodyTimeoutMs || 5000;
+};
+
 const resolveMaxAttempts = (overrideAttempts) => {
     const value =
         typeof overrideAttempts === "number" && Number.isFinite(overrideAttempts)
@@ -103,7 +117,7 @@ const errorReason = (error) => {
     return truncate([code, message].filter(Boolean).join(":"));
 };
 
-const classifyFetchError = (error) => {
+const classifyFetchError = (error, phase) => {
     const reason = errorReason(error);
     const name = String(error?.name || "");
     const code = String(error?.code || error?.cause?.code || "");
@@ -115,15 +129,29 @@ const classifyFetchError = (error) => {
         message.toLowerCase().includes("aborted")
     ) {
         return {
-            code: "upstream.timeout",
+            code: phase === "body" ? "upstream.incomplete" : "upstream.timeout",
             reason,
+            retryable: false,
         };
     }
 
     return {
-        code: "upstream.unavailable",
+        code: "upstream.network",
         reason,
+        retryable: true,
     };
+};
+
+const parseTimingHeaderMs = (response, name) => {
+    const raw = response.headers.get(name);
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed) : null;
+};
+
+const calculateTunnelMs = (totalMs, upstreamAppMs) => {
+    if (!Number.isFinite(upstreamAppMs)) return null;
+    return Math.max(0, totalMs - upstreamAppMs);
 };
 
 const summarizeSelectionBlockers = (excluded, regions) => {
@@ -258,6 +286,7 @@ export const requestUpstream = async ({
     service = "upstream",
     path = "/",
     timeoutMs,
+    bodyTimeoutMs,
     maxAttempts,
     buildBody = buildUpstreamDownloadBody,
     headers: extraHeaders = {},
@@ -265,7 +294,11 @@ export const requestUpstream = async ({
     requireStatus = true,
     returnFailureResponse = false,
 } = {}) => {
+    const traceId = String(payload?.traceId || randomUUID()).slice(0, 128);
     if (!hasUpstreams()) {
+        console.warn(
+            `[UPSTREAM BLOCKED] trace_id=${traceId} event=upstream.unavailable reason=no_upstreams_configured`,
+        );
         return returnFailureResponse
             ? createFailureResponse({
                 code: "upstream.unavailable",
@@ -297,6 +330,9 @@ export const requestUpstream = async ({
                         reason: "circuit_open",
                         retryAfterSeconds: blockers.retryAfterSeconds,
                     });
+                    console.warn(
+                        `[UPSTREAM BLOCKED] trace_id=${traceId} event=upstream.circuit_open service=${service} regions=${regions.join("|")} circuit_open=${blockers.circuitOpen} retry_after_seconds=${blockers.retryAfterSeconds}`,
+                    );
                 }
                 break;
             }
@@ -307,8 +343,10 @@ export const requestUpstream = async ({
 
             const endpoint = new URL(path, node.url);
             const effectiveTimeoutMs = resolveTimeoutMs(timeoutMs);
+            const effectiveBodyTimeoutMs = resolveBodyTimeoutMs(bodyTimeoutMs);
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), effectiveTimeoutMs);
+            let phase = "headers";
+            let timeout = setTimeout(() => controller.abort(), effectiveTimeoutMs);
             const startedAt = Date.now();
 
             const headers = {
@@ -316,6 +354,7 @@ export const requestUpstream = async ({
                 "Content-Type": "application/json",
                 "ngrok-skip-browser-warning": "true",
                 ...extraHeaders,
+                "X-FSV-Trace-ID": traceId,
             };
 
             if (env.upstreamApiKey) {
@@ -329,7 +368,7 @@ export const requestUpstream = async ({
 
             try {
                 console.log(
-                    `[UPSTREAM REQUEST] service=${service} policy=${regionPlan.name} regions=${regions.join("|")} attempt=${attemptNo} upstream=${node.origin} region=${node.region} target_host=${targetHost} timeout_ms=${effectiveTimeoutMs}`,
+                    `[UPSTREAM REQUEST] trace_id=${traceId} event=request_start service=${service} policy=${regionPlan.name} regions=${regions.join("|")} attempt=${attemptNo} upstream=${node.origin} region=${node.region} target_host=${targetHost} headers_timeout_ms=${effectiveTimeoutMs} body_timeout_ms=${effectiveBodyTimeoutMs}`,
                 );
 
                 const response = await fetch(endpoint, {
@@ -339,8 +378,18 @@ export const requestUpstream = async ({
                     body: JSON.stringify(buildBody(payload)),
                 });
 
+                const headersMs = Date.now() - startedAt;
+                const upstreamAppMs = parseTimingHeaderMs(response, "x-fsv-app-elapsed-ms");
+                console.log(
+                    `[UPSTREAM STAGE] trace_id=${traceId} event=response_headers service=${service} upstream=${node.origin} region=${node.region} http=${response.status} headers_ms=${headersMs} upstream_app_ms=${upstreamAppMs ?? "n/a"}`,
+                );
+                clearTimeout(timeout);
+                phase = "body";
+                timeout = setTimeout(() => controller.abort(), effectiveBodyTimeoutMs);
                 const body = await response.json().catch(() => null);
                 const elapsedMs = Date.now() - startedAt;
+                const bodyMs = elapsedMs - headersMs;
+                const tunnelMs = calculateTunnelMs(elapsedMs, upstreamAppMs);
 
                 if (
                     !body ||
@@ -348,8 +397,14 @@ export const requestUpstream = async ({
                     (requireStatus && typeof body.status !== "string")
                 ) {
                     markUpstreamFailure(node, `invalid_json:http_${response.status}`);
+                    lastErrorResult = createFailureResponse({
+                        code: "upstream.incomplete",
+                        service,
+                        reason: `invalid_json:http_${response.status}`,
+                        retryAfterSeconds: 5,
+                    });
                     console.warn(
-                        `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=invalid_json http=${response.status} elapsed_ms=${elapsedMs}`,
+                        `[UPSTREAM FAILOVER] trace_id=${traceId} event=response_incomplete service=${service} upstream=${node.origin} region=${node.region} reason=invalid_json http=${response.status} headers_ms=${headersMs} body_ms=${bodyMs} total_ms=${elapsedMs} upstream_app_ms=${upstreamAppMs ?? "n/a"} tunnel_ms=${tunnelMs ?? "n/a"}`,
                     );
                     continue;
                 }
@@ -357,6 +412,12 @@ export const requestUpstream = async ({
                 if (!response.ok) {
                     if (isFailoverStatus(response.status)) {
                         markUpstreamFailure(node, `http_${response.status}`);
+                        lastErrorResult = createFailureResponse({
+                            code: "upstream.unavailable",
+                            service,
+                            reason: `http_${response.status}`,
+                            retryAfterSeconds: 5,
+                        });
                         continue;
                     }
                     return null;
@@ -364,7 +425,7 @@ export const requestUpstream = async ({
 
                 markUpstreamSuccess(node, elapsedMs);
                 console.log(
-                    `[UPSTREAM RESULT] service=${service} upstream=${node.origin} region=${node.region} http=${response.status} status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
+                    `[UPSTREAM RESULT] trace_id=${traceId} event=response_complete service=${service} upstream=${node.origin} region=${node.region} http=${response.status} status=${logResultStatus(body)} headers_ms=${headersMs} body_ms=${bodyMs} total_ms=${elapsedMs} upstream_app_ms=${upstreamAppMs ?? "n/a"} tunnel_ms=${tunnelMs ?? "n/a"}`,
                 );
 
                 if (acceptResponse && !acceptResponse({ response, body, node })) {
@@ -384,6 +445,9 @@ export const requestUpstream = async ({
                     console.warn(
                         `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=body_error status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
                     );
+                    if (body.error?.code === "error.api.youtube.timeout") {
+                        return lastErrorResult;
+                    }
                     continue;
                 }
 
@@ -395,7 +459,7 @@ export const requestUpstream = async ({
                 };
             } catch (error) {
                 const elapsedMs = Date.now() - startedAt;
-                const failure = classifyFetchError(error);
+                const failure = classifyFetchError(error, phase);
                 const reason = failure.reason;
                 markUpstreamFailure(node, reason);
                 if (returnFailureResponse || !lastErrorResult) {
@@ -407,7 +471,13 @@ export const requestUpstream = async ({
                     });
                 }
                 console.warn(
-                    `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=${reason} elapsed_ms=${elapsedMs}`,
+                    `[UPSTREAM FAILOVER] trace_id=${traceId} event=${failure.code} phase=${phase} service=${service} upstream=${node.origin} region=${node.region} reason=${reason} total_ms=${elapsedMs} retryable=${failure.retryable}`,
+                );
+                if (!failure.retryable) {
+                    return lastErrorResult?.upstreamFailure ? lastErrorResult : null;
+                }
+                console.warn(
+                    `[UPSTREAM RETRY] trace_id=${traceId} event=retry_next_node service=${service} failed_upstream=${node.origin} next_attempt=${attemptNo + 1}`,
                 );
             } finally {
                 clearTimeout(timeout);

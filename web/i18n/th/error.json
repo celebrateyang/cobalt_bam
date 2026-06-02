@@ -49,5 +49,8 @@
     "api.upstream.timeout": "โหนดประมวลผล YouTube กำลังยุ่งหรือตอบสนองช้าเกินไป โปรดรอประมาณ 1 นาทีแล้วลองใหม่",
     "api.upstream.circuit_open": "โหนดประมวลผล YouTube เพิ่งล้มเหลวชั่วคราวและกำลังพักการใช้งาน โปรดรอประมาณ 1 นาทีแล้วลองใหม่",
     "api.upstream.unavailable": "ตอนนี้ไม่มีโหนดประมวลผล YouTube ที่ใช้ได้ โปรดลองใหม่ในภายหลัง",
-    "api.bilibili.space.unsupported": "ยังไม่รองรับหน้ารวมคอลเลกชันของ Bilibili space โดยตรง โปรดเปิดวิดีโอรายการใดรายการหนึ่งในคอลเลกชัน คัดลอกลิงก์วิดีโอนั้น แล้วลองใหม่อีกครั้ง"
+    "api.bilibili.space.unsupported": "ยังไม่รองรับหน้ารวมคอลเลกชันของ Bilibili space โดยตรง โปรดเปิดวิดีโอรายการใดรายการหนึ่งในคอลเลกชัน คัดลอกลิงก์วิดีโอนั้น แล้วลองใหม่อีกครั้ง",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

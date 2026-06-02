@@ -22,6 +22,8 @@ upstream:
   globalUrls: ""
   cnUrls: ""
   timeoutMs: 12000
+  youtubeHeadersTimeoutMs: 20000
+  bodyTimeoutMs: 5000
   maxAttempts: 2
   circuitFailures: 3
   circuitCooldownMs: 60000

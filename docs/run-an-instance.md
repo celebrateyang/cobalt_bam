@@ -93,7 +93,9 @@ sudo service nscd start
 | `UPSTREAM_GLOBAL_URLS` | not used | `https://api3.example.com` | optional comma-separated global/overseas upstream pool. overrides automatic region detection for matching URLs and may add URLs not present in `UPSTREAM_URLS`. |
 | `UPSTREAM_CN_URLS` | not used | `https://api4.example.com` | optional comma-separated China mainland upstream pool. overrides automatic region detection for matching URLs and may add URLs not present in `UPSTREAM_URLS`. |
 | `UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value sent to upstream nodes. supersedes `INSTAGRAM_UPSTREAM_API_KEY` when set. |
-| `UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. supersedes `INSTAGRAM_UPSTREAM_TIMEOUT_MS` when set. |
+| `UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | headers wait timeout (ms) for ordinary upstream fallback requests. supersedes `INSTAGRAM_UPSTREAM_TIMEOUT_MS` when set. |
+| `UPSTREAM_YOUTUBE_HEADERS_TIMEOUT_MS` | `20000` | `20000` | YouTube-specific upstream headers wait timeout (ms). Allows normal yt-dlp work to finish without using the same budget for JSON body transfer. |
+| `UPSTREAM_BODY_TIMEOUT_MS` | `5000` | `5000` | timeout (ms) for reading the upstream JSON response after headers arrive. |
 | `UPSTREAM_MAX_ATTEMPTS` | `2` | `1` | maximum upstream nodes to try for one request. single-node pools are tried once. |
 | `UPSTREAM_CIRCUIT_FAILURES` | `3` | `3` | consecutive node-level failures before an upstream is temporarily removed from selection. |
 | `UPSTREAM_CIRCUIT_COOLDOWN_MS` | `60000` | `120000` | cooldown before a failed upstream node can be tried again. |
@@ -134,6 +136,8 @@ Notes:
 
 #### Upstream pool health
 When multiple upstream URLs are configured, the API tracks node-level failures and temporarily removes unhealthy nodes after `UPSTREAM_CIRCUIT_FAILURES` consecutive network/timeout/5xx failures. The admin-protected `GET /upstreams/health` endpoint returns the current pool state, including circuit status, consecutive failures, latency, and last success/failure times.
+
+Each upstream request carries `X-FSV-Trace-ID`. Main API logs split `headers_ms`, `body_ms`, `upstream_app_ms`, and inferred `tunnel_ms`; the upstream app logs the same trace around request receipt, yt-dlp start/completion, and response start/completion. Timeout failures are not automatically replayed on another node because the first node may still be finishing expensive extraction work. Network failures can still use node-level failover.
 
 Upstream nodes are region-aware. By default, hostnames matching `api<number>.freesavevideo.online` are classified by parity: odd numbers are `global`, even numbers are `cn`. Foreign services such as YouTube, Instagram, X/Twitter, Facebook, and TikTok use global upstreams only. China services such as Douyin, Bilibili, Kuaishou, Haokan, Xiaohongshu, and CCTV prefer `cn` upstreams and automatically fall back to `global` upstreams when cn nodes are unavailable or fail. Use `UPSTREAM_GLOBAL_URLS` and `UPSTREAM_CN_URLS` to override or extend the automatic classification.
 

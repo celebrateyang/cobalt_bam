@@ -56,5 +56,8 @@
     "api.upstream.timeout": "El nodo de procesamiento de YouTube esta ocupado o tardo demasiado en responder. Espera aproximadamente 1 minuto e intentalo de nuevo.",
     "api.upstream.circuit_open": "El nodo de procesamiento de YouTube tuvo un fallo temporal y esta en enfriamiento. Espera aproximadamente 1 minuto e intentalo de nuevo.",
     "api.upstream.unavailable": "No hay ningun nodo de procesamiento de YouTube disponible ahora. Intentalo de nuevo mas tarde.",
-    "api.bilibili.space.unsupported": "Las paginas de colecciones del espacio de Bilibili aun no se admiten directamente. Abre un video concreto dentro de la coleccion, copia ese enlace de video e intentalo de nuevo."
+    "api.bilibili.space.unsupported": "Las paginas de colecciones del espacio de Bilibili aun no se admiten directamente. Abre un video concreto dentro de la coleccion, copia ese enlace de video e intentalo de nuevo.",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

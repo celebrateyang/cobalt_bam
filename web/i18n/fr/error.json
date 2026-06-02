@@ -56,5 +56,8 @@
     "api.upstream.timeout": "Le noeud de traitement YouTube est occupe ou a mis trop de temps a repondre. Attendez environ 1 minute, puis reessayez.",
     "api.upstream.circuit_open": "Le noeud de traitement YouTube vient d avoir une erreur temporaire et refroidit. Attendez environ 1 minute, puis reessayez.",
     "api.upstream.unavailable": "Aucun noeud de traitement YouTube n est disponible pour le moment. Reessayez plus tard.",
-    "api.bilibili.space.unsupported": "Les pages de collections d un espace Bilibili ne sont pas encore prises en charge directement. Ouvrez une video precise dans la collection, copiez son lien, puis reessayez."
+    "api.bilibili.space.unsupported": "Les pages de collections d un espace Bilibili ne sont pas encore prises en charge directement. Ouvrez une video precise dans la collection, copiez son lien, puis reessayez.",
+    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
+    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
 }

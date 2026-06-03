@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cobalt-postgresql.fullname" . }}
+  labels:
+    {{- include "cobalt-postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp-postgresql
+      port: {{ .Values.service.port }}
+      targetPort: tcp-postgresql
+  selector:
+    {{- include "cobalt-postgresql.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cobalt-postgresql.fullname" . }}-headless
+  labels:
+    {{- include "cobalt-postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: tcp-postgresql
+      port: {{ .Values.service.port }}
+      targetPort: tcp-postgresql
+  selector:
+    {{- include "cobalt-postgresql.selectorLabels" . | nindent 4 }}

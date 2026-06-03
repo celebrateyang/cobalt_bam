@@ -135,7 +135,7 @@ jobs:
               --set image.repository=${IMAGE} \
               --set image.tag=<< parameters.tag_prefix >>-${CIRCLE_SHA1} \
               --set database.type=${DB_TYPE} \
-              --set database.host=${DB_HOST} \
+              --set database.host=cobalt-postgresql.infra.svc.cluster.local \
               --set database.port=${DB_PORT} \
               --set database.user=${DB_USER} \
               --set database.password="${DB_PASSWORD}" \

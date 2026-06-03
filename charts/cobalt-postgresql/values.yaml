@@ -1,0 +1,47 @@
+replicaCount: 1
+
+image:
+  registry: docker.io
+  repository: bitnamilegacy/postgresql
+  tag: 13.0.0
+  pullPolicy: IfNotPresent
+
+auth:
+  database: asyncproxy
+  username: emag
+  existingSecret: cobalt-postgresql-secret
+  userPasswordKey: password
+  postgresPasswordKey: postgres-password
+  password: ""
+  postgresPassword: ""
+
+persistence:
+  storageClassName: ssd
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+service:
+  port: 5432
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+podSecurityContext:
+  fsGroup: 1001
+
+containerSecurityContext:
+  runAsUser: 1001
+
+postgresql:
+  sharedPreloadLibraries: pgaudit
+  clientMinMessages: error
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

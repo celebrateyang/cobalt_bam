@@ -178,5 +178,15 @@
         "create_prompt": "Entrez l'URL d'un site Web à intégrer (https://...)",
         "edit_prompt": "Modifier l'URL intégrée",
         "invalid_url_alert": "Veuillez saisir un lien commençant par http(s)"
+    },
+    "environment": {
+        "checking_label": "Verification de compatibilite",
+        "checking_title": "Verification du navigateur",
+        "checking_body": "Preparation de l'enregistreur...",
+        "blocked_label": "Appareil non pris en charge",
+        "mobile_title": "Utilisez cet enregistreur sur ordinateur",
+        "mobile_body": "Cette page d'enregistrement est lourde sur telephone. Ouvrez-la sur un ordinateur de bureau ou portable pour une experience plus fluide.",
+        "wechat_title": "Ouvrez cette page dans Chrome ou Edge",
+        "wechat_body": "Le navigateur integre de WeChat ne prend pas cet enregistreur en charge de facon fiable. Copiez le lien et ouvrez-le dans Chrome ou Microsoft Edge."
     }
 }

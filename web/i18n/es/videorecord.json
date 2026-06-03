@@ -178,5 +178,15 @@
         "create_prompt": "Ingrese la URL de un sitio web para insertar (https://...)",
         "edit_prompt": "Editar URL incrustada",
         "invalid_url_alert": "Por favor ingrese un enlace que comience con http(s)"
+    },
+    "environment": {
+        "checking_label": "Comprobacion de compatibilidad",
+        "checking_title": "Comprobando tu navegador",
+        "checking_body": "Preparando el grabador...",
+        "blocked_label": "Dispositivo no compatible",
+        "mobile_title": "Usa este grabador en una computadora",
+        "mobile_body": "Esta pagina de grabacion consume muchos recursos en telefonos. Abrela en una computadora de escritorio o portatil para una mejor experiencia.",
+        "wechat_title": "Abre esta pagina en Chrome o Edge",
+        "wechat_body": "El navegador integrado de WeChat no admite este grabador de forma fiable. Copia el enlace y abrelo en Chrome o Microsoft Edge."
     }
 }

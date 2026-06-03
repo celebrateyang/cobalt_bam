@@ -178,5 +178,15 @@
         "create_prompt": "埋め込む Web サイトの URL を入力します (https://...)",
         "edit_prompt": "埋め込みURLを編集する",
         "invalid_url_alert": "httpで始まるリンクを入力してください"
+    },
+    "environment": {
+        "checking_label": "互換性チェック",
+        "checking_title": "ブラウザを確認しています",
+        "checking_body": "レコーダーを準備しています...",
+        "blocked_label": "この環境は推奨されません",
+        "mobile_title": "このレコーダーはパソコンで使用してください",
+        "mobile_body": "スマートフォンではこの録画ページの負荷が高くなります。デスクトップまたはノート PC で開いてください。",
+        "wechat_title": "Chrome または Edge で開いてください",
+        "wechat_body": "WeChat の内蔵ブラウザではこのレコーダーが安定して動作しません。リンクをコピーして Chrome または Microsoft Edge で開いてください。"
     }
 }

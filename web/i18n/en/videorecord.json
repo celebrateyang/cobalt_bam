@@ -178,5 +178,15 @@
         "create_prompt": "Enter a website URL to embed (https://...)",
         "edit_prompt": "Edit embedded URL",
         "invalid_url_alert": "Please enter a link that starts with http(s)"
+    },
+    "environment": {
+        "checking_label": "Compatibility check",
+        "checking_title": "Checking your browser",
+        "checking_body": "Preparing the recorder...",
+        "blocked_label": "Device not supported",
+        "mobile_title": "Use this recorder on a computer",
+        "mobile_body": "This recording page is performance-heavy on phones. Please open it on a desktop or laptop for a smoother experience.",
+        "wechat_title": "Open this page in Chrome or Edge",
+        "wechat_body": "The WeChat in-app browser does not support this recorder reliably. Please copy the link and open it in Chrome or Microsoft Edge."
     }
 }

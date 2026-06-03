@@ -178,5 +178,15 @@
         "create_prompt": "Nhập URL trang web cần nhúng (https://...)",
         "edit_prompt": "Chỉnh sửa URL được nhúng",
         "invalid_url_alert": "Vui lòng nhập liên kết bắt đầu bằng http(s)"
+    },
+    "environment": {
+        "checking_label": "Kiem tra tuong thich",
+        "checking_title": "Dang kiem tra trinh duyet",
+        "checking_body": "Dang chuan bi trinh ghi...",
+        "blocked_label": "Moi truong khong duoc khuyen nghi",
+        "mobile_title": "Hay dung trinh ghi nay tren may tinh",
+        "mobile_body": "Trang ghi hinh nay kha nang tren dien thoai. Hay mo bang may tinh de ban hoac laptop de co trai nghiem muot hon.",
+        "wechat_title": "Mo trang nay bang Chrome hoac Edge",
+        "wechat_body": "Trinh duyet trong ung dung WeChat khong ho tro trinh ghi nay on dinh. Hay sao chep lien ket va mo bang Chrome hoac Microsoft Edge."
     }
 }

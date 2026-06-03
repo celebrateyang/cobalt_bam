@@ -178,5 +178,15 @@
         "create_prompt": "Geben Sie eine Website-URL zum Einbetten ein (https://...)",
         "edit_prompt": "Bearbeiten Sie die eingebettete URL",
         "invalid_url_alert": "Bitte geben Sie einen Link ein, der mit http(s) beginnt."
+    },
+    "environment": {
+        "checking_label": "Kompatibilitaetscheck",
+        "checking_title": "Browser wird geprueft",
+        "checking_body": "Recorder wird vorbereitet...",
+        "blocked_label": "Geraet nicht unterstuetzt",
+        "mobile_title": "Nutze diesen Recorder am Computer",
+        "mobile_body": "Diese Aufnahmeseite ist auf Smartphones sehr rechenintensiv. Oeffne sie bitte auf einem Desktop oder Laptop.",
+        "wechat_title": "Oeffne diese Seite in Chrome oder Edge",
+        "wechat_body": "Der WeChat-In-App-Browser unterstuetzt diesen Recorder nicht zuverlaessig. Kopiere den Link und oeffne ihn in Chrome oder Microsoft Edge."
     }
 }

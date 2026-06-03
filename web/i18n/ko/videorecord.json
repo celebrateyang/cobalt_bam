@@ -178,5 +178,15 @@
         "create_prompt": "삽입할 웹사이트 URL을 입력하세요(https://...)",
         "edit_prompt": "삽입된 URL 수정",
         "invalid_url_alert": "http(s)로 시작하는 링크를 입력하세요."
+    },
+    "environment": {
+        "checking_label": "호환성 확인",
+        "checking_title": "브라우저를 확인하는 중",
+        "checking_body": "녹화기를 준비하는 중...",
+        "blocked_label": "권장되지 않는 환경",
+        "mobile_title": "이 녹화기는 컴퓨터에서 사용해 주세요",
+        "mobile_body": "휴대폰에서는 이 녹화 페이지의 성능 부하가 큽니다. 더 부드러운 사용을 위해 데스크톱이나 노트북에서 열어 주세요.",
+        "wechat_title": "Chrome 또는 Edge에서 열어 주세요",
+        "wechat_body": "WeChat 내장 브라우저는 이 녹화기를 안정적으로 지원하지 않습니다. 링크를 복사한 뒤 Chrome 또는 Microsoft Edge에서 열어 주세요."
     }
 }

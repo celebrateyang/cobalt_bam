@@ -178,5 +178,15 @@
         "create_prompt": "请输入要嵌入的网站地址（https://...）",
         "edit_prompt": "编辑嵌入网址",
         "invalid_url_alert": "请输入以 http(s) 开头的链接"
+    },
+    "environment": {
+        "checking_label": "兼容性检查",
+        "checking_title": "正在检查浏览器",
+        "checking_body": "正在准备录制器...",
+        "blocked_label": "当前环境不建议使用",
+        "mobile_title": "请在电脑端使用这个录制器",
+        "mobile_body": "手机端打开这个录制页面时性能负载较高，建议在台式机或笔记本电脑上使用。",
+        "wechat_title": "请用 Chrome 或 Edge 打开本页",
+        "wechat_body": "微信内置浏览器对这个录制器的支持不够稳定。请复制链接，改用 Chrome 或 Microsoft Edge 打开。"
     }
 }

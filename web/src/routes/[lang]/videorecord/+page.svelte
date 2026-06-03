@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { get } from "svelte/store";
     import { page } from "$app/stores";
     import env from "$lib/env";
@@ -74,6 +74,12 @@
         operatingSystem: "Web Browser",
         description: seoDescription,
     };
+
+    type EnvironmentBlockReason = "wechat" | "mobile";
+
+    let environmentChecked = false;
+    let environmentBlockReason: EnvironmentBlockReason | null = null;
+    $: canUseVideoRecord = environmentChecked && !environmentBlockReason;
 
     let drawing = false;
     let lastX = 0;
@@ -2176,6 +2182,31 @@
         typeof window !== "undefined" &&
         window.matchMedia("(max-width: 768px)").matches;
 
+    const detectVideoRecordEnvironment = (): EnvironmentBlockReason | null => {
+        if (typeof window === "undefined") return null;
+
+        const nav = window.navigator as Navigator & {
+            userAgentData?: { mobile?: boolean };
+        };
+        const ua = nav.userAgent || "";
+
+        if (/MicroMessenger/i.test(ua)) {
+            return "wechat";
+        }
+
+        const isMobileUa =
+            nav.userAgentData?.mobile === true ||
+            /Android|iPhone|iPod|IEMobile|Mobile|Windows Phone/i.test(ua);
+        const isCompactViewport = window.matchMedia("(max-width: 768px)").matches;
+        const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+        if (isMobileUa || (isCompactViewport && isCoarsePointer)) {
+            return "mobile";
+        }
+
+        return null;
+    };
+
     const clampSlidesPanelIntoViewport = () => {
         if (!slidesPanelEl || typeof window === "undefined") return;
         if (isMobileViewport()) return;
@@ -2430,84 +2461,94 @@
     };
 
     onMount(() => {
-        ctx = canvasEl.getContext("2d");
-        if (!ctx) return;
+        let cleanup = () => {};
 
-        resizeCanvas();
-        loadProjectSnapshot();
-        if (
-            !cameraFillFrameHydrated &&
-            typeof window !== "undefined" &&
-            window.matchMedia("(max-width: 768px)").matches
-        ) {
-            cameraFillFrame = true;
-        }
-        pushHistorySnapshot();
+        const initializePage = async () => {
+            environmentBlockReason = detectVideoRecordEnvironment();
+            environmentChecked = true;
 
-        try {
-            const raw = window.localStorage.getItem("videorecord.teleprompter");
-            if (raw) {
-                const saved = JSON.parse(raw);
-                if (typeof saved.x === "number") teleprompterOffsetX = saved.x;
-                if (typeof saved.y === "number") teleprompterOffsetY = saved.y;
-                if (typeof saved.speed === "number") {
-                    teleprompterSpeed = sanitizeTeleprompterSpeed(saved.speed);
-                }
-                if (typeof saved.opacity === "number")
-                    teleprompterOpacity = saved.opacity;
-                if (typeof saved.fontSize === "number")
-                    teleprompterFontSize = saved.fontSize;
-                if (typeof saved.text === "string")
-                    teleprompterText = saved.text;
-            }
-        } catch {
-            // ignore storage parse errors
-        }
+            if (environmentBlockReason) return;
 
-        try {
-            const raw = window.localStorage.getItem("videorecord.slides-panel");
-            if (raw) {
-                const saved = JSON.parse(raw);
-                if (typeof saved.x === "number") slidesPanelOffsetX = saved.x;
-                if (typeof saved.y === "number") slidesPanelOffsetY = saved.y;
-            }
-        } catch {
-            // ignore storage parse errors
-        }
+            await tick();
 
-        requestAnimationFrame(() => {
-            clampAndSnapTeleprompter();
-            teleprompterHydrated = true;
-            persistTeleprompterPrefs();
-            if (isMobileViewport()) {
-                slidesPanelOffsetX = 0;
-                slidesPanelOffsetY = 0;
-            } else {
-                clampSlidesPanelIntoViewport();
-            }
-            slidesPanelHydrated = true;
-            persistSlidesPanelPrefs();
-        });
+            ctx = canvasEl.getContext("2d");
+            if (!ctx) return;
 
-        const onWindowResize = () => {
             resizeCanvas();
-            clampAndSnapTeleprompter();
-            if (isMobileViewport()) {
-                draggingSlidesPanel = false;
-                slidesPanelOffsetX = 0;
-                slidesPanelOffsetY = 0;
-                return;
+            loadProjectSnapshot();
+            if (
+                !cameraFillFrameHydrated &&
+                typeof window !== "undefined" &&
+                window.matchMedia("(max-width: 768px)").matches
+            ) {
+                cameraFillFrame = true;
             }
-            clampSlidesPanelIntoViewport();
-            persistSlidesPanelPrefs();
-        };
+            pushHistorySnapshot();
 
-        window.addEventListener("resize", onWindowResize);
-        window.addEventListener("resize", clampCameraOverlayIntoSlide);
-        window.addEventListener("devicechange", refreshMicDevices);
-        void refreshMicDevices();
+            try {
+                const raw = window.localStorage.getItem("videorecord.teleprompter");
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (typeof saved.x === "number") teleprompterOffsetX = saved.x;
+                    if (typeof saved.y === "number") teleprompterOffsetY = saved.y;
+                    if (typeof saved.speed === "number") {
+                        teleprompterSpeed = sanitizeTeleprompterSpeed(saved.speed);
+                    }
+                    if (typeof saved.opacity === "number")
+                        teleprompterOpacity = saved.opacity;
+                    if (typeof saved.fontSize === "number")
+                        teleprompterFontSize = saved.fontSize;
+                    if (typeof saved.text === "string")
+                        teleprompterText = saved.text;
+                }
+            } catch {
+                // ignore storage parse errors
+            }
 
-        return () => {
+            try {
+                const raw = window.localStorage.getItem("videorecord.slides-panel");
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (typeof saved.x === "number") slidesPanelOffsetX = saved.x;
+                    if (typeof saved.y === "number") slidesPanelOffsetY = saved.y;
+                }
+            } catch {
+                // ignore storage parse errors
+            }
+
+            requestAnimationFrame(() => {
+                clampAndSnapTeleprompter();
+                teleprompterHydrated = true;
+                persistTeleprompterPrefs();
+                if (isMobileViewport()) {
+                    slidesPanelOffsetX = 0;
+                    slidesPanelOffsetY = 0;
+                } else {
+                    clampSlidesPanelIntoViewport();
+                }
+                slidesPanelHydrated = true;
+                persistSlidesPanelPrefs();
+            });
+
+            const onWindowResize = () => {
+                resizeCanvas();
+                clampAndSnapTeleprompter();
+                if (isMobileViewport()) {
+                    draggingSlidesPanel = false;
+                    slidesPanelOffsetX = 0;
+                    slidesPanelOffsetY = 0;
+                    return;
+                }
+                clampSlidesPanelIntoViewport();
+                persistSlidesPanelPrefs();
+            };
+
+            window.addEventListener("resize", onWindowResize);
+            window.addEventListener("resize", clampCameraOverlayIntoSlide);
+            window.addEventListener("devicechange", refreshMicDevices);
+            void refreshMicDevices();
+
+            cleanup = () => {
             window.removeEventListener("resize", onWindowResize);
             window.removeEventListener("resize", clampCameraOverlayIntoSlide);
             window.removeEventListener("devicechange", refreshMicDevices);
@@ -2525,7 +2566,12 @@
             delete document.body.dataset.vrImmersive;
             unmountExcalidrawBridge();
             recorder?.stop();
+            };
         };
+
+        void initializePage();
+
+        return () => cleanup();
     });
 
     const getPoint = (e: PointerEvent) => {
@@ -4354,10 +4400,11 @@
                 ? "crosshair"
                 : "crosshair";
 
-    $: if (excalidrawHostEl) {
+    $: if (canUseVideoRecord && excalidrawHostEl) {
         void mountExcalidrawBridge();
     }
     $: if (
+        canUseVideoRecord &&
         excalidrawHostEl &&
         excalidrawMounted &&
         mountedExcalidrawLangCode !== excalidrawLangCode
@@ -4409,6 +4456,8 @@
     };
 
     const onGlobalKeydown = (e: KeyboardEvent) => {
+        if (!canUseVideoRecord) return;
+
         const target = e.target as HTMLElement | null;
         const tag = target?.tagName;
         const isTypingTarget =
@@ -4460,7 +4509,40 @@
     {@html `<script type="application/ld+json">${JSON.stringify(seoJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 
-<div class="page" class:settings-open={showSettings}>
+<div class="page" class:settings-open={showSettings && canUseVideoRecord}>
+    {#if !environmentChecked}
+        <section class="environment-message" aria-live="polite">
+            <div class="environment-message-inner">
+                <p class="environment-eyebrow">
+                    {$t("videorecord.environment.checking_label")}
+                </p>
+                <h1>{$t("videorecord.environment.checking_title")}</h1>
+                <p>{$t("videorecord.environment.checking_body")}</p>
+            </div>
+        </section>
+    {:else if environmentBlockReason}
+        <section class="environment-message" aria-live="polite">
+            <div class="environment-message-inner">
+                <p class="environment-eyebrow">
+                    {$t("videorecord.environment.blocked_label")}
+                </p>
+                <h1>
+                    {$t(
+                        environmentBlockReason === "wechat"
+                            ? "videorecord.environment.wechat_title"
+                            : "videorecord.environment.mobile_title",
+                    )}
+                </h1>
+                <p>
+                    {$t(
+                        environmentBlockReason === "wechat"
+                            ? "videorecord.environment.wechat_body"
+                            : "videorecord.environment.mobile_body",
+                    )}
+                </p>
+            </div>
+        </section>
+    {:else}
     <input
         bind:this={imageInputEl}
         type="file"
@@ -4823,9 +4905,10 @@
             </div>
         </div>
     {/if}
+    {/if}
 </div>
 
-{#if showSettings}
+{#if canUseVideoRecord && showSettings}
     <button
         class="modal-backdrop"
         aria-label={$t("videorecord.settings.close")}
@@ -5226,6 +5309,48 @@
         color: #111111;
         border-radius: 0;
         min-height: 100vh;
+    }
+
+    .environment-message {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+            linear-gradient(135deg, rgba(247, 247, 247, 0.96), rgba(255, 255, 255, 0.98)),
+            #ffffff;
+    }
+
+    .environment-message-inner {
+        width: min(100%, 520px);
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 28px;
+        background: #ffffff;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
+    }
+
+    .environment-eyebrow {
+        margin: 0 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .environment-message h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        line-height: 1.15;
+        color: #111111;
+    }
+
+    .environment-message p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 16px;
+        line-height: 1.6;
     }
 
     .toolbar {

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "人気プラットフォームから透かしなしでダウンロード",
-        "description": "TikTok、Bilibili、Haokan、NAVER、快手、酷狗音楽、小紅書、YouTube、Instagram、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
+        "description": "TikTok、Bilibili、Haokan、NAVER、快手、酷狗音楽、小紅書、YouTube、Instagram、Threads、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
         "douyin": {
             "name": "TikTok/抖音ダウンローダー",
             "desc": "国内外のTikTok/抖音に対応。ワンクリックで透かしを削除し、HD音声と画質を維持します。"
@@ -49,6 +49,10 @@
         "naver": {
             "name": "NAVER Video Downloader",
             "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+        },
+        "threads": {
+            "name": "Threads 動画ダウンローダー",
+            "desc": "公開 Threads 投稿リンクを貼り付けて、利用可能な動画や写真を保存します。"
         }
     },
     "cards": {
@@ -71,7 +75,7 @@
     "hero": {
         "eyebrow": "オンライン動画ダウンローダー",
         "title": "透かしなし動画をオンラインでダウンロード",
-        "subtitle": "Douyin、TikTok、Bilibili、Haokan、NAVER、酷狗音楽、小紅書、Instagram、Facebook、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
+        "subtitle": "Douyin、TikTok、Bilibili、Haokan、NAVER、酷狗音楽、小紅書、Instagram、Threads、Facebook、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
         "trust": "対応サービスでは一括ダウンロード、合集 / playlist、音声のみ、ミュート保存をそのまま使えます。"
     },
     "tools": {

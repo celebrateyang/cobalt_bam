@@ -46,6 +46,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | soundcloud        | ➖            | ✅         | ➖         | ✅         | ✅              |
 | streamable        | ✅            | ✅         | ✅         | ➖         | ➖              |
 | tiktok            | ✅            | ✅         | ✅         | ❌         | ❌              |
+| threads           | ✅            | ✅         | ✅         | ❌         | ❌              |
 | toutiao           | ✅            | ✅         | ✅         | ✅         | ✅              |
 | tumblr            | ✅            | ✅         | ✅         | ➖         | ➖              |
 | twitch clips      | ✅            | ✅         | ✅         | ✅         | ✅              |
@@ -74,6 +75,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | rutube     | supports yappy & private links.                                                                                      |
 | soundcloud | supports private links.                                                                                              |
 | tiktok     | supports videos with or without watermark, images from slideshow without watermark, and full (original) audios.      |
+| threads    | supports public Threads post videos and photos.                                                                      |
 | toutiao    | supports public Toutiao video links and quality selection from available mp4 variants.                               |
 | twitter/x  | lets you pick what to save from multi-media posts. may not be 100% reliable due to current management.               |
 | vimeo      | audio downloads are only available for dash.                                                                         |

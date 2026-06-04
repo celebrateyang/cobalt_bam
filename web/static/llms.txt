@@ -22,7 +22,7 @@
 - Provides Discover pages for public video discovery and a random 1v1 video chat feature.
 
 ## Supported Service Summary
-Core supported platforms include YouTube, TikTok, Douyin, Bilibili, Kuaishou, Xiaohongshu, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
+Core supported platforms include YouTube, TikTok, Douyin, Bilibili, Kuaishou, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
 
 Different platforms expose different capabilities. Some support video, audio, no-watermark output, stories, reels, GIFs, images, multi-part videos, collections, or playlist parsing. See `/capabilities.json` for the most concise machine-readable service map.
 

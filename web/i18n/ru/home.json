@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Скачивание без водяных знаков с популярных платформ",
-        "description": "Поддерживает 100+ популярных сайтов, включая TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook и другие. Анализируйте и скачивайте HD-файлы на телефоне и ПК.",
+        "description": "Поддерживает 100+ популярных сайтов, включая TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook и другие. Анализируйте и скачивайте HD-файлы на телефоне и ПК.",
         "douyin": {
             "name": "Скачать из TikTok/Douyin",
             "desc": "Поддержка отечественных и международных версий TikTok/Douyin. Удаление водяных знаков в один клик, сохранение HD аудио и видео."
@@ -49,6 +49,10 @@
         "naver": {
             "name": "NAVER Video Downloader",
             "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+        },
+        "threads": {
+            "name": "Threads Video Downloader",
+            "desc": "Paste a public Threads post link to save available videos or photos directly."
         }
     },
     "cards": {
@@ -71,7 +75,7 @@
     "hero": {
         "eyebrow": "онлайн загрузчик видео",
         "title": "Скачивайте видео онлайн без водяных знаков",
-        "subtitle": "Вставьте ссылку из Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube и других сервисов, чтобы скачать HD-видео.",
+        "subtitle": "Вставьте ссылку из Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Threads, Facebook, YouTube и других сервисов, чтобы скачать HD-видео.",
         "trust": "Для поддерживаемых сервисов доступны пакетная загрузка, коллекции / playlist, только аудио и беззвучный режим."
     },
     "tools": {

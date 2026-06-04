@@ -102,6 +102,7 @@
         "naver",
         "xiaohongshu",
         "instagram",
+        "threads",
         "youtube",
         "facebook",
         "twitter",

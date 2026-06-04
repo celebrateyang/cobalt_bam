@@ -218,6 +218,17 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports posts, Reels, stories, share links, and ddinstagram.com links.'],
     },
     {
+        id: 'threads',
+        name: 'Threads',
+        category: 'social',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        notes: ['Supports public Threads post links with available videos or photos.'],
+    },
+    {
         id: 'facebook',
         name: 'Facebook',
         category: 'social',

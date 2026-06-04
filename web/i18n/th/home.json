@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "ดาวน์โหลดไม่มีลายน้ำจากแพลตฟอร์มยอดนิยม",
-        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
+        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
         "douyin": {
             "name": "ดาวน์โหลด TikTok/Douyin",
             "desc": "รองรับ TikTok/Douyin ทั้งเวอร์ชันในประเทศและต่างประเทศ ลบลายน้ำในคลิกเดียว คงคุณภาพเสียงและวิดีโอระดับ HD"
@@ -49,6 +49,10 @@
         "naver": {
             "name": "NAVER Video Downloader",
             "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+        },
+        "threads": {
+            "name": "Threads Video Downloader",
+            "desc": "Paste a public Threads post link to save available videos or photos directly."
         }
     },
     "cards": {
@@ -71,7 +75,7 @@
     "hero": {
         "eyebrow": "โปรแกรมดาวน์โหลดวิดีโอออนไลน์",
         "title": "ดาวน์โหลดวิดีโอออนไลน์แบบไม่มีลายน้ำ",
-        "subtitle": "วางลิงก์จาก Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube และแพลตฟอร์มอื่นๆ เพื่อดาวน์โหลดวิดีโอ HD ได้ในไม่กี่คลิก",
+        "subtitle": "วางลิงก์จาก Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Threads, Facebook, YouTube และแพลตฟอร์มอื่นๆ เพื่อดาวน์โหลดวิดีโอ HD ได้ในไม่กี่คลิก",
         "trust": "บริการที่รองรับสามารถใช้การดาวน์โหลดหลายลิงก์ ชุดรวม / playlist โหมดเสียงอย่างเดียว และโหมดปิดเสียงได้ทันที"
     },
     "tools": {

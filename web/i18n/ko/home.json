@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "인기 플랫폼 워터마크 없는 다운로드",
-        "description": "TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
+        "description": "TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
         "douyin": {
             "name": "TikTok/Douyin 다운로더",
             "desc": "국내외 버전의 TikTok/Douyin을 지원합니다. 원클릭 워터마크 제거, HD 오디오 및 비디오 유지."
@@ -49,6 +49,10 @@
         "naver": {
             "name": "NAVER 동영상 다운로드",
             "desc": "naver.me 공유 링크와 m.naver.com/shorts 링크로 공개 네이버 숯폼 영상을 MP4로 저장하세요."
+        },
+        "threads": {
+            "name": "Threads 비디오 다운로더",
+            "desc": "공개 Threads 게시물 링크를 붙여넣고 사용 가능한 동영상이나 이미지를 저장하세요."
         }
     },
     "cards": {
@@ -71,7 +75,7 @@
     "hero": {
         "eyebrow": "온라인 동영상 다운로더",
         "title": "워터마크 없는 동영상을 온라인으로 다운로드",
-        "subtitle": "Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
+        "subtitle": "Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
         "trust": "지원되는 서비스에서는 일괄 다운로드, 모음집 / 플레이리스트, 오디오 전용, 음소거 모드를 바로 사용할 수 있습니다."
     },
     "tools": {

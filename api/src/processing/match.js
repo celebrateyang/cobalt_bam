@@ -30,6 +30,7 @@ import dailymotion from "./services/dailymotion.js";
 import snapchat from "./services/snapchat.js";
 import loom from "./services/loom.js";
 import facebook from "./services/facebook.js";
+import threads from "./services/threads.js";
 import haokan from "./services/haokan.js";
 import bluesky from "./services/bluesky.js";
 import xiaohongshu from "./services/xiaohongshu.js";
@@ -406,6 +407,14 @@ export default async function({ host, patternMatch, params, authType }) {
                     h265: params.allowH265,
                     alwaysProxy: params.alwaysProxy,
                     subtitleLang,
+                });
+                break;
+
+            case "threads":
+                r = await threads({
+                    ...patternMatch,
+                    alwaysProxy: params.alwaysProxy,
+                    dispatcher,
                 });
                 break;
 

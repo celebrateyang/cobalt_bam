@@ -1,0 +1,12 @@
+[
+    {
+        "name": "single video post",
+        "url": "https://www.threads.com/@pkn_pastikamunanya/post/DTJmirojjPf",
+        "params": {},
+        "canFail": true,
+        "expected": {
+            "code": 200,
+            "status": "redirect"
+        }
+    }
+]

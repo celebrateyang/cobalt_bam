@@ -7,6 +7,7 @@ const friendlyNames = {
     kuaishou: "Kuaishou",
     kugou: "Kugou Music",
     naver: "Naver",
+    threads: "Threads",
     toutiao: "Toutiao",
     weibo: "Weibo",
     zhshjn: "zhshjn"

@@ -187,6 +187,7 @@ export default function({
                 case "snapchat":
                 case "bsky":
                 case "xiaohongshu":
+                case "threads":
                     params = { picker: r.picker };
                     break;
 
@@ -286,6 +287,7 @@ export default function({
 
                 case "facebook":
                 case "instagram":
+                case "threads":
                 case "tumblr":
                 case "pinterest":
                 case "streamable":

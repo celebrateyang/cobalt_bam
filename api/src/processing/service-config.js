@@ -209,6 +209,13 @@ export const services = {
         ],
         subdomains: ["vt", "vm", "m", "t"],
     },
+    threads: {
+        patterns: [
+            "@:username/post/:postId",
+            "t/:postId",
+        ],
+        altDomains: ["threads.net"],
+    },
     toutiao: {
         patterns: [
             "video/:id",

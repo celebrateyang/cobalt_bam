@@ -520,8 +520,8 @@
             return () => window.cancelIdleCallback?.(handle);
         }
 
-        const handle = window.setTimeout(callback, Math.min(timeout, 1200));
-        return () => window.clearTimeout(handle);
+        const handle = globalThis.setTimeout(callback, Math.min(timeout, 1200));
+        return () => globalThis.clearTimeout(handle);
     };
 
     // 检查本地存储中是否已关闭通知
@@ -596,7 +596,7 @@
 
                 await goto(`${cleaned.pathname}${cleaned.search}`, {
                     replaceState: true,
-                    keepfocus: true,
+                    keepFocus: true,
                     noScroll: true,
                 });
             })();

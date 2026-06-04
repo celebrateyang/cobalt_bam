@@ -61,7 +61,7 @@ import IconCat from "@tabler/icons-svelte/IconCat.svelte";
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/resources"
                         tabTitle="资源管理"
-                        iconColor="purple"
+                        iconColor="blue"
                     >
                         <IconFolder />
                     </PageNavTab>

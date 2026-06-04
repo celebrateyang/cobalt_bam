@@ -24,7 +24,7 @@ export const load: PageLoad = async ({ params }) => {
                 lede: locale.lede,
             };
         })
-        .filter(Boolean)
+        .filter((guide): guide is NonNullable<typeof guide> => Boolean(guide))
         .sort((a, b) => {
             const priorityDiff = getGuidePriority(a.slug) - getGuidePriority(b.slug);
             return priorityDiff !== 0 ? priorityDiff : a.title.localeCompare(b.title, params.lang);

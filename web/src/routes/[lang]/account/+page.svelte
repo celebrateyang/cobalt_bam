@@ -252,7 +252,7 @@
                 ? `${$clerkUser.id}:${sectionToFocus}`
                 : "";
 
-        if (focusKey && focusKey !== lastFocusedSectionKey) {
+        if (sectionToFocus && focusKey && focusKey !== lastFocusedSectionKey) {
             lastFocusedSectionKey = focusKey;
             void scrollToRequestedAccountSection(sectionToFocus);
         }
@@ -860,6 +860,15 @@
         }
 
         return null;
+    };
+
+    const checkActiveOrderStatus = (order: ActivePaymentOrder) => {
+        if (order.kind === "membership") {
+            void fetchMembershipOrderStatus(order.id, true);
+            return;
+        }
+
+        void fetchOrderStatus(order.id, true);
     };
 
     const startPolling = (orderId: number) => {
@@ -1851,16 +1860,9 @@
                             <div class="payment-actions">
                                 <button
                                     class="button elevated"
-                                    on:click={() =>
-                                        activeOrder.kind === "membership"
-                                            ? void fetchMembershipOrderStatus(
-                                                  activeOrder.id,
-                                                  true,
-                                              )
-                                            : void fetchOrderStatus(
-                                                  activeOrder.id,
-                                                  true,
-                                              )}
+                                    on:click={() => {
+                                        if (activeOrder) checkActiveOrderStatus(activeOrder);
+                                    }}
                                     disabled={orderStatusLoading}
                                 >
                                     {$t("auth.check_status")}

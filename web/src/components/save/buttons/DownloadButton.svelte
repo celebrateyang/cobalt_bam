@@ -11,7 +11,7 @@
     export let disabled = false;
     export let loading = false;
     export let blocked = false;
-    export let onDownload: ((url: string) => void | Promise<void>) | undefined =
+    export let onDownload: ((url: string) => unknown | Promise<unknown>) | undefined =
         undefined;
 
     $: buttonText = ">>";

@@ -12,6 +12,19 @@ declare module '*.md' {
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 declare global {
+    interface FileSystemSyncAccessHandle {
+        close(): void;
+        flush(): Promise<void> | void;
+        write(
+            buffer: BufferSource,
+            options?: { at?: number },
+        ): number;
+    }
+
+    interface FileSystemFileHandle {
+        createSyncAccessHandle(): Promise<FileSystemSyncAccessHandle>;
+    }
+
     namespace App {
         // interface Error {}
         // interface Locals {}

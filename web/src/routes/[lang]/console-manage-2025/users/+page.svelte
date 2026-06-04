@@ -604,11 +604,11 @@
                                             class="btn-secondary btn-copy"
                                             type="button"
                                             on:click={() =>
-                                                handleCopyEmail(
-                                                    user.id,
-                                                    user.primary_email,
-                                                )}
-                                        >
+                                                  handleCopyEmail(
+                                                      user.id,
+                                                      user.primary_email ?? "",
+                                                  )}
+                                          >
                                             {copiedUserId === user.id
                                                 ? "已复制"
                                                 : "复制"}

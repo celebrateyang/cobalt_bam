@@ -8,7 +8,7 @@ const getResponse = () => {
     return null;
 }
 
-const update = () => {
+const reset = () => {
     const turnstileElement = document.getElementById("turnstile-widget");
 
     if (turnstileElement) {
@@ -20,5 +20,6 @@ const update = () => {
 
 export default {
     getResponse,
-    update,
+    reset,
+    update: reset,
 }

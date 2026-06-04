@@ -10,6 +10,7 @@ export const entries = () => {
 export const load: PageLoad = async ({ params, url }) => {
     const { loadTranslations } = await import('$lib/i18n/translations');
     // Load the namespace plus the current pathname (mirrors other routes)
-    await loadTranslations(params.lang, ['tampermonkey', url.pathname]);
+    await loadTranslations(params.lang, 'tampermonkey');
+    await loadTranslations(params.lang, url.pathname);
     return { lang: params.lang };
 };

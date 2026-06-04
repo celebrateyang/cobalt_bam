@@ -87,17 +87,7 @@
 
     let strokeColor = "#111111";
     let strokeWidth = 4;
-    let tool:
-        | "select"
-        | "pen"
-        | "eraser"
-        | "text"
-        | "line"
-        | "rect"
-        | "circle"
-        | "laser"
-        | "frame"
-        | "webembed" = "pen";
+    let tool: string = "pen";
 
     // text tool
     let textFontSize = 28;
@@ -105,7 +95,7 @@
     let textInputX = 0;
     let textInputY = 0;
     let textInputValue = "";
-    let textAreaEl: HTMLTextAreaElement | null = null;
+    let textAreaEl: HTMLTextAreaElement | undefined;
     let imageInputEl: HTMLInputElement | null = null;
 
     // shape tools
@@ -153,7 +143,7 @@
     };
 
     type ProjectSnapshot = {
-        version: 2;
+        version: 1 | 2;
         slides: string[];
         bridgeSlides?: BridgeSlideScene[];
         activeSlide: number;
@@ -237,7 +227,7 @@
     let isRecordingStarting = false;
     let isRecordingStopping = false;
     let recordDuration = 0;
-    let recorderStopTimer: ReturnType<typeof setTimeout> | null = null;
+    let recorderStopTimer: number | null = null;
     let stopHandled = false;
     let lastChunkAt = 0;
     let recordingStopCause:
@@ -266,7 +256,7 @@
     let exportFormat: "webm" | "mp4" = "mp4";
     let selectedMimeType = "video/mp4;codecs=avc1.42E01E,mp4a.40.2";
     let lastProjectSaveAt = 0;
-    let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+    let autosaveTimer: number | null = null;
     let autosaveSignature = "";
     let exportNotice = "";
     let exportNoticeLevel: "info" | "warn" | "error" = "info";

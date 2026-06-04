@@ -17,13 +17,13 @@ const updatePlausiblePreference = (settings: PartialSettings) => {
     }
 }
 
-const writeToStorage = (settings: PartialSettings) => {
+const writeToStorage = (settings: PartialSettings | AllPartialSettingsWithSchema): PartialSettings => {
     localStorage.setItem(
         "settings",
         JSON.stringify(settings)
     );
 
-    return settings;
+    return settings as PartialSettings;
 }
 
 const loadFromStorage = () => {

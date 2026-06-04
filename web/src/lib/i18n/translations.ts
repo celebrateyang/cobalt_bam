@@ -36,6 +36,10 @@ const config: Config<{
     required?: number;
     gap?: number;
     size?: string;
+    price?: string;
+    date?: string;
+    plan?: string;
+    used?: number;
 }> = {
     fallbackLocale: defaultLocale,
     translations: Object.keys(parsedLocfiles).reduce((obj, lang) => {

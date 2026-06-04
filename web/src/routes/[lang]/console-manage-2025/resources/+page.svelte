@@ -9,6 +9,9 @@
         category: ResourceCategory;
         depth: number;
     };
+    type ResourceCategoryTreeItem = ResourceCategory & {
+        children: ResourceCategoryTreeItem[];
+    };
 
     let categoryList: ResourceCategory[] = [];
     let linkList: ResourceLink[] = [];
@@ -48,10 +51,10 @@
         category.names?.zh || category.names?.en || category.slug || `#${category.id}`;
 
     const buildCategoryTree = (items: ResourceCategory[]) => {
-        const map = new Map<number, ResourceCategory & { children: ResourceCategory[] }>();
+        const map = new Map<number, ResourceCategoryTreeItem>();
         items.forEach((item) => map.set(item.id, { ...item, children: [] }));
 
-        const roots: (ResourceCategory & { children: ResourceCategory[] })[] = [];
+        const roots: ResourceCategoryTreeItem[] = [];
 
         map.forEach((item) => {
             if (item.parent_id && map.has(item.parent_id)) {
@@ -61,7 +64,7 @@
             }
         });
 
-        const sortTree = (node: ResourceCategory & { children: ResourceCategory[] }) => {
+        const sortTree = (node: ResourceCategoryTreeItem) => {
             node.children.sort((a, b) => (b.sort_order || 0) - (a.sort_order || 0));
             node.children.forEach(sortTree);
         };

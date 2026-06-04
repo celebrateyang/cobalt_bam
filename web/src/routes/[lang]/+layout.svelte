@@ -123,8 +123,8 @@
             return () => window.cancelIdleCallback?.(handle);
         }
 
-        const handle = window.setTimeout(callback, Math.min(timeout, 1200));
-        return () => window.clearTimeout(handle);
+        const handle = globalThis.setTimeout(callback, Math.min(timeout, 1200));
+        return () => globalThis.clearTimeout(handle);
     };
 
     afterNavigate(async() => {

@@ -17,11 +17,11 @@ type CobaltSettingsAppearance = {
     language: keyof typeof languages,
     autoLanguage: boolean,
     hideRemuxTab: boolean,
+    reduceMotion: boolean,
+    reduceTransparency: boolean,
 };
 
 type CobaltSettingsAccessibility = {
-    reduceMotion: boolean,
-    reduceTransparency: boolean,
     disableHaptics: boolean,
     dontAutoOpenQueue: boolean,
 };
@@ -58,10 +58,13 @@ type CobaltSettingsSave = {
     youtubeVideoCodec: typeof youtubeVideoCodecOptions[number],
     youtubeVideoContainer: typeof youtubeVideoContainerOptions[number],
     youtubeDubLang: string,
+    youtubeDubBrowserLang: boolean,
     youtubeHLS: boolean,
     youtubeBetterAudio: boolean,
     tiktokFullAudio: boolean,
+    tiktokH265: boolean,
     allowH265: boolean,
+    twitterGif: boolean,
     convertGif: boolean,
     subtitleLang: string,
 };
@@ -79,9 +82,9 @@ export type CurrentCobaltSettings = {
 export type CobaltSettings = CurrentCobaltSettings;
 
 export type PartialSettings = RecursivePartial<CobaltSettings>;
-export type PartialSettingsWithSchema = RecursivePartial<CobaltSettings> & { schemaVersion: number };
+export type PartialSettingsWithSchema = RecursivePartial<Omit<CobaltSettings, 'schemaVersion'>> & { schemaVersion: number };
 
 export type AllSchemaVersions = CurrentCobaltSettings;
-export type AllPartialSettingsWithSchema = RecursivePartial<CobaltSettings> & { schemaVersion: number };
+export type AllPartialSettingsWithSchema = RecursivePartial<Omit<CobaltSettings, 'schemaVersion'>> & { schemaVersion: number };
 
 export type DownloadModeOption = CobaltSettings['save']['downloadMode'];

@@ -13,10 +13,10 @@ const defaultSettings: CobaltSettings = {
         language: defaultLocale,
         autoLanguage: true,
         hideRemuxTab: false,
-    },
-    accessibility: {
         reduceMotion: false,
         reduceTransparency: false,
+    },
+    accessibility: {
         disableHaptics: false,
         dontAutoOpenQueue: false,
     },
@@ -38,8 +38,11 @@ const defaultSettings: CobaltSettings = {
         youtubeVideoCodec: "h264",
         youtubeVideoContainer: "auto",
         youtubeDubLang: "original",
+        youtubeDubBrowserLang: false,
         youtubeHLS: false,
         youtubeBetterAudio: false,
+        tiktokH265: false,
+        twitterGif: true,
     },
     privacy: {
         disableAnalytics: false,

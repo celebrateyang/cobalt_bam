@@ -553,13 +553,18 @@ export const resources = {
             const query = queryParams.toString();
             return request(`/admin/resources/categories${query ? `?${query}` : ''}`);
         },
-        create: async (data: Partial<ResourceCategory> & { names: Record<string, string> }) => {
+        create: async (
+            data: Partial<ResourceCategory> & { names: Record<string, string> }
+        ): Promise<ApiResponse<ResourceCategory>> => {
             return request('/admin/resources/categories', {
                 method: 'POST',
                 body: JSON.stringify(data),
             });
         },
-        update: async (id: number, data: Partial<ResourceCategory> & { names?: Record<string, string> }) => {
+        update: async (
+            id: number,
+            data: Partial<ResourceCategory> & { names?: Record<string, string> }
+        ): Promise<ApiResponse<ResourceCategory>> => {
             return request(`/admin/resources/categories/${id}`, {
                 method: 'PUT',
                 body: JSON.stringify(data),

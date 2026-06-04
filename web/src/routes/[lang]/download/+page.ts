@@ -30,7 +30,7 @@ export const load: PageLoad = async ({ params }) => {
                 guideSlug: guide?.slug ?? null,
             };
         })
-        .filter(Boolean)
+        .filter((card): card is NonNullable<typeof card> => Boolean(card))
         .sort((a, b) => {
             const priorityDiff = getDownloadPriority(a.slug) - getDownloadPriority(b.slug);
             return priorityDiff !== 0 ? priorityDiff : a.h1.localeCompare(b.h1, params.lang);

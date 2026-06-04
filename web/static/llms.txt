@@ -10,6 +10,7 @@
 - Sitemap: https://freesavevideo.online/sitemap.xml
 - Robots: https://freesavevideo.online/robots.txt
 - LLM file: https://freesavevideo.online/llms.txt
+- Full LLM context: https://freesavevideo.online/llms-full.txt
 - LLM alias: https://freesavevideo.online/llm.txt
 - Well-known alias: https://freesavevideo.online/.well-known/llms.txt
 

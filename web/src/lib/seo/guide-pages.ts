@@ -41,6 +41,26 @@ export const guidePages: GuidePage[] = [
         platform: 'Kuaishou',
     },
     {
+        slug: 'haokan-download-guide',
+        landingSlug: 'haokan-video-download',
+        platform: 'Haokan',
+    },
+    {
+        slug: 'naver-download-guide',
+        landingSlug: 'naver-video-download',
+        platform: 'NAVER',
+    },
+    {
+        slug: 'toutiao-download-guide',
+        landingSlug: 'toutiao-video-download',
+        platform: 'Toutiao',
+    },
+    {
+        slug: 'weibo-download-guide',
+        landingSlug: 'weibo-video-download',
+        platform: 'Weibo',
+    },
+    {
         slug: 'xiaohongshu-download-guide',
         landingSlug: 'xiaohongshu-video-download',
         platform: 'Xiaohongshu',
@@ -61,6 +81,11 @@ export const guidePages: GuidePage[] = [
         platform: 'YouTube',
     },
     {
+        slug: 'youtube-shorts-download-guide',
+        landingSlug: 'youtube-shorts-download',
+        platform: 'YouTube Shorts',
+    },
+    {
         slug: 'facebook-download-guide',
         landingSlug: 'facebook-video-download',
         platform: 'Facebook',
@@ -76,9 +101,24 @@ export const guidePages: GuidePage[] = [
         platform: 'Pinterest',
     },
     {
+        slug: 'reddit-download-guide',
+        landingSlug: 'reddit-video-download',
+        platform: 'Reddit',
+    },
+    {
         slug: 'snapchat-download-guide',
         landingSlug: 'snapchat-video-download',
         platform: 'Snapchat',
+    },
+    {
+        slug: 'vimeo-download-guide',
+        landingSlug: 'vimeo-video-download',
+        platform: 'Vimeo',
+    },
+    {
+        slug: 'soundcloud-download-guide',
+        landingSlug: 'soundcloud-audio-download',
+        platform: 'SoundCloud',
     },
 ];
 

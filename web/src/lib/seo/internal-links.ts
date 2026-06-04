@@ -52,21 +52,25 @@ const crossLinkEntries: CrossLinkEntry[] = [
     {
         platform: 'NAVER',
         downloadSlug: 'naver-video-download',
+        guideSlug: 'naver-download-guide',
         homeKey: 'naver',
     },
     {
         platform: 'Toutiao',
         downloadSlug: 'toutiao-video-download',
+        guideSlug: 'toutiao-download-guide',
         homeKey: 'toutiao',
     },
     {
         platform: 'Weibo',
         downloadSlug: 'weibo-video-download',
+        guideSlug: 'weibo-download-guide',
         homeKey: 'weibo',
     },
     {
         platform: 'Haokan',
         downloadSlug: 'haokan-video-download',
+        guideSlug: 'haokan-download-guide',
         homeKey: 'haokan',
     },
     {
@@ -112,18 +116,22 @@ const crossLinkEntries: CrossLinkEntry[] = [
     {
         platform: 'YouTube Shorts',
         downloadSlug: 'youtube-shorts-download',
+        guideSlug: 'youtube-shorts-download-guide',
     },
     {
         platform: 'Vimeo',
         downloadSlug: 'vimeo-video-download',
+        guideSlug: 'vimeo-download-guide',
     },
     {
         platform: 'Reddit',
         downloadSlug: 'reddit-video-download',
+        guideSlug: 'reddit-download-guide',
     },
     {
         platform: 'SoundCloud',
         downloadSlug: 'soundcloud-audio-download',
+        guideSlug: 'soundcloud-download-guide',
     },
     {
         platform: 'Douyin Collection',

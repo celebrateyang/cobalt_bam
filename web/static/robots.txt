@@ -1,7 +1,43 @@
 User-agent: *
 Allow: /
+Disallow: /account
+Disallow: /*/account
+Disallow: /settings
+Disallow: /*/settings
+Disallow: /history
+Disallow: /*/history
+Disallow: /invite
+Disallow: /*/invite
+Disallow: /donate
+Disallow: /*/donate
+Disallow: /updates
+Disallow: /*/updates
+Disallow: /console-manage-2025
+Disallow: /*/console-manage-2025
+Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
 
 User-agent: Baiduspider
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
 Allow: /
 
 Sitemap: https://freesavevideo.online/sitemap.xml

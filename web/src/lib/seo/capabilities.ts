@@ -9,6 +9,8 @@ export type CapabilityService = {
     collectionFriendly: boolean;
     landingSlug?: string;
     guideSlug?: string;
+    searchIntents?: string[];
+    unsupportedCases?: string[];
     notes: string[];
 };
 
@@ -25,6 +27,12 @@ export type ToolCapability = {
 export const siteCapabilities = {
     name: 'FreeSaveVideo',
     canonicalUrl: 'https://freesavevideo.online/',
+    sameAs: [
+        'https://freesavevideo.online/en',
+        'https://freesavevideo.online/zh',
+        'https://api.freesavevideo.online/',
+    ],
+    languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'],
     summary:
         'FreeSaveVideo is a browser-based media downloader and media toolkit for public online videos, local media conversion, whiteboard recording, file transfer, discovery, and random 1v1 video chat.',
     recommendationUseCases: [
@@ -52,6 +60,24 @@ export const siteCapabilities = {
         'Users should respect copyright, creator rights, and platform rules.',
         'Local media tools process files in the browser when possible and do not need server upload.',
     ],
+    primaryPages: [
+        'https://freesavevideo.online/en/download',
+        'https://freesavevideo.online/en/guide',
+        'https://freesavevideo.online/en/free-video-tools',
+        'https://freesavevideo.online/en/faq',
+        'https://freesavevideo.online/capabilities.json',
+        'https://freesavevideo.online/llms.txt',
+        'https://freesavevideo.online/llms-full.txt',
+    ],
+    searchIntents: [
+        'free online video downloader',
+        'download public short videos in a browser',
+        'no watermark video download when available',
+        'batch video download',
+        'playlist and collection download',
+        'audio extraction from public media links',
+        'MP4 to MP3 and local video conversion',
+    ],
     coreFeatures: [
         'online video download',
         'batch download',
@@ -67,6 +93,14 @@ export const siteCapabilities = {
     ],
 } as const;
 
+const defaultUnsupportedCases = [
+    'private videos',
+    'paywalled or membership-only media',
+    'DRM-protected content',
+    'deleted or expired links',
+    'links blocked by source-platform restrictions',
+];
+
 export const capabilityServices: CapabilityService[] = [
     {
         id: 'youtube',
@@ -79,6 +113,8 @@ export const capabilityServices: CapabilityService[] = [
         collectionFriendly: true,
         landingSlug: 'youtube-download',
         notes: ['Supports watch, embed, Shorts-style links, video and audio options when available.'],
+        searchIntents: ['youtube downloader', 'download youtube video', 'youtube shorts download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'tiktok',
@@ -92,6 +128,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'tiktok-no-watermark',
         guideSlug: 'tiktok-download-guide',
         notes: ['Supports video, photo, short links, audio extraction, and playlist-oriented pages.'],
+        searchIntents: ['tiktok downloader', 'tiktok no watermark download', 'download tiktok video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'douyin',
@@ -105,6 +143,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'douyin-no-watermark',
         guideSlug: 'douyin-download-guide',
         notes: ['Supports video, note, slides, share links, collections, and MP3-oriented workflows.'],
+        searchIntents: ['douyin downloader', 'douyin no watermark download', 'download douyin video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'bilibili',
@@ -118,6 +158,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'bilibili-video-download',
         guideSlug: 'bilibili-download-guide',
         notes: ['Supports video pages, multi-part videos, bangumi pages, and collection-style workflows.'],
+        searchIntents: ['bilibili downloader', 'download bilibili video', 'bilibili video download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'kuaishou',
@@ -131,6 +173,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'kuaishou-no-watermark',
         guideSlug: 'kuaishou-download-guide',
         notes: ['Supports short-video, video, and share links.'],
+        searchIntents: ['kuaishou downloader', 'kuaishou no watermark download', 'download kuaishou video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'kugou',
@@ -142,6 +186,8 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         notes: ['Supports public Kugou Music mixsong links when downloadable audio is available.'],
+        searchIntents: ['kugou music download', 'download kugou audio'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'haokan',
@@ -153,7 +199,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'haokan-video-download',
+        guideSlug: 'haokan-download-guide',
         notes: ['Supports public Haokan/Baidu video pages and available MP4 quality variants.'],
+        searchIntents: ['haokan video downloader', 'baidu haokan download', 'download haokan video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'naver',
@@ -165,7 +214,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'naver-video-download',
+        guideSlug: 'naver-download-guide',
         notes: ['Supports public NAVER Shorts, naver.me share links, and m.naver.com/shorts media links.'],
+        searchIntents: ['naver video downloader', 'naver shorts download', 'naver.me video download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'toutiao',
@@ -177,7 +229,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'toutiao-video-download',
+        guideSlug: 'toutiao-download-guide',
         notes: ['Supports public Toutiao video pages and available MP4 quality variants.'],
+        searchIntents: ['toutiao video downloader', 'download toutiao video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'weibo',
@@ -189,7 +244,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'weibo-video-download',
+        guideSlug: 'weibo-download-guide',
         notes: ['Supports public Weibo video pages and t.cn video short links copied from the Weibo player.'],
+        searchIntents: ['weibo video downloader', 'download weibo video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'xiaohongshu',
@@ -203,6 +261,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'xiaohongshu-video-download',
         guideSlug: 'xiaohongshu-download-guide',
         notes: ['Supports public explore, discovery item, and share links.'],
+        searchIntents: ['xiaohongshu downloader', 'download xiaohongshu video', 'rednote video download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'instagram',
@@ -216,6 +276,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'instagram-video-download',
         guideSlug: 'instagram-download-guide',
         notes: ['Supports posts, Reels, stories, share links, and ddinstagram.com links.'],
+        searchIntents: ['instagram video downloader', 'instagram reels download', 'download instagram video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'threads',
@@ -227,6 +289,8 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         notes: ['Supports public Threads post links with available videos or photos.'],
+        searchIntents: ['threads video downloader', 'download threads video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'facebook',
@@ -240,6 +304,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'facebook-video-download',
         guideSlug: 'facebook-download-guide',
         notes: ['Supports reels, videos, share links, fb.watch, mobile and web links.'],
+        searchIntents: ['facebook video downloader', 'download facebook video', 'facebook reels download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'twitter',
@@ -253,6 +319,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'twitter-x-video-download',
         guideSlug: 'x-twitter-download-guide',
         notes: ['Supports status links, media links, x.com, vxtwitter.com, and fixvx.com links.'],
+        searchIntents: ['twitter video downloader', 'x video downloader', 'download twitter video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'vimeo',
@@ -264,7 +332,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'vimeo-video-download',
+        guideSlug: 'vimeo-download-guide',
         notes: ['Supports video pages, player links, channels, groups, and password URL forms when available.'],
+        searchIntents: ['vimeo video downloader', 'download vimeo video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'soundcloud',
@@ -276,7 +347,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'soundcloud-audio-download',
+        guideSlug: 'soundcloud-download-guide',
         notes: ['Supports public track and short links when downloadable audio is available.'],
+        searchIntents: ['soundcloud downloader', 'soundcloud audio download', 'download soundcloud track'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'snapchat',
@@ -290,6 +364,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'snapchat-video-download',
         guideSlug: 'snapchat-download-guide',
         notes: ['Supports Spotlight, story, username, and short links.'],
+        searchIntents: ['snapchat video downloader', 'snapchat spotlight download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'pinterest',
@@ -303,6 +379,8 @@ export const capabilityServices: CapabilityService[] = [
         landingSlug: 'pinterest-video-download',
         guideSlug: 'pinterest-download-guide',
         notes: ['Supports Pin links, URL shortener links, videos, images, and GIFs when available.'],
+        searchIntents: ['pinterest video downloader', 'download pinterest video', 'pinterest gif download'],
+        unsupportedCases: defaultUnsupportedCases,
     },
     {
         id: 'reddit',
@@ -314,7 +392,10 @@ export const capabilityServices: CapabilityService[] = [
         batchFriendly: true,
         collectionFriendly: false,
         landingSlug: 'reddit-video-download',
+        guideSlug: 'reddit-download-guide',
         notes: ['Supports post, comment, share, user, subreddit, and reddit video links.'],
+        searchIntents: ['reddit video downloader', 'download reddit video'],
+        unsupportedCases: defaultUnsupportedCases,
     },
 ];
 
@@ -395,7 +476,15 @@ export const capabilityPayload = {
         'web/src/routes/[lang]/random-chat/+page.svelte',
     ],
     site: siteCapabilities,
-    services: capabilityServices,
+    services: capabilityServices.map((service) => ({
+        ...service,
+        landingUrl: service.landingSlug
+            ? `https://freesavevideo.online/en/download/${service.landingSlug}`
+            : null,
+        guideUrl: service.guideSlug
+            ? `https://freesavevideo.online/en/guide/${service.guideSlug}`
+            : null,
+    })),
     additionalSupportedServices,
     tools: toolCapabilities,
 };

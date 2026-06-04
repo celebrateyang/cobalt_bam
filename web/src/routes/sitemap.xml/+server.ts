@@ -3,9 +3,10 @@ import type { RequestHandler } from './$types';
 import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
 import { guideSlugs } from '$lib/seo/guide-pages';
+import { machineReadablePaths, supportedSeoLanguages } from '$lib/seo/site';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
-const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
+const languages = [...supportedSeoLanguages];
 const excludedPathPatterns = [/^\/[^/]+\/donate(?:\/|$)/];
 
 // paths to include in sitemap
@@ -17,6 +18,7 @@ const pages = [
     'discover',
     'guide',
     'download',
+    'videorecord',
     'youtube-video-downloader',
     ...guideSlugs.map((slug) => `guide/${slug}`),
     ...seoLandingSlugs.map((slug) => `download/${slug}`),
@@ -42,25 +44,52 @@ for (const file of Object.keys(aboutFiles)) {
 const shouldExcludePath = (path: string) =>
     excludedPathPatterns.some((pattern) => pattern.test(path));
 
+const escapeXml = (value: string): string =>
+    value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+
+const normalizePath = (path: string) => (path === '/' ? '' : path);
+
+const buildAlternateLinks = (path: string): string => {
+    const normalized = normalizePath(path);
+    const withoutLang = normalized.replace(/^\/[^/]+/, '');
+
+    return [
+        ...languages.map((lang) => {
+            const href = `${site}/${lang}${withoutLang}`;
+            return `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeXml(href)}" />`;
+        }),
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${site}/en${withoutLang}`)}" />`,
+    ].join('');
+};
+
+const urlEntry = (
+    loc: string,
+    lastmod: string,
+    changefreq: string,
+    priority: string,
+    alternates = '',
+) => `
+    <url>
+        <loc>${escapeXml(loc)}</loc>
+        <lastmod>${lastmod}</lastmod>
+        <changefreq>${changefreq}</changefreq>
+        <priority>${priority}</priority>${alternates}
+    </url>`;
+
 function generateSitemap(): string {
     const urls: string[] = [];
     const now = new Date().toISOString();
 
-    urls.push(`
-    <url>
-        <loc>${site}/</loc>
-        <lastmod>${now}</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>1.0</priority>
-    </url>`);
+    urls.push(urlEntry(`${site}/`, now, 'daily', '1.0'));
 
-    urls.push(`
-    <url>
-        <loc>${site}/capabilities.json</loc>
-        <lastmod>${now}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.7</priority>
-    </url>`);
+    for (const path of machineReadablePaths) {
+        urls.push(urlEntry(`${site}${path}`, now, 'weekly', path === '/capabilities.json' ? '0.7' : '0.6'));
+    }
 
     for (const lang of languages) {
         // top-level pages
@@ -70,13 +99,9 @@ function generateSitemap(): string {
             const priority = page === '' ? '1.0' : '0.8';
             const changefreq = page === '' ? 'daily' : 'weekly';
 
-            urls.push(`
-    <url>
-        <loc>${site}${path}</loc>
-        <lastmod>${now}</lastmod>
-        <changefreq>${changefreq}</changefreq>
-        <priority>${priority}</priority>
-    </url>`);
+            urls.push(
+                urlEntry(`${site}${path}`, now, changefreq, priority, buildAlternateLinks(path)),
+            );
         }
 
         // about sub-pages
@@ -85,18 +110,15 @@ function generateSitemap(): string {
             if (!available || !available.has(aboutPage)) continue;
             const path = `/${lang}/about/${aboutPage}`;
             if (shouldExcludePath(path)) continue;
-            urls.push(`
-    <url>
-        <loc>${site}${path}</loc>
-        <lastmod>${now}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.6</priority>
-    </url>`);
+            urls.push(
+                urlEntry(`${site}${path}`, now, 'monthly', '0.6', buildAlternateLinks(path)),
+            );
         }
     }
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls.join('')}
 </urlset>`;
 }

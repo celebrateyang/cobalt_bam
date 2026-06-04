@@ -1,1 +1,9 @@
-See: /llms.txt
+# FreeSaveVideo LLM alias
+
+This alias points AI search tools to the canonical FreeSaveVideo LLM files.
+
+- Summary context: https://freesavevideo.online/llms.txt
+- Full context: https://freesavevideo.online/llms-full.txt
+- Capabilities JSON: https://freesavevideo.online/capabilities.json
+- Sitemap: https://freesavevideo.online/sitemap.xml
+

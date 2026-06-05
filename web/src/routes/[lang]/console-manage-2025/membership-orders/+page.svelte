@@ -42,6 +42,8 @@
     let pages = 0;
     let sort: SortKey = "created_at";
     let order: SortOrder = "desc";
+    let copiedEmailOrderId: number | null = null;
+    let copiedEmailTimeout: ReturnType<typeof setTimeout> | null = null;
 
     $: lang = $page.params.lang;
 
@@ -77,6 +79,49 @@
             : order.plan_key === "member_yearly"
               ? "年会员"
               : order.plan_key;
+
+    const copyText = async (text: string) => {
+        const normalized = String(text ?? "").trim();
+        if (!normalized) return false;
+
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(normalized);
+                return true;
+            }
+        } catch {
+            // fall back
+        }
+
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = normalized;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.top = "-1000px";
+            textarea.style.left = "-1000px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+            const ok = document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return ok;
+        } catch {
+            return false;
+        }
+    };
+
+    async function handleCopyEmail(orderId: number, email: string | null | undefined) {
+        const ok = await copyText(email ?? "");
+        if (!ok) return;
+
+        copiedEmailOrderId = orderId;
+        if (copiedEmailTimeout) clearTimeout(copiedEmailTimeout);
+        copiedEmailTimeout = setTimeout(() => {
+            copiedEmailOrderId = null;
+            copiedEmailTimeout = null;
+        }, 1500);
+    }
 
     async function loadOrders() {
         loading = true;
@@ -237,7 +282,32 @@
                         <tr>
                             <td class="mono">{item.id}</td>
                             <td>
-                                <div class="user-email mono">{item.user?.primary_email || "-"}</div>
+                                {#if item.user?.primary_email}
+                                    <div class="email-cell">
+                                        <span
+                                            class="user-email mono selectable"
+                                            title={item.user.primary_email}
+                                        >
+                                            {item.user.primary_email}
+                                        </span>
+                                        <button
+                                            class="btn-secondary btn-copy"
+                                            class:copied={copiedEmailOrderId === item.id}
+                                            type="button"
+                                            title="Copy email"
+                                            aria-label="Copy email"
+                                            on:click={() =>
+                                                handleCopyEmail(
+                                                    item.id,
+                                                    item.user?.primary_email,
+                                                )}
+                                        >
+                                            {copiedEmailOrderId === item.id ? "Copied" : "Copy"}
+                                        </button>
+                                    </div>
+                                {:else}
+                                    <div class="user-email mono">-</div>
+                                {/if}
                                 <div class="sub">#{item.user_id} · {item.user?.full_name || "-"}</div>
                             </td>
                             <td>{planLabel(item)}</td>
@@ -285,7 +355,10 @@
     th[aria-sort="none"] .sort-indicator { opacity: 0.5; }
     .mono { font-family: "IBM Plex Mono", monospace; }
     .selectable { user-select: text; -webkit-user-select: text; cursor: text; }
-    .user-email { margin-bottom: 0.2rem; }
+    .email-cell { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 0.2rem; }
+    .user-email { min-width: 0; }
+    .btn-copy { padding: 5px 8px; border-radius: 6px; font-size: 0.72rem; line-height: 1; }
+    .btn-copy.copied { color: #12824b; background: rgba(18, 130, 75, 0.14); }
     .status { display: inline-flex; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
     .status-paid { color: #12824b; background: rgba(18, 130, 75, 0.14); }
     .status-created { color: #9a6600; background: rgba(188, 129, 0, 0.14); }

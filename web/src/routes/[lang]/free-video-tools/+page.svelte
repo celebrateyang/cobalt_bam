@@ -140,7 +140,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
-    <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v2.png`} />
+    <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v3.png`} />
     {#each structuredData as ld}
         {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
     {/each}

@@ -400,7 +400,7 @@
               description: seoDescription,
               primaryImageOfPage: {
                   "@type": "ImageObject",
-                  url: `https://${fallbackHost}/og-share-v2.png`,
+                  url: `https://${fallbackHost}/og-share-v3.png`,
               },
           }
         : null;
@@ -632,14 +632,14 @@
     <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={seoDescription} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={`https://${fallbackHost}/og-share-v2.png`} />
+    <meta property="og:image" content={`https://${fallbackHost}/og-share-v3.png`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="FreeSaveVideo online video downloader preview" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
-    <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v2.png`} />
+    <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v3.png`} />
     <meta name="twitter:image:alt" content="FreeSaveVideo online video downloader preview" />
     {#if structuredData.length}
         {#each structuredData as ld}

@@ -17,6 +17,7 @@ const VALID_SERVICES = new Set([
     'reddit',
     'twitter',
     'vimeo',
+    'weibo',
     'youtube',
     'youtube_oauth',
     'vimeo_bearer',

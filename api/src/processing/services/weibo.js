@@ -1,3 +1,5 @@
+import { getCookie } from "../cookie/manager.js";
+
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 const PAGE_TIMEOUT_MS = 15000;
 const SHORT_LINK_TIMEOUT_MS = 10000;
@@ -10,6 +12,13 @@ const pageHeaders = {
 const mediaHeaders = {
     "user-agent": MOBILE_UA,
     referer: "https://h5.video.weibo.com/",
+};
+
+const statusHeaders = {
+    "user-agent": MOBILE_UA,
+    accept: "application/json, text/plain, */*",
+    referer: "https://weibo.com/",
+    "x-requested-with": "XMLHttpRequest",
 };
 
 const decodeHtmlEntities = (value) =>
@@ -111,6 +120,75 @@ const collectFormats = (info) => {
     return formats;
 };
 
+const collectStatusFormats = (mediaInfo) => {
+    const formats = collectFormats(mediaInfo);
+    const seen = new Set(formats.map(format => format.url));
+
+    const addFormat = (label, value) => {
+        const url = toAbsoluteUrl(value);
+        if (!url || seen.has(url)) return;
+
+        seen.add(url);
+        formats.push({
+            label,
+            url,
+            height: getHeight(label, url),
+        });
+    };
+
+    addFormat("stream_url", mediaInfo?.stream_url);
+
+    if (mediaInfo?.playback_list && typeof mediaInfo.playback_list === "object") {
+        for (const item of Object.values(mediaInfo.playback_list).flat()) {
+            const meta = item?.play_info || item;
+            addFormat(meta?.quality_label || meta?.label || meta?.quality || "playback", meta?.url);
+        }
+    }
+
+    const directKeys = [
+        "mp4_hd_url",
+        "mp4_720p_mp4",
+        "mp4_1080p_mp4",
+        "mp4_4k_mp4",
+        "h5_url",
+    ];
+    for (const key of directKeys) {
+        addFormat(key, mediaInfo?.[key]);
+    }
+
+    return formats;
+};
+
+const findObjectId = (value) => {
+    if (!value) return null;
+
+    if (typeof value === "string") {
+        return value.match(/1034:[0-9A-Za-z:_-]{1,64}/)?.[0] || null;
+    }
+
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            const id = findObjectId(item);
+            if (id) return id;
+        }
+        return null;
+    }
+
+    if (typeof value === "object") {
+        for (const key of ["object_id", "oid", "fid", "media_id"]) {
+            const id = findObjectId(value[key]);
+            if (id) return id;
+        }
+
+        for (const item of Object.values(value)) {
+            const id = findObjectId(item);
+            if (id) return id;
+        }
+    }
+
+    return null;
+};
+
 const extractOidFromUrl = (value) => {
     let parsed;
     try {
@@ -178,9 +256,73 @@ const fetchPlayInfo = async (oid) => {
         : null;
 };
 
-export default async function weibo({ oid, fid, shortLink, quality, url }) {
+const fetchStatusInfo = async (mblogId, uid) => {
+    if (!mblogId) return null;
+
+    const apiUrl = new URL("https://weibo.com/ajax/statuses/show");
+    apiUrl.searchParams.set("id", mblogId);
+
+    const cookie = getCookie("weibo");
+    const headers = {
+        ...statusHeaders,
+        referer: uid
+            ? `https://weibo.com/${encodeURIComponent(uid)}/${encodeURIComponent(mblogId)}`
+            : statusHeaders.referer,
+    };
+
+    if (cookie) {
+        headers.cookie = cookie.toString();
+    }
+
+    const response = await fetch(apiUrl, {
+        headers,
+        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+    });
+
+    if (!response.ok) return null;
+
+    return response.json().catch(() => null);
+};
+
+const formatStatusResponse = (status, mblogId, quality) => {
+    const mediaInfo = status?.page_info?.media_info;
+    if (!mediaInfo) return null;
+
+    const selected = pickFormat(collectStatusFormats(mediaInfo), quality);
+    if (!selected?.url) return null;
+
+    const title = sanitizeFilenamePart(
+        stripHtml(status.text_raw || status.text || mediaInfo.title || status?.page_info?.page_title || mblogId)
+    );
+    const mediaId = mediaInfo.media_id || status.idstr || mblogId;
+    const duration = parseNumber(mediaInfo.duration || mediaInfo.duration_time);
+
+    return {
+        type: "video",
+        urls: selected.url,
+        original_url: `https://weibo.com/${status?.user?.id || ""}/${mblogId}`.replace(".com//", ".com/"),
+        filename: `${title || "weibo"}_${mediaId}.mp4`,
+        duration: duration > 0 ? Math.round(duration) : undefined,
+        cover: toAbsoluteUrl(mediaInfo.cover_image || status?.page_info?.page_pic?.url),
+        headers: {
+            ...mediaHeaders,
+            referer: "https://weibo.com/",
+        },
+        fileMetadata: title ? { title } : undefined,
+    };
+};
+
+export default async function weibo({ oid, fid, shortLink, mblogId, uid, quality, url }) {
     try {
         let resolvedOid = decodeUrlPart(oid || fid) || extractOidFromUrl(url);
+
+        if (!resolvedOid && mblogId) {
+            const status = await fetchStatusInfo(mblogId, uid);
+            const statusResponse = formatStatusResponse(status, mblogId, quality);
+            if (statusResponse) return statusResponse;
+
+            resolvedOid = findObjectId(status);
+        }
 
         if (!resolvedOid && shortLink) {
             resolvedOid = extractOidFromUrl(await resolveShortLink(shortLink));

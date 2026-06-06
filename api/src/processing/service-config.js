@@ -268,6 +268,7 @@ export const services = {
             "show/:oid",
             "show?fid=:fid",
             "tv/show/:oid",
+            ":uid/:mblogId",
         ],
         subdomains: ["video", "h5.video"],
     },

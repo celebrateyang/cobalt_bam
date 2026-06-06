@@ -12,6 +12,18 @@
         "canFail": true
     },
     {
+        "name": "desktop status page",
+        "url": "https://weibo.com/5861424034/R2wy13jVq",
+        "params": {
+            "videoQuality": "720"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
         "name": "h5 video",
         "url": "https://h5.video.weibo.com/show/1034:5300586136928293",
         "params": {},

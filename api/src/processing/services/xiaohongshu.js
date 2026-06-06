@@ -7,8 +7,86 @@ const https = (url) => {
     return url.replace(/^http:/i, 'https:');
 }
 
-const canonicalNoteUrl = (noteId, xsecToken) => {
-    return `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(xsecToken)}`;
+const encodeQueryValue = (value) => {
+    try {
+        return encodeURIComponent(decodeURIComponent(value));
+    } catch {
+        return encodeURIComponent(value);
+    }
+};
+
+const snakeToCamel = (value) =>
+    value.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+
+const camelizeKeys = (value) => {
+    if (Array.isArray(value)) {
+        return value.map(camelizeKeys);
+    }
+
+    if (!value || typeof value !== "object") {
+        return value;
+    }
+
+    return Object.fromEntries(
+        Object.entries(value).map(([key, entry]) => [
+            snakeToCamel(key),
+            camelizeKeys(entry),
+        ])
+    );
+};
+
+const canonicalNoteUrl = (noteId, xsecToken, originURL) => {
+    const hostname = originURL?.hostname === "www.rednote.com"
+        ? "www.rednote.com"
+        : "www.xiaohongshu.com";
+
+    if (!xsecToken) {
+        return `https://${hostname}/explore/${noteId}`;
+    }
+
+    return `https://${hostname}/explore/${noteId}?xsec_token=${encodeQueryValue(xsecToken)}`;
+};
+
+const extractInitialState = (html) => {
+    const match = html.match(/<script>window\.__INITIAL_STATE__=(.*?)<\/script>/s);
+    if (!match) return null;
+
+    return JSON.parse(match[1].replace(/:\s*undefined/g, ":null"));
+};
+
+const extractNoteFromInitialState = ({ data, noteId, redirectedToUnavailable }) => {
+    const preloadNote = data?.noteData?.data?.noteData;
+    if (preloadNote) {
+        return camelizeKeys(preloadNote);
+    }
+
+    const feedItem = data?.noteData?.data?.items?.[0]?.noteCard;
+    if (feedItem) {
+        return camelizeKeys(feedItem);
+    }
+
+    const apiFeedItem = data?.data?.items?.[0]?.note_card;
+    if (apiFeedItem) {
+        return camelizeKeys(apiFeedItem);
+    }
+
+    const noteInfo = data?.note?.noteDetailMap;
+    if (!noteInfo) {
+        if (redirectedToUnavailable) {
+            throw new Error("content.post.unavailable");
+        }
+        throw new Error("no note detail map");
+    }
+
+    const currentNote = noteInfo[noteId];
+    if (!currentNote) {
+        if (redirectedToUnavailable) {
+            throw new Error("content.post.unavailable");
+        }
+        throw new Error("no current note in detail map");
+    }
+
+    return camelizeKeys(currentNote.note);
 };
 
 const pickBestStreamVariant = (variants = []) => {
@@ -41,6 +119,55 @@ const getLivePhotoVideoUrl = ({ image, h265, isAudioOnly }) => {
         if (selected?.masterUrl) {
             return https(selected.masterUrl);
         }
+    }
+
+    return null;
+};
+
+const resolveOriginalVideoUrl = async ({ originVideoKey, dispatcher }) => {
+    if (!originVideoKey) return null;
+
+    const candidates = [
+        `https://sns-video-hw.xhscdn.com/${originVideoKey}`,
+        `https://sns-video-bd.xhscdn.com/${originVideoKey}`,
+    ];
+
+    for (const url of candidates) {
+        const res = await fetch(url, {
+            method: "HEAD",
+            headers: {
+                "user-agent": genericUserAgent,
+                "referer": "https://www.rednote.com/",
+            },
+            dispatcher,
+        }).catch(() => null);
+
+        if (res?.ok) {
+            return url;
+        }
+    }
+
+    return null;
+};
+
+const pickBestVideoUrl = async ({ video, h265, isAudioOnly, dispatcher }) => {
+    if (h265 && !isAudioOnly && video.consumer?.originVideoKey) {
+        const originalURL = await resolveOriginalVideoUrl({
+            originVideoKey: video.consumer.originVideoKey,
+            dispatcher,
+        });
+
+        if (originalURL) {
+            return originalURL;
+        }
+    }
+
+    const h264Streams = video.media?.stream?.h264;
+
+    if (h264Streams?.length) {
+        return h264Streams.reduce((a, b) =>
+            Number(a?.videoBitrate) > Number(b?.videoBitrate) ? a : b
+        ).masterUrl;
     }
 
     return null;
@@ -82,11 +209,11 @@ const buildImagePickerItem = ({
     };
 };
 
-const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly }) => {
-    if (!noteId || !xsecToken) return null;
+const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly, url }) => {
+    if (!noteId) return null;
 
     const fallback = await extractGeneric({
-        url: canonicalNoteUrl(noteId, xsecToken),
+        url: canonicalNoteUrl(noteId, xsecToken, url),
         videoQuality: "1080",
         audioFormat: "mp3",
         audioBitrate: "128",
@@ -115,7 +242,7 @@ const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly }) => {
     };
 };
 
-export default async function ({ id, token, shareType, shareId, h265, isAudioOnly, dispatcher }) {
+export default async function ({ id, token, shareType, shareId, h265, isAudioOnly, dispatcher, url }) {
     let noteId = id;
     let xsecToken = token;
 
@@ -129,9 +256,9 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
         xsecToken = patternMatch?.token;
     }
 
-    if (!noteId || !xsecToken) return { error: "fetch.short_link" };
+    if (!noteId) return { error: "fetch.short_link" };
 
-    const noteUrl = canonicalNoteUrl(noteId, xsecToken);
+    const noteUrl = canonicalNoteUrl(noteId, xsecToken, url);
     const res = await fetch(noteUrl, {
         headers: {
             "user-agent": genericUserAgent,
@@ -151,29 +278,19 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
 
     let note;
     try {
-        const initialState = html
-            .split('<script>window.__INITIAL_STATE__=')[1]
-            .split('</script>')[0]
-            .replace(/:\s*undefined/g, ":null");
-
-        const data = JSON.parse(initialState);
-
-        const noteInfo = data?.note?.noteDetailMap;
-        if (!noteInfo) throw "no note detail map";
-
-        const currentNote = noteInfo[noteId];
-        if (!currentNote) {
-            if (redirectedToUnavailable) {
-                return { error: "content.post.unavailable" };
-            }
-            throw "no current note in detail map";
+        note = extractNoteFromInitialState({
+            data: extractInitialState(html),
+            noteId,
+            redirectedToUnavailable,
+        });
+    } catch (error) {
+        if (error?.message === "content.post.unavailable") {
+            return { error: "content.post.unavailable" };
         }
-
-        note = currentNote.note;
-    } catch {}
+    }
 
     if (!note) {
-        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly, url });
         if (fallback) return fallback;
         return { error: redirectedToUnavailable ? "content.post.unavailable" : "fetch.empty" };
     }
@@ -187,20 +304,10 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
         const videoFilename = `${filenameBase}.mp4`;
         const audioFilename = `${filenameBase}_audio`;
 
-        let videoURL;
-
-        if (h265 && !isAudioOnly && video.consumer?.originVideoKey) {
-            videoURL = `https://sns-video-bd.xhscdn.com/${video.consumer.originVideoKey}`;
-        } else {
-            const h264Streams = video.media?.stream?.h264;
-
-            if (h264Streams?.length) {
-                videoURL = h264Streams.reduce((a, b) => Number(a?.videoBitrate) > Number(b?.videoBitrate) ? a : b).masterUrl;
-            }
-        }
+        const videoURL = await pickBestVideoUrl({ video, h265, isAudioOnly, dispatcher });
 
         if (!videoURL) {
-            const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+            const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly, url });
             if (fallback) return fallback;
             return { error: "fetch.empty" };
         }
@@ -213,7 +320,7 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     }
 
     if (!images || images.length === 0) {
-        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly });
+        const fallback = await attemptGenericFallback({ noteId, xsecToken, isAudioOnly, url });
         if (fallback) return fallback;
         return { error: "fetch.empty" };
     }

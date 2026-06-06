@@ -128,7 +128,7 @@ export const testers = {
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10 && pattern.videoId?.accessKey <= 18),
 
     "xiaohongshu": pattern =>
-        pattern.id?.length <= 24 && pattern.token?.length <= 64 ||
+        pattern.id?.length <= 24 && (!pattern.token || pattern.token.length <= 64) ||
         pattern.shareId?.length <= 24 && pattern.shareType?.length === 1,
 
     "zhshjn": pattern =>

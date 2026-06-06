@@ -563,6 +563,7 @@ export default async function({ host, patternMatch, params, authType }) {
                     h265: params.allowH265,
                     isAudioOnly,
                     dispatcher,
+                    url,
                 });
                 break;
 

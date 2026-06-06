@@ -289,10 +289,12 @@ export const services = {
     xiaohongshu: {
         patterns: [
             "explore/:id?xsec_token=:token",
+            "explore/:id",
             "discovery/item/:id?xsec_token=:token",
+            "discovery/item/:id",
             ":shareType/:shareId",
         ],
-        altDomains: ["xhslink.com"],
+        altDomains: ["rednote.com", "xhslink.com"],
     },
     zhshjn: {
         patterns: [

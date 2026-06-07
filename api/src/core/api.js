@@ -183,6 +183,10 @@ const queueDownloadAttemptAuditTask = (task, label) => {
 };
 
 const scheduleDownloadAttemptCreate = (payload) => {
+    if (isUpstreamServer) {
+        return Promise.resolve(null);
+    }
+
     return queueDownloadAttemptAuditTask(
         () => createDownloadAttempt(payload),
         "create",
@@ -193,6 +197,10 @@ const scheduleDownloadAttemptCreate = (payload) => {
 };
 
 const scheduleDownloadAttemptComplete = (createTask, payload) => {
+    if (isUpstreamServer) {
+        return Promise.resolve(null);
+    }
+
     const afterCreate =
         createTask && typeof createTask.then === "function"
             ? createTask
@@ -620,9 +628,15 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             },
         }),
     );
-    app.use('/social', socialMediaRouter);
-    app.use('/user', userRouter);
-    app.use('/payments', paymentsRouter);
+    if (!isUpstreamServer) {
+        app.use('/social', socialMediaRouter);
+        app.use('/user', userRouter);
+        app.use('/payments', paymentsRouter);
+    } else {
+        app.use(['/social', '/user', '/payments'], (_, res) => {
+            res.sendStatus(404);
+        });
+    }
 
     app.post(['/', '/expand'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {

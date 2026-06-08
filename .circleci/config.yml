@@ -32,6 +32,39 @@ executors:
   gcloud-helm:
     docker:
       - image: docker.io/celebrateyang/gcloud-helm:282.0.0
+
+commands:
+  halt_unless_api_changed:
+    steps:
+      - run:
+          name: Skip unless api changed
+          command: |
+            set -euo pipefail
+
+            BASE_REF=""
+            if [[ "${CIRCLE_COMPARE_URL:-}" =~ /compare/([^.]*)\.\.\. ]]; then
+              BASE_REF="${BASH_REMATCH[1]}"
+            fi
+
+            if [ -n "${BASE_REF}" ]; then
+              git fetch --no-tags origin "${BASE_REF}" --depth=1 || true
+            fi
+
+            if [ -n "${BASE_REF}" ] && git rev-parse --verify "${BASE_REF}^{commit}" >/dev/null 2>&1; then
+              CHANGED_FILES="$(git diff --name-only "${BASE_REF}" "${CIRCLE_SHA1}")"
+            elif git rev-parse --verify "${CIRCLE_SHA1}^" >/dev/null 2>&1; then
+              CHANGED_FILES="$(git diff --name-only "${CIRCLE_SHA1}^" "${CIRCLE_SHA1}")"
+            else
+              CHANGED_FILES="$(git diff-tree --no-commit-id --name-only -r "${CIRCLE_SHA1}")"
+            fi
+
+            echo "${CHANGED_FILES}"
+
+            if ! echo "${CHANGED_FILES}" | grep -qE '^api/'; then
+              echo "No api/ changes detected; skipping."
+              circleci-agent step halt
+            fi
+
 jobs:
   build_docker:
     executor: gcloud-helm
@@ -45,6 +78,7 @@ jobs:
       - attach_workspace:
           at: .
       - checkout
+      - halt_unless_api_changed
       - setup_remote_docker:
           version: docker23
           docker_layer_caching: true
@@ -90,6 +124,7 @@ jobs:
       - attach_workspace:
           at: .
       - checkout
+      - halt_unless_api_changed
       - run:
           name: Setup Google Cloud SDK
           command: |

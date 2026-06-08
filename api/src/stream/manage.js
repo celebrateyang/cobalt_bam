@@ -446,7 +446,7 @@ const shouldUseInternalFfmpegInputs = (streamInfo) =>
 
 const shouldUseDirectFfmpegInputs = (streamInfo) =>
     isFfmpegStreamType(streamInfo?.type) &&
-    streamInfo?.service === 'cctv' &&
+    ['bjnews', 'cctv'].includes(streamInfo?.service) &&
     streamInfo?.isHLS === true;
 
 const buildIndexedOriginalRequest = (originalRequest, index, total) =>

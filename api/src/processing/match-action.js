@@ -275,6 +275,7 @@ export default function({
                     break;
 
                 case "ok":
+                case "analdin":
                 case "haokan":
                 case "naver":
                 case "toutiao":

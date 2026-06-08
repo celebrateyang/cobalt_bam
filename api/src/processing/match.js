@@ -10,7 +10,9 @@ import matchAction from "./match-action.js";
 
 import { friendlyServiceName } from "./service-alias.js";
 
+import analdin from "./services/analdin.js";
 import bilibili from "./services/bilibili.js";
+import bjnews from "./services/bjnews.js";
 import cctv from "./services/cctv.js";
 import reddit from "./services/reddit.js";
 import twitter from "./services/twitter.js";
@@ -304,6 +306,19 @@ export default async function({ host, patternMatch, params, authType }) {
             params.subtitleLang !== "none" ? params.subtitleLang : undefined;
 
         switch (host) {
+            case "analdin":
+                r = await analdin({
+                    id: patternMatch.id,
+                });
+                break;
+
+            case "bjnews":
+                r = await bjnews({
+                    ...patternMatch,
+                    url,
+                });
+                break;
+
             case "twitter":
                 r = await twitter({
                     id: patternMatch.id,

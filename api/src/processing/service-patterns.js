@@ -1,4 +1,7 @@
 export const testers = {
+    "analdin": pattern =>
+        pattern.id?.length <= 16,
+
     "bilibili": pattern =>
         (pattern.comId?.length <= 12 && pattern.partId?.length <= 3) ||
         (pattern.comId?.length <= 12 && !pattern.partId) ||
@@ -14,6 +17,9 @@ export const testers = {
 
     "bsky": pattern =>
         pattern.user?.length <= 128 && pattern.post?.length <= 128,
+
+    "bjnews": pattern =>
+        pattern.id?.length <= 32,
 
     "dailymotion": pattern => pattern.id?.length <= 32,
 

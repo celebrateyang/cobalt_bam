@@ -4,6 +4,8 @@ import { genericUserAgent } from "../../config.js";
 
 const ABSOLUTE_MEDIA_RE = /^https?:\/\//i;
 const MEDIA_EXT_RE = /\.(mp4|m4v|webm|mov|m3u8)(?:$|[?#])/i;
+const HLS_EXT_RE = /\.m3u8(?:$|[?#])/i;
+const PREVIEW_MEDIA_RE = /(?:^|[\/_.-])(?:preview|vthumb|thumb|thumbnail)(?:[\/_.-]|$)/i;
 
 const resolveCandidateUrl = (value, baseUrl) => {
     if (typeof value !== "string") return "";
@@ -28,6 +30,26 @@ const decodeHtml = (value) => {
         .replace(/&#39;/g, "'")
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">");
+};
+
+const getHost = (value) => {
+    try {
+        return new URL(value).hostname.toLowerCase();
+    } catch {
+        return "";
+    }
+};
+
+const getDomainKey = (host) => {
+    const parts = String(host || "").split(".").filter(Boolean);
+    if (parts.length <= 2) return parts.join(".");
+
+    const suffix = parts.slice(-2).join(".");
+    if (suffix === "com.cn" || suffix === "net.cn" || suffix === "org.cn") {
+        return parts.slice(-3).join(".");
+    }
+
+    return suffix;
 };
 
 const extractMetaContent = (html, property) => {
@@ -62,6 +84,11 @@ const extractCandidatesFromHtml = (html, baseUrl) => {
         const resolved = resolveCandidateUrl(value, baseUrl);
         if (!resolved || candidates.includes(resolved)) return;
         if (!MEDIA_EXT_RE.test(resolved)) return;
+        try {
+            if (PREVIEW_MEDIA_RE.test(new URL(resolved).pathname)) return;
+        } catch {
+            return;
+        }
         candidates.push(resolved);
     };
 
@@ -84,7 +111,22 @@ const extractCandidatesFromHtml = (html, baseUrl) => {
         push(match[0]);
     }
 
-    return candidates;
+    const baseHost = getHost(baseUrl);
+    const baseDomainKey = getDomainKey(baseHost);
+
+    return candidates
+        .map((url, index) => {
+            const host = getHost(url);
+            const sameHost = host === baseHost;
+            const sameSite = getDomainKey(host) === baseDomainKey;
+            return {
+                url,
+                index,
+                rank: sameHost ? 0 : sameSite ? 1 : 2,
+            };
+        })
+        .sort((a, b) => a.rank - b.rank || a.index - b.index)
+        .map((candidate) => candidate.url);
 };
 
 const buildFilenameAttributes = ({ originUrl, title, extension }) => {
@@ -186,17 +228,18 @@ export default async function htmlProbe({ url, timeoutMs }) {
         return { error: "fetch.empty" };
     }
 
+    const candidateHeaders = {
+        referer: finalUrl,
+        origin: new URL(finalUrl).origin,
+    };
     const selected = candidates[0];
-    const isHLS = /\.m3u8(?:$|[?#])/i.test(selected);
+    const isHLS = HLS_EXT_RE.test(selected);
     const extension = isHLS ? "mp4" : guessExtension(selected, "");
 
     return {
         service: responseHost,
         urls: selected,
-        headers: {
-            referer: finalUrl,
-            origin: new URL(finalUrl).origin,
-        },
+        headers: candidateHeaders,
         filenameAttributes: buildFilenameAttributes({
             originUrl: finalUrl,
             title,

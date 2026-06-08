@@ -1,9 +1,17 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv"]);
+export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews"]);
 
 export const services = {
+    analdin: {
+        patterns: [
+            "videos/:id/:slug",
+            "videos/:id",
+            "embed/:id",
+        ],
+        tld: "xxx",
+    },
     bilibili: {
         patterns: [
             "video/:comId",
@@ -27,6 +35,13 @@ export const services = {
             "profile/:user/post/:post"
         ],
         tld: "app",
+    },
+    bjnews: {
+        patterns: [
+            "detail/:id.html",
+        ],
+        tld: "com.cn",
+        subdomains: ["m"],
     },
     dailymotion: {
         patterns: ["video/:id"],

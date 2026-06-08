@@ -1,0 +1,18 @@
+{
+    "name": "@freesavevideo/extension",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build && node ./scripts/copy-static.mjs && node ./scripts/validate-manifest.mjs",
+        "dev": "vite build --watch",
+        "package": "pnpm build && node ./scripts/package-extension.mjs",
+        "typecheck": "tsc --noEmit",
+        "validate": "node ./scripts/validate-manifest.mjs"
+    },
+    "devDependencies": {
+        "@types/chrome": "^0.0.268",
+        "typescript": "^5.4.5",
+        "vite": "^5.0.3"
+    }
+}

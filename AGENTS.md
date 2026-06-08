@@ -97,6 +97,13 @@
   - Python scripts that explicitly read/write with `encoding='utf-8'`.
 - After any i18n edit, run `pnpm -C web i18n:check-encoding` before finalizing changes.
 
+### Correct UTF-8 reading workflow (must-follow)
+- Do not decide that a UTF-8 file is corrupted from PowerShell `Get-Content`, `Select-String`, or terminal-rendered output alone; Windows console codepages can display valid UTF-8 text as mojibake.
+- To verify file content, read bytes/text with Python using `Path(...).read_text(encoding='utf-8')`, then print samples with `value.encode("unicode_escape").decode()` so the terminal cannot hide or create mojibake.
+- Keep verification scripts ASCII-only. Represent non-ASCII expected text as Unicode escapes such as `r'\u4e2d\u6587'`, then decode inside Python with `.encode('ascii').decode('unicode_escape')`.
+- Before fixing suspected encoding damage, confirm with at least one byte-safe check, such as an exact Unicode-escape sample match, `pnpm -C web i18n:check-encoding` for i18n files, or `rg -n "�|\\uFFFD|锟|鎴|馃" <file>`.
+- If UTF-8 Python reads and Unicode-escape spot checks are clean, treat mojibake shown by PowerShell or the terminal as a display issue and do not rewrite the file.
+
 ### Safe copywriting edit workflow (must-follow)
 - Treat PowerShell command text itself as unsafe for non-ASCII. Even when Python reads/writes files with `encoding='utf-8'`, non-ASCII literals embedded in a PowerShell here-string can be converted to `?` before Python receives them.
 - For multi-locale or non-ASCII copy edits, use one of these safe approaches:

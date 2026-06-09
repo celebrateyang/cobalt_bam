@@ -279,7 +279,9 @@ function getHostIfValid(url) {
         return serviceName;
     }
 
-    if ((service.tld ?? 'com') !== host.tld) return;
+    const serviceTld = service.tld ?? 'com';
+    const validTld = Array.isArray(serviceTld) ? serviceTld.includes(host.tld) : serviceTld === host.tld;
+    if (!validTld) return;
 
     const anySubdomainAllowed = service.subdomains === '*';
     const validSubdomain = [null, 'www', ...(service.subdomains ?? [])].includes(host.subdomain);

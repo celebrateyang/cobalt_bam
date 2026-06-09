@@ -29,6 +29,7 @@ export const services = {
         ],
         subdomains: "*",
         altDomains: ["12371.cn"],
+        tld: ["com", "cn"],
     },
     bsky: {
         patterns: [

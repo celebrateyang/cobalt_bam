@@ -313,9 +313,13 @@ const buildPicker = (videos) =>
     }));
 
 export default async function cctv({ id, quality, url }) {
-    const pageUrl = url instanceof URL
-        ? url
-        : new URL(`https://tv.cctv.com/${id || ""}`);
+    let pageUrl;
+    if (url instanceof URL) {
+        pageUrl = url;
+    } else {
+        // Fallback: construct URL from id with default domain
+        pageUrl = new URL(`https://tv.cctv.com/${id || ""}`);
+    }
     const headers = requestHeadersForPage(pageUrl);
 
     const html = await requestText(pageUrl);

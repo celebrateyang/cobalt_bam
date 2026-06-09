@@ -21,6 +21,10 @@ export const testers = {
     "bjnews": pattern =>
         pattern.id?.length <= 32,
 
+    "ourjiangsu": pattern =>
+        /^\d{8}$/.test(pattern.date || "") &&
+        pattern.id?.length <= 32,
+
     "dailymotion": pattern => pattern.id?.length <= 32,
 
     "douyin": pattern =>

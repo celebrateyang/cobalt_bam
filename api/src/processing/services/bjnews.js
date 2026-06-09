@@ -1,4 +1,5 @@
 import { genericUserAgent } from "../../config.js";
+import newsHtml from "./news-html.js";
 
 const SOURCE_RE = /["']source["']\s*:\s*["']([^"']+\.m3u8(?:\?[^"']*)?)["']/i;
 const TITLE_RE = /<title[^>]*>([^<]+)<\/title>/i;
@@ -33,7 +34,7 @@ export default async function bjnews({ url, id }) {
     const html = await response.text().catch(() => "");
     const mediaUrl = decodeHtml(html.match(SOURCE_RE)?.[1]);
     if (!mediaUrl) {
-        return { error: "fetch.empty" };
+        return newsHtml({ url, id, service: "bjnews" });
     }
 
     const title = decodeHtml(html.match(TITLE_RE)?.[1]) || id || "bjnews";

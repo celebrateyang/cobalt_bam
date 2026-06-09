@@ -276,8 +276,10 @@ export default function({
 
                 case "ok":
                 case "analdin":
+                case "bjnews":
                 case "haokan":
                 case "naver":
+                case "ourjiangsu":
                 case "toutiao":
                 case "weibo":
                 case "xiaohongshu":

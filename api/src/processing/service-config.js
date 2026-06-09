@@ -43,6 +43,12 @@ export const services = {
         tld: "com.cn",
         subdomains: ["m"],
     },
+    ourjiangsu: {
+        patterns: [
+            "a/:date/:id.shtml",
+            "video/:date/:id.shtml",
+        ],
+    },
     dailymotion: {
         patterns: ["video/:id"],
     },

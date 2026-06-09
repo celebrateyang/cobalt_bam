@@ -13,6 +13,7 @@ import { friendlyServiceName } from "./service-alias.js";
 import analdin from "./services/analdin.js";
 import bilibili from "./services/bilibili.js";
 import bjnews from "./services/bjnews.js";
+import newsHtml from "./services/news-html.js";
 import cctv from "./services/cctv.js";
 import reddit from "./services/reddit.js";
 import twitter from "./services/twitter.js";
@@ -316,6 +317,14 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await bjnews({
                     ...patternMatch,
                     url,
+                });
+                break;
+
+            case "ourjiangsu":
+                r = await newsHtml({
+                    ...patternMatch,
+                    url,
+                    service: "ourjiangsu",
                 });
                 break;
 

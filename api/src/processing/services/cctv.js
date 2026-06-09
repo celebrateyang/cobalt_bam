@@ -4,6 +4,7 @@ import { env, genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 
 const CCTV_REFERER = "https://tv.cctv.com/";
+const CCTV_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
 const GUID_REGEX = /var\s+guid\s*=\s*"([0-9a-f]{32})"/i;
 const GUID_PATTERNS = [
     /var\s+guid(?:_\d+)?\s*=\s*"([0-9a-f]{32})"/gi,
@@ -14,8 +15,8 @@ const CCTV_HLS_BITRATES = [2000, 1200, 850, 450];
 const CCTV_HIGH_QUALITY_BANDWIDTH = 1200000;
 
 const requestHeaders = {
-    "user-agent": genericUserAgent,
-    referer: CCTV_REFERER,
+    "User-Agent": CCTV_USER_AGENT,
+    "Referer": CCTV_REFERER,
 };
 
 const requestHeadersForPage = (pageUrl) => {
@@ -23,7 +24,7 @@ const requestHeadersForPage = (pageUrl) => {
 
     return {
         ...requestHeaders,
-        referer: `${pageUrl.protocol}//${pageUrl.hostname}/`,
+        "Referer": `${pageUrl.protocol}//${pageUrl.hostname}/`,
     };
 };
 
@@ -85,9 +86,10 @@ const selectVariant = (variants, quality, manifestLabel) => {
     });
 };
 
-const requestText = async (url) => {
+const requestText = async (url, customHeaders = null) => {
     try {
-        const response = await fetch(url, { headers: requestHeaders });
+        const headers = customHeaders || requestHeaders;
+        const response = await fetch(url, { headers });
         return await response.text();
     } catch {}
 };
@@ -322,7 +324,7 @@ export default async function cctv({ id, quality, url }) {
     }
     const headers = requestHeadersForPage(pageUrl);
 
-    const html = await requestText(pageUrl);
+    const html = await requestText(pageUrl, headers);
     if (!html) return { error: "fetch.fail" };
 
     const guids = extractGuids(html);

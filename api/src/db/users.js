@@ -12,7 +12,7 @@ import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
-export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 30;
+export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 200;
 
 let clipboardPersonalSchemaPromise = null;
 

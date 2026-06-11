@@ -8,7 +8,7 @@ import { t } from "$lib/i18n/translations";
 import { getClerkToken } from "$lib/state/clerk";
 import { createDialog } from "$lib/state/dialogs";
 
-export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 30;
+export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 200;
 
 export type PointsHelpSection = "topup" | "referral" | "promotion" | "contact";
 

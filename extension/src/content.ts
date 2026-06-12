@@ -12,7 +12,7 @@ const YOUTUBE_HOST_RE = /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i;
 const MEDIA_EXTENSIONS: Array<{ re: RegExp; kind: MediaKind; label: string }> = [
     { re: /\.(m3u8)(?:[?#]|$)/i, kind: 'playlist', label: 'HLS playlist' },
     { re: /\.(mpd)(?:[?#]|$)/i, kind: 'playlist', label: 'DASH manifest' },
-    { re: /\.(mp4|webm|mov|m4v|avi|mkv|m4s)(?:[?#]|$)/i, kind: 'video', label: 'Video file' },
+    { re: /\.(mp4|webm|mov|m4v|avi|mkv)(?:[?#]|$)/i, kind: 'video', label: 'Video file' },
     { re: /\.(mp3|m4a|aac|ogg|opus|wav|flac)(?:[?#]|$)/i, kind: 'audio', label: 'Audio file' },
     { re: /\.(vtt|srt|ass)(?:[?#]|$)/i, kind: 'subtitle', label: 'Subtitle file' },
     { re: /\.(jpg|jpeg|png|webp|gif|avif)(?:[?#]|$)/i, kind: 'image', label: 'Image file' },
@@ -44,10 +44,40 @@ const normalizeUrl = (value: string, baseUrl: string): string | null => {
     }
 };
 
+const isNoiseUrl = (url: string) => {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        const path = parsed.pathname.toLowerCase();
+        if (host === 'data.bilibili.com' || host.endsWith('.data.bilibili.com')) return true;
+        if (host === 'cm.bilibili.com' || host.endsWith('.cm.bilibili.com')) return true;
+        if (path.includes('/log/') || path.includes('/collect') || path.includes('/report')) return true;
+        if (/click|heartbeat|tracking|analytics|beacon/i.test(path)) return true;
+        return false;
+    } catch {
+        return false;
+    }
+};
+
+const isBilibiliMediaHost = (host: string) =>
+    /(^|\.)bilivideo\.com$/i.test(host) ||
+    /(^|\.)akamaized\.net$/i.test(host) ||
+    /^upos-/i.test(host);
+
 const classifyUrl = (url: string): { kind: MediaKind; label: string } | null => {
-    if (/\/video\.m4s(?:[?#]|$)/i.test(url)) return { kind: 'video', label: 'Bilibili video stream' };
-    if (/\/audio\.m4s(?:[?#]|$)/i.test(url)) return { kind: 'audio', label: 'Bilibili audio stream' };
-    if (/\.bilivideo\.com\//i.test(url) && /m4s|mp4/i.test(url)) return { kind: 'video', label: 'Bilibili media stream' };
+    if (isNoiseUrl(url)) return null;
+    let parsed: URL | null = null;
+    try {
+        parsed = new URL(url);
+    } catch {
+        parsed = null;
+    }
+    if (parsed && isBilibiliMediaHost(parsed.hostname)) {
+        const path = parsed.pathname;
+        if (/\/audio\.m4s$/i.test(path)) return { kind: 'audio', label: 'Audio stream' };
+        if (/\/video\.m4s$/i.test(path)) return { kind: 'video', label: 'Video stream' };
+        if (/\.(m4s|mp4)$/i.test(path)) return { kind: 'video', label: 'Video stream' };
+    }
     for (const item of MEDIA_EXTENSIONS) {
         if (item.re.test(url)) return { kind: item.kind, label: item.label };
     }
@@ -56,6 +86,7 @@ const classifyUrl = (url: string): { kind: MediaKind; label: string } | null => 
 
 const inferFormat = (url: string, fallback?: string): string | undefined => {
     if (fallback?.includes('/')) return fallback.split('/').pop()?.toUpperCase();
+    if (/\/(?:video|audio)\.m4s(?:[?#]|$)/i.test(url)) return 'MP4';
     const match = url.match(/\.([a-z0-9]{2,5})(?:[?#]|$)/i);
     if (match) return match[1].toUpperCase();
     if (/m4s/i.test(url)) return 'M4S';
@@ -93,6 +124,14 @@ const pageThumbnail = (): string | undefined => {
     return image ? normalizeUrl(image.currentSrc || image.src, pageUrl()) ?? undefined : undefined;
 };
 
+const pageMediaLabel = (kind: MediaKind, fallback: string) => {
+    const title = document.title?.trim().replace(/\s+/g, ' ');
+    if (!title || (kind !== 'video' && kind !== 'audio' && kind !== 'playlist')) return fallback;
+    if (kind === 'audio') return `${title}.m4a`;
+    if (kind === 'playlist') return `${title}.m3u8`;
+    return `${title}.mp4`;
+};
+
 const bestText = (element: Element, fallback: string): string => {
     const aria = element.getAttribute('aria-label')?.trim();
     if (aria) return aria.slice(0, 80);
@@ -103,6 +142,13 @@ const bestText = (element: Element, fallback: string): string => {
     const text = element.textContent?.trim().replace(/\s+/g, ' ');
     if (text) return text.slice(0, 80);
     return fallback;
+};
+
+const dedupeKeyFor = (url: string) => {
+    if (/\.(m4s|mp4|m3u8|mpd)(?:[?#]|$)/i.test(url)) {
+        return url.replace(/[?#].*$/, '');
+    }
+    return url;
 };
 
 const addMedia = (
@@ -116,8 +162,10 @@ const addMedia = (
 ) => {
     if (seen.size >= MAX_RESULTS || !rawUrl) return;
     const url = normalizeUrl(rawUrl, baseUrl);
-    if (!url || seen.has(url)) return;
-    seen.set(url, {
+    if (!url || isNoiseUrl(url)) return;
+    const dedupeKey = dedupeKeyFor(url);
+    if (seen.has(dedupeKey)) return;
+    seen.set(dedupeKey, {
         id: String(seen.size + 1),
         kind,
         url,
@@ -200,7 +248,7 @@ const scanDom = (): PageScanResult => {
         const classified = classifyUrl(url);
         if (!classified) return;
         const size = entry.encodedBodySize || entry.transferSize || entry.decodedBodySize;
-        addMedia(seen, url, baseUrl, classified.kind, classified.label, 'network', {
+        addMedia(seen, url, baseUrl, classified.kind, pageMediaLabel(classified.kind, classified.label), 'network', {
             sizeLabel: formatBytes(size),
             thumbnailUrl: classified.kind === 'video' || classified.kind === 'playlist' ? fallbackThumbnail : undefined,
         });

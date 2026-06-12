@@ -37,6 +37,36 @@ const mediaIcon = (kind: DetectedMedia['kind']) => {
     }
 };
 
+const extensionFromUrl = (value: string) => {
+    try {
+        const match = new URL(value).pathname.match(/\.([a-z0-9]{2,5})$/i);
+        return match?.[1].toLowerCase();
+    } catch {
+        return undefined;
+    }
+};
+
+const extensionFor = (item: DetectedMedia) => {
+    const format = item.format?.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (format === 'hls') return 'm3u8';
+    if (format === 'dash') return 'mpd';
+    if (format === 'm4s') return 'mp4';
+    return format || extensionFromUrl(item.url) || (item.kind === 'image' ? 'jpg' : 'mp4');
+};
+
+const safeFilenamePart = (value: string) =>
+    value
+        .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 100) || 'download';
+
+const downloadFilename = (result: PageScanResult, item: DetectedMedia) => {
+    const title = safeFilenamePart(result.pageTitle || item.label || 'download');
+    const suffix = item.qualityLabel ? `-${safeFilenamePart(item.qualityLabel)}` : '';
+    return `FreeSaveVideo/${title}${suffix}.${extensionFor(item)}`;
+};
+
 const shortUrl = (value: string) => {
     try {
         const url = new URL(value);
@@ -102,6 +132,10 @@ const openFreeSaveVideo = async (url: string) => {
     await chrome.runtime.sendMessage({ type: 'FSV_OPEN_FREESAVEVIDEO', url });
 };
 
+const downloadUrl = async (url: string, filename?: string) => {
+    await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url, filename });
+};
+
 const bindActions = () => {
     document.querySelector<HTMLButtonElement>('[data-action="rescan"]')?.addEventListener('click', () => {
         void scanPage();
@@ -122,6 +156,12 @@ const bindActions = () => {
             if (url) void openFreeSaveVideo(url);
         });
     });
+    document.querySelectorAll<HTMLButtonElement>('[data-download-url]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.downloadUrl;
+            if (url) void downloadUrl(url, button.dataset.downloadFilename);
+        });
+    });
     document.querySelectorAll<HTMLButtonElement>('[data-filter-kind]').forEach((button) => {
         button.addEventListener('click', () => {
             const kind = button.dataset.filterKind as State extends { activeKind: infer K } ? K : never;
@@ -130,7 +170,7 @@ const bindActions = () => {
     });
 };
 
-const renderMediaItem = (item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => `
+const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => `
     <article class="media-item">
         ${
             item.thumbnailUrl
@@ -151,8 +191,14 @@ const renderMediaItem = (item: DetectedMedia, copiedUrl: string | null, disabled
             <button type="button" class="icon-button" data-copy-url="${escapeHtml(item.url)}">
                 ${copiedUrl === item.url ? 'Copied' : 'Copy'}
             </button>
-            <button type="button" class="primary" data-open-url="${escapeHtml(item.url)}" ${disabled ? 'disabled' : ''}>
-                Open
+            <button
+                type="button"
+                class="primary"
+                data-download-url="${escapeHtml(item.url)}"
+                data-download-filename="${escapeHtml(downloadFilename(result, item))}"
+                ${disabled ? 'disabled' : ''}
+            >
+                Download
             </button>
         </div>
     </article>
@@ -255,7 +301,7 @@ const render = () => {
             ${
                 visibleMedia.length
                     ? `<section class="media-list">
-                        ${visibleMedia.map((item) => renderMediaItem(item, copiedUrl, youtubeBlocked)).join('')}
+                        ${visibleMedia.map((item) => renderMediaItem(result, item, copiedUrl, youtubeBlocked)).join('')}
                     </section>`
                     : `<div class="empty">No ${activeKind === 'all' ? '' : activeKind} media found. Start playback, then scan again.</div>`
             }

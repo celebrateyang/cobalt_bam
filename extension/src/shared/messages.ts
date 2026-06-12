@@ -24,6 +24,7 @@ export type ExtensionMessage =
     | { type: 'FSV_SCAN_PAGE' }
     | { type: 'FSV_SCAN_RESULT'; result: PageScanResult }
     | { type: 'FSV_OPEN_FREESAVEVIDEO'; url: string }
+    | { type: 'FSV_DOWNLOAD_URL'; url: string; filename?: string }
     | { type: 'FSV_COPY_TO_CLIPBOARD'; text: string };
 
 export const FREESAVEVIDEO_ORIGIN = 'https://freesavevideo.online';

@@ -506,3 +506,304 @@ type ExtensionFeatureFlags = {
 5. 做 TikTok adapter。
 6. 做 Instagram/Xiaohongshu/Kuaishou。
 7. 根据真实用户反馈继续补 P1/P2。
+
+## 实施任务清单
+
+以下清单按“可独立开会话执行”的粒度拆分。默认策略已经确认：
+
+- 阶段 1 接受“先不上 API 授权、基础下载全免费”，但要预留授权接口和埋点位。
+- 第一批 P0 平台按 `Douyin -> Bilibili -> TikTok -> Instagram` 落地。
+
+### 里程碑划分
+
+#### M1：完成扩展架构重构，不追求平台效果提升
+
+目标：
+
+- 把当前“单 content scanner”升级为“adapter registry + generic adapter + downloader pipeline”。
+- 保持现有通用扫描能力不回退。
+- 为后续 Douyin/Bilibili/TikTok/Instagram adapter 留好接口。
+
+可并行任务：
+
+1. 任务 A1：抽统一类型与消息协议
+   - 文件范围：
+     - `extension/src/shared/messages.ts`
+     - `extension/src/adapters/types.ts`
+   - 工作内容：
+     - 定义 `PlatformId`、`AdapterResult`、`DetectedMedia`、`AdapterContext`、`PlatformAdapter`。
+     - 给 `DetectedMedia` 增加 `durationLabel`、`filename`、`score`、`requiresPageContext`。
+     - 给 `AdapterResult` 增加 `warnings` 和平台状态字段。
+     - 升级 popup/background/content 间消息协议，避免后续平台信息丢失。
+   - 验收：
+     - TypeScript 可编译。
+     - 旧 popup 仍能正常展示 generic 扫描结果。
+
+2. 任务 A2：建立 adapter 目录与 registry
+   - 文件范围：
+     - `extension/src/adapters/registry.ts`
+     - `extension/src/adapters/generic.ts`
+     - `extension/src/adapters/index.ts`（如需要）
+   - 工作内容：
+     - 建立 adapter 注册表与 URL 匹配流程。
+     - 约定 adapter 失败时只返回空结果或 warning，不抛致命错误。
+     - 先接入 `generic` adapter 和 `youtube-policy` 特判逻辑。
+   - 验收：
+     - content script 能根据 URL 正确命中 generic 或后续平台 adapter。
+     - YouTube 页面仍只显示政策提示，不出现下载按钮。
+
+3. 任务 A3：迁移现有 content 通用扫描逻辑
+   - 文件范围：
+     - `extension/src/content.ts`
+     - `extension/src/adapters/generic.ts`
+   - 工作内容：
+     - 把当前 DOM/performance 扫描逻辑迁入 `generic adapter`。
+     - content script 自身只保留注入、上下文组装、调用 registry、回传结果。
+     - 保留当前噪声过滤基础能力。
+   - 验收：
+     - 非目标平台页面扫描结果与当前版本接近。
+     - 扫描时间维持在 3 秒内。
+
+4. 任务 A4：抽 downloader 通用模块
+   - 文件范围：
+     - `extension/src/downloader/chrome-downloads.ts`
+     - `extension/src/downloader/filename.ts`
+     - `extension/src/downloader/probe.ts`
+     - `extension/src/background.ts`
+   - 工作内容：
+     - 抽离文件名清洗逻辑。
+     - 抽离下载入口，统一调用 `chrome.downloads.download`。
+     - 为未来 `requiresPageContext`、403/404 回退策略预留接口。
+   - 验收：
+     - 当前 popup 里的下载功能不回退。
+     - 文件名仍落在 `FreeSaveVideo/...` 目录下，且非法字符被正确清洗。
+
+5. 任务 A5：popup 数据结构升级
+   - 文件范围：
+     - `extension/src/popup/main.ts`
+     - `extension/src/popup/styles.css`
+   - 工作内容：
+     - 让 popup 消费 `AdapterResult`，而不是只消费简单 `PageScanResult`。
+     - 增加平台标识、warning、状态文案区域。
+     - 保持当前 UI 先可用，不强求完整视觉重做。
+   - 验收：
+     - popup 可展示平台、状态、warning。
+     - generic 扫描结果仍能下载、复制链接、打开 FreeSaveVideo。
+
+#### M2：Douyin 首发可用 + Bilibili 体验升级
+
+目标：
+
+- 先解决当前最明显的问题：Douyin 噪声大、候选不准。
+- 把 Bilibili 从“能扫到”提升为“能看懂、能选对”。
+
+可并行任务：
+
+1. 任务 B1：实现 Douyin adapter
+   - 文件范围：
+     - `extension/src/adapters/douyin.ts`
+     - `extension/src/adapters/registry.ts`
+   - 工作内容：
+     - 支持 `video/note/share/slides/shortLink/jingxuan modal`。
+     - 从 `performance`、`window._ROUTER_DATA`、`window._RENDER_DATA`、hydration script、`video.currentSrc` 取候选。
+     - 过滤埋点、头像、封面小图、推荐流、`webcast` 直播资源。
+     - 按文档优先级对 `douyinvod/bytevod/zjcdn/aweme play/currentSrc/generic` 排序。
+   - 验收：
+     - 同一视频默认只展示 1 到 3 个高可信候选。
+     - 默认第一项可下载概率明显高于 generic 扫描。
+     - 不再出现“80 items found”式列表污染。
+
+2. 任务 B2：Douyin 展示与降级文案
+   - 文件范围：
+     - `extension/src/popup/main.ts`
+     - `extension/src/popup/styles.css`
+   - 工作内容：
+     - 展示标题、缩略图、`MP4`、清晰度、大小、来源。
+     - 增加 `needsPlayback`、`needsLogin`、`blockedByPlatform`、`fallbackOnly` 的文案。
+   - 验收：
+     - 无法直下时，用户能看懂下一步该做什么。
+
+3. 任务 B3：Bilibili adapter 整理
+   - 文件范围：
+     - `extension/src/adapters/bilibili.ts`
+     - `extension/src/adapters/registry.ts`
+   - 工作内容：
+     - 从 `window.__playinfo__`、`playurl API`、network 资源中归并 video/audio 候选。
+     - 对同一视频的 video/audio 流做成组展示。
+     - 过滤 `data.bilibili.com/log` 和其他统计噪声。
+   - 验收：
+     - 列表不再出现明显噪声链接。
+     - video/audio 不重复。
+     - 可明确标识“视频流/音频流”。
+
+4. 任务 B4：P0 测试样本沉淀
+   - 文件范围：
+     - `docs/` 下新增测试样本文档，或 `extension/README.md`
+   - 工作内容：
+     - 为 Douyin、Bilibili 各整理至少 5 条验收链接。
+     - 覆盖公开视频、多清晰度、图文/图集、短链、登录态或地区差异样本。
+   - 验收：
+     - 后续任何会话都能复用这些样本做回归。
+
+#### M3：TikTok + Instagram
+
+目标：
+
+- 完成第一批 P0 平台主链路。
+- 验证 adapter 架构具备横向复制能力。
+
+可并行任务：
+
+1. 任务 C1：实现 TikTok adapter
+   - 文件范围：
+     - `extension/src/adapters/tiktok.ts`
+   - 工作内容：
+     - 支持 `@user/video/:id`、`photo/:id`、短链。
+     - 解析 `__UNIVERSAL_DATA_FOR_REHYDRATION__` 和 embed 数据。
+     - 参考文档实现 no-watermark 候选优先、embed fallback 降级。
+   - 验收：
+     - 视频、图集、原声都有明确结果或明确降级提示。
+
+2. 任务 C2：实现 Instagram adapter
+   - 文件范围：
+     - `extension/src/adapters/instagram.ts`
+   - 工作内容：
+     - 优先支持 `p/`、`reel/`、share。
+     - `stories/` 先做到“能识别时展示，不能稳定支持时明确提示”。
+     - 利用页面登录态 cookie 和 hydration 数据。
+   - 验收：
+     - 对 post/reel 的成功率高于 generic。
+     - 对 story 私密或过期内容有清晰提示。
+
+3. 任务 C3：P0 popup 体验收口
+   - 文件范围：
+     - `extension/src/popup/main.ts`
+     - `extension/src/popup/styles.css`
+   - 工作内容：
+     - 统一各平台卡片结构。
+     - 规范 badge：格式、清晰度、大小、来源、Pro 占位。
+     - 规范失败态和空态。
+   - 验收：
+     - Douyin/Bilibili/TikTok/Instagram 在同一 popup 交互下都能读懂。
+
+#### M4：商业化基础设施接线，但默认不拦基础下载
+
+目标：
+
+- 把授权、登录、配额、feature flags 接进来。
+- 默认仍允许基础下载，避免影响增长。
+
+可并行任务：
+
+1. 任务 D1：定义扩展授权 API
+   - 文件范围：
+     - `api/src/routes/` 下新增 extension 路由
+     - `docs/` 下新增或补充扩展 API 文档
+   - 工作内容：
+     - 新增 `POST /extension/download-authorize`。
+     - 定义请求/响应结构、reason 枚举、feature flags 返回。
+     - 默认只传 `mediaUrlHash`，不传完整 URL。
+   - 验收：
+     - 本地和生产 API 都能返回 allow/deny/remaining/plan/reason。
+
+2. 任务 D2：扩展登录态接入 Clerk
+   - 文件范围：
+     - `extension/src/background.ts`
+     - `extension/src/popup/main.ts`
+     - 视方案需要新增 `extension/src/auth/*`
+   - 工作内容：
+     - popup 增加登录入口。
+     - 与现有 FreeSaveVideo/Clerk 体系对接。
+     - token 或 session 保存到 `chrome.storage.local`。
+   - 验收：
+     - 登录后可在扩展内看到用户权益状态。
+     - token 过期时不阻塞基础浏览和基础扫描。
+
+3. 任务 D3：扩展授权调用与缓存
+   - 文件范围：
+     - `extension/src/background.ts`
+     - `extension/src/downloader/*`
+   - 工作内容：
+     - 在点击 `Download` 前先请求授权。
+     - 授权结果缓存最多 5 分钟。
+     - API 不可用时，增长期继续放行基础下载。
+   - 验收：
+     - API 超时或失败不把基础下载链路打崩。
+     - 低风险免费能力可离线短暂可用。
+
+4. 任务 D4：feature flags 打通
+   - 文件范围：
+     - `api` feature flags 输出逻辑
+     - `extension/src/background.ts`
+     - `extension/src/popup/main.ts`
+   - 工作内容：
+     - 支持按平台关闭 adapter。
+     - 支持按功能灰度 `batchDownload/highQuality/noWatermark/galleryPack/playlist`。
+   - 验收：
+     - 后端可动态关平台、关功能、开额度策略，无需重新发版。
+
+#### M5：收费能力与高级功能灰度
+
+目标：
+
+- 在不牺牲基础增长的前提下，逐步上线积分和会员能力。
+
+建议后置任务：
+
+1. 任务 E1：免费额度策略
+   - 匿名用户每日免费次数。
+   - 登录用户更高免费次数。
+   - 首次安装赠送试用额度。
+
+2. 任务 E2：Pro/Credits 功能墙
+   - 高级解析。
+   - 批量下载。
+   - 图集打包。
+   - 高清优先。
+   - 无水印优先。
+
+3. 任务 E3：高级下载策略
+   - 针对 `requiresPageContext`、403/404 增加页面上下文 fetch/blob 下载。
+   - 仍不优先走 FreeSaveVideo tunnel。
+
+### 多会话执行建议
+
+建议按以下边界拆会话，减少互相冲突：
+
+1. 会话 1：A1 + A2
+   - 只动类型、消息协议、adapter registry。
+2. 会话 2：A3 + A4
+   - 只动 content 通用逻辑和 downloader。
+3. 会话 3：A5 + B2 + C3
+   - 只动 popup 展示层。
+4. 会话 4：B1
+   - 只做 Douyin adapter。
+5. 会话 5：B3
+   - 只做 Bilibili adapter。
+6. 会话 6：C1
+   - 只做 TikTok adapter。
+7. 会话 7：C2
+   - 只做 Instagram adapter。
+8. 会话 8：D1 + D4
+   - 只做 API 授权接口和 flags。
+9. 会话 9：D2 + D3
+   - 只做扩展登录与授权调用。
+
+### 编码约束与落地原则
+
+- 短期不增加 `<all_urls>`、`webRequest` 等高敏感权限。
+- 不为 Chrome Web Store 版本实现 YouTube adapter。
+- adapter 内只做平台候选识别、过滤、评分，不把通用下载逻辑塞回 adapter。
+- 通用去重、排序、文件名清洗、下载动作统一放共享模块。
+- adapter 失败时必须优雅退回 generic，不得让 popup 整体报错。
+- 商业化阶段前，默认基础下载不被 API 授权阻塞。
+
+### 每阶段完成后的统一回归清单
+
+1. 普通非目标站点页面仍可扫描出通用媒体资源。
+2. YouTube 页面仍只显示政策提示。
+3. 扫描结果在 3 秒内返回。
+4. 文件名可读且不含非法字符。
+5. 下载扩展名正确。
+6. adapter 失败时能回落 generic，而不是白屏或报错。
+7. popup 中 FreeSaveVideo 品牌和页面入口仍保留。

@@ -1,5 +1,6 @@
-import type { DetectedMedia, PageScanResult } from '../shared/messages';
-import { buildFreeSaveVideoUrl, isYouTubeUrl } from '../shared/url';
+import type { AdapterStatus, DetectedMedia, PageScanResult } from '../shared/messages';
+import { buildDownloadFilename } from '../downloader/filename';
+import { buildFreeSaveVideoUrl } from '../shared/url';
 import './styles.css';
 
 type State =
@@ -35,36 +36,6 @@ const mediaIcon = (kind: DetectedMedia['kind']) => {
         default:
             return 'URL';
     }
-};
-
-const extensionFromUrl = (value: string) => {
-    try {
-        const match = new URL(value).pathname.match(/\.([a-z0-9]{2,5})$/i);
-        return match?.[1].toLowerCase();
-    } catch {
-        return undefined;
-    }
-};
-
-const extensionFor = (item: DetectedMedia) => {
-    const format = item.format?.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (format === 'hls') return 'm3u8';
-    if (format === 'dash') return 'mpd';
-    if (format === 'm4s') return 'mp4';
-    return format || extensionFromUrl(item.url) || (item.kind === 'image' ? 'jpg' : 'mp4');
-};
-
-const safeFilenamePart = (value: string) =>
-    value
-        .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 100) || 'download';
-
-const downloadFilename = (result: PageScanResult, item: DetectedMedia) => {
-    const title = safeFilenamePart(result.pageTitle || item.label || 'download');
-    const suffix = item.qualityLabel ? `-${safeFilenamePart(item.qualityLabel)}` : '';
-    return `FreeSaveVideo/${title}${suffix}.${extensionFor(item)}`;
 };
 
 const shortUrl = (value: string) => {
@@ -132,8 +103,8 @@ const openFreeSaveVideo = async (url: string) => {
     await chrome.runtime.sendMessage({ type: 'FSV_OPEN_FREESAVEVIDEO', url });
 };
 
-const downloadUrl = async (url: string, filename?: string) => {
-    await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url, filename });
+const downloadUrl = async (item: DetectedMedia, filename?: string) => {
+    await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
 };
 
 const bindActions = () => {
@@ -159,7 +130,9 @@ const bindActions = () => {
     document.querySelectorAll<HTMLButtonElement>('[data-download-url]').forEach((button) => {
         button.addEventListener('click', () => {
             const url = button.dataset.downloadUrl;
-            if (url) void downloadUrl(url, button.dataset.downloadFilename);
+            if (!url || state.kind !== 'ready') return;
+            const item = state.result.media.find((candidate) => candidate.url === url);
+            if (item) void downloadUrl(item, button.dataset.downloadFilename);
         });
     });
     document.querySelectorAll<HTMLButtonElement>('[data-filter-kind]').forEach((button) => {
@@ -168,6 +141,32 @@ const bindActions = () => {
             if (state.kind === 'ready') setState({ ...state, activeKind: kind });
         });
     });
+};
+
+const platformLabel = (platform: PageScanResult['platform']) =>
+    platform
+        .split('-')
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ');
+
+const statusText: Record<AdapterStatus, string> = {
+    ok: 'Ready to download',
+    empty: 'No direct media found yet',
+    needsPlayback: 'Start playback, then scan again',
+    needsLogin: 'Log in on this site, then scan again',
+    blockedByPlatform: 'This platform blocked the current request',
+    unsupportedContent: 'This content is not supported for direct download',
+    fallbackOnly: 'Showing generic fallback results',
+    policyBlocked: 'Policy restricted in the extension',
+};
+
+const statusHelpText: Partial<Record<AdapterStatus, string>> = {
+    needsPlayback: 'Play the target media for a moment, then scan again.',
+    needsLogin: 'Sign in on this site in the current tab, then run the scan again.',
+    blockedByPlatform: 'The platform did not expose a stable direct file on this page. Copy the link or open it in FreeSaveVideo.',
+    unsupportedContent: 'This page may be live, private, DRM-protected, or otherwise unsupported for direct download.',
+    fallbackOnly: 'The platform adapter could not produce a clean direct result, so fallback candidates are shown below.',
+    policyBlocked: 'Chrome Web Store policy blocks download actions for this page in the extension.',
 };
 
 const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => `
@@ -184,7 +183,9 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 <span>${escapeHtml(item.format || mediaIcon(item.kind))}</span>
                 ${item.qualityLabel ? `<span>${escapeHtml(item.qualityLabel)}</span>` : ''}
                 ${item.sizeLabel ? `<span>${escapeHtml(item.sizeLabel)}</span>` : ''}
+                ${item.durationLabel ? `<span>${escapeHtml(item.durationLabel)}</span>` : ''}
                 <span>${escapeHtml(item.source)}</span>
+                ${item.requiresPageContext ? '<span>Page context</span>' : ''}
             </div>
         </div>
         <div class="media-actions">
@@ -195,7 +196,7 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 type="button"
                 class="primary"
                 data-download-url="${escapeHtml(item.url)}"
-                data-download-filename="${escapeHtml(downloadFilename(result, item))}"
+                data-download-filename="${escapeHtml(buildDownloadFilename(result, item))}"
                 ${disabled ? 'disabled' : ''}
             >
                 Download
@@ -234,7 +235,7 @@ const render = () => {
 
     const { result, copiedUrl } = state;
     const activeKind = state.activeKind;
-    const youtubeBlocked = result.isYouTube || isYouTubeUrl(result.pageUrl);
+    const youtubeBlocked = result.status === 'policyBlocked';
     const media = result.media;
     const counts = media.reduce<Record<string, number>>((acc, item) => {
         acc[item.kind] = (acc[item.kind] || 0) + 1;
@@ -265,6 +266,11 @@ const render = () => {
                 <button type="button" class="scan-button" data-action="rescan">Scan</button>
             </header>
 
+            <section class="meta-strip">
+                <span class="meta-pill">${escapeHtml(platformLabel(result.platform))}</span>
+                <span class="meta-text">${escapeHtml(statusText[result.status])}</span>
+            </section>
+
             ${
                 youtubeBlocked
                     ? `<section class="policy-box">
@@ -274,6 +280,20 @@ const render = () => {
                         <span>${media.length} item${media.length === 1 ? '' : 's'} found</span>
                         <button type="button" data-action="open-page">Open page link</button>
                     </section>`
+            }
+
+            ${
+                result.warnings?.length
+                    ? `<section class="warning-list">
+                        ${result.warnings.map((warning) => `<div>${escapeHtml(warning)}</div>`).join('')}
+                    </section>`
+                    : ''
+            }
+
+            ${
+                statusHelpText[result.status]
+                    ? `<section class="status-help">${escapeHtml(statusHelpText[result.status] || '')}</section>`
+                    : ''
             }
 
             ${

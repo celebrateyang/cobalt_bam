@@ -188,6 +188,39 @@ export const readAssignedJsonFromScripts = <T>(
     return null;
 };
 
+export const readJsonScriptById = <T>(document: Document, id: string): T | null => {
+    const text = document.getElementById(id)?.textContent;
+    if (!text) return null;
+    return safeJsonParse<T>(text);
+};
+
+export const readJsonLdScripts = <T>(document: Document): T[] => {
+    return [...document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')]
+        .map((script) => safeJsonParse<T>(script.textContent || ''))
+        .filter((value): value is T => value !== null);
+};
+
+export const findJsonObjectByProperty = <T>(source: string, propertyNames: string[]): T | null => {
+    for (const propertyName of propertyNames) {
+        const patterns = [
+            `"${propertyName}":`,
+            `"${propertyName}" :`,
+            `${propertyName}:`,
+        ];
+
+        for (const pattern of patterns) {
+            const index = source.indexOf(pattern);
+            if (index === -1) continue;
+            const value = extractBalancedValue(source, index + pattern.length);
+            if (!value) continue;
+            const parsed = safeJsonParse<T>(value);
+            if (parsed) return parsed;
+        }
+    }
+
+    return null;
+};
+
 export const visitObject = (value: unknown, visitor: (node: unknown) => void) => {
     const queue = [value];
     const seen = new Set<unknown>();

@@ -38,6 +38,21 @@ const mediaIcon = (kind: DetectedMedia['kind']) => {
     }
 };
 
+const sourceLabel = (source: DetectedMedia['source']) => {
+    switch (source) {
+        case 'adapter':
+            return 'Adapter';
+        case 'network':
+            return 'Network';
+        case 'dom':
+            return 'Page';
+        case 'api':
+            return 'API';
+        default:
+            return 'Fallback';
+    }
+};
+
 const shortUrl = (value: string) => {
     try {
         const url = new URL(value);
@@ -184,7 +199,7 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 ${item.qualityLabel ? `<span>${escapeHtml(item.qualityLabel)}</span>` : ''}
                 ${item.sizeLabel ? `<span>${escapeHtml(item.sizeLabel)}</span>` : ''}
                 ${item.durationLabel ? `<span>${escapeHtml(item.durationLabel)}</span>` : ''}
-                <span>${escapeHtml(item.source)}</span>
+                <span>${escapeHtml(sourceLabel(item.source))}</span>
                 ${item.requiresPageContext ? '<span>Page context</span>' : ''}
             </div>
         </div>

@@ -2,6 +2,8 @@ import { YOUTUBE_HOST_RE } from '../shared/messages';
 import { bilibiliAdapter } from './bilibili';
 import { douyinAdapter } from './douyin';
 import { genericAdapter } from './generic';
+import { instagramAdapter } from './instagram';
+import { tiktokAdapter } from './tiktok';
 import type { AdapterContext, AdapterResult, PlatformAdapter } from './types';
 
 const youtubePolicyAdapter: PlatformAdapter = {
@@ -23,7 +25,7 @@ const youtubePolicyAdapter: PlatformAdapter = {
     },
 };
 
-const adapters: PlatformAdapter[] = [youtubePolicyAdapter, douyinAdapter, bilibiliAdapter];
+const adapters: PlatformAdapter[] = [youtubePolicyAdapter, douyinAdapter, bilibiliAdapter, tiktokAdapter, instagramAdapter];
 
 export const getMatchingAdapter = (url: URL): PlatformAdapter => {
     return adapters.find((adapter) => adapter.matches(url)) ?? genericAdapter;

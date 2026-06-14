@@ -6,7 +6,7 @@ import {
     getPreferredThumbnail,
     readAssignedJsonFromScripts,
 } from './utils';
-import { normalizeUrl } from '../shared/url';
+import { normalizeUrl } from './runtime';
 
 const BILIBILI_HOST_RE = /(^|\.)bilibili\.com$|(^|\.)bilibili\.tv$|(^|\.)b23\.tv$/i;
 

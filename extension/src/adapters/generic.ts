@@ -5,7 +5,7 @@ import type {
     MediaKind,
     PlatformAdapter,
 } from './types';
-import { normalizeUrl } from '../shared/url';
+import { normalizeUrl } from './runtime';
 
 const MAX_RESULTS = 80;
 

@@ -4,8 +4,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && node ./scripts/copy-static.mjs && node ./scripts/validate-manifest.mjs",
-        "dev": "vite build --watch",
+        "build": "vite build && vite build --config vite.content.config.ts && node ./scripts/copy-static.mjs && node ./scripts/validate-manifest.mjs",
+        "dev": "vite build --watch & vite build --config vite.content.config.ts --watch",
         "package": "pnpm build && node ./scripts/package-extension.mjs",
         "typecheck": "tsc --noEmit",
         "validate": "node ./scripts/validate-manifest.mjs"

@@ -59,6 +59,7 @@ export type DetectedMedia = {
     sizeLabel?: string;
     qualityLabel?: string;
     thumbnailUrl?: string;
+    thumbnailRect?: ViewportRect;
     durationLabel?: string;
     filename?: string;
     score?: number;
@@ -82,6 +83,10 @@ export type AdapterContext = {
     document: Document;
     performanceEntries: PerformanceResourceTiming[];
     genericScan: () => DetectedMedia[];
+    tiktokFeedItems?: TikTokFeedItemSnapshot[];
+    tiktokResourceItems?: TikTokResourceSnapshot[];
+    instagramDomVideos?: InstagramDomVideoSnapshot[];
+    instagramResourceItems?: InstagramResourceSnapshot[];
 };
 
 export type PlatformAdapter = {
@@ -89,4 +94,47 @@ export type PlatformAdapter = {
     label: string;
     matches(url: URL): boolean;
     scan(context: AdapterContext): Promise<AdapterResult> | AdapterResult;
+};
+
+export type TikTokFeedItemSnapshot = {
+    url: string;
+    title?: string;
+    author?: string;
+    thumbnailUrl?: string;
+    thumbnailRect?: ViewportRect;
+    durationLabel?: string;
+    visibleArea?: number;
+    currentTime?: number;
+    paused?: boolean;
+    seenAt: number;
+};
+
+export type TikTokResourceSnapshot = {
+    url: string;
+    thumbnailUrl?: string;
+    seenAt: number;
+};
+
+export type InstagramResourceSnapshot = {
+    url: string;
+    thumbnailUrl?: string;
+    seenAt: number;
+};
+
+export type InstagramDomVideoSnapshot = {
+    url: string;
+    thumbnailUrl?: string;
+    thumbnailRect?: ViewportRect;
+    durationLabel?: string;
+    visibleArea?: number;
+    currentTime?: number;
+    paused?: boolean;
+    seenAt: number;
+};
+
+export type ViewportRect = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 };

@@ -1,4 +1,4 @@
-import { normalizeUrl } from '../shared/url';
+import { normalizeUrl } from './runtime';
 
 export const dedupeBy = <T>(items: T[], keyFor: (item: T) => string | null | undefined) => {
     const seen = new Set<string>();

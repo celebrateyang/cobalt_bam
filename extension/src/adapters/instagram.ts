@@ -8,9 +8,11 @@ import {
     readJsonLdScripts,
     visitObject,
 } from './utils';
-import { normalizeUrl } from '../shared/url';
+import { normalizeUrl } from './runtime';
 
 const INSTAGRAM_HOST_RE = /(^|\.)instagram\.com$|(^|\.)ddinstagram\.com$/i;
+const INSTAGRAM_VIDEO_RE = /\.(?:mp4|m4v)(?:[?#]|$)/i;
+const INSTAGRAM_VIDEO_RESOURCE_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
 
 type InstagramShortcodeMedia = {
     __typename?: string;
@@ -77,6 +79,110 @@ const getJsonLdMedia = (document: Document, pageUrl: string) => {
     return null;
 };
 
+const getMetaVideoMedia = (context: AdapterContext): DetectedMedia[] => {
+    const title = getMetaContent(context.document, 'meta[property="og:title"]') || context.pageTitle;
+    const thumbnailUrl = getPreferredThumbnail(context.document, context.pageUrl);
+    const candidates = dedupeBy(
+        [
+            getMetaContent(context.document, 'meta[property="og:video"]'),
+            getMetaContent(context.document, 'meta[property="og:video:secure_url"]'),
+            getMetaContent(context.document, 'meta[name="twitter:player:stream"]'),
+        ]
+            .map((value) => (value ? normalizeUrl(value, context.pageUrl) : null))
+            .filter((url): url is string => Boolean(url)),
+        (url) => url.replace(/[?#].*$/, ''),
+    );
+
+    return candidates.map((url, index) => ({
+        id: `instagram-meta-video-${index + 1}`,
+        kind: 'video' as const,
+        url,
+        label: title,
+        source: 'adapter' as const,
+        format: 'MP4',
+        thumbnailUrl: context.instagramResourceItems?.find((item) => item.url === url)?.thumbnailUrl || thumbnailUrl,
+        score: 88 - index,
+        requiresPageContext: true,
+    }));
+};
+
+const collectInlineVideoMedia = (context: AdapterContext): DetectedMedia[] => {
+    const title = getMetaContent(context.document, 'meta[property="og:title"]') || context.pageTitle;
+    const thumbnailUrl = getPreferredThumbnail(context.document, context.pageUrl);
+    const videoUrls = dedupeBy(
+        [
+            ...[...context.document.querySelectorAll<HTMLVideoElement>('video')].map((video) => video.currentSrc || video.src),
+            ...context.performanceEntries.map((entry) => entry.name),
+        ]
+            .map((value) => normalizeUrl(value, context.pageUrl))
+            .filter((url): url is string => Boolean(url))
+            .filter((url) => INSTAGRAM_VIDEO_RE.test(url) || /mime_type=video_/i.test(url)),
+        (url) => url.replace(/[?#].*$/, ''),
+    );
+
+    return videoUrls.map((url, index) => ({
+        id: `instagram-inline-video-${index + 1}`,
+        kind: 'video' as const,
+        url,
+        label: title,
+        source: index === 0 ? 'dom' as const : 'network' as const,
+        format: 'MP4',
+        thumbnailUrl: context.instagramResourceItems?.find((item) => item.url === url)?.thumbnailUrl || thumbnailUrl,
+        score: 82 - index,
+        requiresPageContext: true,
+    }));
+};
+
+const collectResourceVideoMedia = (context: AdapterContext): DetectedMedia[] => {
+    const title = getMetaContent(context.document, 'meta[property="og:title"]') || context.pageTitle;
+    const resources = dedupeBy(
+        dedupeBy(
+            (context.instagramResourceItems ?? [])
+                .filter((item) => INSTAGRAM_VIDEO_RESOURCE_RE.test(item.url))
+                .filter((item) => Boolean(item.thumbnailUrl))
+                .sort((left, right) => right.seenAt - left.seenAt),
+            (item) => item.url,
+        ),
+        (item) => item.thumbnailUrl || item.url,
+    );
+
+    return resources.slice(0, 6).map((item, index) => ({
+        id: `instagram-resource-video-${index + 1}`,
+        kind: 'video' as const,
+        url: item.url,
+        label: `${title}${resources.length > 1 ? ` (${index + 1})` : ''}`,
+        source: 'adapter' as const,
+        format: 'MP4',
+        thumbnailUrl: item.thumbnailUrl,
+        score: 94 - index,
+        requiresPageContext: true,
+    }));
+};
+
+const collectDomVideoMedia = (context: AdapterContext): DetectedMedia[] => {
+    const title = getMetaContent(context.document, 'meta[property="og:title"]') || context.pageTitle;
+    const videos = dedupeBy(
+        (context.instagramDomVideos ?? [])
+            .filter((item) => item.url.startsWith('blob:') || INSTAGRAM_VIDEO_RESOURCE_RE.test(item.url) || INSTAGRAM_VIDEO_RE.test(item.url))
+            .sort((left, right) => right.seenAt - left.seenAt),
+        (item) => item.url,
+    );
+
+    return videos.map((item, index) => ({
+        id: `instagram-dom-video-${index + 1}`,
+        kind: 'video' as const,
+        url: item.url,
+        label: `${title}${videos.length > 1 ? ` (${index + 1})` : ''}`,
+        source: 'dom' as const,
+        format: 'MP4',
+        thumbnailUrl: item.thumbnailUrl,
+        thumbnailRect: item.thumbnailRect,
+        durationLabel: item.durationLabel,
+        score: 110 - index,
+        requiresPageContext: true,
+    }));
+};
+
 const collectStoryMediaFromPage = (context: AdapterContext) => {
     const videoUrl = [...context.document.querySelectorAll<HTMLVideoElement>('video')]
         .map((video) => normalizeUrl(video.currentSrc || video.src, context.pageUrl))
@@ -140,6 +246,7 @@ const mediaItemsFromShortcode = (context: AdapterContext, media: InstagramShortc
                     thumbnailUrl: displayUrl,
                     durationLabel,
                     score: 90 - index,
+                    requiresPageContext: true,
                 }];
             }
             if (displayUrl) {
@@ -173,6 +280,7 @@ const mediaItemsFromShortcode = (context: AdapterContext, media: InstagramShortc
             thumbnailUrl,
             durationLabel,
             score: 100,
+            requiresPageContext: true,
         }];
     }
 
@@ -248,11 +356,23 @@ export const instagramAdapter: PlatformAdapter = {
 
         const shortcodeMedia = unwrapShortcodeMedia(findShortcodeMediaFromScripts(context.document));
         const jsonLdMedia = getJsonLdMedia(context.document, context.pageUrl);
+        const domVideoMedia = collectDomVideoMedia(context);
         const adapterMedia = shortcodeMedia ? mediaItemsFromShortcode(context, shortcodeMedia) : [];
+        const resourceVideoMedia = collectResourceVideoMedia(context);
+        const metaVideoMedia = getMetaVideoMedia(context);
+        const inlineVideoMedia = collectInlineVideoMedia(context);
 
-        const media = adapterMedia.length
+        const media = domVideoMedia.length
+            ? domVideoMedia
+            : adapterMedia.length
             ? adapterMedia
-            : jsonLdMedia?.url
+            : metaVideoMedia.length
+                ? metaVideoMedia
+                : inlineVideoMedia.length
+                    ? inlineVideoMedia
+                    : resourceVideoMedia.length
+                ? resourceVideoMedia
+                : jsonLdMedia?.url
                 ? [{
                     id: `instagram-jsonld-${jsonLdMedia.type}`,
                     kind: jsonLdMedia.type,
@@ -263,9 +383,9 @@ export const instagramAdapter: PlatformAdapter = {
                     thumbnailUrl: jsonLdMedia.thumbnailUrl,
                     durationLabel: jsonLdMedia.durationLabel,
                     score: 65,
+                    requiresPageContext: true,
                 } satisfies DetectedMedia]
                 : collectCandidateUrls(context)
-                    .slice(0, 8)
                     .map((url, index) => ({
                         id: `instagram-fallback-${index + 1}`,
                         kind: /\.mp4(?:[?#]|$)/i.test(url) ? 'video' : 'image',
@@ -273,18 +393,14 @@ export const instagramAdapter: PlatformAdapter = {
                         label: getMetaContent(context.document, 'meta[property="og:title"]') || context.pageTitle,
                         source: 'fallback',
                         format: /\.mp4(?:[?#]|$)/i.test(url) ? 'MP4' : 'JPG',
-                        thumbnailUrl: getPreferredThumbnail(context.document, context.pageUrl),
+                        thumbnailUrl: /\.mp4(?:[?#]|$)/i.test(url)
+                            ? context.instagramResourceItems?.find((item) => item.url === url)?.thumbnailUrl
+                            : url,
                         score: 35 - index,
-                    } satisfies DetectedMedia));
+                    } satisfies DetectedMedia))
+                    .filter((item) => item.kind !== 'video' || Boolean(item.thumbnailUrl));
 
         if (media.length > 0) {
-            const warnings: string[] = [];
-            if (!adapterMedia.length) {
-                warnings.push('Instagram returned fallback page media instead of structured post data, so some results may be less reliable.');
-            }
-            if (pathInfo.isReel) {
-                warnings.push('Instagram reels often work best after the reel is fully opened in the current tab.');
-            }
             return {
                 platform: 'instagram',
                 pageUrl: context.pageUrl,
@@ -292,7 +408,6 @@ export const instagramAdapter: PlatformAdapter = {
                 hostname: context.hostname,
                 status: 'ok',
                 media,
-                warnings: warnings.length ? warnings : undefined,
             };
         }
 

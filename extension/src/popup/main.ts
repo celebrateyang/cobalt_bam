@@ -1,6 +1,5 @@
 import type { AdapterStatus, DetectedMedia, PageScanResult } from '../shared/messages';
 import { buildDownloadFilename } from '../downloader/filename';
-import { buildFreeSaveVideoUrl } from '../shared/url';
 import './styles.css';
 
 type State =
@@ -12,6 +11,8 @@ const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('Missing app root');
 
 let state: State = { kind: 'loading' };
+let scanInFlight = false;
+let autoRefreshTimer: number | undefined;
 
 const escapeHtml = (value: string) =>
     value
@@ -38,21 +39,6 @@ const mediaIcon = (kind: DetectedMedia['kind']) => {
     }
 };
 
-const sourceLabel = (source: DetectedMedia['source']) => {
-    switch (source) {
-        case 'adapter':
-            return 'Adapter';
-        case 'network':
-            return 'Network';
-        case 'dom':
-            return 'Page';
-        case 'api':
-            return 'API';
-        default:
-            return 'Fallback';
-    }
-};
-
 const shortUrl = (value: string) => {
     try {
         const url = new URL(value);
@@ -73,14 +59,85 @@ const getActiveTab = async () => {
     return tab;
 };
 
-const scanPage = async () => {
-    setState({ kind: 'loading' });
+const sendPageDownload = async (item: DetectedMedia, filename?: string) => {
+    const tab = await getActiveTab();
+    if (!tab.id) {
+        throw new Error('No active tab found.');
+    }
+
+    const result = await chrome.runtime.sendMessage({
+        type: 'FSV_PAGE_DOWNLOAD',
+        tabId: tab.id,
+        url: item.url,
+        filename,
+        media: item,
+    });
+
+    if (!result?.ok) {
+        throw new Error(result?.error || 'Page-context download failed.');
+    }
+};
+
+const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Unable to load captured thumbnail.'));
+        image.src = src;
+    });
+
+const cropCapturedThumbnail = async (dataUrl: string, rect: NonNullable<DetectedMedia['thumbnailRect']>, tab: chrome.tabs.Tab) => {
+    const image = await loadImage(dataUrl);
+    const scaleX = image.naturalWidth / Math.max(1, tab.width || image.naturalWidth);
+    const scaleY = image.naturalHeight / Math.max(1, tab.height || image.naturalHeight);
+    const sourceX = Math.max(0, rect.x * scaleX);
+    const sourceY = Math.max(0, rect.y * scaleY);
+    const sourceWidth = Math.min(image.naturalWidth - sourceX, Math.max(1, rect.width * scaleX));
+    const sourceHeight = Math.min(image.naturalHeight - sourceY, Math.max(1, rect.height * scaleY));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 152;
+    canvas.height = 96;
+    const context = canvas.getContext('2d');
+    if (!context) return dataUrl;
+    context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.72);
+};
+
+const withCapturedPlatformThumbnails = async (result: PageScanResult, tab: chrome.tabs.Tab): Promise<PageScanResult> => {
+    if (result.platform !== 'tiktok' && result.platform !== 'instagram') return result;
+    const needsCapture = result.media.some((item) => item.kind === 'video' && !item.thumbnailUrl && item.thumbnailRect);
+    if (!needsCapture) return result;
+
+    try {
+        const screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 70 });
+        const media = await Promise.all(
+            result.media.map(async (item) => {
+                if (item.kind !== 'video' || item.thumbnailUrl || !item.thumbnailRect) return item;
+                return {
+                    ...item,
+                    thumbnailUrl: await cropCapturedThumbnail(screenshot, item.thumbnailRect, tab),
+                };
+            }),
+        );
+        return { ...result, media };
+    } catch {
+        return result;
+    }
+};
+
+const scanPage = async (options: { silent?: boolean } = {}) => {
+    if (scanInFlight) return;
+    scanInFlight = true;
+    if (!options.silent) setState({ kind: 'loading' });
     const tab = await getActiveTab();
     if (!tab.id || !tab.url) {
+        scanInFlight = false;
         setState({ kind: 'error', message: 'No active tab found.' });
         return;
     }
     if (!/^https?:\/\//i.test(tab.url)) {
+        scanInFlight = false;
         setState({ kind: 'error', message: 'Open a normal web page to scan media.' });
         return;
     }
@@ -93,18 +150,24 @@ const scanPage = async () => {
         const result = (await chrome.tabs.sendMessage(tab.id, {
             type: 'FSV_SCAN_PAGE',
         })) as PageScanResult;
-        setState({ kind: 'ready', result, copiedUrl: null, activeKind: chooseDefaultKind(result.media) });
+        const enrichedResult = await withCapturedPlatformThumbnails(result, tab);
+        const previousState = state;
+        const activeKind =
+            previousState.kind === 'ready' &&
+            (previousState.activeKind === 'all' || enrichedResult.media.some((item) => item.kind === previousState.activeKind))
+                ? previousState.activeKind
+                : chooseDefaultKind(enrichedResult.media);
+        setState({ kind: 'ready', result: enrichedResult, copiedUrl: null, activeKind });
     } catch {
-        setState({
-            kind: 'error',
-            message: 'This page cannot be scanned yet. Reload the tab and try again.',
-        });
+        if (!options.silent) {
+            setState({
+                kind: 'error',
+                message: 'This page cannot be scanned yet. Reload the tab and try again.',
+            });
+        }
+    } finally {
+        scanInFlight = false;
     }
-};
-
-const copyUrl = async (url: string) => {
-    await navigator.clipboard.writeText(url);
-    if (state.kind === 'ready') setState({ ...state, copiedUrl: url });
 };
 
 const chooseDefaultKind = (media: DetectedMedia[]): DetectedMedia['kind'] | 'all' => {
@@ -114,34 +177,20 @@ const chooseDefaultKind = (media: DetectedMedia[]): DetectedMedia['kind'] | 'all
     return 'all';
 };
 
-const openFreeSaveVideo = async (url: string) => {
-    await chrome.runtime.sendMessage({ type: 'FSV_OPEN_FREESAVEVIDEO', url });
-};
-
 const downloadUrl = async (item: DetectedMedia, filename?: string) => {
-    await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
+    try {
+        if (item.requiresPageContext) {
+            await sendPageDownload(item, filename);
+            return;
+        }
+
+        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
+    } catch {
+        await sendPageDownload(item, filename);
+    }
 };
 
 const bindActions = () => {
-    document.querySelector<HTMLButtonElement>('[data-action="rescan"]')?.addEventListener('click', () => {
-        void scanPage();
-    });
-    document.querySelector<HTMLButtonElement>('[data-action="open-page"]')?.addEventListener('click', () => {
-        if (state.kind !== 'ready') return;
-        void chrome.tabs.create({ url: buildFreeSaveVideoUrl(state.result.pageUrl) });
-    });
-    document.querySelectorAll<HTMLButtonElement>('[data-copy-url]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const url = button.dataset.copyUrl;
-            if (url) void copyUrl(url);
-        });
-    });
-    document.querySelectorAll<HTMLButtonElement>('[data-open-url]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const url = button.dataset.openUrl;
-            if (url) void openFreeSaveVideo(url);
-        });
-    });
     document.querySelectorAll<HTMLButtonElement>('[data-download-url]').forEach((button) => {
         button.addEventListener('click', () => {
             const url = button.dataset.downloadUrl;
@@ -199,14 +248,9 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 ${item.qualityLabel ? `<span>${escapeHtml(item.qualityLabel)}</span>` : ''}
                 ${item.sizeLabel ? `<span>${escapeHtml(item.sizeLabel)}</span>` : ''}
                 ${item.durationLabel ? `<span>${escapeHtml(item.durationLabel)}</span>` : ''}
-                <span>${escapeHtml(sourceLabel(item.source))}</span>
-                ${item.requiresPageContext ? '<span>Page context</span>' : ''}
             </div>
         </div>
         <div class="media-actions">
-            <button type="button" class="icon-button" data-copy-url="${escapeHtml(item.url)}">
-                ${copiedUrl === item.url ? 'Copied' : 'Copy'}
-            </button>
             <button
                 type="button"
                 class="primary"
@@ -278,7 +322,6 @@ const render = () => {
                     <div class="brand">FreeSaveVideo</div>
                     <div class="page-title" title="${escapeHtml(result.pageTitle)}">${escapeHtml(result.pageTitle)}</div>
                 </div>
-                <button type="button" class="scan-button" data-action="rescan">Scan</button>
             </header>
 
             <section class="meta-strip">
@@ -291,10 +334,7 @@ const render = () => {
                     ? `<section class="policy-box">
                         YouTube downloads are not supported in this extension because of Chrome Web Store policy.
                     </section>`
-                    : `<section class="summary">
-                        <span>${media.length} item${media.length === 1 ? '' : 's'} found</span>
-                        <button type="button" data-action="open-page">Open page link</button>
-                    </section>`
+                    : ''
             }
 
             ${
@@ -346,3 +386,10 @@ const render = () => {
 };
 
 void scanPage();
+autoRefreshTimer = window.setInterval(() => {
+    void scanPage({ silent: true });
+}, 1800);
+
+window.addEventListener('pagehide', () => {
+    if (autoRefreshTimer) window.clearInterval(autoRefreshTimer);
+});

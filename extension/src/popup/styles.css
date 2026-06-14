@@ -207,21 +207,22 @@ button:disabled {
 .media-list {
     display: grid;
     gap: 0;
-    max-height: 382px;
+    max-height: 434px;
     overflow: auto;
     padding: 0;
 }
 
 .media-item {
     display: grid;
-    grid-template-columns: 76px minmax(0, 1fr) auto;
+    grid-template-columns: 130px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     border: 0;
     border-bottom: 1px solid #edf1f5;
     border-radius: 0;
     background: #ffffff;
-    padding: 12px;
+    min-height: 112px;
+    padding: 12px 14px;
 }
 
 .media-kind {
@@ -237,10 +238,10 @@ button:disabled {
 }
 
 .thumb {
-    width: 76px;
-    height: 48px;
+    width: 130px;
+    height: 82px;
     overflow: hidden;
-    border-radius: 6px;
+    border-radius: 7px;
     background: #edf1f5;
 }
 
@@ -251,6 +252,14 @@ button:disabled {
     display: block;
 }
 
+.thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #0b1220;
+}
+
 .media-body {
     min-width: 0;
 }
@@ -259,6 +268,9 @@ button:disabled {
     color: #172033;
     font-size: 13px;
     font-weight: 700;
+    line-height: 1.25;
+    max-height: 32px;
+    overflow: hidden;
 }
 
 .media-url {
@@ -274,7 +286,7 @@ button:disabled {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    margin-top: 7px;
+    margin-top: 8px;
 }
 
 .badges span {
@@ -297,6 +309,7 @@ button:disabled {
     border-color: #2869d8;
     background: #2869d8;
     color: #ffffff;
+    min-width: 86px;
 }
 
 .primary:hover:not(:disabled) {

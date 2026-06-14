@@ -4,13 +4,15 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     build: {
         outDir: 'dist',
-        emptyOutDir: true,
+        emptyOutDir: false,
         sourcemap: false,
+        lib: {
+            entry: resolve(__dirname, 'src/content.ts'),
+            formats: ['iife'],
+            fileName: () => 'content.js',
+            name: 'FreeSaveVideoContent',
+        },
         rollupOptions: {
-            input: {
-                background: resolve(__dirname, 'src/background.ts'),
-                popup: resolve(__dirname, 'src/popup/index.html'),
-            },
             output: {
                 entryFileNames: 'assets/[name].js',
                 chunkFileNames: 'assets/[name].js',

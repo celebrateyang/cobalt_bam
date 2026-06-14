@@ -8,7 +8,7 @@ import {
     readAssignedJsonFromScripts,
     visitObject,
 } from './utils';
-import { normalizeUrl } from '../shared/url';
+import { normalizeUrl } from './runtime';
 
 const DOUYIN_HOST_RE = /(^|\.)douyin\.com$|(^|\.)iesdouyin\.com$/i;
 const DOUYIN_CANDIDATE_RE = /(douyinvod\.com|bytevod|zjcdn\.com|\/aweme\/v1\/play(?:wm)?\/)/i;

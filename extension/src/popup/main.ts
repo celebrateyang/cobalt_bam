@@ -105,7 +105,7 @@ const cropCapturedThumbnail = async (dataUrl: string, rect: NonNullable<Detected
 };
 
 const withCapturedPlatformThumbnails = async (result: PageScanResult, tab: chrome.tabs.Tab): Promise<PageScanResult> => {
-    if (result.platform !== 'tiktok' && result.platform !== 'instagram') return result;
+    if (result.platform !== 'tiktok' && result.platform !== 'instagram' && result.platform !== 'douyin') return result;
     const needsCapture = result.media.some((item) => item.kind === 'video' && !item.thumbnailUrl && item.thumbnailRect);
     if (!needsCapture) return result;
 

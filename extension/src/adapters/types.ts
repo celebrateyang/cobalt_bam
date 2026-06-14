@@ -85,6 +85,7 @@ export type AdapterContext = {
     genericScan: () => DetectedMedia[];
     tiktokFeedItems?: TikTokFeedItemSnapshot[];
     tiktokResourceItems?: TikTokResourceSnapshot[];
+    douyinDomVideos?: DouyinDomVideoSnapshot[];
     instagramDomVideos?: InstagramDomVideoSnapshot[];
     instagramResourceItems?: InstagramResourceSnapshot[];
 };
@@ -131,6 +132,8 @@ export type InstagramDomVideoSnapshot = {
     paused?: boolean;
     seenAt: number;
 };
+
+export type DouyinDomVideoSnapshot = InstagramDomVideoSnapshot;
 
 export type ViewportRect = {
     x: number;

@@ -79,6 +79,15 @@ const qualityLabelFromUrl = (url: string) => {
     return height ? `${height}p` : undefined;
 };
 
+const candidateKey = (url: string) => {
+    try {
+        const parsed = new URL(url);
+        return `${parsed.hostname}${parsed.pathname}`;
+    } catch {
+        return url.replace(/[?#].*$/, '');
+    }
+};
+
 const bestTitle = (context: AdapterContext, probe: DouyinProbe) =>
     probe.title ||
     getMetaContent(context.document, 'meta[property="og:title"]') ||
@@ -189,41 +198,47 @@ const currentVideoCandidates = (context: AdapterContext) =>
     );
 
 const buildVideoMedia = (context: AdapterContext, probe: DouyinProbe): DetectedMedia[] => {
+    const domVideos = context.douyinDomVideos ?? [];
+    const domByKey = new Map(domVideos.map((item) => [candidateKey(item.url), item]));
     const ranked = dedupeBy(
         [
+            ...domVideos.map((item) => item.url),
             ...probe.videoCandidates,
             ...performanceCandidates(context),
             ...currentVideoCandidates(context),
             ...context.genericScan().filter((item) => item.kind === 'video').map((item) => item.url),
         ],
-        (url) => {
-            try {
-                const parsed = new URL(url);
-                return `${parsed.hostname}${parsed.pathname}`;
-            } catch {
-                return url;
-            }
-        },
+        candidateKey,
     )
         .filter((url) => !/webcast|avatar|cover|recommend|im\/fetch/i.test(url))
-        .sort((left, right) => candidateScore(right) - candidateScore(left))
+        .sort((left, right) => {
+            const leftDom = domByKey.get(candidateKey(left));
+            const rightDom = domByKey.get(candidateKey(right));
+            const leftScore = candidateScore(left) + (leftDom?.visibleArea ?? 0) / 100 + (leftDom && !leftDom.paused ? 40 : 0);
+            const rightScore = candidateScore(right) + (rightDom?.visibleArea ?? 0) / 100 + (rightDom && !rightDom.paused ? 40 : 0);
+            return rightScore - leftScore;
+        })
         .slice(0, 3);
 
     const title = bestTitle(context, probe);
     const thumbnailUrl = probe.thumbnailUrl || getPreferredThumbnail(context.document, context.pageUrl);
 
-    return ranked.map((url, index) => ({
-        id: `douyin-video-${index + 1}`,
-        kind: 'video',
-        url,
-        label: `${title}${ranked.length > 1 ? ` (${index + 1})` : ''}`,
-        source: 'adapter',
-        format: 'MP4',
-        qualityLabel: qualityLabelFromUrl(url),
-        thumbnailUrl,
-        durationLabel: probe.durationLabel,
-        score: candidateScore(url),
-    }));
+    return ranked.map((url, index) => {
+        const domVideo = domByKey.get(candidateKey(url));
+        return {
+            id: `douyin-video-${index + 1}`,
+            kind: 'video',
+            url,
+            label: `${title}${ranked.length > 1 ? ` (${index + 1})` : ''}`,
+            source: 'adapter',
+            format: 'MP4',
+            qualityLabel: qualityLabelFromUrl(url),
+            thumbnailUrl: domVideo?.thumbnailUrl || thumbnailUrl,
+            thumbnailRect: domVideo?.thumbnailUrl ? undefined : domVideo?.thumbnailRect,
+            durationLabel: domVideo?.durationLabel || probe.durationLabel,
+            score: candidateScore(url) + (domVideo?.visibleArea ?? 0) / 100,
+        };
+    });
 };
 
 const buildImageMedia = (context: AdapterContext, probe: DouyinProbe): DetectedMedia[] => {

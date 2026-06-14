@@ -1,6 +1,6 @@
 import { scanGenericMedia } from './adapters/generic';
 import { scanWithAdapter } from './adapters/registry';
-import type { DetectedMedia, InstagramDomVideoSnapshot, InstagramResourceSnapshot, TikTokFeedItemSnapshot, TikTokResourceSnapshot } from './adapters/types';
+import type { DetectedMedia, DouyinDomVideoSnapshot, InstagramDomVideoSnapshot, InstagramResourceSnapshot, TikTokFeedItemSnapshot, TikTokResourceSnapshot } from './adapters/types';
 import type { CaptureVisibleTabResponse, ExtensionMessage, InstagramResourceCacheResponse, PageScanResult, TikTokResourceCacheResponse } from './shared/messages';
 
 declare global {
@@ -19,6 +19,7 @@ export {};
 
 const TIKTOK_HOST_RE = /(^|\.)tiktok\.com$/i;
 const INSTAGRAM_HOST_RE = /(^|\.)instagram\.com$/i;
+const DOUYIN_HOST_RE = /(^|\.)douyin\.com$|(^|\.)iesdouyin\.com$/i;
 const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tiktokcdn|byteoversea|muscdn|akamaized\.net/i;
 const TIKTOK_AVATAR_RE = /(?:^|\/)tos-[^/?]*-avt-|\/avatar\//i;
 const INSTAGRAM_VIDEO_URL_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
@@ -447,6 +448,32 @@ const collectInstagramDomVideos = (): InstagramDomVideoSnapshot[] => {
         .sort((left, right) => right.seenAt - left.seenAt);
 };
 
+const collectDouyinDomVideos = (): DouyinDomVideoSnapshot[] => {
+    if (!DOUYIN_HOST_RE.test(window.location.hostname)) return [];
+    const now = Date.now();
+    const pageUrl = window.location.href;
+    return [...document.querySelectorAll<HTMLVideoElement>('video')]
+        .map((video) => {
+            const url = normalizeAbsoluteUrl(video.currentSrc || video.src, pageUrl);
+            if (!url) return null;
+            const visibleArea = getVisibleArea(video);
+            if (visibleArea < 1_600 && !video.currentTime) return null;
+            const item: DouyinDomVideoSnapshot = {
+                url,
+                thumbnailUrl: captureVideoElementFrame(video),
+                thumbnailRect: getViewportRect(video),
+                durationLabel: Number.isFinite(video.duration) ? `${Math.round(video.duration)}s` : undefined,
+                visibleArea,
+                currentTime: video.currentTime,
+                paused: video.paused,
+                seenAt: now + visibleArea + (video.paused ? 0 : 100_000) + (video.currentTime > 0 ? 25_000 : 0),
+            };
+            return item;
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .sort((left, right) => right.seenAt - left.seenAt);
+};
+
 const refreshTikTokFeedCache = () => {
     if (!TIKTOK_HOST_RE.test(window.location.hostname)) return;
     refreshTikTokResourceCache();
@@ -587,6 +614,7 @@ const scanPage = async (): Promise<PageScanResult> => {
         tiktokResourceItems: TIKTOK_HOST_RE.test(window.location.hostname)
             ? [...backgroundTikTokResources, ...getTikTokResourceItems()]
             : undefined,
+        douyinDomVideos: DOUYIN_HOST_RE.test(window.location.hostname) ? collectDouyinDomVideos() : undefined,
         instagramDomVideos: INSTAGRAM_HOST_RE.test(window.location.hostname) ? collectInstagramDomVideos() : undefined,
         instagramResourceItems: INSTAGRAM_HOST_RE.test(window.location.hostname)
             ? [...backgroundInstagramResources, ...getInstagramResourceItems()]

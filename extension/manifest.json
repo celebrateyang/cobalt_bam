@@ -13,7 +13,15 @@
     },
     "content_scripts": [
         {
-            "matches": ["*://*.tiktok.com/*", "*://*.instagram.com/*"],
+            "matches": [
+                "*://*.tiktok.com/*",
+                "*://*.instagram.com/*",
+                "*://*.douyin.com/*",
+                "*://*.iesdouyin.com/*",
+                "*://*.bilibili.com/*",
+                "*://*.bilibili.tv/*",
+                "*://*.b23.tv/*"
+            ],
             "js": ["assets/content.js"],
             "run_at": "document_idle"
         }
@@ -26,7 +34,17 @@
         "*://*.tiktokcdn.com/*",
         "*://*.byteoversea.com/*",
         "*://*.muscdn.com/*",
-        "*://*.akamaized.net/*"
+        "*://*.akamaized.net/*",
+        "*://*.douyin.com/*",
+        "*://*.iesdouyin.com/*",
+        "*://*.douyinvod.com/*",
+        "*://*.bytevod.com/*",
+        "*://*.zjcdn.com/*",
+        "*://*.bilibili.com/*",
+        "*://*.bilibili.tv/*",
+        "*://*.b23.tv/*",
+        "*://*.bilivideo.com/*",
+        "*://*.hdslb.com/*"
     ],
     "icons": {
         "16": "icons/icon-16.png",

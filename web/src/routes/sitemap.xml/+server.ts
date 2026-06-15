@@ -18,6 +18,7 @@ const pages = [
     'discover',
     'guide',
     'download',
+    'support',
     'videorecord',
     'youtube-video-downloader',
     ...guideSlugs.map((slug) => `guide/${slug}`),

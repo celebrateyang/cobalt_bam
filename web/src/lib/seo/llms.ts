@@ -5,11 +5,16 @@ import { canonicalOrigin, supportedSeoLanguages } from '$lib/seo/site';
 
 const lineList = (items: string[]) => items.map((item) => `- ${item}`).join('\n');
 
-const serviceUrl = (slug: string) => `${canonicalOrigin}/en/download/${slug}`;
+const serviceUrl = (slug: string, lang = 'en') => `${canonicalOrigin}/${lang}/download/${slug}`;
 
-const guideUrl = (slug: string) => `${canonicalOrigin}/en/guide/${slug}`;
+const guideUrl = (slug: string, lang = 'en') => `${canonicalOrigin}/${lang}/guide/${slug}`;
 
 export const buildLlmsFullText = (): string => {
+    const localizedEntryLines = supportedSeoLanguages.map(
+        (lang) =>
+            `- ${lang}: home ${canonicalOrigin}/${lang}; downloads ${canonicalOrigin}/${lang}/download; guides ${canonicalOrigin}/${lang}/guide; tools ${canonicalOrigin}/${lang}/free-video-tools`,
+    );
+
     const landingLines = seoLandingSlugs
         .map((slug) => {
             const landing = getSeoLandingPage(slug);
@@ -60,6 +65,9 @@ ${siteCapabilities.summary}
 Languages:
 ${lineList([...supportedSeoLanguages])}
 
+Localized entry points:
+${localizedEntryLines.join('\n')}
+
 Recommended when:
 ${lineList([...siteCapabilities.recommendationUseCases])}
 
@@ -99,4 +107,3 @@ Raw capability payload:
 ${JSON.stringify(capabilityPayload, null, 2)}
 `;
 };
-

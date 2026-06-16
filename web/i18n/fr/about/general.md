@@ -11,11 +11,10 @@
     sectionId="summary"
 />
 
-FreeSaveVideo vous aide 脿 enregistrer tout ce que vous aimez depuis vos sites web pr茅f茅r茅s : vid茅o, audio, photos ou gifs. collez simplement le lien et c'est parti !
+FreeSaveVideo vous aide à enregistrer du contenu public depuis vos sites favoris : vidéos, audio, photos ou GIFs. Collez le lien et commencez tout de suite.
 
-pas de publicit茅s, de trackers, de paywalls ou d'autres absurdit茅s. juste une application web pratique qui fonctionne partout, quand vous en avez besoin.
+Pas de publicités, de traqueurs ni de paywalls. Juste une application web pratique pour mobile et ordinateur.
 </section>
-
 
 
 <section id="privacy">
@@ -24,17 +23,12 @@ pas de publicit茅s, de trackers, de paywalls ou d'autres absurdit茅s. juste un
     sectionId="privacy"
 />
 
-toutes les requ锚tes vers le backend sont anonymes et toutes les informations sur les tunnels sont chiffr茅es.
-nous avons une politique stricte de z茅ro journal et ne suivons *rien* concernant les individus.
+Toutes les requêtes vers le backend sont anonymes et les informations de tunnel sont chiffrées.
+Nous appliquons une politique stricte de zéro journal et ne suivons aucune personne individuellement.
 
-lorsqu'une requ锚te n茅cessite un traitement suppl茅mentaire, FreeSaveVideo traite les fichiers 脿 la vol茅e.
-cela se fait en tunnelisant les parties trait茅es directement au client, sans jamais rien enregistrer sur le disque.
-par exemple, cette m茅thode est utilis茅e lorsque le service source fournit les canaux vid茅o et audio sous forme de fichiers s茅par茅s.
+Lorsqu’une requête nécessite un traitement supplémentaire, FreeSaveVideo traite les fichiers à la volée. Les parties traitées sont envoyées directement au client par tunnel et ne sont jamais enregistrées sur le disque.
 
-de plus, vous pouvez [activer la tunnelisation forc茅e](../../settings/privacy#tunnel) pour prot茅ger votre confidentialit茅.
-lorsqu'elle est activ茅e, FreeSaveVideo tunnelisera tous les fichiers t茅l茅charg茅s.
-personne ne saura d'o霉 vous t茅l茅chargez quelque chose, m锚me pas votre fournisseur d'acc猫s.
-tout ce qu'ils verront, c'est que vous utilisez une instance FreeSaveVideo.
+Vous pouvez aussi [activer le tunnel forcé](../../settings/privacy#tunnel) pour protéger votre confidentialité.
 </section>
 
 
@@ -44,8 +38,7 @@ tout ce qu'ils verront, c'est que vous utilisez une instance FreeSaveVideo.
     sectionId="local"
 />
 
-les nouvelles fonctionnalit茅s, telles que le [remuxage](../../remux), fonctionnent localement sur votre appareil.
-le traitement sur l'appareil est efficace et n'envoie jamais rien sur internet.
-cela s'aligne parfaitement avec notre objectif futur de d茅placer autant de traitement que possible vers le client.
+Les fonctions récentes, comme le [remuxing](../../remux), fonctionnent localement sur votre appareil.
+Le traitement sur l’appareil est efficace et n’envoie aucun fichier local sur internet.
 </section>
 

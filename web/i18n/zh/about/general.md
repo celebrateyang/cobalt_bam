@@ -11,11 +11,10 @@
     sectionId="summary"
 />
 
-FreeSaveVideo helps you save anything from your favorite websites: video, audio, photos or gifs. just paste the link and you're ready to rock!
+FreeSaveVideo 可以帮你保存喜欢网站上的公开视频、音频、图片或 GIF。只需粘贴链接，就可以开始使用。
 
-no ads, trackers, paywalls, or other nonsense. just a convenient web app that works anywhere, whenever you need it.
+没有广告、追踪器或付费墙。这是一个适合移动端和桌面端的 Web 工具。
 </section>
-
 
 
 <section id="privacy">
@@ -24,19 +23,13 @@ no ads, trackers, paywalls, or other nonsense. just a convenient web app that wo
     sectionId="privacy"
 />
 
-all requests to the backend are anonymous and all information about tunnels is encrypted.
-we have a strict zero log policy and don't track *anything* about individual people.
+所有发往后端的请求都是匿名的，与隧道相关的信息会被加密。
+我们坚持严格的零日志政策，不追踪任何个人。
 
-when a request needs additional processing, FreeSaveVideo processes files on-the-fly.
-it's done by tunneling processed parts directly to the client, without ever saving anything to disk.
-for example, this method is used when the source service provides video and audio channels as separate files.
+需要额外处理时，FreeSaveVideo 会即时处理文件。处理后的数据会通过隧道直接传给客户端，不会保存到磁盘。
 
-additionally, you can [enable forced tunneling](../../settings/privacy#tunnel) to protect your privacy.
-when enabled, FreeSaveVideo will tunnel all downloaded files.
-no one will know where you download something from, even your network provider.
-all they'll see is that you're using a FreeSaveVideo instance.
+你还可以[启用强制隧道](../../settings/privacy#tunnel)来保护隐私。启用后，FreeSaveVideo 会通过隧道传输所有下载文件。
 </section>
-
 
 
 <section id="local">
@@ -45,8 +38,7 @@ all they'll see is that you're using a FreeSaveVideo instance.
     sectionId="local"
 />
 
-newest features, such as [remuxing](../../remux), work locally on your device.
-on-device processing is efficient and never sends anything over the internet.
-it perfectly aligns with our future goal of moving as much processing as possible to the client.
+最新功能，例如 [remuxing](../../remux)，会在你的设备上本地运行。
+设备端处理效率高，且不会通过互联网发送本地文件。
 </section>
 

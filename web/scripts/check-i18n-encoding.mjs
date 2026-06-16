@@ -16,20 +16,32 @@ const scriptMatchers = {
     th: /[\p{Script=Thai}]/u,
 };
 
+const forbiddenMarkdownScripts = {
+    de: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    en: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    es: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    fr: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    vi: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    ja: /[\p{Script=Cyrillic}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    ko: /[\p{Script=Cyrillic}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\uE000-\uF8FF]/u,
+    ru: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    th: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Cyrillic}\uE000-\uF8FF]/u,
+};
+
 /** @type {Array<{file:string,key?:string,message:string,sample?:string}>} */
 const issues = [];
 
-const walkJsonFiles = async (dir) => {
+const walkFiles = async (dir, extensions) => {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     const files = [];
 
     for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-            files.push(...(await walkJsonFiles(full)));
+            files.push(...(await walkFiles(full, extensions)));
             continue;
         }
-        if (entry.isFile() && entry.name.endsWith(".json")) {
+        if (entry.isFile() && extensions.some((extension) => entry.name.endsWith(extension))) {
             files.push(full);
         }
     }
@@ -105,8 +117,44 @@ const collectStringIssues = (locale, file, node, keyPath = "") => {
     }
 };
 
+const stripMarkdownControlLines = (text) =>
+    text
+        .split(/\r?\n/)
+        .filter((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return false;
+            if (trimmed.startsWith("<") || trimmed.startsWith("</")) return false;
+            if (trimmed.startsWith("import ")) return false;
+            if (/^(title|sectionId)=/.test(trimmed)) return false;
+            if (/^[{});]+$/.test(trimmed)) return false;
+            return true;
+        })
+        .join("\n");
+
+const inspectMarkdownText = (locale, file, text) => {
+    if (text.includes("\uFFFD")) {
+        addIssue(file, "contains Unicode replacement character U+FFFD");
+    }
+
+    for (const frag of suspiciousFragments) {
+        if (frag === "\uFFFD") continue;
+        if (text.includes(frag)) {
+            addIssue(file, `contains suspicious mojibake fragment "${frag}"`);
+        }
+    }
+
+    const content = stripMarkdownControlLines(text);
+    if (!content) return;
+
+    const forbidden = forbiddenMarkdownScripts[locale];
+    if (forbidden?.test(content)) {
+        addIssue(file, `contains unexpected script characters for locale "${locale}"`, undefined, content);
+    }
+
+};
+
 const main = async () => {
-    const files = await walkJsonFiles(i18nRoot);
+    const files = await walkFiles(i18nRoot, [".json"]);
 
     for (const file of files) {
         const rel = path.relative(i18nRoot, file).replaceAll("\\", "/");
@@ -137,6 +185,30 @@ const main = async () => {
         }
 
         collectStringIssues(locale, file, parsed);
+    }
+
+    const markdownFiles = await walkFiles(i18nRoot, [".md"]);
+    for (const file of markdownFiles) {
+        const rel = path.relative(i18nRoot, file).replaceAll("\\", "/");
+        const locale = rel.split("/")[0];
+
+        let raw;
+        try {
+            raw = await fs.readFile(file);
+        } catch (error) {
+            addIssue(file, `failed to read file: ${error.message}`);
+            continue;
+        }
+
+        let text = "";
+        try {
+            text = decoder.decode(raw);
+        } catch (error) {
+            addIssue(file, `invalid UTF-8 byte sequence: ${error.message}`);
+            continue;
+        }
+
+        inspectMarkdownText(locale, file, text);
     }
 
     if (issues.length === 0) {

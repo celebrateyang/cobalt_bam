@@ -1,42 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import type { Handle, RequestEvent } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
 
-const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'] as const;
-type SupportedLanguage = (typeof supportedLanguages)[number];
-
-const defaultLanguage: SupportedLanguage = 'en';
-
-const isLangPrefixedPath = (pathname: string) =>
-    supportedLanguages.some(lang => pathname === `/${lang}` || pathname.startsWith(`/${lang}/`));
-
-const getPreferredLanguage = (event: RequestEvent): SupportedLanguage => {
-    const cookieLang = event.cookies.get('preferred-language');
-    if (cookieLang && supportedLanguages.includes(cookieLang as SupportedLanguage)) {
-        return cookieLang as SupportedLanguage;
-    }
-
-    const acceptLanguage = event.request.headers.get('accept-language');
-    if (acceptLanguage) {
-        const languages = acceptLanguage
-            .split(',')
-            .map((lang: string) => {
-                const [code, weight] = lang.split(';q=');
-                return {
-                    code: code.trim().split('-')[0].toLowerCase(),
-                    weight: weight ? parseFloat(weight) : 1.0
-                };
-            })
-            .sort((a: { weight: number }, b: { weight: number }) => b.weight - a.weight);
-
-        for (const lang of languages) {
-            if (supportedLanguages.includes(lang.code as SupportedLanguage)) {
-                return lang.code as SupportedLanguage;
-            }
-        }
-    }
-
-    return defaultLanguage;
-};
+import { getPreferredLanguage, getRequestCountry, isLangPrefixedPath } from '$lib/seo/language-routing';
 
 const shouldSkipLangRedirect = (pathname: string) => {
     if (pathname === '/') return true;
@@ -60,7 +25,12 @@ export const handle: Handle = async ({ event, resolve }) => {
         !shouldSkipLangRedirect(pathname) &&
         !isLangPrefixedPath(pathname)
     ) {
-        throw redirect(302, `/${getPreferredLanguage(event)}${pathname}`);
+        throw redirect(302, `/${getPreferredLanguage({
+            cookieHeader: event.request.headers.get('cookie'),
+            acceptLanguage: event.request.headers.get('accept-language'),
+            country: getRequestCountry(event.request),
+            userAgent: event.request.headers.get('user-agent'),
+        })}${pathname}`);
     }
 
     const response = await resolve(event);

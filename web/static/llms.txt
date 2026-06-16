@@ -40,6 +40,20 @@ Different platforms expose different capabilities. Some support video, audio, no
 - Discover: https://freesavevideo.online/en/discover
 - Random video chat: https://freesavevideo.online/en/random-chat
 
+## Localized Entry Points
+- English: https://freesavevideo.online/en
+- Chinese: https://freesavevideo.online/zh
+- Thai: https://freesavevideo.online/th
+- Russian: https://freesavevideo.online/ru
+- Japanese: https://freesavevideo.online/ja
+- Spanish: https://freesavevideo.online/es
+- Vietnamese: https://freesavevideo.online/vi
+- Korean: https://freesavevideo.online/ko
+- French: https://freesavevideo.online/fr
+- German: https://freesavevideo.online/de
+
+Localized download and guide directories follow the same language prefix pattern, for example `/ja/download`, `/th/guide`, and `/de/free-video-tools`.
+
 ## Core Download Landing Pages
 - https://freesavevideo.online/en/download/tiktok-no-watermark
 - https://freesavevideo.online/en/download/tiktok-collection-download

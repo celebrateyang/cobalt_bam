@@ -360,8 +360,15 @@ const normalizeTitle = (value) =>
         .replace(/[\u0000-\u001F\u007F-\u009F]+/g, " ")
         .replace(/\s+/g, " ");
 
-const sanitizeFilenamePart = (value) =>
+const cleanDouyinTitle = (value) =>
     normalizeTitle(value)
+        .replace(/(?:^|\s)#[^\s#]+/g, "")
+        .replace(/\s*[|｜]\s*/g, "  ")
+        .replace(/ {3,}/g, "  ")
+        .trim();
+
+const sanitizeFilenamePart = (value) =>
+    cleanDouyinTitle(value)
         .replaceAll("\\", "\uFF3C")
         .replaceAll("/", "\uFF0F")
         .replaceAll(":", "\uFF1A")
@@ -371,7 +378,7 @@ const sanitizeFilenamePart = (value) =>
         .replaceAll("<", "\uFF1C")
         .replaceAll(">", "\uFF1E")
         .replaceAll("|", "\uFF5C")
-        .replace(/\s+/g, " ")
+        .replace(/ {3,}/g, "  ")
         .slice(0, 120)
         .trim();
 
@@ -1509,7 +1516,7 @@ export default async function(obj) {
 
         const videoUri = item.video.play_addr.uri;
         const title = item.desc;
-        const normalizedTitle = normalizeTitle(title);
+        const normalizedTitle = cleanDouyinTitle(title);
         const filenameBase = buildFilenameBase(title, videoId);
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
 

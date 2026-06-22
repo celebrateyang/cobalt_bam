@@ -354,6 +354,24 @@ const toSeconds = (value) => {
     return value > 1000 ? Math.round(value / 1000) : Math.round(value);
 };
 
+const normalizeTitle = (value) =>
+    String(value || "")
+        .trim()
+        .replace(/[\u0000-\u001F\u007F-\u009F]+/g, " ")
+        .replace(/\s+/g, " ");
+
+const sanitizeFilenamePart = (value) =>
+    normalizeTitle(value)
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replace(/\s+/g, " ")
+        .slice(0, 120)
+        .trim();
+
+const buildFilenameBase = (title, videoId) => {
+    const filenameTitle = sanitizeFilenamePart(title);
+    return filenameTitle ? `${filenameTitle}_${videoId}` : `douyin_${videoId}`;
+};
+
 const parseTotalLength = (headers) => {
     const contentRange = headers.get("content-range");
     if (contentRange) {
@@ -1483,6 +1501,8 @@ export default async function(obj) {
 
         const videoUri = item.video.play_addr.uri;
         const title = item.desc;
+        const normalizedTitle = normalizeTitle(title);
+        const filenameBase = buildFilenameBase(title, videoId);
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
 
         let usedDiscoverFallback = false;
@@ -1586,19 +1606,21 @@ export default async function(obj) {
                             });
                             if (upstream.relayUrl) {
                                 return {
-                                    filename: upstream.filename || `douyin_${videoId}.mp4`,
-                                    audioFilename: `douyin_${videoId}_audio`,
+                                    filename: upstream.filename || `${filenameBase}.mp4`,
+                                    audioFilename: `${filenameBase}_audio`,
                                     urls: upstream.relayUrl,
                                     duration: upstream.duration,
+                                    fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
                                     headers: buildRelayHeaders(),
                                 };
                             }
                             return {
-                                filename: upstream.filename || `douyin_${videoId}.mp4`,
-                                audioFilename: `douyin_${videoId}_audio`,
+                                filename: upstream.filename || `${filenameBase}.mp4`,
+                                audioFilename: `${filenameBase}_audio`,
                                 urls: upstream.url,
                                 forceRedirect: true,
                                 duration: upstream.duration,
+                                fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
                                 headers: {
                                     "User-Agent": MOBILE_UA,
                                 },
@@ -1704,19 +1726,21 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `douyin_${videoId}.mp4`,
-                            audioFilename: `douyin_${videoId}_audio`,
+                            filename: upstream.filename || `${filenameBase}.mp4`,
+                            audioFilename: `${filenameBase}_audio`,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
+                            fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
                             headers: buildRelayHeaders(),
                         };
                     }
                     return {
-                        filename: upstream.filename || `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}_audio`,
+                        filename: upstream.filename || `${filenameBase}.mp4`,
+                        audioFilename: `${filenameBase}_audio`,
                         urls: upstream.url,
                         forceRedirect: true,
                         duration: upstream.duration,
+                        fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
                         headers: {
                             "User-Agent": MOBILE_UA,
                         },
@@ -1739,12 +1763,13 @@ export default async function(obj) {
             shouldPreferRedirectForMediaClass(mediaClass) || allowZjcdnRedirect;
 
         return {
-            filename: `douyin_${videoId}.mp4`,
-            audioFilename: `douyin_${videoId}_audio`,
+            filename: `${filenameBase}.mp4`,
+            audioFilename: `${filenameBase}_audio`,
             urls: directUrl,
             forceRedirect: usedDiscoverFallback || preferRedirect,
             allowZjcdnRedirect,
             duration,
+            fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
             headers: {
                 "User-Agent": MOBILE_UA
             }

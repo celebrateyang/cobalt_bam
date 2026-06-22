@@ -362,14 +362,22 @@ const normalizeTitle = (value) =>
 
 const sanitizeFilenamePart = (value) =>
     normalizeTitle(value)
-        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replaceAll("\\", "\uFF3C")
+        .replaceAll("/", "\uFF0F")
+        .replaceAll(":", "\uFF1A")
+        .replaceAll("*", "\uFF0A")
+        .replaceAll("?", "\uFF1F")
+        .replaceAll('"', "\uFF02")
+        .replaceAll("<", "\uFF1C")
+        .replaceAll(">", "\uFF1E")
+        .replaceAll("|", "\uFF5C")
         .replace(/\s+/g, " ")
         .slice(0, 120)
         .trim();
 
 const buildFilenameBase = (title, videoId) => {
     const filenameTitle = sanitizeFilenamePart(title);
-    return filenameTitle ? `${filenameTitle}_${videoId}` : `douyin_${videoId}`;
+    return filenameTitle || `douyin_${videoId}`;
 };
 
 const parseTotalLength = (headers) => {

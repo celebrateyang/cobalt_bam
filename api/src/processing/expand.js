@@ -22,6 +22,8 @@ const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
 // Verified working as of Dec 2025.
 const DOUYIN_MOBILE_UA =
     "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+const DOUYIN_DESKTOP_UA =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
 
 const isBilibiliHost = (hostname) => {
     return (
@@ -67,6 +69,29 @@ const uniqBy = (items, keyFn) => {
         result.push(item);
     }
     return result;
+};
+
+const cleanDouyinTitle = (value) =>
+    String(value || "")
+        .trim()
+        .replace(/[\u0000-\u001F\u007F-\u009F]+/g, " ")
+        .replace(/\s+/g, " ")
+        .replace(/(?:^|\s)#[^\s#]+/g, "")
+        .replace(/\s*[|｜]\s*/g, "  ")
+        .replace(/ {3,}/g, "  ")
+        .replace(/^(\u7b2c\d+\s*\u96c6)\s+/, "$1  ")
+        .trim();
+
+const getDouyinCurrentEpisode = (item) => {
+    const episode = Number(item?.mix_info?.statis?.current_episode);
+    return Number.isFinite(episode) && episode > 0 ? Math.trunc(episode) : null;
+};
+
+const buildDouyinItemTitle = (item) => {
+    const title = cleanDouyinTitle(item?.desc);
+    const episode = getDouyinCurrentEpisode(item);
+    if (!title || !episode || /^\u7b2c\d+\s*\u96c6/.test(title)) return title;
+    return `\u7b2c${episode}\u96c6  ${title}`;
 };
 
 const runProcess = (command, args, timeoutMs) => new Promise((resolve) => {
@@ -641,7 +666,7 @@ const fetchDouyinMixItems = async (mixId) => {
             items.push({
                 itemKey: `douyin:video:${awemeId}`,
                 url: `https://www.douyin.com/video/${awemeId}`,
-                title: aweme?.desc,
+                title: buildDouyinItemTitle(aweme),
                 duration: toSecondsMaybeMs(aweme?.video?.duration ?? aweme?.duration),
             });
         }
@@ -686,6 +711,28 @@ const fetchDouyinMixTitle = async (mixId) => {
 
     if (!json || json.status_code !== 0) return;
     return json?.mix_info?.mix_name;
+};
+
+const fetchDouyinWebAwemeDetail = async (videoId) => {
+    if (!videoId) return null;
+
+    const url = new URL("https://www.douyin.com/aweme/v1/web/aweme/detail/");
+    url.searchParams.set("aweme_id", String(videoId));
+    url.searchParams.set("aid", "1128");
+    url.searchParams.set("device_platform", "webapp");
+
+    const json = await fetch(url, {
+        headers: {
+            "user-agent": DOUYIN_DESKTOP_UA,
+            referer: `https://www.douyin.com/video/${videoId}`,
+            accept: "application/json, text/plain, */*",
+        },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+    return json?.aweme_detail || null;
 };
 
 const bilibiliView = async ({ id }) => {
@@ -1140,18 +1187,23 @@ const expandDouyin = async (inputUrl) => {
         };
     }
 
-    const mixId = item?.mix_info?.mix_id;
+    const detailItem = item?.mix_info?.mix_id
+        ? null
+        : await fetchDouyinWebAwemeDetail(videoId);
+    const enrichedItem = detailItem || item;
+    const mixId = enrichedItem?.mix_info?.mix_id;
     if (!mixId) {
+        const title = buildDouyinItemTitle(enrichedItem) || enrichedItem?.desc || item?.desc;
         return {
             service: "douyin",
             kind: "single",
-            title: item?.desc,
+            title,
             items: [
                 {
                     url: canonicalUrl,
-                    title: item?.desc,
+                    title,
                     duration: toSecondsMaybeMs(
-                        item?.video?.duration ?? item?.duration,
+                        enrichedItem?.video?.duration ?? enrichedItem?.duration ?? item?.video?.duration ?? item?.duration,
                     ),
                 },
             ],
@@ -1173,7 +1225,7 @@ const expandDouyin = async (inputUrl) => {
         service: "douyin",
         kind: "douyin-mix",
         collectionKey: buildCollectionKey("douyin", "mix", String(mixId)),
-        title: item?.mix_info?.mix_name,
+        title: enrichedItem?.mix_info?.mix_name,
         items: expandedItems,
     };
 };

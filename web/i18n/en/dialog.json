@@ -11,6 +11,8 @@
     "batch.status.downloaded": "downloaded",
     "batch.select_all": "select all",
     "batch.select_none": "select none",
+    "batch.mark_selected_downloaded": "mark selected done",
+    "batch.mark_selected_pending": "move selected back",
     "batch.download_selected": "download selected",
     "batch.stop": "stop",
     "batch.view_downloaded": "downloaded",

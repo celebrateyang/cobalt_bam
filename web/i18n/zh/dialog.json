@@ -11,6 +11,8 @@
     "batch.status.downloaded": "已下载",
     "batch.select_all": "全选",
     "batch.select_none": "全不选",
+    "batch.mark_selected_downloaded": "标记已下载",
+    "batch.mark_selected_pending": "移回待下载",
     "batch.download_selected": "下载已选",
     "batch.stop": "停止",
     "batch.view_downloaded": "已下载",

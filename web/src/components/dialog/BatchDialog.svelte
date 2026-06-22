@@ -4,7 +4,11 @@
     import { t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
-    import { clearCollectionMemory } from "$lib/api/collection-memory";
+    import {
+        clearCollectionMemory,
+        markCollectionDownloadedItems,
+        unmarkCollectionDownloadedItems,
+    } from "$lib/api/collection-memory";
     import {
         fetchCurrentUserPointsProfile,
         showPointsInsufficientDialog as openPointsInsufficientDialog,
@@ -37,6 +41,7 @@
     import IconSquare from "@tabler/icons-svelte/IconSquare.svelte";
     import IconTrash from "@tabler/icons-svelte/IconTrash.svelte";
     import IconPlayerStop from "@tabler/icons-svelte/IconPlayerStop.svelte";
+    import IconArrowBackUp from "@tabler/icons-svelte/IconArrowBackUp.svelte";
 
     export let id: string;
     export let title = "";
@@ -53,6 +58,7 @@
     let close: () => void;
 
     let selected: boolean[] = [];
+    let downloadedSelected: boolean[] = [];
     let running = false;
     let cancelRequested = false;
     let progress = 0;
@@ -68,6 +74,7 @@
 
     let viewingDownloaded = false;
     $: safeDownloadedItems = Array.isArray(downloadedItems) ? downloadedItems : [];
+    let downloadedItemsKey = "";
     const rateLimitErrorCode = "error.api.rate_exceeded";
     const baseBatchDelayMs = 1200;
     const rateLimitBackoffMs = 4000;
@@ -161,6 +168,9 @@
 
     const computeItemsKey = (batchItems: DialogBatchItem[]) =>
         batchItems.map((item) => item.url).join("\n");
+
+    const computeDownloadedItemsKey = (batchItems: DialogBatchItem[]) =>
+        batchItems.map((item) => item.itemKey || item.url).join("\n");
 
     const currentReturnPath = () =>
         `${$page.url.pathname}${$page.url.search}${$page.url.hash}`;
@@ -361,6 +371,14 @@
         }
     }
 
+    $: {
+        const nextKey = computeDownloadedItemsKey(safeDownloadedItems);
+        if (nextKey !== downloadedItemsKey) {
+            downloadedItemsKey = nextKey;
+            downloadedSelected = safeDownloadedItems.map(() => false);
+        }
+    }
+
     $: if (
         autoStart &&
         !autoStartConsumed &&
@@ -384,10 +402,17 @@
     };
 
     const selectedCount = () => selected.filter(Boolean).length;
+    const downloadedSelectedCount = () => downloadedSelected.filter(Boolean).length;
 
     const setSelectedAt = (index: number, value: boolean) => {
         selected = selected.map((current, i) => (i === index ? value : current));
         schedulePointsPreview();
+    };
+
+    const setDownloadedSelectedAt = (index: number, value: boolean) => {
+        downloadedSelected = downloadedSelected.map((current, i) =>
+            i === index ? value : current,
+        );
     };
 
     const handleItemSelectionChange = (index: number, event: Event) => {
@@ -399,6 +424,81 @@
 
     const setAll = (value: boolean) => {
         selected = selected.map(() => value);
+        schedulePointsPreview();
+    };
+
+    const setAllDownloaded = (value: boolean) => {
+        downloadedSelected = downloadedSelected.map(() => value);
+    };
+
+    const dedupeByItemKeyOrUrl = (batchItems: DialogBatchItem[]) => {
+        const seen = new Set<string>();
+        const result: DialogBatchItem[] = [];
+
+        for (const item of batchItems) {
+            const key = item.itemKey || item.url;
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            result.push(item);
+        }
+
+        return result;
+    };
+
+    const markSelectedDownloaded = async () => {
+        if (!collectionKey || running || pointsCheckLoading || !clerkEnabled || !$isSignedIn) {
+            return;
+        }
+
+        const selectedItems = items.filter((item, index) => selected[index] && item.itemKey);
+        if (!selectedItems.length) return;
+
+        const ok = await markCollectionDownloadedItems({
+            collectionKey,
+            title: title || undefined,
+            sourceUrl: collectionSourceUrl,
+            items: selectedItems.map((item) => ({
+                itemKey: item.itemKey!,
+                url: item.url,
+                title: item.title,
+            })),
+        });
+        if (!ok) return;
+
+        const markedKeys = new Set(selectedItems.map((item) => item.itemKey));
+        downloadedItems = dedupeByItemKeyOrUrl([
+            ...safeDownloadedItems,
+            ...selectedItems,
+        ]);
+        items = items.filter((item) => !item.itemKey || !markedKeys.has(item.itemKey));
+        selected = items.map(() => false);
+        schedulePointsPreview();
+    };
+
+    const unmarkSelectedDownloaded = async () => {
+        if (!collectionKey || running || pointsCheckLoading || !clerkEnabled || !$isSignedIn) {
+            return;
+        }
+
+        const selectedItems = safeDownloadedItems.filter(
+            (item, index) => downloadedSelected[index] && item.itemKey,
+        );
+        if (!selectedItems.length) return;
+
+        const itemKeys = selectedItems
+            .map((item) => item.itemKey)
+            .filter((key): key is string => typeof key === "string" && key.length > 0);
+        const ok = await unmarkCollectionDownloadedItems({ collectionKey, itemKeys });
+        if (!ok) return;
+
+        const unmarkedKeys = new Set(itemKeys);
+        downloadedItems = safeDownloadedItems.filter(
+            (item) => !item.itemKey || !unmarkedKeys.has(item.itemKey),
+        );
+        items = dedupeByItemKeyOrUrl([...items, ...selectedItems]);
+        downloadedSelected = downloadedItems.map(() => false);
+        selected = items.map((item) => unmarkedKeys.has(item.itemKey || ""));
+        viewingDownloaded = downloadedItems.length > 0;
         schedulePointsPreview();
     };
 
@@ -711,6 +811,10 @@
                         <div>
                             {$t("dialog.batch.status.selected")}: {selectedCount()}/{items.length}
                         </div>
+                    {:else}
+                        <div>
+                            {$t("dialog.batch.status.selected")}: {downloadedSelectedCount()}/{safeDownloadedItems.length}
+                        </div>
                     {/if}
                     {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
                         <div>
@@ -753,6 +857,41 @@
                     <IconSquare />
                     {$t("dialog.batch.select_none")}
                 </button>
+                {#if clerkEnabled && collectionKey && $isSignedIn}
+                    <button
+                        class="button elevated toolbar-button"
+                        disabled={running || pointsCheckLoading || selectedCount() === 0}
+                        on:click={markSelectedDownloaded}
+                    >
+                        <IconCircleCheck />
+                        {$t("dialog.batch.mark_selected_downloaded")}
+                    </button>
+                {/if}
+            {:else}
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={() => setAllDownloaded(true)}
+                >
+                    <IconSquareCheck />
+                    {$t("dialog.batch.select_all")}
+                </button>
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading}
+                    on:click={() => setAllDownloaded(false)}
+                >
+                    <IconSquare />
+                    {$t("dialog.batch.select_none")}
+                </button>
+                <button
+                    class="button elevated toolbar-button"
+                    disabled={running || pointsCheckLoading || downloadedSelectedCount() === 0}
+                    on:click={unmarkSelectedDownloaded}
+                >
+                    <IconArrowBackUp />
+                    {$t("dialog.batch.mark_selected_pending")}
+                </button>
             {/if}
 
             {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
@@ -783,9 +922,20 @@
             {#each viewingDownloaded ? safeDownloadedItems : items as item, i (item.url)}
                 <div class="batch-item" class:downloaded={viewingDownloaded} role="listitem">
                     {#if viewingDownloaded}
-                        <div class="batch-check downloaded-indicator" aria-hidden="true">
-                            <IconCircleCheck />
-                        </div>
+                        <label class="batch-check downloaded-check">
+                            <input
+                                type="checkbox"
+                                checked={downloadedSelected[i]}
+                                on:change={(e) => {
+                                    const target = e.currentTarget;
+                                    if (target instanceof HTMLInputElement) {
+                                        setDownloadedSelectedAt(i, target.checked);
+                                    }
+                                }}
+                                disabled={running || pointsCheckLoading}
+                                aria-label={$t("a11y.dialog.batch.select_item")}
+                            />
+                        </label>
                     {:else}
                         <label class="batch-check">
                             <input
@@ -822,11 +972,26 @@
                         <button
                             class="button elevated icon-button"
                             disabled={running || pointsCheckLoading}
-                            on:click={() => downloadSingle(item.url)}
-                            aria-label={$t("button.download")}
-                            title={$t("button.download")}
+                            on:click={viewingDownloaded
+                                ? () => {
+                                      downloadedSelected = downloadedSelected.map((current, index) =>
+                                          index === i ? true : current,
+                                      );
+                                      void unmarkSelectedDownloaded();
+                                  }
+                                : () => downloadSingle(item.url)}
+                            aria-label={viewingDownloaded
+                                ? $t("dialog.batch.mark_selected_pending")
+                                : $t("button.download")}
+                            title={viewingDownloaded
+                                ? $t("dialog.batch.mark_selected_pending")
+                                : $t("button.download")}
                         >
-                            <IconDownload />
+                            {#if viewingDownloaded}
+                                <IconArrowBackUp />
+                            {:else}
+                                <IconDownload />
+                            {/if}
                         </button>
                     </div>
                 </div>
@@ -1001,15 +1166,6 @@
     .batch-check input {
         width: 16px;
         height: 16px;
-    }
-
-    .downloaded-indicator {
-        color: var(--primary);
-    }
-
-    .downloaded-indicator :global(svg) {
-        width: 18px;
-        height: 18px;
     }
 
     .batch-item.downloaded .batch-title {

@@ -46,6 +46,7 @@ import {
     clearCollectionMemoryForUser,
     getDownloadedItemKeysForCollection,
     markDownloadedItemsForCollection,
+    unmarkDownloadedItemsForCollection,
 } from "../db/collection-memory.js";
 import {
     createFeedback,
@@ -2029,6 +2030,78 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to mark collection memory",
+                );
+            }
+        });
+
+        router.post("/collection-memory/unmark", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const collectionKeyRaw = req.body?.collectionKey;
+                const collectionKey =
+                    typeof collectionKeyRaw === "string"
+                        ? collectionKeyRaw.trim()
+                        : "";
+
+                if (!collectionKey) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "collectionKey is required",
+                    );
+                }
+
+                const itemKeys = Array.isArray(req.body?.itemKeys)
+                    ? req.body.itemKeys
+                    : [];
+                if (!itemKeys.length) {
+                    return res.json({
+                        status: "success",
+                        data: { deleted: 0 },
+                    });
+                }
+
+                const clerkUser = await clerkClient.users.getUser(auth.userId);
+                const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+
+                const result = await unmarkDownloadedItemsForCollection({
+                    userId: user.id,
+                    collectionKey,
+                    itemKeys,
+                });
+
+                if (!result.ok) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "Invalid collection memory payload",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        deleted: result.deleted ?? 0,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/collection-memory/unmark error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to unmark collection memory",
                 );
             }
         });

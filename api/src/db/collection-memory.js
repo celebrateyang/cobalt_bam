@@ -237,3 +237,83 @@ export const clearCollectionMemoryForUser = async ({ userId, collectionKey }) =>
 
     return { ok: true, deleted: res.rowCount || 0 };
 };
+
+export const unmarkDownloadedItemsForCollection = async ({
+    userId,
+    collectionKey,
+    itemKeys,
+}) => {
+    const parsed = parseCollectionKey(collectionKey);
+    if (!parsed) return { ok: false, code: "INVALID_COLLECTION_KEY" };
+
+    const normalizedKeys = Array.isArray(itemKeys) ? itemKeys : [];
+    const dedup = [];
+    const seen = new Set();
+
+    for (const rawKey of normalizedKeys) {
+        const itemKey = typeof rawKey === "string" ? rawKey.trim() : "";
+        if (!itemKey || itemKey.length > MAX_ITEM_KEY_LENGTH || seen.has(itemKey)) {
+            continue;
+        }
+
+        seen.add(itemKey);
+        dedup.push(itemKey);
+
+        if (dedup.length >= MAX_ITEMS_PER_REQUEST) {
+            break;
+        }
+    }
+
+    if (!dedup.length) {
+        return { ok: true, deleted: 0 };
+    }
+
+    const client = await getClient();
+
+    try {
+        await client.query("BEGIN");
+
+        const memoryRes = await client.query(
+            `
+            SELECT id
+            FROM user_collection_memories
+            WHERE user_id = $1 AND collection_key = $2
+            LIMIT 1
+            `,
+            [userId, parsed.collectionKey],
+        );
+
+        const memoryId = memoryRes.rows?.[0]?.id;
+        if (!memoryId) {
+            await client.query("COMMIT");
+            return { ok: true, deleted: 0 };
+        }
+
+        const deleteRes = await client.query(
+            `
+            DELETE FROM user_collection_memory_items
+            WHERE memory_id = $1 AND item_key = ANY($2::text[])
+            `,
+            [memoryId, dedup],
+        );
+
+        await client.query(
+            `
+            UPDATE user_collection_memories
+            SET updated_at = $2
+            WHERE id = $1
+            `,
+            [memoryId, Date.now()],
+        );
+
+        await client.query("COMMIT");
+        return { ok: true, deleted: deleteRes.rowCount || 0 };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+};

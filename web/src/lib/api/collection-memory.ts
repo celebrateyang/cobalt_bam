@@ -97,3 +97,30 @@ export const clearCollectionMemory = async (collectionKey: string) => {
     const data = await res?.json().catch(() => ({}));
     return !!res?.ok && data?.status === "success";
 };
+
+export const unmarkCollectionDownloadedItems = async ({
+    collectionKey,
+    itemKeys,
+}: {
+    collectionKey: string;
+    itemKeys: string[];
+}) => {
+    const token = await getTokenWithRetry();
+    if (!token) return false;
+
+    const apiBase = currentApiURL();
+    const res = await fetch(`${apiBase}/user/collection-memory/unmark`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            collectionKey,
+            itemKeys,
+        }),
+    }).catch(() => null);
+
+    const data = await res?.json().catch(() => ({}));
+    return !!res?.ok && data?.status === "success";
+};

@@ -44,7 +44,7 @@ type SavingHandlerArgs = {
         batchSessionId?: string;
         batchSelectionTotal?: number;
     },
-    suppressErrors?: string[],
+    suppressErrors?: true | string[],
 }
 
 const isPrivateHostname = (hostname: string) => {
@@ -392,7 +392,14 @@ export const savingHandler = async ({
 }: SavingHandlerArgs) => {
     downloadButtonState.set("think");
 
-    const showError = (errorText: string) => {
+    const shouldSuppressError = (code?: string) => {
+        if (suppressErrors === true) return true;
+        return !!code && !!suppressErrors?.includes(code);
+    };
+
+    const showError = (errorText: string, code?: string) => {
+        if (shouldSuppressError(code)) return;
+
         createDialog({
             id: "save-error",
             type: "small",
@@ -433,7 +440,7 @@ export const savingHandler = async ({
 
     if (!response) {
         downloadButtonState.set("error");
-        showError(get(t)("error.api.unreachable"));
+        showError(get(t)("error.api.unreachable"), "error.api.unreachable");
         return null;
     }
 
@@ -455,26 +462,27 @@ export const savingHandler = async ({
             const current = Number(response.error?.context?.current);
             const required = Number(response.error?.context?.required);
             if (Number.isFinite(current) && Number.isFinite(required)) {
-                if (selectedRequest?.url) {
+                if (selectedRequest?.url && !shouldSuppressError(response.error.code)) {
                     savePendingLaunchIntent(selectedRequest.url, { autostart: true });
                 }
 
-                showPointsInsufficientDialog(
-                    current,
-                    required,
-                    null,
-                    getCurrentRedirectPath(),
-                );
+                if (!shouldSuppressError(response.error.code)) {
+                    showPointsInsufficientDialog(
+                        current,
+                        required,
+                        null,
+                        getCurrentRedirectPath(),
+                    );
+                }
                 return response;
             }
         }
 
         downloadButtonState.set("error");
-        if (!suppressErrors?.includes(response.error.code)) {
-            showError(
-                await translateApiError(response.error.code, response?.error?.context)
-            );
-        }
+        showError(
+            await translateApiError(response.error.code, response?.error?.context),
+            response.error.code
+        );
         return response;
     }
 
@@ -583,7 +591,7 @@ export const savingHandler = async ({
             return response;
         } else {
             downloadButtonState.set("error");
-            showError(get(t)("error.tunnel.probe"));
+            showError(get(t)("error.tunnel.probe"), "error.tunnel.probe");
             return response;
         }
     }
@@ -622,7 +630,7 @@ export const savingHandler = async ({
             }
 
             downloadButtonState.set("error");
-            showError(get(t)("error.api.generic"));
+            showError(get(t)("error.api.generic"), "error.api.generic");
         }
 
         return response;
@@ -661,6 +669,6 @@ export const savingHandler = async ({
     }
 
     downloadButtonState.set("error");
-    showError(get(t)("error.api.unknown_response"));
+    showError(get(t)("error.api.unknown_response"), "error.api.unknown_response");
     return response;
 }

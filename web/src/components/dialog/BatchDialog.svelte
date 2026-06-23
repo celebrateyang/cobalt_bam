@@ -640,7 +640,7 @@
                     request,
                     skipPoints: true,
                     oldTaskId: taskId,
-                    suppressErrors: [rateLimitErrorCode],
+                    suppressErrors: true,
                     queueMeta,
                 });
 

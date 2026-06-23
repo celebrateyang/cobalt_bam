@@ -18,5 +18,6 @@
     "success_notice": "Se han descargado correctamente {{ count }} videos en este lote.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Guardar pulsado",
-    "manual_save_warning": "Importante: cuando termine cada video, pulsa \"Guardar\" de inmediato. Tras reiniciar el navegador, la cola puede perderse."
+    "manual_save_warning": "Importante: cuando termine cada video, pulsa \"Guardar\" de inmediato. Tras reiniciar el navegador, la cola puede perderse.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

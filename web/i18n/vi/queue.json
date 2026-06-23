@@ -18,5 +18,6 @@
     "success_notice": "Đã tải xuống thành công {{ count }} video trong lô này.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Da bam luu",
-    "manual_save_warning": "Quan trong: sau khi tai xong, hay bam \"Luu\" ngay. Sau khi khoi dong lai trinh duyet, muc tai trong hang doi co the bi mat."
+    "manual_save_warning": "Quan trong: sau khi tai xong, hay bam \"Luu\" ngay. Sau khi khoi dong lai trinh duyet, muc tai trong hang doi co the bi mat.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

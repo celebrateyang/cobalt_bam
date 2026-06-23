@@ -18,5 +18,6 @@
     "success_notice": "{{ count }} vid?os ont ?t? t?l?charg?es avec succ?s dans ce lot.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Enregistrer clique",
-    "manual_save_warning": "Important: apres le telechargement, cliquez tout de suite sur \"Enregistrer\". Apres redemarrage du navigateur, la file peut etre perdue."
+    "manual_save_warning": "Important: apres le telechargement, cliquez tout de suite sur \"Enregistrer\". Apres redemarrage du navigateur, la file peut etre perdue.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

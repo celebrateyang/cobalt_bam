@@ -14,5 +14,9 @@
     "api.override.body": "{{ value }}が処理インスタンスになりました。信頼できない場合は「キャンセル」を押すと無視されます。\n\n後で処理設定で選択を変更できます。",
     "safety.custom_instance.body": "カスタムインスタンスはプライバシーと安全性のリスクをもたらす可能性があります。\n\n悪意のあるインスタンスは：\n1. FreeSaveVideoから離れてリダイレクトし、詐欺を試みる可能性があります。\n2. リクエストに関するすべての情報をログに記録し、永久に保存し、あなたを追跡するために使用する可能性があります。\n3. 悪意のあるファイル（マルウェアなど）を提供する可能性があります。\n4. 広告を強制的に視聴させたり、ダウンロードに料金を請求したりする可能性があります。\n\nこの時点以降、当社はあなたを保護することはできません。どのインスタンスを使用するかは慎重に判断し、常に直感を信頼してください。何かがおかしいと感じたら、このページに戻ってカスタムインスタンスをリセットし、GitHubで報告してください。",
     "processing.ongoing": "FreeSaveVideoは現在このタブでメディアを処理しています。離れると処理が中止されます。本当にこれを実行しますか？",
-    "processing.title.ongoing": "処理がキャンセルされます"
+    "processing.title.ongoing": "処理がキャンセルされます",
+    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.start_confirm.title": "Before batch download",
+    "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
+    "batch.start_confirm.confirm": "I understand, start download"
 }

@@ -18,5 +18,6 @@
     "success_notice": "이 배치에서 {{ count }}개의 동영상을 성공적으로 다운로드했습니다.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "저장 클릭됨",
-    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."
+    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

@@ -18,5 +18,6 @@
     "success_notice": "このバッチで {{ count }} 本の動画を正常にダウンロードしました。",
     "save_all_done": "Save all downloaded",
     "save_clicked": "保存クリック済み",
-    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart."
+    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

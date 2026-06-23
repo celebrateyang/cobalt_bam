@@ -14,5 +14,9 @@
     "api.override.body": "{{ value }} ist jetzt die Verarbeitungsinstanz. Wenn Sie ihr nicht vertrauen, drücken Sie \"Abbrechen\" und sie wird ignoriert.\n\nSie können Ihre Wahl später in den Verarbeitungseinstellungen ändern.",
     "safety.custom_instance.body": "Benutzerdefinierte Instanzen können potenzielle Datenschutz- und Sicherheitsrisiken darstellen.\n\nSchlechte Instanzen können:\n1. Sie von FreeSaveVideo wegleiten und versuchen, Sie zu betrügen.\n2. Alle Informationen über Ihre Anfragen protokollieren, sie für immer speichern und verwenden, um Sie zu verfolgen.\n3. Ihnen bösartige Dateien (wie Malware) bereitstellen.\n4. Sie zwingen, Werbung anzusehen oder für Downloads zu bezahlen.\n\nAb diesem Punkt können wir Sie nicht mehr schützen. Bitte seien Sie achtsam, welche Instanzen Sie verwenden und vertrauen Sie immer Ihrem Bauchgefühl. Wenn sich etwas nicht richtig anfühlt, kehren Sie zu dieser Seite zurück, setzen Sie die benutzerdefinierte Instanz zurück und melden Sie es uns auf GitHub.",
     "processing.ongoing": "FreeSaveVideo verarbeitet derzeit Medien in diesem Tab. Wenn Sie weggehen, wird dies abgebrochen. Sind Sie sicher, dass Sie dies tun möchten?",
-    "processing.title.ongoing": "Verarbeitung wird abgebrochen"
+    "processing.title.ongoing": "Verarbeitung wird abgebrochen",
+    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.start_confirm.title": "Before batch download",
+    "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
+    "batch.start_confirm.confirm": "I understand, start download"
 }

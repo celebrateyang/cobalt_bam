@@ -532,6 +532,29 @@
         });
     };
 
+    const confirmBatchDownloadReadiness = () =>
+        new Promise<boolean>((resolve) => {
+            createDialog({
+                id: "batch-download-readiness",
+                type: "small",
+                meowbalt: "question",
+                title: $t("dialog.batch.start_confirm.title"),
+                bodyText: $t("dialog.batch.start_confirm.body"),
+                buttons: [
+                    {
+                        text: $t("button.cancel"),
+                        main: false,
+                        action: () => resolve(false),
+                    },
+                    {
+                        text: $t("dialog.batch.start_confirm.confirm"),
+                        main: true,
+                        action: () => resolve(true),
+                    },
+                ],
+            });
+        });
+
     const downloadSelected = async () => {
         if (running || pointsCheckLoading) return;
         if (clerkEnabled && (!pointsPreviewReady || pointsPreviewLoading)) return;
@@ -553,6 +576,9 @@
 
         const selectedItems = items.filter((_, i) => selected[i]);
         if (!selectedItems.length) return;
+
+        const readyToStart = await confirmBatchDownloadReadiness();
+        if (!readyToStart) return;
 
         const requiredPoints = clerkEnabled ? pointsPreviewRequired : 0;
 
@@ -1000,6 +1026,12 @@
         </div>
 
         <div class="batch-footer">
+            {#if !running && !viewingDownloaded}
+                <div class="batch-footer-reminder" role="note">
+                    {$t("dialog.batch.footer_reminder")}
+                </div>
+            {/if}
+
             <div class="batch-footer-actions">
                 <button
                     class="button elevated footer-button"
@@ -1232,6 +1264,21 @@
         justify-content: flex-end;
     }
 
+    .batch-footer-reminder {
+        align-self: flex-end;
+        max-width: 520px;
+        padding: 8px 10px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 34%, transparent);
+        border-left: 4px solid var(--secondary);
+        border-radius: 8px;
+        background-color: color-mix(in srgb, var(--secondary) 10%, var(--button));
+        color: color-mix(in srgb, var(--text) 82%, var(--secondary));
+        font-size: 13px;
+        line-height: 1.4;
+        font-weight: 650;
+        text-align: right;
+    }
+
     .points-preview {
         font-size: 12px;
         color: var(--gray);
@@ -1272,6 +1319,12 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             width: 100%;
+        }
+
+        .batch-footer-reminder {
+            align-self: stretch;
+            max-width: none;
+            text-align: left;
         }
 
         .footer-button {

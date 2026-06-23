@@ -219,6 +219,17 @@
             </div>
         </div>
 
+        {#if pendingCount > 0}
+            <div class="queue-save-warning queue-awake-warning" role="note">
+                <span class="warning-icon" aria-hidden="true">
+                    <IconAlertTriangle />
+                </span>
+                <p>
+                    {$t("queue.keep_awake_warning")}
+                </p>
+            </div>
+        {/if}
+
         <div id="processing-list" role="list" aria-labelledby="queue-title">
             {#each queue as [id, item] (id)}
                 <ProcessingQueueItem {id} info={item} />
@@ -365,6 +376,10 @@
         line-height: 1.45;
         font-weight: 600;
         letter-spacing: 0;
+    }
+
+    .queue-awake-warning {
+        margin-bottom: 10px;
     }
 
     .warning-icon {

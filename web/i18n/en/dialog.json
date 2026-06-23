@@ -75,5 +75,9 @@
         "balance_enough": "You have {{ current }} points. This download needs {{ required }} points.",
         "first_grace": "Your first download can use an automatic grace cover for the missing {{ required }} points, so you can continue.",
         "unknown": "Unable to estimate points; actual deduction applies. Continue?"
-    }
+    },
+    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.start_confirm.title": "Before batch download",
+    "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
+    "batch.start_confirm.confirm": "I understand, start download"
 }

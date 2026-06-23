@@ -14,5 +14,9 @@
     "api.override.body": "{{ value }} hiện là phiên bản xử lý. nếu bạn không tin tưởng nó, nhấn \"hủy\" và nó sẽ bị bỏ qua.\n\nbạn có thể thay đổi lựa chọn của mình sau trong cài đặt xử lý.",
     "safety.custom_instance.body": "phiên bản tùy chỉnh có thể gây rủi ro về quyền riêng tư & an toàn.\n\nphiên bản xấu có thể:\n1. chuyển hướng bạn khỏi FreeSaveVideo và cố gắng lừa đảo bạn.\n2. ghi lại tất cả thông tin về các yêu cầu của bạn, lưu trữ mãi mãi và sử dụng để theo dõi bạn.\n3. phục vụ bạn các file độc hại (như phần mềm độc hại).\n4. buộc bạn xem quảng cáo hoặc khiến bạn phải trả tiền để tải xuống.\n\nsau điểm này, chúng tôi không thể bảo vệ bạn. vui lòng lưu ý những phiên bản nào để sử dụng và luôn tin tưởng trực giác của bạn. nếu có gì cảm thấy không đúng, quay lại trang này, đặt lại phiên bản tùy chỉnh và báo cáo với chúng tôi trên github.",
     "processing.ongoing": "FreeSaveVideo hiện đang xử lý phương tiện trong tab này. rời đi sẽ hủy bỏ nó. bạn có chắc chắn muốn làm điều này?",
-    "processing.title.ongoing": "xử lý sẽ bị hủy"
+    "processing.title.ongoing": "xử lý sẽ bị hủy",
+    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.start_confirm.title": "Before batch download",
+    "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
+    "batch.start_confirm.confirm": "I understand, start download"
 }

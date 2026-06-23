@@ -18,5 +18,6 @@
     "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Speichern geklickt",
-    "manual_save_warning": "Wichtig: Nach jedem Download bitte sofort auf \"Speichern\" klicken. Nach Browser-Neustart kann der Queue-Download verloren gehen."
+    "manual_save_warning": "Wichtig: Nach jedem Download bitte sofort auf \"Speichern\" klicken. Nach Browser-Neustart kann der Queue-Download verloren gehen.",
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
 }

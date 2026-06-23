@@ -75,5 +75,9 @@
         "balance_enough": "你当前有 {{ current }} 积分，本次下载需要 {{ required }} 积分。",
         "first_grace": "这是你的首次下载，系统可自动补差 {{ required }} 积分，本次仍可继续。",
         "unknown": "暂无法预估，按实际扣除。是否继续下载？"
-    }
+    },
+    "batch.footer_reminder": "开始前请确认：设备不要睡眠/息屏，完成后逐个点击“保存”。",
+    "batch.start_confirm.title": "开始批量下载前请确认",
+    "batch.start_confirm.body": "请在整个批量下载期间保持设备唤醒：电脑不要睡眠，手机不要息屏。每个视频下载完成后，还需要点击“保存”才能留住文件。",
+    "batch.start_confirm.confirm": "我知道了，开始下载"
 }

@@ -14,5 +14,9 @@
     "api.override.body": "{{ value }} es ahora la instancia de procesamiento. si no confías en ella, presiona \"cancelar\" y será ignorada.\n\npuedes cambiar tu elección más tarde en la configuración de procesamiento.",
     "safety.custom_instance.body": "las instancias personalizadas pueden potencialmente presentar riesgos de privacidad y seguridad.\n\nlas instancias malas pueden:\n1. redirigirte fuera de FreeSaveVideo e intentar estafarte.\n2. registrar toda la información sobre tus solicitudes, almacenarla para siempre y usarla para rastrearte.\n3. servirte archivos maliciosos (como malware).\n4. obligarte a ver anuncios, o hacerte pagar por descargar.\n\ndespués de este punto, no podemos protegerte. por favor ten cuidado con qué instancias usar y siempre confía en tu instinto. si algo se siente mal, vuelve a esta página, restablece la instancia personalizada y repórtala en github.",
     "processing.ongoing": "FreeSaveVideo está procesando actualmente medios en esta pestaña. salir lo abortará. ¿estás seguro de que quieres hacer esto?",
-    "processing.title.ongoing": "el procesamiento será cancelado"
+    "processing.title.ongoing": "el procesamiento será cancelado",
+    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.start_confirm.title": "Before batch download",
+    "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
+    "batch.start_confirm.confirm": "I understand, start download"
 }

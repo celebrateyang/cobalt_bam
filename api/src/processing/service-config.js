@@ -1,7 +1,7 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews"]);
+export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico"]);
 
 export const services = {
     analdin: {
@@ -145,6 +145,14 @@ export const services = {
             "portal/view/:id",
             "audio/listen/:audioId",
         ]
+    },
+    niconico: {
+        patterns: [
+            "watch/:id",
+            "shorts/:id",
+        ],
+        tld: "jp",
+        subdomains: ["sp", "embed"],
     },
     naver: {
         patterns: [

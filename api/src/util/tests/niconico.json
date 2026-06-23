@@ -1,0 +1,34 @@
+[
+    {
+        "name": "public watch video",
+        "url": "https://www.nicovideo.jp/watch/sm44744982",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "public watch video audio",
+        "url": "https://www.nicovideo.jp/watch/sm44744982",
+        "params": {
+            "downloadMode": "audio",
+            "audioFormat": "best"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "public watch video muted",
+        "url": "https://www.nicovideo.jp/watch/sm44744982",
+        "params": {
+            "downloadMode": "mute"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    }
+]

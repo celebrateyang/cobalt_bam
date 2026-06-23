@@ -50,6 +50,58 @@ const isSupportedUrl = (value) => {
     }
 };
 
+const cookieAttributeNames = new Set([
+    "domain",
+    "path",
+    "expires",
+    "max-age",
+    "secure",
+    "httponly",
+    "samesite",
+]);
+
+const extractCookieHeader = (cookies = "") => {
+    const pairs = String(cookies)
+        .split(";")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .map((part) => {
+            const eq = part.indexOf("=");
+            if (eq <= 0) return null;
+
+            const name = part.slice(0, eq).trim();
+            const value = part.slice(eq + 1).trim();
+            if (!name || cookieAttributeNames.has(name.toLowerCase())) {
+                return null;
+            }
+
+            return `${name}=${value}`;
+        })
+        .filter(Boolean);
+
+    return pairs.length ? pairs.join("; ") : undefined;
+};
+
+const buildFormatHeaders = (format) => {
+    const source = format?.http_headers && typeof format.http_headers === "object"
+        ? format.http_headers
+        : {};
+    const headers = {};
+
+    for (const [key, value] of Object.entries(source)) {
+        if (typeof value === "string" && value.trim()) {
+            headers[key] = value;
+        }
+    }
+
+    const cookie = extractCookieHeader(format?.cookies);
+    if (cookie) {
+        headers.Cookie = cookie;
+    }
+
+    return Object.keys(headers).length ? headers : undefined;
+};
+
 const getHost = (value) => {
     try {
         return new URL(value).hostname.toLowerCase();
@@ -261,6 +313,7 @@ const collectCandidates = (formats = []) => {
                 width: parseNumber(format?.width),
                 tbr: parseNumber(format?.tbr || format?.vbr || format?.abr),
                 fileSize: parseNumber(format?.filesize || format?.filesize_approx),
+                headers: buildFormatHeaders(format),
                 hasVideo,
                 hasAudio,
                 isHLS: protocol.includes("m3u8"),
@@ -395,6 +448,14 @@ const buildResponseBase = ({ info, url }) => {
     };
 };
 
+const withSelectedHeaders = (base, selected) => ({
+    ...base,
+    headers: {
+        ...base.headers,
+        ...selected?.headers,
+    },
+});
+
 export default async function extractWithYtDlp({ url, quality, downloadMode, timeoutMs }) {
     const runner = await resolveRunner();
     if (!runner) {
@@ -458,7 +519,9 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
             const base = buildResponseBase({ info, url });
             const extension = String(info?.ext || "mp4").toLowerCase();
             return {
-                ...base,
+                ...withSelectedHeaders(base, {
+                    headers: buildFormatHeaders(info),
+                }),
                 urls: info.url,
                 bestAudio: normalizeAudioExt(extension),
                 filenameAttributes: buildFilenameAttributes({
@@ -497,7 +560,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
             }
 
             return {
-                ...base,
+                ...withSelectedHeaders(base, selected),
                 urls: selected.url,
                 bestAudio: normalizeAudioExt(selected.ext),
                 filenameAttributes: buildFilenameAttributes({
@@ -517,7 +580,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
             }
 
             return {
-                ...base,
+                ...withSelectedHeaders(base, selected),
                 urls: selected.url,
                 filenameAttributes: buildFilenameAttributes({
                     originUrl: url,
@@ -533,7 +596,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
 
         if (videoOnly && audioOnly) {
             return {
-                ...base,
+                ...withSelectedHeaders(base, videoOnly),
                 urls: [videoOnly.url, audioOnly.url],
                 bestAudio: normalizeAudioExt(audioOnly.ext),
                 filenameAttributes: buildFilenameAttributes({
@@ -551,7 +614,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
 
         if (hlsVideo && hlsAudio) {
             return {
-                ...base,
+                ...withSelectedHeaders(base, hlsVideo),
                 urls: [hlsVideo.url, hlsAudio.url],
                 bestAudio: normalizeAudioExt(hlsAudio.ext),
                 filenameAttributes: buildFilenameAttributes({
@@ -571,7 +634,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
         }
 
         return {
-            ...base,
+            ...withSelectedHeaders(base, selected),
             urls: selected.url,
             bestAudio: normalizeAudioExt(selected.ext),
             filenameAttributes: buildFilenameAttributes({

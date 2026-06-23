@@ -38,6 +38,7 @@ import haokan from "./services/haokan.js";
 import bluesky from "./services/bluesky.js";
 import xiaohongshu from "./services/xiaohongshu.js";
 import newgrounds from "./services/newgrounds.js";
+import niconico from "./services/niconico.js";
 import douyin from "./services/douyin.js";
 import kuaishou from "./services/kuaishou.js";
 import kugou from "./services/kugou.js";
@@ -602,6 +603,16 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await newgrounds({
                     ...patternMatch,
                     quality: params.videoQuality,
+                });
+                break;
+
+            case "niconico":
+                r = await niconico({
+                    ...patternMatch,
+                    type: url.pathname.startsWith("/shorts/") ? "shorts" : "watch",
+                    quality: params.videoQuality,
+                    isAudioOnly,
+                    isAudioMuted,
                 });
                 break;
 

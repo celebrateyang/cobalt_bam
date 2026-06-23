@@ -158,6 +158,10 @@ function aliasURL(url) {
 }
 
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (host.domain === "nicovideo.jp") {
+        return "niconico";
+    }
+
     if (host.domain === "rednote.com") {
         return "xiaohongshu";
     }

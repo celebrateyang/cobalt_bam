@@ -62,6 +62,9 @@ export const testers = {
         pattern.id?.length <= 12 ||
         pattern.audioId?.length <= 12,
 
+    "niconico": pattern =>
+        /^(?:[a-z]{2})?\d{1,16}$/i.test(pattern.id || ""),
+
     "naver": pattern =>
         pattern.shortLink?.length <= 32 ||
         /^[0-9A-F]{16,64}$/i.test(pattern.mediaId || ""),

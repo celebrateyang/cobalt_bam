@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
-        "description": "Supports 100+ popular sites including TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, CCTV, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
+        "description": "Supports 100+ popular sites including TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, CCTV, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Supports domestic and international versions of TikTok/Douyin. One-click watermark removal, keeping HD audio and video."
@@ -84,6 +84,10 @@
             "name": "NAVER Video Downloader",
             "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
         },
+        "niconico": {
+            "name": "NicoNico Video Downloader",
+            "desc": "Save public NicoNico watch and shorts videos with available HLS quality options."
+        },
         "threads": {
             "name": "Threads Video Downloader",
             "desc": "Paste a public Threads post link to save available videos or photos directly."
@@ -109,7 +113,7 @@
     "hero": {
         "eyebrow": "Online video downloader",
         "title": "Download Videos Online Without Watermarks",
-        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, CCTV, Instagram, Threads, Facebook, YouTube, and more to download HD videos in a few clicks.",
+        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, CCTV, Instagram, Threads, Facebook, YouTube, and more to download HD videos in a few clicks.",
         "trust": "Batch downloads, collection / playlist parsing, audio-only mode, and mute mode are built in for supported services."
     },
     "tools": {

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Téléchargement sans filigrane depuis des plateformes populaires",
-        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analysez et telechargez des fichiers HD directement sur mobile et PC.",
+        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analysez et telechargez des fichiers HD directement sur mobile et PC.",
         "douyin": {
             "name": "Téléchargeur TikTok/Douyin",
             "desc": "Prend en charge les versions nationales et internationales de TikTok/Douyin. Suppression du filigrane en un clic, conservant l'audio et la vidéo HD."
@@ -50,6 +50,10 @@
             "name": "NAVER Video Downloader",
             "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
         },
+        "niconico": {
+            "name": "Telechargeur video NicoNico",
+            "desc": "Enregistrez les videos publiques NicoNico watch et shorts avec les qualites disponibles."
+        },
         "threads": {
             "name": "Threads Video Downloader",
             "desc": "Paste a public Threads post link to save available videos or photos directly."
@@ -75,7 +79,7 @@
     "hero": {
         "eyebrow": "Telechargeur video en ligne",
         "title": "Telechargez des videos en ligne sans filigrane",
-        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, Xiaohongshu, Instagram, Threads, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
+        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
         "trust": "Les services compatibles proposent le telechargement par lots, les collections / playlists, l audio seul et le mode muet."
     },
     "tools": {

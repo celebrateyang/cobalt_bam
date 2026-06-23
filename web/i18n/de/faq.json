@@ -3,8 +3,8 @@
     "description": "Antworten zu wasserzeichenfreien Downloads, Formaten, Punkten und Fehlerbehebung.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Wasserzeichenfreier Video-Downloader",
-        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
-        "keywords": "FAQ Video-Downloader, Douyin Downloader, Bilibili Downloader, Kuaishou Downloader, Xiaohongshu Downloader, TikTok Downloader, wasserzeichenfrei herunterladen, Batch-Download, Punkte-Abrechnung, Haokan downloader, Haokan video download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download"
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
+        "keywords": "FAQ Video-Downloader, Douyin Downloader, Bilibili Downloader, Kuaishou Downloader, Xiaohongshu Downloader, TikTok Downloader, wasserzeichenfrei herunterladen, Batch-Download, Punkte-Abrechnung, Haokan downloader, Haokan video download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download"
     },
     "toc": {
         "title": "Schnellzugriffe"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Was ist FreeSaveVideo?",
-            "a": "FreeSaveVideo ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook und mehr."
+            "a": "FreeSaveVideo ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook und mehr."
         },
         "how_to_use": {
             "q": "Wie lade ich ein Video (ohne Wasserzeichen) herunter?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Welche Plattformen und Linktypen werden unterstützt?",
-            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) und Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab."
+            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) und Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab."
         },
         "youtube_supported": {
             "q": "Wird YouTube unterstützt?",

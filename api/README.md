@@ -26,6 +26,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | loom              | ✅            | ❌         | ✅         | ✅         | ➖              |
 | naver             | ✅            | ✅         | ✅         | ✅         | ✅              |
 | newgrounds        | ✅            | ✅         | ✅         | ✅         | ✅              |
+| niconico          | ✅            | ✅         | ✅         | ✅         | ✅              |
 | ok.ru             | ✅            | ❌         | ✅         | ✅         | ✅              |
 | pinterest         | ✅            | ✅         | ✅         | ➖         | ➖              |
 | reddit            | ✅            | ✅         | ✅         | ❌         | ❌              |
@@ -56,6 +57,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | facebook   | supports public accessible videos content only.                                                                      |
 | haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |
 | naver      | supports public Naver Shorts share links and media-id links.                                                        |
+| niconico   | supports public NicoNico watch and shorts video links.                                                              |
 | pinterest  | supports photos, gifs, videos and stories.                                                                           |
 | reddit     | supports gifs and videos.                                                                                            |
 | snapchat   | supports spotlights and stories. lets you pick what to save from stories.                                            |

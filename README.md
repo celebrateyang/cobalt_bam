@@ -38,6 +38,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | facebook          | ✅            | ❌         | ✅         | ➖         | ➖              |
 | loom              | ✅            | ❌         | ✅         | ✅         | ➖              |
 | naver             | ✅            | ✅         | ✅         | ✅         | ✅              |
+| niconico          | ✅            | ✅         | ✅         | ✅         | ✅              |
 | ok.ru             | ✅            | ❌         | ✅         | ✅         | ✅              |
 | pinterest         | ✅            | ✅         | ✅         | ➖         | ➖              |
 | reddit            | ✅            | ✅         | ✅         | ❌         | ❌              |
@@ -69,6 +70,7 @@ this list is not final and keeps expanding over time. if support for a service y
 | facebook   | supports public accessible videos content only.                                                                      |
 | haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |
 | naver      | supports public Naver Shorts share links and media-id links.                                                        |
+| niconico   | supports public NicoNico watch and shorts video links.                                                              |
 | pinterest  | supports photos, gifs, videos and stories.                                                                           |
 | reddit     | supports gifs and videos.                                                                                            |
 | snapchat   | supports spotlights and stories. lets you pick what to save from stories.                                            |

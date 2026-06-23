@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "热门平台无水印下载",
-        "description": "覆盖抖音、B站、快手、酷狗音乐、好看视频、微博、小红书、CCTV、NAVER、YouTube、Instagram、Threads、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",
+        "description": "覆盖抖音、B站、NicoNico、快手、酷狗音乐、好看视频、微博、小红书、CCTV、NAVER、YouTube、Instagram、Threads、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",
         "douyin": {
             "name": "抖音无水印下载",
             "desc": "支持国内外版抖音/TikTok，一键去水印，保持高清音画。"
@@ -84,6 +84,10 @@
             "name": "NAVER（네이버）视频下载",
             "desc": "支持 naver.me 分享短链和 m.naver.com/shorts 视频链接，在线保存可用 MP4。"
         },
+        "niconico": {
+            "name": "NicoNico 视频下载",
+            "desc": "粘贴 NicoNico 公开 watch 或 shorts 链接，在线解析并保存可用视频。"
+        },
         "threads": {
             "name": "Threads 视频下载",
             "desc": "粘贴公开 Threads 帖子链接，直接保存可用视频或图片。"
@@ -109,7 +113,7 @@
     "hero": {
         "eyebrow": "在线视频下载器",
         "title": "在线下载无水印视频",
-        "subtitle": "粘贴抖音、TikTok、B站、酷狗音乐、好看视频、微博、小红书、CCTV、Instagram、Threads、Facebook、NAVER、YouTube 等平台链接，几步即可下载高清视频。",
+        "subtitle": "粘贴抖音、TikTok、B站、酷狗音乐、好看视频、微博、小红书、CCTV、NicoNico、Instagram、Threads、Facebook、NAVER、YouTube 等平台链接，几步即可下载高清视频。",
         "trust": "支持的平台可直接使用批次下载、合集解析、音频模式和静音模式。"
     },
     "tools": {

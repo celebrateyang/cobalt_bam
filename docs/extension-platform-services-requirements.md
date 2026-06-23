@@ -94,6 +94,7 @@ type PlatformId =
   | 'vk'
   | 'weibo'
   | 'naver'
+  | 'niconico'
   | 'rutube'
   | 'ok'
   | 'loom'
@@ -189,6 +190,7 @@ type AdapterContext = {
 - Rutube
 - OK.ru
 - Naver
+- NicoNico
 - Bluesky
 - Newgrounds
 - CCTV

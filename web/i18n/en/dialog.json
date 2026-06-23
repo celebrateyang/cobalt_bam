@@ -36,7 +36,7 @@
     "batch.detect.download_single": "download this only",
     "batch.detect.download_batch": "batch download",
     "batch.manual_save_hint": "after items finish downloading in queue, click \"save\" manually for each video.",
-    "batch.keep_screen_on_hint": "on mobile, keep your phone screen on during downloading. lock screen may pause downloads.",
+    "batch.keep_screen_on_hint": "During batch queue downloads, keep this device awake: do not let your computer sleep or your phone screen lock, or later tasks may pause or fail.",
     "saving.title": "choose how to save",
     "saving.blocked": "FreeSaveVideo tried opening the file in a new tab, but your browser blocked it. you can allow pop-ups for FreeSaveVideo to prevent this from happening next time.",
     "saving.timeout": "FreeSaveVideo tried saving the file automatically, but your browser stopped it. you have to select a preferred method manually.",

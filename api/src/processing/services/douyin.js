@@ -362,7 +362,7 @@ const normalizeTitle = (value) =>
 
 const cleanDouyinTitle = (value) =>
     normalizeTitle(value)
-        .replace(/(?:^|\s)#[^\s#]+/g, "")
+        .replace(/#[^\s#]+/g, "")
         .replace(/\s*[|｜]\s*/g, "  ")
         .replace(/ {3,}/g, "  ")
         .replace(/^(\u7b2c\d+\s*\u96c6)\s+/, "$1  ")

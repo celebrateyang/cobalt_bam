@@ -76,7 +76,7 @@ const cleanDouyinTitle = (value) =>
         .trim()
         .replace(/[\u0000-\u001F\u007F-\u009F]+/g, " ")
         .replace(/\s+/g, " ")
-        .replace(/(?:^|\s)#[^\s#]+/g, "")
+        .replace(/#[^\s#]+/g, "")
         .replace(/\s*[|｜]\s*/g, "  ")
         .replace(/ {3,}/g, "  ")
         .replace(/^(\u7b2c\d+\s*\u96c6)\s+/, "$1  ")

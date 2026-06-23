@@ -2,7 +2,6 @@
     import { page } from "$app/stores";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
-    import { device } from "$lib/device";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import {
         clearCollectionMemory,
@@ -634,6 +633,7 @@
             let queueRetries = 0;
             let shouldStopBatch = false;
             let itemCompleted = false;
+            let shouldSkipItem = false;
 
             while (!cancelRequested && !itemCompleted) {
                 response = await savingHandler({
@@ -681,6 +681,8 @@
                         code === "error.api.auth.clerk.invalid"
                     ) {
                         cancelRequested = true;
+                    } else {
+                        shouldSkipItem = true;
                     }
                     break;
                 }
@@ -714,10 +716,11 @@
                     continue;
                 }
 
+                shouldSkipItem = true;
                 break;
             }
 
-            if (!itemCompleted) break;
+            if (!itemCompleted && !shouldSkipItem) break;
 
             progress += 1;
 
@@ -832,11 +835,9 @@
             <div class="batch-notice-line">
                 {$t("dialog.batch.manual_save_hint")}
             </div>
-            {#if device.is.mobile}
-                <div class="batch-notice-line">
-                    {$t("dialog.batch.keep_screen_on_hint")}
-                </div>
-            {/if}
+            <div class="batch-notice-line">
+                {$t("dialog.batch.keep_screen_on_hint")}
+            </div>
         </div>
 
         <div class="batch-toolbar">

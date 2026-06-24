@@ -21,6 +21,7 @@ const allowedPayloadKeys = new Set([
     "videoQuality",
     "localProcessing",
     "batch",
+    "filenameTitle",
     "youtubeDubLang",
     "subtitleLang",
     "disableMetadata",

@@ -534,7 +534,10 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "douyin":
-                r = await douyin(patternMatch);
+                r = await douyin({
+                    ...patternMatch,
+                    filenameTitle: params.batch ? params.filenameTitle : undefined,
+                });
                 break;
 
             case "kuaishou":

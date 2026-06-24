@@ -131,6 +131,7 @@ export type CobaltServerInfo = {
 export type CobaltSaveRequestBody =
     { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>> & {
         batch?: boolean;
+        filenameTitle?: string;
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;

@@ -40,6 +40,12 @@ export const apiSchema = z.object({
 
     batch: z.boolean().default(false),
 
+    filenameTitle: z.string()
+                    .trim()
+                    .min(1)
+                    .max(300)
+                    .optional(),
+
     youtubeDubLang: z.string()
                      .min(2)
                      .max(8)

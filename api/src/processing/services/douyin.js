@@ -1188,6 +1188,10 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
 export default async function(obj) {
     let videoId = obj.id;
     let resolvedTargetUrl = null;
+    const getProvidedFilenameBase = (fallbackId) =>
+        obj.filenameTitle
+            ? buildFilenameBase(obj.filenameTitle, fallbackId)
+            : null;
 
     if (!videoId && obj.shortLink) {
         try {
@@ -1204,6 +1208,7 @@ export default async function(obj) {
             if (upstreamTargetUrl) {
                 const upstream = await requestUpstreamCobalt(upstreamTargetUrl);
                 if (upstream?.url) {
+                    const providedFilenameBase = getProvidedFilenameBase(obj.shortLink);
                     logUpstreamUsed("shortlink_fetch_failed", {
                         videoId,
                         shortLink: obj.shortLink,
@@ -1212,16 +1217,20 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
-                            audioFilename: `douyin_${obj.shortLink}`,
+                            filename: providedFilenameBase
+                                ? `${providedFilenameBase}.mp4`
+                                : upstream.filename || `douyin_${obj.shortLink}.mp4`,
+                            audioFilename: providedFilenameBase || `douyin_${obj.shortLink}`,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
                     return {
-                        filename: upstream.filename || `douyin_${obj.shortLink}.mp4`,
-                        audioFilename: `douyin_${obj.shortLink}`,
+                        filename: providedFilenameBase
+                            ? `${providedFilenameBase}.mp4`
+                            : upstream.filename || `douyin_${obj.shortLink}.mp4`,
+                        audioFilename: providedFilenameBase || `douyin_${obj.shortLink}`,
                         urls: upstream.url,
                         forceRedirect: true,
                         duration: upstream.duration,
@@ -1237,6 +1246,7 @@ export default async function(obj) {
     }
 
     if (!videoId) return { error: "fetch.short_link" };
+    const providedFilenameBase = getProvidedFilenameBase(videoId);
 
     // Fetch share page
     const shareUrls = [
@@ -1321,8 +1331,8 @@ export default async function(obj) {
             const discover = await tryResolveViaDiscover(videoId, "waf_fetch");
             if (discover?.directUrl) {
                 return {
-                    filename: `douyin_${videoId}.mp4`,
-                    audioFilename: `douyin_${videoId}`,
+                    filename: `${providedFilenameBase || `douyin_${videoId}`}.mp4`,
+                    audioFilename: providedFilenameBase || `douyin_${videoId}`,
                     urls: discover.directUrl,
                     forceRedirect: true,
                     headers: {
@@ -1351,16 +1361,20 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `douyin_${videoId}.mp4`,
-                            audioFilename: `douyin_${videoId}`,
+                            filename: providedFilenameBase
+                                ? `${providedFilenameBase}.mp4`
+                                : upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: providedFilenameBase || `douyin_${videoId}`,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
                     return {
-                        filename: upstream.filename || `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}`,
+                        filename: providedFilenameBase
+                            ? `${providedFilenameBase}.mp4`
+                            : upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: providedFilenameBase || `douyin_${videoId}`,
                         urls: upstream.url,
                         forceRedirect: true,
                         duration: upstream.duration,
@@ -1404,8 +1418,8 @@ export default async function(obj) {
             const discover = await tryResolveViaDiscover(videoId, "waf_parse");
             if (discover?.directUrl) {
                 return {
-                    filename: `douyin_${videoId}.mp4`,
-                    audioFilename: `douyin_${videoId}`,
+                    filename: `${providedFilenameBase || `douyin_${videoId}`}.mp4`,
+                    audioFilename: providedFilenameBase || `douyin_${videoId}`,
                     urls: discover.directUrl,
                     forceRedirect: true,
                     headers: {
@@ -1434,16 +1448,20 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `douyin_${videoId}.mp4`,
-                            audioFilename: `douyin_${videoId}`,
+                            filename: providedFilenameBase
+                                ? `${providedFilenameBase}.mp4`
+                                : upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: providedFilenameBase || `douyin_${videoId}`,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
                     return {
-                        filename: upstream.filename || `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}`,
+                        filename: providedFilenameBase
+                            ? `${providedFilenameBase}.mp4`
+                            : upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: providedFilenameBase || `douyin_${videoId}`,
                         urls: upstream.url,
                         forceRedirect: true,
                         duration: upstream.duration,
@@ -1493,8 +1511,8 @@ export default async function(obj) {
             const discover = await tryResolveViaDiscover(videoId, "no_item_list");
             if (discover?.directUrl) {
                 return {
-                    filename: `douyin_${videoId}.mp4`,
-                    audioFilename: `douyin_${videoId}`,
+                    filename: `${providedFilenameBase || `douyin_${videoId}`}.mp4`,
+                    audioFilename: providedFilenameBase || `douyin_${videoId}`,
                     urls: discover.directUrl,
                     forceRedirect: true,
                     headers: {
@@ -1527,16 +1545,20 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `douyin_${videoId}.mp4`,
-                            audioFilename: `douyin_${videoId}`,
+                            filename: providedFilenameBase
+                                ? `${providedFilenameBase}.mp4`
+                                : upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: providedFilenameBase || `douyin_${videoId}`,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
                             headers: buildRelayHeaders(),
                         };
                     }
                     return {
-                        filename: upstream.filename || `douyin_${videoId}.mp4`,
-                        audioFilename: `douyin_${videoId}`,
+                        filename: providedFilenameBase
+                            ? `${providedFilenameBase}.mp4`
+                            : upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: providedFilenameBase || `douyin_${videoId}`,
                         urls: upstream.url,
                         forceRedirect: true,
                         duration: upstream.duration,
@@ -1558,9 +1580,10 @@ export default async function(obj) {
         const detailItem = await fetchWebAwemeDetail(videoId);
         const titleItem = detailItem || item;
         const title = titleItem?.desc || item.desc;
-        const displayTitle = buildDisplayTitle(title, titleItem);
+        const displayTitle = buildDisplayTitle(obj.filenameTitle || title, titleItem);
         const filenameBase = buildFilenameBase(displayTitle, videoId);
         const normalizedTitle = cleanDouyinTitle(displayTitle);
+        const preferProvidedFilename = Boolean(obj.filenameTitle);
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
 
         let usedDiscoverFallback = false;
@@ -1664,7 +1687,9 @@ export default async function(obj) {
                             });
                             if (upstream.relayUrl) {
                                 return {
-                                    filename: upstream.filename || `${filenameBase}.mp4`,
+                                    filename: preferProvidedFilename
+                                        ? `${filenameBase}.mp4`
+                                        : upstream.filename || `${filenameBase}.mp4`,
                                     audioFilename: filenameBase,
                                     urls: upstream.relayUrl,
                                     duration: upstream.duration,
@@ -1673,7 +1698,9 @@ export default async function(obj) {
                                 };
                             }
                             return {
-                                filename: upstream.filename || `${filenameBase}.mp4`,
+                                filename: preferProvidedFilename
+                                    ? `${filenameBase}.mp4`
+                                    : upstream.filename || `${filenameBase}.mp4`,
                                 audioFilename: filenameBase,
                                 urls: upstream.url,
                                 forceRedirect: true,
@@ -1784,7 +1811,9 @@ export default async function(obj) {
                     });
                     if (upstream.relayUrl) {
                         return {
-                            filename: upstream.filename || `${filenameBase}.mp4`,
+                            filename: preferProvidedFilename
+                                ? `${filenameBase}.mp4`
+                                : upstream.filename || `${filenameBase}.mp4`,
                             audioFilename: filenameBase,
                             urls: upstream.relayUrl,
                             duration: upstream.duration,
@@ -1793,7 +1822,9 @@ export default async function(obj) {
                         };
                     }
                     return {
-                        filename: upstream.filename || `${filenameBase}.mp4`,
+                        filename: preferProvidedFilename
+                            ? `${filenameBase}.mp4`
+                            : upstream.filename || `${filenameBase}.mp4`,
                         audioFilename: filenameBase,
                         urls: upstream.url,
                         forceRedirect: true,

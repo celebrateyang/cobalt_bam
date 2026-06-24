@@ -468,6 +468,31 @@ function wrapStream(streamInfo) {
     const useInternalFfmpegInputs = shouldUseInternalFfmpegInputs(streamInfo);
     const useDirectFfmpegInputs = shouldUseDirectFfmpegInputs(streamInfo);
 
+    if (streamInfo.service === 'niconico') {
+        const urls = Array.isArray(url) ? url : [url];
+        console.log('[stream.wrap][niconico] decision:', {
+            type: streamInfo.type,
+            isHLS: streamInfo.isHLS,
+            urlCount: urls.length,
+            useInternalFfmpegInputs,
+            useDirectFfmpegInputs,
+            headers: {
+                keys: Object.keys(streamInfo.headers || {}),
+                hasCookie: Object.keys(streamInfo.headers || {})
+                    .some(key => key.toLowerCase() === 'cookie'),
+                hasUserAgent: Object.keys(streamInfo.headers || {})
+                    .some(key => key.toLowerCase() === 'user-agent'),
+            },
+            hosts: urls.map((singleUrl) => {
+                try {
+                    return new URL(singleUrl).hostname;
+                } catch {
+                    return '<invalid-url>';
+                }
+            }),
+        });
+    }
+
     // FFmpeg usually reads from signed public tunnels, but Vimeo HLS merge/remux
     // works more reliably through localhost itunnels to avoid auth failures.
     // CCTV and NicoNico HLS inputs are already resolved locally and can be read

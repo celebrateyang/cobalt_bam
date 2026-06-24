@@ -60,6 +60,56 @@ const toRawHeaders = (headers) =>
         .map(([key, value]) => `${key}: ${value}\r\n`)
         .join('');
 
+const isDiagnosticService = (streamInfo) =>
+    streamInfo?.service === 'niconico';
+
+const redactUrl = (value) => {
+    if (typeof value !== 'string' || !/^https?:\/\//i.test(value)) {
+        return value;
+    }
+
+    try {
+        const url = new URL(value);
+        return `${url.origin}${url.pathname}${url.search ? '?<redacted>' : ''}`;
+    } catch {
+        return '<invalid-url>';
+    }
+};
+
+const sanitizeRawHeaders = (headers) =>
+    String(headers || '')
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((line) => {
+            const [name] = line.split(':', 1);
+            if (!name) return '<invalid-header>';
+
+            if (/^(cookie|authorization|proxy-authorization)$/i.test(name)) {
+                return `${name}: <redacted>`;
+            }
+
+            return `${name}: <present>`;
+        })
+        .join('\\r\\n');
+
+const redactFfmpegArgs = (args) =>
+    args.map((arg, index) => {
+        if (args[index - 1] === '-headers') {
+            return sanitizeRawHeaders(arg);
+        }
+
+        return redactUrl(arg);
+    });
+
+const summarizeHeaders = (headers) => {
+    const keys = Object.keys(headers || {});
+    return {
+        keys,
+        hasCookie: keys.some(key => key.toLowerCase() === 'cookie'),
+        hasUserAgent: keys.some(key => key.toLowerCase() === 'user-agent'),
+    };
+};
+
 const buildInputArgs = (url, streamInfo) => {
     if (streamInfo?.isHLS) {
         const args = [
@@ -92,28 +142,70 @@ const buildInputArgs = (url, streamInfo) => {
 
 const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
     let process;
+    let finalized = false;
+    let muxBytes = 0;
+    let stderrBuffer = '';
     const urls = Array.isArray(streamInfo.urls) ? streamInfo.urls : [streamInfo.urls];
-    const shutdown = () => (
-        killProcess(process),
-        closeResponse(res),
-        urls.map(destroyInternalStream)
-    );
+    const diagnostics = isDiagnosticService(streamInfo);
+    const shutdown = (reason = 'unknown', error) => {
+        if (finalized) return;
+        finalized = true;
+
+        if (diagnostics) {
+            console.log('[ffmpeg.render][niconico] shutdown:', {
+                reason,
+                error: error?.message || error?.toString?.(),
+                exitCode: process?.exitCode,
+                signalCode: process?.signalCode,
+                muxBytes,
+                headersSent: res.headersSent,
+                writableEnded: res.writableEnded,
+                stderr: stderrBuffer.slice(-2000),
+            });
+        }
+
+        killProcess(process);
+        closeResponse(res);
+        urls.map(destroyInternalStream);
+    };
 
     try {
         const args = [
-            '-loglevel', '-8',
+            '-loglevel', diagnostics ? 'warning' : '-8',
             ...ffargs,
         ];
+
+        if (diagnostics) {
+            console.log('[ffmpeg.render][niconico] spawn:', {
+                type: streamInfo.type,
+                filename: streamInfo.filename,
+                urlCount: urls.length,
+                urls: urls.map(redactUrl),
+                headers: summarizeHeaders(streamInfo.headers),
+                args: redactFfmpegArgs(args),
+            });
+        }
 
         process = spawn(...getCommand(args), {
             windowsHide: true,
             stdio: [
-                'inherit', 'inherit', 'inherit',
+                'inherit', 'inherit', 'pipe',
                 'pipe'
             ],
         });
 
-        const [, , , muxOutput] = process.stdio;
+        const [, , ffmpegError, muxOutput] = process.stdio;
+
+        ffmpegError?.on('data', chunk => {
+            stderrBuffer += chunk.toString();
+            if (stderrBuffer.length > 8000) {
+                stderrBuffer = stderrBuffer.slice(-8000);
+            }
+        });
+
+        muxOutput?.on('data', chunk => {
+            muxBytes += chunk.length;
+        });
 
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('Content-Disposition', contentDisposition(streamInfo.filename));
@@ -124,13 +216,13 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
         const estimatedLength = await estimateTunnelLength(streamInfo, estimateMultiplier);
         res.setHeader('Estimated-Content-Length', estimatedLength);
 
-        pipe(muxOutput, res, shutdown);
+        pipe(muxOutput, res, error => shutdown('pipe', error));
 
-        process.on('close', () => shutdown());
-        process.on('error', () => { });
-        res.on('finish', shutdown);
+        process.on('close', () => shutdown('process-close'));
+        process.on('error', error => shutdown('process-error', error));
+        res.on('finish', () => shutdown('response-finish'));
     } catch (e) {
-        shutdown();
+        shutdown('exception', e);
     }
 }
 
@@ -140,7 +232,7 @@ const remux = async (streamInfo, res) => {
 
     console.log('[ffmpeg.remux] Type:', streamInfo.type);
     console.log('[ffmpeg.remux] Format:', format);
-    console.log('[ffmpeg.remux] URLs:', urls);
+    console.log('[ffmpeg.remux] URLs:', urls.map(redactUrl));
     console.log('[ffmpeg.remux] URLs length:', urls.length);
 
     const args = urls.flatMap(url => buildInputArgs(url, streamInfo));
@@ -213,7 +305,7 @@ const remux = async (streamInfo, res) => {
 
     args.push('-f', format === 'mkv' ? 'matroska' : format, 'pipe:3');
 
-    console.log('[ffmpeg.remux] Final FFmpeg args:', args);
+    console.log('[ffmpeg.remux] Final FFmpeg args:', redactFfmpegArgs(args));
     console.log('[ffmpeg.remux] About to call render...');
 
     await render(res, streamInfo, args);

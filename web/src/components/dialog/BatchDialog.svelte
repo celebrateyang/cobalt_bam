@@ -151,13 +151,16 @@
             }, queueTaskTimeoutMs);
         });
 
-    const buildBatchRequest = (url: string): CobaltSaveRequestBody => {
-        const request = buildSaveRequest(url);
+    const buildBatchRequest = (item: DialogBatchItem): CobaltSaveRequestBody => {
+        const request = buildSaveRequest(item.url);
 
         // Only batch downloads should go through the processing queue.
         // Keep single-link behavior unchanged.
         if (downloadMode) {
             request.downloadMode = downloadMode;
+        }
+        if (item.title) {
+            request.filenameTitle = item.title.slice(0, 300);
         }
         request.localProcessing = "forced";
         request.batch = true;
@@ -627,7 +630,7 @@
             if (cancelRequested) break;
 
             const taskId = uuid();
-            const request = buildBatchRequest(item.url);
+            const request = buildBatchRequest(item);
             const queueMeta: {
                 batchSessionId: string;
                 batchSelectionTotal: number;
@@ -800,7 +803,7 @@
 
         const taskId = uuid();
         await savingHandler({
-            request: buildBatchRequest(url),
+            request: buildBatchRequest(item || { url }),
             skipPoints: true,
             oldTaskId: taskId,
             queueMeta:

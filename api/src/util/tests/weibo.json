@@ -24,6 +24,18 @@
         "canFail": true
     },
     {
+        "name": "desktop live replay uses browser HLS processing",
+        "url": "https://weibo.com/5417371966/QgSmfd6xN",
+        "params": {
+            "videoQuality": "max"
+        },
+        "expected": {
+            "code": 200,
+            "status": "local-processing"
+        },
+        "canFail": true
+    },
+    {
         "name": "h5 video",
         "url": "https://h5.video.weibo.com/show/1034:5300586136928293",
         "params": {},

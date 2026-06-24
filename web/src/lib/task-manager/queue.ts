@@ -70,6 +70,14 @@ const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
         );
     }
 
+    if (
+        info.service === "weibo" &&
+        info.source?.kind === "hls" &&
+        info.output.filename.endsWith(".mp4")
+    ) {
+        ffargs.push("-bsf:a", "aac_adtstoasc");
+    }
+
     ffargs.push(
         ...(info.output.metadata ? ffmpegMetadataArgs(info.output.metadata) : [])
     );

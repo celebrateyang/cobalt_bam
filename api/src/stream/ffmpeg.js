@@ -218,7 +218,19 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
 
         pipe(muxOutput, res, error => shutdown('pipe', error));
 
-        process.on('close', () => shutdown('process-close'));
+        process.on('close', (code, signal) => {
+            if (code !== 0 || muxBytes === 0) {
+                console.warn('[ffmpeg.render] process failed:', {
+                    service: streamInfo.service,
+                    type: streamInfo.type,
+                    code,
+                    signal,
+                    muxBytes,
+                    stderr: stderrBuffer.slice(-2000),
+                });
+            }
+            shutdown('process-close');
+        });
         process.on('error', error => shutdown('process-error', error));
         res.on('finish', () => shutdown('response-finish'));
     } catch (e) {

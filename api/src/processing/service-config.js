@@ -1,7 +1,7 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico"]);
+export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo"]);
 
 export const services = {
     analdin: {

@@ -3,8 +3,8 @@
     "description": "무워터마크 다운로드, 형식, 포인트, 문제 해결에 대한 답변.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - 무워터마크 영상 다운로더",
-        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법.",
-        "keywords": "FAQ, 영상 다운로더, 네이버 동영상 다운로드, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, Bilibili 다운로더, Kuaishou 다운로더, Xiaohongshu 다운로더, TikTok 다운로더, 무워터마크 다운로드, 배치 다운로드, 포인트 과금, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download"
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법.",
+        "keywords": "FAQ, 영상 다운로더, 네이버 동영상 다운로드, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, Bilibili 다운로더, Kuaishou 다운로더, Xiaohongshu 다운로더, TikTok 다운로더, 무워터마크 다운로드, 배치 다운로드, 포인트 과금, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download, Sohu video downloader"
     },
     "toc": {
         "title": "빠른 링크"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo는 무엇인가요?",
-            "a": "FreeSaveVideo는 온라인 미디어 다운로더입니다.\n공유 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nDouyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등을 지원합니다."
+            "a": "FreeSaveVideo는 온라인 미디어 다운로더입니다.\n공유 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nDouyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등을 지원합니다."
         },
         "how_to_use": {
             "q": "영상(무워터마크)을 어떻게 다운로드하나요?",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "지원 플랫폼/링크는 무엇인가요?",
-            "a": "100개 이상의 서비스를 지원합니다. 대표적으로 Douyin/TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등이 있습니다.\n화질/오디오/추가 파일은 플랫폼과 원본 게시물에 따라 달라집니다."
+            "a": "100개 이상의 서비스를 지원합니다. 대표적으로 Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등이 있습니다.\n화질/오디오/추가 파일은 플랫폼과 원본 게시물에 따라 달라집니다."
         },
         "youtube_supported": {
             "q": "YouTube 다운로드를 지원하나요?",

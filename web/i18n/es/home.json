@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Descarga sin marca de agua de plataformas populares",
-        "description": "Soporta mas de 100 sitios populares, incluidos TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analiza y descarga archivos HD directamente en movil y PC.",
+        "description": "Soporta mas de 100 sitios populares, incluidos TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analiza y descarga archivos HD directamente en movil y PC.",
         "douyin": {
             "name": "Descargador de TikTok/Douyin",
             "desc": "Soporta versiones nacionales e internacionales de TikTok/Douyin. Eliminación de marca de agua con un clic, manteniendo audio y video en HD."
@@ -21,6 +21,10 @@
         "toutiao": {
             "name": "Descargador de videos de Toutiao",
             "desc": "Pega un enlace publico de video de Toutiao y guarda las calidades MP4 disponibles, incluidas opciones HD cuando la fuente las ofrece."
+        },
+        "sohu": {
+            "name": "Descargador de Sohu Video",
+            "desc": "Descarga videos publicos de Sohu Video en MP4, con modos de solo audio y sin sonido."
         },
         "weibo": {
             "name": "Descargador de videos de Weibo",
@@ -79,7 +83,7 @@
     "hero": {
         "eyebrow": "Descargador de videos online",
         "title": "Descarga videos online sin marcas de agua",
-        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
+        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
         "trust": "Las plataformas compatibles incluyen descarga por lotes, colecciones / playlists, modo solo audio y modo sin sonido."
     },
     "tools": {

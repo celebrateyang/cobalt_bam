@@ -32,6 +32,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | reddit            | ✅            | ✅         | ✅         | ❌         | ❌              |
 | rutube            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | snapchat          | ✅            | ✅         | ✅         | ➖         | ➖              |
+| sohu video        | ✅            | ✅         | ✅         | ✅         | ✅              |
 | soundcloud        | ➖            | ✅         | ➖         | ✅         | ✅              |
 | streamable        | ✅            | ✅         | ✅         | ➖         | ➖              |
 | tiktok            | ✅            | ✅         | ✅         | ❌         | ❌              |

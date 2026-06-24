@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "人気プラットフォームから透かしなしでダウンロード",
-        "description": "TikTok、Bilibili、Haokan、NAVER、快手、酷狗音楽、小紅書、YouTube、NicoNico、Instagram、Threads、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
+        "description": "TikTok、Bilibili、Sohu Video、Haokan、NAVER、快手、酷狗音楽、小紅書、YouTube、NicoNico、Instagram、Threads、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
         "douyin": {
             "name": "TikTok/抖音ダウンローダー",
             "desc": "国内外のTikTok/抖音に対応。ワンクリックで透かしを削除し、HD音声と画質を維持します。"
@@ -21,6 +21,10 @@
         "toutiao": {
             "name": "Toutiao 動画ダウンローダー",
             "desc": "公開 Toutiao 動画リンクを貼り付け、利用可能な MP4 画質を保存。ソースが提供する場合は HD も選べます。"
+        },
+        "sohu": {
+            "name": "Sohu Video ダウンローダー",
+            "desc": "公開されている Sohu Video を MP4 で保存できます。音声のみとミュート保存にも対応します。"
         },
         "weibo": {
             "name": "Weibo Video Downloader",
@@ -79,7 +83,7 @@
     "hero": {
         "eyebrow": "オンライン動画ダウンローダー",
         "title": "透かしなし動画をオンラインでダウンロード",
-        "subtitle": "Douyin、TikTok、Bilibili、Haokan、NAVER、酷狗音楽、小紅書、Instagram、Threads、Facebook、NicoNico、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
+        "subtitle": "Douyin、TikTok、Bilibili、Sohu Video、Haokan、NAVER、酷狗音楽、小紅書、Instagram、Threads、Facebook、NicoNico、YouTube などのリンクを貼るだけで、HD 動画をすばやく保存できます。",
         "trust": "対応サービスでは一括ダウンロード、合集 / playlist、音声のみ、ミュート保存をそのまま使えます。"
     },
     "tools": {

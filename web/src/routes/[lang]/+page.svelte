@@ -98,6 +98,7 @@
         "kuaishou",
         "haokan",
         "toutiao",
+        "sohu",
         "weibo",
         "naver",
         "niconico",

@@ -20,7 +20,11 @@
 
         if ($cachedInfo) {
             loaded = true;
-            services = $cachedInfo.info.cobalt.services;
+            services = Array.from(new Set([
+                ...$cachedInfo.info.cobalt.services,
+                ...capabilityServices.map((service) => service.name),
+                ...additionalSupportedServices,
+            ]));
         }
     };
 </script>

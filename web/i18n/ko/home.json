@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "인기 플랫폼 워터마크 없는 다운로드",
-        "description": "TikTok, Bilibili, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
+        "description": "TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, NAVER(네이버), Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook 등 100개 이상의 인기 사이트를 지원합니다. 모바일과 PC에서 HD 파일을 바로 분석하고 다운로드하세요.",
         "douyin": {
             "name": "TikTok/Douyin 다운로더",
             "desc": "국내외 버전의 TikTok/Douyin을 지원합니다. 원클릭 워터마크 제거, HD 오디오 및 비디오 유지."
@@ -21,6 +21,10 @@
         "toutiao": {
             "name": "Toutiao 비디오 다운로더",
             "desc": "공개 Toutiao 비디오 링크를 붙여넣고 사용 가능한 MP4 화질을 저장하세요. 원본이 제공하면 HD 옵션도 표시됩니다."
+        },
+        "sohu": {
+            "name": "Sohu Video 다운로더",
+            "desc": "공개 Sohu Video 영상을 MP4로 저장하고 오디오 전용 또는 음소거 모드를 사용할 수 있습니다."
         },
         "weibo": {
             "name": "Weibo Video Downloader",
@@ -79,7 +83,7 @@
     "hero": {
         "eyebrow": "온라인 동영상 다운로더",
         "title": "워터마크 없는 동영상을 온라인으로 다운로드",
-        "subtitle": "Douyin, TikTok, Bilibili, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
+        "subtitle": "Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
         "trust": "지원되는 서비스에서는 일괄 다운로드, 모음집 / 플레이리스트, 오디오 전용, 음소거 모드를 바로 사용할 수 있습니다."
     },
     "tools": {

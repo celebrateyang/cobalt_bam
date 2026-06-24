@@ -17,6 +17,7 @@
         signUp,
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
+    import { capabilityServices } from "$lib/seo/capabilities";
 
     import Skeleton from "$components/misc/Skeleton.svelte";
     import IconGift from "@tabler/icons-svelte/IconGift.svelte";
@@ -126,7 +127,10 @@
         await getServerInfo().catch(() => false);
         if ($cachedInfo) {
             servicesLoaded = true;
-            services = $cachedInfo.info.cobalt.services || [];
+            services = Array.from(new Set([
+                ...($cachedInfo.info.cobalt.services || []),
+                ...capabilityServices.map((service) => service.name),
+            ]));
         }
     };
 

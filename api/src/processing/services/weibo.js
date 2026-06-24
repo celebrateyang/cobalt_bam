@@ -284,12 +284,50 @@ const fetchStatusInfo = async (mblogId, uid) => {
     return response.json().catch(() => null);
 };
 
-const formatStatusResponse = (status, mblogId, quality) => {
+const resolveLivePlaybackUrl = async (value) => {
+    if (typeof value !== "string" || !value) return null;
+
+    let parsed;
+    try {
+        parsed = new URL(value);
+    } catch {
+        return null;
+    }
+
+    if (
+        parsed.hostname !== "wblive-out.api.weibo.com" ||
+        !parsed.pathname.endsWith("/wblive/room/play")
+    ) {
+        return null;
+    }
+
+    try {
+        const response = await fetch(parsed, {
+            redirect: "manual",
+            headers: statusHeaders,
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+        const location = response.headers.get("location");
+        if (!location) return null;
+
+        const resolved = new URL(location, parsed);
+        if (resolved.protocol === "http:") resolved.protocol = "https:";
+
+        return resolved.toString();
+    } catch {
+        return null;
+    }
+};
+
+const formatStatusResponse = async (status, mblogId, quality) => {
     const mediaInfo = status?.page_info?.media_info;
     if (!mediaInfo) return null;
 
     const selected = pickFormat(collectStatusFormats(mediaInfo), quality);
     if (!selected?.url) return null;
+    const livePlaybackUrl = await resolveLivePlaybackUrl(selected.url);
+    const mediaUrl = livePlaybackUrl || selected.url;
+    const isHLS = /\.m3u8(?:$|[?#])/i.test(mediaUrl);
 
     const title = sanitizeFilenamePart(
         stripHtml(status.text_raw || status.text || mediaInfo.title || status?.page_info?.page_title || mblogId)
@@ -299,7 +337,8 @@ const formatStatusResponse = (status, mblogId, quality) => {
 
     return {
         type: "video",
-        urls: selected.url,
+        urls: mediaUrl,
+        isHLS,
         original_url: `https://weibo.com/${status?.user?.id || ""}/${mblogId}`.replace(".com//", ".com/"),
         filename: `${title || "weibo"}_${mediaId}.mp4`,
         duration: duration > 0 ? Math.round(duration) : undefined,
@@ -318,7 +357,7 @@ export default async function weibo({ oid, fid, shortLink, mblogId, uid, quality
 
         if (!resolvedOid && mblogId) {
             const status = await fetchStatusInfo(mblogId, uid);
-            const statusResponse = formatStatusResponse(status, mblogId, quality);
+            const statusResponse = await formatStatusResponse(status, mblogId, quality);
             if (statusResponse) return statusResponse;
 
             resolvedOid = findObjectId(status);

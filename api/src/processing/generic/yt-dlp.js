@@ -286,12 +286,21 @@ const buildFilenameAttributes = ({ originUrl, title, uploader, extension, height
     };
 };
 
-const collectCandidates = (formats = []) => {
+const isSohuExtractor = (info) => {
+    const extractor = String(info?.extractor || "").toLowerCase();
+    const extractorKey = String(info?.extractor_key || "").toLowerCase();
+    return extractor === "sohu" || extractorKey === "sohu";
+};
+
+export const collectCandidates = (formats = [], info = {}) => {
+    const trustSohuMp4AsMuxed = isSohuExtractor(info);
+
     return formats
         .map((format) => {
             const url = typeof format?.url === "string" ? format.url : "";
             if (!isSupportedUrl(url)) return null;
 
+            const ext = String(format?.ext || "").toLowerCase() || "mp4";
             const videoCodec = String(format?.vcodec || "").toLowerCase();
             const audioCodec = String(format?.acodec || "").toLowerCase();
             const protocol = String(format?.protocol || "").toLowerCase();
@@ -304,11 +313,14 @@ const collectCandidates = (formats = []) => {
             const hasAudio =
                 (audioCodec !== "" && audioCodec !== "none")
                 || (audioExt !== "" && audioExt !== "none")
-                || resolution === "audio only";
+                || resolution === "audio only"
+                // yt-dlp's Sohu extractor reports its progressive MP4 files as
+                // audio_ext=none even though the files contain AAC audio.
+                || (trustSohuMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"));
 
             return {
                 url,
-                ext: String(format?.ext || "").toLowerCase() || "mp4",
+                ext,
                 height: parseHeight(format),
                 width: parseNumber(format?.width),
                 tbr: parseNumber(format?.tbr || format?.vbr || format?.abr),
@@ -535,7 +547,10 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
             };
         }
 
-        const candidates = collectCandidates(Array.isArray(info?.formats) ? info.formats : []);
+        const candidates = collectCandidates(
+            Array.isArray(info?.formats) ? info.formats : [],
+            info,
+        );
         const directVideo = pickBestDirectVideo({ candidates, requestedQuality });
         const videoOnly = pickBestVideoOnly({ candidates, requestedQuality });
         const audioOnly = pickBestAudioOnly({ candidates });

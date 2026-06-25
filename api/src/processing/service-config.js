@@ -1,9 +1,14 @@
 import UrlPattern from "url-pattern";
 
 export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo"]);
+export const hlsExceptions = new Set(["amazon", "dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo"]);
 
 export const services = {
+    amazon: {
+        patterns: [
+            "live/video/:id",
+        ],
+    },
     analdin: {
         patterns: [
             "videos/:id/:slug",

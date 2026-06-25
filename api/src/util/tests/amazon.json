@@ -1,0 +1,24 @@
+[
+    {
+        "name": "public Amazon Live replay",
+        "url": "https://www.amazon.com/live/video/0de1fea9489e41a8bac7225ad2fdfb94",
+        "params": {
+            "videoQuality": "720"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
+        "name": "rejects non-hex replay id",
+        "url": "https://www.amazon.com/live/video/not-a-video",
+        "params": {},
+        "expected": {
+            "code": 400,
+            "status": "error",
+            "errorCode": "error.api.link.unsupported"
+        }
+    }
+]

@@ -10,6 +10,7 @@ import matchAction from "./match-action.js";
 
 import { friendlyServiceName } from "./service-alias.js";
 
+import amazon from "./services/amazon.js";
 import analdin from "./services/analdin.js";
 import bilibili from "./services/bilibili.js";
 import bjnews from "./services/bjnews.js";
@@ -308,6 +309,14 @@ export default async function({ host, patternMatch, params, authType }) {
             params.subtitleLang !== "none" ? params.subtitleLang : undefined;
 
         switch (host) {
+            case "amazon":
+                r = await amazon({
+                    id: patternMatch.id,
+                    quality: params.videoQuality,
+                    url,
+                });
+                break;
+
             case "analdin":
                 r = await analdin({
                     id: patternMatch.id,

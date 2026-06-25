@@ -1,4 +1,7 @@
 export const testers = {
+    "amazon": pattern =>
+        /^[0-9a-f]{32}$/i.test(pattern.id || ""),
+
     "analdin": pattern =>
         pattern.id?.length <= 16,
 

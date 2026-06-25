@@ -379,7 +379,12 @@ export default function({
 
     if ((canUseBrowserHlsProcessing || !params.isHLS) && responseType !== "picker") {
         const isPreferredWithExtra =
-            localProcessing === "preferred" && extraProcessingTypes.has(params.type);
+            localProcessing === "preferred"
+            && extraProcessingTypes.has(params.type)
+            // Twitter GIFs are MP4 videos that need a full palette-based encode.
+            // Keep this conversion server-side: browser WASM processing is less
+            // reliable across devices, while the API ffmpeg path handles them.
+            && !(host === "twitter" && params.type === "gif");
 
         if (canUseBrowserHlsProcessing || localProcessing === "forced" || isPreferredWithExtra) {
             responseType = "local-processing";

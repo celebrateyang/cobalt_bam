@@ -8,6 +8,7 @@ import { clearCurrentTasks, removeWorkerFromQueue } from "$lib/state/task-manage
 import { clearFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
+import { saveFileToAutoSaveDirectory } from "$lib/storage/auto-save";
 
 import type { CobaltQueue, CobaltQueueItem, CobaltQueueItemRunning, UUID } from "$lib/types/queue";
 
@@ -224,6 +225,9 @@ export function addItem(item: CobaltQueueItem) {
             ...item,
             collectionMemory: item.collectionMemory ?? existing?.collectionMemory,
             points: item.points ?? existing?.points,
+            batchSessionId: item.batchSessionId ?? existing?.batchSessionId,
+            batchSelectionTotal: item.batchSelectionTotal ?? existing?.batchSelectionTotal,
+            autoSave: item.autoSave ?? existing?.autoSave,
         };
         return queueData;
     });
@@ -298,7 +302,49 @@ export function itemDone(id: UUID, file: File) {
     schedule();
     clearFetchResumeStateForTask(id);
     void finalizeQueueHold(id);
+    void autoSaveCompletedItem(id, file);
 }
+
+const autoSaveCompletedItem = async (id: UUID, file: File) => {
+    const item = get(queue)[id];
+    if (!item?.autoSave?.enabled) return;
+
+    updateItem(id, (current) => ({
+        ...current,
+        autoSave: {
+            enabled: true,
+            state: "saving",
+        },
+    }));
+
+    try {
+        const filename = await saveFileToAutoSaveDirectory(file, item.filename);
+        updateItem(id, (current) => ({
+            ...current,
+            saveRequested: true,
+            autoSave: {
+                enabled: true,
+                state: "saved",
+                filename,
+            },
+        }));
+        await removeFromFileStorage(file.name);
+        console.log(`[queue] auto-save completed id=${id} filename=${filename}`);
+    } catch (error) {
+        const errorName = error instanceof DOMException
+            ? error.name
+            : "UnknownError";
+        updateItem(id, (current) => ({
+            ...current,
+            autoSave: {
+                enabled: true,
+                state: "error",
+                errorName,
+            },
+        }));
+        console.error(`[queue] auto-save failed id=${id}`, error);
+    }
+};
 
 export function pipelineTaskDone(id: UUID, workerId: UUID, file: File) {
     update(queueData => {

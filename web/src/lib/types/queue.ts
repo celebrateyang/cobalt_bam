@@ -35,6 +35,12 @@ type CobaltQueueItemBase = {
     batchSessionId?: string;
     batchSelectionTotal?: number;
     saveRequested?: boolean;
+    autoSave?: {
+        enabled: boolean;
+        state: "pending" | "saving" | "saved" | "error";
+        filename?: string;
+        errorName?: string;
+    };
     fallback?: {
         pipeline: CobaltPipelineItem[];
         used?: boolean;

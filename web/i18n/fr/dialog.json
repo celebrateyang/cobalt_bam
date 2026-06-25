@@ -15,8 +15,12 @@
     "safety.custom_instance.body": "les instances personnalisées peuvent potentiellement présenter des risques pour la confidentialité et la sécurité.\n\nles mauvaises instances peuvent :\n1. vous rediriger loin de FreeSaveVideo et essayer de vous arnaquer.\n2. enregistrer toutes les informations sur vos demandes, les stocker indéfiniment et les utiliser pour vous suivre.\n3. vous servir des fichiers malveillants (tels que des logiciels malveillants).\n4. vous forcer à regarder des publicités ou à payer pour télécharger.\n\naprès ce point, nous ne pouvons plus vous protéger. veuillez faire attention aux instances que vous utilisez et faites toujours confiance à votre instinct. si quelque chose semble anormal, revenez à cette page, réinitialisez l'instance personnalisée et signalez-la nous sur github.",
     "processing.ongoing": "FreeSaveVideo traite actuellement des médias dans cet onglet. partir annulera le traitement. êtes-vous sûr de vouloir faire cela ?",
     "processing.title.ongoing": "le traitement sera annulé",
-    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.footer_reminder": "For safer batch downloads, choose a folder for automatic saving and keep this device awake.",
     "batch.start_confirm.title": "Before batch download",
     "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
-    "batch.start_confirm.confirm": "I understand, start download"
+    "batch.start_confirm.confirm": "I understand, start download",
+    "batch.start_confirm.auto_save_body": "Choose a folder once. Each completed video will be saved to your device immediately. Keep this device awake while the batch is running.",
+    "batch.start_confirm.unsupported_body": "This browser cannot save a batch directly to a selected folder. Keep this device awake and click Save after each item finishes.",
+    "batch.start_confirm.auto_save": "Choose folder and auto-save",
+    "batch.start_confirm.manual": "Start with manual saving"
 }

@@ -12,12 +12,16 @@
             "encode": "starting encode"
         },
         "retrying": "retrying",
-        "waiting": "waiting"
+        "waiting": "waiting",
+        "auto_saving": "saving to your device...",
+        "auto_saved": "Saved to device: {{ value }}",
+        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
     "success_notice": "Successfully downloaded {{ count }} videos in this batch.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Save clicked",
     "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Downloads in queue may be lost after browser restart.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
+    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically."
 }

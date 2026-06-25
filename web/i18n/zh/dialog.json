@@ -35,7 +35,7 @@
     "batch.detect.body.parts": "检测到该视频包含多个分P「{{ title }}」（共 {{ count }} 个分P），是否批量下载所有分P？",
     "batch.detect.download_single": "仅下载当前",
     "batch.detect.download_batch": "批量下载",
-    "batch.manual_save_hint": "队列中的视频下载完成后，请手动点击“保存”按钮。",
+    "batch.manual_save_hint": "开始批量任务时建议选择自动保存，每个完成的视频都会立即写入设备。",
     "batch.keep_screen_on_hint": "批量队列下载期间，请保持设备唤醒：电脑不要睡眠，手机不要息屏，否则后续任务可能暂停或失败。",
     "saving.title": "选择保存方式",
     "saving.blocked": "FreeSaveVideo 尝试在新标签中打开文件，但您的浏览器阻止了它。您可以为 FreeSaveVideo 启用弹出窗口以防止下次发生。",
@@ -76,8 +76,12 @@
         "first_grace": "这是你的首次下载，系统可自动补差 {{ required }} 积分，本次仍可继续。",
         "unknown": "暂无法预估，按实际扣除。是否继续下载？"
     },
-    "batch.footer_reminder": "开始前请确认：设备不要睡眠/息屏，完成后逐个点击“保存”。",
+    "batch.footer_reminder": "为避免文件丢失，建议选择文件夹自动保存，并在批量任务期间保持设备唤醒。",
     "batch.start_confirm.title": "开始批量下载前请确认",
     "batch.start_confirm.body": "请在整个批量下载期间保持设备唤醒：电脑不要睡眠，手机不要息屏。每个视频下载完成后，还需要点击“保存”才能留住文件。",
-    "batch.start_confirm.confirm": "我知道了，开始下载"
+    "batch.start_confirm.confirm": "我知道了，开始下载",
+    "batch.start_confirm.auto_save_body": "选择一次保存文件夹，之后每个视频完成时都会立即保存到设备。批量任务运行期间请保持设备唤醒。",
+    "batch.start_confirm.unsupported_body": "当前浏览器不支持直接保存到指定文件夹。请保持设备唤醒，并在每项完成后点击“保存”。",
+    "batch.start_confirm.auto_save": "选择文件夹并自动保存",
+    "batch.start_confirm.manual": "仍然手动保存"
 }

@@ -12,12 +12,16 @@
             "encode": "bắt đầu mã hóa"
         },
         "retrying": "đang thử lại",
-        "waiting": "đang chờ"
+        "waiting": "đang chờ",
+        "auto_saving": "saving to your device...",
+        "auto_saved": "Saved to device: {{ value }}",
+        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong.",
     "success_notice": "Đã tải xuống thành công {{ count }} video trong lô này.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "Da bam luu",
     "manual_save_warning": "Quan trong: sau khi tai xong, hay bam \"Luu\" ngay. Sau khi khoi dong lai trinh duyet, muc tai trong hang doi co the bi mat.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
+    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically."
 }

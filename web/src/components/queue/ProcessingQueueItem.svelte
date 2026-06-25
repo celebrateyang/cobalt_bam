@@ -161,6 +161,17 @@
             return runningText;
 
         case "done":
+            if (info.autoSave?.state === "saving") {
+                return $t("queue.state.auto_saving");
+            }
+            if (info.autoSave?.state === "saved") {
+                return $t("queue.state.auto_saved", {
+                    value: info.autoSave.filename || info.filename,
+                });
+            }
+            if (info.autoSave?.state === "error") {
+                return $t("queue.state.auto_save_failed");
+            }
             return formatFileSize(info.resultFile?.size);
 
         case "error":
@@ -280,33 +291,37 @@
 
     <div class="file-actions">
         {#if info.state === "done" && info.resultFile}
-            <button
-                class="button action-button"
-                class:save-button={info.state === "done"}
-                class:saved={info.saveRequested}
-                aria-label={$t(info.saveRequested ? "queue.save_clicked" : "button.save")}
-                aria-pressed={info.saveRequested}
-                on:click={() => download(info.resultFile)}
-                disabled={downloading}
-                class:downloading
-            >
-                {#if downloading}
-                    <IconLoader2 />
-                {:else if info.saveRequested}
-                    <IconCheck />
-                    <span>{$t("queue.save_clicked")}</span>
-                {:else}
-                    {$t("button.save")}
-                {/if}
-            </button>
-            <button
-                class="button action-button"
-                aria-label="传到其他设备"
-                title="Send to other device"
-                on:click={() => transfer(info.resultFile)}
-            >
-                <IconDeviceMobile />
-            </button>
+            {#if info.autoSave?.state !== "saved"}
+                <button
+                    class="button action-button"
+                    class:save-button={info.state === "done"}
+                    class:saved={info.saveRequested}
+                    aria-label={$t(info.saveRequested ? "queue.save_clicked" : "button.save")}
+                    aria-pressed={info.saveRequested}
+                    on:click={() => download(info.resultFile)}
+                    disabled={downloading || info.autoSave?.state === "saving"}
+                    class:downloading
+                >
+                    {#if downloading || info.autoSave?.state === "saving"}
+                        <IconLoader2 />
+                    {:else if info.saveRequested}
+                        <IconCheck />
+                        <span>{$t("queue.save_clicked")}</span>
+                    {:else}
+                        {$t("button.save")}
+                    {/if}
+                </button>
+            {/if}
+            {#if info.autoSave?.state !== "saved"}
+                <button
+                    class="button action-button"
+                    aria-label="传到其他设备"
+                    title="Send to other device"
+                    on:click={() => transfer(info.resultFile)}
+                >
+                    <IconDeviceMobile />
+                </button>
+            {/if}
         {/if}
 
         {#if !retrying}

@@ -25,6 +25,10 @@
         signIn,
     } from "$lib/state/clerk";
     import { uuid } from "$lib/util";
+    import {
+        prepareAutoSaveDirectory,
+        supportsAutoSaveDirectory,
+    } from "$lib/storage/auto-save";
 
     import type { DialogBatchItem } from "$lib/types/dialog";
     import type { CobaltSaveRequestBody } from "$lib/types/api";
@@ -535,14 +539,22 @@
         });
     };
 
+    type BatchSaveMode = "auto" | "manual";
+
     const confirmBatchDownloadReadiness = () =>
-        new Promise<boolean>((resolve) => {
+        new Promise<BatchSaveMode | false>((resolve) => {
+            const autoSaveSupported = supportsAutoSaveDirectory();
             createDialog({
                 id: "batch-download-readiness",
                 type: "small",
                 meowbalt: "question",
+                dismissable: false,
                 title: $t("dialog.batch.start_confirm.title"),
-                bodyText: $t("dialog.batch.start_confirm.body"),
+                bodyText: $t(
+                    autoSaveSupported
+                        ? "dialog.batch.start_confirm.auto_save_body"
+                        : "dialog.batch.start_confirm.unsupported_body"
+                ),
                 buttons: [
                     {
                         text: $t("button.cancel"),
@@ -550,10 +562,25 @@
                         action: () => resolve(false),
                     },
                     {
-                        text: $t("dialog.batch.start_confirm.confirm"),
-                        main: true,
-                        action: () => resolve(true),
+                        text: $t("dialog.batch.start_confirm.manual"),
+                        main: !autoSaveSupported,
+                        action: () => resolve("manual"),
                     },
+                    ...(autoSaveSupported
+                        ? [{
+                            text: $t("dialog.batch.start_confirm.auto_save"),
+                            main: true,
+                            action: async () => {
+                                try {
+                                    const ready = await prepareAutoSaveDirectory();
+                                    resolve(ready ? "auto" : false);
+                                } catch (error) {
+                                    console.error("[batch] unable to prepare auto-save directory", error);
+                                    resolve(false);
+                                }
+                            },
+                        }]
+                        : []),
                 ],
             });
         });
@@ -580,8 +607,8 @@
         const selectedItems = items.filter((_, i) => selected[i]);
         if (!selectedItems.length) return;
 
-        const readyToStart = await confirmBatchDownloadReadiness();
-        if (!readyToStart) return;
+        const saveMode = await confirmBatchDownloadReadiness();
+        if (!saveMode) return;
 
         const requiredPoints = clerkEnabled ? pointsPreviewRequired : 0;
 
@@ -634,6 +661,7 @@
             const queueMeta: {
                 batchSessionId: string;
                 batchSelectionTotal: number;
+                autoSaveEnabled: boolean;
                 collectionMemory?: {
                     collectionKey: string;
                     title?: string;
@@ -645,6 +673,7 @@
             } = {
                 batchSessionId,
                 batchSelectionTotal: selectedItems.length,
+                autoSaveEnabled: saveMode === "auto",
             };
 
             if (clerkEnabled && collectionKey && $isSignedIn && item.itemKey) {

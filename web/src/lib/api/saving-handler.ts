@@ -43,6 +43,7 @@ type SavingHandlerArgs = {
         collectionMemory?: CobaltQueueItemCollectionMemory;
         batchSessionId?: string;
         batchSelectionTotal?: number;
+        autoSaveEnabled?: boolean;
     },
     suppressErrors?: true | string[],
 }
@@ -116,6 +117,7 @@ const applyQueueMeta = (
         hasCollectionMemory: Boolean(queueMeta?.collectionMemory),
         batchSessionId: queueMeta?.batchSessionId ?? null,
         batchSelectionTotal: queueMeta?.batchSelectionTotal ?? null,
+        autoSaveEnabled: queueMeta?.autoSaveEnabled ?? false,
     });
 
     if (
@@ -123,7 +125,8 @@ const applyQueueMeta = (
         !required &&
         !queueMeta?.collectionMemory &&
         !queueMeta?.batchSessionId &&
-        !queueMeta?.batchSelectionTotal
+        !queueMeta?.batchSelectionTotal &&
+        !queueMeta?.autoSaveEnabled
     ) return;
 
     updateItem(taskId, (current) => ({
@@ -137,6 +140,12 @@ const applyQueueMeta = (
         collectionMemory: queueMeta?.collectionMemory ?? current.collectionMemory,
         batchSessionId: queueMeta?.batchSessionId ?? current.batchSessionId,
         batchSelectionTotal: queueMeta?.batchSelectionTotal ?? current.batchSelectionTotal,
+        autoSave: queueMeta?.autoSaveEnabled
+            ? {
+                enabled: true,
+                state: current.autoSave?.state ?? "pending",
+            }
+            : current.autoSave,
     }));
 };
 

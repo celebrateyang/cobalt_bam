@@ -12,7 +12,10 @@
             "encode": "开始编码"
         },
         "retrying": "重试中",
-        "waiting": "等待中"
+        "waiting": "等待中",
+        "auto_saving": "正在自动保存到设备...",
+        "auto_saved": "已保存到设备：{{ value }}",
+        "auto_save_failed": "自动保存失败，请点击“保存”保留此文件"
     },
     "stub": "队列为空",
     "waiting_notice": "当前已有 {{ count }} 个视频进入队列，请耐心等待下载",
@@ -20,5 +23,6 @@
     "save_all_done": "一键保存已下载",
     "save_clicked": "已点保存",
     "manual_save_warning": "请注意：视频下载完成后，请立即点击“保存”；浏览器重启后，下载会丢失！",
-    "keep_awake_warning": "批量下载进行中：请保持设备唤醒，等每个任务完成后再点击“保存”。"
+    "keep_awake_warning": "批量下载进行中：请保持设备唤醒，等每个任务完成后再点击“保存”。",
+    "keep_awake_auto_save_warning": "批量下载进行中：请保持设备唤醒，每个完成的文件都会自动保存到所选文件夹。"
 }

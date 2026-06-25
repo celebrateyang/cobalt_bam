@@ -12,12 +12,16 @@
             "encode": "인코딩 시작 중"
         },
         "retrying": "재시도 중",
-        "waiting": "대기 중"
+        "waiting": "대기 중",
+        "auto_saving": "saving to your device...",
+        "auto_saved": "Saved to device: {{ value }}",
+        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
     "success_notice": "이 배치에서 {{ count }}개의 동영상을 성공적으로 다운로드했습니다.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "저장 클릭됨",
     "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files."
+    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
+    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically."
 }

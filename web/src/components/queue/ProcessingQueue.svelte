@@ -113,8 +113,17 @@
 
     $: indeterminate = queue.length > 0 && totalProgress === 0;
     $: pendingCount = queue.filter(([, item]) => item.state === "waiting" || item.state === "running").length;
-    $: doneCount = queue.filter(([, item]) => item.state === "done" && Boolean(item.resultFile)).length;
-    $: canBulkSave = doneCount > 0 && pendingCount === 0;
+    $: autoSaveBatchRunning = queue.some(([, item]) =>
+        item.autoSave?.enabled &&
+        (item.state === "waiting" || item.state === "running" || item.autoSave.state === "saving")
+    );
+    $: manualSaveCount = queue.filter(([, item]) =>
+        item.state === "done" &&
+        Boolean(item.resultFile) &&
+        item.autoSave?.state !== "saved" &&
+        item.autoSave?.state !== "saving"
+    ).length;
+    $: canBulkSave = manualSaveCount > 0 && pendingCount === 0;
 
     const saveAllDownloaded = () => {
         if (bulkSaving || typeof window === "undefined") {
@@ -122,7 +131,10 @@
         }
 
         const snapshot = Object.entries(get(readableQueue)).filter(([, item]) =>
-            item.state === "done" && Boolean(item.resultFile)
+            item.state === "done" &&
+            Boolean(item.resultFile) &&
+            item.autoSave?.state !== "saved" &&
+            item.autoSave?.state !== "saving"
         );
         if (!snapshot.length) {
             return;
@@ -225,7 +237,11 @@
                     <IconAlertTriangle />
                 </span>
                 <p>
-                    {$t("queue.keep_awake_warning")}
+                    {$t(
+                        autoSaveBatchRunning
+                            ? "queue.keep_awake_auto_save_warning"
+                            : "queue.keep_awake_warning"
+                    )}
                 </p>
             </div>
         {/if}
@@ -238,7 +254,7 @@
                 <ProcessingQueueStub />
             {/if}
         </div>
-        {#if doneCount > 0}
+        {#if manualSaveCount > 0}
             <div class="queue-save-warning" role="note">
                 <span class="warning-icon" aria-hidden="true">
                     <IconAlertTriangle />

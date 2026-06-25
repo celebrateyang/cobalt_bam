@@ -15,8 +15,12 @@
     "safety.custom_instance.body": "อินสแตนซ์ที่กำหนดเองอาจก่อให้เกิดความเสี่ยงด้านความเป็นส่วนตัวและความปลอดภัย\n\nอินสแตนซ์ที่ไม่ดีอาจ:\n1. เปลี่ยนเส้นทางคุณออกจาก FreeSaveVideo และพยายามหลอกลวง\n2. บันทึกข้อมูลทั้งหมดเกี่ยวกับคำขอของคุณ เก็บข้อมูลนั้นไว้ตลอดไป และใช้เพื่อติดตามคุณ\n3. ให้บริการไฟล์ที่เป็นอันตราย (เช่น มัลแวร์)\n4. บังคับให้คุณดูโฆษณาหรือเรียกเก็บเงินสำหรับการดาวน์โหลด\n\nหลังจากจุดนี้ เราไม่สามารถปกป้องคุณได้ โปรดระมัดระวังในการใช้อินสแตนซ์ที่เลือก และเชื่อสัญชาตญาณของคุณ หากคุณรู้สึกว่ามีอะไรผิดปกติ ให้กลับมาที่หน้านี้ รีเซ็ตอินสแตนซ์ที่กำหนดเอง และรายงานให้เราทราบผ่าน GitHub",
     "processing.ongoing": "FreeSaveVideo กำลังประมวลผลสื่อในแท็บนี้ หากคุณออกไปจะเป็นการยกเลิกการประมวลผล คุณแน่ใจหรือว่าต้องการทำสิ่งนี้?",
     "processing.title.ongoing": "การประมวลผลจะถูกยกเลิก",
-    "batch.footer_reminder": "Before starting, keep this device awake and click \"Save\" after each item finishes.",
+    "batch.footer_reminder": "For safer batch downloads, choose a folder for automatic saving and keep this device awake.",
     "batch.start_confirm.title": "Before batch download",
     "batch.start_confirm.body": "Keep this device awake during the whole batch: do not let your computer sleep or your phone screen lock. After each video finishes, click \"Save\" to keep the file.",
-    "batch.start_confirm.confirm": "I understand, start download"
+    "batch.start_confirm.confirm": "I understand, start download",
+    "batch.start_confirm.auto_save_body": "Choose a folder once. Each completed video will be saved to your device immediately. Keep this device awake while the batch is running.",
+    "batch.start_confirm.unsupported_body": "This browser cannot save a batch directly to a selected folder. Keep this device awake and click Save after each item finishes.",
+    "batch.start_confirm.auto_save": "Choose folder and auto-save",
+    "batch.start_confirm.manual": "Start with manual saving"
 }

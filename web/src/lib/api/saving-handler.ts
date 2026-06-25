@@ -575,6 +575,10 @@ export const savingHandler = async ({
         const tunnelUrl = normalizeTunnelUrl(response.tunnelUrl || response.url)
             || response.tunnelUrl
             || response.url;
+        console.log("[download] tunnel response", {
+            hasDirectUrl: Boolean(response.directUrl),
+            hasTunnelUrl: Boolean(response.tunnelUrl),
+        });
 
         // In forced local-processing mode, even tunnel responses should be queued.
         // This is especially useful for batch downloads where user activation can expire.

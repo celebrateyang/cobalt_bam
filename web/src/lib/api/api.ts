@@ -242,11 +242,21 @@ const expand = async (url: string, justRetried = false) => {
     return response;
 }
 
-const probeCobaltTunnel = async (url: string) => {
-    const request = await fetch(`${url}&p=1`).catch(() => {});
-    if (request?.status === 200) {
-        return request?.status;
+const probeCobaltTunnel = async (url: string, attempts = 3) => {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        const request = await fetch(`${url}&p=1`, {
+            signal: AbortSignal.timeout(5000),
+        }).catch(() => {});
+
+        if (request?.status === 200) {
+            return request.status;
+        }
+
+        if (attempt < attempts) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+        }
     }
+
     return 0;
 }
 

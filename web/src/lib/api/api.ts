@@ -250,8 +250,29 @@ const probeCobaltTunnel = async (url: string) => {
     return 0;
 }
 
+const probeCobaltTunnelMedia = async (url: string, timeoutMs = 8000) => {
+    try {
+        const response = await fetch(url, {
+            headers: {
+                Range: "bytes=0-1",
+            },
+            signal: AbortSignal.timeout(timeoutMs),
+        });
+        const contentType = response.headers.get("content-type") || "";
+        await response.body?.cancel();
+
+        return (
+            (response.status === 200 || response.status === 206) &&
+            contentType.toLowerCase().startsWith("video/")
+        );
+    } catch {
+        return false;
+    }
+}
+
 export default {
     request,
     expand,
     probeCobaltTunnel,
+    probeCobaltTunnelMedia,
 }

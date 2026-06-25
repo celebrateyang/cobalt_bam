@@ -197,7 +197,7 @@ const extractGraphqlMedia = async (thread, dispatcher, id, guestToken, cookie) =
     return (repostedTweet?.media || baseTweet?.extended_entities?.media);
 }
 
-export default async function({ id, index, toGif, dispatcher, alwaysProxy, subtitleLang }) {
+export default async function({ id, index, dispatcher, alwaysProxy, subtitleLang }) {
     const cookie = await getCookie('twitter');
 
     let guestToken = await getGuestToken(dispatcher);
@@ -291,6 +291,7 @@ export default async function({ id, index, toGif, dispatcher, alwaysProxy, subti
                 }
             }
 
+            const isAnimatedGif = mediaItem.type === "animated_gif";
             let subtitles;
             let fileMetadata;
             if (mediaItem.type === "video" && subtitleLang) {
@@ -305,11 +306,12 @@ export default async function({ id, index, toGif, dispatcher, alwaysProxy, subti
             }
 
             return {
-                type: subtitles || needsFixing(mediaItem) ? "remux" : "proxy",
+                type: subtitles || needsFixing(mediaItem)
+                    ? "remux"
+                    : (isAnimatedGif ? "proxy" : undefined),
                 urls: bestQuality(mediaItem.video_info.variants),
                 filename: `twitter_${id}.mp4`,
                 audioFilename: `twitter_${id}_audio`,
-                isGif: mediaItem.type === "animated_gif",
                 subtitles,
                 fileMetadata,
             }
@@ -332,25 +334,22 @@ export default async function({ id, index, toGif, dispatcher, alwaysProxy, subti
                 }
 
                 let url = bestQuality(content.video_info.variants);
-                const shouldRenderGif = content.type === "animated_gif" && toGif;
-                const videoFilename = `twitter_${id}_${i + 1}.${shouldRenderGif ? "gif" : "mp4"}`;
+                const isAnimatedGif = content.type === "animated_gif";
+                const videoFilename = `twitter_${id}_${i + 1}.mp4`;
 
-                let type = "video";
-                if (shouldRenderGif) type = "gif";
-
-                if (needsFixing(content) || shouldRenderGif) {
+                if (needsFixing(content)) {
                     url = createStream({
                         service: "twitter",
-                        type: shouldRenderGif ? "gif" : "remux",
+                        type: "remux",
                         url,
                         filename: videoFilename,
                     })
-                } else if (alwaysProxy) {
+                } else if (alwaysProxy || isAnimatedGif) {
                     url = proxyMedia(url, videoFilename);
                 }
 
                 return {
-                    type,
+                    type: "video",
                     url,
                     thumb: proxyThumb(content.media_url_https, i),
                 }

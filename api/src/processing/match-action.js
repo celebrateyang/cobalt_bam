@@ -251,7 +251,7 @@ export default function({
                     break;
 
                 case "twitter":
-                    if (r.type === "remux") {
+                    if (r.type === "remux" || r.type === "proxy") {
                         params = { type: r.type };
                     } else {
                         responseType = "redirect";
@@ -379,12 +379,7 @@ export default function({
 
     if ((canUseBrowserHlsProcessing || !params.isHLS) && responseType !== "picker") {
         const isPreferredWithExtra =
-            localProcessing === "preferred"
-            && extraProcessingTypes.has(params.type)
-            // Twitter GIFs are MP4 videos that need a full palette-based encode.
-            // Keep this conversion server-side: browser WASM processing is less
-            // reliable across devices, while the API ffmpeg path handles them.
-            && !(host === "twitter" && params.type === "gif");
+            localProcessing === "preferred" && extraProcessingTypes.has(params.type);
 
         if (canUseBrowserHlsProcessing || localProcessing === "forced" || isPreferredWithExtra) {
             responseType = "local-processing";

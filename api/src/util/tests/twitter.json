@@ -179,7 +179,7 @@
         }
     },
     {
-        "name": "gif with preferred local processing",
+        "name": "animated gif downloads directly with preferred local processing",
         "url": "https://x.com/Furubafani/status/2069866524538478863",
         "params": {
             "localProcessing": "preferred",

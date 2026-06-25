@@ -342,7 +342,6 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await twitter({
                     id: patternMatch.id,
                     index: patternMatch.index - 1,
-                    toGif: !!params.convertGif,
                     alwaysProxy: params.alwaysProxy,
                     dispatcher,
                     subtitleLang

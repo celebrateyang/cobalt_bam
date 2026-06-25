@@ -97,37 +97,11 @@ const isTunnelUrl = (url?: string) => {
     }
 };
 
-const probeDirectVideo = async (url: string, timeoutMs = 5000) => {
-    if (typeof document === "undefined") return false;
-
-    return await new Promise<boolean>((resolve) => {
-        const video = document.createElement("video");
-        let settled = false;
-        let timeout: ReturnType<typeof setTimeout> | undefined;
-
-        const finish = (success: boolean) => {
-            if (settled) return;
-            settled = true;
-            if (timeout) clearTimeout(timeout);
-            video.removeAttribute("src");
-            video.load();
-            video.remove();
-            resolve(success);
-        };
-
-        video.preload = "metadata";
-        video.crossOrigin = "anonymous";
-        video.muted = true;
-        video.playsInline = true;
-        video.style.display = "none";
-        video.addEventListener("loadedmetadata", () => finish(true), { once: true });
-        video.addEventListener("error", () => finish(false), { once: true });
-
-        timeout = setTimeout(() => finish(false), timeoutMs);
-        document.body.appendChild(video);
-        video.src = url;
-        video.load();
-    });
+const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
+    const url = new URL("/api/tiktok-media", window.location.origin);
+    url.searchParams.set("url", directUrl);
+    url.searchParams.set("filename", filename);
+    return url.toString();
 };
 
 const applyQueueMeta = (
@@ -624,19 +598,38 @@ export const savingHandler = async ({
         }
 
         downloadButtonState.set("check");
-        if (response.directUrl && await probeDirectVideo(response.directUrl)) {
-            console.log("[tiktok-download] direct probe succeeded, opening direct URL");
-            downloadButtonState.set("done");
+        if (response.directUrl) {
+            const tunnelMediaAvailable = await API.probeCobaltTunnelMedia(tunnelUrl);
+            if (tunnelMediaAvailable) {
+                console.log("[tiktok-download] tunnel media probe succeeded, using tunnel");
+                downloadButtonState.set("done");
+                downloadFile({
+                    url: tunnelUrl,
+                });
+                return response;
+            }
 
+            const mediaProxyUrl = buildTikTokMediaProxyUrl(
+                response.directUrl,
+                response.filename,
+            );
+            const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
+            if (mediaProxyAvailable) {
+                console.log("[tiktok-download] tunnel failed, using Cloudflare media proxy");
+                downloadButtonState.set("done");
+                downloadFile({
+                    url: mediaProxyUrl,
+                });
+                return response;
+            }
+
+            console.log("[tiktok-download] tunnel and media proxy failed, opening direct URL");
+            downloadButtonState.set("done");
             downloadFile({
                 url: response.directUrl,
                 urlType: "redirect",
             });
             return response;
-        }
-
-        if (response.directUrl) {
-            console.log("[tiktok-download] direct probe failed, falling back to tunnel");
         }
 
         const probeResult = await API.probeCobaltTunnel(tunnelUrl);

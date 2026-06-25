@@ -56,12 +56,18 @@ export const shareFile = async (file: File) => {
 }
 
 export const openURL = (url: string) => {
-    // video.twimg.com (and other *.twimg.com hosts) return 403 when a foreign Referer is present.
+    // Some media CDNs return 403 when a foreign Referer is present.
     // Use noreferrer so the download works when opened from our UI.
     let open: Window | null = null;
     try {
         const { hostname } = new URL(url, window.location.href);
-        if (hostname.endsWith("twimg.com")) {
+        const needsNoReferrer =
+            hostname.endsWith("twimg.com") ||
+            hostname.endsWith("tiktokcdn.com") ||
+            hostname.endsWith("tiktokcdn-us.com") ||
+            hostname.endsWith("tiktokcdn-eu.com");
+
+        if (needsNoReferrer) {
             open = window.open(url, "_blank", "noopener,noreferrer");
         } else {
             open = window.open(url, "_blank");

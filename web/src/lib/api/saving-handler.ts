@@ -97,6 +97,28 @@ const isTunnelUrl = (url?: string) => {
     }
 };
 
+const probeDirectVideo = async (url: string, timeoutMs = 5000) => {
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            mode: "cors",
+            credentials: "omit",
+            referrerPolicy: "no-referrer",
+            headers: {
+                Range: "bytes=0-1",
+            },
+            signal: AbortSignal.timeout(timeoutMs),
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+        await response.body?.cancel();
+
+        return response.ok && contentType.toLowerCase().startsWith("video/");
+    } catch {
+        return false;
+    }
+};
+
 const applyQueueMeta = (
     taskId: string | undefined,
     response: CobaltAPIResponse | null,
@@ -565,7 +587,9 @@ export const savingHandler = async ({
     }
 
     if (response.status === "tunnel") {
-        const tunnelUrl = normalizeTunnelUrl(response.url) || response.url;
+        const tunnelUrl = normalizeTunnelUrl(response.tunnelUrl || response.url)
+            || response.tunnelUrl
+            || response.url;
 
         // In forced local-processing mode, even tunnel responses should be queued.
         // This is especially useful for batch downloads where user activation can expire.
@@ -589,6 +613,16 @@ export const savingHandler = async ({
         }
 
         downloadButtonState.set("check");
+        if (response.directUrl && await probeDirectVideo(response.directUrl)) {
+            downloadButtonState.set("done");
+
+            downloadFile({
+                url: response.directUrl,
+                urlType: "redirect",
+            });
+            return response;
+        }
+
         const probeResult = await API.probeCobaltTunnel(tunnelUrl);
 
         if (probeResult === 200) {

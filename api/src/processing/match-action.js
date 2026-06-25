@@ -403,8 +403,16 @@ export default function({
         }
     }
 
-    return createResponse(
-        responseType,
-        { ...defaultParams, ...params }
-    );
+    const responseData = { ...defaultParams, ...params };
+
+    if (
+        host === "tiktok" &&
+        responseType === "tunnel" &&
+        params.type === "proxy" &&
+        typeof r.urls === "string"
+    ) {
+        responseData.directUrl = r.urls;
+    }
+
+    return createResponse(responseType, responseData);
 }

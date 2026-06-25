@@ -192,9 +192,12 @@ export function createResponse(responseType, responseData) {
                 break;
 
             case "tunnel":
+                const tunnelUrl = createStream(responseData);
                 response = {
-                    url: createStream(responseData),
-                    filename: responseData?.filename
+                    url: tunnelUrl,
+                    filename: responseData?.filename,
+                    directUrl: responseData?.directUrl,
+                    tunnelUrl: responseData?.directUrl ? tunnelUrl : undefined,
                 }
                 break;
 

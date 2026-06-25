@@ -46,6 +46,8 @@ type CobaltRedirectResponse = {
 
 type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
+    directUrl?: string,
+    tunnelUrl?: string,
 } & CobaltPartialURLResponse;
 
 export type CobaltLocalProcessingResponse = {

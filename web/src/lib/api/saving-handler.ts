@@ -98,25 +98,36 @@ const isTunnelUrl = (url?: string) => {
 };
 
 const probeDirectVideo = async (url: string, timeoutMs = 5000) => {
-    try {
-        const response = await fetch(url, {
-            method: "GET",
-            mode: "cors",
-            credentials: "omit",
-            referrerPolicy: "no-referrer",
-            headers: {
-                Range: "bytes=0-1",
-            },
-            signal: AbortSignal.timeout(timeoutMs),
-        });
+    if (typeof document === "undefined") return false;
 
-        const contentType = response.headers.get("content-type") || "";
-        await response.body?.cancel();
+    return await new Promise<boolean>((resolve) => {
+        const video = document.createElement("video");
+        let settled = false;
+        let timeout: ReturnType<typeof setTimeout> | undefined;
 
-        return response.ok && contentType.toLowerCase().startsWith("video/");
-    } catch {
-        return false;
-    }
+        const finish = (success: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (timeout) clearTimeout(timeout);
+            video.removeAttribute("src");
+            video.load();
+            video.remove();
+            resolve(success);
+        };
+
+        video.preload = "metadata";
+        video.crossOrigin = "anonymous";
+        video.muted = true;
+        video.playsInline = true;
+        video.style.display = "none";
+        video.addEventListener("loadedmetadata", () => finish(true), { once: true });
+        video.addEventListener("error", () => finish(false), { once: true });
+
+        timeout = setTimeout(() => finish(false), timeoutMs);
+        document.body.appendChild(video);
+        video.src = url;
+        video.load();
+    });
 };
 
 const applyQueueMeta = (
@@ -614,6 +625,7 @@ export const savingHandler = async ({
 
         downloadButtonState.set("check");
         if (response.directUrl && await probeDirectVideo(response.directUrl)) {
+            console.log("[tiktok-download] direct probe succeeded, opening direct URL");
             downloadButtonState.set("done");
 
             downloadFile({
@@ -621,6 +633,10 @@ export const savingHandler = async ({
                 urlType: "redirect",
             });
             return response;
+        }
+
+        if (response.directUrl) {
+            console.log("[tiktok-download] direct probe failed, falling back to tunnel");
         }
 
         const probeResult = await API.probeCobaltTunnel(tunnelUrl);

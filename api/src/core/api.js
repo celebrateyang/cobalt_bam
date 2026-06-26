@@ -319,7 +319,31 @@ const normalizeUpstreamTunnelUrl = (value, upstreamOrigin) => {
     ).toString();
 };
 
-const wrapUpstreamTunnelUrl = (value, upstreamOrigin, {
+const isHlsContentType = (value) => {
+    const contentType = String(value || "").toLowerCase();
+    return contentType.includes("mpegurl") || contentType.includes("vnd.apple.mpegurl");
+};
+
+const probeUpstreamTunnelIsHls = async (url) => {
+    try {
+        const { body, headers } = await undiciRequest(url, {
+            method: "GET",
+            headers: {
+                Range: "bytes=0-0",
+            },
+            maxRedirections: 4,
+            headersTimeout: 8_000,
+            bodyTimeout: 8_000,
+        });
+
+        try { body.destroy?.(); } catch {}
+        return isHlsContentType(headers?.["content-type"]);
+    } catch {
+        return false;
+    }
+};
+
+const wrapUpstreamTunnelUrl = async (value, upstreamOrigin, {
     filename,
     service,
     type,
@@ -342,25 +366,36 @@ const wrapUpstreamTunnelUrl = (value, upstreamOrigin, {
     const shouldRemuxHlsProxy =
         isHLS === true &&
         (!type || type === "proxy");
+    const shouldProbeLegacyHls =
+        isHLS !== true &&
+        !type &&
+        typeof filename === "string" &&
+        /\.(mp4|mkv|mov)(?:$|[?#])/i.test(filename);
+    const isLegacyHlsProxy =
+        shouldProbeLegacyHls &&
+        await probeUpstreamTunnelIsHls(normalizedUrl);
+    const shouldRemux =
+        shouldRemuxHlsProxy ||
+        isLegacyHlsProxy;
 
     return createStream({
-        type: shouldRemuxHlsProxy ? "remux" : "proxy",
+        type: shouldRemux ? "remux" : "proxy",
         url: normalizedUrl,
         service: service || "generic-upstream",
         filename: typeof filename === "string" && filename.trim()
             ? filename
             : "download.bin",
-        isHLS: shouldRemuxHlsProxy,
+        isHLS: shouldRemux,
     });
 };
 
-const normalizeUpstreamBody = (body, upstreamOrigin) => {
+const normalizeUpstreamBody = async (body, upstreamOrigin) => {
     if (!body || typeof body !== "object") return body;
 
     if (body.status === "tunnel" || body.status === "redirect") {
         return {
             ...body,
-            url: wrapUpstreamTunnelUrl(body.url, upstreamOrigin, {
+            url: await wrapUpstreamTunnelUrl(body.url, upstreamOrigin, {
                 filename: body.filename,
                 service: body.service,
                 type: body.type,
@@ -372,14 +407,16 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
     if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
         return {
             ...body,
-            tunnel: body.tunnel.map((item) => wrapUpstreamTunnelUrl(item, upstreamOrigin, {
-                filename: body.output?.filename || body.filename,
-                service: body.service,
-            })),
+            tunnel: await Promise.all(
+                body.tunnel.map((item) => wrapUpstreamTunnelUrl(item, upstreamOrigin, {
+                    filename: body.output?.filename || body.filename,
+                    service: body.service,
+                }))
+            ),
             fallback: body.fallback?.url
                 ? {
                     ...body.fallback,
-                    url: wrapUpstreamTunnelUrl(body.fallback.url, upstreamOrigin, {
+                    url: await wrapUpstreamTunnelUrl(body.fallback.url, upstreamOrigin, {
                         filename: body.fallback.filename || body.output?.filename || body.filename,
                         service: body.service,
                     }),
@@ -392,22 +429,22 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
         return {
             ...body,
             audio: typeof body.audio === "string"
-                ? wrapUpstreamTunnelUrl(body.audio, upstreamOrigin, {
+                ? await wrapUpstreamTunnelUrl(body.audio, upstreamOrigin, {
                     filename: body.filename,
                     service: body.service,
                 })
                 : body.audio,
             picker: Array.isArray(body.picker)
-                ? body.picker.map((item) => {
+                ? await Promise.all(body.picker.map(async (item) => {
                     if (!item || typeof item !== "object") return item;
                     return {
                         ...item,
-                        url: wrapUpstreamTunnelUrl(item.url, upstreamOrigin, {
+                        url: await wrapUpstreamTunnelUrl(item.url, upstreamOrigin, {
                             filename: item.filename || body.filename,
                             service: item.service || body.service,
                         }),
                     };
-                })
+                }))
                 : body.picker,
         };
     }
@@ -431,7 +468,7 @@ const requestGenericUpstream = async ({ payload, requestClientIp }) => {
 
     return {
         status: upstream.status,
-        body: normalizeUpstreamBody(upstream.body, upstream.upstreamOrigin),
+        body: await normalizeUpstreamBody(upstream.body, upstream.upstreamOrigin),
     };
 };
 

@@ -4,6 +4,7 @@ import { genericUserAgent } from "../../config.js";
 
 const ABSOLUTE_MEDIA_RE = /^https?:\/\//i;
 const MEDIA_EXT_RE = /\.(mp4|m4v|webm|mov|m3u8)(?:$|[?#])/i;
+const MEDIA_HINT_RE = /(?:[/.])(?:mp4|m4v|webm|mov|m3u8)(?:[-/?#]|$)/i;
 const HLS_EXT_RE = /\.m3u8(?:$|[?#])/i;
 const PREVIEW_MEDIA_RE = /(?:^|[\/_.-])(?:preview|vthumb|thumb|thumbnail)(?:[\/_.-]|$)/i;
 const MIN_DIRECT_MEDIA_BYTES = 32 * 1024;
@@ -82,10 +83,10 @@ const extractTitle = (html) => {
 
 const extractCandidatesFromHtml = (html, baseUrl) => {
     const candidates = [];
-    const push = (value) => {
+    const push = (value, { allowHint = false } = {}) => {
         const resolved = resolveCandidateUrl(value, baseUrl);
         if (!resolved || candidates.includes(resolved)) return;
-        if (!MEDIA_EXT_RE.test(resolved)) return;
+        if (!MEDIA_EXT_RE.test(resolved) && !(allowHint && MEDIA_HINT_RE.test(resolved))) return;
         try {
             if (PREVIEW_MEDIA_RE.test(new URL(resolved).pathname)) return;
         } catch {
@@ -107,6 +108,34 @@ const extractCandidatesFromHtml = (html, baseUrl) => {
 
     for (const match of html.matchAll(/<(?:video|source)[^>]+src=["']([^"']+)["']/gi)) {
         push(decodeHtml(match[1]));
+    }
+
+    for (const match of html.matchAll(/<(?:script)[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+        const jsonText = decodeHtml(match[1]);
+        try {
+            const data = JSON.parse(jsonText);
+            const stack = [data];
+            while (stack.length) {
+                const item = stack.pop();
+                if (!item || typeof item !== "object") continue;
+                if (Array.isArray(item)) {
+                    stack.push(...item);
+                    continue;
+                }
+                push(item.contentUrl, { allowHint: true });
+                push(item.embedUrl, { allowHint: true });
+                for (const value of Object.values(item)) {
+                    if (value && typeof value === "object") stack.push(value);
+                }
+            }
+        } catch {
+            // ignore malformed structured data
+        }
+    }
+
+    const decodedHtml = decodeHtml(html);
+    for (const match of decodedHtml.matchAll(/["']src["']\s*:\s*["']([^"']+)["']/gi)) {
+        push(match[1], { allowHint: true });
     }
 
     for (const match of html.matchAll(/https?:\/\/[^"'<>\\\s]+?\.(?:mp4|m4v|webm|mov|m3u8)(?:\?[^"'<>\\\s]*)?/gi)) {

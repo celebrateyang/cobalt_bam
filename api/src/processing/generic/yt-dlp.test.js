@@ -43,3 +43,12 @@ test("does not assume Sohu HLS video-only formats contain audio", () => {
     assert.equal(candidate.hasVideo, true);
     assert.equal(candidate.hasAudio, false);
 });
+
+test("treats LinkedIn progressive MP4 as a muxed audio/video candidate", () => {
+    const [candidate] = collectCandidates([sohuFormat], {
+        extractor_key: "LinkedIn",
+    });
+
+    assert.equal(candidate.hasVideo, true);
+    assert.equal(candidate.hasAudio, true);
+});

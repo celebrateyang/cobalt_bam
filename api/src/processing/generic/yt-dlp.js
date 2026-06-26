@@ -292,8 +292,15 @@ const isSohuExtractor = (info) => {
     return extractor === "sohu" || extractorKey === "sohu";
 };
 
+const isLinkedInExtractor = (info) => {
+    const extractor = String(info?.extractor || "").toLowerCase();
+    const extractorKey = String(info?.extractor_key || "").toLowerCase();
+    return extractor === "linkedin" || extractorKey === "linkedin";
+};
+
 export const collectCandidates = (formats = [], info = {}) => {
     const trustSohuMp4AsMuxed = isSohuExtractor(info);
+    const trustLinkedInMp4AsMuxed = isLinkedInExtractor(info);
 
     return formats
         .map((format) => {
@@ -316,7 +323,10 @@ export const collectCandidates = (formats = [], info = {}) => {
                 || resolution === "audio only"
                 // yt-dlp's Sohu extractor reports its progressive MP4 files as
                 // audio_ext=none even though the files contain AAC audio.
-                || (trustSohuMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"));
+                || (trustSohuMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"))
+                // LinkedIn public posts expose progressive MP4 files in HTML,
+                // but yt-dlp labels their audio extension as none.
+                || (trustLinkedInMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"));
 
             return {
                 url,

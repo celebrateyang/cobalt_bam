@@ -3,7 +3,7 @@
     "meowbalt": "FreeSaveVideo",
     "beta": "베타",
     "or": "또는",
-    "embed.description": "YouTube, TikTok, Bilibili, Sohu Video, NicoNico, NAVER(네이버), Instagram, Threads, Facebook, Twitter에서 무료로 동영상을 다운로드하세요. 등록이 필요 없습니다. 쉽고 빠른 동영상 다운로드.",
+    "embed.description": "YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Amazon Live, NAVER(네이버), Instagram, Threads, Facebook, Twitter에서 무료로 동영상을 다운로드하세요. 등록이 필요 없습니다. 쉽고 빠른 동영상 다운로드.",
     "guide": {
         "title": "FreeSaveVideo로 온라인에서 동영상을 저장하는 방법",
         "description1": "FreeSaveVideo를 사용하면 소프트웨어 설치 없이 온라인에서 동영상을 다운로드할 수 있습니다. NAVER(네이버)를 포함한 지원 플랫폼 링크를 붙여넣으면 가능할 때 HD 영상을 저장할 수 있습니다.",
@@ -45,8 +45,8 @@
     "seo": {
         "home": {
             "title": "FreeSaveVideo - 온라인 동영상 다운로더",
-            "description": "FreeSaveVideo로 워터마크 없는 동영상을 온라인에서 다운로드하세요. Douyin, TikTok, Bilibili, Sohu Video, NicoNico, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣기만 하면 됩니다. 일괄 다운로드, 모음집, 오디오 전용, 음소거 모드를 지원합니다.",
-            "keywords": "온라인 동영상 다운로더, 워터마크 없는 동영상 다운로드, 네이버 동영상 다운로드, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, TikTok 동영상 저장, Bilibili 동영상 다운로드, 일괄 다운로드, 플레이리스트 다운로더, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download, Sohu video downloader, download Sohu video"
+            "description": "FreeSaveVideo로 워터마크 없는 동영상을 온라인에서 다운로드하세요. Douyin, TikTok, Bilibili, Sohu Video, NicoNico, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣기만 하면 됩니다. 일괄 다운로드, 모음집, 오디오 전용, 음소거 모드를 지원합니다.",
+            "keywords": "온라인 동영상 다운로더, 워터마크 없는 동영상 다운로드, 네이버 동영상 다운로드, Amazon Live, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, TikTok 동영상 저장, Bilibili 동영상 다운로드, 일괄 다운로드, 플레이리스트 다운로더, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download, Sohu video downloader, download Sohu video, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download"
         },
         "transfer": {
             "title": "무료 온라인 파일 전송 - 앱 필요 없음 | P2P 공유 | 기기 간",

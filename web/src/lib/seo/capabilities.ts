@@ -205,6 +205,19 @@ export const capabilityServices: CapabilityService[] = [
         unsupportedCases: defaultUnsupportedCases,
     },
     {
+        id: 'amazon',
+        name: 'Amazon Live',
+        category: 'video',
+        publicOnly: true,
+        audioMode: true,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        notes: ['Supports public amazon.com/live/video/:id replay links with available HLS quality options.'],
+        searchIntents: ['amazon live downloader', 'download amazon live replay', 'amazon live video download'],
+        unsupportedCases: defaultUnsupportedCases,
+    },
+    {
         id: 'naver',
         name: 'NAVER',
         category: 'video',
@@ -426,6 +439,7 @@ export const capabilityServices: CapabilityService[] = [
 ];
 
 export const additionalSupportedServices = [
+    'Amazon Live',
     'Bluesky',
     'CCTV',
     'Dailymotion',

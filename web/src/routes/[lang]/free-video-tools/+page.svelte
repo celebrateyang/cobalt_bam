@@ -64,7 +64,7 @@
                   },
                   {
                       q: 'FreeSaveVideo 支持哪些平台？',
-                      a: `FreeSaveVideo 支持 YouTube、TikTok、抖音、Bilibili、NicoNico、快手、小红书、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit 等平台，具体能力以解析结果和 capabilities.json 为准。`,
+                      a: `FreeSaveVideo 支持 YouTube、TikTok、抖音、Bilibili、NicoNico、快手、小红书、Amazon Live、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit 等平台，具体能力以解析结果和 capabilities.json 为准。`,
                   },
                   {
                       q: '本地视频转换会上传文件吗？',
@@ -82,7 +82,7 @@
                   },
                   {
                       q: 'Which platforms does FreeSaveVideo support?',
-                      a: 'FreeSaveVideo supports platforms such as YouTube, TikTok, Douyin, Bilibili, NicoNico, Kuaishou, Xiaohongshu, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more. Exact support depends on the parsed result and capabilities.json.',
+                      a: 'FreeSaveVideo supports platforms such as YouTube, TikTok, Douyin, Bilibili, NicoNico, Kuaishou, Xiaohongshu, Amazon Live, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more. Exact support depends on the parsed result and capabilities.json.',
                   },
                   {
                       q: 'Are local video conversion files uploaded?',
@@ -132,7 +132,7 @@
     <meta name="description" content={pageDesc} />
     <meta
         name="keywords"
-        content="FreeSaveVideo,online video downloader,public video downloader,batch video downloader,playlist downloader,collection downloader,YouTube downloader,TikTok downloader,Douyin downloader,Bilibili downloader,MP4 to MP3,video converter,audio extractor,whiteboard recorder,file transfer"
+        content="FreeSaveVideo,online video downloader,public video downloader,batch video downloader,playlist downloader,collection downloader,YouTube downloader,TikTok downloader,Douyin downloader,Bilibili downloader,Amazon Live downloader,Amazon Live replay download,MP4 to MP3,video converter,audio extractor,whiteboard recorder,file transfer"
     />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
@@ -175,8 +175,8 @@
         <h2>{isZh ? '支持的视频与媒体平台' : 'Supported video and media platforms'}</h2>
         <p>
             {isZh
-                ? 'FreeSaveVideo 支持 100+ 热门视频、音频和社交平台。不同平台可用的视频、音频、无水印、合集或 playlist 能力不同。'
-                : 'FreeSaveVideo supports 100+ popular video, audio, and social platforms. Video, audio, no-watermark, collection, and playlist support depends on each source.'}
+                ? 'FreeSaveVideo 支持 100+ 热门视频、音频和社交平台，包括 Amazon Live 公开回放。不同平台可用的视频、音频、无水印、合集或 playlist 能力不同。'
+                : 'FreeSaveVideo supports 100+ popular video, audio, and social platforms, including public Amazon Live replays. Video, audio, no-watermark, collection, and playlist support depends on each source.'}
         </p>
         <div class="service-list">
             {#each serviceNames as service}

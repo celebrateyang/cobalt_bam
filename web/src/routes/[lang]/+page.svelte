@@ -100,6 +100,7 @@
         "toutiao",
         "sohu",
         "weibo",
+        "amazon",
         "naver",
         "niconico",
         "xiaohongshu",
@@ -337,8 +338,8 @@
         {
             q:
                 currentLocale === "zh"
-                    ? "\u5982\u4f55\u4e0b\u8f7d\u6296\u97f3\u3001B\u7ad9\u3001NicoNico\u3001\u5feb\u624b\u3001\u5c0f\u7ea2\u4e66\u7b49\u5e73\u53f0\u7684\u89c6\u9891\uff1f"
-                    : "How to download videos from Douyin, Bilibili, NicoNico, Kuaishou or Xiaohongshu?",
+                    ? "\u5982\u4f55\u4e0b\u8f7d\u6296\u97f3\u3001B\u7ad9\u3001NicoNico\u3001Amazon Live\u3001\u5feb\u624b\u3001\u5c0f\u7ea2\u4e66\u7b49\u5e73\u53f0\u7684\u89c6\u9891\uff1f"
+                    : "How to download videos from Douyin, Bilibili, NicoNico, Amazon Live, Kuaishou or Xiaohongshu?",
             a:
                 currentLocale === "zh"
                     ? "\u590d\u5236\u89c6\u9891\u94fe\u63a5\uff0c\u7c98\u8d34\u5230\u8f93\u5165\u6846\uff0c\u4fdd\u6301\u81ea\u52a8\u6a21\u5f0f\uff0c\u70b9\u51fb\u4e0b\u8f7d\u5373\u53ef\u751f\u6210\u53ef\u7528\u7684\u4e0b\u8f7d\u7ed3\u679c\u3002"

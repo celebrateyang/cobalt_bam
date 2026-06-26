@@ -3,8 +3,8 @@
     "description": "無水印ダウンロード、形式、ポイント、トラブル対応の回答。",
     "seo": {
         "title": "FAQ | FreeSaveVideo - 無水印動画ダウンローダー",
-        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。",
-        "keywords": "FAQ, 動画ダウンローダー, Douyinダウンロード, Bilibiliダウンロード, Kuaishouダウンロード, 酷狗音楽ダウンロード, 小红书ダウンロード, TikTokダウンロード, 無水印ダウンロード, バッチダウンロード, ポイント課金, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader"
+        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。",
+        "keywords": "FAQ, 動画ダウンローダー, Douyinダウンロード, Bilibiliダウンロード, Kuaishouダウンロード, 酷狗音楽ダウンロード, 小红书ダウンロード, TikTokダウンロード, 無水印ダウンロード, バッチダウンロード, ポイント課金, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download"
     },
     "toc": {
         "title": "クイックリンク"
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideoとは？",
-            "a": "FreeSaveVideoはオンラインのメディアダウンローダーです。\n共有リンクを貼り付け、モードを選んでダウンロードします。\nDouyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Facebook などに対応。"
+            "a": "FreeSaveVideoはオンラインのメディアダウンローダーです。\n共有リンクを貼り付け、モードを選んでダウンロードします。\nDouyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook などに対応。"
         },
         "how_to_use": {
             "q": "動画を（無水印で）ダウンロードするには？",
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "対応プラットフォームとリンクは？",
-            "a": "100以上のサービスに対応。代表例：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Facebook。\n画質・音声・追加ファイルはプラットフォームと投稿内容によって異なります。"
+            "a": "100以上のサービスに対応。代表例：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook。\n画質・音声・追加ファイルはプラットフォームと投稿内容によって異なります。"
         },
         "youtube_supported": {
             "q": "YouTubeは対応していますか？",

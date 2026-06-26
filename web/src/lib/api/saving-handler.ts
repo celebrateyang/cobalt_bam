@@ -135,6 +135,22 @@ const queueTikTokProxyDownload = (
     );
 };
 
+const openTikTokDownloadDialog = (
+    mediaUrls: string[],
+    response: { filename: string },
+    fallbackUrl?: string,
+) => {
+    downloadButtonState.set("done");
+    createDialog({
+        id: `tiktok-download-${Date.now()}`,
+        type: "tiktok-download",
+        title: "TikTok video preview and download",
+        filename: response.filename,
+        urls: mediaUrls,
+        fallbackUrl,
+    });
+};
+
 const applyQueueMeta = (
     taskId: string | undefined,
     response: CobaltAPIResponse | null,
@@ -644,20 +660,17 @@ export const savingHandler = async ({
                 value.length > 0 &&
                 list.indexOf(value) === index
             ));
+            const mediaProxyUrls = directCandidates.map((directCandidate) => (
+                buildTikTokMediaProxyUrl(directCandidate, response.filename)
+            ));
 
-            for (const directCandidate of directCandidates) {
-                const mediaProxyUrl = buildTikTokMediaProxyUrl(
-                    directCandidate,
-                    response.filename,
-                );
+            for (const mediaProxyUrl of mediaProxyUrls) {
                 const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
                 if (mediaProxyAvailable) {
-                    console.log("[tiktok-download] queueing TikTok media proxy with tunnel fallback");
-                    queueTikTokProxyDownload(
-                        mediaProxyUrl,
+                    console.log("[tiktok-download] opening TikTok download dialog with media proxy fallback chain");
+                    openTikTokDownloadDialog(
+                        mediaProxyUrls,
                         response,
-                        selectedRequest,
-                        effectiveTaskId,
                         tunnelUrl,
                     );
                     return response;

@@ -340,6 +340,15 @@ export default async function(obj) {
 
     images = isEmbed ? detail?.itemInfos?.imagePostInfo?.images : detail.imagePost?.images;
 
+    if (isEmbed && !obj.isAudioOnly && !images) {
+        return {
+            error: "fetch.fail",
+            tiktokPreferUpstream: true,
+            tiktokUsedEmbedFallback: true,
+            tiktokVideoSourceKind: "embed",
+        };
+    }
+
     const videoCandidates = buildVideoCandidateSet({
         detail,
         isEmbed,

@@ -59,6 +59,14 @@ type SavingDialog = Dialog & {
     urlType?: CobaltFileUrlType,
 };
 
+type TikTokDownloadDialog = Dialog & {
+    type: "tiktok-download",
+    title?: string,
+    filename: string,
+    urls: string[],
+    fallbackUrl?: string,
+};
+
 type BatchDialog = Dialog & {
     type: "batch",
     title?: string,
@@ -78,4 +86,4 @@ type FeedbackDialog = Dialog & {
     initialVideoUrl?: string,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | BatchDialog | FeedbackDialog;
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | BatchDialog | FeedbackDialog;

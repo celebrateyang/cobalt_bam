@@ -371,7 +371,7 @@ export default function({
     }
 
     const canUseBrowserHlsProcessing =
-        new Set(["amazon", "vimeo", "weibo"]).has(host) &&
+        new Set(["vimeo", "weibo"]).has(host) &&
         params.isHLS === true &&
         alwaysProxy !== true &&
         responseType !== "picker" &&

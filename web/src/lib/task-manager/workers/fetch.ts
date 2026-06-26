@@ -494,14 +494,27 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: Fetch
                 Number.isFinite(contentLengthHeader) &&
                 contentLengthHeader === 0
             ) {
-                // Fast-fail obvious broken tunnel responses (200 with empty body on range request),
-                // otherwise the worker can appear stuck in repeated retries at 0%.
+                // Some tunnel/CDN hops intermittently answer the first ranged request
+                // with an empty 200 before a retry succeeds. Treat it as transient
+                // first; only fail once retries are exhausted.
                 logDebug("request_empty_range_response", {
                     status: response.status,
                     range: headers.Range || "none",
                     contentLength: contentLengthHeaderRaw || "none",
+                    retries,
                 });
-                return error("queue.fetch.empty_tunnel");
+                await response.body?.cancel().catch(() => undefined);
+                if (retries < MAX_RETRIES) {
+                    retries++;
+                    rangeChunkBytes = clampChunkSize(Math.floor(rangeChunkBytes / 2), runtimeTuning.maxChunkBytes);
+                    logDebug("request_retry_empty_range_response", {
+                        retries,
+                        nextChunkBytes: rangeChunkBytes,
+                    });
+                    await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                    continue;
+                }
+                return error("queue.fetch.empty_tunnel", await buildResumeSnapshot());
             }
 
             if (!response.ok && !partialResponse) {

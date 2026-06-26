@@ -173,14 +173,37 @@ const extractEmbed = (html, postId) => {
     }
 };
 
-const fetchLegacyDetail = async (postId, cookie) => {
+const normalizeTikTokUsernamePath = (username) => {
+    if (typeof username !== "string") return "@i";
+
+    const normalized = username.trim().replace(/^\/+|\/+$/g, "");
+    if (!normalized) return "@i";
+
+    return normalized.startsWith("@") ? normalized : `@${normalized}`;
+};
+
+const withOptionalCookie = (headers, cookie) => {
+    if (typeof cookie !== "string" || !cookie.trim()) {
+        return headers;
+    }
+
+    return {
+        ...headers,
+        cookie,
+    };
+};
+
+const fetchLegacyDetail = async (postId, cookie, username) => {
     try {
         // Legacy flow: should always be /video/, even for photos.
-        const res = await fetch(`https://www.tiktok.com/@i/video/${postId}`, {
-            headers: {
+        // Prefer the real username path when available. Newer TikTok pages can
+        // WAF the generic /@i/video/:id path while serving universal data on
+        // /@:user/video/:id.
+        const userPath = normalizeTikTokUsernamePath(username);
+        const res = await fetch(`https://www.tiktok.com/${userPath}/video/${postId}`, {
+            headers: withOptionalCookie({
                 "user-agent": genericUserAgent,
-                cookie,
-            }
+            }, cookie)
         });
         updateCookie(cookie, res.headers);
 
@@ -222,10 +245,9 @@ const fetchLegacyDetail = async (postId, cookie) => {
 const fetchEmbedDetail = async (postId, cookie) => {
     try {
         const embedRes = await fetch(`https://www.tiktok.com/embed/v2/${postId}`, {
-            headers: {
+            headers: withOptionalCookie({
                 "user-agent": genericUserAgent,
-                cookie,
-            }
+            }, cookie)
         });
 
         updateCookie(cookie, embedRes.headers);
@@ -253,6 +275,7 @@ const fetchEmbedDetail = async (postId, cookie) => {
 export default async function(obj) {
     const cookie = new Cookie({});
     let postId = obj.postId;
+    let username = obj.username || obj.user;
 
     if (!postId) {
         let html = await fetch(`${shortDomain}${obj.shortLink}`, {
@@ -269,6 +292,7 @@ export default async function(obj) {
             const { host, patternMatch } = extract(normalizeURL(extractedURL));
             if (host === "tiktok") {
                 postId = patternMatch?.postId;
+                username = patternMatch?.user || username;
             }
         }
     }
@@ -276,7 +300,7 @@ export default async function(obj) {
 
     // Prefer legacy extraction for no-watermark video URLs.
     // If legacy fails (e.g. WAF), fall back to embed extraction and retry legacy once using refreshed cookies.
-    const legacy = await fetchLegacyDetail(postId, cookie);
+    const legacy = await fetchLegacyDetail(postId, cookie, username);
     let detail;
     let isEmbed = false;
 
@@ -290,7 +314,7 @@ export default async function(obj) {
 
         const embed = await fetchEmbedDetail(postId, cookie);
         if (embed.ok) {
-            const retryLegacy = await fetchLegacyDetail(postId, cookie);
+            const retryLegacy = await fetchLegacyDetail(postId, cookie, username);
             if (retryLegacy.ok) {
                 detail = retryLegacy.detail;
                 isEmbed = false;

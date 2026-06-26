@@ -434,6 +434,7 @@ export default async function({ host, patternMatch, params, authType }) {
             case "tiktok":
                 r = await tiktok({
                     postId: patternMatch.postId,
+                    username: patternMatch.user,
                     shortLink: patternMatch.shortLink,
                     fullAudio: params.tiktokFullAudio,
                     isAudioOnly,

@@ -104,6 +104,29 @@ const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
     return url.toString();
 };
 
+const queueTikTokProxyDownload = (
+    mediaUrl: string,
+    response: { filename: string },
+    selectedRequest: CobaltSaveRequestBody,
+    effectiveTaskId?: string,
+) => {
+    downloadButtonState.set("done");
+    createSavePipeline(
+        {
+            status: "local-processing",
+            type: "proxy",
+            service: "tiktok",
+            tunnel: [mediaUrl],
+            output: {
+                type: guessMimeTypeFromFilename(response.filename),
+                filename: response.filename,
+            },
+        } as any,
+        selectedRequest,
+        effectiveTaskId,
+    );
+};
+
 const applyQueueMeta = (
     taskId: string | undefined,
     response: CobaltAPIResponse | null,
@@ -605,11 +628,13 @@ export const savingHandler = async ({
         if (response.directUrl) {
             const tunnelMediaAvailable = await API.probeCobaltTunnelMedia(tunnelUrl);
             if (tunnelMediaAvailable) {
-                console.log("[tiktok-download] tunnel media probe succeeded, using tunnel");
-                downloadButtonState.set("done");
-                downloadFile({
-                    url: tunnelUrl,
-                });
+                console.log("[tiktok-download] tunnel media probe succeeded, queueing tunnel");
+                queueTikTokProxyDownload(
+                    tunnelUrl,
+                    response,
+                    selectedRequest,
+                    effectiveTaskId,
+                );
                 return response;
             }
 
@@ -619,11 +644,25 @@ export const savingHandler = async ({
             );
             const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
             if (mediaProxyAvailable) {
-                console.log("[tiktok-download] tunnel failed, using Cloudflare media proxy");
-                downloadButtonState.set("done");
-                downloadFile({
-                    url: mediaProxyUrl,
-                });
+                console.log("[tiktok-download] tunnel failed, queueing Cloudflare media proxy");
+                queueTikTokProxyDownload(
+                    mediaProxyUrl,
+                    response,
+                    selectedRequest,
+                    effectiveTaskId,
+                );
+                return response;
+            }
+
+            const directMediaAvailable = await API.probeCobaltTunnelMedia(response.directUrl);
+            if (directMediaAvailable) {
+                console.log("[tiktok-download] tunnel and proxy failed, queueing direct media");
+                queueTikTokProxyDownload(
+                    response.directUrl,
+                    response,
+                    selectedRequest,
+                    effectiveTaskId,
+                );
                 return response;
             }
 

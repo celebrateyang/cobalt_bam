@@ -319,7 +319,12 @@ const normalizeUpstreamTunnelUrl = (value, upstreamOrigin) => {
     ).toString();
 };
 
-const wrapUpstreamTunnelUrl = (value, upstreamOrigin, { filename, service } = {}) => {
+const wrapUpstreamTunnelUrl = (value, upstreamOrigin, {
+    filename,
+    service,
+    type,
+    isHLS,
+} = {}) => {
     const normalizedUrl = normalizeUpstreamTunnelUrl(value, upstreamOrigin);
     if (typeof normalizedUrl !== "string") return normalizedUrl;
 
@@ -334,13 +339,18 @@ const wrapUpstreamTunnelUrl = (value, upstreamOrigin, { filename, service } = {}
         return normalizedUrl;
     }
 
+    const shouldRemuxHlsProxy =
+        isHLS === true &&
+        (!type || type === "proxy");
+
     return createStream({
-        type: "proxy",
+        type: shouldRemuxHlsProxy ? "remux" : "proxy",
         url: normalizedUrl,
         service: service || "generic-upstream",
         filename: typeof filename === "string" && filename.trim()
             ? filename
             : "download.bin",
+        isHLS: shouldRemuxHlsProxy,
     });
 };
 
@@ -353,6 +363,8 @@ const normalizeUpstreamBody = (body, upstreamOrigin) => {
             url: wrapUpstreamTunnelUrl(body.url, upstreamOrigin, {
                 filename: body.filename,
                 service: body.service,
+                type: body.type,
+                isHLS: body.isHLS,
             }),
         };
     }

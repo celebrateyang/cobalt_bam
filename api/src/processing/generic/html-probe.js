@@ -6,6 +6,8 @@ const ABSOLUTE_MEDIA_RE = /^https?:\/\//i;
 const MEDIA_EXT_RE = /\.(mp4|m4v|webm|mov|m3u8)(?:$|[?#])/i;
 const HLS_EXT_RE = /\.m3u8(?:$|[?#])/i;
 const PREVIEW_MEDIA_RE = /(?:^|[\/_.-])(?:preview|vthumb|thumb|thumbnail)(?:[\/_.-]|$)/i;
+const MIN_DIRECT_MEDIA_BYTES = 32 * 1024;
+const MAX_HLS_PLAYLIST_BYTES = 512 * 1024;
 
 const resolveCandidateUrl = (value, baseUrl) => {
     if (typeof value !== "string") return "";
@@ -162,6 +164,127 @@ const guessExtension = (url, contentType) => {
     return "mp4";
 };
 
+const isMediaContentType = (contentType) => {
+    const normalized = String(contentType || "").toLowerCase();
+    return (
+        normalized.startsWith("video/")
+        || normalized.startsWith("audio/")
+        || normalized.includes("octet-stream")
+    );
+};
+
+const isHlsContentType = (contentType) => {
+    const normalized = String(contentType || "").toLowerCase();
+    return normalized.includes("mpegurl") || normalized.includes("vnd.apple.mpegurl");
+};
+
+const getNumericHeader = (headers, name) => {
+    const value = Number(headers.get(name));
+    return Number.isFinite(value) && value >= 0 ? value : undefined;
+};
+
+const isValidHlsPlaylist = (text) => {
+    const playlist = String(text || "");
+    if (!playlist.trimStart().startsWith("#EXTM3U")) return false;
+
+    return (
+        /#EXT-X-STREAM-INF\b/i.test(playlist)
+        || /#EXTINF\b/i.test(playlist)
+        || /#EXT-X-MEDIA\b/i.test(playlist)
+    );
+};
+
+const validateHlsCandidate = async ({ url, headers, signal }) => {
+    let response;
+    try {
+        response = await fetch(url, {
+            redirect: "follow",
+            signal,
+            headers: {
+                "user-agent": genericUserAgent,
+                ...headers,
+            },
+        });
+    } catch {
+        return false;
+    }
+
+    if (!response.ok) return false;
+
+    const contentLength = getNumericHeader(response.headers, "content-length");
+    if (contentLength && contentLength > MAX_HLS_PLAYLIST_BYTES) return false;
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && !isHlsContentType(contentType) && !contentType.toLowerCase().includes("text/plain")) {
+        return false;
+    }
+
+    let text;
+    try {
+        text = await response.text();
+    } catch {
+        return false;
+    }
+
+    if (text.length > MAX_HLS_PLAYLIST_BYTES) return false;
+    return isValidHlsPlaylist(text);
+};
+
+const validateDirectMediaCandidate = async ({ url, headers, signal }) => {
+    let response;
+    try {
+        response = await fetch(url, {
+            method: "GET",
+            redirect: "follow",
+            signal,
+            headers: {
+                "user-agent": genericUserAgent,
+                ...headers,
+                Range: "bytes=0-1023",
+            },
+        });
+    } catch {
+        return false;
+    }
+
+    if (!response.ok && response.status !== 206) return false;
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && !isMediaContentType(contentType)) return false;
+
+    const contentRange = String(response.headers.get("content-range") || "");
+    const rangeTotal = Number(contentRange.match(/\/(\d+)$/)?.[1]);
+    const contentLength = getNumericHeader(response.headers, "content-length");
+    const sizeHint = Number.isFinite(rangeTotal) && rangeTotal > 0
+        ? rangeTotal
+        : contentLength;
+
+    if (sizeHint && sizeHint < MIN_DIRECT_MEDIA_BYTES) return false;
+
+    try {
+        await response.body?.cancel();
+    } catch {
+        // ignore
+    }
+
+    return true;
+};
+
+const selectValidatedCandidate = async ({ candidates, headers, signal }) => {
+    for (const candidate of candidates) {
+        const isHLS = HLS_EXT_RE.test(candidate);
+        const valid = isHLS
+            ? await validateHlsCandidate({ url: candidate, headers, signal })
+            : await validateDirectMediaCandidate({ url: candidate, headers, signal });
+
+        if (valid) {
+            return candidate;
+        }
+    }
+
+    return "";
+};
+
 export default async function htmlProbe({ url, timeoutMs }) {
     const controller = AbortSignal.timeout(timeoutMs);
 
@@ -232,7 +355,15 @@ export default async function htmlProbe({ url, timeoutMs }) {
         referer: finalUrl,
         origin: new URL(finalUrl).origin,
     };
-    const selected = candidates[0];
+    const selected = await selectValidatedCandidate({
+        candidates,
+        headers: candidateHeaders,
+        signal: controller,
+    });
+    if (!selected) {
+        return { error: "fetch.empty" };
+    }
+
     const isHLS = HLS_EXT_RE.test(selected);
     const extension = isHLS ? "mp4" : guessExtension(selected, "");
 

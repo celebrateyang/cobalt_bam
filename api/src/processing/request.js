@@ -198,6 +198,9 @@ export function createResponse(responseType, responseData) {
                     filename: responseData?.filename,
                     directUrl: responseData?.directUrl,
                     tunnelUrl: responseData?.directUrl ? tunnelUrl : undefined,
+                    type: responseData?.type,
+                    service: responseData?.service,
+                    isHLS: responseData?.isHLS,
                 }
                 break;
 

@@ -83,6 +83,19 @@ const shouldStripContentLengthForHls = (streamInfo) => {
     return streamInfo?.isHLS === true;
 };
 
+const isHlsContentType = (value) => {
+    const contentType = String(value || "").toLowerCase();
+    return contentType.includes("mpegurl") || contentType.includes("vnd.apple.mpegurl");
+};
+
+const shouldRejectPlaylistDownload = (streamInfo, headers) => {
+    if (streamInfo?.isHLS === true) return false;
+    if (!isHlsContentType(headers?.["content-type"])) return false;
+
+    const filename = String(streamInfo?.filename || "").toLowerCase();
+    return filename.endsWith(".mp4") || filename.endsWith(".mkv") || filename.endsWith(".mov");
+};
+
 export default async function (streamInfo, res) {
     const shouldFastFailBilibili = shouldApplyBilibiliFastFail(streamInfo);
     const abortController = new AbortController();
@@ -189,6 +202,16 @@ export default async function (streamInfo, res) {
         upstreamContentLength = headers["content-length"];
         upstreamContentRange = headers["content-range"];
         upstreamAcceptRanges = headers["accept-ranges"];
+
+        if (shouldRejectPlaylistDownload(streamInfo, headers)) {
+            tunnelDebugWarn(
+                `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=playlist_download_rejected upstream_status=${statusCode} upstream_len=${upstreamContentLength ?? "n/a"} route=${routeInfo.route}`,
+            );
+            try { stream.destroy?.(); } catch {}
+            res.status(502).end();
+            return;
+        }
+
         res.status(statusCode);
 
         const stripContentLength = shouldStripContentLengthForHls(streamInfo);

@@ -63,6 +63,11 @@ const toRawHeaders = (headers) =>
 const isDiagnosticService = (streamInfo) =>
     streamInfo?.service === 'niconico';
 
+const isGenericHostService = (service) => {
+    const value = String(service || "");
+    return value.includes(".") && !hlsExceptions.has(value);
+};
+
 const redactUrl = (value) => {
     if (typeof value !== 'string' || !/^https?:\/\//i.test(value)) {
         return value;
@@ -279,6 +284,12 @@ const remux = async (streamInfo, res) => {
         streamInfo.service === 'cctv' &&
         streamInfo.isHLS === true &&
         urls.length === 1;
+    const shouldTranscodeUnknownHlsAudio =
+        !shouldTranscodeCorruptCctv &&
+        streamInfo.type !== 'mute' &&
+        streamInfo.isHLS === true &&
+        format === 'mp4' &&
+        isGenericHostService(streamInfo.service);
 
     if (shouldTranscodeCorruptCctv) {
         args.push(
@@ -286,6 +297,12 @@ const remux = async (streamInfo, res) => {
             '-preset', 'veryfast',
             '-crf', '21',
             ...(streamInfo.type === 'mute' ? ['-an'] : ['-c:a', 'aac', '-b:a', '192k'])
+        );
+    } else if (shouldTranscodeUnknownHlsAudio) {
+        args.push(
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-b:a', '192k',
         );
     } else {
         args.push(

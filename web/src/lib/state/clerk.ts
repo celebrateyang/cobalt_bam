@@ -143,6 +143,15 @@ export const hasSeenClerkSignInLocally = () => {
     }
 };
 
+export const hasClerkAuthenticationHintLocally = () => {
+    if (hasSeenClerkSignInLocally()) return true;
+
+    const instance = get(clerk) as (ClerkInstance & {
+        client?: { lastAuthenticationStrategy?: string | null } | null,
+    }) | null;
+    return Boolean(instance?.client?.lastAuthenticationStrategy);
+};
+
 const markClerkSignInSeenLocally = () => {
     setLocalStorageFlag(CLERK_HAS_SIGNED_IN_KEY, "1");
 };

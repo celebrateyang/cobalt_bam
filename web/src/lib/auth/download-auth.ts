@@ -6,7 +6,7 @@ import { loadTranslations, t } from "$lib/i18n/translations";
 import { createDialog } from "$lib/state/dialogs";
 import {
     checkSignedIn,
-    hasSeenClerkSignInLocally,
+    hasClerkAuthenticationHintLocally,
     isSignedIn,
     signIn,
     signUp,
@@ -94,7 +94,7 @@ export const requireDownloadAuth = async (
     const alreadySignedIn = await checkSignedIn();
     if (alreadySignedIn) return true;
 
-    const shouldOpenSignUp = !hasSeenClerkSignInLocally();
+    const shouldOpenSignUp = !hasClerkAuthenticationHintLocally();
     const shouldExplainRetry =
         shouldOpenSignUp && readDownloadAuthPromptCount() > 0;
 

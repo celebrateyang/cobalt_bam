@@ -14,7 +14,7 @@
         "retrying": "đang thử lại",
         "waiting": "đang chờ",
         "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to device: {{ value }}",
+        "auto_saved": "Saved to: {{ value }}",
         "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong.",

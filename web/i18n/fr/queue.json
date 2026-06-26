@@ -14,7 +14,7 @@
         "retrying": "nouvelle tentative",
         "waiting": "en attente",
         "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to device: {{ value }}",
+        "auto_saved": "Saved to: {{ value }}",
         "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "Il y a actuellement {{ count }} videos dans la file d'attente. Merci de patienter pendant le telechargement.",

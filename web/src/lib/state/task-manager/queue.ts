@@ -318,18 +318,21 @@ const autoSaveCompletedItem = async (id: UUID, file: File) => {
     }));
 
     try {
-        const filename = await saveFileToAutoSaveDirectory(file, item.filename);
+        const savedFile = await saveFileToAutoSaveDirectory(file, item.filename);
         updateItem(id, (current) => ({
             ...current,
             saveRequested: true,
             autoSave: {
                 enabled: true,
                 state: "saved",
-                filename,
+                directoryName: savedFile.directoryName,
+                filename: savedFile.filename,
             },
         }));
         await removeFromFileStorage(file.name);
-        console.log(`[queue] auto-save completed id=${id} filename=${filename}`);
+        console.log(
+            `[queue] auto-save completed id=${id} path=${savedFile.directoryName}/${savedFile.filename}`
+        );
     } catch (error) {
         const errorName = error instanceof DOMException
             ? error.name

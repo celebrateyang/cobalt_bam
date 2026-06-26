@@ -38,6 +38,7 @@ type CobaltQueueItemBase = {
     autoSave?: {
         enabled: boolean;
         state: "pending" | "saving" | "saved" | "error";
+        directoryName?: string;
         filename?: string;
         errorName?: string;
     };

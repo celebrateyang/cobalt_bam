@@ -183,7 +183,10 @@ const writeFile = async (file: File, requestedFilename: string) => {
         throw error;
     }
 
-    return filename;
+    return {
+        directoryName: directory.name,
+        filename,
+    };
 };
 
 export const saveFileToAutoSaveDirectory = (

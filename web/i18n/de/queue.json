@@ -14,7 +14,7 @@
         "retrying": "Wiederholen",
         "waiting": "Warten",
         "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to device: {{ value }}",
+        "auto_saved": "Saved to: {{ value }}",
         "auto_save_failed": "Automatic save failed. Click Save to keep this file."
     },
     "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",

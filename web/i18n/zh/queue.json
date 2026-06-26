@@ -14,7 +14,7 @@
         "retrying": "重试中",
         "waiting": "等待中",
         "auto_saving": "正在自动保存到设备...",
-        "auto_saved": "已保存到设备：{{ value }}",
+        "auto_saved": "已保存到：{{ value }}",
         "auto_save_failed": "自动保存失败，请点击“保存”保留此文件"
     },
     "stub": "队列为空",

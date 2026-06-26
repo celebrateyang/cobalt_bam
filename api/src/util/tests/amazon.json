@@ -7,7 +7,7 @@
         },
         "expected": {
             "code": 200,
-            "status": "tunnel"
+            "status": "local-processing"
         },
         "canFail": true
     },

@@ -71,7 +71,8 @@ const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
     }
 
     if (
-        info.service === "weibo" &&
+        info.service &&
+        ["amazon", "weibo"].includes(info.service) &&
         info.source?.kind === "hls" &&
         info.output.filename.endsWith(".mp4")
     ) {

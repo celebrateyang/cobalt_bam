@@ -102,6 +102,7 @@ const CLERK_INIT_TIMEOUT_MS = 12000;
 const META_COMPLETE_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
 const META_COMPLETE_REGISTRATION_TRACKED_PREFIX =
     "meta_complete_registration_tracked:";
+const CLERK_HAS_SIGNED_IN_KEY = "fsv.clerk.has_signed_in";
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -120,6 +121,30 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: str
             clearTimeout(timeoutId);
         }
     }
+};
+
+const setLocalStorageFlag = (key: string, value: string) => {
+    if (!browser) return;
+
+    try {
+        window.localStorage.setItem(key, value);
+    } catch {
+        // Ignore storage errors in strict privacy mode.
+    }
+};
+
+export const hasSeenClerkSignInLocally = () => {
+    if (!browser) return false;
+
+    try {
+        return window.localStorage.getItem(CLERK_HAS_SIGNED_IN_KEY) === "1";
+    } catch {
+        return false;
+    }
+};
+
+const markClerkSignInSeenLocally = () => {
+    setLocalStorageFlag(CLERK_HAS_SIGNED_IN_KEY, "1");
 };
 
 const toEpochMs = (value: unknown): number | null => {
@@ -203,6 +228,8 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
     const userId = instance.user?.id;
     if (!userId || userId === lastSyncedUserId) return;
 
+    markClerkSignInSeenLocally();
+
     if (syncPromise) {
         await syncPromise;
         if (lastSyncedUserId === userId) return;
@@ -267,6 +294,10 @@ export const initClerk = async () => {
             clerkUser.set(instance.user as unknown as ClerkUser | null);
             clerkSession.set(instance.session as unknown as ClerkSession | null);
 
+            if (instance.user) {
+                markClerkSignInSeenLocally();
+            }
+
             await syncUserToAPI(instance);
 
             instance.addListener((resources) => {
@@ -274,6 +305,7 @@ export const initClerk = async () => {
                 clerkSession.set(resources.session as unknown as ClerkSession | null);
 
                 if (resources.user) {
+                    markClerkSignInSeenLocally();
                     void syncUserToAPI(instance);
                 }
             });

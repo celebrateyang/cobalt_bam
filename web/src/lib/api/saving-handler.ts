@@ -24,11 +24,9 @@ import {
     showPointsInsufficientDialog,
 } from "$lib/points/ui";
 import {
-    checkSignedIn,
     clerkEnabled,
-    isSignedIn,
-    signIn,
 } from "$lib/state/clerk";
+import { requireDownloadAuth } from "$lib/auth/download-auth";
 
 import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
@@ -263,20 +261,6 @@ const guessMimeTypeFromFilename = (filename: string) => {
     }
 };
 
-const ensureSignedIn = async () => {
-    if (get(isSignedIn)) return true;
-
-    const alreadySignedIn = await checkSignedIn();
-    if (alreadySignedIn) return true;
-
-    const currentUrl = get(page)?.url?.href;
-    await signIn({
-        fallbackRedirectUrl: currentUrl,
-        signUpFallbackRedirectUrl: currentUrl,
-    });
-    return false;
-};
-
 const translateApiError = async (code: string, context?: Record<string, unknown>) => {
     const lang = get(page)?.params?.lang || "en";
     await loadTranslations(lang, "error");
@@ -484,7 +468,7 @@ export const savingHandler = async ({
     const effectiveTaskId = oldTaskId || findResumableTaskIdForUrl(selectedRequest.url);
 
     if (clerkEnabled) {
-        const signedIn = await ensureSignedIn();
+        const signedIn = await requireDownloadAuth();
         if (!signedIn) {
             downloadButtonState.set("idle");
             return null;

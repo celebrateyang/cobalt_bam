@@ -19,11 +19,10 @@
     import { createDialog } from "$lib/state/dialogs";
     import { queue as queueStore } from "$lib/state/task-manager/queue";
     import {
-        checkSignedIn,
         clerkEnabled,
         isSignedIn,
-        signIn,
     } from "$lib/state/clerk";
+    import { requireDownloadAuth } from "$lib/auth/download-auth";
     import { uuid } from "$lib/util";
     import {
         prepareAutoSaveDirectory,
@@ -591,15 +590,14 @@
 
         if (!$isSignedIn) {
             persistCurrentBatchIntent(true);
-            const alreadySignedIn = await checkSignedIn();
-            if (!alreadySignedIn) {
+            const signedIn = await requireDownloadAuth({
                 // Close native <dialog> first (it sits in the browser top-layer and can cover Clerk).
-                close?.();
-                await new Promise((r) => setTimeout(r, 200));
-                await signIn({
-                    fallbackRedirectUrl: $page.url.href,
-                    signUpFallbackRedirectUrl: $page.url.href,
-                });
+                beforeOpenClerk: async () => {
+                    close?.();
+                    await new Promise((r) => setTimeout(r, 200));
+                },
+            });
+            if (!signedIn) {
                 return;
             }
         }
@@ -794,14 +792,13 @@
         if (running) return;
         if (!$isSignedIn) {
             persistCurrentBatchIntent(true);
-            const alreadySignedIn = await checkSignedIn();
-            if (!alreadySignedIn) {
-                close?.();
-                await new Promise((r) => setTimeout(r, 200));
-                await signIn({
-                    fallbackRedirectUrl: $page.url.href,
-                    signUpFallbackRedirectUrl: $page.url.href,
-                });
+            const signedIn = await requireDownloadAuth({
+                beforeOpenClerk: async () => {
+                    close?.();
+                    await new Promise((r) => setTimeout(r, 200));
+                },
+            });
+            if (!signedIn) {
                 return;
             }
         }

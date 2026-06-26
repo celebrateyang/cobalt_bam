@@ -165,12 +165,8 @@
                 return $t("queue.state.auto_saving");
             }
             if (info.autoSave?.state === "saved") {
-                const filename = info.autoSave.filename || info.filename;
-                const savedPath = info.autoSave.directoryName
-                    ? `${info.autoSave.directoryName}/${filename}`
-                    : filename;
                 return $t("queue.state.auto_saved", {
-                    value: savedPath,
+                    value: info.autoSave.directoryName || "",
                 });
             }
             if (info.autoSave?.state === "error") {

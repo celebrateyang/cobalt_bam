@@ -572,7 +572,7 @@
                             main: true,
                             action: async () => {
                                 try {
-                                    const ready = await prepareAutoSaveDirectory();
+                                    const ready = await prepareAutoSaveDirectory({ prompt: true });
                                     resolve(ready ? "auto" : false);
                                 } catch (error) {
                                     console.error("[batch] unable to prepare auto-save directory", error);

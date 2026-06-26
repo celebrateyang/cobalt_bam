@@ -82,11 +82,11 @@ export const restoreAutoSaveDirectory = () => {
     return restorePromise;
 };
 
-export const prepareAutoSaveDirectory = async () => {
+export const prepareAutoSaveDirectory = async (options?: { prompt?: boolean }) => {
     if (!supportsAutoSaveDirectory()) return false;
 
     let handle = activeDirectory;
-    if (handle && await requestReadWritePermission(handle).catch(() => false)) {
+    if (!options?.prompt && handle && await requestReadWritePermission(handle).catch(() => false)) {
         activeDirectory = handle;
         return true;
     }

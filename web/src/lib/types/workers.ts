@@ -33,6 +33,11 @@ export type CobaltFetchResume = {
     contentType?: string,
 };
 
+export type CobaltFetchValidation = {
+    expectedContentTypePrefixes?: string[],
+    minBytes?: number,
+};
+
 type CobaltPipelineItemBase = {
     workerId: UUID,
     parentId: UUID,
@@ -55,6 +60,7 @@ type CobaltFetchPipelineItem = CobaltPipelineItemBase & {
         url: string,
         tuning?: CobaltFetchTuning,
         resume?: CobaltFetchResume,
+        validation?: CobaltFetchValidation,
     },
 }
 

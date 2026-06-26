@@ -4,6 +4,10 @@ const allowedTikTokHosts = [
     "tiktokcdn.com",
     "tiktokcdn-us.com",
     "tiktokcdn-eu.com",
+    "tiktokv.com",
+    "tiktok.com",
+    "byteoversea.com",
+    "ibytedtos.com",
 ];
 
 const isAllowedTikTokMediaUrl = (value: string) => {
@@ -44,6 +48,7 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
         upstream = await fetch(target, {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+                "Origin": "https://www.tiktok.com",
                 "Referer": "https://www.tiktok.com/",
                 ...(range ? { Range: range } : {}),
             },
@@ -58,6 +63,16 @@ export const GET: RequestHandler = async ({ request, url, fetch }) => {
         return new Response("TikTok media fetch failed", {
             status: upstream.status,
         });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "";
+    if (
+        contentType.toLowerCase().startsWith("text/html") ||
+        contentType.toLowerCase().startsWith("text/plain") ||
+        contentType.toLowerCase().startsWith("application/xhtml")
+    ) {
+        await upstream.body?.cancel();
+        return new Response("TikTok media response is not video", { status: 502 });
     }
 
     const headers = new Headers();

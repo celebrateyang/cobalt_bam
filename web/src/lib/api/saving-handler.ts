@@ -109,6 +109,7 @@ const queueTikTokProxyDownload = (
     response: { filename: string },
     selectedRequest: CobaltSaveRequestBody,
     effectiveTaskId?: string,
+    fallbackUrl?: string,
 ) => {
     downloadButtonState.set("done");
     createSavePipeline(
@@ -121,6 +122,13 @@ const queueTikTokProxyDownload = (
                 type: guessMimeTypeFromFilename(response.filename),
                 filename: response.filename,
             },
+            fallback: fallbackUrl
+                ? {
+                    type: "tunnel",
+                    url: fallbackUrl,
+                    filename: response.filename,
+                }
+                : undefined,
         } as any,
         selectedRequest,
         effectiveTaskId,
@@ -626,9 +634,39 @@ export const savingHandler = async ({
 
         downloadButtonState.set("check");
         if (response.directUrl) {
+            const directCandidates = [
+                response.directUrl,
+                ...(Array.isArray(response.directUrlCandidates)
+                    ? response.directUrlCandidates
+                    : []),
+            ].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ));
+
+            for (const directCandidate of directCandidates) {
+                const mediaProxyUrl = buildTikTokMediaProxyUrl(
+                    directCandidate,
+                    response.filename,
+                );
+                const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
+                if (mediaProxyAvailable) {
+                    console.log("[tiktok-download] queueing TikTok media proxy with tunnel fallback");
+                    queueTikTokProxyDownload(
+                        mediaProxyUrl,
+                        response,
+                        selectedRequest,
+                        effectiveTaskId,
+                        tunnelUrl,
+                    );
+                    return response;
+                }
+            }
+
             const tunnelMediaAvailable = await API.probeCobaltTunnelMedia(tunnelUrl);
             if (tunnelMediaAvailable) {
-                console.log("[tiktok-download] tunnel media probe succeeded, queueing tunnel");
+                console.log("[tiktok-download] media proxy failed, queueing tunnel");
                 queueTikTokProxyDownload(
                     tunnelUrl,
                     response,
@@ -638,35 +676,20 @@ export const savingHandler = async ({
                 return response;
             }
 
-            const mediaProxyUrl = buildTikTokMediaProxyUrl(
-                response.directUrl,
-                response.filename,
-            );
-            const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
-            if (mediaProxyAvailable) {
-                console.log("[tiktok-download] tunnel failed, queueing Cloudflare media proxy");
-                queueTikTokProxyDownload(
-                    mediaProxyUrl,
-                    response,
-                    selectedRequest,
-                    effectiveTaskId,
-                );
-                return response;
-            }
-
             const directMediaAvailable = await API.probeCobaltTunnelMedia(response.directUrl);
             if (directMediaAvailable) {
-                console.log("[tiktok-download] tunnel and proxy failed, queueing direct media");
+                console.log("[tiktok-download] proxy and tunnel failed, queueing direct media");
                 queueTikTokProxyDownload(
                     response.directUrl,
                     response,
                     selectedRequest,
                     effectiveTaskId,
+                    tunnelUrl,
                 );
                 return response;
             }
 
-            console.log("[tiktok-download] tunnel and media proxy failed, opening direct URL");
+            console.log("[tiktok-download] media proxy, tunnel and direct probe failed, opening direct URL");
             downloadButtonState.set("done");
             downloadFile({
                 url: response.directUrl,

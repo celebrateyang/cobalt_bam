@@ -10,7 +10,7 @@ import {
 } from "$lib/state/task-manager/fetch-resume";
 
 import type { CobaltQueue, UUID } from "$lib/types/queue";
-import type { CobaltFetchResume, CobaltFetchTuning } from "$lib/types/workers";
+import type { CobaltFetchResume, CobaltFetchTuning, CobaltFetchValidation } from "$lib/types/workers";
 
 export const runFetchWorker = async (
     workerId: UUID,
@@ -18,6 +18,7 @@ export const runFetchWorker = async (
     url: string,
     tuning?: CobaltFetchTuning,
     resume?: CobaltFetchResume,
+    validation?: CobaltFetchValidation,
     startAttempt = 0,
 ) => {
     const worker = new FetchWorker();
@@ -41,6 +42,7 @@ export const runFetchWorker = async (
                 url,
                 tuning,
                 resume,
+                validation,
                 startAttempt + 1,
             );
         }
@@ -62,9 +64,9 @@ export const runFetchWorker = async (
 
     worker.postMessage({
         cobaltFetchWorker: {
-            url,
-            tuning,
-            resume: {
+                url,
+                tuning,
+                resume: {
                 ...resume,
                 ...(savedResume
                     ? {
@@ -75,6 +77,7 @@ export const runFetchWorker = async (
                     }
                     : {}),
             },
+            validation,
         }
     });
 

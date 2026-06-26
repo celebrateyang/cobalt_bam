@@ -27,6 +27,11 @@ type FetchWorkerResume = {
     contentType?: string,
 };
 
+type FetchWorkerValidation = {
+    expectedContentTypePrefixes?: string[],
+    minBytes?: number,
+};
+
 const isAbortError = (e: unknown) => (
     (typeof e === "object" && e && "name" in e && e.name === "AbortError") ||
     String(e).includes("AbortError")
@@ -215,7 +220,30 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
     };
 };
 
-const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: FetchWorkerResume) => {
+const normalizeValidation = (validation?: FetchWorkerValidation) => ({
+    expectedContentTypePrefixes: Array.isArray(validation?.expectedContentTypePrefixes)
+        ? validation.expectedContentTypePrefixes
+            .map((value) => String(value || "").toLowerCase().trim())
+            .filter(Boolean)
+        : [],
+    minBytes: Number.isFinite(validation?.minBytes) && Number(validation?.minBytes) > 0
+        ? Math.floor(Number(validation?.minBytes))
+        : 0,
+});
+
+const isLikelyHtmlResponse = (contentType: string) => {
+    const normalized = contentType.toLowerCase();
+    return normalized.startsWith("text/html") ||
+        normalized.startsWith("application/xhtml") ||
+        normalized.startsWith("text/plain");
+};
+
+const fetchFile = async (
+    url: string,
+    tuning?: FetchWorkerTuning,
+    resume?: FetchWorkerResume,
+    validation?: FetchWorkerValidation,
+) => {
     // Let the runner know this worker booted successfully,
     // so it can distinguish "slow network" vs "worker failed to load".
     self.postMessage({
@@ -225,6 +253,7 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: Fetch
     });
 
     const runtimeTuning = normalizeTuning(tuning);
+    const runtimeValidation = normalizeValidation(validation);
     const debug = Boolean(tuning);
     const debugPrefix = "[FETCH DEBUG]";
     const logDebug = (message: string, extra?: Record<string, unknown>) => {
@@ -568,6 +597,23 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: Fetch
             if (nextContentType) {
                 contentType = nextContentType;
             }
+            if (
+                runtimeValidation.expectedContentTypePrefixes.length > 0 &&
+                isLikelyHtmlResponse(contentType)
+            ) {
+                await response.body?.cancel().catch(() => undefined);
+                return error("queue.fetch.bad_response", await buildResumeSnapshot());
+            }
+            if (
+                runtimeValidation.expectedContentTypePrefixes.length > 0 &&
+                contentType &&
+                !runtimeValidation.expectedContentTypePrefixes.some((prefix) => (
+                    contentType.toLowerCase().startsWith(prefix)
+                ))
+            ) {
+                await response.body?.cancel().catch(() => undefined);
+                return error("queue.fetch.bad_response", await buildResumeSnapshot());
+            }
 
             const contentRangeHeader = response.headers.get("Content-Range");
             const rangeBounds = parseContentRangeBounds(contentRangeHeader);
@@ -844,6 +890,9 @@ const fetchFile = async (url: string, tuning?: FetchWorkerTuning, resume?: Fetch
         if (receivedBytes === 0) {
             return error("queue.fetch.empty_tunnel");
         }
+        if (runtimeValidation.minBytes > 0 && receivedBytes < runtimeValidation.minBytes) {
+            return error("queue.fetch.corrupted_file");
+        }
 
         if (!storage) {
             return error("queue.fetch.empty_tunnel");
@@ -929,6 +978,7 @@ self.onmessage = async (event: MessageEvent) => {
             event.data.cobaltFetchWorker.url,
             event.data.cobaltFetchWorker.tuning,
             event.data.cobaltFetchWorker.resume,
+            event.data.cobaltFetchWorker.validation,
         );
         self.close();
     }

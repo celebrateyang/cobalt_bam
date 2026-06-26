@@ -60,6 +60,7 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
                 workerArgs.url,
                 workerArgs.tuning,
                 workerArgs.resume,
+                workerArgs.validation,
             );
             break;
 

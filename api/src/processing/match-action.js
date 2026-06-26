@@ -412,6 +412,13 @@ export default function({
         typeof r.urls === "string"
     ) {
         responseData.directUrl = r.urls;
+        responseData.directUrlCandidates = Array.isArray(r.urlCandidates)
+            ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ))
+            : undefined;
     }
 
     return createResponse(responseType, responseData);

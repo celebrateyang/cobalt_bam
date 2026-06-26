@@ -197,6 +197,7 @@ export function createResponse(responseType, responseData) {
                     url: tunnelUrl,
                     filename: responseData?.filename,
                     directUrl: responseData?.directUrl,
+                    directUrlCandidates: responseData?.directUrlCandidates,
                     tunnelUrl: responseData?.directUrl ? tunnelUrl : undefined,
                     type: responseData?.type,
                     service: responseData?.service,

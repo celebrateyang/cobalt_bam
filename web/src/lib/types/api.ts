@@ -47,6 +47,7 @@ type CobaltRedirectResponse = {
 type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
     directUrl?: string,
+    directUrlCandidates?: string[],
     tunnelUrl?: string,
 } & CobaltPartialURLResponse;
 

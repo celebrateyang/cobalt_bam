@@ -144,6 +144,15 @@ const buildFallbackPipeline = (parentId: string, url: string): CobaltPipelineIte
     },
 }]);
 
+const buildFetchValidation = (info: CobaltLocalProcessingResponse) => {
+    if (info.service !== "tiktok") return undefined;
+
+    return {
+        expectedContentTypePrefixes: ["video/"],
+        minBytes: 64 * 1024,
+    };
+};
+
 const getDirectInputSources = (info: CobaltLocalProcessingResponse) => {
     if (info.source?.kind !== "hls" || !Array.isArray(info.source.urls)) {
         return;
@@ -221,6 +230,7 @@ export const createSavePipeline = (
             slowChunkMs: 8000,
         }
         : undefined;
+    const fetchValidation = buildFetchValidation(info);
 
     const directSources = getDirectInputSources(info);
 
@@ -269,6 +279,7 @@ export const createSavePipeline = (
                             slot: fetchSlot,
                         }
                         : undefined,
+                    validation: fetchValidation,
                 },
             });
         }

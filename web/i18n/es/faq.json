@@ -69,8 +69,8 @@
             "a": "Sí. Para enlaces compatibles, la app intentará detectar colecciones/episodios/listas y ofrecer una entrada de lote.\nSi no lo detecta, pega cada enlace en modo lote."
         },
         "batch_save_location": {
-            "q": "¿Dónde se guardan los videos de una colección cuando termina la descarga?",
-            "a": "Cuando una tarea de colección termina, los videos primero aparecen en la cola de descargas de la esquina superior derecha. Debes pulsar \"Guardar\" en cada elemento para escribir el archivo en tu dispositivo. Por seguridad del navegador, el sitio no puede guardar automáticamente en disco."
+            "q": "¿Dónde se guardó mi video después de descargarlo?",
+            "a": "Descarga individual: normalmente el navegador guarda el archivo. Pulsa Ctrl+J para abrir la lista de descargas en Chrome, Edge, Firefox u Opera, y revisa la carpeta configurada en los ajustes de Descargas del navegador. En Safari, usa el botón de descargas de la barra de herramientas; en Mac, Option+Command+L muestra la lista de descargas.\nDescarga por lotes: si al iniciar el lote elegiste una carpeta para guardado automático, los videos están en esa carpeta. Intenta recordar la ruta elegida o mira el nombre de la carpeta guardada en la cola de descargas. Si elegiste guardado manual, o tu navegador no admite guardar automáticamente en una carpeta, los videos terminados quedan primero en la cola de descargas de la esquina superior derecha. Pulsa \"Guardar\" en cada elemento; después, la ubicación depende de los ajustes de descarga del navegador.\nMóvil/iOS: si usaste compartir o un panel del sistema para guardar, el archivo puede estar en Fotos o en la app Archivos, en Descargas/Recientes. Si cierras o actualizas la página antes de guardar elementos de la cola, los archivos temporales pueden perderse y tendrás que descargarlos otra vez."
         },
         "batch_browser_restart": {
             "q": "¿Las descargas de colección siguen ahí después de cerrar y abrir el navegador?",

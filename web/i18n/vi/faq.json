@@ -69,8 +69,8 @@
             "a": "Có. Với link hỗ trợ, ứng dụng sẽ cố gắng nhận diện bộ sưu tập/tập/playlist và cung cấp chế độ batch.\nNếu không nhận diện, hãy dán từng link vào chế độ batch."
         },
         "batch_save_location": {
-            "q": "Video tải theo bộ sưu tập sẽ được lưu ở đâu sau khi hoàn tất?",
-            "a": "Sau khi tác vụ bộ sưu tập hoàn tất, video sẽ xuất hiện trước trong hàng đợi tải xuống ở góc trên bên phải. Bạn cần bấm \"Lưu\" cho từng mục thì tệp mới được ghi vào thiết bị. Do cơ chế bảo mật của trình duyệt, trang web không thể tự động lưu thẳng xuống đĩa."
+            "q": "Video đã tải xuống được lưu ở đâu?",
+            "a": "Tải một video: tệp thường do trình duyệt lưu. Nhấn Ctrl+J để mở danh sách tải xuống trong Chrome, Edge, Firefox hoặc Opera, rồi kiểm tra thư mục lưu trong phần cài đặt Downloads của trình duyệt. Trong Safari, dùng nút tải xuống trên thanh công cụ; trên Mac, Option+Command+L sẽ mở danh sách tải xuống.\nTải hàng loạt: nếu khi bắt đầu bạn đã chọn thư mục để tự động lưu, video nằm trong thư mục đó. Hãy nhớ lại đường dẫn đã chọn hoặc xem tên thư mục được hiển thị trong hàng đợi tải xuống. Nếu bạn chọn lưu thủ công, hoặc trình duyệt không hỗ trợ tự động lưu vào thư mục, video hoàn tất sẽ nằm trước trong hàng đợi tải xuống ở góc trên bên phải. Nhấn \"Lưu\" cho từng mục; sau đó vị trí lưu sẽ theo cài đặt tải xuống của trình duyệt.\nDi động/iOS: nếu dùng chia sẻ hoặc bảng lưu của hệ thống, tệp có thể nằm trong Photos hoặc ứng dụng Files, mục Downloads/Recents. Nếu đóng hoặc làm mới trang trước khi lưu các mục trong hàng đợi, tệp tạm có thể bị mất và bạn có thể phải tải lại."
         },
         "batch_browser_restart": {
             "q": "Đóng rồi mở lại trình duyệt thì các tải xuống bộ sưu tập còn không?",

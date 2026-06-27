@@ -69,8 +69,8 @@
             "a": "Yes. For supported links, the app will try to detect collections/episodes/playlists and offer a batch entry.\nIf it fails to detect, paste each item link into batch mode."
         },
         "batch_save_location": {
-            "q": "Where are collection downloads saved after they finish?",
-            "a": "After a collection task finishes, videos first appear in the download queue at the top right. You must click \"Save\" on each item to write files to your device. For browser security reasons, the site cannot auto-save files to disk."
+            "q": "Where did my video go after downloading?",
+            "a": "Single downloads: the file is usually saved by your browser. Press Ctrl+J to open the downloads list in Chrome, Edge, Firefox, or Opera, and check the browser's Downloads settings for the save folder. In Safari, use the downloads button in the toolbar; on Mac, Option+Command+L shows the downloads list.\nBatch downloads: if you chose a folder for automatic saving when the batch started, the videos are in that folder. Try to recall the path you selected, or check the saved folder name shown in the download queue. If you chose manual saving, or your browser does not support automatic folder saving, completed videos stay in the top-right download queue first. Click \"Save\" on each item; after that, the location follows your browser's download settings.\nMobile/iOS: when sharing or using a system save panel, the file may be in Photos or the Files app under Downloads/Recents. If you close or refresh the page before saving queue items, temporary files may be lost and you may need to download again."
         },
         "batch_browser_restart": {
             "q": "Will collection downloads still exist after I close and reopen the browser?",

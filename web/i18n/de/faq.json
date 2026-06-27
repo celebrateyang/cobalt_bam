@@ -69,8 +69,8 @@
             "a": "Ja. Für unterstützte Links erkennt die App Sammlungen/Episoden/Playlists und bietet einen Batch-Einstieg.\nWenn nicht erkannt, füge jeden Link im Batch-Modus ein."
         },
         "batch_save_location": {
-            "q": "Wo werden Sammlungs-Downloads nach Abschluss gespeichert?",
-            "a": "Nach Abschluss einer Sammlungsaufgabe erscheinen die Videos zuerst in der Download-Warteschlange oben rechts. Du musst bei jedem Eintrag auf \"Speichern\" klicken, damit die Datei wirklich auf deinem Gerät landet. Aus Sicherheitsgründen kann die Website nicht automatisch auf die Festplatte speichern."
+            "q": "Wo wurde mein Video nach dem Download gespeichert?",
+            "a": "Einzelner Download: Die Datei wird normalerweise vom Browser gespeichert. Druecke Ctrl+J, um die Downloadliste zu oeffnen (Chrome, Edge, Firefox und Opera). In den Browser-Einstellungen findest du auch den eingestellten Downloadordner. In Safari kannst du die Download-Schaltflaeche in der Symbolleiste verwenden; auf dem Mac zeigt Option+Command+L die Downloadliste.\nBatch-Download: Wenn du beim Start einen Ordner fuer automatisches Speichern gewaehlt hast, liegen die Videos in diesem Ordner. Erinnere dich an den ausgewaehlten Pfad oder pruefe den Ordnernamen in der Download-Warteschlange. Wenn du manuelles Speichern gewaehlt hast oder der Browser automatisches Speichern nicht unterstuetzt, bleiben fertige Videos zuerst in der Warteschlange oben rechts. Klicke fuer jedes Video auf \"Speichern\"; danach gilt wieder der Downloadordner deines Browsers.\nMobil/iOS: Bei Teilen- oder System-Speicherdialogen kann die Datei in Fotos oder in der Dateien-App unter Downloads/Zuletzt landen. Wenn du die Seite schliesst oder neu laedst, bevor du speicherst, koennen temporaere Warteschlangen-Dateien verloren gehen und muessen neu heruntergeladen werden."
         },
         "batch_browser_restart": {
             "q": "Bleiben Sammlungs-Downloads nach dem Schließen und erneuten Öffnen des Browsers erhalten?",

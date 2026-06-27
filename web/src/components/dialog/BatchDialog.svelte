@@ -405,7 +405,9 @@
     const selectedCount = () => selected.filter(Boolean).length;
     const downloadedSelectedCount = () => downloadedSelected.filter(Boolean).length;
     $: activeSelectionTotal = viewingDownloaded ? safeDownloadedItems.length : items.length;
-    $: activeSelectedCount = viewingDownloaded ? downloadedSelectedCount() : selectedCount();
+    $: activeSelectedCount = viewingDownloaded
+        ? downloadedSelected.filter(Boolean).length
+        : selected.filter(Boolean).length;
     $: activeSelectionAll =
         activeSelectionTotal > 0 && activeSelectedCount === activeSelectionTotal;
     $: activeSelectionPartial =
@@ -441,8 +443,11 @@
         downloadedSelected = downloadedSelected.map(() => value);
     };
 
-    const toggleAllSelection = () => {
-        const shouldSelect = !activeSelectionAll;
+    const handleAllSelectionChange = (event: Event) => {
+        const target = event.currentTarget;
+        if (!(target instanceof HTMLInputElement)) return;
+
+        const shouldSelect = target.checked;
         if (viewingDownloaded) {
             setAllDownloaded(shouldSelect);
         } else {
@@ -872,7 +877,7 @@
                         bind:this={selectAllCheckbox}
                         type="checkbox"
                         checked={activeSelectionAll}
-                        on:change={toggleAllSelection}
+                        on:change={handleAllSelectionChange}
                         disabled={running || pointsCheckLoading || activeSelectionTotal === 0}
                         aria-label={activeSelectionAll
                             ? $t("dialog.batch.select_none")

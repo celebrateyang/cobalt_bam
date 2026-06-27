@@ -672,21 +672,14 @@
 
             const subsetCounts = (() => {
                 const limit = batchMaxItems;
-                const candidates = [limit, 50, 20, 10, 5];
-                const unique = new Set<number>();
+                const candidates = [5, 10, 20];
 
-                for (const candidate of candidates) {
-                    if (
-                        typeof candidate === "number" &&
+                return candidates.filter(
+                    (candidate) =>
                         Number.isFinite(candidate) &&
                         candidate > 1 &&
-                        candidate <= limit
-                    ) {
-                        unique.add(candidate);
-                    }
-                }
-
-                return [...unique].sort((a, b) => b - a).slice(0, 3);
+                        candidate <= limit,
+                );
             })();
 
             const batchTitle = expanded.title || $t("dialog.batch.title");
@@ -716,27 +709,22 @@
                     max: batchMaxItems,
                 }),
                 buttons: [
-                    ...subsetCounts.map((count, index) => ({
-                        text: $t("dialog.batch.limit.download_first", { count }),
-                        main: index === 0,
-                        action: () => openSubset(count),
-                    })),
                     ...(canFallbackToSingle
                         ? [
                               {
                                   text: $t("dialog.batch.detect.download_single"),
-                                  main: subsetCounts.length === 0,
+                                  main: true,
                                   action: () => {
                                       setTimeout(() => savingHandler({ url }), 200);
                                   },
                               },
                           ]
                         : []),
-                    {
-                        text: $t("button.gotit"),
-                        main: subsetCounts.length === 0 && !canFallbackToSingle,
-                        action: () => {},
-                    },
+                    ...subsetCounts.map((count) => ({
+                        text: $t("dialog.batch.limit.download_first", { count }),
+                        main: !canFallbackToSingle && count === subsetCounts[0],
+                        action: () => openSubset(count),
+                    })),
                 ],
             });
             return;

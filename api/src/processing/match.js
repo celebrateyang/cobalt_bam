@@ -439,6 +439,8 @@ export default async function({ host, patternMatch, params, authType }) {
                     postId: patternMatch.postId,
                     username: patternMatch.user,
                     shortLink: patternMatch.shortLink,
+                    url: url.toString(),
+                    quality: params.videoQuality,
                     fullAudio: params.tiktokFullAudio,
                     isAudioOnly,
                     h265: params.allowH265,

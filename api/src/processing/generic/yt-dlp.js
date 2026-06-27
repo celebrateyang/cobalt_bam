@@ -298,6 +298,18 @@ const isLinkedInExtractor = (info) => {
     return extractor === "linkedin" || extractorKey === "linkedin";
 };
 
+const isWatermarkedFormat = (format = {}) => {
+    const fields = [
+        format?.format_id,
+        format?.format,
+        format?.format_note,
+        format?.quality,
+        format?.preference,
+    ].map((value) => String(value || "").toLowerCase());
+
+    return fields.some((value) => value.includes("watermark"));
+};
+
 export const collectCandidates = (formats = [], info = {}) => {
     const trustSohuMp4AsMuxed = isSohuExtractor(info);
     const trustLinkedInMp4AsMuxed = isLinkedInExtractor(info);
@@ -342,6 +354,7 @@ export const collectCandidates = (formats = [], info = {}) => {
                 isDash: protocol.includes("dash") || protocol.includes("http_dash_segments"),
                 protocol,
                 formatId: format?.format_id || format?.itag,
+                isWatermarked: isWatermarkedFormat(format),
             };
         })
         .filter(Boolean);
@@ -478,7 +491,13 @@ const withSelectedHeaders = (base, selected) => ({
     },
 });
 
-export default async function extractWithYtDlp({ url, quality, downloadMode, timeoutMs }) {
+export default async function extractWithYtDlp({
+    url,
+    quality,
+    downloadMode,
+    timeoutMs,
+    avoidWatermarked = false,
+}) {
     const runner = await resolveRunner();
     if (!runner) {
         return { error: "fetch.fail", message: "yt-dlp executable not found" };
@@ -538,6 +557,10 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
         }
 
         if (isSupportedUrl(info?.url) && !Array.isArray(info?.formats)) {
+            if (avoidWatermarked && isWatermarkedFormat(info)) {
+                return { error: "fetch.fail", message: "yt-dlp returned only watermarked URL" };
+            }
+
             const base = buildResponseBase({ info, url });
             const extension = String(info?.ext || "mp4").toLowerCase();
             return {
@@ -560,7 +583,7 @@ export default async function extractWithYtDlp({ url, quality, downloadMode, tim
         const candidates = collectCandidates(
             Array.isArray(info?.formats) ? info.formats : [],
             info,
-        );
+        ).filter((candidate) => !avoidWatermarked || !candidate.isWatermarked);
         const directVideo = pickBestDirectVideo({ candidates, requestedQuality });
         const videoOnly = pickBestVideoOnly({ candidates, requestedQuality });
         const audioOnly = pickBestAudioOnly({ candidates });

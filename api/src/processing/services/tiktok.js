@@ -5,6 +5,7 @@ import { genericUserAgent } from "../../config.js";
 import { updateCookie } from "../cookie/manager.js";
 import { createStream } from "../../stream/manage.js";
 import { convertLanguageCode } from "../../misc/language-codes.js";
+import extractWithYtDlp from "../generic/yt-dlp.js";
 
 const shortDomain = "https://vt.tiktok.com/";
 const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
@@ -272,6 +273,69 @@ const fetchEmbedDetail = async (postId, cookie) => {
     }
 };
 
+const buildTikTokCanonicalUrl = ({ postId, username, shortLink, url }) => {
+    if (typeof url === "string" && /^https?:\/\//i.test(url)) {
+        return url;
+    }
+
+    if (shortLink) {
+        return `${shortDomain}${shortLink}`;
+    }
+
+    if (postId) {
+        const userPath = normalizeTikTokUsernamePath(username);
+        return `https://www.tiktok.com/${userPath}/video/${postId}`;
+    }
+
+    return "";
+};
+
+const fallbackToYtDlp = async (obj, reason) => {
+    if (obj.isAudioOnly || obj.isAudioMuted) return null;
+
+    const url = buildTikTokCanonicalUrl({
+        postId: obj.postId,
+        username: obj.username || obj.user,
+        shortLink: obj.shortLink,
+        url: obj.url,
+    });
+
+    if (!url) return null;
+
+    const startedAt = Date.now();
+    console.log(`[tiktok] trying yt-dlp fallback reason=${reason || "unknown"} url=${url}`);
+
+    const result = await extractWithYtDlp({
+        url,
+        quality: obj.quality,
+        downloadMode: "auto",
+        timeoutMs: obj.ytDlpTimeoutMs,
+        avoidWatermarked: true,
+    }).catch((error) => ({
+        error: "fetch.fail",
+        message: error?.message || String(error),
+    }));
+
+    if (result?.error) {
+        console.log(
+            `[tiktok] yt-dlp fallback failed reason=${reason || "unknown"} elapsed_ms=${Date.now() - startedAt} message=${result.message || result.error}`,
+        );
+        return null;
+    }
+
+    console.log(
+        `[tiktok] yt-dlp fallback success elapsed_ms=${Date.now() - startedAt} hls=${result?.isHLS === true} merge=${Array.isArray(result?.urls)}`,
+    );
+
+    return {
+        ...result,
+        service: "tiktok",
+        tiktokVideoSource: "yt-dlp",
+        tiktokVideoSourceKind: "yt-dlp",
+        tiktokUsedYtDlpFallback: true,
+    };
+};
+
 export default async function(obj) {
     const cookie = new Cookie({});
     let postId = obj.postId;
@@ -285,7 +349,10 @@ export default async function(obj) {
             }
         }).then(r => r.text()).catch(() => {});
 
-        if (!html) return { error: "fetch.fail" };
+        if (!html) {
+            const ytDlp = await fallbackToYtDlp(obj, "short_link_fetch_fail");
+            return ytDlp || { error: "fetch.fail" };
+        }
 
         if (html.startsWith('<a href="https://')) {
             const extractedURL = html.split('<a href="')[1].split('?')[0];
@@ -296,7 +363,13 @@ export default async function(obj) {
             }
         }
     }
-    if (!postId) return { error: "fetch.short_link" };
+    if (!postId) {
+        const ytDlp = await fallbackToYtDlp(obj, "short_link_resolve_fail");
+        return ytDlp || { error: "fetch.short_link" };
+    }
+
+    obj.postId = postId;
+    obj.username = username;
 
     // Prefer legacy extraction for no-watermark video URLs.
     // If legacy fails (e.g. WAF), fall back to embed extraction and retry legacy once using refreshed cookies.
@@ -323,7 +396,8 @@ export default async function(obj) {
                 isEmbed = true;
             }
         } else {
-            return { error: legacy.error || "fetch.fail" };
+            const ytDlp = await fallbackToYtDlp(obj, legacy.error || "legacy_and_embed_fail");
+            return ytDlp || { error: legacy.error || "fetch.fail" };
         }
     }
 
@@ -341,7 +415,8 @@ export default async function(obj) {
     images = isEmbed ? detail?.itemInfos?.imagePostInfo?.images : detail.imagePost?.images;
 
     if (isEmbed && !obj.isAudioOnly && !images) {
-        return {
+        const ytDlp = await fallbackToYtDlp(obj, "embed_video_watermarked");
+        return ytDlp || {
             error: "fetch.fail",
             tiktokPreferUpstream: true,
             tiktokUsedEmbedFallback: true,

@@ -79,6 +79,11 @@
                 <a class="link-item link-item--primary" href={`/${data.lang}/faq`}>
                     {isZh ? '常见问题（FAQ）' : 'Frequently asked questions'}
                 </a>
+                {#if data.lang === 'en'}
+                    <a class="link-item link-item--primary" href="/en/learn">
+                        Learning and troubleshooting guides
+                    </a>
+                {/if}
                 <a class="link-item link-item--primary" href={`/${data.lang}`}>
                     {isZh ? '返回首页下载' : 'Back to home downloader'}
                 </a>

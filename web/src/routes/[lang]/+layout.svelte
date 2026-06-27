@@ -63,6 +63,9 @@
 
     const buildLangPath = (lang: string) =>
         currentPath ? `/${lang}${currentPath}` : `/${lang}`;
+    $: alternateLanguages = currentPath.startsWith("/learn")
+        ? ["en"]
+        : supportedLanguages;
 
     const noindexPathPatterns = [
         /^\/account(?:\/|$)/,
@@ -177,7 +180,7 @@
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- hreflang tags for SEO -->
-    {#each supportedLanguages as lang}
+    {#each alternateLanguages as lang}
         <link
             rel="alternate"
             hreflang={lang}

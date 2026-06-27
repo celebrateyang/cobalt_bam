@@ -32,6 +32,7 @@
     $: faqUrl = `/${data.lang}/faq`;
     $: discoverUrl = `/${data.lang}/discover`;
     $: downloadHubUrl = `/${data.lang}/download`;
+    $: learnUrl = '/en/learn';
     $: relatedGuides = getRelatedGuideLinks(data.slug, 6);
     $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 6);
     $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
@@ -329,6 +330,11 @@
                 <a class="related-link related-link--primary" href={guideIndexUrl}>
                     {guideHubLabel}
                 </a>
+                {#if data.lang === 'en'}
+                    <a class="related-link related-link--primary" href={learnUrl}>
+                        Learning and troubleshooting guides
+                    </a>
+                {/if}
                 <a class="related-link related-link--primary" href={faqUrl}>
                     {faqLabel}
                 </a>

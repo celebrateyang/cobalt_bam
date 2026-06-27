@@ -90,6 +90,11 @@
                 <a class="hero-link" href={`/${data.lang}/guide`}>
                     {isZh ? '查看下载指南' : 'Browse guides'}
                 </a>
+                {#if data.lang === 'en'}
+                    <a class="hero-link" href="/en/learn">
+                        Learn
+                    </a>
+                {/if}
                 <a class="hero-link" href={`/${data.lang}/faq`}>
                     FAQ
                 </a>

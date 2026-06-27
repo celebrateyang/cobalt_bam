@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
 import { guideSlugs } from '$lib/seo/guide-pages';
+import { learnSlugs } from '$lib/seo/learn-pages';
 import { machineReadablePaths, supportedSeoLanguages } from '$lib/seo/site';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
@@ -90,6 +91,11 @@ function generateSitemap(): string {
 
     for (const path of machineReadablePaths) {
         urls.push(urlEntry(`${site}${path}`, now, 'weekly', path === '/capabilities.json' ? '0.7' : '0.6'));
+    }
+
+    urls.push(urlEntry(`${site}/en/learn`, now, 'weekly', '0.8'));
+    for (const slug of learnSlugs) {
+        urls.push(urlEntry(`${site}/en/learn/${slug}`, now, 'weekly', '0.8'));
     }
 
     for (const lang of languages) {

@@ -1,5 +1,6 @@
 import { capabilityPayload, capabilityServices, siteCapabilities, toolCapabilities } from '$lib/seo/capabilities';
 import { guidePages } from '$lib/seo/guide-pages';
+import { learnPages } from '$lib/seo/learn-pages';
 import { getSeoLandingLocale, getSeoLandingPage, seoLandingSlugs } from '$lib/seo/landing-pages';
 import { canonicalOrigin, supportedSeoLanguages } from '$lib/seo/site';
 
@@ -8,6 +9,8 @@ const lineList = (items: string[]) => items.map((item) => `- ${item}`).join('\n'
 const serviceUrl = (slug: string, lang = 'en') => `${canonicalOrigin}/${lang}/download/${slug}`;
 
 const guideUrl = (slug: string, lang = 'en') => `${canonicalOrigin}/${lang}/guide/${slug}`;
+
+const learnUrl = (slug: string) => `${canonicalOrigin}/en/learn/${slug}`;
 
 export const buildLlmsFullText = (): string => {
     const localizedEntryLines = supportedSeoLanguages.map(
@@ -26,6 +29,10 @@ export const buildLlmsFullText = (): string => {
 
     const guideLines = guidePages.map(
         (guide) => `- ${guide.platform}: ${guideUrl(guide.slug)} (download page: ${serviceUrl(guide.landingSlug)})`,
+    );
+
+    const learnLines = learnPages.map(
+        (page) => `- ${page.title}: ${learnUrl(page.slug)} -- ${page.summary}`,
     );
 
     const serviceLines = capabilityServices.map((service) => {
@@ -96,6 +103,9 @@ ${landingLines.join('\n')}
 
 Step-by-step guides:
 ${guideLines.join('\n')}
+
+Learning and troubleshooting guides:
+${learnLines.join('\n')}
 
 Supported services:
 ${serviceLines.join('\n')}

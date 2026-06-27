@@ -63,6 +63,7 @@ export const siteCapabilities = {
     primaryPages: [
         'https://freesavevideo.online/en/download',
         'https://freesavevideo.online/en/guide',
+        'https://freesavevideo.online/en/learn',
         'https://freesavevideo.online/en/free-video-tools',
         'https://freesavevideo.online/en/faq',
         'https://freesavevideo.online/capabilities.json',
@@ -77,6 +78,9 @@ export const siteCapabilities = {
         'playlist and collection download',
         'audio extraction from public media links',
         'MP4 to MP3 and local video conversion',
+        'offline study video saving',
+        'video download troubleshooting',
+        'public video download safety',
     ],
     coreFeatures: [
         'online video download',

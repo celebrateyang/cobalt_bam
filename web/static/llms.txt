@@ -33,6 +33,7 @@ Different platforms expose different capabilities. Some support video, audio, no
 - Download directory: https://freesavevideo.online/en/download
 - Chinese download directory: https://freesavevideo.online/zh/download
 - Guide index: https://freesavevideo.online/en/guide
+- Learn hub: https://freesavevideo.online/en/learn
 - FAQ: https://freesavevideo.online/en/faq
 - Video converter/audio extractor: https://freesavevideo.online/en/remux
 - Whiteboard recorder: https://freesavevideo.online/en/videorecord
@@ -72,6 +73,16 @@ Localized download and guide directories follow the same language prefix pattern
 - https://freesavevideo.online/en/download/snapchat-video-download
 - https://freesavevideo.online/en/download/vimeo-video-download
 - https://freesavevideo.online/en/download/soundcloud-audio-download
+
+## Learning and Troubleshooting Guides
+- How to save online videos for offline study: https://freesavevideo.online/en/learn/save-online-videos-offline-study
+- How to convert video to audio for language learning: https://freesavevideo.online/en/learn/convert-video-to-audio-language-learning
+- How to download subtitles or learning materials from videos: https://freesavevideo.online/en/learn/download-subtitles-learning-materials
+- Why online video downloads fail and how to fix them: https://freesavevideo.online/en/learn/video-download-errors-explained
+- Best link types for online video downloaders: https://freesavevideo.online/en/learn/best-link-types-for-video-downloaders
+- How to download video audio from Weibo: https://freesavevideo.online/en/learn/download-video-audio-from-weibo
+- How to extract audio from short videos: https://freesavevideo.online/en/learn/extract-audio-from-short-videos
+- Public video download safety and copyright checklist: https://freesavevideo.online/en/learn/public-video-download-safety
 
 ## API
 - Base URL: https://api.freesavevideo.online/

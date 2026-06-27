@@ -79,6 +79,43 @@
                 return script;
             };
 
+            const detectAiReferral = () => {
+                const patterns = [
+                    ["chatgpt", /(^|\.)chatgpt\.com$/i],
+                    ["openai", /(^|\.)openai\.com$/i],
+                    ["claude", /(^|\.)claude\.ai$/i],
+                    ["anthropic", /(^|\.)anthropic\.com$/i],
+                    ["gemini", /(^|\.)gemini\.google\.com$/i],
+                    ["perplexity", /(^|\.)perplexity\.ai$/i],
+                    ["copilot", /(^|\.)copilot\.microsoft\.com$/i],
+                    ["bing", /(^|\.)bing\.com$/i],
+                ];
+
+                let host = "";
+                try {
+                    host = document.referrer ? new URL(document.referrer).hostname : "";
+                } catch {
+                    host = "";
+                }
+
+                const source = patterns.find(([, pattern]) => pattern.test(host))?.[0];
+                if (!source) return;
+
+                window.__aiReferralSource = source;
+                window.gtag("event", "ai_referral_visit", {
+                    ai_source: source,
+                    referrer_host: host,
+                    page_path: window.location.pathname,
+                });
+
+                if (typeof window.clarity === "function") {
+                    window.clarity("set", "ai_source", source);
+                    window.clarity("event", "ai_referral_visit");
+                }
+            };
+
+            detectAiReferral();
+
             const bootLateThirdPartyScripts = () => {
                 if (window.__lateThirdPartyBooted) return;
                 window.__lateThirdPartyBooted = true;

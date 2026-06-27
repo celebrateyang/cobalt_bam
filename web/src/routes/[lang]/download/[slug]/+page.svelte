@@ -24,6 +24,7 @@
     $: discoverUrl = `/${data.lang}/discover`;
     $: guideIndexUrl = `/${data.lang}/guide`;
     $: downloadIndexUrl = `/${data.lang}/download`;
+    $: learnUrl = '/en/learn';
     $: homeUrl = `/${data.lang}`;
     $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentGuideLabel = isZh
@@ -334,6 +335,11 @@
                         <a class="related-link" href={guideIndexUrl}>
                             {guideHubLabel}
                         </a>
+                        {#if data.lang === 'en'}
+                            <a class="related-link" href={learnUrl}>
+                                Learning and troubleshooting guides
+                            </a>
+                        {/if}
                         <a class="related-link" href={faqUrl}>
                             {faqLabel}
                         </a>

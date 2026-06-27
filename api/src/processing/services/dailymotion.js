@@ -85,13 +85,15 @@ export default async function({ id }) {
                         .reduce((a, b) => a.bandwidth > b.bandwidth ? a : b);
     if (!bestQuality) return { error: "fetch.empty" }
 
+    const bestAudio = bestQuality.audio?.find(audio => audio?.uri);
+
     const fileMetadata = {
         title: media.title,
         artist: media.channel.displayName
     }
 
     return {
-        urls: bestQuality.uri,
+        urls: bestAudio ? [bestQuality.uri, bestAudio.uri] : bestQuality.uri,
         isHLS: true,
         duration: media.duration,
         filenameAttributes: {

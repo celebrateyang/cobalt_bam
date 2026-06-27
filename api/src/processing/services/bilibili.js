@@ -152,6 +152,21 @@ const toSeconds = (value) =>
         ? Math.round(value / 1000)
         : undefined;
 
+const sanitizeFilenamePart = (value) =>
+    String(value || "")
+        .trim()
+        .replace(/[\u0000-\u001F\u007F-\u009F]+/g, " ")
+        .replace(/[<>:"/\\|?*]+/g, "_")
+        .replace(/\s+/g, " ")
+        .replace(/[. ]+$/g, "")
+        .slice(0, 120)
+        .trim();
+
+const buildFilenameBase = ({ fallbackBase, filenameTitle }) => {
+    const titleBase = sanitizeFilenamePart(filenameTitle);
+    return titleBase || fallbackBase;
+};
+
 const BILIBILI_COM_HEADERS = Object.freeze({
     "user-agent": genericUserAgent,
     referer: "https://www.bilibili.com/",
@@ -198,7 +213,7 @@ const fetchComPlayInfo = async ({ id, cid }) => {
     return payload.data;
 };
 
-async function com_download(id, partId) {
+async function com_download(id, partId, filenameTitle) {
     const meta = await fetchComVideoMeta(id);
     if (!meta) {
         return { error: "fetch.fail" };
@@ -226,10 +241,11 @@ async function com_download(id, partId) {
         return { error: "fetch.empty" };
     }
 
-    let filenameBase = `bilibili_${id}`;
+    let fallbackBase = `bilibili_${id}`;
     if (partId) {
-        filenameBase += `_${partId}`;
+        fallbackBase += `_${partId}`;
     }
+    const filenameBase = buildFilenameBase({ fallbackBase, filenameTitle });
 
     return {
         urls: [video.baseUrl, audio.baseUrl],
@@ -277,15 +293,19 @@ async function tv_download(id) {
     };
 }
 
-const buildUpstreamContext = ({ comId, tvId, partId }) => {
+const buildUpstreamContext = ({ comId, tvId, partId, filenameTitle }) => {
     if (comId) {
         const upstreamUrl = new URL(`https://www.bilibili.com/video/${comId}`);
         if (partId) upstreamUrl.searchParams.set('p', partId);
 
+        const fallbackBase = `bilibili_${comId}${partId ? `_${partId}` : ''}`;
+        const filenameBase = buildFilenameBase({ fallbackBase, filenameTitle });
+
         return {
             upstreamUrl,
-            audioFilename: `bilibili_${comId}${partId ? `_${partId}` : ''}_audio`,
-            defaultFilename: `bilibili_${comId}.mp4`,
+            audioFilename: `${filenameBase}_audio`,
+            defaultFilename: `${fallbackBase}.mp4`,
+            preferredFilename: filenameTitle ? `${filenameBase}.mp4` : undefined,
         };
     }
 
@@ -304,6 +324,7 @@ const buildUpstreamResult = ({
     upstream,
     audioFilename,
     defaultFilename,
+    preferredFilename,
     originalRequest,
 }) => {
     if (!upstream?.tunnels?.length) return null;
@@ -318,7 +339,7 @@ const buildUpstreamResult = ({
 
     return {
         urls: upstream.tunnels.slice(0, 2),
-        filename: upstream.filename || defaultFilename,
+        filename: preferredFilename || upstream.filename || defaultFilename,
         audioFilename,
         duration: upstream.duration,
         originalRequest,
@@ -332,6 +353,7 @@ const tryUpstreamResult = async ({
     upstreamUrl,
     audioFilename,
     defaultFilename,
+    preferredFilename,
     originalRequest,
     reason,
     timeoutMs,
@@ -346,6 +368,7 @@ const tryUpstreamResult = async ({
         upstream,
         audioFilename,
         defaultFilename,
+        preferredFilename,
         originalRequest,
     });
 
@@ -369,11 +392,12 @@ const tryLocalExtractorResult = async ({
     comId,
     tvId,
     partId,
+    filenameTitle,
 }) => {
     let result;
 
     if (comId) {
-        result = await com_download(comId, partId);
+        result = await com_download(comId, partId, filenameTitle);
     } else if (tvId) {
         result = await tv_download(tvId);
     } else {
@@ -395,7 +419,7 @@ const tryLocalExtractorResult = async ({
     return result;
 };
 
-export default async function({ comId, tvId, comShortLink, partId, epId, __streamRetry }) {
+export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, __streamRetry }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
         // return an explicit user-facing error instead of a generic fetch.empty.
@@ -411,12 +435,14 @@ export default async function({ comId, tvId, comShortLink, partId, epId, __strea
         upstreamUrl,
         audioFilename,
         defaultFilename,
-    } = buildUpstreamContext({ comId, tvId, partId });
+        preferredFilename,
+    } = buildUpstreamContext({ comId, tvId, partId, filenameTitle });
     const originalRequest = {
         comId,
         tvId,
         partId,
         epId,
+        filenameTitle,
     };
 
     const canUseUpstream = !!upstreamUrl && shouldUseUpstream();
@@ -441,6 +467,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, __strea
                 upstreamUrl,
                 audioFilename,
                 defaultFilename,
+                preferredFilename,
                 originalRequest,
                 reason: __streamRetry
                     ? (index === 0 ? "adaptive-stream-retry-primary" : "adaptive-stream-retry-secondary")
@@ -458,6 +485,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, __strea
             comId,
             tvId,
             partId,
+            filenameTitle,
         });
 
         if (!localResult?.error) {

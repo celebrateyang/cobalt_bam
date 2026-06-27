@@ -366,7 +366,10 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "bilibili":
-                r = await bilibili(patternMatch);
+                r = await bilibili({
+                    ...patternMatch,
+                    filenameTitle: params.batch ? params.filenameTitle : undefined,
+                });
                 break;
 
             case "cctv":

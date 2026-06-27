@@ -19,7 +19,7 @@
     "batch.view_pending": "返回待下载",
     "batch.memory.clear": "清除记忆",
     "batch.memory.empty.title": "已全部下载",
-    "batch.memory.empty.body": "该合集的条目都已下载过。你可以清除记忆后重新下载。",
+    "batch.memory.empty.body": "该合集的条目都已下载过。查看已下载条目，并将需要的条目移回待下载即可重新下载。",
     "batch.memory.cleared.title": "已清除记忆",
     "batch.memory.cleared.body": "已清除该合集的下载记忆，下次打开会重新显示全部条目。",
     "batch.points_insufficient.title": "积分不足",

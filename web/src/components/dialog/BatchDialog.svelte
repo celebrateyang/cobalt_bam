@@ -4,7 +4,6 @@
     import { t } from "$lib/i18n/translations";
     import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import {
-        clearCollectionMemory,
         markCollectionDownloadedItems,
         unmarkCollectionDownloadedItems,
     } from "$lib/api/collection-memory";
@@ -36,12 +35,8 @@
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
     import IconBoxMultiple from "@tabler/icons-svelte/IconBoxMultiple.svelte";
-    import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconCircleCheck from "@tabler/icons-svelte/IconCircleCheck.svelte";
-    import IconSquareCheck from "@tabler/icons-svelte/IconSquareCheck.svelte";
-    import IconSquare from "@tabler/icons-svelte/IconSquare.svelte";
-    import IconTrash from "@tabler/icons-svelte/IconTrash.svelte";
     import IconPlayerStop from "@tabler/icons-svelte/IconPlayerStop.svelte";
     import IconArrowBackUp from "@tabler/icons-svelte/IconArrowBackUp.svelte";
 
@@ -77,6 +72,7 @@
     let viewingDownloaded = false;
     $: safeDownloadedItems = Array.isArray(downloadedItems) ? downloadedItems : [];
     let downloadedItemsKey = "";
+    let selectAllCheckbox: HTMLInputElement | null = null;
     const rateLimitErrorCode = "error.api.rate_exceeded";
     const baseBatchDelayMs = 1200;
     const rateLimitBackoffMs = 4000;
@@ -200,7 +196,7 @@
         const selectedUrlSet = new Set(
             Array.isArray(selectedUrls) && selectedUrls.length
                 ? selectedUrls
-                : items.map((item) => item.url),
+                : [],
         );
         selected = items.map((item) => selectedUrlSet.has(item.url));
         running = false;
@@ -408,6 +404,15 @@
 
     const selectedCount = () => selected.filter(Boolean).length;
     const downloadedSelectedCount = () => downloadedSelected.filter(Boolean).length;
+    $: activeSelectionTotal = viewingDownloaded ? safeDownloadedItems.length : items.length;
+    $: activeSelectedCount = viewingDownloaded ? downloadedSelectedCount() : selectedCount();
+    $: activeSelectionAll =
+        activeSelectionTotal > 0 && activeSelectedCount === activeSelectionTotal;
+    $: activeSelectionPartial =
+        activeSelectedCount > 0 && activeSelectedCount < activeSelectionTotal;
+    $: if (selectAllCheckbox) {
+        selectAllCheckbox.indeterminate = activeSelectionPartial;
+    }
 
     const setSelectedAt = (index: number, value: boolean) => {
         selected = selected.map((current, i) => (i === index ? value : current));
@@ -434,6 +439,15 @@
 
     const setAllDownloaded = (value: boolean) => {
         downloadedSelected = downloadedSelected.map(() => value);
+    };
+
+    const toggleAllSelection = () => {
+        const shouldSelect = !activeSelectionAll;
+        if (viewingDownloaded) {
+            setAllDownloaded(shouldSelect);
+        } else {
+            setAll(shouldSelect);
+        }
     };
 
     const dedupeByItemKeyOrUrl = (batchItems: DialogBatchItem[]) => {
@@ -480,19 +494,16 @@
         schedulePointsPreview();
     };
 
-    const unmarkSelectedDownloaded = async () => {
+    const unmarkDownloadedItems = async (itemsToUnmark: DialogBatchItem[]) => {
         if (!collectionKey || running || pointsCheckLoading || !clerkEnabled || !$isSignedIn) {
             return;
         }
 
-        const selectedItems = safeDownloadedItems.filter(
-            (item, index) => downloadedSelected[index] && item.itemKey,
-        );
-        if (!selectedItems.length) return;
-
-        const itemKeys = selectedItems
+        const itemKeys = itemsToUnmark
             .map((item) => item.itemKey)
             .filter((key): key is string => typeof key === "string" && key.length > 0);
+        if (!itemKeys.length) return;
+
         const ok = await unmarkCollectionDownloadedItems({ collectionKey, itemKeys });
         if (!ok) return;
 
@@ -500,42 +511,22 @@
         downloadedItems = safeDownloadedItems.filter(
             (item) => !item.itemKey || !unmarkedKeys.has(item.itemKey),
         );
-        items = dedupeByItemKeyOrUrl([...items, ...selectedItems]);
+        items = dedupeByItemKeyOrUrl([...items, ...itemsToUnmark]);
         downloadedSelected = downloadedItems.map(() => false);
         selected = items.map((item) => unmarkedKeys.has(item.itemKey || ""));
         viewingDownloaded = downloadedItems.length > 0;
         schedulePointsPreview();
     };
 
-    const copyUrls = async (urls: string[]) => {
-        try {
-            await navigator.clipboard.writeText(urls.join("\n"));
-        } catch {
-            // ignore
-        }
-    };
-
-    const clearMemory = async () => {
-        if (!collectionKey || running || pointsCheckLoading) return;
-        if (!clerkEnabled || !$isSignedIn) return;
-
-        const ok = await clearCollectionMemory(collectionKey);
-        if (!ok) return;
-
-        createDialog({
-            id: "batch-memory-cleared",
-            type: "small",
-            meowbalt: "smile",
-            title: $t("dialog.batch.memory.cleared.title"),
-            bodyText: $t("dialog.batch.memory.cleared.body"),
-            buttons: [
-                {
-                    text: $t("button.gotit"),
-                    main: true,
-                    action: () => {},
-                },
-            ],
-        });
+    const unmarkSelectedDownloaded = async () => {
+        const selectedItems = safeDownloadedItems.filter(
+            (item, index) => downloadedSelected[index] && item.itemKey,
+        );
+        await unmarkDownloadedItems(
+            selectedItems.length === 0 && safeDownloadedItems.length === 1
+                ? safeDownloadedItems
+                : selectedItems,
+        );
     };
 
     type BatchSaveMode = "auto" | "manual";
@@ -788,68 +779,6 @@
         resetRunState();
     };
 
-    const downloadSingle = async (url: string) => {
-        if (running) return;
-        if (!$isSignedIn) {
-            persistCurrentBatchIntent(true);
-            const signedIn = await requireDownloadAuth({
-                beforeOpenClerk: async () => {
-                    close?.();
-                    await new Promise((r) => setTimeout(r, 200));
-                },
-            });
-            if (!signedIn) {
-                return;
-            }
-        }
-
-        const item =
-            items.find((entry) => entry.url === url) ||
-            safeDownloadedItems.find((entry) => entry.url === url) ||
-            { url };
-        const { requiredPoints } = await prepareBatch([item]);
-
-        if (requiredPoints > 0) {
-            let currentPoints;
-            let membershipActive = false;
-            try {
-                const profile = await fetchUserPointsProfile();
-                membershipActive = profile.membershipActive;
-                currentPoints = Number(profile.points ?? 0);
-            } catch {
-                showPointsError();
-                return;
-            }
-
-            if (!membershipActive && currentPoints < requiredPoints) {
-                showPointsInsufficient(currentPoints, requiredPoints);
-                return;
-            }
-        }
-
-        const taskId = uuid();
-        await savingHandler({
-            request: buildBatchRequest(item || { url }),
-            skipPoints: true,
-            oldTaskId: taskId,
-            queueMeta:
-                clerkEnabled &&
-                collectionKey &&
-                $isSignedIn &&
-                item?.itemKey
-                    ? {
-                          collectionMemory: {
-                              collectionKey,
-                              title: title || undefined,
-                              sourceUrl: collectionSourceUrl,
-                              itemKey: item.itemKey,
-                              itemUrl: item.url,
-                              itemTitle: item.title,
-                          },
-                      }
-                    : undefined,
-        });
-    };
 </script>
 
 <DialogContainer {id} {dismissable} bind:close>
@@ -897,22 +826,6 @@
 
         <div class="batch-toolbar">
             {#if !viewingDownloaded}
-                <button
-                    class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading}
-                    on:click={() => setAll(true)}
-                >
-                    <IconSquareCheck />
-                    {$t("dialog.batch.select_all")}
-                </button>
-                <button
-                    class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading}
-                    on:click={() => setAll(false)}
-                >
-                    <IconSquare />
-                    {$t("dialog.batch.select_none")}
-                </button>
                 {#if clerkEnabled && collectionKey && $isSignedIn}
                     <button
                         class="button elevated toolbar-button"
@@ -926,23 +839,11 @@
             {:else}
                 <button
                     class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading}
-                    on:click={() => setAllDownloaded(true)}
-                >
-                    <IconSquareCheck />
-                    {$t("dialog.batch.select_all")}
-                </button>
-                <button
-                    class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading}
-                    on:click={() => setAllDownloaded(false)}
-                >
-                    <IconSquare />
-                    {$t("dialog.batch.select_none")}
-                </button>
-                <button
-                    class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading || downloadedSelectedCount() === 0}
+                    disabled={
+                        running ||
+                        pointsCheckLoading ||
+                        (downloadedSelectedCount() === 0 && safeDownloadedItems.length !== 1)
+                    }
                     on:click={unmarkSelectedDownloaded}
                 >
                     <IconArrowBackUp />
@@ -962,19 +863,27 @@
                         : $t("dialog.batch.view_downloaded")}
                 </button>
             {/if}
-            {#if clerkEnabled && collectionKey && $isSignedIn}
-                <button
-                    class="button elevated toolbar-button"
-                    disabled={running || pointsCheckLoading}
-                    on:click={clearMemory}
-                >
-                    <IconTrash />
-                    {$t("dialog.batch.memory.clear")}
-                </button>
-            {/if}
         </div>
 
         <div class="batch-list" role="list">
+            <div class="batch-selection-header">
+                <label class="batch-check batch-check-master">
+                    <input
+                        bind:this={selectAllCheckbox}
+                        type="checkbox"
+                        checked={activeSelectionAll}
+                        on:change={toggleAllSelection}
+                        disabled={running || pointsCheckLoading || activeSelectionTotal === 0}
+                        aria-label={activeSelectionAll
+                            ? $t("dialog.batch.select_none")
+                            : $t("dialog.batch.select_all")}
+                        title={activeSelectionAll
+                            ? $t("dialog.batch.select_none")
+                            : $t("dialog.batch.select_all")}
+                    />
+                </label>
+            </div>
+
             {#each viewingDownloaded ? safeDownloadedItems : items as item, i (item.url)}
                 <div class="batch-item" class:downloaded={viewingDownloaded} role="listitem">
                     {#if viewingDownloaded}
@@ -1015,41 +924,19 @@
                         {/if}
                     </div>
 
-                    <div class="batch-actions">
-                        <button
-                            class="button elevated icon-button"
-                            disabled={running || pointsCheckLoading}
-                            on:click={() => copyUrls([item.url])}
-                            aria-label={$t("button.copy")}
-                            title={$t("button.copy")}
-                        >
-                            <IconCopy />
-                        </button>
-                        <button
-                            class="button elevated icon-button"
-                            disabled={running || pointsCheckLoading}
-                            on:click={viewingDownloaded
-                                ? () => {
-                                      downloadedSelected = downloadedSelected.map((current, index) =>
-                                          index === i ? true : current,
-                                      );
-                                      void unmarkSelectedDownloaded();
-                                  }
-                                : () => downloadSingle(item.url)}
-                            aria-label={viewingDownloaded
-                                ? $t("dialog.batch.mark_selected_pending")
-                                : $t("button.download")}
-                            title={viewingDownloaded
-                                ? $t("dialog.batch.mark_selected_pending")
-                                : $t("button.download")}
-                        >
-                            {#if viewingDownloaded}
+                    {#if viewingDownloaded}
+                        <div class="batch-actions">
+                            <button
+                                class="button elevated icon-button"
+                                disabled={running || pointsCheckLoading}
+                                on:click={() => void unmarkDownloadedItems([item])}
+                                aria-label={$t("dialog.batch.mark_selected_pending")}
+                                title={$t("dialog.batch.mark_selected_pending")}
+                            >
                                 <IconArrowBackUp />
-                            {:else}
-                                <IconDownload />
-                            {/if}
-                        </button>
-                    </div>
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             {/each}
         </div>
@@ -1207,6 +1094,14 @@
         padding-right: 2px;
     }
 
+    .batch-selection-header {
+        display: grid;
+        grid-template-columns: 24px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 0 12px;
+    }
+
     .batch-item {
         display: grid;
         grid-template-columns: 24px 1fr auto;
@@ -1228,6 +1123,10 @@
     .batch-check input {
         width: 16px;
         height: 16px;
+    }
+
+    .batch-check-master {
+        height: 24px;
     }
 
     .batch-item.downloaded .batch-title {

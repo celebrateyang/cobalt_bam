@@ -27,7 +27,6 @@
         readPendingBatchIntent,
     } from "$lib/pwa/batch-intent";
     import {
-        clearCollectionMemory,
         getCollectionDownloadedItemKeys,
     } from "$lib/api/collection-memory";
 
@@ -551,7 +550,11 @@
 
                 openBatchDialog(
                     detectedUrls.map((url) => ({ url })),
-                    $t("dialog.batch.title")
+                    $t("dialog.batch.title"),
+                    undefined,
+                    undefined,
+                    undefined,
+                    detectedUrls,
                 );
                 return;
             }
@@ -647,18 +650,18 @@
                                   },
                               ]
                             : []),
-                        {
-                            text: $t("dialog.batch.memory.clear"),
-                            main: false,
-                            action: async () => {
-                                await clearCollectionMemory(collectionKey);
-                            },
-                        },
                     ],
                 });
                 return;
             }
         }
+
+        const selectedInputUrls = isBilibiliVideoPage(url) ||
+            isDouyinVideoPage(url) ||
+            isTikTokVideoPage(url) ||
+            isYouTubeVideoPage(url)
+                ? [url]
+                : undefined;
 
         if (batchLimitEnabled && visibleBatchItems.length > batchMaxItems) {
             const canFallbackToSingle =
@@ -693,7 +696,14 @@
                     subset.length < visibleBatchItems.length
                         ? `${batchTitle} (${subset.length}/${memoryInfo?.collectionTotalCount || visibleBatchItems.length})`
                         : batchTitle;
-                openBatchDialog(subset, title, collectionKey, url, memoryInfo);
+                openBatchDialog(
+                    subset,
+                    title,
+                    collectionKey,
+                    url,
+                    memoryInfo,
+                    selectedInputUrls,
+                );
             };
 
             createDialog({
@@ -792,6 +802,7 @@
                                     collectionKey,
                                     url,
                                     memoryInfo,
+                                    selectedInputUrls,
                                 ),
                             200
                         );

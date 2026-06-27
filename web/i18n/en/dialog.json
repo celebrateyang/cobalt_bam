@@ -19,7 +19,7 @@
     "batch.view_pending": "to download",
     "batch.memory.clear": "clear memory",
     "batch.memory.empty.title": "everything already downloaded",
-    "batch.memory.empty.body": "all items in this collection were already downloaded. you can clear memory to show them again.",
+    "batch.memory.empty.body": "all items in this collection were already downloaded. view downloaded items and move any item back to download it again.",
     "batch.memory.cleared.title": "memory cleared",
     "batch.memory.cleared.body": "download memory for this collection has been cleared. reopen the collection to see all items again.",
     "batch.points_insufficient.title": "not enough points",

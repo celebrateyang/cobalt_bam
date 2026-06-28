@@ -167,6 +167,21 @@ const buildFilenameBase = ({ fallbackBase, filenameTitle }) => {
     return titleBase || fallbackBase;
 };
 
+const buildComFilenameTitle = (meta, partId) => {
+    const title = sanitizeFilenamePart(meta?.title);
+    if (!title) return undefined;
+
+    if (!partId || !Array.isArray(meta?.pages) || meta.pages.length <= 1) {
+        return title;
+    }
+
+    const selectedPage = meta.pages.find((page) => String(page?.page) === String(partId));
+    const part = sanitizeFilenamePart(selectedPage?.part);
+    if (!part || part === title) return title;
+
+    return `${title} - ${part}`;
+};
+
 const BILIBILI_COM_HEADERS = Object.freeze({
     "user-agent": genericUserAgent,
     referer: "https://www.bilibili.com/",
@@ -213,8 +228,8 @@ const fetchComPlayInfo = async ({ id, cid }) => {
     return payload.data;
 };
 
-async function com_download(id, partId, filenameTitle) {
-    const meta = await fetchComVideoMeta(id);
+async function com_download(id, partId, filenameTitle, preloadedMeta) {
+    const meta = preloadedMeta || await fetchComVideoMeta(id);
     if (!meta) {
         return { error: "fetch.fail" };
     }
@@ -245,7 +260,10 @@ async function com_download(id, partId, filenameTitle) {
     if (partId) {
         fallbackBase += `_${partId}`;
     }
-    const filenameBase = buildFilenameBase({ fallbackBase, filenameTitle });
+    const filenameBase = buildFilenameBase({
+        fallbackBase,
+        filenameTitle: filenameTitle || buildComFilenameTitle(meta, partId),
+    });
 
     return {
         urls: [video.baseUrl, audio.baseUrl],
@@ -393,11 +411,12 @@ const tryLocalExtractorResult = async ({
     tvId,
     partId,
     filenameTitle,
+    preloadedMeta,
 }) => {
     let result;
 
     if (comId) {
-        result = await com_download(comId, partId, filenameTitle);
+        result = await com_download(comId, partId, filenameTitle, preloadedMeta);
     } else if (tvId) {
         result = await tv_download(tvId);
     } else {
@@ -431,18 +450,23 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         comId = patternMatch?.comId;
     }
 
+    const preloadedMeta = comId && !filenameTitle
+        ? await fetchComVideoMeta(comId).catch(() => null)
+        : null;
+    const resolvedFilenameTitle = filenameTitle || buildComFilenameTitle(preloadedMeta, partId);
+
     const {
         upstreamUrl,
         audioFilename,
         defaultFilename,
         preferredFilename,
-    } = buildUpstreamContext({ comId, tvId, partId, filenameTitle });
+    } = buildUpstreamContext({ comId, tvId, partId, filenameTitle: resolvedFilenameTitle });
     const originalRequest = {
         comId,
         tvId,
         partId,
         epId,
-        filenameTitle,
+        filenameTitle: resolvedFilenameTitle,
     };
 
     const canUseUpstream = !!upstreamUrl && shouldUseUpstream();
@@ -485,7 +509,8 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
             comId,
             tvId,
             partId,
-            filenameTitle,
+            filenameTitle: resolvedFilenameTitle,
+            preloadedMeta,
         });
 
         if (!localResult?.error) {

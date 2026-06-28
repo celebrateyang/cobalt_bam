@@ -15,7 +15,8 @@
         "waiting": "Warten",
         "auto_saving": "saving to your device...",
         "auto_saved": "Saved to: {{ value }}",
-        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
+        "auto_save_failed": "Automatic save failed. Click Save to keep this file.",
+        "manual_save_started": "Check your browser downloads (ctrl+j) or the save location you chose."
     },
     "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",
     "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen.",
@@ -23,5 +24,7 @@
     "save_clicked": "Speichern geklickt",
     "manual_save_warning": "Wichtig: Nach jedem Download bitte sofort auf \"Speichern\" klicken. Nach Browser-Neustart kann der Queue-Download verloren gehen.",
     "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
-    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically."
+    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
+    "save_started": "Save started",
+    "manual_save_notice": "Check your browser downloads (ctrl+j) or the save location you chose."
 }

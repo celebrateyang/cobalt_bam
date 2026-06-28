@@ -5,7 +5,6 @@
     import { downloadFile } from "$lib/download";
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
-    import { onDestroy } from "svelte";
 
     import { removeItem, updateItem } from "$lib/state/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
@@ -55,8 +54,6 @@
 
     let retrying = false;
     let downloading = false;
-    let showManualSaveNotice = false;
-    let manualSaveNoticeTimeout: ReturnType<typeof setTimeout> | undefined;
     let hasResumeSnapshot = false;
     $: hasResumeSnapshot = info.state === "error" && hasFetchResumeStateForTask(id);
 
@@ -73,14 +70,6 @@
 
     const download = (file: File) => {
         downloading = true;
-        showManualSaveNotice = true;
-        if (manualSaveNoticeTimeout) {
-            clearTimeout(manualSaveNoticeTimeout);
-        }
-        manualSaveNoticeTimeout = setTimeout(() => {
-            showManualSaveNotice = false;
-            manualSaveNoticeTimeout = undefined;
-        }, 5000);
 
         downloadFile({
             file: new File([file], info.filename, {
@@ -241,12 +230,6 @@
     };
 
     $: pointsSummary = info.state === "done" ? getPointsSummary(info.points) : null;
-
-    onDestroy(() => {
-        if (manualSaveNoticeTimeout) {
-            clearTimeout(manualSaveNoticeTimeout);
-        }
-    });
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -366,12 +349,6 @@
             </button>
         {/if}
     </div>
-
-    {#if showManualSaveNotice}
-        <div class="manual-save-notice" role="status" aria-live="polite">
-            {$t("queue.manual_save_notice")}
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -646,27 +623,6 @@
     .processing-item:last-child {
         padding-bottom: 16px;
         border: none;
-    }
-
-    .manual-save-notice {
-        position: absolute;
-        z-index: 2;
-        right: 0;
-        top: calc(100% + 6px);
-        max-width: min(320px, 82vw);
-        padding: 8px 10px;
-        border: 1px solid color-mix(in srgb, var(--secondary) 28%, transparent);
-        border-radius: 6px;
-        background: var(--button);
-        color: var(--text);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        font-size: 12px;
-        line-height: 1.35;
-    }
-
-    :global([dir="rtl"]) .manual-save-notice {
-        left: 0;
-        right: auto;
     }
 
     @keyframes save-pulse {

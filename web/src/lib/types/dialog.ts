@@ -65,6 +65,7 @@ type TikTokDownloadDialog = Dialog & {
     filename: string,
     urls: string[],
     fallbackUrl?: string,
+    extensionUrls?: string[],
 };
 
 type BatchDialog = Dialog & {

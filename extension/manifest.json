@@ -20,7 +20,11 @@
                 "*://*.iesdouyin.com/*",
                 "*://*.bilibili.com/*",
                 "*://*.bilibili.tv/*",
-                "*://*.b23.tv/*"
+                "*://*.b23.tv/*",
+                "*://freesavevideo.online/*",
+                "*://*.freesavevideo.online/*",
+                "http://localhost/*",
+                "http://127.0.0.1/*"
             ],
             "js": ["assets/content.js"],
             "run_at": "document_idle"

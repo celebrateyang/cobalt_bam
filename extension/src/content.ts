@@ -10,6 +10,7 @@ declare global {
         __fsvTikTokResourceCache?: TikTokResourceSnapshot[];
         __fsvInstagramResourceCache?: InstagramResourceSnapshot[];
         __fsvTikTokFeedObserverReady?: boolean;
+        __fsvPageBridgeReady?: boolean;
         __fsvTikTokFeedCacheTimer?: number;
         __fsvInstagramResourcePageUrl?: string;
     }
@@ -22,10 +23,88 @@ const INSTAGRAM_HOST_RE = /(^|\.)instagram\.com$/i;
 const DOUYIN_HOST_RE = /(^|\.)douyin\.com$|(^|\.)iesdouyin\.com$/i;
 const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tiktokcdn|byteoversea|muscdn|akamaized\.net/i;
 const TIKTOK_AVATAR_RE = /(?:^|\/)tos-[^/?]*-avt-|\/avatar\//i;
+const FREESAVEVIDEO_HOST_RE = /(^|\.)freesavevideo\.online$|^localhost$|^127\.0\.0\.1$/i;
 const INSTAGRAM_VIDEO_URL_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
 const INSTAGRAM_HOST_RESOURCE_RE = /(instagram|cdninstagram|fbcdn)/i;
 const tikTokThumbnailCapturePending = new Set<string>();
 let lastTikTokThumbnailCaptureAt = 0;
+
+const isAllowedPageBridgeUrl = (value: string) => {
+    try {
+        const url = new URL(value);
+        if (url.protocol !== 'https:') return false;
+        const host = url.hostname.toLowerCase();
+        return host === 'tiktok.com' ||
+            host.endsWith('.tiktok.com') ||
+            host.endsWith('.tiktokcdn.com') ||
+            host.endsWith('.tiktokcdn-us.com') ||
+            host.endsWith('.tiktokcdn-eu.com') ||
+            host.endsWith('.byteoversea.com') ||
+            host.endsWith('.muscdn.com') ||
+            host.endsWith('.akamaized.net');
+    } catch {
+        return false;
+    }
+};
+
+const installFreeSaveVideoPageBridge = () => {
+    if (!FREESAVEVIDEO_HOST_RE.test(window.location.hostname) || window.__fsvPageBridgeReady) return;
+    window.__fsvPageBridgeReady = true;
+
+    window.postMessage({ source: 'freesavevideo-extension', type: 'FSV_EXTENSION_READY' }, window.location.origin);
+
+    window.addEventListener('message', (event) => {
+        if (event.source !== window) return;
+        if (event.origin !== window.location.origin) return;
+        const data = event.data;
+        if (!data || data.source !== 'freesavevideo-page' || data.type !== 'FSV_EXTENSION_DOWNLOAD') return;
+
+        const requestId = typeof data.requestId === 'string' ? data.requestId : '';
+        const url = typeof data.url === 'string' ? data.url : '';
+        const filename = typeof data.filename === 'string' ? data.filename : undefined;
+        if (!requestId || !isAllowedPageBridgeUrl(url)) {
+            window.postMessage({
+                source: 'freesavevideo-extension',
+                type: 'FSV_EXTENSION_DOWNLOAD_RESULT',
+                requestId,
+                ok: false,
+                error: 'Unsupported download URL.',
+            }, window.location.origin);
+            return;
+        }
+
+        void chrome.runtime.sendMessage({
+            type: 'FSV_DOWNLOAD_URL',
+            url,
+            filename,
+            media: {
+                id: `page-tiktok-${Date.now()}`,
+                kind: 'video',
+                url,
+                label: filename || 'TikTok video',
+                source: 'api',
+                format: 'mp4',
+            },
+        } satisfies ExtensionMessage).then(() => {
+            window.postMessage({
+                source: 'freesavevideo-extension',
+                type: 'FSV_EXTENSION_DOWNLOAD_RESULT',
+                requestId,
+                ok: true,
+            }, window.location.origin);
+        }).catch((error) => {
+            window.postMessage({
+                source: 'freesavevideo-extension',
+                type: 'FSV_EXTENSION_DOWNLOAD_RESULT',
+                requestId,
+                ok: false,
+                error: error instanceof Error ? error.message : 'Extension download failed.',
+            }, window.location.origin);
+        });
+    });
+};
+
+installFreeSaveVideoPageBridge();
 
 const getTikTokRecentFeedItems = () => {
     window.__fsvTikTokFeedCache ??= [];

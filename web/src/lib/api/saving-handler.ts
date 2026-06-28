@@ -95,6 +95,12 @@ const isTunnelUrl = (url?: string) => {
     }
 };
 
+const isTikTokDownloadResponse = (response: CobaltAPIResponse) => (
+    response.status === "tunnel" &&
+    "service" in response &&
+    response.service === "tiktok"
+);
+
 const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
     const url = new URL("/api/tiktok-media", window.location.origin);
     url.searchParams.set("url", directUrl);
@@ -102,41 +108,11 @@ const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
     return url.toString();
 };
 
-const queueTikTokProxyDownload = (
-    mediaUrl: string,
-    response: { filename: string },
-    selectedRequest: CobaltSaveRequestBody,
-    effectiveTaskId?: string,
-    fallbackUrl?: string,
-) => {
-    downloadButtonState.set("done");
-    createSavePipeline(
-        {
-            status: "local-processing",
-            type: "proxy",
-            service: "tiktok",
-            tunnel: [mediaUrl],
-            output: {
-                type: guessMimeTypeFromFilename(response.filename),
-                filename: response.filename,
-            },
-            fallback: fallbackUrl
-                ? {
-                    type: "tunnel",
-                    url: fallbackUrl,
-                    filename: response.filename,
-                }
-                : undefined,
-        } as any,
-        selectedRequest,
-        effectiveTaskId,
-    );
-};
-
 const openTikTokDownloadDialog = (
     mediaUrls: string[],
     response: { filename: string },
     fallbackUrl?: string,
+    extensionUrls?: string[],
 ) => {
     downloadButtonState.set("done");
     createDialog({
@@ -146,6 +122,7 @@ const openTikTokDownloadDialog = (
         filename: response.filename,
         urls: mediaUrls,
         fallbackUrl,
+        extensionUrls,
     });
 };
 
@@ -633,9 +610,9 @@ export const savingHandler = async ({
         }
 
         downloadButtonState.set("check");
-        if (response.directUrl) {
+        if (isTikTokDownloadResponse(response)) {
             const directCandidates = [
-                response.directUrl,
+                response.directUrl || "",
                 ...(Array.isArray(response.directUrlCandidates)
                     ? response.directUrlCandidates
                     : []),
@@ -648,50 +625,13 @@ export const savingHandler = async ({
                 buildTikTokMediaProxyUrl(directCandidate, response.filename)
             ));
 
-            for (const mediaProxyUrl of mediaProxyUrls) {
-                const mediaProxyAvailable = await API.probeCobaltTunnelMedia(mediaProxyUrl);
-                if (mediaProxyAvailable) {
-                    console.log("[tiktok-download] opening TikTok download dialog with media proxy fallback chain");
-                    openTikTokDownloadDialog(
-                        mediaProxyUrls,
-                        response,
-                        tunnelUrl,
-                    );
-                    return response;
-                }
-            }
-
-            const tunnelMediaAvailable = await API.probeCobaltTunnelMedia(tunnelUrl);
-            if (tunnelMediaAvailable) {
-                console.log("[tiktok-download] media proxy failed, queueing tunnel");
-                queueTikTokProxyDownload(
-                    tunnelUrl,
-                    response,
-                    selectedRequest,
-                    effectiveTaskId,
-                );
-                return response;
-            }
-
-            const directMediaAvailable = await API.probeCobaltTunnelMedia(response.directUrl);
-            if (directMediaAvailable) {
-                console.log("[tiktok-download] proxy and tunnel failed, queueing direct media");
-                queueTikTokProxyDownload(
-                    response.directUrl,
-                    response,
-                    selectedRequest,
-                    effectiveTaskId,
-                    tunnelUrl,
-                );
-                return response;
-            }
-
-            console.log("[tiktok-download] media proxy, tunnel and direct probe failed, opening direct URL");
-            downloadButtonState.set("done");
-            downloadFile({
-                url: response.directUrl,
-                urlType: "redirect",
-            });
+            console.log("[tiktok-download] opening TikTok download dialog");
+            openTikTokDownloadDialog(
+                mediaProxyUrls.length ? mediaProxyUrls : [tunnelUrl],
+                response,
+                mediaProxyUrls.length ? tunnelUrl : undefined,
+                directCandidates,
+            );
             return response;
         }
 

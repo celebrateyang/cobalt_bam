@@ -17,6 +17,7 @@
     export let filename: string;
     export let urls: string[] = [];
     export let fallbackUrl: string | undefined = undefined;
+    export let extensionUrls: string[] = [];
 
     let close: () => void;
     let controller: AbortController | null = null;
@@ -26,9 +27,11 @@
     let progress = 0;
     let receivedBytes = 0;
     let totalBytes: number | null = null;
+    let startedAt = 0;
     let status: "idle" | "downloading" | "done" | "fallback" | "error" = "idle";
     let statusText = "Preparing download...";
     let copied = false;
+    let extensionStarted = false;
 
     $: displayProgress = Math.max(0, Math.min(100, Math.round(progress)));
     $: sizeText = totalBytes
@@ -36,6 +39,9 @@
         : receivedBytes > 0
             ? formatBytes(receivedBytes)
             : "";
+    $: speedText = status === "downloading" || status === "fallback"
+        ? formatSpeed(receivedBytes, startedAt)
+        : "";
 
     const formatBytes = (value: number) => {
         if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -49,6 +55,12 @@
         return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
     };
 
+    const formatSpeed = (bytes: number, started: number) => {
+        if (!bytes || !started) return "";
+        const elapsedSeconds = Math.max(0.1, (Date.now() - started) / 1000);
+        return `${formatBytes(bytes / elapsedSeconds)}/s`;
+    };
+
     const uniqueUrls = () => {
         const list = [...urls, fallbackUrl].filter((value): value is string => (
             typeof value === "string" && value.length > 0
@@ -56,12 +68,69 @@
         return list.filter((value, index) => list.indexOf(value) === index);
     };
 
+    const uniqueExtensionUrls = () => extensionUrls.filter((value, index, list) => (
+        typeof value === "string" &&
+        value.length > 0 &&
+        list.indexOf(value) === index
+    ));
+
     const isVideoResponse = (response: Response) => {
         const contentType = response.headers.get("content-type")?.toLowerCase() || "";
         return contentType.startsWith("video/") ||
             contentType === "application/octet-stream" ||
-            contentType === "binary/octet-stream";
+            contentType === "binary/octet-stream" ||
+            contentType === "";
     };
+
+    const looksLikeHtmlError = (chunks: Uint8Array[]) => {
+        const first = chunks[0];
+        if (!first?.length) return false;
+
+        const sample = new TextDecoder("utf-8", { fatal: false })
+            .decode(first.slice(0, 1024))
+            .trimStart()
+            .toLowerCase();
+
+        return sample.startsWith("<!doctype html") ||
+            sample.startsWith("<html") ||
+            sample.includes("access denied") ||
+            sample.includes("permission to access");
+    };
+
+    const requestExtensionDownload = (url: string) => new Promise<boolean>((resolve) => {
+        const requestId = `tiktok-extension-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const timeout = window.setTimeout(() => {
+            cleanup();
+            resolve(false);
+        }, 3500);
+
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            window.removeEventListener("message", onMessage);
+        };
+
+        const onMessage = (event: MessageEvent) => {
+            if (event.source !== window) return;
+            if (event.origin !== window.location.origin) return;
+
+            const data = event.data;
+            if (!data || data.source !== "freesavevideo-extension") return;
+            if (data.type !== "FSV_EXTENSION_DOWNLOAD_RESULT") return;
+            if (data.requestId !== requestId) return;
+
+            cleanup();
+            resolve(data.ok === true);
+        };
+
+        window.addEventListener("message", onMessage);
+        window.postMessage({
+            source: "freesavevideo-page",
+            type: "FSV_EXTENSION_DOWNLOAD",
+            requestId,
+            url,
+            filename,
+        }, window.location.origin);
+    });
 
     const downloadFromUrl = async (url: string, signal: AbortSignal) => {
         activeUrl = url;
@@ -69,6 +138,7 @@
         progress = 0;
         receivedBytes = 0;
         totalBytes = null;
+        startedAt = Date.now();
 
         const response = await fetch(url, {
             cache: "no-store",
@@ -102,6 +172,10 @@
             throw new Error("too_small");
         }
 
+        if (looksLikeHtmlError(chunks)) {
+            throw new Error("html_error");
+        }
+
         if (totalBytes && receivedBytes !== totalBytes) {
             throw new Error("size_mismatch");
         }
@@ -132,6 +206,7 @@
             URL.revokeObjectURL(filePreviewUrl);
             filePreviewUrl = "";
         }
+        extensionStarted = false;
         status = "downloading";
         statusText = "Preparing download...";
 
@@ -147,6 +222,23 @@
             } catch (error) {
                 if (controller.signal.aborted) return;
                 console.warn("[tiktok-download-dialog] candidate failed", error);
+            }
+        }
+
+        const extensionCandidates = uniqueExtensionUrls();
+        if (extensionCandidates.length) {
+            status = "fallback";
+            statusText = "Trying browser extension fallback...";
+            for (const extensionCandidate of extensionCandidates) {
+                const started = await requestExtensionDownload(extensionCandidate);
+                if (controller.signal.aborted) return;
+                if (started) {
+                    extensionStarted = true;
+                    progress = 100;
+                    status = "done";
+                    statusText = "Download started in Chrome.";
+                    return;
+                }
             }
         }
 
@@ -189,7 +281,9 @@
                 <p>{filename}</p>
             </div>
             {#if status === "downloading" || status === "fallback"}
-                <IconLoader2 class="spin" />
+                <span class="spin">
+                    <IconLoader2 />
+                </span>
             {:else if status === "done"}
                 <IconCheck />
             {/if}
@@ -208,8 +302,8 @@
         <div class="progress-area">
             <div class="progress-label">
                 <span>{statusText}</span>
-                {#if sizeText}
-                    <span>{sizeText}</span>
+                {#if sizeText || speedText}
+                    <span>{[sizeText, speedText].filter(Boolean).join(" | ")}</span>
                 {/if}
             </div>
             <div class="progress-track">
@@ -227,7 +321,7 @@
                 <button
                     type="button"
                     class="button elevated"
-                    disabled={status !== "done"}
+                    disabled={status !== "done" || extensionStarted}
                     on:click={save}
                 >
                     <IconDownload />
@@ -286,6 +380,7 @@
     }
 
     .spin {
+        display: inline-flex;
         animation: spin 1s linear infinite;
     }
 

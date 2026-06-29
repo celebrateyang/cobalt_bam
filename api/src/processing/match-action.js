@@ -343,6 +343,12 @@ export default function({
                 processType = "audio";
             }
 
+            if (host === "podcast") {
+                processType = "proxy";
+                copy = true;
+                audioFormat = r.bestAudio || audioFormat;
+            }
+
             const audioUrlCandidates = Array.isArray(r.urlCandidates)
                 ? r.urlCandidates[1]
                 : r.urlCandidates;

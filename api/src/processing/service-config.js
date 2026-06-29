@@ -145,6 +145,14 @@ export const services = {
             "url_shortener/:shortLink"
         ],
     },
+    podcast: {
+        patterns: [
+            "episode?data=:data",
+        ],
+        tld: "online",
+        subdomains: ["podcast"],
+        altDomains: ["podcast.freesavevideo.online"],
+    },
     newgrounds: {
         patterns: [
             "portal/view/:id",

@@ -79,6 +79,9 @@ export const testers = {
         pattern.id?.length <= 128 ||
         pattern.shortLink?.length <= 32,
 
+    "podcast": pattern =>
+        pattern.data?.length <= 8192,
+
     "reddit": pattern =>
         pattern.id?.length <= 16 && !pattern.sub && !pattern.user ||
         (pattern.sub?.length <= 22 && pattern.id?.length <= 16) ||

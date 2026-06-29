@@ -27,6 +27,7 @@ import vimeo from "./services/vimeo.js";
 import soundcloud from "./services/soundcloud.js";
 import instagram from "./services/instagram.js";
 import pinterest from "./services/pinterest.js";
+import podcast from "./services/podcast.js";
 import streamable from "./services/streamable.js";
 import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
@@ -514,6 +515,12 @@ export default async function({ host, patternMatch, params, authType }) {
                     id: patternMatch.id,
                     shortLink: patternMatch.shortLink || false
                 });
+                break;
+
+            case "podcast":
+                isAudioOnly = true;
+                isAudioMuted = false;
+                r = await podcast(patternMatch);
                 break;
 
             case "streamable":

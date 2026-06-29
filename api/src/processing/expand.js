@@ -6,6 +6,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { genericUserAgent } from "../config.js";
 import { getRedirectingURL } from "../misc/utils.js";
 import { getCookie } from "./cookie/manager.js";
+import { buildPodcastExpandResult } from "./podcast.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_YTDLP_TIMEOUT_MS = 35000;
@@ -69,6 +70,25 @@ const uniqBy = (items, keyFn) => {
         result.push(item);
     }
     return result;
+};
+
+const isPodcastCandidateHost = (hostname) => {
+    return (
+        hostname === "xiaoyuzhoufm.com" ||
+        hostname.endsWith(".xiaoyuzhoufm.com") ||
+        hostname === "ximalaya.com" ||
+        hostname.endsWith(".ximalaya.com")
+    );
+};
+
+const isPodcastFeedCandidate = (url) => {
+    const path = String(url?.pathname || "").toLowerCase();
+    return (
+        path.endsWith(".xml") ||
+        path.endsWith(".rss") ||
+        path.endsWith(".atom") ||
+        isPodcastCandidateHost(url.hostname)
+    );
 };
 
 const cleanDouyinTitle = (value) =>
@@ -1415,6 +1435,11 @@ export const expandURL = async (url) => {
             kind: "single",
             items: [],
         };
+    }
+
+    if (isPodcastFeedCandidate(parsed)) {
+        const podcast = await buildPodcastExpandResult(input).catch(() => null);
+        if (podcast) return podcast;
     }
 
     if (isBilibiliHost(parsed.hostname)) {

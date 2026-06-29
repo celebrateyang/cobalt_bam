@@ -158,6 +158,10 @@ function aliasURL(url) {
 }
 
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (url.hostname === "podcast.freesavevideo.online") {
+        return "podcast";
+    }
+
     if (host.domain === "nicovideo.jp") {
         return "niconico";
     }
@@ -199,6 +203,9 @@ function cleanURL(url) {
     switch (host) {
         case "pinterest":
             url.hostname = 'pinterest.com';
+            break;
+        case "podcast":
+            stripQuery = false;
             break;
         case "vk":
             if (url.pathname.includes('/clip') && url.searchParams.get('z')) {

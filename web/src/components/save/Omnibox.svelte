@@ -196,6 +196,25 @@
         }
     };
 
+    const isPodcastFeedCandidateUrl = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            const host = parsed.hostname.toLowerCase();
+            const path = parsed.pathname.toLowerCase();
+            return (
+                path.endsWith(".xml") ||
+                path.endsWith(".rss") ||
+                path.endsWith(".atom") ||
+                host === "xiaoyuzhoufm.com" ||
+                host.endsWith(".xiaoyuzhoufm.com") ||
+                host === "ximalaya.com" ||
+                host.endsWith(".ximalaya.com")
+            );
+        } catch {
+            return false;
+        }
+    };
+
     const isBilibiliVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -567,7 +586,8 @@
                 !isBilibiliUrl(url) &&
                 !isDouyinUrl(url) &&
                 !isTikTokUrl(url) &&
-                !isYouTubePlaylistCandidateUrl(url)
+                !isYouTubePlaylistCandidateUrl(url) &&
+                !isPodcastFeedCandidateUrl(url)
             ) {
                 handedOffToSavingHandler = true;
                 return savingHandler({ url });

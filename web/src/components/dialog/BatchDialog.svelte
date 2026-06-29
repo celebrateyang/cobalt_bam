@@ -309,8 +309,11 @@
         return { requiredPoints };
     };
 
-    const computePointsPreview = async (requestId: number) => {
-        const selectedItems = items.filter((_, i) => selected[i]);
+    const computePointsPreview = async (
+        requestId: number,
+        selectionSnapshot = selected,
+    ) => {
+        const selectedItems = items.filter((_, i) => selectionSnapshot[i]);
         if (!selectedItems.length) {
             if (requestId !== pointsPreviewRequestId) return;
             pointsPreviewRequired = 0;
@@ -334,13 +337,13 @@
         pointsPreviewReady = true;
     };
 
-    const schedulePointsPreview = () => {
+    const schedulePointsPreview = (selectionSnapshot = selected) => {
         if (!clerkEnabled || running) {
             cancelPointsPreview();
             return;
         }
 
-        if (selectedCount() === 0) {
+        if (selectionSnapshot.filter(Boolean).length === 0) {
             cancelPointsPreview();
             pointsPreviewRequired = 0;
             pointsPreviewReady = true;
@@ -358,7 +361,7 @@
 
         pointsPreviewTimer = setTimeout(() => {
             pointsPreviewTimer = null;
-            void computePointsPreview(requestId);
+            void computePointsPreview(requestId, selectionSnapshot);
         }, 200);
     };
 
@@ -386,7 +389,7 @@
         !running &&
         !pointsCheckLoading &&
         !viewingDownloaded &&
-        selectedCount() > 0 &&
+        selectedCountValue > 0 &&
         (!clerkEnabled || (pointsPreviewReady && !pointsPreviewLoading))
     ) {
         autoStartConsumed = true;
@@ -402,12 +405,12 @@
         }
     };
 
-    const selectedCount = () => selected.filter(Boolean).length;
-    const downloadedSelectedCount = () => downloadedSelected.filter(Boolean).length;
+    $: selectedCountValue = selected.filter(Boolean).length;
+    $: downloadedSelectedCountValue = downloadedSelected.filter(Boolean).length;
     $: activeSelectionTotal = viewingDownloaded ? safeDownloadedItems.length : items.length;
     $: activeSelectedCount = viewingDownloaded
-        ? downloadedSelected.filter(Boolean).length
-        : selected.filter(Boolean).length;
+        ? downloadedSelectedCountValue
+        : selectedCountValue;
     $: activeSelectionAll =
         activeSelectionTotal > 0 && activeSelectedCount === activeSelectionTotal;
     $: activeSelectionPartial =
@@ -416,9 +419,36 @@
         selectAllCheckbox.indeterminate = activeSelectionPartial;
     }
 
+    const setSelectedAt = (index: number, value: boolean) => {
+        const nextSelected = selected.map((current, i) => (i === index ? value : current));
+        selected = nextSelected;
+        schedulePointsPreview(nextSelected);
+    };
+
+    const setDownloadedSelectedAt = (index: number, value: boolean) => {
+        downloadedSelected = downloadedSelected.map((current, i) =>
+            i === index ? value : current,
+        );
+    };
+
+    const handleItemSelectionChange = (index: number, event: Event) => {
+        const target = event.currentTarget;
+        if (target instanceof HTMLInputElement) {
+            setSelectedAt(index, target.checked);
+        }
+    };
+
+    const handleDownloadedSelectionChange = (index: number, event: Event) => {
+        const target = event.currentTarget;
+        if (target instanceof HTMLInputElement) {
+            setDownloadedSelectedAt(index, target.checked);
+        }
+    };
+
     const setAll = (value: boolean) => {
-        selected = selected.map(() => value);
-        schedulePointsPreview();
+        const nextSelected = selected.map(() => value);
+        selected = nextSelected;
+        schedulePointsPreview(nextSelected);
     };
 
     const setAllDownloaded = (value: boolean) => {
@@ -783,11 +813,11 @@
                 {:else}
                     {#if !viewingDownloaded}
                         <div>
-                            {$t("dialog.batch.status.selected")}: {selectedCount()}/{items.length}
+                            {$t("dialog.batch.status.selected")}: {selectedCountValue}/{items.length}
                         </div>
                     {:else}
                         <div>
-                            {$t("dialog.batch.status.selected")}: {downloadedSelectedCount()}/{safeDownloadedItems.length}
+                            {$t("dialog.batch.status.selected")}: {downloadedSelectedCountValue}/{safeDownloadedItems.length}
                         </div>
                     {/if}
                     {#if clerkEnabled && collectionKey && $isSignedIn && safeDownloadedItems.length > 0}
@@ -816,7 +846,7 @@
                 {#if clerkEnabled && collectionKey && $isSignedIn}
                     <button
                         class="button elevated toolbar-button"
-                        disabled={running || pointsCheckLoading || selectedCount() === 0}
+                        disabled={running || pointsCheckLoading || selectedCountValue === 0}
                         on:click={markSelectedDownloaded}
                     >
                         <IconCircleCheck />
@@ -829,7 +859,7 @@
                     disabled={
                         running ||
                         pointsCheckLoading ||
-                        (downloadedSelectedCount() === 0 && safeDownloadedItems.length !== 1)
+                        (downloadedSelectedCountValue === 0 && safeDownloadedItems.length !== 1)
                     }
                     on:click={unmarkSelectedDownloaded}
                 >
@@ -877,7 +907,8 @@
                         <label class="batch-check downloaded-check">
                             <input
                                 type="checkbox"
-                                bind:checked={downloadedSelected[i]}
+                                checked={downloadedSelected[i]}
+                                on:change={(event) => handleDownloadedSelectionChange(i, event)}
                                 disabled={running || pointsCheckLoading}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />
@@ -886,8 +917,8 @@
                         <label class="batch-check">
                             <input
                                 type="checkbox"
-                                bind:checked={selected[i]}
-                                on:change={schedulePointsPreview}
+                                checked={selected[i]}
+                                on:change={(event) => handleItemSelectionChange(i, event)}
                                 disabled={running || pointsCheckLoading}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />
@@ -959,7 +990,7 @@
                         <button
                             class="button elevated footer-button active"
                             disabled={
-                                selectedCount() === 0 ||
+                                selectedCountValue === 0 ||
                                 pointsCheckLoading ||
                                 (clerkEnabled &&
                                     (!pointsPreviewReady || pointsPreviewLoading))
@@ -973,7 +1004,7 @@
                 {/if}
             </div>
 
-            {#if !viewingDownloaded && clerkEnabled && selectedCount() > 0}
+            {#if !viewingDownloaded && clerkEnabled && selectedCountValue > 0}
                 <div class="points-preview" aria-live="polite">
                     {#if pointsPreviewLoading || !pointsPreviewReady}
                         {$t("dialog.batch.points_preview.loading")}

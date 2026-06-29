@@ -416,24 +416,6 @@
         selectAllCheckbox.indeterminate = activeSelectionPartial;
     }
 
-    const setSelectedAt = (index: number, value: boolean) => {
-        selected = selected.map((current, i) => (i === index ? value : current));
-        schedulePointsPreview();
-    };
-
-    const setDownloadedSelectedAt = (index: number, value: boolean) => {
-        downloadedSelected = downloadedSelected.map((current, i) =>
-            i === index ? value : current,
-        );
-    };
-
-    const handleItemSelectionChange = (index: number, event: Event) => {
-        const target = event.currentTarget;
-        if (target instanceof HTMLInputElement) {
-            setSelectedAt(index, target.checked);
-        }
-    };
-
     const setAll = (value: boolean) => {
         selected = selected.map(() => value);
         schedulePointsPreview();
@@ -895,13 +877,7 @@
                         <label class="batch-check downloaded-check">
                             <input
                                 type="checkbox"
-                                checked={downloadedSelected[i]}
-                                on:change={(e) => {
-                                    const target = e.currentTarget;
-                                    if (target instanceof HTMLInputElement) {
-                                        setDownloadedSelectedAt(i, target.checked);
-                                    }
-                                }}
+                                bind:checked={downloadedSelected[i]}
                                 disabled={running || pointsCheckLoading}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />
@@ -910,8 +886,8 @@
                         <label class="batch-check">
                             <input
                                 type="checkbox"
-                                checked={selected[i]}
-                                on:change={(e) => handleItemSelectionChange(i, e)}
+                                bind:checked={selected[i]}
+                                on:change={schedulePointsPreview}
                                 disabled={running || pointsCheckLoading}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />

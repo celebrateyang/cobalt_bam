@@ -6,11 +6,7 @@
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
 
-    import {
-        markQueueItemSaveRequested,
-        removeItem,
-        updateItem,
-    } from "$lib/state/task-manager/queue";
+    import { removeItem, updateItem } from "$lib/state/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
@@ -98,20 +94,6 @@
         }, 3000)
     };
 
-    const downloadDirect = async (url: string) => {
-        downloading = true;
-
-        downloadFile({
-            url,
-            urlType: info.directUrlType || "redirect",
-        });
-        await markQueueItemSaveRequested(id);
-
-        setTimeout(() => {
-            downloading = false;
-        }, 3000);
-    };
-
     const transfer = async (file: File) => {
         // Add file to clipboard manager state
         const fileToSend = new File([file], info.filename, { type: info.mimeType });
@@ -179,11 +161,6 @@
             return runningText;
 
         case "done":
-            if (info.directUrl && !info.resultFile) {
-                return info.saveRequested
-                    ? $t("queue.save_started")
-                    : $t("button.save");
-            }
             if (info.autoSave?.state === "saving") {
                 return $t("queue.state.auto_saving");
             }
@@ -313,7 +290,7 @@
     </div>
 
     <div class="file-actions">
-        {#if info.state === "done" && (info.resultFile || info.directUrl)}
+        {#if info.state === "done" && info.resultFile}
             {#if info.autoSave?.state !== "saved"}
                 <button
                     class="button action-button"
@@ -321,7 +298,7 @@
                     class:saved={info.saveRequested}
                     aria-label={$t(info.saveRequested ? "queue.save_started" : "button.save")}
                     aria-pressed={info.saveRequested}
-                    on:click={() => info.resultFile ? download(info.resultFile) : info.directUrl && downloadDirect(info.directUrl)}
+                    on:click={() => download(info.resultFile)}
                     disabled={downloading || info.autoSave?.state === "saving"}
                     class:downloading
                 >
@@ -335,12 +312,12 @@
                     {/if}
                 </button>
             {/if}
-            {#if info.resultFile && info.autoSave?.state !== "saved"}
+            {#if info.autoSave?.state !== "saved"}
                 <button
                     class="button action-button"
                     aria-label="传到其他设备"
                     title="Send to other device"
-                    on:click={() => info.resultFile && transfer(info.resultFile)}
+                    on:click={() => transfer(info.resultFile)}
                 >
                     <IconDeviceMobile />
                 </button>

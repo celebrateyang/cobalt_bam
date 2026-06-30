@@ -10,11 +10,13 @@ import { loadTranslations, t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
-import { createDirectUrlQueueItem, createSavePipeline } from "$lib/task-manager/queue";
+import { createSavePipeline } from "$lib/task-manager/queue";
 import { queue, updateItem } from "$lib/state/task-manager/queue";
 import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { addToHistory } from "$lib/history";
 import { currentApiURL } from "$lib/api/api-url";
+import { finalizePointsHold } from "$lib/api/points";
+import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
 import {
     fetchCurrentUserPointsProfile,
@@ -518,20 +520,34 @@ export const savingHandler = async ({
             if (!isTunnelUrl(redirectUrl)) {
                 downloadButtonState.set("done");
 
-                createDirectUrlQueueItem(
-                    {
-                        url: redirectUrl,
-                        filename: response.filename,
-                        mimeType: guessMimeTypeFromFilename(response.filename),
-                        mediaType: "video",
-                    },
-                    selectedRequest,
-                    effectiveTaskId,
-                );
-                applyQueueMeta(effectiveTaskId, response, {
-                    ...queueMeta,
-                    autoSaveEnabled: false,
+                downloadFile({
+                    url: redirectUrl,
+                    urlType: "redirect",
                 });
+
+                const holdId = response?.points?.holdId;
+                if (holdId) {
+                    void finalizePointsHold(holdId, "redirect_download_started", {
+                        queueId: effectiveTaskId,
+                        itemId: effectiveTaskId,
+                    }).catch(() => false);
+                }
+
+                const memory = queueMeta?.collectionMemory;
+                if (memory?.collectionKey && memory?.itemKey) {
+                    void markCollectionDownloadedItems({
+                        collectionKey: memory.collectionKey,
+                        title: memory.title,
+                        sourceUrl: memory.sourceUrl,
+                        items: [
+                            {
+                                itemKey: memory.itemKey,
+                                url: memory.itemUrl,
+                                title: memory.itemTitle,
+                            },
+                        ],
+                    }).catch(() => false);
+                }
 
                 return response;
             }

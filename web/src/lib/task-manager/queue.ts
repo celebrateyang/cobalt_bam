@@ -54,34 +54,6 @@ export const createRemuxPipeline = (file: File) => {
     }
 }
 
-export const createDirectUrlQueueItem = (
-    info: {
-        url: string;
-        filename: string;
-        mimeType: string;
-        mediaType?: CobaltPipelineResultFileType;
-    },
-    request: CobaltSaveRequestBody,
-    oldTaskId?: string,
-) => {
-    const parentId = oldTaskId || uuid();
-
-    addItem({
-        id: parentId,
-        state: "done",
-        pipeline: [],
-        directUrl: info.url,
-        directUrlType: "redirect",
-        canRetry: true,
-        originalRequest: request,
-        filename: info.filename,
-        mimeType: info.mimeType,
-        mediaType: info.mediaType || getMediaType(info.mimeType) || "file",
-    });
-
-    openQueuePopover();
-};
-
 const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
     const ffargs = ["-c:v", "copy"];
 

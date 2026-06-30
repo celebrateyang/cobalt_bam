@@ -14,7 +14,6 @@ const allowedPayloadKeys = new Set([
     "url",
     "audioBitrate",
     "audioFormat",
-    "bilibiliDirectMp4",
     "downloadMode",
     "filenameStyle",
     "youtubeVideoCodec",

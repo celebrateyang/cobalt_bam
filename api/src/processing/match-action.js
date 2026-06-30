@@ -228,11 +228,7 @@ export default function({
         case "video":
             switch (host) {
                 case "bilibili":
-                    params = {
-                        type: r.directClientDownload === true && typeof r.urls === "string"
-                            ? "proxy"
-                            : "merge"
-                    };
+                    params = { type: "merge" };
                     break;
 
                 case "youtube":

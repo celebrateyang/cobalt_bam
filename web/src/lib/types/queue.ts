@@ -34,8 +34,6 @@ type CobaltQueueItemBase = {
     collectionMemory?: CobaltQueueItemCollectionMemory;
     batchSessionId?: string;
     batchSelectionTotal?: number;
-    directUrl?: string;
-    directUrlType?: "redirect";
     saveRequested?: boolean;
     autoSave?: {
         enabled: boolean;
@@ -65,7 +63,7 @@ export type CobaltQueueItemRunning = CobaltQueueItemBase & {
 
 export type CobaltQueueItemDone = CobaltQueueItemBase & {
     state: "done";
-    resultFile?: File;
+    resultFile: File;
     pipelineResults?: Record<UUID, File>;
 };
 

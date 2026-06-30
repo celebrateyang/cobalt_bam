@@ -39,7 +39,6 @@ export const apiSchema = z.object({
     ).default("disabled"),
 
     batch: z.boolean().default(false),
-    bilibiliDirectMp4: z.boolean().default(false),
 
     filenameTitle: z.string()
                     .trim()

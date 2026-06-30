@@ -61,13 +61,7 @@ export const openURL = (url: string) => {
     let open: Window | null = null;
     try {
         const { hostname } = new URL(url, window.location.href);
-        const isBilibiliCdn =
-            hostname.endsWith("bilivideo.com") ||
-            hostname.endsWith("bilivideo.cn") ||
-            hostname.endsWith("hdslb.com") ||
-            (hostname.startsWith("upos-") && hostname.endsWith("akamaized.net"));
         const needsNoReferrer =
-            isBilibiliCdn ||
             hostname.endsWith("twimg.com") ||
             hostname.endsWith("tiktokcdn.com") ||
             hostname.endsWith("tiktokcdn-us.com") ||

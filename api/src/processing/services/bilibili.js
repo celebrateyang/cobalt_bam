@@ -13,7 +13,6 @@ const shouldUseUpstream = () => {
 };
 
 const STREAM_RETRY_UPSTREAM_TIMEOUT_MS = 8000;
-const PROGRESSIVE_MP4_PROBE_TIMEOUT_MS = 8000;
 
 const asArray = (value) => {
     if (Array.isArray(value)) return value;
@@ -229,88 +228,6 @@ const fetchComPlayInfo = async ({ id, cid }) => {
     return payload.data;
 };
 
-const fetchComProgressivePlayInfo = async ({ id, cid }) => {
-    const url = new URL("https://api.bilibili.com/x/player/playurl");
-    url.searchParams.set("bvid", id);
-    url.searchParams.set("cid", String(cid));
-    url.searchParams.set("fnval", "0");
-    url.searchParams.set("platform", "html5");
-    url.searchParams.set("high_quality", "1");
-    url.searchParams.set("qn", "64");
-
-    const payload = await fetch(url, {
-        headers: {
-            ...BILIBILI_COM_HEADERS,
-            referer: `https://www.bilibili.com/video/${id}/`,
-        },
-    })
-        .then((response) => response.json())
-        .catch(() => null);
-
-    if (payload?.code !== 0 || !payload?.data) {
-        return null;
-    }
-
-    return payload.data;
-};
-
-const pickProgressiveMp4 = (playInfo) => {
-    const entries = asArray(playInfo?.durl);
-
-    for (const entry of entries) {
-        const candidates = collectCandidateUrls(entry);
-        const mp4Candidate = candidates.find((url) => {
-            try {
-                return new URL(url).pathname.toLowerCase().endsWith(".mp4");
-            } catch {
-                return /\.mp4(?:$|[?#])/i.test(String(url));
-            }
-        }) || candidates[0];
-
-        if (!mp4Candidate) continue;
-
-        return {
-            url: mp4Candidate,
-            candidates,
-            size: Number(entry?.size) || undefined,
-        };
-    }
-};
-
-const probeProgressiveMp4 = async (url) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), PROGRESSIVE_MP4_PROBE_TIMEOUT_MS);
-
-    try {
-        const response = await fetch(url, {
-            method: "HEAD",
-            headers: BILIBILI_COM_HEADERS,
-            signal: controller.signal,
-        });
-
-        if (!response.ok) return false;
-
-        const contentType = response.headers.get("content-type") || "";
-        const contentLength = Number(response.headers.get("content-length"));
-        const pathLooksMp4 = (() => {
-            try {
-                return new URL(url).pathname.toLowerCase().endsWith(".mp4");
-            } catch {
-                return /\.mp4(?:$|[?#])/i.test(String(url));
-            }
-        })();
-
-        return (
-            (contentType.toLowerCase().includes("video/mp4") || pathLooksMp4) &&
-            (!response.headers.has("content-length") || (Number.isFinite(contentLength) && contentLength > 0))
-        );
-    } catch {
-        return false;
-    } finally {
-        clearTimeout(timeout);
-    }
-};
-
 async function com_download(id, partId, filenameTitle, preloadedMeta) {
     const meta = preloadedMeta || await fetchComVideoMeta(id);
     if (!meta) {
@@ -354,55 +271,6 @@ async function com_download(id, partId, filenameTitle, preloadedMeta) {
         audioFilename: `${filenameBase}_audio`,
         filename: `${filenameBase}_${video.width}x${video.height}.mp4`,
         duration: toSeconds(playInfo.timelength),
-    };
-}
-
-async function com_progressive_download(id, partId, filenameTitle, preloadedMeta) {
-    const meta = preloadedMeta || await fetchComVideoMeta(id);
-    if (!meta) {
-        return null;
-    }
-
-    const selectedPage = partId
-        ? meta.pages?.find((page) => String(page?.page) === String(partId))
-        : null;
-    const cid = selectedPage?.cid || meta.cid;
-    if (!cid) {
-        return null;
-    }
-
-    const playInfo = await fetchComProgressivePlayInfo({ id, cid });
-    const progressive = pickProgressiveMp4(playInfo);
-    if (!progressive?.url) {
-        return null;
-    }
-
-    const isUsable = await probeProgressiveMp4(progressive.url);
-    if (!isUsable) {
-        console.log(`[bilibili] progressive mp4 probe failed id=${id} part=${partId || "root"}`);
-        return null;
-    }
-
-    let fallbackBase = `bilibili_${id}`;
-    if (partId) {
-        fallbackBase += `_${partId}`;
-    }
-    const filenameBase = buildFilenameBase({
-        fallbackBase,
-        filenameTitle: filenameTitle || buildComFilenameTitle(meta, partId),
-    });
-
-    return {
-        urls: progressive.url,
-        urlCandidates: progressive.candidates,
-        filename: `${filenameBase}.mp4`,
-        duration: toSeconds(playInfo?.timelength || meta?.duration * 1000),
-        directClientDownload: true,
-        originalRequest: {
-            comId: id,
-            partId,
-            filenameTitle: filenameTitle || buildComFilenameTitle(meta, partId),
-        },
     };
 }
 
@@ -544,23 +412,10 @@ const tryLocalExtractorResult = async ({
     partId,
     filenameTitle,
     preloadedMeta,
-    preferProgressiveMp4,
 }) => {
     let result;
 
     if (comId) {
-        if (preferProgressiveMp4) {
-            result = await com_progressive_download(comId, partId, filenameTitle, preloadedMeta);
-            if (result) {
-                reportBilibiliRouteRequestEvent({
-                    route: "local",
-                    event: "request_success",
-                });
-                console.log(`[bilibili] progressive mp4 selected id=${comId} part=${partId || "root"}`);
-                return result;
-            }
-        }
-
         result = await com_download(comId, partId, filenameTitle, preloadedMeta);
     } else if (tvId) {
         result = await tv_download(tvId);
@@ -583,7 +438,7 @@ const tryLocalExtractorResult = async ({
     return result;
 };
 
-export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, preferProgressiveMp4, __streamRetry }) {
+export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, __streamRetry }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
         // return an explicit user-facing error instead of a generic fetch.empty.
@@ -623,10 +478,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         `[bilibili-route] choose primary=${routePlan.primary} secondary=${routePlan.secondary ?? "none"} stream_retry=${__streamRetry ? 1 : 0} reason=${routePlan.reason} score_local=${routePlan.scores.local} score_upstream=${routePlan.scores.upstream}`,
     );
 
-    const orderedRoutes =
-        preferProgressiveMp4 === true && !__streamRetry
-            ? ["local", ...[routePlan.primary, routePlan.secondary].filter(route => route && route !== "local")]
-            : [routePlan.primary, routePlan.secondary].filter(Boolean);
+    const orderedRoutes = [routePlan.primary, routePlan.secondary].filter(Boolean);
     const attempted = new Set();
     let localFallbackError = null;
 
@@ -659,7 +511,6 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
             partId,
             filenameTitle: resolvedFilenameTitle,
             preloadedMeta,
-            preferProgressiveMp4: preferProgressiveMp4 === true && !__streamRetry,
         });
 
         if (!localResult?.error) {

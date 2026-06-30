@@ -135,7 +135,6 @@ export type CobaltServerInfo = {
 export type CobaltSaveRequestBody =
     { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>> & {
         batch?: boolean;
-        bilibiliDirectMp4?: boolean;
         filenameTitle?: string;
     };
 

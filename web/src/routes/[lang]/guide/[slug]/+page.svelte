@@ -33,8 +33,16 @@
     $: discoverUrl = `/${data.lang}/discover`;
     $: downloadHubUrl = `/${data.lang}/download`;
     $: learnUrl = '/en/learn';
-    $: relatedGuides = getRelatedGuideLinks(data.slug, 6);
-    $: relatedDownloads = getRelatedDownloadLinks(data.guide.landingSlug, 6);
+    $: relatedGuides = getRelatedGuideLinks(
+        data.slug,
+        6,
+        data.lang === 'en' ? 'international' : 'all',
+    );
+    $: relatedDownloads = getRelatedDownloadLinks(
+        data.guide.landingSlug,
+        6,
+        data.lang === 'en' ? 'international' : 'all',
+    );
     $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
     $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';

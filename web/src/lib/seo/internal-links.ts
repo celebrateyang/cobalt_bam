@@ -15,6 +15,8 @@ type CrossLinkEntry = {
     homeKey?: string;
 };
 
+export type LinkAudience = 'all' | 'international';
+
 const crossLinkEntries: CrossLinkEntry[] = [
     {
         platform: 'Douyin',
@@ -84,6 +86,10 @@ const crossLinkEntries: CrossLinkEntry[] = [
         downloadSlug: 'instagram-video-download',
         guideSlug: 'instagram-download-guide',
         homeKey: 'instagram',
+    },
+    {
+        platform: 'Instagram Reels',
+        downloadSlug: 'instagram-reels-download',
     },
     {
         platform: 'Facebook',
@@ -176,6 +182,23 @@ const strategicDownloadOrder = [
     'soundcloud-audio-download',
 ] as const;
 
+const internationalDownloadSlugs = new Set([
+    'tiktok-no-watermark',
+    'tiktok-collection-download',
+    'tiktok-mp3-download',
+    'instagram-reels-download',
+    'instagram-video-download',
+    'youtube-download',
+    'youtube-shorts-download',
+    'facebook-video-download',
+    'twitter-x-video-download',
+    'snapchat-video-download',
+    'pinterest-video-download',
+    'reddit-video-download',
+    'vimeo-video-download',
+    'soundcloud-audio-download',
+]);
+
 const strategicDownloadPriority: Map<string, number> = new Map(
 	strategicDownloadOrder.map((slug, index) => [slug, index]),
 );
@@ -209,6 +232,15 @@ export const getGuidePriority = (slug: string): number => {
         ? getDownloadPriorityValue(linkedEntry.downloadSlug)
         : strategicDownloadPriority.size + 100;
 };
+
+const getGuidePageDownloadSlug = (guideSlug: string): string =>
+    crossLinkEntries.find((entry) => entry.guideSlug === guideSlug)?.downloadSlug ?? '';
+
+export const isInternationalDownloadSlug = (slug: string): boolean =>
+    internationalDownloadSlugs.has(slug);
+
+const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
+    audience === 'all' || internationalDownloadSlugs.has(slug);
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'tiktok-no-watermark': [
@@ -436,6 +468,7 @@ const prioritizeDownloads = (
     anchorSlug: string | null,
     limit: number,
     excludeSlugs: string[] = [],
+    audience: LinkAudience = 'all',
 ): FeaturedDownloadLink[] => {
     const excluded = new Set(excludeSlugs.filter(Boolean));
     if (anchorSlug) excluded.add(anchorSlug);
@@ -451,6 +484,7 @@ const prioritizeDownloads = (
 
     for (const slug of orderedCandidates) {
         if (seen.has(slug) || excluded.has(slug)) continue;
+        if (!matchesAudience(slug, audience)) continue;
         seen.add(slug);
 
         const entry = entryByDownloadSlug.get(slug);
@@ -463,24 +497,33 @@ const prioritizeDownloads = (
     return links;
 };
 
-export const getHubDownloadLinks = (limit = 8): FeaturedDownloadLink[] =>
-    prioritizeDownloads(null, limit);
+export const getHubDownloadLinks = (
+    limit = 8,
+    audience: LinkAudience = 'all',
+): FeaturedDownloadLink[] => prioritizeDownloads(null, limit, [], audience);
 
 export const getRelatedDownloadLinks = (
     currentDownloadSlug: string,
     limit = 4,
-): FeaturedDownloadLink[] => prioritizeDownloads(currentDownloadSlug, limit);
+    audience: LinkAudience = 'all',
+): FeaturedDownloadLink[] => prioritizeDownloads(currentDownloadSlug, limit, [], audience);
 
-export const getHubGuideLinks = (limit = 6): FeaturedGuideLink[] =>
+export const getHubGuideLinks = (
+    limit = 6,
+    audience: LinkAudience = 'all',
+): FeaturedGuideLink[] =>
     [...featuredGuideLinks]
+        .filter((item) => matchesAudience(getGuidePageDownloadSlug(item.slug), audience))
         .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
         .slice(0, limit);
 
 export const getRelatedGuideLinks = (
     currentGuideSlug: string,
     limit = 4,
+    audience: LinkAudience = 'all',
 ): FeaturedGuideLink[] =>
     [...featuredGuideLinks]
         .filter((item) => item.slug !== currentGuideSlug)
+        .filter((item) => matchesAudience(getGuidePageDownloadSlug(item.slug), audience))
         .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
         .slice(0, limit);

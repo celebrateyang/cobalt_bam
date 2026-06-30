@@ -50,7 +50,7 @@
         <h1>Practical guides for public video saving and browser media tools</h1>
         <p class="lede">
             Concrete FreeSaveVideo notes for offline study, audio extraction, subtitles,
-            link preparation, troubleshooting, Weibo video audio, and safer public-link use.
+            link preparation, troubleshooting, short-video downloads, and safer public-link use.
         </p>
         <div class="hero-links">
             <a href="/en">Open downloader</a>

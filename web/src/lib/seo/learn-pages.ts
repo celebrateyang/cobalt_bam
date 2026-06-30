@@ -50,7 +50,7 @@ export const learnPages: LearnPage[] = [
                 heading: 'Start with the right link',
                 body: [
                     'Most download failures begin with the wrong URL. A video detail page, short share link, Shorts URL, playlist URL, or supported collection URL is a better input than a channel homepage, search result, profile page, or comment page.',
-                    'This matches the FreeSaveVideo parser design: platform services such as YouTube, TikTok, Douyin, Bilibili, Weibo, and Haokan each look for concrete media identifiers or public media metadata before they can return downloadable results.',
+                    'This matches the FreeSaveVideo parser design: platform services such as YouTube, TikTok, Instagram, Facebook, X/Twitter, Reddit, Pinterest, Vimeo, and SoundCloud each look for concrete media identifiers or public media metadata before they can return downloadable results.',
                 ],
                 bullets: [
                     'Good: a public video page, post URL, share URL, playlist, or collection.',
@@ -101,8 +101,8 @@ export const learnPages: LearnPage[] = [
                 a: 'Specific public media URLs expose the identifiers and metadata parsers need. Homepages, profiles, and search pages usually do not point to one downloadable media item.',
             },
         ],
-        relatedDownloads: ['youtube-download', 'bilibili-video-download', 'vimeo-video-download'],
-        relatedGuides: ['youtube-download-guide', 'bilibili-download-guide', 'vimeo-download-guide'],
+        relatedDownloads: ['youtube-download', 'tiktok-no-watermark', 'vimeo-video-download'],
+        relatedGuides: ['youtube-download-guide', 'tiktok-download-guide', 'vimeo-download-guide'],
         keywords: ['offline study video download', 'save public videos for study', 'batch video download'],
     },
     {
@@ -128,7 +128,7 @@ export const learnPages: LearnPage[] = [
                     'This distinction matters for privacy: local classroom clips, screen recordings, or downloaded study files can be processed without sending the source file to the API server when the browser tool supports the format.',
                 ],
                 bullets: [
-                    'Use online audio mode for public YouTube, TikTok, Douyin, SoundCloud, and other supported links.',
+                    'Use online audio mode for public YouTube, TikTok, SoundCloud, and other supported links.',
                     'Use the remux tool for local MP4/WebM/AVI-style files already on your device.',
                     'Use queue mode for long public videos or unstable network conditions.',
                 ],
@@ -173,6 +173,100 @@ export const learnPages: LearnPage[] = [
         relatedDownloads: ['youtube-download', 'tiktok-mp3-download', 'soundcloud-audio-download'],
         relatedGuides: ['youtube-download-guide', 'tiktok-mp3-download-guide', 'soundcloud-download-guide'],
         keywords: ['convert video to audio', 'language learning audio', 'mp4 to mp3 browser'],
+    },
+    {
+        slug: 'download-youtube-videos-playlists-online',
+        title: 'How to download YouTube videos and playlists online',
+        description:
+            'A practical YouTube downloader guide covering public video URLs, Shorts, supported playlist downloads, HD MP4, audio options, queue mode, and what makes FreeSaveVideo different.',
+        updatedAt: '2026-06-30',
+        readingTime: '7 min read',
+        category: 'YouTube',
+        summary:
+            'Use a specific public YouTube video, Shorts, or supported playlist URL. FreeSaveVideo can return available HD MP4, audio, or playlist batch results without requiring an app install.',
+        keyTakeaways: [
+            'FreeSaveVideo works best with a specific YouTube watch URL, Shorts URL, or public playlist URL that includes a list parameter.',
+            'Supported public YouTube playlists can be detected and prepared as batch download tasks, so you can save several videos from one workflow.',
+            'FreeSaveVideo is different from many download pages because it combines clear URL guidance, queue mode, audio options, public-link safety notes, and browser tools in one product flow.',
+        ],
+        sections: [
+            {
+                heading: 'Start with the right YouTube link',
+                body: [
+                    'For one video, open the YouTube watch page or Shorts page and copy the share URL. For several videos, use a public playlist URL that includes a list parameter. A channel homepage, search page, subscription feed, or comment URL is not a direct media target.',
+                    'This matters because a downloader needs a stable video ID or playlist ID before it can return reliable results. If the link points to a broad page, there may be no single video to parse.',
+                ],
+                bullets: [
+                    'Good: a public YouTube watch URL, Shorts URL, or supported playlist URL.',
+                    'Weak: channel homepages, search results, subscription feeds, comments, private videos, members-only videos, and deleted videos.',
+                    'For repeated work, paste several supported links or use playlist detection when available.',
+                ],
+            },
+            {
+                heading: 'Use playlist support for batch saving',
+                body: [
+                    'FreeSaveVideo supports YouTube playlist downloads when the playlist is public and the link can be parsed. When playlist items are detected, the page can prepare them as a batch task instead of forcing you to paste every video one by one.',
+                    'Playlist support is especially useful for study lists, creator archives you have permission to save, music practice, conference talks, and multi-part tutorials. Availability still depends on the public playlist and source formats exposed at parse time.',
+                ],
+            },
+            {
+                heading: 'Choose video, audio, or queue mode',
+                body: [
+                    'For video, choose an available MP4 quality that matches your device and storage. For listening, language practice, or podcast-style review, use audio output when the source exposes a usable audio result.',
+                    'Queue mode is one of the practical differences in FreeSaveVideo. It gives longer downloads, playlist items, and unstable network tasks a clearer path: parse, process, finish, then save. That is easier to audit than a page that simply opens a redirect and leaves you guessing where the file went.',
+                ],
+            },
+            {
+                heading: 'What makes FreeSaveVideo different',
+                body: [
+                    'Many downloader pages focus on one quick button. FreeSaveVideo is built more like a browser media workflow: it explains which links work, separates direct downloads from queue tasks, supports batch-style flows, and keeps local tools such as audio extraction and remux nearby.',
+                    'The product also documents unsupported cases. Private, paywalled, membership-only, DRM-protected, deleted, or region-restricted videos may not be downloadable. That boundary is not just a policy note; it helps users pick the right links and avoid wasting time.',
+                ],
+                bullets: [
+                    'One-page workflow for public YouTube videos, Shorts, audio, and supported playlists.',
+                    'Playlist and batch handling when the source link exposes multiple public items.',
+                    'Queue mode with clearer completion and Save behavior for longer tasks.',
+                    'Local browser tools for supported file conversion after saving.',
+                    'Public-link safety guidance instead of promising private or restricted media access.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['YouTube task', 'Best FreeSaveVideo workflow', 'Why'],
+            rows: [
+                ['One public video', 'Paste the watch URL and choose an available result', 'Direct and simple for a single media item'],
+                ['YouTube Short', 'Paste the Shorts URL or equivalent watch URL', 'Both can identify the same public video ID'],
+                ['Public playlist', 'Paste the playlist URL and use detected batch results', 'Saves time compared with copying videos one by one'],
+                ['Audio for listening', 'Use audio output when available', 'Good for study, practice, and offline listening'],
+                ['Long or repeated downloads', 'Use queue mode', 'More visible progress and a clearer final Save step'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Does FreeSaveVideo support YouTube playlist downloads?',
+                a: 'Yes, for supported public playlist URLs. Use a playlist link with a list parameter; when items are detected, FreeSaveVideo can prepare them as a batch download task.',
+            },
+            {
+                q: 'Can I download YouTube videos as HD MP4?',
+                a: 'Use the YouTube downloader page and choose from the available video qualities returned for that public link. The exact options depend on what YouTube exposes for the video.',
+            },
+            {
+                q: 'Can FreeSaveVideo download private or members-only YouTube videos?',
+                a: 'No. FreeSaveVideo is designed for publicly accessible links and should not be used for private, members-only, paywalled, or DRM-protected media.',
+            },
+            {
+                q: 'Why use queue mode for YouTube?',
+                a: 'Queue mode is useful for long videos, playlist items, and unstable networks because it gives the task more visible progress and a clear Save step after completion.',
+            },
+        ],
+        relatedDownloads: ['youtube-download', 'youtube-shorts-download', 'soundcloud-audio-download'],
+        relatedGuides: ['youtube-download-guide', 'youtube-shorts-download-guide', 'soundcloud-download-guide'],
+        keywords: [
+            'download YouTube videos online',
+            'YouTube playlist downloader',
+            'download YouTube playlist',
+            'YouTube video downloader HD',
+        ],
     },
     {
         slug: 'download-subtitles-learning-materials',
@@ -234,8 +328,8 @@ export const learnPages: LearnPage[] = [
                 a: 'Use official captions or transcripts when the source provides them, and keep your own notes or generated transcripts clearly separate.',
             },
         ],
-        relatedDownloads: ['youtube-download', 'bilibili-video-download', 'vimeo-video-download'],
-        relatedGuides: ['youtube-download-guide', 'bilibili-download-guide', 'vimeo-download-guide'],
+        relatedDownloads: ['youtube-download', 'tiktok-no-watermark', 'vimeo-video-download'],
+        relatedGuides: ['youtube-download-guide', 'tiktok-download-guide', 'vimeo-download-guide'],
         keywords: ['download subtitles', 'video learning materials', 'save transcripts from video'],
     },
     {
@@ -258,7 +352,7 @@ export const learnPages: LearnPage[] = [
                 heading: 'Check the link type first',
                 body: [
                     'FreeSaveVideo routes URLs through platform matchers and service parsers. Those parsers need concrete media identifiers, source metadata, or supported embed data. A profile page or search result usually does not contain one clear downloadable target.',
-                    'The project has platform-specific guidance for Douyin search and profile links, Weibo video address links, Haokan public video pages, and Bilibili multi-part content because each platform exposes media differently.',
+                    'The project has platform-specific guidance for TikTok share links, Instagram Reels, YouTube Shorts, Facebook posts, X/Twitter posts, and Reddit media because each platform exposes public media differently.',
                 ],
             },
             {
@@ -299,8 +393,8 @@ export const learnPages: LearnPage[] = [
                 a: 'Include the public URL, platform name, whether direct or queue mode was used, the selected output settings, and the visible error message.',
             },
         ],
-        relatedDownloads: ['tiktok-no-watermark', 'douyin-no-watermark', 'youtube-download'],
-        relatedGuides: ['tiktok-download-guide', 'douyin-download-guide', 'youtube-download-guide'],
+        relatedDownloads: ['tiktok-no-watermark', 'instagram-reels-download', 'youtube-download'],
+        relatedGuides: ['tiktok-download-guide', 'instagram-download-guide', 'youtube-download-guide'],
         keywords: ['video download failed', 'online downloader error', 'why video download fails'],
     },
     {
@@ -333,9 +427,8 @@ export const learnPages: LearnPage[] = [
                 ],
                 bullets: [
                     'YouTube watch URLs and Shorts-style URLs.',
-                    'TikTok, Douyin, Kuaishou, Instagram, Facebook, X/Twitter, Reddit, Pinterest, and Vimeo public post URLs.',
-                    'Bilibili video, bangumi, and multi-part pages when public.',
-                    'Weibo public video pages or copied video address links, including supported short links.',
+                    'TikTok, Instagram, Facebook, X/Twitter, Reddit, Pinterest, Vimeo, and Snapchat public post URLs.',
+                    'YouTube watch URLs, Shorts URLs, playlist URLs, and supported public share links.',
                 ],
             },
             {
@@ -369,86 +462,225 @@ export const learnPages: LearnPage[] = [
                 a: 'Usually no. A profile is a discovery page, not a stable list of downloadable public media results.',
             },
         ],
-        relatedDownloads: ['tiktok-no-watermark', 'douyin-no-watermark', 'weibo-video-download'],
-        relatedGuides: ['tiktok-download-guide', 'douyin-download-guide', 'weibo-download-guide'],
+        relatedDownloads: ['tiktok-no-watermark', 'instagram-reels-download', 'youtube-shorts-download'],
+        relatedGuides: ['tiktok-download-guide', 'instagram-download-guide', 'youtube-shorts-download-guide'],
         keywords: ['best video download link', 'public video URL', 'playlist downloader links'],
     },
     {
-        slug: 'download-video-audio-from-weibo',
-        title: 'How to download video audio from Weibo',
+        slug: 'instagram-reels-download-guide-online',
+        title: 'How to download Instagram Reels online',
         description:
-            'A Weibo-specific guide based on FreeSaveVideo support for public Weibo video URLs, t.cn short links, mobile headers, HLS handling, and audio extraction workflows.',
-        updatedAt: '2026-06-27',
+            'A practical guide to saving public Instagram Reels with the right share link, browser download settings, and troubleshooting checks.',
+        updatedAt: '2026-06-30',
         readingTime: '6 min read',
-        category: 'Weibo',
+        category: 'Instagram Reels',
         summary:
-            'For Weibo, copy a public video page URL or the player video address, including supported t.cn short links, then choose video or audio output when available.',
+            'For Instagram Reels, use the public Reel URL or share link, avoid profile and feed pages, and check whether the source exposes a downloadable video result.',
         keyTakeaways: [
-            'FreeSaveVideo supports public Weibo video links and supported t.cn short links.',
-            'The Weibo parser handles mobile video pages and status metadata, then selects usable quality variants when exposed.',
-            'Some Weibo media uses HLS; recent project work moved Weibo HLS processing into the browser path for better compatibility.',
+            'A specific public Reel URL is a stronger input than an Instagram profile, feed, hashtag, or explore page.',
+            'Instagram availability can change by region, login state, age gate, deleted media, or source-side limits.',
+            'If a Reel saves without the expected audio or quality, the public variants exposed by Instagram may be limited.',
         ],
         sections: [
             {
-                heading: 'Copy the right Weibo link',
+                heading: 'Copy a specific public Reel link',
                 body: [
-                    'Open the Weibo video page and copy the video address from the player or share action. FreeSaveVideo can handle supported public Weibo page URLs and supported t.cn short links.',
-                    'Avoid profile pages, comment pages, private posts, deleted videos, and links that only open a feed. They may not expose one playable video target.',
+                    'Open the Reel itself, use the share action, and copy the Reel URL. A direct Reel page gives FreeSaveVideo a clear media target, while a profile or hashtag page points to a changing list of posts.',
+                    'If the link only opens inside the app, open it in a browser first and confirm it loads as a public Reel page before pasting it into the downloader.',
+                ],
+                bullets: [
+                    'Good: a public Instagram Reel URL or share link.',
+                    'Weak: profile pages, feeds, hashtag pages, Explore pages, private posts, or deleted Reels.',
+                    'For repeated work, keep each Reel URL on its own line in the batch input.',
                 ],
             },
             {
-                heading: 'How FreeSaveVideo handles Weibo',
+                heading: 'What to expect from Reels downloads',
                 body: [
-                    'The Weibo service code uses mobile-style page headers and status metadata requests to find media information, collect available stream URLs, estimate quality labels, and select a suitable format based on the requested quality.',
-                    'The recent Weibo HLS work is important because some public Weibo videos are not a simple MP4 file. Browser-side HLS processing helps keep those results usable when the source exposes segmented media.',
+                    'Instagram may expose different video variants depending on the post, region, and public metadata available at the time of parsing. FreeSaveVideo can only return media that is publicly reachable from the source.',
+                    'For short clips, direct saving is usually enough. If the source is slow or the browser save flow is interrupted, queue mode gives the task more room to finish and makes the final Save step explicit.',
                 ],
             },
             {
-                heading: 'Getting audio for study or clipping',
+                heading: 'Troubleshoot common Reel failures',
                 body: [
-                    'If a Weibo result exposes audio or a video file that can be processed, choose audio-only settings before parsing or use local audio extraction after saving the video. The available audio result depends on the public media variants returned by Weibo.',
+                    'If parsing fails, test the link in a private browser window. If it requires login, is private, is removed, or redirects to a profile/feed page, it is not a good public downloader input.',
+                    'If the result appears but the final file is missing, check the browser download folder, the queue Save action, or any auto-save directory permission you granted.',
                 ],
             },
         ],
         table: {
-            headers: ['Weibo input', 'Expected result', 'Notes'],
+            headers: ['Input', 'Reliability', 'Best action'],
             rows: [
-                ['Public video page', 'Best chance of video result', 'Use a playable public post'],
-                ['Copied video address', 'Good chance of direct parse', 'Often the cleanest input'],
-                ['t.cn short link', 'Supported when it expands to a public video', 'Short links can expire or redirect'],
-                ['Profile or comment page', 'Unreliable', 'Not one public media target'],
+                ['Public Reel URL', 'High', 'Paste the Reel page or share link'],
+                ['Instagram post with video', 'Medium to high', 'Use the specific post URL'],
+                ['Profile or hashtag page', 'Low', 'Open the individual Reel first'],
+                ['Private or login-only Reel', 'Unsupported', 'Use only public content you are allowed to save'],
             ],
         },
         faqs: [
             {
-                q: 'Can I paste a Weibo t.cn short link?',
-                a: 'Yes, supported public t.cn short links can be parsed when they expand to a playable Weibo video page.',
+                q: 'Can FreeSaveVideo download private Instagram Reels?',
+                a: 'No. The downloader is for public links and should not be used for private, login-only, or restricted media.',
             },
             {
-                q: 'Why does my Weibo link return no result?',
-                a: 'The link may be private, deleted, expired, a profile page, a comment page, or a page that does not expose public playable media.',
+                q: 'Why did the Reel download without the quality I expected?',
+                a: 'The available quality depends on the public variants Instagram exposes for that Reel at parse time.',
             },
             {
-                q: 'Can FreeSaveVideo extract audio from Weibo videos?',
-                a: 'Use audio-only settings when available, or save the public video result and extract audio locally when the browser tool supports the file.',
+                q: 'Should I use the Instagram page or the app share link?',
+                a: 'Either can work when it resolves to the specific public Reel. A browser-visible Reel URL is easiest to verify.',
             },
         ],
-        relatedDownloads: ['weibo-video-download', 'bilibili-video-download', 'douyin-no-watermark'],
-        relatedGuides: ['weibo-download-guide', 'bilibili-download-guide', 'douyin-download-guide'],
-        keywords: ['download Weibo video audio', 'Weibo video downloader', 't.cn video download'],
+        relatedDownloads: ['instagram-reels-download', 'instagram-video-download', 'facebook-video-download'],
+        relatedGuides: ['instagram-download-guide', 'facebook-download-guide', 'tiktok-download-guide'],
+        keywords: ['download Instagram Reels online', 'Instagram Reels downloader', 'save public Instagram Reel'],
+    },
+    {
+        slug: 'download-tiktok-without-watermark-online',
+        title: 'How to download TikTok videos without watermark online',
+        description:
+            'A focused guide for saving public TikTok videos without watermark when a clean source is available, with link checks and realistic failure notes.',
+        updatedAt: '2026-06-30',
+        readingTime: '6 min read',
+        category: 'TikTok',
+        summary:
+            'Use a specific public TikTok video URL, paste it into FreeSaveVideo, and choose the available no-watermark result when the source exposes one.',
+        keyTakeaways: [
+            'A specific TikTok video URL or share link is the best input for no-watermark downloads.',
+            'No-watermark availability depends on the public media variants TikTok exposes for that post.',
+            'If a link fails, check whether it is private, deleted, region-limited, login-only, or a profile/feed URL.',
+        ],
+        sections: [
+            {
+                heading: 'Start with the exact TikTok video',
+                body: [
+                    'Open the TikTok video itself and copy the share link. A profile, search page, or feed is not enough because it does not identify one stable media item.',
+                    'Short TikTok share links can work when they redirect to a public video page. If the redirect lands on an app prompt or profile page, open the actual video in a browser and copy again.',
+                ],
+                bullets: [
+                    'Good: a public TikTok video URL or share URL.',
+                    'Weak: profile pages, search pages, feeds, collections that are not supported, private posts, and deleted videos.',
+                    'For several clips, paste one public video URL per line in batch mode.',
+                ],
+            },
+            {
+                heading: 'Choose the clean result when available',
+                body: [
+                    'FreeSaveVideo returns the media variants it can resolve from the public source. When a no-watermark variant is available, choose that result before saving.',
+                    'If only a watermarked or lower-quality result appears, the source may not be exposing a clean variant for that link at that time. Retrying later can help with temporary source limits, but it cannot create variants that are not exposed.',
+                ],
+            },
+            {
+                heading: 'Use queue mode for repeated saves',
+                body: [
+                    'For batch work, long clips, or unreliable mobile networks, queue mode is easier to audit than a chain of direct downloads. It also makes the final Save action visible, so it is clearer where files go.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Goal', 'Best page', 'Notes'],
+            rows: [
+                ['No-watermark video', 'TikTok no-watermark downloader', 'Use a specific public video link'],
+                ['Audio-only save', 'TikTok MP3 downloader', 'Availability depends on public audio variants'],
+                ['Several videos', 'Batch or queue mode', 'Paste one supported URL per line'],
+                ['Troubleshooting', 'Download error guide', 'Check link type and public access first'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Can every TikTok video be saved without watermark?',
+                a: 'No. A clean result depends on the public variants exposed for that specific video.',
+            },
+            {
+                q: 'Why does my TikTok share link fail?',
+                a: 'It may redirect to an app prompt, profile, private post, deleted video, or region-limited page instead of a public video URL.',
+            },
+            {
+                q: 'Can I download TikTok audio only?',
+                a: 'Use the TikTok MP3 page or audio settings when the public source exposes a usable audio result.',
+            },
+        ],
+        relatedDownloads: ['tiktok-no-watermark', 'tiktok-mp3-download', 'tiktok-collection-download'],
+        relatedGuides: ['tiktok-download-guide', 'tiktok-mp3-download-guide', 'tiktok-collection-download-guide'],
+        keywords: ['download TikTok without watermark', 'TikTok video downloader no watermark', 'save TikTok video online'],
+    },
+    {
+        slug: 'youtube-shorts-download-online',
+        title: 'How to download YouTube Shorts online',
+        description:
+            'How to save public YouTube Shorts with the right URL, choose video or audio output, and avoid common browser saving mistakes.',
+        updatedAt: '2026-06-30',
+        readingTime: '6 min read',
+        category: 'YouTube Shorts',
+        summary:
+            'A public YouTube Shorts URL works best when it points to one visible Short. Use FreeSaveVideo, choose the result that fits your device, and confirm the browser save step.',
+        keyTakeaways: [
+            'Use a YouTube Shorts URL or a normal YouTube watch URL for the same public video.',
+            'Output choices depend on the formats YouTube exposes for that public media item.',
+            'For long playlists or repeated saves, queue mode and clear save folders reduce missed files.',
+        ],
+        sections: [
+            {
+                heading: 'Use a Shorts URL or watch URL',
+                body: [
+                    'YouTube Shorts links usually look different from regular watch links, but both can identify the same public video when they include a stable video ID.',
+                    'Avoid channel pages, search results, subscription feeds, comments, and private or members-only videos. Those pages are not one public downloadable media target.',
+                ],
+            },
+            {
+                heading: 'Pick the right output',
+                body: [
+                    'For phone viewing, a practical MP4 result is usually enough. For listening practice, choose audio-only output when a usable audio result is available.',
+                    'Very high quality is not always exposed for Shorts. If only limited variants appear, changing settings may help, but the source still controls what is available.',
+                ],
+            },
+            {
+                heading: 'Confirm where the file goes',
+                body: [
+                    'Direct downloads go through the browser download flow. Queue downloads finish in FreeSaveVideo first and then need a Save action unless auto-save directory access is enabled.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Input', 'Use case', 'Recommendation'],
+            rows: [
+                ['Shorts URL', 'One short video', 'Paste directly into the downloader'],
+                ['Watch URL', 'Same video in standard YouTube format', 'Works when the video is public'],
+                ['Playlist URL', 'Several videos', 'Use supported playlist or batch behavior'],
+                ['Channel page', 'Discovery only', 'Open the specific Short first'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Can I use a normal YouTube link for a Short?',
+                a: 'Yes, when it points to the same public video ID, a normal watch URL can work like a Shorts URL.',
+            },
+            {
+                q: 'Can I save only the audio from a YouTube Short?',
+                a: 'Use audio settings when a usable audio result is exposed for that public video.',
+            },
+            {
+                q: 'Why is the saved quality lower than expected?',
+                a: 'The available formats depend on what YouTube exposes for that video and the selected FreeSaveVideo settings.',
+            },
+        ],
+        relatedDownloads: ['youtube-shorts-download', 'youtube-download', 'tiktok-no-watermark'],
+        relatedGuides: ['youtube-shorts-download-guide', 'youtube-download-guide', 'tiktok-download-guide'],
+        keywords: ['download YouTube Shorts', 'YouTube Shorts downloader online', 'save YouTube Shorts video'],
     },
     {
         slug: 'extract-audio-from-short-videos',
         title: 'How to extract audio from short videos',
         description:
-            'A practical guide for extracting audio from public short videos on TikTok, Douyin, YouTube Shorts, Instagram, and saved local files.',
+            'A practical guide for extracting audio from public short videos on TikTok, YouTube Shorts, Instagram, and saved local files.',
         updatedAt: '2026-06-27',
         readingTime: '5 min read',
         category: 'Audio extraction',
         summary:
             'Short-video audio extraction works best when the public source exposes an audio variant or when you already have a saved video file that can be processed locally.',
         keyTakeaways: [
-            'TikTok and Douyin have dedicated MP3-oriented pages in FreeSaveVideo because short-video audio is a common workflow.',
+            'TikTok has a dedicated MP3-oriented page in FreeSaveVideo because short-video audio is a common workflow.',
             'YouTube Shorts, Instagram, and similar services depend on the public media variants returned by their parsers.',
             'For files already saved locally, use the browser remux/audio extraction tool instead of re-uploading private files.',
         ],
@@ -456,7 +688,7 @@ export const learnPages: LearnPage[] = [
             {
                 heading: 'Use platform audio mode first',
                 body: [
-                    'For public short-video links, set audio-only or MP3/M4A preferences before parsing when the page supports it. FreeSaveVideo has dedicated TikTok MP3 and Douyin MP3 landing pages, plus general audio options for other supported services.',
+                    'For public short-video links, set audio-only or MP3/M4A preferences before parsing when the page supports it. FreeSaveVideo has a dedicated TikTok MP3 landing page, plus general audio options for other supported services.',
                     'The parser still depends on the source. Some posts expose a clean audio stream; others expose only combined video or limited variants.',
                 ],
             },
@@ -477,8 +709,8 @@ export const learnPages: LearnPage[] = [
             headers: ['Source', 'Best workflow', 'Caution'],
             rows: [
                 ['TikTok', 'TikTok MP3 or audio-only mode', 'Some sounds may be restricted by source rules'],
-                ['Douyin', 'Douyin MP3 or audio-only mode', 'Use the actual video share link'],
                 ['YouTube Shorts', 'YouTube download page with audio option', 'Options depend on available formats'],
+                ['Instagram Reels', 'Instagram video result or local extraction after saving', 'Audio availability depends on public variants'],
                 ['Local short video file', 'Remux/audio extraction tool', 'Browser support depends on format'],
             ],
         },
@@ -496,9 +728,9 @@ export const learnPages: LearnPage[] = [
                 a: 'Yes, supported local remux and audio extraction workflows run in the browser when possible.',
             },
         ],
-        relatedDownloads: ['tiktok-mp3-download', 'douyin-mp3-download', 'youtube-shorts-download'],
-        relatedGuides: ['tiktok-mp3-download-guide', 'douyin-mp3-download-guide', 'youtube-shorts-download-guide'],
-        keywords: ['extract audio from short videos', 'TikTok MP3', 'Douyin MP3'],
+        relatedDownloads: ['tiktok-mp3-download', 'youtube-shorts-download', 'instagram-reels-download'],
+        relatedGuides: ['tiktok-mp3-download-guide', 'youtube-shorts-download-guide', 'instagram-download-guide'],
+        keywords: ['extract audio from short videos', 'TikTok MP3', 'YouTube Shorts audio'],
     },
     {
         slug: 'public-video-download-safety',
@@ -570,3 +802,11 @@ export const learnSlugs = learnPages.map((page) => page.slug);
 
 export const getLearnPage = (slug: string): LearnPage | undefined =>
     learnPages.find((page) => page.slug === slug);
+
+export const getRelatedLearnPagesForDownload = (
+    downloadSlug: string,
+    limit = 4,
+): LearnPage[] =>
+    learnPages
+        .filter((page) => page.relatedDownloads.includes(downloadSlug))
+        .slice(0, limit);

@@ -67,8 +67,14 @@
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: siteUrl = `https://${fallbackHost}`;
     $: youtubeGuideUrl = `${siteUrl}/${lang}/youtube-video-downloader`;
-    const featuredDownloads = getHubDownloadLinks(6);
-    const featuredGuides = getHubGuideLinks(4);
+    $: featuredDownloads = getHubDownloadLinks(
+        6,
+        lang === "en" ? "international" : "all",
+    );
+    $: featuredGuides = getHubGuideLinks(
+        4,
+        lang === "en" ? "international" : "all",
+    );
 
     $: title = $t("faq.title");
     $: description = $t("faq.description");

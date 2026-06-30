@@ -12,6 +12,7 @@
         landing: import('$lib/seo/landing-pages').SeoLandingPage;
         guideSlug: string | null;
         relatedPages: import('$lib/seo/landing-pages').SeoLandingPage[];
+        relatedLearnPages: import('$lib/seo/learn-pages').LearnPage[];
     };
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
@@ -365,6 +366,24 @@
                         {/each}
                     </div>
                 </section>
+
+                {#if data.relatedLearnPages.length}
+                    <section class="related-column">
+                        <h3>Learn guides</h3>
+                        <div class="related-links">
+                            {#each data.relatedLearnPages as article}
+                                <a
+                                    class="related-link related-link--download"
+                                    href={`/en/learn/${article.slug}`}
+                                    title={article.title}
+                                >
+                                    <span class="related-link-title">{article.title}</span>
+                                    <span class="related-link-desc">{article.description}</span>
+                                </a>
+                            {/each}
+                        </div>
+                    </section>
+                {/if}
             </div>
         </section>
 

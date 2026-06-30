@@ -20,7 +20,10 @@
     const pageDesc = isZh
         ? '为常见平台提供下载步骤与常见问题，一步一步完成。'
         : 'Step-by-step download guides for popular platforms.';
-    const featuredDownloads = getHubDownloadLinks(6);
+    const featuredDownloads = getHubDownloadLinks(
+        6,
+        data.lang === 'en' ? 'international' : 'all',
+    );
 </script>
 
 <svelte:head>

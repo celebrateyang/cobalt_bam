@@ -2,9 +2,10 @@ import type { RequestHandler } from './$types';
 
 import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
-import { guideSlugs } from '$lib/seo/guide-pages';
+import { getGuidePage, guideSlugs } from '$lib/seo/guide-pages';
 import { learnSlugs } from '$lib/seo/learn-pages';
 import { machineReadablePaths, supportedSeoLanguages } from '$lib/seo/site';
+import { isInternationalDownloadSlug } from '$lib/seo/internal-links';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
@@ -101,6 +102,20 @@ function generateSitemap(): string {
     for (const lang of languages) {
         // top-level pages
         for (const page of pages) {
+            const downloadSlug = page.match(/^download\/([^/]+)$/)?.[1];
+            if (lang === 'en' && downloadSlug && !isInternationalDownloadSlug(downloadSlug)) {
+                continue;
+            }
+            const guideSlug = page.match(/^guide\/([^/]+)$/)?.[1];
+            const guide = guideSlug ? getGuidePage(guideSlug) : null;
+            if (
+                lang === 'en' &&
+                guide &&
+                !isInternationalDownloadSlug(guide.landingSlug)
+            ) {
+                continue;
+            }
+
             const path = page ? `/${lang}/${page}` : `/${lang}`;
             if (shouldExcludePath(path)) continue;
             const priority = page === '' ? '1.0' : '0.8';

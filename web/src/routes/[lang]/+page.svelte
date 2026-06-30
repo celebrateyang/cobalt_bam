@@ -328,8 +328,14 @@
     ];
     $: homeHubHeading =
         currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u4e0e\u6307\u5357" : "Popular Video Downloader Links";
-    const homeInternalLinks = getHubDownloadLinks(8);
-    const homeGuideLinks = getHubGuideLinks(4);
+    $: homeInternalLinks = getHubDownloadLinks(
+        8,
+        currentLocale === "en" ? "international" : "all",
+    );
+    $: homeGuideLinks = getHubGuideLinks(
+        4,
+        currentLocale === "en" ? "international" : "all",
+    );
     const homeLinkLabel = (platform: string) =>
         currentLocale === "zh" ? `${platform}\u89c6\u9891\u4e0b\u8f7d` : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>

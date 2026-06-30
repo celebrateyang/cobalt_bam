@@ -32,7 +32,7 @@
         },
         "amazon": {
             "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video links with available HLS quality options."
+            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
         },
         "xiaohongshu": {
             "name": "小紅書動画保存",

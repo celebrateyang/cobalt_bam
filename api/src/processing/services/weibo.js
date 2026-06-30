@@ -1,8 +1,10 @@
 import { getCookie } from "../cookie/manager.js";
+import { parse as parseSetCookie, splitCookiesString } from "set-cookie-parser";
 
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 const PAGE_TIMEOUT_MS = 15000;
 const SHORT_LINK_TIMEOUT_MS = 10000;
+const VISITOR_COOKIE_TTL_MS = 6 * 60 * 60 * 1000;
 
 const pageHeaders = {
     "user-agent": MOBILE_UA,
@@ -20,6 +22,8 @@ const statusHeaders = {
     referer: "https://weibo.com/",
     "x-requested-with": "XMLHttpRequest",
 };
+
+let visitorCookie = null;
 
 const decodeHtmlEntities = (value) =>
     String(value || "")
@@ -256,6 +260,104 @@ const fetchPlayInfo = async (oid) => {
         : null;
 };
 
+const parseCallbackJson = (value, callbackName) => {
+    const text = String(value || "").trim();
+    const prefix = `window.${callbackName} && ${callbackName}(`;
+    if (!text.startsWith(prefix)) return null;
+
+    const start = prefix.length;
+    const end = text.lastIndexOf(")");
+    if (end <= start) return null;
+
+    return JSON.parse(text.slice(start, end));
+};
+
+const getSetCookieHeader = (headers) => {
+    if (typeof headers?.getSetCookie === "function") {
+        return headers.getSetCookie().join(", ");
+    }
+
+    return headers?.get?.("set-cookie") || "";
+};
+
+const fetchVisitorCookie = async () => {
+    const now = Date.now();
+    if (visitorCookie?.value && visitorCookie.expiresAt > now) {
+        return visitorCookie.value;
+    }
+
+    const fp = {
+        os: "1",
+        browser: "Chrome138,0,0,0",
+        fonts: "undefined",
+        screenInfo: "1920*1080*24",
+        plugins: "Portable Document Format::internal-pdf-viewer::PDF Viewer",
+    };
+
+    const genResponse = await fetch("https://passport.weibo.com/visitor/genvisitor", {
+        method: "POST",
+        headers: {
+            "user-agent": MOBILE_UA,
+            "content-type": "application/x-www-form-urlencoded",
+            referer: "https://weibo.com/",
+        },
+        body: new URLSearchParams({
+            cb: "gen_callback",
+            fp: JSON.stringify(fp),
+        }),
+        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+    });
+
+    if (!genResponse.ok) return null;
+
+    const genData = parseCallbackJson(await genResponse.text(), "gen_callback");
+    const tid = genData?.data?.tid;
+    if (!tid) return null;
+
+    const visitorUrl = new URL("https://passport.weibo.com/visitor/visitor");
+    visitorUrl.searchParams.set("a", "incarnate");
+    visitorUrl.searchParams.set("t", tid);
+    visitorUrl.searchParams.set("w", "2");
+    visitorUrl.searchParams.set("c", "100");
+    visitorUrl.searchParams.set("gc", "");
+    visitorUrl.searchParams.set("cb", "cross_domain");
+    visitorUrl.searchParams.set("from", "weibo");
+
+    const visitorResponse = await fetch(visitorUrl, {
+        headers: {
+            "user-agent": MOBILE_UA,
+            referer: "https://weibo.com/",
+        },
+        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+    });
+
+    if (!visitorResponse.ok) return null;
+
+    const parsed = parseSetCookie(splitCookiesString(getSetCookieHeader(visitorResponse.headers)), {
+        decodeValues: false,
+    });
+    const values = {};
+    let expiresAt = now + VISITOR_COOKIE_TTL_MS;
+
+    for (const cookie of parsed) {
+        if (!["SUB", "SUBP"].includes(cookie.name) || !cookie.value) continue;
+
+        values[cookie.name] = cookie.value;
+        if (cookie.expires) {
+            expiresAt = Math.min(expiresAt, cookie.expires.getTime());
+        }
+    }
+
+    const value = Object.entries(values)
+        .map(([name, cookieValue]) => `${name}=${cookieValue}`)
+        .join("; ");
+
+    if (!value) return null;
+
+    visitorCookie = { value, expiresAt };
+    return value;
+};
+
 const fetchStatusInfo = async (mblogId, uid) => {
     if (!mblogId) return null;
 
@@ -263,7 +365,7 @@ const fetchStatusInfo = async (mblogId, uid) => {
     apiUrl.searchParams.set("id", mblogId);
 
     const cookie = getCookie("weibo");
-    const headers = {
+    const baseHeaders = {
         ...statusHeaders,
         referer: uid
             ? `https://weibo.com/${encodeURIComponent(uid)}/${encodeURIComponent(mblogId)}`
@@ -271,17 +373,30 @@ const fetchStatusInfo = async (mblogId, uid) => {
     };
 
     if (cookie) {
-        headers.cookie = cookie.toString();
+        baseHeaders.cookie = cookie.toString();
     }
 
-    const response = await fetch(apiUrl, {
-        headers,
-        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+    const requestStatus = async (headers) => {
+        const response = await fetch(apiUrl, {
+            headers,
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+
+        if (!response.ok) return null;
+
+        return response.json().catch(() => null);
+    };
+
+    const data = await requestStatus(baseHeaders);
+    if (data && data.ok !== -100) return data;
+
+    const fallbackCookie = await fetchVisitorCookie().catch(() => null);
+    if (!fallbackCookie) return data;
+
+    return requestStatus({
+        ...baseHeaders,
+        cookie: fallbackCookie,
     });
-
-    if (!response.ok) return null;
-
-    return response.json().catch(() => null);
 };
 
 const resolveLivePlaybackUrl = async (value) => {

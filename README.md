@@ -68,7 +68,7 @@ this list is not final and keeps expanding over time. if support for a service y
 ### additional notes or features (per service)
 | service    | notes or features                                                                                                    |
 | :--------  | :-----                                                                                                               |
-| amazon live | supports public `amazon.com/live/video/:id` replay links and available HLS qualities.                              |
+| amazon live | supports public `amazon.com/live/video/:id` and `amazon.com/vdp/:id` replay links with available HLS qualities.     |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
 | facebook   | supports public accessible videos content only.                                                                      |
 | haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |

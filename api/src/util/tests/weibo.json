@@ -24,6 +24,18 @@
         "canFail": true
     },
     {
+        "name": "desktop numeric status page",
+        "url": "https://weibo.com/2127664045/4236406500445423",
+        "params": {
+            "videoQuality": "720"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
         "name": "desktop live replay uses browser HLS processing",
         "url": "https://weibo.com/5417371966/QgSmfd6xN",
         "params": {
@@ -58,6 +70,26 @@
     {
         "name": "desktop tv page",
         "url": "https://weibo.com/tv/show/1034:5300586136928293",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
+        "name": "desktop tv page with hex oid",
+        "url": "https://weibo.com/tv/show/1034:d0c2233923e3a26279ff47c9484f677e?from=old_pc_videoshow",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
+        "name": "video fid page with hex oid",
+        "url": "https://video.weibo.com/show?fid=1034%3Ad0c2233923e3a26279ff47c9484f677e",
         "params": {},
         "expected": {
             "code": 200,

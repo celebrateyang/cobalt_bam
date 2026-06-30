@@ -217,8 +217,8 @@ export const capabilityServices: CapabilityService[] = [
         noWatermark: false,
         batchFriendly: true,
         collectionFriendly: false,
-        notes: ['Supports public amazon.com/live/video/:id replay links with available HLS quality options.'],
-        searchIntents: ['amazon live downloader', 'download amazon live replay', 'amazon live video download'],
+        notes: ['Supports public amazon.com/live/video/:id and amazon.com/vdp/:id replay links with available HLS quality options.'],
+        searchIntents: ['amazon live downloader', 'download amazon live replay', 'amazon live video download', 'amazon vdp video download'],
         unsupportedCases: defaultUnsupportedCases,
     },
     {

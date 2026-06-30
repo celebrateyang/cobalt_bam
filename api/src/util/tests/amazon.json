@@ -12,6 +12,18 @@
         "canFail": true
     },
     {
+        "name": "public Amazon VDP replay alias",
+        "url": "https://www.amazon.com/vdp/0d71c05d940545beb764eac24df0c353",
+        "params": {
+            "videoQuality": "720"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        },
+        "canFail": true
+    },
+    {
         "name": "rejects non-hex replay id",
         "url": "https://www.amazon.com/live/video/not-a-video",
         "params": {},

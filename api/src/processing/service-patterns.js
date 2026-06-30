@@ -140,7 +140,7 @@ export const testers = {
         }
         return pattern.shortLink?.length <= 32 ||
             (pattern.uid?.length <= 24 && pattern.mblogId?.length <= 32) ||
-            /^1034:\d{8,24}$/.test(id);
+            /^1034:(?:\d{8,24}|[0-9a-fA-F]{32})$/.test(id);
     },
 
     "vk": pattern =>

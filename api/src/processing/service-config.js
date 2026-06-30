@@ -7,6 +7,7 @@ export const services = {
     amazon: {
         patterns: [
             "live/video/:id",
+            "vdp/:id",
         ],
     },
     analdin: {

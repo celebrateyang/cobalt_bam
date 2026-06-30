@@ -370,6 +370,11 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await bilibili({
                     ...patternMatch,
                     filenameTitle: params.batch ? params.filenameTitle : undefined,
+                    preferProgressiveMp4:
+                        params.batch === true &&
+                        params.bilibiliDirectMp4 === true &&
+                        !isAudioOnly &&
+                        !isAudioMuted,
                 });
                 break;
 
@@ -800,6 +805,7 @@ export default async function({ host, patternMatch, params, authType }) {
             requestIP,
             audioBitrate: params.audioBitrate,
             alwaysProxy: params.alwaysProxy || localProcessing === "forced",
+            userAlwaysProxy: params.alwaysProxy,
             localProcessing,
         })
     } catch {

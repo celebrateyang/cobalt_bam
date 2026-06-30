@@ -19,7 +19,9 @@ const clearPipelineCache = (queueItem: CobaltQueueItem) => {
             delete queueItem.pipelineResults[workerId];
         }
     } else if (queueItem.state === "done") {
-        removeFromFileStorage(queueItem.resultFile.name);
+        if (queueItem.resultFile) {
+            removeFromFileStorage(queueItem.resultFile.name);
+        }
     }
 
     return queueItem;
@@ -347,6 +349,14 @@ const autoSaveCompletedItem = async (id: UUID, file: File) => {
         }));
         console.error(`[queue] auto-save failed id=${id}`, error);
     }
+};
+
+export const markQueueItemSaveRequested = async (id: UUID) => {
+    updateItem(id, (current) => ({
+        ...current,
+        saveRequested: true,
+    }));
+    await finalizeQueueHold(id);
 };
 
 export function pipelineTaskDone(id: UUID, workerId: UUID, file: File) {

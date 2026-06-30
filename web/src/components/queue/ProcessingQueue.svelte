@@ -58,7 +58,9 @@
                 summary.total = Math.max(summary.total, total);
             }
 
-            if (item.state === "done") {
+            const directReady = item.state === "done" && item.directUrl && !item.saveRequested;
+
+            if (item.state === "done" && !directReady) {
                 summary.success += 1;
                 summary.completed += 1;
             } else if (item.state === "error") {

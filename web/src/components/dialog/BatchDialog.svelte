@@ -150,6 +150,15 @@
             }, queueTaskTimeoutMs);
         });
 
+    const isBilibiliUrl = (url: string) => {
+        try {
+            const hostname = new URL(url).hostname.toLowerCase();
+            return hostname === "b23.tv" || hostname.endsWith("bilibili.com");
+        } catch {
+            return false;
+        }
+    };
+
     const buildBatchRequest = (item: DialogBatchItem): CobaltSaveRequestBody => {
         const request = buildSaveRequest(item.url);
 
@@ -163,6 +172,9 @@
         }
         request.localProcessing = "forced";
         request.batch = true;
+        request.bilibiliDirectMp4 =
+            isBilibiliUrl(item.url) &&
+            (request.downloadMode || "auto") === "auto";
 
         return request;
     };

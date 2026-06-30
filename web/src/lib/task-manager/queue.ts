@@ -145,6 +145,18 @@ const buildFallbackPipeline = (parentId: string, url: string): CobaltPipelineIte
 }]);
 
 const buildFetchValidation = (info: CobaltLocalProcessingResponse) => {
+    if (info.service === "bilibili") {
+        return {
+            expectedContentTypePrefixes: [
+                "video/",
+                "audio/",
+                "application/octet-stream",
+            ],
+            minBytes: 64 * 1024,
+            requireReliableSize: true,
+        };
+    }
+
     if (info.service !== "tiktok") return undefined;
 
     return {

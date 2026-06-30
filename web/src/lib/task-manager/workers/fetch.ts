@@ -30,6 +30,7 @@ type FetchWorkerResume = {
 type FetchWorkerValidation = {
     expectedContentTypePrefixes?: string[],
     minBytes?: number,
+    requireReliableSize?: boolean,
 };
 
 const isAbortError = (e: unknown) => (
@@ -229,6 +230,7 @@ const normalizeValidation = (validation?: FetchWorkerValidation) => ({
     minBytes: Number.isFinite(validation?.minBytes) && Number(validation?.minBytes) > 0
         ? Math.floor(Number(validation?.minBytes))
         : 0,
+    requireReliableSize: validation?.requireReliableSize === true,
 });
 
 const isLikelyHtmlResponse = (contentType: string) => {
@@ -849,9 +851,11 @@ const fetchFile = async (
                 }
 
                 // For chunked range mode without reliable total size,
-                // a short chunk indicates we've reached the end.
+                // a short chunk usually indicates we've reached the end.
+                // For stricter services, retry instead of accepting a
+                // possibly truncated media stream as complete.
                 if (bytesReceivedThisResponse < expectedChunkBytes) {
-                    if (!expectedSizeReliable) {
+                    if (!expectedSizeReliable && !runtimeValidation.requireReliableSize) {
                         break;
                     }
 
@@ -896,6 +900,13 @@ const fetchFile = async (
 
         if (!storage) {
             return error("queue.fetch.empty_tunnel");
+        }
+
+        if (
+            runtimeValidation.requireReliableSize &&
+            (!expectedSizeReliable || !expectedSize || expectedSize !== receivedBytes)
+        ) {
+            return error("queue.fetch.corrupted_file", await buildResumeSnapshot());
         }
 
         stopTimers();

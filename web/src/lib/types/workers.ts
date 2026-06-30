@@ -36,6 +36,7 @@ export type CobaltFetchResume = {
 export type CobaltFetchValidation = {
     expectedContentTypePrefixes?: string[],
     minBytes?: number,
+    requireReliableSize?: boolean,
 };
 
 type CobaltPipelineItemBase = {

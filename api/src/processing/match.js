@@ -805,7 +805,6 @@ export default async function({ host, patternMatch, params, authType }) {
             requestIP,
             audioBitrate: params.audioBitrate,
             alwaysProxy: params.alwaysProxy || localProcessing === "forced",
-            userAlwaysProxy: params.alwaysProxy,
             localProcessing,
         })
     } catch {

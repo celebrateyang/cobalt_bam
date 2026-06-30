@@ -21,7 +21,6 @@ export default function({
     requestIP,
     audioBitrate,
     alwaysProxy,
-    userAlwaysProxy,
     localProcessing,
 }) {
     const originalRequest =
@@ -229,18 +228,6 @@ export default function({
         case "video":
             switch (host) {
                 case "bilibili":
-                    if (
-                        isBatchRequest === true &&
-                        userAlwaysProxy !== true &&
-                        r.directClientDownload === true &&
-                        typeof r.urls === "string"
-                    ) {
-                        return createResponse("redirect", {
-                            url: r.urls,
-                            filename: defaultParams.filename,
-                            duration: defaultParams.duration,
-                        });
-                    }
                     params = {
                         type: r.directClientDownload === true && typeof r.urls === "string"
                             ? "proxy"

@@ -163,6 +163,18 @@ const collectStatusFormats = (mediaInfo) => {
     return formats;
 };
 
+const getStatusObjectId = (status) => {
+    const objectId = findObjectId(status);
+    if (objectId) return objectId;
+
+    const mediaId = status?.page_info?.media_info?.media_id;
+    if (typeof mediaId === "string" && /^[0-9a-fA-F]{32}$/.test(mediaId)) {
+        return `1034:${mediaId}`;
+    }
+
+    return null;
+};
+
 const findObjectId = (value) => {
     if (!value) return null;
 
@@ -472,10 +484,12 @@ export default async function weibo({ oid, fid, shortLink, mblogId, uid, quality
 
         if (!resolvedOid && mblogId) {
             const status = await fetchStatusInfo(mblogId, uid);
-            const statusResponse = await formatStatusResponse(status, mblogId, quality);
-            if (statusResponse) return statusResponse;
+            resolvedOid = getStatusObjectId(status);
 
-            resolvedOid = findObjectId(status);
+            if (!resolvedOid) {
+                const statusResponse = await formatStatusResponse(status, mblogId, quality);
+                if (statusResponse) return statusResponse;
+            }
         }
 
         if (!resolvedOid && shortLink) {

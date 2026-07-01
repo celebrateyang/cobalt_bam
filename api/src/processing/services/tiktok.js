@@ -1,4 +1,5 @@
 import Cookie from "../cookie/cookie.js";
+import { createHash } from "node:crypto";
 
 import { extract, normalizeURL } from "../url.js";
 import { genericUserAgent } from "../../config.js";
@@ -6,9 +7,11 @@ import { updateCookie } from "../cookie/manager.js";
 import { createStream } from "../../stream/manage.js";
 import { convertLanguageCode } from "../../misc/language-codes.js";
 import extractWithYtDlp from "../generic/yt-dlp.js";
+import { sanitizeString } from "../create-filename.js";
 
 const shortDomain = "https://vt.tiktok.com/";
 const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
+const snapAnySalt = "6HTugjCXxR";
 
 const normalizeUrlCandidate = (value) => {
     if (typeof value !== "string") return "";
@@ -290,6 +293,125 @@ const buildTikTokCanonicalUrl = ({ postId, username, shortLink, url }) => {
     return "";
 };
 
+const isValidSnapAnyMediaUrl = (value) => {
+    const normalized = normalizeUrlCandidate(value);
+    if (!normalized) return false;
+
+    try {
+        const parsed = new URL(normalized);
+        const host = parsed.hostname.toLowerCase();
+        return (
+            host === "tokcdn.com" ||
+            host.endsWith(".tokcdn.com") ||
+            /\.(?:mp4|m4v)(?:$|[?#])/i.test(parsed.pathname)
+        );
+    } catch {
+        return false;
+    }
+};
+
+const buildSnapAnyFilename = ({ title, postId }) => {
+    const safeTitle = typeof title === "string"
+        ? sanitizeString(title.trim().replace(/\s+/g, " ")).replace(/\.+$/g, "")
+        : "";
+
+    if (safeTitle) return `${safeTitle}.mp4`;
+    return `tiktok_${postId || "video"}.mp4`;
+};
+
+const fetchSnapAnyDetail = async (url, postId, reason) => {
+    if (!url) return null;
+
+    const startedAt = Date.now();
+    const timestamp = String(Date.now());
+    const language = "zh";
+    const signature = createHash("md5")
+        .update(`${url}${language}${timestamp}${snapAnySalt}`, "utf8")
+        .digest("hex");
+
+    console.log(`[tiktok] trying snapany direct bridge reason=${reason || "unknown"} url=${url}`);
+
+    const response = await fetch("https://api.snapany.com/v1/extract/post", {
+        method: "POST",
+        headers: {
+            "Accept": "*/*",
+            "Accept-Language": language,
+            "Content-Type": "application/json",
+            "G-Timestamp": timestamp,
+            "G-Footer": signature,
+            "Origin": "https://snapany.com",
+            "Referer": "https://snapany.com/",
+            "User-Agent": genericUserAgent,
+        },
+        body: JSON.stringify({ link: url }),
+    }).catch((error) => ({
+        ok: false,
+        status: 0,
+        statusText: error?.message || String(error),
+        json: async () => ({}),
+    }));
+
+    if (!response.ok) {
+        console.log(
+            `[tiktok] snapany direct bridge failed reason=${reason || "unknown"} elapsed_ms=${Date.now() - startedAt} status=${response.status} ${response.statusText || ""}`,
+        );
+        return null;
+    }
+
+    const data = await response.json().catch(() => null);
+    const medias = Array.isArray(data?.medias) ? data.medias : [];
+    const videoMedia = medias.find((item) => item?.media_type === "video");
+    const formats = Array.isArray(videoMedia?.formats) ? videoMedia.formats : [];
+    const formatUrls = formats
+        .map((item) => item?.video_url)
+        .filter(isValidSnapAnyMediaUrl);
+    const directUrl = [
+        videoMedia?.resource_url,
+        videoMedia?.preview_url,
+        ...formatUrls,
+    ].find(isValidSnapAnyMediaUrl);
+
+    if (!directUrl) {
+        console.log(
+            `[tiktok] snapany direct bridge returned no usable video reason=${reason || "unknown"} elapsed_ms=${Date.now() - startedAt}`,
+        );
+        return null;
+    }
+
+    const candidates = [directUrl, ...formatUrls]
+        .filter(isValidSnapAnyMediaUrl)
+        .filter((value, index, list) => list.indexOf(value) === index);
+
+    console.log(
+        `[tiktok] snapany direct bridge success elapsed_ms=${Date.now() - startedAt} host=${new URL(directUrl).hostname}`,
+    );
+
+    return {
+        urls: directUrl,
+        urlCandidates: candidates.slice(1),
+        filename: buildSnapAnyFilename({ title: data?.text, postId: data?.id || postId }),
+        duration: typeof videoMedia?.duration === "number" ? videoMedia.duration : undefined,
+        cover: videoMedia?.preview_url,
+        service: "tiktok",
+        tiktokVideoSource: "snapany",
+        tiktokVideoSourceKind: "snapany",
+        tiktokUsedSnapAnyFallback: true,
+    };
+};
+
+const fallbackToSnapAny = async (obj, reason) => {
+    if (obj.isAudioOnly || obj.isAudioMuted) return null;
+
+    const url = buildTikTokCanonicalUrl({
+        postId: obj.postId,
+        username: obj.username || obj.user,
+        shortLink: obj.shortLink,
+        url: obj.url,
+    });
+
+    return fetchSnapAnyDetail(url, obj.postId, reason);
+};
+
 const fallbackToYtDlp = async (obj, reason) => {
     if (obj.isAudioOnly || obj.isAudioMuted) return null;
 
@@ -370,6 +492,9 @@ export default async function(obj) {
 
     obj.postId = postId;
     obj.username = username;
+
+    const snapAny = await fallbackToSnapAny(obj, "primary");
+    if (snapAny) return snapAny;
 
     // Prefer legacy extraction for no-watermark video URLs.
     // If legacy fails (e.g. WAF), fall back to embed extraction and retry legacy once using refreshed cookies.

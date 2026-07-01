@@ -10,7 +10,7 @@ import {
 import { normalizeUrl } from './runtime';
 
 const TIKTOK_HOST_RE = /(^|\.)tiktok\.com$/i;
-const TIKTOK_CDN_RE = /(tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net|\/video\/tos\/|playwm|download)/i;
+const TIKTOK_CDN_RE = /(tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net|\/video\/tos\/|playwm|download)/i;
 const IMAGE_EXT_RE = /\.(?:jpe?g|png|webp|gif)(?:[?#]|$)/i;
 
 type TikTokUniversalData = {
@@ -97,7 +97,7 @@ const isLikelyTikTokVideoUrl = (url: string) => {
         /mime_type=video_/i.test(lower) ||
         /\/video\/tos\//i.test(lower) ||
         /\.mp4(?:[?#]|$)/i.test(lower) ||
-        /(tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net)/i.test(lower) && /\/(?:obj|tos|video)\//i.test(lower)
+        /(tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net)/i.test(lower) && /\/(?:obj|tos|video)\//i.test(lower)
     );
 };
 
@@ -106,7 +106,7 @@ const classifyCandidateKind = (url: string) => {
     if (/\/aweme\/v1\/play\//i.test(lower) || /(?:\?|&)is_play_url=1(?:&|$)/i.test(lower)) return 'api-play';
     if (lower.includes('/download/')) return 'download';
     if (lower.includes('playwm')) return 'playwm';
-    if (lower.includes('/video/tos/') || lower.includes('tiktokcdn') || lower.includes('tiktokv') || lower.includes('byteoversea') || lower.includes('ibytedtos')) return 'direct';
+    if (lower.includes('/video/tos/') || lower.includes('tokcdn') || lower.includes('tiktokcdn') || lower.includes('tiktokv') || lower.includes('byteoversea') || lower.includes('ibytedtos')) return 'direct';
     return 'other';
 };
 

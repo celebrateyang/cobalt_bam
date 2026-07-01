@@ -3,7 +3,7 @@ import type { DetectedMedia, InstagramResourceSnapshot, TikTokResourceSnapshot }
 import { downloadWithChrome } from './downloader/chrome-downloads';
 import { buildFreeSaveVideoUrl } from './shared/url';
 
-const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i;
+const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i;
 const TIKTOK_AVATAR_RE = /(?:^|\/)tos-[^/?]*-avt-|\/avatar\//i;
 const INSTAGRAM_VIDEO_URL_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
 const INSTAGRAM_HOST_RE = /(instagram|cdninstagram|fbcdn)/i;
@@ -46,6 +46,7 @@ chrome.webRequest.onBeforeRequest.addListener(
             '*://*.tiktok.com/*',
             '*://*.tiktokcdn.com/*',
             '*://*.tiktokv.com/*',
+            '*://*.tokcdn.com/*',
             '*://*.byteoversea.com/*',
             '*://*.ibytedtos.com/*',
             '*://*.muscdn.com/*',

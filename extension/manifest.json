@@ -38,6 +38,7 @@
         "*://*.tiktok.com/*",
         "*://*.tiktokcdn.com/*",
         "*://*.tiktokv.com/*",
+        "*://*.tokcdn.com/*",
         "*://*.byteoversea.com/*",
         "*://*.ibytedtos.com/*",
         "*://*.muscdn.com/*",

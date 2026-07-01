@@ -21,7 +21,7 @@ export {};
 const TIKTOK_HOST_RE = /(^|\.)tiktok\.com$/i;
 const INSTAGRAM_HOST_RE = /(^|\.)instagram\.com$/i;
 const DOUYIN_HOST_RE = /(^|\.)douyin\.com$|(^|\.)iesdouyin\.com$/i;
-const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i;
+const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i;
 const TIKTOK_AVATAR_RE = /(?:^|\/)tos-[^/?]*-avt-|\/avatar\//i;
 const FREESAVEVIDEO_HOST_RE = /(^|\.)freesavevideo\.online$|^localhost$|^127\.0\.0\.1$/i;
 const DEEPLEARNINGAI_CDN_RE = /(^|\.)cloudfront\.net$/i;
@@ -41,6 +41,7 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.tiktokcdn-us.com') ||
             host.endsWith('.tiktokcdn-eu.com') ||
             host.endsWith('.tiktokv.com') ||
+            host.endsWith('.tokcdn.com') ||
             host.endsWith('.byteoversea.com') ||
             host.endsWith('.ibytedtos.com') ||
             host.endsWith('.muscdn.com') ||

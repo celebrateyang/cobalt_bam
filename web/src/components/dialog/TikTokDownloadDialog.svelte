@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
     import { t } from "$lib/i18n/translations";
-    import { copyURL, openFile, openURL } from "$lib/download";
+    import { copyURL, openFile } from "$lib/download";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
@@ -16,7 +16,6 @@
     export let title = "TikTok video";
     export let filename: string;
     export let urls: string[] = [];
-    export let fallbackUrl: string | undefined = undefined;
     export let extensionUrls: string[] = [];
 
     let close: () => void;
@@ -42,6 +41,7 @@
     $: speedText = status === "downloading" || status === "fallback"
         ? formatSpeed(receivedBytes, startedAt)
         : "";
+    $: primaryUrl = uniqueUrls()[0] || activeUrl;
 
     const formatBytes = (value: number) => {
         if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -62,7 +62,7 @@
     };
 
     const uniqueUrls = () => {
-        const list = [...urls, fallbackUrl].filter((value): value is string => (
+        const list = urls.filter((value): value is string => (
             typeof value === "string" && value.length > 0
         ));
         return list.filter((value, index) => list.indexOf(value) === index);
@@ -132,6 +132,17 @@
         }, window.location.origin);
     });
 
+    const openDirectDownload = (url: string) => {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.target = "_blank";
+        anchor.rel = "noreferrer noopener nofollow";
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+    };
+
     const downloadFromUrl = async (url: string, signal: AbortSignal) => {
         activeUrl = url;
         statusText = "Downloading video...";
@@ -142,6 +153,7 @@
 
         const response = await fetch(url, {
             cache: "no-store",
+            referrerPolicy: "no-referrer",
             signal,
         });
 
@@ -213,10 +225,6 @@
         const candidates = uniqueUrls();
         for (const candidate of candidates) {
             try {
-                if (candidate === fallbackUrl) {
-                    status = "fallback";
-                    statusText = "Direct download failed. Trying tunnel fallback...";
-                }
                 await downloadFromUrl(candidate, controller.signal);
                 return;
             } catch (error) {
@@ -243,20 +251,22 @@
         }
 
         status = "error";
-        statusText = "Download failed. Please try again.";
+        statusText = "Direct fetch was blocked. Use the browser download link or copy the URL.";
     };
 
     const save = () => {
         if (file) {
             openFile(file);
-        } else if (activeUrl) {
-            openURL(activeUrl);
+        } else {
+            const url = primaryUrl || activeUrl;
+            if (url) openDirectDownload(url);
         }
     };
 
     const copy = async () => {
-        if (!activeUrl) return;
-        await copyURL(activeUrl);
+        const url = primaryUrl || activeUrl;
+        if (!url) return;
+        await copyURL(url);
         copied = true;
         setTimeout(() => {
             copied = false;
@@ -313,9 +323,9 @@
 
         <div class="actions">
             {#if status === "error"}
-                <button type="button" class="button elevated" on:click={start}>
-                    <IconRefresh />
-                    Retry
+                <button type="button" class="button elevated" on:click={save}>
+                    <IconDownload />
+                    {$t("button.download")}
                 </button>
             {:else}
                 <button
@@ -332,12 +342,25 @@
             <button
                 type="button"
                 class="button elevated"
-                disabled={!activeUrl}
+                disabled={!primaryUrl && !activeUrl}
                 on:click={copy}
             >
                 <IconCopy />
                 {copied ? $t("button.copied") : $t("button.copy")}
             </button>
+
+            {#if primaryUrl}
+                <button type="button" class="button" on:click={() => openDirectDownload(primaryUrl)}>
+                    Open link
+                </button>
+            {/if}
+
+            {#if status === "error"}
+                <button type="button" class="button" on:click={start}>
+                    <IconRefresh />
+                    Retry
+                </button>
+            {/if}
 
             <button type="button" class="button" on:click={close}>
                 {$t("button.done")}

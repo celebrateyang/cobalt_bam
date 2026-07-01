@@ -282,8 +282,22 @@ export default function({
                     };
                     break;
 
-                case "vk":
                 case "tiktok":
+                    responseType = "redirect";
+                    params = {
+                        url: r.urls,
+                        directUrl: r.urls,
+                        directUrlCandidates: Array.isArray(r.urlCandidates)
+                            ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
+                                typeof value === "string" &&
+                                value.length > 0 &&
+                                list.indexOf(value) === index
+                            ))
+                            : [r.urls].filter((value) => typeof value === "string" && value.length > 0),
+                    };
+                    break;
+
+                case "vk":
                 case "douyin":
                     params = {
                         type: r.subtitles ? "remux" : "proxy"
@@ -426,22 +440,6 @@ export default function({
     }
 
     const responseData = { ...defaultParams, ...params };
-
-    if (
-        host === "tiktok" &&
-        responseType === "tunnel" &&
-        params.type === "proxy" &&
-        typeof r.urls === "string"
-    ) {
-        responseData.directUrl = r.urls;
-        responseData.directUrlCandidates = Array.isArray(r.urlCandidates)
-            ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
-                typeof value === "string" &&
-                value.length > 0 &&
-                list.indexOf(value) === index
-            ))
-            : undefined;
-    }
 
     return createResponse(responseType, responseData);
 }

@@ -64,7 +64,6 @@ type TikTokDownloadDialog = Dialog & {
     title?: string,
     filename: string,
     urls: string[],
-    fallbackUrl?: string,
     extensionUrls?: string[],
 };
 

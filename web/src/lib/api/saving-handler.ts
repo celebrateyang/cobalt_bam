@@ -96,9 +96,11 @@ const isTunnelUrl = (url?: string) => {
 };
 
 const isTikTokDownloadResponse = (response: CobaltAPIResponse) => (
-    response.status === "tunnel" &&
+    response.status === "redirect" &&
     "service" in response &&
-    response.service === "tiktok"
+    response.service === "tiktok" &&
+    typeof response.directUrl === "string" &&
+    response.directUrl.length > 0
 );
 
 const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
@@ -109,17 +111,9 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     response.directUrl.length > 0
 );
 
-const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
-    const url = new URL("/api/tiktok-media", window.location.origin);
-    url.searchParams.set("url", directUrl);
-    url.searchParams.set("filename", filename);
-    return url.toString();
-};
-
 const openTikTokDownloadDialog = (
     mediaUrls: string[],
     response: { filename: string },
-    fallbackUrl?: string,
     extensionUrls?: string[],
 ) => {
     downloadButtonState.set("done");
@@ -129,7 +123,6 @@ const openTikTokDownloadDialog = (
         title: "TikTok video preview and download",
         filename: response.filename,
         urls: mediaUrls,
-        fallbackUrl,
         extensionUrls,
     });
 };
@@ -539,6 +532,28 @@ export const savingHandler = async ({
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
 
+        if (isTikTokDownloadResponse(response)) {
+            const directCandidates = [
+                response.directUrl || "",
+                ...(Array.isArray(response.directUrlCandidates)
+                    ? response.directUrlCandidates
+                    : []),
+                redirectUrl,
+            ].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ));
+
+            console.log("[tiktok-download] opening TikTok Direct Bridge dialog");
+            openTikTokDownloadDialog(
+                directCandidates,
+                response,
+                directCandidates,
+            );
+            return response;
+        }
+
         if (isPreviewDownloadResponse(response)) {
             const directCandidates = [
                 response.directUrl || "",
@@ -661,31 +676,6 @@ export const savingHandler = async ({
         }
 
         downloadButtonState.set("check");
-        if (isTikTokDownloadResponse(response)) {
-            const directCandidates = [
-                response.directUrl || "",
-                ...(Array.isArray(response.directUrlCandidates)
-                    ? response.directUrlCandidates
-                    : []),
-            ].filter((value, index, list) => (
-                typeof value === "string" &&
-                value.length > 0 &&
-                list.indexOf(value) === index
-            ));
-            const mediaProxyUrls = directCandidates.map((directCandidate) => (
-                buildTikTokMediaProxyUrl(directCandidate, response.filename)
-            ));
-
-            console.log("[tiktok-download] opening TikTok download dialog");
-            openTikTokDownloadDialog(
-                mediaProxyUrls.length ? mediaProxyUrls : [tunnelUrl],
-                response,
-                mediaProxyUrls.length ? tunnelUrl : undefined,
-                directCandidates,
-            );
-            return response;
-        }
-
         const probeResult = await API.probeCobaltTunnel(tunnelUrl);
 
         if (probeResult === 200) {

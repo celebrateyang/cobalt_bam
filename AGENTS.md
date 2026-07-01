@@ -19,6 +19,12 @@
 - `vi` (Vietnamese)
 - `zh` (Chinese)
 
+## Shell/file access rule (must-follow)
+- Do not use PowerShell cmdlets to read or write repository files. This includes `Get-Content`, `Set-Content`, `Out-File`, `[IO.File]::WriteAllLines`, and similar PowerShell file APIs.
+- For reading files, use `rg`, `python -c` with `Path(...).read_text(encoding='utf-8')`, or project-native tools.
+- For editing files, use `apply_patch` for targeted edits. If scripting is necessary, use Python with explicit `encoding='utf-8'`.
+- PowerShell may still be used only as the command launcher on Windows, but not as the file reader/writer.
+
 ## Production architecture
 - **Frontend**: Cloudflare Pages (project: `freesavevideo-online`)
 - **Backend**: GKE (namespace: `infra`), exposed as `https://api.freesavevideo.online/`
@@ -31,6 +37,15 @@
 
 ## Supported download services
 - List is in `README.md` / `api/README.md` (core logic + patterns live in `api/src/processing/service-config.js`)
+
+## Direct Bridge download flow
+- "Direct Bridge" means: the API extracts real media resource URLs, returns them to the browser as `redirect` metadata, and avoids creating a `/tunnel` URL for that service.
+- Use Direct Bridge for services where browser/CDN direct download is stable and server proxying is unnecessary or less reliable. Current examples: `deeplearningai`, `tiktok`.
+- API shape: return `status: "redirect"` with `url`, `filename`, `service`, `directUrl`, and optional `directUrlCandidates`. Do not attach `tunnelUrl` for Direct Bridge services.
+- Web flow: detect the service-specific redirect response, open a preview/download modal, preview with the direct URL, try direct `fetch` first, and auto-save when CORS allows it.
+- CORS handling follows the SnapWC-style route-around model: frontend JS cannot bypass CORS; on direct fetch failure, try the browser extension via `FSV_EXTENSION_DOWNLOAD`; if unavailable, offer browser handoff with an `<a download target="_blank" rel="noreferrer noopener nofollow">` link and copy-link action.
+- Extension flow: content bridge must allowlist the direct CDN/resource URLs, then call `chrome.downloads.download` through `FSV_DOWNLOAD_URL`. Add a platform adapter when the source page has stable metadata that can expose cleaner media candidates.
+- Do not silently fall back to API tunnel for Direct Bridge unless the product decision changes explicitly; this flow is intentionally direct-first, extension-second, browser-handoff-last.
 
 ## Deployment (prod)
 

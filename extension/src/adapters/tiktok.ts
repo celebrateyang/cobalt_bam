@@ -114,10 +114,10 @@ const candidateScore = (url: string, source: string, preferredCodec = true) => {
     let score = 0;
     switch (classifyCandidateKind(url)) {
         case 'api-play':
-            score += 120;
+            score += 104;
             break;
         case 'direct':
-            score += 112;
+            score += 124;
             break;
         case 'other':
             score += 72;

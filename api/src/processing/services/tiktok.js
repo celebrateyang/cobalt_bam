@@ -134,10 +134,10 @@ const buildVideoCandidateSet = ({ detail, isEmbed, preferH265 }) => {
     }
 
     return [
-        ...buckets.preferredApiPlay,
         ...buckets.preferredDirectPlay,
-        ...buckets.fallbackApiPlay,
+        ...buckets.preferredApiPlay,
         ...buckets.fallbackDirectPlay,
+        ...buckets.fallbackApiPlay,
         ...buckets.embedPlay,
         ...buckets.download,
     ];

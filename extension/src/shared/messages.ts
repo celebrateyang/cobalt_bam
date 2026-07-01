@@ -9,6 +9,7 @@ export type ExtensionMessage =
     | { type: 'FSV_OPEN_FREESAVEVIDEO'; url: string }
     | { type: 'FSV_DOWNLOAD_URL'; url: string; filename?: string; media?: DetectedMedia }
     | { type: 'FSV_PAGE_DOWNLOAD'; tabId: number; url: string; filename?: string; media?: DetectedMedia }
+    | { type: 'FSV_FIND_TIKTOK_RESOURCE_CANDIDATES'; pageUrl?: string; postId?: string }
     | { type: 'FSV_GET_TIKTOK_RESOURCE_CACHE' }
     | { type: 'FSV_REMEMBER_TIKTOK_RESOURCE_THUMBNAIL'; url: string; thumbnailUrl: string }
     | { type: 'FSV_GET_INSTAGRAM_RESOURCE_CACHE' }
@@ -20,6 +21,12 @@ export type ExtensionMessage =
 export type TikTokResourceCacheResponse = {
     ok: boolean;
     items?: TikTokResourceSnapshot[];
+};
+
+export type TikTokResourceCandidateResponse = {
+    ok: boolean;
+    items?: TikTokResourceSnapshot[];
+    error?: string;
 };
 
 export type InstagramResourceCacheResponse = {

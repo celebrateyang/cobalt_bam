@@ -17,6 +17,7 @@
     export let filename: string;
     export let urls: string[] = [];
     export let extensionUrls: string[] = [];
+    export let sourceUrl = "";
 
     let close: () => void;
     let controller: AbortController | null = null;
@@ -31,6 +32,7 @@
     let statusText = "Preparing download...";
     let copied = false;
     let extensionStarted = false;
+    let extensionCandidateUrls: string[] = [];
 
     $: displayProgress = Math.max(0, Math.min(100, Math.round(progress)));
     $: sizeText = totalBytes
@@ -62,7 +64,7 @@
     };
 
     const uniqueUrls = () => {
-        const list = urls.filter((value): value is string => (
+        const list = [...extensionCandidateUrls, ...urls].filter((value): value is string => (
             typeof value === "string" && value.length > 0
         ));
         return list.filter((value, index) => list.indexOf(value) === index);
@@ -129,6 +131,47 @@
             requestId,
             url,
             filename,
+        }, window.location.origin);
+    });
+
+    const requestExtensionCandidates = () => new Promise<string[]>((resolve) => {
+        if (!sourceUrl) {
+            resolve([]);
+            return;
+        }
+
+        const requestId = `tiktok-candidates-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const timeout = window.setTimeout(() => {
+            cleanup();
+            resolve([]);
+        }, 2500);
+
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            window.removeEventListener("message", onMessage);
+        };
+
+        const onMessage = (event: MessageEvent) => {
+            if (event.source !== window) return;
+            if (event.origin !== window.location.origin) return;
+            const data = event.data;
+            if (!data || data.source !== "freesavevideo-extension") return;
+            if (data.type !== "FSV_EXTENSION_TIKTOK_CANDIDATES_RESULT") return;
+            if (data.requestId !== requestId) return;
+
+            cleanup();
+            const items: { url?: unknown }[] = Array.isArray(data.items) ? data.items : [];
+            resolve(items
+                .map((item) => typeof item?.url === "string" ? item.url : "")
+                .filter(Boolean));
+        };
+
+        window.addEventListener("message", onMessage);
+        window.postMessage({
+            source: "freesavevideo-page",
+            type: "FSV_EXTENSION_TIKTOK_CANDIDATES",
+            requestId,
+            pageUrl: sourceUrl,
         }, window.location.origin);
     });
 
@@ -219,8 +262,15 @@
             filePreviewUrl = "";
         }
         extensionStarted = false;
+        extensionCandidateUrls = [];
         status = "downloading";
-        statusText = "Preparing download...";
+        statusText = "Checking browser extension candidates...";
+
+        extensionCandidateUrls = await requestExtensionCandidates();
+        if (controller.signal.aborted) return;
+        statusText = extensionCandidateUrls.length
+            ? "Using browser extension candidates..."
+            : "Preparing download...";
 
         const candidates = uniqueUrls();
         for (const candidate of candidates) {

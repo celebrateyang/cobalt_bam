@@ -115,6 +115,7 @@ const openTikTokDownloadDialog = (
     mediaUrls: string[],
     response: { filename: string },
     extensionUrls?: string[],
+    sourceUrl?: string,
 ) => {
     downloadButtonState.set("done");
     createDialog({
@@ -124,6 +125,7 @@ const openTikTokDownloadDialog = (
         filename: response.filename,
         urls: mediaUrls,
         extensionUrls,
+        sourceUrl,
     });
 };
 
@@ -550,6 +552,7 @@ export const savingHandler = async ({
                 directCandidates,
                 response,
                 directCandidates,
+                selectedRequest.url,
             );
             return response;
         }

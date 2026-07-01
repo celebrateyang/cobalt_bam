@@ -1,7 +1,7 @@
 import { scanGenericMedia } from './adapters/generic';
 import { scanWithAdapter } from './adapters/registry';
 import type { DetectedMedia, DouyinDomVideoSnapshot, InstagramDomVideoSnapshot, InstagramResourceSnapshot, TikTokFeedItemSnapshot, TikTokResourceSnapshot } from './adapters/types';
-import type { CaptureVisibleTabResponse, ExtensionMessage, InstagramResourceCacheResponse, PageScanResult, TikTokResourceCacheResponse } from './shared/messages';
+import type { CaptureVisibleTabResponse, ExtensionMessage, InstagramResourceCacheResponse, PageScanResult, TikTokResourceCacheResponse, TikTokResourceCandidateResponse } from './shared/messages';
 
 declare global {
     interface Window {
@@ -55,6 +55,16 @@ const isAllowedPageBridgeUrl = (value: string) => {
     }
 };
 
+const getTikTokPostIdFromUrl = (value: string) => {
+    try {
+        const url = new URL(value);
+        if (!/(^|\.)tiktok\.com$/i.test(url.hostname) && url.hostname !== 'vt.tiktok.com') return '';
+        return url.pathname.match(/\/(?:video|photo)\/(\d{8,})/i)?.[1] || '';
+    } catch {
+        return '';
+    }
+};
+
 const installFreeSaveVideoPageBridge = () => {
     if (!FREESAVEVIDEO_HOST_RE.test(window.location.hostname) || window.__fsvPageBridgeReady) return;
     window.__fsvPageBridgeReady = true;
@@ -65,7 +75,51 @@ const installFreeSaveVideoPageBridge = () => {
         if (event.source !== window) return;
         if (event.origin !== window.location.origin) return;
         const data = event.data;
-        if (!data || data.source !== 'freesavevideo-page' || data.type !== 'FSV_EXTENSION_DOWNLOAD') return;
+        if (!data || data.source !== 'freesavevideo-page') return;
+
+        if (data.type === 'FSV_EXTENSION_TIKTOK_CANDIDATES') {
+            const requestId = typeof data.requestId === 'string' ? data.requestId : '';
+            const pageUrl = typeof data.pageUrl === 'string' ? data.pageUrl : '';
+            const postId = getTikTokPostIdFromUrl(pageUrl);
+            if (!requestId || !postId) {
+                window.postMessage({
+                    source: 'freesavevideo-extension',
+                    type: 'FSV_EXTENSION_TIKTOK_CANDIDATES_RESULT',
+                    requestId,
+                    ok: false,
+                    items: [],
+                    error: 'Unsupported TikTok page URL.',
+                }, window.location.origin);
+                return;
+            }
+
+            void chrome.runtime.sendMessage({
+                type: 'FSV_FIND_TIKTOK_RESOURCE_CANDIDATES',
+                pageUrl,
+                postId,
+            } satisfies ExtensionMessage).then((response: TikTokResourceCandidateResponse) => {
+                window.postMessage({
+                    source: 'freesavevideo-extension',
+                    type: 'FSV_EXTENSION_TIKTOK_CANDIDATES_RESULT',
+                    requestId,
+                    ok: response?.ok === true,
+                    items: response?.items ?? [],
+                    error: response?.error,
+                }, window.location.origin);
+            }).catch((error) => {
+                window.postMessage({
+                    source: 'freesavevideo-extension',
+                    type: 'FSV_EXTENSION_TIKTOK_CANDIDATES_RESULT',
+                    requestId,
+                    ok: false,
+                    items: [],
+                    error: error instanceof Error ? error.message : 'Extension candidate lookup failed.',
+                }, window.location.origin);
+            });
+            return;
+        }
+
+        if (data.type !== 'FSV_EXTENSION_DOWNLOAD') return;
 
         const requestId = typeof data.requestId === 'string' ? data.requestId : '';
         const url = typeof data.url === 'string' ? data.url : '';

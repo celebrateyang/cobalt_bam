@@ -10,6 +10,80 @@ const INSTAGRAM_HOST_RE = /(instagram|cdninstagram|fbcdn)/i;
 const tikTokResourceCache = new Map<number, TikTokResourceSnapshot[]>();
 const instagramResourceCache = new Map<number, InstagramResourceSnapshot[]>();
 
+const getTikTokPostIdFromUrl = (value?: string) => {
+    if (!value) return '';
+    try {
+        const url = new URL(value);
+        if (!/(^|\.)tiktok\.com$/i.test(url.hostname) && url.hostname !== 'vt.tiktok.com') return '';
+        return url.pathname.match(/\/(?:video|photo)\/(\d{8,})/i)?.[1] || '';
+    } catch {
+        return '';
+    }
+};
+
+const scoreTikTokResourceUrl = (value: string) => {
+    const lower = value.toLowerCase();
+    let score = 0;
+    if (/\.mp4(?:[?#]|$)/i.test(lower)) score += 60;
+    if (/mime_type=video_|\/video\/tos\/|is_play_url=1|\/aweme\/v1\/play\//i.test(lower)) score += 45;
+    if (/tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i.test(lower)) score += 25;
+    if (/[?&]bytestart=\d+|[?&]byteend=\d+/i.test(lower)) score -= 20;
+    if (/playwm|watermark|avatar|tos-[^/?]*-avt/i.test(lower)) score -= 50;
+    return score;
+};
+
+const normalizeTikTokResourceItems = (items: TikTokResourceSnapshot[]) => {
+    const seen = new Set<string>();
+    return items
+        .filter((item) => item?.url && TIKTOK_VIDEO_URL_RE.test(item.url) && !TIKTOK_AVATAR_RE.test(item.url))
+        .filter((item) => {
+            if (seen.has(item.url)) return false;
+            seen.add(item.url);
+            return true;
+        })
+        .sort((left, right) => (
+            scoreTikTokResourceUrl(right.url) - scoreTikTokResourceUrl(left.url) ||
+            (right.seenAt || 0) - (left.seenAt || 0)
+        ))
+        .slice(0, 12);
+};
+
+const scanTikTokTabResources = async (tabId: number) => {
+    try {
+        const response = await chrome.tabs.sendMessage(tabId, { type: 'FSV_SCAN_PAGE' } satisfies ExtensionMessage);
+        const media = Array.isArray(response?.media) ? response.media : [];
+        return media
+            .filter((item: DetectedMedia) => item?.kind === 'video' && TIKTOK_VIDEO_URL_RE.test(item.url) && !TIKTOK_AVATAR_RE.test(item.url))
+            .map((item: DetectedMedia) => ({
+                url: item.url,
+                thumbnailUrl: item.thumbnailUrl,
+                seenAt: Date.now() + (Number(item.score) || 0),
+            }));
+    } catch {
+        return [];
+    }
+};
+
+const findTikTokResourceCandidates = async (pageUrl?: string, postId?: string) => {
+    const targetPostId = postId || getTikTokPostIdFromUrl(pageUrl);
+    const tabs = await chrome.tabs.query({});
+    const tikTokTabs = tabs.filter((tab) => {
+        const tabUrl = tab.url || '';
+        if (!/^https?:\/\/([^/]+\.)?tiktok\.com\/|^https?:\/\/vt\.tiktok\.com\//i.test(tabUrl)) return false;
+        if (!targetPostId) return true;
+        return getTikTokPostIdFromUrl(tabUrl) === targetPostId || tabUrl.includes(targetPostId);
+    });
+
+    const items: TikTokResourceSnapshot[] = [];
+    for (const tab of tikTokTabs) {
+        if (tab.id === undefined) continue;
+        items.push(...(tikTokResourceCache.get(tab.id) ?? []));
+        items.push(...await scanTikTokTabResources(tab.id));
+    }
+
+    return normalizeTikTokResourceItems(items);
+};
+
 const upsertTikTokTabResource = (tabId: number, url: string, thumbnailUrl?: string) => {
     if (tabId < 0 || !TIKTOK_VIDEO_URL_RE.test(url) || TIKTOK_AVATAR_RE.test(url)) return;
     const items = tikTokResourceCache.get(tabId) ?? [];
@@ -230,6 +304,16 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
                     error: error instanceof Error ? error.message : 'Unknown page download error.',
                 });
             });
+        return true;
+    }
+    if (message.type === 'FSV_FIND_TIKTOK_RESOURCE_CANDIDATES') {
+        void findTikTokResourceCandidates(message.pageUrl, message.postId)
+            .then((items) => sendResponse({ ok: true, items }))
+            .catch((error) => sendResponse({
+                ok: false,
+                items: [],
+                error: error instanceof Error ? error.message : 'TikTok candidate lookup failed.',
+            }));
         return true;
     }
     if (message.type === 'FSV_GET_TIKTOK_RESOURCE_CACHE') {

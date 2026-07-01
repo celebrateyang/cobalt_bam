@@ -32,6 +32,7 @@ import streamable from "./services/streamable.js";
 import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
+import deeplearningai from "./services/deeplearningai.js";
 import snapchat from "./services/snapchat.js";
 import loom from "./services/loom.js";
 import facebook from "./services/facebook.js";
@@ -552,6 +553,13 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "dailymotion":
                 r = await dailymotion(patternMatch);
+                break;
+
+            case "deeplearningai":
+                r = await deeplearningai({
+                    ...patternMatch,
+                    url,
+                });
                 break;
 
             case "douyin":

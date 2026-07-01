@@ -59,6 +59,13 @@ export const services = {
     dailymotion: {
         patterns: ["video/:id"],
     },
+    deeplearningai: {
+        patterns: [
+            "courses/:courseSlug/lesson/:lessonId/:lessonSlug",
+        ],
+        tld: "ai",
+        subdomains: ["learn"],
+    },
     douyin: {
         patterns: [
             "video/:id",

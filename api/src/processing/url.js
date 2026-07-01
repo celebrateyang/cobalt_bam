@@ -162,6 +162,10 @@ function serviceNameForURL(url, host = psl.parse(url.hostname)) {
         return "podcast";
     }
 
+    if (url.hostname === "learn.deeplearning.ai") {
+        return "deeplearningai";
+    }
+
     if (host.domain === "nicovideo.jp") {
         return "niconico";
     }

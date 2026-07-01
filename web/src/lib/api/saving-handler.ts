@@ -101,6 +101,14 @@ const isTikTokDownloadResponse = (response: CobaltAPIResponse) => (
     response.service === "tiktok"
 );
 
+const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
+    response.status === "redirect" &&
+    "service" in response &&
+    response.service === "deeplearningai" &&
+    typeof response.directUrl === "string" &&
+    response.directUrl.length > 0
+);
+
 const buildTikTokMediaProxyUrl = (directUrl: string, filename: string) => {
     const url = new URL("/api/tiktok-media", window.location.origin);
     url.searchParams.set("url", directUrl);
@@ -123,6 +131,24 @@ const openTikTokDownloadDialog = (
         urls: mediaUrls,
         fallbackUrl,
         extensionUrls,
+    });
+};
+
+const openPreviewDownloadDialog = (
+    mediaUrls: string[],
+    response: { filename: string },
+    extensionUrls?: string[],
+) => {
+    downloadButtonState.set("done");
+    createDialog({
+        id: `preview-download-${Date.now()}`,
+        type: "preview-download",
+        title: "File preview and download",
+        filename: response.filename,
+        urls: mediaUrls,
+        extensionUrls,
+        mediaType: "video",
+        autoSave: true,
     });
 };
 
@@ -512,6 +538,31 @@ export const savingHandler = async ({
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        if (isPreviewDownloadResponse(response)) {
+            const directCandidates = [
+                response.directUrl || "",
+                ...(Array.isArray(response.directUrlCandidates)
+                    ? response.directUrlCandidates
+                    : []),
+                redirectUrl,
+            ].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ));
+            const directMediaUrls = directCandidates.filter((candidate) => (
+                !/\.m3u8(?:$|[?#])/i.test(candidate)
+            ));
+
+            console.log("[preview-download] opening preview download dialog");
+            openPreviewDownloadDialog(
+                directMediaUrls.length ? directMediaUrls : directCandidates,
+                response,
+                directCandidates,
+            );
+            return response;
+        }
 
         // For batch requests forced into the queue, treat redirects as queue items.
         if (selectedRequest.localProcessing === "forced" && selectedRequest.batch) {

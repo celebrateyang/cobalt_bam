@@ -68,6 +68,16 @@ type TikTokDownloadDialog = Dialog & {
     extensionUrls?: string[],
 };
 
+type PreviewDownloadDialog = Dialog & {
+    type: "preview-download",
+    title?: string,
+    filename: string,
+    urls: string[],
+    extensionUrls?: string[],
+    mediaType?: "video" | "audio" | "image",
+    autoSave?: boolean,
+};
+
 type BatchDialog = Dialog & {
     type: "batch",
     title?: string,
@@ -87,4 +97,4 @@ type FeedbackDialog = Dialog & {
     initialVideoUrl?: string,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | BatchDialog | FeedbackDialog;
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog;

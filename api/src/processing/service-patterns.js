@@ -30,6 +30,11 @@ export const testers = {
 
     "dailymotion": pattern => pattern.id?.length <= 32,
 
+    "deeplearningai": pattern =>
+        pattern.courseSlug?.length <= 128 &&
+        pattern.lessonId?.length <= 32 &&
+        pattern.lessonSlug?.length <= 128,
+
     "douyin": pattern =>
         pattern.id?.length <= 24 ||
         pattern.shortLink?.length <= 12,

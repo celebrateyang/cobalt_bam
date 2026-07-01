@@ -187,7 +187,10 @@ export function createResponse(responseType, responseData) {
             case "redirect":
                 response = {
                     url: responseData?.url,
-                    filename: responseData?.filename
+                    filename: responseData?.filename,
+                    directUrl: responseData?.directUrl,
+                    directUrlCandidates: responseData?.directUrlCandidates,
+                    service: responseData?.service,
                 }
                 break;
 

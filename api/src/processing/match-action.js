@@ -266,6 +266,22 @@ export default function({
                     }
                     break;
 
+                case "deeplearningai":
+                    responseType = "redirect";
+                    params = {
+                        url: r.directUrl || r.urls,
+                        directUrl: r.directUrl || r.urls,
+                        directUrlCandidates: [
+                            r.directUrl || r.urls,
+                            typeof r.hlsUrl === "string" ? r.hlsUrl : undefined,
+                        ].filter((value, index, list) => (
+                            typeof value === "string" &&
+                            value.length > 0 &&
+                            list.indexOf(value) === index
+                        )),
+                    };
+                    break;
+
                 case "vk":
                 case "tiktok":
                 case "douyin":

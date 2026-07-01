@@ -1,4 +1,5 @@
 import { bilibiliAdapter } from './bilibili';
+import { deeplearningaiAdapter } from './deeplearningai';
 import { douyinAdapter } from './douyin';
 import { genericAdapter } from './generic';
 import { instagramAdapter } from './instagram';
@@ -25,7 +26,14 @@ const youtubePolicyAdapter: PlatformAdapter = {
     },
 };
 
-const adapters: PlatformAdapter[] = [youtubePolicyAdapter, douyinAdapter, bilibiliAdapter, tiktokAdapter, instagramAdapter];
+const adapters: PlatformAdapter[] = [
+    youtubePolicyAdapter,
+    deeplearningaiAdapter,
+    douyinAdapter,
+    bilibiliAdapter,
+    tiktokAdapter,
+    instagramAdapter,
+];
 
 export const getMatchingAdapter = (url: URL): PlatformAdapter => {
     return adapters.find((adapter) => adapter.matches(url)) ?? genericAdapter;

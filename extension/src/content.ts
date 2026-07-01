@@ -24,6 +24,7 @@ const DOUYIN_HOST_RE = /(^|\.)douyin\.com$|(^|\.)iesdouyin\.com$/i;
 const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tiktokcdn|byteoversea|muscdn|akamaized\.net/i;
 const TIKTOK_AVATAR_RE = /(?:^|\/)tos-[^/?]*-avt-|\/avatar\//i;
 const FREESAVEVIDEO_HOST_RE = /(^|\.)freesavevideo\.online$|^localhost$|^127\.0\.0\.1$/i;
+const DEEPLEARNINGAI_CDN_RE = /(^|\.)cloudfront\.net$/i;
 const INSTAGRAM_VIDEO_URL_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
 const INSTAGRAM_HOST_RESOURCE_RE = /(instagram|cdninstagram|fbcdn)/i;
 const tikTokThumbnailCapturePending = new Set<string>();
@@ -41,7 +42,11 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.tiktokcdn-eu.com') ||
             host.endsWith('.byteoversea.com') ||
             host.endsWith('.muscdn.com') ||
-            host.endsWith('.akamaized.net');
+            host.endsWith('.akamaized.net') ||
+            (
+                DEEPLEARNINGAI_CDN_RE.test(host) &&
+                /\.(?:mp4|m3u8)(?:$|[?#])/i.test(url.pathname)
+            );
     } catch {
         return false;
     }
@@ -78,12 +83,12 @@ const installFreeSaveVideoPageBridge = () => {
             url,
             filename,
             media: {
-                id: `page-tiktok-${Date.now()}`,
+                id: `page-download-${Date.now()}`,
                 kind: 'video',
                 url,
-                label: filename || 'TikTok video',
+                label: filename || 'Video',
                 source: 'api',
-                format: 'mp4',
+                format: /\.m3u8(?:$|[?#])/i.test(url) ? 'm3u8' : 'mp4',
             },
         } satisfies ExtensionMessage).then(() => {
             window.postMessage({

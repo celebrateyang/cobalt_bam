@@ -21,6 +21,7 @@
                 "*://*.bilibili.com/*",
                 "*://*.bilibili.tv/*",
                 "*://*.b23.tv/*",
+                "*://learn.deeplearning.ai/*",
                 "*://freesavevideo.online/*",
                 "*://*.freesavevideo.online/*",
                 "http://localhost/*",
@@ -48,7 +49,9 @@
         "*://*.bilibili.tv/*",
         "*://*.b23.tv/*",
         "*://*.bilivideo.com/*",
-        "*://*.hdslb.com/*"
+        "*://*.hdslb.com/*",
+        "*://learn.deeplearning.ai/*",
+        "*://*.cloudfront.net/*"
     ],
     "icons": {
         "16": "icons/icon-16.png",

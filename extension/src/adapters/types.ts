@@ -2,6 +2,7 @@ export type PlatformId =
     | 'generic'
     | 'youtube-policy'
     | 'bilibili'
+    | 'deeplearningai'
     | 'douyin'
     | 'tiktok'
     | 'instagram'

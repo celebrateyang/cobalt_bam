@@ -5,6 +5,7 @@
     import PickerDialog from "$components/dialog/PickerDialog.svelte";
     import SavingDialog from "$components/dialog/SavingDialog.svelte";
     import TikTokDownloadDialog from "$components/dialog/TikTokDownloadDialog.svelte";
+    import PreviewDownloadDialog from "$components/dialog/PreviewDownloadDialog.svelte";
     import BatchDialog from "$components/dialog/BatchDialog.svelte";
     import FeedbackDialog from "$components/dialog/FeedbackDialog.svelte";
 
@@ -25,6 +26,8 @@
             <SavingDialog {...dialog} />
         {:else if dialog.type === "tiktok-download"}
             <TikTokDownloadDialog {...dialog} />
+        {:else if dialog.type === "preview-download"}
+            <PreviewDownloadDialog {...dialog} />
         {:else if dialog.type === "batch"}
             <BatchDialog {...dialog} />
         {:else if dialog.type === "feedback"}

@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FreeSaveVideo Downloader",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Detect media on the current page and open supported public links in FreeSaveVideo.",
     "action": {
         "default_popup": "popup/index.html",

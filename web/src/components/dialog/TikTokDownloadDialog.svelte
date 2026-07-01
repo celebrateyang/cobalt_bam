@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
+    import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { copyURL, openFile } from "$lib/download";
 
@@ -13,11 +14,15 @@
 
     export let id: string;
     export let dismissable = true;
-    export let title = "TikTok video";
+    export let title = "";
     export let filename: string;
     export let urls: string[] = [];
     export let extensionUrls: string[] = [];
     export let sourceUrl = "";
+
+    const EXTENSION_STORE_URL = "https://chromewebstore.google.com/detail/freesavevideo-downloader/pcpbaaiagdihbnbpbcdkeofheepadcid";
+    const EXTENSION_DISMISSED_KEY = "fsv:tiktok-extension-dismissed-at";
+    const EXTENSION_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
 
     let close: () => void;
     let controller: AbortController | null = null;
@@ -29,10 +34,14 @@
     let totalBytes: number | null = null;
     let startedAt = 0;
     let status: "idle" | "downloading" | "done" | "fallback" | "error" = "idle";
-    let statusText = "Preparing download...";
+    let statusText = "";
     let copied = false;
     let extensionStarted = false;
     let extensionCandidateUrls: string[] = [];
+    let previewFailed = false;
+    let extensionInstalled = false;
+    let extensionCheckComplete = false;
+    let extensionPromptDismissed = false;
 
     $: displayProgress = Math.max(0, Math.min(100, Math.round(progress)));
     $: sizeText = totalBytes
@@ -44,6 +53,10 @@
         ? formatSpeed(receivedBytes, startedAt)
         : "";
     $: primaryUrl = uniqueUrls()[0] || activeUrl;
+    $: showExtensionPrompt = isChromiumLike() &&
+        extensionCheckComplete &&
+        !extensionInstalled &&
+        !extensionPromptDismissed;
 
     const formatBytes = (value: number) => {
         if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -62,6 +75,8 @@
         const elapsedSeconds = Math.max(0.1, (Date.now() - started) / 1000);
         return `${formatBytes(bytes / elapsedSeconds)}/s`;
     };
+
+    const tt = (key: string) => get(t)(key);
 
     const uniqueUrls = () => {
         const list = [...extensionCandidateUrls, ...urls].filter((value): value is string => (
@@ -99,6 +114,73 @@
             sample.includes("permission to access");
     };
 
+    const isChromiumLike = () => {
+        if (typeof navigator === "undefined") return false;
+        const ua = navigator.userAgent || "";
+        return /\b(?:Chrome|Chromium|Edg)\//.test(ua) &&
+            !/\b(?:OPR|Opera|SamsungBrowser|CriOS|FxiOS)\//.test(ua);
+    };
+
+    const readExtensionPromptDismissed = () => {
+        try {
+            const dismissedAt = Number(localStorage.getItem(EXTENSION_DISMISSED_KEY) || "0");
+            return Number.isFinite(dismissedAt) && Date.now() - dismissedAt < EXTENSION_DISMISS_MS;
+        } catch {
+            return false;
+        }
+    };
+
+    const dismissExtensionPrompt = () => {
+        extensionPromptDismissed = true;
+        try {
+            localStorage.setItem(EXTENSION_DISMISSED_KEY, String(Date.now()));
+        } catch {
+            // Best effort only.
+        }
+    };
+
+    const openExtensionStore = () => {
+        window.open(EXTENSION_STORE_URL, "_blank", "noopener,noreferrer");
+    };
+
+    const detectExtensionInstalled = () => new Promise<boolean>((resolve) => {
+        const requestId = `tiktok-extension-ping-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const timeout = window.setTimeout(() => {
+            cleanup();
+            resolve(false);
+        }, 900);
+
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            window.removeEventListener("message", onMessage);
+        };
+
+        const onMessage = (event: MessageEvent) => {
+            if (event.source !== window) return;
+            if (event.origin !== window.location.origin) return;
+
+            const data = event.data;
+            if (!data || data.source !== "freesavevideo-extension") return;
+            if (data.type === "FSV_EXTENSION_READY") {
+                cleanup();
+                resolve(true);
+                return;
+            }
+            if (data.type !== "FSV_EXTENSION_PONG") return;
+            if (data.requestId !== requestId) return;
+
+            cleanup();
+            resolve(data.ok === true);
+        };
+
+        window.addEventListener("message", onMessage);
+        window.postMessage({
+            source: "freesavevideo-page",
+            type: "FSV_EXTENSION_PING",
+            requestId,
+        }, window.location.origin);
+    });
+
     const requestExtensionDownload = (url: string) => new Promise<boolean>((resolve) => {
         const requestId = `tiktok-extension-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const timeout = window.setTimeout(() => {
@@ -121,6 +203,7 @@
             if (data.requestId !== requestId) return;
 
             cleanup();
+            if (data.ok === true) extensionInstalled = true;
             resolve(data.ok === true);
         };
 
@@ -160,6 +243,7 @@
             if (data.requestId !== requestId) return;
 
             cleanup();
+            extensionInstalled = true;
             const items: { url?: unknown }[] = Array.isArray(data.items) ? data.items : [];
             resolve(items
                 .map((item) => typeof item?.url === "string" ? item.url : "")
@@ -186,9 +270,15 @@
         anchor.remove();
     };
 
+    const noReferrer = (node: HTMLVideoElement) => {
+        node.setAttribute("referrerpolicy", "no-referrer");
+        return {};
+    };
+
     const downloadFromUrl = async (url: string, signal: AbortSignal) => {
         activeUrl = url;
-        statusText = "Downloading video...";
+        previewFailed = false;
+        statusText = tt("dialog.tiktok_download.status.downloading");
         progress = 0;
         receivedBytes = 0;
         totalBytes = null;
@@ -250,7 +340,7 @@
         filePreviewUrl = URL.createObjectURL(file);
         progress = 100;
         status = "done";
-        statusText = "Download complete. Preview the video, then save it.";
+        statusText = tt("dialog.tiktok_download.status.complete");
     };
 
     const start = async () => {
@@ -263,14 +353,15 @@
         }
         extensionStarted = false;
         extensionCandidateUrls = [];
+        previewFailed = false;
         status = "downloading";
-        statusText = "Checking browser extension candidates...";
+        statusText = tt("dialog.tiktok_download.status.checking_extension");
 
         extensionCandidateUrls = await requestExtensionCandidates();
         if (controller.signal.aborted) return;
         statusText = extensionCandidateUrls.length
-            ? "Using browser extension candidates..."
-            : "Preparing download...";
+            ? tt("dialog.tiktok_download.status.using_extension_candidates")
+            : tt("dialog.tiktok_download.status.preparing");
 
         const candidates = uniqueUrls();
         for (const candidate of candidates) {
@@ -286,22 +377,23 @@
         const extensionCandidates = uniqueExtensionUrls();
         if (extensionCandidates.length) {
             status = "fallback";
-            statusText = "Trying browser extension fallback...";
+            statusText = tt("dialog.tiktok_download.status.extension_fallback");
             for (const extensionCandidate of extensionCandidates) {
                 const started = await requestExtensionDownload(extensionCandidate);
                 if (controller.signal.aborted) return;
                 if (started) {
+                    extensionInstalled = true;
                     extensionStarted = true;
                     progress = 100;
                     status = "done";
-                    statusText = "Download started in Chrome.";
+                    statusText = tt("dialog.tiktok_download.status.extension_started");
                     return;
                 }
             }
         }
 
         status = "error";
-        statusText = "Direct fetch was blocked. Use the browser download link or copy the URL.";
+        statusText = tt("dialog.tiktok_download.status.blocked_error");
     };
 
     const save = () => {
@@ -324,6 +416,14 @@
     };
 
     onMount(() => {
+        statusText = tt("dialog.tiktok_download.status.preparing");
+        extensionPromptDismissed = readExtensionPromptDismissed();
+        void detectExtensionInstalled().then((installed) => {
+            extensionInstalled = installed;
+            extensionCheckComplete = true;
+        }).catch(() => {
+            extensionCheckComplete = true;
+        });
         void start();
     });
 
@@ -337,7 +437,7 @@
     <div class="dialog-body tiktok-download-dialog">
         <header class="header">
             <div>
-                <h2>{title}</h2>
+                <h2>{title || $t("dialog.tiktok_download.title")}</h2>
                 <p>{filename}</p>
             </div>
             {#if status === "downloading" || status === "fallback"}
@@ -350,12 +450,34 @@
         </header>
 
         <div class="preview-frame">
-            {#if filePreviewUrl}
-                <video src={filePreviewUrl} controls playsinline></video>
-            {:else if activeUrl}
-                <video src={activeUrl} controls playsinline muted></video>
+            {#if filePreviewUrl && !previewFailed}
+                <video
+                    src={filePreviewUrl}
+                    controls
+                    playsinline
+                    preload="metadata"
+                    on:error={() => (previewFailed = true)}
+                ></video>
+            {:else if activeUrl && !previewFailed}
+                <video
+                    src={activeUrl}
+                    controls
+                    playsinline
+                    muted
+                    preload="metadata"
+                    use:noReferrer
+                    on:error={() => (previewFailed = true)}
+                ></video>
+            {:else if extensionStarted}
+                <div class="preview-placeholder">
+                    {$t("dialog.tiktok_download.preview.blocked")}
+                </div>
+            {:else if previewFailed}
+                <div class="preview-placeholder">
+                    {$t("dialog.tiktok_download.preview.unavailable")}
+                </div>
             {:else}
-                <div class="preview-placeholder">Preparing preview...</div>
+                <div class="preview-placeholder">{$t("dialog.tiktok_download.preview.preparing")}</div>
             {/if}
         </div>
 
@@ -370,6 +492,33 @@
                 <div class="progress-fill" style={`width: ${displayProgress}%`}></div>
             </div>
         </div>
+
+        {#if showExtensionPrompt}
+            <div class="extension-prompt">
+                <div class="extension-prompt-copy">
+                    <strong>{$t("dialog.tiktok_download.extension.title")}</strong>
+                    <p>{$t("dialog.tiktok_download.extension.body")}</p>
+                    <div class="extension-trust">
+                        <span>{$t("dialog.tiktok_download.extension.trust.easy")}</span>
+                        <span>{$t("dialog.tiktok_download.extension.trust.safe")}</span>
+                        <span>{$t("dialog.tiktok_download.extension.trust.free")}</span>
+                    </div>
+                </div>
+                <div class="extension-prompt-actions">
+                    <button type="button" class="install-button chrome" on:click={openExtensionStore}>
+                        <span class="browser-icon chrome-icon"></span>
+                        {$t("dialog.tiktok_download.extension.chrome")}
+                    </button>
+                    <button type="button" class="install-button edge" on:click={openExtensionStore}>
+                        <span class="browser-icon edge-icon"></span>
+                        {$t("dialog.tiktok_download.extension.edge")}
+                    </button>
+                    <button type="button" class="later-button" on:click={dismissExtensionPrompt}>
+                        {$t("dialog.tiktok_download.extension.later")}
+                    </button>
+                </div>
+            </div>
+        {/if}
 
         <div class="actions">
             {#if status === "error"}
@@ -401,14 +550,14 @@
 
             {#if primaryUrl}
                 <button type="button" class="button" on:click={() => openDirectDownload(primaryUrl)}>
-                    Open link
+                    {$t("dialog.tiktok_download.open_link")}
                 </button>
             {/if}
 
             {#if status === "error"}
                 <button type="button" class="button" on:click={start}>
                     <IconRefresh />
-                    Retry
+                    {$t("button.retry")}
                 </button>
             {/if}
 
@@ -486,6 +635,146 @@
         gap: 8px;
     }
 
+    .extension-prompt {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 26%, var(--button-stroke));
+        background:
+            radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 36%),
+            linear-gradient(135deg, color-mix(in srgb, var(--secondary) 13%, var(--background)), color-mix(in srgb, var(--popup-bg) 94%, var(--secondary)));
+        box-shadow: 0 12px 34px color-mix(in srgb, var(--secondary) 14%, transparent);
+        color: var(--text);
+    }
+
+    .extension-prompt-copy {
+        min-width: 0;
+    }
+
+    .extension-prompt strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 1.05rem;
+        line-height: 1.25;
+    }
+
+    .extension-prompt p {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.9rem;
+        line-height: 1.45;
+        max-width: 58ch;
+    }
+
+    .extension-trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        margin-top: 12px;
+    }
+
+    .extension-trust span {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--text);
+        font-size: 0.78rem;
+        opacity: 0.86;
+    }
+
+    .extension-trust span::before {
+        content: "✓";
+        display: inline-grid;
+        place-items: center;
+        width: 15px;
+        height: 15px;
+        border-radius: 999px;
+        color: white;
+        font-size: 0.68rem;
+        background: var(--secondary);
+    }
+
+    .extension-prompt-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .install-button,
+    .later-button {
+        border: 0;
+        border-radius: 14px;
+        font: inherit;
+        cursor: pointer;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .install-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-width: 168px;
+        padding: 11px 18px;
+        color: var(--text);
+        background: color-mix(in srgb, var(--popup-bg) 84%, white);
+        box-shadow: 0 8px 18px color-mix(in srgb, black 9%, transparent);
+    }
+
+    .install-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px color-mix(in srgb, black 12%, transparent);
+    }
+
+    .later-button {
+        padding: 11px 16px;
+        color: var(--subtext);
+        background: color-mix(in srgb, var(--button-hover) 58%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--button-stroke) 68%, transparent);
+    }
+
+    .later-button:hover {
+        color: var(--text);
+        background: color-mix(in srgb, var(--button-hover) 72%, transparent);
+    }
+
+    .browser-icon {
+        position: relative;
+        width: 22px;
+        height: 22px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+    }
+
+    .chrome-icon {
+        background: conic-gradient(#ea4335 0 33%, #fbbc05 0 66%, #34a853 0 83%, #ea4335 0);
+    }
+
+    .chrome-icon::before,
+    .edge-icon::before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border-radius: inherit;
+        background: #4285f4;
+        box-shadow: 0 0 0 2px white;
+    }
+
+    .edge-icon {
+        background: conic-gradient(#0aa5ff, #00c2a8, #2cc36b, #0a5fdc, #0aa5ff);
+    }
+
+    .edge-icon::before {
+        background: #fff;
+        opacity: 0.92;
+    }
+
     .progress-label {
         display: flex;
         justify-content: space-between;
@@ -525,6 +814,13 @@
     .actions .button :global(svg) {
         width: 18px;
         height: 18px;
+    }
+
+    @media (max-width: 640px) {
+        .install-button,
+        .later-button {
+            flex: 1 1 100%;
+        }
     }
 
     @keyframes spin {

@@ -77,6 +77,17 @@ const installFreeSaveVideoPageBridge = () => {
         const data = event.data;
         if (!data || data.source !== 'freesavevideo-page') return;
 
+        if (data.type === 'FSV_EXTENSION_PING') {
+            const requestId = typeof data.requestId === 'string' ? data.requestId : '';
+            window.postMessage({
+                source: 'freesavevideo-extension',
+                type: 'FSV_EXTENSION_PONG',
+                requestId,
+                ok: true,
+            }, window.location.origin);
+            return;
+        }
+
         if (data.type === 'FSV_EXTENSION_TIKTOK_CANDIDATES') {
             const requestId = typeof data.requestId === 'string' ? data.requestId : '';
             const pageUrl = typeof data.pageUrl === 'string' ? data.pageUrl : '';

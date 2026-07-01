@@ -121,7 +121,6 @@ const openTikTokDownloadDialog = (
     createDialog({
         id: `tiktok-download-${Date.now()}`,
         type: "tiktok-download",
-        title: "TikTok video preview and download",
         filename: response.filename,
         urls: mediaUrls,
         extensionUrls,

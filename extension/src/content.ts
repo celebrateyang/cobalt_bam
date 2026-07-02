@@ -146,19 +146,14 @@ const installFreeSaveVideoPageBridge = () => {
             return;
         }
 
-        void chrome.runtime.sendMessage({
-            type: 'FSV_DOWNLOAD_URL',
+        void downloadInPageContext(url, filename, {
+            id: `page-download-${Date.now()}`,
+            kind: 'video',
             url,
-            filename,
-            media: {
-                id: `page-download-${Date.now()}`,
-                kind: 'video',
-                url,
-                label: filename || 'Video',
-                source: 'api',
-                format: /\.m3u8(?:$|[?#])/i.test(url) ? 'm3u8' : 'mp4',
-            },
-        } satisfies ExtensionMessage).then(() => {
+            label: filename || 'Video',
+            source: 'api',
+            format: /\.m3u8(?:$|[?#])/i.test(url) ? 'm3u8' : 'mp4',
+        }).then(() => {
             window.postMessage({
                 source: 'freesavevideo-extension',
                 type: 'FSV_EXTENSION_DOWNLOAD_RESULT',
@@ -801,6 +796,16 @@ const mediaTypeMatches = (blobType: string, media?: DetectedMedia) => {
     }
 };
 
+const looksLikeHtmlErrorBytes = async (blob: Blob) => {
+    const sample = await blob.slice(0, 2048).text().catch(() => '');
+    const normalized = sample.trimStart().toLowerCase();
+    return normalized.startsWith('<!doctype html') ||
+        normalized.startsWith('<html') ||
+        normalized.includes('access denied') ||
+        normalized.includes('permission to access') ||
+        normalized.includes('errors.edgesuite.net');
+};
+
 const basenameFromFilename = (filename?: string) => {
     const raw = filename?.split('/').pop()?.trim();
     return raw || 'download';
@@ -808,8 +813,9 @@ const basenameFromFilename = (filename?: string) => {
 
 const downloadInPageContext = async (url: string, filename?: string, media?: DetectedMedia) => {
     const response = await fetch(url, {
-        credentials: 'include',
+        credentials: 'omit',
         cache: 'no-store',
+        referrerPolicy: 'no-referrer',
     });
     if (!response.ok) {
         throw new Error(`Download failed with status ${response.status}.`);
@@ -823,6 +829,12 @@ const downloadInPageContext = async (url: string, filename?: string, media?: Det
     const blob = await response.blob();
     if (!blob.size) {
         throw new Error('Empty download payload.');
+    }
+    if (blob.size < 64 * 1024) {
+        throw new Error('Download payload is too small.');
+    }
+    if (await looksLikeHtmlErrorBytes(blob)) {
+        throw new Error('TikTok CDN returned an HTML error page instead of video.');
     }
 
     if (!mediaTypeMatches(blob.type || contentType, media)) {

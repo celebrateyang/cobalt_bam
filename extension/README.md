@@ -58,3 +58,6 @@ Detect media on the current page and open supported public links in FreeSaveVide
 ```
 
 Privacy disclosure should state that the extension scans the current page DOM for media URLs, stores only local settings, and sends URLs to FreeSaveVideo only after the user clicks an open action.
+
+package
+pnpm -C extension package

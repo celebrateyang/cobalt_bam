@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FreeSaveVideo Downloader",
-    "version": "0.1.1",
+    "version": "0.1.3",
     "description": "Detect media on the current page and open supported public links in FreeSaveVideo.",
     "action": {
         "default_popup": "popup/index.html",
@@ -10,6 +10,14 @@
     "background": {
         "service_worker": "assets/background.js",
         "type": "module"
+    },
+    "externally_connectable": {
+        "matches": [
+            "https://freesavevideo.online/*",
+            "https://*.freesavevideo.online/*",
+            "http://localhost/*",
+            "http://127.0.0.1/*"
+        ]
     },
     "content_scripts": [
         {

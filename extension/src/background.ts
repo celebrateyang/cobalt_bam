@@ -9,6 +9,7 @@ const INSTAGRAM_VIDEO_URL_RE = /\.(?:mp4|m4v)(?:[?#]|$)|\/v\/t\d+\.\d+-\d+\//i;
 const INSTAGRAM_HOST_RE = /(instagram|cdninstagram|fbcdn)/i;
 const tikTokResourceCache = new Map<number, TikTokResourceSnapshot[]>();
 const instagramResourceCache = new Map<number, InstagramResourceSnapshot[]>();
+const FREESAVEVIDEO_EXTERNAL_ORIGIN_RE = /^https:\/\/([^/]+\.)?freesavevideo\.online$|^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i;
 
 const getTikTokPostIdFromUrl = (value?: string) => {
     if (!value) return '';
@@ -288,6 +289,89 @@ const downloadInMainWorld = async (tabId: number, url: string, filename?: string
     }
 };
 
+const isAllowedExternalSender = (sender: chrome.runtime.MessageSender) => {
+    const senderUrl = sender.url || sender.origin || '';
+    if (!senderUrl) return false;
+    try {
+        const parsed = new URL(senderUrl);
+        return FREESAVEVIDEO_EXTERNAL_ORIGIN_RE.test(parsed.origin);
+    } catch {
+        return false;
+    }
+};
+
+const downloadTikTokExternalInTab = async (tabId: number, url: string, filename?: string) => {
+    if (!TIKTOK_VIDEO_URL_RE.test(url) || TIKTOK_AVATAR_RE.test(url)) {
+        throw new Error('Unsupported TikTok download URL.');
+    }
+
+    const [result] = await chrome.scripting.executeScript({
+        target: { tabId },
+        world: 'ISOLATED',
+        args: [url, filename],
+        func: async (targetUrl: string, targetFilename?: string) => {
+            const mediaTypeMatches = (value: string) => {
+                const type = value.toLowerCase();
+                return !type ||
+                    type === 'application/octet-stream' ||
+                    type === 'binary/octet-stream' ||
+                    type.startsWith('video/');
+            };
+
+            const looksLikeHtmlError = async (blob: Blob) => {
+                const sample = await blob.slice(0, 2048).text().catch(() => '');
+                const normalized = sample.trimStart().toLowerCase();
+                return normalized.startsWith('<!doctype html') ||
+                    normalized.startsWith('<html') ||
+                    normalized.includes('access denied') ||
+                    normalized.includes('permission to access') ||
+                    normalized.includes('errors.edgesuite.net');
+            };
+
+            const response = await fetch(targetUrl, {
+                credentials: 'omit',
+                cache: 'no-store',
+                referrerPolicy: 'no-referrer',
+            });
+
+            if (!response.ok) {
+                throw new Error(`Download failed with status ${response.status}.`);
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            if (!mediaTypeMatches(contentType)) {
+                throw new Error(`Unexpected content type: ${contentType || 'unknown'}.`);
+            }
+
+            const blob = await response.blob();
+            if (blob.size < 64 * 1024) {
+                throw new Error('Download payload is too small.');
+            }
+            if (await looksLikeHtmlError(blob)) {
+                throw new Error('TikTok CDN returned an HTML error page instead of video.');
+            }
+            if (!mediaTypeMatches(blob.type || contentType)) {
+                throw new Error('Downloaded payload is not a video file.');
+            }
+
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = targetFilename?.split('/').pop()?.trim() || 'tiktok_video.mp4';
+            link.style.display = 'none';
+            document.body.append(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+            return { ok: true };
+        },
+    });
+
+    if (!result?.result?.ok) {
+        throw new Error('External extension download failed.');
+    }
+};
+
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
     if (message.type === 'FSV_OPEN_FREESAVEVIDEO') {
         void chrome.tabs.create({ url: buildFreeSaveVideoUrl(message.url) });
@@ -359,5 +443,38 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         });
         return true;
     }
+    return false;
+});
+
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    if (!isAllowedExternalSender(sender)) {
+        sendResponse({ ok: false, error: 'Unauthorized sender.' });
+        return false;
+    }
+
+    if (message?.type === 'FSV_EXTERNAL_PING') {
+        sendResponse({ ok: true });
+        return false;
+    }
+
+    if (message?.type === 'FSV_EXTERNAL_TIKTOK_DOWNLOAD') {
+        const tabId = sender.tab?.id;
+        const url = typeof message.url === 'string' ? message.url : '';
+        const filename = typeof message.filename === 'string' ? message.filename : undefined;
+        if (tabId === undefined || !url) {
+            sendResponse({ ok: false, error: 'Missing sender tab or download URL.' });
+            return false;
+        }
+
+        void downloadTikTokExternalInTab(tabId, url, filename)
+            .then(() => sendResponse({ ok: true }))
+            .catch((error) => sendResponse({
+                ok: false,
+                error: error instanceof Error ? error.message : 'External TikTok download failed.',
+            }));
+        return true;
+    }
+
+    sendResponse({ ok: false, error: 'Unsupported external message.' });
     return false;
 });

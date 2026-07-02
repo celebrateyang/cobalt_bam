@@ -20,6 +20,7 @@
     export let extensionUrls: string[] = [];
     export let sourceUrl = "";
 
+    const EXTENSION_ID = "pcpbaaiagdihbnbpbcdkeofheepadcid";
     const EXTENSION_STORE_URL = "https://chromewebstore.google.com/detail/freesavevideo-downloader/pcpbaaiagdihbnbpbcdkeofheepadcid";
     const EXTENSION_DISMISSED_KEY = "fsv:tiktok-extension-dismissed-at";
     const EXTENSION_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
@@ -42,6 +43,8 @@
     let extensionInstalled = false;
     let extensionCheckComplete = false;
     let extensionPromptDismissed = false;
+    let extensionStoreOpened = false;
+    let extensionInstallPoll: number | undefined;
 
     $: displayProgress = Math.max(0, Math.min(100, Math.round(progress)));
     $: sizeText = totalBytes
@@ -140,10 +143,51 @@
     };
 
     const openExtensionStore = () => {
+        extensionStoreOpened = true;
+        startExtensionInstallPolling();
         window.open(EXTENSION_STORE_URL, "_blank", "noopener,noreferrer");
     };
 
-    const detectExtensionInstalled = () => new Promise<boolean>((resolve) => {
+    const sendExternalExtensionMessage = <T,>(message: Record<string, unknown>) => new Promise<T | null>((resolve) => {
+        const runtime = (globalThis as typeof globalThis & {
+            chrome?: {
+                runtime?: {
+                    sendMessage?: (
+                        extensionId: string,
+                        message: Record<string, unknown>,
+                        callback: (response?: T) => void,
+                    ) => void;
+                    lastError?: { message?: string };
+                };
+            };
+        }).chrome?.runtime;
+
+        if (!runtime?.sendMessage) {
+            resolve(null);
+            return;
+        }
+
+        try {
+            runtime.sendMessage(EXTENSION_ID, message, (response?: T) => {
+                if (runtime.lastError) {
+                    resolve(null);
+                    return;
+                }
+                resolve(response ?? null);
+            });
+        } catch {
+            resolve(null);
+        }
+    });
+
+    const detectExtensionInstalledExternally = async () => {
+        const response = await sendExternalExtensionMessage<{ ok?: boolean }>({
+            type: "FSV_EXTERNAL_PING",
+        });
+        return response?.ok === true;
+    };
+
+    const detectExtensionInstalledFromBridge = () => new Promise<boolean>((resolve) => {
         const requestId = `tiktok-extension-ping-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const timeout = window.setTimeout(() => {
             cleanup();
@@ -181,7 +225,52 @@
         }, window.location.origin);
     });
 
-    const requestExtensionDownload = (url: string) => new Promise<boolean>((resolve) => {
+    const detectExtensionInstalled = async () => (
+        await detectExtensionInstalledFromBridge() ||
+        await detectExtensionInstalledExternally()
+    );
+
+    const maybeRetryAfterExtensionInstall = () => {
+        if (!extensionStoreOpened) return;
+        extensionStoreOpened = false;
+        if (status === "error" || status === "done" || status === "fallback") {
+            void start();
+        }
+    };
+
+    const checkExtensionAfterFocus = async () => {
+        const installed = await detectExtensionInstalled();
+        extensionInstalled = installed;
+        extensionCheckComplete = true;
+        if (installed) maybeRetryAfterExtensionInstall();
+    };
+
+    const startExtensionInstallPolling = () => {
+        if (extensionInstallPoll !== undefined) return;
+        const startedAt = Date.now();
+        extensionInstallPoll = window.setInterval(() => {
+            if (Date.now() - startedAt > 90_000) {
+                if (extensionInstallPoll !== undefined) {
+                    window.clearInterval(extensionInstallPoll);
+                    extensionInstallPoll = undefined;
+                }
+                return;
+            }
+
+            void detectExtensionInstalled().then((installed) => {
+                extensionInstalled = installed;
+                extensionCheckComplete = true;
+                if (!installed) return;
+                if (extensionInstallPoll !== undefined) {
+                    window.clearInterval(extensionInstallPoll);
+                    extensionInstallPoll = undefined;
+                }
+                maybeRetryAfterExtensionInstall();
+            });
+        }, 1500);
+    };
+
+    const requestExtensionBridgeDownload = (url: string) => new Promise<boolean>((resolve) => {
         const requestId = `tiktok-extension-${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const timeout = window.setTimeout(() => {
             cleanup();
@@ -216,6 +305,20 @@
             filename,
         }, window.location.origin);
     });
+
+    const requestExtensionExternalDownload = async (url: string) => {
+        const response = await sendExternalExtensionMessage<{ ok?: boolean; error?: string }>({
+            type: "FSV_EXTERNAL_TIKTOK_DOWNLOAD",
+            url,
+            filename,
+        });
+        return response?.ok === true;
+    };
+
+    const requestExtensionDownload = async (url: string) => (
+        await requestExtensionBridgeDownload(url) ||
+        await requestExtensionExternalDownload(url)
+    );
 
     const requestExtensionCandidates = () => new Promise<string[]>((resolve) => {
         if (!sourceUrl) {
@@ -260,14 +363,7 @@
     });
 
     const openDirectDownload = (url: string) => {
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = filename;
-        anchor.target = "_blank";
-        anchor.rel = "noreferrer noopener nofollow";
-        document.body.append(anchor);
-        anchor.click();
-        anchor.remove();
+        window.open(url, "_blank", "noopener,noreferrer");
     };
 
     const noReferrer = (node: HTMLVideoElement) => {
@@ -399,10 +495,12 @@
     const save = () => {
         if (file) {
             openFile(file);
-        } else {
-            const url = primaryUrl || activeUrl;
-            if (url) openDirectDownload(url);
+            return;
         }
+
+        status = "error";
+        progress = 0;
+        statusText = tt("dialog.tiktok_download.status.blocked_error");
     };
 
     const copy = async () => {
@@ -424,11 +522,18 @@
         }).catch(() => {
             extensionCheckComplete = true;
         });
+        window.addEventListener("focus", checkExtensionAfterFocus);
+        window.addEventListener("visibilitychange", checkExtensionAfterFocus);
         void start();
     });
 
     onDestroy(() => {
         controller?.abort();
+        window.removeEventListener("focus", checkExtensionAfterFocus);
+        window.removeEventListener("visibilitychange", checkExtensionAfterFocus);
+        if (extensionInstallPoll !== undefined) {
+            window.clearInterval(extensionInstallPoll);
+        }
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
     });
 </script>

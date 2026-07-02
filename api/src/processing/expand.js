@@ -789,7 +789,10 @@ const bilibiliView = async ({ id }) => {
         viewUrl.searchParams.set("bvid", id);
     }
 
-    return fetch(viewUrl, { headers: BILIBILI_HEADERS })
+    return fetch(viewUrl, {
+        headers: BILIBILI_HEADERS,
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    })
         .then((r) => r.json())
         .catch(() => null);
 };
@@ -958,6 +961,31 @@ const bilibiliMultiPageFromView = (data) => {
     };
 };
 
+const bilibiliSingleFromView = (data, fallbackId, partId) => {
+    const canonicalBvid = data?.bvid || fallbackId;
+    if (!canonicalBvid) return;
+
+    const selectedPage = partId
+        ? data?.pages?.find((page) => String(page?.page) === String(partId))
+        : null;
+    const itemUrl = new URL(`https://www.bilibili.com/video/${canonicalBvid}`);
+    if (selectedPage?.page) {
+        itemUrl.searchParams.set("p", String(selectedPage.page));
+    }
+
+    return {
+        service: "bilibili",
+        kind: "single",
+        title: data?.title,
+        items: [
+            {
+                url: itemUrl.toString(),
+                duration: toSeconds(selectedPage?.duration ?? data?.duration),
+            },
+        ],
+    };
+};
+
 const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
     const pageSize = 30;
 
@@ -1044,7 +1072,20 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
 };
 
 const expandBilibili = async (inputUrl) => {
-    const finalUrlString = await resolveFinalURL(inputUrl);
+    let inputParsed;
+    try {
+        inputParsed = new URL(inputUrl);
+    } catch {
+        return {
+            service: "bilibili",
+            kind: "single",
+            items: [{ url: inputUrl }],
+        };
+    }
+
+    const finalUrlString = inputParsed.hostname === "b23.tv"
+        ? await resolveFinalURL(inputUrl)
+        : inputUrl;
 
     let url;
     try {
@@ -1065,6 +1106,16 @@ const expandBilibili = async (inputUrl) => {
         const data = view?.code === 0 ? view?.data : null;
 
         if (data) {
+            const partId = url.searchParams.get("p");
+            const currentSingle = bilibiliSingleFromView(data, id, partId);
+            const currentDuration = currentSingle?.items?.[0]?.duration;
+            if (
+                typeof currentDuration === "number" &&
+                currentDuration >= BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS
+            ) {
+                return currentSingle;
+            }
+
             const season = bilibiliUgcSeasonFromView(data);
             if (season?.error) return season;
 
@@ -1079,18 +1130,7 @@ const expandBilibili = async (inputUrl) => {
 
             if (season) return season;
 
-            const canonicalBvid = data?.bvid || id;
-            return {
-                service: "bilibili",
-                kind: "single",
-                title: data?.title,
-                items: [
-                    {
-                        url: `https://www.bilibili.com/video/${canonicalBvid}`,
-                        duration: toSeconds(data?.duration),
-                    },
-                ],
-            };
+            return currentSingle;
         }
 
         return {

@@ -20,5 +20,8 @@
     "tiktok_download.extension.trust.easy": "Easy to use",
     "tiktok_download.extension.trust.safe": "Stable fallback",
     "tiktok_download.extension.trust.free": "Free forever",
-    "tiktok_download.open_link": "Open link"
+    "tiktok_download.open_link": "Open link",
+    "error.title": "Что-то пошло не так",
+    "bilibili_download.extension.title": "Установите расширение для более стабильных длинных загрузок Bilibili",
+    "bilibili_download.extension.body": "Расширение FreeSaveVideo может загружать через браузер, когда CDN Bilibili блокирует запросы со страницы, поэтому большие прямые загрузки становятся стабильнее."
 }

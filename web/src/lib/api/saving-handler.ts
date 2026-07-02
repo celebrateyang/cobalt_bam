@@ -106,7 +106,7 @@ const isTikTokDownloadResponse = (response: CobaltAPIResponse) => (
 const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     response.status === "redirect" &&
     "service" in response &&
-    response.service === "deeplearningai" &&
+    (response.service === "deeplearningai" || response.service === "bilibili") &&
     typeof response.directUrl === "string" &&
     response.directUrl.length > 0
 );
@@ -130,9 +130,18 @@ const openTikTokDownloadDialog = (
 
 const openPreviewDownloadDialog = (
     mediaUrls: string[],
-    response: { filename: string },
+    response: { filename: string; service?: string },
     extensionUrls?: string[],
 ) => {
+    const extensionPrompt =
+        response.service === "bilibili"
+            ? {
+                extensionPromptTitleKey: "dialog.bilibili_download.extension.title",
+                extensionPromptBodyKey: "dialog.bilibili_download.extension.body",
+                extensionPromptKey: "bilibili",
+            }
+            : {};
+
     downloadButtonState.set("done");
     createDialog({
         id: `preview-download-${Date.now()}`,
@@ -143,6 +152,7 @@ const openPreviewDownloadDialog = (
         extensionUrls,
         mediaType: "video",
         autoSave: true,
+        ...extensionPrompt,
     });
 };
 

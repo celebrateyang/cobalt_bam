@@ -105,5 +105,8 @@
     "tiktok_download.extension.trust.easy": "简单易用",
     "tiktok_download.extension.trust.safe": "稳定备用",
     "tiktok_download.extension.trust.free": "永久免费",
-    "tiktok_download.open_link": "打开链接"
+    "tiktok_download.open_link": "打开链接",
+    "error.title": "出现问题",
+    "bilibili_download.extension.title": "安装浏览器插件，Bilibili 长视频下载更稳",
+    "bilibili_download.extension.body": "Bilibili CDN 拦截页面 fetch 时，FreeSaveVideo 插件可以通过浏览器通道下载，让大文件直连下载更稳定。"
 }

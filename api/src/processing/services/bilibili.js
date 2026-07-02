@@ -13,6 +13,7 @@ const shouldUseUpstream = () => {
 };
 
 const STREAM_RETRY_UPSTREAM_TIMEOUT_MS = 8000;
+const LONG_VIDEO_DIRECT_BRIDGE_SECONDS = 30 * 60;
 
 const asArray = (value) => {
     if (Array.isArray(value)) return value;
@@ -182,6 +183,19 @@ const buildComFilenameTitle = (meta, partId) => {
     return `${title} - ${part}`;
 };
 
+const getComDurationSeconds = (meta, partId) => {
+    if (!meta) return undefined;
+
+    const selectedPage = partId
+        ? meta.pages?.find((page) => String(page?.page) === String(partId))
+        : null;
+    const duration = selectedPage?.duration ?? meta.duration;
+
+    return typeof duration === "number" && Number.isFinite(duration)
+        ? Math.round(duration)
+        : undefined;
+};
+
 const BILIBILI_COM_HEADERS = Object.freeze({
     "user-agent": genericUserAgent,
     referer: "https://www.bilibili.com/",
@@ -228,7 +242,58 @@ const fetchComPlayInfo = async ({ id, cid }) => {
     return payload.data;
 };
 
-async function com_download(id, partId, filenameTitle, preloadedMeta) {
+const fetchComProgressivePlayInfo = async ({ id, cid }) => {
+    const url = new URL("https://api.bilibili.com/x/player/playurl");
+    url.searchParams.set("bvid", id);
+    url.searchParams.set("cid", String(cid));
+    url.searchParams.set("fnval", "0");
+    url.searchParams.set("platform", "html5");
+    url.searchParams.set("high_quality", "1");
+    url.searchParams.set("qn", "64");
+
+    const payload = await fetch(url, {
+        headers: {
+            ...BILIBILI_COM_HEADERS,
+            referer: `https://www.bilibili.com/video/${id}/`,
+        },
+    })
+        .then((response) => response.json())
+        .catch(() => null);
+
+    if (payload?.code !== 0 || !payload?.data) {
+        return null;
+    }
+
+    return payload.data;
+};
+
+const pickProgressiveMp4 = (playInfo) => {
+    const entries = Array.isArray(playInfo?.durl) ? playInfo.durl : [];
+    const candidates = entries
+        .map((entry) => {
+            const urls = collectCandidateUrls(entry);
+            if (!urls.length) return null;
+
+            return {
+                url: urls[0],
+                candidates: urls,
+                size: typeof entry?.size === "number" ? entry.size : 0,
+                length: typeof entry?.length === "number" ? entry.length : 0,
+                isMp4: urls.some((url) => /\.mp4(?:$|[?#])/i.test(url)),
+            };
+        })
+        .filter(Boolean);
+
+    return candidates.reduce((best, item) => {
+        if (!best) return item;
+        if (item.isMp4 !== best.isMp4) return item.isMp4 ? item : best;
+        if (item.size > best.size) return item;
+        if (item.size === best.size && item.length > best.length) return item;
+        return best;
+    }, null);
+};
+
+async function com_download(id, partId, filenameTitle, preloadedMeta, preferProgressiveMp4 = false) {
     const meta = preloadedMeta || await fetchComVideoMeta(id);
     if (!meta) {
         return { error: "fetch.fail" };
@@ -240,6 +305,37 @@ async function com_download(id, partId, filenameTitle, preloadedMeta) {
     const cid = selectedPage?.cid || meta.cid;
     if (!cid) {
         return { error: "fetch.empty" };
+    }
+
+    const durationSeconds = getComDurationSeconds(meta, partId);
+    const shouldUseDirectBridge =
+        preferProgressiveMp4 === true &&
+        typeof durationSeconds === "number" &&
+        durationSeconds >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS;
+
+    let fallbackBase = `bilibili_${id}`;
+    if (partId) {
+        fallbackBase += `_${partId}`;
+    }
+    const filenameBase = buildFilenameBase({
+        fallbackBase,
+        filenameTitle: filenameTitle || buildComFilenameTitle(meta, partId),
+    });
+
+    if (shouldUseDirectBridge) {
+        const progressiveInfo = await fetchComProgressivePlayInfo({ id, cid });
+        const progressive = pickProgressiveMp4(progressiveInfo);
+
+        if (progressive?.url) {
+            return {
+                service: "bilibili",
+                urls: progressive.url,
+                urlCandidates: progressive.candidates,
+                directClientDownload: true,
+                filename: `${filenameBase}.mp4`,
+                duration: durationSeconds,
+            };
+        }
     }
 
     const playInfo = await fetchComPlayInfo({ id, cid });
@@ -255,15 +351,6 @@ async function com_download(id, partId, filenameTitle, preloadedMeta) {
     if (!video || !audio) {
         return { error: "fetch.empty" };
     }
-
-    let fallbackBase = `bilibili_${id}`;
-    if (partId) {
-        fallbackBase += `_${partId}`;
-    }
-    const filenameBase = buildFilenameBase({
-        fallbackBase,
-        filenameTitle: filenameTitle || buildComFilenameTitle(meta, partId),
-    });
 
     return {
         urls: [video.baseUrl, audio.baseUrl],
@@ -412,11 +499,18 @@ const tryLocalExtractorResult = async ({
     partId,
     filenameTitle,
     preloadedMeta,
+    preferProgressiveMp4,
 }) => {
     let result;
 
     if (comId) {
-        result = await com_download(comId, partId, filenameTitle, preloadedMeta);
+        result = await com_download(
+            comId,
+            partId,
+            filenameTitle,
+            preloadedMeta,
+            preferProgressiveMp4,
+        );
     } else if (tvId) {
         result = await tv_download(tvId);
     } else {
@@ -438,7 +532,7 @@ const tryLocalExtractorResult = async ({
     return result;
 };
 
-export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, __streamRetry }) {
+export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, preferProgressiveMp4, __streamRetry }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
         // return an explicit user-facing error instead of a generic fetch.empty.
@@ -450,10 +544,14 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         comId = patternMatch?.comId;
     }
 
-    const preloadedMeta = comId && !filenameTitle
+    const preloadedMeta = comId && (!filenameTitle || preferProgressiveMp4)
         ? await fetchComVideoMeta(comId).catch(() => null)
         : null;
     const resolvedFilenameTitle = filenameTitle || buildComFilenameTitle(preloadedMeta, partId);
+    const longDirectBridgeEligible =
+        preferProgressiveMp4 === true &&
+        typeof getComDurationSeconds(preloadedMeta, partId) === "number" &&
+        getComDurationSeconds(preloadedMeta, partId) >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS;
 
     const {
         upstreamUrl,
@@ -469,7 +567,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         filenameTitle: resolvedFilenameTitle,
     };
 
-    const canUseUpstream = !!upstreamUrl && shouldUseUpstream();
+    const canUseUpstream = !!upstreamUrl && shouldUseUpstream() && !longDirectBridgeEligible;
     const routePlan = pickBilibiliRoutePlan({
         canUseUpstream,
         streamRetry: !!__streamRetry,
@@ -511,6 +609,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
             partId,
             filenameTitle: resolvedFilenameTitle,
             preloadedMeta,
+            preferProgressiveMp4: longDirectBridgeEligible,
         });
 
         if (!localResult?.error) {

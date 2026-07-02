@@ -2,8 +2,14 @@
     import { onDestroy, onMount } from "svelte";
     import { t } from "$lib/i18n/translations";
     import { copyURL, openFile } from "$lib/download";
+    import {
+        detectFreeSaveVideoExtensionInstalled,
+        isChromiumLike,
+        openFreeSaveVideoExtensionStore,
+    } from "$lib/extension/freesavevideo";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
+    import ExtensionInstallPrompt from "$components/dialog/ExtensionInstallPrompt.svelte";
 
     import IconCheck from "@tabler/icons-svelte/IconCheck.svelte";
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
@@ -19,6 +25,11 @@
     export let extensionUrls: string[] = [];
     export let mediaType: "video" | "audio" | "image" = "video";
     export let autoSave = true;
+    export let extensionPromptTitleKey = "";
+    export let extensionPromptBodyKey = "";
+    export let extensionPromptKey = "preview";
+
+    const EXTENSION_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
 
     let close: () => void;
     let controller: AbortController | null = null;
@@ -34,6 +45,11 @@
     let copied = false;
     let extensionStarted = false;
     let autoSaved = false;
+    let extensionInstalled = false;
+    let extensionCheckComplete = false;
+    let extensionPromptDismissed = false;
+    let extensionStoreOpened = false;
+    let extensionInstallPoll: number | undefined;
 
     $: displayProgress = Math.max(0, Math.min(100, Math.round(progress)));
     $: sizeText = totalBytes
@@ -45,6 +61,11 @@
         ? formatSpeed(receivedBytes, startedAt)
         : "";
     $: primaryUrl = uniqueUrls()[0] || activeUrl;
+    $: showExtensionPrompt = Boolean(extensionPromptTitleKey && extensionPromptBodyKey) &&
+        isChromiumLike() &&
+        extensionCheckComplete &&
+        !extensionInstalled &&
+        !extensionPromptDismissed;
 
     const formatBytes = (value: number) => {
         if (!Number.isFinite(value) || value <= 0) return "0 B";
@@ -76,6 +97,72 @@
         value.length > 0 &&
         list.indexOf(value) === index
     ));
+
+    const extensionDismissedStorageKey = () => `fsv:${extensionPromptKey || "preview"}-extension-dismissed-at`;
+
+    const readExtensionPromptDismissed = () => {
+        try {
+            const dismissedAt = Number(localStorage.getItem(extensionDismissedStorageKey()) || "0");
+            return Number.isFinite(dismissedAt) && Date.now() - dismissedAt < EXTENSION_DISMISS_MS;
+        } catch {
+            return false;
+        }
+    };
+
+    const dismissExtensionPrompt = () => {
+        extensionPromptDismissed = true;
+        try {
+            localStorage.setItem(extensionDismissedStorageKey(), String(Date.now()));
+        } catch {
+            // Best effort only.
+        }
+    };
+
+    const maybeRetryAfterExtensionInstall = () => {
+        if (!extensionStoreOpened) return;
+        extensionStoreOpened = false;
+        if (status === "error" || status === "fallback") {
+            void start();
+        }
+    };
+
+    const checkExtensionAfterFocus = async () => {
+        const installed = await detectFreeSaveVideoExtensionInstalled();
+        extensionInstalled = installed;
+        extensionCheckComplete = true;
+        if (installed) maybeRetryAfterExtensionInstall();
+    };
+
+    const startExtensionInstallPolling = () => {
+        if (extensionInstallPoll !== undefined) return;
+        const startedAt = Date.now();
+        extensionInstallPoll = window.setInterval(() => {
+            if (Date.now() - startedAt > 90_000) {
+                if (extensionInstallPoll !== undefined) {
+                    window.clearInterval(extensionInstallPoll);
+                    extensionInstallPoll = undefined;
+                }
+                return;
+            }
+
+            void detectFreeSaveVideoExtensionInstalled().then((installed) => {
+                extensionInstalled = installed;
+                extensionCheckComplete = true;
+                if (!installed) return;
+                if (extensionInstallPoll !== undefined) {
+                    window.clearInterval(extensionInstallPoll);
+                    extensionInstallPoll = undefined;
+                }
+                maybeRetryAfterExtensionInstall();
+            });
+        }, 1500);
+    };
+
+    const openExtensionStore = () => {
+        extensionStoreOpened = true;
+        startExtensionInstallPolling();
+        openFreeSaveVideoExtensionStore();
+    };
 
     const isExpectedResponse = (response: Response) => {
         const contentType = response.headers.get("content-type")?.toLowerCase() || "";
@@ -124,6 +211,7 @@
             if (data.requestId !== requestId) return;
 
             cleanup();
+            if (data.ok === true) extensionInstalled = true;
             resolve(data.ok === true);
         };
 
@@ -289,11 +377,23 @@
     };
 
     onMount(() => {
+        extensionPromptDismissed = readExtensionPromptDismissed();
+        void detectFreeSaveVideoExtensionInstalled().then((installed) => {
+            extensionInstalled = installed;
+            extensionCheckComplete = true;
+        }).catch(() => {
+            extensionCheckComplete = true;
+        });
+        window.addEventListener("focus", checkExtensionAfterFocus);
         void start();
     });
 
     onDestroy(() => {
         controller?.abort();
+        window.removeEventListener("focus", checkExtensionAfterFocus);
+        if (extensionInstallPoll !== undefined) {
+            window.clearInterval(extensionInstallPoll);
+        }
         if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
     });
 </script>
@@ -337,6 +437,15 @@
                 <div class="progress-fill" style={`width: ${displayProgress}%`}></div>
             </div>
         </div>
+
+        {#if showExtensionPrompt}
+            <ExtensionInstallPrompt
+                titleKey={extensionPromptTitleKey}
+                bodyKey={extensionPromptBodyKey}
+                onInstall={openExtensionStore}
+                onDismiss={dismissExtensionPrompt}
+            />
+        {/if}
 
         <div class="actions">
             {#if status === "error"}

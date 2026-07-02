@@ -44,5 +44,8 @@
     "tiktok_download.extension.trust.easy": "Easy to use",
     "tiktok_download.extension.trust.safe": "Stable fallback",
     "tiktok_download.extension.trust.free": "Free forever",
-    "tiktok_download.open_link": "Open link"
+    "tiktok_download.open_link": "Open link",
+    "error.title": "문제가 발생했습니다",
+    "bilibili_download.extension.title": "긴 Bilibili 동영상을 더 안정적으로 다운로드하려면 브라우저 확장프로그램을 설치하세요",
+    "bilibili_download.extension.body": "Bilibili CDN이 페이지에서의 가져오기를 차단할 때 FreeSaveVideo 확장프로그램이 브라우저를 통해 다운로드할 수 있어, 큰 파일 직접 다운로드가 더 안정적입니다."
 }

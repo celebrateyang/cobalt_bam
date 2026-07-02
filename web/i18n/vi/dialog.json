@@ -44,5 +44,8 @@
     "tiktok_download.extension.trust.easy": "Easy to use",
     "tiktok_download.extension.trust.safe": "Stable fallback",
     "tiktok_download.extension.trust.free": "Free forever",
-    "tiktok_download.open_link": "Open link"
+    "tiktok_download.open_link": "Open link",
+    "error.title": "Da xay ra loi",
+    "bilibili_download.extension.title": "Cai tien ich de tai video Bilibili dai on dinh hon",
+    "bilibili_download.extension.body": "Tien ich FreeSaveVideo co the tai qua trinh duyet khi CDN Bilibili chan fetch tren trang, giup cac tep lon tai truc tiep on dinh hon."
 }

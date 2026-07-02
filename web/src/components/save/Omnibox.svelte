@@ -4,7 +4,7 @@
     import { browser } from "$app/environment";
     import { onDestroy, tick } from "svelte";
 
-    import { t } from "$lib/i18n/translations";
+    import { loadTranslations, t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
 
     import dialogs, { createDialog } from "$lib/state/dialogs";
@@ -600,7 +600,27 @@
                 handedOffToSavingHandler = true;
                 return savingHandler({ url });
             }
-            if (!expanded || expanded.status === "error") {
+            if (expanded?.status === "error") {
+                await loadTranslations($page.params.lang || "en", "error");
+                downloadButtonState.set("idle");
+                createDialog({
+                    id: "expand-error",
+                    type: "small",
+                    meowbalt: "error",
+                    title: $t("dialog.error.title"),
+                    bodyText: $t(expanded.error.code, expanded.error.context),
+                    buttons: [
+                        {
+                            text: $t("button.gotit"),
+                            main: true,
+                            action: () => {},
+                        },
+                    ],
+                });
+                return;
+            }
+
+            if (!expanded) {
                 handedOffToSavingHandler = true;
                 return savingHandler({ url });
             }

@@ -76,6 +76,9 @@ type PreviewDownloadDialog = Dialog & {
     extensionUrls?: string[],
     mediaType?: "video" | "audio" | "image",
     autoSave?: boolean,
+    extensionPromptTitleKey?: string,
+    extensionPromptBodyKey?: string,
+    extensionPromptKey?: string,
 };
 
 type BatchDialog = Dialog & {

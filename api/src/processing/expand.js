@@ -18,6 +18,7 @@ const BILIBILI_HEADERS = Object.freeze({
 });
 
 const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
+const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 30 * 60;
 
 // Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.
 // Verified working as of Dec 2025.
@@ -295,6 +296,25 @@ const toSecondsMaybeMs = (value) =>
             ? Math.round(value / 1000)
             : Math.round(value)
         : undefined;
+
+const hasLongBilibiliCollectionItem = (items) =>
+    Array.isArray(items) &&
+    items.some((item) => (
+        typeof item?.duration === "number" &&
+        Number.isFinite(item.duration) &&
+        item.duration >= BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS
+    ));
+
+const buildBilibiliLongCollectionError = () => ({
+    service: "bilibili",
+    kind: "error",
+    error: {
+        code: "error.api.bilibili.collection_has_long_video",
+        context: {
+            limit: Math.round(BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS / 60),
+        },
+    },
+});
 
 const extractYouTubePlaylistId = (urlString) => {
     if (!urlString) return;
@@ -800,6 +820,9 @@ const bilibiliUgcSeasonFromView = (data) => {
         .filter((item) => item.url);
 
     if (items.length <= 1) return;
+    if (hasLongBilibiliCollectionItem(items)) {
+        return buildBilibiliLongCollectionError();
+    }
 
     return {
         service: "bilibili",
@@ -882,6 +905,9 @@ const bilibiliUgcSeasonPagesFromView = async (data) => {
     const uniqueItems = uniqBy(items, (i) => i.url);
 
     if (!expandedPages || uniqueItems.length <= 1) return;
+    if (hasLongBilibiliCollectionItem(uniqueItems)) {
+        return buildBilibiliLongCollectionError();
+    }
 
     return {
         service: "bilibili",
@@ -917,6 +943,9 @@ const bilibiliMultiPageFromView = (data) => {
         .filter((item) => item.url);
 
     if (items.length <= 1) return;
+    if (hasLongBilibiliCollectionItem(items)) {
+        return buildBilibiliLongCollectionError();
+    }
 
     return {
         service: "bilibili",
@@ -979,6 +1008,9 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
     const items = uniqBy(allArchives, (i) => i.url);
 
     if (items.length <= 1) return;
+    if (hasLongBilibiliCollectionItem(items)) {
+        return buildBilibiliLongCollectionError();
+    }
 
     // Fetch meta from the first page (already done) is best effort; if missing, we still return items.
     const metaUrl = new URL(
@@ -1033,6 +1065,9 @@ const expandBilibili = async (inputUrl) => {
         const data = view?.code === 0 ? view?.data : null;
 
         if (data) {
+            const season = bilibiliUgcSeasonFromView(data);
+            if (season?.error) return season;
+
             // Small UGC seasons can contain a few large multi-page videos.
             // Expand those nested pages for video URLs, but keep large space/list
             // collection URLs at the outer-video level to avoid huge queues.
@@ -1042,7 +1077,6 @@ const expandBilibili = async (inputUrl) => {
             const multi = bilibiliMultiPageFromView(data);
             if (multi) return multi;
 
-            const season = bilibiliUgcSeasonFromView(data);
             if (season) return season;
 
             const canonicalBvid = data?.bvid || id;

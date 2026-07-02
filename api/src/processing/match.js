@@ -371,6 +371,7 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await bilibili({
                     ...patternMatch,
                     filenameTitle: params.batch ? params.filenameTitle : undefined,
+                    preferProgressiveMp4: !isAudioOnly && !isAudioMuted,
                 });
                 break;
 

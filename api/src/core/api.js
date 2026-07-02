@@ -824,6 +824,15 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         try {
             const result = await expandURL(request.url);
 
+            if (result?.error?.code) {
+                return res.status(400).json({
+                    status: "error",
+                    error: result.error,
+                    service: result?.service,
+                    kind: result?.kind,
+                });
+            }
+
             // If expansion failed or didn't return anything useful, fall back to single.
             const items = result?.items?.length ? result.items : [{ url: request.url }];
 

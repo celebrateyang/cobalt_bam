@@ -72,5 +72,6 @@
     "api.bilibili.space.unsupported": "Bilibili space collection pages are not supported yet. Open one video inside the collection, copy that video link, and try again.",
     "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
     "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
-    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later.",
+    "api.bilibili.collection_has_long_video": "This Bilibili collection contains videos longer than {{ limit }} minutes, so batch download is disabled. Open each video and download them one by one."
 }

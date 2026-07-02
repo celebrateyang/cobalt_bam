@@ -59,5 +59,6 @@
     "api.bilibili.space.unsupported": "Bilibiliスペースのコレクション一覧ページはまだ直接対応していません。コレクション内の個別動画を開き、その動画リンクをコピーしてもう一度お試しください。",
     "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
     "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
-    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later.",
+    "api.bilibili.collection_has_long_video": "このBilibiliコレクションには{{ limit }}分を超える動画が含まれているため、一括ダウンロードは無効です。各動画を開いて、1本ずつダウンロードしてください。"
 }

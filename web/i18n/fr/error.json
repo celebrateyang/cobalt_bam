@@ -59,5 +59,6 @@
     "api.bilibili.space.unsupported": "Les pages de collections d un espace Bilibili ne sont pas encore prises en charge directement. Ouvrez une video precise dans la collection, copiez son lien, puis reessayez.",
     "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
     "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
-    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later."
+    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later.",
+    "api.bilibili.collection_has_long_video": "Cette collection Bilibili contient des videos de plus de {{ limit }} minutes. Le telechargement par lot est desactive. Ouvrez chaque video et telechargez-les une par une."
 }

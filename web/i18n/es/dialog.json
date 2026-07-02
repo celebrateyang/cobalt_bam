@@ -44,5 +44,8 @@
     "tiktok_download.extension.trust.easy": "Easy to use",
     "tiktok_download.extension.trust.safe": "Stable fallback",
     "tiktok_download.extension.trust.free": "Free forever",
-    "tiktok_download.open_link": "Open link"
+    "tiktok_download.open_link": "Open link",
+    "error.title": "Algo salio mal",
+    "bilibili_download.extension.title": "Instala la extension para descargas largas de Bilibili mas estables",
+    "bilibili_download.extension.body": "La extension de FreeSaveVideo puede descargar desde tu navegador cuando el CDN de Bilibili bloquea las peticiones de la pagina, lo que hace mas estables las descargas directas grandes."
 }

@@ -44,5 +44,8 @@
     "tiktok_download.extension.trust.easy": "Easy to use",
     "tiktok_download.extension.trust.safe": "Stable fallback",
     "tiktok_download.extension.trust.free": "Free forever",
-    "tiktok_download.open_link": "Open link"
+    "tiktok_download.open_link": "Open link",
+    "error.title": "มีบางอย่างผิดพลาด",
+    "bilibili_download.extension.title": "ติดตั้งส่วนขยายเพื่อดาวน์โหลดวิดีโอ Bilibili ยาวๆ ได้เสถียรขึ้น",
+    "bilibili_download.extension.body": "ส่วนขยาย FreeSaveVideo สามารถดาวน์โหลดผ่านเบราว์เซอร์เมื่อ CDN ของ Bilibili บล็อกการ fetch จากหน้าเว็บ ช่วยให้การดาวน์โหลดไฟล์ใหญ่โดยตรงเสถียรขึ้น"
 }

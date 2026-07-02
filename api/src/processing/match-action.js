@@ -228,7 +228,22 @@ export default function({
         case "video":
             switch (host) {
                 case "bilibili":
-                    params = { type: "merge" };
+                    if (r.directClientDownload === true && typeof r.urls === "string") {
+                        responseType = "redirect";
+                        params = {
+                            url: r.urls,
+                            directUrl: r.urls,
+                            directUrlCandidates: Array.isArray(r.urlCandidates)
+                                ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
+                                    typeof value === "string" &&
+                                    value.length > 0 &&
+                                    list.indexOf(value) === index
+                                ))
+                                : [r.urls].filter((value) => typeof value === "string" && value.length > 0),
+                        };
+                    } else {
+                        params = { type: "merge" };
+                    }
                     break;
 
                 case "youtube":

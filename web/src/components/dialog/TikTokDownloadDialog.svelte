@@ -17,7 +17,7 @@
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
-    import IconRefresh from "@tabler/icons-svelte/IconRefresh.svelte";
+    import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let id: string;
     export let dismissable = true;
@@ -278,10 +278,6 @@
         }, window.location.origin);
     });
 
-    const openDirectDownload = (url: string) => {
-        window.open(url, "_blank", "noopener,noreferrer");
-    };
-
     const noReferrer = (node: HTMLVideoElement) => {
         node.setAttribute("referrerpolicy", "no-referrer");
         return {};
@@ -414,6 +410,19 @@
             return;
         }
 
+        const url = primaryUrl || activeUrl;
+        if (url) {
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = filename;
+            anchor.target = "_blank";
+            anchor.rel = "noreferrer noopener nofollow";
+            document.body.append(anchor);
+            anchor.click();
+            anchor.remove();
+            return;
+        }
+
         status = "error";
         progress = 0;
         statusText = tt("dialog.tiktok_download.status.blocked_error");
@@ -461,13 +470,18 @@
                 <h2>{title || $t("dialog.tiktok_download.title")}</h2>
                 <p>{filename}</p>
             </div>
-            {#if status === "downloading" || status === "fallback"}
-                <span class="spin">
-                    <IconLoader2 />
-                </span>
-            {:else if status === "done"}
-                <IconCheck />
-            {/if}
+            <div class="header-actions">
+                {#if status === "downloading" || status === "fallback"}
+                    <span class="spin">
+                        <IconLoader2 />
+                    </span>
+                {:else if status === "done"}
+                    <IconCheck />
+                {/if}
+                <button type="button" class="close-button" aria-label="Close" on:click={close}>
+                    <IconX />
+                </button>
+            </div>
         </header>
 
         <div class="preview-frame">
@@ -550,23 +564,6 @@
                 <IconCopy />
                 {copied ? $t("button.copied") : $t("button.copy")}
             </button>
-
-            {#if primaryUrl}
-                <button type="button" class="button" on:click={() => openDirectDownload(primaryUrl)}>
-                    {$t("dialog.tiktok_download.open_link")}
-                </button>
-            {/if}
-
-            {#if status === "error"}
-                <button type="button" class="button" on:click={start}>
-                    <IconRefresh />
-                    {$t("button.retry")}
-                </button>
-            {/if}
-
-            <button type="button" class="button" on:click={close}>
-                {$t("button.done")}
-            </button>
         </div>
     </div>
 </DialogContainer>
@@ -602,6 +599,40 @@
     .header :global(svg) {
         color: var(--secondary);
         flex: 0 0 auto;
+    }
+
+    .header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    .close-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--button-stroke);
+        border-radius: 999px;
+        background: var(--button-hover);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .close-button:hover {
+        background: var(--button);
+        border-color: var(--secondary);
+        transform: translateY(-1px);
+    }
+
+    .close-button :global(svg) {
+        width: 18px;
+        height: 18px;
+        color: currentColor;
     }
 
     .spin {

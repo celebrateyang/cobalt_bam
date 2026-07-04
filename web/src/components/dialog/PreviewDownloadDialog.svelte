@@ -15,7 +15,7 @@
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
-    import IconRefresh from "@tabler/icons-svelte/IconRefresh.svelte";
+    import IconX from "@tabler/icons-svelte/IconX.svelte";
 
     export let id: string;
     export let dismissable = true;
@@ -405,13 +405,18 @@
                 <h2>{title}</h2>
                 <p>{filename}</p>
             </div>
-            {#if status === "downloading" || status === "fallback"}
-                <span class="spin">
-                    <IconLoader2 />
-                </span>
-            {:else if status === "done"}
-                <IconCheck />
-            {/if}
+            <div class="header-actions">
+                {#if status === "downloading" || status === "fallback"}
+                    <span class="spin">
+                        <IconLoader2 />
+                    </span>
+                {:else if status === "done"}
+                    <IconCheck />
+                {/if}
+                <button type="button" class="close-button" aria-label="Close" on:click={close}>
+                    <IconX />
+                </button>
+            </div>
         </header>
 
         <div class="preview-frame" class:preview-frame--audio={mediaType === "audio"}>
@@ -448,12 +453,7 @@
         {/if}
 
         <div class="actions">
-            {#if status === "error"}
-                <button type="button" class="button elevated" on:click={start}>
-                    <IconRefresh />
-                    Retry
-                </button>
-            {:else if status === "fallback"}
+            {#if status === "fallback" || status === "error"}
                 <button type="button" class="button elevated" on:click={save}>
                     <IconDownload />
                     {$t("button.download")}
@@ -478,23 +478,6 @@
             >
                 <IconCopy />
                 {copied ? $t("button.copied") : $t("button.copy")}
-            </button>
-
-            {#if primaryUrl}
-                <button type="button" class="button" on:click={() => openDirectDownload(primaryUrl)}>
-                    Open link
-                </button>
-            {/if}
-
-            {#if status === "fallback"}
-                <button type="button" class="button" on:click={start}>
-                    <IconRefresh />
-                    Retry
-                </button>
-            {/if}
-
-            <button type="button" class="button" on:click={close}>
-                {$t("button.done")}
             </button>
         </div>
     </div>
@@ -531,6 +514,40 @@
     .header :global(svg) {
         color: var(--secondary);
         flex: 0 0 auto;
+    }
+
+    .header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    .close-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid var(--button-stroke);
+        border-radius: 999px;
+        background: var(--button-hover);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .close-button:hover {
+        background: var(--button);
+        border-color: var(--secondary);
+        transform: translateY(-1px);
+    }
+
+    .close-button :global(svg) {
+        width: 18px;
+        height: 18px;
+        color: currentColor;
     }
 
     .spin {

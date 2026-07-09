@@ -12,6 +12,7 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
     import ExtensionInstallPrompt from "$components/dialog/ExtensionInstallPrompt.svelte";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
 
     import IconCheck from "@tabler/icons-svelte/IconCheck.svelte";
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
@@ -43,6 +44,7 @@
     let statusText = "";
     let copied = false;
     let extensionStarted = false;
+    let saveStarted = false;
     let extensionCandidateUrls: string[] = [];
     let previewFailed = false;
     let extensionInstalled = false;
@@ -355,6 +357,7 @@
         controller?.abort();
         controller = new AbortController();
         file = null;
+        saveStarted = false;
         if (filePreviewUrl) {
             URL.revokeObjectURL(filePreviewUrl);
             filePreviewUrl = "";
@@ -392,6 +395,7 @@
                 if (started) {
                     extensionInstalled = true;
                     extensionStarted = true;
+                    saveStarted = true;
                     progress = 100;
                     status = "done";
                     statusText = tt("dialog.tiktok_download.status.extension_started");
@@ -405,6 +409,7 @@
     };
 
     const save = () => {
+        saveStarted = true;
         if (file) {
             openFile(file);
             return;
@@ -535,6 +540,10 @@
                 onInstall={openExtensionStore}
                 onDismiss={dismissExtensionPrompt}
             />
+        {/if}
+
+        {#if saveStarted}
+            <SaveLocationHint afterClick compact />
         {/if}
 
         <div class="actions">

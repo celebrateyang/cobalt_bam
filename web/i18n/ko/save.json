@@ -25,5 +25,13 @@
     "wechat.notice.copied_title": "링크가 복사되었습니다",
     "wechat.notice.copied_body": "WeChat 오른쪽 상단 메뉴에서 \"브라우저에서 열기\"를 선택한 뒤, Chrome 또는 Edge에 링크를 붙여 넣어 주세요.",
     "wechat.notice.copy_failed_title": "복사에 실패했습니다",
-    "wechat.notice.copy_failed_body": "현재 페이지 URL을 수동으로 복사한 뒤 Chrome 또는 Edge에서 열어 주세요."
+    "wechat.notice.copy_failed_body": "현재 페이지 URL을 수동으로 복사한 뒤 Chrome 또는 Edge에서 열어 주세요.",
+    "location.summary": "Where is my video saved?",
+    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
+    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
+    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
+    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
+    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
+    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
+    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
 }

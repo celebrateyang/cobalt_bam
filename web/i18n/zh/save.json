@@ -27,5 +27,13 @@
     "wechat.notice.copied_title": "链接已复制",
     "wechat.notice.copied_body": "请在微信右上角选择“在浏览器打开”，并在 Chrome 或 Edge 中粘贴链接访问。",
     "wechat.notice.copy_failed_title": "复制失败",
-    "wechat.notice.copy_failed_body": "请手动复制当前页面链接，然后在 Chrome 或 Edge 中打开。"
+    "wechat.notice.copy_failed_body": "请手动复制当前页面链接，然后在 Chrome 或 Edge 中打开。",
+    "location.summary": "视频保存在哪里？",
+    "location.default": "如果没有选择文件夹，请查看浏览器下载列表或设备的“下载”文件夹。",
+    "location.desktop": "电脑：点击浏览器右上角的下载图标，或按 Ctrl+J，再打开文件或所在文件夹。",
+    "location.ios": "iPhone/iPad：打开“文件”App，查看“下载”或 Safari 让你选择的文件夹。",
+    "location.android": "Android：查看下载通知、Chrome 下载列表，或“文件管理 > Downloads”。",
+    "location.wechat": "微信或 App 内置浏览器可能阻止下载。如果找不到文件，请用 Chrome 或 Safari 打开本页再下载。",
+    "location.after_click": "点击“下载”后，浏览器可能会让你选择保存位置。如果你选了文件夹，请先去那个文件夹查找。",
+    "location.batch_auto": "批量自动保存时，视频会保存到你开始批量下载时选择的文件夹。"
 }

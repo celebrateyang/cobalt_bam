@@ -17,6 +17,7 @@
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
     import SavingTutorial from "$components/dialog/SavingTutorial.svelte";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
     import VerticalActionButton from "$components/buttons/VerticalActionButton.svelte";
 
     import IconShare2 from "@tabler/icons-svelte/IconShare2.svelte";
@@ -36,6 +37,9 @@
     let close: () => void;
 
     let copied = false;
+
+    $: canDirectDownload = device.supports.directDownload
+        && !(device.is.iOS && urlType === "redirect");
 
     $: if (copied) {
         setTimeout(() => {
@@ -59,7 +63,7 @@
             </div>
 
             <div class="action-buttons">
-                {#if device.supports.directDownload && !(device.is.iOS && urlType === "redirect")}
+                {#if canDirectDownload}
                     <VerticalActionButton
                         id="save-download"
                         fill
@@ -121,6 +125,8 @@
                     {bodyText}
                 </div>
             {/if}
+
+            <SaveLocationHint afterClick={canDirectDownload} compact />
         </div>
 
         <DialogButtons

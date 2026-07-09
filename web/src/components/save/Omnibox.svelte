@@ -40,6 +40,7 @@
 
     import ClearButton from "$components/save/buttons/ClearButton.svelte";
     import DownloadButton from "$components/save/buttons/DownloadButton.svelte";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
 
     import Switcher from "$components/buttons/Switcher.svelte";
     import ActionButton from "$components/buttons/ActionButton.svelte";
@@ -1136,6 +1137,10 @@
         </div>
     {/if}
 
+    <div class="save-location-home-hint">
+        <SaveLocationHint collapsible compact />
+    </div>
+
     <div id="action-container">
         <Switcher>
             <SettingsButton
@@ -1367,6 +1372,10 @@
 
     .wechat-browser-notice-action:hover {
         background: rgba(245, 158, 11, 0.28);
+    }
+
+    .save-location-home-hint {
+        margin-top: -6px;
     }
 
     .input-row {

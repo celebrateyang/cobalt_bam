@@ -10,6 +10,7 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
     import ExtensionInstallPrompt from "$components/dialog/ExtensionInstallPrompt.svelte";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
 
     import IconCheck from "@tabler/icons-svelte/IconCheck.svelte";
     import IconCopy from "@tabler/icons-svelte/IconCopy.svelte";
@@ -45,6 +46,7 @@
     let copied = false;
     let extensionStarted = false;
     let autoSaved = false;
+    let saveStarted = false;
     let extensionInstalled = false;
     let extensionCheckComplete = false;
     let extensionPromptDismissed = false;
@@ -308,6 +310,7 @@
 
         if (autoSave && !autoSaved) {
             autoSaved = true;
+            saveStarted = true;
             openFile(file);
         }
     };
@@ -317,6 +320,7 @@
         controller = new AbortController();
         file = null;
         autoSaved = false;
+        saveStarted = false;
         if (filePreviewUrl) {
             URL.revokeObjectURL(filePreviewUrl);
             filePreviewUrl = "";
@@ -345,6 +349,7 @@
                 if (controller.signal.aborted) return;
                 if (started) {
                     extensionStarted = true;
+                    saveStarted = true;
                     progress = 100;
                     status = "done";
                     statusText = "Download started in Chrome.";
@@ -358,6 +363,7 @@
     };
 
     const save = () => {
+        saveStarted = true;
         if (file) {
             openFile(file);
         } else {
@@ -450,6 +456,10 @@
                 onInstall={openExtensionStore}
                 onDismiss={dismissExtensionPrompt}
             />
+        {/if}
+
+        {#if saveStarted}
+            <SaveLocationHint afterClick compact />
         {/if}
 
         <div class="actions">

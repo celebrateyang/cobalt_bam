@@ -16,6 +16,7 @@
 
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
     import ProcessingStatus from "$components/queue/ProcessingStatus.svelte";
     import ProcessingQueueItem from "$components/queue/ProcessingQueueItem.svelte";
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
@@ -117,6 +118,7 @@
         item.autoSave?.enabled &&
         (item.state === "waiting" || item.state === "running" || item.autoSave.state === "saving")
     );
+    $: autoSavedCount = queue.filter(([, item]) => item.autoSave?.state === "saved").length;
     $: manualSaveCount = queue.filter(([, item]) =>
         item.state === "done" &&
         Boolean(item.resultFile) &&
@@ -244,6 +246,14 @@
                     )}
                 </p>
             </div>
+        {/if}
+
+        {#if latestBatchSummary?.finished || autoSavedCount > 0}
+            <SaveLocationHint
+                batch={autoSavedCount > 0 || autoSaveBatchRunning}
+                open
+                compact
+            />
         {/if}
 
         <div id="processing-list" role="list" aria-labelledby="queue-title">

@@ -25,5 +25,13 @@
     "wechat.notice.copied_title": "リンクをコピーしました",
     "wechat.notice.copied_body": "WeChat右上のメニューから「ブラウザーで開く」を選び、ChromeまたはEdgeにリンクを貼り付けてください。",
     "wechat.notice.copy_failed_title": "コピーに失敗しました",
-    "wechat.notice.copy_failed_body": "このページのURLを手動でコピーして、ChromeまたはEdgeで開いてください。"
+    "wechat.notice.copy_failed_body": "このページのURLを手動でコピーして、ChromeまたはEdgeで開いてください。",
+    "location.summary": "Where is my video saved?",
+    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
+    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
+    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
+    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
+    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
+    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
+    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
 }

@@ -21,7 +21,7 @@
     "success_notice": "이 배치에서 {{ count }}개의 동영상을 성공적으로 다운로드했습니다.",
     "save_all_done": "Save all downloaded",
     "save_clicked": "저장 클릭됨",
-    "manual_save_warning": "Important: After videos finish downloading, click \"Save\" immediately. Queue downloads may be lost after browser restart. Check your browser downloads (ctrl+j) or the save location you chose for the saved video.",
+    "manual_save_warning": "Important: after videos finish, click Save for any item that was not auto-saved. If you chose a folder for batch auto-save, look in that folder first; otherwise check browser downloads (Ctrl+J) or your device Downloads folder.",
     "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
     "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
     "save_started": "Save started"

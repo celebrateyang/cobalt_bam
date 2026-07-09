@@ -183,12 +183,24 @@ const buildComFilenameTitle = (meta, partId) => {
     return `${title} - ${part}`;
 };
 
+const getComSelectedPage = (meta, partId) => {
+    if (!Array.isArray(meta?.pages) || !meta.pages.length) return null;
+
+    if (partId) {
+        return meta.pages.find((page) => String(page?.page) === String(partId)) || null;
+    }
+
+    if (meta?.cid) {
+        return meta.pages.find((page) => String(page?.cid) === String(meta.cid)) || meta.pages[0];
+    }
+
+    return meta.pages[0];
+};
+
 const getComDurationSeconds = (meta, partId) => {
     if (!meta) return undefined;
 
-    const selectedPage = partId
-        ? meta.pages?.find((page) => String(page?.page) === String(partId))
-        : null;
+    const selectedPage = getComSelectedPage(meta, partId);
     const duration = selectedPage?.duration ?? meta.duration;
 
     return typeof duration === "number" && Number.isFinite(duration)
@@ -299,9 +311,7 @@ async function com_download(id, partId, filenameTitle, preloadedMeta, preferProg
         return { error: "fetch.fail" };
     }
 
-    const selectedPage = partId
-        ? meta.pages?.find((page) => String(page?.page) === String(partId))
-        : null;
+    const selectedPage = getComSelectedPage(meta, partId);
     const cid = selectedPage?.cid || meta.cid;
     if (!cid) {
         return { error: "fetch.empty" };

@@ -965,9 +965,19 @@ const bilibiliSingleFromView = (data, fallbackId, partId) => {
     const canonicalBvid = data?.bvid || fallbackId;
     if (!canonicalBvid) return;
 
-    const selectedPage = partId
-        ? data?.pages?.find((page) => String(page?.page) === String(partId))
-        : null;
+    const selectedPage = (() => {
+        if (!Array.isArray(data?.pages) || !data.pages.length) return null;
+
+        if (partId) {
+            return data.pages.find((page) => String(page?.page) === String(partId)) || null;
+        }
+
+        if (data?.cid) {
+            return data.pages.find((page) => String(page?.cid) === String(data.cid)) || data.pages[0];
+        }
+
+        return data.pages[0];
+    })();
     const itemUrl = new URL(`https://www.bilibili.com/video/${canonicalBvid}`);
     if (selectedPage?.page) {
         itemUrl.searchParams.set("p", String(selectedPage.page));

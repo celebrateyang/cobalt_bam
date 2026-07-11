@@ -9,6 +9,7 @@
     export let collapsible = false;
     export let open = false;
     export let compact = false;
+    export let inline = false;
 
     $: platformKey = device.is.iOS
         ? "save.location.ios"
@@ -18,7 +19,7 @@
 </script>
 
 {#if collapsible}
-    <details class="save-location-hint" class:compact {open}>
+    <details class="save-location-hint" class:compact class:inline {open}>
         <summary>
             <IconFolderDown />
             <span>{$t("save.location.summary")}</span>
@@ -38,7 +39,7 @@
         </div>
     </details>
 {:else}
-    <div class="save-location-hint" class:compact role="note">
+    <div class="save-location-hint" class:compact class:inline role="note">
         <div class="hint-title">
             <IconFolderDown />
             <span>{$t("save.location.summary")}</span>
@@ -78,6 +79,17 @@
         gap: 6px;
     }
 
+    .save-location-hint.inline {
+        align-self: center;
+        width: fit-content;
+        max-width: min(680px, calc(100% - 24px));
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--gray);
+    }
+
     .hint-title,
     summary {
         display: flex;
@@ -97,6 +109,25 @@
 
     summary::-webkit-details-marker {
         display: none;
+    }
+
+    .inline summary {
+        padding: 5px 10px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 20%, var(--button-stroke));
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--secondary) 7%, var(--button));
+        color: color-mix(in srgb, var(--secondary) 84%, var(--text));
+        font-size: 12px;
+        transition:
+            background-color 0.15s ease,
+            border-color 0.15s ease,
+            transform 0.15s ease;
+    }
+
+    .inline summary:hover {
+        border-color: color-mix(in srgb, var(--secondary) 36%, var(--button-stroke));
+        background: color-mix(in srgb, var(--secondary) 11%, var(--button));
+        transform: translateY(-1px);
     }
 
     .hint-title :global(svg),
@@ -119,5 +150,14 @@
 
     .hint-body p {
         margin: 0;
+    }
+
+    .inline .hint-body {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 18%, transparent);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--button) 96%, var(--secondary));
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
     }
 </style>

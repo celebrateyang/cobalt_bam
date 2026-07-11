@@ -1138,7 +1138,7 @@
     {/if}
 
     <div class="save-location-home-hint">
-        <SaveLocationHint collapsible compact />
+        <SaveLocationHint collapsible compact inline />
     </div>
 
     <div id="action-container">
@@ -1375,7 +1375,9 @@
     }
 
     .save-location-home-hint {
-        margin-top: -6px;
+        display: flex;
+        justify-content: center;
+        margin: -10px 0 -8px;
     }
 
     .input-row {

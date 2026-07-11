@@ -94,6 +94,12 @@
         "title": "その他のツール",
         "description": "ダウンロード以外の機能が必要なときも、トップページの主題を崩さずすぐ使えます。"
     },
+    "ecosystem": {
+        "badge": "FreeSaveVideo エコシステム製品",
+        "title": "動画を何度も止めて単語を調べずに、言語を学ぶ",
+        "description": "NoPainStudy は単語の即時検索、動的字幕、発音練習、スマート復習に対応しています。",
+        "action": "NoPainStudy を見る"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ 対応サイト",

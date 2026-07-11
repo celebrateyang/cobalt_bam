@@ -127,5 +127,11 @@
     "tools": {
         "title": "More tools",
         "description": "Need more than downloading? These tools stay one tap away without taking over the homepage."
+    },
+    "ecosystem": {
+        "badge": "A FreeSaveVideo ecosystem product",
+        "title": "Learn languages from video without constantly pausing to look up words",
+        "description": "NoPainStudy offers instant word definitions, dynamic subtitles, speaking practice, and smart review.",
+        "action": "Explore NoPainStudy"
     }
 }

@@ -1,6 +1,9 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import { homePlatformToDownloadSlug } from "$lib/seo/internal-links";
+    import {
+        homePlatformToDownloadSlug,
+        isInternationalDownloadSlug,
+    } from "$lib/seo/internal-links";
 
     export let currentLocale: string;
     export let canonicalUrl: string;
@@ -12,14 +15,21 @@
     export let guideDescription1: string;
     export let guideDescription2: string;
 
-    const platformHref = (slug: string) =>
-        homePlatformToDownloadSlug[slug]
-            ? `/${currentLocale}/download/${homePlatformToDownloadSlug[slug]}`
-            : slug === "youtube"
+    const platformHref = (slug: string) => {
+        const downloadSlug = homePlatformToDownloadSlug[slug];
+        if (
+            downloadSlug &&
+            (currentLocale !== "en" || isInternationalDownloadSlug(downloadSlug))
+        ) {
+            return `/${currentLocale}/download/${downloadSlug}`;
+        }
+
+        return slug === "youtube"
             ? `/${currentLocale}/youtube-video-downloader`
             : canonicalUrl
               ? `${canonicalUrl}#platform-${slug}`
               : `/${currentLocale}#platform-${slug}`;
+    };
 </script>
 
 <section class="platform-section seo-section" id="platforms">
@@ -74,8 +84,8 @@
     .seo-section {
         width: 100%;
         max-width: 1100px;
-        margin: 28px auto;
-        padding: 0 var(--padding);
+        margin: 18px auto;
+        padding: 0;
         box-sizing: border-box;
         content-visibility: auto;
         contain-intrinsic-size: 1px 680px;
@@ -84,13 +94,13 @@
     .seo-body {
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 14px;
     }
 
     .seo-text h2 {
         margin: 0;
         font-size: clamp(19px, 2.4vw, 24px);
-        color: var(--secondary);
+        color: var(--text);
     }
 
     .seo-text p {
@@ -102,26 +112,26 @@
 
     .seo-grid {
         display: grid;
-        gap: 14px;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         width: 100%;
     }
 
     .seo-card {
-        padding: 16px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
         background: var(--surface-1);
         border: 1px solid var(--surface-2);
         display: flex;
         flex-direction: column;
         gap: 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
     }
 
     .seo-card h3 {
         margin: 0;
         font-size: 15px;
-        color: var(--secondary);
+        color: var(--accent-strong);
     }
 
     .seo-card p {
@@ -134,8 +144,8 @@
     .platform-section {
         width: 100%;
         max-width: 1100px;
-        margin: 0 auto 12px;
-        padding: 0 var(--padding);
+        margin: 14px auto 12px;
+        padding: 0;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -147,7 +157,7 @@
     .platform-heading h2 {
         margin: 0;
         font-size: clamp(19px, 2.4vw, 24px);
-        color: var(--accent-strong);
+        color: var(--text);
     }
 
     .platform-heading p {
@@ -158,19 +168,21 @@
 
     .platform-grid {
         display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .platform-card {
         display: block;
-        padding: 14px;
+        padding: 13px 14px;
         border-radius: 12px;
         background: var(--surface-1);
         border: 1px solid var(--surface-2);
         text-decoration: none;
         color: var(--text);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         transition:
+            transform 0.2s,
             background-color 0.2s,
             border-color 0.2s;
     }
@@ -178,12 +190,13 @@
     .platform-card:hover {
         border-color: var(--accent);
         background: var(--surface-2);
+        transform: translateY(-1px);
     }
 
     .platform-name {
         font-weight: 600;
         margin-bottom: 6px;
-        color: var(--accent-strong);
+        color: var(--text);
     }
 
     .platform-card p {
@@ -195,7 +208,7 @@
 
     @media (max-width: 600px) {
         .seo-section {
-            padding: 0 14px;
+            padding: 0;
             margin: 16px auto;
         }
 
@@ -223,6 +236,13 @@
 
         .platform-card {
             padding: 12px;
+        }
+    }
+
+    @media (min-width: 601px) and (max-width: 900px) {
+        .platform-grid,
+        .seo-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 </style>

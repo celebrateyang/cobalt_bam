@@ -9,6 +9,8 @@
         "preview": "vite preview",
         "indexnow:submit": "node ./scripts/submit-indexnow.mjs",
         "i18n:check-encoding": "node ./scripts/check-i18n-encoding.mjs",
+        "check:homepage-prerender": "node ./scripts/check-homepage-prerender.mjs",
+        "test:homepage": "pnpm build && pnpm check:homepage-prerender",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
     },

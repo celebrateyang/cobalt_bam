@@ -94,6 +94,12 @@
         "title": "Autres outils",
         "description": "Besoin de plus que du telechargement ? Ces outils restent accessibles sans brouiller le theme SEO de la page d accueil."
     },
+    "ecosystem": {
+        "badge": "Un produit de l ecosysteme FreeSaveVideo",
+        "title": "Apprenez les langues avec des videos sans interrompre sans cesse la lecture",
+        "description": "NoPainStudy propose des definitions instantanees, des sous-titres dynamiques, des exercices oraux et des revisions intelligentes.",
+        "action": "Decouvrir NoPainStudy"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ sites pris en charge",

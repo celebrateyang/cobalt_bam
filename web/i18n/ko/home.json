@@ -94,6 +94,12 @@
         "title": "다른 도구",
         "description": "다운로드 외 기능이 필요해도 메인 SEO 흐름을 깨지 않고 바로 이동할 수 있습니다."
     },
+    "ecosystem": {
+        "badge": "FreeSaveVideo 생태계 제품",
+        "title": "단어를 찾느라 영상을 계속 멈추지 않고 언어를 배우세요",
+        "description": "NoPainStudy는 선택 단어 뜻, 동적 자막, 따라 말하기 연습과 스마트 복습을 제공합니다.",
+        "action": "NoPainStudy 알아보기"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ 지원 사이트",

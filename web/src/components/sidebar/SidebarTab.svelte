@@ -57,13 +57,16 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         align-items: center;
         text-align: center;
         gap: 3px;
-        padding: var(--padding) 3px;
+        padding: 9px 3px;
         color: var(--sidebar-tab-text);
         font-size: var(--sidebar-font-size);
         opacity: 1;
         height: fit-content;
-        border-radius: var(--border-radius);
-        transition: transform 0.2s;
+        border-radius: 12px;
+        transition:
+            transform 0.16s ease,
+            background-color 0.16s ease,
+            color 0.16s ease;
 
         text-decoration: none;
         text-decoration-line: none;
@@ -74,7 +77,7 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
     }
 
     .sidebar-tab :global(svg) {
-        stroke-width: 1.2px;
+        stroke-width: 1.6px;
         height: 22px;
         width: 22px;
     }
@@ -89,6 +92,7 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         opacity: 1;
         transform: none;
         transition: none;
+        box-shadow: 0 8px 18px rgba(24, 54, 8, 0.16);
         animation: pressButton 0.3s;
         cursor: default;
     }

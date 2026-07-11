@@ -1306,9 +1306,9 @@
     #omnibox {
         display: flex;
         flex-direction: column;
-        max-width: 800px; /* Increased from 640px */
+        max-width: 820px;
         width: 100%;
-        gap: 16px; /* Increased gap */
+        gap: 14px;
         margin: 0 auto; /* Center alignment */
         position: relative;
     }
@@ -1389,17 +1389,17 @@
     #input-container {
         display: flex;
         /* Enhanced border and shadow */
+        border: 1px solid rgba(var(--accent-rgb), 0.72);
         box-shadow:
-            0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -1px rgba(0, 0, 0, 0.06),
-            0 0 0 1.5px var(--input-border) inset;
+            0 14px 30px rgba(20, 55, 15, 0.08),
+            0 3px 8px rgba(0, 0, 0, 0.04);
         border-radius: 99px; /* Pill shape for modern feel */
-        padding: 16px 24px; /* Larger padding */
+        padding: 15px 22px;
         align-items: center;
         gap: 14px;
         font-size: 16px; /* Larger font */
         flex: 1;
-        background: var(--background);
+        background: color-mix(in srgb, var(--background) 97%, white 3%);
         transition: all 0.2s ease;
     }
 
@@ -1419,9 +1419,9 @@
 
     #input-container:hover {
         box-shadow:
-            0 10px 15px -3px rgba(0, 0, 0, 0.1),
-            0 4px 6px -2px rgba(0, 0, 0, 0.05),
-            0 0 0 1.5px var(--gray) inset;
+            0 16px 34px rgba(20, 55, 15, 0.11),
+            0 4px 10px rgba(0, 0, 0, 0.05);
+        border-color: var(--accent);
     }
 
     #input-container.downloadable {
@@ -1431,9 +1431,9 @@
     #input-container.focused {
         /* Stronger focus state */
         box-shadow:
-            0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04),
-            0 0 0 2px var(--secondary) inset;
+            0 18px 38px rgba(20, 55, 15, 0.14),
+            0 0 0 3px rgba(var(--accent-rgb), 0.13);
+        border-color: var(--accent);
         transform: translateY(-1px);
     }
 
@@ -1488,7 +1488,7 @@
         flex: 1;
 
         font-weight: 500;
-        font-size: 18px; /* Larger input text */
+        font-size: 17px;
 
         /* workaround for safari */
         /* font-size: inherit; removed to enforce size */

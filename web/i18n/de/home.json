@@ -94,6 +94,12 @@
         "title": "Weitere Tools",
         "description": "Brauchst du mehr als Downloads? Diese Tools bleiben einen Klick entfernt, ohne die Startseite zu ueberladen."
     },
+    "ecosystem": {
+        "badge": "Ein Produkt des FreeSaveVideo-Oekosystems",
+        "title": "Sprachen mit Videos lernen, ohne staendig Woerter nachzuschlagen",
+        "description": "NoPainStudy bietet Worterklaerungen, dynamische Untertitel, Nachsprechuebungen und intelligente Wiederholungen.",
+        "action": "NoPainStudy entdecken"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ unterstuetzte Seiten",

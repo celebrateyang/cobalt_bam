@@ -94,6 +94,12 @@
         "title": "Cong cu khac",
         "description": "Neu ban can hon ca tai video, cac cong cu nay van de tim thay ma khong lam loang chu de SEO cua trang chu."
     },
+    "ecosystem": {
+        "badge": "San pham trong he sinh thai FreeSaveVideo",
+        "title": "Hoc ngon ngu qua video ma khong phai lien tuc dung lai de tra tu",
+        "description": "NoPainStudy co tra nghia khi chon tu, phu de dong, luyen noi theo va on tap thong minh.",
+        "action": "Kham pha NoPainStudy"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ trang duoc ho tro",

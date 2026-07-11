@@ -7,6 +7,8 @@
 
     import Omnibox from "$components/save/Omnibox.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
+    import HomeDeferredSections from "$components/home/HomeDeferredSections.svelte";
+    import NoPainStudyCard from "$components/home/NoPainStudyCard.svelte";
 
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
@@ -17,8 +19,6 @@
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import { getHubDownloadLinks, getHubGuideLinks } from "$lib/seo/internal-links";
 
-    type HomeDeferredSectionsComponent =
-        typeof import("$components/home/HomeDeferredSections.svelte").default;
     type ClerkRuntimeModule = typeof import("$lib/state/clerk");
 
     export let data: { lang?: string };
@@ -439,7 +439,6 @@
               applicationSubCategory: "Video Downloader",
               operatingSystem: "Any",
               browserRequirements: "Requires JavaScript and a modern web browser.",
-              isAccessibleForFree: true,
               featureList: heroCapabilities.map((item) => item.title),
               knowsAbout: [
                   "public online video download",
@@ -450,11 +449,6 @@
                   "MP4 to MP3",
                   "browser media tools",
               ],
-              offers: {
-                  "@type": "Offer",
-                  price: "0",
-                  priceCurrency: "USD",
-              },
               potentialAction: {
                   "@type": "UseAction",
                   target: canonicalUrl,
@@ -463,10 +457,6 @@
         : null;
     $: structuredData = [websiteJsonLd, pageJsonLd, faqJsonLd, appJsonLd].filter(Boolean);
 
-    let HomeDeferredSections: HomeDeferredSectionsComponent | null = null;
-    let deferredSectionsTarget: HTMLElement | null = null;
-    let deferredSectionsObserver: IntersectionObserver | null = null;
-    let deferredSectionsLoading = false;
     let deferredWorkArmed = false;
     let pointsFetchArmed = false;
     let homeInternalOpen = true;
@@ -480,46 +470,6 @@
             : currentLocale === "zh"
               ? "\u5c55\u5f00"
               : "Open";
-
-    const loadDeferredSections = async () => {
-        if (deferredSectionsLoading || HomeDeferredSections) return;
-        deferredSectionsLoading = true;
-
-        try {
-            const module = await import("$components/home/HomeDeferredSections.svelte");
-            HomeDeferredSections = module.default;
-        } finally {
-            deferredSectionsLoading = false;
-        }
-    };
-
-    const startDeferredSectionsWhenVisible = () => {
-        if (HomeDeferredSections || deferredSectionsLoading) return;
-
-        if (
-            !browser ||
-            !deferredSectionsTarget ||
-            typeof window.IntersectionObserver === "undefined"
-        ) {
-            void loadDeferredSections();
-            return;
-        }
-
-        deferredSectionsObserver = new IntersectionObserver(
-            (entries) => {
-                if (!entries.some((entry) => entry.isIntersecting)) return;
-                deferredSectionsObserver?.disconnect();
-                deferredSectionsObserver = null;
-                void loadDeferredSections();
-            },
-            {
-                rootMargin: "420px 0px",
-                threshold: 0.01,
-            },
-        );
-
-        deferredSectionsObserver.observe(deferredSectionsTarget);
-    };
 
     const runOnIdle = (callback: () => void, timeout = 2500) => {
         if (!browser) return () => {};
@@ -538,7 +488,6 @@
         if (deferredWorkArmed) return;
         deferredWorkArmed = true;
         pointsFetchArmed = true;
-        startDeferredSectionsWhenVisible();
     };
 
     onMount(() => {
@@ -547,7 +496,6 @@
         const isCompactHome = window.matchMedia("(max-width: 600px)").matches;
         let cancelClerkInit = () => {};
         let cancelHomeArm = () => {};
-        let cancelDeferredLoad = () => {};
         let cancelNotificationInit = () => {};
 
         homeInternalOpen = !isCompactHome;
@@ -576,10 +524,6 @@
         cancelHomeArm = runOnIdle(() => {
             armDeferredHomeTasks();
         }, 2600);
-
-        cancelDeferredLoad = runOnIdle(() => {
-            void loadDeferredSections();
-        }, 7200);
 
         const armOnInteraction = () => {
             armDeferredHomeTasks();
@@ -614,13 +558,10 @@
         return () => {
             cancelClerkInit();
             cancelHomeArm();
-            cancelDeferredLoad();
             cancelNotificationInit();
             window.removeEventListener("pointerdown", armOnInteraction);
             window.removeEventListener("keydown", armOnInteraction);
             window.removeEventListener("scroll", armOnInteraction);
-            deferredSectionsObserver?.disconnect();
-            deferredSectionsObserver = null;
             cleanupClerkStoreBindings();
         };
     });
@@ -709,13 +650,13 @@
 
     <details class="seo-disclosure home-internal-disclosure" bind:open={homeInternalOpen}>
         <summary>
-            <span>{homeHubHeading}</span>
+            <h2>{homeHubHeading}</h2>
             <span class="seo-disclosure-hint">
                 {disclosureLabel(homeInternalOpen)}
             </span>
         </summary>
         <section class="home-internal-hub" aria-label={homeHubHeading}>
-            <div class="home-internal-links">
+            <div class="home-internal-primary-links">
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
                     {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : "Video download directory"}
                 </a>
@@ -725,23 +666,35 @@
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
                     {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : "Video download FAQ"}
                 </a>
-                {#each homeInternalLinks as item}
-                    <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
-                        {homeLinkLabel(item.platform)}
-                    </a>
-                {/each}
-                {#each homeGuideLinks as item}
-                    <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
-                        {homeGuideLabel(item.platform)}
-                    </a>
-                {/each}
+            </div>
+            <div class="home-internal-link-groups">
+                <div class="home-internal-link-group">
+                    <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : "Popular downloaders"}</h3>
+                    <div class="home-internal-links">
+                        {#each homeInternalLinks as item}
+                            <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
+                                {homeLinkLabel(item.platform)}
+                            </a>
+                        {/each}
+                    </div>
+                </div>
+                <div class="home-internal-link-group">
+                    <h3>{currentLocale === "zh" ? "\u4e0b\u8f7d\u6559\u7a0b" : "Download guides"}</h3>
+                    <div class="home-internal-links">
+                        {#each homeGuideLinks as item}
+                            <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
+                                {homeGuideLabel(item.platform)}
+                            </a>
+                        {/each}
+                    </div>
+                </div>
             </div>
         </section>
     </details>
 
     <details class="seo-disclosure more-tools-disclosure" bind:open={moreToolsOpen}>
         <summary>
-            <span>{$t("home.tools.title")}</span>
+            <h2>{$t("home.tools.title")}</h2>
             <span class="seo-disclosure-hint">
                 {disclosureLabel(moreToolsOpen)}
             </span>
@@ -758,28 +711,42 @@
         </section>
     </details>
 
+    <NoPainStudyCard />
+
     <details class="seo-disclosure home-deferred-disclosure" bind:open={homeDeferredOpen}>
         <summary>
-            <span>
+            <h2>
                 {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : "Supported platforms and download notes"}
-            </span>
+            </h2>
             <span class="seo-disclosure-hint">
                 {disclosureLabel(homeDeferredOpen)}
             </span>
         </summary>
-        <div class="deferred-sections-anchor" bind:this={deferredSectionsTarget} aria-hidden="true"></div>
-        {#if HomeDeferredSections}
-            <svelte:component
-                this={HomeDeferredSections}
-                {currentLocale}
-                {canonicalUrl}
-                {platformCards}
-                {guideDescription1}
-                {guideDescription2}
-            />
-        {:else}
-            <div class="deferred-sections-placeholder" aria-hidden="true"></div>
-        {/if}
+        <HomeDeferredSections
+            {currentLocale}
+            {canonicalUrl}
+            {platformCards}
+            {guideDescription1}
+            {guideDescription2}
+        />
+        <section class="home-faq" aria-labelledby="home-faq-title">
+            <div class="home-faq-heading">
+                <h2 id="home-faq-title">
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : "Download FAQ"}
+                </h2>
+                <a href={`/${currentLocale}/faq`}>
+                    {currentLocale === "zh" ? "\u67e5\u770b\u5168\u90e8" : "View all"}
+                </a>
+            </div>
+            <div class="home-faq-list">
+                {#each faqItems as item}
+                    <details class="home-faq-item">
+                        <summary>{item.q}</summary>
+                        <p>{item.a}</p>
+                    </details>
+                {/each}
+            </div>
+        </section>
     </details>
     {#if showLowPointsBalloon}
         <div class="low-points-balloon-wrapper" aria-label={$t("home.points_balloon.aria")}>
@@ -829,11 +796,11 @@
 
 <style>
     #cobalt-save-container {
-        padding: var(--padding);
+        padding: clamp(10px, 1.5vw, 20px) var(--padding) 28px;
         /* 允许纵向滚动，移除 overflow:hidden 限制 */
         overflow-y: auto;
         overflow-x: hidden;
-        justify-content: space-between;
+        justify-content: flex-start;
         min-height: 100%;
         box-sizing: border-box;
     }
@@ -845,14 +812,14 @@
         justify-content: flex-start;
         width: 100%;
         min-height: auto;
-        gap: 14px;
-        margin-bottom: 24px;
+        gap: 12px;
+        margin-bottom: 18px;
     }
 
     @media (min-width: 900px) {
         #cobalt-save {
             min-height: auto;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
     }
 
@@ -872,9 +839,9 @@
         color: #2e7d32;
         border-radius: var(--border-radius);
         width: 100%;
-        max-width: 640px;
+        max-width: 820px;
         box-sizing: border-box;
-        margin-bottom: var(--padding);
+        margin-bottom: 2px;
         animation: slideIn 0.5s ease-out;
         border: 1px solid #c8e6c9;
     }
@@ -970,26 +937,26 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         text-align: center;
-        margin-top: 4px;
+        margin-top: 0;
     }
 
     .download-hero h1 {
         margin: 0;
         max-width: 860px;
-        font-size: clamp(2rem, 3.8vw, 2.85rem);
-        line-height: 1.12;
+        font-size: clamp(2rem, 3.4vw, 2.75rem);
+        line-height: 1.08;
         letter-spacing: -0.03em;
-        color: var(--secondary);
+        color: var(--text);
         text-wrap: balance;
     }
 
     .hero-subtitle {
         margin: 0;
         max-width: 760px;
-        font-size: clamp(0.98rem, 1.55vw, 1.08rem);
-        line-height: 1.6;
+        font-size: clamp(0.94rem, 1.35vw, 1.04rem);
+        line-height: 1.5;
         color: var(--secondary-600);
         text-wrap: balance;
     }
@@ -1002,7 +969,7 @@
         box-sizing: border-box;
     }
 
-    .seo-disclosure summary {
+    .seo-disclosure > summary {
         min-height: 44px;
         display: flex;
         align-items: center;
@@ -1010,9 +977,9 @@
         gap: 14px;
         padding: 10px 14px;
         border: 1px solid var(--surface-2);
-        border-radius: 12px;
-        background: var(--surface-1);
-        color: var(--secondary);
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--surface-1) 94%, var(--accent) 6%);
+        color: var(--text);
         cursor: pointer;
         font-size: 0.95rem;
         font-weight: 700;
@@ -1023,11 +990,11 @@
             background-color 0.2s;
     }
 
-    .seo-disclosure summary::-webkit-details-marker {
+    .seo-disclosure > summary::-webkit-details-marker {
         display: none;
     }
 
-    .seo-disclosure summary::after {
+    .seo-disclosure > summary::after {
         content: "";
         width: 9px;
         height: 9px;
@@ -1038,12 +1005,12 @@
         transition: transform 0.2s;
     }
 
-    .seo-disclosure[open] summary {
-        background: rgba(var(--accent-rgb), 0.08);
-        border-color: rgba(var(--accent-rgb), 0.26);
+    .seo-disclosure[open] > summary {
+        background: rgba(var(--accent-rgb), 0.07);
+        border-color: rgba(var(--accent-rgb), 0.22);
     }
 
-    .seo-disclosure[open] summary::after {
+    .seo-disclosure[open] > summary::after {
         transform: rotate(225deg);
     }
 
@@ -1062,28 +1029,49 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 14px;
     }
 
-    .home-internal-hub h2 {
-        display: none;
+    .seo-disclosure > summary h2 {
         margin: 0;
-        font-size: clamp(18px, 2.2vw, 22px);
-        color: var(--secondary);
+        color: inherit;
+        font: inherit;
     }
 
+    .home-internal-primary-links,
     .home-internal-links {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
+    }
+
+    .home-internal-link-groups {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+        gap: 12px;
+    }
+
+    .home-internal-link-group {
+        padding: 12px;
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+    }
+
+    .home-internal-link-group h3 {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--subtext);
+        line-height: 1.3;
+        margin-bottom: 9px;
     }
 
     .home-hub-link {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 38px;
-        padding: 8px 12px;
+        min-height: 34px;
+        padding: 7px 11px;
         border-radius: 999px;
         border: 1px solid var(--surface-2);
         background: var(--surface-1);
@@ -1104,7 +1092,7 @@
     .home-hub-link--primary {
         border-color: rgba(var(--accent-rgb), 0.32);
         background: rgba(var(--accent-rgb), 0.12);
-        color: var(--secondary);
+        color: var(--accent-strong);
         font-weight: 600;
     }
 
@@ -1114,24 +1102,16 @@
         margin: 10px auto 0;
         padding: 0;
         box-sizing: border-box;
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr);
         align-items: center;
-        justify-content: space-between;
-        gap: 12px 18px;
+        gap: 14px 24px;
     }
 
     .more-tools-copy {
         display: flex;
         flex-direction: column;
         gap: 4px;
-    }
-
-    .more-tools-copy h2 {
-        display: none;
-        margin: 0;
-        font-size: clamp(16px, 2vw, 20px);
-        color: var(--secondary);
     }
 
     .more-tools-copy p {
@@ -1142,20 +1122,20 @@
     }
 
     .more-tools-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
     }
 
     .more-tools-link {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 38px;
+        min-height: 42px;
         padding: 8px 12px;
         border-radius: 999px;
         border: 1px solid var(--surface-2);
-        background: transparent;
+        background: var(--surface-1);
         color: var(--text);
         text-decoration: none;
         font-size: 0.9rem;
@@ -1170,18 +1150,89 @@
         border-color: var(--accent);
     }
 
-    .deferred-sections-anchor {
-        width: 100%;
-        height: 0;
-    }
-
-    .deferred-sections-placeholder {
+    .home-faq {
         width: 100%;
         max-width: 1100px;
-        margin: 0 auto;
-        min-height: 1px;
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 1px;
+        margin: 18px auto 10px;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .home-faq-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 10px;
+    }
+
+    .home-faq-heading h2 {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(18px, 2vw, 22px);
+    }
+
+    .home-faq-heading a {
+        color: var(--accent-strong);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .home-faq-heading a:hover {
+        text-decoration: underline;
+    }
+
+    .home-faq-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .home-faq-item {
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: var(--surface-1);
+        overflow: hidden;
+    }
+
+    .home-faq-item summary {
+        min-height: 48px;
+        padding: 12px 38px 12px 13px;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 650;
+        line-height: 1.4;
+        list-style: none;
+        position: relative;
+    }
+
+    .home-faq-item summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .home-faq-item summary::after {
+        content: "+";
+        position: absolute;
+        top: 50%;
+        right: 13px;
+        transform: translateY(-50%);
+        color: var(--accent-strong);
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .home-faq-item[open] summary::after {
+        content: "\2212";
+    }
+
+    .home-faq-item p {
+        margin: 0;
+        padding: 0 13px 13px;
+        color: var(--secondary-600);
+        font-size: 0.86rem;
+        line-height: 1.55;
     }
 
     @media (max-width: 600px) {
@@ -1197,11 +1248,11 @@
         }
 
         .download-hero h1 {
-            font-size: clamp(1.65rem, 7.4vw, 2.2rem);
+            font-size: clamp(1.72rem, 7.2vw, 2.15rem);
         }
 
         .download-hero {
-            gap: 8px;
+            gap: 6px;
             margin-top: 2px;
         }
 
@@ -1215,14 +1266,28 @@
             padding: 0 14px;
         }
 
-        .seo-disclosure summary {
+        .seo-disclosure > summary {
             min-height: 42px;
             padding: 9px 12px;
             font-size: 0.92rem;
         }
 
-        .deferred-sections-placeholder {
-            min-height: 1px;
+        .home-internal-link-groups,
+        .more-tools-strip,
+        .home-faq-list {
+            grid-template-columns: 1fr;
+        }
+
+        .more-tools-links {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .more-tools-copy p {
+            font-size: 0.88rem;
+        }
+
+        .home-faq {
+            margin-top: 14px;
         }
     }
 
@@ -1249,7 +1314,7 @@
             ),
             var(--surface-1);
         border-radius: 20px;
-        padding: 12px 14px;
+        padding: 12px 40px 12px 14px;
         box-shadow: var(--button-box-shadow);
         text-align: left;
         cursor: pointer;
@@ -1258,7 +1323,6 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding-right: 40px;
         transition:
             transform 0.15s ease,
             border-color 0.15s ease;
@@ -1413,4 +1477,5 @@
             animation: none !important;
         }
     }
+
 </style>

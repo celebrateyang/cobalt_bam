@@ -94,6 +94,12 @@
         "title": "Mas herramientas",
         "description": "Necesitas algo mas que descargar? Estas herramientas siguen a un clic sin robar protagonismo a la portada."
     },
+    "ecosystem": {
+        "badge": "Un producto del ecosistema FreeSaveVideo",
+        "title": "Aprende idiomas con videos sin pausar a cada momento para buscar palabras",
+        "description": "NoPainStudy ofrece definiciones al seleccionar, subtitulos dinamicos, practica oral y repaso inteligente.",
+        "action": "Conocer NoPainStudy"
+    },
     "capabilities": {
         "supported": {
             "title": "100+ sitios compatibles",

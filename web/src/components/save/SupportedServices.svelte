@@ -125,11 +125,13 @@
         flex-direction: row;
         font-size: 13px;
         font-weight: 500;
-        background: none;
+        border: 1px solid var(--surface-2);
+        background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+        color: var(--text);
     }
 
     #services-button:not(:focus-visible) {
-        box-shadow: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
 
     .expand-icon {

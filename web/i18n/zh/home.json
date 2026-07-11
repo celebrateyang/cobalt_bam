@@ -127,5 +127,11 @@
     "tools": {
         "title": "更多工具",
         "description": "如果你还需要其他能力，这些工具依然随时可用，但不会打断首页的下载体验。"
+    },
+    "ecosystem": {
+        "badge": "FreeSaveVideo 生态产品",
+        "title": "看视频学语言，不必反复暂停查词",
+        "description": "NoPainStudy 支持划词取义、动态字幕、跟读练习和智能复习。",
+        "action": "了解 NoPainStudy"
     }
 }

@@ -14,6 +14,31 @@ const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
 export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 200;
 
+export const normalizeEmailForSignup = (email) => {
+    if (typeof email !== "string") return null;
+
+    const trimmed = email.trim().toLowerCase();
+    const atIndex = trimmed.lastIndexOf("@");
+    if (atIndex <= 0 || atIndex === trimmed.length - 1) return null;
+
+    let local = trimmed.slice(0, atIndex);
+    let domain = trimmed.slice(atIndex + 1);
+
+    if (!local || !domain) return null;
+
+    if (domain === "googlemail.com") {
+        domain = "gmail.com";
+    }
+
+    if (domain === "gmail.com") {
+        local = local.split("+", 1)[0].replace(/\./g, "");
+    }
+
+    if (!local) return null;
+
+    return `${local}@${domain}`;
+};
+
 let clipboardPersonalSchemaPromise = null;
 
 export const ensureClipboardPersonalSchema = async () => {
@@ -84,6 +109,7 @@ export const initUserDatabase = async () => {
             id SERIAL PRIMARY KEY,
             clerk_user_id TEXT NOT NULL UNIQUE,
             primary_email TEXT,
+            normalized_email TEXT,
             full_name TEXT,
             avatar_url TEXT,
             last_seen_at BIGINT,
@@ -95,6 +121,8 @@ export const initUserDatabase = async () => {
             first_download_grace_extra_points INTEGER NOT NULL DEFAULT 0,
             referral_code TEXT,
             is_disabled BOOLEAN DEFAULT false,
+            signup_block_reason TEXT,
+            signup_blocked_at BIGINT,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL
         );
@@ -104,6 +132,18 @@ export const initUserDatabase = async () => {
     await query(
         `ALTER TABLE users
             ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 20;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS normalized_email TEXT;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS signup_block_reason TEXT;`,
+    );
+    await query(
+        `ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS signup_blocked_at BIGINT;`,
     );
 
     // Migration: ensure default points for new users is correct
@@ -155,6 +195,23 @@ export const initUserDatabase = async () => {
     );
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_primary_email ON users(primary_email);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_users_normalized_email ON users(normalized_email);`,
+    );
+    await query(
+        `
+        UPDATE users
+        SET normalized_email = lower(
+            CASE
+                WHEN split_part(lower(primary_email), '@', 2) IN ('gmail.com', 'googlemail.com')
+                    THEN replace(split_part(split_part(lower(primary_email), '@', 1), '+', 1), '.', '') || '@gmail.com'
+                ELSE lower(primary_email)
+            END
+        )
+        WHERE primary_email IS NOT NULL
+          AND (normalized_email IS NULL OR normalized_email = '');
+        `,
     );
     await query(
         `CREATE INDEX IF NOT EXISTS idx_users_last_seen_at ON users(last_seen_at DESC);`,
@@ -475,21 +532,46 @@ export const upsertUserFromClerk = async ({
     fullName,
     avatarUrl,
 }) => {
+    const client = await getClient();
     const now = Date.now();
     const referralCode = generateReferralCode();
 
     const normalizedPrimaryEmail = primaryEmail || null;
+    const normalizedEmail = normalizeEmailForSignup(normalizedPrimaryEmail);
     const normalizedFullName = fullName || null;
     const normalizedAvatarUrl = avatarUrl || null;
+
+    const findCanonicalSql = `
+        SELECT clerk_user_id
+        FROM users
+        WHERE normalized_email = $1
+          AND COALESCE(is_disabled, false) = false
+        ORDER BY id ASC
+        LIMIT 1;
+    `;
+
+    const shouldBlockDuplicateSignup = async () => {
+        if (!normalizedEmail) return false;
+
+        const canonical = await client.query(findCanonicalSql, [normalizedEmail]);
+        const canonicalClerkUserId = canonical.rows[0]?.clerk_user_id;
+
+        return !!canonicalClerkUserId && canonicalClerkUserId !== clerkUserId;
+    };
 
     const updateSql = `
         UPDATE users
         SET primary_email = $2,
-            full_name = $3,
-            avatar_url = $4,
-            last_seen_at = $5,
-            referral_code = COALESCE(referral_code, $6),
-            updated_at = $7
+            normalized_email = $3,
+            full_name = $4,
+            avatar_url = $5,
+            last_seen_at = $6,
+            referral_code = COALESCE(referral_code, $7),
+            points = CASE WHEN $8 THEN 0 ELSE points END,
+            is_disabled = CASE WHEN $8 THEN true ELSE is_disabled END,
+            signup_block_reason = CASE WHEN $8 THEN 'duplicate_normalized_email' ELSE signup_block_reason END,
+            signup_blocked_at = CASE WHEN $8 THEN COALESCE(signup_blocked_at, $9) ELSE signup_blocked_at END,
+            updated_at = $9
         WHERE clerk_user_id = $1
         RETURNING *;
     `;
@@ -497,77 +579,116 @@ export const upsertUserFromClerk = async ({
     const updateParamsBase = [
         clerkUserId,
         normalizedPrimaryEmail,
+        normalizedEmail,
         normalizedFullName,
         normalizedAvatarUrl,
         now,
     ];
 
-    let updateResult;
     try {
-        updateResult = await query(updateSql, [...updateParamsBase, referralCode, now]);
-    } catch (error) {
-        if (!isUniqueViolation(error)) throw error;
-        updateResult = await query(updateSql, [
-            ...updateParamsBase,
-            generateReferralCode(),
-            now,
-        ]);
-    }
+        await client.query("BEGIN");
+        if (normalizedEmail) {
+            await client.query("SELECT pg_advisory_xact_lock(hashtext($1));", [
+                normalizedEmail,
+            ]);
+        }
 
-    if (updateResult.rows[0]) {
-        return updateResult.rows[0];
-    }
+        const blockDuplicateSignup = await shouldBlockDuplicateSignup();
 
-    const insertSql = `
-        INSERT INTO users (
-            clerk_user_id,
-            primary_email,
-            full_name,
-            avatar_url,
-            last_seen_at,
-            referral_code,
-            created_at,
-            updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *;
-    `;
-
-    let lastError;
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-        const attemptReferralCode = attempt === 0 ? referralCode : generateReferralCode();
-
+        let updateResult;
         try {
-            const insertResult = await query(insertSql, [
-                clerkUserId,
-                normalizedPrimaryEmail,
-                normalizedFullName,
-                normalizedAvatarUrl,
-                now,
-                attemptReferralCode,
-                now,
+            updateResult = await client.query(updateSql, [
+                ...updateParamsBase,
+                referralCode,
+                blockDuplicateSignup,
                 now,
             ]);
-
-            return insertResult.rows[0];
         } catch (error) {
-            lastError = error;
             if (!isUniqueViolation(error)) throw error;
+            updateResult = await client.query(updateSql, [
+                ...updateParamsBase,
+                generateReferralCode(),
+                blockDuplicateSignup,
+                now,
+            ]);
+        }
 
-            // Either: a race on clerk_user_id, or an extremely rare referral_code collision.
+        if (updateResult.rows[0]) {
+            await client.query("COMMIT");
+            return updateResult.rows[0];
+        }
+
+        const insertSql = `
+            INSERT INTO users (
+                clerk_user_id,
+                primary_email,
+                normalized_email,
+                full_name,
+                avatar_url,
+                last_seen_at,
+                referral_code,
+                points,
+                is_disabled,
+                signup_block_reason,
+                signup_blocked_at,
+                created_at,
+                updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING *;
+        `;
+
+        let lastError;
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+            const attemptReferralCode = attempt === 0 ? referralCode : generateReferralCode();
+
             try {
-                const retryUpdate = await query(updateSql, [
-                    ...updateParamsBase,
-                    generateReferralCode(),
+                const insertResult = await client.query(insertSql, [
+                    clerkUserId,
+                    normalizedPrimaryEmail,
+                    normalizedEmail,
+                    normalizedFullName,
+                    normalizedAvatarUrl,
+                    now,
+                    attemptReferralCode,
+                    blockDuplicateSignup ? 0 : 20,
+                    blockDuplicateSignup,
+                    blockDuplicateSignup ? "duplicate_normalized_email" : null,
+                    blockDuplicateSignup ? now : null,
+                    now,
                     now,
                 ]);
-                if (retryUpdate.rows[0]) return retryUpdate.rows[0];
-            } catch (retryError) {
-                if (!isUniqueViolation(retryError)) throw retryError;
+
+                await client.query("COMMIT");
+                return insertResult.rows[0];
+            } catch (error) {
+                lastError = error;
+                if (!isUniqueViolation(error)) throw error;
+
+                // Either: a race on clerk_user_id, or an extremely rare referral_code collision.
+                try {
+                    const retryUpdate = await client.query(updateSql, [
+                        ...updateParamsBase,
+                        generateReferralCode(),
+                        blockDuplicateSignup,
+                        now,
+                    ]);
+                    if (retryUpdate.rows[0]) {
+                        await client.query("COMMIT");
+                        return retryUpdate.rows[0];
+                    }
+                } catch (retryError) {
+                    if (!isUniqueViolation(retryError)) throw retryError;
+                }
             }
         }
-    }
 
-    throw lastError;
+        throw lastError;
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 export const getUserByClerkId = async (clerkUserId) => {

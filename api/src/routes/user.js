@@ -1168,6 +1168,16 @@ if (!isClerkApiConfigured) {
 
                 const clerkUser = await clerkClient.users.getUser(auth.userId);
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                if (user?.is_disabled) {
+                    return jsonError(
+                        res,
+                        403,
+                        user.signup_block_reason === "duplicate_normalized_email"
+                            ? "DUPLICATE_SIGNUP_BLOCKED"
+                            : "ACCOUNT_DISABLED",
+                        "This account is not allowed to register.",
+                    );
+                }
                 const membership = await getActiveMembershipForUser(user.id);
 
                 res.json({
@@ -1600,6 +1610,16 @@ if (!isClerkApiConfigured) {
                 }
 
                 const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+                if (user?.is_disabled) {
+                    return jsonError(
+                        res,
+                        403,
+                        user.signup_block_reason === "duplicate_normalized_email"
+                            ? "DUPLICATE_SIGNUP_BLOCKED"
+                            : "ACCOUNT_DISABLED",
+                        "This account is not allowed to claim a referral reward.",
+                    );
+                }
 
                 const result = await claimReferralReward({
                     referralCode,
@@ -1622,6 +1642,15 @@ if (!isClerkApiConfigured) {
                             400,
                             "SELF_REFERRAL",
                             "Cannot refer yourself",
+                        );
+                    }
+
+                    if (result.code === "REFERRED_USER_DISABLED") {
+                        return jsonError(
+                            res,
+                            403,
+                            "ACCOUNT_DISABLED",
+                            "This account is not allowed to claim a referral reward.",
                         );
                     }
 

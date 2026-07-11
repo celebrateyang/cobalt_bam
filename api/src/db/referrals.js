@@ -75,6 +75,22 @@ export const claimReferralReward = async ({ referralCode, referredUserId }) => {
             return { ok: false, code: "SELF_REFERRAL" };
         }
 
+        const referredRes = await client.query(
+            `
+            SELECT id
+            FROM users
+            WHERE id = $1
+              AND COALESCE(is_disabled, false) = false
+            LIMIT 1;
+            `,
+            [referredUserId],
+        );
+
+        if (!referredRes.rows?.[0]?.id) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "REFERRED_USER_DISABLED" };
+        }
+
         const insertRes = await client.query(
             `
             INSERT INTO user_referrals (

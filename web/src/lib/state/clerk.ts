@@ -260,6 +260,17 @@ const syncUserToAPI = async (instance: ClerkInstance | null | undefined) => {
                 const payload = await response.json().catch(() => null);
                 const createdAt = payload?.data?.user?.created_at;
                 trackMetaCompleteRegistration(userId, createdAt);
+            } else if (response?.status === 403) {
+                const payload = await response.json().catch(() => null);
+                const code = payload?.error?.code;
+                if (
+                    code === "DUPLICATE_SIGNUP_BLOCKED" ||
+                    code === "ACCOUNT_DISABLED"
+                ) {
+                    await instance.signOut().catch(() => {});
+                    clerkUser.set(null);
+                    clerkSession.set(null);
+                }
             }
 
             lastSyncedUserId = userId;

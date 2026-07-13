@@ -78,6 +78,7 @@
                     tabName="videorecord"
                     tabLink={videorecordLink}
                     preloadCode="off"
+                    memberOnly
                 >
                     <IconVideo />
                 </SidebarTab>
@@ -87,7 +88,11 @@
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
                     <IconStack2 />
                 </SidebarTab>
-                <SidebarTab tabName="random_video" tabLink={randomChatLink}>
+                <SidebarTab
+                    tabName="random_video"
+                    tabLink={randomChatLink}
+                    memberOnly
+                >
                     <IconMessageCircle />
                 </SidebarTab>
                 <SidebarTab tabName="remux" tabLink={remuxLink} beta>

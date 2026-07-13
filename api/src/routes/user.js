@@ -27,7 +27,6 @@ import {
     reviewPromotionSubmission,
 } from "../db/promotion-submissions.js";
 import {
-    hasPaidCreditOrderByClerkUserId,
     listCreditOrders,
     listCreditOrdersForUser,
 } from "../db/credit-orders.js";
@@ -73,10 +72,6 @@ const router = express.Router();
 const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
     isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
-const requirePaidForRandomChat = ["1", "true", "yes", "on"].includes(
-    String(process.env.CHAT_REQUIRE_PAID || "").toLowerCase().trim(),
-);
-
 const REFERRAL_CLAIM_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const mapClerkUser = (clerkUser) => {
@@ -1284,20 +1279,21 @@ if (!isClerkApiConfigured) {
                     );
                 }
 
-                const hasPaidOrder = requirePaidForRandomChat
-                    ? await hasPaidCreditOrderByClerkUserId(auth.userId)
-                    : true;
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                if (user?.is_disabled) {
+                    return jsonError(res, 403, "ACCOUNT_DISABLED", "Account disabled");
+                }
 
-                const eligible = requirePaidForRandomChat
-                    ? hasPaidOrder
-                    : true;
+                const eligibility = await getMembershipFeatureEligibility(
+                    user.id,
+                    "random_chat",
+                );
 
                 return res.json({
                     status: "success",
                     data: {
-                        eligible,
-                        hasPaidOrder,
-                        requirePaidOrder: requirePaidForRandomChat,
+                        ...eligibility,
+                        requireMembership: true,
                     },
                 });
             } catch (error) {

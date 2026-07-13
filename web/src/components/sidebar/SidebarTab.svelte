@@ -2,10 +2,12 @@
     import { page } from "$app/stores";
 
     import { t } from "$lib/i18n/translations";
+    import IconCrown from "@tabler/icons-svelte/IconCrown.svelte";
 
 export let tabName: string;
 export let tabLink: string;
 export let beta = false;
+export let memberOnly = false;
 export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = null;
 
     const firstTabPage = ["save", "remux", "settings"];
@@ -45,6 +47,15 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
 >
     {#if beta}
         <div class="beta-sign" aria-label={$t("general.beta")}>β</div>
+    {/if}
+    {#if memberOnly}
+        <div
+            class="member-sign"
+            aria-label={$t("tabs.member_only")}
+            title={$t("tabs.member_only")}
+        >
+            <IconCrown />
+        </div>
     {/if}
     <slot></slot>
     {$t(`tabs.${tabName}`)}
@@ -109,6 +120,26 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         position: absolute;
         transform: translateX(16px) translateY(-6px);
         opacity: 0.7;
+    }
+
+    .member-sign {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 17px;
+        height: 17px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        color: var(--accent);
+        background: var(--sidebar-bg);
+        box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.32);
+    }
+
+    .member-sign :global(svg) {
+        width: 11px;
+        height: 11px;
+        stroke-width: 2px;
     }
 
     @keyframes pressButton {

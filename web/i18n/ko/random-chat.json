@@ -2,7 +2,7 @@
     "meta.title": "랜덤 1대1 영상채팅",
     "meta.description": "온라인 사용자 한 명을 무작위로 매칭해 10분간 1대1 영상 채팅을 해보세요.",
     "header.title": "랜덤 1대1 영상채팅",
-    "header.subtitle": "로그인한 사용자가 참여할 수 있습니다. 각 세션은 10분 후에 자동으로 종료됩니다.",
+    "header.subtitle": "회원만 참여할 수 있습니다. 각 세션은 10분 후에 자동으로 종료됩니다.",
     "brand.title": "무료저장비디오 무작위",
     "brand.subtitle": "1대1 영상채팅",
     "brand.searching_users": "온라인 사용자 검색 중...",

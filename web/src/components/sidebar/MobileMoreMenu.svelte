@@ -25,30 +25,35 @@
             icon: IconVideo,
             link: `/${currentLang}/random-chat`,
             label: $t("tabs.random_video"),
+            memberOnly: true,
         },
         {
             name: "videorecord",
             icon: IconVideo,
             link: `/${currentLang}/videorecord`,
             label: $t("tabs.videorecord"),
+            memberOnly: true,
         },
         {
             name: "clipboard",
             icon: IconClipboard,
             link: `/${currentLang}/clipboard`,
             label: $t("tabs.clipboard"),
+            memberOnly: false,
         },
         {
             name: "faq",
             icon: IconComet,
             link: `/${currentLang}/faq`,
             label: $t("tabs.faq"),
+            memberOnly: false,
         },
         {
             name: "about",
             icon: IconInfoCircle,
             link: `/${currentLang}${defaultNavPage("about")}`,
             label: $t("tabs.about"),
+            memberOnly: false,
         },
     ];
 
@@ -116,6 +121,9 @@
                 >
                     <svelte:component this={item.icon} />
                     <span>{item.label}</span>
+                    {#if item.memberOnly}
+                        <span class="member-pill">{$t("tabs.member_only")}</span>
+                    {/if}
                 </a>
             {/each}
         </div>
@@ -216,5 +224,16 @@
         height: 20px;
         stroke-width: 1.5px;
         color: var(--subtext);
+    }
+
+    .member-pill {
+        margin-left: auto;
+        padding: 3px 7px;
+        border-radius: 999px;
+        color: var(--accent);
+        background: rgba(var(--accent-rgb), 0.11);
+        font-size: 0.68rem;
+        font-weight: 750;
+        white-space: nowrap;
     }
 </style>

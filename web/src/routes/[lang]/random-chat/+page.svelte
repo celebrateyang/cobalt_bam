@@ -3,9 +3,12 @@
     import { page } from "$app/stores";
     import { onDestroy, onMount } from "svelte";
 
-    import { currentApiURL } from "$lib/api/api-url";
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
+    import {
+        requireMembershipFeature,
+        showMembershipUpgradeDialog,
+    } from "$lib/membership/gate";
     import type {
         ChatMatchProfile,
         ChatTargetGender,
@@ -23,12 +26,7 @@
         loadRandomChatPreferences,
         saveRandomChatPreferences,
     } from "$lib/chat/random-chat-preferences";
-    import {
-        checkSignedIn,
-        clerkEnabled,
-        getClerkToken,
-        signIn,
-    } from "$lib/state/clerk";
+    import { clerkEnabled, getClerkToken } from "$lib/state/clerk";
 
     let manager: RandomAvChatManager | null = null;
 
@@ -40,12 +38,8 @@
     let remoteStream: MediaStream | null = null;
     let peerProfile: ChatMatchProfile | null = null;
 
-    let signedIn = false;
-    let checkingEligibility = false;
-    let eligible = false;
-    let requirePaidOrder = false;
-    let hasPaidOrder = true;
     let connected = false;
+    let checkingMembership = false;
     let searching = false;
     let inCall = false;
     let hasStartedOnce = false;
@@ -72,7 +66,7 @@
         applicationCategory: "SocialNetworkingApplication",
         applicationSubCategory: "Random Video Chat",
         operatingSystem: "Any",
-        isAccessibleForFree: true,
+        isAccessibleForFree: false,
         description: String($t("random-chat.meta.description")),
         featureList: ["1v1 video matching", "10-minute sessions", "WebRTC media", "country and language preferences"],
     };
@@ -184,52 +178,6 @@
         clearCountdown();
     };
 
-    const refreshEligibility = async () => {
-        checkingEligibility = true;
-        errorMessage = "";
-
-        try {
-            signedIn = await checkSignedIn(800);
-            if (!signedIn) {
-                eligible = false;
-                return;
-            }
-
-            const token = await getClerkToken();
-            if (!token) {
-                eligible = false;
-                signedIn = false;
-                return;
-            }
-
-            const res = await fetch(`${currentApiURL()}/user/chat/eligibility`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            const data = await res.json().catch(() => null);
-
-            if (!res.ok || data?.status !== "success") {
-                throw new Error(
-                    data?.error?.message ||
-                        $t("random-chat.error.check_eligibility_failed"),
-                );
-            }
-
-            eligible = Boolean(data?.data?.eligible);
-            requirePaidOrder = Boolean(data?.data?.requirePaidOrder);
-            hasPaidOrder = Boolean(data?.data?.hasPaidOrder);
-        } catch (error) {
-            eligible = false;
-            errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : $t("random-chat.error.check_eligibility_failed");
-        } finally {
-            checkingEligibility = false;
-        }
-    };
-
     const ensureManagerConnected = async () => {
         if (!manager) {
             throw new Error($t("random-chat.error.manager_not_initialized"));
@@ -275,7 +223,14 @@
     };
 
     const startMatching = async () => {
-        if (!eligible) return;
+        if (checkingMembership) return;
+        checkingMembership = true;
+        const allowed = await requireMembershipFeature("random_chat").finally(
+            () => {
+                checkingMembership = false;
+            },
+        );
+        if (!allowed) return;
 
         matchEndReason = "";
         errorMessage = "";
@@ -286,6 +241,13 @@
             searching = true;
             hasStartedOnce = true;
         } catch (error) {
+            if (
+                error instanceof Error &&
+                (error as Error & { code?: string }).code ===
+                    "membership_required"
+            ) {
+                return;
+            }
             errorMessage =
                 error instanceof Error
                     ? error.message
@@ -308,7 +270,15 @@
     };
 
     const nextMatch = async () => {
-        if (!eligible || !hasStartedOnce) return;
+        if (!hasStartedOnce || checkingMembership) return;
+
+        checkingMembership = true;
+        const allowed = await requireMembershipFeature("random_chat").finally(
+            () => {
+                checkingMembership = false;
+            },
+        );
+        if (!allowed) return;
 
         errorMessage = "";
         matchEndReason = "";
@@ -323,11 +293,6 @@
                     ? error.message
                     : $t("random-chat.error.next_match_failed");
         }
-    };
-
-    const handleSignIn = async () => {
-        await signIn();
-        await refreshEligibility();
     };
 
     const toggleFullscreen = async () => {
@@ -351,10 +316,6 @@
     };
 
     const scheduleNextMatch = () => {
-        if (!eligible) {
-            return;
-        }
-
         const autoNextDone = chatPrefs.autoNext && matchEndReason !== "left";
         if (!autoNextDone) {
             return;
@@ -407,10 +368,9 @@
                 connected = false;
                 searching = false;
                 inCall = false;
-                if (reason === "payment_required") {
-                    eligible = false;
-                    requirePaidOrder = true;
-                    hasPaidOrder = false;
+                if (reason === "membership_required") {
+                    void showMembershipUpgradeDialog("random_chat");
+                    return;
                 }
                 errorMessage = message;
             }),
@@ -438,12 +398,15 @@
             manager.on("remote_stream", ({ stream }) => {
                 remoteStream = stream;
             }),
-            manager.on("error", ({ message }) => {
+            manager.on("error", ({ message, code }) => {
+                if (code === "MEMBERSHIP_REQUIRED") {
+                    searching = false;
+                    void showMembershipUpgradeDialog("random_chat");
+                    return;
+                }
                 errorMessage = message;
             }),
         ];
-
-        void refreshEligibility();
 
         return () => {
             document.removeEventListener("fullscreenchange", onFullscreenChange);
@@ -472,26 +435,6 @@
 <div class="random-chat-page">
     {#if !clerkEnabled}
         <div class="notice error">{$t("random-chat.notice.clerk_disabled")}</div>
-    {:else if checkingEligibility}
-        <div class="notice">{$t("random-chat.notice.checking_eligibility")}</div>
-    {:else if !signedIn}
-        <div class="notice warn">
-            <p>{$t("random-chat.notice.signin_required")}</p>
-            <button class="action primary" on:click={handleSignIn}>
-                {$t("random-chat.action.sign_in")}
-            </button>
-        </div>
-    {:else if !eligible}
-        <div class="notice warn">
-            {#if requirePaidOrder && !hasPaidOrder}
-                <p>{$t("random-chat.notice.paid_required")}</p>
-                <a class="action primary" href={`/${currentLang}/account`}>
-                    {$t("random-chat.action.go_to_account")}
-                </a>
-            {:else}
-                <p>{$t("random-chat.notice.not_eligible")}</p>
-            {/if}
-        </div>
     {:else}
         <section class="stage" bind:this={stageEl}>
             <div class="panel panel-remote">
@@ -499,6 +442,7 @@
                     <video class="video" bind:this={remoteVideoEl} autoplay playsinline></video>
                 {:else}
                     <div class="brand-area">
+                        <div class="member-badge">{$t("tabs.member_only")}</div>
                         <div class="brand-title">{$t("random-chat.brand.title")}</div>
                         <div class="brand-subtitle">{$t("random-chat.brand.subtitle")}</div>
                         <div class="online-indicator">
@@ -545,7 +489,11 @@
         </section>
 
         <section class="dock">
-            <button class="dock-btn start" on:click={startMatching} disabled={searching || inCall}>
+            <button
+                class="dock-btn start"
+                on:click={startMatching}
+                disabled={checkingMembership || searching || inCall}
+            >
                 {$t("random-chat.action.start")}
             </button>
             <button class="dock-btn stop" on:click={inCall ? leaveMatch : cancelMatching} disabled={!searching && !inCall}>
@@ -554,7 +502,7 @@
             <button
                 class="dock-btn next"
                 on:click={nextMatch}
-                disabled={!hasStartedOnce}
+                disabled={checkingMembership || !hasStartedOnce}
             >
                 {$t("random-chat.action.next")}
             </button>
@@ -747,6 +695,20 @@
         color: #f7f7f7;
     }
 
+    .member-badge {
+        width: fit-content;
+        margin: 0 auto;
+        padding: 5px 10px;
+        border: 1px solid rgba(var(--accent-rgb), 0.5);
+        border-radius: 999px;
+        color: var(--accent);
+        background: rgba(0, 0, 0, 0.34);
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
     .brand-title {
         font-size: clamp(1.6rem, 3.1vw, 2.8rem);
         letter-spacing: 0.05em;
@@ -931,33 +893,9 @@
         background: rgba(110, 158, 210, 0.12);
     }
 
-    .notice.warn {
-        border-color: rgba(255, 177, 66, 0.4);
-        background: rgba(255, 177, 66, 0.12);
-    }
-
     .notice.error {
         border-color: rgba(228, 90, 90, 0.45);
         background: rgba(228, 90, 90, 0.14);
-    }
-
-    .action {
-        border-radius: 10px;
-        border: 1px solid var(--popup-stroke);
-        background: transparent;
-        color: var(--text);
-        padding: 8px 12px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .action.primary {
-        border-color: rgba(var(--accent-rgb), 0.95);
-        background: rgba(var(--accent-rgb), 0.82);
-        color: #ffffff;
     }
 
     .settings-mask {

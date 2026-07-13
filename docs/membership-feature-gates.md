@@ -66,3 +66,27 @@ if (!allowed) return;
 The helper checks the API and opens the shared membership dialog when sign-in
 or membership is required. It returns `true` only when the server grants the
 feature.
+
+## Enforced features
+
+### Random chat
+
+Random chat no longer uses paid credit-order history as an eligibility signal.
+The legacy `/user/chat/eligibility` endpoint now checks the `random_chat`
+entitlement and returns `requireMembership: true`.
+
+The WebSocket server enforces the same entitlement when the client:
+
+- authenticates the random-chat socket;
+- enters the matching queue;
+- requests the next match.
+
+An active call is not interrupted when membership expires. The next queue or
+next-match request performs a fresh membership check.
+
+### Video recording
+
+The recording page remains publicly visible. The web client calls
+`requireMembershipFeature("video_recording")` before recording preflight,
+countdown, or camera/microphone acquisition. Once recording starts, it can be
+completed and exported without another membership check.

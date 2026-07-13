@@ -1,0 +1,20 @@
+{
+    "eyebrow": "会员专享",
+    "title": "会员可使用{feature}",
+    "reason.membership_required": "开通会员后即可正式使用此功能。",
+    "reason.entitlement_missing": "当前会员方案未包含此功能，请查看会员方案或刷新会员状态。",
+    "feature.ai_video_studio": "AI 视频工作室",
+    "feature.video_recording": "视频录制",
+    "feature.random_chat": "随机聊天",
+    "benefit.ai_video_studio": "AI 精彩切片与翻译字幕",
+    "benefit.video_recording": "完整的浏览器视频录制工具",
+    "benefit.random_chat": "会员专属随机视频聊天",
+    "note.ai_video_studio": "AI 视频处理受合理使用额度限制。",
+    "note.unmetered": "此功能不设置使用次数或时长额度。",
+    "action.not_now": "暂不开通",
+    "action.sign_in": "登录",
+    "action.view_membership": "查看会员方案",
+    "action.close": "关闭",
+    "error.title": "会员状态检查失败",
+    "error.body": "暂时无法验证会员状态，请稍后重试。"
+}

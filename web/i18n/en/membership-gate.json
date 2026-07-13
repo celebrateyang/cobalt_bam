@@ -1,0 +1,20 @@
+{
+    "eyebrow": "member access",
+    "title": "{feature} is included with membership",
+    "reason.membership_required": "Join as a member to start using this feature.",
+    "reason.entitlement_missing": "Your current membership does not include this feature. View your membership options or refresh your plan status.",
+    "feature.ai_video_studio": "AI video studio",
+    "feature.video_recording": "video recording",
+    "feature.random_chat": "random chat",
+    "benefit.ai_video_studio": "AI highlight clips with translated subtitles",
+    "benefit.video_recording": "Full browser video recording studio",
+    "benefit.random_chat": "Member-only random video chat",
+    "note.ai_video_studio": "AI video processing is subject to fair-use limits.",
+    "note.unmetered": "No usage quota is applied to this feature.",
+    "action.not_now": "not now",
+    "action.sign_in": "sign in",
+    "action.view_membership": "view membership",
+    "action.close": "close",
+    "error.title": "membership check failed",
+    "error.body": "We could not verify your membership right now. Please try again."
+}

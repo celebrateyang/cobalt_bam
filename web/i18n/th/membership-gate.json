@@ -1,0 +1,20 @@
+{
+    "eyebrow": "สำหรับสมาชิก",
+    "title": "{feature} รวมอยู่ในการเป็นสมาชิก",
+    "reason.membership_required": "สมัครสมาชิกเพื่อเริ่มใช้ฟีเจอร์นี้",
+    "reason.entitlement_missing": "สมาชิกปัจจุบันของคุณไม่รวมฟีเจอร์นี้ โปรดดูตัวเลือกสมาชิกหรือรีเฟรชสถานะ",
+    "feature.ai_video_studio": "สตูดิโอวิดีโอ AI",
+    "feature.video_recording": "การบันทึกวิดีโอ",
+    "feature.random_chat": "แชตแบบสุ่ม",
+    "benefit.ai_video_studio": "คลิปไฮไลต์ AI พร้อมคำบรรยายแปล",
+    "benefit.video_recording": "สตูดิโอบันทึกวิดีโอเต็มรูปแบบในเบราว์เซอร์",
+    "benefit.random_chat": "วิดีโอแชตแบบสุ่มสำหรับสมาชิก",
+    "note.ai_video_studio": "การประมวลผลวิดีโอ AI อยู่ภายใต้ขีดจำกัดการใช้งานที่เหมาะสม",
+    "note.unmetered": "ฟีเจอร์นี้ไม่มีโควตาจำนวนครั้งหรือเวลาใช้งาน",
+    "action.not_now": "ไว้ภายหลัง",
+    "action.sign_in": "ลงชื่อเข้าใช้",
+    "action.view_membership": "ดูสมาชิก",
+    "action.close": "ปิด",
+    "error.title": "ตรวจสอบสมาชิกไม่สำเร็จ",
+    "error.body": "ไม่สามารถตรวจสอบสถานะสมาชิกได้ในขณะนี้ โปรดลองอีกครั้ง"
+}

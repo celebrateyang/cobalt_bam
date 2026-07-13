@@ -1,0 +1,20 @@
+{
+    "eyebrow": "メンバー限定",
+    "title": "{feature}はメンバーシップに含まれます",
+    "reason.membership_required": "この機能を利用するにはメンバーシップにご加入ください。",
+    "reason.entitlement_missing": "現在のメンバーシップにはこの機能が含まれていません。プランを確認するか、会員状態を更新してください。",
+    "feature.ai_video_studio": "AI動画スタジオ",
+    "feature.video_recording": "動画録画",
+    "feature.random_chat": "ランダムチャット",
+    "benefit.ai_video_studio": "AIハイライト切り抜きと翻訳字幕",
+    "benefit.video_recording": "ブラウザ内の本格的な動画録画スタジオ",
+    "benefit.random_chat": "メンバー限定ランダムビデオチャット",
+    "note.ai_video_studio": "AI動画処理には適正利用の上限があります。",
+    "note.unmetered": "この機能に利用回数や時間の上限はありません。",
+    "action.not_now": "後で",
+    "action.sign_in": "ログイン",
+    "action.view_membership": "メンバーシップを見る",
+    "action.close": "閉じる",
+    "error.title": "会員状態を確認できませんでした",
+    "error.body": "現在、会員状態を確認できません。もう一度お試しください。"
+}

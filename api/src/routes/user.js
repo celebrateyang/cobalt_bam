@@ -5,6 +5,7 @@ import {
     consumeUserPoints,
     getOrCreateClipboardPersonalProfile,
     getActiveMembershipForUser,
+    getMembershipFeatureEligibility,
     getUserByClerkId,
     finalizePointsHold,
     listUsers,
@@ -867,6 +868,17 @@ router.get("/admin/users/:id/orders", requireAdminAuth, async (req, res) => {
 });
 
 if (!isClerkApiConfigured) {
+    router.get("/features/:feature/eligibility", (_, res) => {
+        res.status(501).json({
+            status: "error",
+            error: {
+                code: "CLERK_NOT_CONFIGURED",
+                message:
+                    "Clerk is not configured on this server (missing CLERK_SECRET_KEY)",
+            },
+        });
+    });
+
     router.get("/chat/eligibility", (_, res) => {
         res.status(501).json({
             status: "error",
@@ -1044,6 +1056,17 @@ if (!isClerkApiConfigured) {
     });
 
     if (!isClerkAuthConfigured) {
+        router.get("/features/:feature/eligibility", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message:
+                        "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+
         router.get("/chat/eligibility", (_, res) => {
             res.status(501).json({
                 status: "error",
@@ -1198,6 +1221,54 @@ if (!isClerkApiConfigured) {
                         message: "Failed to load user profile",
                     },
                 });
+            }
+        });
+
+        router.get("/features/:feature/eligibility", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(
+                        res,
+                        401,
+                        "UNAUTHORIZED",
+                        "Unauthenticated",
+                    );
+                }
+
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                if (user?.is_disabled) {
+                    return jsonError(res, 403, "ACCOUNT_DISABLED", "Account disabled");
+                }
+
+                const eligibility = await getMembershipFeatureEligibility(
+                    user.id,
+                    req.params.feature,
+                );
+                if (!eligibility.supported) {
+                    return jsonError(
+                        res,
+                        404,
+                        "FEATURE_NOT_FOUND",
+                        "Unknown membership feature",
+                    );
+                }
+
+                return res.json({
+                    status: "success",
+                    data: eligibility,
+                });
+            } catch (error) {
+                console.error(
+                    "GET /user/features/:feature/eligibility error:",
+                    error,
+                );
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to verify feature eligibility",
+                );
             }
         });
 

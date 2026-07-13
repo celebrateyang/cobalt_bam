@@ -1,0 +1,20 @@
+{
+    "eyebrow": "accès membre",
+    "title": "{feature} est inclus avec l’abonnement",
+    "reason.membership_required": "Devenez membre pour utiliser cette fonctionnalité.",
+    "reason.entitlement_missing": "Votre abonnement actuel n’inclut pas cette fonctionnalité. Consultez les offres ou actualisez votre statut.",
+    "feature.ai_video_studio": "studio vidéo IA",
+    "feature.video_recording": "enregistrement vidéo",
+    "feature.random_chat": "chat aléatoire",
+    "benefit.ai_video_studio": "Extraits IA avec sous-titres traduits",
+    "benefit.video_recording": "Studio d’enregistrement complet dans le navigateur",
+    "benefit.random_chat": "Chat vidéo aléatoire réservé aux membres",
+    "note.ai_video_studio": "Le traitement vidéo par IA est soumis à des limites d’utilisation raisonnable.",
+    "note.unmetered": "Aucun quota d’utilisation ne s’applique à cette fonctionnalité.",
+    "action.not_now": "pas maintenant",
+    "action.sign_in": "se connecter",
+    "action.view_membership": "voir l’abonnement",
+    "action.close": "fermer",
+    "error.title": "échec de la vérification de l’abonnement",
+    "error.body": "Impossible de vérifier votre abonnement pour le moment. Veuillez réessayer."
+}

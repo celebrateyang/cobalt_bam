@@ -8,6 +8,7 @@ import { initDownloadAttemptsDatabase } from "./download-attempts.js";
 import { initCuriousCatDatabase } from "./curious-cat.js";
 import { nanoid } from "nanoid";
 import { generateClipboardPersonalCode } from "../core/clipboard-personal.js";
+import { evaluateMembershipFeatureEligibility } from "../core/membership-features.js";
 
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
@@ -486,16 +487,15 @@ export const initUserDatabase = async () => {
         `CREATE INDEX IF NOT EXISTS idx_member_usage_user_created_at ON member_usage_events(user_id, created_at DESC);`,
     );
 
-    // Seed: core entitlement for future gating
+    // Seed: core entitlements used by plans and feature gates.
     await query(
         `INSERT INTO entitlements (key, description)
-         VALUES ('batch_download', 'Allows using the batch download feature')
-         ON CONFLICT (key) DO NOTHING;`,
-    );
-
-    await query(
-        `INSERT INTO entitlements (key, description)
-         VALUES ('member_download', 'Allows downloads without consuming points within fair-use limits')
+         VALUES
+            ('batch_download', 'Allows using the batch download feature'),
+            ('member_download', 'Allows downloads without consuming points within fair-use limits'),
+            ('ai_video_studio', 'Allows using AI video clipping and translated subtitles'),
+            ('video_recording', 'Allows using the browser video recording studio'),
+            ('random_chat', 'Allows using random video chat')
          ON CONFLICT (key) DO NOTHING;`,
     );
 
@@ -514,8 +514,15 @@ export const initUserDatabase = async () => {
 
     await query(
         `INSERT INTO plan_entitlements (plan_id, entitlement_key)
-         SELECT p.id, 'member_download'
+         SELECT p.id, entitlement.key
          FROM plans p
+         CROSS JOIN (
+            VALUES
+                ('member_download'),
+                ('ai_video_studio'),
+                ('video_recording'),
+                ('random_chat')
+         ) AS entitlement(key)
          WHERE p.key IN ('member_monthly', 'member_yearly')
          ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
     );
@@ -1459,6 +1466,9 @@ const normalizeMembershipRow = (row, usage = null) => {
         status: row.status,
         currentPeriodStart: row.current_period_start,
         currentPeriodEnd: row.current_period_end,
+        entitlements: Array.isArray(row.entitlements)
+            ? [...new Set(row.entitlements.filter(Boolean))].sort()
+            : [],
         limits,
         usage: usageCounts,
         limitExceeded:
@@ -1478,14 +1488,24 @@ export const getActiveMembershipForUser = async (userId, now = Date.now()) => {
             s.current_period_start,
             s.current_period_end,
             p.key AS plan_key,
-            p.name AS plan_name
+            p.name AS plan_name,
+            ARRAY(
+                SELECT pe.entitlement_key
+                FROM plan_entitlements pe
+                WHERE pe.plan_id = p.id
+                ORDER BY pe.entitlement_key
+            ) AS entitlements
         FROM subscriptions s
         JOIN plans p ON p.id = s.plan_id
-        JOIN plan_entitlements pe ON pe.plan_id = p.id
         WHERE s.user_id = $1
           AND s.status = 'active'
           AND p.is_active = true
-          AND pe.entitlement_key = 'member_download'
+          AND EXISTS (
+              SELECT 1
+              FROM plan_entitlements membership_entitlement
+              WHERE membership_entitlement.plan_id = p.id
+                AND membership_entitlement.entitlement_key = 'member_download'
+          )
           AND (s.current_period_end IS NULL OR s.current_period_end > $2)
         ORDER BY COALESCE(s.current_period_end, 9223372036854775807) DESC, s.id DESC
         LIMIT 1;
@@ -1498,6 +1518,15 @@ export const getActiveMembershipForUser = async (userId, now = Date.now()) => {
 
     const usage = await getMembershipUsageCounts(userId, now);
     return normalizeMembershipRow(row, usage);
+};
+
+export const getMembershipFeatureEligibility = async (
+    userId,
+    feature,
+    now = Date.now(),
+) => {
+    const membership = await getActiveMembershipForUser(userId, now);
+    return evaluateMembershipFeatureEligibility({ feature, membership });
 };
 
 export const getMembershipUsageCounts = async (userId, now = Date.now()) => {

@@ -15,6 +15,7 @@
     let excalidrawHostEl: HTMLDivElement | null = null;
     let cleanupExcalidraw: (() => void) | null = null;
     let excalidrawMountToken = 0;
+    let excalidrawMounting = false;
     let excalidrawMounted = false;
     let excalidrawApi: any = null;
     let bridgeConvertElements:
@@ -2306,7 +2307,8 @@
     };
 
     const mountExcalidrawBridge = async () => {
-        if (!excalidrawHostEl || excalidrawMounted) return;
+        if (!excalidrawHostEl || excalidrawMounted || excalidrawMounting) return;
+        excalidrawMounting = true;
         const token = ++excalidrawMountToken;
         const langCode = excalidrawLangCode;
 
@@ -2449,6 +2451,8 @@
             console.error("excalidraw bridge mount failed", e);
             setExportNotice("error", "videorecord.notice.whiteboard_load_failed");
             excalidrawMounted = false;
+        } finally {
+            excalidrawMounting = false;
         }
     };
 
@@ -2466,6 +2470,7 @@
             ctx = canvasEl.getContext("2d");
             if (!ctx) return;
 
+            await mountExcalidrawBridge();
             resizeCanvas();
             loadProjectSnapshot();
             if (
@@ -4406,9 +4411,6 @@
                 ? "crosshair"
                 : "crosshair";
 
-    $: if (canUseVideoRecord && excalidrawHostEl) {
-        void mountExcalidrawBridge();
-    }
     $: if (
         canUseVideoRecord &&
         excalidrawHostEl &&

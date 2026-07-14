@@ -221,3 +221,39 @@ downloadAttemptCleanup:
   failedJobsHistoryLimit: 3
   startingDeadlineSeconds: 600
   suspend: false
+
+aiVideo:
+  enabled: false
+  # Existing Kubernetes ServiceAccount annotated for GCS Workload Identity.
+  serviceAccountName: ""
+  storageProvider: gcs
+  gcsBucket: ebay-mag-terraform-state
+  storagePrefix: production/cloudsql-pgsql/data
+  localStorageRoot: .ai-video-storage
+  monthlySeconds: 7200
+  maxFileBytes: 1073741824
+  maxDurationSeconds: 3600
+  uploadChunkBytes: 16777216
+  uploadGlobalConcurrency: 3
+  uploadSessionTtlMs: 21600000
+  uploadStallTimeoutMs: 120000
+  secretName: ai-video-secret
+  uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+  worker:
+    replicaCount: 1
+    heartbeatMs: 15000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  cleanup:
+    enabled: true
+    schedule: "15 * * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 3
+    startingDeadlineSeconds: 600
+    suspend: false

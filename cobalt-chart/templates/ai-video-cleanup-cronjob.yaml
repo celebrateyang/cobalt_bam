@@ -1,0 +1,56 @@
+{{- if and .Values.aiVideo.enabled .Values.aiVideo.cleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cobalt-chart.fullname" . }}-ai-video-cleanup
+  labels:
+    {{- include "cobalt-chart.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.aiVideo.cleanup.schedule | quote }}
+  concurrencyPolicy: {{ .Values.aiVideo.cleanup.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.aiVideo.cleanup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.aiVideo.cleanup.failedJobsHistoryLimit }}
+  startingDeadlineSeconds: {{ .Values.aiVideo.cleanup.startingDeadlineSeconds }}
+  suspend: {{ .Values.aiVideo.cleanup.suspend }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: ai-video-cleanup
+            app.kubernetes.io/part-of: argoCD
+        spec:
+          {{- if .Values.aiVideo.serviceAccountName }}
+          serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+          {{- end }}
+          restartPolicy: OnFailure
+          containers:
+            - name: ai-video-cleanup
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["node", "src/util/cleanup-ai-video-assets.js"]
+              env:
+                - name: DB_TYPE
+                  value: {{ .Values.database.type | quote }}
+                - name: DB_HOST
+                  value: {{ .Values.database.host | quote }}
+                - name: DB_PORT
+                  value: {{ .Values.database.port | quote }}
+                - name: DB_USER
+                  value: {{ .Values.database.user | quote }}
+                - name: DB_PASSWORD
+                  value: {{ .Values.database.password | quote }}
+                - name: DB_NAME
+                  value: {{ .Values.database.name | quote }}
+                - name: AI_VIDEO_STORAGE_PROVIDER
+                  value: {{ .Values.aiVideo.storageProvider | quote }}
+                - name: AI_VIDEO_GCS_BUCKET
+                  value: {{ .Values.aiVideo.gcsBucket | quote }}
+                - name: AI_VIDEO_STORAGE_PREFIX
+                  value: {{ .Values.aiVideo.storagePrefix | quote }}
+                - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.aiVideo.secretName | quote }}
+                      key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+{{- end }}

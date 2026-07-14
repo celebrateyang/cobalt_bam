@@ -60,6 +60,7 @@ import {
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
+import aiVideoRouter from "../routes/ai-video.js";
 import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
@@ -600,6 +601,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "XRequestId",
         "X-Request-Id",
         "X-FSV-Trace-ID",
+        "Upload-Offset",
+        "Digest",
     ];
 
     app.use('/social', cors({
@@ -618,7 +621,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     }));
 
     app.use('/', cors({
-        methods: ['GET', 'POST', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
@@ -627,7 +630,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             'Ratelimit-Reset',
             'X-FSV-Trace-ID',
             'X-FSV-App-Elapsed-Ms',
-            'Server-Timing'
+            'Server-Timing',
+            'Upload-Offset'
         ],
         ...corsConfig,
     }));
@@ -679,6 +683,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     );
     if (!isUpstreamServer) {
         app.use('/social', socialMediaRouter);
+        app.use('/user/ai-video', aiVideoRouter);
         app.use('/user', userRouter);
         app.use('/payments', paymentsRouter);
     } else {

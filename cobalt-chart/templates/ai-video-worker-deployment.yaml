@@ -1,0 +1,63 @@
+{{- if .Values.aiVideo.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-system-worker
+  labels:
+    app.kubernetes.io/name: argocd-system-worker
+    app.kubernetes.io/part-of: argoCD
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.aiVideo.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-system-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-system-worker
+        app.kubernetes.io/part-of: argoCD
+    spec:
+      {{- if .Values.aiVideo.serviceAccountName }}
+      serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: argocd-system-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "src/ai-video/worker.js"]
+          env:
+            - name: DB_TYPE
+              value: {{ .Values.database.type | quote }}
+            - name: DB_HOST
+              value: {{ .Values.database.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.port | quote }}
+            - name: DB_USER
+              value: {{ .Values.database.user | quote }}
+            - name: DB_PASSWORD
+              value: {{ .Values.database.password | quote }}
+            - name: DB_NAME
+              value: {{ .Values.database.name | quote }}
+            - name: AI_VIDEO_ENABLED
+              value: "1"
+            - name: AI_VIDEO_STORAGE_PROVIDER
+              value: {{ .Values.aiVideo.storageProvider | quote }}
+            - name: AI_VIDEO_GCS_BUCKET
+              value: {{ .Values.aiVideo.gcsBucket | quote }}
+            - name: AI_VIDEO_STORAGE_PREFIX
+              value: {{ .Values.aiVideo.storagePrefix | quote }}
+            - name: AI_VIDEO_WORKER_HEARTBEAT_MS
+              value: {{ .Values.aiVideo.worker.heartbeatMs | quote }}
+            - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+          resources:
+            {{- toYaml .Values.aiVideo.worker.resources | nindent 12 }}
+{{- end }}

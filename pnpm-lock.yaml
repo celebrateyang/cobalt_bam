@@ -56,6 +56,9 @@ importers:
       ffmpeg-static:
         specifier: ^5.1.0
         version: 5.2.0
+      ffprobe-static:
+        specifier: ^3.1.0
+        version: 3.1.0
       hls-parser:
         specifier: ^0.10.7
         version: 0.10.9
@@ -71,6 +74,9 @@ importers:
       nanoid:
         specifier: ^5.0.9
         version: 5.1.5
+      openai:
+        specifier: ^5.20.0
+        version: 5.23.2(ws@8.18.2)(zod@3.23.8)
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -2813,6 +2819,9 @@ packages:
     resolution: {integrity: sha512-WrM7kLW+do9HLr+H6tk7LzQ7kPqbAgLjdzNE32+u3Ff11gXt9Kkkd2nusGFrlWMIe+XaA97t+I8JS7sZIrvRgA==}
     engines: {node: '>=16'}
 
+  ffprobe-static@3.1.0:
+    resolution: {integrity: sha512-Dvpa9uhVMOYivhHKWLGDoa512J751qN1WZAIO+Xw4L/mrUSPxS4DApzSUDbCFE/LUq2+xYnznEahTd63AqBSpA==}
+
   file-entry-cache@6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -3621,6 +3630,18 @@ packages:
 
   open-color@1.9.1:
     resolution: {integrity: sha512-vCseG/EQ6/RcvxhUcGJiHViOgrtz4x0XbZepXvKik66TMGkvbmjeJrKFyBEx6daG5rNyyd14zYXhz0hZVwQFOw==}
+
+  openai@5.23.2:
+    resolution: {integrity: sha512-MQBzmTulj+MM5O8SKEk/gL8a7s5mktS9zUtAkU257WjvobGc9nKcBuVwjyEEcb9SI8a8Y2G/mzn3vm9n1Jlleg==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -7340,6 +7361,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  ffprobe-static@3.1.0: {}
+
   file-entry-cache@6.0.1:
     dependencies:
       flat-cache: 3.2.0
@@ -8209,6 +8232,11 @@ snapshots:
       mimic-fn: 2.1.0
 
   open-color@1.9.1: {}
+
+  openai@5.23.2(ws@8.18.2)(zod@3.23.8):
+    optionalDependencies:
+      ws: 8.18.2
+      zod: 3.23.8
 
   optionator@0.9.4:
     dependencies:

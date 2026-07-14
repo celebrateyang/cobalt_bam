@@ -12,10 +12,13 @@ import {
     createAiVideoJob,
     failAiVideoJob,
     getAiVideoJob,
+    getAiVideoDraft,
     getAiVideoUploadSession,
     getAiVideoUsage,
     listAiVideoJobs,
+    retryAiVideoJob,
     softDeleteAiVideoJob,
+    updateAiVideoDraft,
 } from "../db/ai-video.js";
 import { createOpaqueObjectKey, getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { decryptUploadSession, encryptUploadSession } from "../ai-video/session-crypto.js";
@@ -163,6 +166,82 @@ router.get("/jobs/:jobId", async (req, res) => {
         return job ? res.json({ status: "success", data: { job } }) : jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
     } catch (error) {
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load AI video job");
+    }
+});
+
+router.get("/jobs/:jobId/draft", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const draft = await getAiVideoDraft({ jobId: req.params.jobId, userId: user.id });
+        if (!draft) return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
+        if (draft.job.status !== "draft_ready") return jsonError(res, 409, "AI_VIDEO_DRAFT_NOT_READY", "Draft is not ready", { job: draft.job });
+        return res.json({ status: "success", data: { ...draft, sourcePreviewUrl: `/user/ai-video/jobs/${draft.job.id}/source` } });
+    } catch (error) {
+        console.error("GET AI video draft error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load AI video draft");
+    }
+});
+
+router.put("/jobs/:jobId/draft", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const expectedRevision = Number(req.body?.revision);
+        const segments = Array.isArray(req.body?.segments) ? req.body.segments : [];
+        const clips = Array.isArray(req.body?.clips) ? req.body.clips : [];
+        if (!Number.isInteger(expectedRevision) || segments.length > 2000 || clips.length > 5) {
+            return jsonError(res, 400, "AI_VIDEO_DRAFT_INVALID", "Invalid draft payload");
+        }
+        for (const segment of segments) {
+            if (typeof segment.id !== "string" || !Number.isInteger(segment.segmentIndex) || typeof segment.translatedText !== "string" || segment.translatedText.length > 4000) {
+                return jsonError(res, 400, "AI_VIDEO_DRAFT_INVALID", "Invalid subtitle segment");
+            }
+        }
+        const current = await getAiVideoDraft({ jobId: req.params.jobId, userId: user.id });
+        if (!current) return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
+        const durationMs = current.job.sourceDurationMs || 0;
+        for (const clip of clips) {
+            const length = Number(clip.endMs) - Number(clip.startMs);
+            if (typeof clip.id !== "string" || !Number.isInteger(clip.startMs) || !Number.isInteger(clip.endMs) || clip.startMs < 0 || clip.endMs > durationMs || length < 15000 || length > 90000 || typeof clip.enabled !== "boolean" || !Number.isFinite(clip.focusX) || clip.focusX < 0 || clip.focusX > 1 || typeof clip.title !== "string" || clip.title.length > 120) {
+                return jsonError(res, 400, "AI_VIDEO_DRAFT_INVALID", "Invalid highlight clip");
+            }
+        }
+        const result = await updateAiVideoDraft({ jobId: req.params.jobId, userId: user.id, expectedRevision, segments, clips });
+        if (result.reason === "revision_conflict") return jsonError(res, 409, "AI_VIDEO_DRAFT_REVISION_CONFLICT", "Draft was changed elsewhere", { revision: result.revision });
+        if (result.reason) return jsonError(res, result.reason === "not_found" ? 404 : 409, "AI_VIDEO_DRAFT_NOT_EDITABLE", "Draft is not editable");
+        return res.json({ status: "success", data: result });
+    } catch (error) {
+        console.error("PUT AI video draft error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to save AI video draft");
+    }
+});
+
+router.get("/jobs/:jobId/source", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const job = await getAiVideoJob({ jobId: req.params.jobId, userId: user.id });
+        if (!job?.sourceObjectKey) return jsonError(res, 404, "AI_VIDEO_SOURCE_NOT_FOUND", "Source is unavailable");
+        const storage = getAiVideoObjectStorage();
+        try {
+            const url = await storage.createDownloadUrl(job.sourceObjectKey, 10 * 60 * 1000);
+            return res.redirect(302, url);
+        } catch (error) {
+            if (process.env.AI_VIDEO_STORAGE_PROVIDER === "gcs") throw error;
+            res.setHeader("Content-Type", job.sourceMime || "video/mp4");
+            return storage.openReadStream(job.sourceObjectKey).pipe(res);
+        }
+    } catch (error) {
+        console.error("GET AI video source error:", error);
+        return jsonError(res, 502, "AI_VIDEO_STORAGE_ERROR", "Failed to load source preview");
+    }
+});
+
+router.post("/jobs/:jobId/retry", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const job = await retryAiVideoJob({ jobId: req.params.jobId, userId: user.id });
+        return job ? res.json({ status: "success", data: { job } }) : jsonError(res, 409, "AI_VIDEO_JOB_NOT_RETRYABLE", "Job cannot be retried");
+    } catch (error) {
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to retry job");
     }
 });
 

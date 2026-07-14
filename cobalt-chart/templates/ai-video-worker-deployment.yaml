@@ -53,6 +53,29 @@ spec:
               value: {{ .Values.aiVideo.storagePrefix | quote }}
             - name: AI_VIDEO_WORKER_HEARTBEAT_MS
               value: {{ .Values.aiVideo.worker.heartbeatMs | quote }}
+            - name: AI_VIDEO_WORKER_POLL_MS
+              value: {{ .Values.aiVideo.worker.pollMs | quote }}
+            - name: AI_VIDEO_WORKER_LEASE_MS
+              value: {{ .Values.aiVideo.worker.leaseMs | quote }}
+            - name: AI_VIDEO_TRANSCRIPTION_MODEL
+              value: {{ .Values.aiVideo.worker.transcriptionModel | quote }}
+            - name: AI_VIDEO_TEXT_MODEL
+              value: {{ .Values.aiVideo.worker.textModel | quote }}
+            {{- if .Values.aiVideo.worker.openaiBaseUrl }}
+            - name: OPENAI_BASE_URL
+              value: {{ .Values.aiVideo.worker.openaiBaseUrl | quote }}
+            {{- end }}
+            - name: AI_VIDEO_OPENAI_TIMEOUT_MS
+              value: {{ .Values.aiVideo.worker.openaiTimeoutMs | quote }}
+            - name: AI_VIDEO_OPENAI_MAX_RETRIES
+              value: {{ .Values.aiVideo.worker.openaiMaxRetries | quote }}
+            - name: AI_VIDEO_AUDIO_CHUNK_SECONDS
+              value: {{ .Values.aiVideo.worker.audioChunkSeconds | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.openaiApiKeySecretKey | quote }}
             - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:

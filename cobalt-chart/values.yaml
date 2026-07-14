@@ -239,16 +239,25 @@ aiVideo:
   uploadStallTimeoutMs: 120000
   secretName: ai-video-secret
   uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+  openaiApiKeySecretKey: OPENAI_API_KEY
   worker:
     replicaCount: 1
     heartbeatMs: 15000
+    pollMs: 3000
+    leaseMs: 120000
+    transcriptionModel: gpt-4o-transcribe-diarize
+    textModel: gpt-5-mini
+    openaiBaseUrl: ""
+    openaiTimeoutMs: 120000
+    openaiMaxRetries: 2
+    audioChunkSeconds: 600
     resources:
       requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
         cpu: 500m
         memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
   cleanup:
     enabled: true
     schedule: "15 * * * *"

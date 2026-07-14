@@ -10,6 +10,7 @@
     import IconComet from "@tabler/icons-svelte/IconComet.svelte";
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
+    import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
 
     import { defaultNavPage } from "$lib/subnav";
 
@@ -20,6 +21,13 @@
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
 
     $: menuItems = [
+        {
+            name: "ai_video",
+            icon: IconSparkles,
+            link: `/${currentLang}/ai-video`,
+            label: $t("tabs.ai_video"),
+            memberOnly: true,
+        },
         {
             name: "random_video",
             icon: IconVideo,

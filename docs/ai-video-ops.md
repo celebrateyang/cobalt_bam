@@ -26,7 +26,7 @@ gs://ebay-mag-terraform-state/production/cloudsql-pgsql/data/
 
 - `data` 是对象名前缀，不需要单独创建目录。
 - 对象名由服务端随机生成，不包含用户 ID、邮箱、任务 ID、原文件名、标题或字幕内容。
-- 生产当前通过 `argo-gcs-credentials` Kubernetes Secret 挂载 `app-upload-production` ServiceAccount JSON 密钥。
+- 生产当前通过 `argo-gcs-credentials` Kubernetes Secret 挂载 `cbtcircleci-deploy` ServiceAccount JSON 密钥。
 - JSON 文件以只读方式挂载到 `/var/run/secrets/google/service-account.json`，API、Worker 和清理 CronJob 均通过 `GOOGLE_APPLICATION_CREDENTIALS` 使用它。
 - 不要把 JSON 内容直接写入环境变量、Helm values、Git 或日志；长期可在具备 IAM 管理条件后迁移到 GKE Workload Identity。
 - 该 Google ServiceAccount 至少需要在上述固定前缀内创建、读取和删除对象的权限。

@@ -4,6 +4,7 @@
     import { page } from "$app/stores";
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
+    import { requireMembershipFeature } from "$lib/membership/gate";
     import "@excalidraw/excalidraw/index.css";
 
     let canvasEl: HTMLCanvasElement;
@@ -224,6 +225,7 @@
     let recorder: MediaRecorder | null = null;
     let chunks: Blob[] = [];
     let isRecording = false;
+    let isRecordingEligibilityChecking = false;
     let isRecordingStarting = false;
     let isRecordingStopping = false;
     let recordDuration = 0;
@@ -3341,6 +3343,20 @@
     };
 
     const triggerRecordStart = async () => {
+        if (
+            isRecording ||
+            isRecordingEligibilityChecking ||
+            isRecordingStarting ||
+            isRecordingStopping
+        )
+            return;
+        isRecordingEligibilityChecking = true;
+        const allowed = await requireMembershipFeature("video_recording").finally(
+            () => {
+                isRecordingEligibilityChecking = false;
+            },
+        );
+        if (!allowed) return;
         if (isRecording || isRecordingStarting || isRecordingStopping) return;
         if (!runRecordPreflight()) return;
         selectCurrentSlideFrame({
@@ -4632,10 +4648,11 @@
                 <button
                     class="floating-record"
                     on:click={triggerRecordStart}
-                    disabled={isRecordingStarting ||
+                    disabled={isRecordingEligibilityChecking ||
+                        isRecordingStarting ||
                         isRecordingStopping ||
                         recordCountdownLeft > 0}
-                    >{isRecordingStarting
+                    >{isRecordingEligibilityChecking || isRecordingStarting
                         ? $t("videorecord.controls.starting")
                         : recordCountdownLeft > 0
                           ? $t("videorecord.controls.countdown", {

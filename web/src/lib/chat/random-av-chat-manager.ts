@@ -22,7 +22,7 @@ export type ChatMatchEnqueueOptions = {
 };
 
 type ChatEventMap = {
-    error: { message: string };
+    error: { message: string; code?: string };
     socket_closed: undefined;
     auth_ok: undefined;
     auth_failed: { reason: string; message: string };
@@ -256,9 +256,14 @@ export class RandomAvChatManager {
                 break;
             case "chat_auth_failed":
                 if (this.authPromise) {
-                    this.authPromise.reject(
-                        new Error(message?.message || "Authentication failed"),
-                    );
+                    const authError = new Error(
+                        message?.message || "Authentication failed",
+                    ) as Error & { code?: string };
+                    authError.code =
+                        typeof message?.reason === "string"
+                            ? message.reason
+                            : "auth_failed";
+                    this.authPromise.reject(authError);
                     this.authPromise = null;
                 }
                 this.emit("auth_failed", {
@@ -292,6 +297,10 @@ export class RandomAvChatManager {
             case "chat_error":
                 this.emit("error", {
                     message: message?.message || "Signaling error",
+                    code:
+                        typeof message?.code === "string"
+                            ? message.code
+                            : undefined,
                 });
                 break;
             case "error":

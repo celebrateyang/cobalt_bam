@@ -13,6 +13,7 @@
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
+    import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
 
@@ -31,6 +32,7 @@
     $: videorecordLink = `/${currentLang}/videorecord`;
     $: discoverLink = `/${currentLang}/discover`;
     $: randomChatLink = `/${currentLang}/random-chat`;
+    $: aiVideoLink = `/${currentLang}/ai-video`;
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
     $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
@@ -78,16 +80,24 @@
                     tabName="videorecord"
                     tabLink={videorecordLink}
                     preloadCode="off"
+                    memberOnly
                 >
                     <IconVideo />
                 </SidebarTab>
                 <SidebarTab tabName="clipboard" tabLink={clipboardLink}>
                     <IconClipboard />
                 </SidebarTab>
+                <SidebarTab tabName="ai_video" tabLink={aiVideoLink} memberOnly>
+                    <IconSparkles />
+                </SidebarTab>
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
                     <IconStack2 />
                 </SidebarTab>
-                <SidebarTab tabName="random_video" tabLink={randomChatLink}>
+                <SidebarTab
+                    tabName="random_video"
+                    tabLink={randomChatLink}
+                    memberOnly
+                >
                     <IconMessageCircle />
                 </SidebarTab>
                 <SidebarTab tabName="remux" tabLink={remuxLink} beta>

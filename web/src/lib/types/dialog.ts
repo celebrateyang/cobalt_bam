@@ -1,6 +1,7 @@
 import type { CobaltFileUrlType } from "$lib/types/api";
 import type { DownloadModeOption } from "$lib/types/settings";
 import type { MeowbaltEmotions } from "$lib/types/meowbalt";
+import type { MembershipEligibilityReason, MembershipFeature } from "$lib/api/membership";
 
 export type DialogButton = {
     text: string,
@@ -100,4 +101,11 @@ type FeedbackDialog = Dialog & {
     initialVideoUrl?: string,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog;
+type MembershipUpgradeDialog = Dialog & {
+    type: "membership-upgrade",
+    feature: MembershipFeature,
+    reason?: MembershipEligibilityReason,
+    returnPath?: string | null,
+};
+
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog;

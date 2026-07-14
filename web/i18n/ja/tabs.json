@@ -12,10 +12,12 @@
     "history": "履歴",
     "faq": "よくある質問",
     "account": "アカウント",
+    "member_only": "メンバー限定",
     "feature": {
         "media_downloader": "メディアダウンローダー",
         "feedback": "フィードバック",
         "file_transfer": "ファイル転送",
         "discover_trends": "トレンドを発見"
-    }
+    },
+    "ai_video": "AI動画"
 }

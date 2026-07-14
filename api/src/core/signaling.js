@@ -1,16 +1,16 @@
 import { verifyToken } from "@clerk/express";
 import { WebSocketServer } from "ws";
 
-import { hasPaidCreditOrderByClerkUserId } from "../db/credit-orders.js";
+import {
+    getMembershipFeatureEligibility,
+    getUserByClerkId,
+} from "../db/users.js";
 import { Green } from "../misc/console-text.js";
 import { verifyClipboardPersonalWsTicket } from "./clipboard-personal.js";
 
 const CLIPBOARD_SESSION_TTL_MS = 30 * 60 * 1000;
 const CLIPBOARD_PEER_ONLINE_WINDOW_MS = 45 * 1000;
 const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
-const CHAT_REQUIRE_PAID = ["1", "true", "yes", "on"].includes(
-    String(process.env.CHAT_REQUIRE_PAID || "").toLowerCase().trim(),
-);
 const CHAT_ALLOW_SELF_MATCH = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_ALLOW_SELF_MATCH || "").toLowerCase().trim(),
 );
@@ -398,6 +398,32 @@ export const setupSignalingServer = (httpServer) => {
         });
     };
 
+    const getRandomChatEligibility = async (clerkUserId) => {
+        const user = await getUserByClerkId(clerkUserId);
+        if (!user || user.is_disabled) {
+            return { eligible: false, reason: "MEMBERSHIP_REQUIRED" };
+        }
+
+        return getMembershipFeatureEligibility(user.id, "random_chat");
+    };
+
+    const sendChatMembershipRequired = (ws, type = "chat_error") => {
+        if (type === "chat_auth_failed") {
+            sendJson(ws, {
+                type,
+                reason: "membership_required",
+                message: "Active membership is required for random chat",
+            });
+            return;
+        }
+
+        sendJson(ws, {
+            type,
+            code: "MEMBERSHIP_REQUIRED",
+            message: "Active membership is required for random chat",
+        });
+    };
+
     const handleChatAuth = async (ws, message, authState) => {
         const token = typeof message?.token === "string" ? message.token.trim() : "";
         if (!token) {
@@ -434,22 +460,14 @@ export const setupSignalingServer = (httpServer) => {
                 return;
             }
 
-            const hasPaidOrder = CHAT_REQUIRE_PAID
-                ? await hasPaidCreditOrderByClerkUserId(clerkUserId)
-                : true;
-
-            if (CHAT_REQUIRE_PAID && !hasPaidOrder) {
-                sendJson(ws, {
-                    type: "chat_auth_failed",
-                    reason: "payment_required",
-                    message: "Paid order is required for random chat",
-                });
+            const eligibility = await getRandomChatEligibility(clerkUserId);
+            if (!eligibility.eligible) {
+                sendChatMembershipRequired(ws, "chat_auth_failed");
                 return;
             }
 
             authState.authenticated = true;
             authState.clerkUserId = clerkUserId;
-            authState.hasPaidOrder = hasPaidOrder;
 
             sendJson(ws, {
                 type: "chat_auth_ok",
@@ -464,7 +482,7 @@ export const setupSignalingServer = (httpServer) => {
         }
     };
 
-    const handleChatEnqueue = (ws, authState, message) => {
+    const handleChatEnqueue = async (ws, authState, message) => {
         if (!authState.authenticated || !authState.clerkUserId) {
             sendJson(ws, {
                 type: "chat_error",
@@ -474,12 +492,9 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
-        if (CHAT_REQUIRE_PAID && !authState.hasPaidOrder) {
-            sendJson(ws, {
-                type: "chat_error",
-                code: "PAYMENT_REQUIRED",
-                message: "Paid order is required",
-            });
+        const eligibility = await getRandomChatEligibility(authState.clerkUserId);
+        if (!eligibility.eligible) {
+            sendChatMembershipRequired(ws);
             return;
         }
 
@@ -531,7 +546,7 @@ export const setupSignalingServer = (httpServer) => {
         handleChatCancel(ws);
     };
 
-    const handleChatNext = (ws, authState, message) => {
+    const handleChatNext = async (ws, authState, message) => {
         if (!authState.authenticated || !authState.clerkUserId) {
             sendJson(ws, {
                 type: "chat_error",
@@ -541,12 +556,9 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
-        if (CHAT_REQUIRE_PAID && !authState.hasPaidOrder) {
-            sendJson(ws, {
-                type: "chat_error",
-                code: "PAYMENT_REQUIRED",
-                message: "Paid order is required",
-            });
+        const eligibility = await getRandomChatEligibility(authState.clerkUserId);
+        if (!eligibility.eligible) {
+            sendChatMembershipRequired(ws);
             return;
         }
 
@@ -645,7 +657,6 @@ export const setupSignalingServer = (httpServer) => {
         const chatAuthState = {
             authenticated: false,
             clerkUserId: null,
-            hasPaidOrder: false,
         };
 
         const touchClipboardSessionPeer = () => {
@@ -757,7 +768,7 @@ export const setupSignalingServer = (httpServer) => {
                         await handleChatAuth(ws, message, chatAuthState);
                         break;
                     case "chat_match_enqueue":
-                        handleChatEnqueue(ws, chatAuthState, message);
+                        await handleChatEnqueue(ws, chatAuthState, message);
                         break;
                     case "chat_match_cancel":
                         handleChatCancel(ws);
@@ -781,7 +792,7 @@ export const setupSignalingServer = (httpServer) => {
                         handleChatLeave(ws);
                         break;
                     case "chat_next":
-                        handleChatNext(ws, chatAuthState, message);
+                        await handleChatNext(ws, chatAuthState, message);
                         break;
                     default:
                         sendJson(ws, {

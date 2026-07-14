@@ -12,11 +12,13 @@
     "history": "历史记录",
     "faq": "常见问题",
     "account": "账号",
+    "member_only": "会员专享",
     "more": "更多",
     "feature": {
         "media_downloader": "媒体下载器",
         "feedback": "问题反馈",
         "file_transfer": "文件传输",
         "discover_trends": "发现趋势"
-    }
+    },
+    "ai_video": "AI 视频"
 }

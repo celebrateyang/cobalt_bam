@@ -60,6 +60,8 @@ import {
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
+import aiVideoRouter from "../routes/ai-video.js";
+import { createMediaImportToken, getMediaImportCandidate } from "../ai-video/media-import-token.js";
 import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
@@ -600,6 +602,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "XRequestId",
         "X-Request-Id",
         "X-FSV-Trace-ID",
+        "Upload-Offset",
+        "Digest",
     ];
 
     app.use('/social', cors({
@@ -618,7 +622,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     }));
 
     app.use('/', cors({
-        methods: ['GET', 'POST', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
@@ -627,7 +631,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             'Ratelimit-Reset',
             'X-FSV-Trace-ID',
             'X-FSV-App-Elapsed-Ms',
-            'Server-Timing'
+            'Server-Timing',
+            'Upload-Offset'
         ],
         ...corsConfig,
     }));
@@ -679,6 +684,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     );
     if (!isUpstreamServer) {
         app.use('/social', socialMediaRouter);
+        app.use('/user/ai-video', aiVideoRouter);
         app.use('/user', userRouter);
         app.use('/payments', paymentsRouter);
     } else {
@@ -1374,6 +1380,18 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     holdId: pointsHoldId,
                     holdExpiresAt: pointsHoldExpiresAt,
                 };
+            }
+
+            if (process.env.AI_VIDEO_ENABLED === "1" && pointsUser && result?.body && isDownloadSuccess) {
+                const candidate = getMediaImportCandidate(result.body);
+                if (candidate) {
+                    try {
+                        result.body.mediaImportToken = createMediaImportToken({ userId: pointsUser.id, ...candidate });
+                        result.body.mediaImportExpiresAt = Date.now() + 15 * 60 * 1000;
+                    } catch (error) {
+                        console.warn(`[AI VIDEO IMPORT] request_id=${requestId} token_issue_failed=${error.code || "unknown"}`);
+                    }
+                }
             }
 
             res.status(result.status).json(result.body);

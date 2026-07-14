@@ -1,0 +1,76 @@
+{{- if and .Values.aiVideo.enabled .Values.aiVideo.cleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cobalt-chart.fullname" . }}-ai-video-cleanup
+  labels:
+    {{- include "cobalt-chart.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.aiVideo.cleanup.schedule | quote }}
+  concurrencyPolicy: {{ .Values.aiVideo.cleanup.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.aiVideo.cleanup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.aiVideo.cleanup.failedJobsHistoryLimit }}
+  startingDeadlineSeconds: {{ .Values.aiVideo.cleanup.startingDeadlineSeconds }}
+  suspend: {{ .Values.aiVideo.cleanup.suspend }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: ai-video-cleanup
+            app.kubernetes.io/part-of: argoCD
+        spec:
+          {{- if .Values.aiVideo.serviceAccountName }}
+          serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+          {{- end }}
+          restartPolicy: OnFailure
+          containers:
+            - name: ai-video-cleanup
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["node", "src/util/cleanup-ai-video-assets.js"]
+              {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+              volumeMounts:
+                - name: ai-video-gcs-credentials
+                  mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
+                  readOnly: true
+              {{- end }}
+              env:
+                - name: DB_TYPE
+                  value: {{ .Values.database.type | quote }}
+                - name: DB_HOST
+                  value: {{ .Values.database.host | quote }}
+                - name: DB_PORT
+                  value: {{ .Values.database.port | quote }}
+                - name: DB_USER
+                  value: {{ .Values.database.user | quote }}
+                - name: DB_PASSWORD
+                  value: {{ .Values.database.password | quote }}
+                - name: DB_NAME
+                  value: {{ .Values.database.name | quote }}
+                - name: AI_VIDEO_STORAGE_PROVIDER
+                  value: {{ .Values.aiVideo.storageProvider | quote }}
+                - name: AI_VIDEO_GCS_BUCKET
+                  value: {{ .Values.aiVideo.gcsBucket | quote }}
+                - name: AI_VIDEO_STORAGE_PREFIX
+                  value: {{ .Values.aiVideo.storagePrefix | quote }}
+                {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+                {{- end }}
+                - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.aiVideo.secretName | quote }}
+                      key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+          {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+          volumes:
+            - name: ai-video-gcs-credentials
+              secret:
+                secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+                defaultMode: 0400
+                items:
+                  - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                    path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
+          {{- end }}
+{{- end }}

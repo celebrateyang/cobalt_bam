@@ -1,0 +1,111 @@
+{{- if .Values.aiVideo.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-system-worker
+  labels:
+    app.kubernetes.io/name: argocd-system-worker
+    app.kubernetes.io/part-of: argoCD
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.aiVideo.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-system-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-system-worker
+        app.kubernetes.io/part-of: argoCD
+    spec:
+      {{- if .Values.aiVideo.serviceAccountName }}
+      serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: argocd-system-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "src/ai-video/worker.js"]
+          {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+          volumeMounts:
+            - name: ai-video-gcs-credentials
+              mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
+              readOnly: true
+          {{- end }}
+          env:
+            - name: DB_TYPE
+              value: {{ .Values.database.type | quote }}
+            - name: DB_HOST
+              value: {{ .Values.database.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.database.port | quote }}
+            - name: DB_USER
+              value: {{ .Values.database.user | quote }}
+            - name: DB_PASSWORD
+              value: {{ .Values.database.password | quote }}
+            - name: DB_NAME
+              value: {{ .Values.database.name | quote }}
+            - name: AI_VIDEO_ENABLED
+              value: "1"
+            - name: AI_VIDEO_STORAGE_PROVIDER
+              value: {{ .Values.aiVideo.storageProvider | quote }}
+            - name: AI_VIDEO_GCS_BUCKET
+              value: {{ .Values.aiVideo.gcsBucket | quote }}
+            - name: AI_VIDEO_STORAGE_PREFIX
+              value: {{ .Values.aiVideo.storagePrefix | quote }}
+            {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+            {{- end }}
+            - name: AI_VIDEO_WORKER_HEARTBEAT_MS
+              value: {{ .Values.aiVideo.worker.heartbeatMs | quote }}
+            - name: AI_VIDEO_WORKER_POLL_MS
+              value: {{ .Values.aiVideo.worker.pollMs | quote }}
+            - name: AI_VIDEO_WORKER_LEASE_MS
+              value: {{ .Values.aiVideo.worker.leaseMs | quote }}
+            - name: AI_VIDEO_TRANSCRIPTION_MODEL
+              value: {{ .Values.aiVideo.worker.transcriptionModel | quote }}
+            - name: AI_VIDEO_TEXT_MODEL
+              value: {{ .Values.aiVideo.worker.textModel | quote }}
+            {{- if .Values.aiVideo.worker.openaiBaseUrl }}
+            - name: OPENAI_BASE_URL
+              value: {{ .Values.aiVideo.worker.openaiBaseUrl | quote }}
+            {{- end }}
+            - name: AI_VIDEO_OPENAI_TIMEOUT_MS
+              value: {{ .Values.aiVideo.worker.openaiTimeoutMs | quote }}
+            - name: AI_VIDEO_OPENAI_MAX_RETRIES
+              value: {{ .Values.aiVideo.worker.openaiMaxRetries | quote }}
+            - name: AI_VIDEO_AUDIO_CHUNK_SECONDS
+              value: {{ .Values.aiVideo.worker.audioChunkSeconds | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.openaiApiKeySecretKey | quote }}
+            - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+            - name: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.mediaImportTokenKeySecretKey | quote }}
+          resources:
+            {{- toYaml .Values.aiVideo.worker.resources | nindent 12 }}
+      {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+      volumes:
+        - name: ai-video-gcs-credentials
+          secret:
+            secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+            defaultMode: 0400
+            items:
+              - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
+      {{- end }}
+{{- end }}

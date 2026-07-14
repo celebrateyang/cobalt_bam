@@ -12,10 +12,12 @@
     "history": "historial",
     "faq": "FAQ",
     "account": "cuenta",
+    "member_only": "Miembros",
     "feature": {
         "media_downloader": "Descargador de Medios",
         "feedback": "Comentarios",
         "file_transfer": "Transferencia de Archivos",
         "discover_trends": "Descubre Tendencias"
-    }
+    },
+    "ai_video": "Video con IA"
 }

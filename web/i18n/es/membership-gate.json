@@ -1,0 +1,20 @@
+{
+    "eyebrow": "acceso para miembros",
+    "title": "{feature} está incluido con la membresía",
+    "reason.membership_required": "Hazte miembro para empezar a usar esta función.",
+    "reason.entitlement_missing": "Tu membresía actual no incluye esta función. Revisa las opciones o actualiza el estado de tu plan.",
+    "feature.ai_video_studio": "estudio de video con IA",
+    "feature.video_recording": "grabación de video",
+    "feature.random_chat": "chat aleatorio",
+    "benefit.ai_video_studio": "Clips destacados con IA y subtítulos traducidos",
+    "benefit.video_recording": "Estudio completo de grabación en el navegador",
+    "benefit.random_chat": "Videochat aleatorio solo para miembros",
+    "note.ai_video_studio": "El procesamiento de video con IA está sujeto a límites de uso razonable.",
+    "note.unmetered": "Esta función no tiene una cuota de uso.",
+    "action.not_now": "ahora no",
+    "action.sign_in": "iniciar sesión",
+    "action.view_membership": "ver membresía",
+    "action.close": "cerrar",
+    "error.title": "no se pudo verificar la membresía",
+    "error.body": "No pudimos verificar tu membresía. Inténtalo de nuevo."
+}

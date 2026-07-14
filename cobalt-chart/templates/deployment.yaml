@@ -23,6 +23,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if and .Values.aiVideo.enabled .Values.aiVideo.serviceAccountName }}
+      serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -46,6 +49,11 @@ spec:
             {{- if .Values.wechatpay.enabled }}
             - mountPath: {{ .Values.wechatpay.privateKeyMountPath | quote }}
               name: wechatpay-secret
+              readOnly: true
+            {{- end }}
+            {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: ai-video-gcs-credentials
+              mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
               readOnly: true
             {{- end }}
           env:
@@ -161,6 +169,46 @@ spec:
                 secretKeyRef:
                   name: clerk-secret
                   key: CLERK_PUBLISHABLE_KEY
+            {{- if .Values.aiVideo.enabled }}
+            - name: AI_VIDEO_ENABLED
+              value: "1"
+            - name: AI_VIDEO_STORAGE_PROVIDER
+              value: {{ .Values.aiVideo.storageProvider | quote }}
+            - name: AI_VIDEO_GCS_BUCKET
+              value: {{ .Values.aiVideo.gcsBucket | quote }}
+            - name: AI_VIDEO_STORAGE_PREFIX
+              value: {{ .Values.aiVideo.storagePrefix | quote }}
+            {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+            {{- end }}
+            - name: AI_VIDEO_LOCAL_STORAGE_ROOT
+              value: {{ .Values.aiVideo.localStorageRoot | quote }}
+            - name: AI_VIDEO_MONTHLY_SECONDS
+              value: {{ .Values.aiVideo.monthlySeconds | quote }}
+            - name: AI_VIDEO_MAX_FILE_BYTES
+              value: {{ .Values.aiVideo.maxFileBytes | quote }}
+            - name: AI_VIDEO_MAX_DURATION_SECONDS
+              value: {{ .Values.aiVideo.maxDurationSeconds | quote }}
+            - name: AI_VIDEO_UPLOAD_CHUNK_BYTES
+              value: {{ .Values.aiVideo.uploadChunkBytes | quote }}
+            - name: AI_VIDEO_UPLOAD_GLOBAL_CONCURRENCY
+              value: {{ .Values.aiVideo.uploadGlobalConcurrency | quote }}
+            - name: AI_VIDEO_UPLOAD_SESSION_TTL_MS
+              value: {{ .Values.aiVideo.uploadSessionTtlMs | quote }}
+            - name: AI_VIDEO_UPLOAD_STALL_TIMEOUT_MS
+              value: {{ .Values.aiVideo.uploadStallTimeoutMs | quote }}
+            - name: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+            - name: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.mediaImportTokenKeySecretKey | quote }}
+            {{- end }}
             {{- if .Values.polar.enabled }}
             # Polar checkout - Credits top-up
             - name: POLAR_SERVER
@@ -254,6 +302,15 @@ spec:
         - name: wechatpay-secret
           secret:
             secretName: {{ .Values.wechatpay.secretName | quote }}
+        {{- end }}
+        {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+        - name: ai-video-gcs-credentials
+          secret:
+            secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+            defaultMode: 0400
+            items:
+              - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

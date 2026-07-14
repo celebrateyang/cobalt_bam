@@ -221,3 +221,56 @@ downloadAttemptCleanup:
   failedJobsHistoryLimit: 3
   startingDeadlineSeconds: 600
   suspend: false
+
+aiVideo:
+  enabled: false
+  # Kubernetes ServiceAccount used by the API, worker, and cleanup pods.
+  serviceAccountName: ""
+  storageProvider: gcs
+  gcsBucket: ebay-mag-terraform-state
+  storagePrefix: production/cloudsql-pgsql/data
+  gcsCredentials:
+    secretName: argo-gcs-credentials
+    secretKey: service-account.json
+    mountPath: /var/run/secrets/google
+    fileName: service-account.json
+  localStorageRoot: .ai-video-storage
+  monthlySeconds: 7200
+  maxFileBytes: 1073741824
+  maxDurationSeconds: 3600
+  uploadChunkBytes: 16777216
+  uploadGlobalConcurrency: 3
+  uploadSessionTtlMs: 21600000
+  uploadStallTimeoutMs: 120000
+  secretName: argo-secret
+  uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+  mediaImportTokenKeySecretKey: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
+  openaiApiKeySecretKey: OPENAI_API_KEY
+  worker:
+    replicaCount: 1
+    heartbeatMs: 15000
+    pollMs: 3000
+    leaseMs: 120000
+    transcriptionModel: gpt-4o-transcribe-diarize
+    textModel: gpt-5-mini
+    openaiBaseUrl: ""
+    openaiTimeoutMs: 120000
+    openaiMaxRetries: 2
+    audioChunkSeconds: 600
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 2Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+        ephemeral-storage: 6Gi
+  cleanup:
+    enabled: true
+    schedule: "15 * * * *"
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 3
+    startingDeadlineSeconds: 600
+    suspend: false

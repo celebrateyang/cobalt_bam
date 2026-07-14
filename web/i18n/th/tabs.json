@@ -10,10 +10,12 @@
     "remux": "รีมักซ์",
     "faq": "FAQ",
     "account": "บัญชี",
+    "member_only": "สำหรับสมาชิก",
     "feature": {
         "media_downloader": "โปรแกรมดาวน์โหลดสื่อ",
         "feedback": "รายงานปัญหา",
         "file_transfer": "ถ่ายโอนไฟล์",
         "discover_trends": "ค้นหาเทรนด์"
-    }
+    },
+    "ai_video": "วิดีโอ AI"
 }

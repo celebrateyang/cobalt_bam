@@ -1,0 +1,20 @@
+{
+    "eyebrow": "dành cho thành viên",
+    "title": "{feature} có trong gói thành viên",
+    "reason.membership_required": "Hãy đăng ký thành viên để bắt đầu sử dụng tính năng này.",
+    "reason.entitlement_missing": "Gói thành viên hiện tại không bao gồm tính năng này. Hãy xem các lựa chọn hoặc làm mới trạng thái gói.",
+    "feature.ai_video_studio": "studio video AI",
+    "feature.video_recording": "quay video",
+    "feature.random_chat": "trò chuyện ngẫu nhiên",
+    "benefit.ai_video_studio": "Đoạn nổi bật bằng AI với phụ đề đã dịch",
+    "benefit.video_recording": "Studio quay video đầy đủ trong trình duyệt",
+    "benefit.random_chat": "Trò chuyện video ngẫu nhiên dành cho thành viên",
+    "note.ai_video_studio": "Xử lý video bằng AI áp dụng giới hạn sử dụng hợp lý.",
+    "note.unmetered": "Tính năng này không giới hạn số lần hoặc thời gian sử dụng.",
+    "action.not_now": "để sau",
+    "action.sign_in": "đăng nhập",
+    "action.view_membership": "xem gói thành viên",
+    "action.close": "đóng",
+    "error.title": "không thể kiểm tra thành viên",
+    "error.body": "Hiện không thể xác minh trạng thái thành viên. Vui lòng thử lại."
+}

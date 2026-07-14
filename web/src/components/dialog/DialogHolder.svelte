@@ -8,6 +8,7 @@
     import PreviewDownloadDialog from "$components/dialog/PreviewDownloadDialog.svelte";
     import BatchDialog from "$components/dialog/BatchDialog.svelte";
     import FeedbackDialog from "$components/dialog/FeedbackDialog.svelte";
+    import MembershipUpgradeDialog from "$components/dialog/MembershipUpgradeDialog.svelte";
 
     $: backdropVisible = $dialogs.length > 0;
 </script>
@@ -32,6 +33,8 @@
             <BatchDialog {...dialog} />
         {:else if dialog.type === "feedback"}
             <FeedbackDialog {...dialog} />
+        {:else if dialog.type === "membership-upgrade"}
+            <MembershipUpgradeDialog {...dialog} />
         {/if}
     {/each}
     <div id="dialog-backdrop" class:visible={backdropVisible}></div>

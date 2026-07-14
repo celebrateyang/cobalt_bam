@@ -170,6 +170,17 @@ const request = async (requestBody: CobaltSaveRequestBody, justRetried = false) 
         return request(requestBody, true);
     }
 
+    if (response && response.status !== "error" && response.mediaImportToken && response.mediaImportExpiresAt) {
+        try {
+            sessionStorage.setItem("fsv_ai_video_import_v1", JSON.stringify({
+                token: response.mediaImportToken,
+                expiresAt: response.mediaImportExpiresAt,
+                filename: "filename" in response ? response.filename : "imported-video.mp4",
+                service: "service" in response ? response.service : null,
+            }));
+        } catch {}
+    }
+
     return response;
 }
 

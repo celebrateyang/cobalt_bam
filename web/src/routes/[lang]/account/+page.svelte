@@ -89,7 +89,7 @@
     type PaymentProvider = "wechat" | "polar";
     type PromotionType = "post" | "video";
     type RecordsTab = "promotion" | "feedback";
-    type AccountSection = "topup" | "referral" | "promotion" | "contact";
+    type AccountSection = "membership" | "topup" | "referral" | "promotion" | "contact";
     type PromotionRecord = {
         id: number;
         promotion_type: string;
@@ -113,6 +113,7 @@
 
     let autoAuthLaunched = false;
     let topupSectionEl: HTMLElement | null = null;
+    let membershipSectionEl: HTMLElement | null = null;
     let referralSectionEl: HTMLElement | null = null;
     let promotionSectionEl: HTMLElement | null = null;
     let contactSectionEl: HTMLElement | null = null;
@@ -184,6 +185,7 @@
 
         const raw = new URLSearchParams(window.location.search).get("section");
         if (
+            raw === "membership" ||
             raw === "topup" ||
             raw === "referral" ||
             raw === "promotion" ||
@@ -198,6 +200,7 @@
         await tick();
 
         const sectionMap: Record<AccountSection, HTMLElement | null> = {
+            membership: membershipSectionEl,
             topup: topupSectionEl,
             referral: referralSectionEl,
             promotion: promotionSectionEl,
@@ -1663,7 +1666,7 @@
                     </section>
 
                     {#if isChinese}
-                        <section class="card membership-card">
+                        <section class="card membership-card" bind:this={membershipSectionEl}>
                             <div class="topup-header">
                                 <div class="topup-title">
                                     {$t("auth.membership_title")}

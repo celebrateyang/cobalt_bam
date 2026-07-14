@@ -6,6 +6,7 @@
     "random_video": "random video",
     "settings": "settings",
     "account": "account",
+    "member_only": "members",
     "updates": "updates",
     "donate": "donate",
     "about": "about",
@@ -18,5 +19,6 @@
         "feedback": "Feedback",
         "file_transfer": "File Transfer",
         "discover_trends": "Discover Trends"
-    }
+    },
+    "ai_video": "AI video"
 }

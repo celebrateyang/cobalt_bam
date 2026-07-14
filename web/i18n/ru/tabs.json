@@ -9,10 +9,12 @@
     "about": "инфа",
     "remux": "ремукс",
     "account": "аккаунт",
+    "member_only": "Для участников",
     "feature": {
         "media_downloader": "Загрузчик Медиа",
         "feedback": "Обратная связь",
         "file_transfer": "Передача Файлов",
         "discover_trends": "Открыть Тренды"
-    }
+    },
+    "ai_video": "ИИ-видео"
 }

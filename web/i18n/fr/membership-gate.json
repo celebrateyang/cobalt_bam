@@ -1,6 +1,6 @@
 {
     "eyebrow": "accès membre",
-    "title": "{feature} est inclus avec l’abonnement",
+    "title": "{{feature}} est inclus avec l’abonnement",
     "reason.membership_required": "Devenez membre pour utiliser cette fonctionnalité.",
     "reason.entitlement_missing": "Votre abonnement actuel n’inclut pas cette fonctionnalité. Consultez les offres ou actualisez votre statut.",
     "feature.ai_video_studio": "studio vidéo IA",

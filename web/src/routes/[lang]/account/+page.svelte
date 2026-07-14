@@ -1757,7 +1757,9 @@
 
                                             <div class="membership-benefits">
                                                 <span>{$t("auth.membership_benefit_no_points")}</span>
-                                                <span>{$t("auth.membership_benefit_fair_use")}</span>
+                                                <span>{$t("auth.membership_benefit_ai_video")}</span>
+                                                <span>{$t("auth.membership_benefit_video_recording")}</span>
+                                                <span>{$t("auth.membership_benefit_random_chat")}</span>
                                             </div>
 
                                             <div class="product-actions">

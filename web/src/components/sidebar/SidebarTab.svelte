@@ -124,22 +124,27 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
 
     .member-sign {
         position: absolute;
-        top: 2px;
-        right: 2px;
-        width: 17px;
-        height: 17px;
+        top: 3px;
+        right: 3px;
+        z-index: 1;
+        width: 20px;
+        height: 20px;
         display: grid;
         place-items: center;
+        box-sizing: border-box;
         border-radius: 999px;
-        color: var(--accent);
-        background: var(--sidebar-bg);
-        box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.32);
+        color: #36540f;
+        background: linear-gradient(145deg, #fff2a8 0%, #f6c344 52%, #dc970e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow:
+            0 2px 6px rgba(31, 54, 7, 0.42),
+            0 0 0 1px rgba(104, 67, 0, 0.28);
     }
 
     .member-sign :global(svg) {
-        width: 11px;
-        height: 11px;
-        stroke-width: 2px;
+        width: 13px;
+        height: 13px;
+        stroke-width: 2.5px;
     }
 
     @keyframes pressButton {

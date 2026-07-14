@@ -1,6 +1,6 @@
 {
     "eyebrow": "회원 전용",
-    "title": "{feature}은(는) 멤버십에 포함됩니다",
+    "title": "{{feature}}은(는) 멤버십에 포함됩니다",
     "reason.membership_required": "이 기능을 사용하려면 멤버십에 가입하세요.",
     "reason.entitlement_missing": "현재 멤버십에는 이 기능이 포함되어 있지 않습니다. 멤버십 옵션을 확인하거나 상태를 새로고침하세요.",
     "feature.ai_video_studio": "AI 동영상 스튜디오",

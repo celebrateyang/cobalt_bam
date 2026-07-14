@@ -1,6 +1,6 @@
 {
     "eyebrow": "会员专享",
-    "title": "会员可使用{feature}",
+    "title": "会员可使用{{feature}}",
     "reason.membership_required": "开通会员后即可正式使用此功能。",
     "reason.entitlement_missing": "当前会员方案未包含此功能，请查看会员方案或刷新会员状态。",
     "feature.ai_video_studio": "AI 视频工作室",

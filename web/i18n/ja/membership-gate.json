@@ -1,6 +1,6 @@
 {
     "eyebrow": "メンバー限定",
-    "title": "{feature}はメンバーシップに含まれます",
+    "title": "{{feature}}はメンバーシップに含まれます",
     "reason.membership_required": "この機能を利用するにはメンバーシップにご加入ください。",
     "reason.entitlement_missing": "現在のメンバーシップにはこの機能が含まれていません。プランを確認するか、会員状態を更新してください。",
     "feature.ai_video_studio": "AI動画スタジオ",

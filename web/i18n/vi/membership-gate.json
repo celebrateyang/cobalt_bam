@@ -1,6 +1,6 @@
 {
     "eyebrow": "dành cho thành viên",
-    "title": "{feature} có trong gói thành viên",
+    "title": "{{feature}} có trong gói thành viên",
     "reason.membership_required": "Hãy đăng ký thành viên để bắt đầu sử dụng tính năng này.",
     "reason.entitlement_missing": "Gói thành viên hiện tại không bao gồm tính năng này. Hãy xem các lựa chọn hoặc làm mới trạng thái gói.",
     "feature.ai_video_studio": "studio video AI",

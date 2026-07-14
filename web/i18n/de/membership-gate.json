@@ -1,6 +1,6 @@
 {
     "eyebrow": "Mitgliederzugang",
-    "title": "{feature} ist in der Mitgliedschaft enthalten",
+    "title": "{{feature}} ist in der Mitgliedschaft enthalten",
     "reason.membership_required": "Werde Mitglied, um diese Funktion zu nutzen.",
     "reason.entitlement_missing": "Deine aktuelle Mitgliedschaft enthält diese Funktion nicht. Prüfe deine Mitgliedschaftsoptionen oder aktualisiere den Status.",
     "feature.ai_video_studio": "KI-Videostudio",

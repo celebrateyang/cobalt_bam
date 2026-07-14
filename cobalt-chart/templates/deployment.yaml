@@ -51,6 +51,11 @@ spec:
               name: wechatpay-secret
               readOnly: true
             {{- end }}
+            {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: ai-video-gcs-credentials
+              mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
+              readOnly: true
+            {{- end }}
           env:
             - name: API_URL
               value: https://api.freesavevideo.online/
@@ -173,6 +178,10 @@ spec:
               value: {{ .Values.aiVideo.gcsBucket | quote }}
             - name: AI_VIDEO_STORAGE_PREFIX
               value: {{ .Values.aiVideo.storagePrefix | quote }}
+            {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+            {{- end }}
             - name: AI_VIDEO_LOCAL_STORAGE_ROOT
               value: {{ .Values.aiVideo.localStorageRoot | quote }}
             - name: AI_VIDEO_MONTHLY_SECONDS
@@ -293,6 +302,15 @@ spec:
         - name: wechatpay-secret
           secret:
             secretName: {{ .Values.wechatpay.secretName | quote }}
+        {{- end }}
+        {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+        - name: ai-video-gcs-credentials
+          secret:
+            secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+            defaultMode: 0400
+            items:
+              - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

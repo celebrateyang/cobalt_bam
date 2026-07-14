@@ -30,6 +30,12 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "src/ai-video/worker.js"]
+          {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+          volumeMounts:
+            - name: ai-video-gcs-credentials
+              mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
+              readOnly: true
+          {{- end }}
           env:
             - name: DB_TYPE
               value: {{ .Values.database.type | quote }}
@@ -51,6 +57,10 @@ spec:
               value: {{ .Values.aiVideo.gcsBucket | quote }}
             - name: AI_VIDEO_STORAGE_PREFIX
               value: {{ .Values.aiVideo.storagePrefix | quote }}
+            {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ printf "%s/%s" .Values.aiVideo.gcsCredentials.mountPath .Values.aiVideo.gcsCredentials.fileName | quote }}
+            {{- end }}
             - name: AI_VIDEO_WORKER_HEARTBEAT_MS
               value: {{ .Values.aiVideo.worker.heartbeatMs | quote }}
             - name: AI_VIDEO_WORKER_POLL_MS
@@ -88,4 +98,14 @@ spec:
                   key: {{ .Values.aiVideo.mediaImportTokenKeySecretKey | quote }}
           resources:
             {{- toYaml .Values.aiVideo.worker.resources | nindent 12 }}
+      {{- if and (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+      volumes:
+        - name: ai-video-gcs-credentials
+          secret:
+            secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}
+            defaultMode: 0400
+            items:
+              - key: {{ .Values.aiVideo.gcsCredentials.secretKey | quote }}
+                path: {{ .Values.aiVideo.gcsCredentials.fileName | quote }}
+      {{- end }}
 {{- end }}

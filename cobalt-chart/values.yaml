@@ -224,11 +224,16 @@ downloadAttemptCleanup:
 
 aiVideo:
   enabled: false
-  # Existing Kubernetes ServiceAccount annotated for GCS Workload Identity.
+  # Kubernetes ServiceAccount used by the API, worker, and cleanup pods.
   serviceAccountName: ""
   storageProvider: gcs
   gcsBucket: ebay-mag-terraform-state
   storagePrefix: production/cloudsql-pgsql/data
+  gcsCredentials:
+    secretName: argo-gcs-credentials
+    secretKey: service-account.json
+    mountPath: /var/run/secrets/google
+    fileName: service-account.json
   localStorageRoot: .ai-video-storage
   monthlySeconds: 7200
   maxFileBytes: 1073741824

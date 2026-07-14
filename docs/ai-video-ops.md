@@ -26,8 +26,10 @@ gs://ebay-mag-terraform-state/production/cloudsql-pgsql/data/
 
 - `data` 是对象名前缀，不需要单独创建目录。
 - 对象名由服务端随机生成，不包含用户 ID、邮箱、任务 ID、原文件名、标题或字幕内容。
-- 现有 Kubernetes ServiceAccount 通过 GKE Workload Identity 访问 GCS，不需要在环境变量中放置 ServiceAccount JSON 密钥。
-- ServiceAccount 至少需要在上述固定前缀内创建、读取和删除对象的权限。
+- 生产当前通过 `argo-gcs-credentials` Kubernetes Secret 挂载 `app-upload-production` ServiceAccount JSON 密钥。
+- JSON 文件以只读方式挂载到 `/var/run/secrets/google/service-account.json`，API、Worker 和清理 CronJob 均通过 `GOOGLE_APPLICATION_CREDENTIALS` 使用它。
+- 不要把 JSON 内容直接写入环境变量、Helm values、Git 或日志；长期可在具备 IAM 管理条件后迁移到 GKE Workload Identity。
+- 该 Google ServiceAccount 至少需要在上述固定前缀内创建、读取和删除对象的权限。
 - 不需要 `storage.buckets.update`，也不需要配置 Bucket CORS。
 - 浏览器只连接 API；API 将连续的 16 MiB 分块流式转发到 GCS resumable upload session。
 - 清理程序不得枚举或删除 `production/cloudsql-pgsql/data/` 之外的对象。
@@ -35,6 +37,8 @@ gs://ebay-mag-terraform-state/production/cloudsql-pgsql/data/
 该 Bucket 已启用版本控制和 7 天 soft delete。应用删除对象后，管理员仍可能在 soft-delete 窗口内恢复底层对象；应用层过期时间不等同于物理数据立即不可恢复。
 
 ## 3. Kubernetes Secret
+
+### 应用密钥
 
 `argo-secret` 必须包含三个相互独立的值：
 
@@ -56,6 +60,18 @@ kubectl create secret generic argo-secret -n infra `
 
 不要把真实密钥写入 Helm values、Git、前端构建变量或日志。更新 Secret 不会自动重启已有 Pod；应通过正常发布流程触发新一轮 API 和 Worker Pod 部署。
 
+### GCS ServiceAccount JSON
+
+GCS 凭证使用独立 Secret，不与 `argo-secret` 混合：
+
+```powershell
+kubectl create secret generic argo-gcs-credentials -n infra `
+  --from-file=service-account.json='<app-upload-production JSON密钥文件路径>' `
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Secret 中的 key 必须是 `service-account.json`。不要提交原始 JSON 文件或生成后的 Secret YAML。
+
 ## 4. Helm 配置
 
 建议的首版配置如下：
@@ -67,6 +83,11 @@ aiVideo:
   storageProvider: gcs
   gcsBucket: ebay-mag-terraform-state
   storagePrefix: production/cloudsql-pgsql/data
+  gcsCredentials:
+    secretName: argo-gcs-credentials
+    secretKey: service-account.json
+    mountPath: /var/run/secrets/google
+    fileName: service-account.json
   localStorageRoot: .ai-video-storage
 
   monthlySeconds: 7200

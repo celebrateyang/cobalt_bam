@@ -36,7 +36,7 @@ gs://ebay-mag-terraform-state/production/cloudsql-pgsql/data/
 
 ## 3. Kubernetes Secret
 
-`ai-video-secret` 必须包含三个相互独立的值：
+`argo-secret` 必须包含三个相互独立的值：
 
 | Secret key | 用途 |
 | --- | --- |
@@ -47,7 +47,7 @@ gs://ebay-mag-terraform-state/production/cloudsql-pgsql/data/
 两个自定义加密密钥均应至少 32 个字符，且不能互相复用，也不能复用 OpenAI 密钥。
 
 ```powershell
-kubectl create secret generic ai-video-secret -n infra `
+kubectl create secret generic argo-secret -n infra `
   --from-literal=AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY='<至少32字符的上传会话密钥>' `
   --from-literal=AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY='<另一个至少32字符的导入凭证密钥>' `
   --from-literal=OPENAI_API_KEY='<OpenAI API密钥>' `
@@ -78,7 +78,7 @@ aiVideo:
   uploadSessionTtlMs: 21600000
   uploadStallTimeoutMs: 120000
 
-  secretName: ai-video-secret
+  secretName: argo-secret
   uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
   mediaImportTokenKeySecretKey: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
   openaiApiKeySecretKey: OPENAI_API_KEY

@@ -237,7 +237,7 @@ aiVideo:
   uploadGlobalConcurrency: 3
   uploadSessionTtlMs: 21600000
   uploadStallTimeoutMs: 120000
-  secretName: ai-video-secret
+  secretName: argo-secret
   uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
   mediaImportTokenKeySecretKey: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
   openaiApiKeySecretKey: OPENAI_API_KEY

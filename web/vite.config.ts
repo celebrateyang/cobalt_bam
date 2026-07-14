@@ -92,6 +92,11 @@ export default defineConfig(({ mode }) => {
 
     return {
         resolve: {
+            // Excalidraw is distributed as several ESM chunks that all import
+            // React. In a pnpm workspace those imports can otherwise resolve
+            // through different package paths, producing multiple React
+            // runtimes and an invalid hook dispatcher at runtime.
+            dedupe: ["react", "react-dom"],
             alias: {
                 'roughjs/bin/rough': 'roughjs/bin/rough.js',
             },

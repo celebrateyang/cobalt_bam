@@ -39,6 +39,7 @@ export const ensureAiVideoSchema = async () => {
                 source_duration_ms BIGINT,
                 source_width INTEGER,
                 source_height INTEGER,
+                source_import_token TEXT,
                 source_language TEXT,
                 target_language TEXT NOT NULL,
                 subtitle_mode TEXT NOT NULL CHECK (subtitle_mode IN ('translated', 'bilingual')),
@@ -49,7 +50,9 @@ export const ensureAiVideoSchema = async () => {
                 failed_stage TEXT,
                 draft_revision INTEGER NOT NULL DEFAULT 0,
                 render_revision INTEGER,
+                render_snapshot JSONB,
                 attempt_count INTEGER NOT NULL DEFAULT 0,
+                render_attempt_count INTEGER NOT NULL DEFAULT 0,
                 available_at BIGINT NOT NULL,
                 lease_owner TEXT,
                 lease_expires_at BIGINT,
@@ -63,6 +66,9 @@ export const ensureAiVideoSchema = async () => {
             );
         `);
         await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS failed_stage TEXT;`);
+        await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS source_import_token TEXT;`);
+        await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS render_snapshot JSONB;`);
+        await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS render_attempt_count INTEGER NOT NULL DEFAULT 0;`);
         await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_jobs_user_created ON ai_video_jobs(user_id, created_at DESC);`);
         await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_jobs_queue ON ai_video_jobs(status, available_at, created_at);`);
         await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_jobs_lease ON ai_video_jobs(status, lease_expires_at);`);
@@ -176,6 +182,16 @@ export const ensureAiVideoSchema = async () => {
         await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_clips_job ON ai_video_clips(job_id, sort_order);`);
 
         await query(`
+            CREATE TABLE IF NOT EXISTS ai_video_import_nonces (
+                nonce TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                expires_at BIGINT NOT NULL,
+                used_at BIGINT NOT NULL
+            );
+        `);
+        await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_import_nonces_expiry ON ai_video_import_nonces(expires_at);`);
+
+        await query(`
             CREATE TABLE IF NOT EXISTS ai_video_workers (
                 worker_id TEXT PRIMARY KEY,
                 product_label TEXT NOT NULL,
@@ -223,6 +239,8 @@ const normalizeJob = (row) => row && ({
     draftRevision: row.draft_revision,
     sourceWidth: row.source_width,
     sourceHeight: row.source_height,
+    renderRevision: row.render_revision,
+    renderAttemptCount: row.render_attempt_count,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
     completedAt: row.completed_at == null ? null : Number(row.completed_at),
@@ -253,7 +271,7 @@ export const getAiVideoUsage = async ({ userId, limitSeconds, now = Date.now(), 
     };
 };
 
-export const createAiVideoJob = async ({ userId, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, monthlySeconds, now = Date.now() }) => {
+export const createAiVideoJob = async ({ userId, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, monthlySeconds, importToken = null, importPayload = null, now = Date.now() }) => {
     await ensureAiVideoSchema();
     const client = await getClient();
     try {
@@ -305,14 +323,26 @@ export const createAiVideoJob = async ({ userId, sourceKind, filename, contentTy
         }
         const id = randomUUID();
         const status = sourceKind === "upload" ? "uploading" : "queued_ingest";
+        if (sourceKind === "download_import") {
+            const nonce = await client.query(
+                `INSERT INTO ai_video_import_nonces (nonce,user_id,expires_at,used_at)
+                 VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING nonce`,
+                [importPayload?.nonce, userId, importPayload?.expiresAt, now],
+            );
+            if (!nonce.rowCount) {
+                const error = new Error("Media import token was already used");
+                error.code = "AI_VIDEO_IMPORT_TOKEN_USED";
+                throw error;
+            }
+        }
         const result = await client.query(
             `INSERT INTO ai_video_jobs (
                 id, user_id, status, source_kind, source_filename, source_mime,
                 source_size_bytes, source_language, target_language, subtitle_mode,
-                current_stage, available_at, created_at, updated_at
-             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12)
+                current_stage, available_at, created_at, updated_at, source_import_token
+             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12,$13)
              RETURNING *`,
-            [id, userId, status, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, status, now],
+            [id, userId, status, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, status, now, importToken],
         );
         await client.query("COMMIT");
         return { job: normalizeJob(result.rows[0]), usage };
@@ -415,6 +445,69 @@ export const completeAiVideoUpload = async ({ jobId, userId, generation, sizeByt
     }
 };
 
+export const getAiVideoWorkerImport = async ({ jobId, workerId }) => {
+    const result = await query(
+        `SELECT source_import_token FROM ai_video_jobs
+         WHERE id=$1 AND lease_owner=$2 AND source_kind='download_import' AND source_object_key IS NULL`,
+        [jobId, workerId],
+    );
+    return result.rows[0]?.source_import_token || null;
+};
+
+export const prepareAiVideoImport = async ({ jobId, workerId, objectKey, mime, sizeBytes, now = Date.now() }) => {
+    const existing = await query(
+        `SELECT a.* FROM ai_video_assets a JOIN ai_video_jobs j ON j.id=a.job_id
+         WHERE a.job_id=$1 AND a.kind='source' AND j.lease_owner=$2 AND a.deleted_at IS NULL LIMIT 1`,
+        [jobId, workerId],
+    );
+    if (existing.rowCount) return existing.rows[0];
+    const result = await query(
+        `INSERT INTO ai_video_assets (
+            id,job_id,kind,object_key,object_generation,mime,size_bytes,revision,
+            expires_at,cleanup_status,cleanup_after,created_at
+         ) SELECT $1,j.id,'source',$3,'pending',$4,$5,0,$6,'pending',$7,$8
+           FROM ai_video_jobs j WHERE j.id=$2 AND j.lease_owner=$9 AND j.source_object_key IS NULL
+         RETURNING *`,
+        [randomUUID(), jobId, objectKey, mime, sizeBytes, now + 6 * 60 * 60 * 1000, now + 6 * 60 * 60 * 1000, now, workerId],
+    );
+    return result.rows[0] || null;
+};
+
+export const completeAiVideoImport = async ({ jobId, workerId, assetId, objectKey, generation, sizeBytes, mime, now = Date.now() }) => {
+    const client = await getClient();
+    try {
+        await client.query("BEGIN");
+        const job = await client.query(
+            `SELECT * FROM ai_video_jobs WHERE id=$1 AND lease_owner=$2 FOR UPDATE`,
+            [jobId, workerId],
+        );
+        if (!job.rowCount) {
+            await client.query("ROLLBACK");
+            return null;
+        }
+        if (!job.rows[0].source_object_key) {
+            await client.query(
+                `UPDATE ai_video_assets SET object_generation=$4,size_bytes=$5,mime=$6,
+                    cleanup_status='active',cleanup_after=expires_at
+                 WHERE id=$1 AND job_id=$2 AND object_key=$3`,
+                [assetId, jobId, objectKey, generation, sizeBytes, mime],
+            );
+            await client.query(
+                `UPDATE ai_video_jobs SET source_object_key=$3,source_size_bytes=$4,source_mime=$5,
+                    source_import_token=NULL,updated_at=$6 WHERE id=$1 AND lease_owner=$2`,
+                [jobId, workerId, objectKey, sizeBytes, mime, now],
+            );
+        }
+        await client.query("COMMIT");
+        return { objectKey, generation, sizeBytes, mime };
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 export const listAiVideoJobs = async ({ userId, limit = 20, before = null }) => {
     await ensureAiVideoSchema();
     const result = await query(
@@ -442,6 +535,9 @@ export const cancelAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
          RETURNING *`,
         [jobId, userId, now, AI_VIDEO_ACTIVE_STATUSES],
     );
+    if (result.rows[0]?.status === "cancelled") {
+        await query(`UPDATE ai_video_assets SET cleanup_after=$2,cleanup_status='pending' WHERE job_id=$1 AND deleted_at IS NULL`, [jobId, now]);
+    }
     return normalizeJob(result.rows[0] || null);
 };
 
@@ -463,18 +559,23 @@ export const claimAiVideoJob = async ({ workerId, leaseMs, now = Date.now() }) =
     const result = await query(
         `WITH candidate AS (
             SELECT id FROM ai_video_jobs
-            WHERE status IN ('queued_ingest','ingesting','probing','transcribing','translating','analyzing') AND available_at <= $1
-              AND (status = 'queued_ingest' OR lease_expires_at < $1)
-              AND attempt_count < 3
+            WHERE status IN ('queued_ingest','ingesting','probing','transcribing','translating','analyzing','queued_render','rendering','cancel_requested') AND available_at <= $1
+              AND (status IN ('queued_ingest','queued_render') OR lease_expires_at < $1)
+              AND (status='cancel_requested'
+                   OR (status IN ('queued_render','rendering') AND render_attempt_count < 3)
+                   OR (status NOT IN ('queued_render','rendering') AND attempt_count < 3))
               AND deleted_at IS NULL
             ORDER BY created_at
             FOR UPDATE SKIP LOCKED LIMIT 1
          )
          UPDATE ai_video_jobs j SET
-             status=CASE WHEN j.status='queued_ingest' THEN 'ingesting' ELSE j.status END,
-             current_stage=CASE WHEN j.status='queued_ingest' THEN 'ingesting' ELSE j.current_stage END,
+             status=CASE WHEN j.status='queued_ingest' THEN 'ingesting' WHEN j.status='queued_render' THEN 'rendering' ELSE j.status END,
+             current_stage=CASE WHEN j.status='queued_ingest' THEN 'ingesting' WHEN j.status='queued_render' THEN 'rendering' ELSE j.current_stage END,
              lease_owner=$2, lease_expires_at=$3, heartbeat_at=$1,
-             started_at=COALESCE(started_at,$1), attempt_count=attempt_count+1, updated_at=$1
+             started_at=COALESCE(started_at,$1),
+             attempt_count=attempt_count + CASE WHEN j.status IN ('queued_render','rendering','cancel_requested') THEN 0 ELSE 1 END,
+             render_attempt_count=render_attempt_count + CASE WHEN j.status IN ('queued_render','rendering') THEN 1 ELSE 0 END,
+             updated_at=$1
          FROM candidate WHERE j.id=candidate.id RETURNING j.*`,
         [now, workerId, now + leaseMs],
     );
@@ -625,7 +726,7 @@ export const finishAiVideoDraft = async ({ jobId, workerId, now = Date.now() }) 
         await query(
             `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2
              WHERE job_id=$1 AND kind='source' AND deleted_at IS NULL`,
-            [jobId, now + 24 * 60 * 60 * 1000],
+            [jobId, now + 30 * 24 * 60 * 60 * 1000],
         );
     }
     return normalizeJob(result.rows[0] || null);
@@ -644,6 +745,13 @@ export const failAiVideoProcessingJob = async ({ jobId, workerId, stage, errorCo
              WHERE job_id=$1 AND kind='source' AND deleted_at IS NULL`,
             [jobId, now + 24 * 60 * 60 * 1000],
         );
+        if (stage === "rendering") {
+            await query(
+                `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2
+                 WHERE job_id=$1 AND kind IN ('output','srt','vtt') AND deleted_at IS NULL`,
+                [jobId, now + 24 * 60 * 60 * 1000],
+            );
+        }
     }
     return normalizeJob(result.rows[0] || null);
 };
@@ -656,6 +764,9 @@ export const finishAiVideoCancellation = async ({ jobId, workerId, now = Date.no
          WHERE id=$1 AND lease_owner=$2 AND status='cancel_requested' RETURNING *`,
         [jobId, workerId, now],
     );
+    if (result.rowCount) {
+        await query(`UPDATE ai_video_assets SET cleanup_after=$2,cleanup_status='pending' WHERE job_id=$1 AND deleted_at IS NULL`, [jobId, now]);
+    }
     return normalizeJob(result.rows[0] || null);
 };
 
@@ -727,11 +838,205 @@ export const updateAiVideoDraft = async ({ jobId, userId, expectedRevision, segm
     }
 };
 
+export const queueAiVideoRender = async ({ jobId, userId, expectedRevision, now = Date.now() }) => {
+    const client = await getClient();
+    try {
+        await client.query("BEGIN");
+        const jobResult = await client.query(
+            `SELECT * FROM ai_video_jobs WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL FOR UPDATE`,
+            [jobId, userId],
+        );
+        const job = jobResult.rows[0];
+        if (!job) {
+            await client.query("ROLLBACK");
+            return { reason: "not_found" };
+        }
+        if (job.render_revision === expectedRevision && new Set(["queued_render", "rendering", "completed"]).has(job.status)) {
+            await client.query("COMMIT");
+            return { job: normalizeJob(job), idempotent: true };
+        }
+        if (job.status !== "draft_ready") {
+            await client.query("ROLLBACK");
+            return { reason: "not_renderable" };
+        }
+        if (job.draft_revision !== expectedRevision) {
+            await client.query("ROLLBACK");
+            return { reason: "revision_conflict", revision: job.draft_revision };
+        }
+        const [clipsResult, segmentsResult] = await Promise.all([
+            client.query(`SELECT * FROM ai_video_clips WHERE job_id=$1 AND enabled=true ORDER BY sort_order LIMIT 5`, [jobId]),
+            client.query(`SELECT * FROM ai_video_transcript_segments WHERE job_id=$1 ORDER BY segment_index`, [jobId]),
+        ]);
+        if (!clipsResult.rowCount) {
+            await client.query("ROLLBACK");
+            return { reason: "no_clips" };
+        }
+        const snapshot = {
+            revision: expectedRevision,
+            createdAt: now,
+            subtitleMode: job.subtitle_mode,
+            targetLanguage: job.target_language,
+            clips: clipsResult.rows.map((row) => ({
+                id: row.id,
+                sortOrder: row.sort_order,
+                startMs: Number(row.start_ms),
+                endMs: Number(row.end_ms),
+                title: row.title || `clip-${row.sort_order + 1}`,
+                cropMode: row.crop_mode,
+                focusX: Number(row.focus_x),
+                subtitleStyle: row.subtitle_style || {},
+            })),
+            segments: segmentsResult.rows.map((row) => ({
+                segmentIndex: row.segment_index,
+                startMs: Number(row.start_ms),
+                endMs: Number(row.end_ms),
+                sourceText: row.source_text,
+                translatedText: row.translated_text || "",
+                speaker: row.speaker,
+            })),
+        };
+        const updated = await client.query(
+            `UPDATE ai_video_jobs SET status='queued_render',current_stage='queued_render',progress=75,
+                render_revision=$3,render_snapshot=$4,render_attempt_count=0,available_at=$5,
+                error_code=NULL,error_detail=NULL,failed_stage=NULL,completed_at=NULL,updated_at=$5
+             WHERE id=$1 AND user_id=$2 RETURNING *`,
+            [jobId, userId, expectedRevision, snapshot, now],
+        );
+        await client.query(
+            `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2,cleanup_status='active'
+             WHERE job_id=$1 AND kind='source' AND deleted_at IS NULL`,
+            [jobId, now + 24 * 60 * 60 * 1000],
+        );
+        await query(
+            `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2,cleanup_status='active'
+             WHERE job_id=$1 AND kind IN ('output','srt','vtt') AND deleted_at IS NULL`,
+            [jobId, now + 7 * 24 * 60 * 60 * 1000],
+        );
+        await client.query("COMMIT");
+        return { job: normalizeJob(updated.rows[0]), idempotent: false };
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const getAiVideoWorkerRenderSnapshot = async ({ jobId, workerId }) => {
+    const result = await query(
+        `SELECT render_snapshot,render_revision,source_object_key,source_filename,target_language,subtitle_mode
+         FROM ai_video_jobs WHERE id=$1 AND lease_owner=$2 AND status='rendering'`,
+        [jobId, workerId],
+    );
+    return result.rows[0] || null;
+};
+
+export const updateAiVideoRenderProgress = async ({ jobId, workerId, progress, now = Date.now() }) => {
+    const result = await query(
+        `UPDATE ai_video_jobs SET progress=$3,heartbeat_at=$4,updated_at=$4
+         WHERE id=$1 AND lease_owner=$2 AND status='rendering' RETURNING *`,
+        [jobId, workerId, Math.min(99, Math.max(76, Math.round(progress))), now],
+    );
+    return normalizeJob(result.rows[0] || null);
+};
+
+export const prepareAiVideoRenderedAsset = async ({ jobId, clipId, kind, objectKey, mime, revision, expiresAt, now = Date.now() }) => {
+    const result = await query(
+        `INSERT INTO ai_video_assets (
+            id,job_id,kind,clip_id,object_key,object_generation,mime,size_bytes,revision,
+            expires_at,cleanup_status,cleanup_after,created_at
+         ) VALUES ($1,$2,$3,$4,$5,'pending',$6,NULL,$7,$8,'pending',$9,$10)
+         ON CONFLICT (job_id,kind,clip_id,revision) DO UPDATE SET job_id=EXCLUDED.job_id
+         RETURNING *`,
+        [randomUUID(), jobId, kind, clipId, objectKey, mime, revision, expiresAt, now + 6 * 60 * 60 * 1000, now],
+    );
+    return result.rows[0];
+};
+
+export const finalizeAiVideoRenderedAsset = async ({ assetId, generation, sizeBytes, now = Date.now() }) => {
+    const result = await query(
+        `UPDATE ai_video_assets SET object_generation=$2,size_bytes=$3,cleanup_status='active',
+            cleanup_after=expires_at,cleanup_attempts=0
+         WHERE id=$1 AND deleted_at IS NULL RETURNING *`,
+        [assetId, generation, sizeBytes, now],
+    );
+    return result.rows[0] || null;
+};
+
+export const getAiVideoWorkerRenderedAssets = async ({ jobId, workerId, revision }) => {
+    const result = await query(
+        `SELECT a.* FROM ai_video_assets a JOIN ai_video_jobs j ON j.id=a.job_id
+         WHERE a.job_id=$1 AND j.lease_owner=$2 AND a.revision=$3
+           AND a.kind IN ('output','srt','vtt') AND a.deleted_at IS NULL`,
+        [jobId, workerId, revision],
+    );
+    return result.rows;
+};
+
+export const finishAiVideoRender = async ({ jobId, workerId, now = Date.now() }) => {
+    const result = await query(
+        `UPDATE ai_video_jobs SET status='completed',current_stage='completed',progress=100,
+            lease_owner=NULL,lease_expires_at=NULL,heartbeat_at=NULL,completed_at=$3,
+            expires_at=$3 + 2592000000,updated_at=$3
+         WHERE id=$1 AND lease_owner=$2 AND status='rendering' RETURNING *`,
+        [jobId, workerId, now],
+    );
+    if (result.rowCount) {
+        await query(
+            `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2
+             WHERE job_id=$1 AND kind='source' AND deleted_at IS NULL`,
+            [jobId, now + 24 * 60 * 60 * 1000],
+        );
+        await query(
+            `UPDATE ai_video_assets SET cleanup_after=$2,expires_at=$2,cleanup_status='active'
+             WHERE job_id=$1 AND kind IN ('output','srt','vtt') AND deleted_at IS NULL`,
+            [jobId, now + 7 * 24 * 60 * 60 * 1000],
+        );
+    }
+    return normalizeJob(result.rows[0] || null);
+};
+
+export const getAiVideoResults = async ({ jobId, userId, now = Date.now() }) => {
+    const jobResult = await query(
+        `SELECT * FROM ai_video_jobs WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`,
+        [jobId, userId],
+    );
+    if (!jobResult.rowCount) return null;
+    const assets = await query(
+        `SELECT a.*,c.sort_order,c.title FROM ai_video_assets a
+         LEFT JOIN ai_video_clips c ON c.id=a.clip_id
+         WHERE a.job_id=$1 AND a.kind IN ('output','srt','vtt') AND a.deleted_at IS NULL
+           AND a.cleanup_status='active' AND (a.expires_at IS NULL OR a.expires_at > $2)
+         ORDER BY c.sort_order,a.kind`,
+        [jobId, now],
+    );
+    return { job: normalizeJob(jobResult.rows[0]), assets: assets.rows };
+};
+
+export const getAiVideoAsset = async ({ jobId, assetId, userId, now = Date.now() }) => {
+    const result = await query(
+        `SELECT a.*,j.target_language,c.sort_order,c.title
+         FROM ai_video_assets a
+         JOIN ai_video_jobs j ON j.id=a.job_id
+         LEFT JOIN ai_video_clips c ON c.id=a.clip_id
+         WHERE a.id=$1 AND a.job_id=$2 AND j.user_id=$3 AND j.deleted_at IS NULL
+           AND a.kind IN ('output','srt','vtt') AND a.deleted_at IS NULL AND a.cleanup_status='active'
+           AND (a.expires_at IS NULL OR a.expires_at > $4)`,
+        [assetId, jobId, userId, now],
+    );
+    return result.rows[0] || null;
+};
+
 export const retryAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
     const result = await query(
-        `UPDATE ai_video_jobs SET status='queued_ingest',current_stage='queued_ingest',available_at=$3,
+        `UPDATE ai_video_jobs SET
+             status=CASE WHEN failed_stage='rendering' AND render_snapshot IS NOT NULL THEN 'queued_render' ELSE 'queued_ingest' END,
+             current_stage=CASE WHEN failed_stage='rendering' AND render_snapshot IS NOT NULL THEN 'queued_render' ELSE 'queued_ingest' END,
+             available_at=$3,
              error_code=NULL,error_detail=NULL,updated_at=$3
-         WHERE id=$1 AND user_id=$2 AND status='failed' AND attempt_count < 3
+         WHERE id=$1 AND user_id=$2 AND status='failed'
+           AND ((failed_stage='rendering' AND render_attempt_count < 3)
+                OR (failed_stage<>'rendering' AND attempt_count < 3))
            AND COALESCE((error_detail->>'retryable')::boolean,false)=true RETURNING *`,
         [jobId, userId, now],
     );
@@ -827,3 +1132,9 @@ export const claimExpiredAiVideoUploadSessions = async ({ limit = 50, now = Date
 
 export const markAiVideoUploadSessionAborted = ({ sessionId, now = Date.now() }) =>
     query(`UPDATE ai_video_upload_sessions SET status='aborted', updated_at=$2 WHERE id=$1`, [sessionId, now]);
+
+export const cleanupExpiredAiVideoImportNonces = async ({ now = Date.now() }) => {
+    await ensureAiVideoSchema();
+    const result = await query(`DELETE FROM ai_video_import_nonces WHERE expires_at < $1`, [now - 24 * 60 * 60 * 1000]);
+    return result.rowCount;
+};

@@ -10,6 +10,7 @@ export type AiVideoJob = {
     sourceDurationMs: number | null;
     sourceWidth: number | null;
     sourceHeight: number | null;
+    targetLanguage: string;
     errorCode: string | null;
     errorRetryable: boolean;
     failedStage: string | null;
@@ -44,6 +45,23 @@ export type AiVideoDraft = {
     clips: AiVideoClip[];
     sourcePreviewUrl: string;
 };
+
+export type AiVideoAsset = {
+    id: string;
+    clipId: string;
+    kind: "output" | "srt" | "vtt";
+    mime: string;
+    sizeBytes: number | null;
+    expiresAt: number | null;
+    sortOrder: number;
+    title: string;
+    filename: string;
+    previewUrl: string | null;
+    downloadUrl: string;
+};
+
+export type AiVideoResults = { job: AiVideoJob; assets: AiVideoAsset[] };
+export type PendingAiVideoImport = { token: string; expiresAt: number; filename: string; service: string | null };
 
 const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
     const token = await getClerkToken();
@@ -85,6 +103,35 @@ export const createFileFingerprint = async (file: File) => {
 export const listAiVideoJobs = () => request<{ jobs: AiVideoJob[] }>("/jobs?limit=20");
 export const getAiVideoJob = (jobId: string) => request<{ job: AiVideoJob }>(`/jobs/${jobId}`);
 export const getAiVideoDraft = (jobId: string) => request<AiVideoDraft>(`/jobs/${jobId}/draft`);
+export const getAiVideoResults = (jobId: string) => request<AiVideoResults>(`/jobs/${jobId}/results`);
+
+export const getPendingAiVideoImport = (): PendingAiVideoImport | null => {
+    try {
+        const value = JSON.parse(sessionStorage.getItem("fsv_ai_video_import_v1") || "null") as PendingAiVideoImport | null;
+        if (!value?.token || value.expiresAt <= Date.now()) {
+            sessionStorage.removeItem("fsv_ai_video_import_v1");
+            return null;
+        }
+        return value;
+    } catch {
+        sessionStorage.removeItem("fsv_ai_video_import_v1");
+        return null;
+    }
+};
+
+export const createImportedAiVideo = async ({ token, sourceLanguage, targetLanguage, subtitleMode }: {
+    token: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    subtitleMode: "translated" | "bilingual";
+}) => {
+    const created = await request<{ job: AiVideoJob }>("/jobs", {
+        method: "POST",
+        body: JSON.stringify({ sourceKind: "download_import", mediaImportToken: token, sourceLanguage, targetLanguage, subtitleMode }),
+    });
+    sessionStorage.removeItem("fsv_ai_video_import_v1");
+    return created.job;
+};
 
 export const createAndUploadAiVideo = async ({
     file,
@@ -177,3 +224,6 @@ export const saveAiVideoDraft = (draft: AiVideoDraft) => request<{ job: AiVideoJ
 
 export const retryAiVideoJob = (jobId: string) => request<{ job: AiVideoJob }>(`/jobs/${jobId}/retry`, { method: "POST", body: "{}" });
 export const cancelAiVideoJob = (jobId: string) => request<{ job: AiVideoJob }>(`/jobs/${jobId}/cancel`, { method: "POST", body: "{}" });
+export const queueAiVideoRender = (jobId: string, revision: number) => request<{ job: AiVideoJob; idempotent: boolean }>(`/jobs/${jobId}/render`, {
+    method: "POST", body: JSON.stringify({ revision }),
+});

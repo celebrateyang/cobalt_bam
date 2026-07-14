@@ -172,6 +172,7 @@ export const openAiHighlightProvider = {
 
 export const classifyProviderError = (error) => {
     const status = Number(error?.status);
-    const retryable = status === 408 || status === 409 || status === 429 || status >= 500 || error?.code === "ETIMEDOUT" || error?.code === "ECONNRESET";
+    const retryable = status === 408 || status === 409 || status === 429 || status >= 500
+        || new Set(["ETIMEDOUT", "ECONNRESET", "EAI_AGAIN", "ENOTFOUND", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT"]).has(error?.code);
     return { retryable, detail: status ? `provider_http_${status}` : String(error?.code || "provider_error") };
 };

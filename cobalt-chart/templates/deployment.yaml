@@ -194,6 +194,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.aiVideo.secretName | quote }}
                   key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+            - name: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.mediaImportTokenKeySecretKey | quote }}
             {{- end }}
             {{- if .Values.polar.enabled }}
             # Polar checkout - Credits top-up

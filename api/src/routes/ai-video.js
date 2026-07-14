@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { Transform } from "node:stream";
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
+import { create as contentDisposition } from "content-disposition-header";
 
 import { getClient, query } from "../db/pg-client.js";
 import { getUserByClerkId, upsertUserFromClerk } from "../db/users.js";
@@ -13,15 +14,20 @@ import {
     failAiVideoJob,
     getAiVideoJob,
     getAiVideoDraft,
+    getAiVideoAsset,
+    getAiVideoResults,
     getAiVideoUploadSession,
     getAiVideoUsage,
     listAiVideoJobs,
+    queueAiVideoRender,
     retryAiVideoJob,
     softDeleteAiVideoJob,
     updateAiVideoDraft,
 } from "../db/ai-video.js";
 import { createOpaqueObjectKey, getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { decryptUploadSession, encryptUploadSession } from "../ai-video/session-crypto.js";
+import { readMediaImportToken } from "../ai-video/media-import-token.js";
+import { sanitizeOutputFilename } from "../ai-video/subtitles.js";
 
 const router = express.Router();
 const supportedLanguages = new Set(["auto", "de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"]);
@@ -104,7 +110,21 @@ router.post("/jobs", async (req, res) => {
             return jsonError(res, 413, "AI_VIDEO_FILE_TOO_LARGE", "Video file exceeds the 1 GiB limit");
         }
         if (req.body.sourceKind === "download_import") {
-            return jsonError(res, 501, "AI_VIDEO_IMPORT_NOT_READY", "Trusted download import tokens are not available in 3A");
+            const importPayload = readMediaImportToken(req.body.mediaImportToken, { expectedUserId: user.id });
+            created = await createAiVideoJob({
+                userId: user.id,
+                sourceKind: "download_import",
+                filename: importPayload.filename,
+                contentType: importPayload.mime,
+                sizeBytes: null,
+                sourceLanguage: req.body.sourceLanguage || "auto",
+                targetLanguage: req.body.targetLanguage,
+                subtitleMode: req.body.subtitleMode,
+                monthlySeconds: limits.monthlySeconds,
+                importToken: req.body.mediaImportToken,
+                importPayload,
+            });
+            return res.status(201).json({ status: "success", data: { job: created.job, usage: created.usage } });
         }
         created = await createAiVideoJob({
             userId: user.id,
@@ -139,7 +159,11 @@ router.post("/jobs", async (req, res) => {
         if (storage && storageSession) await storage.abortResumableUpload({ sessionUri: storageSession }).catch(() => {});
         if (storage && objectKey) await storage.deleteObject(objectKey).catch(() => {});
         if (created?.job?.id && user?.id) await failAiVideoJob({ jobId: created.job.id, userId: user.id, errorCode: "AI_VIDEO_UPLOAD_INIT_FAILED" }).catch(() => {});
-        const statusByCode = { MEMBERSHIP_REQUIRED: 403, AI_VIDEO_CONCURRENCY_LIMIT: 409, AI_VIDEO_QUOTA_EXCEEDED: 429, AI_VIDEO_UPLOAD_CAPACITY: 503 };
+        const statusByCode = {
+            MEMBERSHIP_REQUIRED: 403, AI_VIDEO_CONCURRENCY_LIMIT: 409, AI_VIDEO_QUOTA_EXCEEDED: 429, AI_VIDEO_UPLOAD_CAPACITY: 503,
+            AI_VIDEO_IMPORT_TOKEN_INVALID: 400, AI_VIDEO_IMPORT_TOKEN_USER_MISMATCH: 403,
+            AI_VIDEO_IMPORT_TOKEN_EXPIRED: 410, AI_VIDEO_IMPORT_TOKEN_USED: 409,
+        };
         if (statusByCode[error.code]) return jsonError(res, statusByCode[error.code], error.code, error.message, error.usage);
         console.error("POST /user/ai-video/jobs error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to create AI video job");
@@ -175,7 +199,12 @@ router.get("/jobs/:jobId/draft", async (req, res) => {
         const draft = await getAiVideoDraft({ jobId: req.params.jobId, userId: user.id });
         if (!draft) return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
         if (draft.job.status !== "draft_ready") return jsonError(res, 409, "AI_VIDEO_DRAFT_NOT_READY", "Draft is not ready", { job: draft.job });
-        return res.json({ status: "success", data: { ...draft, sourcePreviewUrl: `/user/ai-video/jobs/${draft.job.id}/source` } });
+        let sourcePreviewUrl = `/user/ai-video/jobs/${draft.job.id}/source`;
+        if (draft.job.sourceObjectKey) {
+            try { sourcePreviewUrl = await getAiVideoObjectStorage().createDownloadUrl(draft.job.sourceObjectKey, 10 * 60 * 1000, { responseType: draft.job.sourceMime || "video/mp4" }); }
+            catch {}
+        }
+        return res.json({ status: "success", data: { ...draft, sourcePreviewUrl } });
     } catch (error) {
         console.error("GET AI video draft error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load AI video draft");
@@ -242,6 +271,87 @@ router.post("/jobs/:jobId/retry", async (req, res) => {
         return job ? res.json({ status: "success", data: { job } }) : jsonError(res, 409, "AI_VIDEO_JOB_NOT_RETRYABLE", "Job cannot be retried");
     } catch (error) {
         return jsonError(res, 500, "SERVER_ERROR", "Failed to retry job");
+    }
+});
+
+router.post("/jobs/:jobId/render", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const revision = Number(req.body?.revision);
+        if (!Number.isInteger(revision) || revision < 0) return jsonError(res, 400, "AI_VIDEO_RENDER_INVALID", "A valid draft revision is required");
+        const result = await queueAiVideoRender({ jobId: req.params.jobId, userId: user.id, expectedRevision: revision });
+        if (result.reason === "not_found") return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
+        if (result.reason === "revision_conflict") return jsonError(res, 409, "AI_VIDEO_DRAFT_REVISION_CONFLICT", "Draft was changed elsewhere", { revision: result.revision });
+        if (result.reason === "no_clips") return jsonError(res, 400, "AI_VIDEO_RENDER_NO_CLIPS", "Select at least one clip");
+        if (result.reason) return jsonError(res, 409, "AI_VIDEO_JOB_NOT_RENDERABLE", "Job cannot be rendered");
+        return res.status(result.idempotent ? 200 : 202).json({ status: "success", data: result });
+    } catch (error) {
+        if (error.code === "23505") return jsonError(res, 409, "AI_VIDEO_CONCURRENCY_LIMIT", "Another AI video task is processing");
+        console.error("POST AI video render error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to queue render");
+    }
+});
+
+const assetFilename = (asset) => {
+    const extension = asset.kind === "output" ? "mp4" : asset.kind;
+    const base = sanitizeOutputFilename(asset.title, `clip-${Number(asset.sort_order || 0) + 1}`);
+    return `${base}-${asset.target_language || "translated"}.${extension}`;
+};
+
+router.get("/jobs/:jobId/results", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const result = await getAiVideoResults({ jobId: req.params.jobId, userId: user.id });
+        if (!result) return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
+        if (result.job.status !== "completed") return jsonError(res, 409, "AI_VIDEO_RESULTS_NOT_READY", "Results are not ready", { job: result.job });
+        const storage = getAiVideoObjectStorage();
+        const assets = await Promise.all(result.assets.map(async (asset) => {
+            const filename = assetFilename({ ...asset, target_language: result.job.targetLanguage });
+            let previewUrl = null;
+            let downloadUrl = `/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download`;
+            try {
+                downloadUrl = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, {
+                    responseDisposition: contentDisposition(filename), responseType: asset.mime,
+                });
+            } catch {}
+            if (asset.kind === "output" || asset.kind === "vtt") {
+                try { previewUrl = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, { responseType: asset.mime || (asset.kind === "output" ? "video/mp4" : "text/vtt") }); }
+                catch { previewUrl = `/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download?inline=1`; }
+            }
+            return {
+                id: asset.id, clipId: asset.clip_id, kind: asset.kind, mime: asset.mime,
+                sizeBytes: asset.size_bytes == null ? null : Number(asset.size_bytes), expiresAt: asset.expires_at == null ? null : Number(asset.expires_at),
+                sortOrder: asset.sort_order, title: asset.title, filename, previewUrl,
+                downloadUrl,
+            };
+        }));
+        return res.json({ status: "success", data: { job: result.job, assets } });
+    } catch (error) {
+        console.error("GET AI video results error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load results");
+    }
+});
+
+router.get("/jobs/:jobId/assets/:assetId/download", async (req, res) => {
+    try {
+        const user = await loadUser(req, res); if (!user) return;
+        const asset = await getAiVideoAsset({ jobId: req.params.jobId, assetId: req.params.assetId, userId: user.id });
+        if (!asset) return jsonError(res, 404, "AI_VIDEO_ASSET_EXPIRED", "Asset is unavailable or expired");
+        const filename = assetFilename(asset);
+        const disposition = contentDisposition(filename, { type: req.query.inline === "1" ? "inline" : "attachment" });
+        const storage = getAiVideoObjectStorage();
+        try {
+            const url = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, { responseDisposition: disposition, responseType: asset.mime });
+            return res.redirect(302, url);
+        } catch (error) {
+            if (process.env.AI_VIDEO_STORAGE_PROVIDER === "gcs") throw error;
+            res.setHeader("Content-Type", asset.mime || "application/octet-stream");
+            res.setHeader("Content-Disposition", disposition);
+            return storage.openReadStream(asset.object_key).pipe(res);
+        }
+    } catch (error) {
+        console.error("GET AI video asset error:", error);
+        return jsonError(res, 502, "AI_VIDEO_STORAGE_ERROR", "Failed to create asset download");
     }
 });
 

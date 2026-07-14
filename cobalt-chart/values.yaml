@@ -239,6 +239,7 @@ aiVideo:
   uploadStallTimeoutMs: 120000
   secretName: ai-video-secret
   uploadSessionEncryptionKeySecretKey: AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY
+  mediaImportTokenKeySecretKey: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
   openaiApiKeySecretKey: OPENAI_API_KEY
   worker:
     replicaCount: 1
@@ -255,9 +256,11 @@ aiVideo:
       requests:
         cpu: 500m
         memory: 512Mi
+        ephemeral-storage: 2Gi
       limits:
         cpu: "2"
         memory: 2Gi
+        ephemeral-storage: 6Gi
   cleanup:
     enabled: true
     schedule: "15 * * * *"

@@ -81,6 +81,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.aiVideo.secretName | quote }}
                   key: {{ .Values.aiVideo.uploadSessionEncryptionKeySecretKey | quote }}
+            - name: AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.aiVideo.secretName | quote }}
+                  key: {{ .Values.aiVideo.mediaImportTokenKeySecretKey | quote }}
           resources:
             {{- toYaml .Values.aiVideo.worker.resources | nindent 12 }}
 {{- end }}

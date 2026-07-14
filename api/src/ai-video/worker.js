@@ -2,6 +2,7 @@ import os from "node:os";
 
 import { claimAiVideoJob, ensureAiVideoSchema, heartbeatAiVideoJob, heartbeatAiVideoWorker } from "../db/ai-video.js";
 import { processAiVideoJob } from "./pipeline.js";
+import { processAiVideoRenderJob } from "./render-pipeline.js";
 
 const workerId = process.env.AI_VIDEO_WORKER_ID || `${os.hostname()}:${process.pid}`;
 const heartbeatMs = Number(process.env.AI_VIDEO_WORKER_HEARTBEAT_MS || 15000);
@@ -11,14 +12,14 @@ const pollMs = Number(process.env.AI_VIDEO_WORKER_POLL_MS || 3000);
 const heartbeat = async () => {
     await heartbeatAiVideoWorker({
         workerId,
-        metadata: { version: "3B", pid: process.pid, hostname: os.hostname() },
+        metadata: { version: "3C", pid: process.pid, hostname: os.hostname() },
     });
 };
 
 const main = async () => {
     await ensureAiVideoSchema();
     await heartbeat();
-    console.log(`[AI VIDEO WORKER] worker_id=${workerId} product=argoCD stage=3B ready=true`);
+    console.log(`[AI VIDEO WORKER] worker_id=${workerId} product=argoCD stage=3C ready=true`);
     setInterval(() => {
         heartbeat().catch((error) => console.error("[AI VIDEO WORKER] heartbeat failed", error));
     }, heartbeatMs);
@@ -33,7 +34,8 @@ const main = async () => {
                 .catch((error) => console.error(`[AI VIDEO WORKER] job_id=${job.id} heartbeat_failed=${error.message}`));
         }, Math.max(5000, Math.floor(leaseMs / 3)));
         try {
-            await processAiVideoJob({ job, workerId });
+            if (job.status === "rendering") await processAiVideoRenderJob({ job, workerId });
+            else await processAiVideoJob({ job, workerId });
         } finally {
             clearInterval(jobHeartbeat);
         }

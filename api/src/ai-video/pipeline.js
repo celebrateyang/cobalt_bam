@@ -21,6 +21,7 @@ import {
 import { getAiVideoObjectStorage } from "./object-storage.js";
 import { createAiVideoWorkDir, extractAudioChunks, probeVideo } from "./media.js";
 import { deterministicHighlights, normalizeHighlightClips } from "./highlights.js";
+import { ingestAiVideoImport } from "./import-source.js";
 import {
     classifyProviderError,
     openAiHighlightProvider,
@@ -71,12 +72,18 @@ export const processAiVideoJob = async ({ job, workerId }) => {
         const canResume = resumeFromDraftData && probe && segments.length > 0;
 
         if (!canResume) {
+            let sourceIsLocal = false;
             if (!job.sourceObjectKey) {
-                const error = new Error("Source object is missing");
-                error.code = "AI_VIDEO_SOURCE_MISSING";
-                throw error;
+                if (job.sourceKind === "download_import") {
+                    await ingestAiVideoImport({ job, workerId, targetPath: sourcePath });
+                    sourceIsLocal = true;
+                } else {
+                    const error = new Error("Source object is missing");
+                    error.code = "AI_VIDEO_SOURCE_MISSING";
+                    throw error;
+                }
             }
-            await pipeline(storage.openReadStream(job.sourceObjectKey), createWriteStream(sourcePath, { flags: "wx" }));
+            if (!sourceIsLocal) await pipeline(storage.openReadStream(job.sourceObjectKey), createWriteStream(sourcePath, { flags: "wx" }));
 
             stage = "probing";
             await transition({ jobId: job.id, workerId, status: stage, progress: 10 });
@@ -169,6 +176,7 @@ export const processAiVideoJob = async ({ job, workerId }) => {
             throw error;
         }
         await replaceAiVideoClips({ jobId: job.id, clips: clips.slice(0, Math.max(3, Math.min(5, clips.length))) });
+        await checkCancellation({ jobId: job.id, workerId });
         await finishAiVideoDraft({ jobId: job.id, workerId });
         console.log(`[AI VIDEO WORKER] job_id=${job.id} result=draft_ready segments=${segments.length} clips=${clips.length}`);
     } catch (error) {
@@ -178,7 +186,10 @@ export const processAiVideoJob = async ({ job, workerId }) => {
         }
         if (!usageCommitted) await releaseAiVideoUsage({ jobId: job.id }).catch(() => {});
         const provider = classifyProviderError(error);
-        const retryable = !nonRetryableCodes.has(error.code) && (provider.retryable || error.code === "AI_VIDEO_SOURCE_MISSING" || error.code === "AI_VIDEO_MEDIA_PROCESS_FAILED");
+        const retryable = !nonRetryableCodes.has(error.code) && (
+            provider.retryable
+            || new Set(["AI_VIDEO_SOURCE_MISSING", "AI_VIDEO_MEDIA_PROCESS_FAILED", "AI_VIDEO_IMPORT_FETCH_FAILED", "AI_VIDEO_STORAGE_ERROR"]).has(error.code)
+        );
         await failAiVideoProcessingJob({
             jobId: job.id,
             workerId,

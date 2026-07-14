@@ -6,17 +6,23 @@
     import {
         cancelAiVideoJob,
         createAndUploadAiVideo,
+        createImportedAiVideo,
         getAiVideoDraft,
         getAiVideoJob,
+        getAiVideoResults,
+        getPendingAiVideoImport,
         listAiVideoJobs,
+        queueAiVideoRender,
         retryAiVideoJob,
         saveAiVideoDraft,
         type AiVideoDraft,
         type AiVideoJob,
+        type AiVideoResults,
+        type PendingAiVideoImport,
     } from "$lib/api/ai-video";
 
     const languages = ["de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"];
-    const terminalStatuses = new Set(["draft_ready", "failed", "cancelled", "deleted"]);
+    const terminalStatuses = new Set(["draft_ready", "completed", "failed", "cancelled", "deleted"]);
     let eligible: boolean | null = null;
     let eligibilityReason: string | null = null;
     let loading = true;
@@ -31,8 +37,11 @@
     let jobs: AiVideoJob[] = [];
     let activeJob: AiVideoJob | null = null;
     let draft: AiVideoDraft | null = null;
+    let results: AiVideoResults | null = null;
+    let pendingImport: PendingAiVideoImport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     $: zh = $page.params.lang === "zh";
+    $: previewFocus = draft?.clips.find((clip) => clip.enabled)?.focusX ?? 0.5;
 
     const message = (en: string, cn: string) => zh ? cn : en;
     const setError = (value: unknown) => {
@@ -45,8 +54,15 @@
     };
 
     const loadDraft = async (jobId: string) => {
+        results = null;
         draft = await getAiVideoDraft(jobId);
         activeJob = draft.job;
+    };
+
+    const loadResults = async (jobId: string) => {
+        draft = null;
+        results = await getAiVideoResults(jobId);
+        activeJob = results.job;
     };
 
     const poll = async (jobId: string) => {
@@ -56,7 +72,8 @@
             activeJob = next;
             jobs = [next, ...jobs.filter((item) => item.id !== next.id)];
             if (next.status === "draft_ready") await loadDraft(next.id);
-            if (!terminalStatuses.has(next.status)) timer = setTimeout(() => poll(jobId), 2500);
+            if (next.status === "completed") await loadResults(next.id);
+            if (!terminalStatuses.has(next.status)) timer = setTimeout(() => poll(jobId), document.hidden ? 10_000 : 2500);
         } catch (value) {
             setError(value);
         }
@@ -67,8 +84,27 @@
         notice = "";
         activeJob = job;
         draft = null;
+        results = null;
         if (job.status === "draft_ready") await loadDraft(job.id);
+        else if (job.status === "completed") await loadResults(job.id);
         else if (!terminalStatuses.has(job.status)) await poll(job.id);
+    };
+
+    const startImport = async () => {
+        if (!pendingImport || busy) return;
+        busy = true;
+        error = "";
+        notice = "";
+        draft = null;
+        results = null;
+        try {
+            const job = await createImportedAiVideo({ token: pendingImport.token, sourceLanguage, targetLanguage, subtitleMode });
+            pendingImport = null;
+            activeJob = job;
+            jobs = [job, ...jobs.filter((item) => item.id !== job.id)];
+            await poll(job.id);
+        } catch (value) { setError(value); }
+        finally { busy = false; }
     };
 
     const start = async () => {
@@ -108,6 +144,25 @@
         }
     };
 
+    const renderDraft = async () => {
+        if (!draft || busy || !draft.clips.some((clip) => clip.enabled)) return;
+        busy = true;
+        error = "";
+        notice = "";
+        try {
+            const saved = await saveAiVideoDraft(draft);
+            draft.job = saved.job;
+            const queued = await queueAiVideoRender(draft.job.id, saved.job.draftRevision);
+            activeJob = queued.job;
+            jobs = [queued.job, ...jobs.filter((item) => item.id !== queued.job.id)];
+            draft = null;
+            await poll(queued.job.id);
+        } catch (value) {
+            setError(value);
+            if ((value as { code?: string })?.code === "AI_VIDEO_DRAFT_REVISION_CONFLICT" && draft) await loadDraft(draft.job.id);
+        } finally { busy = false; }
+    };
+
     const retry = async () => {
         if (!activeJob || busy) return;
         busy = true;
@@ -132,11 +187,19 @@
             const result = await fetchMembershipFeatureEligibility("ai_video_studio");
             eligible = result.eligible;
             eligibilityReason = result.reason;
-            if (eligible) await refreshJobs();
+            if (eligible) {
+                pendingImport = getPendingAiVideoImport();
+                await refreshJobs();
+                const running = jobs.find((job) => !terminalStatuses.has(job.status));
+                if (running) await selectJob(running);
+            }
         } catch (value) { setError(value); }
         finally { loading = false; }
     });
-    onDestroy(() => { if (timer) clearTimeout(timer); });
+    onDestroy(() => {
+        if (timer) clearTimeout(timer);
+        if (draft && !busy) void save();
+    });
 </script>
 
 <svelte:head><title>{message("AI Video Studio", "AI 视频工作室")}</title></svelte:head>
@@ -178,7 +241,9 @@
                 </label>
             </div>
             <p class="privacy">{message("Your video is uploaded to our server and sent to the configured AI provider for transcription and analysis. Source files are normally removed 24 hours after the task completes; draft metadata is retained for 30 days.", "你的视频会上传到服务器，并发送给配置的 AI 服务进行转写与分析。源文件通常在任务完成 24 小时后清理，草稿元数据保留 30 天。")}</p>
-            <button disabled={!file || busy} on:click={start}>{busy ? message("Working...", "处理中……") : message("Upload and analyze", "上传并分析")}</button>
+            <div class="actions"><button disabled={!file || busy} on:click={start}>{busy ? message("Working...", "处理中……") : message("Upload and analyze", "上传并分析")}</button>
+                {#if pendingImport}<button class="secondary" disabled={busy} on:click={startImport}>{message(`Analyze recent download: ${pendingImport.filename}`, `分析最近下载：${pendingImport.filename}`)}</button>{/if}
+            </div>
             {#if uploadProgress > 0 && uploadProgress < 1}<progress value={uploadProgress} max="1"></progress>{/if}
         </section>
 
@@ -197,8 +262,8 @@
             </aside>
 
             <section class="card editor">
-                {#if activeJob && !draft}
-                    <h2>{message("Analysis progress", "分析进度")}</h2>
+                {#if activeJob && !draft && !results}
+                    <h2>{message("Task progress", "任务进度")}</h2>
                     <p><strong>{activeJob.status}</strong>{#if activeJob.failedStage} · {activeJob.failedStage}{/if}</p>
                     <progress value={activeJob.progress} max="100"></progress>
                     {#if activeJob.status === "failed"}
@@ -208,14 +273,16 @@
                         <button class="secondary" on:click={cancel} disabled={busy}>{message("Cancel", "取消")}</button>
                     {/if}
                 {:else if draft}
+                    <div class="source-preview"><!-- svelte-ignore a11y-media-has-caption --><video src={draft.sourcePreviewUrl} controls preload="metadata" style:object-position={`${previewFocus * 100}% 50%`}></video></div>
                     <h2>{message("Highlight candidates", "精彩片段候选")}</h2>
                     <p class="muted">{message("Clips must remain between 15 and 90 seconds.", "每个切片必须保持在 15–90 秒之间。")}</p>
                     <div class="clips">
                         {#each draft.clips as clip}
                             <article>
                                 <label class="check"><input type="checkbox" bind:checked={clip.enabled} /> {message("Include", "启用")}</label>
-                                <input class="title" bind:value={clip.title} maxlength="160" />
+                                <input class="title" bind:value={clip.title} maxlength="120" />
                                 <div class="times"><label>Start <input type="number" min="0" step="0.1" value={clip.startMs / 1000} on:change={(event) => clip.startMs = Math.round(Number(event.currentTarget.value) * 1000)} /></label><label>End <input type="number" min="15" step="0.1" value={clip.endMs / 1000} on:change={(event) => clip.endMs = Math.round(Number(event.currentTarget.value) * 1000)} /></label></div>
+                                <label>{message("Horizontal focus", "水平焦点")}<input type="range" min="0" max="1" step="0.01" bind:value={clip.focusX} /></label>
                                 <p>{clip.reason}</p>
                             </article>
                         {/each}
@@ -226,7 +293,24 @@
                             <article><time>{(segment.startMs / 1000).toFixed(1)}–{(segment.endMs / 1000).toFixed(1)}s{segment.speaker ? ` · ${segment.speaker}` : ""}</time><p>{segment.sourceText}</p><textarea bind:value={segment.translatedText} maxlength="4000"></textarea></article>
                         {/each}
                     </div>
-                    <div class="sticky"><button on:click={save} disabled={busy}>{message("Save draft", "保存草稿")}</button></div>
+                    <div class="sticky actions"><button class="secondary" on:click={save} disabled={busy}>{message("Save draft", "保存草稿")}</button><button on:click={renderDraft} disabled={busy || !draft.clips.some((clip) => clip.enabled)}>{message("Render vertical videos", "生成竖屏视频")}</button></div>
+                {:else if results}
+                    <h2>{message("Rendered clips", "生成结果")}</h2>
+                    <p class="muted">{message("Download links are refreshed for 10 minutes. Files are retained for 7 days.", "下载链接每次刷新后有效 10 分钟，文件保留 7 天。")}</p>
+                    <div class="results">
+                        {#each results.assets.filter((asset) => asset.kind === "output") as output}
+                            <article>
+                                {#if output.previewUrl}<video src={output.previewUrl} controls preload="metadata"><track kind="captions" srclang={results.job.targetLanguage || "en"} label={results.job.targetLanguage || "captions"} src={results.assets.find((asset) => asset.clipId === output.clipId && asset.kind === "vtt")?.previewUrl || ""} default /></video>{/if}
+                                <h3>{output.title || output.filename}</h3>
+                                <div class="actions">
+                                    <a class="button" href={output.downloadUrl}>{message("Download MP4", "下载 MP4")}</a>
+                                    {#each results.assets.filter((asset) => asset.clipId === output.clipId && asset.kind !== "output") as subtitle}
+                                        <a class="button secondary-link" href={subtitle.downloadUrl}>{subtitle.kind.toUpperCase()}</a>
+                                    {/each}
+                                </div>
+                            </article>
+                        {/each}
+                    </div>
                 {:else}
                     <h2>{message("Your draft will appear here", "草稿将在这里显示")}</h2>
                     <p class="muted">{message("Upload a video or choose a recent job.", "上传视频或选择一个最近任务。")}</p>
@@ -245,7 +329,8 @@
     .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     input, select, textarea { box-sizing: border-box; width: 100%; border: 1px solid rgba(128,128,128,.35); border-radius: 10px; padding: 10px; color: inherit; background: var(--background); }
     button, .button { border: 0; border-radius: 11px; padding: 11px 16px; color: white; background: var(--accent); font-weight: 750; cursor: pointer; text-decoration: none; width: fit-content; }
-    button:disabled { opacity: .5; cursor: wait; } button.secondary { background: transparent; color: inherit; border: 1px solid rgba(128,128,128,.4); }
+    button:disabled { opacity: .5; cursor: wait; } button.secondary, .secondary-link { background: transparent; color: inherit; border: 1px solid rgba(128,128,128,.4); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
     progress { width: 100%; accent-color: var(--accent); } .workspace { display: grid; grid-template-columns: 260px 1fr; gap: 18px; margin-top: 18px; align-items: start; }
     .jobs { display: grid; gap: 8px; } .jobs button { width: 100%; background: transparent; color: inherit; text-align: left; display: grid; gap: 4px; border: 1px solid transparent; }
     .jobs button.active { border-color: var(--accent); background: rgba(var(--accent-rgb), .08); } .jobs span, .muted, time, .privacy { opacity: .72; font-size: 12px; }
@@ -253,7 +338,9 @@
     article { border: 1px solid rgba(128,128,128,.22); border-radius: 13px; padding: 13px; } article p { line-height: 1.5; } .check { display: flex; align-items: center; } .check input { width: auto; }
     .title { margin: 10px 0; font-weight: 750; } .times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } textarea { min-height: 76px; resize: vertical; }
     .sticky { position: sticky; bottom: 12px; display: flex; justify-content: flex-end; } .alert { border-radius: 12px; padding: 12px 16px; margin: 14px 0; } .error { color: #c43b3b; background: rgba(196,59,59,.09); } .success { color: #287b37; background: rgba(40,123,55,.09); }
+    .source-preview { width: min(320px, 100%); aspect-ratio: 9 / 16; margin: 0 auto 22px; overflow: hidden; border-radius: 16px; background: #000; } .source-preview video { width: 100%; height: 100%; object-fit: cover; }
+    .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; } .results video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: #000; } .results h3 { margin: 10px 0; }
     .gate { display: grid; gap: 10px; max-width: 620px; }
-    @media (max-width: 820px) { .workspace { grid-template-columns: 1fr; } .clips { grid-template-columns: 1fr; } .jobs { max-height: 220px; overflow: auto; } }
+    @media (max-width: 820px) { .workspace { grid-template-columns: 1fr; } .clips, .results { grid-template-columns: 1fr; } .jobs { max-height: 220px; overflow: auto; } }
     @media (max-width: 560px) { .studio { width: min(100% - 20px, 1180px); padding-top: 20px; } .fields { grid-template-columns: 1fr; } .card { padding: 15px; border-radius: 14px; } }
 </style>

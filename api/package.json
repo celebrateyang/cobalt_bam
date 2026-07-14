@@ -17,6 +17,7 @@
         "test:membership-features": "node --test src/core/membership-features.test.js",
         "test:ai-video-infrastructure": "node --test src/ai-video/infrastructure.test.js",
         "test:ai-video-analysis": "node --test src/ai-video/highlights.test.js",
+        "test:ai-video-delivery": "node --test src/ai-video/media-import-token.test.js src/ai-video/subtitles.test.js",
         "social:sync-enabled": "node src/util/sync-enabled-accounts.js",
         "social:thumb-expiry": "node src/util/analyze-thumbnail-expiry.js",
         "douyin:probe-user": "node src/util/probe-douyin-user.js",

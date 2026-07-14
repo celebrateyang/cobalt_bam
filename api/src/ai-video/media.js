@@ -7,9 +7,9 @@ import ffprobeStatic from "ffprobe-static";
 
 const ffprobePath = ffprobeStatic.path;
 
-const runProcess = (command, args, { timeoutMs = 10 * 60 * 1000 } = {}) =>
+export const runProcess = (command, args, { timeoutMs = 10 * 60 * 1000, cwd } = {}) =>
     new Promise((resolve, reject) => {
-        const child = spawn(command, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+        const child = spawn(command, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"], cwd });
         let stdout = "";
         let stderr = "";
         const collect = (target) => (chunk) => {
@@ -92,3 +92,25 @@ export const extractAudioChunks = async ({ inputPath, outputDir, chunkSeconds = 
     return names.map((name, index) => ({ path: path.join(outputDir, name), offsetSeconds: index * chunkSeconds }));
 };
 
+export const renderVerticalClip = async ({ inputPath, outputPath, workDir, assFilename, startMs, endMs, focusX = 0.5 }) => {
+    const durationSeconds = (endMs - startMs) / 1000;
+    const safeFocus = Math.min(1, Math.max(0, Number(focusX) || 0.5));
+    const videoFilter = [
+        "scale=1080:1920:force_original_aspect_ratio=increase",
+        `crop=1080:1920:(in_w-out_w)*${safeFocus.toFixed(4)}:(in_h-out_h)/2`,
+        `ass=${assFilename}`,
+    ].join(",");
+    await runProcess(ffmpegPath, [
+        "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
+        "-ss", (startMs / 1000).toFixed(3),
+        "-i", inputPath,
+        "-t", durationSeconds.toFixed(3),
+        "-map", "0:v:0", "-map", "0:a:0?",
+        "-vf", videoFilter,
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
+        "-pix_fmt", "yuv420p", "-r", "30",
+        "-c:a", "aac", "-ar", "48000", "-b:a", "128k",
+        "-movflags", "+faststart", "-max_muxing_queue_size", "2048",
+        outputPath,
+    ], { cwd: workDir, timeoutMs: 15 * 60 * 1000 });
+};

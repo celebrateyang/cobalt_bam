@@ -17,11 +17,12 @@ No Bucket CORS configuration is required.
 
 ## Secret
 
-The existing `ai-video-secret` must contain two independent values:
+The existing `ai-video-secret` must contain three independent values after stage 3C:
 
 ```powershell
 kubectl create secret generic ai-video-secret -n infra `
   --from-literal=AI_VIDEO_UPLOAD_SESSION_ENCRYPTION_KEY='<32-byte-or-longer-random-secret>' `
+  --from-literal=AI_VIDEO_MEDIA_IMPORT_TOKEN_KEY='<different-32-byte-or-longer-random-secret>' `
   --from-literal=OPENAI_API_KEY='<openai-api-key>' `
   --dry-run=client -o yaml | kubectl apply -f -
 ```

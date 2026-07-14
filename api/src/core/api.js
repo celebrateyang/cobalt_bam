@@ -61,6 +61,7 @@ import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
 import aiVideoRouter from "../routes/ai-video.js";
+import { createMediaImportToken, getMediaImportCandidate } from "../ai-video/media-import-token.js";
 import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
 
@@ -1379,6 +1380,18 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     holdId: pointsHoldId,
                     holdExpiresAt: pointsHoldExpiresAt,
                 };
+            }
+
+            if (process.env.AI_VIDEO_ENABLED === "1" && pointsUser && result?.body && isDownloadSuccess) {
+                const candidate = getMediaImportCandidate(result.body);
+                if (candidate) {
+                    try {
+                        result.body.mediaImportToken = createMediaImportToken({ userId: pointsUser.id, ...candidate });
+                        result.body.mediaImportExpiresAt = Date.now() + 15 * 60 * 1000;
+                    } catch (error) {
+                        console.warn(`[AI VIDEO IMPORT] request_id=${requestId} token_issue_failed=${error.code || "unknown"}`);
+                    }
+                }
             }
 
             res.status(result.status).json(result.body);

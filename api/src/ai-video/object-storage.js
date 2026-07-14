@@ -104,9 +104,13 @@ class GcsObjectStorage {
         return this.bucket.file(objectKey).createWriteStream({ resumable: true, preconditionOpts: { ifGenerationMatch: 0 }, ...options });
     }
 
-    async createDownloadUrl(objectKey, expiresMs) {
+    async createDownloadUrl(objectKey, expiresMs, { responseDisposition, responseType } = {}) {
         assertObjectKey(objectKey, this.prefix);
-        const [url] = await this.bucket.file(objectKey).getSignedUrl({ version: "v4", action: "read", expires: Date.now() + expiresMs });
+        const [url] = await this.bucket.file(objectKey).getSignedUrl({
+            version: "v4", action: "read", expires: Date.now() + expiresMs,
+            ...(responseDisposition ? { responseDisposition } : {}),
+            ...(responseType ? { responseType } : {}),
+        });
         return url;
     }
 

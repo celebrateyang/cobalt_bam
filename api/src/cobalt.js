@@ -16,7 +16,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename).slice(0, -4);
 
-// Avoid exposing the Express implementation in default response headers.
+// Avoid exposing the Express implementation in default response headers1.
 app.disable("x-powered-by");
 
 if (env.apiURL) {

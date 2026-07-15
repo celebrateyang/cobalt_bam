@@ -22,11 +22,15 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
+        fontconfig \
+        fonts-noto-core \
+        fonts-noto-cjk \
         python3 \
         python3-pip \
         unzip \
         vim && \
     pip3 install --no-cache-dir yt-dlp && \
+    fc-cache -f && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

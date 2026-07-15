@@ -18,7 +18,9 @@ test("clip subtitles are trimmed, made relative, and bilingual", () => {
     ]);
     assert.match(renderSrt(cues), /00:00:00,000 --> 00:00:02,000/);
     assert.match(renderVtt(cues), /^WEBVTT/);
-    assert.match(renderAss(cues, { bilingual: true }), /PlayResX: 1080/);
+    const ass = renderAss(cues, { bilingual: true });
+    assert.match(ass, /PlayResX: 1080/);
+    assert.match(ass, /Style: Default,Noto Sans,/);
 });
 
 test("ASS and filenames escape user-controlled syntax", () => {

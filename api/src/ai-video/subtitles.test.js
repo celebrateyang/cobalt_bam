@@ -20,7 +20,14 @@ test("clip subtitles are trimmed, made relative, and bilingual", () => {
     assert.match(renderVtt(cues), /^WEBVTT/);
     const ass = renderAss(cues, { bilingual: true });
     assert.match(ass, /PlayResX: 1080/);
-    assert.match(ass, /Style: Default,Noto Sans,/);
+    assert.match(ass, /WrapStyle: 0/);
+    assert.match(ass, /Style: Default,Noto Sans,58,/);
+    assert.match(ass, /,1,4,0,2,96,96,190,1/);
+});
+
+test("translated-only ASS uses the larger single-language font", () => {
+    const ass = renderAss([{ startMs: 0, endMs: 2000, text: "Readable subtitle" }]);
+    assert.match(ass, /Style: Default,Noto Sans,66,/);
 });
 
 test("ASS and filenames escape user-controlled syntax", () => {

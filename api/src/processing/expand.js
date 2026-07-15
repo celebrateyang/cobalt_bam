@@ -7,6 +7,7 @@ import { genericUserAgent } from "../config.js";
 import { getRedirectingURL } from "../misc/utils.js";
 import { getCookie } from "./cookie/manager.js";
 import { buildPodcastExpandResult } from "./podcast.js";
+import { sliceCollectionFromItemKey } from "./collection-window.js";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_YTDLP_TIMEOUT_MS = 35000;
@@ -1314,7 +1315,18 @@ const expandDouyin = async (inputUrl) => {
         };
     }
 
-    const expandedItems = await fetchDouyinMixItems(mixId);
+    const expandedItems = sliceCollectionFromItemKey(
+        await fetchDouyinMixItems(mixId),
+        `douyin:video:${videoId}`,
+        {
+            itemKey: `douyin:video:${videoId}`,
+            url: canonicalUrl,
+            title: buildDouyinItemTitle(enrichedItem),
+            duration: toSecondsMaybeMs(
+                enrichedItem?.video?.duration ?? enrichedItem?.duration,
+            ),
+        },
+    );
 
     if (expandedItems.length <= 1) {
         return {

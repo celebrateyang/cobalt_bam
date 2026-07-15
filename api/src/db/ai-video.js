@@ -953,12 +953,12 @@ export const prepareAiVideoRenderedAsset = async ({ jobId, clipId, kind, objectK
     return result.rows[0];
 };
 
-export const finalizeAiVideoRenderedAsset = async ({ assetId, generation, sizeBytes, now = Date.now() }) => {
+export const finalizeAiVideoRenderedAsset = async ({ assetId, generation, sizeBytes }) => {
     const result = await query(
         `UPDATE ai_video_assets SET object_generation=$2,size_bytes=$3,cleanup_status='active',
             cleanup_after=expires_at,cleanup_attempts=0
          WHERE id=$1 AND deleted_at IS NULL RETURNING *`,
-        [assetId, generation, sizeBytes, now],
+        [assetId, generation, sizeBytes],
     );
     return result.rows[0] || null;
 };

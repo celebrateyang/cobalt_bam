@@ -6,7 +6,16 @@
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
 
-    import { removeItem, updateItem } from "$lib/state/task-manager/queue";
+    import {
+        removeItem,
+        updateItem,
+        waitForPointsRelease,
+        waitForQueueItemTerminal,
+    } from "$lib/state/task-manager/queue";
+    import {
+        retrySchedulerBusy,
+        scheduleQueueRetry,
+    } from "$lib/task-manager/retry-scheduler";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
@@ -60,11 +69,23 @@
     const retry = async (info: CobaltQueueItem) => {
         if (info.canRetry && info.originalRequest) {
             retrying = true;
-            await savingHandler({
-                request: info.originalRequest,
-                oldTaskId: id,
-            });
-            retrying = false;
+            try {
+                await scheduleQueueRetry(id, async () => {
+                    // Avoid racing a previous attempt's asynchronous hold release.
+                    await waitForPointsRelease(id);
+                    const response = await savingHandler({
+                        request: info.originalRequest,
+                        oldTaskId: id,
+                        skipPoints: true,
+                    });
+                    if (response?.status !== "error") {
+                        await waitForQueueItemTerminal(id);
+                    }
+                    return response;
+                });
+            } finally {
+                retrying = false;
+            }
         }
     };
 
@@ -332,6 +353,7 @@
                     aria-label={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
                     title={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
                     on:click={() => retry(info)}
+                    disabled={$retrySchedulerBusy}
                 >
                     <IconReload />
                     {#if hasResumeSnapshot}

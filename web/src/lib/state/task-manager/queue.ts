@@ -28,6 +28,48 @@ const clearPipelineCache = (queueItem: CobaltQueueItem) => {
 let update: (_: Updater<CobaltQueue>) => void;
 let queueRefreshHintAt = 0;
 const QUEUE_REFRESH_HINT_COOLDOWN_MS = 60_000;
+const pendingPointsReleases = new Map<UUID, Promise<void>>();
+
+export const waitForPointsRelease = async (id: UUID) => {
+    await pendingPointsReleases.get(id);
+};
+
+export const waitForQueueItemTerminal = (
+    id: UUID,
+    timeoutMs = 30 * 60 * 1000,
+) => new Promise<"done" | "error" | "missing" | "timeout">((resolve) => {
+    let seen = false;
+    let settled = false;
+    let unsubscribe: (() => void) | null = null;
+
+    const timer = setTimeout(() => settle("timeout"), timeoutMs);
+    const settle = (status: "done" | "error" | "missing" | "timeout") => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe?.();
+        unsubscribe = null;
+        resolve(status);
+    };
+
+    unsubscribe = queue.subscribe((queueData) => {
+        const item = queueData[id];
+        if (!item) {
+            if (seen) settle("missing");
+            return;
+        }
+
+        seen = true;
+        if (item.state === "done" || item.state === "error") {
+            settle(item.state);
+        }
+    });
+
+    if (settled) {
+        unsubscribe?.();
+        unsubscribe = null;
+    }
+});
 
 export const queue = readable<CobaltQueue>(
     {},
@@ -282,7 +324,13 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
     }
     maybeShowQueueRefreshHint(error);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
-    void releaseQueueHold(id, "queue_error", error);
+    const pendingRelease = releaseQueueHold(id, "queue_error", error).then(() => undefined);
+    pendingPointsReleases.set(id, pendingRelease);
+    void pendingRelease.finally(() => {
+        if (pendingPointsReleases.get(id) === pendingRelease) {
+            pendingPointsReleases.delete(id);
+        }
+    });
 }
 
 export function itemDone(id: UUID, file: File) {

@@ -16,7 +16,11 @@
         savePendingBatchIntent,
     } from "$lib/pwa/batch-intent";
     import { createDialog } from "$lib/state/dialogs";
-    import { queue as queueStore } from "$lib/state/task-manager/queue";
+    import {
+        queue as queueStore,
+        waitForPointsRelease,
+    } from "$lib/state/task-manager/queue";
+    import { scheduleQueueRetry } from "$lib/task-manager/retry-scheduler";
     import {
         clerkEnabled,
         isSignedIn,
@@ -700,13 +704,34 @@
             let shouldSkipItem = false;
 
             while (!cancelRequested && !itemCompleted) {
-                response = await savingHandler({
-                    request,
-                    skipPoints: true,
-                    oldTaskId: taskId,
-                    suppressErrors: true,
-                    queueMeta,
-                });
+                const launchAttempt = async () => {
+                    if (queueRetries > 0) {
+                        await waitForPointsRelease(taskId);
+                    }
+                    return savingHandler({
+                        request,
+                        skipPoints: true,
+                        oldTaskId: taskId,
+                        suppressErrors: true,
+                        queueMeta,
+                    });
+                };
+                if (rateLimitRetries > 0 || queueRetries > 0) {
+                    response = await scheduleQueueRetry(taskId, async () => {
+                        const retryResponse = await launchAttempt();
+                        const retryItem = get(queueStore)[taskId];
+                        if (
+                            retryResponse?.status !== "error" &&
+                            retryItem &&
+                            (retryItem.state === "waiting" || retryItem.state === "running")
+                        ) {
+                            await waitForQueueItemDone(taskId);
+                        }
+                        return retryResponse;
+                    });
+                } else {
+                    response = await launchAttempt();
+                }
 
                 if (response?.status === "error" && response.error.code === rateLimitErrorCode) {
                     rateLimitRetries += 1;

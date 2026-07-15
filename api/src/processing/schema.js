@@ -40,6 +40,15 @@ export const apiSchema = z.object({
 
     batch: z.boolean().default(false),
 
+    // Stable browser queue identity used to make points holds idempotent
+    // across network retries and manual queue resumes.
+    queueId: z.string()
+              .trim()
+              .min(1)
+              .max(120)
+              .regex(/^[0-9a-zA-Z_-]+$/)
+              .optional(),
+
     filenameTitle: z.string()
                     .trim()
                     .min(1)

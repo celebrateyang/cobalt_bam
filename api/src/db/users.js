@@ -14,6 +14,78 @@ const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
 export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 200;
+const DOWNLOAD_REQUEST_LEASE_MS = 5 * 60 * 1000;
+const DOWNLOAD_REQUEST_REPLAY_MS = 60 * 60 * 1000;
+
+export const calculateFirstDownloadGraceCharge = ({
+    requiredPoints,
+    availablePoints,
+    allowFirstDownloadGrace = false,
+    maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+    firstDownloadGraceEligible = false,
+    firstDownloadGraceUsed = false,
+    downloadSuccessCount = 0,
+    activeHoldCount = 0,
+} = {}) => {
+    const required = Math.max(0, Number(requiredPoints) || 0);
+    const available = Number(availablePoints);
+    const graceLimit = Math.max(0, Number(maxGracePoints) || 0);
+    const gracePoints = Math.max(0, required - available);
+    const useFirstDownloadGrace =
+        Number.isFinite(available) &&
+        allowFirstDownloadGrace &&
+        firstDownloadGraceEligible &&
+        !firstDownloadGraceUsed &&
+        Number(downloadSuccessCount || 0) === 0 &&
+        Number(activeHoldCount || 0) === 0 &&
+        gracePoints > 0 &&
+        gracePoints <= graceLimit;
+    const allowed =
+        Number.isFinite(available) &&
+        (available >= required || useFirstDownloadGrace);
+
+    return {
+        allowed,
+        useFirstDownloadGrace,
+        chargedPoints: useFirstDownloadGrace
+            ? Math.max(0, Math.min(required, available))
+            : required,
+        gracePoints: useFirstDownloadGrace ? gracePoints : 0,
+    };
+};
+
+export const resolveDownloadRequestAction = ({
+    request,
+    sourceUrl,
+    hold = null,
+    now = Date.now(),
+} = {}) => {
+    if (!request || request.source_url !== sourceUrl) {
+        return { action: "reject", code: "IDEMPOTENCY_CONFLICT" };
+    }
+    if (request.status === "completed") {
+        if (hold?.status === "finalized") {
+            return { action: "reject", code: "IDEMPOTENCY_FINALIZED" };
+        }
+        const replayableHold = !hold || (
+            hold.status === "held" && Number(hold.expires_at) > now
+        );
+        if (
+            replayableHold &&
+            Number(request.replay_expires_at) > now &&
+            request.response_body
+        ) {
+            return { action: "replay" };
+        }
+    }
+    if (
+        request.status === "processing" &&
+        Number(request.lease_expires_at) > now
+    ) {
+        return { action: "reject", code: "IDEMPOTENCY_IN_PROGRESS" };
+    }
+    return { action: "claim" };
+};
 
 export const normalizeEmailForSignup = (email) => {
     if (typeof email !== "string") return null;
@@ -288,6 +360,9 @@ export const initUserDatabase = async () => {
             status TEXT NOT NULL DEFAULT 'held', -- held | finalized | released | expired
             reason TEXT,
             source_url TEXT,
+            queue_id TEXT,
+            required_points INTEGER,
+            grace_points INTEGER NOT NULL DEFAULT 0,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             expires_at BIGINT NOT NULL,
@@ -298,12 +373,58 @@ export const initUserDatabase = async () => {
     `);
 
     await query(
+        `ALTER TABLE user_points_holds
+            ADD COLUMN IF NOT EXISTS queue_id TEXT;`,
+    );
+    await query(
+        `ALTER TABLE user_points_holds
+            ADD COLUMN IF NOT EXISTS required_points INTEGER;`,
+    );
+    await query(
+        `ALTER TABLE user_points_holds
+            ADD COLUMN IF NOT EXISTS grace_points INTEGER NOT NULL DEFAULT 0;`,
+    );
+
+    await query(
         `CREATE INDEX IF NOT EXISTS idx_user_points_holds_user_status
          ON user_points_holds(user_id, status);`,
     );
     await query(
         `CREATE INDEX IF NOT EXISTS idx_user_points_holds_expires_at
          ON user_points_holds(expires_at);`,
+    );
+    await query(
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_user_points_holds_user_queue
+         ON user_points_holds(user_id, queue_id)
+         WHERE queue_id IS NOT NULL;`,
+    );
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS user_download_requests (
+            id BIGSERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            queue_id TEXT NOT NULL,
+            source_url TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'processing',
+            owner_token TEXT,
+            response_status INTEGER,
+            response_body JSONB,
+            lease_expires_at BIGINT NOT NULL,
+            replay_expires_at BIGINT,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE (user_id, queue_id)
+        );
+    `);
+
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_download_requests_expiry
+         ON user_download_requests(lease_expires_at, replay_expires_at);`,
+    );
+    await query(
+        `CREATE INDEX IF NOT EXISTS idx_user_download_requests_updated
+         ON user_download_requests(updated_at);`,
     );
 
     // Credit orders (top-ups for points/credits)
@@ -1031,12 +1152,277 @@ const getActiveHoldPoints = async (client, userId, now) => {
     return Number.isFinite(held) ? held : 0;
 };
 
+const getActiveHoldCount = async (client, userId, now) => {
+    const result = await client.query(
+        `
+        SELECT COUNT(*) AS count
+        FROM user_points_holds
+        WHERE user_id = $1
+          AND status = 'held'
+          AND expires_at > $2;
+        `,
+        [userId, now],
+    );
+    const count = Number.parseInt(result.rows?.[0]?.count ?? "0", 10);
+    return Number.isFinite(count) ? count : 0;
+};
+
+const lockDownloadRequestClaim = async (client, {
+    userId,
+    queueId,
+    ownerToken,
+}) => {
+    if (!queueId || !ownerToken) return true;
+
+    const result = await client.query(
+        `
+        SELECT id
+        FROM user_download_requests
+        WHERE user_id = $1
+          AND queue_id = $2
+          AND status = 'processing'
+          AND owner_token = $3
+        FOR UPDATE;
+        `,
+        [userId, queueId, ownerToken],
+    );
+    return result.rowCount > 0;
+};
+
+const completeDownloadRequestWithClient = async (client, {
+    userId,
+    queueId,
+    ownerToken,
+    responseStatus,
+    responseBody,
+    now = Date.now(),
+}) => {
+    if (!queueId || !ownerToken) return true;
+
+    const result = await client.query(
+        `
+        UPDATE user_download_requests
+        SET status = 'completed',
+            response_status = $4,
+            response_body = $5,
+            replay_expires_at = $6,
+            lease_expires_at = $3,
+            updated_at = $3
+        WHERE user_id = $1
+          AND queue_id = $2
+          AND status = 'processing'
+          AND owner_token = $7;
+        `,
+        [
+            userId,
+            queueId,
+            now,
+            responseStatus,
+            responseBody,
+            now + DOWNLOAD_REQUEST_REPLAY_MS,
+            ownerToken,
+        ],
+    );
+    return result.rowCount > 0;
+};
+
+export const claimDownloadRequest = async ({
+    userId,
+    queueId,
+    sourceUrl,
+} = {}) => {
+    if (!userId || !queueId || !sourceUrl) {
+        return { ok: true, status: "skipped" };
+    }
+
+    const client = await getClient();
+    const now = Date.now();
+    const ownerToken = nanoid(20);
+    const leaseExpiresAt = now + DOWNLOAD_REQUEST_LEASE_MS;
+
+    try {
+        await client.query("BEGIN");
+        await client.query(
+            `
+            DELETE FROM user_download_requests
+            WHERE id IN (
+                SELECT id
+                FROM user_download_requests
+                WHERE updated_at < $1
+                  AND (status <> 'processing' OR lease_expires_at <= $2)
+                ORDER BY updated_at
+                LIMIT 100
+            );
+            `,
+            [now - 24 * 60 * 60 * 1000, now],
+        );
+        const inserted = await client.query(
+            `
+            INSERT INTO user_download_requests (
+                user_id,
+                queue_id,
+                source_url,
+                status,
+                owner_token,
+                lease_expires_at,
+                created_at,
+                updated_at
+            ) VALUES ($1, $2, $3, 'processing', $4, $5, $6, $6)
+            ON CONFLICT (user_id, queue_id) DO NOTHING
+            RETURNING *;
+            `,
+            [userId, queueId, sourceUrl, ownerToken, leaseExpiresAt, now],
+        );
+
+        if (inserted.rowCount) {
+            const legacyHoldRes = await client.query(
+                `
+                SELECT status, expires_at
+                FROM user_points_holds
+                WHERE user_id = $1 AND queue_id = $2;
+                `,
+                [userId, queueId],
+            );
+            const legacyHold = legacyHoldRes.rows?.[0] ?? null;
+            if (legacyHold?.status === "finalized") {
+                await client.query("ROLLBACK");
+                return { ok: false, code: "IDEMPOTENCY_FINALIZED" };
+            }
+            if (
+                legacyHold?.status === "held" &&
+                Number(legacyHold.expires_at) > now
+            ) {
+                await client.query("ROLLBACK");
+                return { ok: false, code: "IDEMPOTENCY_IN_PROGRESS" };
+            }
+            await client.query("COMMIT");
+            return { ok: true, status: "claimed", ownerToken };
+        }
+
+        const existingRes = await client.query(
+            `
+            SELECT *
+            FROM user_download_requests
+            WHERE user_id = $1 AND queue_id = $2
+            FOR UPDATE;
+            `,
+            [userId, queueId],
+        );
+        const existing = existingRes.rows?.[0];
+        const holdRes = await client.query(
+            `
+            SELECT status, expires_at
+            FROM user_points_holds
+            WHERE user_id = $1 AND queue_id = $2;
+            `,
+            [userId, queueId],
+        );
+        const action = resolveDownloadRequestAction({
+            request: existing,
+            sourceUrl,
+            hold: holdRes.rows?.[0] ?? null,
+            now,
+        });
+        if (action.action === "reject") {
+            await client.query("ROLLBACK");
+            return { ok: false, code: action.code };
+        }
+        if (action.action === "replay") {
+            await client.query("COMMIT");
+            return {
+                ok: true,
+                status: "replay",
+                responseStatus: existing.response_status,
+                responseBody: existing.response_body,
+            };
+        }
+
+        await client.query(
+            `
+            UPDATE user_download_requests
+            SET status = 'processing',
+                owner_token = $3,
+                response_status = NULL,
+                response_body = NULL,
+                replay_expires_at = NULL,
+                lease_expires_at = $4,
+                updated_at = $5
+            WHERE user_id = $1 AND queue_id = $2;
+            `,
+            [userId, queueId, ownerToken, leaseExpiresAt, now],
+        );
+        await client.query("COMMIT");
+        return { ok: true, status: "claimed", ownerToken };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {
+            // ignore
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const completeDownloadRequest = async ({
+    userId,
+    queueId,
+    ownerToken,
+    responseStatus,
+    responseBody,
+} = {}) => {
+    const client = await getClient();
+    try {
+        const completed = await completeDownloadRequestWithClient(client, {
+            userId,
+            queueId,
+            ownerToken,
+            responseStatus,
+            responseBody,
+        });
+        return { ok: completed };
+    } finally {
+        client.release();
+    }
+};
+
+export const failDownloadRequest = async ({
+    userId,
+    queueId,
+    ownerToken,
+} = {}) => {
+    if (!userId || !queueId || !ownerToken) return { ok: true };
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE user_download_requests
+        SET status = 'failed',
+            owner_token = NULL,
+            lease_expires_at = $3,
+            updated_at = $3
+        WHERE user_id = $1
+          AND queue_id = $2
+          AND status = 'processing'
+          AND owner_token = $4;
+        `,
+        [userId, queueId, now, ownerToken],
+    );
+    return { ok: result.rowCount > 0 };
+};
+
 export const createPointsHold = async ({
     userId,
     points,
     expiresAt,
     reason = null,
     sourceUrl = null,
+    queueId = null,
+    allowFirstDownloadGrace = false,
+    maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+    idempotencyOwnerToken = null,
+    responseStatus = null,
+    responseBody = null,
 } = {}) => {
     const client = await getClient();
     const now = Date.now();
@@ -1046,7 +1432,14 @@ export const createPointsHold = async ({
         await expireUserPointsHolds(client, userId, now);
 
         const userRes = await client.query(
-            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            `SELECT
+                points,
+                download_success_count,
+                first_download_grace_eligible,
+                first_download_grace_used
+             FROM users
+             WHERE id = $1
+             FOR UPDATE;`,
             [userId],
         );
         if (!userRes.rowCount) {
@@ -1055,16 +1448,168 @@ export const createPointsHold = async ({
         }
 
         const userPoints = Number(userRes.rows[0]?.points ?? 0);
-        const heldPoints = await getActiveHoldPoints(client, userId, now);
-        const available = userPoints - heldPoints;
+        const ownsDownloadRequest = await lockDownloadRequestClaim(client, {
+            userId,
+            queueId,
+            ownerToken: idempotencyOwnerToken,
+        });
+        if (!ownsDownloadRequest) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "IDEMPOTENCY_LOST" };
+        }
 
-        if (!Number.isFinite(available) || available < points) {
+        const completeQueuedRequest = async (hold) => {
+            if (!idempotencyOwnerToken) return true;
+            return completeDownloadRequestWithClient(client, {
+                userId,
+                queueId,
+                ownerToken: idempotencyOwnerToken,
+                responseStatus,
+                responseBody: {
+                    ...responseBody,
+                    points: {
+                        outcome: "held",
+                        required: hold.required_points ?? hold.points,
+                        before: userPoints,
+                        after: userPoints,
+                        holdId: hold.hold_id,
+                        holdExpiresAt: hold.expires_at,
+                    },
+                },
+                now,
+            });
+        };
+
+        let existingHold = null;
+        if (queueId) {
+            const existingRes = await client.query(
+                `
+                SELECT *
+                FROM user_points_holds
+                WHERE user_id = $1 AND queue_id = $2
+                FOR UPDATE;
+                `,
+                [userId, queueId],
+            );
+            existingHold = existingRes.rows?.[0] ?? null;
+
+            if (
+                existingHold &&
+                existingHold.source_url &&
+                sourceUrl &&
+                existingHold.source_url !== sourceUrl
+            ) {
+                await client.query("ROLLBACK");
+                return { ok: false, code: "IDEMPOTENCY_CONFLICT" };
+            }
+
+            if (existingHold?.status === "held") {
+                const refreshedRes = await client.query(
+                    `
+                    UPDATE user_points_holds
+                    SET updated_at = $2,
+                        expires_at = GREATEST(expires_at, $3)
+                    WHERE id = $1
+                    RETURNING *;
+                    `,
+                    [existingHold.id, now, expiresAt],
+                );
+                existingHold = refreshedRes.rows[0];
+                if (!await completeQueuedRequest(existingHold)) {
+                    await client.query("ROLLBACK");
+                    return { ok: false, code: "IDEMPOTENCY_LOST" };
+                }
+                await client.query("COMMIT");
+                return {
+                    ok: true,
+                    status: "held",
+                    reused: true,
+                    holdId: existingHold.hold_id,
+                    pointsBefore: userPoints,
+                    pointsHeld: existingHold.points,
+                    pointsRequired: existingHold.required_points ?? existingHold.points,
+                    expiresAt: existingHold.expires_at,
+                };
+            }
+
+            if (existingHold?.status === "finalized") {
+                await client.query("ROLLBACK");
+                return { ok: false, code: "IDEMPOTENCY_FINALIZED" };
+            }
+        }
+
+        const heldPoints = await getActiveHoldPoints(client, userId, now);
+        const activeHoldCount = await getActiveHoldCount(client, userId, now);
+        const available = userPoints - heldPoints;
+        const requiredPoints = existingHold?.required_points ?? points;
+        const graceCharge = calculateFirstDownloadGraceCharge({
+            requiredPoints,
+            availablePoints: available,
+            allowFirstDownloadGrace,
+            maxGracePoints,
+            firstDownloadGraceEligible:
+                userRes.rows[0]?.first_download_grace_eligible === true,
+            firstDownloadGraceUsed:
+                userRes.rows[0]?.first_download_grace_used === true,
+            downloadSuccessCount:
+                userRes.rows[0]?.download_success_count ?? 0,
+            activeHoldCount,
+        });
+        const holdPoints = graceCharge.chargedPoints;
+
+        if (!graceCharge.allowed) {
             await client.query("ROLLBACK");
             return {
                 ok: false,
                 code: "INSUFFICIENT_POINTS",
                 current: Number.isFinite(available) ? available : userPoints,
-                required: points,
+                required: requiredPoints,
+            };
+        }
+
+        if (existingHold) {
+            const reactivated = await client.query(
+                `
+                UPDATE user_points_holds
+                SET status = 'held',
+                    points = $2,
+                    required_points = $3,
+                    grace_points = $4,
+                    reason = COALESCE($5, reason),
+                    source_url = COALESCE(source_url, $6),
+                    updated_at = $7,
+                    expires_at = $8,
+                    finalized_at = NULL,
+                    released_at = NULL
+                WHERE id = $1
+                RETURNING *;
+                `,
+                [
+                    existingHold.id,
+                    holdPoints,
+                    requiredPoints,
+                    graceCharge.gracePoints,
+                    reason,
+                    sourceUrl,
+                    now,
+                    expiresAt,
+                ],
+            );
+            if (!await completeQueuedRequest(reactivated.rows[0])) {
+                await client.query("ROLLBACK");
+                return { ok: false, code: "IDEMPOTENCY_LOST" };
+            }
+            await client.query("COMMIT");
+            const hold = reactivated.rows[0];
+            return {
+                ok: true,
+                status: "held",
+                reused: true,
+                holdId: hold.hold_id,
+                pointsBefore: userPoints,
+                pointsHeld: hold.points,
+                pointsRequired: hold.required_points ?? hold.points,
+                expiresAt: hold.expires_at,
             };
         }
 
@@ -1078,21 +1623,48 @@ export const createPointsHold = async ({
                 status,
                 reason,
                 source_url,
+                queue_id,
+                required_points,
+                grace_points,
                 created_at,
                 updated_at,
                 expires_at
-            ) VALUES ($1, $2, $3, 'held', $4, $5, $6, $6, $7);
+            ) VALUES ($1, $2, $3, 'held', $4, $5, $6, $7, $8, $9, $9, $10);
             `,
-            [holdId, userId, points, reason, sourceUrl, now, expiresAt],
+            [
+                holdId,
+                userId,
+                holdPoints,
+                reason,
+                sourceUrl,
+                queueId,
+                requiredPoints,
+                graceCharge.gracePoints,
+                now,
+                expiresAt,
+            ],
         );
+
+        const insertedHold = {
+            hold_id: holdId,
+            points: holdPoints,
+            required_points: requiredPoints,
+            expires_at: expiresAt,
+        };
+        if (!await completeQueuedRequest(insertedHold)) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "IDEMPOTENCY_LOST" };
+        }
 
         await client.query("COMMIT");
 
         return {
             ok: true,
+            status: "held",
             holdId,
             pointsBefore: userPoints,
-            pointsHeld: points,
+            pointsHeld: holdPoints,
+            pointsRequired: requiredPoints,
             expiresAt,
         };
     } catch (error) {
@@ -1119,6 +1691,18 @@ export const finalizePointsHold = async ({
     try {
         await client.query("BEGIN");
         await expireUserPointsHolds(client, userId, now);
+
+        // Keep the lock order consistent with createPointsHold (user -> hold)
+        // so a retry cannot deadlock with finalization of the same task.
+        const userRes = await client.query(
+            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
+            [userId],
+        );
+        if (!userRes.rowCount) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "USER_NOT_FOUND" };
+        }
+        const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
 
         const holdRes = await client.query(
             `
@@ -1162,11 +1746,8 @@ export const finalizePointsHold = async ({
             return { ok: false, code: "HOLD_EXPIRED", status: "released" };
         }
 
-        const userRes = await client.query(
-            `SELECT points FROM users WHERE id = $1 FOR UPDATE;`,
-            [userId],
-        );
-        const userPoints = Number(userRes.rows?.[0]?.points ?? 0);
+        const gracePoints = Math.max(0, Number(hold.grace_points) || 0);
+        const useFirstDownloadGrace = gracePoints > 0;
 
         if (!Number.isFinite(userPoints) || userPoints < hold.points) {
             await client.query(
@@ -1190,11 +1771,28 @@ export const finalizePointsHold = async ({
             SET points = points - $2,
                 updated_at = $3,
                 download_success_count = COALESCE(download_success_count, 0) +
-                    CASE WHEN $4 THEN 1 ELSE 0 END
+                    CASE WHEN $4 THEN 1 ELSE 0 END,
+                first_download_grace_used = CASE
+                    WHEN $5 THEN true
+                    ELSE first_download_grace_used
+                END,
+                first_download_grace_used_at = CASE
+                    WHEN $5 THEN $3
+                    ELSE first_download_grace_used_at
+                END,
+                first_download_grace_extra_points =
+                    COALESCE(first_download_grace_extra_points, 0) + $6
             WHERE id = $1
             RETURNING *;
             `,
-            [userId, hold.points, now, markDownloadSuccess],
+            [
+                userId,
+                hold.points,
+                now,
+                markDownloadSuccess,
+                useFirstDownloadGrace,
+                gracePoints,
+            ],
         );
 
         await client.query(
@@ -1217,6 +1815,8 @@ export const finalizePointsHold = async ({
             charged: hold.points,
             pointsBefore: userPoints,
             pointsAfter: updated.rows?.[0]?.points ?? null,
+            usedFirstDownloadGrace: useFirstDownloadGrace,
+            gracePoints,
         };
     } catch (error) {
         try {
@@ -1305,6 +1905,10 @@ export const consumeUserPoints = async (
         allowFirstDownloadGrace = false,
         maxGracePoints = FIRST_DOWNLOAD_GRACE_MAX_POINTS,
         markDownloadSuccess = false,
+        queueId = null,
+        idempotencyOwnerToken = null,
+        responseStatus = null,
+        responseBody = null,
     } = {},
 ) => {
     const client = await getClient();
@@ -1341,32 +1945,38 @@ export const consumeUserPoints = async (
         const firstDownloadGraceEligible =
             userRes.rows?.[0]?.first_download_grace_eligible === true;
         const heldPoints = await getActiveHoldPoints(client, id, now);
+        const activeHoldCount = await getActiveHoldCount(client, id, now);
         const available = userPoints - heldPoints;
-        const normalizedMaxGracePoints = Math.max(
-            0,
-            Number(maxGracePoints) || 0,
-        );
-        const gracePoints = Math.max(0, points - available);
-        const useFirstDownloadGrace =
-            allowFirstDownloadGrace &&
-            firstDownloadGraceEligible &&
-            !firstDownloadGraceUsed &&
-            downloadSuccessCount === 0 &&
-            heldPoints <= 0 &&
-            gracePoints > 0 &&
-            gracePoints <= normalizedMaxGracePoints;
+        const graceCharge = calculateFirstDownloadGraceCharge({
+            requiredPoints: points,
+            availablePoints: available,
+            allowFirstDownloadGrace,
+            maxGracePoints,
+            firstDownloadGraceEligible,
+            firstDownloadGraceUsed,
+            downloadSuccessCount,
+            activeHoldCount,
+        });
+        const {
+            useFirstDownloadGrace,
+            chargedPoints,
+            gracePoints,
+        } = graceCharge;
 
-        if (
-            !Number.isFinite(available) ||
-            (available < points && !useFirstDownloadGrace)
-        ) {
+        if (!graceCharge.allowed) {
             await client.query("ROLLBACK");
             return null;
         }
 
-        const chargedPoints = useFirstDownloadGrace
-            ? Math.max(0, Math.min(points, available))
-            : points;
+        const ownsDownloadRequest = await lockDownloadRequestClaim(client, {
+            userId: id,
+            queueId,
+            ownerToken: idempotencyOwnerToken,
+        });
+        if (!ownsDownloadRequest) {
+            await client.query("ROLLBACK");
+            return null;
+        }
 
         const result = await client.query(
             `
@@ -1396,6 +2006,21 @@ export const consumeUserPoints = async (
                 useFirstDownloadGrace ? gracePoints : 0,
             ],
         );
+
+        if (idempotencyOwnerToken) {
+            const completed = await completeDownloadRequestWithClient(client, {
+                userId: id,
+                queueId,
+                ownerToken: idempotencyOwnerToken,
+                responseStatus,
+                responseBody,
+                now,
+            });
+            if (!completed) {
+                await client.query("ROLLBACK");
+                return null;
+            }
+        }
 
         await client.query("COMMIT");
 

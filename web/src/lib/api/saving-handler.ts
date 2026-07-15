@@ -18,6 +18,7 @@ import { currentApiURL } from "$lib/api/api-url";
 import { finalizePointsHold } from "$lib/api/points";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { savePendingLaunchIntent } from "$lib/pwa/launch-intent";
+import { uuid } from "$lib/util";
 import {
     fetchCurrentUserPointsProfile,
     isFirstDownloadGraceEligible,
@@ -472,7 +473,15 @@ export const savingHandler = async ({
     if (!request && !url) return null;
 
     const selectedRequest = request || buildSaveRequest(url!);
-    const effectiveTaskId = oldTaskId || findResumableTaskIdForUrl(selectedRequest.url);
+    const effectiveTaskId =
+        oldTaskId ||
+        selectedRequest.queueId ||
+        findResumableTaskIdForUrl(selectedRequest.url) ||
+        uuid();
+
+    // Every browser launch gets a stable logical identity. Queue retries keep
+    // this value so the API can reuse the same points hold.
+    selectedRequest.queueId = effectiveTaskId;
 
     if (clerkEnabled) {
         const signedIn = await requireDownloadAuth();
@@ -591,8 +600,9 @@ export const savingHandler = async ({
             return response;
         }
 
-        // For batch requests forced into the queue, treat redirects as queue items.
-        if (selectedRequest.localProcessing === "forced" && selectedRequest.batch) {
+        // Forced local-processing requests keep points deferred even when the
+        // extractor returns a redirect instead of a pipeline response.
+        if (selectedRequest.localProcessing === "forced") {
             // Only tunnel links should be queued for fetch workers.
             // Direct CDN redirects usually fail in fetch worker due cross-origin restrictions.
             if (!isTunnelUrl(redirectUrl)) {

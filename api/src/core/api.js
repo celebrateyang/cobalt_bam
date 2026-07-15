@@ -43,8 +43,11 @@ import * as YouTubeSession from "../processing/helpers/youtube-session.js";
 import { verifyToken } from "@clerk/express";
 import {
     consumeUserPoints,
+    claimDownloadRequest,
+    completeDownloadRequest,
     createPointsHold,
     completeMemberDownloadUsage,
+    failDownloadRequest,
     FIRST_DOWNLOAD_GRACE_MAX_POINTS,
     getUserByClerkId,
     reserveMemberDownloadUsage,
@@ -1003,7 +1006,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             },
         });
 
+        let downloadRequestClaim = null;
+
         const failDownload = async (code, context, extra = {}) => {
+            if (downloadRequestClaim) {
+                try {
+                    await failDownloadRequest(downloadRequestClaim);
+                } catch (error) {
+                    console.error("Failed to release download request claim:", error);
+                }
+                downloadRequestClaim = null;
+            }
             const { status, body } = createResponse("error", { code, context });
             const completedAt = Date.now();
             scheduleDownloadAttemptComplete(
@@ -1031,6 +1044,65 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             return res.status(status).json(body);
         };
 
+        if (pointsUser && normalizedRequest.queueId) {
+            try {
+                const claim = await claimDownloadRequest({
+                    userId: pointsUser.id,
+                    queueId: normalizedRequest.queueId,
+                    sourceUrl: normalizedRequest.url,
+                });
+                if (claim.status === "replay") {
+                    const completedAt = Date.now();
+                    const replayStatus = Number(claim.responseStatus) || 200;
+                    const replayBodyStatus = claim.responseBody?.status ?? "unknown";
+                    scheduleDownloadAttemptComplete(
+                        downloadAttemptCreateTask,
+                        {
+                            requestId,
+                            status:
+                                replayStatus < 400 && replayBodyStatus !== "error"
+                                    ? DOWNLOAD_ATTEMPT_STATUS.success
+                                    : DOWNLOAD_ATTEMPT_STATUS.failed,
+                            service:
+                                claim.responseBody?.service ??
+                                getUrlHost(normalizedRequest.url),
+                            httpStatus: replayStatus,
+                            bodyStatus: replayBodyStatus,
+                            errorCode: claim.responseBody?.error?.code ?? null,
+                            pointsOutcome:
+                                claim.responseBody?.points?.outcome ??
+                                "idempotency_replay",
+                            completedAt,
+                            elapsedMs: completedAt - startedAtMs,
+                            metadata: {
+                                queueId: normalizedRequest.queueId,
+                                idempotencyReplay: true,
+                            },
+                        },
+                    );
+                    return res
+                        .status(replayStatus)
+                        .json(claim.responseBody);
+                }
+                if (!claim.ok) {
+                    return failDownload("error.api.points.unavailable", null, {
+                        pointsOutcome: "idempotency_conflict",
+                        metadata: { idempotencyCode: claim.code },
+                    });
+                }
+                if (claim.status === "claimed") {
+                    downloadRequestClaim = {
+                        userId: pointsUser.id,
+                        queueId: normalizedRequest.queueId,
+                        ownerToken: claim.ownerToken,
+                    };
+                }
+            } catch (error) {
+                console.error("Failed to claim download request:", error);
+                return failDownload("error.api.points.unavailable");
+            }
+        }
+
         if (env.downloadDedupeTTL > 0) {
             try {
                 const dedupeIdentity = resolveDedupeIdentity(req, clerkUserId);
@@ -1057,6 +1129,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             elapsedMs: completedAt - startedAtMs,
                         },
                     );
+                    if (downloadRequestClaim) {
+                        await failDownloadRequest(downloadRequestClaim).catch(() => false);
+                        downloadRequestClaim = null;
+                    }
                     return res.status(429).json(body);
                 }
                 await downloadDedupe.set(dedupeKey, "1", env.downloadDedupeTTL);
@@ -1174,6 +1250,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
             const resultBodyStatus = result?.body?.status ?? "unknown";
             const isBatchRequest = normalizedRequest?.batch === true;
+            const isBrowserQueuedRequest =
+                resultBodyStatus === "local-processing" ||
+                (
+                    normalizedRequest?.localProcessing === "forced" &&
+                    resultBodyStatus === "tunnel"
+                );
+            const shouldDeferPointsCharge = isBrowserQueuedRequest;
             let pointsOutcome = "skipped";
             let pointsRequired = null;
             let pointsBefore = null;
@@ -1232,7 +1315,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             service: result?.body?.service ?? parsed.host,
                         });
                     }
-                } else if (isBatchRequest) {
+                } else if (shouldDeferPointsCharge) {
                     pointsOutcome = "hold";
                     const holdExpiresAt =
                         Date.now() + env.pointsHoldTtlSeconds * 1000;
@@ -1241,11 +1324,38 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             userId: pointsUser.id,
                             points: pointsRequired,
                             expiresAt: holdExpiresAt,
-                            reason: "batch_download",
+                            reason: isBatchRequest
+                                ? "batch_download"
+                                : "queued_download",
                             sourceUrl: normalizedRequest.url,
+                            queueId: normalizedRequest.queueId ?? null,
+                            allowFirstDownloadGrace: true,
+                            maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
+                            idempotencyOwnerToken:
+                                downloadRequestClaim?.ownerToken ?? null,
+                            responseStatus: result.status,
+                            responseBody: result.body,
                         });
 
                         if (!hold.ok) {
+                            if (
+                                hold.code === "IDEMPOTENCY_CONFLICT" ||
+                                hold.code === "IDEMPOTENCY_FINALIZED" ||
+                                hold.code === "IDEMPOTENCY_LOST"
+                            ) {
+                                pointsOutcome = "idempotency_conflict";
+                                return failDownload(
+                                    "error.api.points.unavailable",
+                                    null,
+                                    {
+                                        pointsOutcome,
+                                        pointsRequired,
+                                        pointsBefore,
+                                        pointsAfter,
+                                        service: result?.body?.service ?? parsed.host,
+                                    },
+                                );
+                            }
                             pointsOutcome = "insufficient";
                             return failDownload(
                                 "error.api.points.insufficient",
@@ -1264,6 +1374,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         }
 
                         pointsOutcome = "held";
+                        pointsRequired = hold.pointsRequired ?? pointsRequired;
                         pointsHoldId = hold.holdId;
                         pointsHoldExpiresAt = hold.expiresAt;
                         pointsBefore = hold.pointsBefore ?? pointsBefore;
@@ -1289,6 +1400,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                                 allowFirstDownloadGrace: true,
                                 maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
                                 markDownloadSuccess: true,
+                                queueId: normalizedRequest.queueId ?? null,
+                                idempotencyOwnerToken:
+                                    downloadRequestClaim?.ownerToken ?? null,
+                                responseStatus: result.status,
+                                responseBody: result.body,
                             },
                         );
                         if (!updated) {
@@ -1367,11 +1483,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         membershipPlan,
                         membershipUsage: membershipLimit,
                         isBatch: isBatchRequest,
+                        isBrowserQueued: isBrowserQueuedRequest,
+                        queueId: normalizedRequest?.queueId ?? null,
                     },
                 },
             );
 
-            if (isBatchRequest && result?.body && pointsOutcome !== "skipped") {
+            if (shouldDeferPointsCharge && result?.body && pointsOutcome !== "skipped") {
                 result.body.points = {
                     outcome: pointsOutcome,
                     required: pointsRequired,
@@ -1392,6 +1510,23 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         console.warn(`[AI VIDEO IMPORT] request_id=${requestId} token_issue_failed=${error.code || "unknown"}`);
                     }
                 }
+            }
+
+            if (downloadRequestClaim) {
+                try {
+                    if (isDownloadSuccess) {
+                        await completeDownloadRequest({
+                            ...downloadRequestClaim,
+                            responseStatus: result.status,
+                            responseBody: result.body,
+                        });
+                    } else {
+                        await failDownloadRequest(downloadRequestClaim);
+                    }
+                } catch (error) {
+                    console.error("Failed to complete download request claim:", error);
+                }
+                downloadRequestClaim = null;
             }
 
             res.status(result.status).json(result.body);
@@ -1432,6 +1567,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     },
                 },
             );
+            if (downloadRequestClaim) {
+                await failDownloadRequest(downloadRequestClaim).catch(() => false);
+                downloadRequestClaim = null;
+            }
             fail(res, "error.api.generic");
         }
     });

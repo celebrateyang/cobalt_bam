@@ -104,11 +104,17 @@ notes:
 | `service`    | `string` | **optional**, stating which service was being downloaded from                                                  |
 | `limit`      | `number` | **optional** number providing the ratelimit maximum number of requests, or maximum downloadable video duration |
 
-## points hold flow (batch downloads)
-when `batch=true`, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
+## points hold flow (browser-queued downloads)
+when `batch=true` or the response is handled by the browser processing queue, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
+
+the web client sends a stable `queueId` (1-120 ASCII letters, numbers, `_`, or `-`). points holds are unique per user and `queueId`. retries of the same URL reuse the existing hold; reusing a `queueId` for another URL is rejected.
+
+the api claims a queue id before contacting the source platform. concurrent duplicates are rejected, and completed responses are replayed without another extraction. queued responses are replayed only while their hold remains active; finalized queue ids cannot be reused for a new extraction.
+
+direct bridge responses do not create holds because they do not enter the browser processing queue. their immediate points charge and cached idempotent response are committed in the same database transaction, so a lost response can be retried without another charge. first-download grace is reserved on a queue hold and consumed only when that hold is finalized.
 
 ### success path (hold -> finalize)
-1) client sends `POST /` with `batch=true`
+1) client sends `POST /` with a stable `queueId`
 2) server calculates required points and creates a hold (`status=held`, `expires_at = now + POINTS_HOLD_TTL_SECONDS`)
 3) client stores `holdId` on the queue item
 4) when the item finishes, client calls `POST /user/points/hold/finalize`
@@ -116,7 +122,7 @@ when `batch=true`, the api creates a points hold per item. the hold is finalized
 
 sequence (success):
 ```
-client -> api POST / (batch=true)
+client -> api POST / (queueId=stable-task-id)
 api -> db createPointsHold (status=held, expires_at=now+TTL)
 api -> client { points: { holdId, required, outcome:"held" } }
 client -> queue itemDone -> finalizeQueueHold
@@ -125,7 +131,7 @@ api -> db finalizePointsHold (users.points -= hold.points, status=finalized)
 ```
 
 ### failure path (no charge)
-1) client sends `POST /` with `batch=true` (same hold creation)
+1) client sends `POST /` with a stable `queueId` (same hold creation)
 2) queue worker fails (`fetch/ffmpeg` error)
 3) client calls `POST /user/points/hold/release`
 4) server marks the hold `released` (no points deducted)

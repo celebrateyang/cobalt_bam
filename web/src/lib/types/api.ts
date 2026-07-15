@@ -137,8 +137,9 @@ export type CobaltServerInfo = {
 // but i couldn't figure out how to make a strict partial :(
 export type CobaltSaveRequestBody =
     { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>> & {
-        batch?: boolean;
-        filenameTitle?: string;
+         batch?: boolean;
+         queueId?: string;
+         filenameTitle?: string;
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;

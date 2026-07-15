@@ -245,7 +245,7 @@
         finally { loading = false; }
     });
     onDestroy(() => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        if (typeof document !== "undefined") document.removeEventListener("visibilitychange", handleVisibilityChange);
         if (timer) clearTimeout(timer);
         clearResultTimer();
         if (draft && !busy) void save();

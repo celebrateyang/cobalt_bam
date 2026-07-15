@@ -42,6 +42,21 @@ test("long bilingual segments are split into readable timed cues", () => {
     assert.ok(cues.length >= 3);
     assert.equal(cues[0].startMs, 0);
     assert.equal(cues.at(-1).endMs, 12_000);
-    assert.ok(cues.every((cue) => cue.endMs - cue.startMs <= 3500));
+    assert.ok(cues.every((cue) => cue.endMs - cue.startMs <= 4500));
     assert.ok(cues.every((cue) => cue.text.length < 100));
+});
+
+test("a longer translation does not split away from its normalized source segment", () => {
+    const cues = buildClipCues({
+        clip: { startMs: 0, endMs: 4000 },
+        subtitleMode: "bilingual",
+        segments: [{
+            startMs: 0,
+            endMs: 4000,
+            sourceText: "保持真实。",
+            translatedText: "Stay honest with yourself even when the translated sentence needs more words to express the same complete idea.",
+        }],
+    });
+    assert.equal(cues.length, 1);
+    assert.match(cues[0].text, /^保持真实。\nStay honest/);
 });

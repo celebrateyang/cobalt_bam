@@ -22,6 +22,7 @@ import { getAiVideoObjectStorage } from "./object-storage.js";
 import { createAiVideoWorkDir, extractAudioChunks, probeVideo } from "./media.js";
 import { deterministicHighlights, maxHighlightClipsForDuration, normalizeHighlightClips } from "./highlights.js";
 import { ingestAiVideoImport } from "./import-source.js";
+import { normalizeTranscriptSegments } from "./transcript-segments.js";
 import {
     classifyProviderError,
     openAiHighlightProvider,
@@ -124,9 +125,9 @@ export const processAiVideoJob = async ({ job, workerId }) => {
                 error.code = "AI_VIDEO_NO_SPEECH";
                 throw error;
             }
-            segments = transcript
-                .filter((segment) => segment.endMs <= probe.durationMs + 1000)
-                .map((segment, segmentIndex) => ({ ...segment, segmentIndex }));
+            segments = normalizeTranscriptSegments(
+                transcript.filter((segment) => segment.endMs <= probe.durationMs + 1000),
+            );
             if (!segments.length) {
                 const error = new Error("No timestamped speech was detected within the video duration");
                 error.code = "AI_VIDEO_NO_SPEECH";

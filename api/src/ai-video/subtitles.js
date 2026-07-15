@@ -75,12 +75,12 @@ const splitSegmentCues = ({ segment, clip, subtitleMode }) => {
     const source = normalizeText(segment.sourceText);
     const translated = normalizeText(segment.translatedText);
     const bilingual = subtitleMode === "bilingual" && source && translated && source !== translated;
-    const relevant = bilingual ? [source, translated] : [translated || source];
-    const maxUnits = bilingual ? 44 : 60;
+    const relevant = source || translated;
+    const maxUnits = bilingual ? 52 : 64;
     const desiredCount = Math.max(
         1,
-        Math.ceil(durationMs / 3500),
-        ...relevant.map((text) => Math.ceil(textUnits(text) / maxUnits)),
+        Math.ceil(durationMs / 4500),
+        Math.ceil(textUnits(relevant) / maxUnits),
     );
     const count = Math.min(desiredCount, Math.max(1, Math.floor(durationMs / 1200)));
     const sourceParts = splitBalanced(source, count);

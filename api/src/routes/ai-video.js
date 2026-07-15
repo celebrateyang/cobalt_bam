@@ -19,6 +19,7 @@ import {
     getAiVideoUploadSession,
     getAiVideoUsage,
     listAiVideoJobs,
+    markAiVideoUploadSessionAborted,
     queueAiVideoRender,
     retryAiVideoJob,
     softDeleteAiVideoJob,
@@ -32,6 +33,7 @@ import { sanitizeOutputFilename } from "../ai-video/subtitles.js";
 const router = express.Router();
 const supportedLanguages = new Set(["auto", "de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"]);
 const jsonError = (res, status, code, message, context) => res.status(status).json({ status: "error", error: { code, message, ...(context ? { context } : {}) } });
+const absoluteApiUrl = (path) => new URL(path, process.env.API_URL || "http://localhost").toString();
 const mapClerkUser = (user) => ({
     clerkUserId: user.id,
     primaryEmail: user.emailAddresses?.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || null,
@@ -199,7 +201,7 @@ router.get("/jobs/:jobId/draft", async (req, res) => {
         const draft = await getAiVideoDraft({ jobId: req.params.jobId, userId: user.id });
         if (!draft) return jsonError(res, 404, "AI_VIDEO_JOB_NOT_FOUND", "Job not found");
         if (draft.job.status !== "draft_ready") return jsonError(res, 409, "AI_VIDEO_DRAFT_NOT_READY", "Draft is not ready", { job: draft.job });
-        let sourcePreviewUrl = `/user/ai-video/jobs/${draft.job.id}/source`;
+        let sourcePreviewUrl = absoluteApiUrl(`/user/ai-video/jobs/${draft.job.id}/source`);
         if (draft.job.sourceObjectKey) {
             try { sourcePreviewUrl = await getAiVideoObjectStorage().createDownloadUrl(draft.job.sourceObjectKey, 10 * 60 * 1000, { responseType: draft.job.sourceMime || "video/mp4" }); }
             catch {}
@@ -308,20 +310,25 @@ router.get("/jobs/:jobId/results", async (req, res) => {
         const assets = await Promise.all(result.assets.map(async (asset) => {
             const filename = assetFilename({ ...asset, target_language: result.job.targetLanguage });
             let previewUrl = null;
-            let downloadUrl = `/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download`;
+            let downloadUrl = absoluteApiUrl(`/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download`);
             try {
                 downloadUrl = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, {
                     responseDisposition: contentDisposition(filename), responseType: asset.mime,
                 });
             } catch {}
             if (asset.kind === "output" || asset.kind === "vtt") {
-                try { previewUrl = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, { responseType: asset.mime || (asset.kind === "output" ? "video/mp4" : "text/vtt") }); }
-                catch { previewUrl = `/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download?inline=1`; }
+                try {
+                    previewUrl = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, {
+                        responseDisposition: contentDisposition(filename, { type: "inline" }),
+                        responseType: asset.mime || (asset.kind === "output" ? "video/mp4" : "text/vtt"),
+                    });
+                }
+                catch { previewUrl = absoluteApiUrl(`/user/ai-video/jobs/${req.params.jobId}/assets/${asset.id}/download?inline=1`); }
             }
             return {
                 id: asset.id, clipId: asset.clip_id, kind: asset.kind, mime: asset.mime,
                 sizeBytes: asset.size_bytes == null ? null : Number(asset.size_bytes), expiresAt: asset.expires_at == null ? null : Number(asset.expires_at),
-                sortOrder: asset.sort_order, title: asset.title, filename, previewUrl,
+                sortOrder: asset.sort_order, title: asset.title, summary: asset.reason, filename, previewUrl,
                 downloadUrl,
             };
         }));
@@ -455,9 +462,25 @@ router.post("/jobs/:jobId/cancel", async (req, res) => {
 router.delete("/jobs/:jobId", async (req, res) => {
     try {
         const user = await loadUser(req, res); if (!user) return;
-        const deleted = await softDeleteAiVideoJob({ jobId: req.params.jobId, userId: user.id });
-        return deleted ? res.status(204).end() : jsonError(res, 409, "AI_VIDEO_JOB_NOT_DELETABLE", "Job is running or not found");
-    } catch { return jsonError(res, 500, "SERVER_ERROR", "Failed to delete job"); }
+        const deletion = await softDeleteAiVideoJob({ jobId: req.params.jobId, userId: user.id });
+        if (!deletion.deleted) return jsonError(res, 409, "AI_VIDEO_JOB_NOT_DELETABLE", "Cancel the running job before deleting it");
+        const storage = getAiVideoObjectStorage();
+        await Promise.all(deletion.uploadSessions.map(async (session) => {
+            try {
+                await storage.abortResumableUpload({ sessionUri: decryptUploadSession(session.storage_session_encrypted) }).catch(() => {});
+                await storage.deleteObject(session.object_key).catch((error) => {
+                    if (!new Set(["ENOENT", 404]).has(error.code) && error.statusCode !== 404) throw error;
+                });
+                await markAiVideoUploadSessionAborted({ sessionId: session.id });
+            } catch (error) {
+                console.warn(`[AI VIDEO DELETE] upload_session=${session.id} cleanup_deferred=true error=${error.message}`);
+            }
+        }));
+        return res.status(204).end();
+    } catch (error) {
+        console.error("DELETE AI video job error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to delete job");
+    }
 });
 
 export default router;

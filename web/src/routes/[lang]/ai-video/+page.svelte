@@ -7,6 +7,7 @@
         cancelAiVideoJob,
         createAndUploadAiVideo,
         createImportedAiVideo,
+        deleteAiVideoJob,
         getAiVideoDraft,
         getAiVideoJob,
         getAiVideoResults,
@@ -23,6 +24,7 @@
 
     const languages = ["de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"];
     const terminalStatuses = new Set(["draft_ready", "completed", "failed", "cancelled", "deleted"]);
+    const deletableStatuses = new Set(["draft_ready", "completed", "failed", "cancelled"]);
     let eligible: boolean | null = null;
     let eligibilityReason: string | null = null;
     let loading = true;
@@ -40,6 +42,8 @@
     let results: AiVideoResults | null = null;
     let pendingImport: PendingAiVideoImport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let resultTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastPreviewRefreshAt = 0;
     $: zh = $page.params.lang === "zh";
     $: previewFocus = draft?.clips.find((clip) => clip.enabled)?.focusX ?? 0.5;
 
@@ -53,16 +57,37 @@
         jobs = (await listAiVideoJobs()).jobs;
     };
 
+    const clearResultTimer = () => {
+        if (resultTimer) clearTimeout(resultTimer);
+        resultTimer = null;
+    };
+
     const loadDraft = async (jobId: string) => {
+        clearResultTimer();
         results = null;
         draft = await getAiVideoDraft(jobId);
         activeJob = draft.job;
     };
 
     const loadResults = async (jobId: string) => {
+        clearResultTimer();
         draft = null;
         results = await getAiVideoResults(jobId);
         activeJob = results.job;
+        resultTimer = setTimeout(() => {
+            if (activeJob?.id === jobId && activeJob.status === "completed") void loadResults(jobId).catch(setError);
+        }, 8 * 60 * 1000);
+    };
+
+    const refreshResultLinks = async () => {
+        if (!results || Date.now() - lastPreviewRefreshAt < 30_000) return;
+        lastPreviewRefreshAt = Date.now();
+        try { await loadResults(results.job.id); }
+        catch (value) { setError(value); }
+    };
+
+    const handleVisibilityChange = () => {
+        if (!document.hidden && results) void refreshResultLinks();
     };
 
     const poll = async (jobId: string) => {
@@ -80,6 +105,7 @@
     };
 
     const selectJob = async (job: AiVideoJob) => {
+        clearResultTimer();
         error = "";
         notice = "";
         activeJob = job;
@@ -93,6 +119,7 @@
     const startImport = async () => {
         if (!pendingImport || busy) return;
         busy = true;
+        clearResultTimer();
         error = "";
         notice = "";
         draft = null;
@@ -110,6 +137,7 @@
     const start = async () => {
         if (!file || busy) return;
         busy = true;
+        clearResultTimer();
         error = "";
         notice = "";
         draft = null;
@@ -182,7 +210,27 @@
         finally { busy = false; }
     };
 
+    const removeJob = async (job: AiVideoJob) => {
+        if (busy || !deletableStatuses.has(job.status)) return;
+        if (!window.confirm(message("Delete this task and schedule all of its files for removal? Used membership minutes will not be restored.", "删除此任务并清理它的全部文件吗？已使用的会员分钟不会返还。"))) return;
+        busy = true;
+        error = "";
+        try {
+            await deleteAiVideoJob(job.id);
+            jobs = jobs.filter((item) => item.id !== job.id);
+            if (activeJob?.id === job.id) {
+                clearResultTimer();
+                activeJob = null;
+                draft = null;
+                results = null;
+            }
+            notice = message("Task deleted. Stored files are being removed in the background.", "任务已删除，相关文件正在后台清理。");
+        } catch (value) { setError(value); }
+        finally { busy = false; }
+    };
+
     onMount(async () => {
+        document.addEventListener("visibilitychange", handleVisibilityChange);
         try {
             const result = await fetchMembershipFeatureEligibility("ai_video_studio");
             eligible = result.eligible;
@@ -197,7 +245,9 @@
         finally { loading = false; }
     });
     onDestroy(() => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
         if (timer) clearTimeout(timer);
+        clearResultTimer();
         if (draft && !busy) void save();
     });
 </script>
@@ -255,9 +305,14 @@
                 <h2>{message("Recent jobs", "最近任务")}</h2>
                 {#if jobs.length === 0}<p class="muted">{message("No jobs yet.", "暂无任务。")}</p>{/if}
                 {#each jobs as job}
-                    <button class:active={activeJob?.id === job.id} on:click={() => selectJob(job)}>
-                        <strong>{job.sourceFilename || job.id}</strong><span>{job.status} · {job.progress}%</span>
-                    </button>
+                    <div class="job-row">
+                        <button class="job-select" class:active={activeJob?.id === job.id} on:click={() => selectJob(job)}>
+                            <strong>{job.sourceFilename || job.id}</strong><span>{job.status} · {job.progress}%</span>
+                        </button>
+                        {#if deletableStatuses.has(job.status)}
+                            <button class="job-delete" aria-label={message("Delete task", "删除任务")} title={message("Delete task", "删除任务")} disabled={busy} on:click={() => removeJob(job)}>×</button>
+                        {/if}
+                    </div>
                 {/each}
             </aside>
 
@@ -283,7 +338,7 @@
                                 <input class="title" bind:value={clip.title} maxlength="120" />
                                 <div class="times"><label>Start <input type="number" min="0" step="0.1" value={clip.startMs / 1000} on:change={(event) => clip.startMs = Math.round(Number(event.currentTarget.value) * 1000)} /></label><label>End <input type="number" min="15" step="0.1" value={clip.endMs / 1000} on:change={(event) => clip.endMs = Math.round(Number(event.currentTarget.value) * 1000)} /></label></div>
                                 <label>{message("Horizontal focus", "水平焦点")}<input type="range" min="0" max="1" step="0.01" bind:value={clip.focusX} /></label>
-                                <p>{clip.reason}</p>
+                                <p class="clip-summary"><strong>{message("Summary", "亮点摘要")}:</strong> {clip.reason}</p>
                             </article>
                         {/each}
                     </div>
@@ -300,8 +355,9 @@
                     <div class="results">
                         {#each results.assets.filter((asset) => asset.kind === "output") as output}
                             <article>
-                                {#if output.previewUrl}<video src={output.previewUrl} controls preload="metadata"><track kind="captions" srclang={results.job.targetLanguage || "en"} label={results.job.targetLanguage || "captions"} src={results.assets.find((asset) => asset.clipId === output.clipId && asset.kind === "vtt")?.previewUrl || ""} default /></video>{/if}
+                                {#if output.previewUrl}<!-- svelte-ignore a11y-media-has-caption --><video src={output.previewUrl} controls playsinline preload="metadata" on:error={refreshResultLinks}></video>{/if}
                                 <h3>{output.title || output.filename}</h3>
+                                {#if output.summary}<p class="result-summary">{output.summary}</p>{/if}
                                 <div class="actions">
                                     <a class="button" href={output.downloadUrl}>{message("Download MP4", "下载 MP4")}</a>
                                     {#each results.assets.filter((asset) => asset.clipId === output.clipId && asset.kind !== "output") as subtitle}
@@ -332,14 +388,14 @@
     button:disabled { opacity: .5; cursor: wait; } button.secondary, .secondary-link { background: transparent; color: inherit; border: 1px solid rgba(128,128,128,.4); }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
     progress { width: 100%; accent-color: var(--accent); } .workspace { display: grid; grid-template-columns: 260px 1fr; gap: 18px; margin-top: 18px; align-items: start; }
-    .jobs { display: grid; gap: 8px; } .jobs button { width: 100%; background: transparent; color: inherit; text-align: left; display: grid; gap: 4px; border: 1px solid transparent; }
-    .jobs button.active { border-color: var(--accent); background: rgba(var(--accent-rgb), .08); } .jobs span, .muted, time, .privacy { opacity: .72; font-size: 12px; }
+    .jobs { display: grid; gap: 8px; } .job-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: 4px; } .jobs .job-select { width: 100%; background: transparent; color: inherit; text-align: left; display: grid; gap: 4px; border: 1px solid transparent; min-width: 0; }
+    .jobs .job-select.active { border-color: var(--accent); background: rgba(var(--accent-rgb), .08); } .jobs .job-delete { width: 34px; padding: 0; color: #b33; background: transparent; border: 1px solid rgba(179,51,51,.22); font-size: 20px; } .jobs span, .muted, time, .privacy { opacity: .72; font-size: 12px; }
     .editor { min-height: 260px; } .clips, .segments { display: grid; gap: 12px; margin-bottom: 24px; } .clips { grid-template-columns: repeat(3, 1fr); }
-    article { border: 1px solid rgba(128,128,128,.22); border-radius: 13px; padding: 13px; } article p { line-height: 1.5; } .check { display: flex; align-items: center; } .check input { width: auto; }
+    article { border: 1px solid rgba(128,128,128,.22); border-radius: 13px; padding: 13px; } article p { line-height: 1.5; } .clip-summary { font-size: 13px; opacity: .82; } .check { display: flex; align-items: center; } .check input { width: auto; }
     .title { margin: 10px 0; font-weight: 750; } .times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } textarea { min-height: 76px; resize: vertical; }
     .sticky { position: sticky; bottom: 12px; display: flex; justify-content: flex-end; } .alert { border-radius: 12px; padding: 12px 16px; margin: 14px 0; } .error { color: #c43b3b; background: rgba(196,59,59,.09); } .success { color: #287b37; background: rgba(40,123,55,.09); }
     .source-preview { width: min(320px, 100%); aspect-ratio: 9 / 16; margin: 0 auto 22px; overflow: hidden; border-radius: 16px; background: #000; } .source-preview video { width: 100%; height: 100%; object-fit: cover; }
-    .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; } .results video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: #000; } .results h3 { margin: 10px 0; }
+    .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; } .results video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: #000; } .results h3 { margin: 10px 0 6px; } .result-summary { margin: 0 0 12px; line-height: 1.45; font-size: 13px; opacity: .82; }
     .gate { display: grid; gap: 10px; max-width: 620px; }
     @media (max-width: 820px) { .workspace { grid-template-columns: 1fr; } .clips, .results { grid-template-columns: 1fr; } .jobs { max-height: 220px; overflow: auto; } }
     @media (max-width: 560px) { .studio { width: min(100% - 20px, 1180px); padding-top: 20px; } .fields { grid-template-columns: 1fr; } .card { padding: 15px; border-radius: 14px; } }

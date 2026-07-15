@@ -163,7 +163,7 @@ export const openAiHighlightProvider = {
         const parsed = await structuredResponse({
             name: "ai_video_highlights",
             schema: highlightSchema,
-            system: `Select up to ${maxClips} compelling, self-contained short-video clips. Each clip must be ${minSeconds}-${maxSeconds} seconds, use exact millisecond boundaries from the transcript, avoid overlap, and favor strong hooks, complete ideas, emotional or practical value.`,
+            system: `Select up to ${maxClips} compelling, self-contained short-video clips. Returning only one clip is valid and preferred when the source is short or contains only one strong idea. Each clip must be ${minSeconds}-${maxSeconds} seconds, use exact millisecond boundaries from the transcript, avoid overlap, and never invent similar clips just to reach the limit. Use title for a short headline and reason for a concise viewer-facing summary, not the raw transcript. Favor strong hooks, complete ideas, emotional or practical value.`,
             input: JSON.stringify(transcript),
         });
         return parsed.clips;

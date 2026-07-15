@@ -55,6 +55,7 @@ export type AiVideoAsset = {
     expiresAt: number | null;
     sortOrder: number;
     title: string;
+    summary: string | null;
     filename: string;
     previewUrl: string | null;
     downloadUrl: string;
@@ -224,6 +225,7 @@ export const saveAiVideoDraft = (draft: AiVideoDraft) => request<{ job: AiVideoJ
 
 export const retryAiVideoJob = (jobId: string) => request<{ job: AiVideoJob }>(`/jobs/${jobId}/retry`, { method: "POST", body: "{}" });
 export const cancelAiVideoJob = (jobId: string) => request<{ job: AiVideoJob }>(`/jobs/${jobId}/cancel`, { method: "POST", body: "{}" });
+export const deleteAiVideoJob = (jobId: string) => request<void>(`/jobs/${jobId}`, { method: "DELETE" });
 export const queueAiVideoRender = (jobId: string, revision: number) => request<{ job: AiVideoJob; idempotent: boolean }>(`/jobs/${jobId}/render`, {
     method: "POST", body: JSON.stringify({ revision }),
 });

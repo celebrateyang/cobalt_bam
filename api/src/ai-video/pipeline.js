@@ -20,7 +20,7 @@ import {
 } from "../db/ai-video.js";
 import { getAiVideoObjectStorage } from "./object-storage.js";
 import { createAiVideoWorkDir, extractAudioChunks, probeVideo } from "./media.js";
-import { deterministicHighlights, normalizeHighlightClips } from "./highlights.js";
+import { deterministicHighlights, maxHighlightClipsForDuration, normalizeHighlightClips } from "./highlights.js";
 import { ingestAiVideoImport } from "./import-source.js";
 import {
     classifyProviderError,
@@ -158,24 +158,24 @@ export const processAiVideoJob = async ({ job, workerId }) => {
 
         stage = "analyzing";
         await transition({ jobId: job.id, workerId, status: stage, progress: 65 });
+        const maxClips = maxHighlightClipsForDuration(probe.durationMs);
         let suggested;
         try {
-            suggested = await openAiHighlightProvider.suggest({ segments: translatedSegments, minSeconds: 15, maxSeconds: 90, maxClips: 5 });
+            suggested = await openAiHighlightProvider.suggest({ segments: translatedSegments, minSeconds: 15, maxSeconds: 90, maxClips });
         } catch (error) {
             console.warn(`[AI VIDEO WORKER] job_id=${job.id} stage=analyzing provider_fallback=true code=${error?.status || error?.code || "unknown"}`);
             suggested = [];
         }
-        let clips = normalizeHighlightClips({ clips: suggested, durationMs: probe.durationMs, minSeconds: 15, maxSeconds: 90, maxClips: 5 });
-        if (clips.length < 3) {
-            const fallback = deterministicHighlights({ segments: translatedSegments, durationMs: probe.durationMs, minSeconds: 15, maxSeconds: 90, maxClips: 5 });
-            clips = normalizeHighlightClips({ clips: [...clips, ...fallback], durationMs: probe.durationMs, minSeconds: 15, maxSeconds: 90, maxClips: 5 });
+        let clips = normalizeHighlightClips({ clips: suggested, durationMs: probe.durationMs, minSeconds: 15, maxSeconds: 90, maxClips });
+        if (!clips.length) {
+            clips = deterministicHighlights({ segments: translatedSegments, durationMs: probe.durationMs, minSeconds: 15, maxSeconds: 90, maxClips });
         }
         if (!clips.length) {
             const error = new Error("No valid highlight candidates could be generated");
             error.code = "AI_VIDEO_NO_VALID_HIGHLIGHTS";
             throw error;
         }
-        await replaceAiVideoClips({ jobId: job.id, clips: clips.slice(0, Math.max(3, Math.min(5, clips.length))) });
+        await replaceAiVideoClips({ jobId: job.id, clips });
         await checkCancellation({ jobId: job.id, workerId });
         await finishAiVideoDraft({ jobId: job.id, workerId });
         console.log(`[AI VIDEO WORKER] job_id=${job.id} result=draft_ready segments=${segments.length} clips=${clips.length}`);

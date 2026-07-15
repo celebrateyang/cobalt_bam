@@ -542,16 +542,38 @@ export const cancelAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
 };
 
 export const softDeleteAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
-    const result = await query(
-        `UPDATE ai_video_jobs SET deleted_at=$3, updated_at=$3
-         WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND status NOT IN ('ingesting','probing','transcribing','translating','analyzing','rendering','cancel_requested')
-         RETURNING id`,
-        [jobId, userId, now],
-    );
-    if (result.rowCount) {
-        await query(`UPDATE ai_video_assets SET cleanup_after=$2, cleanup_status='pending' WHERE job_id=$1 AND deleted_at IS NULL`, [jobId, now]);
+    const client = await getClient();
+    try {
+        await client.query("BEGIN");
+        const result = await client.query(
+            `UPDATE ai_video_jobs SET deleted_at=$3, updated_at=$3
+             WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL
+               AND status IN ('draft_ready','completed','failed','cancelled')
+             RETURNING id`,
+            [jobId, userId, now],
+        );
+        if (!result.rowCount) {
+            await client.query("ROLLBACK");
+            return { deleted: false, uploadSessions: [] };
+        }
+        await client.query(
+            `UPDATE ai_video_assets SET cleanup_after=$2, cleanup_status='pending'
+             WHERE job_id=$1 AND deleted_at IS NULL`,
+            [jobId, now],
+        );
+        const sessions = await client.query(
+            `UPDATE ai_video_upload_sessions SET status='expired',expires_at=$2,updated_at=$2
+             WHERE job_id=$1 AND status IN ('active','expired') RETURNING *`,
+            [jobId, now],
+        );
+        await client.query("COMMIT");
+        return { deleted: true, uploadSessions: sessions.rows };
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
     }
-    return result.rowCount > 0;
 };
 
 export const claimAiVideoJob = async ({ workerId, leaseMs, now = Date.now() }) => {
@@ -1003,7 +1025,7 @@ export const getAiVideoResults = async ({ jobId, userId, now = Date.now() }) => 
     );
     if (!jobResult.rowCount) return null;
     const assets = await query(
-        `SELECT a.*,c.sort_order,c.title FROM ai_video_assets a
+        `SELECT a.*,c.sort_order,c.title,c.reason FROM ai_video_assets a
          LEFT JOIN ai_video_clips c ON c.id=a.clip_id
          WHERE a.job_id=$1 AND a.kind IN ('output','srt','vtt') AND a.deleted_at IS NULL
            AND a.cleanup_status='active' AND (a.expires_at IS NULL OR a.expires_at > $2)
@@ -1015,7 +1037,7 @@ export const getAiVideoResults = async ({ jobId, userId, now = Date.now() }) => 
 
 export const getAiVideoAsset = async ({ jobId, assetId, userId, now = Date.now() }) => {
     const result = await query(
-        `SELECT a.*,j.target_language,c.sort_order,c.title
+        `SELECT a.*,j.target_language,c.sort_order,c.title,c.reason
          FROM ai_video_assets a
          JOIN ai_video_jobs j ON j.id=a.job_id
          LEFT JOIN ai_video_clips c ON c.id=a.clip_id

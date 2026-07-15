@@ -3,7 +3,7 @@
     "videorecord": "录制视频",
     "clipboard": "文件传输",
     "discover": "发现",
-    "random_video": "随机聊天",
+    "random_video": "随机视频聊天",
     "settings": "设置",
     "updates": "更新",
     "donate": "捐赠",
@@ -20,5 +20,5 @@
         "file_transfer": "文件传输",
         "discover_trends": "发现趋势"
     },
-    "ai_video": "AI 视频"
+    "ai_video": "AI视频切片"
 }

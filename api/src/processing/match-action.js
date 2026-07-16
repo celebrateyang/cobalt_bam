@@ -88,8 +88,13 @@ export default function({
 
     const shouldKeepDouyinLegacyBatchFlow =
         host === "douyin" && isBatchRequest === true;
+    const shouldQueueForcedYouTube =
+        host === "youtube" && alwaysProxy === true;
 
-    if (!shouldKeepDouyinLegacyBatchFlow && r.forceRedirect && r.urls) {
+    // Forced YouTube processing (used by playlist batches) must not escape
+    // through the extractor's fast redirect path. Doing so launches one browser
+    // download per item and bypasses queue completion/error tracking.
+    if (!shouldQueueForcedYouTube && !shouldKeepDouyinLegacyBatchFlow && r.forceRedirect && r.urls) {
         const url = Array.isArray(r.urls) ? r.urls[0] : r.urls;
         const allowDouyinRedirect =
             host !== "douyin" ||

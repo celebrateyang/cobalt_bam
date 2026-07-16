@@ -16,6 +16,7 @@
         "test": "node src/util/test",
         "test:membership-features": "node --test src/core/membership-features.test.js",
         "test:collection-window": "node --test src/processing/collection-window.test.js",
+        "test:match-action": "node --test src/processing/match-action.test.js",
         "test:ai-video-infrastructure": "node --test src/ai-video/infrastructure.test.js",
         "test:ai-video-analysis": "node --test src/ai-video/highlights.test.js",
         "test:ai-video-delivery": "node --test src/ai-video/media-import-token.test.js src/ai-video/subtitles.test.js",

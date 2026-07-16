@@ -60,8 +60,19 @@
             }
 
             if (item.state === "done") {
-                summary.success += 1;
-                summary.completed += 1;
+                const usesAutoSave = item.autoSave?.enabled === true;
+                const autoSaveFinished =
+                    item.autoSave?.state === "saved" || item.autoSave?.state === "error";
+                const succeeded = usesAutoSave
+                    ? item.autoSave?.state === "saved"
+                    : true;
+
+                if (succeeded) {
+                    summary.success += 1;
+                }
+                if (!usesAutoSave || autoSaveFinished) {
+                    summary.completed += 1;
+                }
             } else if (item.state === "error") {
                 summary.completed += 1;
             }

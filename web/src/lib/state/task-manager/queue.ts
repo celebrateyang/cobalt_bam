@@ -151,6 +151,15 @@ const finalizeQueueHold = async (id: UUID) => {
         return;
     }
 
+    // Active members do not receive a points hold: their usage is recorded by
+    // the API before the queued response is returned. The completed item still
+    // needs to be persisted in collection memory.
+    if (!holdId && currentStatus === "member") {
+        console.log(`[queue] finalize skipped for member; marking memory id=${id}`);
+        await markQueueItemMemory(item);
+        return;
+    }
+
     if (!holdId && required) {
         console.warn("[queue] finalize skipped; missing holdId", {
             id,

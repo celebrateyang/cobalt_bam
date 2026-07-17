@@ -17,6 +17,7 @@
     "api.generic": "Etwas ist schiefgelaufen und ich konnte nichts für Sie bekommen. Versuchen Sie es in ein paar Sekunden erneut, aber wenn das Problem anhält, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
     "api.unknown_response": "Die Antwort vom Server konnte nicht geparst werden. Dies könnte durch eine Versionsabweichung verursacht werden. Sind Sie sicher, dass Sie die neueste Version von FreeSaveVideo verwenden?",
     "api.service.unsupported": "Dieser Dienst wird noch nicht unterstützt. Haben Sie den richtigen Link eingefügt?",
+    "api.platform.unsupported": "Diese Videoplattform wird noch nicht unterstützt. Du kannst sie vorschlagen.",
     "api.douyin.user.unsupported": "Douyin-Profilseiten werden noch nicht unterstuetzt. Oeffne bitte das konkrete Video, kopiere den Videolink und versuche es erneut.",
     "api.service.disabled": "Dieser Dienst wird von FreeSaveVideo unterstützt, aber er ist auf dieser Instanz deaktiviert. Versuchen Sie einen Link von einem anderen Dienst!",
     "api.link.invalid": "Ihr Link ist ungültig oder dieser Dienst wird noch nicht unterstützt. Haben Sie den richtigen Link eingefügt?",

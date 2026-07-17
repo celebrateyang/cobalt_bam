@@ -452,20 +452,43 @@ export const savingHandler = async ({
         return !!code && !!suppressErrors?.includes(code);
     };
 
-    const showError = (errorText: string, code?: string) => {
+    const showError = (
+        errorText: string,
+        code?: string,
+        platformRequest?: { eligible: boolean; domain: string },
+    ) => {
         if (shouldSuppressError(code)) return;
 
-        createDialog({
-            id: "save-error",
-            type: "small",
-            meowbalt: "error",
-            buttons: [
+        const lang = get(page)?.params?.lang || "en";
+        const requestPath = `/${lang}/requests?domain=${encodeURIComponent(platformRequest?.domain || "")}&source=unsupported_download`;
+        const buttons = platformRequest?.eligible
+            ? [
+                {
+                    text: get(t)("button.gotit"),
+                    main: false,
+                    action: () => { },
+                },
+                {
+                    text: get(t)("requests.download_cta"),
+                    main: true,
+                    action: () => {
+                        window.location.assign(requestPath);
+                    },
+                },
+            ]
+            : [
                 {
                     text: get(t)("button.gotit"),
                     main: true,
                     action: () => { },
                 },
-            ],
+            ];
+
+        createDialog({
+            id: "save-error",
+            type: "small",
+            meowbalt: "error",
+            buttons,
             bodyText: errorText,
         });
     }
@@ -520,6 +543,10 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        if (response.platformRequest?.eligible) {
+            const lang = get(page)?.params?.lang || "en";
+            await loadTranslations(lang, "requests");
+        }
         if (response.error.code === "error.api.points.insufficient") {
             downloadButtonState.set("idle");
             const current = Number(response.error?.context?.current);
@@ -544,7 +571,8 @@ export const savingHandler = async ({
         downloadButtonState.set("error");
         showError(
             await translateApiError(response.error.code, response?.error?.context),
-            response.error.code
+            response.error.code,
+            response.platformRequest,
         );
         return response;
     }

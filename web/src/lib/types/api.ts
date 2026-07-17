@@ -14,10 +14,15 @@ export type CobaltErrorResponse = {
         code: string,
         context?: {
             service?: string,
+            domain?: string,
             limit?: number,
             current?: number,
             required?: number,
-        }
+        },
+    },
+    platformRequest?: {
+        eligible: boolean,
+        domain: string,
     },
 };
 

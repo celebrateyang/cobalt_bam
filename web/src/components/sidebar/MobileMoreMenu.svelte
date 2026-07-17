@@ -11,6 +11,7 @@
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
+    import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 
     import { defaultNavPage } from "$lib/subnav";
 
@@ -47,6 +48,13 @@
             icon: IconClipboard,
             link: `/${currentLang}/clipboard`,
             label: $t("tabs.clipboard"),
+            memberOnly: false,
+        },
+        {
+            name: "requests",
+            icon: IconBulb,
+            link: `/${currentLang}/requests`,
+            label: $t("tabs.requests"),
             memberOnly: false,
         },
         {

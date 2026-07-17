@@ -5,6 +5,30 @@ import { env } from "../config.js";
 import { services } from "./service-config.js";
 import { getRedirectingURL } from "../misc/utils.js";
 import { friendlyServiceName } from "./service-alias.js";
+import { normalizePlatformDomain } from "./platform-domain.js";
+
+const serviceByPlatformDomain = new Map([
+    ["12371.cn", "cctv"],
+    ["b23.tv", "bilibili"],
+    ["baidu.com", "haokan"],
+    ["dai.ly", "dailymotion"],
+    ["deeplearning.ai", "deeplearningai"],
+    ["iesdouyin.com", "douyin"],
+    ["nicovideo.jp", "niconico"],
+    ["pin.it", "pinterest"],
+    ["rednote.com", "xiaohongshu"],
+    ["redd.it", "reddit"],
+    ["t.cn", "weibo"],
+    ["toutiaoimg.cn", "toutiao"],
+    ["youtu.be", "youtube"],
+]);
+
+for (const [serviceName, service] of Object.entries(services)) {
+    for (const altDomain of service.altDomains ?? []) {
+        const normalized = normalizePlatformDomain(`https://${altDomain}/`);
+        if (normalized) serviceByPlatformDomain.set(normalized.domain, serviceName);
+    }
+}
 
 function aliasURL(url) {
     assert(url instanceof URL);
@@ -305,6 +329,35 @@ function getHostIfValid(url) {
     return serviceName;
 }
 
+export function identifyService(value, enabledServices = env.enabledServices) {
+    const platform = normalizePlatformDomain(value, { allowBareDomain: false });
+    if (!platform) return null;
+
+    let url;
+    try {
+        url = value instanceof URL ? new URL(value.toString()) : normalizeURL(value);
+    } catch {
+        return null;
+    }
+
+    let service = getHostIfValid(url);
+    if (!service) {
+        try {
+            service = getHostIfValid(new URL(platform.homepageUrl));
+        } catch {
+            service = undefined;
+        }
+    }
+    service ??= serviceByPlatformDomain.get(platform.domain);
+    if (!service || !services[service]) return null;
+
+    return {
+        service,
+        domain: platform.domain,
+        enabled: enabledServices?.has?.(service) ?? true,
+    };
+}
+
 export function normalizeURL(url) {
     return cleanURL(
         aliasURL(
@@ -318,6 +371,10 @@ export function extract(url, enabledServices = env.enabledServices) {
         url = new URL(url);
     }
 
+    const platform = normalizePlatformDomain(url, { allowBareDomain: false });
+    if (!platform) return { error: "link.invalid" };
+
+    const identified = identifyService(url, enabledServices);
     const host = getHostIfValid(url);
 
     if (!host) {
@@ -333,7 +390,19 @@ export function extract(url, enabledServices = env.enabledServices) {
             };
         }
 
-        return { error: "link.invalid" };
+        if (identified) {
+            return {
+                error: "link.unsupported",
+                context: {
+                    service: friendlyServiceName(identified.service),
+                },
+            };
+        }
+
+        return {
+            error: "platform.unsupported",
+            domain: platform.domain,
+        };
     }
 
     if (!enabledServices.has(host)) {

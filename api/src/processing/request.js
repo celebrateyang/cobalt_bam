@@ -180,7 +180,8 @@ export function createResponse(responseType, responseData) {
                     error: {
                         code: responseData?.code,
                         context: responseData?.context,
-                    }
+                    },
+                    platformRequest: responseData?.platformRequest,
                 }
                 break;
 

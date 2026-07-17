@@ -14,6 +14,7 @@
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
+    import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
 
@@ -35,6 +36,7 @@
     $: aiVideoLink = `/${currentLang}/ai-video`;
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
+    $: requestsLink = `/${currentLang}/requests`;
     $: settingsLink = `/${currentLang}${defaultNavPage("settings")}`;
     $: accountLink = `/${currentLang}/account`;
     $: aboutLink = `/${currentLang}${defaultNavPage("about")}`;
@@ -111,6 +113,9 @@
                 </SidebarTab>
             </div>
             <div id="sidebar-info" class="sidebar-inner-container">
+                <SidebarTab tabName="requests" tabLink={requestsLink}>
+                    <IconBulb />
+                </SidebarTab>
                 <!--
                 <SidebarTab tabName="donate" tabLink="/donate">
                     <IconHeart />

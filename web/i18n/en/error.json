@@ -22,6 +22,7 @@
     "api.generic": "something went wrong and i couldn't get anything for you. try again in a few seconds, but if issue sticks, let us know and we'll try to help!",
     "api.unknown_response": "couldn't parse the response from the server. this could be caused by a version mismatch. are you sure you're on the latest version of FreeSaveVideo?",
     "api.service.unsupported": "this service is not supported yet. have you pasted the right link?",
+    "api.platform.unsupported": "this video platform is not supported yet. you can request it for future support.",
     "api.douyin.user.unsupported": "Douyin profile pages are not supported yet. Please open the specific video and copy that video link, then try again.",
     "api.service.disabled": "this service is supported by FreeSaveVideo, but it's disabled on this instance. try a link from another service!",
     "api.link.invalid": "your link is invalid or this service is not supported yet. have you pasted the right link?",

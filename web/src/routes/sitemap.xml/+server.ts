@@ -25,6 +25,7 @@ const pages = [
     'clipboard',
     'random-chat',
     'discover',
+    'requests',
     'guide',
     'download',
     'support',

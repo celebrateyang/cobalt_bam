@@ -18,6 +18,7 @@ import IconLogout from "@tabler/icons-svelte/IconLogout.svelte";
 import IconServer2 from "@tabler/icons-svelte/IconServer2.svelte";
 import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
 import IconCat from "@tabler/icons-svelte/IconCat.svelte";
+import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 
     $: lang = $page.params.lang;
     $: pathname = $page.url.pathname;
@@ -119,6 +120,13 @@ import IconCat from "@tabler/icons-svelte/IconCat.svelte";
                         iconColor="green"
                     >
                         <IconCat />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/platform-requests"
+                        tabTitle="平台愿望单"
+                        iconColor="green"
+                    >
+                        <IconBulb />
                     </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/feedback"

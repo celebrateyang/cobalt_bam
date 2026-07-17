@@ -17,6 +17,7 @@
     "api.generic": "có gì đó không ổn và tôi không thể lấy gì cho bạn. thử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
     "api.unknown_response": "không thể phân tích phản hồi từ máy chủ. điều này có thể do không khớp phiên bản. bạn có chắc mình đang dùng phiên bản FreeSaveVideo mới nhất không?",
     "api.service.unsupported": "dịch vụ này chưa được hỗ trợ. bạn đã dán đúng liên kết chưa?",
+    "api.platform.unsupported": "nền tảng video này chưa được hỗ trợ. bạn có thể gửi đề xuất.",
     "api.douyin.user.unsupported": "Trang ho so Douyin chua duoc ho tro. Hay mo video cu the, sao chep lien ket cua video do, roi thu lai.",
     "api.service.disabled": "dịch vụ này được FreeSaveVideo hỗ trợ, nhưng nó bị tắt trên phiên bản này. thử liên kết từ dịch vụ khác!",
     "api.link.invalid": "liên kết của bạn không hợp lệ hoặc dịch vụ này chưa được hỗ trợ. bạn đã dán đúng liên kết chưa?",

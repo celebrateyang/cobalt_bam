@@ -104,6 +104,36 @@ notes:
 | `service`    | `string` | **optional**, stating which service was being downloaded from                                                  |
 | `limit`      | `number` | **optional** number providing the ratelimit maximum number of requests, or maximum downloadable video duration |
 
+For a valid URL whose platform is not registered in `service-config.js`, the API may first try the generic extractor. If that also fails, the response uses `error.api.platform.unsupported` and includes explicit request metadata:
+
+```json
+{
+    "status": "error",
+    "error": {
+        "code": "error.api.platform.unsupported",
+        "context": { "domain": "example.co.uk" }
+    },
+    "platformRequest": {
+        "eligible": true,
+        "domain": "example.co.uk"
+    }
+}
+```
+
+Clients must use `platformRequest.eligible`, not error-message text, to decide whether to show the platform wishlist entry point. Errors from a configured service, including `link.unsupported`, `fetch.*`, and `content.*`, do not carry this metadata.
+
+## platform request endpoints
+
+- `GET /platform-requests`: public paginated list; supports `page`, `limit`, `sort`, `status`, and `search`.
+- `GET /platform-requests/:id`: public request details.
+- `POST /platform-requests/preview`: normalize a URL/domain and report `new`, `already_requested`, or `already_supported` without fetching the target website.
+- `POST /platform-requests`: Clerk-authenticated creation; the creator automatically receives one vote.
+- `POST /platform-requests/:id/vote`: Clerk-authenticated vote.
+- `DELETE /platform-requests/:id/vote`: Clerk-authenticated vote removal.
+- `GET /platform-requests/admin` and `PATCH /platform-requests/admin/:id`: admin-JWT list and status/note update.
+
+Only the registrable domain and generated `https://<domain>/` homepage are stored. Original video paths, query parameters, fragments, credentials, and ports are discarded.
+
 ## points hold flow (browser-queued downloads)
 when `batch=true` or the response is handled by the browser processing queue, the api creates a points hold per item. the hold is finalized only after the item completes successfully.
 

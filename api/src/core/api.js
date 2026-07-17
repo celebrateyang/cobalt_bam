@@ -63,6 +63,7 @@ import {
 import socialMediaRouter from "../routes/social-media.js";
 import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
+import platformRequestsRouter from "../routes/platform-requests.js";
 import aiVideoRouter from "../routes/ai-video.js";
 import { createMediaImportToken, getMediaImportCandidate } from "../ai-video/media-import-token.js";
 import paymentsRouter from "../routes/payments.js";
@@ -119,6 +120,7 @@ const readableDownloadErrors = new Map([
     ["error.api.link.invalid", "The submitted URL is invalid or unsupported."],
     ["error.api.link.missing", "No URL was submitted."],
     ["error.api.link.unsupported", "This URL is not supported yet."],
+    ["error.api.platform.unsupported", "This video platform is not supported yet."],
     ["error.api.douyin.user.unsupported", "Douyin profile pages are not supported. Ask the user to copy and submit the URL of a specific Douyin video."],
     ["error.api.bilibili.space.unsupported", "Bilibili space collection index pages are not supported. Ask the user to open one video inside the collection and submit that video URL."],
     ["error.api.youtube.login", "YouTube could not be processed because the upstream node may need refreshed YouTube cookies or account tokens. Ask the user to try again later."],
@@ -241,7 +243,7 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 const serverRole = isUpstreamServer ? "upstream" : "api";
-const genericFallbackErrors = new Set(["link.invalid"]);
+const genericFallbackErrors = new Set(["platform.unsupported"]);
 
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -610,7 +612,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     ];
 
     app.use('/social', cors({
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
@@ -625,7 +627,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     }));
 
     app.use('/', cors({
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: corsAllowedHeaders,
         exposedHeaders: [
             'Ratelimit-Limit',
@@ -689,9 +691,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         app.use('/social', socialMediaRouter);
         app.use('/user/ai-video', aiVideoRouter);
         app.use('/user', userRouter);
+        app.use('/platform-requests', platformRequestsRouter);
         app.use('/payments', paymentsRouter);
     } else {
-        app.use(['/social', '/user', '/payments'], (_, res) => {
+        app.use(['/social', '/user', '/platform-requests', '/payments'], (_, res) => {
             res.sendStatus(404);
         });
     }
@@ -1017,7 +1020,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 }
                 downloadRequestClaim = null;
             }
-            const { status, body } = createResponse("error", { code, context });
+            const { status, body } = createResponse("error", {
+                code,
+                context,
+                platformRequest: extra.platformRequest,
+            });
             const completedAt = Date.now();
             scheduleDownloadAttemptComplete(
                 downloadAttemptCreateTask,
@@ -1199,18 +1206,23 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
             if ("error" in parsed) {
                 if (genericFallbackErrors.has(parsed.error)) {
-                    result = await attemptGenericFallback({
+                    const genericResult = await attemptGenericFallback({
                         request: {
                             ...normalizedRequest,
                             requestClientIp,
                         },
                         requestClientIp,
                     });
+                    if (genericResult?.body?.status !== "error") {
+                        result = genericResult;
+                    }
                 }
 
                 if (!result) {
                     let context;
-                    if (parsed?.context) {
+                    if (parsed.error === "platform.unsupported") {
+                        context = { domain: parsed.domain };
+                    } else if (parsed?.context) {
                         context = parsed.context;
                     } else if (genericFallbackErrors.has(parsed.error) && canAttemptGenericURL(normalizedRequest.url)) {
                         context = { service: getGenericServiceHost(normalizedRequest.url) };
@@ -1232,6 +1244,12 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     }
                     return failDownload(`error.api.${parsed.error}`, context, {
                         service: context?.service ?? parsed?.host,
+                        platformRequest: parsed.error === "platform.unsupported"
+                            ? {
+                                eligible: true,
+                                domain: parsed.domain,
+                            }
+                            : undefined,
                     });
                 }
             } else {

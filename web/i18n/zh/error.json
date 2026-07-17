@@ -15,6 +15,7 @@
     "api.generic": "处理请求时发生错误。请稍后重试。",
     "api.unknown_response": "处理服务器返回了无法识别的响应。请稍后重试。",
     "api.service.unsupported": "暂不支持该服务。您粘贴的链接正确吗？",
+    "api.platform.unsupported": "暂不支持这个视频平台，你可以提交需求并邀请其他用户投票。",
     "api.service.disabled": "FreeSaveVideo 支持该服务，但当前实例未启用。请尝试其他服务的链接！",
     "api.link.invalid": "您的链接无效，或暂不支持该服务。您粘贴的链接正确吗？",
     "api.link.unsupported": "支持 {{ service }}，但我无法识别这个链接。您粘贴的链接正确吗？",

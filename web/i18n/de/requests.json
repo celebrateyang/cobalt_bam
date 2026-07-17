@@ -33,7 +33,7 @@
     "status_rejected": "derzeit nicht möglich",
     "loading": "Wünsche werden geladen…",
     "empty": "Keine Plattformwünsche entsprechen diesen Filtern.",
-    "vote_count": "{count} Stimmen",
+    "vote_count": "{{ count }} Stimmen",
     "previous": "zurück",
     "next": "weiter",
     "not_found": "Dieser Plattformwunsch wurde nicht gefunden.",

@@ -33,7 +33,7 @@
     "status_rejected": "impossible actuellement",
     "loading": "chargement des demandes…",
     "empty": "Aucune demande ne correspond à ces filtres.",
-    "vote_count": "{count} votes",
+    "vote_count": "{{ count }} votes",
     "previous": "précédent",
     "next": "suivant",
     "not_found": "Cette demande est introuvable.",

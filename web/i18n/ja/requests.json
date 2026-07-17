@@ -33,7 +33,7 @@
     "status_rejected": "現在対応困難",
     "loading": "要望を読み込み中…",
     "empty": "条件に一致する要望はありません。",
-    "vote_count": "{count} 票",
+    "vote_count": "{{ count }} 票",
     "previous": "前へ",
     "next": "次へ",
     "not_found": "この要望は見つかりませんでした。",

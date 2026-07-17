@@ -33,7 +33,7 @@
     "status_rejected": "ยังไม่สามารถรองรับ",
     "loading": "กำลังโหลดคำขอ…",
     "empty": "ยังไม่มีคำขอที่ตรงกับตัวกรองนี้",
-    "vote_count": "{count} โหวต",
+    "vote_count": "{{ count }} โหวต",
     "previous": "ก่อนหน้า",
     "next": "ถัดไป",
     "not_found": "ไม่พบคำขอนี้",

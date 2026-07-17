@@ -33,7 +33,7 @@
     "status_rejected": "hiện chưa thể hỗ trợ",
     "loading": "đang tải đề xuất…",
     "empty": "Không có đề xuất phù hợp với bộ lọc này.",
-    "vote_count": "{count} phiếu",
+    "vote_count": "{{ count }} phiếu",
     "previous": "trước",
     "next": "tiếp",
     "not_found": "Không tìm thấy đề xuất này.",

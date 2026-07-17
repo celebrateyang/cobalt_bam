@@ -33,7 +33,7 @@
     "status_rejected": "no es posible ahora",
     "loading": "cargando solicitudes…",
     "empty": "No hay solicitudes con estos filtros.",
-    "vote_count": "{count} votos",
+    "vote_count": "{{ count }} votos",
     "previous": "anterior",
     "next": "siguiente",
     "not_found": "No se encontró esta solicitud.",

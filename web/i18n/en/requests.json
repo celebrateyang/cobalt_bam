@@ -33,7 +33,7 @@
     "status_rejected": "not currently possible",
     "loading": "loading requests…",
     "empty": "No platform requests match these filters yet.",
-    "vote_count": "{count} votes",
+    "vote_count": "{{ count }} votes",
     "previous": "previous",
     "next": "next",
     "not_found": "This platform request could not be found.",

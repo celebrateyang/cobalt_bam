@@ -33,7 +33,7 @@
     "status_rejected": "현재 지원 불가",
     "loading": "요청 불러오는 중…",
     "empty": "조건에 맞는 플랫폼 요청이 없습니다.",
-    "vote_count": "{count}표",
+    "vote_count": "{{ count }}표",
     "previous": "이전",
     "next": "다음",
     "not_found": "플랫폼 요청을 찾을 수 없습니다.",

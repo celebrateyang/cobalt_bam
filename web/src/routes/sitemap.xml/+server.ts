@@ -3,13 +3,20 @@ import type { RequestHandler } from './$types';
 import env from '$lib/env';
 import { seoLandingSlugs } from '$lib/seo/landing-pages';
 import { getGuidePage, guideSlugs } from '$lib/seo/guide-pages';
-import { learnSlugs } from '$lib/seo/learn-pages';
+import { getLearnPage, learnSlugs } from '$lib/seo/learn-pages';
 import { machineReadablePaths, supportedSeoLanguages } from '$lib/seo/site';
 import { isInternationalDownloadSlug } from '$lib/seo/internal-links';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
 const excludedPathPatterns = [/^\/[^/]+\/donate(?:\/|$)/];
+const lastModified = {
+    site: '2026-07-17',
+    seoPages: '2026-06-30',
+    machineReadable: '2026-06-27',
+    support: '2026-06-15',
+    about: '2026-06-15',
+};
 
 // paths to include in sitemap
 const pages = [
@@ -57,16 +64,33 @@ const escapeXml = (value: string): string =>
 
 const normalizePath = (path: string) => (path === '/' ? '' : path);
 
+const availableLanguagesForPath = (path: string): string[] => {
+    const downloadSlug = path.match(/^\/[^/]+\/download\/([^/]+)$/)?.[1];
+    if (downloadSlug && !isInternationalDownloadSlug(downloadSlug)) {
+        return languages.filter((lang) => lang !== 'en');
+    }
+
+    const guideSlug = path.match(/^\/[^/]+\/guide\/([^/]+)$/)?.[1];
+    const guide = guideSlug ? getGuidePage(guideSlug) : null;
+    if (guide && !isInternationalDownloadSlug(guide.landingSlug)) {
+        return languages.filter((lang) => lang !== 'en');
+    }
+
+    return languages;
+};
+
 const buildAlternateLinks = (path: string): string => {
     const normalized = normalizePath(path);
     const withoutLang = normalized.replace(/^\/[^/]+/, '');
+    const alternateLanguages = availableLanguagesForPath(path);
+    const defaultLanguage = alternateLanguages.includes('en') ? 'en' : 'zh';
 
     return [
-        ...languages.map((lang) => {
+        ...alternateLanguages.map((lang) => {
             const href = `${site}/${lang}${withoutLang}`;
             return `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeXml(href)}" />`;
         }),
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${site}/en${withoutLang}`)}" />`,
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${site}/${defaultLanguage}${withoutLang}`)}" />`,
     ].join('');
 };
 
@@ -86,17 +110,31 @@ const urlEntry = (
 
 function generateSitemap(): string {
     const urls: string[] = [];
-    const now = new Date().toISOString();
 
-    urls.push(urlEntry(`${site}/`, now, 'daily', '1.0'));
+    urls.push(urlEntry(`${site}/`, lastModified.site, 'daily', '1.0'));
 
     for (const path of machineReadablePaths) {
-        urls.push(urlEntry(`${site}${path}`, now, 'weekly', path === '/capabilities.json' ? '0.7' : '0.6'));
+        urls.push(
+            urlEntry(
+                `${site}${path}`,
+                lastModified.machineReadable,
+                'weekly',
+                path === '/capabilities.json' ? '0.7' : '0.6',
+            ),
+        );
     }
 
-    urls.push(urlEntry(`${site}/en/learn`, now, 'weekly', '0.8'));
+    urls.push(urlEntry(`${site}/en/learn`, lastModified.seoPages, 'weekly', '0.8'));
     for (const slug of learnSlugs) {
-        urls.push(urlEntry(`${site}/en/learn/${slug}`, now, 'weekly', '0.8'));
+        const article = getLearnPage(slug);
+        urls.push(
+            urlEntry(
+                `${site}/en/learn/${slug}`,
+                article?.updatedAt ?? lastModified.seoPages,
+                'weekly',
+                '0.8',
+            ),
+        );
     }
 
     for (const lang of languages) {
@@ -120,9 +158,15 @@ function generateSitemap(): string {
             if (shouldExcludePath(path)) continue;
             const priority = page === '' ? '1.0' : '0.8';
             const changefreq = page === '' ? 'daily' : 'weekly';
+            const pageLastModified =
+                page === ''
+                    ? lastModified.site
+                    : page === 'support'
+                      ? lastModified.support
+                      : lastModified.seoPages;
 
             urls.push(
-                urlEntry(`${site}${path}`, now, changefreq, priority, buildAlternateLinks(path)),
+                urlEntry(`${site}${path}`, pageLastModified, changefreq, priority, buildAlternateLinks(path)),
             );
         }
 
@@ -133,7 +177,7 @@ function generateSitemap(): string {
             const path = `/${lang}/about/${aboutPage}`;
             if (shouldExcludePath(path)) continue;
             urls.push(
-                urlEntry(`${site}${path}`, now, 'monthly', '0.6', buildAlternateLinks(path)),
+                urlEntry(`${site}${path}`, lastModified.about, 'monthly', '0.6', buildAlternateLinks(path)),
             );
         }
     }

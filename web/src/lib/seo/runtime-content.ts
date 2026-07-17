@@ -72,7 +72,12 @@ export const getPlatformKey = (slug: string): PlatformKey => {
 
 export const getSeoRuntimeContent = (lang: string): RuntimeContent => {
     const locale = contentByLocale[lang] ?? contentByLocale[fallbackLocale];
-    return locale;
+    return {
+        ...locale,
+        // The first two legacy FAQs were self-recommendation copy written for
+        // search engines rather than questions users actually ask.
+        productFaqs: locale.productFaqs.slice(2),
+    };
 };
 
 export type { RuntimeContent, PlatformKey, ProductFaqItem, PlatformPlaybook, FailureCase, FreeTool };

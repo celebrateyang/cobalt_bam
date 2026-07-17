@@ -49,13 +49,16 @@
         runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
         runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: landingFaqs = data.slug === 'youtube-download'
+        ? localeContent.faqs.slice(1)
+        : localeContent.faqs;
     $: freeTools = runtimeContent.freeTools.map((tool) => ({
         title: tool.title,
         desc: tool.desc,
         href: `/${data.lang}/${tool.path}`,
     }));
     $: mergedFaqs = (() => {
-        const ordered = [...platformFaqs, ...productFaqs, ...localeContent.faqs];
+        const ordered = [...platformFaqs, ...productFaqs, ...landingFaqs];
         const seen = new Set<string>();
         return ordered.filter((item) => {
             if (seen.has(item.q)) return false;

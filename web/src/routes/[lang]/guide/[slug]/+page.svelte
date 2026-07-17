@@ -18,13 +18,56 @@
 
     $: localeContent = getSeoLandingLocale(data.landing, data.lang);
     $: isZh = data.lang === 'zh';
-    $: guideTitle = isZh
-        ? `${localeContent.h1}\u6307\u5357`
-        : `Guide to ${localeContent.h1}`;
+    type GuideSeoCopy = {
+        title: (platform: string) => string;
+        description: (platform: string) => string;
+    };
+    const guideSeoCopy: Record<string, GuideSeoCopy> = {
+        de: {
+            title: (platform) => `So laden Sie ${platform}-Videos herunter`,
+            description: (platform) => `Schritt-für-Schritt-Anleitung zum Kopieren eines unterstützten ${platform}-Links, Einfügen in den Downloader und Speichern der verfügbaren Formate.`,
+        },
+        en: {
+            title: (platform) => `How to Download ${platform} Videos`,
+            description: (platform) => `Learn how to copy a supported ${platform} link, paste it into the downloader, choose an available format, and fix common link errors.`,
+        },
+        es: {
+            title: (platform) => `Cómo descargar videos de ${platform}`,
+            description: (platform) => `Guía paso a paso para copiar un enlace compatible de ${platform}, pegarlo en el descargador, elegir un formato disponible y resolver errores comunes.`,
+        },
+        fr: {
+            title: (platform) => `Comment télécharger des vidéos ${platform}`,
+            description: (platform) => `Guide étape par étape pour copier un lien ${platform} compatible, le coller dans le téléchargeur, choisir un format et corriger les erreurs courantes.`,
+        },
+        ja: {
+            title: (platform) => `${platform}動画をダウンロードする方法`,
+            description: (platform) => `対応している${platform}リンクをコピーし、ダウンローダーに貼り付け、利用可能な形式を選び、一般的なリンクエラーを解決する手順です。`,
+        },
+        ko: {
+            title: (platform) => `${platform} 동영상 다운로드 방법`,
+            description: (platform) => `지원되는 ${platform} 링크를 복사하고 다운로더에 붙여 넣은 뒤 사용 가능한 형식을 선택하고 일반적인 링크 오류를 해결하는 방법입니다.`,
+        },
+        ru: {
+            title: (platform) => `Как скачать видео с ${platform}`,
+            description: (platform) => `Пошаговая инструкция: скопируйте поддерживаемую ссылку ${platform}, вставьте ее в загрузчик, выберите доступный формат и устраните типичные ошибки.`,
+        },
+        th: {
+            title: (platform) => `วิธีดาวน์โหลดวิดีโอ ${platform}`,
+            description: (platform) => `คำแนะนำทีละขั้นตอนสำหรับคัดลอกลิงก์ ${platform} ที่รองรับ วางในตัวดาวน์โหลด เลือกรูปแบบที่มี และแก้ข้อผิดพลาดของลิงก์ที่พบบ่อย`,
+        },
+        vi: {
+            title: (platform) => `Cách tải video ${platform}`,
+            description: (platform) => `Hướng dẫn từng bước để sao chép liên kết ${platform} được hỗ trợ, dán vào trình tải, chọn định dạng có sẵn và xử lý lỗi liên kết thường gặp.`,
+        },
+        zh: {
+            title: (platform) => `如何下载 ${platform} 视频`,
+            description: (platform) => `分步骤说明如何复制受支持的 ${platform} 链接、粘贴到下载器、选择可用格式，并处理常见的链接错误。`,
+        },
+    };
+    $: localizedGuideCopy = guideSeoCopy[data.lang] ?? guideSeoCopy.en;
+    $: guideTitle = localizedGuideCopy.title(data.guide.platform);
     $: pageTitle = `${guideTitle} - ${isZh ? ZH_BRAND : EN_BRAND}`;
-    $: pageDesc = isZh
-        ? `\u4e00\u6b65\u6b65\u4e86\u89e3\u5982\u4f55\u4e0b\u8f7d ${data.guide.platform} \u5185\u5bb9\uff0c\u5e76\u67e5\u770b\u5e38\u89c1\u95ee\u9898\u4e0e\u4f7f\u7528\u5efa\u8bae\u3002`
-        : `Step-by-step guide to download ${data.guide.platform} content with tips and FAQs.`;
+    $: pageDesc = localizedGuideCopy.description(data.guide.platform);
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/guide/${data.slug}`;
     $: downloadUrl = `https://${fallbackHost}/${data.lang}/download/${data.guide.landingSlug}`;
@@ -83,13 +126,16 @@
         runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
         runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: landingFaqs = data.guide.landingSlug === 'youtube-download'
+        ? localeContent.faqs.slice(1)
+        : localeContent.faqs;
     $: freeTools = runtimeContent.freeTools.map((tool) => ({
         title: tool.title,
         desc: tool.desc,
         href: `/${data.lang}/${tool.path}`,
     }));
     $: mergedFaqs = (() => {
-        const ordered = [...platformFaqs, ...productFaqs, ...localeContent.faqs];
+        const ordered = [...platformFaqs, ...productFaqs, ...landingFaqs];
         const seen = new Set<string>();
         return ordered.filter((item) => {
             if (seen.has(item.q)) return false;

@@ -14,6 +14,7 @@
     import { updateSetting } from "$lib/state/settings";
     import { turnstileSolved } from "$lib/state/turnstile";
     import { savingHandler } from "$lib/api/saving-handler";
+    import { requireDownloadAuth } from "$lib/auth/download-auth";
     import API from "$lib/api/api";
     import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
     import {
@@ -559,6 +560,14 @@
             if (blockedDouyinGuideUrl) {
                 showDouyinGuideDialog(getDouyinGuideReason(blockedDouyinGuideUrl) || "browse");
                 return;
+            }
+
+            // Authenticate on the user's download click, before collection
+            // detection makes a potentially slow /expand request. The saving
+            // handler keeps its own check as a guard for other entry points.
+            if (clerkEnabled) {
+                const signedIn = await requireDownloadAuth();
+                if (!signedIn) return;
             }
 
             // Multiple links => batch dialog immediately (platform-agnostic).

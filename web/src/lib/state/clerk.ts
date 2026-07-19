@@ -56,6 +56,19 @@ const supportedClerkLocales = [
 type ClerkLocaleKey = (typeof supportedClerkLocales)[number];
 type ClerkLocalizationMap = Record<ClerkLocaleKey, ClerkLocalization>;
 
+const clerkCaptchaErrorCopy: Record<ClerkLocaleKey, string> = {
+    de: "Die Sicherheitsprüfung ist fehlgeschlagen. Aktualisieren Sie Chrome, Edge oder Firefox oder versuchen Sie es in einem privaten Fenster ohne Erweiterungen erneut. Wechseln Sie bei Bedarf das Netzwerk.",
+    en: "Security verification failed. Update Chrome, Edge, or Firefox, or try again in a private window with extensions disabled. If needed, switch networks.",
+    es: "La verificación de seguridad falló. Actualiza Chrome, Edge o Firefox, o inténtalo de nuevo en una ventana privada con las extensiones desactivadas. Si es necesario, cambia de red.",
+    fr: "La vérification de sécurité a échoué. Mettez à jour Chrome, Edge ou Firefox, ou réessayez dans une fenêtre privée avec les extensions désactivées. Si nécessaire, changez de réseau.",
+    ja: "セキュリティ確認に失敗しました。Chrome、Edge、Firefoxを最新版に更新するか、拡張機能を無効にしたプライベートウィンドウで再試行してください。必要に応じてネットワークも切り替えてください。",
+    ko: "보안 확인에 실패했습니다. Chrome, Edge 또는 Firefox를 최신 버전으로 업데이트하거나 확장 프로그램을 끈 비공개 창에서 다시 시도하세요. 필요한 경우 네트워크를 변경하세요.",
+    ru: "Не удалось пройти проверку безопасности. Обновите Chrome, Edge или Firefox либо повторите попытку в приватном окне с отключёнными расширениями. При необходимости смените сеть.",
+    th: "การตรวจสอบความปลอดภัยล้มเหลว โปรดอัปเดต Chrome, Edge หรือ Firefox หรือลองอีกครั้งในหน้าต่างส่วนตัวโดยปิดส่วนขยาย หากจำเป็นให้เปลี่ยนเครือข่าย",
+    vi: "Xác minh bảo mật không thành công. Hãy cập nhật Chrome, Edge hoặc Firefox, hoặc thử lại trong cửa sổ riêng tư khi đã tắt tiện ích mở rộng. Nếu cần, hãy đổi mạng.",
+    zh: "安全验证失败。请升级到最新版 Chrome、Edge 或 Firefox，或在关闭扩展的无痕窗口中重试；若仍失败，请更换网络。",
+};
+
 const getClerkLocaleKey = () => {
     const fallbackFromPath =
         (browser && window.location.pathname.match(/^\/([a-z]{2})\b/)?.[1]) || "en";
@@ -89,7 +102,21 @@ const loadClerkLocalizations = async (): Promise<ClerkLocalizationMap> => {
 
 const getClerkLocalization = async () => {
     const localizations = await loadClerkLocalizations();
-    return localizations[getClerkLocaleKey()] || localizations.en;
+    const localeKey = getClerkLocaleKey();
+    const localization = (localizations[localeKey] || localizations.en) as {
+        unstable__errors?: Record<string, unknown>;
+        [key: string]: unknown;
+    };
+    const captchaError = clerkCaptchaErrorCopy[localeKey];
+
+    return {
+        ...localization,
+        unstable__errors: {
+            ...localization.unstable__errors,
+            captcha_invalid: captchaError,
+            captcha_unavailable: captchaError,
+        },
+    };
 };
 
 let initPromise: Promise<ClerkInstance | null> | null = null;

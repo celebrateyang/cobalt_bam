@@ -19,6 +19,7 @@
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
+    import { buildQueueRetryRequest } from "$lib/task-manager/retry-request";
 
     import type { CobaltQueueItem, UUID } from "$lib/types/queue";
     import type { CobaltCurrentTasks } from "$lib/types/task-manager";
@@ -67,14 +68,19 @@
     $: hasResumeSnapshot = info.state === "error" && hasFetchResumeStateForTask(id);
 
     const retry = async (info: CobaltQueueItem) => {
-        if (info.canRetry && info.originalRequest) {
+        const originalRequest = info.originalRequest;
+        if (info.canRetry && originalRequest) {
             retrying = true;
             try {
                 await scheduleQueueRetry(id, async () => {
                     // Avoid racing a previous attempt's asynchronous hold release.
                     await waitForPointsRelease(id);
                     const response = await savingHandler({
-                        request: info.originalRequest,
+                        request: buildQueueRetryRequest(
+                            originalRequest,
+                            id,
+                            info.points?.status,
+                        ),
                         oldTaskId: id,
                         skipPoints: true,
                     });

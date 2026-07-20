@@ -21,6 +21,7 @@
         waitForPointsRelease,
     } from "$lib/state/task-manager/queue";
     import { scheduleQueueRetry } from "$lib/task-manager/retry-scheduler";
+    import { buildQueueRetryRequest } from "$lib/task-manager/retry-request";
     import {
         clerkEnabled,
         isSignedIn,
@@ -705,11 +706,18 @@
 
             while (!cancelRequested && !itemCompleted) {
                 const launchAttempt = async () => {
+                    let attemptRequest = request;
                     if (queueRetries > 0) {
                         await waitForPointsRelease(taskId);
+                        const retryItem = get(queueStore)[taskId];
+                        attemptRequest = buildQueueRetryRequest(
+                            request,
+                            taskId,
+                            retryItem?.points?.status,
+                        );
                     }
                     return savingHandler({
-                        request,
+                        request: attemptRequest,
                         skipPoints: true,
                         oldTaskId: taskId,
                         suppressErrors: true,

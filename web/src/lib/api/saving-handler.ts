@@ -495,7 +495,7 @@ export const savingHandler = async ({
 
     if (!request && !url) return null;
 
-    const selectedRequest = request || buildSaveRequest(url!);
+    const selectedRequest = { ...(request || buildSaveRequest(url!)) };
     const effectiveTaskId =
         oldTaskId ||
         selectedRequest.queueId ||
@@ -504,7 +504,7 @@ export const savingHandler = async ({
 
     // Every browser launch gets a stable logical identity. Queue retries keep
     // this value so the API can reuse the same points hold.
-    selectedRequest.queueId = effectiveTaskId;
+    selectedRequest.queueId ||= effectiveTaskId;
 
     if (clerkEnabled) {
         const signedIn = await requireDownloadAuth();

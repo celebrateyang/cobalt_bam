@@ -828,8 +828,18 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
     app.post('/expand', async (req, res) => {
         const request = req.body;
+        const requestId = req.traceId || randomUUID();
+        const startedAtMs = Date.now();
+        const submittedUrl = sanitizeLogHeaderValue(request?.url, 4096);
+
+        console.log(
+            `[EXPAND REQUEST] request_id=${requestId} url=${JSON.stringify(submittedUrl ?? "n/a")}`,
+        );
 
         if (!request?.url) {
+            console.warn(
+                `[EXPAND RESULT] request_id=${requestId} url=${JSON.stringify(submittedUrl ?? "n/a")} http_status=400 error_code=error.api.link.missing elapsed_ms=${Date.now() - startedAtMs}`,
+            );
             return fail(res, "error.api.link.missing");
         }
 
@@ -837,6 +847,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             const result = await expandURL(request.url);
 
             if (result?.error?.code) {
+                console.warn(
+                    `[EXPAND RESULT] request_id=${requestId} url=${JSON.stringify(submittedUrl ?? "n/a")} http_status=400 service=${result?.service ?? "n/a"} kind=${result?.kind ?? "n/a"} error_code=${result.error.code} elapsed_ms=${Date.now() - startedAtMs}`,
+                );
                 return res.status(400).json({
                     status: "error",
                     error: result.error,
@@ -848,6 +861,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             // If expansion failed or didn't return anything useful, fall back to single.
             const items = result?.items?.length ? result.items : [{ url: request.url }];
 
+            console.log(
+                `[EXPAND RESULT] request_id=${requestId} url=${JSON.stringify(submittedUrl ?? "n/a")} http_status=200 service=${result?.service ?? "n/a"} kind=${result?.kind || "single"} item_count=${items.length} elapsed_ms=${Date.now() - startedAtMs}`,
+            );
+
             return res.status(200).json({
                 status: "ok",
                 service: result?.service,
@@ -856,7 +873,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 collectionKey: result?.collectionKey,
                 items,
             });
-        } catch {
+        } catch (error) {
+            console.error(
+                `[EXPAND RESULT] request_id=${requestId} url=${JSON.stringify(submittedUrl ?? "n/a")} http_status=200 result=exception error=${JSON.stringify(error?.message ?? "unknown")} elapsed_ms=${Date.now() - startedAtMs}`,
+            );
             return res.status(200).json({
                 status: "ok",
                 kind: "single",

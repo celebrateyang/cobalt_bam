@@ -19,7 +19,7 @@ const BILIBILI_HEADERS = Object.freeze({
 });
 
 const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
-const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 30 * 60;
+const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 50 * 60;
 
 // Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.
 // Verified working as of Dec 2025.
@@ -1127,16 +1127,19 @@ const expandBilibili = async (inputUrl) => {
                 return currentSingle;
             }
 
+            // A video URL can reveal its surrounding UGC season. Keep batch
+            // expansion when every item is within the limit. If a long item is
+            // found, fall back to the exact video/page the user submitted; only
+            // explicit collection URLs should surface the collection error.
             const season = bilibiliUgcSeasonFromView(data);
-            if (season?.error) return season;
+            if (season?.error) return currentSingle;
 
-            // Small UGC seasons can contain a few large multi-page videos.
-            // Expand those nested pages for video URLs, but keep large space/list
-            // collection URLs at the outer-video level to avoid huge queues.
             const seasonPages = await bilibiliUgcSeasonPagesFromView(data);
+            if (seasonPages?.error) return currentSingle;
             if (seasonPages) return seasonPages;
 
             const multi = bilibiliMultiPageFromView(data);
+            if (multi?.error) return currentSingle;
             if (multi) return multi;
 
             if (season) return season;

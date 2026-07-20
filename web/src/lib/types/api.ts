@@ -145,6 +145,7 @@ export type CobaltSaveRequestBody =
          batch?: boolean;
          queueId?: string;
          filenameTitle?: string;
+         bilibiliDirectBridge?: boolean;
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;

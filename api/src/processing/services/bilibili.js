@@ -305,7 +305,14 @@ const pickProgressiveMp4 = (playInfo) => {
     }, null);
 };
 
-async function com_download(id, partId, filenameTitle, preloadedMeta, preferProgressiveMp4 = false) {
+async function com_download(
+    id,
+    partId,
+    filenameTitle,
+    preloadedMeta,
+    preferProgressiveMp4 = false,
+    forceProgressiveMp4 = false,
+) {
     const meta = preloadedMeta || await fetchComVideoMeta(id);
     if (!meta) {
         return { error: "fetch.fail" };
@@ -320,8 +327,13 @@ async function com_download(id, partId, filenameTitle, preloadedMeta, preferProg
     const durationSeconds = getComDurationSeconds(meta, partId);
     const shouldUseDirectBridge =
         preferProgressiveMp4 === true &&
-        typeof durationSeconds === "number" &&
-        durationSeconds >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS;
+        (
+            forceProgressiveMp4 === true ||
+            (
+                typeof durationSeconds === "number" &&
+                durationSeconds >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS
+            )
+        );
 
     let fallbackBase = `bilibili_${id}`;
     if (partId) {
@@ -346,6 +358,10 @@ async function com_download(id, partId, filenameTitle, preloadedMeta, preferProg
                 duration: durationSeconds,
             };
         }
+
+        // This request came from the explicit "download current only" Direct
+        // Bridge action. Do not silently switch it back to DASH merge/queue.
+        if (forceProgressiveMp4) return { error: "fetch.empty" };
     }
 
     const playInfo = await fetchComPlayInfo({ id, cid });
@@ -510,6 +526,7 @@ const tryLocalExtractorResult = async ({
     filenameTitle,
     preloadedMeta,
     preferProgressiveMp4,
+    forceProgressiveMp4,
 }) => {
     let result;
 
@@ -520,6 +537,7 @@ const tryLocalExtractorResult = async ({
             filenameTitle,
             preloadedMeta,
             preferProgressiveMp4,
+            forceProgressiveMp4,
         );
     } else if (tvId) {
         result = await tv_download(tvId);
@@ -542,7 +560,7 @@ const tryLocalExtractorResult = async ({
     return result;
 };
 
-export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, preferProgressiveMp4, __streamRetry }) {
+export default async function({ comId, tvId, comShortLink, partId, epId, filenameTitle, preferProgressiveMp4, forceProgressiveMp4, __streamRetry }) {
     if (epId) {
         // bangumi episodes are often behind paid membership / regional licensing walls.
         // return an explicit user-facing error instead of a generic fetch.empty.
@@ -558,10 +576,15 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         ? await fetchComVideoMeta(comId).catch(() => null)
         : null;
     const resolvedFilenameTitle = filenameTitle || buildComFilenameTitle(preloadedMeta, partId);
-    const longDirectBridgeEligible =
+    const directBridgeEligible =
         preferProgressiveMp4 === true &&
-        typeof getComDurationSeconds(preloadedMeta, partId) === "number" &&
-        getComDurationSeconds(preloadedMeta, partId) >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS;
+        (
+            forceProgressiveMp4 === true ||
+            (
+                typeof getComDurationSeconds(preloadedMeta, partId) === "number" &&
+                getComDurationSeconds(preloadedMeta, partId) >= LONG_VIDEO_DIRECT_BRIDGE_SECONDS
+            )
+        );
 
     const {
         upstreamUrl,
@@ -577,7 +600,7 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
         filenameTitle: resolvedFilenameTitle,
     };
 
-    const canUseUpstream = !!upstreamUrl && shouldUseUpstream() && !longDirectBridgeEligible;
+    const canUseUpstream = !!upstreamUrl && shouldUseUpstream() && !directBridgeEligible;
     const routePlan = pickBilibiliRoutePlan({
         canUseUpstream,
         streamRetry: !!__streamRetry,
@@ -619,7 +642,8 @@ export default async function({ comId, tvId, comShortLink, partId, epId, filenam
             partId,
             filenameTitle: resolvedFilenameTitle,
             preloadedMeta,
-            preferProgressiveMp4: longDirectBridgeEligible,
+            preferProgressiveMp4: directBridgeEligible,
+            forceProgressiveMp4,
         });
 
         if (!localResult?.error) {

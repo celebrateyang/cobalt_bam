@@ -40,6 +40,10 @@ export const apiSchema = z.object({
 
     batch: z.boolean().default(false),
 
+    // Explicit product action: download only the submitted Bilibili video/page
+    // through a single progressive MP4 URL instead of the browser merge queue.
+    bilibiliDirectBridge: z.boolean().default(false),
+
     // Stable browser queue identity used to make points holds idempotent
     // across network retries and manual queue resumes.
     queueId: z.string()

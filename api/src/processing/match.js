@@ -372,6 +372,7 @@ export default async function({ host, patternMatch, params, authType }) {
                     ...patternMatch,
                     filenameTitle: params.batch ? params.filenameTitle : undefined,
                     preferProgressiveMp4: !isAudioOnly && !isAudioMuted,
+                    forceProgressiveMp4: params.bilibiliDirectBridge === true,
                 });
                 break;
 

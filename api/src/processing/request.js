@@ -90,6 +90,7 @@ const enumAllowlist = {
 
 const booleanKeys = new Set([
     "batch",
+    "bilibiliDirectBridge",
     "disableMetadata",
     "allowH265",
     "convertGif",

@@ -13,7 +13,7 @@
     import cachedInfo from "$lib/state/server-info";
     import { updateSetting } from "$lib/state/settings";
     import { turnstileSolved } from "$lib/state/turnstile";
-    import { savingHandler } from "$lib/api/saving-handler";
+    import { buildSaveRequest, savingHandler } from "$lib/api/saving-handler";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import API from "$lib/api/api";
     import { clerkEnabled, isSignedIn } from "$lib/state/clerk";
@@ -765,7 +765,17 @@
                                   text: $t("dialog.batch.detect.download_single"),
                                   main: true,
                                   action: () => {
-                                      setTimeout(() => savingHandler({ url }), 200);
+                                      setTimeout(() => {
+                                          if (isBilibiliVideoPage(url)) {
+                                              const request = buildSaveRequest(url);
+                                              request.localProcessing = "disabled";
+                                              request.alwaysProxy = false;
+                                              request.bilibiliDirectBridge = true;
+                                              void savingHandler({ request });
+                                              return;
+                                          }
+                                          void savingHandler({ url });
+                                      }, 200);
                                   },
                               },
                           ]

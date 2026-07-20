@@ -53,3 +53,27 @@ test("keeps forced YouTube batch downloads in the processing queue", () => {
     assert.equal(Array.isArray(response.body.tunnel), true);
     assert.equal(response.body.tunnel.length, 1);
 });
+
+test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
+    const directUrl = "https://cdn.example/bilibili-progressive.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "bilibili",
+        r: {
+            urls: directUrl,
+            urlCandidates: [directUrl, "https://backup.example/video.mp4"],
+            directClientDownload: true,
+            filename: "video.mp4",
+            duration: 120,
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, directUrl);
+    assert.equal(response.body.directUrl, directUrl);
+    assert.deepEqual(response.body.directUrlCandidates, [
+        directUrl,
+        "https://backup.example/video.mp4",
+    ]);
+});

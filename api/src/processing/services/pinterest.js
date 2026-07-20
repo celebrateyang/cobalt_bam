@@ -13,18 +13,18 @@ export default async function(o) {
         id = patternMatch?.id;
     }
 
-    if (id.includes("--")) id = id.split("--")[1];
     if (!id) return { error: "fetch.fail" };
+    if (id.includes("--")) id = id.split("--")[1];
 
     const html = await fetch(`https://www.pinterest.com/pin/${id}/`, {
         headers: { "user-agent": genericUserAgent }
     }).then(r => r.text()).catch(() => {});
 
+    if (!html) return { error: "fetch.fail" };
+
     const invalidPin = html.match(notFoundRegex);
 
     if (invalidPin) return { error: "fetch.empty" };
-
-    if (!html) return { error: "fetch.fail" };
 
     const videoLink = [...html.matchAll(videoRegex)]
                     .map(([, link]) => link)
@@ -40,12 +40,14 @@ export default async function(o) {
                     .map(([, link]) => link)
                     .find(a => a.endsWith('.jpg') || a.endsWith('.gif'));
 
-    const imageType = imageLink.endsWith(".gif") ? "gif" : "jpg"
+    if (imageLink) {
+        const imageType = imageLink.endsWith(".gif") ? "gif" : "jpg";
 
-    if (imageLink) return {
-        urls: imageLink,
-        isPhoto: true,
-        filename: `pinterest_${id}.${imageType}`
+        return {
+            urls: imageLink,
+            isPhoto: true,
+            filename: `pinterest_${id}.${imageType}`
+        };
     }
 
     return { error: "fetch.empty" };

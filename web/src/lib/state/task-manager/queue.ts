@@ -28,10 +28,10 @@ const clearPipelineCache = (queueItem: CobaltQueueItem) => {
 let update: (_: Updater<CobaltQueue>) => void;
 let queueRefreshHintAt = 0;
 const QUEUE_REFRESH_HINT_COOLDOWN_MS = 60_000;
-const pendingPointsReleases = new Map<UUID, Promise<void>>();
+const pendingPointsReleases = new Map<UUID, Promise<boolean>>();
 
 export const waitForPointsRelease = async (id: UUID) => {
-    await pendingPointsReleases.get(id);
+    return await pendingPointsReleases.get(id) ?? true;
 };
 
 export const waitForQueueItemTerminal = (
@@ -224,13 +224,13 @@ const releaseQueueHold = async (id: UUID, reason: string, errorCode?: string) =>
     const item = get(queue)[id];
     if (!item) {
         console.log(`[queue] releaseQueueHold: item not found id=${id}`);
-        return;
+        return false;
     }
 
     const holdId = item.points?.holdId;
     if (!holdId) {
         console.log(`[queue] releaseQueueHold: no holdId for item id=${id}`);
-        return;
+        return true;
     }
 
     console.log(`[queue] releaseQueueHold: calling API holdId=${holdId} reason=${reason} itemId=${id} errorCode=${errorCode ?? "none"}`);
@@ -249,12 +249,14 @@ const releaseQueueHold = async (id: UUID, reason: string, errorCode?: string) =>
             holdId,
             status: result.status ?? "released",
         });
+        return true;
     } else {
         console.error(`[queue] releaseQueueHold: failed holdId=${holdId} result=`, result);
         updateItemPoints(id, {
             holdId,
             status: "error",
         });
+        return false;
     }
 };
 
@@ -333,7 +335,7 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
     }
     maybeShowQueueRefreshHint(error);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
-    const pendingRelease = releaseQueueHold(id, "queue_error", error).then(() => undefined);
+    const pendingRelease = releaseQueueHold(id, "queue_error", error);
     pendingPointsReleases.set(id, pendingRelease);
     void pendingRelease.finally(() => {
         if (pendingPointsReleases.get(id) === pendingRelease) {

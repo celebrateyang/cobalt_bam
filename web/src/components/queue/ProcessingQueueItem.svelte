@@ -74,7 +74,8 @@
             try {
                 await scheduleQueueRetry(id, async () => {
                     // Avoid racing a previous attempt's asynchronous hold release.
-                    await waitForPointsRelease(id);
+                    const pointsReleased = await waitForPointsRelease(id);
+                    if (!pointsReleased) return null;
                     const response = await savingHandler({
                         request: buildQueueRetryRequest(
                             originalRequest,

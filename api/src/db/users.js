@@ -55,13 +55,34 @@ export const calculateFirstDownloadGraceCharge = ({
     };
 };
 
+const normalizeDownloadSourceUrl = (value) => {
+    if (value instanceof URL) return value.toString();
+    if (typeof value !== "string") return String(value ?? "");
+
+    const trimmed = value.trim();
+    // Older rows were inserted with a URL object. node-postgres serialized it
+    // as a JSON string, leaving literal wrapping quotes in the TEXT column.
+    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (typeof parsed === "string") return parsed;
+        } catch {
+            // Treat malformed legacy values as ordinary strings below.
+        }
+    }
+    return trimmed;
+};
+
 export const resolveDownloadRequestAction = ({
     request,
     sourceUrl,
     hold = null,
     now = Date.now(),
 } = {}) => {
-    if (!request || request.source_url !== sourceUrl) {
+    if (
+        !request ||
+        normalizeDownloadSourceUrl(request.source_url) !== normalizeDownloadSourceUrl(sourceUrl)
+    ) {
         return { action: "reject", code: "IDEMPOTENCY_CONFLICT" };
     }
     if (request.status === "completed") {
@@ -1237,6 +1258,7 @@ export const claimDownloadRequest = async ({
         return { ok: true, status: "skipped" };
     }
 
+    const normalizedSourceUrl = normalizeDownloadSourceUrl(sourceUrl);
     const client = await getClient();
     const now = Date.now();
     const ownerToken = nanoid(20);
@@ -1273,7 +1295,7 @@ export const claimDownloadRequest = async ({
             ON CONFLICT (user_id, queue_id) DO NOTHING
             RETURNING *;
             `,
-            [userId, queueId, sourceUrl, ownerToken, leaseExpiresAt, now],
+            [userId, queueId, normalizedSourceUrl, ownerToken, leaseExpiresAt, now],
         );
 
         if (inserted.rowCount) {
@@ -1321,7 +1343,7 @@ export const claimDownloadRequest = async ({
         );
         const action = resolveDownloadRequestAction({
             request: existing,
-            sourceUrl,
+            sourceUrl: normalizedSourceUrl,
             hold: holdRes.rows?.[0] ?? null,
             now,
         });

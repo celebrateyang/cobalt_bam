@@ -85,6 +85,23 @@ test("replays a completed direct response without another extraction", () => {
     );
 });
 
+test("replays legacy quoted URLs when the retry supplies a URL object", () => {
+    const now = 10_000;
+    assert.deepEqual(
+        resolveDownloadRequestAction({
+            request: {
+                source_url: '"https://example.com/video?p=3"',
+                status: "completed",
+                response_body: { status: "local-processing" },
+                replay_expires_at: now + 1_000,
+            },
+            sourceUrl: new URL("https://example.com/video?p=3"),
+            now,
+        }),
+        { action: "replay" },
+    );
+});
+
 test("replays a queued response only while its hold is active", () => {
     const now = 10_000;
     const request = {

@@ -708,7 +708,8 @@
                 const launchAttempt = async () => {
                     let attemptRequest = request;
                     if (queueRetries > 0) {
-                        await waitForPointsRelease(taskId);
+                        const pointsReleased = await waitForPointsRelease(taskId);
+                        if (!pointsReleased) return null;
                         const retryItem = get(queueStore)[taskId];
                         attemptRequest = buildQueueRetryRequest(
                             request,

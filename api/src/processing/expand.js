@@ -810,7 +810,10 @@ const bilibiliUgcSeasonFromView = (data) => {
             // actual /video/:bvid download without ?p= will fetch the first page only.
             // Prefer the first page duration when available.
             const duration = toSeconds(
-                ep?.page?.duration ?? ep?.duration ?? ep?.arc?.duration,
+                ep?.page?.duration ??
+                ep?.pages?.[0]?.duration ??
+                ep?.duration ??
+                ep?.arc?.duration,
             );
             return {
                 itemKey: ep?.bvid ? `bilibili:video:${ep.bvid}` : undefined,
@@ -1119,6 +1122,8 @@ const expandBilibili = async (inputUrl) => {
         if (data) {
             const partId = url.searchParams.get("p");
             const currentSingle = bilibiliSingleFromView(data, id, partId);
+            if (partId && partId !== "1") return currentSingle;
+
             const currentDuration = currentSingle?.items?.[0]?.duration;
             if (
                 typeof currentDuration === "number" &&
@@ -1132,17 +1137,15 @@ const expandBilibili = async (inputUrl) => {
             // found, fall back to the exact video/page the user submitted; only
             // explicit collection URLs should surface the collection error.
             const season = bilibiliUgcSeasonFromView(data);
-            if (season?.error) return currentSingle;
 
             const seasonPages = await bilibiliUgcSeasonPagesFromView(data);
-            if (seasonPages?.error) return currentSingle;
-            if (seasonPages) return seasonPages;
+            if (seasonPages && !seasonPages.error) return seasonPages;
 
             const multi = bilibiliMultiPageFromView(data);
             if (multi?.error) return currentSingle;
             if (multi) return multi;
 
-            if (season) return season;
+            if (season && !season.error) return season;
 
             return currentSingle;
         }

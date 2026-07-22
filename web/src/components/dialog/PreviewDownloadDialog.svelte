@@ -31,6 +31,7 @@
     export let extensionPromptKey = "preview";
 
     const EXTENSION_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
+    const MAX_RESUME_ATTEMPTS = 128;
 
     let close: () => void;
     let controller: AbortController | null = null;
@@ -59,7 +60,7 @@
         : receivedBytes > 0
             ? formatBytes(receivedBytes)
             : "";
-    $: speedText = status === "downloading" || status === "fallback"
+    $: speedText = status === "downloading"
         ? formatSpeed(receivedBytes, startedAt)
         : "";
     $: primaryUrl = uniqueUrls()[0] || activeUrl;
@@ -246,33 +247,66 @@
         totalBytes = null;
         startedAt = Date.now();
 
-        const response = await fetch(url, {
-            cache: "no-store",
-            referrerPolicy: "no-referrer",
-            signal,
-        });
-
-        if (!response.ok || !response.body || !isExpectedResponse(response)) {
-            await response.body?.cancel().catch(() => undefined);
-            throw new Error("bad_response");
-        }
-
-        const length = Number(response.headers.get("content-length"));
-        totalBytes = Number.isFinite(length) && length > 0 ? length : null;
-
-        const reader = response.body.getReader();
         const chunks: Uint8Array[] = [];
+        let contentType = "";
+        let resumeAttempts = 0;
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (!value) continue;
+        while (!totalBytes || receivedBytes < totalBytes) {
+            const resumeOffset = receivedBytes;
+            const response = await fetch(url, {
+                cache: "no-store",
+                referrerPolicy: "no-referrer",
+                headers: resumeOffset > 0 ? { Range: `bytes=${resumeOffset}-` } : undefined,
+                signal,
+            });
 
-            chunks.push(value);
-            receivedBytes += value.length;
-            if (totalBytes) {
-                progress = Math.min(99, (receivedBytes / totalBytes) * 100);
+            if (!response.ok || !response.body || !isExpectedResponse(response)) {
+                await response.body?.cancel().catch(() => undefined);
+                throw new Error("bad_response");
             }
+
+            contentType ||= response.headers.get("content-type") || "";
+            const contentRange = response.headers.get("content-range") || "";
+            const rangeMatch = /^bytes\s+(\d+)-\d+\/(\d+|\*)$/i.exec(contentRange);
+            if (resumeOffset > 0 && (response.status !== 206 || Number(rangeMatch?.[1]) !== resumeOffset)) {
+                await response.body.cancel().catch(() => undefined);
+                throw new Error("range_not_supported");
+            }
+
+            const rangeTotal = Number(rangeMatch?.[2]);
+            const length = Number(response.headers.get("content-length"));
+            if (Number.isFinite(rangeTotal) && rangeTotal > 0) {
+                totalBytes = rangeTotal;
+            } else if (resumeOffset === 0 && Number.isFinite(length) && length > 0) {
+                totalBytes = length;
+            }
+
+            const reader = response.body.getReader();
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (!value) continue;
+
+                    chunks.push(value);
+                    receivedBytes += value.length;
+                    if (totalBytes) {
+                        progress = Math.min(99, (receivedBytes / totalBytes) * 100);
+                    }
+                }
+            } catch (error) {
+                if (signal.aborted || !receivedBytes || resumeAttempts >= MAX_RESUME_ATTEMPTS) throw error;
+                resumeAttempts += 1;
+                statusText = "Connection interrupted. Resuming download...";
+                continue;
+            }
+
+            if (!totalBytes || receivedBytes >= totalBytes) break;
+            if (receivedBytes === resumeOffset || resumeAttempts >= MAX_RESUME_ATTEMPTS) {
+                throw new Error("size_mismatch");
+            }
+            resumeAttempts += 1;
+            statusText = "Connection interrupted. Resuming download...";
         }
 
         if (receivedBytes < 1024) {
@@ -288,7 +322,7 @@
         }
 
         const blob = new Blob(chunks, {
-            type: response.headers.get("content-type") || (
+            type: contentType || (
                 mediaType === "audio" ? "audio/mpeg" :
                 mediaType === "image" ? "image/jpeg" :
                 "video/mp4"
@@ -360,6 +394,10 @@
 
         status = "fallback";
         statusText = "Direct fetch was blocked. Use the browser download link or copy the URL.";
+        progress = 0;
+        receivedBytes = 0;
+        totalBytes = null;
+        startedAt = 0;
     };
 
     const save = () => {
@@ -412,7 +450,7 @@
                 <p>{filename}</p>
             </div>
             <div class="header-actions">
-                {#if status === "downloading" || status === "fallback"}
+                {#if status === "downloading"}
                     <span class="spin">
                         <IconLoader2 />
                     </span>

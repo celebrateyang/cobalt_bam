@@ -148,17 +148,18 @@ const normalizeUpstreamErrorBody = (payload, body) => {
     return body;
 };
 
-const requestUpstreamCobalt = async (payload) => {
+const requestUpstreamCobalt = async (payload, options = {}) => {
     if (isUpstreamServer) {
         return null;
     }
 
-    const timeoutMs =
+    const configuredTimeoutMs =
         typeof env.upstreamTimeoutMs === "number"
         && Number.isFinite(env.upstreamTimeoutMs)
         && env.upstreamTimeoutMs > 0
             ? env.upstreamTimeoutMs
             : 12000;
+    const timeoutMs = options.timeoutMs || configuredTimeoutMs;
 
     const upstream = await requestUpstream({
         payload,
@@ -166,8 +167,9 @@ const requestUpstreamCobalt = async (payload) => {
         timeoutMs: isYouTubeHost(getRequestHost(payload))
             ? Math.max(timeoutMs, env.upstreamYoutubeHeadersTimeoutMs)
             : timeoutMs,
-        bodyTimeoutMs: env.upstreamBodyTimeoutMs,
-        returnFailureResponse: true,
+        bodyTimeoutMs: options.bodyTimeoutMs || env.upstreamBodyTimeoutMs,
+        maxAttempts: options.maxAttempts,
+        returnFailureResponse: options.returnFailureResponse !== false,
     });
 
     if (!upstream?.body) {
@@ -368,6 +370,27 @@ export default async function({ host, patternMatch, params, authType }) {
                 break;
 
             case "bilibili":
+                if (params.bilibiliDirectBridge === true && !isUpstreamServer) {
+                    const upstreamDirect = await requestUpstreamCobalt(params, {
+                        // api4 is an optional regional accelerator. A short,
+                        // single attempt keeps GKE local extraction as the
+                        // reliable fallback when the Shanghai node is offline.
+                        timeoutMs: 5000,
+                        bodyTimeoutMs: 1500,
+                        maxAttempts: 1,
+                        returnFailureResponse: false,
+                    });
+                    const upstreamBody = upstreamDirect?.body;
+                    if (
+                        upstreamBody?.status === "redirect" &&
+                        upstreamBody?.service === "bilibili" &&
+                        typeof upstreamBody.directUrl === "string" &&
+                        upstreamBody.directUrl.length > 0
+                    ) {
+                        return upstreamDirect;
+                    }
+                }
+
                 r = await bilibili({
                     ...patternMatch,
                     filenameTitle: params.batch ? params.filenameTitle : undefined,

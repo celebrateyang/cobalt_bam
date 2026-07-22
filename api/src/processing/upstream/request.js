@@ -21,6 +21,7 @@ const allowedPayloadKeys = new Set([
     "videoQuality",
     "localProcessing",
     "batch",
+    "bilibiliDirectBridge",
     "filenameTitle",
     "youtubeDubLang",
     "subtitleLang",

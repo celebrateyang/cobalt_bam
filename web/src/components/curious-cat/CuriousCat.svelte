@@ -14,47 +14,6 @@
     const IDLE_DELAY_MS = 60_000;
     const MAX_DAILY_SHOWS = 3;
 
-    const fallbackActivities: CuriousCatActivity[] = [
-        {
-            id: -1,
-            name: "blind-box",
-            activity_type: "blind_box",
-            title: "喵，我发现了一批盲盒链接",
-            body: "这些链接来自其他用户成功下载过的记录，只显示链接，不显示是谁下载的。试试手气，可能会发现新的好内容。",
-            button_text: "去开盲盒",
-            action_type: "blind_box",
-            target_url: null,
-            image_url: null,
-            copy_text: null,
-            reward_points: null,
-            priority: 1,
-            is_active: true,
-            starts_at: null,
-            ends_at: null,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-        },
-        {
-            id: -2,
-            name: "referral",
-            activity_type: "referral",
-            title: "喵，分享专属链接可以赚积分",
-            body: "进入账号页面，复制你的专属邀请链接，分享给朋友使用 Freesavevideo。",
-            button_text: "查看专属链接",
-            action_type: "link",
-            target_url: "/{lang}/account?section=referral",
-            image_url: null,
-            copy_text: null,
-            reward_points: null,
-            priority: 0,
-            is_active: true,
-            starts_at: null,
-            ends_at: null,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-        },
-    ];
-
     let activities: CuriousCatActivity[] = [];
     let selected: CuriousCatActivity | null = null;
     let visible = false;
@@ -144,8 +103,9 @@
     };
 
     const pickActivity = () => {
-        const pool = activities.length ? activities : fallbackActivities;
-        const sorted = [...pool].sort((a, b) => {
+        if (!activities.length) return null;
+
+        const sorted = [...activities].sort((a, b) => {
             const priorityDiff = Number(b.priority || 0) - Number(a.priority || 0);
             if (priorityDiff !== 0) return priorityDiff;
             return b.id - a.id;

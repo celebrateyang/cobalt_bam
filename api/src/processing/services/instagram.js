@@ -63,6 +63,7 @@ const commonHeaders = {
 }
 
 const mobileHeaders = {
+    "x-ig-app-id": "936619743392459",
     "x-ig-app-locale": "en_US",
     "x-ig-device-locale": "en_US",
     "x-ig-mapped-locale": "en_US",

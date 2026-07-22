@@ -21,3 +21,13 @@ test("keeps non-Bilibili progressive URLs unchanged", () => {
     const source = "https://cdn.example/video.mp4?token=signed";
     assert.deepEqual(buildProgressiveDirectCandidates([source]), [source]);
 });
+
+test("builds the same mirror fallback chain for DASH tracks", () => {
+    const source = "https://upos-hz-mirrorakam.akamaized.net/upgcxcode/00/11/video.m4s?deadline=1&upsig=signed";
+    const candidates = buildProgressiveDirectCandidates([source]);
+
+    assert.equal(new URL(candidates[0]).hostname, "upos-sz-mirrorcos.bilivideo.com");
+    assert.equal(new URL(candidates[1]).hostname, "upos-sz-mirrorali.bilivideo.com");
+    assert.equal(new URL(candidates[2]).hostname, "upos-sz-mirrorhw.bilivideo.com");
+    assert.equal(candidates[3], source);
+});

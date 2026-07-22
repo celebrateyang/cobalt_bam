@@ -13,6 +13,22 @@ const BILIBILI_MIN_REQUEST_TIMEOUT_MS = 60_000;
 const BILIBILI_MAX_REQUEST_TIMEOUT_MS = 240_000;
 const BILIBILI_MIN_BYTES_PER_SECOND = 40 * 1024;
 
+export const getProxyCandidateUrls = (streamInfo) => {
+    const unique = [];
+    const push = (value) => {
+        if (typeof value !== "string") return;
+        const url = value.trim();
+        if (!url || unique.includes(url)) return;
+        unique.push(url);
+    };
+
+    push(streamInfo?.urls);
+    if (streamInfo?.service === "bilibili" && Array.isArray(streamInfo?.urlCandidates)) {
+        streamInfo.urlCandidates.forEach(push);
+    }
+    return unique;
+};
+
 const shouldApplyBilibiliFastFail = (streamInfo) => {
     if (streamInfo.service !== "bilibili") return false;
 
@@ -100,7 +116,7 @@ export default async function (streamInfo, res) {
     const shouldFastFailBilibili = shouldApplyBilibiliFastFail(streamInfo);
     const abortController = new AbortController();
     const startedAt = Date.now();
-    const routeInfo = getRouteInfo(streamInfo.urls);
+    let routeInfo = getRouteInfo(streamInfo.urls);
     const tunnelId = streamInfo.tunnelId || "unknown";
     const upstreamRange = shouldStripRangeForHls(streamInfo) ? undefined : streamInfo.range;
     const rangeHeader = upstreamRange || "none";
@@ -181,7 +197,7 @@ export default async function (streamInfo, res) {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Content-disposition', contentDisposition(streamInfo.filename));
 
-        const { body: stream, headers, statusCode } = await request(streamInfo.urls, {
+        const requestOptions = {
             headers: {
                 ...getHeaders(streamInfo.service),
                 ...(streamInfo.headers || {}),
@@ -196,7 +212,40 @@ export default async function (streamInfo, res) {
                     bodyTimeout: BILIBILI_BODY_TIMEOUT_MS,
                 }
                 : {}),
-        });
+        };
+        const requestCandidates = getProxyCandidateUrls(streamInfo);
+        let upstreamResponse;
+        let selectedUrl = streamInfo.urls;
+
+        for (const [index, candidate] of requestCandidates.entries()) {
+            try {
+                const candidateResponse = await request(candidate, requestOptions);
+                const canTryNext = index < requestCandidates.length - 1;
+                if (candidateResponse.statusCode >= 400 && candidateResponse.statusCode !== 416 && canTryNext) {
+                    candidateResponse.body.destroy();
+                    tunnelDebugWarn(
+                        `[TUNNEL CANDIDATE] id=${tunnelId} service=${streamInfo.service} reason=http_${candidateResponse.statusCode} candidate=${index + 1}/${requestCandidates.length} host=${getRouteInfo(candidate).host}`,
+                    );
+                    continue;
+                }
+                upstreamResponse = candidateResponse;
+                selectedUrl = candidate;
+                break;
+            } catch (error) {
+                if (index >= requestCandidates.length - 1) throw error;
+                tunnelDebugWarn(
+                    `[TUNNEL CANDIDATE] id=${tunnelId} service=${streamInfo.service} reason=request_error candidate=${index + 1}/${requestCandidates.length} host=${getRouteInfo(candidate).host} message=${error?.message ?? "unknown"}`,
+                );
+            }
+        }
+
+        if (!upstreamResponse) {
+            throw new Error("media candidates exhausted");
+        }
+
+        streamInfo.urls = selectedUrl;
+        routeInfo = getRouteInfo(selectedUrl);
+        const { body: stream, headers, statusCode } = upstreamResponse;
 
         upstreamStatusCode = statusCode;
         upstreamContentLength = headers["content-length"];

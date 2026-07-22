@@ -159,7 +159,7 @@ const fetchUpstream = async (url, { timeoutMs: timeoutOverrideMs, reason = "fall
 function getBest(content) {
     return content
         ?.map((entry) => {
-            const candidates = collectCandidateUrls(entry);
+            const candidates = buildProgressiveDirectCandidates(collectCandidateUrls(entry));
             if (!candidates.length) return null;
 
             return {

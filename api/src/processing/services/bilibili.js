@@ -38,6 +38,39 @@ const collectCandidateUrls = (entry) => {
     return unique;
 };
 
+const BILIBILI_BROWSER_CDN_HOSTS = Object.freeze([
+    "upos-sz-mirrorcos.bilivideo.com",
+    "upos-sz-mirrorali.bilivideo.com",
+    "upos-sz-mirrorhw.bilivideo.com",
+]);
+
+export const buildProgressiveDirectCandidates = (urls) => {
+    const unique = [];
+    const push = (value) => {
+        if (!value || unique.includes(value)) return;
+        unique.push(value);
+    };
+
+    for (const rawUrl of urls) {
+        try {
+            const parsed = new URL(rawUrl);
+            if (/\/upgcxcode\//i.test(parsed.pathname)) {
+                for (const hostname of BILIBILI_BROWSER_CDN_HOSTS) {
+                    const candidate = new URL(parsed);
+                    candidate.hostname = hostname;
+                    candidate.port = "";
+                    push(candidate.toString());
+                }
+            }
+        } catch {
+            // Keep the untouched URL below even when it cannot be parsed.
+        }
+    }
+
+    urls.forEach(push);
+    return unique;
+};
+
 const rewriteUpstreamTunnelUrl = (rawUrl, upstreamOrigin) => {
     try {
         const upstreamBase = new URL(upstreamOrigin);
@@ -283,7 +316,7 @@ const pickProgressiveMp4 = (playInfo) => {
     const entries = Array.isArray(playInfo?.durl) ? playInfo.durl : [];
     const candidates = entries
         .map((entry) => {
-            const urls = collectCandidateUrls(entry);
+            const urls = buildProgressiveDirectCandidates(collectCandidateUrls(entry));
             if (!urls.length) return null;
 
             return {

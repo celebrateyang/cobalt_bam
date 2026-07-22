@@ -27,6 +27,7 @@ export type DialogBatchItem = {
     title?: string,
     duration?: number,
     itemKey?: string,
+    availability?: "available" | "platform_restricted",
 };
 
 type Dialog = {

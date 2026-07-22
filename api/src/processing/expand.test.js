@@ -161,6 +161,75 @@ test("a Bilibili video URL expands its collection when every item is within 50 m
     }
 });
 
+test("a Bilibili season starts at the submitted episode and marks preview-only items restricted", async () => {
+    const episodes = [
+        { bvid: "BV1First", title: "EP1", page: { cid: 301, duration: 600 } },
+        { bvid: "BV1Current", title: "EP2", page: { cid: 302, duration: 600 } },
+        { bvid: "BV1Next", title: "EP3", page: { cid: 303, duration: 600 } },
+    ];
+    const currentView = {
+        code: 0,
+        data: {
+            bvid: "BV1Current",
+            title: "EP2",
+            cid: 302,
+            pages: [{ page: 1, cid: 302, duration: 600, part: "EP2" }],
+            ugc_season: {
+                id: 101,
+                title: "Paid season",
+                sections: [{ episodes }],
+            },
+        },
+    };
+    const result = await withMockedFetch(
+        (input) => {
+            const url = new URL(String(input));
+            if (url.pathname === "/x/player/playurl") {
+                return url.searchParams.get("bvid") === "BV1Current"
+                    ? {
+                        code: 0,
+                        data: {
+                            timelength: 600_000,
+                            durl: [{ length: 20_000 }],
+                        },
+                    }
+                    : {
+                        code: 0,
+                        data: {
+                            dash: { video: [{}], audio: [{}] },
+                        },
+                    };
+            }
+
+            const bvid = url.searchParams.get("bvid");
+            const episode = episodes.find((item) => item.bvid === bvid);
+            if (episode && bvid !== "BV1Current") {
+                return {
+                    code: 0,
+                    data: {
+                        bvid,
+                        title: episode.title,
+                        cid: episode.page.cid,
+                        pages: [{
+                            page: 1,
+                            cid: episode.page.cid,
+                            duration: episode.page.duration,
+                            part: episode.title,
+                        }],
+                    },
+                };
+            }
+            return currentView;
+        },
+        () => expandURL("https://www.bilibili.com/video/BV1Current"),
+    );
+
+    assert.equal(result.kind, "bilibili-ugc-season");
+    assert.deepEqual(result.items.map((item) => item.title), ["EP2", "EP3"]);
+    assert.equal(result.items[0].availability, "platform_restricted");
+    assert.equal(result.items[1].availability, "available");
+});
+
 test("an explicit Bilibili collection URL is blocked when an item exceeds 50 minutes", async () => {
     const collectionResponse = {
         code: 0,

@@ -178,6 +178,9 @@
     const computeDownloadedItemsKey = (batchItems: DialogBatchItem[]) =>
         batchItems.map((item) => item.itemKey || item.url).join("\n");
 
+    const isItemRestricted = (item: DialogBatchItem | undefined) =>
+        item?.availability === "platform_restricted";
+
     const currentReturnPath = () =>
         `${$page.url.pathname}${$page.url.search}${$page.url.hash}`;
 
@@ -203,7 +206,9 @@
                 ? selectedUrls
                 : [],
         );
-        selected = items.map((item) => selectedUrlSet.has(item.url));
+        selected = items.map((item) => (
+            !isItemRestricted(item) && selectedUrlSet.has(item.url)
+        ));
         running = false;
         pointsCheckLoading = false;
         cancelRequested = false;
@@ -412,7 +417,9 @@
 
     $: selectedCountValue = selected.filter(Boolean).length;
     $: downloadedSelectedCountValue = downloadedSelected.filter(Boolean).length;
-    $: activeSelectionTotal = viewingDownloaded ? safeDownloadedItems.length : items.length;
+    $: activeSelectionTotal = viewingDownloaded
+        ? safeDownloadedItems.length
+        : items.filter((item) => !isItemRestricted(item)).length;
     $: activeSelectedCount = viewingDownloaded
         ? downloadedSelectedCountValue
         : selectedCountValue;
@@ -425,6 +432,7 @@
     }
 
     const setSelectedAt = (index: number, value: boolean) => {
+        if (isItemRestricted(items[index])) return;
         const nextSelected = selected.map((current, i) => (i === index ? value : current));
         selected = nextSelected;
         schedulePointsPreview(nextSelected);
@@ -451,7 +459,7 @@
     };
 
     const setAll = (value: boolean) => {
-        const nextSelected = selected.map(() => value);
+        const nextSelected = items.map((item) => value && !isItemRestricted(item));
         selected = nextSelected;
         schedulePointsPreview(nextSelected);
     };
@@ -936,14 +944,19 @@
             </div>
 
             {#each viewingDownloaded ? safeDownloadedItems : items as item, i (item.url)}
-                <div class="batch-item" class:downloaded={viewingDownloaded} role="listitem">
+                <div
+                    class="batch-item"
+                    class:downloaded={viewingDownloaded}
+                    class:restricted={!viewingDownloaded && isItemRestricted(item)}
+                    role="listitem"
+                >
                     {#if viewingDownloaded}
                         <label class="batch-check downloaded-check">
                             <input
                                 type="checkbox"
                                 checked={downloadedSelected[i]}
                                 on:change={(event) => handleDownloadedSelectionChange(i, event)}
-                                disabled={running || pointsCheckLoading}
+                                disabled={running || pointsCheckLoading || isItemRestricted(item)}
                                 aria-label={$t("a11y.dialog.batch.select_item")}
                             />
                         </label>
@@ -966,6 +979,11 @@
                         {#if item.title}
                             <div class="batch-url" title={item.url}>
                                 {item.url}
+                            </div>
+                        {/if}
+                        {#if !viewingDownloaded && isItemRestricted(item)}
+                            <div class="batch-restricted-note">
+                                {$t("error.api.content.platform_restricted", { service: "Bilibili" })}
                             </div>
                         {/if}
                     </div>
@@ -1178,6 +1196,16 @@
     .batch-item.downloaded .batch-title {
         color: var(--gray);
         font-weight: 500;
+    }
+
+    .batch-item.restricted {
+        opacity: 0.72;
+    }
+
+    .batch-restricted-note {
+        color: var(--red);
+        font-size: 12px;
+        line-height: 1.35;
     }
 
     .batch-text {

@@ -636,7 +636,10 @@
             }
 
             const items = expanded.items ?? [];
-            const hasBatch = expanded.kind !== "single" && items.length > 1;
+            const hasBatch = expanded.kind !== "single" && (
+                items.length > 1 ||
+                items.some((item) => item.availability === "platform_restricted")
+            );
 
             if (!hasBatch) {
                 handedOffToSavingHandler = true;
@@ -648,6 +651,7 @@
             title: item.title,
             duration: item.duration,
             itemKey: item.itemKey,
+            availability: item.availability,
         }));
 
         const collectionKey =

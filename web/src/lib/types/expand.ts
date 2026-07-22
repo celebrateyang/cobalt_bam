@@ -5,6 +5,7 @@ export type CobaltExpandItem = {
     title?: string;
     duration?: number;
     itemKey?: string;
+    availability?: "available" | "platform_restricted";
 };
 
 export type CobaltExpandOkResponse = {

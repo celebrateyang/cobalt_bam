@@ -798,7 +798,44 @@ const bilibiliView = async ({ id }) => {
         .catch(() => null);
 };
 
-const bilibiliUgcSeasonFromView = (data) => {
+const getBilibiliPlaybackAvailability = async ({ bvid, cid, duration }) => {
+    if (!bvid || !cid) return;
+
+    const playUrl = new URL("https://api.bilibili.com/x/player/playurl");
+    playUrl.searchParams.set("bvid", bvid);
+    playUrl.searchParams.set("cid", String(cid));
+    playUrl.searchParams.set("fnval", "4048");
+    playUrl.searchParams.set("qn", "64");
+    playUrl.searchParams.set("fourk", "1");
+
+    const payload = await fetch(playUrl, { headers: BILIBILI_HEADERS })
+        .then((response) => response.json())
+        .catch(() => null);
+    const playInfo = payload?.code === 0 ? payload?.data : null;
+    if (!playInfo) return;
+
+    const hasDashVideo = Array.isArray(playInfo?.dash?.video) && playInfo.dash.video.length > 0;
+    const hasDashAudio = Array.isArray(playInfo?.dash?.audio) && playInfo.dash.audio.length > 0;
+    if (hasDashVideo && hasDashAudio) return "available";
+
+    const fullDurationMs = Number(playInfo?.timelength) || Number(duration) * 1000;
+    const previewDurationMs = Array.isArray(playInfo?.durl)
+        ? playInfo.durl.reduce(
+            (total, entry) => total + (Number(entry?.length) || 0),
+            0,
+        )
+        : 0;
+
+    if (
+        fullDurationMs > 0 &&
+        previewDurationMs > 0 &&
+        previewDurationMs < fullDurationMs * 0.9
+    ) {
+        return "platform_restricted";
+    }
+};
+
+const bilibiliUgcSeasonFromView = async (data) => {
     const season = data?.ugc_season;
     if (!season?.sections?.length) return;
 
@@ -822,6 +859,7 @@ const bilibiliUgcSeasonFromView = (data) => {
                     : undefined,
                 title: ep?.title || ep?.arc?.title,
                 duration,
+                cid: ep?.page?.cid ?? ep?.cid,
             };
         })
         .filter((item) => item.url);
@@ -831,6 +869,24 @@ const bilibiliUgcSeasonFromView = (data) => {
         return buildBilibiliLongCollectionError();
     }
 
+    const currentItemKey = data?.bvid
+        ? `bilibili:video:${data.bvid}`
+        : undefined;
+    const visibleItems = sliceCollectionFromItemKey(
+        uniqBy(items, (item) => item.url),
+        currentItemKey,
+    );
+    const checkedItems = await Promise.all(
+        visibleItems.map(async ({ cid, ...item }) => ({
+            ...item,
+            availability: await getBilibiliPlaybackAvailability({
+                bvid: item.itemKey?.split(":")[2],
+                cid,
+                duration: item.duration,
+            }),
+        })),
+    );
+
     return {
         service: "bilibili",
         kind: "bilibili-ugc-season",
@@ -838,7 +894,7 @@ const bilibiliUgcSeasonFromView = (data) => {
             ? buildCollectionKey("bilibili", "ugc-season", seasonId)
             : undefined,
         title: season.title,
-        items: uniqBy(items, (i) => i.url),
+        items: checkedItems,
     };
 };
 
@@ -1150,7 +1206,7 @@ const expandBilibili = async (inputUrl) => {
             // expansion when every item is within the limit. If a long item is
             // found, fall back to the exact video/page the user submitted; only
             // explicit collection URLs should surface the collection error.
-            const season = bilibiliUgcSeasonFromView(data);
+            const season = await bilibiliUgcSeasonFromView(data);
 
             const seasonPages = await bilibiliUgcSeasonPagesFromView(data);
             if (seasonPages && !seasonPages.error) return seasonPages;

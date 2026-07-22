@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { PassThrough } from "node:stream";
 import test from "node:test";
 
-import { getProxyCandidateUrls } from "./proxy.js";
+import { discardProxyResponseBody, getProxyCandidateUrls } from "./proxy.js";
 
 test("uses all Bilibili media candidates in priority order", () => {
     assert.deepEqual(getProxyCandidateUrls({
@@ -25,4 +26,12 @@ test("does not change proxy behavior for other services", () => {
         urls: "https://primary.example/video.mp4",
         urlCandidates: ["https://backup.example/video.mp4"],
     }), ["https://primary.example/video.mp4"]);
+});
+
+test("discarding a failed CDN response consumes the asynchronous stream error", async () => {
+    const body = new PassThrough();
+    discardProxyResponseBody(body);
+
+    await new Promise((resolve) => body.once("close", resolve));
+    assert.equal(body.destroyed, true);
 });

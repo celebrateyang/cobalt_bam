@@ -29,6 +29,15 @@ export const getProxyCandidateUrls = (streamInfo) => {
     return unique;
 };
 
+export const discardProxyResponseBody = (body) => {
+    if (!body) return;
+    // Undici emits AbortError asynchronously when BodyReadable.destroy() is
+    // called. Always consume that event before abandoning a failed candidate,
+    // otherwise a routine CDN fallback can terminate the Node process.
+    body.on?.("error", () => {});
+    body.destroy?.();
+};
+
 const shouldApplyBilibiliFastFail = (streamInfo) => {
     if (streamInfo.service !== "bilibili") return false;
 
@@ -222,7 +231,7 @@ export default async function (streamInfo, res) {
                 const candidateResponse = await request(candidate, requestOptions);
                 const canTryNext = index < requestCandidates.length - 1;
                 if (candidateResponse.statusCode >= 400 && candidateResponse.statusCode !== 416 && canTryNext) {
-                    candidateResponse.body.destroy();
+                    discardProxyResponseBody(candidateResponse.body);
                     tunnelDebugWarn(
                         `[TUNNEL CANDIDATE] id=${tunnelId} service=${streamInfo.service} reason=http_${candidateResponse.statusCode} candidate=${index + 1}/${requestCandidates.length} host=${getRouteInfo(candidate).host}`,
                     );

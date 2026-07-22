@@ -47,18 +47,19 @@ const withMockedFetch = async (response, callback) => {
     }
 };
 
-test("an explicit Bilibili p parameter downloads only the selected page", async () => {
+test("an explicit Bilibili p parameter expands the remaining pages from the selected page", async () => {
     const result = await withMockedFetch(
         bilibiliViewResponse,
         () => expandURL(
-            "https://www.bilibili.com/video/BV1zy4y1L7Xd?vd_source=test&p=3",
+            "https://www.bilibili.com/video/BV1zy4y1L7Xd?vd_source=test&p=2",
         ),
     );
 
-    assert.equal(result.kind, "single");
-    assert.equal(result.items.length, 1);
-    assert.equal(result.items[0].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=3");
-    assert.equal(result.items[0].duration, 240);
+    assert.equal(result.kind, "bilibili-multi-page");
+    assert.equal(result.items.length, 2);
+    assert.equal(result.items[0].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=2");
+    assert.equal(result.items[0].duration, 180);
+    assert.equal(result.items[1].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=3");
 });
 
 test("a Bilibili multi-page video still expands when its collection has a long item", async () => {

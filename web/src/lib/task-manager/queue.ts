@@ -152,7 +152,6 @@ const buildFetchValidation = (info: CobaltLocalProcessingResponse) => {
                 "audio/",
                 "application/octet-stream",
             ],
-            minBytes: 64 * 1024,
             requireReliableSize: true,
         };
     }

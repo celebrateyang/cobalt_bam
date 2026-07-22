@@ -1122,14 +1122,28 @@ const expandBilibili = async (inputUrl) => {
         if (data) {
             const partId = url.searchParams.get("p");
             const currentSingle = bilibiliSingleFromView(data, id, partId);
-            if (partId && partId !== "1") return currentSingle;
-
             const currentDuration = currentSingle?.items?.[0]?.duration;
             if (
                 typeof currentDuration === "number" &&
                 currentDuration >= BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS
             ) {
                 return currentSingle;
+            }
+
+            if (partId) {
+                const multi = bilibiliMultiPageFromView(data);
+                if (multi?.error) return currentSingle;
+                if (multi) {
+                    const selectedItemKey = `bilibili:video:${data.bvid || id}:p=${partId}`;
+                    return {
+                        ...multi,
+                        items: sliceCollectionFromItemKey(
+                            multi.items,
+                            selectedItemKey,
+                            currentSingle?.items?.[0],
+                        ),
+                    };
+                }
             }
 
             // A video URL can reveal its surrounding UGC season. Keep batch

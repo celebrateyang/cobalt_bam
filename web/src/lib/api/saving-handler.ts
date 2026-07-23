@@ -10,7 +10,7 @@ import { loadTranslations, t } from "$lib/i18n/translations";
 import { downloadFile } from "$lib/download";
 import { createDialog } from "$lib/state/dialogs";
 import { downloadButtonState } from "$lib/state/omnibox";
-import { createSavePipeline } from "$lib/task-manager/queue";
+import { createDirectCdnPipeline, createSavePipeline } from "$lib/task-manager/queue";
 import { queue, updateItem } from "$lib/state/task-manager/queue";
 import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { addToHistory } from "$lib/history";
@@ -579,6 +579,35 @@ export const savingHandler = async ({
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        if (
+            selectedRequest.batch === true &&
+            selectedRequest.bilibiliDirectBridge === true &&
+            response.service === "bilibili"
+        ) {
+            const directCandidates = [
+                response.directUrl || "",
+                ...(Array.isArray(response.directUrlCandidates)
+                    ? response.directUrlCandidates
+                    : []),
+                redirectUrl,
+            ].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ));
+
+            downloadButtonState.set("done");
+            createDirectCdnPipeline(
+                directCandidates,
+                response.filename,
+                guessMimeTypeFromFilename(response.filename),
+                selectedRequest,
+                effectiveTaskId,
+            );
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
+            return response;
+        }
 
         if (isTikTokDownloadResponse(response)) {
             const directCandidates = [

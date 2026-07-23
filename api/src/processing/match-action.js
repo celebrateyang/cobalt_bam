@@ -421,7 +421,10 @@ export default function({
     }
 
     // alwaysProxy is set to true in match.js if localProcessing is forced
-    if (alwaysProxy && responseType === "redirect") {
+    const keepBilibiliDirectBridge =
+        host === "bilibili" &&
+        r.directClientDownload === true;
+    if (alwaysProxy && responseType === "redirect" && !keepBilibiliDirectBridge) {
         responseType = "tunnel";
         params.type = "proxy";
     }
@@ -433,7 +436,11 @@ export default function({
         responseType !== "picker" &&
         new Set(["merge", "remux", "mute", "audio"]).has(params.type);
 
-    if ((canUseBrowserHlsProcessing || !params.isHLS) && responseType !== "picker") {
+    if (
+        (canUseBrowserHlsProcessing || !params.isHLS) &&
+        responseType !== "picker" &&
+        !keepBilibiliDirectBridge
+    ) {
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);
 

@@ -16,6 +16,7 @@ export const runFetchWorker = async (
     workerId: UUID,
     parentId: UUID,
     url: string,
+    urlCandidates?: string[],
     tuning?: CobaltFetchTuning,
     resume?: CobaltFetchResume,
     validation?: CobaltFetchValidation,
@@ -40,6 +41,7 @@ export const runFetchWorker = async (
                 workerId,
                 parentId,
                 url,
+                urlCandidates,
                 tuning,
                 resume,
                 validation,
@@ -65,6 +67,7 @@ export const runFetchWorker = async (
     worker.postMessage({
         cobaltFetchWorker: {
                 url,
+                urlCandidates,
                 tuning,
                 resume: {
                 ...resume,

@@ -54,6 +54,61 @@ export const createRemuxPipeline = (file: File) => {
     }
 }
 
+export const createDirectCdnPipeline = (
+    urls: string[],
+    filename: string,
+    mimeType: string,
+    request: CobaltSaveRequestBody,
+    oldTaskId?: string,
+) => {
+    const candidates = urls.filter((value, index, list) => (
+        typeof value === "string" && value.length > 0 && list.indexOf(value) === index
+    ));
+    if (!candidates.length) {
+        return showError("pipeline.missing_response_data");
+    }
+
+    const parentId = oldTaskId || uuid();
+    const pipeline: CobaltPipelineItem[] = [{
+        worker: "fetch",
+        workerId: uuid(),
+        parentId,
+        workerArgs: {
+            url: candidates[0],
+            urlCandidates: candidates.slice(1),
+            tuning: {
+                initialChunkBytes: 2 * 1024 * 1024,
+                maxChunkBytes: 4 * 1024 * 1024,
+                fastChunkMs: 2500,
+                slowChunkMs: 8000,
+            },
+            resume: {
+                enabled: true,
+                slot: 0,
+            },
+            validation: {
+                expectedContentTypePrefixes: [
+                    "video/",
+                    "application/octet-stream",
+                ],
+                requireReliableSize: true,
+            },
+        },
+    }];
+
+    addItem({
+        id: parentId,
+        state: "waiting",
+        pipeline,
+        canRetry: true,
+        originalRequest: request,
+        filename,
+        mimeType,
+        mediaType: getMediaType(mimeType) || "video",
+    });
+    openQueuePopover();
+};
+
 const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
     const ffargs = ["-c:v", "copy"];
 

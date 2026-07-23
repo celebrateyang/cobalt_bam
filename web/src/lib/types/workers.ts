@@ -59,6 +59,7 @@ type CobaltFetchPipelineItem = CobaltPipelineItemBase & {
     worker: "fetch",
     workerArgs: {
         url: string,
+        urlCandidates?: string[],
         tuning?: CobaltFetchTuning,
         resume?: CobaltFetchResume,
         validation?: CobaltFetchValidation,

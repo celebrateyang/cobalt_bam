@@ -58,6 +58,7 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
                 workerId,
                 parentId,
                 workerArgs.url,
+                workerArgs.urlCandidates,
                 workerArgs.tuning,
                 workerArgs.resume,
                 workerArgs.validation,

@@ -168,6 +168,12 @@
         }
         request.localProcessing = "forced";
         request.batch = true;
+        if (
+            (!downloadMode || downloadMode === "auto") &&
+            /(?:^|\.)bilibili\.com$/i.test(new URL(item.url).hostname)
+        ) {
+            request.bilibiliDirectBridge = true;
+        }
 
         return request;
     };

@@ -77,3 +77,26 @@ test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
         "https://backup.example/video.mp4",
     ]);
 });
+
+test("keeps a forced Bilibili batch progressive MP4 off the server tunnel", () => {
+    const directUrl = "https://upos-sz-mirrorcos.bilivideo.com/video.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "bilibili",
+        isBatchRequest: true,
+        alwaysProxy: true,
+        localProcessing: "forced",
+        r: {
+            urls: directUrl,
+            urlCandidates: [directUrl, "https://upos-sz-mirrorali.bilivideo.com/video.mp4"],
+            directClientDownload: true,
+            filename: "video.mp4",
+            duration: 120,
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.directUrl, directUrl);
+    assert.equal(response.body.tunnelUrl, undefined);
+});

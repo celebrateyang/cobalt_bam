@@ -242,6 +242,7 @@ const isLikelyHtmlResponse = (contentType: string) => {
 
 const fetchFile = async (
     url: string,
+    urlCandidates?: string[],
     tuning?: FetchWorkerTuning,
     resume?: FetchWorkerResume,
     validation?: FetchWorkerValidation,
@@ -254,6 +255,18 @@ const fetchFile = async (
         }
     });
 
+    const candidates = [url, ...(Array.isArray(urlCandidates) ? urlCandidates : [])]
+        .filter((value, index, list) => (
+            typeof value === "string" && value.length > 0 && list.indexOf(value) === index
+        ));
+    let candidateIndex = 0;
+    let activeUrl = candidates[0];
+    const advanceCandidate = () => {
+        if (candidateIndex >= candidates.length - 1) return false;
+        candidateIndex += 1;
+        activeUrl = candidates[candidateIndex];
+        return true;
+    };
     const runtimeTuning = normalizeTuning(tuning);
     const runtimeValidation = normalizeValidation(validation);
     const debug = Boolean(tuning);
@@ -357,7 +370,8 @@ const fetchFile = async (
         let rangeChunkBytes = runtimeTuning.initialChunkBytes;
         let upstreamIgnoresRange = false;
         logDebug("worker_start", {
-            url,
+            url: activeUrl,
+            candidateCount: candidates.length,
             initialChunkBytes: rangeChunkBytes,
             maxChunkBytes: runtimeTuning.maxChunkBytes,
             fastChunkMs: runtimeTuning.fastChunkMs,
@@ -472,7 +486,7 @@ const fetchFile = async (
                     chunkBytes: rangeChunkBytes,
                     retries,
                 });
-                response = await fetch(url, {
+                response = await fetch(activeUrl, {
                     signal: controller.signal,
                     headers,
                 });
@@ -492,6 +506,10 @@ const fetchFile = async (
                         retries,
                     });
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries));
+                    continue;
+                }
+                if (advanceCandidate()) {
+                    retries = 0;
                     continue;
                 }
                 throw e;
@@ -562,6 +580,11 @@ const fetchFile = async (
                     await waitForRetry(controller.signal, getBackoffDelayMs(retries, retryAfterMs));
                     continue;
                 }
+                await response.body?.cancel().catch(() => undefined);
+                if (advanceCandidate()) {
+                    retries = 0;
+                    continue;
+                }
                 return error("queue.fetch.bad_response", await buildResumeSnapshot());
             }
 
@@ -604,6 +627,10 @@ const fetchFile = async (
                 isLikelyHtmlResponse(contentType)
             ) {
                 await response.body?.cancel().catch(() => undefined);
+                if (advanceCandidate()) {
+                    retries = 0;
+                    continue;
+                }
                 return error("queue.fetch.bad_response", await buildResumeSnapshot());
             }
             if (
@@ -987,6 +1014,7 @@ self.onmessage = async (event: MessageEvent) => {
     if (event.data.cobaltFetchWorker) {
         await fetchFile(
             event.data.cobaltFetchWorker.url,
+            event.data.cobaltFetchWorker.urlCandidates,
             event.data.cobaltFetchWorker.tuning,
             event.data.cobaltFetchWorker.resume,
             event.data.cobaltFetchWorker.validation,

@@ -231,6 +231,25 @@
         }
     };
 
+    const saveCurrentVideo = (url: string) => {
+        if (!isBilibiliVideoPage(url)) {
+            return savingHandler({ url });
+        }
+
+        const request = buildSaveRequest(url);
+        if (
+            request.downloadMode === "audio" ||
+            request.downloadMode === "mute"
+        ) {
+            return savingHandler({ url });
+        }
+
+        request.localProcessing = "disabled";
+        request.alwaysProxy = false;
+        request.bilibiliDirectBridge = true;
+        return savingHandler({ request });
+    };
+
     const isDouyinVideoPage = (url: string) => {
         try {
             const parsed = new URL(url);
@@ -608,7 +627,7 @@
                 expanded = await API.expand(url);
             } catch {
                 handedOffToSavingHandler = true;
-                return savingHandler({ url });
+                return saveCurrentVideo(url);
             }
             if (expanded?.status === "error") {
                 await loadTranslations($page.params.lang || "en", "error");
@@ -632,7 +651,7 @@
 
             if (!expanded) {
                 handedOffToSavingHandler = true;
-                return savingHandler({ url });
+                return saveCurrentVideo(url);
             }
 
             const items = expanded.items ?? [];
@@ -643,7 +662,7 @@
 
             if (!hasBatch) {
                 handedOffToSavingHandler = true;
-                return savingHandler({ url });
+                return saveCurrentVideo(url);
             }
 
         const batchItems: DialogBatchItem[] = items.map((item) => ({
@@ -769,17 +788,10 @@
                                   text: $t("dialog.batch.detect.download_single"),
                                   main: true,
                                   action: () => {
-                                      setTimeout(() => {
-                                          if (isBilibiliVideoPage(url)) {
-                                              const request = buildSaveRequest(url);
-                                              request.localProcessing = "disabled";
-                                              request.alwaysProxy = false;
-                                              request.bilibiliDirectBridge = true;
-                                              void savingHandler({ request });
-                                              return;
-                                          }
-                                          void savingHandler({ url });
-                                      }, 200);
+                                      setTimeout(
+                                          () => void saveCurrentVideo(url),
+                                          200,
+                                      );
                                   },
                               },
                           ]
@@ -839,7 +851,7 @@
                     text: $t("dialog.batch.detect.download_single"),
                     main: false,
                     action: () => {
-                        setTimeout(() => savingHandler({ url }), 200);
+                        setTimeout(() => void saveCurrentVideo(url), 200);
                     },
                 },
                 {

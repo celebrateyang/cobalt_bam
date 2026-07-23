@@ -14,7 +14,6 @@
         <div class="extension-trust">
             <span>{$t("dialog.tiktok_download.extension.trust.easy")}</span>
             <span>{$t("dialog.tiktok_download.extension.trust.safe")}</span>
-            <span>{$t("dialog.tiktok_download.extension.trust.free")}</span>
         </div>
     </div>
     <div class="extension-prompt-actions">

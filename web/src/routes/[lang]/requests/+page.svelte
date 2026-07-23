@@ -131,24 +131,34 @@
 
 <main class="requests-page">
     <section class="hero">
-        <p class="eyebrow">{$t("requests.eyebrow")}</p>
-        <h1>{$t("requests.title")}</h1>
-        <p class="intro">{$t("requests.subtitle")}</p>
+        <div class="hero-glow hero-glow-one"></div>
+        <div class="hero-glow hero-glow-two"></div>
+        <div class="hero-content">
+            <p class="eyebrow"><span></span>{$t("requests.eyebrow")}</p>
+            <h1>{$t("requests.title")}</h1>
+            <p class="intro">{$t("requests.subtitle")}</p>
 
-        <form class="submit-form" on:submit|preventDefault={runPreview}>
-            <label for="platform-url">{$t("requests.input_label")}</label>
-            <div class="input-row">
-                <input
-                    id="platform-url"
-                    bind:value={input}
-                    placeholder={$t("requests.input_placeholder")}
-                    autocomplete="url"
-                />
-                <button class="primary" type="submit" disabled={submitting || !input.trim()}>
-                    {submitting ? $t("requests.checking") : $t("requests.check")}
-                </button>
-            </div>
-        </form>
+            <form class="submit-form" on:submit|preventDefault={runPreview}>
+                <label for="platform-url">{$t("requests.input_label")}</label>
+                <div class="input-row">
+                    <div class="url-field">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/>
+                        </svg>
+                        <input
+                            id="platform-url"
+                            bind:value={input}
+                            placeholder={$t("requests.input_placeholder")}
+                            autocomplete="url"
+                        />
+                    </div>
+                    <button class="primary" type="submit" disabled={submitting || !input.trim()}>
+                        {submitting ? $t("requests.checking") : $t("requests.check")}
+                        <span aria-hidden="true">→</span>
+                    </button>
+                </div>
+            </form>
+        </div>
 
         {#if message}
             <p class="notice" role="status">{message}</p>
@@ -189,6 +199,7 @@
     <section class="list-section">
         <div class="list-heading">
             <div>
+                <p class="section-kicker">FreeSaveVideo</p>
                 <h2>{$t("requests.list_title")}</h2>
                 <p>{$t("requests.list_subtitle")}</p>
             </div>
@@ -221,8 +232,10 @@
                                 <a class="domain" href={`/${lang}/requests/${item.id}`}>{item.domain}</a>
                                 <span class={`status status-${item.status}`}>{statusLabel(item.status)}</span>
                             </div>
-                            <a href={item.homepageUrl} target="_blank" rel="nofollow noreferrer noopener" aria-label={$t("requests.visit_platform")}>
-                                ↗
+                            <a class="external-link" href={item.homepageUrl} target="_blank" rel="nofollow noreferrer noopener" aria-label={$t("requests.visit_platform")}>
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M7 17 17 7M9 7h8v8"/>
+                                </svg>
                             </a>
                         </div>
                         {#if item.adminNote}<p class="note">{item.adminNote}</p>{/if}
@@ -257,48 +270,68 @@
 </main>
 
 <style>
-    .requests-page { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 80px; display: grid; gap: 56px; }
-    .hero { display: grid; gap: 18px; padding: 36px; border-radius: 24px; background: linear-gradient(145deg, var(--background), var(--secondary-background)); border: 1px solid var(--separator); }
-    .eyebrow { margin: 0; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: .8rem; }
+    .requests-page { --accent: var(--secondary-600, #4f7f1c); --brand: var(--secondary, #82b52d); width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 54px 0 88px; display: grid; gap: 64px; }
+    .hero { position: relative; isolation: isolate; overflow: hidden; display: grid; gap: 18px; padding: clamp(34px, 6vw, 68px); border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--separator)); border-radius: 30px; background: linear-gradient(125deg, color-mix(in srgb, var(--brand) 8%, var(--background)) 0%, var(--background) 58%); box-shadow: 0 24px 70px rgba(32, 61, 13, .09); }
+    .hero-content { position: relative; z-index: 1; max-width: 830px; display: grid; gap: 18px; }
+    .hero-glow { position: absolute; z-index: -1; border-radius: 999px; pointer-events: none; }
+    .hero-glow-one { width: 310px; height: 310px; right: -80px; top: -120px; background: color-mix(in srgb, var(--brand) 16%, transparent); }
+    .hero-glow-two { width: 180px; height: 180px; right: 170px; bottom: -120px; border: 30px solid color-mix(in srgb, var(--brand) 10%, transparent); }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--accent); font-weight: 800; letter-spacing: .08em; font-size: .78rem; }
+    .eyebrow span { width: 28px; height: 2px; border-radius: 2px; background: var(--brand); }
     h1, h2, p { margin: 0; }
-    h1 { font-size: clamp(2rem, 6vw, 3.8rem); line-height: 1; max-width: 780px; }
-    .intro { max-width: 720px; color: var(--secondary); font-size: 1.05rem; line-height: 1.65; }
-    .submit-form { display: grid; gap: 8px; margin-top: 8px; }
-    label { font-weight: 700; }
-    .input-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    input, select { min-height: 46px; padding: 0 14px; border: 1px solid var(--separator); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; }
-    button, .secondary { min-height: 42px; padding: 0 16px; border: 1px solid var(--separator); border-radius: 11px; background: var(--background); color: var(--text); font: inherit; font-weight: 750; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
-    button.primary { background: var(--primary); color: var(--button-text); border-color: transparent; }
-    button.active { background: color-mix(in srgb, var(--primary) 18%, var(--background)); border-color: var(--primary); }
-    button:disabled { opacity: .55; cursor: wait; }
-    .notice { padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--primary) 12%, transparent); }
-    .preview-card { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px; border: 1px solid var(--separator); border-radius: 14px; background: var(--background); }
+    h1 { color: var(--text); font-size: clamp(2.25rem, 5.5vw, 4.4rem); letter-spacing: -.045em; line-height: 1.05; max-width: 800px; text-wrap: balance; }
+    h2 { color: var(--text); font-size: clamp(1.55rem, 3vw, 2.15rem); letter-spacing: -.025em; }
+    .intro { max-width: 680px; color: color-mix(in srgb, var(--text) 68%, transparent); font-size: 1.05rem; line-height: 1.75; }
+    .submit-form { display: grid; gap: 10px; margin-top: 12px; }
+    label { color: var(--text); font-size: .9rem; font-weight: 750; }
+    .input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+    .url-field { position: relative; display: flex; align-items: center; }
+    .url-field svg { position: absolute; left: 17px; width: 20px; height: 20px; fill: none; stroke: color-mix(in srgb, var(--text) 45%, transparent); stroke-width: 1.8; stroke-linecap: round; pointer-events: none; }
+    input, select { min-height: 50px; padding: 0 15px; border: 1px solid color-mix(in srgb, var(--text) 13%, transparent); border-radius: 13px; outline: none; background: color-mix(in srgb, var(--background) 96%, transparent); color: var(--text); font: inherit; transition: border-color .2s, box-shadow .2s; }
+    input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent); }
+    .url-field input { width: 100%; min-width: 0; min-height: 58px; padding-left: 49px; font-size: 1rem; box-shadow: 0 10px 30px rgba(25, 46, 13, .06); }
+    button, .secondary { min-height: 44px; padding: 0 18px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-radius: 12px; background: var(--background); color: var(--text); font: inherit; font-weight: 750; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 9px; text-decoration: none; transition: transform .18s, box-shadow .18s, border-color .18s; }
+    button:hover:not(:disabled), .secondary:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--brand) 65%, transparent); }
+    button.primary { min-height: 58px; padding-inline: 24px; background: var(--accent); color: #fff; border-color: transparent; box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 25%, transparent); }
+    button.active { color: var(--accent); background: color-mix(in srgb, var(--brand) 13%, var(--background)); border-color: var(--brand); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .notice { position: relative; z-index: 1; padding: 13px 16px; color: var(--accent); border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--brand) 10%, var(--background)); }
+    .preview-card { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px; border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--separator)); border-radius: 16px; background: var(--background); box-shadow: 0 10px 24px rgba(32, 61, 13, .06); }
     .preview-card > div:first-child { display: grid; gap: 6px; }
-    .preview-card a { color: var(--primary); }
+    .preview-card a { color: var(--accent); }
     .preview-actions { display: flex; gap: 8px; }
-    .list-section { display: grid; gap: 22px; }
-    .list-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
-    .list-heading p { color: var(--secondary); margin-top: 6px; }
-    .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-    .filters input { width: 190px; }
-    .request-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-    .request-card { min-width: 0; padding: 20px; border: 1px solid var(--separator); border-radius: 16px; background: var(--background); display: grid; gap: 18px; }
+    .list-section { display: grid; gap: 24px; }
+    .list-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    .list-heading > div:first-child > p:last-child { color: color-mix(in srgb, var(--text) 62%, transparent); margin-top: 8px; line-height: 1.6; }
+    .section-kicker { margin-bottom: 7px; color: var(--accent); font-size: .73rem; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+    .filters { display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+    .filters input { width: 200px; }
+    .request-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .request-card { min-width: 0; min-height: 132px; padding: 21px; border: 1px solid color-mix(in srgb, var(--text) 11%, transparent); border-radius: 18px; background: var(--background); box-shadow: 0 8px 26px rgba(24, 39, 16, .045); display: grid; align-content: space-between; gap: 20px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+    .request-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--brand) 45%, transparent); box-shadow: 0 16px 36px rgba(32, 61, 13, .09); }
     .card-top, .card-bottom { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
     .card-top > div { min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .domain { color: var(--text); font-size: 1.08rem; font-weight: 850; text-decoration: none; overflow-wrap: anywhere; }
-    .status { padding: 4px 8px; border-radius: 999px; font-size: .75rem; font-weight: 800; background: var(--secondary-background); }
-    .status-planned, .status-supported { color: var(--primary); }
-    .status-rejected { color: var(--error); }
-    .note { color: var(--secondary); line-height: 1.5; }
-    .empty { padding: 36px; text-align: center; color: var(--secondary); border: 1px dashed var(--separator); border-radius: 16px; }
+    .domain:hover { color: var(--accent); }
+    .external-link { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--accent); background: color-mix(in srgb, var(--brand) 10%, var(--background)); transition: background .18s, transform .18s; }
+    .external-link svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .status { padding: 5px 9px; border-radius: 999px; color: color-mix(in srgb, var(--text) 62%, transparent); font-size: .72rem; font-weight: 800; background: color-mix(in srgb, var(--text) 6%, var(--background)); }
+    .status-planned { color: #925d08; background: #fff5dc; }
+    .status-supported { color: var(--accent); background: color-mix(in srgb, var(--brand) 13%, var(--background)); }
+    .status-rejected { color: var(--error); background: color-mix(in srgb, var(--error) 9%, var(--background)); }
+    .note { color: color-mix(in srgb, var(--text) 62%, transparent); line-height: 1.5; }
+    .card-bottom > span { color: var(--accent); font-size: .9rem; font-weight: 700; }
+    .empty { padding: 46px; text-align: center; color: color-mix(in srgb, var(--text) 58%, transparent); border: 1px dashed color-mix(in srgb, var(--text) 18%, transparent); border-radius: 18px; background: color-mix(in srgb, var(--text) 2%, var(--background)); }
     .pagination { display: flex; align-items: center; justify-content: center; gap: 12px; }
     @media (max-width: 760px) {
-        .requests-page { padding-top: 28px; }
-        .hero { padding: 24px 18px; }
+        .requests-page { width: min(100% - 28px, 1120px); padding-top: 22px; gap: 42px; }
+        .hero { padding: 30px 20px; border-radius: 22px; }
         .input-row, .request-grid { grid-template-columns: 1fr; }
+        button.primary { width: 100%; }
         .list-heading { align-items: stretch; flex-direction: column; }
         .filters { justify-content: stretch; }
         .filters input, .filters select { flex: 1 1 150px; width: auto; }
         .preview-card { align-items: stretch; flex-direction: column; }
     }
+    @media (prefers-reduced-motion: reduce) { button, .secondary, .request-card, .external-link { transition: none; } }
 </style>

@@ -27,6 +27,19 @@ export function updateWorkerProgress(workerId: string, progress: CobaltWorkerPro
     });
 }
 
+export function updateWorkerNetworkStalled(workerId: string, networkStalled: boolean) {
+    currentTasks_.update(allTasks => {
+        const task = allTasks[workerId];
+        if (!task) return allTasks;
+        task.progress = {
+            size: task.progress?.size || 0,
+            ...task.progress,
+            networkStalled,
+        };
+        return allTasks;
+    });
+}
+
 export function clearCurrentTasks() {
     currentTasks_.set({});
 }

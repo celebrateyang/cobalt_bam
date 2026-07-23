@@ -9,6 +9,7 @@ export type CobaltWorkerProgress = {
     percentage?: number,
     speed?: number,
     size: number,
+    networkStalled?: boolean,
 };
 
 type CobaltFFmpegWorkerArgs = {

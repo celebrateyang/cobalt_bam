@@ -242,6 +242,15 @@
         currentTasks: $currentTasks
     });
 
+    $: showNetworkStalledNotice =
+        info.state === "running" &&
+        info.originalRequest?.batch === true &&
+        info.originalRequest?.bilibiliDirectBridge === true &&
+        info.pipeline.some((worker) => (
+            worker.worker === "fetch" &&
+            $currentTasks[worker.workerId]?.progress?.networkStalled === true
+        ));
+
     $: MediaTypeIcon = itemIcons[info.mediaType];
 
     const getPointsSummary = (points?: CobaltQueueItem["points"]) => {
@@ -310,6 +319,11 @@
                 {statusText}
             </div>
         </div>
+        {#if showNetworkStalledNotice}
+            <div class="network-stalled-notice" role="status" aria-live="polite">
+                {$t("queue.network_stalled_waiting")}
+            </div>
+        {/if}
         {#if pointsSummary}
             <div class="points-status">
                 {pointsSummary}
@@ -464,6 +478,17 @@
         font-size: 12px;
         color: var(--gray);
         line-break: anywhere;
+    }
+
+    .network-stalled-notice {
+        margin-top: 4px;
+        padding: 6px 8px;
+        border-left: 3px solid var(--yellow);
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--yellow) 10%, transparent);
+        color: var(--gray);
+        font-size: 12px;
+        line-height: 1.4;
     }
 
     .file-status.error:not(.retrying) {

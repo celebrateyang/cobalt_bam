@@ -2,6 +2,7 @@ import * as Storage from "$lib/storage";
 
 const TOTAL_TIMEOUT_MS = 60 * 60 * 1000;
 const STALL_TIMEOUT_MS = 90 * 1000;
+const NETWORK_STALL_NOTICE_MS = 15 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 10;
 const INITIAL_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
@@ -290,6 +291,7 @@ const fetchFile = async (
     const controller = new AbortController();
     const startedAt = Date.now();
     let lastProgressAt = startedAt;
+    let networkStalled = false;
     let stallInterval: ReturnType<typeof setInterval> | null = null;
     const totalTimeout = setTimeout(() => {
         abortReason = "timeout";
@@ -297,14 +299,32 @@ const fetchFile = async (
     }, TOTAL_TIMEOUT_MS);
 
     const markProgress = () => {
+        if (networkStalled) {
+            networkStalled = false;
+            self.postMessage({
+                cobaltFetchWorker: {
+                    networkStalled: false,
+                },
+            });
+        }
         lastProgressAt = Date.now();
     };
 
     const startStallMonitor = () => {
         stallInterval = setInterval(() => {
-            if (Date.now() - lastProgressAt > STALL_TIMEOUT_MS) {
+            const idleMs = Date.now() - lastProgressAt;
+            if (idleMs > STALL_TIMEOUT_MS) {
                 abortReason = "stalled";
                 controller.abort();
+                return;
+            }
+            if (idleMs > NETWORK_STALL_NOTICE_MS && !networkStalled) {
+                networkStalled = true;
+                self.postMessage({
+                    cobaltFetchWorker: {
+                        networkStalled: true,
+                    },
+                });
             }
         }, STALL_CHECK_INTERVAL_MS);
     };

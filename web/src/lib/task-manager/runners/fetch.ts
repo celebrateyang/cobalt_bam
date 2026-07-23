@@ -1,7 +1,10 @@
 import FetchWorker from "$lib/task-manager/workers/fetch?worker";
 
 import { killWorker } from "$lib/task-manager/run-worker";
-import { updateWorkerProgress } from "$lib/state/task-manager/current-tasks";
+import {
+    updateWorkerNetworkStalled,
+    updateWorkerProgress,
+} from "$lib/state/task-manager/current-tasks";
 import { pipelineTaskDone, itemError, queue } from "$lib/state/task-manager/queue";
 import {
     clearFetchResumeState,
@@ -100,6 +103,10 @@ export const runFetchWorker = async (
 
         if (eventData.started) {
             return;
+        }
+
+        if (eventData.networkStalled !== undefined) {
+            updateWorkerNetworkStalled(workerId, eventData.networkStalled === true);
         }
 
         if (eventData.progress !== undefined) {

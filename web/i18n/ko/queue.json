@@ -24,5 +24,6 @@
     "manual_save_warning": "Important: after videos finish, click Save for any item that was not auto-saved. If you chose a folder for batch auto-save, look in that folder first; otherwise check browser downloads (Ctrl+J) or your device Downloads folder.",
     "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
     "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
-    "save_started": "Save started"
+    "save_started": "Save started",
+    "network_stalled_waiting": "네트워크가 일시적으로 느립니다. 다운로드는 계속 데이터를 기다리며 연결이 복구되면 자동으로 계속됩니다."
 }

@@ -36,6 +36,11 @@ import {
     listDownloadAttempts,
 } from "../db/download-attempts.js";
 import {
+    getAdminAiVideoAsset,
+    getAdminAiVideoStorageSummary,
+    listAdminAiVideoAssets,
+} from "../db/ai-video-admin.js";
+import {
     createCuriousCatActivity,
     deleteCuriousCatActivity,
     listBlindBoxLinks,
@@ -66,6 +71,7 @@ import {
 import { extract } from "../processing/url.js";
 import weibo from "../processing/services/weibo.js";
 import { createStream } from "../stream/manage.js";
+import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 
 const router = express.Router();
 
@@ -271,6 +277,67 @@ router.get("/admin/users", requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error("GET /user/admin/users error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to load users");
+    }
+});
+
+router.get("/admin/ai-video/storage", requireAdminAuth, async (req, res) => {
+    try {
+        const result = await listAdminAiVideoAssets({
+            page: req.query?.page,
+            limit: req.query?.limit,
+            search: req.query?.search,
+            kind: req.query?.kind,
+            jobStatus: req.query?.jobStatus,
+            cleanupStatus: req.query?.cleanupStatus,
+            userId: req.query?.userId,
+            createdFrom: req.query?.createdFrom,
+            createdTo: req.query?.createdTo,
+            sort: req.query?.sort,
+            order: req.query?.order,
+        });
+        return res.json({ status: "success", data: result });
+    } catch (error) {
+        console.error("GET /user/admin/ai-video/storage error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load AI video storage");
+    }
+});
+
+router.get("/admin/ai-video/storage/summary", requireAdminAuth, async (_, res) => {
+    try {
+        const summary = await getAdminAiVideoStorageSummary();
+        return res.json({ status: "success", data: { summary } });
+    } catch (error) {
+        console.error("GET /user/admin/ai-video/storage/summary error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load AI video storage summary");
+    }
+});
+
+router.post("/admin/ai-video/storage/:assetId/preview-url", requireAdminAuth, async (req, res) => {
+    try {
+        const asset = await getAdminAiVideoAsset(req.params.assetId);
+        if (!asset) {
+            return jsonError(res, 404, "AI_VIDEO_ASSET_NOT_FOUND", "AI video asset not found");
+        }
+        const url = await getAiVideoObjectStorage().createDownloadUrl(
+            asset.objectKey,
+            5 * 60 * 1000,
+            {
+                responseDisposition: "inline",
+                responseType: asset.mime || (asset.kind === "output" || asset.kind === "source"
+                    ? "video/mp4"
+                    : "text/plain"),
+            },
+        );
+        return res.json({
+            status: "success",
+            data: {
+                url,
+                expiresAt: Date.now() + 5 * 60 * 1000,
+            },
+        });
+    } catch (error) {
+        console.error("POST /user/admin/ai-video/storage/:assetId/preview-url error:", error);
+        return jsonError(res, 502, "AI_VIDEO_STORAGE_ERROR", "Failed to create preview URL");
     }
 });
 

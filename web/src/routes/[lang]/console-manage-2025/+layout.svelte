@@ -19,6 +19,7 @@ import IconServer2 from "@tabler/icons-svelte/IconServer2.svelte";
 import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
 import IconCat from "@tabler/icons-svelte/IconCat.svelte";
 import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
+import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
 
     $: lang = $page.params.lang;
     $: pathname = $page.url.pathname;
@@ -65,6 +66,13 @@ import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
                         iconColor="blue"
                     >
                         <IconFolder />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/ai-video-storage"
+                        tabTitle="AI 视频存储"
+                        iconColor="blue"
+                    >
+                        <IconDatabase />
                     </PageNavTab>
                 </PageNavSection>
 

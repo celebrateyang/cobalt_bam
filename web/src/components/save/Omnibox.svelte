@@ -955,24 +955,46 @@
         isBotCheckOngoing = false;
     }
 
-    const pasteClipboard = () => {
+    const pasteClipboard = async () => {
         if ($dialogs.length > 0 || isDisabled || isLoading) {
             return;
         }
 
-        navigator.clipboard.readText().then(async (text: string) => {
+        // This button is also the user's explicit download action on mobile.
+        // Authenticate before reading the clipboard so a denied/unsupported
+        // Clipboard API cannot silently prevent the sign-in prompt.
+        if (clerkEnabled) {
+            const signedIn = await requireDownloadAuth();
+            if (!signedIn) return;
+        }
+
+        try {
+            if (!navigator.clipboard?.readText) {
+                linkInput?.focus();
+                return;
+            }
+
+            const text = await navigator.clipboard.readText();
             const matchLinks = text.match(/https?:\/\/[^\s]+/gi);
-            if (!matchLinks?.length) return;
+            if (!matchLinks?.length) {
+                linkInput?.focus();
+                return;
+            }
 
             $link = matchLinks.join(" ");
 
             if (!isBotCheckOngoing) {
                 await tick(); // wait for button to render
                 if (!batchLimitExceeded) {
-                    submit();
+                    await submit();
                 }
             }
-        });
+        } catch {
+            // Mobile Safari and embedded browsers commonly block clipboard
+            // reads. Keep the UI actionable by moving focus to the field so
+            // the user can use the browser's native paste control.
+            linkInput?.focus();
+        }
     };
 
     const changeDownloadMode = (mode: DownloadModeOption) => {

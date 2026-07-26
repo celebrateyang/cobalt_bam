@@ -255,10 +255,16 @@
 <svelte:head><title>{message("AI Video Studio", "AI 视频工作室")}</title></svelte:head>
 
 <main class="studio">
-    <header>
-        <p class="eyebrow">MEMBER STUDIO</p>
-        <h1>{message("AI Video Studio", "AI 视频工作室")}</h1>
-        <p>{message("Find highlight clips and create editable translated subtitles.", "自动提取精彩切片，并生成可编辑的翻译字幕。")}</p>
+    <header class="hero">
+        <div>
+            <p class="eyebrow"><span></span> MEMBER STUDIO</p>
+            <h1>{message("AI Video Studio", "AI 视频工作室")}</h1>
+            <p class="hero-copy">{message("Turn long videos into polished short clips with translated subtitles.", "从长视频中自动发现高光，快速生成带翻译字幕的精彩短片。")}</p>
+        </div>
+        <div class="hero-badge" aria-hidden="true">
+            <span>AI</span>
+            <svg viewBox="0 0 24 24"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>
+        </div>
     </header>
 
     {#if loading}
@@ -275,9 +281,18 @@
         </section>
     {:else}
         <section class="card uploader">
-            <h2>{message("Create a draft", "创建 AI 草稿")}</h2>
-            <label>{message("Video (max 1 GiB / 60 minutes)", "视频（最大 1 GiB / 60 分钟）")}
-                <input type="file" accept="video/*" on:change={(event) => file = event.currentTarget.files?.[0] || null} />
+            <div class="section-heading">
+                <span class="step">01</span>
+                <div><h2>{message("Create a draft", "创建 AI 草稿")}</h2><p>{message("Upload a source video to begin", "上传视频，AI 将自动完成分析与切片")}</p></div>
+            </div>
+            <label class="dropzone" class:has-file={file}>
+                <input class="file-input" type="file" accept="video/*" on:change={(event) => file = event.currentTarget.files?.[0] || null} />
+                <span class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 15v4h14v-4"/></svg></span>
+                <span class="drop-copy">
+                    <strong>{file ? file.name : message("Choose a video to upload", "点击选择要上传的视频")}</strong>
+                    <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : message("MP4, MOV, WebM · up to 1 GiB / 60 minutes", "支持 MP4、MOV、WebM · 最大 1 GiB / 60 分钟")}</small>
+                </span>
+                <span class="choose-button">{file ? message("Replace", "更换视频") : message("Browse", "选择文件")}</span>
             </label>
             <div class="fields">
                 <label>{message("Spoken language", "原始语言")}
@@ -290,7 +305,7 @@
                     <select bind:value={subtitleMode}><option value="bilingual">Bilingual</option><option value="translated">Translated</option></select>
                 </label>
             </div>
-            <p class="privacy">{message("Your video is uploaded to our server and sent to the configured AI provider for transcription and analysis. Source files are normally removed 24 hours after the task completes; draft metadata is retained for 30 days.", "你的视频会上传到服务器，并发送给配置的 AI 服务进行转写与分析。源文件通常在任务完成 24 小时后清理，草稿元数据保留 30 天。")}</p>
+            <p class="privacy"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8.1 7 10 4.2-1.9 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>{message("Your source file is normally removed 24 hours after completion. Draft metadata is retained for 30 days.", "源文件通常在任务完成 24 小时后自动清理，草稿数据保留 30 天。")}</p>
             <div class="actions"><button disabled={!file || busy} on:click={start}>{busy ? message("Working...", "处理中……") : message("Upload and analyze", "上传并分析")}</button>
                 {#if pendingImport}<button class="secondary" disabled={busy} on:click={startImport}>{message(`Analyze recent download: ${pendingImport.filename}`, `分析最近下载：${pendingImport.filename}`)}</button>{/if}
             </div>
@@ -302,7 +317,7 @@
 
         <div class="workspace">
             <aside class="card jobs">
-                <h2>{message("Recent jobs", "最近任务")}</h2>
+                <div class="panel-heading"><div><span class="step">02</span><h2>{message("Recent jobs", "最近任务")}</h2></div><span class="count">{jobs.length}</span></div>
                 {#if jobs.length === 0}<p class="muted">{message("No jobs yet.", "暂无任务。")}</p>{/if}
                 {#each jobs as job}
                     <div class="job-row">
@@ -368,8 +383,13 @@
                         {/each}
                     </div>
                 {:else}
-                    <h2>{message("Your draft will appear here", "草稿将在这里显示")}</h2>
-                    <p class="muted">{message("Upload a video or choose a recent job.", "上传视频或选择一个最近任务。")}</p>
+                    <div class="empty-state">
+                        <div class="empty-visual"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="m10 9 5 3-5 3V9Z"/></svg><span>✦</span></div>
+                        <p class="eyebrow">{message("READY WHEN YOU ARE", "等待创作")}</p>
+                        <h2>{message("Your AI draft will appear here", "AI 草稿将在这里生成")}</h2>
+                        <p class="muted">{message("Upload a video above or select a recent job to continue.", "上传视频开始创作，或从左侧选择一项最近任务。")}</p>
+                        <div class="flow"><span>{message("Upload", "上传")}</span><i>→</i><span>{message("Analyze", "分析")}</span><i>→</i><span>{message("Edit & export", "编辑导出")}</span></div>
+                    </div>
                 {/if}
             </section>
         </div>
@@ -399,4 +419,53 @@
     .gate { display: grid; gap: 10px; max-width: 620px; }
     @media (max-width: 820px) { .workspace { grid-template-columns: 1fr; } .clips, .results { grid-template-columns: 1fr; } .jobs { max-height: 220px; overflow: auto; } }
     @media (max-width: 560px) { .studio { width: min(100% - 20px, 1180px); padding-top: 20px; } .fields { grid-template-columns: 1fr; } .card { padding: 15px; border-radius: 14px; } }
+
+    /* Refined studio shell */
+    .studio { width: min(1180px, calc(100% - 40px)); padding-top: 44px; }
+    .hero { display: flex; justify-content: space-between; align-items: center; gap: 30px; margin-bottom: 30px; }
+    .hero h1 { margin: 7px 0 10px; font-size: clamp(36px, 5vw, 56px); line-height: 1.05; letter-spacing: -.045em; }
+    .hero-copy { max-width: 640px; margin: 0; font-size: 15px; line-height: 1.7; opacity: .68; }
+    .eyebrow { margin: 0; font-size: 11px; font-weight: 850; }
+    .eyebrow > span { display: inline-block; width: 18px; height: 2px; margin: 0 7px 3px 0; background: currentColor; }
+    .hero-badge { position: relative; display: grid; width: 104px; height: 104px; flex: 0 0 auto; place-items: center; border-radius: 30px; color: #fff; background: linear-gradient(145deg, var(--accent), #96c45a); box-shadow: 0 18px 45px rgba(var(--accent-rgb), .25); transform: rotate(3deg); }
+    .hero-badge > span { font-size: 34px; font-weight: 900; letter-spacing: -.08em; }
+    .hero-badge svg { position: absolute; top: 10px; right: 10px; width: 27px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .card { border-color: rgba(128,128,128,.16); border-radius: 22px; padding: 24px; box-shadow: 0 18px 50px rgba(25,35,18,.055); }
+    .uploader { gap: 20px; }
+    .section-heading, .panel-heading, .panel-heading > div { display: flex; align-items: center; gap: 11px; }
+    .section-heading p { margin: 5px 0 0; font-size: 12px; opacity: .58; }
+    .step { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 11px; color: var(--accent); background: rgba(var(--accent-rgb), .11); font-size: 11px; font-weight: 850; }
+    .dropzone { display: flex; min-height: 82px; align-items: center; gap: 16px; padding: 15px 18px; border: 1.5px dashed rgba(var(--accent-rgb), .42); border-radius: 16px; background: rgba(var(--accent-rgb), .035); cursor: pointer; transition: .2s ease; }
+    .dropzone:hover, .dropzone.has-file { border-color: var(--accent); background: rgba(var(--accent-rgb), .07); transform: translateY(-1px); }
+    .file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .upload-icon { display: grid; width: 50px; height: 50px; flex: 0 0 auto; place-items: center; border-radius: 15px; color: var(--accent); background: rgba(var(--accent-rgb), .12); }
+    .upload-icon svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .drop-copy { display: grid; min-width: 0; flex: 1; gap: 5px; }
+    .drop-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+    .drop-copy small { opacity: .58; font-weight: 500; }
+    .choose-button { padding: 9px 13px; border: 1px solid rgba(128,128,128,.2); border-radius: 10px; background: var(--button); font-size: 12px; }
+    input, select, textarea { border-color: rgba(128,128,128,.24); border-radius: 12px; padding: 11px 12px; outline: none; transition: .2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .1); }
+    button, .button { border-radius: 12px; padding: 12px 18px; box-shadow: 0 6px 16px rgba(var(--accent-rgb), .17); transition: .18s ease; }
+    button:not(:disabled):hover, .button:hover { filter: brightness(.97); transform: translateY(-1px); }
+    .privacy { display: flex; align-items: center; gap: 8px; margin: 0; line-height: 1.5; }
+    .privacy svg { width: 17px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .workspace { grid-template-columns: 280px minmax(0, 1fr); align-items: stretch; }
+    .panel-heading { justify-content: space-between; margin-bottom: 8px; }
+    .count { display: grid; min-width: 25px; height: 25px; place-items: center; border-radius: 9px; background: rgba(128,128,128,.1); font-size: 11px; font-weight: 800; }
+    .jobs { align-content: start; }
+    .jobs .job-select { border-color: rgba(128,128,128,.1); background: rgba(128,128,128,.035); box-shadow: none; }
+    .jobs .job-select strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .editor { min-height: 320px; }
+    .empty-state { display: flex; min-height: 270px; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .empty-visual { position: relative; display: grid; width: 72px; height: 72px; margin-bottom: 18px; place-items: center; border-radius: 23px; color: var(--accent); background: rgba(var(--accent-rgb), .1); }
+    .empty-visual svg { width: 35px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .empty-visual span { position: absolute; top: -10px; right: -6px; font-size: 23px; }
+    .empty-state h2 { margin: 8px 0; font-size: 22px; }
+    .empty-state > .muted { max-width: 420px; margin: 0; line-height: 1.6; }
+    .flow { display: flex; align-items: center; gap: 9px; margin-top: 24px; }
+    .flow span { padding: 7px 10px; border-radius: 8px; background: rgba(128,128,128,.075); font-size: 11px; font-weight: 750; }
+    .flow i { opacity: .35; font-style: normal; }
+    @media (max-width: 820px) { .workspace { grid-template-columns: 1fr; } .hero-badge { width: 82px; height: 82px; border-radius: 24px; } }
+    @media (max-width: 560px) { .studio { width: min(100% - 20px, 1180px); padding-top: 24px; } .hero { align-items: flex-start; } .hero-badge { display: none; } .card { padding: 16px; border-radius: 17px; } .dropzone { align-items: flex-start; flex-wrap: wrap; } .drop-copy { width: calc(100% - 70px); } .choose-button { margin-left: 66px; } .flow { gap: 5px; } .flow span { padding: 6px 7px; } }
 </style>

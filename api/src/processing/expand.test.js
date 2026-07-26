@@ -47,6 +47,54 @@ const withMockedFetch = async (response, callback) => {
     }
 };
 
+test("a Douyin short link that redirects to a mix expands the collection", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+        const url = String(input);
+        if (url.startsWith("https://v.douyin.com/")) {
+            return {
+                url: "https://www.iesdouyin.com/share/mix/detail/7591102261880457267/",
+            };
+        }
+        if (url.includes("/aweme/v1/mix/detail/")) {
+            return {
+                json: async () => ({
+                    status_code: 0,
+                    mix_info: { mix_name: "Test mix" },
+                }),
+            };
+        }
+        if (url.includes("/aweme/v1/mix/aweme/")) {
+            return {
+                json: async () => ({
+                    status_code: 0,
+                    has_more: 0,
+                    aweme_list: [
+                        { aweme_id: "7590030343332318502", desc: "First" },
+                        { aweme_id: "7590030343332318503", desc: "Second" },
+                    ],
+                }),
+            };
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+    };
+
+    try {
+        const result = await expandURL("https://v.douyin.com/atTMVEAQGN0/");
+        assert.equal(result.kind, "douyin-mix");
+        assert.equal(result.title, "Test mix");
+        assert.deepEqual(
+            result.items.map((item) => item.url),
+            [
+                "https://www.douyin.com/video/7590030343332318502",
+                "https://www.douyin.com/video/7590030343332318503",
+            ],
+        );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 test("an explicit Bilibili p parameter expands the remaining pages from the selected page", async () => {
     const result = await withMockedFetch(
         bilibiliViewResponse,

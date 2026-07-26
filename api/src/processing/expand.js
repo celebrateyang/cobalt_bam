@@ -647,6 +647,16 @@ const extractDouyinVideoId = (urlString) => {
     if (mid) return mid;
 };
 
+const extractDouyinMixId = (urlString) => {
+    try {
+        return new URL(urlString).pathname.match(
+            /^\/(?:share\/mix\/detail|collection)\/(\d+)(?:\/\d+)?\/?$/,
+        )?.[1];
+    } catch {
+        return;
+    }
+};
+
 const parseDouyinShareData = (html) => {
     try {
         const router = html.match(
@@ -1269,21 +1279,18 @@ const expandDouyin = async (inputUrl) => {
     }
 
     // Explicit mix detail and collection URLs can be expanded directly.
-    const mixMatch = url.pathname.match(
-        /^\/(?:share\/mix\/detail|collection)\/(\d+)(?:\/\d+)?\/?$/,
-    );
-    if (mixMatch?.[1]) {
-        const mixId = mixMatch[1];
+    const explicitMixId = extractDouyinMixId(inputUrl);
+    if (explicitMixId) {
         const [title, items] = await Promise.all([
-            fetchDouyinMixTitle(mixId),
-            fetchDouyinMixItems(mixId),
+            fetchDouyinMixTitle(explicitMixId),
+            fetchDouyinMixItems(explicitMixId),
         ]);
 
         if (items.length > 1) {
             return {
                 service: "douyin",
                 kind: "douyin-mix",
-                collectionKey: buildCollectionKey("douyin", "mix", mixId),
+                collectionKey: buildCollectionKey("douyin", "mix", explicitMixId),
                 title,
                 items,
             };
@@ -1303,6 +1310,9 @@ const expandDouyin = async (inputUrl) => {
         const shortLink = parts?.[0];
         if (shortLink) {
             const finalUrl = await resolveDouyinShortLink(shortLink);
+            if (extractDouyinMixId(finalUrl)) {
+                return expandDouyin(finalUrl);
+            }
             videoId = extractDouyinVideoId(finalUrl);
         }
     } else if (!videoId && url.pathname.startsWith("/_shortLink/")) {
@@ -1310,6 +1320,9 @@ const expandDouyin = async (inputUrl) => {
         const shortLink = parts?.[1];
         if (shortLink) {
             const finalUrl = await resolveDouyinShortLink(shortLink);
+            if (extractDouyinMixId(finalUrl)) {
+                return expandDouyin(finalUrl);
+            }
             videoId = extractDouyinVideoId(finalUrl);
         }
     }

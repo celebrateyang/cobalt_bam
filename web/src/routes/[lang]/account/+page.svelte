@@ -17,6 +17,10 @@
         signUp,
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
+    import {
+        feedbackUnread,
+        markFeedbackNotificationsSeen,
+    } from "$lib/state/feedback-notifications";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
     import IconLogin from "@tabler/icons-svelte/IconLogin.svelte";
@@ -450,6 +454,19 @@
                 ? feedbackData.data.feedback
                 : [];
             lastRecordsUserId = userId;
+            if (activeRecordsTab === "feedback") {
+                const seenThrough = feedbackRecords.reduce((latest, item) => {
+                    if (item.processed_at == null) return latest;
+                    const value =
+                        typeof item.processed_at === "string"
+                            ? Number.parseInt(item.processed_at, 10)
+                            : item.processed_at;
+                    return Number.isFinite(value) ? Math.max(latest, value) : latest;
+                }, 0);
+                if (seenThrough > 0) {
+                    await markFeedbackNotificationsSeen(seenThrough);
+                }
+            }
         } catch (error) {
             recordsError = isChinese
                 ? "加载记录失败，请稍后重试。"
@@ -1179,6 +1196,14 @@
                             </span>
                             <span>{isChinese ? "问题反馈" : "Feedback"}</span>
                         </span>
+                        {#if $feedbackUnread > 0}
+                            <span
+                                class="records-notification-badge"
+                                aria-label={`${$feedbackUnread} unread`}
+                            >
+                                {$feedbackUnread > 99 ? "99+" : $feedbackUnread}
+                            </span>
+                        {/if}
                     </button>
                 </nav>
             </aside>
@@ -2348,6 +2373,21 @@
 
     .records-menu-item.active .records-menu-icon {
         background: var(--green);
+    }
+
+    .records-notification-badge {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #ef233c;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
     }
 
     .records-content {

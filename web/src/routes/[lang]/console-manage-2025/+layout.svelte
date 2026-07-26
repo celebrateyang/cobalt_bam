@@ -1,6 +1,7 @@
 <script lang="ts">
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
+    import { onDestroy, onMount } from "svelte";
 
     import { auth } from "$lib/api/social";
 
@@ -26,6 +27,45 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
     $: isLoginPage =
         pathname === `/${lang}/console-manage-2025` ||
         pathname === `/${lang}/console-manage-2025/`;
+
+    let unprocessedFeedback = 0;
+    let feedbackStatsTimer: ReturnType<typeof setInterval> | null = null;
+
+    const loadFeedbackStats = async () => {
+        if (isLoginPage || typeof window === "undefined") return;
+        const token = window.localStorage.getItem("admin_token");
+        if (!token) return;
+
+        try {
+            const { currentApiURL } = await import("$lib/api/api-url");
+            const res = await fetch(`${currentApiURL()}/user/admin/feedback/stats`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") return;
+            const count = Number(data?.data?.unprocessed);
+            unprocessedFeedback =
+                Number.isFinite(count) && count > 0 ? count : 0;
+        } catch {
+            // Keep the last known count during transient failures.
+        }
+    };
+
+    const handleStatsRefresh = () => void loadFeedbackStats();
+
+    onMount(() => {
+        void loadFeedbackStats();
+        feedbackStatsTimer = setInterval(loadFeedbackStats, 60_000);
+        window.addEventListener("focus", handleStatsRefresh);
+        window.addEventListener("admin-feedback-updated", handleStatsRefresh);
+    });
+
+    onDestroy(() => {
+        if (feedbackStatsTimer) clearInterval(feedbackStatsTimer);
+        if (typeof window === "undefined") return;
+        window.removeEventListener("focus", handleStatsRefresh);
+        window.removeEventListener("admin-feedback-updated", handleStatsRefresh);
+    });
 
     const handleLogout = () => {
         auth.logout();
@@ -140,6 +180,7 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
                         tabPath="/{lang}/console-manage-2025/feedback"
                         tabTitle="问题反馈"
                         iconColor="gray"
+                        badgeCount={unprocessedFeedback}
                     >
                         <IconBug />
                     </PageNavTab>

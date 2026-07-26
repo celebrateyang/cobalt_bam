@@ -26,6 +26,7 @@ export const initFeedbackDatabase = async () => {
             suggestion TEXT,
             process_note TEXT,
             processed_at BIGINT,
+            user_seen_at BIGINT,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -37,6 +38,9 @@ export const initFeedbackDatabase = async () => {
     );
     await query(
         `ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS processed_at BIGINT;`,
+    );
+    await query(
+        `ALTER TABLE user_feedback ADD COLUMN IF NOT EXISTS user_seen_at BIGINT;`,
     );
 
     await query(
@@ -161,6 +165,7 @@ export const listFeedback = async ({
         suggestion: row.suggestion,
         process_note: row.process_note ?? null,
         processed_at: row.processed_at ?? null,
+        user_seen_at: row.user_seen_at ?? null,
         created_at: row.created_at,
         updated_at: row.updated_at,
         user: {
@@ -227,11 +232,12 @@ export const listFeedbackForUser = async ({
             suggestion,
             process_note,
             processed_at,
+            user_seen_at,
             created_at,
             updated_at
         FROM user_feedback
         WHERE clerk_user_id = $1
-        ORDER BY created_at DESC
+        ORDER BY GREATEST(created_at, COALESCE(processed_at, 0)) DESC
         LIMIT $2
         OFFSET $3
         `,
@@ -247,6 +253,7 @@ export const listFeedbackForUser = async ({
         suggestion: row.suggestion,
         process_note: row.process_note ?? null,
         processed_at: row.processed_at ?? null,
+        user_seen_at: row.user_seen_at ?? null,
         created_at: row.created_at,
         updated_at: row.updated_at,
     }));
@@ -283,5 +290,55 @@ export const processFeedback = async ({ id, processNote }) => {
     );
 
     return result.rows?.[0] ?? null;
+};
+
+const readCount = (result) => {
+    const raw = result.rows?.[0]?.count ?? 0;
+    return typeof raw === "string" ? Number.parseInt(raw, 10) : Number(raw);
+};
+
+export const countUnprocessedFeedback = async () => {
+    const result = await query(`
+        SELECT COUNT(*)::bigint AS count
+        FROM user_feedback
+        WHERE processed_at IS NULL
+    `);
+
+    return readCount(result);
+};
+
+export const countUnreadFeedbackForUser = async ({ clerkUserId }) => {
+    if (!clerkUserId) return 0;
+
+    const result = await query(
+        `
+        SELECT COUNT(*)::bigint AS count
+        FROM user_feedback
+        WHERE clerk_user_id = $1
+          AND processed_at IS NOT NULL
+          AND (user_seen_at IS NULL OR processed_at > user_seen_at)
+        `,
+        [clerkUserId],
+    );
+
+    return readCount(result);
+};
+
+export const markFeedbackSeenForUser = async ({ clerkUserId, seenThrough }) => {
+    if (!clerkUserId || !Number.isFinite(seenThrough) || seenThrough <= 0) return 0;
+
+    const result = await query(
+        `
+        UPDATE user_feedback
+        SET user_seen_at = GREATEST(COALESCE(user_seen_at, 0), $2)
+        WHERE clerk_user_id = $1
+          AND processed_at IS NOT NULL
+          AND processed_at <= $2
+          AND (user_seen_at IS NULL OR processed_at > user_seen_at)
+        `,
+        [clerkUserId, seenThrough],
+    );
+
+    return result.rowCount ?? 0;
 };
 

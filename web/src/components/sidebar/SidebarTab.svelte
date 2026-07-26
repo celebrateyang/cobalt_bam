@@ -8,6 +8,7 @@ export let tabName: string;
 export let tabLink: string;
 export let beta = false;
 export let memberOnly = false;
+export let notification = false;
 export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = null;
 
     const firstTabPage = ["save", "remux", "settings"];
@@ -56,6 +57,9 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         >
             <IconCrown />
         </div>
+    {/if}
+    {#if notification}
+        <span class="notification-dot" aria-label="New notification"></span>
     {/if}
     <slot></slot>
     {$t(`tabs.${tabName}`)}
@@ -145,6 +149,24 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         width: 13px;
         height: 13px;
         stroke-width: 2.5px;
+    }
+
+    .notification-dot {
+        position: absolute;
+        top: 6px;
+        right: 11px;
+        z-index: 2;
+        width: 9px;
+        height: 9px;
+        border: 2px solid var(--sidebar-bg);
+        border-radius: 999px;
+        background: #ef233c;
+        box-sizing: content-box;
+        box-shadow: 0 1px 4px rgba(120, 0, 16, 0.4);
+    }
+
+    .sidebar-tab.active .notification-dot {
+        border-color: var(--sidebar-tab-active-bg);
     }
 
     @keyframes pressButton {

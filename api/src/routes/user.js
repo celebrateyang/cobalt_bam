@@ -55,8 +55,11 @@ import {
 } from "../db/collection-memory.js";
 import {
     createFeedback,
+    countUnreadFeedbackForUser,
+    countUnprocessedFeedback,
     listFeedback,
     listFeedbackForUser,
+    markFeedbackSeenForUser,
     processFeedback,
 } from "../db/feedback.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
@@ -653,6 +656,19 @@ router.get("/admin/feedback", requireAdminAuth, async (req, res) => {
     }
 });
 
+router.get("/admin/feedback/stats", requireAdminAuth, async (_req, res) => {
+    try {
+        const unprocessed = await countUnprocessedFeedback();
+        return res.json({
+            status: "success",
+            data: { unprocessed },
+        });
+    } catch (error) {
+        console.error("GET /user/admin/feedback/stats error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load feedback stats");
+    }
+});
+
 // Admin-only: add/update process note for feedback.
 router.post("/admin/feedback/:id/process", requireAdminAuth, async (req, res) => {
     try {
@@ -1224,6 +1240,24 @@ if (!isClerkApiConfigured) {
                     code: "CLERK_NOT_CONFIGURED",
                     message:
                         "Clerk request auth is not configured on this server (missing CLERK_PUBLISHABLE_KEY)",
+                },
+            });
+        });
+        router.get("/notifications/status", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message: "Clerk request auth is not configured",
+                },
+            });
+        });
+        router.post("/feedback/mark-seen", (_, res) => {
+            res.status(501).json({
+                status: "error",
+                error: {
+                    code: "CLERK_NOT_CONFIGURED",
+                    message: "Clerk request auth is not configured",
                 },
             });
         });
@@ -2497,6 +2531,72 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to load feedback",
+                );
+            }
+        });
+
+        router.get("/notifications/status", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                }
+
+                const feedbackUnread = await countUnreadFeedbackForUser({
+                    clerkUserId: auth.userId,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        feedbackUnread,
+                        hasUnread: feedbackUnread > 0,
+                    },
+                });
+            } catch (error) {
+                console.error("GET /user/notifications/status error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to load notification status",
+                );
+            }
+        });
+
+        router.post("/feedback/mark-seen", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                }
+
+                const seenThrough = Number(req.body?.seenThrough);
+                if (!Number.isFinite(seenThrough) || seenThrough <= 0) {
+                    return jsonError(
+                        res,
+                        400,
+                        "INVALID_INPUT",
+                        "Invalid seenThrough timestamp",
+                    );
+                }
+
+                const marked = await markFeedbackSeenForUser({
+                    clerkUserId: auth.userId,
+                    seenThrough,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: { marked },
+                });
+            } catch (error) {
+                console.error("POST /user/feedback/mark-seen error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to mark feedback seen",
                 );
             }
         });

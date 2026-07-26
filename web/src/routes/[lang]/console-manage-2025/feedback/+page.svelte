@@ -186,6 +186,7 @@
             }
 
             await loadFeedback();
+            window.dispatchEvent(new CustomEvent("admin-feedback-updated"));
         } catch (e) {
             error = e instanceof Error ? e.message : "网络错误";
         } finally {

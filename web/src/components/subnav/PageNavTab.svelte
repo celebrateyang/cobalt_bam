@@ -6,6 +6,7 @@
     export let tabPath: string;
     export let tabTitle: string;
     export let iconColor: "gray" | "blue" | "green" = "gray";
+    export let badgeCount = 0;
 
     $: isActive = $page.url.pathname === tabPath;
 </script>
@@ -24,8 +25,15 @@
             {tabTitle}
         </div>
     </div>
-    <div class="subnav-tab-chevron">
-        <IconChevronRight />
+    <div class="subnav-tab-right">
+        {#if badgeCount > 0}
+            <span class="notification-badge" aria-label={`${badgeCount} pending`}>
+                {badgeCount > 99 ? "99+" : badgeCount}
+            </span>
+        {/if}
+        <div class="subnav-tab-chevron">
+            <IconChevronRight />
+        </div>
     </div>
 </a>
 
@@ -80,6 +88,27 @@
         stroke: var(--gray);
         height: 18px;
         width: 18px;
+    }
+
+    .subnav-tab-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .notification-badge {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #ef233c;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
     }
 
     @media (hover: hover) {

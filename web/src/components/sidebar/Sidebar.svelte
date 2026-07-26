@@ -1,7 +1,14 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
     import { page } from "$app/stores";
+    import { onDestroy, onMount } from "svelte";
     import { defaultNavPage } from "$lib/subnav";
+    import { clerkEnabled, clerkUser, initClerk } from "$lib/state/clerk";
+    import {
+        clearFeedbackNotifications,
+        feedbackUnread,
+        refreshFeedbackNotifications,
+    } from "$lib/state/feedback-notifications";
 
     import CobaltLogo from "$components/sidebar/CobaltLogo.svelte";
     import SidebarTab from "$components/sidebar/SidebarTab.svelte";
@@ -43,6 +50,40 @@
 
     // Mobile breakpoint - matches CSS
     $: isMobile = screenWidth <= 535;
+
+    let notificationTimer: ReturnType<typeof setInterval> | null = null;
+    let notificationUserId: string | null = null;
+
+    const refreshNotifications = () => {
+        if (!$clerkUser) {
+            clearFeedbackNotifications();
+            return;
+        }
+        void refreshFeedbackNotifications();
+    };
+
+    const handleVisibilityRefresh = () => {
+        if (document.visibilityState === "visible") refreshNotifications();
+    };
+
+    onMount(() => {
+        if (clerkEnabled) void initClerk();
+        notificationTimer = setInterval(refreshNotifications, 60_000);
+        window.addEventListener("focus", refreshNotifications);
+        document.addEventListener("visibilitychange", handleVisibilityRefresh);
+    });
+
+    onDestroy(() => {
+        if (notificationTimer) clearInterval(notificationTimer);
+        if (typeof window === "undefined") return;
+        window.removeEventListener("focus", refreshNotifications);
+        document.removeEventListener("visibilitychange", handleVisibilityRefresh);
+    });
+
+    $: if (($clerkUser?.id ?? null) !== notificationUserId) {
+        notificationUserId = $clerkUser?.id ?? null;
+        refreshNotifications();
+    }
 </script>
 
 <svelte:window bind:innerWidth={screenWidth} />
@@ -68,7 +109,11 @@
                 <SidebarTab tabName="settings" tabLink={settingsLink}>
                     <IconSettings />
                 </SidebarTab>
-                <SidebarTab tabName="account" tabLink={accountLink}>
+                <SidebarTab
+                    tabName="account"
+                    tabLink={accountLink}
+                    notification={$feedbackUnread > 0}
+                >
                     <IconUserCircle />
                 </SidebarTab>
             </div>
@@ -108,7 +153,11 @@
                 <SidebarTab tabName="settings" tabLink={settingsLink}>
                     <IconSettings />
                 </SidebarTab>
-                <SidebarTab tabName="account" tabLink={accountLink}>
+                <SidebarTab
+                    tabName="account"
+                    tabLink={accountLink}
+                    notification={$feedbackUnread > 0}
+                >
                     <IconUserCircle />
                 </SidebarTab>
             </div>

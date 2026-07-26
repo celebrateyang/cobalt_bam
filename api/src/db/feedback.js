@@ -56,6 +56,18 @@ export const initFeedbackDatabase = async () => {
     console.log("✓ Feedback database initialized");
 };
 
+let feedbackSchemaPromise = null;
+
+const ensureFeedbackDatabase = async () => {
+    if (!feedbackSchemaPromise) {
+        feedbackSchemaPromise = initFeedbackDatabase().catch((error) => {
+            feedbackSchemaPromise = null;
+            throw error;
+        });
+    }
+    return feedbackSchemaPromise;
+};
+
 export const createFeedback = async ({
     userId,
     clerkUserId,
@@ -63,6 +75,7 @@ export const createFeedback = async ({
     phenomenon,
     suggestion,
 }) => {
+    await ensureFeedbackDatabase();
     const now = Date.now();
 
     const result = await query(
@@ -97,6 +110,7 @@ export const listFeedback = async ({
     limit = 20,
     search = "",
 } = {}) => {
+    await ensureFeedbackDatabase();
     const pagination = normalizePagination({ page, limit });
     const normalizedSearch = typeof search === "string" ? search.trim() : "";
 
@@ -193,6 +207,7 @@ export const listFeedbackForUser = async ({
     page = 1,
     limit = 20,
 } = {}) => {
+    await ensureFeedbackDatabase();
     if (!clerkUserId) {
         return {
             feedback: [],
@@ -272,6 +287,7 @@ export const listFeedbackForUser = async ({
 };
 
 export const processFeedback = async ({ id, processNote }) => {
+    await ensureFeedbackDatabase();
     const now = Date.now();
     const note = typeof processNote === "string" ? processNote.trim() : "";
     const processedAt = note ? now : null;
@@ -298,10 +314,12 @@ const readCount = (result) => {
 };
 
 export const countUnprocessedFeedback = async () => {
+    await ensureFeedbackDatabase();
     const result = await query(`
         SELECT COUNT(*)::bigint AS count
         FROM user_feedback
         WHERE processed_at IS NULL
+          AND length(BTRIM(COALESCE(process_note, ''))) = 0
     `);
 
     return readCount(result);
@@ -309,6 +327,7 @@ export const countUnprocessedFeedback = async () => {
 
 export const countUnreadFeedbackForUser = async ({ clerkUserId }) => {
     if (!clerkUserId) return 0;
+    await ensureFeedbackDatabase();
 
     const result = await query(
         `
@@ -326,6 +345,7 @@ export const countUnreadFeedbackForUser = async ({ clerkUserId }) => {
 
 export const markFeedbackSeenForUser = async ({ clerkUserId, seenThrough }) => {
     if (!clerkUserId || !Number.isFinite(seenThrough) || seenThrough <= 0) return 0;
+    await ensureFeedbackDatabase();
 
     const result = await query(
         `

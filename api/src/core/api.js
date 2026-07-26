@@ -22,6 +22,7 @@ import { friendlyServiceName } from "../processing/service-alias.js";
 import { createStream, verifyStream } from "../stream/manage.js";
 import { createResponse, normalizeRequest, getIP } from "../processing/request.js";
 import { getHeaders } from "../stream/shared.js";
+import { safeDestroyStream } from "../stream/safe-destroy.js";
 import { expandURL } from "../processing/expand.js";
 import extractGeneric, {
     canAttemptGenericURL,
@@ -343,7 +344,7 @@ const probeUpstreamTunnelIsHls = async (url) => {
             bodyTimeout: 8_000,
         });
 
-        try { body.destroy?.(); } catch {}
+        safeDestroyStream(body);
         return isHlsContentType(headers?.["content-type"]);
     } catch {
         return false;

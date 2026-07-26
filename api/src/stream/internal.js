@@ -1,4 +1,5 @@
 import { request } from "undici";
+import { safeDestroyStream } from "./safe-destroy.js";
 import { Readable } from "node:stream";
 import { closeRequest, getHeaders, pipe } from "./shared.js";
 import { tunnelDebugLog, tunnelDebugWarn } from "./debug-log.js";
@@ -121,17 +122,7 @@ const normalizeCandidateUrls = (streamInfo) => {
 };
 
 const safeDestroyBody = (body) => {
-    if (!body?.destroy) return;
-
-    try {
-        // undici BodyReadable may emit an `error` during destroy() (e.g. UND_ERR_ABORTED).
-        // Ensure there's always at least one error listener before destroying, to avoid
-        // process-level "Unhandled 'error' event" crashes.
-        body.once("error", () => { });
-        body.destroy();
-    } catch {
-        // ignore destroy failures
-    }
+    safeDestroyStream(body);
 };
 
 async function* readChunks(streamInfo, size) {

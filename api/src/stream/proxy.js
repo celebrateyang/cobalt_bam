@@ -4,6 +4,7 @@ import { create as contentDisposition } from "content-disposition-header";
 import { destroyInternalStream } from "./manage.js";
 import { tunnelDebugLog, tunnelDebugWarn } from "./debug-log.js";
 import { getHeaders, closeRequest, closeResponse, pipe } from "./shared.js";
+import { safeDestroyStream } from "./safe-destroy.js";
 
 const defaultAgent = new Agent();
 const BILIBILI_HEADERS_TIMEOUT_MS = 30_000;
@@ -30,12 +31,7 @@ export const getProxyCandidateUrls = (streamInfo) => {
 };
 
 export const discardProxyResponseBody = (body) => {
-    if (!body) return;
-    // Undici emits AbortError asynchronously when BodyReadable.destroy() is
-    // called. Always consume that event before abandoning a failed candidate,
-    // otherwise a routine CDN fallback can terminate the Node process.
-    body.on?.("error", () => {});
-    body.destroy?.();
+    safeDestroyStream(body);
 };
 
 const shouldApplyBilibiliFastFail = (streamInfo) => {
@@ -265,7 +261,7 @@ export default async function (streamInfo, res) {
             tunnelDebugWarn(
                 `[TUNNEL ANALYZE] id=${tunnelId} service=${streamInfo.service} reason=playlist_download_rejected upstream_status=${statusCode} upstream_len=${upstreamContentLength ?? "n/a"} route=${routeInfo.route}`,
             );
-            try { stream.destroy?.(); } catch {}
+            discardProxyResponseBody(stream);
             res.status(502).end();
             return;
         }

@@ -10,6 +10,9 @@ import { env, isCluster } from "./config.js"
 import { Red } from "./misc/console-text.js";
 import { initCluster } from "./misc/cluster.js";
 import { setupEnvWatcher } from "./core/env.js";
+import { installProcessSafetyHandlers } from "./core/process-safety.js";
+
+installProcessSafetyHandlers();
 
 const app = express();
 

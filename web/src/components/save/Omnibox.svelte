@@ -337,6 +337,26 @@
         savePendingLaunchIntent(url, { autostart });
     };
 
+    const rememberLinkForAuthReturn = () => {
+        if (!extractUrls($link).length) return;
+
+        // Registration can leave or reload the page (for example, OAuth).
+        // Preserve the input in this tab, but require another explicit click
+        // after the user returns instead of starting a download automatically.
+        rememberPendingLaunch($link, false);
+    };
+
+    const clearRememberedLink = () => {
+        pendingLaunchUrl = "";
+        pendingLaunchAutostart = false;
+        clearPendingLaunchIntent();
+    };
+
+    const clearLinkInput = () => {
+        $link = "";
+        clearRememberedLink();
+    };
+
     const clearPendingLaunchAutostart = () => {
         pendingLaunchAutostart = false;
         markPendingLaunchAutostartHandled();
@@ -585,8 +605,12 @@
             // detection makes a potentially slow /expand request. The saving
             // handler keeps its own check as a guard for other entry points.
             if (clerkEnabled) {
-                const signedIn = await requireDownloadAuth();
+                const signedIn = await requireDownloadAuth({
+                    beforeOpenClerk: rememberLinkForAuthReturn,
+                });
                 if (!signedIn) return;
+
+                clearRememberedLink();
             }
 
             // Multiple links => batch dialog immediately (platform-agnostic).
@@ -964,8 +988,12 @@
         // Authenticate before reading the clipboard so a denied/unsupported
         // Clipboard API cannot silently prevent the sign-in prompt.
         if (clerkEnabled) {
-            const signedIn = await requireDownloadAuth();
+            const signedIn = await requireDownloadAuth({
+                beforeOpenClerk: rememberLinkForAuthReturn,
+            });
             if (!signedIn) return;
+
+            clearRememberedLink();
         }
 
         try {
@@ -1140,7 +1168,7 @@
             />
 
             {#if $link && !isLoading}
-                <ClearButton click={() => ($link = "")} />
+                <ClearButton click={clearLinkInput} />
             {/if}
             {#if isDownloadable}
                 <DownloadButton

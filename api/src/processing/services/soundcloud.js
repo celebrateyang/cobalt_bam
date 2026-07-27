@@ -158,6 +158,8 @@ export default async function(obj) {
         }
     }
 
+    const isHLS = file.pathname.endsWith('.m3u8');
+
     return {
         urls: file.toString(),
         cover,
@@ -171,6 +173,7 @@ export default async function(obj) {
         },
         bestAudio,
         fileMetadata,
-        isHLS: file.pathname.endsWith('.m3u8'),
+        isHLS,
+        directClientDownload: bestAudio === "mp3" && !isHLS,
     }
 }

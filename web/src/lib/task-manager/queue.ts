@@ -87,10 +87,15 @@ export const createDirectCdnPipeline = (
                 slot: 0,
             },
             validation: {
-                expectedContentTypePrefixes: [
-                    "video/",
-                    "application/octet-stream",
-                ],
+                expectedContentTypePrefixes: mimeType.startsWith("audio/")
+                    ? [
+                        "audio/",
+                        "application/octet-stream",
+                    ]
+                    : [
+                        "video/",
+                        "application/octet-stream",
+                    ],
                 requireReliableSize: true,
             },
         },

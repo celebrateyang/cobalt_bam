@@ -8,6 +8,7 @@ const CCTV_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/5
 const GUID_REGEX = /var\s+guid\s*=\s*"([0-9a-f]{32})"/i;
 const GUID_PATTERNS = [
     /var\s+guid(?:_\d+)?\s*=\s*"([0-9a-f]{32})"/gi,
+    /videoCenterId\s*:\s*["']([0-9a-f]{32})["']/gi,
     /creat\w*Player\w*\(\s*["'][^"']+["']\s*,\s*["']([0-9a-f]{32})["']/gi,
     /\[!--begin:htmlVideoCode--\]\s*([0-9a-f]{32})\s*,/gi,
 ];

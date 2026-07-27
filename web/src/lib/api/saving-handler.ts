@@ -104,6 +104,14 @@ const isTikTokDownloadResponse = (response: CobaltAPIResponse) => (
     response.directUrl.length > 0
 );
 
+const isSoundCloudDownloadResponse = (response: CobaltAPIResponse) => (
+    response.status === "redirect" &&
+    "service" in response &&
+    response.service === "soundcloud" &&
+    typeof response.directUrl === "string" &&
+    response.directUrl.length > 0
+);
+
 const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     response.status === "redirect" &&
     "service" in response &&
@@ -579,6 +587,31 @@ export const savingHandler = async ({
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        if (isSoundCloudDownloadResponse(response)) {
+            const directCandidates = [
+                response.directUrl || "",
+                ...(Array.isArray(response.directUrlCandidates)
+                    ? response.directUrlCandidates
+                    : []),
+                redirectUrl,
+            ].filter((value, index, list) => (
+                typeof value === "string" &&
+                value.length > 0 &&
+                list.indexOf(value) === index
+            ));
+
+            downloadButtonState.set("done");
+            createDirectCdnPipeline(
+                directCandidates,
+                response.filename,
+                "audio/mpeg",
+                selectedRequest,
+                effectiveTaskId,
+            );
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
+            return response;
+        }
 
         if (
             selectedRequest.batch === true &&

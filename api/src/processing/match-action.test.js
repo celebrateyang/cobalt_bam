@@ -100,3 +100,72 @@ test("keeps a forced Bilibili batch progressive MP4 off the server tunnel", () =
     assert.equal(response.body.directUrl, directUrl);
     assert.equal(response.body.tunnelUrl, undefined);
 });
+
+const soundcloudResult = {
+    urls: "https://cf-media.sndcdn.com/track.128.mp3?Policy=signed",
+    bestAudio: "mp3",
+    isHLS: false,
+    directClientDownload: true,
+    filenameAttributes: {
+        service: "soundcloud",
+        id: 123,
+        title: "Track",
+        artist: "Artist",
+    },
+    duration: 240,
+};
+
+test("returns a SoundCloud progressive MP3 as a Direct Bridge redirect", () => {
+    const response = matchAction({
+        ...baseArgs,
+        host: "soundcloud",
+        isAudioOnly: true,
+        localProcessing: "preferred",
+        r: soundcloudResult,
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, soundcloudResult.urls);
+    assert.equal(response.body.directUrl, soundcloudResult.urls);
+    assert.deepEqual(response.body.directUrlCandidates, [soundcloudResult.urls]);
+    assert.match(response.body.filename, /\.mp3$/);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
+test("keeps a forced SoundCloud progressive MP3 off the server tunnel", () => {
+    const response = matchAction({
+        ...baseArgs,
+        host: "soundcloud",
+        isAudioOnly: true,
+        alwaysProxy: true,
+        localProcessing: "forced",
+        r: soundcloudResult,
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.directUrl, soundcloudResult.urls);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
+test("keeps SoundCloud MP3 conversion on the processing path when source is HLS", () => {
+    const response = matchAction({
+        ...baseArgs,
+        host: "soundcloud",
+        isAudioOnly: true,
+        audioFormat: "mp3",
+        localProcessing: "preferred",
+        r: {
+            ...soundcloudResult,
+            urls: "https://cf-hls-media.sndcdn.com/playlist.m3u8",
+            bestAudio: "opus",
+            isHLS: true,
+            directClientDownload: false,
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "tunnel");
+    assert.equal(response.body.directUrl, undefined);
+});

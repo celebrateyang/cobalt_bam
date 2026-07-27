@@ -18,6 +18,15 @@
         }
     },
     {
+        "name": "news.cctv.com legacy videoCenterId page",
+        "url": "https://news.cctv.com/2023/10/11/ARTIF2XwMlL1DwMfV5wNgAFy231011.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
         "name": "12371.cn vod page",
         "url": "https://www.12371.cn/2019/11/23/VIDE1574466961184574.shtml",
         "params": {},

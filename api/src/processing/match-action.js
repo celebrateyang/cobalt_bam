@@ -399,6 +399,26 @@ export default function({
                 audioFormat = r.bestAudio || audioFormat;
             }
 
+            const shouldDirectSoundcloudMp3 =
+                host === "soundcloud" &&
+                r.directClientDownload === true &&
+                r.bestAudio === "mp3" &&
+                r.isHLS !== true &&
+                typeof r.urls === "string" &&
+                (audioFormat === "best" || audioFormat === "mp3");
+
+            if (shouldDirectSoundcloudMp3) {
+                audioFormat = "mp3";
+                responseType = "redirect";
+                params = {
+                    url: r.urls,
+                    directUrl: r.urls,
+                    directUrlCandidates: [r.urls],
+                    audioFormat,
+                };
+                break;
+            }
+
             const audioUrlCandidates = Array.isArray(r.urlCandidates)
                 ? r.urlCandidates[1]
                 : r.urlCandidates;
@@ -424,7 +444,17 @@ export default function({
     const keepBilibiliDirectBridge =
         host === "bilibili" &&
         r.directClientDownload === true;
-    if (alwaysProxy && responseType === "redirect" && !keepBilibiliDirectBridge) {
+    const keepSoundcloudDirectBridge =
+        host === "soundcloud" &&
+        r.directClientDownload === true &&
+        params.audioFormat === "mp3" &&
+        params.isHLS !== true;
+    if (
+        alwaysProxy &&
+        responseType === "redirect" &&
+        !keepBilibiliDirectBridge &&
+        !keepSoundcloudDirectBridge
+    ) {
         responseType = "tunnel";
         params.type = "proxy";
     }
@@ -439,7 +469,8 @@ export default function({
     if (
         (canUseBrowserHlsProcessing || !params.isHLS) &&
         responseType !== "picker" &&
-        !keepBilibiliDirectBridge
+        !keepBilibiliDirectBridge &&
+        !keepSoundcloudDirectBridge
     ) {
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);

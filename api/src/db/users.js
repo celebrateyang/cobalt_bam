@@ -2072,8 +2072,8 @@ export const consumeUserPoints = async (
 };
 
 export const MEMBER_DOWNLOAD_LIMITS = Object.freeze({
-    dailySuccessfulDownloads: 100,
-    monthlySuccessfulDownloads: 2000,
+    dailySuccessfulDownloads: 200,
+    monthlySuccessfulDownloads: 5000,
 });
 
 const CHINA_TIME_OFFSET_MS = 8 * 60 * 60 * 1000;

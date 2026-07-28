@@ -147,6 +147,22 @@
         }
     };
 
+    const autoResize = (node: HTMLTextAreaElement) => {
+        const resize = () => {
+            node.style.height = "auto";
+            node.style.height = `${node.scrollHeight}px`;
+        };
+
+        resize();
+        node.addEventListener("input", resize);
+
+        return {
+            destroy() {
+                node.removeEventListener("input", resize);
+            },
+        };
+    };
+
     const saveProcessNote = async (item: FeedbackItem) => {
         if (processingId) return;
         processingId = item.id;
@@ -341,7 +357,7 @@
                                 </button>
                             </td>
                             <td class="col-phenomenon">
-                                <div class="text clamp">
+                                <div class="text">
                                     {item.phenomenon}
                                 </div>
                             </td>
@@ -357,6 +373,7 @@
                                 <textarea
                                     class="process-input"
                                     rows="3"
+                                    use:autoResize
                                     bind:value={processDraftById[item.id]}
                                     placeholder="填写处理备注（用户可见）"
                                 ></textarea>
@@ -380,7 +397,7 @@
 <style>
     .admin-container {
         width: 100%;
-        max-width: 1200px;
+        max-width: none;
         margin: 0;
         padding: calc(var(--padding) * 2);
     }
@@ -549,7 +566,7 @@
     }
 
     .feedback-table .col-process {
-        width: 420px;
+        width: 520px;
     }
 
     thead th {
@@ -694,7 +711,7 @@
     }
 
     .process-cell {
-        min-width: 420px;
+        min-width: 520px;
     }
 
     .process-time {
@@ -711,7 +728,8 @@
         color: var(--text);
         box-shadow: var(--button-box-shadow);
         padding: 10px;
-        resize: vertical;
+        resize: none;
+        overflow-y: hidden;
         min-height: 80px;
         margin-bottom: 8px;
     }

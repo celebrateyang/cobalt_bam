@@ -1,7 +1,11 @@
 ﻿import type { PageLoad } from './$types';
 
 import { guidePages } from '$lib/seo/guide-pages';
-import { getDownloadPriority, isInternationalDownloadSlug } from '$lib/seo/internal-links';
+import {
+    getDownloadPriority,
+    isEnglishOnlyDownloadSlug,
+    isInternationalDownloadSlug,
+} from '$lib/seo/internal-links';
 import {
     getSeoLandingLocale,
     getSeoLandingPage,
@@ -17,7 +21,10 @@ export const entries = () => languages.map((lang) => ({ lang }));
 export const load: PageLoad = async ({ params }) => {
     const internationalOnly = params.lang === 'en';
     const cards = seoLandingSlugs
-        .filter((slug) => !internationalOnly || isInternationalDownloadSlug(slug))
+        .filter((slug) => {
+            if (isEnglishOnlyDownloadSlug(slug)) return params.lang === 'en';
+            return !internationalOnly || isInternationalDownloadSlug(slug);
+        })
         .map((slug) => {
             const landing = getSeoLandingPage(slug);
             if (!landing) return null;

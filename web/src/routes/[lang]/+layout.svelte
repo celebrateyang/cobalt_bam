@@ -17,7 +17,10 @@
 
     import { t, setLocale, INTERNAL_locale } from "$lib/i18n/translations";
     import { getGuidePage } from "$lib/seo/guide-pages";
-    import { isInternationalDownloadSlug } from "$lib/seo/internal-links";
+    import {
+        isEnglishOnlyDownloadSlug,
+        isInternationalDownloadSlug,
+    } from "$lib/seo/internal-links";
     import languages from "$i18n/languages.json";
 
     import { device, app } from "$lib/device";
@@ -73,7 +76,15 @@
         const guide = guideSlug ? getGuidePage(guideSlug) : null;
         return !guide || isInternationalDownloadSlug(guide.landingSlug);
     };
-    $: alternateLanguages = currentPath.startsWith("/learn")
+    const isEnglishOnlyPath = (path: string) => {
+        const downloadSlug = path.match(/^\/download\/([^/]+)$/)?.[1];
+        if (downloadSlug) return isEnglishOnlyDownloadSlug(downloadSlug);
+
+        const guideSlug = path.match(/^\/guide\/([^/]+)$/)?.[1];
+        const guide = guideSlug ? getGuidePage(guideSlug) : null;
+        return Boolean(guide && isEnglishOnlyDownloadSlug(guide.landingSlug));
+    };
+    $: alternateLanguages = currentPath.startsWith("/learn") || isEnglishOnlyPath(currentPath)
         ? ["en"]
         : hasEnglishVersion(currentPath)
           ? supportedLanguages

@@ -120,6 +120,19 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'youtube',
     },
     {
+        platform: 'YouTube Playlist',
+        downloadSlug: 'youtube-playlist-downloader',
+    },
+    {
+        platform: 'Batch Video',
+        downloadSlug: 'batch-video-downloader',
+        guideSlug: 'how-to-download-multiple-videos',
+    },
+    {
+        platform: 'Playlist',
+        downloadSlug: 'playlist-downloader',
+    },
+    {
         platform: 'YouTube Shorts',
         downloadSlug: 'youtube-shorts-download',
         guideSlug: 'youtube-shorts-download-guide',
@@ -171,6 +184,9 @@ const strategicDownloadOrder = [
     'tiktok-mp3-download',
     'instagram-reels-download',
     'instagram-video-download',
+    'batch-video-downloader',
+    'playlist-downloader',
+    'youtube-playlist-downloader',
     'youtube-download',
     'youtube-shorts-download',
     'facebook-video-download',
@@ -188,6 +204,9 @@ const internationalDownloadSlugs = new Set([
     'tiktok-mp3-download',
     'instagram-reels-download',
     'instagram-video-download',
+    'batch-video-downloader',
+    'playlist-downloader',
+    'youtube-playlist-downloader',
     'youtube-download',
     'youtube-shorts-download',
     'facebook-video-download',
@@ -197,6 +216,12 @@ const internationalDownloadSlugs = new Set([
     'reddit-video-download',
     'vimeo-video-download',
     'soundcloud-audio-download',
+]);
+
+const englishOnlyDownloadSlugs = new Set([
+    'batch-video-downloader',
+    'playlist-downloader',
+    'youtube-playlist-downloader',
 ]);
 
 const strategicDownloadPriority: Map<string, number> = new Map(
@@ -238,6 +263,9 @@ const getGuidePageDownloadSlug = (guideSlug: string): string =>
 
 export const isInternationalDownloadSlug = (slug: string): boolean =>
     internationalDownloadSlugs.has(slug);
+
+export const isEnglishOnlyDownloadSlug = (slug: string): boolean =>
+    englishOnlyDownloadSlugs.has(slug);
 
 const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
     audience === 'all' || internationalDownloadSlugs.has(slug);

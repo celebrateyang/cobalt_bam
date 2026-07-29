@@ -31,19 +31,30 @@ assert(
     !/<lastmod>[^<]*T[^<]*<\/lastmod>/.test(sitemap),
     'sitemap lastmod values must be stable content dates, not build timestamps',
 );
+const sitemapUrls = sitemap.match(/<loc>/g) ?? [];
+assert(
+    sitemapUrls.length < 100,
+    `Focused sitemap must stay below 100 URLs; found ${sitemapUrls.length}`,
+);
+for (const excludedUrl of [
+    'https://freesavevideo.online/capabilities.json',
+    'https://freesavevideo.online/llms.txt',
+    'https://freesavevideo.online/en/random-chat',
+    'https://freesavevideo.online/en/remux',
+    'https://freesavevideo.online/zh/download/bilibili-video-download',
+]) {
+    assert(!sitemap.includes(`<loc>${excludedUrl}</loc>`), `Sitemap must exclude ${excludedUrl}`);
+}
+for (const priorityUrl of [
+    'https://freesavevideo.online/en/download/batch-video-downloader',
+    'https://freesavevideo.online/en/download/playlist-downloader',
+    'https://freesavevideo.online/en/download/youtube-playlist-downloader',
+    'https://freesavevideo.online/en/guide/how-to-download-multiple-videos',
+    'https://freesavevideo.online/en/guide/download-videos-to-folder',
+]) {
+    assert(sitemap.includes(`<loc>${priorityUrl}</loc>`), `Sitemap is missing ${priorityUrl}`);
+}
 const domesticUrl = 'https://freesavevideo.online/zh/download/bilibili-video-download';
-const domesticEntry = sitemap.match(
-    new RegExp(`<loc>${domesticUrl}</loc>(.*?)<\\/url>`, 's'),
-);
-assert(domesticEntry, 'Expected the Chinese Bilibili landing page in sitemap.xml');
-assert(
-    !domesticEntry[1].includes('hreflang="en"'),
-    'A domestic-only page must not advertise a missing English alternate',
-);
-assert(
-    domesticEntry[1].includes(`hreflang="x-default" href="${domesticUrl}"`),
-    'A domestic-only page must use its Chinese URL as x-default',
-);
 
 const domesticHtml = readOutput('zh', 'download', 'bilibili-video-download.html');
 assert(
@@ -54,6 +65,29 @@ assert(
     domesticHtml.includes(`hreflang="x-default" href="${domesticUrl}"`),
     'Rendered domestic-only page must use its Chinese URL as x-default',
 );
+
+for (const slug of [
+    'batch-video-downloader',
+    'playlist-downloader',
+    'youtube-playlist-downloader',
+]) {
+    const html = readOutput('en', 'download', `${slug}.html`);
+    assert(
+        html.includes(`rel="canonical" href="https://freesavevideo.online/en/download/${slug}"`),
+        `${slug} is missing its canonical URL`,
+    );
+    assert(
+        !html.includes('hreflang="zh"'),
+        `${slug} must not advertise untranslated language alternates`,
+    );
+}
+
+for (const lang of ['de', 'en', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'zh']) {
+    const html = readOutput(lang, 'download.html');
+    const scripts = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)];
+    assert(scripts.length >= 2, `${lang} download directory is missing JSON-LD`);
+    for (const [, json] of scripts) JSON.parse(json);
+}
 
 const youtubeDownload = readOutput('en', 'download', 'youtube-download.html');
 for (const promotionalQuestion of [

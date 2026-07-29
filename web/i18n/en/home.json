@@ -4,8 +4,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ supported sites",
-            "desc": "Works on popular video platforms across mobile and desktop."
+            "title": "Popular platforms in one place",
+            "desc": "Use the same workflow for supported public links across mobile and desktop."
         },
         "collection": {
             "title": "Collection / playlist download",
@@ -119,10 +119,10 @@
         }
     },
     "hero": {
-        "eyebrow": "Online video downloader",
-        "title": "Download Videos Online Without Watermarks",
-        "subtitle": "Paste a link from Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, CCTV, Instagram, Threads, Facebook, YouTube, and more to download HD videos in a few clicks.",
-        "trust": "Batch downloads, collection / playlist parsing, audio-only mode, and mute mode are built in for supported services."
+        "eyebrow": "Playlist and batch video downloader",
+        "title": "Download Playlists and Multiple Videos in One Place",
+        "subtitle": "Paste a supported playlist, collection, or multiple public video links. Review the queue, choose available quality, retry failed items, and save without processing every URL one by one.",
+        "trust": "Single-video downloads still work. You can also batch links, download supported YouTube playlists, extract audio, and save to a folder in compatible browsers."
     },
     "tools": {
         "title": "More tools",

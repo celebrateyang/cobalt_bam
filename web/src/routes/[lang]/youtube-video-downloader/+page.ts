@@ -1,4 +1,5 @@
 import type { PageLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 
 export const prerender = true;
 
@@ -7,10 +8,6 @@ export const entries = () => {
     return languages.map(lang => ({ lang }));
 };
 
-export const load: PageLoad = async ({ params, url }) => {
-    const { loadTranslations } = await import('$lib/i18n/translations');
-    // Load the namespace plus the current pathname (mirrors other routes)
-    await loadTranslations(params.lang, 'tampermonkey');
-    await loadTranslations(params.lang, url.pathname);
-    return { lang: params.lang };
+export const load: PageLoad = ({ params }) => {
+    redirect(308, `/${params.lang}/download/youtube-download`);
 };

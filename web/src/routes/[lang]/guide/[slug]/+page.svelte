@@ -16,7 +16,18 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
-    $: localeContent = getSeoLandingLocale(data.landing, data.lang);
+    $: baseLocaleContent = getSeoLandingLocale(data.landing, data.lang);
+    $: localeContent =
+        data.lang === 'en'
+            ? {
+                  ...baseLocaleContent,
+                  stepsTitle: data.guide.enStepsTitle ?? baseLocaleContent.stepsTitle,
+                  steps: data.guide.enSteps ?? baseLocaleContent.steps,
+                  featuresTitle: data.guide.enFeaturesTitle ?? baseLocaleContent.featuresTitle,
+                  features: data.guide.enFeatures ?? baseLocaleContent.features,
+                  faqs: data.guide.enFaqs ?? baseLocaleContent.faqs,
+              }
+            : baseLocaleContent;
     $: isZh = data.lang === 'zh';
     type GuideSeoCopy = {
         title: (platform: string) => string;
@@ -65,9 +76,15 @@
         },
     };
     $: localizedGuideCopy = guideSeoCopy[data.lang] ?? guideSeoCopy.en;
-    $: guideTitle = localizedGuideCopy.title(data.guide.platform);
+    $: guideTitle =
+        data.lang === 'en' && data.guide.enTitle
+            ? data.guide.enTitle
+            : localizedGuideCopy.title(data.guide.platform);
     $: pageTitle = `${guideTitle} - ${isZh ? ZH_BRAND : EN_BRAND}`;
-    $: pageDesc = localizedGuideCopy.description(data.guide.platform);
+    $: pageDesc =
+        data.lang === 'en' && data.guide.enDescription
+            ? data.guide.enDescription
+            : localizedGuideCopy.description(data.guide.platform);
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/guide/${data.slug}`;
     $: downloadUrl = `https://${fallbackHost}/${data.lang}/download/${data.guide.landingSlug}`;

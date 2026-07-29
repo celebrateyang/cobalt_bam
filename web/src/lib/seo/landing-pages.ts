@@ -3620,6 +3620,177 @@ export const seoLandingPages: SeoLandingPage[] = [
             }),
         },
     },
+    {
+        slug: 'batch-video-downloader',
+        locales: {
+            en: en({
+                metaTitle: `Batch Video Downloader for Multiple Links - ${EN_BRAND}`,
+                metaDescription:
+                    'Paste multiple public video links, review the detected items, choose quality, retry failed tasks, and save a batch without processing every URL separately.',
+                metaKeywords: [
+                    'batch video downloader',
+                    'bulk video downloader',
+                    'download multiple videos',
+                    'multiple link video downloader',
+                    'batch download videos',
+                ],
+                h1: 'Batch Video Downloader for Multiple Links',
+                lede: 'Paste multiple supported public video links on separate lines. Review the queue, choose available formats, retry individual failures, and save completed files without starting over.',
+                stepsTitle: 'How to batch download multiple videos',
+                steps: [
+                    'Copy the public video links you are allowed to save and place one URL on each line.',
+                    'Paste the links into the downloader. FreeSaveVideo detects the batch and shows the available items before processing.',
+                    'Choose the available quality or audio mode, start the queue, and retry only the items that fail.',
+                    'Choose a folder for automatic saving when your browser supports it, or save each completed item manually.',
+                ],
+                featuresTitle: 'A queue built for multi-link downloads',
+                features: [
+                    'Process multiple links in one batch instead of submitting every URL separately.',
+                    'Keep completed and failed tasks visible so one error does not erase the rest of the queue.',
+                    'Retry failed items and continue interrupted work from the batch interface.',
+                    'Choose a destination folder once in compatible desktop browsers.',
+                    'Automatically number duplicate filenames instead of overwriting earlier downloads.',
+                ],
+                faqTitle: 'Batch download questions',
+                faqs: [
+                    {
+                        q: 'How should I separate multiple video links?',
+                        a: 'Put one supported public URL on each line. Spaces are also detected, but one link per line is easier to review and correct.',
+                    },
+                    {
+                        q: 'What happens when one video fails?',
+                        a: 'The remaining queue can continue. The failed task stays visible so you can retry it without repeating completed downloads.',
+                    },
+                    {
+                        q: 'How many links can I process at once?',
+                        a: 'The current batch limit is shown in the interface and may depend on server settings. Split larger jobs into smaller batches when prompted.',
+                    },
+                    {
+                        q: 'Can a batch save directly to a folder?',
+                        a: 'Compatible desktop browsers can ask you to choose a folder before the batch starts. Other browsers require you to save completed items manually.',
+                    },
+                    {
+                        q: 'Will files with the same name overwrite each other?',
+                        a: 'Batch auto-save adds a number when a filename already exists so completed files are not silently overwritten.',
+                    },
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'playlist-downloader',
+        locales: {
+            en: en({
+                metaTitle: `Playlist Downloader for Public Video Collections - ${EN_BRAND}`,
+                metaDescription:
+                    'Paste a supported public playlist or collection URL, review detected videos, choose available quality, and save the playlist as a manageable batch.',
+                metaKeywords: [
+                    'playlist downloader',
+                    'video playlist downloader',
+                    'download video playlist',
+                    'collection video downloader',
+                    'playlist batch downloader',
+                ],
+                h1: 'Playlist Downloader for Public Video Collections',
+                lede: 'Paste one supported public playlist, collection, season, or multi-part link. FreeSaveVideo detects the available items and prepares a reviewable batch instead of making you copy every video URL.',
+                stepsTitle: 'How to download a supported playlist',
+                steps: [
+                    'Open the public playlist or collection page and copy its full URL rather than a channel or profile homepage.',
+                    'Paste the URL into FreeSaveVideo and wait for the available playlist items to be detected.',
+                    'Review the item list, keep the videos you need, and choose the available quality or audio mode.',
+                    'Start the batch and use folder auto-save on compatible browsers, or save each completed item manually.',
+                ],
+                featuresTitle: 'Playlist workflow',
+                features: [
+                    'Detect supported playlist, collection, season, and multi-part URLs.',
+                    'Review detected items before starting a large download job.',
+                    'Remember completed collection items and keep failed tasks available for retry.',
+                    'Save to a chosen folder on compatible desktop browsers.',
+                    'Works with public content only; private, paid, or login-only playlists are not supported.',
+                ],
+                faqTitle: 'Playlist download questions',
+                faqs: [
+                    {
+                        q: 'Which playlists are supported?',
+                        a: 'Support depends on the platform and link type. Public YouTube playlists with a list parameter, supported TikTok playlists, and supported Bilibili collections or multi-part pages can produce batch results.',
+                    },
+                    {
+                        q: 'Is a creator profile the same as a playlist?',
+                        a: 'No. Use a specific public playlist or collection URL. Profile and channel homepages do not reliably identify a finite set of videos.',
+                    },
+                    {
+                        q: 'Can I choose only some playlist videos?',
+                        a: 'When multiple items are detected, review the batch and select the items you want before starting.',
+                    },
+                    {
+                        q: 'Can I resume a playlist later?',
+                        a: 'Completed collection items can be remembered for signed-in workflows, while failed tasks remain available for retry in the current queue.',
+                    },
+                    {
+                        q: 'Why was only one video detected?',
+                        a: 'You may have copied an individual video URL instead of the full playlist or collection link, or the platform may not expose the remaining items publicly.',
+                    },
+                ],
+            }),
+        },
+    },
+    {
+        slug: 'youtube-playlist-downloader',
+        locales: {
+            en: en({
+                metaTitle: `YouTube Playlist Downloader for Public Playlists - ${EN_BRAND}`,
+                metaDescription:
+                    'Download supported public YouTube playlists as batch tasks. Paste a playlist URL with its list parameter, review videos, choose available formats, and save.',
+                metaKeywords: [
+                    'youtube playlist downloader',
+                    'download youtube playlist',
+                    'youtube batch downloader',
+                    'save youtube playlist',
+                    'youtube playlist to mp4',
+                ],
+                h1: 'YouTube Playlist Downloader',
+                lede: 'Paste a public YouTube playlist URL that includes its list parameter. FreeSaveVideo detects the available videos, prepares a batch, and lets you save supported formats without copying every watch URL.',
+                stepsTitle: 'How to download a YouTube playlist',
+                steps: [
+                    'Open the public playlist on YouTube and copy the playlist URL. Keep the list parameter in the copied address.',
+                    'Paste the playlist URL below. Do not use a channel homepage, private playlist, or paid-membership page.',
+                    'Review the detected videos and select the items and available formats you want.',
+                    'Start the batch, keep the device awake, and use folder auto-save when your browser offers it.',
+                ],
+                featuresTitle: 'YouTube playlist support',
+                features: [
+                    'Supports public YouTube playlist URLs that can be parsed without an account.',
+                    'Turns detected playlist videos into a selectable batch task.',
+                    'Shows available MP4 or audio choices for each detected item when provided.',
+                    'Keeps individual failures visible for retry instead of restarting the whole playlist.',
+                    'Supports folder auto-save in compatible desktop browsers and manual saving elsewhere.',
+                ],
+                faqTitle: 'YouTube playlist questions',
+                faqs: [
+                    {
+                        q: 'Does FreeSaveVideo support YouTube playlist downloads?',
+                        a: 'Yes. Paste a supported public playlist URL with a list parameter. Detected playlist items are prepared as a batch task.',
+                    },
+                    {
+                        q: 'Why does a YouTube channel URL not work?',
+                        a: 'A channel homepage is not a specific playlist. Open the playlist you want and copy its URL, or use an individual public video URL on the main YouTube downloader page.',
+                    },
+                    {
+                        q: 'Can private or members-only playlists be downloaded?',
+                        a: 'No. The playlist and its videos must be publicly accessible without signing in.',
+                    },
+                    {
+                        q: 'Can I download only part of a playlist?',
+                        a: 'Yes. Review the detected batch and keep only the items you want before starting the queue.',
+                    },
+                    {
+                        q: 'What if one playlist item is unavailable?',
+                        a: 'Other items can continue. The unavailable task remains visible so you can inspect or retry it separately.',
+                    },
+                ],
+            }),
+        },
+    },
 ];
 
 export const seoLandingSlugs = seoLandingPages.map((page) => page.slug);

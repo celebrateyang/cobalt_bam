@@ -3,7 +3,10 @@ import { error } from '@sveltejs/kit';
 
 import { guideSlugs, getGuidePage } from '$lib/seo/guide-pages';
 import { getSeoLandingPage } from '$lib/seo/landing-pages';
-import { isInternationalDownloadSlug } from '$lib/seo/internal-links';
+import {
+    isEnglishOnlyDownloadSlug,
+    isInternationalDownloadSlug,
+} from '$lib/seo/internal-links';
 
 export const prerender = true;
 
@@ -15,6 +18,9 @@ export const entries = () =>
             .map((slug) => {
                 const guide = getGuidePage(slug);
                 if (!guide) return null;
+                if (isEnglishOnlyDownloadSlug(guide.landingSlug) && lang !== 'en') {
+                    return null;
+                }
                 if (lang === 'en' && !isInternationalDownloadSlug(guide.landingSlug)) {
                     return null;
                 }
@@ -26,6 +32,9 @@ export const entries = () =>
 export const load: PageLoad = async ({ params }) => {
     const guide = getGuidePage(params.slug);
     if (!guide) error(404, 'Not found');
+    if (isEnglishOnlyDownloadSlug(guide.landingSlug) && params.lang !== 'en') {
+        error(404, 'Not found');
+    }
     if (params.lang === 'en' && !isInternationalDownloadSlug(guide.landingSlug)) {
         error(404, 'Not found');
     }

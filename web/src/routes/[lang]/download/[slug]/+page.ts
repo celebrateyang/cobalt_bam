@@ -3,7 +3,11 @@ import { error } from '@sveltejs/kit';
 
 import { guidePages } from '$lib/seo/guide-pages';
 import { getSeoLandingPage, seoLandingSlugs } from '$lib/seo/landing-pages';
-import { getRelatedDownloadLinks, isInternationalDownloadSlug } from '$lib/seo/internal-links';
+import {
+    getRelatedDownloadLinks,
+    isEnglishOnlyDownloadSlug,
+    isInternationalDownloadSlug,
+} from '$lib/seo/internal-links';
 import { getRelatedLearnPagesForDownload } from '$lib/seo/learn-pages';
 
 export const prerender = true;
@@ -12,12 +16,18 @@ export const entries = () => {
     const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
     return languages.flatMap((lang) =>
         seoLandingSlugs
-            .filter((slug) => lang !== 'en' || isInternationalDownloadSlug(slug))
+            .filter((slug) => {
+                if (isEnglishOnlyDownloadSlug(slug)) return lang === 'en';
+                return lang !== 'en' || isInternationalDownloadSlug(slug);
+            })
             .map((slug) => ({ lang, slug })),
     );
 };
 
 export const load: PageLoad = async ({ params }) => {
+    if (isEnglishOnlyDownloadSlug(params.slug) && params.lang !== 'en') {
+        error(404, 'Not found');
+    }
     if (params.lang === 'en' && !isInternationalDownloadSlug(params.slug)) {
         error(404, 'Not found');
     }

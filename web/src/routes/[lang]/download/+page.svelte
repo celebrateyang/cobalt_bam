@@ -65,12 +65,8 @@
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
     <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
-    <script type="application/ld+json">
-        {JSON.stringify(breadcrumbJsonLd)}
-    </script>
-    <script type="application/ld+json">
-        {JSON.stringify(itemListJsonLd)}
-    </script>
+    {@html `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {@html `<script type="application/ld+json">${JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c')}</script>`}
 </svelte:head>
 
 <div class="page">

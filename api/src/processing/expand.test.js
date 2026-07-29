@@ -143,6 +143,58 @@ test("a legacy Bilibili media-list URL can fall back to its selected aid", async
     }
 });
 
+test("a plain legacy Bilibili media-list URL expands the favorites list", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+        const url = new URL(String(input));
+        assert.equal(url.pathname, "/x/v3/fav/resource/list");
+        assert.equal(url.searchParams.get("media_id"), "1747518848");
+        const pageNum = Number(url.searchParams.get("pn"));
+
+        return {
+            json: async () => ({
+                code: 0,
+                data: {
+                    info: {
+                        title: "Test favorites",
+                        media_count: 3,
+                    },
+                    medias: pageNum === 1
+                        ? [
+                            { bvid: "BV1First", title: "First", duration: 120 },
+                            { bvid: "BV1Second", title: "Second", duration: 180 },
+                        ]
+                        : [
+                            { bvid: "BV1Third", title: "Third", duration: 240 },
+                        ],
+                    has_more: pageNum === 1,
+                },
+            }),
+        };
+    };
+
+    try {
+        const result = await expandURL(
+            "https://www.bilibili.com/list/ml1747518848",
+        );
+        assert.equal(result.kind, "bilibili-media-list");
+        assert.equal(result.title, "Test favorites");
+        assert.equal(result.collectionKey, "bilibili:media-list:1747518848");
+        assert.equal(result.totalCount, 3);
+        assert.equal(result.truncated, false);
+        assert.deepEqual(
+            result.items.map((item) => item.url),
+            [
+                "https://www.bilibili.com/video/BV1First",
+                "https://www.bilibili.com/video/BV1Second",
+                "https://www.bilibili.com/video/BV1Third",
+            ],
+        );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 test("a Bilibili multi-page video still expands when its collection has a long item", async () => {
     const longSiblingResponse = {
         code: 0,

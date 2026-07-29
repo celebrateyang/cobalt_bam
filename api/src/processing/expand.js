@@ -20,6 +20,7 @@ const BILIBILI_HEADERS = Object.freeze({
 
 const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
 const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 50 * 60;
+const BILIBILI_MEDIA_LIST_EXPAND_LIMIT = 100;
 
 // Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.
 // Verified working as of Dec 2025.
@@ -1151,6 +1152,75 @@ const bilibiliUgcSeasonFromSpace = async ({ mid, seasonId }) => {
     };
 };
 
+const bilibiliMediaList = async ({ mediaId }) => {
+    const pageSize = 20;
+    const allItems = [];
+    let title;
+    let totalCount;
+
+    for (
+        let pageNum = 1;
+        allItems.length < BILIBILI_MEDIA_LIST_EXPAND_LIMIT;
+        pageNum += 1
+    ) {
+        const listUrl = new URL(
+            "https://api.bilibili.com/x/v3/fav/resource/list",
+        );
+        listUrl.searchParams.set("media_id", String(mediaId));
+        listUrl.searchParams.set("pn", String(pageNum));
+        listUrl.searchParams.set("ps", String(pageSize));
+
+        const json = await fetch(listUrl, {
+            headers: {
+                ...BILIBILI_HEADERS,
+                referer: `https://www.bilibili.com/list/ml${mediaId}`,
+            },
+            signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+        })
+            .then((response) => response.json())
+            .catch(() => null);
+
+        if (json?.code !== 0 || !json?.data) break;
+
+        title ||= json.data?.info?.title;
+        totalCount ??= Number(json.data?.info?.media_count) || undefined;
+
+        const medias = Array.isArray(json.data?.medias)
+            ? json.data.medias
+            : [];
+        for (const media of medias) {
+            const bvid = toStringId(media?.bvid);
+            if (!bvid) continue;
+            allItems.push({
+                itemKey: `bilibili:video:${bvid}`,
+                url: `https://www.bilibili.com/video/${bvid}`,
+                title: media?.title,
+                duration: toSeconds(media?.duration),
+            });
+            if (allItems.length >= BILIBILI_MEDIA_LIST_EXPAND_LIMIT) break;
+        }
+
+        if (!medias.length || json.data?.has_more !== true) break;
+    }
+
+    const items = uniqBy(allItems, (item) => item.url);
+    if (!items.length) return;
+
+    return {
+        service: "bilibili",
+        kind: "bilibili-media-list",
+        collectionKey: buildCollectionKey(
+            "bilibili",
+            "media-list",
+            String(mediaId),
+        ),
+        title,
+        totalCount,
+        truncated: typeof totalCount === "number" && totalCount > items.length,
+        items,
+    };
+};
+
 const expandBilibili = async (inputUrl) => {
     let inputParsed;
     try {
@@ -1181,7 +1251,7 @@ const expandBilibili = async (inputUrl) => {
     // www.bilibili.com/list/ml:mediaListId is Bilibili's legacy media-list
     // player. The selected video is carried in the query string even though
     // the pathname itself does not contain a downloadable video id.
-    const mediaListMatch = url.pathname.match(/^\/list\/ml\d+\/?$/i);
+    const mediaListMatch = url.pathname.match(/^\/list\/ml(\d+)\/?$/i);
     if (mediaListMatch) {
         const selectedBvid = url.searchParams.get("bvid");
         const selectedAid = url.searchParams.get("oid");
@@ -1201,6 +1271,11 @@ const expandBilibili = async (inputUrl) => {
             }
             return expandBilibili(selectedUrl.toString());
         }
+
+        const mediaList = await bilibiliMediaList({
+            mediaId: mediaListMatch[1],
+        });
+        if (mediaList) return mediaList;
     }
 
     // /video/:id

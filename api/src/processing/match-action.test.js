@@ -169,3 +169,25 @@ test("keeps SoundCloud MP3 conversion on the processing path when source is HLS"
     assert.equal(response.body.status, "tunnel");
     assert.equal(response.body.directUrl, undefined);
 });
+
+test("creates a named MP3 tunnel for Kuaishou audio-only downloads", () => {
+    const response = matchAction({
+        ...baseArgs,
+        host: "kuaishou",
+        isAudioOnly: true,
+        audioFormat: "mp3",
+        r: {
+            type: "video",
+            urls: "https://cdn.example/kuaishou-video.mp4",
+            filename: "kuaishou_123.mp4",
+            audioFilename: "kuaishou_123_audio",
+            duration: 240,
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "tunnel");
+    assert.equal(response.body.type, "audio");
+    assert.equal(response.body.filename, "kuaishou_123_audio.mp3");
+    assert.equal(response.body.duration, 240);
+});

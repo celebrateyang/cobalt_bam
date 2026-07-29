@@ -1178,6 +1178,31 @@ const expandBilibili = async (inputUrl) => {
         };
     }
 
+    // www.bilibili.com/list/ml:mediaListId is Bilibili's legacy media-list
+    // player. The selected video is carried in the query string even though
+    // the pathname itself does not contain a downloadable video id.
+    const mediaListMatch = url.pathname.match(/^\/list\/ml\d+\/?$/i);
+    if (mediaListMatch) {
+        const selectedBvid = url.searchParams.get("bvid");
+        const selectedAid = url.searchParams.get("oid");
+        const selectedId = selectedBvid || (
+            selectedAid && /^\d+$/.test(selectedAid)
+                ? selectedAid
+                : null
+        );
+
+        if (selectedId) {
+            const selectedUrl = new URL(
+                `https://www.bilibili.com/video/${selectedId}`,
+            );
+            const partId = url.searchParams.get("p");
+            if (partId && /^\d+$/.test(partId)) {
+                selectedUrl.searchParams.set("p", partId);
+            }
+            return expandBilibili(selectedUrl.toString());
+        }
+    }
+
     // /video/:id
     const videoMatch = url.pathname.match(/^\/video\/([^/]+)\/?$/);
     if (videoMatch) {

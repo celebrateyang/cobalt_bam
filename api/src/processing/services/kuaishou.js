@@ -213,11 +213,14 @@ export default async function(obj) {
     }
 
     // 4. Return Result
+    const mediaId = videoInfo.id || videoId || Date.now();
+
     return {
         type: "video",
         urls: videoInfo.url,
         original_url: originalUrl || targetUrl,
-        filename: `kuaishou_${videoInfo.id || videoId || Date.now()}.mp4`,
+        filename: `kuaishou_${mediaId}.mp4`,
+        audioFilename: `kuaishou_${mediaId}_audio`,
         status: "proxy",
         duration: videoInfo.duration,
         headers: {

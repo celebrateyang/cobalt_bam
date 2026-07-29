@@ -110,6 +110,39 @@ test("an explicit Bilibili p parameter expands the remaining pages from the sele
     assert.equal(result.items[1].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=3");
 });
 
+test("a legacy Bilibili media-list URL expands its selected video", async () => {
+    const result = await withMockedFetch(
+        bilibiliViewResponse,
+        () => expandURL(
+            "https://www.bilibili.com/list/ml1747518848?oid=458824467&bvid=BV1zy4y1L7Xd&p=2",
+        ),
+    );
+
+    assert.equal(result.kind, "bilibili-multi-page");
+    assert.equal(result.items.length, 2);
+    assert.equal(result.items[0].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=2");
+    assert.equal(result.items[1].url, "https://www.bilibili.com/video/BV1zy4y1L7Xd?p=3");
+});
+
+test("a legacy Bilibili media-list URL can fall back to its selected aid", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+        const url = new URL(String(input));
+        assert.equal(url.searchParams.get("aid"), "458824467");
+        return { json: async () => bilibiliViewResponse };
+    };
+
+    try {
+        const result = await expandURL(
+            "https://www.bilibili.com/list/ml1747518848?oid=458824467",
+        );
+        assert.equal(result.kind, "bilibili-multi-page");
+        assert.equal(result.items.length, 3);
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 test("a Bilibili multi-page video still expands when its collection has a long item", async () => {
     const longSiblingResponse = {
         code: 0,

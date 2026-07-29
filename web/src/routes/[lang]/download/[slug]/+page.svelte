@@ -170,6 +170,16 @@
           }
         : null;
     $: structuredData = [webPageJsonLd, faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
+
+    let copiedExampleTitle = '';
+
+    const copyExampleLinks = async (title: string, urls: string[]) => {
+        await navigator.clipboard.writeText(urls.join('\n'));
+        copiedExampleTitle = title;
+        window.setTimeout(() => {
+            if (copiedExampleTitle === title) copiedExampleTitle = '';
+        }, 2000);
+    };
 </script>
 
 <svelte:head>
@@ -208,6 +218,61 @@
                 <Omnibox />
             </div>
         </section>
+
+        {#if data.landing.examples?.length || data.landing.supportedLinkFormats?.length}
+            <section class="card example-section" aria-labelledby="supported-example-links">
+                <div class="example-heading">
+                    <div>
+                        <p class="example-eyebrow">Try a supported URL shape</p>
+                        <h2 id="supported-example-links">Supported example links</h2>
+                    </div>
+                    <p>
+                        Examples are public links for demonstrating URL input. Only save content you
+                        own, have permission to use, or are legally allowed to download.
+                    </p>
+                </div>
+
+                {#if data.landing.examples?.length}
+                    <div class="example-grid">
+                        {#each data.landing.examples as example}
+                            <article class="example-card">
+                                <h3>{example.title}</h3>
+                                <p>{example.description}</p>
+                                <div class="example-urls">
+                                    {#each example.urls as url}
+                                        <a href={url} target="_blank" rel="noreferrer noopener nofollow">
+                                            {url}
+                                        </a>
+                                    {/each}
+                                </div>
+                                <button
+                                    type="button"
+                                    class="copy-example"
+                                    on:click={() => copyExampleLinks(example.title, example.urls)}
+                                >
+                                    {copiedExampleTitle === example.title
+                                        ? 'Copied'
+                                        : example.urls.length > 1
+                                          ? 'Copy all links'
+                                          : 'Copy link'}
+                                </button>
+                            </article>
+                        {/each}
+                    </div>
+                {/if}
+
+                {#if data.landing.supportedLinkFormats?.length}
+                    <div class="format-list">
+                        <h3>Other supported collection formats</h3>
+                        <ul class="feature-list">
+                            {#each data.landing.supportedLinkFormats as format}
+                                <li>{format}</li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
+            </section>
+        {/if}
 
         <nav class="crumb-links" aria-label="Breadcrumb">
             <a href={homeUrl}>{isZh ? '\u9996\u9875' : 'Home'}</a>
@@ -454,6 +519,103 @@
         display: flex;
         flex-direction: column;
         gap: calc(var(--padding) / 1.1);
+    }
+
+    .example-section {
+        display: grid;
+        gap: 18px;
+    }
+
+    .example-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(280px, 1.2fr);
+        gap: 18px;
+        align-items: end;
+    }
+
+    .example-heading h2,
+    .example-card h3,
+    .format-list h3 {
+        margin: 0;
+        color: var(--secondary);
+    }
+
+    .example-heading > p,
+    .example-card p {
+        margin: 0;
+        color: var(--secondary);
+        opacity: 0.78;
+        line-height: 1.55;
+    }
+
+    .example-eyebrow {
+        margin: 0 0 6px;
+        color: rgba(var(--accent-rgb), 0.95);
+        font-size: 0.78rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .example-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+    }
+
+    .example-card {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        border: 1px solid var(--button-stroke);
+        border-radius: var(--border-radius);
+        background: var(--button-elevated);
+    }
+
+    .example-urls {
+        display: grid;
+        gap: 8px;
+    }
+
+    .example-urls a {
+        overflow-wrap: anywhere;
+        color: rgb(var(--accent-rgb));
+        font-family: var(--font-mono, monospace);
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .copy-example {
+        align-self: flex-start;
+        min-height: 38px;
+        margin-top: auto;
+        padding: 8px 13px;
+        border: 1px solid var(--button-stroke);
+        border-radius: 999px;
+        background: var(--button);
+        color: var(--secondary);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .copy-example:hover {
+        background: var(--button-hover);
+    }
+
+    .format-list {
+        display: grid;
+        gap: 10px;
+        padding-top: 2px;
+    }
+
+    @media (max-width: 720px) {
+        .example-heading {
+            grid-template-columns: 1fr;
+            align-items: start;
+        }
     }
 
     .services {

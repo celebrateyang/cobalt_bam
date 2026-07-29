@@ -21,6 +21,12 @@ export type SeoLandingLocaleContent = {
 export type SeoLandingPage = {
     slug: string;
     locales: Record<string, SeoLandingLocaleContent>;
+    examples?: Array<{
+        title: string;
+        description: string;
+        urls: string[];
+    }>;
+    supportedLinkFormats?: string[];
 };
 
 export const EN_BRAND = 'FreeSaveVideo';
@@ -3622,6 +3628,23 @@ export const seoLandingPages: SeoLandingPage[] = [
     },
     {
         slug: 'batch-video-downloader',
+        examples: [
+            {
+                title: 'Batch example: three Douyin links',
+                description:
+                    'Copy all three public share links, keep one URL per line, and paste the whole block into the downloader.',
+                urls: [
+                    'https://v.douyin.com/4ig-bzpvB6M',
+                    'https://v.douyin.com/pQGM5tXff1I',
+                    'https://v.douyin.com/8ZgQCPpS038',
+                ],
+            },
+        ],
+        supportedLinkFormats: [
+            'One supported public video, post, or short share URL per line.',
+            'Links from different supported platforms can be combined in one batch.',
+            'A playlist or collection URL should be pasted as one URL; the collection parser creates its item queue.',
+        ],
         locales: {
             en: en({
                 metaTitle: `Batch Video Downloader for Multiple Links - ${EN_BRAND}`,
@@ -3679,6 +3702,40 @@ export const seoLandingPages: SeoLandingPage[] = [
     },
     {
         slug: 'playlist-downloader',
+        examples: [
+            {
+                title: 'YouTube public playlist',
+                description:
+                    'Use the full playlist URL and keep its list parameter.',
+                urls: [
+                    'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+                ],
+            },
+            {
+                title: 'Bilibili video that reveals its collection',
+                description:
+                    'A normal Bilibili video URL can reveal its UGC season or multi-part collection when that metadata is public.',
+                urls: ['https://www.bilibili.com/video/BV1RJ411S7bA'],
+            },
+            {
+                title: 'Douyin collection',
+                description:
+                    'An explicit Douyin collection URL provides the mix ID directly.',
+                urls: ['https://www.douyin.com/collection/7601092017510172672/1'],
+            },
+            {
+                title: 'TikTok video that belongs to a playlist',
+                description:
+                    'When the public video metadata includes a Playlist ID, FreeSaveVideo expands the surrounding Playlist.',
+                urls: ['https://www.tiktok.com/@linustech/video/7226478398657416453'],
+            },
+        ],
+        supportedLinkFormats: [
+            'YouTube: a public URL with a list parameter. Watch Later and generated Mix/Radio list IDs are excluded.',
+            'Bilibili: video URLs that expose a UGC season, multi-part video URLs with p=, /channel/collectiondetail?sid= URLs, and /lists/{sid} URLs.',
+            'Douyin: /collection/{mixId}, /share/mix/detail/{mixId}, public video URLs, and v.douyin.com short links that expose a mix ID.',
+            'TikTok: /playlist/{name}-{playlistId} URLs and public video URLs whose metadata includes a Playlist ID.',
+        ],
         locales: {
             en: en({
                 metaTitle: `Playlist Downloader for Public Video Collections - ${EN_BRAND}`,
@@ -3736,6 +3793,22 @@ export const seoLandingPages: SeoLandingPage[] = [
     },
     {
         slug: 'youtube-playlist-downloader',
+        examples: [
+            {
+                title: 'YouTube playlist example',
+                description:
+                    'Copy the full public playlist URL. The list parameter identifies the playlist to expand.',
+                urls: [
+                    'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+                ],
+            },
+        ],
+        supportedLinkFormats: [
+            'youtube.com/playlist?list={playlistId}',
+            'youtube.com/watch?v={videoId}&list={playlistId}',
+            'Other public YouTube URLs that contain a usable list parameter.',
+            'Watch Later (WL) and generated Mix/Radio IDs beginning with RD or RL are intentionally excluded.',
+        ],
         locales: {
             en: en({
                 metaTitle: `YouTube Playlist Downloader for Public Playlists - ${EN_BRAND}`,

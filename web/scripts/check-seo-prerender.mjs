@@ -82,6 +82,35 @@ for (const slug of [
     );
 }
 
+const examplePages = {
+    'batch-video-downloader': [
+        'https://v.douyin.com/4ig-bzpvB6M',
+        'https://v.douyin.com/pQGM5tXff1I',
+        'https://v.douyin.com/8ZgQCPpS038',
+    ],
+    'playlist-downloader': [
+        'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+        'https://www.bilibili.com/video/BV1RJ411S7bA',
+        'https://www.douyin.com/collection/7601092017510172672/1',
+        'https://www.tiktok.com/@linustech/video/7226478398657416453',
+    ],
+    'youtube-playlist-downloader': [
+        'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+    ],
+};
+for (const [slug, urls] of Object.entries(examplePages)) {
+    const html = readOutput('en', 'download', `${slug}.html`);
+    assert(html.includes('Supported example links'), `${slug} is missing its example section`);
+    for (const url of urls) {
+        const escapedUrl = url.replaceAll('&', '&amp;');
+        assert(html.includes(escapedUrl), `${slug} is missing example URL ${url}`);
+    }
+    assert(
+        html.includes('rel="noreferrer noopener nofollow"'),
+        `${slug} example links must use safe nofollow attributes`,
+    );
+}
+
 for (const lang of ['de', 'en', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'zh']) {
     const html = readOutput(lang, 'download.html');
     const scripts = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)];

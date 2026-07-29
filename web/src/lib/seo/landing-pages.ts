@@ -3708,7 +3708,7 @@ export const seoLandingPages: SeoLandingPage[] = [
                 description:
                     'Use the full playlist URL and keep its list parameter.',
                 urls: [
-                    'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+                    'https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3',
                 ],
             },
             {
@@ -3799,7 +3799,7 @@ export const seoLandingPages: SeoLandingPage[] = [
                 description:
                     'Copy the full public playlist URL. The list parameter identifies the playlist to expand.',
                 urls: [
-                    'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+                    'https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3',
                 ],
             },
         ],

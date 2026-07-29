@@ -89,13 +89,13 @@ const examplePages = {
         'https://v.douyin.com/8ZgQCPpS038',
     ],
     'playlist-downloader': [
-        'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+        'https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3',
         'https://www.bilibili.com/video/BV1RJ411S7bA',
         'https://www.douyin.com/collection/7601092017510172672/1',
         'https://www.tiktok.com/@linustech/video/7226478398657416453',
     ],
     'youtube-playlist-downloader': [
-        'https://www.youtube.com/playlist?list=PLAUHyQdeCeUQzyftt9qhHh-xGYyfk7w1V',
+        'https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3',
     ],
 };
 for (const [slug, urls] of Object.entries(examplePages)) {

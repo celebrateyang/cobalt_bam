@@ -110,10 +110,11 @@ const getHost = (value) => {
     }
 };
 
-const runProcess = (command, args, timeoutMs) => new Promise((resolve) => {
+const runProcess = (command, args, timeoutMs, env = process.env) => new Promise((resolve) => {
     const child = spawn(command, args, {
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
+        env,
     });
 
     let stdout = "";
@@ -157,26 +158,75 @@ const runProcess = (command, args, timeoutMs) => new Promise((resolve) => {
 
 let runnerPromise = null;
 
-const probeYtDlp = async () => {
-    const configured = String(process.env.YTDLP_BIN || "").trim();
+const buildRunnerCandidates = (configured) => {
     const candidates = [];
+    const seen = new Set();
+    const push = (command, prefixArgs = [], pathDir = "") => {
+        const normalizedCommand = String(command || "").trim();
+        if (!normalizedCommand) return;
 
-    if (configured) {
-        candidates.push({ command: configured, prefixArgs: [] });
+        const normalizedPrefixArgs = Array.isArray(prefixArgs)
+            ? prefixArgs.map((value) => String(value))
+            : [];
+        const normalizedPathDir = String(pathDir || "").trim();
+        const key = `${normalizedCommand}\u0000${normalizedPrefixArgs.join("\u0001")}\u0000${normalizedPathDir}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        candidates.push({
+            command: normalizedCommand,
+            prefixArgs: normalizedPrefixArgs,
+            pathDir: normalizedPathDir,
+        });
+    };
+
+    const normalizedConfigured = String(configured || "").trim();
+    if (normalizedConfigured) {
+        push(normalizedConfigured);
+
+        if (process.platform === "win32" && /[\\/]/.test(normalizedConfigured)) {
+            push(
+                path.basename(normalizedConfigured),
+                [],
+                path.dirname(normalizedConfigured),
+            );
+        }
     }
 
-    candidates.push(
-        { command: "yt-dlp", prefixArgs: [] },
-        { command: "python3", prefixArgs: ["-m", "yt_dlp"] },
-        { command: "python", prefixArgs: ["-m", "yt_dlp"] },
-        { command: "py", prefixArgs: ["-m", "yt_dlp"] },
-    );
+    push("yt-dlp");
+    push("python3", ["-m", "yt_dlp"]);
+    push("python", ["-m", "yt_dlp"]);
+    push("py", ["-m", "yt_dlp"]);
+
+    return candidates;
+};
+
+const describeProbeFailure = (result) => {
+    if (result?.error) {
+        const code = result.error.code || "unknown";
+        const message = result.error.message || "spawn failed";
+        return `${code} ${message}`.trim();
+    }
+
+    if (result?.timedOut) return "timed_out";
+    return `exit_${result?.code ?? "unknown"}`;
+};
+
+const probeYtDlp = async () => {
+    const configured = String(process.env.YTDLP_BIN || "").trim();
+    const candidates = buildRunnerCandidates(configured);
 
     for (const candidate of candidates) {
+        const env = candidate.pathDir
+            ? {
+                ...process.env,
+                PATH: `${candidate.pathDir}${path.delimiter}${process.env.PATH || ""}`,
+            }
+            : process.env;
         const result = await runProcess(
             candidate.command,
             [...candidate.prefixArgs, "--version"],
             6000,
+            env,
         );
         if (result.code === 0) {
             console.log(
@@ -184,6 +234,10 @@ const probeYtDlp = async () => {
             );
             return candidate;
         }
+
+        console.warn(
+            `======> [generic] yt-dlp probe failed: ${candidate.command} ${candidate.prefixArgs.join(" ")} (${describeProbeFailure(result)})`.trim(),
+        );
     }
 
     return null;

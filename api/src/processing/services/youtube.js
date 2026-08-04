@@ -423,6 +423,20 @@ const scoreAudioCandidate = (candidate) => {
     return score;
 };
 
+const scoreAudioFallbackCandidate = (candidate) => {
+    let score = Math.max(candidate.directAccessScore, candidate.serverAccessScore);
+
+    if (candidate.ext === "m4a") score += 50;
+    if (candidate.ext === "mp4") score += 35;
+    if (candidate.ext === "webm") score += 20;
+    if (candidate.audioCodec === "aac") score += 25;
+    if (candidate.audioCodec === "opus") score += 15;
+    if (candidate.hasVideo) score -= 20;
+
+    score += Math.min(candidate.tbr, 2000) / 10;
+    return score;
+};
+
 const logCandidates = (label, candidates, scoreKey) => {
     console.log(`======> [youtube] candidate count mode=${label} total=${candidates.length}`);
     for (let i = 0; i < Math.min(MAX_CANDIDATE_LOGS, candidates.length); i += 1) {
@@ -502,6 +516,19 @@ const pickSortedAudioCandidates = ({ candidates }) => {
     return filterAudioCandidates({ candidates })
         .filter((candidate) => candidate.serverAccessScore > MIN_GOOD_URL_SCORE)
         .sort((a, b) => b.audioScore - a.audioScore);
+};
+
+const pickSortedAudioFallbackCandidates = ({ candidates }) => {
+    return candidates
+        .filter((candidate) => candidate.hasAudio)
+        .map((candidate) => ({
+            ...candidate,
+            audioFallbackScore: scoreAudioFallbackCandidate(candidate),
+        }))
+        .filter((candidate) =>
+            Math.max(candidate.directAccessScore, candidate.serverAccessScore) > MIN_GOOD_URL_SCORE,
+        )
+        .sort((a, b) => b.audioFallbackScore - a.audioFallbackScore);
 };
 
 const getMergeOutputContainer = ({ videoCandidate, audioCandidate, profile }) => {
@@ -721,6 +748,9 @@ const buildYoutubeResult = ({
     const audioCandidates = pickSortedAudioCandidates({
         candidates,
     });
+    const audioFallbackCandidates = pickSortedAudioFallbackCandidates({
+        candidates,
+    });
 
     console.log(
         `======> [youtube] strategy quality_requested=${profile.requestedQuality} quality_effective=${profile.effectiveQuality} codec=${profile.preferredCodec} container=${profile.containerPreference} prefer_merge=${profile.preferMerge ? "yes" : "no"} fallback=${profile.fallbackReason || "none"}`,
@@ -729,6 +759,7 @@ const buildYoutubeResult = ({
     logCandidates("direct", directCandidates, "directScore");
     logCandidates("mergeVideo", mergeVideoCandidates, "mergeScore");
     logCandidates("audioOnly", audioCandidates, "audioScore");
+    logCandidates("audioFallback", audioFallbackCandidates, "audioFallbackScore");
 
     const fileMetadata = {
         title,
@@ -736,7 +767,7 @@ const buildYoutubeResult = ({
     };
 
     if (o.isAudioOnly) {
-        const selected = audioCandidates[0];
+        const selected = audioCandidates[0] || audioFallbackCandidates[0];
         if (!selected) {
             return { error: "youtube.no_matching_format" };
         }

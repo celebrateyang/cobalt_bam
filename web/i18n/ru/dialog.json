@@ -1,4 +1,8 @@
 {
+    "picker.select_item": "выбрать изображение {{ count }}",
+    "picker.batch.save_selected": "сохранить выбранные ({{ count }})",
+    "picker.batch.saving": "сохранение {{ count }} из {{ max }}...",
+    "picker.batch.complete": "сохранено: {{ count }}, ошибок: {{ max }}",
     "tiktok_download.title": "TikTok video preview and download",
     "tiktok_download.status.preparing": "Preparing download...",
     "tiktok_download.status.checking_extension": "Checking browser extension candidates...",

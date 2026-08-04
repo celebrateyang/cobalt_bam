@@ -13,6 +13,10 @@
 
     export let item: DialogPickerItem;
     export let number: number;
+    export let selectable = false;
+    export let selected = false;
+    export let selectionDisabled = false;
+    export let onSelectionChange: (selected: boolean) => void = () => {};
 
     let imageLoaded = false;
     const isTunnel = (() => {
@@ -27,15 +31,17 @@
     $: itemKind = item.kind ?? "video";
 </script>
 
-<button
-    class="picker-item"
-    on:click={() =>
-        downloadFile({
-            url: item.url,
-            urlType: isTunnel ? "tunnel" : "redirect",
-        })}
->
-    <div class="picker-type">
+<div class="picker-item" class:selected>
+    <button
+        class="picker-download"
+        disabled={selectionDisabled}
+        on:click={() =>
+            downloadFile({
+                url: item.url,
+                urlType: isTunnel ? "tunnel" : "redirect",
+            })}
+    >
+        <div class="picker-type">
         {#if itemKind === "audio"}
             <IconMusic />
         {:else if itemType === "video"}
@@ -45,29 +51,40 @@
         {:else}
             <IconPhoto />
         {/if}
-    </div>
+        </div>
 
-    <img
+        <img
         class="picker-image"
         src={item.thumb ?? item.url}
         class:loading={!imageLoaded}
         class:video-thumbnail={["video", "gif"].includes(itemType)}
         on:load={() => (imageLoaded = true)}
         alt="{$t(`a11y.dialog.picker.item.${itemType}`)} {number}"
-    />
-    <Skeleton class="picker-image elevated" hidden={imageLoaded} />
+        />
+        <Skeleton class="picker-image elevated" hidden={imageLoaded} />
 
-    {#if item.label || item.note}
-        <div class="picker-meta">
+        {#if item.label || item.note}
+            <div class="picker-meta">
             {#if item.label}
                 <div class="picker-label">{item.label}</div>
             {/if}
             {#if item.note}
                 <div class="picker-note">{item.note}</div>
             {/if}
-        </div>
+            </div>
+        {/if}
+    </button>
+    {#if selectable}
+        <label class="picker-selection" aria-label={$t("dialog.picker.select_item", { count: number })}>
+            <input
+                type="checkbox"
+                checked={selected}
+                disabled={selectionDisabled}
+                on:change={(event) => onSelectionChange(event.currentTarget.checked)}
+            />
+        </label>
     {/if}
-</button>
+</div>
 
 <style>
     .picker-item {
@@ -76,6 +93,18 @@
         padding: 2px;
         box-shadow: none;
         border-radius: calc(var(--border-radius) / 2 + 2px);
+    }
+
+    .picker-item.selected {
+        box-shadow: inset 0 0 0 3px var(--accent);
+    }
+
+    .picker-download {
+        width: 100%;
+        height: 100%;
+        padding: 2px;
+        background: none;
+        box-shadow: none;
     }
 
     :global(.picker-image) {
@@ -127,6 +156,27 @@
         border-radius: 6px;
 
         pointer-events: none;
+    }
+
+    .picker-selection {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 10;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        background: rgba(0, 0, 0, 0.58);
+        cursor: pointer;
+    }
+
+    .picker-selection input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: var(--accent);
     }
 
     .picker-type :global(svg) {

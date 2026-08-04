@@ -122,5 +122,13 @@
             "desc": "Cambia entre automatico, solo audio y modo sin sonido antes de descargar."
         },
         "aria": "Download capabilities"
+    },
+    "extension": {
+        "badge": "Gratis ? Chrome",
+        "title": "Descarga directamente desde cualquier web",
+        "description": "¿Encontraste un video o una imagen en una web como Taobao? Usa la extensión para detectarlo y descargarlo con un clic.",
+        "install": "Instalar extensión de Chrome",
+        "installed": "Extensión de Chrome instalada",
+        "checking": "Comprobando la extensión..."
     }
 }

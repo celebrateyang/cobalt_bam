@@ -122,5 +122,13 @@
             "desc": "다운로드 전에 자동, 오디오 전용, 음소거 모드를 전환할 수 있습니다."
         },
         "aria": "Download capabilities"
+    },
+    "extension": {
+        "badge": "무료 ? Chrome",
+        "title": "웹페이지에서 바로 다운로드",
+        "description": "Taobao 같은 사이트에서 동영상이나 이미지를 찾았나요? 확장 프로그램으로 감지하고 한 번에 다운로드하세요.",
+        "install": "Chrome 확장 프로그램 설치",
+        "installed": "Chrome 확장 프로그램 설치됨",
+        "checking": "확장 프로그램 확인 중..."
     }
 }

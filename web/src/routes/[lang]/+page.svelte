@@ -9,6 +9,7 @@
     import SupportedServices from "$components/save/SupportedServices.svelte";
     import HomeDeferredSections from "$components/home/HomeDeferredSections.svelte";
     import NoPainStudyCard from "$components/home/NoPainStudyCard.svelte";
+    import ExtensionPromoCard from "$components/home/ExtensionPromoCard.svelte";
 
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
@@ -601,7 +602,10 @@
 <!--<Header />-->
 
 <div id="cobalt-save-container" class="center-column-container">
-    <SupportedServices />
+    <div class="home-quick-actions">
+        <SupportedServices />
+        <ExtensionPromoCard />
+    </div>
     <main
         id="cobalt-save"
         tabindex="-1"
@@ -1030,6 +1034,36 @@
         display: flex;
         flex-direction: column;
         gap: 14px;
+    }
+
+    .home-quick-actions {
+        width: fit-content;
+        max-width: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 8px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    .home-quick-actions :global(#supported-services) {
+        width: auto;
+        margin: 0;
+    }
+
+    .home-quick-actions :global(#services-popover) {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        width: min(380px, calc(100vw - var(--sidebar-width) - 28px));
+        box-sizing: border-box;
+        transform: translate(-50%, -6px) scale(0.98);
+    }
+
+    .home-quick-actions :global(#services-popover.expanded) {
+        transform: translate(-50%, 0) scale(1);
     }
 
     .seo-disclosure > summary h2 {

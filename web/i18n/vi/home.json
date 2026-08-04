@@ -122,5 +122,13 @@
             "desc": "Chuyen giua tu dong, chi audio va tat tieng truoc khi tai xuong."
         },
         "aria": "Download capabilities"
+    },
+    "extension": {
+        "badge": "Miễn phí ? Chrome",
+        "title": "Tải trực tiếp từ mọi trang web",
+        "description": "Tìm thấy video hoặc hình ảnh trên trang như Taobao? Dùng tiện ích để phát hiện và tải xuống chỉ với một nhấp chuột.",
+        "install": "Cài tiện ích Chrome",
+        "installed": "Đã cài tiện ích Chrome",
+        "checking": "Đang kiểm tra tiện ích..."
     }
 }

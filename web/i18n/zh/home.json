@@ -133,5 +133,13 @@
         "title": "看视频学语言，不必反复暂停查词",
         "description": "NoPainStudy 支持划词取义、动态字幕、跟读练习和智能复习。",
         "action": "了解 NoPainStudy"
+    },
+    "extension": {
+        "badge": "免费 ? Chrome",
+        "title": "在网页中一键下载",
+        "description": "在淘宝等网页中发现了视频或图片？使用插件即可一键识别并下载。",
+        "install": "安装 Chrome 插件",
+        "installed": "Chrome 插件已安装",
+        "checking": "正在检查插件..."
     }
 }

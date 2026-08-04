@@ -122,5 +122,13 @@
             "desc": "ダウンロード前に自動、音声のみ、ミュートを切り替えられます。"
         },
         "aria": "Download capabilities"
+    },
+    "extension": {
+        "badge": "無料 ? Chrome",
+        "title": "Webページから直接ダウンロード",
+        "description": "Taobaoなどのサイトで動画や画像を見つけたら、拡張機能で検出してワンクリックで保存できます。",
+        "install": "Chrome拡張機能をインストール",
+        "installed": "Chrome拡張機能はインストール済み",
+        "checking": "拡張機能を確認中..."
     }
 }

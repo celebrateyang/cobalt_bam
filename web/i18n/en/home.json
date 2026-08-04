@@ -133,5 +133,13 @@
         "title": "Learn languages from video without constantly pausing to look up words",
         "description": "NoPainStudy offers instant word definitions, dynamic subtitles, speaking practice, and smart review.",
         "action": "Explore NoPainStudy"
+    },
+    "extension": {
+        "badge": "Free ? Chrome",
+        "title": "Download directly from any webpage",
+        "description": "Found a video or image on a site like Taobao? Use the extension to detect and download it in one click.",
+        "install": "Install Chrome extension",
+        "installed": "Chrome extension installed",
+        "checking": "Checking extension..."
     }
 }

@@ -191,6 +191,16 @@ const downloadUrl = async (item: DetectedMedia, filename?: string) => {
 };
 
 const bindActions = () => {
+    document.querySelectorAll<HTMLImageElement>('[data-media-preview]').forEach((image) => {
+        image.addEventListener('error', () => {
+            const thumbnail = image.closest<HTMLDivElement>('.thumb');
+            if (!thumbnail) return;
+            const fallback = document.createElement('div');
+            fallback.className = 'media-kind';
+            fallback.textContent = image.dataset.mediaKind || 'IMG';
+            thumbnail.replaceWith(fallback);
+        }, { once: true });
+    });
     document.querySelectorAll<HTMLButtonElement>('[data-download-url]').forEach((button) => {
         button.addEventListener('click', () => {
             const url = button.dataset.downloadUrl;
@@ -206,6 +216,9 @@ const bindActions = () => {
         });
     });
 };
+
+const previewUrlFor = (item: DetectedMedia) =>
+    item.thumbnailUrl || (item.kind === 'image' ? item.url : undefined);
 
 const platformLabel = (platform: PageScanResult['platform']) =>
     platform
@@ -233,11 +246,13 @@ const statusHelpText: Partial<Record<AdapterStatus, string>> = {
     policyBlocked: 'Chrome Web Store policy blocks download actions for this page in the extension.',
 };
 
-const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => `
+const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => {
+    const previewUrl = previewUrlFor(item);
+    return `
     <article class="media-item">
         ${
-            item.thumbnailUrl
-                ? `<div class="thumb"><img src="${escapeHtml(item.thumbnailUrl)}" alt="" /></div>`
+            previewUrl
+                ? `<div class="thumb"><img src="${escapeHtml(previewUrl)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-media-preview data-media-kind="${mediaIcon(item.kind)}" /></div>`
                 : `<div class="media-kind">${mediaIcon(item.kind)}</div>`
         }
         <div class="media-body">
@@ -263,6 +278,7 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
         </div>
     </article>
 `;
+};
 
 const render = () => {
     if (state.kind === 'loading') {

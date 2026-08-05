@@ -41,7 +41,7 @@ const WECHAT_MEMBERSHIP_PRODUCTS = [
         key: "member_weekly",
         planKey: "member_weekly",
         durationDays: 7,
-        amountFen: 1200,
+        amountFen: 600,
         currency: "CNY",
     },
     {

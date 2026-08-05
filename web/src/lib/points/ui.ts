@@ -141,6 +141,10 @@ export const showPointsInsufficientDialog = (
   onBeforeNavigate?: (() => void) | null,
   redirectPath?: string | null,
 ) => {
+  const pointsGap = Math.max(1, requiredPoints - currentPoints);
+  const preferWeeklyMembership =
+    get(page)?.params?.lang === "zh" && pointsGap >= 100;
+
   trackTopupPrompt(
     "view",
     "points_insufficient",
@@ -178,7 +182,7 @@ export const showPointsInsufficientDialog = (
         ? [
             {
               text: get(t)("button.membership"),
-              main: false,
+              main: preferWeeklyMembership,
               action: () => {
                 trackTopupPrompt(
                   "membership",
@@ -198,7 +202,7 @@ export const showPointsInsufficientDialog = (
         : []),
       {
         text: get(t)("button.buy_points"),
-        main: true,
+        main: !preferWeeklyMembership,
         action: () => {
           trackTopupPrompt(
             "topup",
@@ -211,7 +215,7 @@ export const showPointsInsufficientDialog = (
             onBeforeNavigate,
             redirectPath,
             "starter",
-            Math.max(1, requiredPoints - currentPoints),
+            pointsGap,
           );
         },
       },

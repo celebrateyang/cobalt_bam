@@ -42,6 +42,20 @@ const externalReferrerSource = () => {
     }
 };
 
+const organicSearchHosts = new Set([
+    "baidu.com",
+    "bing.com",
+    "duckduckgo.com",
+    "google.com",
+    "search.yahoo.com",
+    "yandex.com",
+]);
+
+const isOrganicSearchSource = (source: string) =>
+    [...organicSearchHosts].some(
+        (host) => source === host || source.endsWith(`.${host}`),
+    );
+
 export const captureAttribution = () => {
     if (typeof window === "undefined") return;
 
@@ -49,13 +63,19 @@ export const captureAttribution = () => {
     const utmSource = clean(params.get("utm_source"));
     const referrerSource = externalReferrerSource();
     const previous = readStored();
-    if (!utmSource && referrerSource && previous) return;
-    const source = utmSource || referrerSource;
-    if (!source) return;
+    if (!utmSource && previous) return;
+    const source = utmSource || referrerSource || "(direct)";
+    const inferredMedium = referrerSource
+        ? isOrganicSearchSource(referrerSource)
+            ? "organic"
+            : "referral"
+        : "(none)";
 
     const touch: AttributionTouch = {
         source,
-        medium: clean(params.get("utm_medium")) || (utmSource ? "campaign" : "referral"),
+        medium:
+            clean(params.get("utm_medium")) ||
+            (utmSource ? "campaign" : inferredMedium),
         landingPath: clean(window.location.pathname),
         capturedAt: Date.now(),
     };

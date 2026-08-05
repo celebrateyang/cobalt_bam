@@ -1155,7 +1155,29 @@
 
     const consumeRecommendedCheckoutIntent = () => {
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
-        if ($page.url.searchParams.get("checkout") !== "recommended") return;
+        const checkoutIntent = $page.url.searchParams.get("checkout");
+
+        if (checkoutIntent === "membership_monthly") {
+            if (membershipProductsLoading) return;
+            const membershipProduct = membershipProducts.find(
+                (candidate) =>
+                    candidate.key === "member_monthly" &&
+                    candidate.enabled !== false,
+            );
+            if (!membershipProduct) return;
+
+            checkoutIntentHandled = true;
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete("checkout");
+                window.history.replaceState({}, "", url.toString());
+            } catch {}
+
+            void startMembershipWechatPay(membershipProduct.key);
+            return;
+        }
+
+        if (checkoutIntent !== "recommended") return;
         if (creditProductsLoading || !recommendedValueProductKey) return;
 
         const product = creditProducts.find(
@@ -1182,8 +1204,8 @@
     $: if (
         browser &&
         $clerkUser &&
-        creditProducts.length > 0 &&
-        recommendedValueProductKey
+        ((creditProducts.length > 0 && recommendedValueProductKey) ||
+            membershipProducts.length > 0)
     ) {
         consumeRecommendedCheckoutIntent();
     }

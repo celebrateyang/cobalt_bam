@@ -11,7 +11,12 @@ import { createDialog } from "$lib/state/dialogs";
 
 export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 200;
 
-export type PointsHelpSection = "topup" | "referral" | "promotion" | "contact";
+export type PointsHelpSection =
+    | "membership"
+    | "topup"
+    | "referral"
+    | "promotion"
+    | "contact";
 
 export type CurrentUserPointsProfile = {
     points: number | null;
@@ -30,7 +35,7 @@ const normalizeRedirectPath = (redirectPath?: string | null) => {
 export const accountPath = (
     section?: PointsHelpSection,
     redirectPath?: string | null,
-    checkout?: "recommended" | null,
+    checkout?: "recommended" | "membership_monthly" | null,
 ) => {
     const lang = get(page)?.params?.lang || "en";
     const basePath = `/${lang}/account`;
@@ -45,7 +50,7 @@ export const accountPath = (
         params.set("redirect", normalizedRedirectPath);
     }
 
-    if (checkout === "recommended") {
+    if (checkout === "recommended" || checkout === "membership_monthly") {
         params.set("checkout", checkout);
     }
 
@@ -57,7 +62,7 @@ const navigateToAccountSection = async (
     section: PointsHelpSection,
     onBeforeNavigate?: (() => void) | null,
     redirectPath?: string | null,
-    checkout?: "recommended" | null,
+    checkout?: "recommended" | "membership_monthly" | null,
 ) => {
     onBeforeNavigate?.();
     const delayMs = onBeforeNavigate ? 200 : 0;
@@ -132,6 +137,28 @@ export const showPointsInsufficientDialog = (
                     void navigateToAccountSection("referral", onBeforeNavigate, redirectPath);
                 },
             },
+            ...(get(page)?.params?.lang === "zh"
+                ? [
+                      {
+                          text: get(t)("button.membership"),
+                          main: false,
+                          action: () => {
+                              trackTopupPrompt(
+                                  "membership",
+                                  "points_insufficient",
+                                  currentPoints,
+                                  requiredPoints,
+                              );
+                              void navigateToAccountSection(
+                                  "membership",
+                                  onBeforeNavigate,
+                                  redirectPath,
+                                  "membership_monthly",
+                              );
+                          },
+                      },
+                  ]
+                : []),
             {
                 text: get(t)("button.buy_points"),
                 main: true,

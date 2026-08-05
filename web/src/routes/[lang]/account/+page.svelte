@@ -20,6 +20,7 @@
     import {
         trackCheckoutStarted,
         trackCreditProductListViewed,
+        trackPaymentLinkOpened,
         trackPurchaseCompleted,
         trackReferralShared,
     } from "$lib/analytics/commerce";
@@ -2082,10 +2083,11 @@
 
                             {#if activeOrder.status !== "PAID" && codeUrl}
                                 <a
-                                    class="subtext payment-codeurl"
+                                    class="button elevated active payment-codeurl"
                                     href={codeUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                    on:click={() =>
+                                        activeOrder &&
+                                        trackPaymentLinkOpened(activeOrder.kind)}
                                 >
                                     {$t("auth.open_payment_link")}
                                 </a>
@@ -3109,7 +3111,10 @@
     }
 
     .payment-codeurl {
-        padding: 0;
+        width: 100%;
+        padding: 12px 16px;
+        justify-content: center;
+        text-decoration: none;
     }
 
     .payment-status {

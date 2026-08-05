@@ -13,6 +13,7 @@ if (!app) throw new Error('Missing app root');
 let state: State = { kind: 'loading' };
 let scanInFlight = false;
 let autoRefreshTimer: number | undefined;
+let pendingMediaListScrollTop: number | null = null;
 
 const escapeHtml = (value: string) =>
     value
@@ -104,6 +105,21 @@ const cropCapturedThumbnail = async (dataUrl: string, rect: NonNullable<Detected
     return canvas.toDataURL('image/jpeg', 0.72);
 };
 
+const scanResultFingerprint = (result: PageScanResult) => JSON.stringify({
+    platform: result.platform,
+    status: result.status,
+    media: result.media.map((item) => [
+        item.kind,
+        item.url,
+        item.thumbnailUrl,
+        item.label,
+        item.format,
+        item.sizeLabel,
+        item.qualityLabel,
+        item.durationLabel,
+    ]),
+});
+
 const withCapturedPlatformThumbnails = async (result: PageScanResult, tab: chrome.tabs.Tab): Promise<PageScanResult> => {
     if (result.platform !== 'tiktok' && result.platform !== 'instagram' && result.platform !== 'douyin') return result;
     const needsCapture = result.media.some((item) => item.kind === 'video' && !item.thumbnailUrl && item.thumbnailRect);
@@ -157,6 +173,16 @@ const scanPage = async (options: { silent?: boolean } = {}) => {
             (previousState.activeKind === 'all' || enrichedResult.media.some((item) => item.kind === previousState.activeKind))
                 ? previousState.activeKind
                 : chooseDefaultKind(enrichedResult.media);
+        if (
+            options.silent &&
+            previousState.kind === 'ready' &&
+            scanResultFingerprint(previousState.result) === scanResultFingerprint(enrichedResult)
+        ) {
+            return;
+        }
+        if (options.silent) {
+            pendingMediaListScrollTop = document.querySelector<HTMLElement>('.media-list')?.scrollTop ?? null;
+        }
         setState({ kind: 'ready', result: enrichedResult, copiedUrl: null, activeKind });
     } catch {
         if (!options.silent) {
@@ -399,6 +425,11 @@ const render = () => {
         </section>
     `;
     bindActions();
+    if (pendingMediaListScrollTop !== null) {
+        const mediaList = document.querySelector<HTMLElement>('.media-list');
+        if (mediaList) mediaList.scrollTop = pendingMediaListScrollTop;
+        pendingMediaListScrollTop = null;
+    }
 };
 
 void scanPage();

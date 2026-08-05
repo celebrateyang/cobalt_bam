@@ -5,13 +5,13 @@ import { seoLandingSlugs } from '$lib/seo/landing-pages';
 import { getGuidePage, guideSlugs } from '$lib/seo/guide-pages';
 import { getLearnPage, learnSlugs } from '$lib/seo/learn-pages';
 import { supportedSeoLanguages } from '$lib/seo/site';
-import { isInternationalDownloadSlug } from '$lib/seo/internal-links';
+import { getDownloadSeoLanguages, getGuideSeoLanguages } from '$lib/seo/route-locales';
 
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
 const lastModified = {
     site: '2026-07-17',
-    seoPages: '2026-07-29',
+    seoPages: '2026-08-06',
 };
 
 const languageHubPages = ['', 'download'];
@@ -27,10 +27,13 @@ const escapeXml = (value: string): string =>
 
 const normalizePath = (path: string) => (path === '/' ? '' : path);
 
-const buildAlternateLinks = (path: string): string => {
+const buildAlternateLinks = (
+    path: string,
+    availableLanguages: readonly string[] = languages,
+): string => {
     const normalized = normalizePath(path);
     const withoutLang = normalized.replace(/^\/[^/]+/, '');
-    const alternateLanguages = languages;
+    const alternateLanguages = availableLanguages;
 
     return [
         ...alternateLanguages.map((lang) => {
@@ -96,28 +99,38 @@ function generateSitemap(): string {
         );
     }
 
-    for (const slug of seoLandingSlugs.filter(isInternationalDownloadSlug)) {
-        urls.push(
-            urlEntry(
-                `${site}/en/download/${slug}`,
-                lastModified.seoPages,
-                'weekly',
-                '0.9',
-            ),
-        );
+    for (const slug of seoLandingSlugs) {
+        const availableLanguages = getDownloadSeoLanguages(slug);
+        for (const lang of availableLanguages) {
+            const path = `/${lang}/download/${slug}`;
+            urls.push(
+                urlEntry(
+                    `${site}${path}`,
+                    lastModified.seoPages,
+                    'weekly',
+                    '0.9',
+                    buildAlternateLinks(path, availableLanguages),
+                ),
+            );
+        }
     }
 
     for (const slug of guideSlugs) {
         const guide = getGuidePage(slug);
-        if (!guide || !isInternationalDownloadSlug(guide.landingSlug)) continue;
-        urls.push(
-            urlEntry(
-                `${site}/en/guide/${slug}`,
-                lastModified.seoPages,
-                'monthly',
-                '0.7',
-            ),
-        );
+        if (!guide) continue;
+        const availableLanguages = getGuideSeoLanguages(slug);
+        for (const lang of availableLanguages) {
+            const path = `/${lang}/guide/${slug}`;
+            urls.push(
+                urlEntry(
+                    `${site}${path}`,
+                    lastModified.seoPages,
+                    'monthly',
+                    '0.7',
+                    buildAlternateLinks(path, availableLanguages),
+                ),
+            );
+        }
     }
 
     return `<?xml version="1.0" encoding="UTF-8"?>

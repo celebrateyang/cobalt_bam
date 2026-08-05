@@ -1,39 +1,34 @@
 import type { PageLoad } from './$types';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 
 import { guidePages } from '$lib/seo/guide-pages';
 import { getSeoLandingPage, seoLandingSlugs } from '$lib/seo/landing-pages';
 import {
     getRelatedDownloadLinks,
-    isEnglishOnlyDownloadSlug,
-    isInternationalDownloadSlug,
 } from '$lib/seo/internal-links';
 import { getRelatedLearnPagesForDownload } from '$lib/seo/learn-pages';
+import {
+    getDownloadSeoLanguages,
+    getPreferredSeoLanguage,
+} from '$lib/seo/route-locales';
 
 export const prerender = true;
 
 export const entries = () => {
-    const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
-    return languages.flatMap((lang) =>
-        seoLandingSlugs
-            .filter((slug) => {
-                if (isEnglishOnlyDownloadSlug(slug)) return lang === 'en';
-                return lang !== 'en' || isInternationalDownloadSlug(slug);
-            })
-            .map((slug) => ({ lang, slug })),
+    return seoLandingSlugs.flatMap((slug) =>
+        getDownloadSeoLanguages(slug).map((lang) => ({ lang, slug })),
     );
 };
 
 export const load: PageLoad = async ({ params }) => {
-    if (isEnglishOnlyDownloadSlug(params.slug) && params.lang !== 'en') {
-        error(404, 'Not found');
-    }
-    if (params.lang === 'en' && !isInternationalDownloadSlug(params.slug)) {
-        error(404, 'Not found');
-    }
-
     const landing = getSeoLandingPage(params.slug);
     if (!landing) error(404, 'Not found');
+
+    const availableLanguages = getDownloadSeoLanguages(params.slug);
+    if (!availableLanguages.includes(params.lang)) {
+        const lang = getPreferredSeoLanguage(availableLanguages);
+        redirect(308, `/${lang}/download/${params.slug}`);
+    }
 
     const linkAudience = params.lang === 'en' ? 'international' : 'all';
     const guide = guidePages.find((item) => item.landingSlug === params.slug);

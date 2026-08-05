@@ -59,37 +59,35 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Documents and SvelteKit data responses must always come from the active
+    // deployment. Serving an older cached HTML document after a release can
+    // make it reference chunks that no longer belong to the same build, which
+    // turns an otherwise valid route into the global error page.
+    if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+        return;
+    }
+
+    // Only immutable build/static assets are safe to serve cache-first. Other
+    // same-origin GET requests (API-style routes, page data, sitemap, etc.) use
+    // the browser's normal network behavior and cannot become stale here.
+    if (!ASSETS.includes(url.pathname)) {
+        return;
+    }
+
     async function respond() {
         const cache = await caches.open(CACHE);
 
-        // `build`/`files` can always be served from the cache
-        if (ASSETS.includes(url.pathname)) {
-            const cached = await cache.match(event.request);
-            if (cached) {
-                return cached;
-            }
-
-            // If cache was cleared or install didn't fully cache, fall back to network.
-            const response = await fetch(event.request);
-            if (response.status === 200) {
-                cache.put(event.request, response.clone());
-            }
-            return response;
+        const cached = await cache.match(event.request);
+        if (cached) {
+            return cached;
         }
 
-        // for everything else, try the network first, but
-        // fall back to the cache if we're offline
-        try {
-            const response = await fetch(event.request);
-
-            if (response.status === 200) {
-                cache.put(event.request, response.clone());
-            }
-
-            return response;
-        } catch {
-            return cache.match(event.request);
+        // If cache installation was incomplete, fetch and repair this asset.
+        const response = await fetch(event.request);
+        if (response.status === 200) {
+            cache.put(event.request, response.clone());
         }
+        return response;
     }
 
     event.respondWith(respond());

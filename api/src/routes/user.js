@@ -1837,6 +1837,9 @@ if (!isClerkApiConfigured) {
                         rewardedPoints: result.claimed
                             ? result.rewardedPoints ?? 0
                             : 0,
+                        inviteeRewardedPoints: result.claimed
+                            ? result.inviteeRewardedPoints ?? 0
+                            : 0,
                     },
                 });
             } catch (error) {

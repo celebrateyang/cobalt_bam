@@ -1,6 +1,7 @@
 import { getClient, query } from "./pg-client.js";
 
 export const REFERRAL_REWARD_POINTS = 50;
+export const REFERRAL_INVITEE_REWARD_POINTS = 20;
 
 export const initReferralDatabase = async () => {
     await query(`
@@ -121,13 +122,26 @@ export const claimReferralReward = async ({ referralCode, referredUserId }) => {
             [REFERRAL_REWARD_POINTS, now, referrerUserId],
         );
 
+        const referredUpdatedRes = await client.query(
+            `
+            UPDATE users
+            SET points = points + $1,
+                updated_at = $2
+            WHERE id = $3
+            RETURNING points;
+            `,
+            [REFERRAL_INVITEE_REWARD_POINTS, now, referredUserId],
+        );
+
         await client.query("COMMIT");
         return {
             ok: true,
             claimed: true,
             rewardedPoints: REFERRAL_REWARD_POINTS,
+            inviteeRewardedPoints: REFERRAL_INVITEE_REWARD_POINTS,
             referrerUserId,
             referrerPoints: updatedRes.rows?.[0]?.points ?? null,
+            referredPoints: referredUpdatedRes.rows?.[0]?.points ?? null,
         };
     } catch (error) {
         try {

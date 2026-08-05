@@ -35,7 +35,7 @@ const normalizeRedirectPath = (redirectPath?: string | null) => {
 export const accountPath = (
     section?: PointsHelpSection,
     redirectPath?: string | null,
-    checkout?: "recommended" | "membership_monthly" | null,
+    checkout?: "recommended" | "membership_weekly" | "membership_monthly" | null,
 ) => {
     const lang = get(page)?.params?.lang || "en";
     const basePath = `/${lang}/account`;
@@ -50,7 +50,11 @@ export const accountPath = (
         params.set("redirect", normalizedRedirectPath);
     }
 
-    if (checkout === "recommended" || checkout === "membership_monthly") {
+    if (
+        checkout === "recommended" ||
+        checkout === "membership_weekly" ||
+        checkout === "membership_monthly"
+    ) {
         params.set("checkout", checkout);
     }
 
@@ -62,7 +66,7 @@ const navigateToAccountSection = async (
     section: PointsHelpSection,
     onBeforeNavigate?: (() => void) | null,
     redirectPath?: string | null,
-    checkout?: "recommended" | "membership_monthly" | null,
+    checkout?: "recommended" | "membership_weekly" | "membership_monthly" | null,
 ) => {
     onBeforeNavigate?.();
     const delayMs = onBeforeNavigate ? 200 : 0;
@@ -153,7 +157,7 @@ export const showPointsInsufficientDialog = (
                                   "membership",
                                   onBeforeNavigate,
                                   redirectPath,
-                                  "membership_monthly",
+                                  "membership_weekly",
                               );
                           },
                       },

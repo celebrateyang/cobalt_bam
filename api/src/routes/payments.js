@@ -38,6 +38,13 @@ const router = express.Router();
 
 const WECHAT_MEMBERSHIP_PRODUCTS = [
     {
+        key: "member_weekly",
+        planKey: "member_weekly",
+        durationDays: 7,
+        amountFen: 1200,
+        currency: "CNY",
+    },
+    {
         key: "member_monthly",
         planKey: "member_monthly",
         durationDays: 30,
@@ -818,9 +825,11 @@ if (!isClerkAuthConfigured) {
             });
 
             const description =
-                product.key === "member_yearly"
-                    ? "Yearly membership"
-                    : "Monthly membership";
+                product.key === "member_weekly"
+                    ? "7-day membership"
+                    : product.key === "member_yearly"
+                      ? "Yearly membership"
+                      : "Monthly membership";
             const wechat = await createWechatNativeTransaction({
                 outTradeNo,
                 amountFen: product.amountFen,

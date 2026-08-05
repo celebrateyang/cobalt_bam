@@ -646,6 +646,7 @@ export const initUserDatabase = async () => {
     await query(
         `INSERT INTO plans (key, name, description, is_active, created_at, updated_at)
          VALUES
+            ('member_weekly', '7-Day Member', '7-day membership for downloads without points', true, $1, $1),
             ('member_monthly', 'Monthly Member', 'Monthly membership for downloads without points', true, $1, $1),
             ('member_yearly', 'Yearly Member', 'Yearly membership for downloads without points', true, $1, $1)
          ON CONFLICT (key) DO UPDATE
@@ -667,7 +668,7 @@ export const initUserDatabase = async () => {
                 ('video_recording'),
                 ('random_chat')
          ) AS entitlement(key)
-         WHERE p.key IN ('member_monthly', 'member_yearly')
+         WHERE p.key IN ('member_weekly', 'member_monthly', 'member_yearly')
          ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
     );
 

@@ -558,6 +558,7 @@
     };
 
     const membershipPlanLabel = (planKey: string | undefined | null) => {
+        if (planKey === "member_weekly") return $t("auth.membership_weekly");
         if (planKey === "member_yearly") return $t("auth.membership_yearly");
         return $t("auth.membership_monthly");
     };
@@ -568,6 +569,9 @@
     };
 
     const formatMembershipProductSubtitle = (product: MembershipProduct) => {
+        if (product.key === "member_weekly") {
+            return $t("auth.membership_weekly_subtitle");
+        }
         const perMonth =
             product.key === "member_yearly"
                 ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
@@ -1157,11 +1161,18 @@
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
         const checkoutIntent = $page.url.searchParams.get("checkout");
 
-        if (checkoutIntent === "membership_monthly") {
+        if (
+            checkoutIntent === "membership_weekly" ||
+            checkoutIntent === "membership_monthly"
+        ) {
             if (membershipProductsLoading) return;
+            const productKey =
+                checkoutIntent === "membership_weekly"
+                    ? "member_weekly"
+                    : "member_monthly";
             const membershipProduct = membershipProducts.find(
                 (candidate) =>
-                    candidate.key === "member_monthly" &&
+                    candidate.key === productKey &&
                     candidate.enabled !== false,
             );
             if (!membershipProduct) return;
@@ -1919,7 +1930,7 @@
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
-                                                    {:else}
+                                                    {:else if product.key === "member_weekly"}
                                                         <span class="badge rec">
                                                             {$t("auth.badge_recommended")}
                                                         </span>

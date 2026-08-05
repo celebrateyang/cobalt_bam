@@ -74,7 +74,9 @@
         currency === "CNY" ? `¥${(amountFen / 100).toFixed(2)}` : `${(amountFen / 100).toFixed(2)} ${currency}`;
 
     const planLabel = (order: MembershipOrder) =>
-        order.plan_key === "member_monthly"
+        order.plan_key === "member_weekly"
+            ? "7天会员"
+            : order.plan_key === "member_monthly"
             ? "月会员"
             : order.plan_key === "member_yearly"
               ? "年会员"

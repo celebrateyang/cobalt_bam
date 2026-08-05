@@ -63,6 +63,42 @@ export const trackTopupPrompt = (
   target.clarity?.("event", "topup_prompt");
 };
 
+export const trackCreditProductListViewed = (
+  provider: string,
+  products: Array<{
+    key: string;
+    points: number;
+    amountFen: number;
+    currency: string;
+  }>,
+) => {
+  if (!products.length) return;
+  const dedupeKey = `fsv_credit_products_viewed:${provider}`;
+  try {
+    if (window.sessionStorage.getItem(dedupeKey) === "1") return;
+    window.sessionStorage.setItem(dedupeKey, "1");
+  } catch {
+    // Tracking remains best-effort when storage is unavailable.
+  }
+
+  const target = analyticsWindow();
+  target.gtag?.("event", "view_item_list", {
+    item_list_id: `credit_products_${provider}`,
+    item_list_name: `${provider} credit products`,
+    currency: products[0].currency,
+    items: products.map((product, index) => ({
+      item_id: product.key,
+      item_name: `${product.points} credits`,
+      item_category: "credit",
+      price: product.amountFen / 100,
+      index,
+      quantity: 1,
+    })),
+  });
+  target.clarity?.("set", "credit_products_provider", provider);
+  target.clarity?.("event", "credit_products_viewed");
+};
+
 export const trackPurchaseCompleted = (
   transactionId: string,
   item: CommerceItem,

@@ -19,6 +19,7 @@
     import { currentApiURL } from "$lib/api/api-url";
     import {
         trackCheckoutStarted,
+        trackCreditProductListViewed,
         trackPurchaseCompleted,
     } from "$lib/analytics/commerce";
     import { getOrderAttribution } from "$lib/analytics/attribution";
@@ -573,6 +574,7 @@
     };
 
     let creditProducts: CreditProduct[] = [];
+    let displayedCreditProducts: CreditProduct[] = [];
     let membershipProducts: MembershipProduct[] = [];
     let creditProductsLoading = false;
     let membershipProductsLoading = false;
@@ -605,6 +607,17 @@
 
     const POLAR_BEST_VALUE_PRODUCT_KEY = "polar_usd_999";
     const POLAR_RECOMMENDED_PRODUCT_KEY = "polar_usd_499";
+    const WECHAT_RECOMMENDED_PRODUCT_KEY = "points_1000";
+
+    const sortCreditProductsForDisplay = (
+        products: CreditProduct[],
+        recommendedKey: string | null,
+    ) =>
+        [...products].sort((a, b) => {
+            if (a.key === recommendedKey) return -1;
+            if (b.key === recommendedKey) return 1;
+            return 0;
+        });
 
     const unitPriceFenPerPoint = (product: CreditProduct) => {
         const points = Number(product.points);
@@ -652,9 +665,18 @@
                     : fallbackRecommended;
         } else {
             bestValueProductKey = ranked[0]?.key ?? null;
-            recommendedValueProductKey = ranked[1]?.key ?? null;
+            recommendedValueProductKey = ranked.some(
+                (product) => product.key === WECHAT_RECOMMENDED_PRODUCT_KEY,
+            )
+                ? WECHAT_RECOMMENDED_PRODUCT_KEY
+                : (ranked[1]?.key ?? null);
         }
     }
+
+    $: displayedCreditProducts = sortCreditProductsForDisplay(
+        creditProducts,
+        recommendedValueProductKey,
+    );
 
     const fetchCreditProducts = async () => {
         const provider = selectedPaymentProvider;
@@ -682,6 +704,13 @@
             creditProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
+            const trackedProducts = sortCreditProductsForDisplay(
+                creditProducts,
+                provider === "wechat"
+                    ? WECHAT_RECOMMENDED_PRODUCT_KEY
+                    : POLAR_RECOMMENDED_PRODUCT_KEY,
+            );
+            trackCreditProductListViewed(provider, trackedProducts);
         } catch (error) {
             creditProductsErrorKey = "auth.credit_products_load_failed";
             console.debug("load credit products failed", error);
@@ -1683,7 +1712,7 @@
                             <div class="subtext error">{$t(creditProductsErrorKey)}</div>
                         {:else}
                             <div class="products-grid">
-                                {#each creditProducts as product (product.key)}
+                                {#each displayedCreditProducts as product (product.key)}
                                     {@const isTest = product.key.startsWith("points_test_")}
                                     {@const isBest = !isTest && product.key === bestValueProductKey}
                                     {@const isRecommended =
@@ -1691,7 +1720,10 @@
                                         !isBest &&
                                         product.key === recommendedValueProductKey}
 
-                                    <div class="product-card">
+                                    <div
+                                        class="product-card"
+                                        class:recommended-product={isRecommended}
+                                    >
                                         <div class="product-main">
                                             <div class="product-left">
                                                 <div class="product-points">
@@ -2746,6 +2778,11 @@
     .product-card:hover {
         border-color: var(--popup-stroke);
         transform: translateY(-1px);
+    }
+
+    .product-card.recommended-product {
+        border-color: var(--blue);
+        box-shadow: 0 10px 24px rgba(32, 120, 255, 0.16);
     }
 
     .product-main {

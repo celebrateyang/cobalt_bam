@@ -1188,14 +1188,26 @@
             return;
         }
 
-        if (checkoutIntent !== "recommended") return;
+        if (
+            checkoutIntent !== "recommended" &&
+            checkoutIntent !== "starter"
+        )
+            return;
         if (creditProductsLoading || !recommendedValueProductKey) return;
 
-        const product = creditProducts.find(
+        const enabledProducts = creditProducts.filter(
             (candidate) =>
-                candidate.key === recommendedValueProductKey &&
+                !candidate.key.startsWith("points_test_") &&
                 candidate.enabled !== false,
         );
+        const product =
+            checkoutIntent === "starter"
+                ? [...enabledProducts].sort(
+                      (a, b) => Number(a.amountFen) - Number(b.amountFen),
+                  )[0]
+                : enabledProducts.find(
+                      (candidate) => candidate.key === recommendedValueProductKey,
+                  );
         if (!product) return;
 
         checkoutIntentHandled = true;

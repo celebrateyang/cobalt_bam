@@ -4,6 +4,7 @@ import { page } from "$app/stores";
 import { get } from "svelte/store";
 
 import { currentApiURL } from "$lib/api/api-url";
+import { trackTopupPrompt } from "$lib/analytics/commerce";
 import { t } from "$lib/i18n/translations";
 import { getClerkToken } from "$lib/state/clerk";
 import { createDialog } from "$lib/state/dialogs";
@@ -106,6 +107,7 @@ export const showPointsInsufficientDialog = (
     onBeforeNavigate?: (() => void) | null,
     redirectPath?: string | null,
 ) => {
+    trackTopupPrompt("view", "points_insufficient", currentPoints, requiredPoints);
     createDialog({
         id: `points-insufficient-${Date.now()}`,
         type: "small",
@@ -117,30 +119,18 @@ export const showPointsInsufficientDialog = (
         }),
         buttons: [
             {
-                text: get(t)("button.free_points"),
-                main: false,
-                action: () => {
-                    void navigateToAccountSection("contact", onBeforeNavigate, redirectPath);
-                },
-            },
-            {
                 text: get(t)("button.invite_points"),
                 main: false,
                 action: () => {
+                    trackTopupPrompt("referral", "points_insufficient", currentPoints, requiredPoints);
                     void navigateToAccountSection("referral", onBeforeNavigate, redirectPath);
-                },
-            },
-            {
-                text: get(t)("button.promotion_points"),
-                main: false,
-                action: () => {
-                    void navigateToAccountSection("promotion", onBeforeNavigate, redirectPath);
                 },
             },
             {
                 text: get(t)("button.buy_points"),
                 main: true,
                 action: () => {
+                    trackTopupPrompt("topup", "points_insufficient", currentPoints, requiredPoints);
                     void navigateToAccountSection("topup", onBeforeNavigate, redirectPath);
                 },
             },

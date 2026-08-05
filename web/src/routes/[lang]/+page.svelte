@@ -19,6 +19,7 @@
     import IconCoin from "@tabler/icons-svelte/IconCoin.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import { getHubDownloadLinks, getHubGuideLinks } from "$lib/seo/internal-links";
+    import { trackTopupPrompt } from "$lib/analytics/commerce";
 
     type ClerkRuntimeModule = typeof import("$lib/state/clerk");
 
@@ -146,7 +147,8 @@
             ? capabilityPlatformLabels[platform].zh
             : capabilityPlatformLabels[platform].default;
 
-    const accountPath = () => `/${currentLocale}/account`;
+    const accountPath = (section?: "topup") =>
+        `/${currentLocale}/account${section ? `?section=${section}` : ""}`;
 
     const buildFeedbackRedirectPath = () => {
         const next = new URL($page.url.toString());
@@ -192,7 +194,8 @@
     const buildGuideLabel = (title: string) =>
         currentLocale === "zh" ? `${title}\u8BF4\u660E` : `${title} guide`;
 
-    const LOW_POINTS_THRESHOLD = 10;
+    const LOW_POINTS_THRESHOLD = 20;
+    const LOW_POINTS_BALLOON_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
     const lowPointsBalloonKeyForUser = (userId: string) =>
         `low-points-balloon-dismissed:${userId}`;
 
@@ -204,13 +207,21 @@
     let lowPointsBalloonDismissed = false;
     let lowPointsBalloonDismissKey: string | null = null;
     let lastDismissUserId: string | null = null;
+    let lastLowPointsBalloonViewUserId: string | null = null;
     let showLowPointsBalloon = false;
 
     const dismissLowPointsBalloon = () => {
         lowPointsBalloonDismissed = true;
         if (browser && lowPointsBalloonDismissKey) {
-            localStorage.setItem(lowPointsBalloonDismissKey, "1");
+            localStorage.setItem(lowPointsBalloonDismissKey, String(Date.now()));
         }
+    };
+
+    const closeLowPointsBalloon = () => {
+        if (userPoints !== null) {
+            trackTopupPrompt("dismiss", "low_points_balloon", userPoints);
+        }
+        dismissLowPointsBalloon();
     };
 
     const fetchUserPoints = async () => {
@@ -252,8 +263,11 @@
     };
 
     const goToAccountForPoints = async () => {
+        if (userPoints !== null) {
+            trackTopupPrompt("topup", "low_points_balloon", userPoints);
+        }
         dismissLowPointsBalloon();
-        await goto(accountPath());
+        await goto(accountPath("topup"));
     };
 
     $: if (browser && clerkUserState?.id) {
@@ -262,7 +276,10 @@
             lastDismissUserId = userId;
             const key = lowPointsBalloonKeyForUser(userId);
             lowPointsBalloonDismissKey = key;
-            lowPointsBalloonDismissed = localStorage.getItem(key) === "1";
+            const dismissedAt = Number(localStorage.getItem(key));
+            lowPointsBalloonDismissed =
+                Number.isFinite(dismissedAt) &&
+                Date.now() - dismissedAt < LOW_POINTS_BALLOON_COOLDOWN_MS;
         }
     }
 
@@ -275,6 +292,7 @@
         lowPointsBalloonDismissed = false;
         lowPointsBalloonDismissKey = null;
         lastDismissUserId = null;
+        lastLowPointsBalloonViewUserId = null;
     }
 
     $: showLowPointsBalloon =
@@ -285,6 +303,16 @@
         userPoints !== null &&
         userPoints < LOW_POINTS_THRESHOLD &&
         !lowPointsBalloonDismissed;
+
+    $: if (
+        showLowPointsBalloon &&
+        clerkUserState?.id &&
+        userPoints !== null &&
+        lastLowPointsBalloonViewUserId !== clerkUserState.id
+    ) {
+        lastLowPointsBalloonViewUserId = clerkUserState.id;
+        trackTopupPrompt("view", "low_points_balloon", userPoints);
+    }
 
     $: platformCards = platformsList.map((slug) => ({
         slug,
@@ -790,7 +818,7 @@
                 type="button"
                 class="low-points-balloon-close"
                 aria-label={$t("home.points_balloon.close")}
-                on:click|stopPropagation={dismissLowPointsBalloon}
+                on:click|stopPropagation={closeLowPointsBalloon}
             >
                 <IconX size={16} />
             </button>

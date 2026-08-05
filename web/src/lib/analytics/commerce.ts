@@ -43,6 +43,26 @@ export const trackCheckoutStarted = (item: CommerceItem) => {
   target.clarity?.("event", "checkout_started");
 };
 
+export const trackTopupPrompt = (
+  action: "view" | "topup" | "referral" | "dismiss",
+  source: "points_insufficient" | "low_points_balloon",
+  currentPoints: number,
+  requiredPoints?: number,
+) => {
+  const target = analyticsWindow();
+  target.gtag?.("event", "topup_prompt", {
+    action,
+    source,
+    current_points: currentPoints,
+    ...(requiredPoints === undefined
+      ? {}
+      : { required_points: requiredPoints }),
+  });
+  target.clarity?.("set", "topup_prompt_source", source);
+  target.clarity?.("set", "topup_prompt_action", action);
+  target.clarity?.("event", "topup_prompt");
+};
+
 export const trackPurchaseCompleted = (
   transactionId: string,
   item: CommerceItem,

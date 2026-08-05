@@ -18,6 +18,10 @@
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
     import {
+        trackCheckoutStarted,
+        trackPurchaseCompleted,
+    } from "$lib/analytics/commerce";
+    import {
         feedbackUnread,
         markFeedbackNotificationsSeen,
     } from "$lib/state/feedback-notifications";
@@ -815,6 +819,14 @@
                 if (order.status === "PAID") {
                     stopPolling();
                     purchaseNoticeKey = "auth.payment_success";
+                    trackPurchaseCompleted(order.out_trade_no, {
+                        id: `credits-${order.points}`,
+                        name: `${order.points} credits`,
+                        value: order.amount_fen / 100,
+                        currency: order.currency,
+                        provider: order.provider,
+                        kind: "credit",
+                    });
                     lastPointsUserId = null;
                     void fetchPoints();
                     maybeResumeAfterPayment(order.id);
@@ -868,6 +880,14 @@
                 if (order.status === "PAID") {
                     stopPolling();
                     purchaseNoticeKey = "auth.membership_payment_success";
+                    trackPurchaseCompleted(order.out_trade_no, {
+                        id: order.product_key,
+                        name: order.plan_key,
+                        value: order.amount_fen / 100,
+                        currency: order.currency,
+                        provider: order.provider,
+                        kind: "membership",
+                    });
                     lastPointsUserId = null;
                     void fetchPoints();
                 }
@@ -936,6 +956,15 @@
                 throw new Error("invalid create order response");
             }
 
+            trackCheckoutStarted({
+                id: productKey,
+                name: `${order.points} credits`,
+                value: order.amount_fen / 100,
+                currency: order.currency,
+                provider: order.provider,
+                kind: "credit",
+            });
+
             activeOrder = { ...order, kind: "credit" };
             codeUrl = receivedCodeUrl;
             qrDataUrl = await QRCode.toDataURL(receivedCodeUrl, {
@@ -988,6 +1017,15 @@
             if (!order?.id || !receivedCodeUrl) {
                 throw new Error("invalid create membership order response");
             }
+
+            trackCheckoutStarted({
+                id: order.product_key,
+                name: order.plan_key,
+                value: order.amount_fen / 100,
+                currency: order.currency,
+                provider: order.provider,
+                kind: "membership",
+            });
 
             activeOrder = { ...order, kind: "membership" };
             codeUrl = receivedCodeUrl;
@@ -1045,6 +1083,20 @@
             const checkoutUrl = data?.data?.polar?.checkoutUrl as string | undefined;
             if (!checkoutUrl) {
                 throw new Error("missing checkout url");
+            }
+
+            const selectedProduct = creditProducts.find(
+                (product) => product.key === productKey,
+            );
+            if (selectedProduct) {
+                trackCheckoutStarted({
+                    id: selectedProduct.key,
+                    name: `${selectedProduct.points} credits`,
+                    value: selectedProduct.amountFen / 100,
+                    currency: selectedProduct.currency,
+                    provider: "polar",
+                    kind: "credit",
+                });
             }
 
             purchaseNoticeKey = "auth.polar_redirecting";

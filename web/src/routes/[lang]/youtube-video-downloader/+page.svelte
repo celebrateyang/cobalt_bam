@@ -3,12 +3,11 @@
     import env from "$lib/env";
     import { onMount } from "svelte";
     import { browser } from "$app/environment";
+    import { page } from "$app/stores";
 
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconPlayerPlay from "@tabler/icons-svelte/IconPlayerPlay.svelte";
     import IconShieldCheck from "@tabler/icons-svelte/IconShieldCheck.svelte";
-
-    export let data;
 
     const videoId = "BV1Bp4EzeEJo";
     const videoUrl = "https://www.bilibili.com/video/BV1Bp4EzeEJo";
@@ -27,7 +26,7 @@
     let embedFailed = false;
     $: showEmbed = !disableEmbed && !embedFailed;
 
-    const currentLocale = data.lang || INTERNAL_locale;
+    const currentLocale = $page.params.lang || INTERNAL_locale;
     const fallbackHost = env.HOST || "freesavevideo.online";
     const siteUrl = `https://${fallbackHost}`;
     const canonicalUrl = `${siteUrl}/${currentLocale}/youtube-video-downloader`;

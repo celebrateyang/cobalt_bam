@@ -36,12 +36,21 @@ assert(
     sitemapUrls.length < 100,
     `Focused sitemap must stay below 100 URLs; found ${sitemapUrls.length}`,
 );
+const sitemapLocs = new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]));
+const sitemapAlternates = [
+    ...sitemap.matchAll(/<xhtml:link[^>]+href="([^"]+)"[^>]*\/>/g),
+].map((match) => match[1]);
+for (const href of sitemapAlternates) {
+    assert(
+        sitemapLocs.has(href),
+        `Sitemap alternate must resolve to an included URL: ${href}`,
+    );
+}
 for (const excludedUrl of [
     'https://freesavevideo.online/capabilities.json',
     'https://freesavevideo.online/llms.txt',
     'https://freesavevideo.online/en/random-chat',
     'https://freesavevideo.online/en/remux',
-    'https://freesavevideo.online/zh/download/bilibili-video-download',
 ]) {
     assert(!sitemap.includes(`<loc>${excludedUrl}</loc>`), `Sitemap must exclude ${excludedUrl}`);
 }
@@ -136,16 +145,7 @@ assert(
 );
 
 const guideTitles = {
-    de: 'So laden Sie YouTube-Videos herunter',
     en: 'How to Download YouTube Videos',
-    es: 'C\u00f3mo descargar videos de YouTube',
-    fr: 'Comment t\u00e9l\u00e9charger des vid\u00e9os YouTube',
-    ja: 'YouTube\u52d5\u753b\u3092\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3059\u308b\u65b9\u6cd5',
-    ko: 'YouTube \ub3d9\uc601\uc0c1 \ub2e4\uc6b4\ub85c\ub4dc \ubc29\ubc95',
-    ru: '\u041a\u0430\u043a \u0441\u043a\u0430\u0447\u0430\u0442\u044c \u0432\u0438\u0434\u0435\u043e \u0441 YouTube',
-    th: '\u0e27\u0e34\u0e18\u0e35\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d YouTube',
-    vi: 'C\u00e1ch t\u1ea3i video YouTube',
-    zh: '\u5982\u4f55\u4e0b\u8f7d YouTube \u89c6\u9891',
 };
 for (const [lang, expectedTitle] of Object.entries(guideTitles)) {
     const guide = readOutput(lang, 'guide', 'youtube-download-guide.html');

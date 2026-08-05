@@ -34,13 +34,16 @@ const buildAlternateLinks = (
     const normalized = normalizePath(path);
     const withoutLang = normalized.replace(/^\/[^/]+/, '');
     const alternateLanguages = availableLanguages;
+    const defaultLanguage = alternateLanguages.includes('en')
+        ? 'en'
+        : alternateLanguages[0] ?? 'en';
 
     return [
         ...alternateLanguages.map((lang) => {
             const href = `${site}/${lang}${withoutLang}`;
             return `<xhtml:link rel="alternate" hreflang="${lang}" href="${escapeXml(href)}" />`;
         }),
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${site}/en${withoutLang}`)}" />`,
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${site}/${defaultLanguage}${withoutLang}`)}" />`,
     ].join('');
 };
 

@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
+
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
 
-    import Omnibox from '$components/save/Omnibox.svelte';
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
     export let data: {
@@ -172,6 +173,17 @@
     $: structuredData = [webPageJsonLd, faqJsonLd, breadcrumbJsonLd, howToJsonLd].filter(Boolean);
 
     let copiedExampleTitle = '';
+    let OmniboxComponent: typeof import('$components/save/Omnibox.svelte').default | null = null;
+
+    onMount(() => {
+        void import('$components/save/Omnibox.svelte')
+            .then((module) => {
+                OmniboxComponent = module.default;
+            })
+            .catch((error) => {
+                console.debug('Downloader controls failed to load', error);
+            });
+    });
 
     const copyExampleLinks = async (title: string, urls: string[]) => {
         await navigator.clipboard.writeText(urls.join('\n'));
@@ -215,7 +227,13 @@
                 <p class="lede">{localeContent.lede}</p>
             </div>
             <div class="hero-omnibox">
-                <Omnibox />
+                {#if OmniboxComponent}
+                    <svelte:component this={OmniboxComponent} />
+                {:else}
+                    <a class="downloader-fallback" href={homeUrl}>
+                        {isZh ? '打开下载器' : 'Open downloader'}
+                    </a>
+                {/if}
             </div>
         </section>
 
@@ -662,6 +680,19 @@
         padding: 6px 0 0;
         border: 0;
         box-shadow: none;
+    }
+
+    .downloader-fallback {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
+        border-radius: var(--border-radius);
+        background: var(--download-accent);
+        color: var(--download-accent-contrast, #fff);
+        font-weight: 700;
+        text-decoration: none;
     }
 
     .crumb-links {

@@ -1200,10 +1200,17 @@
                 !candidate.key.startsWith("points_test_") &&
                 candidate.enabled !== false,
         );
+        const pointsNeeded = Math.max(
+            1,
+            Number.parseInt($page.url.searchParams.get("needed") || "1", 10) || 1,
+        );
         const product =
             checkoutIntent === "starter"
                 ? [...enabledProducts].sort(
-                      (a, b) => Number(a.amountFen) - Number(b.amountFen),
+                      (a, b) => Number(a.points) - Number(b.points),
+                  ).find((candidate) => Number(candidate.points) >= pointsNeeded) ??
+                  [...enabledProducts].sort(
+                      (a, b) => Number(b.points) - Number(a.points),
                   )[0]
                 : enabledProducts.find(
                       (candidate) => candidate.key === recommendedValueProductKey,
@@ -1214,6 +1221,7 @@
         try {
             const url = new URL(window.location.href);
             url.searchParams.delete("checkout");
+            url.searchParams.delete("needed");
             window.history.replaceState({}, "", url.toString());
         } catch {}
 

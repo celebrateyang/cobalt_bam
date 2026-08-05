@@ -12,181 +12,209 @@ import { createDialog } from "$lib/state/dialogs";
 export const FIRST_DOWNLOAD_GRACE_MAX_GAP = 200;
 
 export type PointsHelpSection =
-    | "membership"
-    | "topup"
-    | "referral"
-    | "promotion"
-    | "contact";
+  | "membership"
+  | "topup"
+  | "referral"
+  | "promotion"
+  | "contact";
 
 export type CurrentUserPointsProfile = {
-    points: number | null;
-    membershipActive: boolean;
-    downloadSuccessCount: number;
-    firstDownloadGraceEligible: boolean;
-    firstDownloadGraceUsed: boolean;
+  points: number | null;
+  membershipActive: boolean;
+  downloadSuccessCount: number;
+  firstDownloadGraceEligible: boolean;
+  firstDownloadGraceUsed: boolean;
 };
 
 const normalizeRedirectPath = (redirectPath?: string | null) => {
-    if (!redirectPath || typeof redirectPath !== "string") return null;
-    if (!redirectPath.startsWith("/") || redirectPath.startsWith("//")) return null;
-    return redirectPath;
+  if (!redirectPath || typeof redirectPath !== "string") return null;
+  if (!redirectPath.startsWith("/") || redirectPath.startsWith("//"))
+    return null;
+  return redirectPath;
 };
 
 export const accountPath = (
-    section?: PointsHelpSection,
-    redirectPath?: string | null,
-    checkout?:
-        | "starter"
-        | "recommended"
-        | "membership_weekly"
-        | "membership_monthly"
-        | null,
+  section?: PointsHelpSection,
+  redirectPath?: string | null,
+  checkout?:
+    | "starter"
+    | "recommended"
+    | "membership_weekly"
+    | "membership_monthly"
+    | null,
+  pointsNeeded?: number | null,
 ) => {
-    const lang = get(page)?.params?.lang || "en";
-    const basePath = `/${lang}/account`;
-    const params = new URLSearchParams();
+  const lang = get(page)?.params?.lang || "en";
+  const basePath = `/${lang}/account`;
+  const params = new URLSearchParams();
 
-    if (section) {
-        params.set("section", section);
-    }
+  if (section) {
+    params.set("section", section);
+  }
 
-    const normalizedRedirectPath = normalizeRedirectPath(redirectPath);
-    if (normalizedRedirectPath) {
-        params.set("redirect", normalizedRedirectPath);
-    }
+  const normalizedRedirectPath = normalizeRedirectPath(redirectPath);
+  if (normalizedRedirectPath) {
+    params.set("redirect", normalizedRedirectPath);
+  }
 
-    if (
-        checkout === "starter" ||
-        checkout === "recommended" ||
-        checkout === "membership_weekly" ||
-        checkout === "membership_monthly"
-    ) {
-        params.set("checkout", checkout);
-    }
+  if (
+    checkout === "starter" ||
+    checkout === "recommended" ||
+    checkout === "membership_weekly" ||
+    checkout === "membership_monthly"
+  ) {
+    params.set("checkout", checkout);
+  }
 
-    const query = params.toString();
-    return query ? `${basePath}?${query}` : basePath;
+  if (
+    checkout === "starter" &&
+    Number.isFinite(pointsNeeded) &&
+    Number(pointsNeeded) > 0
+  ) {
+    params.set("needed", String(Math.ceil(Number(pointsNeeded))));
+  }
+
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
 };
 
 const navigateToAccountSection = async (
-    section: PointsHelpSection,
-    onBeforeNavigate?: (() => void) | null,
-    redirectPath?: string | null,
-    checkout?:
-        | "starter"
-        | "recommended"
-        | "membership_weekly"
-        | "membership_monthly"
-        | null,
+  section: PointsHelpSection,
+  onBeforeNavigate?: (() => void) | null,
+  redirectPath?: string | null,
+  checkout?:
+    | "starter"
+    | "recommended"
+    | "membership_weekly"
+    | "membership_monthly"
+    | null,
+  pointsNeeded?: number | null,
 ) => {
-    onBeforeNavigate?.();
-    const delayMs = onBeforeNavigate ? 200 : 0;
-    if (delayMs > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-    await goto(accountPath(section, redirectPath, checkout));
+  onBeforeNavigate?.();
+  const delayMs = onBeforeNavigate ? 200 : 0;
+  if (delayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  await goto(accountPath(section, redirectPath, checkout, pointsNeeded));
 };
 
 export const fetchCurrentUserPointsProfile =
-    async (): Promise<CurrentUserPointsProfile | null> => {
-        const token = await getClerkToken();
-        if (!token) return null;
+  async (): Promise<CurrentUserPointsProfile | null> => {
+    const token = await getClerkToken();
+    if (!token) return null;
 
-        const apiBase = currentApiURL();
-        const res = await fetch(`${apiBase}/user/me`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }).catch(() => null);
+    const apiBase = currentApiURL();
+    const res = await fetch(`${apiBase}/user/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch(() => null);
 
-        if (!res?.ok) return null;
+    if (!res?.ok) return null;
 
-        const data = await res.json().catch(() => null);
-        const user = data?.data?.user;
+    const data = await res.json().catch(() => null);
+    const user = data?.data?.user;
 
-        return {
-            points:
-                typeof user?.points === "number" ? user.points : null,
-            membershipActive: user?.membership?.active === true,
-            downloadSuccessCount: Number(user?.download_success_count ?? 0) || 0,
-            firstDownloadGraceEligible:
-                user?.first_download_grace_eligible === true,
-            firstDownloadGraceUsed:
-                user?.first_download_grace_used === true,
-        };
+    return {
+      points: typeof user?.points === "number" ? user.points : null,
+      membershipActive: user?.membership?.active === true,
+      downloadSuccessCount: Number(user?.download_success_count ?? 0) || 0,
+      firstDownloadGraceEligible: user?.first_download_grace_eligible === true,
+      firstDownloadGraceUsed: user?.first_download_grace_used === true,
     };
+  };
 
 export const isFirstDownloadGraceEligible = (
-    profile: CurrentUserPointsProfile | null,
-    gap: number,
+  profile: CurrentUserPointsProfile | null,
+  gap: number,
 ) =>
-    !!profile &&
-    profile.firstDownloadGraceEligible &&
-    profile.downloadSuccessCount === 0 &&
-    !profile.firstDownloadGraceUsed &&
-    gap > 0 &&
-    gap <= FIRST_DOWNLOAD_GRACE_MAX_GAP;
+  !!profile &&
+  profile.firstDownloadGraceEligible &&
+  profile.downloadSuccessCount === 0 &&
+  !profile.firstDownloadGraceUsed &&
+  gap > 0 &&
+  gap <= FIRST_DOWNLOAD_GRACE_MAX_GAP;
 
 export const showPointsInsufficientDialog = (
-    currentPoints: number,
-    requiredPoints: number,
-    onBeforeNavigate?: (() => void) | null,
-    redirectPath?: string | null,
+  currentPoints: number,
+  requiredPoints: number,
+  onBeforeNavigate?: (() => void) | null,
+  redirectPath?: string | null,
 ) => {
-    trackTopupPrompt("view", "points_insufficient", currentPoints, requiredPoints);
-    createDialog({
-        id: `points-insufficient-${Date.now()}`,
-        type: "small",
-        meowbalt: "error",
-        title: get(t)("dialog.batch.points_insufficient.title"),
-        bodyText: get(t)("dialog.batch.points_insufficient.body", {
-            current: currentPoints,
-            required: requiredPoints,
-        }),
-        buttons: [
+  trackTopupPrompt(
+    "view",
+    "points_insufficient",
+    currentPoints,
+    requiredPoints,
+  );
+  createDialog({
+    id: `points-insufficient-${Date.now()}`,
+    type: "small",
+    meowbalt: "error",
+    title: get(t)("dialog.batch.points_insufficient.title"),
+    bodyText: get(t)("dialog.batch.points_insufficient.body", {
+      current: currentPoints,
+      required: requiredPoints,
+    }),
+    buttons: [
+      {
+        text: get(t)("button.invite_points"),
+        main: false,
+        action: () => {
+          trackTopupPrompt(
+            "referral",
+            "points_insufficient",
+            currentPoints,
+            requiredPoints,
+          );
+          void navigateToAccountSection(
+            "referral",
+            onBeforeNavigate,
+            redirectPath,
+          );
+        },
+      },
+      ...(get(page)?.params?.lang === "zh"
+        ? [
             {
-                text: get(t)("button.invite_points"),
-                main: false,
-                action: () => {
-                    trackTopupPrompt("referral", "points_insufficient", currentPoints, requiredPoints);
-                    void navigateToAccountSection("referral", onBeforeNavigate, redirectPath);
-                },
+              text: get(t)("button.membership"),
+              main: false,
+              action: () => {
+                trackTopupPrompt(
+                  "membership",
+                  "points_insufficient",
+                  currentPoints,
+                  requiredPoints,
+                );
+                void navigateToAccountSection(
+                  "membership",
+                  onBeforeNavigate,
+                  redirectPath,
+                  "membership_weekly",
+                );
+              },
             },
-            ...(get(page)?.params?.lang === "zh"
-                ? [
-                      {
-                          text: get(t)("button.membership"),
-                          main: false,
-                          action: () => {
-                              trackTopupPrompt(
-                                  "membership",
-                                  "points_insufficient",
-                                  currentPoints,
-                                  requiredPoints,
-                              );
-                              void navigateToAccountSection(
-                                  "membership",
-                                  onBeforeNavigate,
-                                  redirectPath,
-                                  "membership_weekly",
-                              );
-                          },
-                      },
-                  ]
-                : []),
-            {
-                text: get(t)("button.buy_points"),
-                main: true,
-                action: () => {
-                    trackTopupPrompt("topup", "points_insufficient", currentPoints, requiredPoints);
-                    void navigateToAccountSection(
-                        "topup",
-                        onBeforeNavigate,
-                        redirectPath,
-                        "starter",
-                    );
-                },
-            },
-        ],
-    });
+          ]
+        : []),
+      {
+        text: get(t)("button.buy_points"),
+        main: true,
+        action: () => {
+          trackTopupPrompt(
+            "topup",
+            "points_insufficient",
+            currentPoints,
+            requiredPoints,
+          );
+          void navigateToAccountSection(
+            "topup",
+            onBeforeNavigate,
+            redirectPath,
+            "starter",
+            Math.max(1, requiredPoints - currentPoints),
+          );
+        },
+      },
+    ],
+  });
 };

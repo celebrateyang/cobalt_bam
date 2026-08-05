@@ -18,6 +18,7 @@
     } from "$lib/state/clerk";
     import { currentApiURL } from "$lib/api/api-url";
     import { capabilityServices } from "$lib/seo/capabilities";
+    import { trackInviteAction } from "$lib/analytics/invite";
 
     import Skeleton from "$components/misc/Skeleton.svelte";
     import IconGift from "@tabler/icons-svelte/IconGift.svelte";
@@ -45,6 +46,16 @@
             fallbackRedirectUrl: redirectUrl,
             signUpFallbackRedirectUrl: redirectUrl,
         };
+    };
+
+    const startSignUp = () => {
+        trackInviteAction("sign_up_click");
+        void signUp(getRedirectForSignUp());
+    };
+
+    const startSignIn = () => {
+        trackInviteAction("sign_in_click");
+        void signIn(getRedirectForSignIn());
     };
 
     $: homeLink = `/${$page.params.lang}/`;
@@ -185,12 +196,17 @@
             const data = await res.json().catch(() => ({}));
             if (!res.ok || data?.status !== "success") {
                 claimState = mapClaimError(data?.error?.code);
+                trackInviteAction("claim_failed", claimState);
                 return;
             }
 
             claimState = data?.data?.claimed ? "claimed" : "already";
+            trackInviteAction(
+                claimState === "claimed" ? "claim_success" : "claim_already",
+            );
         } catch (error) {
             claimState = "error";
+            trackInviteAction("claim_failed", "network_or_server");
             console.debug("claim invite failed", error);
         }
     };
@@ -213,6 +229,7 @@
     };
 
     onMount(() => {
+        trackInviteAction("view", getInviteCode() ? "with_code" : "missing_code");
         if (clerkEnabled) {
             initClerk();
         }
@@ -291,6 +308,69 @@
         </div>
     </section>
 
+    {#if !clerkEnabled}
+        <section class="card conversion-card">
+            <h2 class="card-title">{$t("auth.not_configured")}</h2>
+            <div class="subtext card-subtitle">
+                {$t("auth.not_configured_hint")}
+            </div>
+        </section>
+    {:else if !$clerkLoaded}
+        <section class="card conversion-card">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+        </section>
+    {:else if !$clerkUser}
+        <section class="card conversion-card">
+            <h2 class="card-title">{$t("invite.cta_title")}</h2>
+            <div class="subtext card-subtitle">{$t("invite.cta_subtitle")}</div>
+
+            <div class="trust-list">
+                <div><strong>{$t("invite.trust_auth_title")}</strong> {$t("invite.trust_auth_body")}</div>
+                <div><strong>{$t("invite.trust_privacy_title")}</strong> {$t("invite.trust_privacy_body")}</div>
+            </div>
+
+            <div class="actions conversion-actions">
+                <button class="button elevated active" on:click={startSignUp}>
+                    <IconUserPlus size={18} />
+                    {$t("invite.sign_up")}
+                </button>
+                <button class="button elevated" on:click={startSignIn}>
+                    <IconLogin size={18} />
+                    {$t("invite.sign_in")}
+                </button>
+            </div>
+        </section>
+    {:else}
+        <section class="card conversion-card">
+            <h2 class="card-title">{$t("invite.processing_title")}</h2>
+
+            {#if claimState === "claiming"}
+                <div class="subtext">{$t("invite.claiming")}</div>
+            {:else if claimState === "claimed"}
+                <div class="subtext success">{$t("invite.claimed")}</div>
+            {:else if claimState === "already"}
+                <div class="subtext">{$t("invite.already")}</div>
+            {:else if claimState === "too_old"}
+                <div class="subtext warn">{$t("invite.too_old")}</div>
+            {:else if claimState === "invalid"}
+                <div class="subtext warn">{$t("invite.invalid")}</div>
+            {:else if claimState === "self"}
+                <div class="subtext warn">{$t("invite.self")}</div>
+            {:else if claimState === "error"}
+                <div class="subtext warn">{$t("invite.error")}</div>
+                <div class="actions">
+                    <button class="button elevated" on:click={retryClaim}>
+                        <IconRefresh size={18} />
+                        {$t("invite.retry")}
+                    </button>
+                </div>
+            {:else}
+                <div class="subtext">{$t("invite.signed_in_hint")}</div>
+            {/if}
+        </section>
+    {/if}
+
     <section class="card features-card">
         <h2 class="card-title">{$t("invite.features_title")}</h2>
         <div class="subtext card-subtitle">{$t("invite.features_subtitle")}</div>
@@ -358,69 +438,6 @@
         </div>
     </section>
 
-    {#if !clerkEnabled}
-        <section class="card">
-            <h2 class="card-title">{$t("auth.not_configured")}</h2>
-            <div class="subtext card-subtitle">
-                {$t("auth.not_configured_hint")}
-            </div>
-        </section>
-    {:else if !$clerkLoaded}
-        <section class="card">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-        </section>
-    {:else if !$clerkUser}
-        <section class="card">
-            <h2 class="card-title">{$t("invite.cta_title")}</h2>
-            <div class="subtext card-subtitle">{$t("invite.cta_subtitle")}</div>
-
-            <div class="actions">
-                <button
-                    class="button elevated active"
-                    on:click={() => signUp(getRedirectForSignUp())}
-                >
-                    <IconUserPlus size={18} />
-                    {$t("invite.sign_up")}
-                </button>
-                <button
-                    class="button elevated"
-                    on:click={() => signIn(getRedirectForSignIn())}
-                >
-                    <IconLogin size={18} />
-                    {$t("invite.sign_in")}
-                </button>
-            </div>
-        </section>
-    {:else}
-        <section class="card">
-            <h2 class="card-title">{$t("invite.processing_title")}</h2>
-
-            {#if claimState === "claiming"}
-                <div class="subtext">{$t("invite.claiming")}</div>
-            {:else if claimState === "claimed"}
-                <div class="subtext success">{$t("invite.claimed")}</div>
-            {:else if claimState === "already"}
-                <div class="subtext">{$t("invite.already")}</div>
-            {:else if claimState === "too_old"}
-                <div class="subtext warn">{$t("invite.too_old")}</div>
-            {:else if claimState === "invalid"}
-                <div class="subtext warn">{$t("invite.invalid")}</div>
-            {:else if claimState === "self"}
-                <div class="subtext warn">{$t("invite.self")}</div>
-            {:else if claimState === "error"}
-                <div class="subtext warn">{$t("invite.error")}</div>
-                <div class="actions">
-                    <button class="button elevated" on:click={retryClaim}>
-                        <IconRefresh size={18} />
-                        {$t("invite.retry")}
-                    </button>
-                </div>
-            {:else}
-                <div class="subtext">{$t("invite.signed_in_hint")}</div>
-            {/if}
-        </section>
-    {/if}
 </div>
 
 <style>
@@ -476,6 +493,27 @@
     .rule {
         line-height: 1.55;
         color: var(--text);
+    }
+
+    .conversion-card {
+        border-color: color-mix(in srgb, var(--accent) 58%, var(--surface-2));
+        background: color-mix(in srgb, var(--accent) 7%, var(--surface-1));
+    }
+
+    .trust-list {
+        display: grid;
+        gap: 8px;
+        color: var(--subtext);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .trust-list strong {
+        color: var(--text);
+    }
+
+    .conversion-actions :global(button:first-child) {
+        min-width: 150px;
     }
 
     .features-card {

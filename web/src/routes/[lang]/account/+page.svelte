@@ -598,6 +598,7 @@
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let polarHandledOrderId: number | null = null;
+    let checkoutIntentHandled = false;
 
     $: isChinese = $page.params.lang === "zh";
     $: if (!isChinese && selectedPaymentProvider !== "polar") {
@@ -1151,6 +1152,41 @@
             purchaseLoading = false;
         }
     };
+
+    const consumeRecommendedCheckoutIntent = () => {
+        if (!browser || checkoutIntentHandled || !$clerkUser) return;
+        if ($page.url.searchParams.get("checkout") !== "recommended") return;
+        if (creditProductsLoading || !recommendedValueProductKey) return;
+
+        const product = creditProducts.find(
+            (candidate) =>
+                candidate.key === recommendedValueProductKey &&
+                candidate.enabled !== false,
+        );
+        if (!product) return;
+
+        checkoutIntentHandled = true;
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("checkout");
+            window.history.replaceState({}, "", url.toString());
+        } catch {}
+
+        if (selectedPaymentProvider === "polar") {
+            void startPolarPay(product.key);
+        } else {
+            void startWechatPay(product.key);
+        }
+    };
+
+    $: if (
+        browser &&
+        $clerkUser &&
+        creditProducts.length > 0 &&
+        recommendedValueProductKey
+    ) {
+        consumeRecommendedCheckoutIntent();
+    }
 
     const selectPaymentProvider = (provider: PaymentProvider) => {
         if (!isChinese) return;

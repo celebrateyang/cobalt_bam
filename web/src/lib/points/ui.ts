@@ -30,6 +30,7 @@ const normalizeRedirectPath = (redirectPath?: string | null) => {
 export const accountPath = (
     section?: PointsHelpSection,
     redirectPath?: string | null,
+    checkout?: "recommended" | null,
 ) => {
     const lang = get(page)?.params?.lang || "en";
     const basePath = `/${lang}/account`;
@@ -44,6 +45,10 @@ export const accountPath = (
         params.set("redirect", normalizedRedirectPath);
     }
 
+    if (checkout === "recommended") {
+        params.set("checkout", checkout);
+    }
+
     const query = params.toString();
     return query ? `${basePath}?${query}` : basePath;
 };
@@ -52,13 +57,14 @@ const navigateToAccountSection = async (
     section: PointsHelpSection,
     onBeforeNavigate?: (() => void) | null,
     redirectPath?: string | null,
+    checkout?: "recommended" | null,
 ) => {
     onBeforeNavigate?.();
     const delayMs = onBeforeNavigate ? 200 : 0;
     if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-    await goto(accountPath(section, redirectPath));
+    await goto(accountPath(section, redirectPath, checkout));
 };
 
 export const fetchCurrentUserPointsProfile =
@@ -131,7 +137,12 @@ export const showPointsInsufficientDialog = (
                 main: true,
                 action: () => {
                     trackTopupPrompt("topup", "points_insufficient", currentPoints, requiredPoints);
-                    void navigateToAccountSection("topup", onBeforeNavigate, redirectPath);
+                    void navigateToAccountSection(
+                        "topup",
+                        onBeforeNavigate,
+                        redirectPath,
+                        "recommended",
+                    );
                 },
             },
         ],

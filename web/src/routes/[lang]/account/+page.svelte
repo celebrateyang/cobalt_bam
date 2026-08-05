@@ -233,6 +233,7 @@
     let referralLink = "";
     let referralCopyState: "idle" | "copied" | "failed" = "idle";
     let referralCopyTimer: ReturnType<typeof setTimeout> | null = null;
+    let nativeShareSupported = false;
     let promotionType: PromotionType = "post";
     let promotionAccessMethod = "";
     let promotionSubmitting = false;
@@ -330,6 +331,7 @@
         referralCode && $page.params.lang
             ? `${$page.url.origin}/${$page.params.lang}/invite/${encodeURIComponent(referralCode)}`
             : "";
+    $: nativeShareSupported = browser && typeof navigator.share === "function";
 
     const selectReferralLinkOnFocus = (event: FocusEvent) => {
         const input = event.currentTarget as HTMLInputElement | null;
@@ -1157,6 +1159,29 @@
         }
     };
 
+    const shareReferralLink = async (
+        source: "account" | "payment_success" = "account",
+    ) => {
+        if (!referralLink) return;
+        if (!navigator.share) {
+            await copyReferralLink(source);
+            return;
+        }
+
+        try {
+            await navigator.share({
+                title: $t("auth.referral_title"),
+                text: $t("auth.referral_subtitle"),
+                url: referralLink,
+            });
+            trackReferralShared(source);
+        } catch (error) {
+            if ((error as Error)?.name !== "AbortError") {
+                console.debug("share referral link failed", error);
+            }
+        }
+    };
+
     const consumeRecommendedCheckoutIntent = () => {
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
         const checkoutIntent = $page.url.searchParams.get("checkout");
@@ -1648,6 +1673,14 @@
                                                 value={referralLink}
                                                 on:focus={selectReferralLinkOnFocus}
                                             />
+                                            {#if nativeShareSupported}
+                                                <button
+                                                    class="button elevated active"
+                                                    on:click={() => void shareReferralLink()}
+                                                >
+                                                    {$t("button.share")}
+                                                </button>
+                                            {/if}
                                             <button
                                                 class="button elevated"
                                                 on:click={() => void copyReferralLink()}
@@ -2072,9 +2105,14 @@
                                         </div>
                                         <button
                                             class="button elevated payment-referral-button"
-                                            on:click={() => copyReferralLink("payment_success")}
+                                            on:click={() =>
+                                                nativeShareSupported
+                                                    ? shareReferralLink("payment_success")
+                                                    : copyReferralLink("payment_success")}
                                         >
-                                            {#if referralCopyState === "copied"}
+                                            {#if nativeShareSupported}
+                                                {$t("button.share")}
+                                            {:else if referralCopyState === "copied"}
                                                 {$t("auth.referral_copied")}
                                             {:else if referralCopyState === "failed"}
                                                 {$t("auth.referral_copy_failed")}

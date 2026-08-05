@@ -147,7 +147,7 @@
             ? capabilityPlatformLabels[platform].zh
             : capabilityPlatformLabels[platform].default;
 
-    const accountPath = (section?: "topup") =>
+    const accountPath = (section?: "topup" | "referral") =>
         `/${currentLocale}/account${section ? `?section=${section}` : ""}`;
 
     const buildFeedbackRedirectPath = () => {
@@ -268,6 +268,14 @@
         }
         dismissLowPointsBalloon();
         await goto(accountPath("topup"));
+    };
+
+    const goToAccountForReferral = async () => {
+        if (userPoints !== null) {
+            trackTopupPrompt("referral", "low_points_balloon", userPoints);
+        }
+        dismissLowPointsBalloon();
+        await goto(accountPath("referral"));
     };
 
     $: if (browser && clerkUserState?.id) {
@@ -813,6 +821,13 @@
                         </span>
                     </div>
                 </div>
+            </button>
+            <button
+                type="button"
+                class="low-points-balloon-invite"
+                on:click={() => void goToAccountForReferral()}
+            >
+                {$t("button.invite_points")}
             </button>
             <button
                 type="button"
@@ -1394,6 +1409,25 @@
 
     .low-points-balloon:hover {
         transform: translateY(-1px);
+        border-color: var(--popup-stroke);
+    }
+
+    .low-points-balloon-invite {
+        pointer-events: auto;
+        width: calc(100% - 28px);
+        margin: 8px 14px 0;
+        min-height: 34px;
+        border: 1px solid var(--surface-2);
+        border-radius: 999px;
+        background: var(--surface-0);
+        color: var(--text);
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: var(--button-box-shadow);
+    }
+
+    .low-points-balloon-invite:hover {
+        background: var(--button-hover);
         border-color: var(--popup-stroke);
     }
 

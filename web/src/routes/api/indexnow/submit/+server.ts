@@ -1,5 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
+const DEFAULT_INDEXNOW_ORIGIN = 'https://freesavevideo.online';
+
 function getEnv(event: Parameters<RequestHandler>[0], name: string): string | undefined {
     const platformEnv = (event.platform as { env?: Record<string, string | undefined> } | undefined)?.env;
     if (platformEnv?.[name]) return platformEnv[name];
@@ -56,7 +58,10 @@ export const POST: RequestHandler = async (event) => {
     const key = getEnv(event, 'INDEXNOW_KEY');
     if (!key) return json({ ok: false, error: 'Missing INDEXNOW_KEY' }, { status: 500 });
 
-    const origin = getEnv(event, 'INDEXNOW_ORIGIN') ?? event.url.origin;
+    // IndexNow verifies that every submitted URL belongs to `host`. Pages
+    // preview deployments must therefore submit for the canonical production
+    // origin rather than their temporary *.pages.dev hostname.
+    const origin = getEnv(event, 'INDEXNOW_ORIGIN') ?? DEFAULT_INDEXNOW_ORIGIN;
     const host = getEnv(event, 'INDEXNOW_HOST') ?? new URL(origin).hostname;
     const keyLocation =
         getEnv(event, 'INDEXNOW_KEY_LOCATION') ?? `${new URL(origin).origin}/${key}.txt`;

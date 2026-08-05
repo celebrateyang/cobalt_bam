@@ -152,12 +152,23 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-const downloadInMainWorld = async (tabId: number, url: string, filename?: string, media?: DetectedMedia) => {
+const downloadInMainWorld = async (
+    tabId: number,
+    url: string,
+    filename?: string,
+    media?: DetectedMedia,
+    convertToJpeg = false,
+) => {
     const [result] = await chrome.scripting.executeScript({
         target: { tabId },
         world: 'MAIN',
-        args: [url, filename, media?.kind],
-        func: async (targetUrl: string, targetFilename?: string, mediaKind?: DetectedMedia['kind']) => {
+        args: [url, filename, media?.kind, convertToJpeg],
+        func: async (
+            targetUrl: string,
+            targetFilename?: string,
+            mediaKind?: DetectedMedia['kind'],
+            shouldConvertToJpeg = false,
+        ) => {
             const matchesType = (value: string) => {
                 const type = value.toLowerCase();
                 if (!type || type === 'application/octet-stream') return true;
@@ -270,7 +281,30 @@ const downloadInMainWorld = async (tabId: number, url: string, filename?: string
                 throw lastError instanceof Error ? lastError : new Error('Page-context download failed.');
             }
 
-            const basename = targetFilename?.split('/').pop()?.trim() || 'download';
+            if (shouldConvertToJpeg) {
+                const bitmap = await createImageBitmap(blob);
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const context = canvas.getContext('2d');
+                if (!context) {
+                    bitmap.close();
+                    throw new Error('Image conversion is unavailable.');
+                }
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(bitmap, 0, 0);
+                bitmap.close();
+                const jpegBlob = await new Promise<Blob | null>((resolve) => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.92);
+                });
+                if (!jpegBlob?.size) {
+                    throw new Error('Image conversion failed.');
+                }
+                blob = jpegBlob;
+            }
+
+            const basename = targetFilename?.split('/').pop()?.trim() || (shouldConvertToJpeg ? 'download.jpg' : 'download');
             const objectUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = objectUrl;
@@ -380,7 +414,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         void downloadWithChrome(message);
     }
     if (message.type === 'FSV_PAGE_DOWNLOAD') {
-        void downloadInMainWorld(message.tabId, message.url, message.filename, message.media)
+        void downloadInMainWorld(message.tabId, message.url, message.filename, message.media, message.convertToJpeg)
             .then(() => sendResponse({ ok: true }))
             .catch((error) => {
                 sendResponse({

@@ -60,7 +60,7 @@ const getActiveTab = async () => {
     return tab;
 };
 
-const sendPageDownload = async (item: DetectedMedia, filename?: string) => {
+const sendPageDownload = async (item: DetectedMedia, filename?: string, convertToJpeg = false) => {
     const tab = await getActiveTab();
     if (!tab.id) {
         throw new Error('No active tab found.');
@@ -72,6 +72,7 @@ const sendPageDownload = async (item: DetectedMedia, filename?: string) => {
         url: item.url,
         filename,
         media: item,
+        convertToJpeg,
     });
 
     if (!result?.ok) {
@@ -204,15 +205,22 @@ const chooseDefaultKind = (media: DetectedMedia[]): DetectedMedia['kind'] | 'all
 };
 
 const downloadUrl = async (item: DetectedMedia, filename?: string) => {
+    const convertToJpeg = item.kind === 'image' && (
+        item.format?.toLowerCase() === 'webp' ||
+        /\.webp(?:[?#]|$)/i.test(item.url)
+    );
+    const targetFilename = convertToJpeg
+        ? filename?.replace(/\.[a-z0-9]{2,5}$/i, '.jpg')
+        : filename;
     try {
-        if (item.requiresPageContext) {
-            await sendPageDownload(item, filename);
+        if (item.requiresPageContext || convertToJpeg) {
+            await sendPageDownload(item, targetFilename, convertToJpeg);
             return;
         }
 
-        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
+        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename: targetFilename, media: item });
     } catch {
-        await sendPageDownload(item, filename);
+        await sendPageDownload(item, targetFilename, convertToJpeg);
     }
 };
 
@@ -274,6 +282,10 @@ const statusHelpText: Partial<Record<AdapterStatus, string>> = {
 
 const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl: string | null, disabled: boolean) => {
     const previewUrl = previewUrlFor(item);
+    const convertsToJpeg = item.kind === 'image' && (
+        item.format?.toLowerCase() === 'webp' ||
+        /\.webp(?:[?#]|$)/i.test(item.url)
+    );
     return `
     <article class="media-item">
         ${
@@ -299,7 +311,7 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 data-download-filename="${escapeHtml(buildDownloadFilename(result, item))}"
                 ${disabled ? 'disabled' : ''}
             >
-                Download
+                ${convertsToJpeg ? 'Download JPG' : 'Download'}
             </button>
         </div>
     </article>

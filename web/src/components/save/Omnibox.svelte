@@ -984,18 +984,6 @@
             return;
         }
 
-        // This button is also the user's explicit download action on mobile.
-        // Authenticate before reading the clipboard so a denied/unsupported
-        // Clipboard API cannot silently prevent the sign-in prompt.
-        if (clerkEnabled) {
-            const signedIn = await requireDownloadAuth({
-                beforeOpenClerk: rememberLinkForAuthReturn,
-            });
-            if (!signedIn) return;
-
-            clearRememberedLink();
-        }
-
         try {
             if (!navigator.clipboard?.readText) {
                 linkInput?.focus();

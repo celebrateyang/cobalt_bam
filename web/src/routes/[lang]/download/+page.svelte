@@ -18,9 +18,12 @@
 
     $: isZh = data.lang === 'zh';
     $: pageTitle = isZh ? '下载目录' : 'Download directory';
+    $: seoTitle = isZh
+        ? '各平台视频下载器目录 | FreeSaveVideo'
+        : 'Video Downloaders by Platform | FreeSaveVideo';
     $: pageDesc = isZh
-        ? '按平台浏览全部下载页面，并快速进入对应指南与常见问题。'
-        : 'Browse all downloader landing pages by platform, with quick links to guides and FAQ.';
+        ? '按平台查找公开视频下载器，支持 YouTube、TikTok、B站、抖音等平台，并提供批量、合集下载指南与常见问题。'
+        : 'Find a public video downloader for YouTube, TikTok, Instagram, Bilibili and more, with batch and playlist download guides.';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download`;
 
     $: breadcrumbJsonLd = {
@@ -55,13 +58,13 @@
 </script>
 
 <svelte:head>
-    <title>{pageTitle}</title>
+    <title>{seoTitle}</title>
     <meta name="description" content={pageDesc} />
-    <meta property="og:title" content={pageTitle} />
+    <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={pageDesc} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
     <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />

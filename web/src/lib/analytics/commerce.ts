@@ -135,3 +135,16 @@ export const trackPurchaseCompleted = (
     // Ignore storage errors in strict privacy mode.
   }
 };
+
+export const trackReferralShared = (
+  source: "account" | "payment_success",
+) => {
+  const target = analyticsWindow();
+  target.gtag?.("event", "share", {
+    method: "copy_link",
+    content_type: "referral_invite",
+    item_id: source,
+  });
+  target.clarity?.("set", "referral_share_source", source);
+  target.clarity?.("event", "referral_shared");
+};

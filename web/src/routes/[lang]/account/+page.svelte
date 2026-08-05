@@ -21,6 +21,7 @@
         trackCheckoutStarted,
         trackCreditProductListViewed,
         trackPurchaseCompleted,
+        trackReferralShared,
     } from "$lib/analytics/commerce";
     import { getOrderAttribution } from "$lib/analytics/attribution";
     import {
@@ -335,7 +336,9 @@
         input?.select();
     };
 
-    const copyReferralLink = async () => {
+    const copyReferralLink = async (
+        source: "account" | "payment_success" = "account",
+    ) => {
         if (!referralLink) return;
 
         if (referralCopyTimer) {
@@ -349,6 +352,7 @@
             }
             await navigator.clipboard.writeText(referralLink);
             referralCopyState = "copied";
+            trackReferralShared(source);
         } catch (error) {
             referralCopyState = "failed";
             console.debug("copy referral link failed", error);
@@ -1971,6 +1975,26 @@
                                 <div class="subtext payment-hint">
                                     {$t("auth.payment_paid_hint")}
                                 </div>
+                                {#if referralLink}
+                                    <div class="payment-referral-cta">
+                                        <div class="payment-referral-copy">
+                                            <strong>{$t("auth.referral_title")}</strong>
+                                            <span>{$t("auth.referral_subtitle")}</span>
+                                        </div>
+                                        <button
+                                            class="button elevated payment-referral-button"
+                                            on:click={() => copyReferralLink("payment_success")}
+                                        >
+                                            {#if referralCopyState === "copied"}
+                                                {$t("auth.referral_copied")}
+                                            {:else if referralCopyState === "failed"}
+                                                {$t("auth.referral_copy_failed")}
+                                            {:else}
+                                                {$t("auth.referral_copy")}
+                                            {/if}
+                                        </button>
+                                    </div>
+                                {/if}
                             {:else}
                                 <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
@@ -2972,6 +2996,31 @@
         color: var(--green);
         font-weight: 900;
         font-size: 15px;
+    }
+
+    .payment-referral-cta {
+        display: grid;
+        gap: 0.7rem;
+        width: min(100%, 25rem);
+        padding: 0.85rem;
+        border: 1px solid var(--accent);
+        border-radius: 0.85rem;
+        background: color-mix(in srgb, var(--accent) 9%, transparent);
+    }
+
+    .payment-referral-copy {
+        display: grid;
+        gap: 0.3rem;
+        line-height: 1.4;
+    }
+
+    .payment-referral-copy span {
+        color: var(--text-secondary);
+        font-size: 0.88rem;
+    }
+
+    .payment-referral-button {
+        width: 100%;
     }
 
     .payment-wait {

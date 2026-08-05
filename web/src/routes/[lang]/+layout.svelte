@@ -10,6 +10,7 @@
     import { onMount } from "svelte";
     import { getServerInfo } from "$lib/api/server-info";
     import cachedInfo from "$lib/state/server-info";
+    import { captureAttribution } from "$lib/analytics/attribution";
 
     import "$lib/polyfills";
     import env from "$lib/env";
@@ -162,6 +163,7 @@
     };
 
     afterNavigate(async() => {
+        captureAttribution();
         const to_focus: HTMLElement | null =
             document.querySelector("[data-first-focus]");
         to_focus?.focus();
@@ -172,6 +174,7 @@
     });
 
     onMount(() => {
+        captureAttribution();
         const bootDeferredShell = () => {
             void loadDeferredShell();
         };

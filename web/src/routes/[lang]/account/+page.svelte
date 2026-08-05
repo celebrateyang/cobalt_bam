@@ -21,6 +21,7 @@
         trackCheckoutStarted,
         trackPurchaseCompleted,
     } from "$lib/analytics/commerce";
+    import { getOrderAttribution } from "$lib/analytics/attribution";
     import {
         feedbackUnread,
         markFeedbackNotificationsSeen,
@@ -943,7 +944,10 @@
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ productKey }),
+                body: JSON.stringify({
+                    productKey,
+                    attribution: getOrderAttribution(),
+                }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || data?.status !== "success") {
@@ -1003,7 +1007,10 @@
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ productKey }),
+                body: JSON.stringify({
+                    productKey,
+                    attribution: getOrderAttribution(),
+                }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || data?.status !== "success") {

@@ -157,6 +157,32 @@ const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
     isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
 
+const sanitizeAttribution = (value) => {
+    const sanitizeTouch = (touch) => {
+        if (!touch || typeof touch !== "object") return null;
+        const clean = (field) =>
+            typeof field === "string" ? field.trim().slice(0, 200) : "";
+        const source = clean(touch.source);
+        const medium = clean(touch.medium);
+        const landingPath = clean(touch.landingPath);
+        const capturedAt = Number(touch.capturedAt);
+        if (!source || !medium || !landingPath || !Number.isFinite(capturedAt)) {
+            return null;
+        }
+
+        const sanitized = { source, medium, landingPath, capturedAt };
+        for (const field of ["campaign", "content", "term"]) {
+            const fieldValue = clean(touch[field]);
+            if (fieldValue) sanitized[field] = fieldValue;
+        }
+        return sanitized;
+    };
+
+    const firstTouch = sanitizeTouch(value?.firstTouch);
+    const lastTouch = sanitizeTouch(value?.lastTouch);
+    return firstTouch && lastTouch ? { firstTouch, lastTouch } : null;
+};
+
 const mapClerkUser = (clerkUser) => {
     const primaryEmail =
         clerkUser.emailAddresses?.find(
@@ -696,6 +722,7 @@ if (!isClerkAuthConfigured) {
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
 
             const outTradeNo = `cpt_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
             const createdOrder = await createCreditOrder({
                 userId: user.id,
                 clerkUserId: user.clerk_user_id,
@@ -705,6 +732,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 outTradeNo,
+                providerData: attribution ? { attribution } : null,
             });
 
             const description = `Points top-up ${product.points}`;
@@ -775,6 +803,7 @@ if (!isClerkAuthConfigured) {
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
 
             const outTradeNo = `mbr_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
             const createdOrder = await createMembershipOrder({
                 userId: user.id,
                 clerkUserId: user.clerk_user_id,
@@ -785,6 +814,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 outTradeNo,
+                providerData: attribution ? { attribution } : null,
             });
 
             const description =

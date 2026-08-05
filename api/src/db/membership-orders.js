@@ -107,7 +107,7 @@ export const updateMembershipOrderProviderData = async (id, providerData) => {
     const result = await query(
         `
         UPDATE membership_orders
-        SET provider_data = $2,
+        SET provider_data = COALESCE(provider_data, '{}'::jsonb) || $2::jsonb,
             updated_at = $3
         WHERE id = $1
         RETURNING *;

@@ -43,16 +43,6 @@ export const trackCheckoutStarted = (item: CommerceItem) => {
   target.clarity?.("event", "checkout_started");
 };
 
-export const trackPaymentLinkOpened = (kind: "credit" | "membership") => {
-  const target = analyticsWindow();
-  target.gtag?.("event", "payment_link_opened", {
-    payment_type: "wechat",
-    checkout_kind: kind,
-  });
-  target.clarity?.("set", "payment_link_kind", kind);
-  target.clarity?.("event", "payment_link_opened");
-};
-
 export const trackTopupPrompt = (
   action: "view" | "topup" | "membership" | "referral" | "dismiss",
   source: "points_insufficient" | "low_points_balloon",

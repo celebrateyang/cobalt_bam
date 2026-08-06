@@ -200,7 +200,7 @@ const downloadInMainWorld = async (
 
             const fetchBlob = async (candidateUrl: string) => {
                 const response = await fetch(candidateUrl, {
-                    credentials: isInstagramCdnUrl(candidateUrl) ? 'omit' : 'include',
+                    credentials: shouldConvertToJpeg || isInstagramCdnUrl(candidateUrl) ? 'omit' : 'include',
                     cache: 'no-store',
                     referrer: window.location.href,
                 });

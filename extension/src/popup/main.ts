@@ -205,22 +205,40 @@ const chooseDefaultKind = (media: DetectedMedia[]): DetectedMedia['kind'] | 'all
 };
 
 const downloadUrl = async (item: DetectedMedia, filename?: string) => {
-    const convertToJpeg = item.kind === 'image' && (
-        item.format?.toLowerCase() === 'webp' ||
-        /\.webp(?:[?#]|$)/i.test(item.url)
-    );
-    const targetFilename = convertToJpeg
-        ? filename?.replace(/\.[a-z0-9]{2,5}$/i, '.jpg')
-        : filename;
     try {
-        if (item.requiresPageContext || convertToJpeg) {
-            await sendPageDownload(item, targetFilename, convertToJpeg);
+        if (item.requiresPageContext) {
+            await sendPageDownload(item, filename);
             return;
         }
 
-        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename: targetFilename, media: item });
+        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
     } catch {
-        await sendPageDownload(item, targetFilename, convertToJpeg);
+        await sendPageDownload(item, filename);
+    }
+};
+
+const convertImageToJpeg = async (item: DetectedMedia, filename: string | undefined, button: HTMLButtonElement) => {
+    const originalText = button.textContent || 'Convert JPG';
+    button.disabled = true;
+    button.textContent = 'Converting...';
+    try {
+        const response = await chrome.runtime.sendMessage({
+            type: 'FSV_CONVERT_IMAGE_TO_JPEG',
+            url: item.url,
+            filename,
+        });
+        if (!response?.ok) throw new Error(response?.error || 'Image conversion failed.');
+        button.textContent = 'Saved';
+        window.setTimeout(() => {
+            button.disabled = false;
+            button.textContent = originalText;
+        }, 1200);
+    } catch {
+        button.textContent = 'Failed';
+        window.setTimeout(() => {
+            button.disabled = false;
+            button.textContent = originalText;
+        }, 1800);
     }
 };
 
@@ -241,6 +259,14 @@ const bindActions = () => {
             if (!url || state.kind !== 'ready') return;
             const item = state.result.media.find((candidate) => candidate.url === url);
             if (item) void downloadUrl(item, button.dataset.downloadFilename);
+        });
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-convert-jpeg-url]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.convertJpegUrl;
+            if (!url || state.kind !== 'ready') return;
+            const item = state.result.media.find((candidate) => candidate.url === url);
+            if (item) void convertImageToJpeg(item, button.dataset.downloadFilename, button);
         });
     });
     document.querySelectorAll<HTMLButtonElement>('[data-filter-kind]').forEach((button) => {
@@ -311,8 +337,15 @@ const renderMediaItem = (result: PageScanResult, item: DetectedMedia, copiedUrl:
                 data-download-filename="${escapeHtml(buildDownloadFilename(result, item))}"
                 ${disabled ? 'disabled' : ''}
             >
-                ${convertsToJpeg ? 'Download JPG' : 'Download'}
+                Download
             </button>
+            ${convertsToJpeg ? `<button
+                type="button"
+                class="secondary"
+                data-convert-jpeg-url="${escapeHtml(item.url)}"
+                data-download-filename="${escapeHtml(buildDownloadFilename(result, item))}"
+                ${disabled ? 'disabled' : ''}
+            >Convert JPG</button>` : ''}
         </div>
     </article>
 `;

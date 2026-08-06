@@ -4,6 +4,10 @@ import { derived, get, writable } from "svelte/store";
 import env from "$lib/env";
 import { INTERNAL_locale } from "$lib/i18n/translations";
 import { currentApiURL } from "$lib/api/api-url";
+import {
+    chooseSignUpMode,
+    emailFirstSignUpAppearance,
+} from "$lib/auth/sign-up-guidance";
 
 import type { Clerk as ClerkInstance } from "@clerk/clerk-js";
 
@@ -405,9 +409,18 @@ export const signUp = async (options: Record<string, unknown> = {}) => {
     if (!instance) return;
     await syncClerkLocale(instance);
 
+    const signUpMode = await chooseSignUpMode();
+    if (!signUpMode) return;
+
+    // Let the app dialog leave the top layer before Clerk opens its modal.
+    await new Promise((resolve) => setTimeout(resolve, 180));
+
     instance.openSignUp({
         appearance: clerkAppearance,
         ...options,
+        ...(signUpMode === "email"
+            ? { appearance: emailFirstSignUpAppearance }
+            : {}),
     } as any);
 };
 

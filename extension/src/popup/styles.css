@@ -305,6 +305,28 @@ button:disabled {
     gap: 8px;
 }
 
+.media-actions:has(.secondary) {
+    flex-direction: column;
+    gap: 6px;
+}
+
+.media-actions .secondary {
+    min-width: 88px;
+    border: 1px solid #2869d8;
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: #2869d8;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.media-actions .secondary:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
 .primary {
     border-color: #2869d8;
     background: #2869d8;

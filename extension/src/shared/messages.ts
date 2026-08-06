@@ -8,6 +8,7 @@ export type ExtensionMessage =
     | { type: 'FSV_SCAN_RESULT'; result: PageScanResult }
     | { type: 'FSV_OPEN_FREESAVEVIDEO'; url: string }
     | { type: 'FSV_DOWNLOAD_URL'; url: string; filename?: string; media?: DetectedMedia }
+    | { type: 'FSV_CONVERT_IMAGE_TO_JPEG'; url: string; filename?: string }
     | { type: 'FSV_PAGE_DOWNLOAD'; tabId: number; url: string; filename?: string; media?: DetectedMedia; convertToJpeg?: boolean }
     | { type: 'FSV_FIND_TIKTOK_RESOURCE_CANDIDATES'; pageUrl?: string; postId?: string }
     | { type: 'FSV_GET_TIKTOK_RESOURCE_CACHE' }

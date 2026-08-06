@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "FreeSaveVideo Downloader",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "description": "Detect media on the current page and open supported public links in FreeSaveVideo.",
     "action": {
         "default_popup": "popup/index.html",
@@ -61,6 +61,7 @@
         "*://*.b23.tv/*",
         "*://*.bilivideo.com/*",
         "*://*.hdslb.com/*",
+        "*://*.alicdn.com/*",
         "*://learn.deeplearning.ai/*",
         "*://*.cloudfront.net/*"
     ],

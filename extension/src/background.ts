@@ -1,6 +1,7 @@
 import type { ExtensionMessage } from './shared/messages';
 import type { DetectedMedia, InstagramResourceSnapshot, TikTokResourceSnapshot } from './adapters/types';
 import { downloadWithChrome } from './downloader/chrome-downloads';
+import { sanitizeDownloadPath } from './downloader/filename';
 import { buildFreeSaveVideoUrl } from './shared/url';
 
 const TIKTOK_VIDEO_URL_RE = /\/aweme\/v1\/play\/|is_play_url=1|mime_type=video_|\/video\/tos\/|\.mp4(?:[?#]|$)|tokcdn|tiktokcdn|tiktokv|byteoversea|ibytedtos|muscdn|akamaized\.net/i;
@@ -151,6 +152,49 @@ chrome.runtime.onInstalled.addListener(() => {
         installedAt: new Date().toISOString(),
     });
 });
+
+const bytesToBase64 = (bytes: Uint8Array) => {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+    return btoa(binary);
+};
+
+const convertImageToJpeg = async (url: string, filename?: string) => {
+    const response = await fetch(url, {
+        credentials: 'omit',
+        cache: 'no-store',
+        referrerPolicy: 'no-referrer',
+    });
+    if (!response.ok) throw new Error(`Image request failed with status ${response.status}.`);
+
+    const sourceBlob = await response.blob();
+    if (!sourceBlob.type.startsWith('image/')) throw new Error('The downloaded resource is not an image.');
+
+    const bitmap = await createImageBitmap(sourceBlob);
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext('2d');
+    if (!context) {
+        bitmap.close();
+        throw new Error('Image conversion is unavailable.');
+    }
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0);
+    bitmap.close();
+
+    const jpegBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.92 });
+    if (!jpegBlob.size) throw new Error('Image conversion produced an empty file.');
+
+    const bytes = new Uint8Array(await jpegBlob.arrayBuffer());
+    const dataUrl = `data:image/jpeg;base64,${bytesToBase64(bytes)}`;
+    const targetFilename = sanitizeDownloadPath(
+        filename?.replace(/\.[a-z0-9]{2,5}$/i, '.jpg') || 'FreeSaveVideo/image.jpg',
+    );
+    await chrome.downloads.download({ url: dataUrl, filename: targetFilename, saveAs: false });
+};
 
 const downloadInMainWorld = async (
     tabId: number,
@@ -412,6 +456,15 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     }
     if (message.type === 'FSV_DOWNLOAD_URL') {
         void downloadWithChrome(message);
+    }
+    if (message.type === 'FSV_CONVERT_IMAGE_TO_JPEG') {
+        void convertImageToJpeg(message.url, message.filename)
+            .then(() => sendResponse({ ok: true }))
+            .catch((error) => sendResponse({
+                ok: false,
+                error: error instanceof Error ? error.message : 'Image conversion failed.',
+            }));
+        return true;
     }
     if (message.type === 'FSV_PAGE_DOWNLOAD') {
         void downloadInMainWorld(message.tabId, message.url, message.filename, message.media, message.convertToJpeg)

@@ -605,9 +605,14 @@
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let polarHandledOrderId: number | null = null;
     let checkoutIntentHandled = false;
+    const POLAR_PAYMENT_VISIBLE = false;
 
     $: isChinese = $page.params.lang === "zh";
-    $: if (!isChinese && selectedPaymentProvider !== "polar") {
+    $: if (
+        POLAR_PAYMENT_VISIBLE &&
+        !isChinese &&
+        selectedPaymentProvider !== "polar"
+    ) {
         selectedPaymentProvider = "polar";
         clearActiveOrder();
     }
@@ -1811,7 +1816,7 @@
                             </div>
                         </div>
 
-                        {#if isChinese}
+                        {#if isChinese && POLAR_PAYMENT_VISIBLE}
                             <div class="provider-switch" role="tablist">
                                 <button
                                     type="button"

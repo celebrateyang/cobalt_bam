@@ -1,76 +1,71 @@
 <script lang="ts">
-    import env from "$lib/env";
-    import { t } from "$lib/i18n/translations";
-
     import SectionHeading from "$components/misc/SectionHeading.svelte";
 </script>
 
-<section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
+<section id="privacy">
+<SectionHeading title="Privacy Policy" sectionId="privacy" />
 
-FreeSaveVideo's privacy policy is simple: we don't collect or store anything about you. what you do is solely your business, not ours or anyone else's.
+**Last updated: August 7, 2026**
 
-these terms are applicable only when using the official FreeSaveVideo instance. in other cases, you may need to contact the hoster for accurate info.
+This Privacy Policy explains how **celebrateyang**, operator of FreeSaveVideo, handles information when you use the official website, account features, payments, support, and download tools.
 </section>
 
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
+<section id="information">
+<SectionHeading title="Information we process" sectionId="information" />
 
-tools that use on-device processing work offline, locally, and never send any data anywhere. they are explicitly marked as such whenever applicable.
+Depending on the features you use, we may process:
+
+- account identifiers and profile information supplied through our authentication provider;
+- purchase, order, credit balance, membership, subscription, and payment-status records;
+- support messages, feedback, copyright complaints, and related correspondence;
+- technical information such as IP address, browser/device data, security events, request timestamps, and diagnostic logs;
+- URLs and options submitted to perform a requested download; and
+- cookie or analytics information where enabled and permitted.
+
+Payment-card and wallet credentials are processed by the selected payment provider. FreeSaveVideo does not receive or store full card numbers or payment passwords.
 </section>
 
-<section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
+<section id="use">
+<SectionHeading title="How information is used" sectionId="use" />
 
-when using saving functionality, in some cases FreeSaveVideo will encrypt & temporarily store information needed for tunneling. it's stored in processing server's RAM for 90 seconds and irreversibly purged afterwards. no one has access to it, even instance owners, as long as they don't modify the official FreeSaveVideo image.
+We use information to provide downloads and account features, fulfill purchases, maintain credit and membership balances, prevent fraud and abuse, secure and troubleshoot the service, respond to support and copyright requests, meet legal obligations, and improve reliability.
 
-processed/tunneled files are never cached anywhere. everything is tunneled live. FreeSaveVideo's saving functionality is essentially a fancy proxy service.
+We do not sell personal information.
 </section>
 
-<section id="encryption">
-<SectionHeading
-    title={$t("about.heading.encryption")}
-    sectionId="encryption"
-/>
+<section id="downloads">
+<SectionHeading title="Download processing" sectionId="downloads" />
 
-temporarily stored tunnel data is encrypted using the AES-256 standard. decryption keys are only included in the access link and never logged/cached/stored anywhere. only the end user has access to the link & encryption keys. keys are generated uniquely for each requested tunnel.
+Download URLs and related technical data are processed only as needed to resolve the requested media, deliver the result, prevent abuse, and diagnose failures. Some downloads are handed directly to the source or content-delivery network. Others may pass temporarily through a processing tunnel.
+
+Media passing through a tunnel is processed transiently and is not intentionally retained as a permanent media library. Short-lived operational, security, or error logs may still contain request metadata. Local browser tools process selected files on the user's device when the interface says processing is local.
 </section>
 
-{#if env.PLAUSIBLE_ENABLED}
-<section id="plausible">
-<SectionHeading
-    title={$t("about.heading.plausible")}
-    sectionId="plausible"
-/>
+<section id="sharing">
+<SectionHeading title="Service providers and disclosure" sectionId="sharing" />
 
-for sake of privacy, we use [plausible's anonymous traffic analytics](https://plausible.io/) to get an approximate number of active FreeSaveVideo users. no identifiable information about you or your requests is ever stored. all data is anonymized and aggregated. the plausible instance we use is hosted & managed by us.
+We may share the minimum necessary information with providers that supply hosting, content delivery, authentication, database, analytics, fraud prevention, customer support, and payment processing. Information may also be disclosed when required by law, to protect users or the service, or to investigate fraud, abuse, or intellectual-property complaints.
 
-plausible doesn't use cookies and is fully compliant with GDPR, CCPA, and PECR.
-
-[learn more about plausible's dedication to privacy.](https://plausible.io/privacy-focused-web-analytics)
-
-if you wish to opt out of anonymous analytics, you can do it in <a href="../settings/privacy#analytics">privacy settings</a>.
+These providers may process information in countries other than your own under their applicable safeguards and terms.
 </section>
-{/if}
 
-<section id="cloudflare">
-<SectionHeading
-    title={$t("about.heading.cloudflare")}
-    sectionId="cloudflare"
-/>
+<section id="retention">
+<SectionHeading title="Retention and security" sectionId="retention" />
 
-we use cloudflare services for ddos & bot protection. we also use cloudflare pages for deploying & hosting the static web app. all of these are required to provide the best experience for everyone. it's the most private & reliable provider that we know of.
+We retain account, transaction, membership, support, compliance, and security records for as long as reasonably necessary to provide the service, maintain financial records, resolve disputes, enforce agreements, and comply with law. Temporary download-processing data is retained only for the operational period needed for the request, except where security, debugging, or legal obligations require limited metadata to be kept longer.
 
-cloudflare is fully compliant with GDPR and HIPAA.
+We use reasonable technical and organizational safeguards, but no online service can guarantee absolute security.
+</section>
 
-[learn more about cloudflare's dedication to privacy.](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
+<section id="rights">
+<SectionHeading title="Your choices and rights" sectionId="rights" />
+
+You may request access, correction, or deletion of applicable personal information, subject to identity verification and legal retention obligations. You can manage optional privacy settings in the website, cancel an eligible subscription for future billing, and contact us about privacy questions.
+</section>
+
+<section id="contact">
+<SectionHeading title="Contact" sectionId="contact" />
+
+Operator: **celebrateyang**  
+Privacy email: [celebrateyang@gmail.com](mailto:celebrateyang@gmail.com)
 </section>

@@ -32,13 +32,17 @@
                   "常见下载失败、隐私边界、积分和支持平台问题，可以先查看 FAQ。",
               policyTitle: "政策与合规",
               policyBody:
-                  "FreeSaveVideo 仅面向公开可访问内容。请尊重版权、平台规则和创作者权益。",
+                  "FreeSaveVideo 仅用于下载你拥有、已获许可或依法有权保存的内容。禁止下载未经授权的版权内容。",
               actions: {
                   email: "发送邮件",
                   feedback: "提交站内反馈",
                   faq: "查看 FAQ",
                   privacy: "隐私政策",
                   terms: "使用条款",
+                  refund: "退款政策",
+                  copyright: "版权政策",
+                  dmca: "DMCA / 版权投诉",
+                  contact: "联系信息",
                   home: "返回首页",
               },
           }
@@ -63,13 +67,17 @@
                   "For common download failures, privacy boundaries, credits, and supported platform questions, start with the FAQ.",
               policyTitle: "Policy and Compliance",
               policyBody:
-                  "FreeSaveVideo is intended for publicly accessible content only. Please respect copyright, platform rules, and creator rights.",
+                  "FreeSaveVideo is intended only for content you own, have permission to download, or are otherwise legally authorized to save. Unauthorized copyrighted content is prohibited.",
               actions: {
                   email: "Email Support",
                   feedback: "Open Feedback",
                   faq: "Read FAQ",
                   privacy: "Privacy Policy",
                   terms: "Terms",
+                  refund: "Refund Policy",
+                  copyright: "Copyright Policy",
+                  dmca: "DMCA / Copyright Complaint",
+                  contact: "Contact",
                   home: "Back Home",
               },
           };
@@ -153,6 +161,10 @@
             <div class="policy-links">
                 <a class="text-link" href={`/${lang}/about/privacy`}>{copy.actions.privacy}</a>
                 <a class="text-link" href={`/${lang}/about/terms`}>{copy.actions.terms}</a>
+                <a class="text-link" href={`/${lang}/about/refund`}>{copy.actions.refund}</a>
+                <a class="text-link" href={`/${lang}/about/copyright`}>{copy.actions.copyright}</a>
+                <a class="text-link" href={`/${lang}/about/dmca`}>{copy.actions.dmca}</a>
+                <a class="text-link" href={`/${lang}/about/contact`}>{copy.actions.contact}</a>
             </div>
         </article>
     </section>

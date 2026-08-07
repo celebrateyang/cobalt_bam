@@ -1,56 +1,66 @@
 <script lang="ts">
-    import { t } from "$lib/i18n/translations";
     import SectionHeading from "$components/misc/SectionHeading.svelte";
 </script>
 
-<section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
+<section id="terms">
+<SectionHeading title="Terms of Service" sectionId="terms" />
 
-these terms are applicable only when using the official FreeSaveVideo instance.
-in other cases, you may need to contact the hoster for accurate info.
+**Last updated: August 7, 2026**
+
+These Terms govern use of the official FreeSaveVideo service operated by **celebrateyang**. By accessing the service, creating an account, or purchasing credits, a membership, or a subscription, you agree to these Terms.
 </section>
 
-<section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
+<section id="permitted-use">
+<SectionHeading title="Permitted use" sectionId="permitted-use" />
 
-saving functionality simplifies downloading content from the internet and takes zero liability for what the saved content is used for.
-processing servers work like advanced proxies and don't ever write any content to disk.
-everything is handled in RAM and permanently purged once the tunnel is done.
-we have no downloading logs and can't identify anyone.
+FreeSaveVideo is intended only for downloading content that you own, have permission to download, or are otherwise legally authorized to save. You are responsible for confirming that your download and later use are permitted by applicable law, the rights holder, and any terms that apply to the source content.
 
-[you can read more about how tunnels work in our privacy policy.](privacy)
+Public availability of a URL does not by itself grant permission to copy or reuse its content.
 </section>
 
-<section id="responsibility">
-<SectionHeading
-    title={$t("about.heading.responsibility")}
-    sectionId="responsibility"
-/>
+<section id="prohibited-use">
+<SectionHeading title="Prohibited use" sectionId="prohibited-use" />
 
-you (end user) are responsible for what you do with our tools, how you use and distribute resulting content.
-please be mindful when using content of others and always credit original creators.
-make sure you don't violate any terms or licenses.
+You must not use FreeSaveVideo to:
 
-when used in educational purposes, always cite sources and credit original creators.
+- download or distribute unauthorized copyrighted content;
+- infringe copyright, trademark, privacy, publicity, contractual, or other third-party rights;
+- access private, paywalled, subscription-only, login-restricted, or DRM-protected content without authorization;
+- bypass access controls, technical protection measures, or geographic restrictions;
+- download unlawful, exploitative, or non-consensual content;
+- resell, redistribute, or commercially exploit content without the necessary rights;
+- overload, abuse, reverse engineer, or interfere with the service; or
+- use the service in violation of applicable law or binding platform terms.
 
-fair use and credits benefit everyone.
+We may restrict or terminate access, cancel orders, preserve relevant records, or cooperate with valid legal requests when we reasonably believe the service is being misused.
 </section>
 
-<section id="abuse">
-<SectionHeading
-    title={$t("about.heading.abuse")}
-    sectionId="abuse"
-/>
+<section id="accounts-payments">
+<SectionHeading title="Accounts, credits, and payments" sectionId="accounts-payments" />
 
-we have no way of detecting abusive behavior automatically, as FreeSaveVideo is 100% anonymous.
+You must provide accurate account and payment information. Credits, memberships, and subscriptions are personal to the purchasing account and may not be resold or transferred unless we expressly allow it.
 
+Prices, included usage, duration, and renewal terms are shown before purchase. Payment processing may be performed by third-party payment providers, whose terms and privacy practices also apply. Refunds and subscription cancellations are governed by our [Refund Policy](refund).
+</section>
 
-please note that this email is not intended for user support.
-if you're experiencing issues, contact us via any preferred method on [the support page](community).
+<section id="availability">
+<SectionHeading title="Service availability" sectionId="availability" />
+
+Source platforms change frequently. We do not guarantee that every URL, platform, format, resolution, or feature will remain available. We may modify, suspend, or discontinue functionality for technical, security, legal, or compliance reasons.
+
+The service is provided on an “as available” basis to the extent permitted by law. You remain responsible for downloaded files and how they are stored, shared, or used.
+</section>
+
+<section id="copyright">
+<SectionHeading title="Copyright complaints" sectionId="copyright" />
+
+We respect intellectual-property rights. Rights holders and authorized agents may submit a notice under our [Copyright Policy](copyright) and [DMCA / Copyright Complaint procedure](dmca). We may disable access to relevant functionality or terminate repeat infringers when appropriate.
+</section>
+
+<section id="contact">
+<SectionHeading title="Contact" sectionId="contact" />
+
+Operator: **celebrateyang**  
+Email: [celebrateyang@gmail.com](mailto:celebrateyang@gmail.com)  
+Support and policy contact details are also available on the [Contact page](contact).
 </section>

@@ -1816,6 +1816,14 @@
                             </div>
                         </div>
 
+                        <p class="purchase-policy-notice">
+                            {#if isChinese}
+                                购买即表示你同意<a href={`/${$page.params.lang}/about/terms`}>服务条款</a>和<a href={`/${$page.params.lang}/about/refund`}>退款政策</a>。积分购买及已生效会员不退款；订阅可随时取消，并从下一计费周期停止续费。
+                            {:else}
+                                By purchasing, you agree to the <a href={`/${$page.params.lang}/about/terms`}>Terms of Service</a> and <a href={`/${$page.params.lang}/about/refund`}>Refund Policy</a>. Credit purchases and activated memberships are non-refundable. Subscriptions may be canceled for future billing.
+                            {/if}
+                        </p>
+
                         {#if isChinese && POLAR_PAYMENT_VISIBLE}
                             <div class="provider-switch" role="tablist">
                                 <button
@@ -2924,6 +2932,19 @@
     .product-card:hover {
         border-color: var(--popup-stroke);
         transform: translateY(-1px);
+    }
+
+    .purchase-policy-notice {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+
+    .purchase-policy-notice a {
+        color: var(--text);
+        font-weight: 700;
+        text-underline-offset: 2px;
     }
 
     .product-card.recommended-product {

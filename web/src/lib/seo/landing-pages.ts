@@ -1804,6 +1804,103 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
+        slug: 'bilibili-playlist-download',
+        locales: {
+            zh: zh({
+                metaTitle: `B站合集下载 - 批量保存分P与公开视频 | ${ZH_BRAND}`,
+                metaDescription:
+                    '在线解析 B站合集、分P和公开视频列表。粘贴公开链接后预览条目、选择需要的视频并加入批量下载队列。',
+                metaKeywords: [
+                    'b站合集下载',
+                    'b站批量下载',
+                    'b站分p下载',
+                    'bilibili playlist downloader',
+                    '哔哩哔哩合集下载',
+                ],
+                h1: 'B站合集与分P批量下载',
+                lede: '粘贴公开的 B站合集、分P或视频列表链接，预览并选择你有权保存的条目。',
+                stepsTitle: '如何下载 B站合集或分P',
+                steps: [
+                    '在 Bilibili 打开公开合集、分P视频或视频列表并复制链接。',
+                    '把链接粘贴到下方输入框，等待系统识别可用条目。',
+                    '勾选需要的条目和可用格式，加入队列后逐个保存。',
+                ],
+                featuresTitle: '适合创作者备份的批量工具',
+                features: [
+                    '部分公开合集、分P和课程条目可自动识别，具体以解析结果为准。',
+                    '下载前可查看条目并取消不需要的视频。',
+                    '队列中的失败条目可以单独重试，无需重新处理已完成项目。',
+                ],
+                faqTitle: '常见问题',
+                faqs: [
+                    {
+                        q: '所有 B站合集都能批量下载吗？',
+                        a: '不能。能否识别取决于链接类型和公开访问状态；会员、付费、私密或受限内容不受支持。',
+                    },
+                    {
+                        q: '可以只下载合集中的部分视频吗？',
+                        a: '可以。识别成功后，可在队列中选择需要的公开条目，再开始下载。',
+                    },
+                    {
+                        q: '我可以用它备份自己上传的视频吗？',
+                        a: '可以，前提是视频公开可访问。请只保存你自己拥有、已获授权或法律允许下载的内容。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `Bilibili Playlist Downloader - Batch & Multi-Part | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public Bilibili playlists and multi-part videos in a selectable batch queue. Preview items, choose available formats, and retry failed entries.',
+                metaKeywords: [
+                    'bilibili playlist downloader',
+                    'download bilibili playlist',
+                    'bilibili batch downloader',
+                    'download bilibili multi part video',
+                ],
+                h1: 'Bilibili Playlist & Multi-Part Downloader',
+                lede: 'Paste a public Bilibili playlist, collection, or multi-part video link and select the items you are allowed to save.',
+                stepsTitle: 'How to download a Bilibili playlist',
+                steps: [
+                    'Open a public Bilibili playlist, collection, or multi-part video and copy its link.',
+                    'Paste the link below and wait for the available items to appear.',
+                    'Select the items and formats you need, then process them in the download queue.',
+                ],
+                featuresTitle: 'A practical queue for creator backups',
+                features: [
+                    'Detects supported public playlists, collections, and multi-part videos.',
+                    'Lets you review and deselect items before downloading.',
+                    'Retries failed items without restarting completed downloads.',
+                ],
+                faqTitle: 'FAQ',
+                faqs: [
+                    {
+                        q: 'Does every Bilibili playlist work?',
+                        a: 'No. Support depends on the public link type and current platform availability. Private, paid, member-only, and restricted content is not supported.',
+                    },
+                    {
+                        q: 'Can I download only selected videos?',
+                        a: 'Yes. When the link is supported, review the detected items and keep only the public videos you need.',
+                    },
+                    {
+                        q: 'Can I use this to back up videos I uploaded?',
+                        a: 'Yes, when they are publicly accessible. Only download content you own, have permission to use, or are otherwise legally allowed to save.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'Bilibili',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'bilibili playlist downloader',
+                    'download bilibili playlist',
+                    'bilibili batch downloader',
+                    'download bilibili multi part video',
+                ],
+            }),
+        },
+    },
+    {
         slug: 'haokan-video-download',
         locales: {
             zh: {
@@ -3879,6 +3976,7 @@ const zhLandingMeta: Record<string, { platform: string; kind: 'video' | 'audio' 
     'douyin-mp3-download': { platform: 'Douyin', kind: 'audio' },
     'douyin-collection-download': { platform: 'Douyin collection', kind: 'collection' },
     'bilibili-video-download': { platform: 'Bilibili', kind: 'video' },
+    'bilibili-playlist-download': { platform: 'Bilibili playlist', kind: 'collection' },
     'kuaishou-no-watermark': { platform: 'Kuaishou', kind: 'video' },
     'xiaohongshu-video-download': { platform: 'Xiaohongshu', kind: 'video' },
     'instagram-reels-download': { platform: 'Instagram Reels', kind: 'reels' },

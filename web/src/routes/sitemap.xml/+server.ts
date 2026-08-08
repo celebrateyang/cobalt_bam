@@ -11,7 +11,7 @@ const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
 const lastModified = {
     site: '2026-07-17',
-    seoPages: '2026-08-06',
+    seoPages: '2026-08-08',
 };
 
 const languageHubPages = ['', 'download'];

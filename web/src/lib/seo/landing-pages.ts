@@ -3976,7 +3976,6 @@ const zhLandingMeta: Record<string, { platform: string; kind: 'video' | 'audio' 
     'douyin-mp3-download': { platform: 'Douyin', kind: 'audio' },
     'douyin-collection-download': { platform: 'Douyin collection', kind: 'collection' },
     'bilibili-video-download': { platform: 'Bilibili', kind: 'video' },
-    'bilibili-playlist-download': { platform: 'Bilibili playlist', kind: 'collection' },
     'kuaishou-no-watermark': { platform: 'Kuaishou', kind: 'video' },
     'xiaohongshu-video-download': { platform: 'Xiaohongshu', kind: 'video' },
     'instagram-reels-download': { platform: 'Instagram Reels', kind: 'reels' },

@@ -2,6 +2,11 @@ import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
 
 import { getPreferredLanguage, getRequestCountry, isLangPrefixedPath } from '$lib/seo/language-routing';
+import {
+    getLegacyRedirectTarget,
+    getLocalizedRoute,
+    shouldNoindexLocalizedPath,
+} from '$lib/seo/indexing';
 
 const shouldSkipLangRedirect = (pathname: string) => {
     if (pathname === '/') return true;
@@ -19,9 +24,16 @@ const shouldSkipLangRedirect = (pathname: string) => {
 
 export const handle: Handle = async ({ event, resolve }) => {
     const pathname = event.url.pathname;
+    const isNavigationRequest =
+        event.request.method === 'GET' || event.request.method === 'HEAD';
+
+    if (isNavigationRequest) {
+        const legacyRedirectTarget = getLegacyRedirectTarget(pathname);
+        if (legacyRedirectTarget) throw redirect(308, legacyRedirectTarget);
+    }
 
     if (
-        (event.request.method === 'GET' || event.request.method === 'HEAD') &&
+        isNavigationRequest &&
         !shouldSkipLangRedirect(pathname) &&
         !isLangPrefixedPath(pathname)
     ) {
@@ -34,6 +46,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
 
     const response = await resolve(event);
+    const localizedRoute = getLocalizedRoute(pathname);
+    if (
+        localizedRoute &&
+        shouldNoindexLocalizedPath(localizedRoute.path, localizedRoute.lang)
+    ) {
+        response.headers.set('X-Robots-Tag', 'noindex, follow');
+    }
 
     // Apply COOP/COEP headers to enable SharedArrayBuffer for libav
     // Exclude the youtube-video-downloader page which contains a Bilibili iframe that would be blocked

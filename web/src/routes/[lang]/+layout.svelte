@@ -18,6 +18,7 @@
 
     import { t, setLocale, INTERNAL_locale } from "$lib/i18n/translations";
     import { getGuidePage } from "$lib/seo/guide-pages";
+    import { shouldNoindexLocalizedPath } from "$lib/seo/indexing";
     import {
         getDownloadSeoLanguages,
         getGuideSeoLanguages,
@@ -99,21 +100,11 @@
           ? "zh"
           : alternateLanguages[0];
 
-    const noindexPathPatterns = [
-        /^\/account(?:\/|$)/,
-        /^\/settings(?:\/|$)/,
-        /^\/history(?:\/|$)/,
-        /^\/invite(?:\/|$)/,
-        /^\/donate(?:\/|$)/,
-        /^\/updates(?:\/|$)/,
-        /^\/console-manage-2025(?:\/|$)/,
-    ];
-
     const nofollowPathPatterns = [
         /^\/console-manage-2025(?:\/|$)/,
     ];
 
-    $: isNoindexPath = noindexPathPatterns.some((pattern) => pattern.test(currentPath));
+    $: isNoindexPath = shouldNoindexLocalizedPath(currentPath, data.lang);
     $: isNofollowPath = nofollowPathPatterns.some((pattern) => pattern.test(currentPath));
     $: robotsContent = isNoindexPath
         ? (isNofollowPath ? "noindex,nofollow" : "noindex,follow")
@@ -213,19 +204,21 @@
     <meta property="og:url" content={canonicalUrl} />
     <link rel="canonical" href={canonicalUrl} />
 
-    <!-- hreflang tags for SEO -->
-    {#each alternateLanguages as lang}
+    {#if !isNoindexPath}
+        <!-- hreflang tags are only useful for indexable pages. -->
+        {#each alternateLanguages as lang}
+            <link
+                rel="alternate"
+                hreflang={lang}
+                href={`https://${fallbackHost}${buildLangPath(lang)}`}
+            />
+        {/each}
         <link
             rel="alternate"
-            hreflang={lang}
-            href={`https://${fallbackHost}${buildLangPath(lang)}`}
+            hreflang="x-default"
+            href={`https://${fallbackHost}${buildLangPath(defaultAlternateLanguage)}`}
         />
-    {/each}
-    <link
-        rel="alternate"
-        hreflang="x-default"
-        href={`https://${fallbackHost}${buildLangPath(defaultAlternateLanguage)}`}
-    />
+    {/if}
 
     {#if device.is.mobile}
         <meta name="theme-color" content={statusBarColors[$currentTheme]} />

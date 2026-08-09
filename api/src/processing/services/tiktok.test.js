@@ -64,11 +64,15 @@ test("resolves a vm short link from its Location header", async (t) => {
             ok: true,
             status: 200,
             json: async () => ({
-                id: "7531234567890123456",
-                medias: [{
-                    media_type: "video",
-                    resource_url: "https://media.tokcdn.com/video.mp4",
-                }],
+                code: 0,
+                data: {
+                    status: 2,
+                    detail: {
+                        id: "7531234567890123456",
+                        play_url: "https://v16.tokcdn.com/hash/time/7531234567890123456_original.mp4",
+                        author: { unique_id: "creator" },
+                    },
+                },
             }),
         };
     });
@@ -79,10 +83,12 @@ test("resolves a vm short link from its Location header", async (t) => {
     });
 
     assert.equal(requests[0].url, "https://vm.tiktok.com/ZG9hWhf2CwnqE-ytsZH");
+    assert.match(requests[1].url, /\/api\/video\/task\/result\?task_id=/);
     assert.equal(
-        JSON.parse(requests[1].init.body).link,
-        "https://www.tiktok.com/@creator/video/7531234567890123456",
+        result.urls,
+        "https://v16.tokcdn.com/hash/time/7531234567890123456_original.mp4",
     );
-    assert.equal(result.urls, "https://media.tokcdn.com/video.mp4");
+    assert.equal(result.tiktokVideoSource, "tikwm-original");
+    assert.equal(result.tiktokOriginalQuality, true);
     assert.equal(result.tiktokUsedDirectProvider, true);
 });

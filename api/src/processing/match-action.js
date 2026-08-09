@@ -303,18 +303,26 @@ export default function({
                     break;
 
                 case "tiktok":
-                    responseType = "redirect";
-                    params = {
-                        url: r.urls,
-                        directUrl: r.urls,
-                        directUrlCandidates: Array.isArray(r.urlCandidates)
-                            ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
-                                typeof value === "string" &&
-                                value.length > 0 &&
-                                list.indexOf(value) === index
-                            ))
-                            : [r.urls].filter((value) => typeof value === "string" && value.length > 0),
-                    };
+                    if (r.tiktokVideoSourceKind === "yt-dlp") {
+                        // TikTok's webapp-prime URLs can be bound to the egress
+                        // IP that extracted them. Keep yt-dlp media on the API
+                        // proxy so the fetch uses that same server identity.
+                        responseType = "tunnel";
+                        params = { type: "proxy" };
+                    } else {
+                        responseType = "redirect";
+                        params = {
+                            url: r.urls,
+                            directUrl: r.urls,
+                            directUrlCandidates: Array.isArray(r.urlCandidates)
+                                ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
+                                    typeof value === "string" &&
+                                    value.length > 0 &&
+                                    list.indexOf(value) === index
+                                ))
+                                : [r.urls].filter((value) => typeof value === "string" && value.length > 0),
+                        };
+                    }
                     break;
 
                 case "vk":
@@ -449,6 +457,9 @@ export default function({
         r.directClientDownload === true &&
         params.audioFormat === "mp3" &&
         params.isHLS !== true;
+    const keepTikTokServerTunnel =
+        host === "tiktok" &&
+        r.tiktokVideoSourceKind === "yt-dlp";
     if (
         alwaysProxy &&
         responseType === "redirect" &&
@@ -470,7 +481,8 @@ export default function({
         (canUseBrowserHlsProcessing || !params.isHLS) &&
         responseType !== "picker" &&
         !keepBilibiliDirectBridge &&
-        !keepSoundcloudDirectBridge
+        !keepSoundcloudDirectBridge &&
+        !keepTikTokServerTunnel
     ) {
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);

@@ -12,6 +12,10 @@ import { sanitizeString } from "../create-filename.js";
 const fallbackShortDomain = "https://vt.tiktok.com/";
 const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
 const directProviderConfig = {
+    tikwmOriginal: {
+        baseUrl: "https://www.tikwm.com",
+        referer: "https://www.tikwm.com/originalDownloader.html",
+    },
     snapany: {
         salt: "6HTugjCXxR",
         endpoint: "https://api.snapany.com/v1/extract/post",
@@ -19,6 +23,9 @@ const directProviderConfig = {
         referer: "https://snapany.com/",
     },
 };
+const TIKWM_POLL_INTERVAL_MS = 1000;
+const TIKWM_MAX_POLLS = 15;
+const TIKWM_REQUEST_TIMEOUT_MS = 8000;
 
 const normalizeUrlCandidate = (value) => {
     if (typeof value !== "string") return "";
@@ -383,6 +390,24 @@ const isValidTikTokDirectMediaUrl = (value) => {
     }
 };
 
+const isOfficialTikTokMediaUrl = (value) => {
+    const normalized = normalizeUrlCandidate(value);
+    if (!normalized) return false;
+
+    try {
+        const host = new URL(normalized).hostname.toLowerCase();
+        return [
+            "tokcdn.com",
+            "tiktokcdn.com",
+            "tiktokcdn-us.com",
+            "tiktokcdn-eu.com",
+            "tiktok.com",
+        ].some((domain) => host === domain || host.endsWith(`.${domain}`));
+    } catch {
+        return false;
+    }
+};
+
 const buildDirectProviderFilename = ({ title, postId }) => {
     const safeTitle = typeof title === "string"
         ? sanitizeString(title.trim().replace(/\s+/g, " ")).replace(/\.+$/g, "")
@@ -438,6 +463,111 @@ const normalizeDirectProviderResponse = ({ provider, data, postId }) => {
         tiktokVideoSourceKind: "direct-provider",
         tiktokUsedDirectProvider: true,
     };
+};
+
+const normalizeTikWmOriginalResponse = (data, postId) => {
+    const detail = data?.data?.detail;
+    const directUrl = normalizeUrlCandidate(detail?.play_url);
+    if (
+        data?.code !== 0
+        || data?.data?.status !== 2
+        || !isOfficialTikTokMediaUrl(directUrl)
+    ) {
+        return null;
+    }
+
+    const username = String(detail?.author?.unique_id || "").trim();
+    return {
+        urls: directUrl,
+        filename: `tiktok_${username || "video"}_${detail?.id || postId || "original"}.mp4`,
+        duration: typeof detail?.duration === "number" ? detail.duration : undefined,
+        cover: normalizeUrlCandidate(detail?.cover) || undefined,
+        service: "tiktok",
+        tiktokVideoSource: "tikwm-original",
+        tiktokVideoSourceKind: "direct-provider",
+        tiktokUsedDirectProvider: true,
+        tiktokOriginalQuality: true,
+    };
+};
+
+const fetchTikWmJson = async (url, options = {}) => {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Referer": directProviderConfig.tikwmOriginal.referer,
+            "User-Agent": genericUserAgent,
+            ...options.headers,
+        },
+        signal: AbortSignal.timeout(TIKWM_REQUEST_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    return response.json().catch(() => null);
+};
+
+const fetchTikWmOriginalDetail = async (url, postId, reason) => {
+    if (!url || !postId) return null;
+
+    const provider = "tikwm-original";
+    const startedAt = Date.now();
+    const config = directProviderConfig.tikwmOriginal;
+    const taskIdFromPost = createHash("md5").update(String(postId), "utf8").digest("hex");
+    const resultUrl = (taskId) => (
+        `${config.baseUrl}/api/video/task/result?task_id=${encodeURIComponent(taskId)}`
+    );
+
+    console.log(`[tiktok] trying direct provider=${provider} reason=${reason || "unknown"} post_id=${postId}`);
+
+    try {
+        // TikWM task IDs are deterministic for public TikTok videos. Reuse a
+        // completed task before submitting another extraction job.
+        const cached = await fetchTikWmJson(resultUrl(taskIdFromPost));
+        const cachedResult = normalizeTikWmOriginalResponse(cached, postId);
+        if (cachedResult) {
+            console.log(
+                `[tiktok] direct provider=${provider} cache success elapsed_ms=${Date.now() - startedAt} host=${new URL(cachedResult.urls).hostname}`,
+            );
+            return cachedResult;
+        }
+
+        const body = new URLSearchParams({ url, web: "1" });
+        const submitted = await fetchTikWmJson(
+            `${config.baseUrl}/api/video/task/submit`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "Origin": config.baseUrl,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body,
+            },
+        );
+        if (submitted?.code !== 0) return null;
+
+        const immediate = normalizeTikWmOriginalResponse(submitted, postId);
+        if (immediate) return immediate;
+
+        const taskId = submitted?.data?.task_id || taskIdFromPost;
+        for (let attempt = 0; attempt < TIKWM_MAX_POLLS; attempt += 1) {
+            await new Promise((resolve) => setTimeout(resolve, TIKWM_POLL_INTERVAL_MS));
+            const result = await fetchTikWmJson(resultUrl(taskId));
+            const normalized = normalizeTikWmOriginalResponse(result, postId);
+            if (normalized) {
+                console.log(
+                    `[tiktok] direct provider=${provider} success elapsed_ms=${Date.now() - startedAt} host=${new URL(normalized.urls).hostname}`,
+                );
+                return normalized;
+            }
+            if (result?.data?.status === 3) break;
+        }
+    } catch (error) {
+        console.log(
+            `[tiktok] direct provider=${provider} failed reason=${reason || "unknown"} elapsed_ms=${Date.now() - startedAt} message=${error?.message || String(error)}`,
+        );
+    }
+
+    return null;
 };
 
 const fetchSnapAnyProviderDetail = async (url, postId, reason) => {
@@ -509,6 +639,7 @@ const fallbackToDirectProviders = async (obj, reason) => {
     });
 
     const providers = [
+        fetchTikWmOriginalDetail,
         fetchSnapAnyProviderDetail,
     ];
 
@@ -618,6 +749,9 @@ export default async function(obj) {
     // TikTok share parameters can carry the request context that yt-dlp needs
     // to avoid an otherwise slow or blocked canonical-page extraction. Keep
     // the original URL intact for this targeted fast path.
+    const directProvider = await fallbackToDirectProviders(obj, "primary");
+    if (directProvider) return directProvider;
+
     if (getTikTokOriginalShareUrl(obj.url)) {
         const ytDlp = await fallbackToYtDlp(
             obj,
@@ -626,9 +760,6 @@ export default async function(obj) {
         );
         if (ytDlp) return ytDlp;
     }
-
-    const directProvider = await fallbackToDirectProviders(obj, "primary");
-    if (directProvider) return directProvider;
 
     // Prefer legacy extraction for no-watermark video URLs.
     // If legacy fails (e.g. WAF), fall back to embed extraction and retry legacy once using refreshed cookies.

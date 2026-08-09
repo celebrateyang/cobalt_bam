@@ -54,6 +54,47 @@ test("keeps forced YouTube batch downloads in the processing queue", () => {
     assert.equal(response.body.tunnel.length, 1);
 });
 
+test("keeps IP-bound TikTok yt-dlp media on the server tunnel", () => {
+    const mediaUrl = "https://v16-webapp-prime.tiktok.com/video/example";
+    const response = matchAction({
+        ...baseArgs,
+        host: "tiktok",
+        localProcessing: "forced",
+        r: {
+            urls: mediaUrl,
+            headers: {
+                referer: "https://www.tiktok.com/@creator/video/123",
+                "user-agent": "test-agent",
+            },
+            filename: "tiktok_creator_123.mp4",
+            tiktokVideoSourceKind: "yt-dlp",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "tunnel");
+    assert.equal(response.body.type, "proxy");
+    assert.equal(response.body.directUrl, undefined);
+    assert.match(response.body.url, /\/tunnel\?/);
+});
+
+test("keeps portable TikTok media on Direct Bridge", () => {
+    const mediaUrl = "https://v16.tokcdn.com/example/video.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "tiktok",
+        r: {
+            urls: mediaUrl,
+            filename: "tiktok_creator_123.mp4",
+            tiktokVideoSourceKind: "direct-provider",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.directUrl, mediaUrl);
+});
+
 test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
     const directUrl = "https://cdn.example/bilibili-progressive.mp4";
     const response = matchAction({

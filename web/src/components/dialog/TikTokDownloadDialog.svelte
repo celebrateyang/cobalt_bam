@@ -64,6 +64,7 @@
         : "";
     $: primaryUrl = uniqueUrls()[0] || activeUrl;
     $: showExtensionPrompt = isChromiumLike() &&
+        status === "error" &&
         extensionCheckComplete &&
         !extensionInstalled &&
         !extensionPromptDismissed;
@@ -87,6 +88,15 @@
     };
 
     const tt = (key: string) => get(t)(key);
+
+    const showBlockedError = () => {
+        status = "error";
+        statusText = tt("dialog.tiktok_download.status.blocked_error");
+
+        // A real download failure should surface the recovery option even if
+        // the user dismissed the proactive prompt during an earlier visit.
+        if (!extensionInstalled) extensionPromptDismissed = false;
+    };
 
     const uniqueUrls = () => {
         const list = [...extensionCandidateUrls, ...urls].filter((value): value is string => (
@@ -404,8 +414,7 @@
             }
         }
 
-        status = "error";
-        statusText = tt("dialog.tiktok_download.status.blocked_error");
+        showBlockedError();
     };
 
     const save = () => {
@@ -428,9 +437,8 @@
             return;
         }
 
-        status = "error";
         progress = 0;
-        statusText = tt("dialog.tiktok_download.status.blocked_error");
+        showBlockedError();
     };
 
     const copy = async () => {

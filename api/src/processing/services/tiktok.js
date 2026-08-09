@@ -9,7 +9,7 @@ import { convertLanguageCode } from "../../misc/language-codes.js";
 import extractWithYtDlp from "../generic/yt-dlp.js";
 import { sanitizeString } from "../create-filename.js";
 
-const shortDomain = "https://vt.tiktok.com/";
+const fallbackShortDomain = "https://vt.tiktok.com/";
 const embedMarker = '<script id="__FRONTITY_CONNECT_STATE__" type="application/json">';
 const directProviderConfig = {
     snapany: {
@@ -153,6 +153,43 @@ const buildVideoCandidateSet = ({ detail, isEmbed, preferH265 }) => {
     ];
 };
 
+export const buildTikTokShortLinkUrl = ({ url, shortLink }) => {
+    if (typeof url === "string") {
+        try {
+            const parsed = new URL(url);
+            const hostname = parsed.hostname.toLowerCase();
+            if (
+                parsed.protocol === "https:"
+                && (hostname === "tiktok.com" || hostname.endsWith(".tiktok.com"))
+            ) {
+                return parsed.toString();
+            }
+        } catch {
+            // Fall back to the legacy vt.tiktok.com URL below.
+        }
+    }
+
+    return `${fallbackShortDomain}${shortLink}`;
+};
+
+const extractTikTokPostFromUrl = (value) => {
+    if (typeof value !== "string" || !value) return {};
+
+    try {
+        const { host, patternMatch } = extract(normalizeURL(value));
+        if (host === "tiktok") {
+            return {
+                postId: patternMatch?.postId,
+                username: patternMatch?.user,
+            };
+        }
+    } catch {
+        // Ignore malformed redirect targets.
+    }
+
+    return {};
+};
+
 const toSeconds = (value) => {
     if (value == null) return undefined;
 
@@ -284,17 +321,17 @@ const fetchEmbedDetail = async (postId, cookie) => {
 };
 
 const buildTikTokCanonicalUrl = ({ postId, username, shortLink, url }) => {
+    if (postId) {
+        const userPath = normalizeTikTokUsernamePath(username);
+        return `https://www.tiktok.com/${userPath}/video/${postId}`;
+    }
+
     if (typeof url === "string" && /^https?:\/\//i.test(url)) {
         return url;
     }
 
     if (shortLink) {
-        return `${shortDomain}${shortLink}`;
-    }
-
-    if (postId) {
-        const userPath = normalizeTikTokUsernamePath(username);
-        return `https://www.tiktok.com/${userPath}/video/${postId}`;
+        return `${fallbackShortDomain}${shortLink}`;
     }
 
     return "";
@@ -506,25 +543,37 @@ export default async function(obj) {
     let username = obj.username || obj.user;
 
     if (!postId) {
-        let html = await fetch(`${shortDomain}${obj.shortLink}`, {
+        const shortLinkUrl = buildTikTokShortLinkUrl(obj);
+        const response = await fetch(shortLinkUrl, {
             redirect: "manual",
             headers: {
                 "user-agent": genericUserAgent.split(' Chrome/1')[0]
             }
-        }).then(r => r.text()).catch(() => {});
+        }).catch(() => {});
 
-        if (!html) {
+        if (!response) {
             const ytDlp = await fallbackToYtDlp(obj, "short_link_fetch_fail");
             return ytDlp || { error: "fetch.fail" };
         }
 
-        if (html.startsWith('<a href="https://')) {
-            const extractedURL = html.split('<a href="')[1].split('?')[0];
-            const { host, patternMatch } = extract(normalizeURL(extractedURL));
-            if (host === "tiktok") {
-                postId = patternMatch?.postId;
-                username = patternMatch?.user || username;
+        let resolvedUrl = response.headers?.get?.("location");
+        if (resolvedUrl) {
+            try {
+                resolvedUrl = new URL(resolvedUrl, shortLinkUrl).toString();
+            } catch {
+                // Leave the target unchanged; extraction below will reject it safely.
             }
+        } else {
+            const html = await response.text().catch(() => "");
+            if (html.startsWith('<a href="https://')) {
+                resolvedUrl = html.split('<a href="')[1].split('"')[0];
+            }
+        }
+
+        const resolved = extractTikTokPostFromUrl(resolvedUrl);
+        if (resolved.postId) {
+            postId = resolved.postId;
+            username = resolved.username || username;
         }
     }
     if (!postId) {

@@ -190,6 +190,35 @@ const extractTikTokPostFromUrl = (value) => {
     return {};
 };
 
+export const getTikTokOriginalShareUrl = (value) => {
+    if (typeof value !== "string") return "";
+
+    try {
+        const parsed = new URL(value);
+        const hostname = parsed.hostname.toLowerCase();
+        if (
+            parsed.protocol !== "https:"
+            || !(hostname === "tiktok.com" || hostname.endsWith(".tiktok.com"))
+            || !/\/(?:video|photo)\/\d+/.test(parsed.pathname)
+        ) {
+            return "";
+        }
+
+        const shareContextKeys = [
+            "_d",
+            "checksum",
+            "sec_user_id",
+            "share_link_id",
+            "timestamp",
+        ];
+        return shareContextKeys.some((key) => parsed.searchParams.has(key))
+            ? parsed.toString()
+            : "";
+    } catch {
+        return "";
+    }
+};
+
 const toSeconds = (value) => {
     if (value == null) return undefined;
 
@@ -491,15 +520,17 @@ const fallbackToDirectProviders = async (obj, reason) => {
     return null;
 };
 
-const fallbackToYtDlp = async (obj, reason) => {
+const fallbackToYtDlp = async (obj, reason, { useOriginalShareUrl = false } = {}) => {
     if (obj.isAudioOnly || obj.isAudioMuted) return null;
 
-    const url = buildTikTokCanonicalUrl({
-        postId: obj.postId,
-        username: obj.username || obj.user,
-        shortLink: obj.shortLink,
-        url: obj.url,
-    });
+    const url = useOriginalShareUrl
+        ? getTikTokOriginalShareUrl(obj.url)
+        : buildTikTokCanonicalUrl({
+            postId: obj.postId,
+            username: obj.username || obj.user,
+            shortLink: obj.shortLink,
+            url: obj.url,
+        });
 
     if (!url) return null;
 
@@ -583,6 +614,18 @@ export default async function(obj) {
 
     obj.postId = postId;
     obj.username = username;
+
+    // TikTok share parameters can carry the request context that yt-dlp needs
+    // to avoid an otherwise slow or blocked canonical-page extraction. Keep
+    // the original URL intact for this targeted fast path.
+    if (getTikTokOriginalShareUrl(obj.url)) {
+        const ytDlp = await fallbackToYtDlp(
+            obj,
+            "original_share_url",
+            { useOriginalShareUrl: true },
+        );
+        if (ytDlp) return ytDlp;
+    }
 
     const directProvider = await fallbackToDirectProviders(obj, "primary");
     if (directProvider) return directProvider;

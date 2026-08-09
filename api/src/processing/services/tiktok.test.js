@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import tiktok, { buildTikTokShortLinkUrl } from "./tiktok.js";
+import tiktok, {
+    buildTikTokShortLinkUrl,
+    getTikTokOriginalShareUrl,
+} from "./tiktok.js";
 
 test("preserves the original TikTok short-link domain", () => {
     assert.equal(
@@ -20,6 +23,26 @@ test("falls back to the legacy vt domain without a valid source URL", () => {
             shortLink: "abc123",
         }),
         "https://vt.tiktok.com/abc123",
+    );
+});
+
+test("preserves a parameterized TikTok share URL for yt-dlp", () => {
+    const url = "https://www.tiktok.com/@creator/video/7667533730919009569?checksum=abc&sec_user_id=user123";
+    assert.equal(getTikTokOriginalShareUrl(url), url);
+});
+
+test("does not enable the yt-dlp fast path for ordinary canonical URLs", () => {
+    assert.equal(
+        getTikTokOriginalShareUrl(
+            "https://www.tiktok.com/@creator/video/7667533730919009569",
+        ),
+        "",
+    );
+    assert.equal(
+        getTikTokOriginalShareUrl(
+            "https://example.com/@creator/video/7667533730919009569?checksum=abc",
+        ),
+        "",
     );
 });
 

@@ -23,5 +23,9 @@
     "heading.responsibility": "사용자 책임",
     "heading.abuse": "악용 신고",
     "heading.motivation": "동기",
-    "heading.testers": "베타 테스터"
+    "heading.testers": "베타 테스터",
+    "page.refund": "환불 정책",
+    "page.copyright": "저작권 정책",
+    "page.dmca": "DMCA 정책",
+    "page.contact": "문의하기"
 }

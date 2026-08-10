@@ -23,5 +23,9 @@
     "heading.responsibility": "ユーザーの責任",
     "heading.abuse": "不正利用の報告",
     "heading.motivation": "モチベーション",
-    "heading.testers": "ベータテスター"
+    "heading.testers": "ベータテスター",
+    "page.refund": "返金ポリシー",
+    "page.copyright": "著作権ポリシー",
+    "page.dmca": "DMCAポリシー",
+    "page.contact": "お問い合わせ"
 }

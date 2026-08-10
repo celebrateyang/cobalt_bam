@@ -23,5 +23,9 @@
     "heading.responsibility": "responsabilidades del usuario",
     "heading.abuse": "reportar abuso",
     "heading.motivation": "motivación",
-    "heading.testers": "probadores beta"
+    "heading.testers": "probadores beta",
+    "page.refund": "política de reembolso",
+    "page.copyright": "política de derechos de autor",
+    "page.dmca": "política de la DMCA",
+    "page.contact": "contacto"
 }

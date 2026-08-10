@@ -14,7 +14,11 @@ const lastModified = {
     seoPages: '2026-08-08',
 };
 
-const languageHubPages = ['', 'download'];
+// Google classifies the generic non-EN/ZH home and download-directory routes as
+// soft 404s. They remain available in the product UI, but do not provide enough
+// distinct search value to submit as canonical sitemap entries.
+const sitemapHubLanguages = ['en', 'zh'];
+const languageHubPages = [''];
 const englishSupportPages = ['guide', 'faq'];
 
 const escapeXml = (value: string): string =>
@@ -64,8 +68,6 @@ const urlEntry = (
 function generateSitemap(): string {
     const urls: string[] = [];
 
-    urls.push(urlEntry(`${site}/`, lastModified.site, 'daily', '1.0'));
-
     urls.push(urlEntry(`${site}/en/learn`, lastModified.seoPages, 'weekly', '0.8'));
     for (const slug of learnSlugs) {
         const article = getLearnPage(slug);
@@ -79,7 +81,7 @@ function generateSitemap(): string {
         );
     }
 
-    for (const lang of languages) {
+    for (const lang of sitemapHubLanguages) {
         for (const page of languageHubPages) {
             const path = page ? `/${lang}/${page}` : `/${lang}`;
             const priority = page === '' ? '1.0' : '0.8';

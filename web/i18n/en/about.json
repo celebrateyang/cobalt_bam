@@ -23,5 +23,9 @@
     "heading.responsibility": "user responsibilities",
     "heading.abuse": "reporting abuse",
     "heading.motivation": "motivation",
-    "heading.testers": "beta testers"
+    "heading.testers": "beta testers",
+    "page.refund": "refund policy",
+    "page.copyright": "copyright policy",
+    "page.dmca": "DMCA policy",
+    "page.contact": "contact us"
 }

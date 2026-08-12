@@ -1,12 +1,12 @@
 import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { nanoid } from "nanoid";
-import { WebhookVerificationError, validateEvent } from "@polar-sh/sdk/webhooks";
 
 import { upsertUserFromClerk } from "../db/users.js";
 import {
     createCreditOrder,
     getCreditOrderById,
+    getCreditOrderByOutTradeNo,
     markCreditOrderPaid,
     updateCreditOrderProviderData,
 } from "../db/credit-orders.js";
@@ -26,13 +26,19 @@ import {
 } from "../payments/wechatpay.js";
 
 import {
-    PolarRequestError,
-    createPolarCheckoutSession,
-    getPolarCheckoutSession,
-    getPolarWebhookSecret,
-    isPolarCheckoutConfigured,
-    isPolarWebhookConfigured,
-} from "../payments/polar.js";
+    PayPalRequestError,
+    capturePayPalOrder,
+    createPayPalOrder,
+    getCompletedPayPalCapture,
+    getPayPalClientId,
+    getPayPalEnvironment,
+    getPayPalOrder,
+    getPayPalSdkUrl,
+    isPayPalCheckoutConfigured,
+    isPayPalWebhookConfigured,
+    parsePayPalAmount,
+    verifyPayPalWebhookSignature,
+} from "../payments/paypal.js";
 
 const router = express.Router();
 
@@ -105,58 +111,48 @@ const WECHAT_CREDIT_PRODUCTS = [
     },
 ];
 
-const POLAR_CREDIT_PRODUCTS = [
+const PAYPAL_CREDIT_PRODUCTS = [
     {
-        key: "polar_usd_199",
+        key: "paypal_usd_199",
         points: 600,
         amountFen: 199,
         currency: "USD",
         unitPriceFen: 0.332,
-        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_199",
-        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_199 || "").trim(),
     },
     {
-        key: "polar_usd_499",
+        key: "paypal_usd_499",
         points: 2000,
         amountFen: 499,
         currency: "USD",
         unitPriceFen: 0.25,
-        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_499",
-        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_499 || "").trim(),
     },
     {
-        key: "polar_usd_999",
+        key: "paypal_usd_999",
         points: 5000,
         amountFen: 999,
         currency: "USD",
         unitPriceFen: 0.2,
-        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_999",
-        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_999 || "").trim(),
     },
     {
-        key: "polar_usd_1999",
+        key: "paypal_usd_1999",
         points: 12000,
         amountFen: 1999,
         currency: "USD",
         unitPriceFen: 0.167,
-        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_1999",
-        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_1999 || "").trim(),
     },
     {
-        key: "polar_usd_4999",
+        key: "paypal_usd_4999",
         points: 35000,
         amountFen: 4999,
         currency: "USD",
         unitPriceFen: 0.143,
-        polarProductIdEnvKey: "POLAR_PRODUCT_ID_USD_4999",
-        polarProductId: String(process.env.POLAR_PRODUCT_ID_USD_4999 || "").trim(),
     },
 ];
 
 const getWechatProductByKey = (key) =>
     WECHAT_CREDIT_PRODUCTS.find((p) => p.key === key);
-const getPolarProductByKey = (key) =>
-    POLAR_CREDIT_PRODUCTS.find((p) => p.key === key);
+const getPayPalProductByKey = (key) =>
+    PAYPAL_CREDIT_PRODUCTS.find((p) => p.key === key);
 const getWechatMembershipProductByKey = (key) =>
     WECHAT_MEMBERSHIP_PRODUCTS.find((p) => p.key === key);
 
@@ -222,21 +218,22 @@ const normalizeProvider = (rawProvider, fallback = "wechat") => {
     const normalized = String(rawProvider || "")
         .trim()
         .toLowerCase();
-    if (normalized === "wechat" || normalized === "polar") {
+    if (["wechat", "paypal"].includes(normalized)) {
         return normalized;
     }
     return fallback;
 };
 
 const buildPublicProducts = (provider) => {
-    if (provider === "polar") {
-        return POLAR_CREDIT_PRODUCTS.map((product) => ({
+    if (provider === "paypal") {
+        const enabled = isPayPalCheckoutConfigured();
+        return PAYPAL_CREDIT_PRODUCTS.map((product) => ({
             key: product.key,
             points: product.points,
             unitPriceFen: product.unitPriceFen,
             amountFen: product.amountFen,
             currency: product.currency,
-            enabled: !!product.polarProductId,
+            enabled,
         }));
     }
 
@@ -265,90 +262,6 @@ const buildPublicMembershipProducts = (provider) => {
     }));
 };
 
-const resolveRequestOrigin = (req) => {
-    const xForwardedProto = req.header("x-forwarded-proto");
-    const xForwardedHost = req.header("x-forwarded-host");
-    const proto = (xForwardedProto || req.protocol || "https")
-        .split(",")[0]
-        .trim();
-    const host = (xForwardedHost || req.get("host") || "")
-        .split(",")[0]
-        .trim();
-    if (!host) return null;
-    return `${proto}://${host}`;
-};
-
-const parseHttpOrigin = (value) => {
-    if (typeof value !== "string" || !value.trim()) return null;
-
-    try {
-        const url = new URL(value);
-        if (url.protocol !== "https:" && url.protocol !== "http:") {
-            return null;
-        }
-        return url.origin;
-    } catch {
-        return null;
-    }
-};
-
-const resolveAllowedRedirectOrigins = (req) => {
-    const origins = new Set();
-    const addOrigin = (value) => {
-        const origin = parseHttpOrigin(value);
-        if (origin) {
-            origins.add(origin);
-        }
-    };
-
-    addOrigin(resolveRequestOrigin(req));
-    addOrigin(req.header("origin"));
-    addOrigin(req.header("referer"));
-
-    const fromEnv = String(
-        process.env.PAYMENTS_ALLOWED_REDIRECT_ORIGINS ||
-            process.env.WEB_ORIGIN ||
-            process.env.WEB_URL ||
-            "",
-    )
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-    for (const candidate of fromEnv) {
-        addOrigin(candidate);
-    }
-
-    return origins;
-};
-
-const normalizeRedirectUrl = (value, allowedOrigins) => {
-    if (typeof value !== "string" || !value.trim()) return null;
-
-    try {
-        const url = new URL(value);
-        if (url.protocol !== "https:" && url.protocol !== "http:") {
-            return null;
-        }
-        if (allowedOrigins?.size > 0 && !allowedOrigins.has(url.origin)) {
-            return null;
-        }
-        return url.toString();
-    } catch {
-        return null;
-    }
-};
-
-const appendQueryParams = (rawUrl, params) => {
-    const url = new URL(rawUrl);
-    for (const [key, value] of Object.entries(params || {})) {
-        if (typeof value === "string" && value) {
-            url.searchParams.set(key, value);
-        }
-    }
-    return url.toString();
-};
-
 const toHeaderRecord = (headers) => {
     const record = {};
     for (const [key, value] of Object.entries(headers || {})) {
@@ -361,32 +274,71 @@ const toHeaderRecord = (headers) => {
     return record;
 };
 
-const firstFiniteNumber = (...values) => {
-    for (const value of values) {
-        const parsed = Number(value);
-        if (Number.isFinite(parsed)) {
-            return parsed;
-        }
-    }
-    return Number.NaN;
+const resolvePayPalOrderIdFromEvent = (event) => {
+    const resource = event?.resource || {};
+    return String(
+        resource?.supplementary_data?.related_ids?.order_id ||
+            resource?.id ||
+            "",
+    ).trim();
 };
 
-const isPolarCustomerEmailValidationError = (error) => {
-    if (!(error instanceof PolarRequestError)) {
-        return false;
+const resolveOutTradeNoFromPayPalOrder = (paypalOrder) => {
+    const purchaseUnits = Array.isArray(paypalOrder?.purchase_units)
+        ? paypalOrder.purchase_units
+        : [];
+    return String(
+        purchaseUnits.find((unit) => unit?.custom_id)?.custom_id || "",
+    ).trim();
+};
+
+const markPayPalOrderPaidFromOrder = async ({
+    paypalOrder,
+    expectedOrder = null,
+    rawNotify,
+}) => {
+    const completed = getCompletedPayPalCapture(paypalOrder);
+    if (!completed?.outTradeNo || !completed?.capture) {
+        return { ok: false, code: "PAYPAL_CAPTURE_NOT_COMPLETED" };
     }
 
-    const details = error?.data?.detail;
-    if (!Array.isArray(details)) {
-        return false;
+    const order =
+        expectedOrder ||
+        (await getCreditOrderByOutTradeNo(completed.outTradeNo));
+    if (!order || order.out_trade_no !== completed.outTradeNo) {
+        return { ok: false, code: "ORDER_NOT_FOUND" };
+    }
+    if (order.provider !== "paypal") {
+        return { ok: false, code: "PROVIDER_MISMATCH", order };
     }
 
-    return details.some((item) => {
-        const locParts = Array.isArray(item?.loc)
-            ? item.loc.map((part) => String(part || "").toLowerCase())
-            : [];
-        const msg = String(item?.msg || "").toLowerCase();
-        return locParts.includes("customer_email") || msg.includes("email");
+    const paypalOrderId = String(paypalOrder?.id || "").trim();
+    const storedPayPalOrderId = String(
+        order?.provider_data?.paypal_order_id || "",
+    ).trim();
+    if (!paypalOrderId || storedPayPalOrderId !== paypalOrderId) {
+        return { ok: false, code: "PAYPAL_ORDER_MISMATCH", order };
+    }
+
+    const captureAmount = completed.capture?.amount || {};
+    const totalFen = parsePayPalAmount(captureAmount?.value);
+    const currency = String(captureAmount?.currency_code || "").toUpperCase();
+    if (!Number.isFinite(totalFen) || totalFen !== Number(order.amount_fen)) {
+        return { ok: false, code: "AMOUNT_MISMATCH", order };
+    }
+    if (currency !== String(order.currency || "").toUpperCase()) {
+        return { ok: false, code: "CURRENCY_MISMATCH", order };
+    }
+
+    const parsedPaidAt = completed.capture?.update_time
+        ? Date.parse(completed.capture.update_time)
+        : Number.NaN;
+    return await markCreditOrderPaid({
+        outTradeNo: order.out_trade_no,
+        providerTransactionId: String(completed.capture.id || paypalOrderId),
+        paidAt: Number.isFinite(parsedPaidAt) ? parsedPaidAt : Date.now(),
+        rawNotify,
+        totalFen,
     });
 };
 
@@ -556,97 +508,102 @@ router.post("/wechat/notify", async (req, res) => {
     }
 });
 
-router.post("/polar/webhook", async (req, res) => {
+router.post("/paypal/webhook", async (req, res) => {
     try {
-        if (!isPolarWebhookConfigured()) {
-            return res.status(500).json({
-                code: "FAIL",
-                message: "Polar webhook is not configured",
-            });
+        if (!isPayPalWebhookConfigured()) {
+            return jsonError(
+                res,
+                500,
+                "PAYPAL_WEBHOOK_NOT_CONFIGURED",
+                "PayPal webhook is not configured",
+            );
         }
 
-        const headers = toHeaderRecord(req.headers);
         const rawBody = req.rawBody || JSON.stringify(req.body || {});
-        const event = validateEvent(rawBody, headers, getPolarWebhookSecret());
-
-        if (event?.type !== "order.paid") {
-            return res.status(200).json({
-                code: "SUCCESS",
-                message: "ignored",
-            });
+        const event = JSON.parse(rawBody);
+        const headers = toHeaderRecord(req.headers);
+        const verified = await verifyPayPalWebhookSignature({ headers, event });
+        if (!verified) {
+            console.error("PayPal webhook signature invalid");
+            return jsonError(res, 403, "INVALID_SIGNATURE", "invalid signature");
         }
 
-        const payload = event?.data || {};
-        const metadata = payload?.metadata || {};
-        const outTradeNo =
-            typeof metadata?.out_trade_no === "string"
-                ? metadata.out_trade_no.trim()
-                : "";
-
-        const totalFen = firstFiniteNumber(
-            payload?.amount,
-            payload?.total_amount,
-            payload?.checkout?.amount,
-            payload?.checkout?.total_amount,
-        );
-        const providerTransactionId =
-            typeof payload?.id === "string" ? payload.id : null;
-        const parsedPaidAt = payload?.modified_at
-            ? Date.parse(payload.modified_at)
-            : Number.NaN;
-        const paidAt = Number.isFinite(parsedPaidAt) ? parsedPaidAt : Date.now();
-
-        if (!outTradeNo || !Number.isFinite(totalFen)) {
-            console.error("Polar webhook missing out_trade_no or amount", {
-                outTradeNo,
-                amount: payload?.amount,
-                total_amount: payload?.total_amount,
-            });
-            return res.status(200).json({
-                code: "SUCCESS",
-                message: "ignored",
-            });
+        const supportedEventTypes = new Set([
+            "CHECKOUT.ORDER.APPROVED",
+            "PAYMENT.CAPTURE.COMPLETED",
+        ]);
+        if (!supportedEventTypes.has(event?.event_type)) {
+            return res.status(200).json({ code: "SUCCESS", message: "ignored" });
         }
 
-        const result = await markCreditOrderPaid({
-            outTradeNo,
-            providerTransactionId,
-            paidAt,
+        const paypalOrderId = resolvePayPalOrderIdFromEvent(event);
+        if (!paypalOrderId) {
+            console.error("PayPal webhook missing related order id", {
+                eventId: event?.id,
+            });
+            return res.status(200).json({ code: "SUCCESS", message: "ignored" });
+        }
+
+        let paypalOrder = await getPayPalOrder(paypalOrderId);
+        let expectedOrder = null;
+        if (event.event_type === "CHECKOUT.ORDER.APPROVED") {
+            const outTradeNo = resolveOutTradeNoFromPayPalOrder(paypalOrder);
+            expectedOrder = outTradeNo
+                ? await getCreditOrderByOutTradeNo(outTradeNo)
+                : null;
+            const storedPayPalOrderId = String(
+                expectedOrder?.provider_data?.paypal_order_id || "",
+            ).trim();
+            if (
+                !expectedOrder ||
+                expectedOrder.provider !== "paypal" ||
+                storedPayPalOrderId !== paypalOrderId
+            ) {
+                console.error("PayPal approved webhook order mismatch", {
+                    eventId: event?.id,
+                    paypalOrderId,
+                    outTradeNo,
+                });
+                return res
+                    .status(200)
+                    .json({ code: "SUCCESS", message: "ignored" });
+            }
+
+            try {
+                paypalOrder = await capturePayPalOrder({
+                    paypalOrderId,
+                    outTradeNo,
+                });
+            } catch (error) {
+                if (!(error instanceof PayPalRequestError)) throw error;
+                paypalOrder = await getPayPalOrder(paypalOrderId);
+            }
+        }
+        const result = await markPayPalOrderPaidFromOrder({
+            paypalOrder,
+            expectedOrder,
             rawNotify: {
-                source: "polar_webhook",
-                headers,
+                source: "paypal_webhook",
                 event,
             },
-            totalFen,
         });
-
-        if (!result.ok && result.code === "ORDER_NOT_FOUND") {
-            console.error("Polar webhook order not found", { outTradeNo });
-        } else if (!result.ok && result.code === "AMOUNT_MISMATCH") {
-            console.error("Polar webhook amount mismatch", {
-                outTradeNo,
-                totalFen,
+        if (!result.ok) {
+            console.error("PayPal webhook could not credit order", {
+                eventId: event?.id,
+                paypalOrderId,
+                code: result.code,
             });
         }
 
-        return res.status(200).json({
-            code: "SUCCESS",
-            message: "OK",
-        });
+        return res.status(200).json({ code: "SUCCESS", message: "OK" });
     } catch (error) {
-        if (error instanceof WebhookVerificationError) {
-            console.error("Polar webhook signature invalid");
-            return res.status(403).json({
-                code: "FAIL",
-                message: "invalid signature",
-            });
-        }
-
-        console.error("POST /payments/polar/webhook error:", error);
-        return res.status(500).json({
-            code: "FAIL",
-            message: "server error",
+        console.error("POST /payments/paypal/webhook error:", {
+            name: error?.name,
+            message: error?.message,
+            status: error?.status,
+            debugId: error?.debugId,
         });
+        return jsonError(res, 500, "SERVER_ERROR", "server error");
     }
 });
 
@@ -660,7 +617,25 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post("/credits/polar/checkout", (_, res) => {
+    router.post("/credits/paypal/config", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
+    router.post("/credits/paypal/orders", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
+    router.post("/credits/paypal/orders/:id/capture", (_, res) => {
         return jsonError(
             res,
             501,
@@ -697,6 +672,234 @@ if (!isClerkAuthConfigured) {
     });
 } else {
     router.use(clerkMiddleware());
+
+    router.post("/credits/paypal/config", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isPayPalCheckoutConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "PAYPAL_NOT_CONFIGURED",
+                    "PayPal is not configured on this server",
+                );
+            }
+
+            return res.json({
+                status: "success",
+                data: {
+                    clientId: getPayPalClientId(),
+                    environment: getPayPalEnvironment(),
+                    sdkUrl: getPayPalSdkUrl(),
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/credits/paypal/config error:", {
+                name: error?.name,
+                message: error?.message,
+                status: error?.status,
+                debugId: error?.debugId,
+            });
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CONFIG_FAILED",
+                "Failed to initialize PayPal checkout",
+            );
+        }
+    });
+
+    router.post("/credits/paypal/orders", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isPayPalCheckoutConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "PAYPAL_NOT_CONFIGURED",
+                    "PayPal is not configured on this server",
+                );
+            }
+
+            const product = getPayPalProductByKey(req.body?.productKey);
+            if (!product) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid credit product",
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const outTradeNo = `cpt_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            const createdOrder = await createCreditOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "paypal",
+                productKey: product.key,
+                points: product.points,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+                providerData: attribution ? { attribution } : null,
+            });
+
+            const paypalOrder = await createPayPalOrder({
+                outTradeNo,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                points: product.points,
+            });
+            if (typeof paypalOrder?.id !== "string" || !paypalOrder.id) {
+                return jsonError(
+                    res,
+                    502,
+                    "PAYPAL_INVALID_RESPONSE",
+                    "PayPal order response missing id",
+                );
+            }
+
+            const order = await updateCreditOrderProviderData(createdOrder.id, {
+                paypal_order_id: paypalOrder.id,
+                paypal_status: paypalOrder.status || "CREATED",
+            });
+            return res.json({
+                status: "success",
+                data: {
+                    order,
+                    paypal: {
+                        orderId: paypalOrder.id,
+                        status: paypalOrder.status,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/credits/paypal/orders error:", {
+                name: error?.name,
+                message: error?.message,
+                status: error?.status,
+                debugId: error?.debugId,
+            });
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CREATE_ORDER_FAILED",
+                "Failed to create PayPal order",
+            );
+        }
+    });
+
+    router.post("/credits/paypal/orders/:id/capture", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isPayPalCheckoutConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "PAYPAL_NOT_CONFIGURED",
+                    "PayPal is not configured on this server",
+                );
+            }
+
+            const id = Number.parseInt(req.params.id, 10);
+            if (!Number.isFinite(id) || id <= 0) {
+                return jsonError(res, 400, "INVALID_ID", "Invalid order id");
+            }
+            const order = await getCreditOrderById(id);
+            if (!order || order.clerk_user_id !== auth.userId) {
+                return jsonError(res, 404, "NOT_FOUND", "Order not found");
+            }
+            if (order.provider !== "paypal") {
+                return jsonError(
+                    res,
+                    409,
+                    "PROVIDER_MISMATCH",
+                    "Order is not a PayPal order",
+                );
+            }
+
+            const storedPayPalOrderId = String(
+                order?.provider_data?.paypal_order_id || "",
+            ).trim();
+            const approvedPayPalOrderId = String(req.body?.paypalOrderId || "").trim();
+            if (
+                !storedPayPalOrderId ||
+                !approvedPayPalOrderId ||
+                storedPayPalOrderId !== approvedPayPalOrderId
+            ) {
+                return jsonError(
+                    res,
+                    409,
+                    "PAYPAL_ORDER_MISMATCH",
+                    "PayPal order does not match local order",
+                );
+            }
+
+            let paypalOrder;
+            try {
+                paypalOrder = await capturePayPalOrder({
+                    paypalOrderId: storedPayPalOrderId,
+                    outTradeNo: order.out_trade_no,
+                });
+            } catch (error) {
+                if (!(error instanceof PayPalRequestError)) throw error;
+                paypalOrder = await getPayPalOrder(storedPayPalOrderId);
+            }
+
+            const result = await markPayPalOrderPaidFromOrder({
+                paypalOrder,
+                expectedOrder: order,
+                rawNotify: {
+                    source: "paypal_capture",
+                    paypalOrder,
+                },
+            });
+            if (!result.ok) {
+                return jsonError(
+                    res,
+                    409,
+                    result.code || "PAYPAL_CAPTURE_NOT_COMPLETED",
+                    "PayPal payment is not completed",
+                );
+            }
+
+            return res.json({
+                status: "success",
+                data: {
+                    order: result.order,
+                    paypal: {
+                        orderId: storedPayPalOrderId,
+                        status: paypalOrder?.status,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/credits/paypal/orders/:id/capture error:", {
+                name: error?.name,
+                message: error?.message,
+                status: error?.status,
+                debugId: error?.debugId,
+            });
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CAPTURE_FAILED",
+                "Failed to capture PayPal order",
+            );
+        }
+    });
 
     router.post("/credits/wechat/native", async (req, res) => {
         try {
@@ -869,163 +1072,6 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.post("/credits/polar/checkout", async (req, res) => {
-        try {
-            const auth = getAuth(req);
-            if (!auth.userId) {
-                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
-            }
-
-            if (!isPolarCheckoutConfigured()) {
-                return jsonError(
-                    res,
-                    501,
-                    "POLAR_NOT_CONFIGURED",
-                    "Polar is not configured on this server",
-                );
-            }
-
-            const productKey = req.body?.productKey;
-            const product = getPolarProductByKey(productKey);
-            if (!product) {
-                return jsonError(
-                    res,
-                    400,
-                    "INVALID_PRODUCT",
-                    "Invalid credit product",
-                );
-            }
-
-            if (!product.polarProductId) {
-                return jsonError(
-                    res,
-                    501,
-                    "POLAR_PRODUCT_NOT_CONFIGURED",
-                    `${product.polarProductIdEnvKey} is missing`,
-                );
-            }
-
-            const allowedRedirectOrigins = resolveAllowedRedirectOrigins(req);
-            const successUrl = normalizeRedirectUrl(
-                req.body?.successUrl,
-                allowedRedirectOrigins,
-            );
-            const returnUrl =
-                normalizeRedirectUrl(req.body?.returnUrl, allowedRedirectOrigins) ||
-                successUrl;
-
-            if (!successUrl || !returnUrl) {
-                return jsonError(
-                    res,
-                    400,
-                    "INVALID_REDIRECT_URL",
-                    "Invalid success/return URL",
-                );
-            }
-
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
-
-            const outTradeNo = `cpt_${nanoid(20)}`;
-            const createdOrder = await createCreditOrder({
-                userId: user.id,
-                clerkUserId: user.clerk_user_id,
-                provider: "polar",
-                productKey: product.key,
-                points: product.points,
-                amountFen: product.amountFen,
-                currency: product.currency,
-                outTradeNo,
-            });
-
-            const checkoutSuccessUrl = appendQueryParams(successUrl, {
-                polarOrderId: String(createdOrder.id),
-                polarResult: "success",
-            });
-            const checkoutReturnUrl = appendQueryParams(returnUrl, {
-                polarOrderId: String(createdOrder.id),
-                polarResult: "return",
-            });
-
-            const normalizedCustomerEmail =
-                typeof user.primary_email === "string"
-                    ? user.primary_email.trim()
-                    : "";
-            const checkoutPayload = {
-                productId: product.polarProductId,
-                successUrl: checkoutSuccessUrl,
-                returnUrl: checkoutReturnUrl,
-                externalCustomerId: user.clerk_user_id,
-                customerEmail: normalizedCustomerEmail || undefined,
-                customerName: user.full_name || undefined,
-                metadata: {
-                    out_trade_no: outTradeNo,
-                    credit_order_id: String(createdOrder.id),
-                    product_key: product.key,
-                    clerk_user_id: user.clerk_user_id,
-                },
-            };
-
-            let checkout;
-            try {
-                checkout = await createPolarCheckoutSession(checkoutPayload);
-            } catch (error) {
-                if (isPolarCustomerEmailValidationError(error)) {
-                    console.warn(
-                        "Polar checkout rejected customer_email, retrying without email",
-                        {
-                            orderId: createdOrder.id,
-                            clerkUserId: user.clerk_user_id,
-                        },
-                    );
-                    checkout = await createPolarCheckoutSession({
-                        ...checkoutPayload,
-                        customerEmail: undefined,
-                    });
-                } else {
-                    throw error;
-                }
-            }
-
-            const checkoutUrl =
-                typeof checkout?.url === "string" ? checkout.url : null;
-            const checkoutId = typeof checkout?.id === "string" ? checkout.id : null;
-            if (!checkoutUrl || !checkoutId) {
-                return jsonError(
-                    res,
-                    500,
-                    "POLAR_INVALID_RESPONSE",
-                    "Polar checkout response missing id or url",
-                );
-            }
-
-            const order = await updateCreditOrderProviderData(createdOrder.id, {
-                checkout_id: checkoutId,
-                checkout_url: checkoutUrl,
-                product_id: product.polarProductId,
-            });
-
-            return res.json({
-                status: "success",
-                data: {
-                    order,
-                    polar: {
-                        checkoutId,
-                        checkoutUrl,
-                    },
-                },
-            });
-        } catch (error) {
-            console.error("POST /payments/credits/polar/checkout error:", error);
-            return jsonError(
-                res,
-                500,
-                "SERVER_ERROR",
-                "Failed to create payment",
-            );
-        }
-    });
-
     router.get("/credits/orders/:id", async (req, res) => {
         try {
             const auth = getAuth(req);
@@ -1113,57 +1159,31 @@ if (!isClerkAuthConfigured) {
 
             if (
                 shouldSync &&
-                order.provider === "polar" &&
+                order.provider === "paypal" &&
                 order.status !== "PAID" &&
-                isPolarCheckoutConfigured()
+                isPayPalCheckoutConfigured()
             ) {
                 try {
-                    const checkoutId = order?.provider_data?.checkout_id;
-                    if (typeof checkoutId === "string" && checkoutId.trim()) {
-                        const checkout = await getPolarCheckoutSession(checkoutId);
-                        const checkoutStatus = String(checkout?.status || "")
-                            .trim()
-                            .toLowerCase();
-                        const paidStatuses = new Set([
-                            "succeeded",
-                            "completed",
-                            "confirmed",
-                        ]);
-
-                        if (paidStatuses.has(checkoutStatus)) {
-                            const totalFenRaw = firstFiniteNumber(
-                                checkout?.amount,
-                                checkout?.total_amount,
-                            );
-                            const totalFen = Number.isFinite(totalFenRaw)
-                                ? totalFenRaw
-                                : order.amount_fen;
-                            const paidAtRaw = checkout?.modified_at
-                                ? Date.parse(checkout.modified_at)
-                                : Number.NaN;
-                            const paidAt = Number.isFinite(paidAtRaw)
-                                ? paidAtRaw
-                                : Date.now();
-
-                            const result = await markCreditOrderPaid({
-                                outTradeNo: order.out_trade_no,
-                                providerTransactionId:
-                                    checkout?.order_id || checkoutId,
-                                paidAt,
-                                rawNotify: {
-                                    source: "polar_checkout_sync",
-                                    checkout,
-                                },
-                                totalFen,
-                            });
-                            if (result?.order) {
-                                resolvedOrder = result.order;
-                            }
+                    const paypalOrderId = String(
+                        order?.provider_data?.paypal_order_id || "",
+                    ).trim();
+                    if (paypalOrderId) {
+                        const paypalOrder = await getPayPalOrder(paypalOrderId);
+                        const result = await markPayPalOrderPaidFromOrder({
+                            paypalOrder,
+                            expectedOrder: order,
+                            rawNotify: {
+                                source: "paypal_order_sync",
+                                paypalOrder,
+                            },
+                        });
+                        if (result?.order) {
+                            resolvedOrder = result.order;
                         }
                     }
                 } catch (error) {
                     console.error(
-                        "Polar sync order status failed:",
+                        "PayPal sync order status failed:",
                         order?.out_trade_no,
                         error,
                     );

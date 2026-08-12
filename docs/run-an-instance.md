@@ -50,17 +50,37 @@ requirements:
 
 if you're running outside Docker and want YouTube or the generic fallback extractor to work reliably, install `yt-dlp` and make sure it's available in `PATH`. if it's installed somewhere custom, set `YTDLP_BIN` to the executable path.
 
-### optional: Polar credits checkout
-if you want to enable international card / wallet checkout with Polar, set these env vars on the API:
+### optional: PayPal credits checkout
 
-- `POLAR_ACCESS_TOKEN`
-- `POLAR_WEBHOOK_SECRET`
-- `POLAR_SERVER` (`production` or `sandbox`)
-- `POLAR_PRODUCT_ID_USD_199`
-- `POLAR_PRODUCT_ID_USD_499`
-- `POLAR_PRODUCT_ID_USD_999`
-- `POLAR_PRODUCT_ID_USD_1999`
-- `POLAR_PRODUCT_ID_USD_4999`
+PayPal provides international checkout with one-time USD credit orders.
+Configure the API with credentials from the same PayPal REST app and environment:
+
+- `PAYPAL_ENV` (`sandbox` or `live`)
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_WEBHOOK_ID`
+
+The webhook listener URL is:
+
+```text
+https://<api-host>/payments/paypal/webhook
+```
+
+For the FreeSaveVideo production API, use:
+
+```text
+https://api.freesavevideo.online/payments/paypal/webhook
+```
+
+For local end-to-end sandbox testing through the `api2` Cloudflare tunnel, use:
+
+```text
+https://api2.freesavevideo.online/payments/paypal/webhook
+```
+
+The browser receives the public PayPal client ID used to initialize Web SDK v6.
+Never expose `PAYPAL_CLIENT_SECRET` in the frontend or commit it to source control.
+Sandbox and live credentials and webhook IDs are separate and must not be mixed.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):

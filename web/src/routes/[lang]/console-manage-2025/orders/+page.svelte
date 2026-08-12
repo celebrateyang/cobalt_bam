@@ -238,7 +238,6 @@
                 >
                     <option value="">全部</option>
                     <option value="wechat">wechat</option>
-                    <option value="polar">polar</option>
                 </select>
             </label>
         </div>

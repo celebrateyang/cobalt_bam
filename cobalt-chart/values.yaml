@@ -162,21 +162,15 @@ wechatpay:
   privateKeyFile: apiclient_key.pem
   notifyUrl: "https://api.freesavevideo.online/payments/wechat/notify"
 
-# Polar checkout - Credits top-up
-# Create a Kubernetes Secret containing:
-# - POLAR_ACCESS_TOKEN
-# - POLAR_WEBHOOK_SECRET
-# - POLAR_PRODUCT_ID_USD_199
-# - POLAR_PRODUCT_ID_USD_499
-# - POLAR_PRODUCT_ID_USD_999
-# - POLAR_PRODUCT_ID_USD_1999
-# - POLAR_PRODUCT_ID_USD_4999
-polar:
-  enabled: false
-  secretName: polar-secret
-  # sandbox | production | custom URL
-  server: sandbox
-  webhookUrl: ""
+# PayPal Checkout - international USD credit top-up
+# The Kubernetes Secret must contain:
+# - PAYPAL_CLIENT_ID
+# - PAYPAL_CLIENT_SECRET
+# - PAYPAL_WEBHOOK_ID
+paypal:
+  enabled: true
+  environment: live
+  secretName: paypal-secret
 
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:

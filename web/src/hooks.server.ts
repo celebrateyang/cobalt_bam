@@ -54,9 +54,10 @@ export const handle: Handle = async ({ event, resolve }) => {
         response.headers.set('X-Robots-Tag', 'noindex, follow');
     }
 
-    // Apply COOP/COEP headers to enable SharedArrayBuffer for libav
-    // Exclude the youtube-video-downloader page which contains a Bilibili iframe that would be blocked
-    if (!pathname.includes('youtube-video-downloader')) {
+    // Apply COOP/COEP headers to enable SharedArrayBuffer for libav.
+    // Third-party embeds and payment SDKs need normal cross-origin behavior.
+    const isAccountPage = /^\/[a-z]{2}\/account(?:\/|$)/.test(pathname);
+    if (!pathname.includes('youtube-video-downloader') && !isAccountPage) {
         response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
         response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
     }

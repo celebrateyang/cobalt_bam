@@ -14,3 +14,5 @@ workflows:
           config-path: .circleci/deploy.yml
           mapping: |
             api/.* run-api-deploy true
+            cobalt-chart/.* run-api-deploy true
+            .circleci/deploy.yml run-api-deploy true

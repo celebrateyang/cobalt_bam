@@ -115,26 +115,19 @@ jobs:
 #          command: |
 #            helm get values cobalt -n infra -o yaml > /tmp/values.yaml
       - run:
+          name: Verify PayPal secret
+          command: |
+            for key in PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET PAYPAL_WEBHOOK_ID; do
+              encoded_value="$(kubectl -n infra get secret paypal-secret -o "jsonpath={.data.${key}}")"
+              if [ -z "${encoded_value}" ]; then
+                echo "paypal-secret is missing required key: ${key}" >&2
+                exit 1
+              fi
+            done
+      - run:
           name: Delete existing deployment to avoid usually stuck
           command: |
             kubectl delete deployment cobalt-cobalt-chart -n infra || true
-      - run:
-          name: Upsert Polar secret
-          command: |
-            DRY_RUN_FLAG="--dry-run=client"
-            if kubectl create secret generic --help 2>/dev/null | grep -q -- "--dry-run=false"; then
-              DRY_RUN_FLAG="--dry-run=true"
-            fi
-
-            kubectl -n infra create secret generic polar-secret \
-              --from-literal=POLAR_ACCESS_TOKEN="${POLAR_ACCESS_TOKEN}" \
-              --from-literal=POLAR_WEBHOOK_SECRET="${POLAR_WEBHOOK_SECRET}" \
-              --from-literal=POLAR_PRODUCT_ID_USD_199="${POLAR_PRODUCT_ID_USD_199}" \
-              --from-literal=POLAR_PRODUCT_ID_USD_499="${POLAR_PRODUCT_ID_USD_499}" \
-              --from-literal=POLAR_PRODUCT_ID_USD_999="${POLAR_PRODUCT_ID_USD_999}" \
-              --from-literal=POLAR_PRODUCT_ID_USD_1999="${POLAR_PRODUCT_ID_USD_1999}" \
-              --from-literal=POLAR_PRODUCT_ID_USD_4999="${POLAR_PRODUCT_ID_USD_4999}" \
-              ${DRY_RUN_FLAG} -o yaml | kubectl apply -f -
       - run:
           name: Deploy
           command: |
@@ -167,8 +160,7 @@ jobs:
               --set-string upstream.circuitCooldownMs="${UPSTREAM_CIRCUIT_COOLDOWN_MS:-60000}" \
               --set-string upstream.healthCheckIntervalMs="${UPSTREAM_HEALTH_CHECK_INTERVAL_MS:-600000}" \
               --set-string instagram.upstreamApiKey="${INSTAGRAM_UPSTREAM_API_KEY}" \
-              --set polar.enabled=true \
-              --set-string polar.secretName="polar-secret" \
-              --set-string polar.server="production" \
-              --set-string polar.webhookUrl="${POLAR_WEBHOOK_URL}" \
+              --set paypal.enabled=true \
+              --set-string paypal.environment="live" \
+              --set-string paypal.secretName="paypal-secret" \
               --history-max=3 --wait --atomic --timeout 10m0s

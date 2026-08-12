@@ -54,7 +54,7 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat" | "polar";
+        provider: "wechat" | "paypal";
     };
 
     type Membership = {
@@ -97,7 +97,30 @@
         | (CreditOrder & { kind: "credit" })
         | (MembershipOrder & { kind: "membership" });
 
-    type PaymentProvider = "wechat" | "polar";
+    type PaymentProvider = "wechat" | "paypal";
+    type PayPalSdkInstance = {
+        findEligibleMethods: (options: {
+            currencyCode: string;
+        }) => Promise<{ isEligible: (method: string) => boolean }>;
+        createPayPalOneTimePaymentSession: (options: {
+            onApprove: (data: { orderId: string }) => Promise<unknown>;
+            onCancel: () => void;
+            onError: (error: unknown) => void;
+        }) => {
+            start: (
+                options: { presentationMode: "popup" },
+                order: Promise<{ orderId: string }>,
+            ) => Promise<void>;
+        };
+    };
+    type PayPalGlobal = {
+        createInstance: (options: {
+            clientId: string;
+            components: string[];
+            pageType: string;
+            locale?: string;
+        }) => Promise<PayPalSdkInstance>;
+    };
     type PromotionType = "post" | "video";
     type RecordsTab = "promotion" | "feedback";
     type AccountSection = "membership" | "topup" | "referral" | "promotion" | "contact";
@@ -603,26 +626,46 @@
     let qrDataUrl = "";
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
-    let polarHandledOrderId: number | null = null;
     let checkoutIntentHandled = false;
-    const POLAR_PAYMENT_VISIBLE = false;
+    let paypalSdkReady = false;
+    let paypalSdkInstance: PayPalSdkInstance | null = null;
+    let paypalSdkPromise: Promise<PayPalSdkInstance> | null = null;
+    let paypalSdkLocale = "";
+    let paypalSdkPromiseLocale = "";
+    const PAYPAL_PAYMENT_VISIBLE = true;
+    const PAYPAL_LOCALE_BY_LANGUAGE: Record<string, string> = {
+        de: "de-DE",
+        en: "en-US",
+        es: "es-ES",
+        fr: "fr-FR",
+        ja: "ja-JP",
+        ko: "ko-KR",
+        ru: "ru-RU",
+        th: "th-TH",
+        vi: "vi-VN",
+        zh: "zh-CN",
+    };
+    const resolvePayPalLocale = (language: string | undefined) =>
+        PAYPAL_LOCALE_BY_LANGUAGE[String(language || "").toLowerCase()] ||
+        "en-US";
+    $: desiredPayPalLocale = resolvePayPalLocale($page.params.lang);
 
     $: isChinese = $page.params.lang === "zh";
     $: if (
-        POLAR_PAYMENT_VISIBLE &&
+        PAYPAL_PAYMENT_VISIBLE &&
         !isChinese &&
-        selectedPaymentProvider !== "polar"
+        selectedPaymentProvider !== "paypal"
     ) {
-        selectedPaymentProvider = "polar";
+        selectedPaymentProvider = "paypal";
         clearActiveOrder();
     }
     $: topupSubtitleKey =
-        selectedPaymentProvider === "polar"
-            ? "auth.topup_subtitle_polar"
+        selectedPaymentProvider === "paypal"
+            ? "auth.topup_subtitle_paypal"
             : "auth.topup_subtitle_wechat";
 
-    const POLAR_BEST_VALUE_PRODUCT_KEY = "polar_usd_999";
-    const POLAR_RECOMMENDED_PRODUCT_KEY = "polar_usd_499";
+    const PAYPAL_BEST_VALUE_PRODUCT_KEY = "paypal_usd_999";
+    const PAYPAL_RECOMMENDED_PRODUCT_KEY = "paypal_usd_499";
     const WECHAT_RECOMMENDED_PRODUCT_KEY = "points_1000";
 
     const sortCreditProductsForDisplay = (
@@ -661,23 +704,23 @@
                 return Number(b.points) - Number(a.points);
             });
 
-        if (selectedPaymentProvider === "polar") {
+        if (selectedPaymentProvider === "paypal") {
             const fallbackBest = ranked[0]?.key ?? null;
             const fallbackRecommended =
                 ranked.find((product) => product.key !== fallbackBest)?.key ?? null;
 
             bestValueProductKey =
-                ranked.some((product) => product.key === POLAR_BEST_VALUE_PRODUCT_KEY)
-                    ? POLAR_BEST_VALUE_PRODUCT_KEY
+                ranked.some((product) => product.key === PAYPAL_BEST_VALUE_PRODUCT_KEY)
+                    ? PAYPAL_BEST_VALUE_PRODUCT_KEY
                     : fallbackBest;
 
             recommendedValueProductKey =
                 ranked.some(
                     (product) =>
-                        product.key === POLAR_RECOMMENDED_PRODUCT_KEY &&
+                        product.key === PAYPAL_RECOMMENDED_PRODUCT_KEY &&
                         product.key !== bestValueProductKey,
                 )
-                    ? POLAR_RECOMMENDED_PRODUCT_KEY
+                    ? PAYPAL_RECOMMENDED_PRODUCT_KEY
                     : fallbackRecommended;
         } else {
             bestValueProductKey = ranked[0]?.key ?? null;
@@ -724,7 +767,7 @@
                 creditProducts,
                 provider === "wechat"
                     ? WECHAT_RECOMMENDED_PRODUCT_KEY
-                    : POLAR_RECOMMENDED_PRODUCT_KEY,
+                    : PAYPAL_RECOMMENDED_PRODUCT_KEY,
             );
             trackCreditProductListViewed(provider, trackedProducts);
         } catch (error) {
@@ -1096,9 +1139,137 @@
         }
     };
 
-    const startPolarPay = async (productKey: string) => {
+    const loadPayPalSdkScript = async (sdkUrl: string) => {
+        const paypalWindow = window as Window & { paypal?: PayPalGlobal };
+        if (paypalWindow.paypal?.createInstance) return paypalWindow.paypal;
+
+        await new Promise<void>((resolve, reject) => {
+            const existing = document.querySelector<HTMLScriptElement>(
+                'script[data-fsv-paypal-sdk="true"]',
+            );
+            const onLoad = () => resolve();
+            const onError = () => reject(new Error("failed to load PayPal SDK"));
+            if (existing) {
+                existing.addEventListener("load", onLoad, { once: true });
+                existing.addEventListener("error", onError, { once: true });
+                return;
+            }
+
+            const script = document.createElement("script");
+            script.src = sdkUrl;
+            script.async = true;
+            script.dataset.fsvPaypalSdk = "true";
+            script.addEventListener("load", onLoad, { once: true });
+            script.addEventListener("error", onError, { once: true });
+            document.head.appendChild(script);
+        });
+
+        if (!paypalWindow.paypal?.createInstance) {
+            throw new Error("PayPal SDK did not initialize");
+        }
+        return paypalWindow.paypal;
+    };
+
+    const preparePayPalSdk = async () => {
+        const requestedLocale = resolvePayPalLocale($page.params.lang);
+        if (
+            paypalSdkReady &&
+            paypalSdkInstance &&
+            paypalSdkLocale === requestedLocale
+        ) {
+            return paypalSdkInstance;
+        }
+        if (paypalSdkPromise && paypalSdkPromiseLocale === requestedLocale) {
+            return paypalSdkPromise;
+        }
+
+        paypalSdkReady = false;
+        paypalSdkInstance = null;
+        paypalSdkPromiseLocale = requestedLocale;
+
+        const pendingSdk = (async () => {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const apiBase = currentApiURL();
+            const response = await fetch(
+                `${apiBase}/payments/credits/paypal/config`,
+                {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            );
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.status !== "success") {
+                throw new Error(
+                    data?.error?.message || "failed to initialize PayPal checkout",
+                );
+            }
+
+            const clientId = data?.data?.clientId as string | undefined;
+            const sdkUrl = data?.data?.sdkUrl as string | undefined;
+            if (!clientId || !sdkUrl) {
+                throw new Error("PayPal configuration response is incomplete");
+            }
+
+            const paypal = await loadPayPalSdkScript(sdkUrl);
+            const sdk = await paypal.createInstance({
+                clientId,
+                components: ["paypal-payments"],
+                pageType: "checkout",
+                locale: requestedLocale,
+            });
+            const eligibility = await sdk.findEligibleMethods({
+                currencyCode: "USD",
+            });
+            if (!eligibility.isEligible("paypal")) {
+                throw new Error("PayPal is not eligible for this browser");
+            }
+            if (paypalSdkPromiseLocale === requestedLocale) {
+                paypalSdkInstance = sdk;
+                paypalSdkLocale = requestedLocale;
+                paypalSdkReady = true;
+                purchaseErrorKey = "";
+            }
+            return sdk;
+        })().catch((error) => {
+            if (paypalSdkPromiseLocale === requestedLocale) {
+                paypalSdkPromise = null;
+                paypalSdkPromiseLocale = "";
+                paypalSdkInstance = null;
+                paypalSdkLocale = "";
+                paypalSdkReady = false;
+            }
+            throw error;
+        });
+        paypalSdkPromise = pendingSdk;
+
+        return pendingSdk;
+    };
+
+    $: if (
+        browser &&
+        $clerkUser &&
+        (!paypalSdkReady || paypalSdkLocale !== desiredPayPalLocale)
+    ) {
+        void preparePayPalSdk().catch((error) => {
+            purchaseErrorKey = "auth.payment_create_failed";
+            console.error("prepare PayPal SDK failed", error);
+        });
+    }
+
+    const startPayPalPay = async (productKey: string) => {
         if (purchaseLoading) return;
         if (!$clerkUser) return;
+        const sdk = paypalSdkInstance;
+        if (!sdk) {
+            purchaseErrorKey = "auth.payment_create_failed";
+            void preparePayPalSdk().catch((error) => {
+                purchaseErrorKey = "auth.payment_create_failed";
+                console.error("prepare PayPal SDK failed", error);
+            });
+            return;
+        }
 
         purchaseLoading = true;
         purchaseErrorKey = "";
@@ -1106,60 +1277,149 @@
         lastPaymentResumeKey = "";
 
         try {
-            const token = await getClerkToken();
-            if (!token) throw new Error("missing token");
-
-            const returnUrl = `${window.location.origin}/${$page.params.lang}/account`;
             const apiBase = currentApiURL();
-            const res = await fetch(`${apiBase}/payments/credits/polar/checkout`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    productKey,
-                    successUrl: returnUrl,
-                    returnUrl,
-                }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok || data?.status !== "success") {
-                const error = new Error(
-                    data?.error?.message || "failed to create polar checkout",
-                ) as Error & { apiCode?: string };
-                error.apiCode = data?.error?.code;
-                throw error;
-            }
-
-            const checkoutUrl = data?.data?.polar?.checkoutUrl as string | undefined;
-            if (!checkoutUrl) {
-                throw new Error("missing checkout url");
-            }
-
             const selectedProduct = creditProducts.find(
                 (product) => product.key === productKey,
             );
-            if (selectedProduct) {
-                trackCheckoutStarted({
-                    id: selectedProduct.key,
-                    name: `${selectedProduct.points} credits`,
-                    value: selectedProduct.amountFen / 100,
-                    currency: selectedProduct.currency,
-                    provider: "polar",
-                    kind: "credit",
-                });
+            let localOrderId = 0;
+            const tokenPromise = getClerkToken().then((token) => {
+                if (!token) throw new Error("missing token");
+                return token;
+            });
+            const orderIdPromise = (async () => {
+                const token = await tokenPromise;
+                const response = await fetch(
+                    `${apiBase}/payments/credits/paypal/orders`,
+                    {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            productKey,
+                            attribution: getOrderAttribution(),
+                        }),
+                    },
+                );
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data?.status !== "success") {
+                    throw new Error(
+                        data?.error?.message || "failed to create PayPal order",
+                    );
+                }
+
+                const order = data?.data?.order as CreditOrder | undefined;
+                const rawPayPalOrderId = data?.data?.paypal?.orderId;
+                if (
+                    !order?.id ||
+                    typeof rawPayPalOrderId !== "string" ||
+                    !rawPayPalOrderId.trim()
+                ) {
+                    throw new Error("invalid PayPal order response");
+                }
+                const paypalOrderId = rawPayPalOrderId.trim();
+                localOrderId = order.id;
+                if (selectedProduct) {
+                    trackCheckoutStarted({
+                        id: selectedProduct.key,
+                        name: `${selectedProduct.points} credits`,
+                        value: selectedProduct.amountFen / 100,
+                        currency: selectedProduct.currency,
+                        provider: "paypal",
+                        kind: "credit",
+                    });
+                }
+                return { orderId: paypalOrderId };
+            })();
+            void orderIdPromise.catch((error) => {
+                console.error("PayPal order creation failed", error);
+            });
+
+            let captureCompleted = false;
+            const captureCreatedOrder = async (
+                paypalOrderId: string,
+                allowIncomplete = false,
+            ) => {
+                const token = await tokenPromise;
+                const response = await fetch(
+                    `${apiBase}/payments/credits/paypal/orders/${localOrderId}/capture`,
+                    {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ paypalOrderId }),
+                    },
+                );
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data?.status !== "success") {
+                    if (
+                        allowIncomplete &&
+                        response.status === 409 &&
+                        data?.error?.code === "PAYPAL_CAPTURE_NOT_COMPLETED"
+                    ) {
+                        return null;
+                    }
+                    throw new Error(
+                        data?.error?.message || "failed to capture PayPal order",
+                    );
+                }
+
+                const paidOrder = data?.data?.order as CreditOrder | undefined;
+                if (paidOrder?.status === "PAID") {
+                    captureCompleted = true;
+                    purchaseNoticeKey = "auth.payment_success";
+                    trackPurchaseCompleted(paidOrder.out_trade_no, {
+                        id: `credits-${paidOrder.points}`,
+                        name: `${paidOrder.points} credits`,
+                        value: paidOrder.amount_fen / 100,
+                        currency: paidOrder.currency,
+                        provider: paidOrder.provider,
+                        kind: "credit",
+                    });
+                    lastPointsUserId = null;
+                    await fetchPoints();
+                    maybeResumeAfterPayment(paidOrder.id);
+                }
+                return data;
+            };
+
+            const session = sdk.createPayPalOneTimePaymentSession({
+                onApprove: async ({ orderId }) => {
+                    return await captureCreatedOrder(orderId);
+                },
+                onCancel: () => {
+                    purchaseNoticeKey = "";
+                },
+                onError: (error) => {
+                    purchaseErrorKey = "auth.payment_create_failed";
+                    console.debug("PayPal checkout failed", error);
+                },
+            });
+
+            let sessionError: unknown = null;
+            try {
+                await session.start({ presentationMode: "popup" }, orderIdPromise);
+            } catch (error) {
+                sessionError = error;
             }
 
-            purchaseNoticeKey = "auth.polar_redirecting";
-            window.location.assign(checkoutUrl);
+            // Some Web SDK v6 popup flows return without invoking onApprove.
+            // Reconcile the approved order after the popup closes; the server
+            // capture endpoint is idempotent, so this is also safe after onApprove.
+            if (!captureCompleted) {
+                const { orderId } = await orderIdPromise;
+                const captured = await captureCreatedOrder(orderId, true);
+                if (!captured && sessionError && sessionError !== false) {
+                    throw sessionError;
+                }
+            }
         } catch (error) {
-            const apiCode = (error as { apiCode?: string })?.apiCode;
-            purchaseErrorKey =
-                apiCode === "POLAR_PRODUCT_NOT_CONFIGURED"
-                    ? "auth.polar_not_ready"
-                    : "auth.payment_create_failed";
-            console.debug("create polar checkout failed", error);
+            purchaseErrorKey = "auth.payment_create_failed";
+            console.debug("create PayPal checkout failed", error);
+        } finally {
             purchaseLoading = false;
         }
     };
@@ -1255,8 +1515,8 @@
             window.history.replaceState({}, "", url.toString());
         } catch {}
 
-        if (selectedPaymentProvider === "polar") {
-            void startPolarPay(product.key);
+        if (selectedPaymentProvider === "paypal") {
+            void startPayPalPay(product.key);
         } else {
             void startWechatPay(product.key);
         }
@@ -1284,53 +1544,6 @@
         clearActiveOrder();
     };
 
-    const sleep = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
-
-    const syncPolarOrderAfterReturn = async (orderId: number) => {
-        purchaseErrorKey = "";
-        purchaseNoticeKey = "";
-
-        let paid = false;
-        for (let i = 0; i < 8; i += 1) {
-            const order = await fetchOrderStatus(orderId, true, false);
-            if (order?.status === "PAID") {
-                paid = true;
-                break;
-            }
-            await sleep(1000);
-        }
-
-        purchaseNoticeKey = paid
-            ? "auth.payment_success"
-            : "auth.polar_pending_notice";
-
-        if (paid) {
-            maybeResumeAfterPayment(orderId);
-        }
-
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.delete("polarOrderId");
-            url.searchParams.delete("polarResult");
-            window.history.replaceState({}, "", url.toString());
-        } catch {}
-    };
-
-    $: if (browser && $clerkLoaded && $clerkUser) {
-        const orderId = Number.parseInt(
-            $page.url.searchParams.get("polarOrderId") || "",
-            10,
-        );
-        if (
-            Number.isFinite(orderId) &&
-            orderId > 0 &&
-            polarHandledOrderId !== orderId
-        ) {
-            polarHandledOrderId = orderId;
-            void syncPolarOrderAfterReturn(orderId);
-        }
-    }
 </script>
 
 <svelte:head>
@@ -1824,7 +2037,7 @@
                             {/if}
                         </p>
 
-                        {#if isChinese && POLAR_PAYMENT_VISIBLE}
+                        {#if isChinese && PAYPAL_PAYMENT_VISIBLE}
                             <div class="provider-switch" role="tablist">
                                 <button
                                     type="button"
@@ -1837,8 +2050,8 @@
                                 <button
                                     type="button"
                                     class="provider-option"
-                                    class:active={selectedPaymentProvider === "polar"}
-                                    on:click={() => selectPaymentProvider("polar")}
+                                    class:active={selectedPaymentProvider === "paypal"}
+                                    on:click={() => selectPaymentProvider("paypal")}
                                 >
                                     {$t("auth.international_pay")}
                                 </button>
@@ -1897,14 +2110,22 @@
                                                     {$t("auth.wechat_pay")}
                                                 </button>
                                             {:else}
-                                                <button
-                                                    class="button elevated active"
-                                                    disabled={purchaseLoading || !product.enabled}
-                                                    title={!product.enabled ? $t("auth.polar_not_ready") : ""}
-                                                    on:click={() => startPolarPay(product.key)}
-                                                >
-                                                    {$t("auth.polar_pay")}
-                                                </button>
+                                                <div class="paypal-button-slot">
+                                                    {#if paypalSdkReady && product.enabled}
+                                                        <paypal-button
+                                                            type="pay"
+                                                            on:click={() => startPayPalPay(product.key)}
+                                                        ></paypal-button>
+                                                    {:else}
+                                                        <div
+                                                            class="paypal-button-placeholder"
+                                                            aria-hidden="true"
+                                                            title={$t("auth.paypal_not_ready")}
+                                                        >
+                                                            {$t("auth.paypal_pay")}
+                                                        </div>
+                                                    {/if}
+                                                </div>
                                             {/if}
                                         </div>
                                     </div>
@@ -2950,6 +3171,36 @@
     .product-card.recommended-product {
         border-color: var(--blue);
         box-shadow: 0 10px 24px rgba(32, 120, 255, 0.16);
+    }
+
+    .paypal-button-slot {
+        width: min(225px, 100%);
+        height: 45px;
+        overflow: hidden;
+        border-radius: 4px;
+    }
+
+    .paypal-button-slot :global(paypal-button) {
+        display: block;
+        width: 100%;
+        height: 45px;
+    }
+
+    .paypal-button-placeholder {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 100%;
+        height: 45px;
+        border-radius: 4px;
+        background: #ffc439;
+        color: #111820;
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1;
+        opacity: 0.78;
     }
 
     .product-main {

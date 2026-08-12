@@ -74,9 +74,11 @@ const enableCOEP: PluginOption = {
             // We want them generally for libav (SharedArrayBuffer)
             // BUT we must exclude the Bilibili downloader guide page because it contains
             // a Bilibili iframe which gets blocked by COOP/COEP.
-            const isGuidePage = req.url?.includes("youtube-video-downloader");
+            const requestPath = req.url || "";
+            const isGuidePage = requestPath.includes("youtube-video-downloader");
+            const isAccountPage = /^\/[a-z]{2}\/account(?:[/?#]|$)/.test(requestPath);
 
-            if (!isGuidePage) {
+            if (!isGuidePage && !isAccountPage) {
                 res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                 res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
             }

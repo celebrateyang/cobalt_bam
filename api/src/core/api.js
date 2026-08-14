@@ -1168,7 +1168,20 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 // fail open if dedupe storage is unavailable
             }
         }
-        if (pointsUser) {
+        const isWechatArticleCollectionPreview = (() => {
+            try {
+                const sourceUrl = new URL(normalizedRequest.url);
+                return (
+                    sourceUrl.hostname === "mp.weixin.qq.com" &&
+                    /^\/s\/[^/]+$/.test(sourceUrl.pathname) &&
+                    !sourceUrl.searchParams.has("fsv_item")
+                );
+            } catch {
+                return false;
+            }
+        })();
+
+        if (pointsUser && !isWechatArticleCollectionPreview) {
             try {
                 membershipReservation = await reserveMemberDownloadUsage({
                     userId: pointsUser.id,
@@ -1324,7 +1337,11 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 }
             }
 
-            if (pointsUser && resultBodyStatus !== "error") {
+            if (
+                pointsUser &&
+                resultBodyStatus !== "error" &&
+                !isWechatArticleCollectionPreview
+            ) {
                 pointsRequired = durationToPoints(result?.body?.duration);
                 pointsBefore = pointsUser.points;
 

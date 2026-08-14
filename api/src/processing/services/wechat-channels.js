@@ -61,12 +61,26 @@ export default async function({ shortUri, articleId, url }) {
     try {
         if (articleId) {
             const article = await resolveWechatArticle(url.toString());
+            const selectedItemParam = url.searchParams.get("fsv_item");
+            let selectedItemIndex = null;
+            if (selectedItemParam !== null) {
+                selectedItemIndex = Number(selectedItemParam);
+                if (
+                    !Number.isInteger(selectedItemIndex) ||
+                    selectedItemIndex < 0 ||
+                    selectedItemIndex >= article.items.length
+                ) {
+                    return { error: "fetch.empty" };
+                }
+                article.items = [article.items[selectedItemIndex]];
+                article.unavailableCount = 0;
+            }
             if (article.unavailableCount > 0) {
                 console.warn(
                     `[wechat_channels] article partial success resolved=${article.items.length} unavailable=${article.unavailableCount}`
                 );
             }
-            return buildWechatArticleResult(article, articleId);
+            return buildWechatArticleResult(article, articleId, selectedItemIndex);
         }
 
         const yuanbaoCookie = await readYuanbaoCookie();

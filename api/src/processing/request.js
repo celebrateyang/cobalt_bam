@@ -272,6 +272,7 @@ export function createResponse(responseType, responseData) {
             case "picker":
                 response = {
                     service: responseData?.service,
+                    title: responseData?.title,
                     picker: responseData?.picker,
                     audio: responseData?.url,
                     audioFilename: responseData?.filename

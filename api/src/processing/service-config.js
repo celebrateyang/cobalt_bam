@@ -341,6 +341,7 @@ export const services = {
     wechat_channels: {
         patterns: [
             "sph/:shortUri",
+            "s/:articleId?fsv_item=:selectedItem",
             "s/:articleId",
             "finder-preview/pages/sph?id=:shortUri",
         ],

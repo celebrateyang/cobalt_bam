@@ -447,7 +447,7 @@ const itemLabel = (item) => ({
     finder: "WeChat Channels",
 }[item.kind] || "Video");
 
-export const buildWechatArticleResult = (article, articleId) => {
+export const buildWechatArticleResult = (article, articleId, selectedItemIndex = null) => {
     if (!article.items.length) return { error: "fetch.empty" };
     const totalDuration = article.items.reduce(
         (sum, item) => sum + (Number(item.duration) || 0),
@@ -457,12 +457,15 @@ export const buildWechatArticleResult = (article, articleId) => {
 
     if (article.items.length === 1) {
         const item = article.items[0];
+        const itemSuffix = Number.isInteger(selectedItemIndex)
+            ? `_${String(selectedItemIndex + 1).padStart(2, "0")}`
+            : "";
         return {
             service: "wechat_channels",
             urls: item.urls[0],
             urlCandidates: item.urls.slice(1),
             directClientDownload: true,
-            filename: `${title}.mp4`,
+            filename: `${title}${itemSuffix}.mp4`,
             cover: item.cover || undefined,
             duration: Number(item.duration) || undefined,
         };
@@ -470,6 +473,7 @@ export const buildWechatArticleResult = (article, articleId) => {
 
     return {
         service: "wechat_channels",
+        title,
         picker: article.items.map((item, index) => {
             const resolution = item.width && item.height
                 ? `${item.width}x${item.height}`
@@ -483,6 +487,7 @@ export const buildWechatArticleResult = (article, articleId) => {
                 url: item.urls[0],
                 urlCandidates: item.urls.slice(1),
                 filename,
+                duration: Number(item.duration) || undefined,
                 thumb: item.cover || undefined,
                 label: `Video ${index + 1}`,
                 note: detail,

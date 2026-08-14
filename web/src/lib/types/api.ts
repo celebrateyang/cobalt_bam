@@ -34,11 +34,13 @@ type CobaltPartialURLResponse = {
 type CobaltPickerResponse = {
     status: CobaltResponseType.Picker
     service?: string,
+    title?: string,
     picker: {
         type: 'photo' | 'video' | 'gif',
         url: string,
         urlCandidates?: string[],
         filename?: string,
+        duration?: number,
         thumb?: string,
         kind?: 'video' | 'audio' | 'mute',
         label?: string,
@@ -149,9 +151,6 @@ export type CobaltSaveRequestBody =
         queueId?: string;
         filenameTitle?: string;
         bilibiliDirectBridge?: boolean;
-        queueDirectUrls?: string[];
-        queueDirectFilename?: string;
-        queueDirectMimeType?: string;
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;

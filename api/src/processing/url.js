@@ -300,6 +300,11 @@ function cleanURL(url) {
         case "wechat_channels":
             if (url.searchParams.get("id")) {
                 limitQuery("id");
+            } else if (
+                /^\/s\//.test(url.pathname) &&
+                /^\d+$/.test(url.searchParams.get("fsv_item") || "")
+            ) {
+                limitQuery("fsv_item");
             }
             break;
     }

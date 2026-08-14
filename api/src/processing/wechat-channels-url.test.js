@@ -36,3 +36,13 @@ test("recognizes a WeChat public article URL", () => {
     assert.equal(result.host, "wechat_channels");
     assert.equal(result.patternMatch.articleId, "igocr2eDxLdknggDAXkSyg");
 });
+
+test("preserves a valid WeChat article item selection", () => {
+    const normalized = normalizeURL(
+        "https://mp.weixin.qq.com/s/igocr2eDxLdknggDAXkSyg?fsv_item=8&ignored=1"
+    );
+    const result = extract(normalized, enabled);
+
+    assert.equal(result.host, "wechat_channels");
+    assert.equal(normalized.search, "?fsv_item=8");
+});

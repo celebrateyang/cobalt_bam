@@ -111,7 +111,7 @@ sudo service nscd start
 | `COOKIE_PATH`         | not used  | `/cookies.json`         | path for cookie file relative to main folder. |
 | `UPSTREAM_URLS` | not used | `https://api3.example.com,https://api4.example.com` | comma-separated cobalt upstream pool used by download fallbacks and generic upstream extraction. supersedes `INSTAGRAM_UPSTREAM_URL` when set. |
 | `UPSTREAM_GLOBAL_URLS` | not used | `https://api3.example.com` | optional comma-separated global/overseas upstream pool. overrides automatic region detection for matching URLs and may add URLs not present in `UPSTREAM_URLS`. |
-| `UPSTREAM_CN_URLS` | not used | `https://api4.example.com` | optional comma-separated China mainland upstream pool. overrides automatic region detection for matching URLs and may add URLs not present in `UPSTREAM_URLS`. |
+| `UPSTREAM_CN_URLS` | not used | `https://api2.freesavevideo.online` | optional comma-separated China mainland upstream pool. overrides automatic region detection for matching URLs and may add URLs not present in `UPSTREAM_URLS`. |
 | `UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value sent to upstream nodes. supersedes `INSTAGRAM_UPSTREAM_API_KEY` when set. |
 | `UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | headers wait timeout (ms) for ordinary upstream fallback requests. supersedes `INSTAGRAM_UPSTREAM_TIMEOUT_MS` when set. |
 | `UPSTREAM_YOUTUBE_HEADERS_TIMEOUT_MS` | `20000` | `20000` | YouTube-specific upstream headers wait timeout (ms). Allows normal yt-dlp work to finish without using the same budget for JSON body transfer. |

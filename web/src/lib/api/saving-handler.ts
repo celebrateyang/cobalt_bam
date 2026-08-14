@@ -118,7 +118,8 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     (
         response.service === "deeplearningai" ||
         response.service === "bilibili" ||
-        response.service === "douyin"
+        response.service === "douyin" ||
+        response.service === "wechat_channels"
     ) &&
     typeof response.directUrl === "string" &&
     response.directUrl.length > 0

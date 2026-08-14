@@ -214,6 +214,7 @@ const cnServiceTokens = new Set([
     "douyin",
     "kuaishou",
     "xiaohongshu",
+    "wechat_channels",
 ]);
 
 const cnHostFragments = [
@@ -226,6 +227,8 @@ const cnHostFragments = [
     "kuaishou.com",
     "v.kuaishou.com",
     "xiaohongshu.com",
+    "weixin.qq.com",
+    "channels.weixin.qq.com",
 ];
 
 const globalHostFragments = [
@@ -248,10 +251,23 @@ const normalizeRouteToken = (value) =>
 const includesAny = (value, fragments) =>
     fragments.some((fragment) => value === fragment || value.endsWith(`.${fragment}`));
 
-const resolveRegionPlan = ({ service, targetHost, path }) => {
+export const resolveRegionPlan = ({ service, targetHost, path }) => {
     const serviceToken = normalizeRouteToken(service);
     const hostToken = normalizeRouteToken(targetHost);
     const routeToken = `${serviceToken} ${hostToken} ${normalizeRouteToken(path)}`;
+
+    // WeChat Channels extraction depends on the Yuanbao session stored only on
+    // the domestic laptop upstream. Never fail over to a global/GKE node.
+    if (
+        serviceToken === "wechat_channels" ||
+        includesAny(hostToken, ["weixin.qq.com", "channels.weixin.qq.com"]) ||
+        routeToken.includes("wechat_channels")
+    ) {
+        return {
+            name: "cn-only",
+            groups: [["cn"]],
+        };
+    }
 
     if (
         cnServiceTokens.has(serviceToken) ||

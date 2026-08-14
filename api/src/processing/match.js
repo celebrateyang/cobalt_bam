@@ -49,6 +49,7 @@ import naver from "./services/naver.js";
 import toutiao from "./services/toutiao.js";
 import weibo from "./services/weibo.js";
 import zhshjn from "./services/zhshjn.js";
+import wechatChannels from "./services/wechat-channels.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -403,6 +404,25 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await cctv({
                     ...patternMatch,
                     quality: params.videoQuality,
+                    url,
+                });
+                break;
+
+            case "wechat_channels":
+                if (!isUpstreamServer) {
+                    const upstream = await requestUpstreamCobalt(params);
+                    if (upstream) return upstream;
+
+                    return createResponse("error", {
+                        code: "error.api.fetch.fail",
+                        context: {
+                            service: friendlyServiceName(host),
+                        },
+                    });
+                }
+
+                r = await wechatChannels({
+                    ...patternMatch,
                     url,
                 });
                 break;

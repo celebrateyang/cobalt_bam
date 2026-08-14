@@ -311,12 +311,14 @@ export default function({
                     break;
 
                 case "deeplearningai":
+                case "wechat_channels":
                     responseType = "redirect";
                     params = {
                         url: r.directUrl || r.urls,
                         directUrl: r.directUrl || r.urls,
                         directUrlCandidates: [
                             r.directUrl || r.urls,
+                            ...(Array.isArray(r.urlCandidates) ? r.urlCandidates : []),
                             typeof r.hlsUrl === "string" ? r.hlsUrl : undefined,
                         ].filter((value, index, list) => (
                             typeof value === "string" &&

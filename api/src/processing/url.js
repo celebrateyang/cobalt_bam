@@ -20,6 +20,7 @@ const serviceByPlatformDomain = new Map([
     ["redd.it", "reddit"],
     ["t.cn", "weibo"],
     ["toutiaoimg.cn", "toutiao"],
+    ["weixin.qq.com", "wechat_channels"],
     ["youtu.be", "youtube"],
 ]);
 
@@ -182,6 +183,13 @@ function aliasURL(url) {
 }
 
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (
+        url.hostname === "weixin.qq.com" ||
+        url.hostname === "channels.weixin.qq.com"
+    ) {
+        return "wechat_channels";
+    }
+
     if (url.hostname === "podcast.freesavevideo.online") {
         return "podcast";
     }
@@ -286,6 +294,11 @@ function cleanURL(url) {
         case "weibo":
             if (url.searchParams.get("fid")) {
                 limitQuery("fid");
+            }
+            break;
+        case "wechat_channels":
+            if (url.searchParams.get("id")) {
+                limitQuery("id");
             }
             break;
     }

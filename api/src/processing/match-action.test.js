@@ -142,6 +142,27 @@ test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
     ]);
 });
 
+test("returns WeChat Channels MP4 candidates through Direct Bridge", () => {
+    const h264 = "https://finder.video.qq.com/251/h264.mp4";
+    const h265 = "https://finder.video.qq.com/251/h265.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "wechat_channels",
+        r: {
+            service: "wechat_channels",
+            urls: h264,
+            urlCandidates: [h265],
+            filename: "wechat_channels_video.mp4",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.directUrl, h264);
+    assert.deepEqual(response.body.directUrlCandidates, [h264, h265]);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test("keeps a forced Bilibili batch progressive MP4 off the server tunnel", () => {
     const directUrl = "https://upos-sz-mirrorcos.bilivideo.com/video.mp4";
     const response = matchAction({

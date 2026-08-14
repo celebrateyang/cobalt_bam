@@ -338,6 +338,15 @@ export const services = {
         subdomains: ["m"],
         altDomains: ["vkvideo.ru", "vk.ru"],
     },
+    wechat_channels: {
+        patterns: [
+            "sph/:shortUri",
+            "finder-preview/pages/sph?id=:shortUri",
+        ],
+        tld: "com",
+        subdomains: [],
+        altDomains: ["weixin.qq.com", "channels.weixin.qq.com"],
+    },
     xiaohongshu: {
         patterns: [
             "explore/:id?xsec_token=:token",

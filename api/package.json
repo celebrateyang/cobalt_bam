@@ -25,6 +25,7 @@
         "social:sync-enabled": "node src/util/sync-enabled-accounts.js",
         "social:thumb-expiry": "node src/util/analyze-thumbnail-expiry.js",
         "douyin:probe-user": "node src/util/probe-douyin-user.js",
+        "wechat:research": "node src/util/resolve-wechat-channel.js",
         "downloads:cleanup-attempts": "node src/util/cleanup-download-attempts.js",
         "points:cleanup-holds": "node src/util/cleanup-points-holds.js",
         "ai-video:worker": "node src/ai-video/worker.js",

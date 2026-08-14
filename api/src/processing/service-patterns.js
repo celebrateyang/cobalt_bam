@@ -148,6 +148,9 @@ export const testers = {
             /^1034:(?:\d{8,24}|[0-9a-fA-F]{32})$/.test(id);
     },
 
+    "wechat_channels": pattern =>
+        /^[A-Za-z0-9]{6,64}$/.test(pattern.shortUri || ""),
+
     "vk": pattern =>
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10) ||
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10 && pattern.videoId?.accessKey <= 18),

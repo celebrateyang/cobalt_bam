@@ -13,6 +13,7 @@ const friendlyNames = {
     threads: "Threads",
     toutiao: "Toutiao",
     weibo: "Weibo",
+    wechat_channels: "WeChat Channels",
     zhshjn: "zhshjn"
 }
 

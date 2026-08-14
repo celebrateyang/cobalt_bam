@@ -37,6 +37,7 @@
     import NotchSticker from "$components/misc/NotchSticker.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
     import PwaInstallBanner from "$components/misc/PwaInstallBanner.svelte";
+    import LanguageSuggestion from "$components/misc/LanguageSuggestion.svelte";
     import CuriousCat from "$components/curious-cat/CuriousCat.svelte";
 
     export let data;
@@ -257,6 +258,7 @@
         {/if}
         <CuriousCat />
         <div id="content">
+            <LanguageSuggestion currentLang={data.lang} />
             {#if !app.is.installed}
                 <PwaInstallBanner />
             {/if}

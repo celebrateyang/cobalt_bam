@@ -331,31 +331,31 @@
                 {#if !isPersonalSession && isCreator && sessionId}
                     <!-- Session ID Display -->
                     <div class="session-copy-section">
-                        <h4>会话信息</h4>
+                        <h4>{$t("clipboard.session_management")}</h4>
                         <div class="info-grid">
                             <div class="info-item">
-                                <span class="info-label">会话ID</span>
+                                <span class="info-label">{$t("clipboard.session_id")}</span>
                                 <div class="info-content">
                                     <code class="session-code">{sessionId}</code>
                                     <button 
                                         class="copy-button" 
                                         class:copied={showSessionIdCopied}
                                         on:click={handleCopySessionId}
-                                        title="复制会话ID"
-                                        aria-label="复制会话ID"
+                                        title={$t("clipboard.copy_session_id")}
+                                        aria-label={$t("clipboard.copy_session_id")}
                                     >
                                         {#if showSessionIdCopied}
                                             <span class="copy-icon">✓</span>
-                                            <span class="copy-text">已复制</span>
+                                            <span class="copy-text">{$t("clipboard.copied")}</span>
                                         {:else}
                                             <span class="copy-icon">📋</span>
-                                            <span class="copy-text">复制</span>
+                                            <span class="copy-text">{$t("clipboard.copy")}</span>
                                         {/if}
                                     </button>
                                 </div>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">分享链接</span>
+                                <span class="info-label">{$t("clipboard.share_link")}</span>
                                 <div class="info-content">
                                     <div class="link-display">
                                         <span class="link-text">{window?.location?.origin}{window?.location?.pathname}?session={sessionId}</span>
@@ -364,15 +364,15 @@
                                         class="copy-button" 
                                         class:copied={showLinkCopied}
                                         on:click={handleCopySessionLink}
-                                        title="复制分享链接"
-                                        aria-label="复制分享链接"
+                                        title={$t("clipboard.copy_link")}
+                                        aria-label={$t("clipboard.copy_link")}
                                     >
                                         {#if showLinkCopied}
                                             <span class="copy-icon">✓</span>
-                                            <span class="copy-text">已复制</span>
+                                            <span class="copy-text">{$t("clipboard.copied")}</span>
                                         {:else}
                                             <span class="copy-icon">🔗</span>
-                                            <span class="copy-text">复制</span>
+                                            <span class="copy-text">{$t("clipboard.copy")}</span>
                                         {/if}
                                     </button>
                                 </div>

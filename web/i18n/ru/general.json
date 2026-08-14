@@ -21,6 +21,11 @@
             "visit": "Visit FinditBuddy"
         }
     },
+    "language_suggestion": {
+        "prompt": "Открыть эту страницу на языке",
+        "switch": "Сменить язык",
+        "dismiss": "Закрыть предложение языка"
+    },
     "seo": {
         "home": {
             "title": "FreeSaveVideo - онлайн загрузчик видео",

@@ -20,6 +20,9 @@
     "scan_decode_error": "No pudimos encontrar un código de sesión en ese QR.",
     "session_active": "Sesión Activa",
     "session_id": "ID de Sesión",
+    "copy_session_id": "Copiar ID de sesión",
+    "share_link": "Enlace para compartir",
+    "copied": "Copiado",
     "copy_link": "Copiar enlace de compartir",
     "copy_session_link": "Copiar enlace de sesión",
     "link_copied": "¡Enlace copiado!",
@@ -104,18 +107,18 @@
         "reconnecting": "Reconectando...",
         "reconnected": "Reconectado",
         "reconnect_failed": "Falló la reconexión",
-        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
-        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
-        "personal_session_forbidden": "This personal session can only be joined by the same account.",
-        "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "personal_code_rotated": "El código de sesión se restableció. Vuelve a abrir tu sesión personal.",
+        "personal_ws_ticket_invalid": "La autorización de la sesión personal caducó. Inténtalo de nuevo.",
+        "personal_session_forbidden": "Solo se puede acceder a esta sesión personal con la misma cuenta.",
+        "open_personal_failed": "No se pudo abrir la sesión personal. Inténtalo de nuevo.",
+        "join_personal_failed": "No se pudo acceder a la sesión personal. Inténtalo de nuevo."
     },
     "entry": {
-        "personal_transfer": "Transfer Between My Devices",
-        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
-        "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session",
-        "personal_login_upsell": "Quieres usarlo sin escanear QR? Inicia sesion y usa tu sesion personal, es mas simple."
+        "personal_transfer": "Transferir entre mis dispositivos",
+        "personal_default_hint": "Los usuarios que hayan iniciado sesión pueden abrir o unirse a su sesión personal con un clic.",
+        "open_random_session": "Crear sesión aleatoria",
+        "hide_random_session": "Ocultar sesión aleatoria",
+        "personal_login_upsell": "¿Quieres usarlo sin escanear códigos QR? Inicia sesión y usa tu sesión personal para simplificar el proceso."
     },
     "personal": {
         "open": "Abrir mi sesión personal",

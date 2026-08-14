@@ -13,6 +13,11 @@
         "install": "ติดตั้ง",
         "close": "ปิด"
     },
+    "language_suggestion": {
+        "prompt": "ดูหน้านี้เป็นภาษา",
+        "switch": "เปลี่ยนภาษา",
+        "dismiss": "ปิดคำแนะนำภาษา"
+    },
     "seo": {
         "home": {
             "title": "FreeSaveVideo - โปรแกรมดาวน์โหลดวิดีโอออนไลน์",

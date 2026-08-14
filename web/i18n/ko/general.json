@@ -42,6 +42,11 @@
         "install": "설치",
         "close": "닫기"
     },
+    "language_suggestion": {
+        "prompt": "이 페이지를 다음 언어로 보기",
+        "switch": "언어 전환",
+        "dismiss": "언어 제안 닫기"
+    },
     "seo": {
         "home": {
             "title": "FreeSaveVideo - 온라인 동영상 다운로더",

@@ -41,6 +41,11 @@
         "install": "安装",
         "close": "关闭"
     },
+    "language_suggestion": {
+        "prompt": "使用以下语言查看此页面",
+        "switch": "切换语言",
+        "dismiss": "关闭语言建议"
+    },
     "seo": {
         "home": {
             "title": "FreeSaveVideo - 在线视频下载器",

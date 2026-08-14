@@ -42,6 +42,11 @@
         "install": "Instalar",
         "close": "Cerrar"
     },
+    "language_suggestion": {
+        "prompt": "Ver esta página en",
+        "switch": "Cambiar idioma",
+        "dismiss": "Cerrar sugerencia de idioma"
+    },
     "seo": {
         "home": {
             "title": "FreeSaveVideo - Descargador de videos online",

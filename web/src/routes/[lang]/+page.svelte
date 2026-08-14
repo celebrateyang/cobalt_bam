@@ -365,18 +365,34 @@
     ];
     $: homeHubHeading =
         currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u4e0e\u6307\u5357" : "Popular Video Downloader Links";
-    $: homeInternalLinks = getHubDownloadLinks(
-        8,
-        currentLocale === "en" ? "international" : "all",
-    );
+    $: homeInternalLinks = currentLocale === "zh"
+        ? getHubDownloadLinks(9, "all")
+              .filter((item) => item.slug !== "naver-video-download")
+              .slice(0, 8)
+        : getHubDownloadLinks(8, currentLocale === "en" ? "international" : "all");
     $: homeGuideLinks = getHubGuideLinks(
         4,
         currentLocale === "en" ? "international" : "all",
     );
+    const zhPlatformNames: Record<string, string> = {
+        Douyin: "\u6296\u97f3",
+        Bilibili: "B\u7ad9",
+        Xiaohongshu: "\u5c0f\u7ea2\u4e66",
+        Kuaishou: "\u5feb\u624b",
+        Toutiao: "\u5934\u6761",
+        Weibo: "\u5fae\u535a",
+        "WeChat Channels & Official Accounts": "\u89c6\u9891\u53f7",
+    };
+    const localizedPlatformName = (platform: string) =>
+        currentLocale === "zh" ? (zhPlatformNames[platform] ?? platform) : platform;
     const homeLinkLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform}\u89c6\u9891\u4e0b\u8f7d` : `${platform} video downloader`;
+        currentLocale === "zh"
+            ? `${localizedPlatformName(platform)}\u89c6\u9891\u4e0b\u8f7d`
+            : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>
-        currentLocale === "zh" ? `${platform}\u4e0b\u8f7d\u6307\u5357` : `How to download ${platform} videos`;
+        currentLocale === "zh"
+            ? `${localizedPlatformName(platform)}\u4e0b\u8f7d\u6307\u5357`
+            : `How to download ${platform} videos`;
     $: faqItems = [
         {
             q:

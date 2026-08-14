@@ -12,6 +12,7 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 const VALID_SERVICES = new Set([
+    'douyin',
     'instagram',
     'instagram_bearer',
     'reddit',

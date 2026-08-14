@@ -12,6 +12,7 @@ build
 .env
 .env.*
 cookies.json
+api/douyin-cookie.txt
 
 # docker
 docker-compose.yml

@@ -1,4 +1,5 @@
 import { env } from "../../config.js";
+import { getCookie, updateCookie } from "../cookie/manager.js";
 import { requestUpstream } from "../upstream/request.js";
 
 // Mobile UA is required for the share page logic to work without X-Bogus
@@ -21,6 +22,13 @@ const isUpstreamServer = (() => {
 const hasConfiguredUpstream = () => Array.isArray(env.upstreamURLs) && env.upstreamURLs.length > 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getDouyinCookie = () => getCookie("douyin");
+
+const withDouyinCookie = (headers = {}, cookie = getDouyinCookie()) => ({
+    ...headers,
+    ...(cookie ? { cookie: cookie.toString() } : {}),
+});
 
 const parseSetCookiePairs = (setCookieHeader) => {
     if (typeof setCookieHeader !== "string" || !setCookieHeader) return [];
@@ -282,10 +290,11 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
 
 const resolveShortLinkFinalUrl = async (shortLink) => {
     const baseUrl = `https://v.douyin.com/${shortLink}/`;
+    const cookie = getDouyinCookie();
 
-    const headers = {
+    const headers = withDouyinCookie({
         "user-agent": MOBILE_UA,
-    };
+    }, cookie);
 
     try {
         const res = await fetch(baseUrl, {
@@ -294,6 +303,7 @@ const resolveShortLinkFinalUrl = async (shortLink) => {
             headers,
             signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
         });
+        updateCookie(cookie, res.headers);
 
         const location = res.headers.get("location");
         if (location) return new URL(location, baseUrl).href;
@@ -308,6 +318,7 @@ const resolveShortLinkFinalUrl = async (shortLink) => {
             headers,
             signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
         });
+        updateCookie(cookie, res.headers);
 
         const location = res.headers.get("location");
         if (location) return new URL(location, baseUrl).href;
@@ -321,6 +332,7 @@ const resolveShortLinkFinalUrl = async (shortLink) => {
         headers,
         signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
     });
+    updateCookie(cookie, res.headers);
 
     return res.url;
 };
@@ -405,19 +417,21 @@ const fetchWebAwemeDetail = async (videoId) => {
     if (!videoId) return null;
 
     try {
+        const cookie = getDouyinCookie();
         const url = new URL("https://www.douyin.com/aweme/v1/web/aweme/detail/");
         url.searchParams.set("aweme_id", String(videoId));
         url.searchParams.set("aid", "1128");
         url.searchParams.set("device_platform", "webapp");
 
         const res = await fetch(url, {
-            headers: {
+            headers: withDouyinCookie({
                 "User-Agent": DESKTOP_UA,
                 referer: `https://www.douyin.com/video/${videoId}`,
                 accept: "application/json, text/plain, */*",
-            },
+            }, cookie),
             signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
         });
+        updateCookie(cookie, res.headers);
 
         if (!res.ok) return null;
         const json = await res.json().catch(() => null);
@@ -864,6 +878,10 @@ const extractDiscoverPlayApiCandidates = (html) => {
 
 const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
     const discoverCookieMap = new Map();
+    const cookie = getDouyinCookie();
+    for (const [name, value] of Object.entries(cookie?.values?.() || {})) {
+        discoverCookieMap.set(name, value);
+    }
     const discoverWarmupUrls = [
         `https://www.iesdouyin.com/share/video/${videoId}`,
         `https://www.douyin.com/video/${videoId}`,
@@ -903,6 +921,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
                     },
                     signal: AbortSignal.timeout(discoverWarmupTimeoutMs),
                 });
+                updateCookie(cookie, warmupRes.headers);
                 mergeCookieFromResponse(discoverCookieMap, warmupRes.headers);
             } catch {
                 // non-fatal
@@ -942,6 +961,7 @@ const fetchDiscoverPlayApiCandidates = async (videoId, meta = undefined) => {
                             },
                             signal: AbortSignal.timeout(discoverPageTimeoutMs),
                         });
+                        updateCookie(cookie, res.headers);
 
                         lastStatus = res.status;
                         lastSource = discoverUrl;
@@ -1186,6 +1206,7 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
 };
 
 export default async function(obj) {
+    const cookie = getDouyinCookie();
     let videoId = obj.id;
     let resolvedTargetUrl = null;
     const getProvidedFilenameBase = (fallbackId) =>
@@ -1264,11 +1285,12 @@ export default async function(obj) {
         for (let attempt = 0; attempt <= SHARE_PAGE_RETRIES; attempt++) {
             try {
                 const res = await fetch(candidateUrl, {
-                    headers: {
+                    headers: withDouyinCookie({
                         "user-agent": MOBILE_UA,
-                    },
+                    }, cookie),
                     signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
                 });
+                updateCookie(cookie, res.headers);
 
                 const body = await res.text();
 
@@ -1488,7 +1510,57 @@ export default async function(obj) {
         if (!videoPageKey) throw new Error("no video page key");
 
         const videoInfoRes = loaderData[videoPageKey].videoInfoRes;
-        if (!videoInfoRes) throw new Error("no videoInfoRes");
+        if (!videoInfoRes) {
+            const upstreamTargetUrl = getUpstreamTargetUrl({
+                videoId,
+                shortLink: obj.shortLink,
+                resolvedUrl: resolvedTargetUrl,
+            });
+
+            if (upstreamTargetUrl && !isUpstreamServer) {
+                console.warn("[douyin] share payload missing video info, trying upstream cobalt", {
+                    videoId,
+                    targetUrl: upstreamTargetUrl,
+                });
+
+                const upstream = await requestUpstreamCobalt(upstreamTargetUrl, {
+                    quickMode: true,
+                });
+                if (upstream?.url) {
+                    logUpstreamUsed("no_video_info", {
+                        videoId,
+                        shortLink: obj.shortLink,
+                        targetUrl: upstreamTargetUrl,
+                        status: upstream.status,
+                    });
+                    if (upstream.relayUrl) {
+                        return {
+                            filename: providedFilenameBase
+                                ? `${providedFilenameBase}.mp4`
+                                : upstream.filename || `douyin_${videoId}.mp4`,
+                            audioFilename: providedFilenameBase || `douyin_${videoId}`,
+                            urls: upstream.relayUrl,
+                            duration: upstream.duration,
+                            headers: buildRelayHeaders(),
+                        };
+                    }
+                    return {
+                        filename: providedFilenameBase
+                            ? `${providedFilenameBase}.mp4`
+                            : upstream.filename || `douyin_${videoId}.mp4`,
+                        audioFilename: providedFilenameBase || `douyin_${videoId}`,
+                        urls: upstream.url,
+                        forceRedirect: true,
+                        duration: upstream.duration,
+                        headers: {
+                            "User-Agent": MOBILE_UA,
+                        },
+                    };
+                }
+            }
+
+            throw new Error("no videoInfoRes");
+        }
 
         const filterReasons = Array.isArray(videoInfoRes.filter_list)
             ? videoInfoRes.filter_list

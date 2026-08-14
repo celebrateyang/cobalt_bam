@@ -26,3 +26,13 @@ test("recognizes a Finder preview URL without stripping its id", () => {
     assert.equal(result.host, "wechat_channels");
     assert.equal(result.patternMatch.shortUri, "AievImkslV");
 });
+
+test("recognizes a WeChat public article URL", () => {
+    const result = extract(
+        normalizeURL("https://mp.weixin.qq.com/s/igocr2eDxLdknggDAXkSyg"),
+        enabled,
+    );
+
+    assert.equal(result.host, "wechat_channels");
+    assert.equal(result.patternMatch.articleId, "igocr2eDxLdknggDAXkSyg");
+});

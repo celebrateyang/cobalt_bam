@@ -185,6 +185,7 @@ function aliasURL(url) {
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
     if (
         url.hostname === "weixin.qq.com" ||
+        url.hostname === "mp.weixin.qq.com" ||
         url.hostname === "channels.weixin.qq.com"
     ) {
         return "wechat_channels";

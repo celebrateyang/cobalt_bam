@@ -504,6 +504,26 @@ H.264 与 H.265 两条真实视频 URL。mock 测试和线上 Range 探测均已
 5. API 返回 `status: redirect`、`directUrl` 和 `directUrlCandidates`，不生成 `/tunnel`。
 6. Web 使用现有预览下载流程：浏览器直连失败时尝试扩展，再提供浏览器接管与复制链接。
 
+### 公众号多视频文章
+
+`https://mp.weixin.qq.com/s/:articleId` 使用同一个 `wechat_channels` 服务入口，仍然只在
+国内 api2 upstream 解析。处理规则如下：
+
+- 从文章的 `video_page_infos` 提取公众号原生 `wxv_...` 视频，选择像素数最高的 MP4，
+  其余清晰度作为内部备用候选。
+- 从腾讯视频 iframe 提取 `vid`，通过腾讯 `getinfo` 获取资源；由于返回的旧 CDN 是
+  HTTP/IP 地址，这类项目由 api2 `/tunnel` 代理，避免浏览器 mixed-content 和证书错误。
+- 从 `mp-common-videosnap` 识别视频号卡片并尝试 Finder 解析；不可播放的卡片计入
+  `unavailableCount`，不会让整篇文章失败。
+- 按文章正文出现顺序去重。只有一个可用视频时返回普通下载；多个视频时返回
+  `status: picker`，包含文件名、封面、来源、分辨率和时长。
+- Web picker 支持视频单项下载；在支持 File System Access API 的桌面浏览器中支持
+  全选、多选和顺序批量保存。
+
+当前真实样本 `igocr2eDxLdknggDAXkSyg` 共发现 11 项：8 个公众号原生视频、2 个腾讯
+视频和 1 个视频号卡片。前 10 项已验证可下载；视频号卡片的公开 Finder 响应为暂时
+不可播放，因此按部分成功策略跳过。
+
 本机运维：
 
 ```bash

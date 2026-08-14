@@ -37,7 +37,7 @@
 
     $: selectableIndexes = (items ?? [])
         .map((item, index) => ({ item, index }))
-        .filter(({ item }) => (item.type ?? "photo") === "photo")
+        .filter(({ item }) => ["photo", "video", "gif"].includes(item.type ?? "photo"))
         .map(({ index }) => index);
     $: batchAvailable = selectableIndexes.length > 1 && supportsAutoSaveDirectory();
 
@@ -76,6 +76,9 @@
             "image/webp": "webp",
             "image/gif": "gif",
             "image/avif": "avif",
+            "video/mp4": "mp4",
+            "video/webm": "webm",
+            "video/quicktime": "mov",
         };
         return extensions[contentType.split(";")[0].toLowerCase()] ?? "jpg";
     };
@@ -107,13 +110,13 @@
                 const blob = await response.blob();
                 const filename = item.filename
                     || responseFilename(response)
-                    || `image-${String(index + 1).padStart(2, "0")}.${extensionForType(blob.type)}`;
+                    || `${item.type ?? "media"}-${String(index + 1).padStart(2, "0")}.${extensionForType(blob.type)}`;
                 const file = new File([blob], filename, { type: blob.type });
                 await saveFileToAutoSaveDirectory(file, filename);
                 completed += 1;
             } catch (error) {
                 failed += 1;
-                console.error(`[picker] batch image save failed index=${index}`, error);
+                console.error(`[picker] batch media save failed index=${index}`, error);
             }
         }
 

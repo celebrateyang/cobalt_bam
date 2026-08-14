@@ -341,11 +341,12 @@ export const services = {
     wechat_channels: {
         patterns: [
             "sph/:shortUri",
+            "s/:articleId",
             "finder-preview/pages/sph?id=:shortUri",
         ],
         tld: "com",
         subdomains: [],
-        altDomains: ["weixin.qq.com", "channels.weixin.qq.com"],
+        altDomains: ["weixin.qq.com", "mp.weixin.qq.com", "channels.weixin.qq.com"],
     },
     xiaohongshu: {
         patterns: [

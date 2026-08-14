@@ -226,6 +226,16 @@ const requestUpstreamCobalt = async (payload, options = {}) => {
                 };
             }
 
+            if (body.status === "picker" && Array.isArray(body.picker)) {
+                return {
+                    ...body,
+                    picker: body.picker.map((item) => ({
+                        ...item,
+                        url: normalizeTunnelUrl(item?.url),
+                    })),
+                };
+            }
+
             if (body.status === "local-processing" && Array.isArray(body.tunnel)) {
                 return {
                     ...body,

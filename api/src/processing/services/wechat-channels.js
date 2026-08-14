@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import { resolveWechatChannel } from "../../util/resolve-wechat-channel.js";
+import {
+    buildWechatArticleResult,
+    resolveWechatArticle,
+} from "./wechat-article.js";
 
 const defaultCookieFile = fileURLToPath(
     new URL("../../../yuanbao-cookie.txt", import.meta.url)
@@ -53,8 +57,18 @@ export const buildWechatChannelResult = (feed, shortUri) => {
     };
 };
 
-export default async function({ shortUri, url }) {
+export default async function({ shortUri, articleId, url }) {
     try {
+        if (articleId) {
+            const article = await resolveWechatArticle(url.toString());
+            if (article.unavailableCount > 0) {
+                console.warn(
+                    `[wechat_channels] article partial success resolved=${article.items.length} unavailable=${article.unavailableCount}`
+                );
+            }
+            return buildWechatArticleResult(article, articleId);
+        }
+
         const yuanbaoCookie = await readYuanbaoCookie();
         if (!yuanbaoCookie) return { error: "fetch.fail" };
 

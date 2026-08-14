@@ -149,7 +149,8 @@ export const testers = {
     },
 
     "wechat_channels": pattern =>
-        /^[A-Za-z0-9]{6,64}$/.test(pattern.shortUri || ""),
+        /^[A-Za-z0-9]{6,64}$/.test(pattern.shortUri || "") ||
+        /^[A-Za-z0-9_-]{8,128}$/.test(pattern.articleId || ""),
 
     "vk": pattern =>
         (pattern.ownerId?.length <= 10 && pattern.videoId?.length <= 10) ||

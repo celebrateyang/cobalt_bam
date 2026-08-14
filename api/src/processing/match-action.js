@@ -220,6 +220,29 @@ export default function({
                     params = { picker: r.picker };
                     break;
 
+                case "wechat_channels":
+                    params = {
+                        picker: r.picker.map((item) => {
+                            const {
+                                requiresProxy,
+                                urlCandidates,
+                                ...publicItem
+                            } = item;
+                            if (!requiresProxy) return publicItem;
+                            return {
+                                ...publicItem,
+                                url: createStream({
+                                    service: "wechat_channels",
+                                    type: "proxy",
+                                    url: item.url,
+                                    urlCandidates,
+                                    filename: item.filename,
+                                }),
+                            };
+                        }),
+                    };
+                    break;
+
                 case "youtube":
                     params = {
                         picker: r.picker,
@@ -311,7 +334,6 @@ export default function({
                     break;
 
                 case "deeplearningai":
-                case "wechat_channels":
                     responseType = "redirect";
                     params = {
                         url: r.directUrl || r.urls,
@@ -326,6 +348,24 @@ export default function({
                             list.indexOf(value) === index
                         )),
                     };
+                    break;
+
+                case "wechat_channels":
+                    if (r.tunnelRequired === true) {
+                        params = { type: "proxy" };
+                    } else {
+                        responseType = "redirect";
+                        params = {
+                            url: r.urls,
+                            directUrl: r.urls,
+                            directUrlCandidates: [r.urls, ...(r.urlCandidates || [])]
+                                .filter((value, index, list) => (
+                                    typeof value === "string" &&
+                                    value.length > 0 &&
+                                    list.indexOf(value) === index
+                                )),
+                        };
+                    }
                     break;
 
                 case "tiktok":

@@ -91,6 +91,30 @@ export default function({
     const shouldQueueForcedYouTube =
         host === "youtube" && alwaysProxy === true;
 
+    if (
+        host === "douyin" &&
+        action === "video" &&
+        !shouldKeepDouyinLegacyBatchFlow &&
+        r.directClientDownload === true &&
+        typeof r.urls === "string" &&
+        r.urls.length > 0
+    ) {
+        return createResponse("redirect", {
+            url: r.urls,
+            directUrl: r.urls,
+            directUrlCandidates: Array.isArray(r.urlCandidates)
+                ? [r.urls, ...r.urlCandidates].filter((value, index, list) => (
+                    typeof value === "string" &&
+                    value.length > 0 &&
+                    list.indexOf(value) === index
+                ))
+                : [r.urls],
+            filename: defaultParams.filename,
+            duration: defaultParams.duration,
+            service: "douyin",
+        });
+    }
+
     // Forced YouTube processing (used by playlist batches) must not escape
     // through the extractor's fast redirect path. Doing so launches one browser
     // download per item and bypasses queue completion/error tracking.

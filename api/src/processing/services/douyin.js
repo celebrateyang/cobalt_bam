@@ -265,7 +265,14 @@ const requestUpstreamCobalt = async (targetUrl, options = {}) => {
 
             return {
                 status: payload.status,
-                url: normalizedUrl,
+                url: payload.directUrl || normalizedUrl,
+                urlCandidates: Array.isArray(payload.directUrlCandidates)
+                    ? payload.directUrlCandidates
+                    : undefined,
+                directClientDownload:
+                    payload.status === "redirect" &&
+                    typeof payload.directUrl === "string" &&
+                    payload.directUrl.length > 0,
                 filename: payload.filename,
                 relayUrl,
                 duration,
@@ -1550,6 +1557,8 @@ export default async function(obj) {
                             : upstream.filename || `douyin_${videoId}.mp4`,
                         audioFilename: providedFilenameBase || `douyin_${videoId}`,
                         urls: upstream.url,
+                        urlCandidates: upstream.urlCandidates,
+                        directClientDownload: upstream.directClientDownload === true,
                         forceRedirect: true,
                         duration: upstream.duration,
                         headers: {
@@ -1927,6 +1936,8 @@ export default async function(obj) {
             filename: `${filenameBase}.mp4`,
             audioFilename: filenameBase,
             urls: directUrl,
+            urlCandidates: probeCandidates,
+            directClientDownload: true,
             forceRedirect: usedDiscoverFallback || preferRedirect,
             allowZjcdnRedirect,
             duration,

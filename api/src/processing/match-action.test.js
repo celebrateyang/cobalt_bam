@@ -95,6 +95,29 @@ test("keeps portable TikTok media on Direct Bridge", () => {
     assert.equal(response.body.directUrl, mediaUrl);
 });
 
+test("returns portable Douyin media through Direct Bridge", () => {
+    const mediaUrl = "https://v26.douyinvod.com/video/example.mp4";
+    const backupUrl = "https://v3.bytevod.com/video/example.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "douyin",
+        r: {
+            urls: mediaUrl,
+            urlCandidates: [mediaUrl, backupUrl],
+            directClientDownload: true,
+            filename: "douyin_video.mp4",
+            duration: 80,
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, mediaUrl);
+    assert.equal(response.body.directUrl, mediaUrl);
+    assert.equal(response.body.service, "douyin");
+    assert.deepEqual(response.body.directUrlCandidates, [mediaUrl, backupUrl]);
+});
+
 test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
     const directUrl = "https://cdn.example/bilibili-progressive.mp4";
     const response = matchAction({

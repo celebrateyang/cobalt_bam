@@ -115,7 +115,11 @@ const isSoundCloudDownloadResponse = (response: CobaltAPIResponse) => (
 const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     response.status === "redirect" &&
     "service" in response &&
-    (response.service === "deeplearningai" || response.service === "bilibili") &&
+    (
+        response.service === "deeplearningai" ||
+        response.service === "bilibili" ||
+        response.service === "douyin"
+    ) &&
     typeof response.directUrl === "string" &&
     response.directUrl.length > 0
 );

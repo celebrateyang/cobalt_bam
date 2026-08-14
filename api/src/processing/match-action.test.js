@@ -163,6 +163,29 @@ test("returns WeChat Channels MP4 candidates through Direct Bridge", () => {
     assert.equal(response.body.tunnelUrl, undefined);
 });
 
+test("keeps forced WeChat article batch items on Direct Bridge", () => {
+    const directUrl = "https://mpvideo.qpic.cn/article-video.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "wechat_channels",
+        localProcessing: "forced",
+        alwaysProxy: true,
+        isBatchRequest: true,
+        r: {
+            service: "wechat_channels",
+            urls: directUrl,
+            urlCandidates: ["https://mpvideo.qpic.cn/article-video-backup.mp4"],
+            filename: "wechat_article_02.mp4",
+            directClientDownload: true,
+        },
+    });
+
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, directUrl);
+    assert.equal(response.body.tunnel, undefined);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test("keeps a forced Bilibili batch progressive MP4 off the server tunnel", () => {
     const directUrl = "https://upos-sz-mirrorcos.bilivideo.com/video.mp4";
     const response = matchAction({

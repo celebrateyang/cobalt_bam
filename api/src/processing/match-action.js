@@ -508,6 +508,9 @@ export default function({
         r.directClientDownload === true &&
         params.audioFormat === "mp3" &&
         params.isHLS !== true;
+    const keepWechatDirectBridge =
+        host === "wechat_channels" &&
+        r.directClientDownload === true;
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
@@ -515,7 +518,8 @@ export default function({
         alwaysProxy &&
         responseType === "redirect" &&
         !keepBilibiliDirectBridge &&
-        !keepSoundcloudDirectBridge
+        !keepSoundcloudDirectBridge &&
+        !keepWechatDirectBridge
     ) {
         responseType = "tunnel";
         params.type = "proxy";
@@ -533,6 +537,7 @@ export default function({
         responseType !== "picker" &&
         !keepBilibiliDirectBridge &&
         !keepSoundcloudDirectBridge &&
+        !keepWechatDirectBridge &&
         !keepTikTokServerTunnel
     ) {
         const isPreferredWithExtra =

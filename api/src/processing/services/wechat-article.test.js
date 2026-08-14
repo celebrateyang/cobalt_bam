@@ -66,7 +66,7 @@ test("parses native, Finder, and Tencent embeds in article order", () => {
     assert.equal(article.items[2].cover, "https://mmbiz.qpic.cn/tencent.jpg");
 });
 
-test("resolves Tencent Video while preserving HTTP for the api2 proxy", async () => {
+test("resolves Tencent Video to browser-downloadable HTTPS CDN candidates", async () => {
     const fetchImpl = async () => new Response(
         `QZOutputJson=${JSON.stringify({
             vl: {
@@ -88,12 +88,13 @@ test("resolves Tencent Video while preserving HTTP for the api2 proxy", async ()
         kind: "tencent_video",
     }, fetchImpl);
 
-    assert.equal(result.urls[0], "http://203.0.113.10/path/video.mp4?vkey=key");
+    assert.equal(result.urls[0], "https://ugcws.video.gtimg.com/path/video.mp4?vkey=key");
+    assert.equal(result.urls[1], "https://apd-vlive.apdcdn.tc.qq.com/path/video.mp4?vkey=key");
     assert.equal(result.width, 1280);
     assert.equal(result.duration, 30.5);
 });
 
-test("builds a video picker and marks only Tencent items for proxying", () => {
+test("builds a direct video picker without proxy markers", () => {
     const result = buildWechatArticleResult({
         title: "Article",
         unavailableCount: 1,
@@ -105,15 +106,15 @@ test("builds a video picker and marks only Tencent items for proxying", () => {
             },
             {
                 kind: "tencent_video",
-                urls: ["http://203.0.113.10/two.mp4"],
+                urls: ["https://ugcws.video.gtimg.com/two.mp4"],
                 duration: 30,
             },
         ],
     }, "article-id");
 
     assert.equal(result.picker.length, 2);
-    assert.equal(result.picker[0].requiresProxy, false);
-    assert.equal(result.picker[1].requiresProxy, true);
+    assert.equal(result.picker[0].requiresProxy, undefined);
+    assert.equal(result.picker[1].requiresProxy, undefined);
     assert.equal(result.unavailableCount, 1);
     assert.equal(result.duration, 50);
 });

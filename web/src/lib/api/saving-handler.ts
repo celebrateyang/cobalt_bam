@@ -535,6 +535,27 @@ export const savingHandler = async ({
         }
     }
 
+    // Queue retries for an item from a multi-video picker should rebuild that
+    // item's fetch pipeline directly. Re-requesting the source article would
+    // enqueue every video in the article again.
+    if (
+        Array.isArray(selectedRequest.queueDirectUrls) &&
+        selectedRequest.queueDirectUrls.length > 0 &&
+        selectedRequest.queueDirectFilename &&
+        selectedRequest.queueDirectMimeType
+    ) {
+        downloadButtonState.set("done");
+        createDirectCdnPipeline(
+            selectedRequest.queueDirectUrls,
+            selectedRequest.queueDirectFilename,
+            selectedRequest.queueDirectMimeType,
+            selectedRequest,
+            effectiveTaskId,
+        );
+        applyQueueMeta(effectiveTaskId, null, queueMeta);
+        return null;
+    }
+
     const response = preFetchedResponse ?? await API.request(selectedRequest);
 
     if (!response) {
@@ -851,6 +872,52 @@ export const savingHandler = async ({
 
     if (response.status === "picker") {
         downloadButtonState.set("done");
+
+        if (response.service === "wechat_channels") {
+            const videoItems = response.picker.filter((item) => item.type === "video");
+            if (videoItems.length > 0) {
+                const batchSessionId = uuid();
+                const batchMeta = {
+                    ...queueMeta,
+                    batchSessionId,
+                    batchSelectionTotal: videoItems.length,
+                };
+
+                videoItems.forEach((item, index) => {
+                    const taskId = index === 0 ? effectiveTaskId : uuid();
+                    const urls = [item.url, ...(item.urlCandidates || [])]
+                        .map((url) => normalizeTunnelUrl(url) || url)
+                        .filter((url, candidateIndex, candidates) => (
+                            url.length > 0 && candidates.indexOf(url) === candidateIndex
+                        ));
+                    const filename = item.filename || `wechat-video-${String(index + 1).padStart(2, "0")}.mp4`;
+                    const mimeType = guessMimeTypeFromFilename(filename);
+                    const itemRequest = {
+                        ...selectedRequest,
+                        queueId: taskId,
+                        queueDirectUrls: urls,
+                        queueDirectFilename: filename,
+                        queueDirectMimeType: mimeType,
+                    };
+
+                    createDirectCdnPipeline(
+                        urls,
+                        filename,
+                        mimeType,
+                        itemRequest,
+                        taskId,
+                    );
+                    applyQueueMeta(
+                        taskId,
+                        index === 0 ? response : null,
+                        batchMeta,
+                    );
+                });
+
+                return response;
+            }
+        }
+
         const buttons = [
             {
                 text: get(t)("button.done"),

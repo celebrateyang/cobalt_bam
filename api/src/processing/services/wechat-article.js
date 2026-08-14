@@ -281,6 +281,28 @@ const parseTencentResponse = (text) => {
     }
 };
 
+const tencentDirectCdnHosts = [
+    "ugcws.video.gtimg.com",
+    "apd-vlive.apdcdn.tc.qq.com",
+];
+
+const toTencentDirectUrls = (rawUrl) => {
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol === "https:") return [parsed.toString()];
+
+        return tencentDirectCdnHosts.map((hostname) => {
+            const direct = new URL(parsed);
+            direct.protocol = "https:";
+            direct.hostname = hostname;
+            direct.port = "";
+            return direct.toString();
+        });
+    } catch {
+        return [];
+    }
+};
+
 export const resolveTencentVideo = async (video, fetchImpl = fetch) => {
     const api = new URL("https://vv.video.qq.com/getinfo");
     for (const [key, value] of Object.entries({
@@ -309,7 +331,9 @@ export const resolveTencentVideo = async (video, fetchImpl = fetch) => {
                 return null;
             }
         })
-        .filter((value, index, list) => value && list.indexOf(value) === index);
+        .filter(Boolean)
+        .flatMap(toTencentDirectUrls)
+        .filter((value, index, list) => list.indexOf(value) === index);
     if (!urls.length) return null;
 
     return {
@@ -437,8 +461,7 @@ export const buildWechatArticleResult = (article, articleId) => {
             service: "wechat_channels",
             urls: item.urls[0],
             urlCandidates: item.urls.slice(1),
-            directClientDownload: item.kind !== "tencent_video",
-            tunnelRequired: item.kind === "tencent_video",
+            directClientDownload: true,
             filename: `${title}.mp4`,
             cover: item.cover || undefined,
             duration: Number(item.duration) || undefined,
@@ -459,7 +482,6 @@ export const buildWechatArticleResult = (article, articleId) => {
                 type: "video",
                 url: item.urls[0],
                 urlCandidates: item.urls.slice(1),
-                requiresProxy: item.kind === "tencent_video",
                 filename,
                 thumb: item.cover || undefined,
                 label: `Video ${index + 1}`,

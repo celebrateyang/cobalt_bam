@@ -33,9 +33,11 @@ type CobaltPartialURLResponse = {
 
 type CobaltPickerResponse = {
     status: CobaltResponseType.Picker
+    service?: string,
     picker: {
         type: 'photo' | 'video' | 'gif',
         url: string,
+        urlCandidates?: string[],
         filename?: string,
         thumb?: string,
         kind?: 'video' | 'audio' | 'mute',
@@ -143,10 +145,13 @@ export type CobaltServerInfo = {
 // but i couldn't figure out how to make a strict partial :(
 export type CobaltSaveRequestBody =
     { url: string } & Partial<Omit<CobaltSettings['save'], 'savingMethod'>> & {
-         batch?: boolean;
-         queueId?: string;
-         filenameTitle?: string;
-         bilibiliDirectBridge?: boolean;
+        batch?: boolean;
+        queueId?: string;
+        filenameTitle?: string;
+        bilibiliDirectBridge?: boolean;
+        queueDirectUrls?: string[];
+        queueDirectFilename?: string;
+        queueDirectMimeType?: string;
     };
 
 export type CobaltSessionResponse = CobaltSession | CobaltErrorResponse;

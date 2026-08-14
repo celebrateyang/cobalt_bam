@@ -3,8 +3,8 @@
     "description": "Answers about watermark-free downloads, formats, points, and troubleshooting.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Watermark-free video downloader",
-        "description": "FreeSaveVideo FAQ for Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about no-watermark saving, batch downloads, formats, points, and troubleshooting.",
-        "keywords": "FAQ, Douyin downloader, Bilibili downloader, Kuaishou downloader, Amazon Live, NAVER downloader, naver.me download, Xiaohongshu downloader, TikTok downloader, no watermark download, batch download, points, Haokan video downloader, Haokan download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FreeSaveVideo FAQ for Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook downloads. Learn about no-watermark saving, batch downloads, formats, points, and troubleshooting. It also supports public WeChat Channels videos and selectable multi-video downloads from WeChat Official Account articles.",
+        "keywords": "FAQ, Douyin downloader, Bilibili downloader, Kuaishou downloader, Amazon Live, NAVER downloader, naver.me download, Xiaohongshu downloader, TikTok downloader, no watermark download, batch download, points, Haokan video downloader, Haokan download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels video downloader, WeChat Official Account video download, download mp.weixin.qq.com video"
     },
     "toc": {
         "title": "Quick links"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Which platforms and link types are supported?",
-            "a": "100+ services are supported, including Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, and more.\nQuality, audio, and extra files depend on the platform and source post."
+            "a": "100+ services are supported, including Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, and more.\nQuality, audio, and extra files depend on the platform and source post. It also supports public WeChat Channels videos and selectable multi-video downloads from WeChat Official Account articles."
         },
         "youtube_supported": {
             "q": "Does it support YouTube downloads?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "How do I report issues or request new features?",
             "a": "Use the in-app feedback entry for the fastest troubleshooting.\nYou can also email: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Can I download WeChat Channels and WeChat Official Account article videos?",
+            "a": "Yes. Paste a public WeChat Channels share link or an mp.weixin.qq.com Official Account article link. When an article contains multiple videos, choose the items you want before they enter the download queue. Private, deleted, and login-only content is not supported."
         }
     }
 }

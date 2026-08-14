@@ -121,7 +121,7 @@
     "hero": {
         "eyebrow": "Playlist and batch video downloader",
         "title": "Download Playlists and Multiple Videos in One Place",
-        "subtitle": "Paste a supported playlist, collection, or multiple public video links. Review the queue, choose available quality, retry failed items, and save without processing every URL one by one.",
+        "subtitle": "Paste a supported playlist, collection, or multiple public video links. Review the queue, choose available quality, retry failed items, and save without processing every URL one by one. WeChat Channels and public WeChat Official Account article videos are supported; articles with multiple videos open a selection list before download.",
         "trust": "Single-video downloads still work. You can also batch links, download supported YouTube playlists, extract audio, and save to a folder in compatible browsers."
     },
     "tools": {

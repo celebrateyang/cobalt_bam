@@ -3,8 +3,8 @@
     "description": "無水印ダウンロード、形式、ポイント、トラブル対応の回答。",
     "seo": {
         "title": "FAQ | FreeSaveVideo - 無水印動画ダウンローダー",
-        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。",
-        "keywords": "FAQ, 動画ダウンローダー, Douyinダウンロード, Bilibiliダウンロード, Kuaishouダウンロード, 酷狗音楽ダウンロード, 小红书ダウンロード, TikTokダウンロード, 無水印ダウンロード, バッチダウンロード, ポイント課金, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。 公開 WeChat Channels 動画と、WeChat 公式アカウント記事内の複数動画の選択ダウンロードにも対応します。",
+        "keywords": "FAQ, 動画ダウンローダー, Douyinダウンロード, Bilibiliダウンロード, Kuaishouダウンロード, 酷狗音楽ダウンロード, 小红书ダウンロード, TikTokダウンロード, 無水印ダウンロード, バッチダウンロード, ポイント課金, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels 動画ダウンロード, WeChat 公式アカウン動画保存, mp.weixin.qq.com 動画ダウンロード"
     },
     "toc": {
         "title": "クイックリンク"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "対応プラットフォームとリンクは？",
-            "a": "100以上のサービスに対応。代表例：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook。\n画質・音声・追加ファイルはプラットフォームと投稿内容によって異なります。"
+            "a": "100以上のサービスに対応。代表例：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook。\n画質・音声・追加ファイルはプラットフォームと投稿内容によって異なります。 公開 WeChat Channels 動画と、WeChat 公式アカウント記事内の複数動画の選択ダウンロードにも対応します。"
         },
         "youtube_supported": {
             "q": "YouTubeは対応していますか？",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "不具合報告や要望は？",
             "a": "アプリ内のフィードバックから送るのが最速です。\nメールでも可能: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "WeChat Channels と公式アカウント記事の動画をダウンロードできますか？",
+            "a": "はい。公開 WeChat Channels 共有リンクまたは mp.weixin.qq.com 記事を貼り付けてください。記事に複数の動画がある場合は、キューに追加する前に必要なものを選択できます。非公開、削除済み、ログイン必須のコンテンツは対応しません。"
         }
     }
 }

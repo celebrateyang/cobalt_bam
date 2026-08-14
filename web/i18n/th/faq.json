@@ -3,8 +3,8 @@
     "description": "คำตอบเกี่ยวกับการดาวน์โหลดแบบไม่มีลายน้ำ รูปแบบ คะแนน และการแก้ปัญหา.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - โปรแกรมดาวน์โหลดวิดีโอไร้ลายน้ำ",
-        "description": "FreeSaveVideo FAQ: ดาวน์โหลด Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook พร้อมคำตอบเรื่องไร้ลายน้ำ โหมดแบตช์ รูปแบบ คะแนน และการแก้ปัญหา.",
-        "keywords": "FAQ ดาวน์โหลดวิดีโอ, ดาวน์โหลด Douyin, ดาวน์โหลด Bilibili, ดาวน์โหลด Kuaishou, ดาวน์โหลด Xiaohongshu, ดาวน์โหลด TikTok, ดาวน์โหลดไร้ลายน้ำ, ดาวน์โหลดแบบแบตช์, การคิดคะแนน, Haokan downloader, ดาวน์โหลดวิดีโอ Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FreeSaveVideo FAQ: ดาวน์โหลด Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook พร้อมคำตอบเรื่องไร้ลายน้ำ โหมดแบตช์ รูปแบบ คะแนน และการแก้ปัญหา. รองรับวิดีโอ WeChat Channels สาธารณะและการเลือกดาวน์โหลดหลายวิดีโอจากบทความบัญชีทางการ WeChat",
+        "keywords": "FAQ ดาวน์โหลดวิดีโอ, ดาวน์โหลด Douyin, ดาวน์โหลด Bilibili, ดาวน์โหลด Kuaishou, ดาวน์โหลด Xiaohongshu, ดาวน์โหลด TikTok, ดาวน์โหลดไร้ลายน้ำ, ดาวน์โหลดแบบแบตช์, การคิดคะแนน, Haokan downloader, ดาวน์โหลดวิดีโอ Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download ดาวน์โหลดวิดีโอ WeChat Channels, ดาวน์โหลดวิดีโอ WeChat Official Account, ดาวน์โหลดวิดีโอ mp.weixin.qq.com"
     },
     "toc": {
         "title": "ลิงก์ด่วน"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "รองรับแพลตฟอร์มและลิงก์แบบไหนบ้าง?",
-            "a": "รองรับกว่า 100 บริการ โดยทั่วไปเช่น Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook\nคุณภาพ/เสียง/ไฟล์เสริมขึ้นอยู่กับแพลตฟอร์มและโพสต์ต้นฉบับ"
+            "a": "รองรับกว่า 100 บริการ โดยทั่วไปเช่น Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook\nคุณภาพ/เสียง/ไฟล์เสริมขึ้นอยู่กับแพลตฟอร์มและโพสต์ต้นฉบับ รองรับวิดีโอ WeChat Channels สาธารณะและการเลือกดาวน์โหลดหลายวิดีโอจากบทความบัญชีทางการ WeChat"
         },
         "youtube_supported": {
             "q": "รองรับ YouTube ไหม?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "รายงานปัญหาหรือขอฟีเจอร์ได้อย่างไร?",
             "a": "ใช้ช่องทางฟีดแบ็กในแอปเพื่อแก้ปัญหาได้เร็วที่สุด\nหรือส่งอีเมล: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "ดาวน์โหลดวิดีโอ WeChat Channels และบทความ Official Account ได้หรือไม่?",
+            "a": "ได้ วางลิงก์ WeChat Channels สาธารณะหรือบทความ mp.weixin.qq.com หากบทความมีหลายวิดีโอ ให้เลือกรายการที่ต้องการก่อนเข้าคิว ไม่รองรับเนื้อหาส่วนตัว ที่ถูกลบ หรือต้องเข้าสู่ระบบ"
         }
     }
 }

@@ -3,8 +3,8 @@
     "description": "Giải đáp về tải không logo, định dạng, điểm và khắc phục lỗi.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Trình tải video không logo",
-        "description": "FAQ FreeSaveVideo: tải Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi.",
-        "keywords": "FAQ tải video, trình tải Douyin, trình tải Bilibili, trình tải Kuaishou, trình tải Xiaohongshu, trình tải TikTok, tải không logo, tải hàng loạt, tính điểm, Haokan downloader, tai video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FAQ FreeSaveVideo: tải Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Không logo, tải hàng loạt, định dạng, điểm và cách xử lý lỗi. Cũng hỗ trợ video WeChat Channels công khai và tải có chọn lọc nhiều video trong bài viết tài khoản chính thức WeChat.",
+        "keywords": "FAQ tải video, trình tải Douyin, trình tải Bilibili, trình tải Kuaishou, trình tải Xiaohongshu, trình tải TikTok, tải không logo, tải hàng loạt, tính điểm, Haokan downloader, tai video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download tai video WeChat Channels, tai video tai khoan chinh thuc WeChat, tai video mp.weixin.qq.com, tải video WeChat Channels, tải video tài khoản chính thức WeChat, tải video mp.weixin.qq.com"
     },
     "toc": {
         "title": "Liên kết nhanh"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Hỗ trợ nền tảng và loại link nào?",
-            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc."
+            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc. Cũng hỗ trợ video WeChat Channels công khai và tải có chọn lọc nhiều video trong bài viết tài khoản chính thức WeChat."
         },
         "youtube_supported": {
             "q": "Có hỗ trợ YouTube không?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "Báo lỗi hoặc yêu cầu tính năng như thế nào?",
             "a": "Dùng mục phản hồi trong ứng dụng để xử lý nhanh hơn.\nBạn cũng có thể email: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Tôi có thể tải video WeChat Channels và video trong bài viết Official Account không?",
+            "a": "Có. Dán liên kết WeChat Channels công khai hoặc bài viết mp.weixin.qq.com. Nếu bài viết có nhiều video, hãy chọn các mục cần tải trước khi đưa vào hàng đợi. Không hỗ trợ nội dung riêng tư, đã xóa hoặc yêu cầu đăng nhập."
         }
     }
 }

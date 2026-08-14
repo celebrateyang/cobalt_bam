@@ -19,6 +19,7 @@
                 "what_is",
                 "how_to_use",
                 "supported_platforms",
+                "wechat_supported",
                 "youtube_supported",
                 "mobile_ios",
             ],

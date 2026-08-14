@@ -64,7 +64,7 @@
                   },
                   {
                       q: 'FreeSaveVideo 支持哪些平台？',
-                      a: `FreeSaveVideo 支持 YouTube、TikTok、抖音、Bilibili、NicoNico、快手、小红书、Amazon Live、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit 等平台，具体能力以解析结果和 capabilities.json 为准。`,
+                      a: `FreeSaveVideo 支持视频号、微信公众号文章视频、YouTube、TikTok、抖音、Bilibili、NicoNico、快手、小红书、Amazon Live、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit 等平台；公众号文章可识别多个内嵌视频并按需选择，具体能力以解析结果和 capabilities.json 为准。`,
                   },
                   {
                       q: '本地视频转换会上传文件吗？',
@@ -78,7 +78,7 @@
                   },
                   {
                       q: 'Which platforms does FreeSaveVideo support?',
-                      a: 'FreeSaveVideo supports platforms such as YouTube, TikTok, Douyin, Bilibili, NicoNico, Kuaishou, Xiaohongshu, Amazon Live, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more. Exact support depends on the parsed result and capabilities.json.',
+                      a: 'FreeSaveVideo supports WeChat Channels, videos embedded in WeChat Official Account articles, YouTube, TikTok, Douyin, Bilibili, NicoNico, Kuaishou, Xiaohongshu, Amazon Live, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more. WeChat articles can expose multiple selectable videos. Exact support depends on the parsed result and capabilities.json.',
                   },
                   {
                       q: 'Are local video conversion files uploaded?',

@@ -3,8 +3,8 @@
     "description": "Antworten zu wasserzeichenfreien Downloads, Formaten, Punkten und Fehlerbehebung.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Wasserzeichenfreier Video-Downloader",
-        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen.",
-        "keywords": "FAQ Video-Downloader, Douyin Downloader, Bilibili Downloader, Kuaishou Downloader, Xiaohongshu Downloader, TikTok Downloader, wasserzeichenfrei herunterladen, Batch-Download, Punkte-Abrechnung, Haokan downloader, Haokan video download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook Downloads. Infos zu wasserzeichenfrei, Batch, Formaten, Punkten und Lösungen. Unterstützt auch öffentliche WeChat-Channels-Videos und die Auswahl mehrerer Videos aus WeChat-Official-Account-Artikeln.",
+        "keywords": "FAQ Video-Downloader, Douyin Downloader, Bilibili Downloader, Kuaishou Downloader, Xiaohongshu Downloader, TikTok Downloader, wasserzeichenfrei herunterladen, Batch-Download, Punkte-Abrechnung, Haokan downloader, Haokan video download, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels Video Downloader, WeChat Official Account Video herunterladen, mp.weixin.qq.com Video herunterladen, WeChat Channels Video Downloader, WeChat Official Account Video herunterladen, mp.weixin.qq.com Video herunterladen"
     },
     "toc": {
         "title": "Schnellzugriffe"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Welche Plattformen und Linktypen werden unterstützt?",
-            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) und Amazon Live, Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab."
+            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) und Amazon Live, Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab. Unterstützt auch öffentliche WeChat-Channels-Videos und die Auswahl mehrerer Videos aus WeChat-Official-Account-Artikeln."
         },
         "youtube_supported": {
             "q": "Wird YouTube unterstützt?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "Wie melde ich Probleme oder wünsche Funktionen?",
             "a": "Nutze das Feedback im App-Interface für schnellere Hilfe.\nOder per E-Mail: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Kann ich Videos aus WeChat Channels und Official-Account-Artikeln herunterladen?",
+            "a": "Ja. Fügen Sie einen öffentlichen WeChat-Channels-Link oder einen mp.weixin.qq.com-Artikel ein. Bei mehreren Videos wählen Sie zuerst die gewünschten Einträge aus. Private, gelöschte oder anmeldepflichtige Inhalte werden nicht unterstützt."
         }
     }
 }

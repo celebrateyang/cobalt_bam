@@ -17,13 +17,14 @@
 ## What FreeSaveVideo Does
 - Downloads publicly accessible online videos and media links when supported by the source platform.
 - Supports batch downloads, collection/playlist parsing, audio-only mode, and mute mode for supported services.
+- Supports public WeChat Channels share links and detects multiple embedded videos in public WeChat Official Account articles for selectable batch downloads.
 - Provides local browser tools for MP4 to MP3, audio extraction, M4A/WAV export, AVI to MP4, and MP4/WebM conversion.
 - Provides a whiteboard and teleprompter recorder with camera/microphone capture and MP4/WebM export.
 - Provides browser-based file/text transfer between devices.
 - Provides Discover pages for public video discovery and a random 1v1 video chat feature.
 
 ## Supported Service Summary
-Core supported platforms include YouTube, TikTok, Douyin, Bilibili, Kuaishou, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
+Core supported platforms include WeChat Channels, WeChat Official Account articles, YouTube, TikTok, Douyin, Bilibili, Kuaishou, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
 
 Different platforms expose different capabilities. Some support video, audio, no-watermark output, stories, reels, GIFs, images, multi-part videos, collections, or playlist parsing. See `/capabilities.json` for the most concise machine-readable service map.
 
@@ -32,6 +33,8 @@ Different platforms expose different capabilities. Some support video, audio, no
 - Chinese product overview: https://freesavevideo.online/zh/free-video-tools
 - Download directory: https://freesavevideo.online/en/download
 - Chinese download directory: https://freesavevideo.online/zh/download
+- WeChat Channels and Official Account video downloader: https://freesavevideo.online/en/download/wechat-video-download
+- 视频号与微信公众号视频下载: https://freesavevideo.online/zh/download/wechat-video-download
 - Guide index: https://freesavevideo.online/en/guide
 - Learn hub: https://freesavevideo.online/en/learn
 - FAQ: https://freesavevideo.online/en/faq
@@ -56,6 +59,8 @@ Different platforms expose different capabilities. Some support video, audio, no
 Localized download and guide directories follow the same language prefix pattern, for example `/ja/download`, `/th/guide`, and `/de/free-video-tools`.
 
 ## Core Download Landing Pages
+- https://freesavevideo.online/en/download/wechat-video-download
+- https://freesavevideo.online/zh/download/wechat-video-download
 - https://freesavevideo.online/en/download/tiktok-no-watermark
 - https://freesavevideo.online/en/download/tiktok-collection-download
 - https://freesavevideo.online/en/download/tiktok-mp3-download

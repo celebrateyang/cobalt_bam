@@ -87,7 +87,7 @@
     "hero": {
         "eyebrow": "온라인 동영상 다운로더",
         "title": "워터마크 없는 동영상을 온라인으로 다운로드",
-        "subtitle": "Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요.",
+        "subtitle": "Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube 등의 링크를 붙여넣고 HD 영상을 빠르게 저장하세요. 공개 WeChat Channels 동영상과 WeChat 공식 계정 글의 동영상을 지원하며, 여러 동영상이 있으면 다운로드 전에 선택 목록을 표시합니다.",
         "trust": "지원되는 서비스에서는 일괄 다운로드, 모음집 / 플레이리스트, 오디오 전용, 음소거 모드를 바로 사용할 수 있습니다."
     },
     "tools": {

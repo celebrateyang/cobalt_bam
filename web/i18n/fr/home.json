@@ -87,7 +87,7 @@
     "hero": {
         "eyebrow": "Telechargeur video en ligne",
         "title": "Telechargez des videos en ligne sans filigrane",
-        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics.",
+        "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics. Les vidéos publiques WeChat Channels et celles des articles de comptes officiels WeChat sont prises en charge ; une liste de sélection apparaît avant le téléchargement si l’article contient plusieurs vidéos.",
         "trust": "Les services compatibles proposent le telechargement par lots, les collections / playlists, l audio seul et le mode muet."
     },
     "tools": {

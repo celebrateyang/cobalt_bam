@@ -121,7 +121,7 @@
     "hero": {
         "eyebrow": "在线视频下载器",
         "title": "在线下载无水印视频",
-        "subtitle": "粘贴抖音、TikTok、B站、搜狐视频、酷狗音乐、好看视频、微博、小红书、CCTV、NicoNico、Instagram、Threads、Facebook、Amazon Live、NAVER、YouTube 等平台链接，几步即可下载高清视频。",
+        "subtitle": "粘贴抖音、TikTok、B站、搜狐视频、酷狗音乐、好看视频、微博、小红书、CCTV、NicoNico、Instagram、Threads、Facebook、Amazon Live、NAVER、YouTube 等平台链接，几步即可下载高清视频。 现已支持视频号视频下载和微信公众号文章视频下载，文章包含多个视频时可先选择再批量下载。",
         "trust": "支持的平台可直接使用批次下载、合集解析、音频模式和静音模式。"
     },
     "tools": {

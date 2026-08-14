@@ -70,6 +70,10 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'weibo',
     },
     {
+        platform: 'WeChat Channels & Official Accounts',
+        downloadSlug: 'wechat-video-download',
+    },
+    {
         platform: 'Haokan',
         downloadSlug: 'haokan-video-download',
         guideSlug: 'haokan-download-guide',
@@ -177,6 +181,7 @@ const strategicDownloadOrder = [
     'naver-video-download',
     'toutiao-video-download',
     'weibo-video-download',
+    'wechat-video-download',
     'haokan-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',

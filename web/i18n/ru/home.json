@@ -87,7 +87,7 @@
     "hero": {
         "eyebrow": "онлайн загрузчик видео",
         "title": "Скачивайте видео онлайн без водяных знаков",
-        "subtitle": "Вставьте ссылку из Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube и других сервисов, чтобы скачать HD-видео.",
+        "subtitle": "Вставьте ссылку из Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube и других сервисов, чтобы скачать HD-видео. Поддерживаются публичные видео WeChat Channels и видео из статей официальных аккаунтов WeChat; если видео несколько, перед загрузкой появится список выбора.",
         "trust": "Для поддерживаемых сервисов доступны пакетная загрузка, коллекции / playlist, только аудио и беззвучный режим."
     },
     "tools": {

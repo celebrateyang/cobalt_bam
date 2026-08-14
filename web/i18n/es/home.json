@@ -87,7 +87,7 @@
     "hero": {
         "eyebrow": "Descargador de videos online",
         "title": "Descarga videos online sin marcas de agua",
-        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube y mas para bajar videos HD en pocos pasos.",
+        "subtitle": "Pega un enlace de Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube y mas para bajar videos HD en pocos pasos. Se admiten vídeos públicos de WeChat Channels y artículos de cuentas oficiales de WeChat; si hay varios vídeos, se muestra una lista de selección antes de descargar.",
         "trust": "Las plataformas compatibles incluyen descarga por lotes, colecciones / playlists, modo solo audio y modo sin sonido."
     },
     "tools": {

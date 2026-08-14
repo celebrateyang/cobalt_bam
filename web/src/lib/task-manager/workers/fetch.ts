@@ -286,6 +286,7 @@ const fetchFile = async (
     let receivedBytes = 0;
     let expectedSize: number | undefined;
     let expectedSizeReliable = false;
+    let shortRangeEndCandidate: number | undefined;
     let contentType = "application/octet-stream";
     let abortReason: "timeout" | "stalled" | null = null;
     const controller = new AbortController();
@@ -545,6 +546,17 @@ const fetchFile = async (
             });
 
             if (response.status === 416 && receivedBytes > 0) {
+                if (
+                    !expectedSizeReliable &&
+                    shortRangeEndCandidate === receivedBytes
+                ) {
+                    expectedSize = receivedBytes;
+                    expectedSizeReliable = true;
+                    logDebug("range_eof_confirmed", {
+                        receivedBytes,
+                        previousShortRangeEnd: shortRangeEndCandidate,
+                    });
+                }
                 if (!expectedSizeReliable || (expectedSize && receivedBytes >= expectedSize)) {
                     break;
                 }
@@ -709,6 +721,7 @@ const fetchFile = async (
                 receivedBytes = 0;
                 expectedSize = undefined;
                 expectedSizeReliable = false;
+                shortRangeEndCandidate = undefined;
                 largestExpectedSize = 0;
                 highestReportedProgress = 0;
                 retries = 0;
@@ -904,6 +917,10 @@ const fetchFile = async (
                 if (bytesReceivedThisResponse < expectedChunkBytes) {
                     if (!expectedSizeReliable && !runtimeValidation.requireReliableSize) {
                         break;
+                    }
+
+                    if (!expectedSizeReliable) {
+                        shortRangeEndCandidate = receivedBytes;
                     }
 
                     if (retries >= MAX_RETRIES) {

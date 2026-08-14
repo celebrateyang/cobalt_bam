@@ -50,8 +50,8 @@
     "seo": {
         "home": {
             "title": "Playlist & Batch Video Downloader - FreeSaveVideo",
-            "description": "Download supported public playlists, collections, and multiple video links in one place. Review batch tasks, retry failures, choose available quality, and save to a folder in compatible browsers.",
-            "keywords": "playlist downloader, batch video downloader, download multiple videos, YouTube playlist downloader, bulk video downloader, save videos to folder, online video downloader"
+            "description": "Download supported public playlists, collections, and multiple video links in one place. Review batch tasks, retry failures, choose available quality, and save to a folder in compatible browsers. It also supports public WeChat Channels videos and selectable multi-video downloads from WeChat Official Account articles.",
+            "keywords": "playlist downloader, batch video downloader, download multiple videos, YouTube playlist downloader, bulk video downloader, save videos to folder, online video downloader WeChat Channels video downloader, WeChat Official Account video download, download mp.weixin.qq.com video"
         },
         "transfer": {
             "title": "Free Online File Transfer - No App Needed | P2P Share | Cross-Device",

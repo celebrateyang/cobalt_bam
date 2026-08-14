@@ -3,8 +3,8 @@
     "description": "무워터마크 다운로드, 형식, 포인트, 문제 해결에 대한 답변.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - 무워터마크 영상 다운로더",
-        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법.",
-        "keywords": "FAQ, 영상 다운로더, 네이버 동영상 다운로드, Amazon Live, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, Bilibili 다운로더, Kuaishou 다운로더, Xiaohongshu 다운로더, TikTok 다운로더, 무워터마크 다운로드, 배치 다운로드, 포인트 과금, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FreeSaveVideo FAQ: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 다운로드. 무워터마크, 배치, 형식, 포인트, 해결 방법. 공개 WeChat Channels 동영상과 WeChat 공식 계정 글에 포함된 여러 동영상의 선택 다운로드도 지원합니다.",
+        "keywords": "FAQ, 영상 다운로더, 네이버 동영상 다운로드, Amazon Live, NAVER 동영상 다운로드, naver.me 다운로드, Douyin 다운로더, Bilibili 다운로더, Kuaishou 다운로더, Xiaohongshu 다운로더, TikTok 다운로더, 무워터마크 다운로드, 배치 다운로드, 포인트 과금, Haokan downloader, Haokan 동영상 다운로드, Toutiao video downloader, Toutiao 비디오 다운로드, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels 동영상 다운로드, WeChat 공식 계정 동영상 다운로드, mp.weixin.qq.com 동영상 저장"
     },
     "toc": {
         "title": "빠른 링크"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "지원 플랫폼/링크는 무엇인가요?",
-            "a": "100개 이상의 서비스를 지원합니다. 대표적으로 Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등이 있습니다.\n화질/오디오/추가 파일은 플랫폼과 원본 게시물에 따라 달라집니다."
+            "a": "100개 이상의 서비스를 지원합니다. 대표적으로 Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등이 있습니다.\n화질/오디오/추가 파일은 플랫폼과 원본 게시물에 따라 달라집니다. 공개 WeChat Channels 동영상과 WeChat 공식 계정 글에 포함된 여러 동영상의 선택 다운로드도 지원합니다."
         },
         "youtube_supported": {
             "q": "YouTube 다운로드를 지원하나요?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "문제 신고나 기능 요청은 어떻게 하나요?",
             "a": "앱 내 피드백을 사용하는 것이 가장 빠릅니다.\n이메일로도 가능합니다: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "WeChat Channels와 WeChat 공식 계정 글의 동영상을 다운로드할 수 있나요?",
+            "a": "네. 공개 WeChat Channels 공유 링크 또는 mp.weixin.qq.com 글 링크를 붙여넣으세요. 글에 여러 동영상이 있으면 큐에 추가하기 전에 필요한 항목을 선택합니다. 비공개, 삭제된 또는 로그인이 필요한 콘텐츠는 지원하지 않습니다."
         }
     }
 }

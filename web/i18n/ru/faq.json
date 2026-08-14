@@ -3,8 +3,8 @@
     "description": "Ответы о скачивании без водяных знаков, форматах, поинтах и решении проблем.",
     "seo": {
         "title": "FAQ | FreeSaveVideo — загрузчик видео без водяных знаков",
-        "description": "FAQ FreeSaveVideo: загрузки Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения.",
-        "keywords": "FAQ загрузчик видео, Douyin загрузчик, Bilibili загрузчик, Kuaishou загрузчик, Xiaohongshu загрузчик, TikTok загрузчик, без водяных знаков, пакетная загрузка, списание поинтов, Haokan downloader, скачать видео Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FAQ FreeSaveVideo: загрузки Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Про водяные знаки, пакетный режим, форматы, поинты и решения. Также поддерживаются публичные видео WeChat Channels и выбор нескольих видео из статей официальных аккаунтов WeChat.",
+        "keywords": "FAQ загрузчик видео, Douyin загрузчик, Bilibili загрузчик, Kuaishou загрузчик, Xiaohongshu загрузчик, TikTok загрузчик, без водяных знаков, пакетная загрузка, списание поинтов, Haokan downloader, скачать видео Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download скачать видео WeChat Channels, скачать видео WeChat Official Account, скачать видео mp.weixin.qq.com"
     },
     "toc": {
         "title": "Быстрые ссылки"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Какие платформы и типы ссылок поддерживаются?",
-            "a": "Сайт поддерживает 100+ сервисов. Частые: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook.\nКачество, аудио и дополнительные файлы зависят от платформы и исходного поста."
+            "a": "Сайт поддерживает 100+ сервисов. Частые: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook.\nКачество, аудио и дополнительные файлы зависят от платформы и исходного поста. Также поддерживаются публичные видео WeChat Channels и выбор нескольих видео из статей официальных аккаунтов WeChat."
         },
         "youtube_supported": {
             "q": "Поддерживается ли YouTube?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "Как сообщить о проблеме или запросить функцию?",
             "a": "Используйте встроенную форму обратной связи для быстрого решения.\nТакже можно написать: celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Можно ли скачивать видео WeChat Channels и из статей Official Account?",
+            "a": "Да. Вставьте публичную ссылку WeChat Channels или статью mp.weixin.qq.com. Если в статье несколько видео, выберите нужные до добавления в очередь. Закрытые, удаленные и требующие входа материалы не поддерживаются."
         }
     }
 }

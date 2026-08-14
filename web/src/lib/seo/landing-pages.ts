@@ -772,6 +772,134 @@ const buildGenericLocales = (params: GenericLocaleParams) => ({
 
 export const seoLandingPages: SeoLandingPage[] = [
 
+    {
+        slug: 'wechat-video-download',
+        locales: {
+            zh: zh({
+                metaTitle: `视频号与微信公众号视频下载 - 公众号文章视频批量保存 | ${ZH_BRAND}`,
+                metaDescription:
+                    '免费在线下载公开视频号视频和微信公众号文章视频。粘贴视频号分享链接或 mp.weixin.qq.com 文章链接，自动识别文章内多个视频，选择需要的项目后加入下载队列。',
+                metaKeywords: [
+                    '视频号视频下载',
+                    '微信视频号下载',
+                    '微信公众号视频下载',
+                    '公众号文章视频下载',
+                    '微信公众号文章视频批量下载',
+                    'mp.weixin.qq.com 视频下载',
+                    'WeChat Channels video downloader',
+                ],
+                h1: '视频号与微信公众号视频下载',
+                lede: '粘贴公开的视频号分享链接，可直接解析视频；粘贴微信公众号文章链接，可自动识别文章内嵌的多个视频，先按需勾选，再进入下载队列。',
+                stepsTitle: '如何下载视频号或微信公众号文章视频',
+                steps: [
+                    '复制公开的视频号分享链接，或复制 mp.weixin.qq.com 微信公众号文章链接。',
+                    '将链接粘贴到 FreeSaveVideo 首页输入框并开始解析。',
+                    '单个视频可直接下载；公众号文章包含多个视频时，先在多选对话框中选择需要的项目。',
+                    '确认选择后，视频进入下载队列，由浏览器从源站视频地址直接保存。',
+                ],
+                featuresTitle: '视频号与公众号文章下载功能',
+                features: [
+                    '支持公开的视频号分享链接和微信公众号文章链接。',
+                    '自动识别公众号文章内的多个视频，并显示可选择的批量列表。',
+                    '仅对用户确认选择的视频计算任务和扣减积分。',
+                    '解析服务只返回媒体地址，实际视频流由用户浏览器从源站 CDN 直接下载。',
+                    '无需安装微信客户端，手机和电脑浏览器均可使用。',
+                ],
+                faqTitle: '视频号与微信公众号视频下载常见问题',
+                faqs: [
+                    {
+                        q: '同时支持视频号和微信公众号文章吗？',
+                        a: '支持公开可访问的视频号分享链接，以及公开的 mp.weixin.qq.com 微信公众号文章链接。',
+                    },
+                    {
+                        q: '公众号文章里有多个视频怎么办？',
+                        a: '解析后会弹出多选列表。你可以查看检测到的视频并只勾选需要的项目，确认后再加入下载队列。',
+                    },
+                    {
+                        q: '支持哪些微信链接格式？',
+                        a: '支持公开的视频号分享链接（例如 weixin.qq.com/sph/...）和微信公众号文章链接（例如 mp.weixin.qq.com/s/...）。',
+                    },
+                    {
+                        q: '视频流会经过 FreeSaveVideo 服务器吗？',
+                        a: '不会。解析服务负责返回可用的视频地址，实际下载由用户浏览器直接请求源站 CDN。',
+                    },
+                    {
+                        q: '可以下载私密、已删除或必须登录的内容吗？',
+                        a: '不可以。仅支持无需登录即可公开访问和播放的内容。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `WeChat Channels & Official Account Video Downloader | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public WeChat Channels videos and videos embedded in WeChat Official Account articles. Paste a share or mp.weixin.qq.com link, select detected videos, and add them to the browser download queue.',
+                metaKeywords: [
+                    'WeChat Channels video downloader',
+                    'download WeChat Channels video',
+                    'WeChat Official Account video download',
+                    'download mp.weixin.qq.com video',
+                    'WeChat article video downloader',
+                    '微信公众号视频下载',
+                    '视频号视频下载',
+                ],
+                h1: 'WeChat Channels and Official Account Video Downloader',
+                lede: 'Paste a public WeChat Channels share link to parse one video, or a public WeChat Official Account article link to detect multiple embedded videos and choose which items enter the download queue.',
+                stepsTitle: 'How to download WeChat Channels or article videos',
+                steps: [
+                    'Copy a public WeChat Channels share link or an mp.weixin.qq.com Official Account article URL.',
+                    'Paste the link into FreeSaveVideo and start parsing.',
+                    'For an article with multiple videos, review the selection dialog and keep only the videos you need.',
+                    'Confirm your selection and let the browser save each queued video directly from the source CDN.',
+                ],
+                featuresTitle: 'WeChat video downloader features',
+                features: [
+                    'Supports public WeChat Channels shares and public WeChat Official Account articles.',
+                    'Detects multiple embedded article videos and presents a selectable batch list.',
+                    'Creates tasks and charges points only for videos the user confirms.',
+                    'The parsing service returns media URLs while the browser downloads the video stream directly from the source CDN.',
+                    'Works in desktop and mobile browsers without the Windows WeChat client.',
+                ],
+                faqTitle: 'WeChat video download FAQ',
+                faqs: [
+                    {
+                        q: 'Are both WeChat Channels and Official Account articles supported?',
+                        a: 'Yes, for publicly accessible Channels share links and public mp.weixin.qq.com article links.',
+                    },
+                    {
+                        q: 'What happens when an article contains several videos?',
+                        a: 'FreeSaveVideo shows a multi-select dialog so you can choose the videos you want before they enter the download queue.',
+                    },
+                    {
+                        q: 'Which WeChat URL formats are supported?',
+                        a: 'Public Channels shares such as weixin.qq.com/sph/... and Official Account articles such as mp.weixin.qq.com/s/... are supported.',
+                    },
+                    {
+                        q: 'Does the video stream pass through FreeSaveVideo?',
+                        a: 'No. The parser returns a usable media URL and the user browser downloads the stream directly from the source CDN.',
+                    },
+                    {
+                        q: 'Can private, deleted, or login-only WeChat videos be downloaded?',
+                        a: 'No. The source must be publicly accessible and playable without signing in.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'WeChat Channels and WeChat Official Account articles',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: [
+                    'wechat channels video downloader',
+                    'wechat official account video download',
+                    'download mp.weixin.qq.com video',
+                ],
+            }),
+        },
+        supportedLinkFormats: [
+            'Public WeChat Channels share links such as https://weixin.qq.com/sph/...',
+            'Public WeChat Official Account article links such as https://mp.weixin.qq.com/s/...',
+            'Articles with multiple embedded videos open a selectable batch list.',
+        ],
+    },
 
     {
         slug: 'weibo-video-download',

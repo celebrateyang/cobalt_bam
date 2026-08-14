@@ -3,8 +3,8 @@
     "description": "Réponses sur les téléchargements sans filigrane, formats, points et dépannage.",
     "seo": {
         "title": "FAQ | FreeSaveVideo - Téléchargeur de vidéos sans filigrane",
-        "description": "FAQ FreeSaveVideo : téléchargements Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Filigrane, mode lot, formats, points et solutions.",
-        "keywords": "FAQ téléchargeur vidéo, téléchargeur Douyin, téléchargeur Bilibili, téléchargeur Kuaishou, téléchargeur Xiaohongshu, téléchargeur TikTok, téléchargement sans filigrane, téléchargement en lot, facturation par points, Haokan downloader, telecharger video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download"
+        "description": "FAQ FreeSaveVideo : téléchargements Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook. Filigrane, mode lot, formats, points et solutions. Prend aussi en charge les vidéos publiques WeChat Channels et la sélection de plusieurs vidéos dans les articles de comptes officiels WeChat.",
+        "keywords": "FAQ téléchargeur vidéo, téléchargeur Douyin, téléchargeur Bilibili, téléchargeur Kuaishou, téléchargeur Xiaohongshu, téléchargeur TikTok, téléchargement sans filigrane, téléchargement en lot, facturation par points, Haokan downloader, telecharger video Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download telecharger video WeChat Channels, telecharger video compte officiel WeChat, telecharger video mp.weixin.qq.com, télécharger vidéo WeChat Channels, télécharger vidéo compte officiel WeChat, télécharger vidéo mp.weixin.qq.com"
     },
     "toc": {
         "title": "Liens rapides"
@@ -38,7 +38,7 @@
         },
         "supported_platforms": {
             "q": "Quelles plateformes et quels liens sont pris en charge ?",
-            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) et Amazon Live, Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original."
+            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) et Amazon Live, Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original. Prend aussi en charge les vidéos publiques WeChat Channels et la sélection de plusieurs vidéos dans les articles de comptes officiels WeChat."
         },
         "youtube_supported": {
             "q": "YouTube est-il pris en charge ?",
@@ -111,6 +111,10 @@
         "feedback_contact": {
             "q": "Comment signaler un problème ou demander une fonctionnalité ?",
             "a": "Utilisez l'entrée de feedback dans l'app pour un diagnostic plus rapide.\nVous pouvez aussi écrire à : celebrateyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Puis-je télécharger les vidéos WeChat Channels et celles des articles de comptes officiels ?",
+            "a": "Oui. Collez un lien public WeChat Channels ou un article mp.weixin.qq.com. Si l’article contient plusieurs vidéos, sélectionnez celles à ajouter à la file. Les contenus privés, supprimés ou réservés aux utilisateurs connectés ne sont pas pris en charge."
         }
     }
 }

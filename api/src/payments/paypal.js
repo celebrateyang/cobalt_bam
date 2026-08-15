@@ -194,6 +194,36 @@ export const getPayPalOrder = async (paypalOrderId) =>
         path: `/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}`,
     });
 
+export const getPayPalOrderStatus = (order) =>
+    String(order?.status || "")
+        .trim()
+        .toUpperCase();
+
+export const canCapturePayPalOrder = (order) =>
+    getPayPalOrderStatus(order) === "APPROVED";
+
+export const getPayPalPayerActionUrl = (order) => {
+    const links = Array.isArray(order?.links) ? order.links : [];
+    const payerAction = links.find((link) =>
+        ["approve", "payer-action"].includes(
+            String(link?.rel || "")
+                .trim()
+                .toLowerCase(),
+        ),
+    );
+    return typeof payerAction?.href === "string" ? payerAction.href : null;
+};
+
+export const getPayPalRequestIssue = (error) => {
+    const details = Array.isArray(error?.data?.details)
+        ? error.data.details
+        : [];
+    const issue = String(details[0]?.issue || "")
+        .trim()
+        .toUpperCase();
+    return issue || null;
+};
+
 export const verifyPayPalWebhookSignature = async ({ headers, event }) => {
     const webhookId = getPayPalWebhookId();
     if (!webhookId) throw new Error("PAYPAL_WEBHOOK_ID missing");

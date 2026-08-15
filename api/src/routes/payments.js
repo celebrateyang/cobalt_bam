@@ -27,12 +27,16 @@ import {
 
 import {
     PayPalRequestError,
+    canCapturePayPalOrder,
     capturePayPalOrder,
     createPayPalOrder,
     getCompletedPayPalCapture,
     getPayPalClientId,
     getPayPalEnvironment,
     getPayPalOrder,
+    getPayPalOrderStatus,
+    getPayPalPayerActionUrl,
+    getPayPalRequestIssue,
     getPayPalSdkUrl,
     isPayPalCheckoutConfigured,
     isPayPalWebhookConfigured,
@@ -207,12 +211,35 @@ const mapClerkUser = (clerkUser) => {
     };
 };
 
-const jsonError = (res, status, code, message) => {
+const jsonError = (res, status, code, message, context) => {
     return res.status(status).json({
         status: "error",
-        error: { code, message },
+        error: { code, message, ...(context ? { context } : {}) },
     });
 };
+
+const getPayPalPendingError = (paypalOrder) => {
+    const status = getPayPalOrderStatus(paypalOrder);
+    if (status === "PAYER_ACTION_REQUIRED") {
+        return {
+            code: "PAYPAL_PAYER_ACTION_REQUIRED",
+            message: "PayPal requires another action from the payer",
+        };
+    }
+    return {
+        code: "PAYPAL_ORDER_NOT_APPROVED",
+        message: "PayPal order has not been approved by the payer",
+    };
+};
+
+const getPayPalErrorContext = ({ paypalOrder, error }) => ({
+    paypal: {
+        status: getPayPalOrderStatus(paypalOrder) || null,
+        issue: getPayPalRequestIssue(error),
+        debugId: error?.debugId || null,
+        payerActionUrl: getPayPalPayerActionUrl(paypalOrder),
+    },
+});
 
 const normalizeProvider = (rawProvider, fallback = "wechat") => {
     const normalized = String(rawProvider || "")
@@ -847,15 +874,47 @@ if (!isClerkAuthConfigured) {
                 );
             }
 
-            let paypalOrder;
-            try {
-                paypalOrder = await capturePayPalOrder({
-                    paypalOrderId: storedPayPalOrderId,
-                    outTradeNo: order.out_trade_no,
+            let paypalOrder = await getPayPalOrder(storedPayPalOrderId);
+            let paypalStatus = getPayPalOrderStatus(paypalOrder);
+            await updateCreditOrderProviderData(order.id, {
+                paypal_status: paypalStatus,
+            });
+
+            if (!["APPROVED", "COMPLETED"].includes(paypalStatus)) {
+                const pendingError = getPayPalPendingError(paypalOrder);
+                return jsonError(
+                    res,
+                    409,
+                    pendingError.code,
+                    pendingError.message,
+                    getPayPalErrorContext({ paypalOrder }),
+                );
+            }
+
+            let captureError = null;
+            if (canCapturePayPalOrder(paypalOrder)) {
+                try {
+                    paypalOrder = await capturePayPalOrder({
+                        paypalOrderId: storedPayPalOrderId,
+                        outTradeNo: order.out_trade_no,
+                    });
+                } catch (error) {
+                    if (!(error instanceof PayPalRequestError)) throw error;
+                    captureError = error;
+                    paypalOrder = await getPayPalOrder(storedPayPalOrderId);
+                }
+                paypalStatus = getPayPalOrderStatus(paypalOrder);
+                await updateCreditOrderProviderData(order.id, {
+                    paypal_status: paypalStatus,
+                    ...(captureError
+                        ? {
+                              paypal_last_issue:
+                                  getPayPalRequestIssue(captureError),
+                              paypal_last_debug_id:
+                                  captureError.debugId || null,
+                          }
+                        : {}),
                 });
-            } catch (error) {
-                if (!(error instanceof PayPalRequestError)) throw error;
-                paypalOrder = await getPayPalOrder(storedPayPalOrderId);
             }
 
             const result = await markPayPalOrderPaidFromOrder({
@@ -867,11 +926,23 @@ if (!isClerkAuthConfigured) {
                 },
             });
             if (!result.ok) {
+                const issue = getPayPalRequestIssue(captureError);
+                const pendingError = getPayPalPendingError(paypalOrder);
+                const code = [
+                    "ORDER_NOT_APPROVED",
+                    "PAYER_ACTION_REQUIRED",
+                ].includes(issue)
+                    ? pendingError.code
+                    : result.code || "PAYPAL_CAPTURE_NOT_COMPLETED";
                 return jsonError(
                     res,
                     409,
-                    result.code || "PAYPAL_CAPTURE_NOT_COMPLETED",
+                    code,
                     "PayPal payment is not completed",
+                    getPayPalErrorContext({
+                        paypalOrder,
+                        error: captureError,
+                    }),
                 );
             }
 

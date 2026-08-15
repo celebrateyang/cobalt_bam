@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    canCapturePayPalOrder,
     formatPayPalAmount,
     getCompletedPayPalCapture,
+    getPayPalOrderStatus,
+    getPayPalPayerActionUrl,
+    getPayPalRequestIssue,
     parsePayPalAmount,
 } from "./paypal.js";
 
@@ -36,4 +40,37 @@ test("extracts the completed capture and local order reference", () => {
 
     assert.equal(result?.outTradeNo, "cpt_example");
     assert.equal(result?.capture?.id, "CAPTURE123");
+});
+
+test("normalizes PayPal order state and payer action links", () => {
+    const order = {
+        status: "payer_action_required",
+        links: [
+            { rel: "self", href: "https://api-m.paypal.com/order/123" },
+            {
+                rel: "payer-action",
+                href: "https://www.paypal.com/checkout/123",
+            },
+        ],
+    };
+
+    assert.equal(getPayPalOrderStatus(order), "PAYER_ACTION_REQUIRED");
+    assert.equal(canCapturePayPalOrder(order), false);
+    assert.equal(canCapturePayPalOrder({ status: "APPROVED" }), true);
+    assert.equal(canCapturePayPalOrder({ status: "COMPLETED" }), false);
+    assert.equal(
+        getPayPalPayerActionUrl(order),
+        "https://www.paypal.com/checkout/123",
+    );
+});
+
+test("extracts the first PayPal request issue", () => {
+    const issue = getPayPalRequestIssue({
+        data: {
+            details: [{ issue: "order_not_approved" }],
+        },
+    });
+
+    assert.equal(issue, "ORDER_NOT_APPROVED");
+    assert.equal(getPayPalRequestIssue({}), null);
 });

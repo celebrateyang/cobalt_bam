@@ -1358,7 +1358,11 @@
                     if (
                         allowIncomplete &&
                         response.status === 409 &&
-                        data?.error?.code === "PAYPAL_CAPTURE_NOT_COMPLETED"
+                        [
+                            "PAYPAL_CAPTURE_NOT_COMPLETED",
+                            "PAYPAL_ORDER_NOT_APPROVED",
+                            "PAYPAL_PAYER_ACTION_REQUIRED",
+                        ].includes(data?.error?.code)
                     ) {
                         return null;
                     }
@@ -1407,8 +1411,8 @@
             }
 
             // Some Web SDK v6 popup flows return without invoking onApprove.
-            // Reconcile the approved order after the popup closes; the server
-            // capture endpoint is idempotent, so this is also safe after onApprove.
+            // Reconcile after the popup closes. The server checks the PayPal
+            // order first and only captures an APPROVED order.
             if (!captureCompleted) {
                 const { orderId } = await orderIdPromise;
                 const captured = await captureCreatedOrder(orderId, true);

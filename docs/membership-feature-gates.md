@@ -6,8 +6,11 @@ The paid membership plans grant these product entitlements:
 - `video_recording`
 - `random_chat`
 
-Both `member_monthly` and `member_yearly` grant the same entitlements. The
-existing `member_download` entitlement remains separate.
+The `member_weekly` legacy plan, `member_3day`, `member_monthly`, and
+`member_yearly` plans grant the same entitlements. The existing
+`member_download` entitlement remains separate. `member_weekly` is retained
+for historical 7-day orders and active subscriptions; new short-term orders
+use `member_3day`.
 
 ## Eligibility API
 

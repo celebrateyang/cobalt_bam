@@ -12,6 +12,7 @@ import {
 } from "../db/credit-orders.js";
 import {
     createMembershipOrder,
+    ensureMembershipCheckoutPlan,
     getMembershipOrderById,
     markMembershipOrderPaid,
     updateMembershipOrderProviderData,
@@ -24,6 +25,11 @@ import {
     queryWechatTransactionByOutTradeNo,
     verifyWechatpaySignature,
 } from "../payments/wechatpay.js";
+import {
+    WECHAT_MEMBERSHIP_PRODUCTS,
+    getMembershipProductDescription,
+    getWechatMembershipProductByKey,
+} from "../payments/membership-products.js";
 
 import {
     PayPalRequestError,
@@ -45,30 +51,6 @@ import {
 } from "../payments/paypal.js";
 
 const router = express.Router();
-
-const WECHAT_MEMBERSHIP_PRODUCTS = [
-    {
-        key: "member_weekly",
-        planKey: "member_weekly",
-        durationDays: 7,
-        amountFen: 600,
-        currency: "CNY",
-    },
-    {
-        key: "member_monthly",
-        planKey: "member_monthly",
-        durationDays: 30,
-        amountFen: 6000,
-        currency: "CNY",
-    },
-    {
-        key: "member_yearly",
-        planKey: "member_yearly",
-        durationDays: 365,
-        amountFen: 60000,
-        currency: "CNY",
-    },
-];
 
 const WECHAT_CREDIT_PRODUCTS = [
     {
@@ -157,9 +139,6 @@ const getWechatProductByKey = (key) =>
     WECHAT_CREDIT_PRODUCTS.find((p) => p.key === key);
 const getPayPalProductByKey = (key) =>
     PAYPAL_CREDIT_PRODUCTS.find((p) => p.key === key);
-const getWechatMembershipProductByKey = (key) =>
-    WECHAT_MEMBERSHIP_PRODUCTS.find((p) => p.key === key);
-
 const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
     isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -1082,6 +1061,7 @@ if (!isClerkAuthConfigured) {
 
             const clerkUser = await clerkClient.users.getUser(auth.userId);
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            await ensureMembershipCheckoutPlan(product.planKey);
 
             const outTradeNo = `mbr_${nanoid(20)}`;
             const attribution = sanitizeAttribution(req.body?.attribution);
@@ -1098,12 +1078,7 @@ if (!isClerkAuthConfigured) {
                 providerData: attribution ? { attribution } : null,
             });
 
-            const description =
-                product.key === "member_weekly"
-                    ? "7-day membership"
-                    : product.key === "member_yearly"
-                      ? "Yearly membership"
-                      : "Monthly membership";
+            const description = getMembershipProductDescription(product.key);
             const wechat = await createWechatNativeTransaction({
                 outTradeNo,
                 amountFen: product.amountFen,

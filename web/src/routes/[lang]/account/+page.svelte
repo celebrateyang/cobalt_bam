@@ -583,6 +583,7 @@
     };
 
     const membershipPlanLabel = (planKey: string | undefined | null) => {
+        if (planKey === "member_3day") return $t("auth.membership_3day");
         if (planKey === "member_weekly") return $t("auth.membership_weekly");
         if (planKey === "member_yearly") return $t("auth.membership_yearly");
         return $t("auth.membership_monthly");
@@ -594,6 +595,9 @@
     };
 
     const formatMembershipProductSubtitle = (product: MembershipProduct) => {
+        if (product.key === "member_3day") {
+            return $t("auth.membership_3day_subtitle");
+        }
         if (product.key === "member_weekly") {
             return $t("auth.membership_weekly_subtitle");
         }
@@ -1456,13 +1460,15 @@
         const checkoutIntent = $page.url.searchParams.get("checkout");
 
         if (
+            checkoutIntent === "membership_3day" ||
             checkoutIntent === "membership_weekly" ||
             checkoutIntent === "membership_monthly"
         ) {
             if (membershipProductsLoading) return;
             const productKey =
+                checkoutIntent === "membership_3day" ||
                 checkoutIntent === "membership_weekly"
-                    ? "member_weekly"
+                    ? "member_3day"
                     : "member_monthly";
             const membershipProduct = membershipProducts.find(
                 (candidate) =>
@@ -2221,7 +2227,7 @@
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
-                                                    {:else if product.key === "member_weekly"}
+                                                    {:else if product.key === "member_3day"}
                                                         <span class="badge rec">
                                                             {$t("auth.badge_recommended")}
                                                         </span>

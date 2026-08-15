@@ -39,6 +39,7 @@ export const accountPath = (
   checkout?:
     | "starter"
     | "recommended"
+    | "membership_3day"
     | "membership_weekly"
     | "membership_monthly"
     | null,
@@ -60,6 +61,7 @@ export const accountPath = (
   if (
     checkout === "starter" ||
     checkout === "recommended" ||
+    checkout === "membership_3day" ||
     checkout === "membership_weekly" ||
     checkout === "membership_monthly"
   ) {
@@ -85,6 +87,7 @@ const navigateToAccountSection = async (
   checkout?:
     | "starter"
     | "recommended"
+    | "membership_3day"
     | "membership_weekly"
     | "membership_monthly"
     | null,
@@ -194,7 +197,7 @@ export const showPointsInsufficientDialog = (
                   "membership",
                   onBeforeNavigate,
                   redirectPath,
-                  "membership_weekly",
+                  "membership_3day",
                 );
               },
             },

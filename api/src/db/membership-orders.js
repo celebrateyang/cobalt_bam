@@ -7,6 +7,77 @@ export const MEMBERSHIP_ORDER_STATUS = Object.freeze({
     failed: "FAILED",
 });
 
+const CHECKOUT_PLAN_METADATA = Object.freeze({
+    member_3day: Object.freeze({
+        name: "3-Day Member",
+        description: "3-day membership for downloads without points",
+    }),
+    member_monthly: Object.freeze({
+        name: "Monthly Member",
+        description: "Monthly membership for downloads without points",
+    }),
+    member_yearly: Object.freeze({
+        name: "Yearly Member",
+        description: "Yearly membership for downloads without points",
+    }),
+});
+
+export const ensureMembershipCheckoutPlan = async (planKey) => {
+    const metadata = CHECKOUT_PLAN_METADATA[planKey];
+    if (!metadata) {
+        throw new Error(`Unsupported membership checkout plan: ${planKey}`);
+    }
+
+    const client = await getClient();
+    const now = Date.now();
+
+    try {
+        await client.query("BEGIN");
+        await client.query(
+            `INSERT INTO entitlements (key, description)
+             VALUES
+                ('member_download', 'Allows downloads without consuming points within fair-use limits'),
+                ('ai_video_studio', 'Allows using AI video clipping and translated subtitles'),
+                ('video_recording', 'Allows using the browser video recording studio'),
+                ('random_chat', 'Allows using random video chat')
+             ON CONFLICT (key) DO NOTHING;`,
+        );
+        await client.query(
+            `INSERT INTO plans (key, name, description, is_active, created_at, updated_at)
+             VALUES ($1, $2, $3, true, $4, $4)
+             ON CONFLICT (key) DO UPDATE
+             SET name = EXCLUDED.name,
+                 description = EXCLUDED.description,
+                 is_active = true,
+                 updated_at = EXCLUDED.updated_at;`,
+            [planKey, metadata.name, metadata.description, now],
+        );
+        await client.query(
+            `INSERT INTO plan_entitlements (plan_id, entitlement_key)
+             SELECT p.id, entitlement.key
+             FROM plans p
+             CROSS JOIN (
+                VALUES
+                    ('member_download'),
+                    ('ai_video_studio'),
+                    ('video_recording'),
+                    ('random_chat')
+             ) AS entitlement(key)
+             WHERE p.key = $1
+             ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
+            [planKey],
+        );
+        await client.query("COMMIT");
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 export const ensureMembershipOrdersSchema = async () => {
     await query(`
         CREATE TABLE IF NOT EXISTS membership_orders (

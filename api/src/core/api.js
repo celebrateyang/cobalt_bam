@@ -122,6 +122,7 @@ const readableDownloadErrors = new Map([
     ["error.api.link.missing", "No URL was submitted."],
     ["error.api.link.unsupported", "This URL is not supported yet."],
     ["error.api.platform.unsupported", "This video platform is not supported yet."],
+    ["error.api.tiktok.collection.unsupported", "TikTok collection links are not supported. Ask the user to open a specific video in the collection and submit that video URL. If TikTok also says the collection does not exist, it may have been deleted or made unavailable."],
     ["error.api.douyin.user.unsupported", "Douyin profile pages are not supported. Ask the user to copy and submit the URL of a specific Douyin video."],
     ["error.api.bilibili.space.unsupported", "Bilibili space collection index pages are not supported. Ask the user to open one video inside the collection and submit that video URL."],
     ["error.api.youtube.login", "YouTube could not be processed because the upstream node may need refreshed YouTube cookies or account tokens. Ask the user to try again later."],

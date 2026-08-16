@@ -27,6 +27,7 @@
     "api.fetch.empty": "không thể tìm thấy phương tiện nào mà tôi có thể tải cho bạn. bạn có chắc đã dán đúng liên kết không?",
     "api.fetch.rate": "máy chủ xử lý FreeSaveVideo bị giới hạn tốc độ bởi api {{ service }}. thử lại sau vài giây!",
     "api.fetch.short_link": "không thể lấy thông tin liên kết từ liên kết ngắn. bạn có chắc nó hoạt động không? nếu có và bạn vẫn gặp lỗi này, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+    "api.tiktok.collection.unsupported": "đây là liên kết bộ sưu tập TikTok, không phải một video riêng lẻ. hãy mở một video trong bộ sưu tập, sao chép liên kết video đó rồi thử lại. nếu TikTok cũng báo không tìm thấy bộ sưu tập, bộ sưu tập có thể đã bị xóa hoặc không còn hiển thị.",
     "api.content.too_long": "phương tiện bạn yêu cầu quá dài. giới hạn thời lượng hiện tại là {{ limit }} phút. thử cái gì đó ngắn hơn thay thế!",
     "api.content.video.unavailable": "tôi không thể truy cập video này. nó có thể bị hạn chế ở phía {{ service }}. bạn đã dán đúng liên kết chưa?",
     "api.content.platform_restricted": "Loại liên kết {{ service }} này bị nền tảng giới hạn (ví dụ tường phí hoặc giới hạn bản quyền theo khu vực), nên tôi không thể tải xuống. Hãy thử một liên kết video công khai khác!",

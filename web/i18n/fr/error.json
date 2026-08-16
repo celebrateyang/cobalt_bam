@@ -27,6 +27,7 @@
     "api.fetch.empty": "impossible de trouver des médias que je puisse télécharger pour vous. êtes-vous sûr d'avoir collé le bon lien ?",
     "api.fetch.rate": "le serveur de traitement FreeSaveVideo a été limité en débit par l'API {{ service }}. réessayez dans quelques secondes !",
     "api.fetch.short_link": "impossible d'obtenir les informations du lien à partir du lien court. êtes-vous sûr qu'il fonctionne ? si c'est le cas et que vous obtenez toujours cette erreur, faites-le nous savoir et nous essaierons d'aider !",
+    "api.tiktok.collection.unsupported": "il s'agit d'un lien vers une collection TikTok, pas vers une vidéo unique. ouvrez une vidéo de la collection, copiez son lien et réessayez. si TikTok ne trouve pas non plus la collection, elle a peut-être été supprimée ou rendue indisponible.",
     "api.content.too_long": "le média que vous avez demandé est trop long. la limite de durée actuelle est de {{ limit }} minutes. essayez quelque chose de plus court !",
     "api.content.video.unavailable": "je ne peux pas accéder à cette vidéo. elle peut être restreinte du côté de {{ service }}. avez-vous collé le bon lien ?",
     "api.content.platform_restricted": "Ce type de lien {{ service }} est limité par la plateforme (par exemple paywall ou droits régionaux), je ne peux donc pas le télécharger. Essaie plutôt un lien vidéo public !",

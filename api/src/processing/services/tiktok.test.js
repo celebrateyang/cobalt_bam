@@ -4,6 +4,7 @@ import test from "node:test";
 import tiktok, {
     buildTikTokShortLinkUrl,
     getTikTokOriginalShareUrl,
+    isTikTokCollectionUrl,
 } from "./tiktok.js";
 
 test("preserves the original TikTok short-link domain", () => {
@@ -44,6 +45,38 @@ test("does not enable the yt-dlp fast path for ordinary canonical URLs", () => {
         ),
         "",
     );
+});
+
+test("recognizes TikTok collection URLs", () => {
+    assert.equal(
+        isTikTokCollectionUrl("https://www.tiktok.com/@creator/collection/asmr-7407927138970110726?share=1"),
+        true,
+    );
+    assert.equal(
+        isTikTokCollectionUrl("https://www.tiktok.com/@creator/video/7531234567890123456"),
+        false,
+    );
+});
+
+test("returns a friendly error when a short link resolves to a collection", async (t) => {
+    const requests = [];
+    t.mock.method(globalThis, "fetch", async (input) => {
+        requests.push(String(input));
+        return {
+            headers: new Headers({
+                location: "https://www.tiktok.com/@creator/collection/asmr-7407927138970110726?share=1",
+            }),
+            text: async () => "",
+        };
+    });
+
+    const result = await tiktok({
+        url: "https://vt.tiktok.com/example",
+        shortLink: "example",
+    });
+
+    assert.deepEqual(result, { error: "tiktok.collection.unsupported" });
+    assert.equal(requests.length, 1);
 });
 
 test("resolves a vm short link from its Location header", async (t) => {

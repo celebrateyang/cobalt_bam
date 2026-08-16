@@ -179,6 +179,21 @@ export const buildTikTokShortLinkUrl = ({ url, shortLink }) => {
     return `${fallbackShortDomain}${shortLink}`;
 };
 
+export const isTikTokCollectionUrl = (value) => {
+    if (typeof value !== "string" || !value) return false;
+
+    try {
+        const parsed = new URL(value);
+        const hostname = parsed.hostname.toLowerCase();
+        return (
+            (hostname === "tiktok.com" || hostname.endsWith(".tiktok.com"))
+            && /\/collection\/[^/]+/i.test(parsed.pathname)
+        );
+    } catch {
+        return false;
+    }
+};
+
 const extractTikTokPostFromUrl = (value) => {
     if (typeof value !== "string" || !value) return {};
 
@@ -706,6 +721,10 @@ export default async function(obj) {
 
     if (!postId) {
         const shortLinkUrl = buildTikTokShortLinkUrl(obj);
+        if (isTikTokCollectionUrl(shortLinkUrl)) {
+            return { error: "tiktok.collection.unsupported" };
+        }
+
         const response = await fetch(shortLinkUrl, {
             redirect: "manual",
             headers: {
@@ -730,6 +749,10 @@ export default async function(obj) {
             if (html.startsWith('<a href="https://')) {
                 resolvedUrl = html.split('<a href="')[1].split('"')[0];
             }
+        }
+
+        if (isTikTokCollectionUrl(resolvedUrl)) {
+            return { error: "tiktok.collection.unsupported" };
         }
 
         const resolved = extractTikTokPostFromUrl(resolvedUrl);

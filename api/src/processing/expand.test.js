@@ -47,6 +47,29 @@ const withMockedFetch = async (response, callback) => {
     }
 };
 
+const tiktokPlaylistResponse = {
+    status_code: 0,
+    has_more: 0,
+    item_list: [
+        {
+            item_basic: {
+                id: "7531234567890123456",
+                desc: "First playlist video",
+                creator: { base: { unique_id: "creator" } },
+                video: { video_play_info: { duration: 12 } },
+            },
+        },
+        {
+            item_basic: {
+                id: "7531234567890123457",
+                desc: "Second playlist video",
+                creator: { base: { unique_id: "creator" } },
+                video: { video_play_info: { duration: 15 } },
+            },
+        },
+    ],
+};
+
 test("a Douyin short link that redirects to a mix expands the collection", async () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (input) => {
@@ -90,6 +113,122 @@ test("a Douyin short link that redirects to a mix expands the collection", async
                 "https://www.douyin.com/video/7590030343332318503",
             ],
         );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+test("an explicit TikTok shared collection returns a specific error", async () => {
+    const result = await expandURL(
+        "https://www.tiktok.com/@creator/collection/asmr-7407927138970110726",
+    );
+
+    assert.equal(result.kind, "tiktok-shared-collection");
+    assert.equal(result.error.code, "error.api.tiktok.collection.unsupported");
+});
+
+test("a TikTok short link that redirects to a shared collection returns a specific error", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({
+        headers: new Headers({
+            location: "https://www.tiktok.com/@creator/collection/asmr-7407927138970110726",
+        }),
+        text: async () => "",
+    });
+
+    try {
+        const result = await expandURL("https://vt.tiktok.com/example/");
+        assert.equal(result.kind, "tiktok-shared-collection");
+        assert.equal(result.error.code, "error.api.tiktok.collection.unsupported");
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+test("an explicit TikTok creator playlist expands into batch items", async () => {
+    const result = await withMockedFetch(
+        tiktokPlaylistResponse,
+        () => expandURL(
+            "https://www.tiktok.com/@creator/playlist/tutorials-7407927138970110726",
+        ),
+    );
+
+    assert.equal(result.kind, "tiktok-playlist");
+    assert.equal(result.collectionKey, "tiktok:playlist:7407927138970110726");
+    assert.deepEqual(
+        result.items.map((item) => item.url),
+        [
+            "https://www.tiktok.com/@creator/video/7531234567890123456",
+            "https://www.tiktok.com/@creator/video/7531234567890123457",
+        ],
+    );
+});
+
+test("a TikTok short link that redirects to a creator playlist expands it", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+        const url = String(input);
+        if (url.startsWith("https://vt.tiktok.com/")) {
+            return {
+                headers: new Headers({
+                    location: "https://www.tiktok.com/@creator/playlist/tutorials-7407927138970110726",
+                }),
+                text: async () => "",
+            };
+        }
+        if (url.includes("/api/reflow/playlist/item_list/")) {
+            return { json: async () => tiktokPlaylistResponse };
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+    };
+
+    try {
+        const result = await expandURL("https://vt.tiktok.com/playlist-example/");
+        assert.equal(result.kind, "tiktok-playlist");
+        assert.equal(result.items.length, 2);
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+test("a TikTok video in a creator playlist expands the surrounding playlist", async () => {
+    const originalFetch = globalThis.fetch;
+    const hydration = {
+        __DEFAULT_SCOPE__: {
+            "webapp.video-detail": {
+                itemInfo: {
+                    itemStruct: {
+                        id: "7531234567890123456",
+                        desc: "Selected video",
+                        playlistId: "7407927138970110726",
+                        author: { uniqueId: "creator" },
+                        video: { duration: 12 },
+                    },
+                },
+            },
+        },
+    };
+    globalThis.fetch = async (input) => {
+        const url = String(input);
+        if (url.includes("/@i/video/7531234567890123456")) {
+            return {
+                ok: true,
+                text: async () =>
+                    `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">${JSON.stringify(hydration)}</script>`,
+            };
+        }
+        if (url.includes("/api/reflow/playlist/item_list/")) {
+            return { json: async () => tiktokPlaylistResponse };
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+    };
+
+    try {
+        const result = await expandURL(
+            "https://www.tiktok.com/@creator/video/7531234567890123456",
+        );
+        assert.equal(result.kind, "tiktok-playlist");
+        assert.equal(result.items.length, 2);
     } finally {
         globalThis.fetch = originalFetch;
     }

@@ -32,6 +32,7 @@
     "api.fetch.empty": "couldn't find any media that i could download for you. are you sure you pasted the right link?",
     "api.fetch.rate": "the FreeSaveVideo processing server got rate limited by {{ service }}. try again in about {{ limit }} seconds!",
     "api.fetch.short_link": "couldn't get link info from the short link. are you sure it works? if it does and you still get this error, let us know, and we'll try to help!",
+    "api.tiktok.collection.unsupported": "this is a TikTok collection link, not a single video. open a specific video in the collection, copy its link, and try again. if TikTok also says the collection doesn't exist, it may have been deleted or made unavailable.",
     "api.content.too_long": "the media you requested is too long. current duration limit is {{ limit }} minutes. try something shorter instead!",
     "api.content.video.unavailable": "i can't access this video. it may be restricted on {{ service }}'s side. have you pasted the right link?",
     "api.content.platform_restricted": "this type of {{ service }} link is restricted by the platform (for example, paid-membership or regional rights), so i can't download it. try a publicly available video link instead!",

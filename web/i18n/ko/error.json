@@ -27,6 +27,7 @@
     "api.fetch.empty": "다운로드할 수 있는 미디어를 찾을 수 없습니다. 올바른 링크를 붙여넣었나요?",
     "api.fetch.rate": "FreeSaveVideo 처리 서버가 {{ service }} API에 의해 속도 제한되었습니다. 몇 초 후에 다시 시도하세요!",
     "api.fetch.short_link": "짧은 링크에서 링크 정보를 가져올 수 없습니다. 작동하나요? 작동하는데도 이 오류가 계속 표시되면 알려주시면 도와드리겠습니다!",
+    "api.tiktok.collection.unsupported": "단일 동영상이 아닌 TikTok 컬렉션 링크입니다. 컬렉션에서 동영상 하나를 열고 해당 동영상 링크를 복사한 후 다시 시도해 주세요. TikTok에서도 컬렉션을 찾을 수 없다면 삭제되었거나 비공개 상태일 수 있습니다.",
     "api.content.too_long": "요청한 미디어가 너무 깁니다. 현재 재생 시간 제한은 {{ limit }}분입니다. 더 짧은 것을 시도하세요!",
     "api.content.video.unavailable": "이 동영상에 액세스할 수 없습니다. {{ service }} 측에서 제한될 수 있습니다. 올바른 링크를 붙여넣었나요?",
     "api.content.platform_restricted": "이 유형의 {{ service }} 링크는 플랫폼 제한(유료 멤버십 장벽 또는 지역 권리 제한 등)으로 인해 다운로드할 수 없습니다. 공개적으로 접근 가능한 영상 링크를 시도해 주세요!",

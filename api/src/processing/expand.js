@@ -472,6 +472,17 @@ const extractTikTokPlaylistId = (urlString) => {
     if (match?.[1]) return match[1];
 };
 
+const isTikTokSharedCollectionUrl = (urlString) => {
+    if (!urlString) return false;
+
+    try {
+        const url = new URL(urlString);
+        return isTikTokHost(url.hostname) && /\/collection\/[^/]+/i.test(url.pathname);
+    } catch {
+        return false;
+    }
+};
+
 const resolveTikTokShortLink = async (urlString) => {
     try {
         const res = await fetch(urlString, {
@@ -1535,38 +1546,50 @@ const expandDouyin = async (inputUrl) => {
     };
 };
 
-const expandTikTok = async (inputUrl) => {
-    const playlistIdFromUrl = extractTikTokPlaylistId(inputUrl);
-    if (playlistIdFromUrl) {
-        const items = await fetchTikTokPlaylistItems(playlistIdFromUrl);
-        if (items.length > 1) {
-            let title;
-            try {
-                const firstUrl = items[0]?.url ? new URL(items[0].url) : null;
-                const match = firstUrl?.pathname?.match(/^\/@([^/]+)\//);
-                if (match?.[1]) title = `@${match[1]} playlist`;
-            } catch {
-                // ignore
-            }
-
-            return {
-                service: "tiktok",
-                kind: "tiktok-playlist",
-                collectionKey: buildCollectionKey(
-                    "tiktok",
-                    "playlist",
-                    String(playlistIdFromUrl),
-                ),
-                title,
-                items,
-            };
+const expandTikTokPlaylist = async (playlistId, sourceUrl) => {
+    const items = await fetchTikTokPlaylistItems(playlistId);
+    if (items.length > 1) {
+        let title;
+        try {
+            const firstUrl = items[0]?.url ? new URL(items[0].url) : null;
+            const match = firstUrl?.pathname?.match(/^\/@([^/]+)\//);
+            if (match?.[1]) title = `@${match[1]} playlist`;
+        } catch {
+            // ignore
         }
 
         return {
             service: "tiktok",
-            kind: "single",
-            items: [{ url: inputUrl }],
+            kind: "tiktok-playlist",
+            collectionKey: buildCollectionKey(
+                "tiktok",
+                "playlist",
+                String(playlistId),
+            ),
+            title,
+            items,
         };
+    }
+
+    return {
+        service: "tiktok",
+        kind: "single",
+        items: [{ url: sourceUrl }],
+    };
+};
+
+const expandTikTok = async (inputUrl) => {
+    if (isTikTokSharedCollectionUrl(inputUrl)) {
+        return {
+            service: "tiktok",
+            kind: "tiktok-shared-collection",
+            error: { code: "error.api.tiktok.collection.unsupported" },
+        };
+    }
+
+    const playlistIdFromUrl = extractTikTokPlaylistId(inputUrl);
+    if (playlistIdFromUrl) {
+        return expandTikTokPlaylist(playlistIdFromUrl, inputUrl);
     }
 
     let postId = extractTikTokVideoId(inputUrl);
@@ -1575,6 +1598,18 @@ const expandTikTok = async (inputUrl) => {
         // Attempt resolving short-link style URLs (vt/vm/t) into a canonical video link.
         const resolved = await resolveTikTokShortLink(inputUrl);
         if (resolved) {
+            if (isTikTokSharedCollectionUrl(resolved)) {
+                return {
+                    service: "tiktok",
+                    kind: "tiktok-shared-collection",
+                    error: { code: "error.api.tiktok.collection.unsupported" },
+                };
+            }
+
+            const resolvedPlaylistId = extractTikTokPlaylistId(resolved);
+            if (resolvedPlaylistId) {
+                return expandTikTokPlaylist(resolvedPlaylistId, resolved);
+            }
             postId = extractTikTokVideoId(resolved);
         }
     }

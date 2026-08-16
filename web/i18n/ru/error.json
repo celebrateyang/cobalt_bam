@@ -13,6 +13,7 @@
     "api.fetch.critical": "Модуль {{ service }} вернул неизвестную ошибку. Повторите попытку через несколько секунд; если проблема останется, сообщите нам.",
     "api.fetch.empty": "Не удалось найти медиа, которое я могу для вас скачать. Убедитесь, что вставили правильную ссылку.",
     "api.fetch.short_link": "Не удалось получить информацию из короткой ссылки. Убедитесь, что она работает; если ссылка работает, но ошибка повторяется, сообщите нам, и мы постараемся помочь.",
+    "api.tiktok.collection.unsupported": "Это ссылка на коллекцию TikTok, а не на отдельное видео. Откройте видео в коллекции, скопируйте его ссылку и повторите попытку. Если TikTok тоже не находит коллекцию, возможно, она удалена или недоступна.",
     "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
     "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
     "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later.",

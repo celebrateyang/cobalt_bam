@@ -27,6 +27,7 @@
     "api.fetch.empty": "Es konnten keine Medien gefunden werden, die ich für Sie herunterladen könnte. Sind Sie sicher, dass Sie den richtigen Link eingefügt haben?",
     "api.fetch.rate": "Der FreeSaveVideo-Verarbeitungsserver wurde von der {{ service }} API ratenbegrenzt. Versuchen Sie es in ein paar Sekunden erneut!",
     "api.fetch.short_link": "Link-Informationen konnten nicht vom Kurzlink abgerufen werden. Sind Sie sicher, dass er funktioniert? Wenn er es tut und Sie diesen Fehler immer noch erhalten, lassen Sie es uns wissen und wir werden versuchen zu helfen!",
+    "api.tiktok.collection.unsupported": "Dies ist ein TikTok-Sammlungslink und kein einzelnes Video. Öffne ein bestimmtes Video in der Sammlung, kopiere dessen Link und versuche es erneut. Wenn TikTok die Sammlung ebenfalls nicht findet, wurde sie möglicherweise gelöscht oder ist nicht sichtbar.",
     "api.content.too_long": "Die von Ihnen angeforderten Medien sind zu lang. Die aktuelle Dauerbegrenzung beträgt {{ limit }} Minuten. Versuchen Sie stattdessen etwas Kürzeres!",
     "api.content.video.unavailable": "Ich kann nicht auf dieses Video zugreifen. Es könnte auf Seiten von {{ service }} eingeschränkt sein. Haben Sie den richtigen Link eingefügt?",
     "api.content.platform_restricted": "Diese Art von {{ service }}-Link ist auf der Plattform eingeschränkt (z. B. durch Paywall oder regionale Rechte), daher kann ich ihn nicht herunterladen. Versuche stattdessen einen öffentlich verfügbaren Videolink!",

@@ -16,6 +16,18 @@ export type SeoLandingLocaleContent = {
     faqTitle: string;
     faqs: SeoLandingFaqItem[];
     disclaimer: string;
+    heroTags?: string[];
+    facts?: string[];
+    supportedLinksTitle?: string;
+    supportedLinks?: Array<{
+        title: string;
+        description: string;
+    }>;
+    exampleTitle?: string;
+    exampleUrl?: string;
+    exampleInput?: string;
+    exampleResult?: string;
+    exampleActions?: string[];
 };
 
 export type SeoLandingPage = {
@@ -1833,104 +1845,258 @@ export const seoLandingPages: SeoLandingPage[] = [
             }),
         },
     },
-    {
-        slug: 'bilibili-video-download',
-        locales: {
-            zh: zh({
-                metaTitle: `B站视频下载 - 在线保存哔哩哔哩视频 | ${ZH_BRAND}`,
-                metaDescription:
-                    '在线下载 B站视频，支持普通投稿、部分合集/分P解析与音频提取。复制哔哩哔哩链接后粘贴即可保存高清视频。',
-                metaKeywords: [
-                    'b站视频下载',
-                    '哔哩哔哩视频下载',
-                    'bilibili视频下载',
-                    'b站下载器',
-                    'b站保存视频',
-                    'bilibili链接解析',
-                ],
-                h1: 'B站视频下载',
-                lede: '复制 B站视频链接后即可在线解析下载，支持视频保存与音频提取。',
-                stepsTitle: '如何下载 B站视频',
-                steps: [
-                    '在 Bilibili 打开视频，点击“分享”复制链接。',
-                    '把链接粘贴到下方输入框，点击下载。',
-                    '选择清晰度、分P结果或音频（如可用）并保存到本地。',
-                ],
-                featuresTitle: '功能亮点',
-                features: [
-                    '支持 B站高清视频下载与音频提取，具体以解析结果为准。',
-                    '部分视频支持分P、合集或课程条目识别。',
-                    '免安装，网页直接使用，手机和电脑均可用。',
-                ],
-                faqTitle: '常见问题',
-                faqs: [
-                    {
-                        q: '怎么下载 B站视频到本地？',
-                        a: '在 B站视频页点击“分享”复制链接，粘贴到本页输入框后点击下载，即可保存视频或音频到本地。',
-                    },
-                    {
-                        q: 'B站分P或合集视频可以下载吗？',
-                        a: '部分分P、合集或课程内容可以识别并展示下载选项，具体以页面解析结果为准。',
-                    },
-                    {
-                        q: '会员或付费视频可以下载吗？',
-                        a: '不可以。仅支持公开可访问内容，付费、会员专享或权限受限的视频无法解析。',
-                    },
-                    {
-                        q: 'B站视频解析失败怎么办？',
-                        a: '请确认链接可在浏览器正常打开；如仍失败，可能是内容权限、地区限制或网络问题，建议稍后重试。',
-                    },
-                ],
-            }),
-            en: en({
-                metaTitle: `Bilibili Video Downloader (HD) - ${EN_BRAND}`,
-                metaDescription:
-                    'Download Bilibili videos: copy link → paste → save. Supports HD and audio options when available.',
-                metaKeywords: [
-                    'bilibili video downloader',
-                    'download bilibili video',
-                    'bilibili video download',
-                    'bilibili audio download',
-                ],
-                h1: 'Bilibili Video Downloader',
-                lede: 'Paste a Bilibili link to download video or audio.',
-                stepsTitle: 'How to download Bilibili videos',
-                steps: [
-                    'Open a Bilibili video and copy the share link.',
-                    'Paste the link below and click download.',
-                    'Choose an available quality or audio option and save.',
-                ],
-                featuresTitle: 'Highlights',
-                features: [
-                    'HD and audio options when available.',
-                    'Browser-based, no app install.',
-                    'Works on mobile and desktop.',
-                ],
-                faqTitle: 'FAQ',
-                faqs: [
-                    {
-                        q: 'Can I download member-only videos?',
-                        a: 'No. Only publicly accessible content can be downloaded.',
-                    },
-                    {
-                        q: 'Why does it fail sometimes?',
-                        a: 'The link may be restricted or expired. Try another link or retry later.',
-                    },
-                ],
-            }),
-            ...buildGenericLocales({
-                platform: 'Bilibili',
-                kind: 'video',
-                contentKey: 'video',
-                keywords: [
-                    'bilibili video downloader',
-                    'download bilibili video',
-                    'bilibili video download',
-                    'bilibili audio download',
-                ],
-            }),
-        },
+  {
+    slug: "bilibili-video-download",
+    locales: {
+      zh: zh({
+        metaTitle: `B站合集批量下载 - Bilibili视频、多P在线下载 | ${ZH_BRAND}`,
+        metaDescription:
+          "在线下载B站视频、合集和多P内容。粘贴合集链接或合集内任一视频地址，即可识别多个可用视频并加入批量下载任务，无需安装软件。",
+        metaKeywords: [
+          "b站视频下载",
+          "b站合集批量下载",
+          "b站多P下载",
+          "bilibili playlist downloader",
+          "哔哩哔哩视频下载",
+          "bilibili视频下载",
+          "b站下载器",
+        ],
+        h1: "B站视频下载器 - 支持合集、多P和批量下载",
+        lede: "粘贴 Bilibili 单视频、多P视频、支持的公开合集链接，或合集中任一视频地址。FreeSaveVideo 可识别所属合集的可用条目，并将选中内容加入批量下载队列。",
+        heroTags: [
+          "B站合集下载",
+          "任一视频反查合集",
+          "多P视频下载",
+          "多链接批量处理",
+          "无需安装软件",
+          "手机和电脑可用",
+        ],
+        facts: [
+          "FreeSaveVideo 是一个在线 Bilibili 视频下载工具，支持单视频、多P视频、支持的公开合集和多链接批量处理。",
+          "对于支持的 Bilibili 合集，粘贴合集链接或其中任一公开视频地址，FreeSaveVideo 都可尝试反查所属合集并识别其中的多个可用视频；无需逐个复制链接。",
+          "选择需要的视频或分P后，可将它们加入批量下载队列并保存到本地。",
+        ],
+        stepsTitle: "B站合集如何批量下载？",
+        steps: [
+          "在 Bilibili 打开一个公开的视频合集、系列或多P视频，复制合集链接或合集内任一视频地址。",
+          "将链接粘贴到 FreeSaveVideo 输入框并开始解析。",
+          "系统自动识别链接中可下载的视频或分P，并展示实际可用条目。",
+          "勾选需要的条目，选择当前可用的视频、音频或清晰度选项。",
+          "将选中内容加入批量下载队列，完成后保存到本地；支持时也可选择本地文件夹自动保存。",
+        ],
+        supportedLinksTitle: "支持哪些 Bilibili 链接？",
+        supportedLinks: [
+          {
+            title: "单个 Bilibili 视频",
+            description: "粘贴公开 BV 视频链接后解析可用视频或音频。",
+          },
+          {
+            title: "多P视频",
+            description: "自动展开支持的分P，可按需勾选后批量处理。",
+          },
+          {
+            title: "视频合集与系列",
+            description:
+              "识别支持的公开 ugc_season、空间合集/列表及旧版视频列表；合集内任一视频地址也可用于反查所属合集。",
+          },
+          {
+            title: "多个 Bilibili 链接",
+            description: "一次粘贴多条支持的公开视频链接，统一加入批量任务。",
+          },
+        ],
+        featuresTitle: "为什么使用 FreeSaveVideo 下载 B站合集？",
+        features: [
+          "在线使用，无需安装桌面软件或浏览器插件。",
+          "支持的合集、多P和多链接可自动创建批量下载队列。",
+          "下载前可选择或取消条目，并使用当前解析到的视频、音频和清晰度选项。",
+          "失败任务可在队列中单独重试，无需重新处理已完成条目。",
+          "手机和电脑浏览器均可使用；浏览器支持时可选择本地文件夹自动保存。",
+        ],
+        exampleTitle: "Bilibili 合集下载示例",
+        exampleUrl: "https://www.bilibili.com/video/BV1RJ411S7bA",
+        exampleInput:
+          "输入：公开多P视频《贝乐虎早教儿歌动画合集》的 Bilibili URL。",
+        exampleResult:
+          "实测结果：2026-08-16 识别到 110 个分P条目，可全选或按需选择。源站内容可能变化，实际数量以当前解析结果为准。",
+        exampleActions: [
+          "全选或单独选择",
+          "选择可用格式与清晰度",
+          "加入批量下载",
+          "保存到本地或支持的文件夹",
+        ],
+        faqTitle: "常见问题",
+        faqs: [
+          {
+            q: "可以批量下载整个B站合集吗？",
+            a: "对于支持的公开 Bilibili 合集链接，可以。FreeSaveVideo 会识别其中可用的多个视频，你可选择多个或全部可用条目并加入批量下载任务，无需逐条复制链接。",
+          },
+          {
+            q: "可以下载B站多P视频吗？",
+            a: "可以。粘贴支持的多P视频链接后，系统会展开可用分P，你可选择指定分P或将多个分P加入队列。",
+          },
+          {
+            q: "FreeSaveVideo 需要安装软件或浏览器插件吗？",
+            a: "不需要。FreeSaveVideo 可以直接在浏览器中使用；扩展是某些 CDN 直连下载失败时的可选备用方式，不是使用本页的必需条件。",
+          },
+          {
+            q: "下载Bilibili视频需要登录账号吗？",
+            a: "下载公开可访问内容通常无需登录 Bilibili 账号。付费、会员专享、私密或其他权限受限内容不受支持。",
+          },
+          {
+            q: "支持哪些B站视频清晰度？",
+            a: "可选清晰度以每次解析结果为准。源站可用性、视频权限和当前下载路径可能影响高清选项，因此不承诺每个视频都有固定清晰度。",
+          },
+          {
+            q: "一次可以批量下载多少个视频？",
+            a: "可用条目数取决于链接解析结果和当前服务器配置；实际处理还会受浏览器、网络和任务队列影响，请以页面提示为准。",
+          },
+          {
+            q: "是否支持Bilibili合集、播放列表和系列？",
+            a: "支持公开可访问且当前能被解析的视频合集、多P、空间合集/列表和旧版视频列表。如平台返回数据受限，页面会以实际识别结果为准。",
+          },
+          {
+            q: "只有B站合集中任意一个视频地址，能找到整个合集吗？",
+            a: "可以。如果该公开视频包含可识别的 Bilibili 合集信息，FreeSaveVideo 会反查所属合集、展示其中可用的多个视频，再由你选择要加入批量队列的条目。",
+          },
+          {
+            q: "可以只下载B站音频吗？",
+            a: "可以，前提是当前视频的解析结果提供音频资源。请在加入下载任务前选择音频模式。",
+          },
+        ],
+      }),
+      en: en({
+        metaTitle: `Bilibili Playlist Downloader - Batch Collections & Multi-Part Videos | ${EN_BRAND}`,
+        metaDescription:
+          "Download public Bilibili videos, playlists, collections, and multi-part videos online. Paste a collection URL or any video from it, detect available items, and add selected videos to a batch queue.",
+        metaKeywords: [
+          "bilibili video downloader",
+          "download bilibili video",
+          "bilibili video download",
+          "bilibili audio download",
+          "bilibili playlist downloader",
+          "bilibili collection downloader",
+          "bilibili batch downloader",
+          "multi-part bilibili video downloader",
+        ],
+        h1: "Bilibili Video Downloader for Playlists, Collections & Multi-Part Videos",
+        lede: "Paste a supported public Bilibili video, multi-part video, playlist, collection URL, or any video URL from a collection. FreeSaveVideo can identify its collection, detect available items, and add your selection to a batch download queue.",
+        heroTags: [
+          "Bilibili collections",
+          "Find a collection from any item",
+          "Multi-part videos",
+          "Multi-link batches",
+          "No software install",
+          "Mobile and desktop",
+        ],
+        facts: [
+          "FreeSaveVideo is an online Bilibili downloader for single videos, multi-part videos, supported public collections, and multiple-link batches.",
+          "For a supported Bilibili collection, paste either its collection URL or any public video URL from it. FreeSaveVideo can identify the parent collection and detect multiple available videos, so you do not need to copy every item link.",
+          "Select the videos or parts you need, add them to the batch download queue, and save the completed files locally.",
+        ],
+        stepsTitle: "How to batch download a Bilibili collection",
+        steps: [
+          "Open a public Bilibili collection, series, or multi-part video and copy either the collection URL or any video URL from it.",
+          "Paste the URL into FreeSaveVideo and start parsing.",
+          "FreeSaveVideo detects the available videos or parts and displays the actual results.",
+          "Select the items and any available video, audio, or quality options.",
+          "Add the selection to the batch queue and save completed files locally.",
+        ],
+        supportedLinksTitle: "Which Bilibili links are supported?",
+        supportedLinks: [
+          {
+            title: "Single Bilibili videos",
+            description:
+              "Parse a public BV video URL for available video or audio.",
+          },
+          {
+            title: "Multi-part videos",
+            description:
+              "Expand supported parts and select the ones to process.",
+          },
+          {
+            title: "Collections and series",
+            description:
+              "Detect supported public UGC seasons, space collections/lists, and legacy media lists; any video URL from a collection can also identify its parent collection.",
+          },
+          {
+            title: "Multiple Bilibili URLs",
+            description:
+              "Paste multiple supported public video links and process them as one batch.",
+          },
+        ],
+        featuresTitle: "Why use FreeSaveVideo for Bilibili collections?",
+        features: [
+          "Runs online without required desktop software or browser extensions.",
+          "Creates a selectable batch queue from supported collections, multi-part videos, and multiple links.",
+          "Offers the video, audio, and quality choices returned by the current parse result.",
+          "Keeps failed queue items available for an individual retry.",
+          "Works on mobile and desktop; supported browsers can also save to a selected local folder.",
+        ],
+        exampleTitle: "Bilibili collection download example",
+        exampleUrl: "https://www.bilibili.com/video/BV1RJ411S7bA",
+        exampleInput:
+          "Input: the public multi-part Bilibili video 'Beilehu Early Learning Nursery Rhyme Animation Collection.'",
+        exampleResult:
+          "Verified result: 110 parts were detected on August 16, 2026, with select-all and individual selection available. Source content can change, so the current parse result is authoritative.",
+        exampleActions: [
+          "Select all or individual items",
+          "Choose available format and quality",
+          "Add to batch download",
+          "Save locally or to a supported folder",
+        ],
+        faqTitle: "FAQ",
+        faqs: [
+          {
+            q: "Can I batch download an entire Bilibili collection?",
+            a: "Yes, when the public collection URL is supported. FreeSaveVideo detects its available videos so you can select multiple or all available items and add them to a batch queue without copying each link.",
+          },
+          {
+            q: "Can I download a multi-part Bilibili video?",
+            a: "Yes. Paste a supported multi-part video URL to display the available parts, then select one or more parts for the queue.",
+          },
+          {
+            q: "Does FreeSaveVideo require software or a browser extension?",
+            a: "No. FreeSaveVideo runs directly in the browser. An extension is only an optional fallback when some direct CDN downloads fail, not a requirement for using this page.",
+          },
+          {
+            q: "Do I need a Bilibili login to download videos?",
+            a: "Publicly accessible content normally does not require a Bilibili login. Paid, private, member-only, or otherwise restricted content is not supported.",
+          },
+          {
+            q: "Which video qualities are supported?",
+            a: "Available qualities depend on each parse result, source availability, permissions, and the current download path. A fixed quality is not guaranteed for every video.",
+          },
+          {
+            q: "How many videos can I batch download at once?",
+            a: "The available item count depends on the parsed URL and current server configuration. Browser, network, and queue conditions also affect processing; follow the limit shown on the page.",
+          },
+          {
+            q: "Are Bilibili collections, playlists, and series supported?",
+            a: "Public collections, multi-part videos, space collections/lists, and legacy media lists are supported when they are currently accessible and parseable. The items shown by the current parse result are authoritative.",
+          },
+          {
+            q: "Can FreeSaveVideo find a whole collection from any video in it?",
+            a: "Yes. When a public video exposes supported Bilibili collection metadata, FreeSaveVideo identifies its parent collection, displays the available videos, and lets you choose which items to add to the batch queue.",
+          },
+          {
+            q: "Can I download audio only?",
+            a: "Yes, when the current parse result includes audio resources. Select audio mode before adding the item to the download task.",
+          },
+        ],
+      }),
+      ...buildGenericLocales({
+        platform: "Bilibili",
+        kind: "video",
+        contentKey: "video",
+        keywords: [
+          "bilibili video downloader",
+          "download bilibili video",
+          "bilibili video download",
+          "bilibili audio download",
+        ],
+      }),
     },
+  },
     {
         slug: 'bilibili-playlist-download',
         locales: {

@@ -225,6 +225,13 @@
             <div class="hero-copy">
                 <h1>{localeContent.h1}</h1>
                 <p class="lede">{localeContent.lede}</p>
+                {#if localeContent.heroTags?.length}
+                    <ul class="hero-tags" aria-label={isZh ? '支持功能' : 'Supported features'}>
+                        {#each localeContent.heroTags as tag}
+                            <li>{tag}</li>
+                        {/each}
+                    </ul>
+                {/if}
             </div>
             <div class="hero-omnibox">
                 {#if OmniboxComponent}
@@ -299,6 +306,14 @@
             <span>/</span>
             <span class="crumb-current">{localeContent.h1}</span>
         </nav>
+
+        {#if localeContent.facts?.length}
+            <section class="card fact-summary" aria-label={isZh ? '产品能力说明' : 'Product capability summary'}>
+                {#each localeContent.facts as fact}
+                    <p>{fact}</p>
+                {/each}
+            </section>
+        {/if}
 
         <section class="section-grid">
             <section class="card steps">
@@ -472,6 +487,47 @@
                 {/if}
             </div>
         </section>
+
+        {#if localeContent.supportedLinksTitle && localeContent.supportedLinks?.length}
+            <section class="card practical">
+                <h2>{localeContent.supportedLinksTitle}</h2>
+                <div class="link-type-grid">
+                    {#each localeContent.supportedLinks as item}
+                        <article class="link-type">
+                            <h3>{item.title}</h3>
+                            <p>{item.description}</p>
+                        </article>
+                    {/each}
+                </div>
+            </section>
+        {/if}
+
+        {#if localeContent.exampleTitle && localeContent.exampleInput && localeContent.exampleResult}
+            <section class="card practical">
+                <h2>{localeContent.exampleTitle}</h2>
+                <div class="example-flow">
+                    <p>{localeContent.exampleInput}</p>
+                    {#if localeContent.exampleUrl}
+                        <a
+                            class="example-source-link"
+                            href={localeContent.exampleUrl}
+                            target="_blank"
+                            rel="noreferrer noopener nofollow"
+                        >
+                            {localeContent.exampleUrl}
+                        </a>
+                    {/if}
+                    <p>{localeContent.exampleResult}</p>
+                    {#if localeContent.exampleActions?.length}
+                        <ul class="feature-list">
+                            {#each localeContent.exampleActions as action}
+                                <li>{action}</li>
+                            {/each}
+                        </ul>
+                    {/if}
+                </div>
+            </section>
+        {/if}
 
         <section class="card related">
             <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : 'Free tools without points'}</h2>
@@ -682,6 +738,25 @@
         box-shadow: none;
     }
 
+    .hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .hero-tags li {
+        padding: 6px 10px;
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
+        border-radius: 999px;
+        background: rgba(var(--accent-rgb), 0.1);
+        color: var(--download-heading);
+        font-size: 0.82rem;
+        font-weight: 650;
+    }
+
     .downloader-fallback {
         display: inline-flex;
         align-items: center;
@@ -743,6 +818,57 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 12px;
+    }
+
+    .fact-summary,
+    .example-flow {
+        display: grid;
+        gap: 10px;
+    }
+
+    .fact-summary p,
+    .example-flow p {
+        margin: 0;
+        color: var(--download-copy);
+        line-height: 1.65;
+    }
+
+    .example-source-link {
+        width: fit-content;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        color: var(--download-accent);
+        font-family: var(--font-mono, monospace);
+        font-size: 0.88rem;
+    }
+
+    .link-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    .link-type {
+        padding: 14px;
+        border: 1px solid var(--download-border);
+        border-radius: 12px;
+        background: var(--download-panel);
+    }
+
+    .link-type h3,
+    .link-type p {
+        margin: 0;
+    }
+
+    .link-type h3 {
+        color: var(--download-heading);
+        font-size: 0.98rem;
+    }
+
+    .link-type p {
+        margin-top: 6px;
+        color: var(--download-muted);
+        line-height: 1.55;
     }
 
     .practical-grid h3 {

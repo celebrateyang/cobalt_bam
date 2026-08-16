@@ -6,6 +6,8 @@ import { requestUpstream } from "../upstream/request.js";
 // Verified working as of Dec 2025
 const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 const DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
+const DOUYIN_APP_UA = "com.ss.android.ugc.aweme/350200 (Linux; U; Android 13; zh_CN; Pixel 7; Build/TD1A.220804.031; Cronet/TTNetVersion:7c4bdf50 2025-01-01)";
+const DOUYIN_APP_DEVICE_ID = `73${Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("")}`;
 const PAGE_TIMEOUT_MS = 15000;
 const CANDIDATE_PROBE_TIMEOUT_MS = 4500;
 const SHARE_PAGE_RETRIES = 1;
@@ -448,6 +450,37 @@ const fetchWebAwemeDetail = async (videoId) => {
     }
 };
 
+// The mobile detail endpoint exposes the same multi-bitrate play_addr list used
+// by the Douyin app. Its direct URLs are generated with an app/universal request
+// profile (aid=0) and are generally safer for browser handoff than PC-web URLs.
+// The endpoint currently requires only a numeric device_id and does not require
+// a browser cookie or X-Bogus signature.
+const fetchAppAwemeDetail = async (videoId) => {
+    if (!videoId) return null;
+
+    try {
+        const url = new URL("https://api.amemv.com/aweme/v1/aweme/detail/");
+        url.searchParams.set("aweme_id", String(videoId));
+        url.searchParams.set("device_id", DOUYIN_APP_DEVICE_ID);
+        url.searchParams.set("aid", "0");
+
+        const res = await fetch(url, {
+            headers: {
+                "User-Agent": DOUYIN_APP_UA,
+                accept: "application/json",
+            },
+            signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        });
+
+        if (!res.ok) return null;
+        const json = await res.json().catch(() => null);
+        const item = json?.status_code === 0 ? json?.aweme_detail : null;
+        return item?.video?.play_addr ? item : null;
+    } catch {
+        return null;
+    }
+};
+
 const parseTotalLength = (headers) => {
     const contentRange = headers.get("content-range");
     if (contentRange) {
@@ -617,7 +650,14 @@ const resolveDirectUrlFromCandidates = async (
             finalUrl,
         } = await probeContentLength(directUrl, CANDIDATE_PROBE_TIMEOUT_MS);
 
-        if (finalUrl) directUrl = finalUrl;
+        // Preserve signed direct-CDN URLs exactly as the detail endpoint issued
+        // them. Following an app/web URL from the API server can produce a CDN
+        // URL selected for that server's egress, which may return 403 to the end
+        // user's browser. Only resolver-style aweme API URLs need their redirect
+        // target materialized.
+        if (finalUrl && classifyMediaUrl(candidate) === "aweme-api") {
+            directUrl = finalUrl;
+        }
 
         const directProbeStatusCode =
             typeof directRangeStatusCode === "number"
@@ -1184,14 +1224,25 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
         }
     };
 
-    pushUrls(item?.video?.download_addr?.url_list);
+    // Prefer the broadly browser-compatible H.264 address before HEVC ladder
+    // variants. Some Chromium/Windows combinations can download HEVC but render
+    // only audio/black video in the preview player.
+    pushUrls(item?.video?.play_addr_h264?.url_list);
     pushUrls(item?.video?.play_addr?.url_list);
 
     if (Array.isArray(item?.video?.bit_rate)) {
-        for (const bitrate of item.video.bit_rate) {
+        const bitrates = [...item.video.bit_rate].sort((left, right) => {
+            const codecDifference = Number(Boolean(left?.is_h265)) - Number(Boolean(right?.is_h265));
+            if (codecDifference !== 0) return codecDifference;
+            return Number(right?.bit_rate || 0) - Number(left?.bit_rate || 0);
+        });
+        for (const bitrate of bitrates) {
             pushUrls(bitrate?.play_addr?.url_list);
         }
     }
+
+    pushUrls(item?.video?.play_addr_265?.url_list);
+    pushUrls(item?.video?.download_addr?.url_list);
 
     if (videoUri) {
         const directVideoUri = normalizeMediaUrlCandidate(videoUri);
@@ -1210,6 +1261,67 @@ const buildOrderedMediaCandidates = (item, videoUri) => {
         ...watermarkedApi,
         ...others,
     ];
+};
+
+const mergeOrderedMediaCandidates = (...candidateGroups) => {
+    const merged = [];
+    const seen = new Set();
+
+    for (const candidates of candidateGroups) {
+        if (!Array.isArray(candidates)) continue;
+        for (const candidate of candidates) {
+            appendUniqueCandidate(merged, seen, candidate);
+        }
+    }
+
+    return merged;
+};
+
+const tryBuildAppDirectResult = async ({ item, videoId, providedFilenameBase }) => {
+    if (!item?.video?.play_addr) return null;
+
+    const candidates = buildOrderedMediaCandidates(item);
+    if (candidates.length === 0) return null;
+
+    const resolved = await resolveDirectUrlFromCandidates(candidates, {
+        reason: "app_detail",
+        videoId,
+        maxAttempts: MAX_PRIMARY_MEDIA_CANDIDATE_ATTEMPTS,
+    });
+    if (
+        !resolved.directUrl ||
+        typeof resolved.directProbeStatusCode !== "number" ||
+        resolved.directProbeStatusCode >= 400
+    ) {
+        return null;
+    }
+
+    const displayTitle = buildDisplayTitle(item.desc, item);
+    const filenameBase = providedFilenameBase || buildFilenameBase(displayTitle, videoId);
+    const normalizedTitle = cleanDouyinTitle(displayTitle);
+
+    console.log("[douyin] mobile app detail direct URL selected", {
+        videoId,
+        selected: resolved.selectedUrl,
+        returned: resolved.directUrl,
+        probeStatus: resolved.directProbeStatusCode,
+        bytes: resolved.bytes ?? "n/a",
+        candidates: candidates.length,
+    });
+
+    return {
+        filename: `${filenameBase}.mp4`,
+        audioFilename: filenameBase,
+        urls: resolved.directUrl,
+        urlCandidates: candidates,
+        directClientDownload: true,
+        forceRedirect: true,
+        duration: toSeconds(item?.video?.duration ?? item?.duration),
+        fileMetadata: normalizedTitle ? { title: normalizedTitle } : undefined,
+        headers: {
+            "User-Agent": MOBILE_UA,
+        },
+    };
 };
 
 export default async function(obj) {
@@ -1275,6 +1387,17 @@ export default async function(obj) {
 
     if (!videoId) return { error: "fetch.short_link" };
     const providedFilenameBase = getProvidedFilenameBase(videoId);
+
+    // Prefer the same cookie-independent App detail path used by modern
+    // multi-quality parsers. This also avoids making api2/home cookies a hard
+    // requirement for ordinary public Douyin videos.
+    const appDetailItem = await fetchAppAwemeDetail(videoId);
+    const appDirectResult = await tryBuildAppDirectResult({
+        item: appDetailItem,
+        videoId,
+        providedFilenameBase,
+    });
+    if (appDirectResult) return appDirectResult;
 
     // Fetch share page
     const shareUrls = [
@@ -1659,7 +1782,7 @@ export default async function(obj) {
 
         const videoUri = item.video.play_addr.uri;
         const detailItem = await fetchWebAwemeDetail(videoId);
-        const titleItem = detailItem || item;
+        const titleItem = detailItem || appDetailItem || item;
         const title = titleItem?.desc || item.desc;
         const displayTitle = buildDisplayTitle(obj.filenameTitle || title, titleItem);
         const filenameBase = buildFilenameBase(displayTitle, videoId);
@@ -1668,8 +1791,12 @@ export default async function(obj) {
         const duration = toSeconds(item?.video?.duration ?? item?.duration);
 
         let usedDiscoverFallback = false;
-        const awemeOnlyPayload = isAwemeOnlyPayload(item);
-        const probeCandidates = buildOrderedMediaCandidates(item, videoUri);
+        const awemeOnlyPayload = !appDetailItem && isAwemeOnlyPayload(item);
+        const probeCandidates = mergeOrderedMediaCandidates(
+            buildOrderedMediaCandidates(appDetailItem),
+            buildOrderedMediaCandidates(item, videoUri),
+            buildOrderedMediaCandidates(detailItem),
+        );
 
         let selectedMediaUrl;
         let directUrl;

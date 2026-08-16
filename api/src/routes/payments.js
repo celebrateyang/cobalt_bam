@@ -2,7 +2,7 @@ import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { nanoid } from "nanoid";
 
-import { upsertUserFromClerk } from "../db/users.js";
+import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk } from "../db/users.js";
 import {
     createCreditOrder,
     getCreditOrderById,
@@ -366,6 +366,7 @@ router.get("/memberships/products", (req, res) => {
         data: {
             provider,
             products: buildPublicMembershipProducts(provider),
+            limits: MEMBER_DOWNLOAD_LIMITS,
         },
     });
 });

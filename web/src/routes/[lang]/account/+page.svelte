@@ -72,6 +72,11 @@
         };
     } | null;
 
+    type MembershipLimits = {
+        dailySuccessfulDownloads?: number;
+        monthlySuccessfulDownloads?: number;
+    };
+
     type MembershipProduct = {
         key: string;
         planKey: string;
@@ -613,6 +618,7 @@
     let creditProducts: CreditProduct[] = [];
     let displayedCreditProducts: CreditProduct[] = [];
     let membershipProducts: MembershipProduct[] = [];
+    let publicMembershipLimits: MembershipLimits | null = null;
     let creditProductsLoading = false;
     let membershipProductsLoading = false;
     let creditProductsErrorKey = "";
@@ -653,6 +659,16 @@
         PAYPAL_LOCALE_BY_LANGUAGE[String(language || "").toLowerCase()] ||
         "en-US";
     $: desiredPayPalLocale = resolvePayPalLocale($page.params.lang);
+    $: membershipDailyLimit = Number(
+        membership?.limits?.dailySuccessfulDownloads ??
+            publicMembershipLimits?.dailySuccessfulDownloads ??
+            0,
+    );
+    $: membershipMonthlyLimit = Number(
+        membership?.limits?.monthlySuccessfulDownloads ??
+            publicMembershipLimits?.monthlySuccessfulDownloads ??
+            0,
+    );
 
     $: isChinese = $page.params.lang === "zh";
     $: if (
@@ -807,6 +823,7 @@
             membershipProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
+            publicMembershipLimits = data?.data?.limits ?? null;
         } catch (error) {
             membershipProductsErrorKey = "auth.membership_products_load_failed";
             console.debug("load membership products failed", error);
@@ -2162,6 +2179,25 @@
                                 </div>
                             </div>
 
+                            {#if membershipDailyLimit > 0 || membershipMonthlyLimit > 0}
+                                <div class="membership-limit-summary">
+                                    {#if membershipDailyLimit > 0}
+                                        <span>
+                                            {$t("auth.membership_daily_limit", {
+                                                limit: membershipDailyLimit,
+                                            })}
+                                        </span>
+                                    {/if}
+                                    {#if membershipMonthlyLimit > 0}
+                                        <span>
+                                            {$t("auth.membership_monthly_limit", {
+                                                limit: membershipMonthlyLimit,
+                                            })}
+                                        </span>
+                                    {/if}
+                                </div>
+                            {/if}
+
                             {#if membership?.active}
                                 <div class="membership-current">
                                     <div>
@@ -2185,8 +2221,7 @@
                                                     membership.usage
                                                         ?.dailySuccessfulDownloads ?? 0,
                                                 limit:
-                                                    membership.limits
-                                                        ?.dailySuccessfulDownloads ?? 0,
+                                                    membershipDailyLimit,
                                             })}
                                         </span>
                                         <span>
@@ -2195,8 +2230,7 @@
                                                     membership.usage
                                                         ?.monthlySuccessfulDownloads ?? 0,
                                                 limit:
-                                                    membership.limits
-                                                        ?.monthlySuccessfulDownloads ?? 0,
+                                                    membershipMonthlyLimit,
                                             })}
                                         </span>
                                     </div>
@@ -3163,6 +3197,23 @@
     .product-card:hover {
         border-color: var(--popup-stroke);
         transform: translateY(-1px);
+    }
+
+    .membership-limit-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .membership-limit-summary span {
+        padding: 7px 11px;
+        border: 1px solid color-mix(in srgb, var(--green) 30%, var(--surface-2));
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--green) 8%, var(--surface-1));
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 800;
     }
 
     .purchase-policy-notice {

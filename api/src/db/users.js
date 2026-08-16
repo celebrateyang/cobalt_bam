@@ -2074,7 +2074,7 @@ export const consumeUserPoints = async (
 };
 
 export const MEMBER_DOWNLOAD_LIMITS = Object.freeze({
-    dailySuccessfulDownloads: 200,
+    dailySuccessfulDownloads: 300,
     monthlySuccessfulDownloads: 5000,
 });
 
@@ -2190,7 +2190,8 @@ export const getMembershipUsageCounts = async (userId, now = Date.now()) => {
             COUNT(*) FILTER (WHERE created_at >= $2)::int AS daily_count,
             COUNT(*) FILTER (WHERE created_at >= $3)::int AS monthly_count
         FROM member_usage_events
-        WHERE user_id = $1;
+        WHERE user_id = $1
+          AND status IN ('reserved', 'success');
         `,
         [userId, dayStart, monthStart],
     );

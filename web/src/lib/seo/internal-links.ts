@@ -207,6 +207,7 @@ const internationalDownloadSlugs = new Set([
     'tiktok-no-watermark',
     'tiktok-collection-download',
     'tiktok-mp3-download',
+    'naver-video-download',
     'instagram-reels-download',
     'instagram-video-download',
     'batch-video-downloader',
@@ -226,7 +227,6 @@ const internationalDownloadSlugs = new Set([
 const englishOnlyDownloadSlugs = new Set([
     'batch-video-downloader',
     'playlist-downloader',
-    'youtube-playlist-downloader',
 ]);
 
 const strategicDownloadPriority: Map<string, number> = new Map(

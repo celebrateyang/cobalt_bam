@@ -4,12 +4,12 @@ import {
     isEnglishOnlyDownloadSlug,
     isInternationalDownloadSlug,
 } from '$lib/seo/internal-links';
+import { supportedLanguages } from '$lib/seo/language-routing';
 
 export const getDownloadSeoLanguages = (slug: string): string[] => {
     if (!getSeoLandingPage(slug)) return [];
-    if (isEnglishOnlyDownloadSlug(slug) || isInternationalDownloadSlug(slug)) {
-        return ['en'];
-    }
+    if (isEnglishOnlyDownloadSlug(slug)) return ['en'];
+    if (isInternationalDownloadSlug(slug)) return [...supportedLanguages];
     return ['zh'];
 };
 

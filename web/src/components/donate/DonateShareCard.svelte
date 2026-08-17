@@ -1,16 +1,12 @@
 <script lang="ts">
-    import { contacts } from "$lib/env";
     import { device } from "$lib/device";
-    import locale from "$lib/i18n/locale";
     import { t } from "$lib/i18n/translations";
 
-    import { openURL, copyURL, shareURL } from "$lib/download";
+    import { copyURL, shareURL } from "$lib/download";
 
     import DonateCardContainer from "$components/donate/DonateCardContainer.svelte";
 
     import IconShare2 from "@tabler/icons-svelte/IconShare2.svelte";
-    import IconBrandGithub from "@tabler/icons-svelte/IconBrandGithub.svelte";
-    import IconBrandTwitter from "@tabler/icons-svelte/IconBrandTwitter.svelte";
     import IconMoodSmileBeam from "@tabler/icons-svelte/IconMoodSmileBeam.svelte";
 
     import CobaltQr from "$components/icons/CobaltQR.svelte";
@@ -75,29 +71,6 @@
                 </button>
             {/if}
 
-            <button
-                id="action-button-github"
-                class="action-button"
-                on:click={async () => openURL(contacts.github)}
-            >
-                <div class="action-button-icon">
-                    <IconBrandGithub />
-                </div>
-                {$t("button.star")}
-            </button>
-
-            {#if $locale !== "ru"}
-                <button
-                    id="action-button-twitter"
-                    class="action-button"
-                    on:click={async () => openURL(contacts.twitter)}
-                >
-                    <div class="action-button-icon">
-                        <IconBrandTwitter />
-                    </div>
-                    {$t("button.follow")}
-                </button>
-            {/if}
         </div>
     </div>
     <div

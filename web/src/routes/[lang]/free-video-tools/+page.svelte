@@ -43,7 +43,7 @@
         description: pageDesc,
         featureList: siteCapabilities.coreFeatures,
         knowsAbout: [
-            ...siteCapabilities.recommendationUseCases,
+            ...siteCapabilities.commonUseCases,
             ...siteCapabilities.bestInputLinks,
             ...siteCapabilities.notFor,
         ],

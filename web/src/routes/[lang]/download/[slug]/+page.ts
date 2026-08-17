@@ -30,11 +30,12 @@ export const load: PageLoad = async ({ params }) => {
         redirect(308, `/${lang}/download/${params.slug}`);
     }
 
-    const linkAudience = params.lang === 'en' ? 'international' : 'all';
+    const linkAudience = params.lang === 'zh' ? 'all' : 'international';
     const guide = guidePages.find((item) => item.landingSlug === params.slug);
     const relatedPages = getRelatedDownloadLinks(params.slug, 6, linkAudience)
         .map((item) => getSeoLandingPage(item.slug))
-        .filter((page): page is NonNullable<typeof page> => Boolean(page));
+        .filter((page): page is NonNullable<typeof page> => Boolean(page))
+        .filter((page) => getDownloadSeoLanguages(page.slug).includes(params.lang));
     const relatedLearnPages =
         params.lang === 'en' ? getRelatedLearnPagesForDownload(params.slug, 4) : [];
 

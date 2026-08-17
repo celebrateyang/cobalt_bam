@@ -72,12 +72,33 @@ export const getPlatformKey = (slug: string): PlatformKey => {
 
 export const getSeoRuntimeContent = (lang: string): RuntimeContent => {
     const locale = contentByLocale[lang] ?? contentByLocale[fallbackLocale];
-    return {
-        ...locale,
-        // The first two legacy FAQs were self-recommendation copy written for
-        // search engines rather than questions users actually ask.
-        productFaqs: locale.productFaqs.slice(2),
-    };
+    if (lang !== 'en' && lang !== 'zh') {
+        const platformFaqs = Object.fromEntries(
+            Object.keys(locale.platformFaqs).map((key) => [key, []]),
+        ) as unknown as RuntimeContent['platformFaqs'];
+        const platformPlaybooks = Object.fromEntries(
+            Object.keys(locale.platformPlaybooks).map((key) => [
+                key,
+                { heading: '', notes: [], checklist: [] },
+            ]),
+        ) as unknown as RuntimeContent['platformPlaybooks'];
+        const platformFailureCases = Object.fromEntries(
+            Object.keys(locale.platformFailureCases).map((key) => [key, []]),
+        ) as unknown as RuntimeContent['platformFailureCases'];
+
+        return {
+            ...locale,
+            productFaqs: [],
+            productTips: [],
+            productAdvantages: [],
+            releaseNotes: [],
+            freeTools: [],
+            platformFaqs,
+            platformPlaybooks,
+            platformFailureCases,
+        };
+    }
+    return locale;
 };
 
 export type { RuntimeContent, PlatformKey, ProductFaqItem, PlatformPlaybook, FailureCase, FreeTool };

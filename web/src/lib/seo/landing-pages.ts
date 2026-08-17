@@ -4236,6 +4236,54 @@ export const seoLandingPages: SeoLandingPage[] = [
             'Watch Later (WL) and generated Mix/Radio IDs beginning with RD or RL are intentionally excluded.',
         ],
         locales: {
+            zh: zh({
+                metaTitle: `YouTube Playlist 合集下载器 - 批量选择公开视频 | ${ZH_BRAND}`,
+                metaDescription:
+                    '粘贴带 list 参数的公开 YouTube Playlist 地址，展开合集中的可用视频，勾选需要的条目并分别选择 MP4 或音频格式后批量保存。',
+                metaKeywords: [
+                    'youtube playlist 下载',
+                    'youtube 合集下载',
+                    'youtube 批量下载',
+                    'youtube playlist downloader',
+                    'youtube playlist 转 mp4',
+                ],
+                h1: 'YouTube Playlist 合集下载器',
+                lede: '粘贴包含 list 参数的公开 Playlist 地址。FreeSaveVideo 会读取当前可用的视频，将它们转换成可勾选的批量任务，不需要逐个复制 watch 链接。',
+                stepsTitle: '如何批量下载 YouTube Playlist',
+                steps: [
+                    '打开公开 Playlist 并复制完整地址，确认链接中保留 list 参数。',
+                    '把地址粘贴到下载器中；不要使用频道主页、私人 Playlist 或会员专属页面。',
+                    '检查识别到的视频，勾选需要的条目并为每个条目选择可用格式。',
+                    '启动批量任务；单个视频不可用时，其余任务仍可继续，失败条目可以单独重试。',
+                ],
+                featuresTitle: 'YouTube Playlist 实际支持能力',
+                features: [
+                    '支持 youtube.com/playlist?list=... 和带 list 参数的 watch 地址。',
+                    '把识别到的公开视频转换成可选择的批量任务。',
+                    '每个视频继续使用 YouTube 格式选择器，可用时显示 MP4、音频等结果。',
+                    '私人、会员专属、Watch Later 和动态 Mix/Radio 列表不在支持范围内。',
+                    '某个条目失败时不会要求重新开始整个 Playlist。',
+                ],
+                faqTitle: 'YouTube Playlist 常见问题',
+                faqs: [
+                    {
+                        q: 'FreeSaveVideo 支持批量下载 YouTube Playlist 吗？',
+                        a: '支持可公开访问且包含有效 list 参数的 Playlist。解析成功后，视频会显示为可勾选的批量任务。',
+                    },
+                    {
+                        q: '为什么 YouTube 频道主页不能展开成合集？',
+                        a: '频道主页不是具体 Playlist。请进入目标 Playlist 后复制其完整地址，或者在主 YouTube 下载页处理单个公开视频。',
+                    },
+                    {
+                        q: '可以只下载 Playlist 中的一部分视频吗？',
+                        a: '可以。展开列表后只保留需要的条目，再启动下载队列。',
+                    },
+                    {
+                        q: '为什么某些 Playlist 条目没有下载选项？',
+                        a: '视频可能已删除、设为私人、限制地区或要求会员权限。其他公开可用条目仍可继续处理。',
+                    },
+                ],
+            }),
             en: en({
                 metaTitle: `YouTube Playlist Downloader for Public Playlists - ${EN_BRAND}`,
                 metaDescription:

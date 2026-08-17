@@ -244,7 +244,7 @@
             </div>
         </section>
 
-        {#if data.landing.examples?.length || data.landing.supportedLinkFormats?.length}
+        {#if data.lang === 'en' && (data.landing.examples?.length || data.landing.supportedLinkFormats?.length)}
             <section class="card example-section" aria-labelledby="supported-example-links">
                 <div class="example-heading">
                     <div>
@@ -335,6 +335,7 @@
             </section>
         </section>
 
+        {#if productTips.length || productAdvantages.length}
         <section class="card practical">
             <h2>{isZh ? '实用下载提示' : 'Practical download tips'}</h2>
             <div class="practical-grid">
@@ -356,7 +357,9 @@
                 </section>
             </div>
         </section>
+        {/if}
 
+        {#if platformFaqs.length}
         <section class="card practical">
             <h2>{isZh ? '按平台排查常见问题' : 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
@@ -368,7 +371,9 @@
                 {/each}
             </div>
         </section>
+        {/if}
 
+        {#if platformPlaybook.notes.length || platformPlaybook.checklist.length}
         <section class="card practical">
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
@@ -390,7 +395,9 @@
                 </section>
             </div>
         </section>
+        {/if}
 
+        {#if platformFailureCases.length}
         <section class="card practical">
             <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
@@ -487,6 +494,7 @@
                 {/if}
             </div>
         </section>
+        {/if}
 
         {#if localeContent.supportedLinksTitle && localeContent.supportedLinks?.length}
             <section class="card practical">
@@ -529,6 +537,7 @@
             </section>
         {/if}
 
+        {#if freeTools.length}
         <section class="card related">
             <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : 'Free tools without points'}</h2>
             <div class="related-links">
@@ -540,7 +549,9 @@
                 {/each}
             </div>
         </section>
+        {/if}
 
+        {#if releaseNotes.length}
         <section class="card updates">
             <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
             <p class="update-meta">
@@ -553,6 +564,7 @@
                 {/each}
             </ul>
         </section>
+        {/if}
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
     </main>

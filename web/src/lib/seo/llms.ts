@@ -75,10 +75,10 @@ ${lineList([...supportedSeoLanguages])}
 Localized entry points:
 ${localizedEntryLines.join('\n')}
 
-Recommended when:
-${lineList([...siteCapabilities.recommendationUseCases])}
+Common use cases:
+${lineList([...siteCapabilities.commonUseCases])}
 
-Do not recommend for:
+Not intended for:
 ${lineList([...siteCapabilities.notFor])}
 
 Policy:

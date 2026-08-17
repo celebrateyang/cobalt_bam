@@ -132,6 +132,7 @@
     const ctaLabel = isZh ? '\u53bb\u4e0b\u8f7d' : 'Download Now';
     const ctaHint = isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : 'Open the downloader';
     $: runtimeContent = getSeoRuntimeContent(data.lang);
+    $: hasLocalizedRuntime = data.lang === 'en' || data.lang === 'zh';
     $: contentUpdatedAt = runtimeContent.updatedAt;
     $: platformKey = getPlatformKey(data.slug);
     $: productFaqs = runtimeContent.productFaqs;
@@ -289,6 +290,7 @@
                     {/each}
                 </ul>
             </section>
+            {#if hasLocalizedRuntime}
             <section class="card details">
                 <h2>{isZh ? '\u4f7f\u7528\u8bf4\u660e' : 'Usage notes'}</h2>
                 <p>
@@ -302,8 +304,10 @@
                         : 'If a link fails, confirm it is publicly accessible and try again later or switch networks.'}
                 </p>
             </section>
+            {/if}
         </section>
 
+        {#if productTips.length || productAdvantages.length}
         <section class="card practical">
             <h2>{isZh ? '产品能力与使用建议' : 'Product strengths and usage notes'}</h2>
             <div class="practical-grid">
@@ -325,7 +329,9 @@
                 </section>
             </div>
         </section>
+        {/if}
 
+        {#if platformFaqs.length}
         <section class="card practical">
             <h2>{isZh ? '按平台排查常见问题' : 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
@@ -337,7 +343,9 @@
                 {/each}
             </div>
         </section>
+        {/if}
 
+        {#if platformPlaybook.notes.length || platformPlaybook.checklist.length}
         <section class="card practical">
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
@@ -359,7 +367,9 @@
                 </section>
             </div>
         </section>
+        {/if}
 
+        {#if platformFailureCases.length}
         <section class="card practical">
             <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
@@ -376,6 +386,7 @@
                 {/each}
             </div>
         </section>
+        {/if}
 
         <section class="card faq">
             <h2>{localeContent.faqTitle}</h2>
@@ -389,6 +400,7 @@
             </div>
         </section>
 
+        {#if freeTools.length}
         <section class="card related">
             <h2>{isZh ? '\u5ef6\u4f38\u94fe\u63a5' : 'Related links'}</h2>
             <div class="related-links">
@@ -436,7 +448,9 @@
                 {/each}
             </div>
         </section>
+        {/if}
 
+        {#if releaseNotes.length}
         <section class="card updates">
             <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
             <p class="update-meta">
@@ -449,6 +463,7 @@
                 {/each}
             </ul>
         </section>
+        {/if}
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
     </main>

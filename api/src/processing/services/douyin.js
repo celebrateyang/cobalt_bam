@@ -370,6 +370,18 @@ const extractResolvedDouyinId = (urlString) => {
     return null;
 };
 
+const isUserProfileUrl = (urlString) => {
+    if (!urlString) return false;
+
+    try {
+        const url = new URL(urlString);
+        // Check if the URL path starts with /user/
+        return url.pathname.startsWith('/user/');
+    } catch {
+        return false;
+    }
+};
+
 const toSeconds = (value) => {
     if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
     return value > 1000 ? Math.round(value / 1000) : Math.round(value);
@@ -1337,6 +1349,12 @@ export default async function(obj) {
         try {
             const finalUrl = await resolveShortLinkFinalUrl(obj.shortLink);
             resolvedTargetUrl = finalUrl;
+            
+            // Check if the resolved URL is a user profile page
+            if (isUserProfileUrl(finalUrl)) {
+                return { error: "douyin.user.unsupported", context: { service: "Douyin" } };
+            }
+            
             videoId = extractResolvedDouyinId(finalUrl);
         } catch (e) {
             console.error("Douyin shortlink fetch failed:", e);

@@ -102,17 +102,50 @@
     $: seoTitle = `${$t("remux.seo.title")} ~ ${$t("general.cobalt")}`;
     $: seoDescription = String($t("remux.seo.description"));
     $: seoKeywords = String($t("remux.seo.keywords"));
+    $: isEnglish = ($page.params.lang || "en") === "en";
     $: canonicalPathname = normalizePathname($page.url.pathname);
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: seoJsonLd = canonicalUrl
-        ? {
+        ? [{
               "@context": "https://schema.org",
-              "@type": "WebPage",
+              "@type": "WebApplication",
               name: seoTitle,
               description: seoDescription,
               url: canonicalUrl,
+              applicationCategory: "MultimediaApplication",
+              operatingSystem: "Any modern browser",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
               inLanguage: $page.params.lang || "en",
-          }
+          }, ...(isEnglish ? [{
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                  {
+                      "@type": "Question",
+                      name: "Are my video files uploaded to a server?",
+                      acceptedAnswer: {
+                          "@type": "Answer",
+                          text: "No. Supported files are processed locally in your browser and are not uploaded to FreeSaveVideo.",
+                      },
+                  },
+                  {
+                      "@type": "Question",
+                      name: "Can I convert MP4 video to MP3?",
+                      acceptedAnswer: {
+                          "@type": "Answer",
+                          text: "Yes. Choose one or more local video files, select Extract audio and MP3, then process and download the results.",
+                      },
+                  },
+                  {
+                      "@type": "Question",
+                      name: "Which video and audio formats are supported?",
+                      acceptedAnswer: {
+                          "@type": "Answer",
+                          text: "Common inputs include MP4, MOV, MKV, WebM, AVI, M4V, MP3, M4A, WAV, OGG, Opus, AAC and FLAC. Output options include MP3, M4A, WAV, MP4 and WebM.",
+                      },
+                  },
+              ],
+          }] : [])]
         : null;
 
     $: {
@@ -629,6 +662,7 @@
     <title>{seoTitle}</title>
     <meta name="description" content={seoDescription} />
     <meta name="keywords" content={seoKeywords} />
+    <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={seoDescription} />
     <meta property="og:type" content="website" />
@@ -862,6 +896,57 @@
     </div>
 </DropReceiver>
 
+{#if isEnglish}
+    <article class="seo-content" aria-labelledby="converter-guide-title">
+        <section>
+            <h2 id="converter-guide-title">Convert video or extract audio without uploading your files</h2>
+            <p>
+                FreeSaveVideo processes supported media directly in your browser. Use it to convert AVI, MOV,
+                MKV, WebM or MP4 files to MP4 or WebM, or extract an audio track as MP3, M4A or WAV. Your source
+                files stay on your device instead of being uploaded to our server.
+            </p>
+        </section>
+
+        <section>
+            <h2>How to convert MP4 to MP3</h2>
+            <ol>
+                <li>Select or drop one or more local video files.</li>
+                <li>Choose <strong>Extract audio</strong>, select MP3 and pick a practical bitrate.</li>
+                <li>Start processing, then download each completed audio file.</li>
+            </ol>
+            <p>
+                MP3 offers broad compatibility. M4A is often smaller at comparable listening quality, while WAV
+                keeps uncompressed audio and creates a much larger file.
+            </p>
+        </section>
+
+        <section>
+            <h2>Fast copy or compatible conversion?</h2>
+            <p>
+                Fast mode first tries to copy the existing audio and video streams into the selected container,
+                which is quick and avoids quality loss when the codecs are compatible. Compatible mode re-encodes
+                the video for wider playback support and can take longer, especially for large files.
+            </p>
+        </section>
+
+        <section>
+            <h2>Frequently asked questions</h2>
+            <h3>Are my files uploaded?</h3>
+            <p>No. Supported conversion work runs locally in the browser.</p>
+            <h3>Which inputs and outputs can I use?</h3>
+            <p>
+                Common inputs include MP4, MOV, MKV, WebM, AVI, M4V, MP3, M4A, WAV, OGG, Opus, AAC and FLAC.
+                Available outputs are MP3, M4A, WAV, MP4 and WebM.
+            </p>
+            <h3>Why can a conversion fail?</h3>
+            <p>
+                A file may contain an unsupported codec, no audio or video stream, or may exceed the browser's
+                available memory. Try compatible mode, a smaller file, or close other memory-heavy tabs.
+            </p>
+        </section>
+    </article>
+{/if}
+
 <style>
     :global(#remux-container) {
         display: flex;
@@ -879,6 +964,41 @@
         width: 100%;
         text-align: center;
         gap: 16px;
+    }
+
+    .seo-content {
+        width: min(760px, calc(100vw - 40px));
+        margin: 36px auto 56px;
+        display: grid;
+        gap: 26px;
+        text-align: left;
+        line-height: 1.65;
+    }
+
+    .seo-content section {
+        padding-top: 22px;
+        border-top: 1px solid var(--input-border);
+    }
+
+    .seo-content h2,
+    .seo-content h3,
+    .seo-content p,
+    .seo-content ol {
+        margin-top: 0;
+    }
+
+    .seo-content h2 {
+        font-size: 22px;
+    }
+
+    .seo-content h3 {
+        margin-bottom: 6px;
+        font-size: 16px;
+    }
+
+    .seo-content p,
+    .seo-content li {
+        color: var(--subtext);
     }
 
     .remux-hero {

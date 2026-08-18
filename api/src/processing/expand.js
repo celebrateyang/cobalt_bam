@@ -19,7 +19,7 @@ const BILIBILI_HEADERS = Object.freeze({
 });
 
 const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
-const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 50 * 60;
+const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 180 * 60;
 const BILIBILI_MEDIA_LIST_EXPAND_LIMIT = 100;
 
 // Mobile UA is required for Douyin share pages + mix API to work without X-Bogus.

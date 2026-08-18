@@ -68,6 +68,8 @@
     "queue.generic_error": "download worker failed to start. refresh the page and try again.",
     "queue.worker_didnt_start": "download worker failed to start in time. refresh the page and try again.",
     "api.membership.limit.exceeded": "membership fair-use limit reached. please try again later.",
+    "api.membership.limit.daily_exceeded": "Your daily member download limit has been reached ({{ used }}/{{ limit }}). It resets tomorrow at 00:00 Beijing time.",
+    "api.membership.limit.monthly_exceeded": "Your monthly member download limit has been reached ({{ used }}/{{ limit }}). It resets at 00:00 Beijing time on the first day of next month.",
     "api.upstream.timeout": "The processing node did not respond in time. This may be a temporary link fluctuation or service congestion, not a problem with your video. Please try again shortly.",
     "api.upstream.circuit_open": "The YouTube processing node is cooling down after a temporary failure. Please wait about 1 minute and try again.",
     "api.upstream.unavailable": "No YouTube processing node is available right now. Please try again later.",

@@ -28,6 +28,10 @@ import {
     clerkEnabled,
 } from "$lib/state/clerk";
 import { requireDownloadAuth } from "$lib/auth/download-auth";
+import {
+    MEMBERSHIP_DOWNLOAD_LIMIT_ERROR,
+    showMembershipDownloadLimitDialog,
+} from "$lib/membership/download-limit";
 
 import type { CobaltAPIResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltQueueItemCollectionMemory } from "$lib/types/queue";
@@ -580,6 +584,14 @@ export const savingHandler = async ({
                 }
                 return response;
             }
+        }
+
+        if (response.error.code === MEMBERSHIP_DOWNLOAD_LIMIT_ERROR) {
+            downloadButtonState.set("idle");
+            if (!shouldSuppressError(response.error.code)) {
+                await showMembershipDownloadLimitDialog(response.error.context);
+            }
+            return response;
         }
 
         downloadButtonState.set("error");

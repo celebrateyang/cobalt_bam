@@ -29,6 +29,10 @@
     import { requireDownloadAuth } from "$lib/auth/download-auth";
     import { uuid } from "$lib/util";
     import {
+        MEMBERSHIP_DOWNLOAD_LIMIT_ERROR,
+        showMembershipDownloadLimitDialog,
+    } from "$lib/membership/download-limit";
+    import {
         prepareAutoSaveDirectory,
         supportsAutoSaveDirectory,
     } from "$lib/storage/auto-save";
@@ -781,6 +785,15 @@
                     }
                     await sleep(rateLimitBackoffMs * rateLimitRetries);
                     continue;
+                }
+
+                if (
+                    response?.status === "error" &&
+                    response.error.code === MEMBERSHIP_DOWNLOAD_LIMIT_ERROR
+                ) {
+                    cancelRequested = true;
+                    await showMembershipDownloadLimitDialog(response.error.context);
+                    break;
                 }
 
                 if (shouldStopBatch || !response || response.status === "error") {

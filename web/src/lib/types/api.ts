@@ -18,6 +18,19 @@ export type CobaltErrorResponse = {
             limit?: number,
             current?: number,
             required?: number,
+            reason?: "daily_limit" | "monthly_limit" | string,
+            membership?: {
+                active?: boolean,
+                limits?: {
+                    dailySuccessfulDownloads?: number,
+                    monthlySuccessfulDownloads?: number,
+                },
+                usage?: {
+                    dailySuccessfulDownloads?: number,
+                    monthlySuccessfulDownloads?: number,
+                },
+                limitExceeded?: boolean,
+            } | null,
         },
     },
     platformRequest?: {

@@ -77,6 +77,8 @@
     "queue.generic_error": "下载工作进程启动失败。请刷新页面后重试。",
     "queue.worker_didnt_start": "下载工作进程未能及时启动。请刷新页面后重试。",
     "api.membership.limit.exceeded": "会员合理使用额度已用完，请稍后再试。",
+    "api.membership.limit.daily_exceeded": "今日会员下载额度已用完（{{ used }}/{{ limit }}），将于明日 00:00（北京时间）恢复。",
+    "api.membership.limit.monthly_exceeded": "本月会员下载额度已用完（{{ used }}/{{ limit }}），将于下月 1 日 00:00（北京时间）恢复。",
     "api.upstream.timeout": "解析节点还没有及时回应。这可能是短暂的链路波动或服务拥堵，不一定是视频本身有问题。请稍后重试。",
     "api.upstream.circuit_open": "YouTube 解析节点刚刚出现短暂失败，正在冷却中，请稍等 1 分钟后再试。",
     "api.upstream.unavailable": "当前没有可用的 YouTube 解析节点，请稍后再试。",

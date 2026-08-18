@@ -21,6 +21,18 @@ export type PointsHelpSection =
 export type CurrentUserPointsProfile = {
   points: number | null;
   membershipActive: boolean;
+  membership: {
+    active?: boolean;
+    limits?: {
+      dailySuccessfulDownloads?: number;
+      monthlySuccessfulDownloads?: number;
+    };
+    usage?: {
+      dailySuccessfulDownloads?: number;
+      monthlySuccessfulDownloads?: number;
+    };
+    limitExceeded?: boolean;
+  } | null;
   downloadSuccessCount: number;
   firstDownloadGraceEligible: boolean;
   firstDownloadGraceUsed: boolean;
@@ -121,6 +133,7 @@ export const fetchCurrentUserPointsProfile =
     return {
       points: typeof user?.points === "number" ? user.points : null,
       membershipActive: user?.membership?.active === true,
+      membership: user?.membership ?? null,
       downloadSuccessCount: Number(user?.download_success_count ?? 0) || 0,
       firstDownloadGraceEligible: user?.first_download_grace_eligible === true,
       firstDownloadGraceUsed: user?.first_download_grace_used === true,

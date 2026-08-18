@@ -213,6 +213,7 @@ const cnServiceTokens = new Set([
     "cctv",
     "douyin",
     "kuaishou",
+    "tencent_video",
     "xiaohongshu",
     "wechat_channels",
 ]);
@@ -226,6 +227,7 @@ const cnHostFragments = [
     "iesdouyin.com",
     "kuaishou.com",
     "v.kuaishou.com",
+    "v.qq.com",
     "xiaohongshu.com",
     "weixin.qq.com",
     "channels.weixin.qq.com",

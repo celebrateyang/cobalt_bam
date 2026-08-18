@@ -163,6 +163,50 @@ test("returns WeChat Channels MP4 candidates through Direct Bridge", () => {
     assert.equal(response.body.tunnelUrl, undefined);
 });
 
+test("returns Tencent Video MP4 candidates through Direct Bridge", () => {
+    const primary = "https://ugcws.video.gtimg.com/video.mp4?vkey=key";
+    const backup = "https://apd-vlive.apdcdn.tc.qq.com/video.mp4?vkey=key";
+    const response = matchAction({
+        ...baseArgs,
+        host: "tencent_video",
+        r: {
+            service: "tencent_video",
+            urls: primary,
+            urlCandidates: [backup],
+            directClientDownload: true,
+            filename: "tencent_video.mp4",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.service, "tencent_video");
+    assert.equal(response.body.directUrl, primary);
+    assert.deepEqual(response.body.directUrlCandidates, [primary, backup]);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
+test("keeps forced Tencent Video downloads on Direct Bridge", () => {
+    const directUrl = "https://ugcws.video.gtimg.com/video.mp4?vkey=key";
+    const response = matchAction({
+        ...baseArgs,
+        host: "tencent_video",
+        localProcessing: "forced",
+        alwaysProxy: true,
+        isBatchRequest: true,
+        r: {
+            service: "tencent_video",
+            urls: directUrl,
+            directClientDownload: true,
+            filename: "tencent_video.mp4",
+        },
+    });
+
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.directUrl, directUrl);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test("keeps forced WeChat article batch items on Direct Bridge", () => {
     const directUrl = "https://mpvideo.qpic.cn/article-video.mp4";
     const response = matchAction({

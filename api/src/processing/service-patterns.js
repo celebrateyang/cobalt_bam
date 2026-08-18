@@ -119,6 +119,10 @@ export const testers = {
         pattern.postId?.length <= 64 &&
         (!pattern.username || pattern.username?.length <= 64),
 
+    "tencent_video": pattern =>
+        /^[A-Za-z0-9]{8,32}$/.test(pattern.videoId || "") &&
+        (!pattern.coverId || /^[A-Za-z0-9]{8,32}$/.test(pattern.coverId)),
+
     "toutiao": pattern =>
         pattern.id?.length <= 24 ||
         pattern.shortLink?.length <= 32,

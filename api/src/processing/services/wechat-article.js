@@ -1,5 +1,8 @@
 import { sanitizeString } from "../create-filename.js";
 import { getFeedByExportId, normalizeFeed } from "../../util/resolve-wechat-channel.js";
+import { resolveTencentVideo } from "./tencent-video.js";
+
+export { resolveTencentVideo } from "./tencent-video.js";
 
 const browserUserAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
@@ -264,84 +267,6 @@ export const parseWechatArticle = (html) => {
             }
             return item;
         }),
-    };
-};
-
-const parseTencentResponse = (text) => {
-    try {
-        return JSON.parse(text);
-    } catch {
-        const match = text.match(/^[^(=]*[=(]([\s\S]*?)[);]*$/);
-        if (!match) return null;
-        try {
-            return JSON.parse(match[1]);
-        } catch {
-            return null;
-        }
-    }
-};
-
-const tencentDirectCdnHosts = [
-    "ugcws.video.gtimg.com",
-    "apd-vlive.apdcdn.tc.qq.com",
-];
-
-const toTencentDirectUrls = (rawUrl) => {
-    try {
-        const parsed = new URL(rawUrl);
-        if (parsed.protocol === "https:") return [parsed.toString()];
-
-        return tencentDirectCdnHosts.map((hostname) => {
-            const direct = new URL(parsed);
-            direct.protocol = "https:";
-            direct.hostname = hostname;
-            direct.port = "";
-            return direct.toString();
-        });
-    } catch {
-        return [];
-    }
-};
-
-export const resolveTencentVideo = async (video, fetchImpl = fetch) => {
-    const api = new URL("https://vv.video.qq.com/getinfo");
-    for (const [key, value] of Object.entries({
-        vids: video.id,
-        platform: "101001",
-        charge: "0",
-        otype: "json",
-        defn: "fhd",
-    })) api.searchParams.set(key, value);
-
-    const response = await fetchImpl(api, {
-        headers: requestHeaders("https://v.qq.com/"),
-    });
-    if (!response.ok) return null;
-    const body = parseTencentResponse(await response.text());
-    const info = body?.vl?.vi?.[0];
-    if (!info?.fn || !info?.fvkey) return null;
-
-    const urls = (info.ul?.ui || [])
-        .map((item) => {
-            try {
-                const url = new URL(`${item.url || ""}${info.fn}`);
-                url.searchParams.set("vkey", info.fvkey);
-                return url.toString();
-            } catch {
-                return null;
-            }
-        })
-        .filter(Boolean)
-        .flatMap(toTencentDirectUrls)
-        .filter((value, index, list) => list.indexOf(value) === index);
-    if (!urls.length) return null;
-
-    return {
-        ...video,
-        urls,
-        width: Number(info.vw) || null,
-        height: Number(info.vh) || null,
-        duration: Number(info.td) || null,
     };
 };
 

@@ -37,6 +37,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | soundcloud        | ➖            | ✅         | ➖         | ✅         | ✅              |
 | streamable        | ✅            | ✅         | ✅         | ➖         | ➖              |
 | tiktok            | ✅            | ✅         | ✅         | ❌         | ❌              |
+| tencent video     | ✅            | ✅         | ✅         | ✅         | ✅              |
 | toutiao           | ✅            | ✅         | ✅         | ✅         | ✅              |
 | tumblr            | ✅            | ✅         | ✅         | ➖         | ➖              |
 | twitch clips      | ✅            | ✅         | ✅         | ✅         | ✅              |
@@ -67,6 +68,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | rutube     | supports yappy & private links.                                                                                      |
 | soundcloud | supports private links.                                                                                              |
 | tiktok     | supports videos with or without watermark, images from slideshow without watermark, and full (original) audios.      |
+| tencent video | supports public, free, non-DRM `v.qq.com/x/cover/...` and `v.qq.com/x/page/...` videos.                           |
 | toutiao    | supports public Toutiao video links and quality selection from available mp4 variants.                               |
 | twitter/x  | lets you pick what to save from multi-media posts. may not be 100% reliable due to current management.               |
 | vimeo      | audio downloads are only available for dash.                                                                         |

@@ -30,3 +30,17 @@ test("routes WeChat Channels only to the domestic upstream", () => {
         },
     );
 });
+
+test("routes Tencent Video to the domestic upstream first", () => {
+    assert.deepEqual(
+        resolveRegionPlan({
+            service: "v.qq.com",
+            targetHost: "v.qq.com",
+            path: "/x/page/a35151vt3pb.html",
+        }),
+        {
+            name: "cn-first",
+            groups: [["cn"], ["global"]],
+        },
+    );
+});

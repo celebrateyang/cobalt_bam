@@ -339,6 +339,7 @@ export default function({
                     };
                     break;
 
+                case "tencent_video":
                 case "wechat_channels":
                     responseType = "redirect";
                     params = {
@@ -511,6 +512,9 @@ export default function({
     const keepWechatDirectBridge =
         host === "wechat_channels" &&
         r.directClientDownload === true;
+    const keepTencentVideoDirectBridge =
+        host === "tencent_video" &&
+        r.directClientDownload === true;
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
@@ -519,7 +523,8 @@ export default function({
         responseType === "redirect" &&
         !keepBilibiliDirectBridge &&
         !keepSoundcloudDirectBridge &&
-        !keepWechatDirectBridge
+        !keepWechatDirectBridge &&
+        !keepTencentVideoDirectBridge
     ) {
         responseType = "tunnel";
         params.type = "proxy";
@@ -538,6 +543,7 @@ export default function({
         !keepBilibiliDirectBridge &&
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
+        !keepTencentVideoDirectBridge &&
         !keepTikTokServerTunnel
     ) {
         const isPreferredWithExtra =

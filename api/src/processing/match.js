@@ -50,6 +50,7 @@ import toutiao from "./services/toutiao.js";
 import weibo from "./services/weibo.js";
 import zhshjn from "./services/zhshjn.js";
 import wechatChannels from "./services/wechat-channels.js";
+import tencentVideo from "./services/tencent-video.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -415,6 +416,27 @@ export default async function({ host, patternMatch, params, authType }) {
                     ...patternMatch,
                     quality: params.videoQuality,
                     url,
+                });
+                break;
+
+            case "tencent_video":
+                if (!isUpstreamServer) {
+                    const upstream = await requestUpstreamCobalt(params, {
+                        returnFailureResponse: false,
+                    });
+                    const upstreamBody = upstream?.body;
+                    if (
+                        upstreamBody?.status === "redirect" &&
+                        upstreamBody?.service === "tencent_video" &&
+                        typeof upstreamBody.directUrl === "string" &&
+                        upstreamBody.directUrl.length > 0
+                    ) {
+                        return upstream;
+                    }
+                }
+
+                r = await tencentVideo({
+                    ...patternMatch,
                 });
                 break;
 

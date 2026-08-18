@@ -267,6 +267,13 @@ export const services = {
         ],
         altDomains: ["threads.net"],
     },
+    tencent_video: {
+        patterns: [
+            "x/cover/:coverId/:videoId.html",
+            "x/page/:videoId.html",
+        ],
+        subdomains: ["v"],
+    },
     toutiao: {
         patterns: [
             "video/:id",

@@ -183,6 +183,10 @@ function aliasURL(url) {
 }
 
 function serviceNameForURL(url, host = psl.parse(url.hostname)) {
+    if (url.hostname === "v.qq.com") {
+        return "tencent_video";
+    }
+
     if (
         url.hostname === "weixin.qq.com" ||
         url.hostname === "mp.weixin.qq.com" ||

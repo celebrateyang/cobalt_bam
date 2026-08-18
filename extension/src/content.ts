@@ -47,6 +47,8 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.muscdn.com') ||
             host.endsWith('.akamaized.net') ||
             host.endsWith('.bilivideo.com') ||
+            host === 'ugcws.video.gtimg.com' ||
+            host === 'apd-vlive.apdcdn.tc.qq.com' ||
             (
                 DEEPLEARNINGAI_CDN_RE.test(host) &&
                 /\.(?:mp4|m3u8)(?:$|[?#])/i.test(url.pathname)

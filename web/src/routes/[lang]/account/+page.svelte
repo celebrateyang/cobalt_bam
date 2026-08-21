@@ -83,6 +83,7 @@
         durationDays: number;
         amountFen: number;
         currency: string;
+        billingType?: "one_time" | "subscription";
         enabled?: boolean;
     };
 
@@ -92,7 +93,7 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat";
+        provider: "wechat" | "paypal";
         product_key: string;
         plan_key: string;
         duration_days: number;
@@ -117,6 +118,15 @@
                 order: Promise<{ orderId: string }>,
             ) => Promise<void>;
         };
+    };
+
+    type PayPalMembershipSubscription = {
+        id: number;
+        product_key: string;
+        status: string;
+        cancel_at_period_end: boolean;
+        local_subscription_id?: number | null;
+        current_period_end?: number | null;
     };
     type PayPalGlobal = {
         createInstance: (options: {
@@ -340,6 +350,8 @@
     } else {
         points = null;
         membership = null;
+        paypalMembershipSubscription = null;
+        lastPayPalMembershipUserId = null;
         referralCode = null;
         lastPointsUserId = null;
         contactAccordionOpen = false;
@@ -606,6 +618,15 @@
         if (product.key === "member_weekly") {
             return $t("auth.membership_weekly_subtitle");
         }
+        if (product.key === "member_monthly_recurring") {
+            return $t("auth.membership_monthly_recurring_subtitle");
+        }
+        if (product.key === "member_yearly_recurring") {
+            return $t("auth.membership_yearly_recurring_subtitle");
+        }
+        if (product.key === "member_monthly_onetime") {
+            return $t("auth.membership_monthly_onetime_subtitle");
+        }
         const perMonth =
             product.key === "member_yearly"
                 ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
@@ -618,6 +639,7 @@
     let creditProducts: CreditProduct[] = [];
     let displayedCreditProducts: CreditProduct[] = [];
     let membershipProducts: MembershipProduct[] = [];
+    let paypalMembershipSubscription: PayPalMembershipSubscription | null = null;
     let publicMembershipLimits: MembershipLimits | null = null;
     let creditProductsLoading = false;
     let membershipProductsLoading = false;
@@ -625,7 +647,10 @@
     let membershipProductsErrorKey = "";
     let selectedPaymentProvider: PaymentProvider = "wechat";
     let requestedProductsProvider: PaymentProvider | null = null;
-    let requestedMembershipProducts = false;
+    let requestedMembershipProductsProvider: PaymentProvider | null = null;
+    let paypalMembershipStatusLoading = false;
+    let paypalMembershipCancelLoading = false;
+    let lastPayPalMembershipUserId: string | null = null;
     let bestValueProductKey: string | null = null;
     let recommendedValueProductKey: string | null = null;
     let purchaseLoading = false;
@@ -668,6 +693,13 @@
         membership?.limits?.monthlySuccessfulDownloads ??
             publicMembershipLimits?.monthlySuccessfulDownloads ??
             0,
+    );
+    $: hasActivePayPalRenewal = Boolean(
+        paypalMembershipSubscription &&
+            !paypalMembershipSubscription.cancel_at_period_end &&
+            ["APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED", "PAST_DUE"].includes(
+                paypalMembershipSubscription.status,
+            ),
     );
 
     $: isChinese = $page.params.lang === "zh";
@@ -799,18 +831,18 @@
     };
 
     const fetchMembershipProducts = async () => {
-        if (!isChinese) return;
+        const provider: PaymentProvider = isChinese ? "wechat" : "paypal";
         if (membershipProductsLoading) return;
-        if (requestedMembershipProducts) return;
+        if (requestedMembershipProductsProvider === provider) return;
 
-        requestedMembershipProducts = true;
+        requestedMembershipProductsProvider = provider;
         membershipProductsLoading = true;
         membershipProductsErrorKey = "";
 
         try {
             const apiBase = currentApiURL();
             const res = await fetch(
-                `${apiBase}/payments/memberships/products?provider=wechat`,
+                `${apiBase}/payments/memberships/products?provider=${provider}`,
             );
             const data = await res.json().catch(() => ({}));
 
@@ -832,12 +864,84 @@
         }
     };
 
+    const fetchPayPalMembershipSubscription = async () => {
+        if (!$clerkUser || isChinese || paypalMembershipStatusLoading) return;
+        if (lastPayPalMembershipUserId === $clerkUser.id) return;
+        paypalMembershipStatusLoading = true;
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+            const response = await fetch(
+                `${currentApiURL()}/payments/memberships/paypal/subscription`,
+                { headers: { Authorization: `Bearer ${token}` } },
+            );
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to load subscription");
+            }
+            paypalMembershipSubscription = data?.data?.subscription ?? null;
+            lastPayPalMembershipUserId = $clerkUser.id;
+            const paypalReturn = $page.url.searchParams.get("paypal_membership");
+            if (paypalReturn === "return") {
+                purchaseNoticeKey = "auth.membership_subscription_pending";
+                for (let attempt = 0; attempt < 5; attempt += 1) {
+                    if (paypalMembershipSubscription?.local_subscription_id) {
+                        lastPointsUserId = null;
+                        await fetchPoints();
+                        purchaseNoticeKey = "auth.membership_payment_success";
+                        break;
+                    }
+                    if (attempt < 4) {
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        const retryResponse = await fetch(
+                            `${currentApiURL()}/payments/memberships/paypal/subscription`,
+                            { headers: { Authorization: `Bearer ${token}` } },
+                        );
+                        const retryData = await retryResponse
+                            .json()
+                            .catch(() => ({}));
+                        if (retryResponse.ok && retryData?.status === "success") {
+                            paypalMembershipSubscription =
+                                retryData?.data?.subscription ?? null;
+                        }
+                    }
+                }
+            } else if (paypalReturn === "cancelled") {
+                const cancelledSubscriptionId = Number.parseInt(
+                    $page.url.searchParams.get("subscription_id") || "",
+                    10,
+                );
+                if (Number.isFinite(cancelledSubscriptionId)) {
+                    await cancelPayPalMembershipSubscription(
+                        cancelledSubscriptionId,
+                    );
+                }
+                purchaseNoticeKey =
+                    "auth.membership_subscription_checkout_cancelled";
+            }
+            if (paypalReturn) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete("paypal_membership");
+                url.searchParams.delete("subscription_id");
+                window.history.replaceState({}, "", url.toString());
+            }
+        } catch (error) {
+            console.debug("load PayPal membership subscription failed", error);
+        } finally {
+            paypalMembershipStatusLoading = false;
+        }
+    };
+
     $: if (browser && selectedPaymentProvider) {
         void fetchCreditProducts();
     }
 
-    $: if (browser && isChinese) {
+    $: if (browser) {
         void fetchMembershipProducts();
+    }
+
+    $: if (browser && $clerkUser && !isChinese) {
+        void fetchPayPalMembershipSubscription();
     }
 
     const stopPolling = () => {
@@ -1279,7 +1383,10 @@
         });
     }
 
-    const startPayPalPay = async (productKey: string) => {
+    const startPayPalPay = async (
+        productKey: string,
+        kind: "credit" | "membership" = "credit",
+    ) => {
         if (purchaseLoading) return;
         if (!$clerkUser) return;
         const sdk = paypalSdkInstance;
@@ -1299,9 +1406,10 @@
 
         try {
             const apiBase = currentApiURL();
-            const selectedProduct = creditProducts.find(
-                (product) => product.key === productKey,
-            );
+            const selectedProduct =
+                kind === "membership"
+                    ? membershipProducts.find((product) => product.key === productKey)
+                    : creditProducts.find((product) => product.key === productKey);
             let localOrderId = 0;
             const tokenPromise = getClerkToken().then((token) => {
                 if (!token) throw new Error("missing token");
@@ -1310,7 +1418,9 @@
             const orderIdPromise = (async () => {
                 const token = await tokenPromise;
                 const response = await fetch(
-                    `${apiBase}/payments/credits/paypal/orders`,
+                    `${apiBase}/payments/${
+                        kind === "membership" ? "memberships" : "credits"
+                    }/paypal/orders`,
                     {
                         method: "POST",
                         headers: {
@@ -1330,7 +1440,10 @@
                     );
                 }
 
-                const order = data?.data?.order as CreditOrder | undefined;
+                const order = data?.data?.order as
+                    | CreditOrder
+                    | MembershipOrder
+                    | undefined;
                 const rawPayPalOrderId = data?.data?.paypal?.orderId;
                 if (
                     !order?.id ||
@@ -1344,11 +1457,16 @@
                 if (selectedProduct) {
                     trackCheckoutStarted({
                         id: selectedProduct.key,
-                        name: `${selectedProduct.points} credits`,
+                        name:
+                            kind === "membership"
+                                ? membershipPlanLabel(
+                                      (selectedProduct as MembershipProduct).planKey,
+                                  )
+                                : `${(selectedProduct as CreditProduct).points} credits`,
                         value: selectedProduct.amountFen / 100,
                         currency: selectedProduct.currency,
                         provider: "paypal",
-                        kind: "credit",
+                        kind,
                     });
                 }
                 return { orderId: paypalOrderId };
@@ -1364,7 +1482,9 @@
             ) => {
                 const token = await tokenPromise;
                 const response = await fetch(
-                    `${apiBase}/payments/credits/paypal/orders/${localOrderId}/capture`,
+                    `${apiBase}/payments/${
+                        kind === "membership" ? "memberships" : "credits"
+                    }/paypal/orders/${localOrderId}/capture`,
                     {
                         method: "POST",
                         headers: {
@@ -1392,21 +1512,37 @@
                     );
                 }
 
-                const paidOrder = data?.data?.order as CreditOrder | undefined;
+                const paidOrder = data?.data?.order as
+                    | CreditOrder
+                    | MembershipOrder
+                    | undefined;
                 if (paidOrder?.status === "PAID") {
                     captureCompleted = true;
-                    purchaseNoticeKey = "auth.payment_success";
+                    purchaseNoticeKey =
+                        kind === "membership"
+                            ? "auth.membership_payment_success"
+                            : "auth.payment_success";
                     trackPurchaseCompleted(paidOrder.out_trade_no, {
-                        id: `credits-${paidOrder.points}`,
-                        name: `${paidOrder.points} credits`,
+                        id:
+                            kind === "membership"
+                                ? `membership-${(paidOrder as MembershipOrder).plan_key}`
+                                : `credits-${(paidOrder as CreditOrder).points}`,
+                        name:
+                            kind === "membership"
+                                ? membershipPlanLabel(
+                                      (paidOrder as MembershipOrder).plan_key,
+                                  )
+                                : `${(paidOrder as CreditOrder).points} credits`,
                         value: paidOrder.amount_fen / 100,
                         currency: paidOrder.currency,
                         provider: paidOrder.provider,
-                        kind: "credit",
+                        kind,
                     });
                     lastPointsUserId = null;
                     await fetchPoints();
-                    maybeResumeAfterPayment(paidOrder.id);
+                    if (kind === "credit") {
+                        maybeResumeAfterPayment(paidOrder.id);
+                    }
                 }
                 return data;
             };
@@ -1449,6 +1585,102 @@
         }
     };
 
+    const startPayPalMembershipSubscription = async (productKey: string) => {
+        if (purchaseLoading || !$clerkUser) return;
+        purchaseLoading = true;
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+        try {
+            const product = membershipProducts.find(
+                (candidate) => candidate.key === productKey,
+            );
+            if (!product || product.billingType !== "subscription") {
+                throw new Error("invalid subscription product");
+            }
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+            const returnUrl = new URL(window.location.href);
+            returnUrl.searchParams.set("section", "membership");
+            returnUrl.searchParams.delete("paypal_membership");
+            returnUrl.searchParams.delete("subscription_id");
+            const response = await fetch(
+                `${currentApiURL()}/payments/memberships/paypal/subscriptions`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        productKey,
+                        returnUrl: returnUrl.toString(),
+                        attribution: getOrderAttribution(),
+                    }),
+                },
+            );
+            const data = await response.json().catch(() => ({}));
+            const approvalUrl = data?.data?.paypal?.approvalUrl;
+            if (
+                !response.ok ||
+                data?.status !== "success" ||
+                typeof approvalUrl !== "string"
+            ) {
+                throw new Error(
+                    data?.error?.message || "failed to create PayPal subscription",
+                );
+            }
+            trackCheckoutStarted({
+                id: product.key,
+                name: membershipPlanLabel(product.planKey),
+                value: product.amountFen / 100,
+                currency: product.currency,
+                provider: "paypal",
+                kind: "membership",
+            });
+            window.location.assign(approvalUrl);
+        } catch (error) {
+            purchaseErrorKey = "auth.payment_create_failed";
+            purchaseLoading = false;
+            console.debug("create PayPal membership subscription failed", error);
+        }
+    };
+
+    const cancelPayPalMembershipSubscription = async (
+        subscriptionId = paypalMembershipSubscription?.id,
+    ) => {
+        if (!subscriptionId || paypalMembershipCancelLoading) return;
+        paypalMembershipCancelLoading = true;
+        purchaseErrorKey = "";
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+            const response = await fetch(
+                `${currentApiURL()}/payments/memberships/paypal/subscriptions/${subscriptionId}/cancel`,
+                {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            );
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to cancel subscription");
+            }
+            if (paypalMembershipSubscription?.id === subscriptionId) {
+                paypalMembershipSubscription = data?.data?.subscription ?? {
+                    ...paypalMembershipSubscription,
+                    status: "CANCELLED",
+                    cancel_at_period_end: true,
+                };
+            }
+            purchaseNoticeKey = "auth.membership_subscription_cancelled";
+        } catch (error) {
+            purchaseErrorKey = "auth.membership_subscription_cancel_failed";
+            console.debug("cancel PayPal membership subscription failed", error);
+        } finally {
+            paypalMembershipCancelLoading = false;
+        }
+    };
+
     const shareReferralLink = async (
         source: "account" | "payment_success" = "account",
     ) => {
@@ -1483,10 +1715,12 @@
         ) {
             if (membershipProductsLoading) return;
             const productKey =
-                checkoutIntent === "membership_3day" ||
-                checkoutIntent === "membership_weekly"
-                    ? "member_3day"
-                    : "member_monthly";
+                !isChinese
+                    ? "member_monthly_recurring"
+                    : checkoutIntent === "membership_3day" ||
+                        checkoutIntent === "membership_weekly"
+                      ? "member_3day"
+                      : "member_monthly";
             const membershipProduct = membershipProducts.find(
                 (candidate) =>
                     candidate.key === productKey &&
@@ -1501,7 +1735,11 @@
                 window.history.replaceState({}, "", url.toString());
             } catch {}
 
-            void startMembershipWechatPay(membershipProduct.key);
+            if (isChinese) {
+                void startMembershipWechatPay(membershipProduct.key);
+            } else {
+                void startPayPalMembershipSubscription(membershipProduct.key);
+            }
             return;
         }
 
@@ -2168,8 +2406,7 @@
                         {/if}
                     </section>
 
-                    {#if isChinese}
-                        <section class="card membership-card" bind:this={membershipSectionEl}>
+                    <section class="card membership-card" bind:this={membershipSectionEl}>
                             <div class="topup-header">
                                 <div class="topup-title">
                                     {$t("auth.membership_title")}
@@ -2237,6 +2474,28 @@
                                 </div>
                             {/if}
 
+                            {#if !isChinese && paypalMembershipSubscription?.cancel_at_period_end}
+                                <div class="subtext notice">
+                                    {$t("auth.membership_subscription_cancel_at_end")}
+                                </div>
+                            {:else if !isChinese && paypalMembershipSubscription && ["APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED", "PAST_DUE"].includes(paypalMembershipSubscription.status)}
+                                <div class="membership-subscription-actions">
+                                    <span class="subtext">
+                                        {$t("auth.membership_subscription_status", {
+                                            status: paypalMembershipSubscription.status,
+                                        })}
+                                    </span>
+                                    <button
+                                        class="button"
+                                        disabled={paypalMembershipCancelLoading}
+                                        on:click={() =>
+                                            cancelPayPalMembershipSubscription()}
+                                    >
+                                        {$t("auth.membership_cancel_subscription")}
+                                    </button>
+                                </div>
+                            {/if}
+
                             {#if membershipProductsLoading}
                                 <div class="subtext">{$t("auth.loading")}</div>
                             {:else if membershipProductsErrorKey}
@@ -2257,11 +2516,11 @@
                                                     </div>
                                                 </div>
                                                 <div class="product-right">
-                                                    {#if product.key === "member_yearly"}
+                                                    {#if product.key === "member_yearly" || product.key === "member_yearly_recurring"}
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
-                                                    {:else if product.key === "member_3day"}
+                                                    {:else if product.key === "member_3day" || product.key === "member_monthly_recurring"}
                                                         <span class="badge rec">
                                                             {$t("auth.badge_recommended")}
                                                         </span>
@@ -2283,18 +2542,54 @@
                                             </div>
 
                                             <div class="product-actions">
-                                                <button
-                                                    class="button elevated active"
-                                                    disabled={purchaseLoading ||
-                                                        activeOrder?.status === "CREATED" ||
-                                                        product.enabled === false}
-                                                    on:click={() =>
-                                                        startMembershipWechatPay(
-                                                            product.key,
-                                                        )}
-                                                >
-                                                    {$t("auth.wechat_pay")}
-                                                </button>
+                                                {#if isChinese}
+                                                    <button
+                                                        class="button elevated active"
+                                                        disabled={purchaseLoading ||
+                                                            activeOrder?.status === "CREATED" ||
+                                                            product.enabled === false}
+                                                        on:click={() =>
+                                                            startMembershipWechatPay(
+                                                                product.key,
+                                                            )}
+                                                    >
+                                                        {$t("auth.wechat_pay")}
+                                                    </button>
+                                                {:else if product.billingType === "subscription"}
+                                                    <button
+                                                        class="button elevated active"
+                                                        disabled={purchaseLoading ||
+                                                            hasActivePayPalRenewal ||
+                                                            product.enabled === false}
+                                                        on:click={() =>
+                                                            startPayPalMembershipSubscription(
+                                                                product.key,
+                                                            )}
+                                                    >
+                                                        {$t("auth.paypal_subscribe")}
+                                                    </button>
+                                                {:else}
+                                                    <div class="paypal-button-slot">
+                                                        {#if paypalSdkReady && product.enabled}
+                                                            <paypal-button
+                                                                type="pay"
+                                                                on:click={() =>
+                                                                    startPayPalPay(
+                                                                        product.key,
+                                                                        "membership",
+                                                                    )}
+                                                            ></paypal-button>
+                                                        {:else}
+                                                            <div
+                                                                class="paypal-button-placeholder"
+                                                                aria-hidden="true"
+                                                                title={$t("auth.paypal_not_ready")}
+                                                            >
+                                                                {$t("auth.paypal_pay")}
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                {/if}
                                             </div>
                                         </div>
                                     {/each}
@@ -2307,8 +2602,7 @@
                             {#if purchaseNoticeKey}
                                 <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
                             {/if}
-                        </section>
-                    {/if}
+                    </section>
                 {/if}
             </div>
         </div>
@@ -3197,6 +3491,17 @@
     .product-card:hover {
         border-color: var(--popup-stroke);
         transform: translateY(-1px);
+    }
+
+    .membership-subscription-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 0.85rem 0;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 0.8rem;
     }
 
     .membership-limit-summary {

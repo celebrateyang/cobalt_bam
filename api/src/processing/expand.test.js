@@ -334,6 +334,41 @@ test("a plain legacy Bilibili media-list URL expands the favorites list", async 
     }
 });
 
+test("a Bilibili mobile playlist URL expands as a media list", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input) => {
+        const url = new URL(String(input));
+        assert.equal(url.pathname, "/x/v3/fav/resource/list");
+        assert.equal(url.searchParams.get("media_id"), "3996964820");
+
+        return {
+            json: async () => ({
+                code: 0,
+                data: {
+                    info: { title: "VS Arashi", media_count: 1 },
+                    medias: [
+                        { bvid: "BV1Playlist", title: "Episode 1", duration: 120 },
+                    ],
+                    has_more: false,
+                },
+            }),
+        };
+    };
+
+    try {
+        const result = await expandURL(
+            "https://m.bilibili.com/playlist/pl3996964820",
+        );
+        assert.equal(result.kind, "bilibili-media-list");
+        assert.equal(result.collectionKey, "bilibili:media-list:3996964820");
+        assert.deepEqual(result.items.map((item) => item.url), [
+            "https://www.bilibili.com/video/BV1Playlist",
+        ]);
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
 test("a Bilibili multi-page video still expands when its collection has a long item", async () => {
     const longSiblingResponse = {
         code: 0,

@@ -1259,10 +1259,15 @@ const expandBilibili = async (inputUrl) => {
         };
     }
 
-    // www.bilibili.com/list/ml:mediaListId is Bilibili's legacy media-list
-    // player. The selected video is carried in the query string even though
-    // the pathname itself does not contain a downloadable video id.
-    const mediaListMatch = url.pathname.match(/^\/list\/ml(\d+)\/?$/i);
+    // These are alternate entry points for the same Bilibili media list:
+    // - /list/ml:id is the legacy desktop player
+    // - /medialist/play/ml:id is an older desktop entry point
+    // - m.bilibili.com/playlist/pl:id is the mobile sharing URL
+    // The selected video may be carried in the query string even though the
+    // pathname itself does not contain a downloadable video id.
+    const mediaListMatch = url.pathname.match(
+        /^\/(?:list\/ml|medialist\/play\/ml|playlist\/pl)(\d+)\/?$/i,
+    );
     if (mediaListMatch) {
         const selectedBvid = url.searchParams.get("bvid");
         const selectedAid = url.searchParams.get("oid");

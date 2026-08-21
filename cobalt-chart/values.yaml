@@ -162,11 +162,14 @@ wechatpay:
   privateKeyFile: apiclient_key.pem
   notifyUrl: "https://api.freesavevideo.online/payments/wechat/notify"
 
-# PayPal Checkout - international USD credit top-up
+# PayPal Checkout - international USD credits and memberships
 # The Kubernetes Secret must contain:
 # - PAYPAL_CLIENT_ID
 # - PAYPAL_CLIENT_SECRET
 # - PAYPAL_WEBHOOK_ID
+# Optional membership subscription plan keys:
+# - PAYPAL_MEMBERSHIP_MONTHLY_PLAN_ID (US$7.99 every month)
+# - PAYPAL_MEMBERSHIP_YEARLY_PLAN_ID (US$79.99 every year)
 paypal:
   enabled: true
   environment: live

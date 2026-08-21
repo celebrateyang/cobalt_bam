@@ -14,9 +14,23 @@ import {
     createMembershipOrder,
     ensureMembershipCheckoutPlan,
     getMembershipOrderById,
+    getMembershipOrderByOutTradeNo,
     markMembershipOrderPaid,
+    reverseMembershipOrderPayment,
     updateMembershipOrderProviderData,
 } from "../db/membership-orders.js";
+import {
+    applyPayPalMembershipPayment,
+    attachPayPalMembershipSubscription,
+    closePayPalMembershipSubscriptionRecord,
+    createPayPalMembershipSubscriptionRecord,
+    getCurrentPayPalMembershipSubscriptionForUser,
+    getPayPalMembershipSubscriptionByExternalId,
+    getPayPalMembershipSubscriptionByOutTradeNo,
+    getPayPalMembershipSubscriptionForUser,
+    reversePayPalMembershipPayment,
+    updatePayPalMembershipSubscriptionStatus,
+} from "../db/paypal-membership-subscriptions.js";
 
 import {
     createWechatNativeTransaction,
@@ -26,24 +40,32 @@ import {
     verifyWechatpaySignature,
 } from "../payments/wechatpay.js";
 import {
+    PAYPAL_MEMBERSHIP_PRODUCTS,
     WECHAT_MEMBERSHIP_PRODUCTS,
     getMembershipProductDescription,
+    getPayPalMembershipPlanId,
+    getPayPalMembershipProductByKey,
     getWechatMembershipProductByKey,
 } from "../payments/membership-products.js";
 
 import {
     PayPalRequestError,
     canCapturePayPalOrder,
+    cancelPayPalSubscription,
     capturePayPalOrder,
     createPayPalOrder,
+    createPayPalSubscription,
     getCompletedPayPalCapture,
     getPayPalClientId,
     getPayPalEnvironment,
     getPayPalOrder,
     getPayPalOrderStatus,
+    getPayPalPlan,
     getPayPalPayerActionUrl,
     getPayPalRequestIssue,
     getPayPalSdkUrl,
+    getPayPalSubscription,
+    getPayPalSubscriptionApprovalUrl,
     isPayPalCheckoutConfigured,
     isPayPalWebhookConfigured,
     parsePayPalAmount,
@@ -254,8 +276,20 @@ const buildPublicProducts = (provider) => {
 };
 
 const buildPublicMembershipProducts = (provider) => {
-    if (provider !== "wechat") {
-        return [];
+    if (provider === "paypal") {
+        const checkoutEnabled = isPayPalCheckoutConfigured();
+        return PAYPAL_MEMBERSHIP_PRODUCTS.map((product) => ({
+            key: product.key,
+            planKey: product.planKey,
+            durationDays: product.durationDays,
+            amountFen: product.amountFen,
+            currency: product.currency,
+            billingType: product.billingType,
+            enabled:
+                checkoutEnabled &&
+                (product.billingType === "one_time" ||
+                    !!getPayPalMembershipPlanId(product)),
+        }));
     }
 
     return WECHAT_MEMBERSHIP_PRODUCTS.map((product) => ({
@@ -264,8 +298,29 @@ const buildPublicMembershipProducts = (provider) => {
         durationDays: product.durationDays,
         amountFen: product.amountFen,
         currency: product.currency,
+        billingType: "one_time",
         enabled: true,
     }));
+};
+
+const isMatchingPayPalMembershipPlan = ({ product, paypalPlan }) => {
+    const regularCycle = (Array.isArray(paypalPlan?.billing_cycles)
+        ? paypalPlan.billing_cycles
+        : []
+    ).find((cycle) => String(cycle?.tenure_type).toUpperCase() === "REGULAR");
+    const fixedPrice = regularCycle?.pricing_scheme?.fixed_price || {};
+    const intervalUnit = String(
+        regularCycle?.frequency?.interval_unit || "",
+    ).toUpperCase();
+    const intervalCount = Number(regularCycle?.frequency?.interval_count);
+    const expectedInterval = product.planKey === "member_yearly" ? "YEAR" : "MONTH";
+    return (
+        parsePayPalAmount(fixedPrice.value) === product.amountFen &&
+        String(fixedPrice.currency_code || "").toUpperCase() === product.currency &&
+        intervalUnit === expectedInterval &&
+        intervalCount === 1 &&
+        String(paypalPlan?.status || "").toUpperCase() === "ACTIVE"
+    );
 };
 
 const toHeaderRecord = (headers) => {
@@ -298,6 +353,150 @@ const resolveOutTradeNoFromPayPalOrder = (paypalOrder) => {
     ).trim();
 };
 
+const PAYPAL_SUBSCRIPTION_EVENT_STATUS = Object.freeze({
+    "BILLING.SUBSCRIPTION.CREATED": "APPROVAL_PENDING",
+    "BILLING.SUBSCRIPTION.ACTIVATED": "ACTIVE",
+    "BILLING.SUBSCRIPTION.UPDATED": "ACTIVE",
+    "BILLING.SUBSCRIPTION.SUSPENDED": "SUSPENDED",
+    "BILLING.SUBSCRIPTION.CANCELLED": "CANCELLED",
+    "BILLING.SUBSCRIPTION.EXPIRED": "EXPIRED",
+    "BILLING.SUBSCRIPTION.PAYMENT.FAILED": "PAST_DUE",
+});
+
+const resolvePayPalSubscriptionIdFromEvent = (event) => {
+    const resource = event?.resource || {};
+    if (String(event?.event_type || "").startsWith("BILLING.SUBSCRIPTION.")) {
+        return String(resource?.id || "").trim();
+    }
+    return String(
+        resource?.billing_agreement_id ||
+            resource?.billing_agreement?.id ||
+            "",
+    ).trim();
+};
+
+const resolvePayPalCaptureIdFromReversalEvent = (event) => {
+    const resource = event?.resource || {};
+    const relatedCaptureId = String(
+        resource?.supplementary_data?.related_ids?.capture_id ||
+            resource?.capture_id ||
+            "",
+    ).trim();
+    if (relatedCaptureId) return relatedCaptureId;
+    const upLink = (Array.isArray(resource?.links) ? resource.links : []).find(
+        (link) => String(link?.rel || "").toLowerCase() === "up",
+    );
+    if (upLink?.href) {
+        try {
+            const segments = new URL(upLink.href).pathname.split("/").filter(Boolean);
+            const capturesIndex = segments.lastIndexOf("captures");
+            if (capturesIndex >= 0 && segments[capturesIndex + 1]) {
+                return segments[capturesIndex + 1];
+            }
+        } catch {}
+    }
+    return event?.event_type === "PAYMENT.CAPTURE.REVERSED"
+        ? String(resource?.id || "").trim()
+        : "";
+};
+
+const handlePayPalSubscriptionWebhook = async (event) => {
+    const eventType = String(event?.event_type || "");
+    const paypalSubscriptionId = resolvePayPalSubscriptionIdFromEvent(event);
+    if (!paypalSubscriptionId) {
+        return { ok: false, code: "SUBSCRIPTION_ID_MISSING" };
+    }
+    let record = await getPayPalMembershipSubscriptionByExternalId(
+        paypalSubscriptionId,
+    );
+    if (!record && event?.resource?.custom_id) {
+        record = await getPayPalMembershipSubscriptionByOutTradeNo(
+            String(event.resource.custom_id),
+        );
+        if (record && !record.paypal_subscription_id) {
+            record = await attachPayPalMembershipSubscription({
+                id: record.id,
+                paypalSubscriptionId,
+                providerData: { recovered_from_webhook: event?.id || null },
+            });
+        }
+    }
+    if (!record) return { ok: false, code: "SUBSCRIPTION_NOT_FOUND" };
+    const product = getPayPalMembershipProductByKey(record.product_key);
+    if (!product || product.billingType !== "subscription") {
+        return { ok: false, code: "PRODUCT_NOT_FOUND" };
+    }
+
+    if (eventType === "PAYMENT.SALE.COMPLETED") {
+        const amount = event?.resource?.amount || {};
+        const amountFen = parsePayPalAmount(amount?.total ?? amount?.value);
+        const currency = String(
+            amount?.currency || amount?.currency_code || "",
+        ).toUpperCase();
+        const paidAtRaw = event?.resource?.create_time || event?.create_time;
+        const parsedPaidAt = paidAtRaw ? Date.parse(paidAtRaw) : Number.NaN;
+        return await applyPayPalMembershipPayment({
+            paypalSubscriptionId,
+            paypalSaleId: String(event?.resource?.id || "").trim(),
+            paypalEventId: String(event?.id || "").trim(),
+            amountFen,
+            currency,
+            paidAt: Number.isFinite(parsedPaidAt) ? parsedPaidAt : Date.now(),
+            durationDays: product.durationDays,
+            rawEvent: event,
+        });
+    }
+
+    if (["PAYMENT.SALE.REFUNDED", "PAYMENT.SALE.REVERSED"].includes(eventType)) {
+        const reversedAtRaw = event?.resource?.update_time || event?.create_time;
+        const reversedAt = reversedAtRaw ? Date.parse(reversedAtRaw) : Number.NaN;
+        return await reversePayPalMembershipPayment({
+            paypalSubscriptionId,
+            paypalSaleId: String(
+                event?.resource?.sale_id || event?.resource?.id || "",
+            ).trim(),
+            reversedAt: Number.isFinite(reversedAt) ? reversedAt : Date.now(),
+            durationDays: product.durationDays,
+            rawEvent: event,
+            refundedAmountFen: parsePayPalAmount(
+                event?.resource?.amount?.total ?? event?.resource?.amount?.value,
+            ),
+            refundCurrency:
+                event?.resource?.amount?.currency ||
+                event?.resource?.amount?.currency_code,
+            fullReversal: eventType === "PAYMENT.SALE.REVERSED",
+        });
+    }
+
+    let status = PAYPAL_SUBSCRIPTION_EVENT_STATUS[eventType];
+    if (!status) return { ok: true, code: "IGNORED" };
+    const resourceStatus = String(event?.resource?.status || "").toUpperCase();
+    if (
+        eventType !== "BILLING.SUBSCRIPTION.PAYMENT.FAILED" &&
+        [
+            "APPROVAL_PENDING",
+            "APPROVED",
+            "ACTIVE",
+            "SUSPENDED",
+            "CANCELLED",
+            "EXPIRED",
+        ].includes(resourceStatus)
+    ) {
+        status = resourceStatus;
+    }
+    const cancelAtPeriodEnd = ["CANCELLED", "EXPIRED"].includes(status);
+    const subscription = await updatePayPalMembershipSubscriptionStatus({
+        paypalSubscriptionId,
+        status,
+        cancelAtPeriodEnd,
+        providerData: {
+            paypal_status_event: eventType,
+            paypal_status_event_id: event?.id || null,
+        },
+    });
+    return { ok: !!subscription, code: subscription ? "UPDATED" : "NOT_FOUND" };
+};
+
 const markPayPalOrderPaidFromOrder = async ({
     paypalOrder,
     expectedOrder = null,
@@ -308,9 +507,12 @@ const markPayPalOrderPaidFromOrder = async ({
         return { ok: false, code: "PAYPAL_CAPTURE_NOT_COMPLETED" };
     }
 
+    const isMembershipOrder = completed.outTradeNo.startsWith("mbr_");
     const order =
         expectedOrder ||
-        (await getCreditOrderByOutTradeNo(completed.outTradeNo));
+        (isMembershipOrder
+            ? await getMembershipOrderByOutTradeNo(completed.outTradeNo)
+            : await getCreditOrderByOutTradeNo(completed.outTradeNo));
     if (!order || order.out_trade_no !== completed.outTradeNo) {
         return { ok: false, code: "ORDER_NOT_FOUND" };
     }
@@ -339,13 +541,16 @@ const markPayPalOrderPaidFromOrder = async ({
     const parsedPaidAt = completed.capture?.update_time
         ? Date.parse(completed.capture.update_time)
         : Number.NaN;
-    return await markCreditOrderPaid({
+    const payment = {
         outTradeNo: order.out_trade_no,
         providerTransactionId: String(completed.capture.id || paypalOrderId),
         paidAt: Number.isFinite(parsedPaidAt) ? parsedPaidAt : Date.now(),
         rawNotify,
         totalFen,
-    });
+    };
+    return isMembershipOrder
+        ? await markMembershipOrderPaid(payment)
+        : await markCreditOrderPaid(payment);
 };
 
 router.get("/credits/products", (req, res) => {
@@ -538,9 +743,58 @@ router.post("/paypal/webhook", async (req, res) => {
         const supportedEventTypes = new Set([
             "CHECKOUT.ORDER.APPROVED",
             "PAYMENT.CAPTURE.COMPLETED",
+            "PAYMENT.CAPTURE.REFUNDED",
+            "PAYMENT.CAPTURE.REVERSED",
+            "PAYMENT.SALE.COMPLETED",
+            "PAYMENT.SALE.REFUNDED",
+            "PAYMENT.SALE.REVERSED",
+            ...Object.keys(PAYPAL_SUBSCRIPTION_EVENT_STATUS),
         ]);
         if (!supportedEventTypes.has(event?.event_type)) {
             return res.status(200).json({ code: "SUCCESS", message: "ignored" });
+        }
+
+        if (
+            ["PAYMENT.CAPTURE.REFUNDED", "PAYMENT.CAPTURE.REVERSED"].includes(
+                event?.event_type,
+            )
+        ) {
+            const captureId = resolvePayPalCaptureIdFromReversalEvent(event);
+            if (captureId) {
+                const result = await reverseMembershipOrderPayment({
+                    providerTransactionId: captureId,
+                    rawNotify: { source: "paypal_webhook", event },
+                    refundedAmountFen: parsePayPalAmount(
+                        event?.resource?.amount?.value,
+                    ),
+                    refundCurrency: event?.resource?.amount?.currency_code,
+                    fullReversal:
+                        event?.event_type === "PAYMENT.CAPTURE.REVERSED",
+                });
+                if (!result.ok && result.code !== "ORDER_NOT_FOUND") {
+                    console.error("PayPal membership reversal was not applied", {
+                        eventId: event?.id,
+                        captureId,
+                        code: result.code,
+                    });
+                }
+            }
+            return res.status(200).json({ code: "SUCCESS", message: "OK" });
+        }
+
+        if (
+            String(event?.event_type || "").startsWith("BILLING.SUBSCRIPTION.") ||
+            String(event?.event_type || "").startsWith("PAYMENT.SALE.")
+        ) {
+            const subscriptionResult = await handlePayPalSubscriptionWebhook(event);
+            if (!subscriptionResult.ok) {
+                console.error("PayPal subscription webhook was not applied", {
+                    eventId: event?.id,
+                    eventType: event?.event_type,
+                    code: subscriptionResult.code,
+                });
+            }
+            return res.status(200).json({ code: "SUCCESS", message: "OK" });
         }
 
         const paypalOrderId = resolvePayPalOrderIdFromEvent(event);
@@ -556,7 +810,9 @@ router.post("/paypal/webhook", async (req, res) => {
         if (event.event_type === "CHECKOUT.ORDER.APPROVED") {
             const outTradeNo = resolveOutTradeNoFromPayPalOrder(paypalOrder);
             expectedOrder = outTradeNo
-                ? await getCreditOrderByOutTradeNo(outTradeNo)
+                ? outTradeNo.startsWith("mbr_")
+                    ? await getMembershipOrderByOutTradeNo(outTradeNo)
+                    : await getCreditOrderByOutTradeNo(outTradeNo)
                 : null;
             const storedPayPalOrderId = String(
                 expectedOrder?.provider_data?.paypal_order_id || "",
@@ -652,6 +908,15 @@ if (!isClerkAuthConfigured) {
     });
 
     router.post("/memberships/wechat/native", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
+    router.use("/memberships/paypal", (_, res) => {
         return jsonError(
             res,
             501,
@@ -948,6 +1213,481 @@ if (!isClerkAuthConfigured) {
                 502,
                 "PAYPAL_CAPTURE_FAILED",
                 "Failed to capture PayPal order",
+            );
+        }
+    });
+
+    router.post("/memberships/paypal/orders", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isPayPalCheckoutConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "PAYPAL_NOT_CONFIGURED",
+                    "PayPal is not configured on this server",
+                );
+            }
+            const product = getPayPalMembershipProductByKey(req.body?.productKey);
+            if (!product || product.billingType !== "one_time") {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid one-time membership product",
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            await ensureMembershipCheckoutPlan(product.planKey);
+            const outTradeNo = `mbr_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            const createdOrder = await createMembershipOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "paypal",
+                productKey: product.key,
+                planKey: product.planKey,
+                durationDays: product.durationDays,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+                providerData: attribution ? { attribution } : null,
+            });
+            const paypalOrder = await createPayPalOrder({
+                outTradeNo,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                description: getMembershipProductDescription(product.key),
+            });
+            if (typeof paypalOrder?.id !== "string" || !paypalOrder.id) {
+                return jsonError(
+                    res,
+                    502,
+                    "PAYPAL_INVALID_RESPONSE",
+                    "PayPal order response missing id",
+                );
+            }
+            const order = await updateMembershipOrderProviderData(
+                createdOrder.id,
+                {
+                    paypal_order_id: paypalOrder.id,
+                    paypal_status: paypalOrder.status || "CREATED",
+                },
+            );
+            return res.json({
+                status: "success",
+                data: {
+                    order,
+                    paypal: {
+                        orderId: paypalOrder.id,
+                        status: paypalOrder.status,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/memberships/paypal/orders error:", error);
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CREATE_ORDER_FAILED",
+                "Failed to create PayPal membership order",
+            );
+        }
+    });
+
+    router.post("/memberships/paypal/orders/:id/capture", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            const id = Number.parseInt(req.params.id, 10);
+            const order = Number.isFinite(id)
+                ? await getMembershipOrderById(id)
+                : null;
+            if (!order || order.clerk_user_id !== auth.userId) {
+                return jsonError(res, 404, "NOT_FOUND", "Order not found");
+            }
+            if (order.provider !== "paypal") {
+                return jsonError(
+                    res,
+                    409,
+                    "PROVIDER_MISMATCH",
+                    "Order is not a PayPal order",
+                );
+            }
+            const storedPayPalOrderId = String(
+                order?.provider_data?.paypal_order_id || "",
+            ).trim();
+            const approvedPayPalOrderId = String(
+                req.body?.paypalOrderId || "",
+            ).trim();
+            if (!storedPayPalOrderId || storedPayPalOrderId !== approvedPayPalOrderId) {
+                return jsonError(
+                    res,
+                    409,
+                    "PAYPAL_ORDER_MISMATCH",
+                    "PayPal order does not match local order",
+                );
+            }
+
+            let paypalOrder = await getPayPalOrder(storedPayPalOrderId);
+            let paypalStatus = getPayPalOrderStatus(paypalOrder);
+            if (!['APPROVED', 'COMPLETED'].includes(paypalStatus)) {
+                const pendingError = getPayPalPendingError(paypalOrder);
+                return jsonError(
+                    res,
+                    409,
+                    pendingError.code,
+                    pendingError.message,
+                    getPayPalErrorContext({ paypalOrder }),
+                );
+            }
+            if (canCapturePayPalOrder(paypalOrder)) {
+                try {
+                    paypalOrder = await capturePayPalOrder({
+                        paypalOrderId: storedPayPalOrderId,
+                        outTradeNo: order.out_trade_no,
+                    });
+                } catch (error) {
+                    if (!(error instanceof PayPalRequestError)) throw error;
+                    paypalOrder = await getPayPalOrder(storedPayPalOrderId);
+                }
+                paypalStatus = getPayPalOrderStatus(paypalOrder);
+                await updateMembershipOrderProviderData(order.id, {
+                    paypal_status: paypalStatus,
+                });
+            }
+            const result = await markPayPalOrderPaidFromOrder({
+                paypalOrder,
+                expectedOrder: order,
+                rawNotify: { source: "paypal_capture", paypalOrder },
+            });
+            if (!result.ok) {
+                return jsonError(
+                    res,
+                    409,
+                    result.code || "PAYPAL_CAPTURE_NOT_COMPLETED",
+                    "PayPal payment is not completed",
+                );
+            }
+            return res.json({
+                status: "success",
+                data: {
+                    order: result.order,
+                    paypal: {
+                        orderId: storedPayPalOrderId,
+                        status: paypalOrder?.status,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error(
+                "POST /payments/memberships/paypal/orders/:id/capture error:",
+                error,
+            );
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CAPTURE_FAILED",
+                "Failed to capture PayPal membership order",
+            );
+        }
+    });
+
+    router.post("/memberships/paypal/subscriptions", async (req, res) => {
+        let pendingRecord = null;
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isPayPalCheckoutConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "PAYPAL_NOT_CONFIGURED",
+                    "PayPal is not configured on this server",
+                );
+            }
+            const product = getPayPalMembershipProductByKey(req.body?.productKey);
+            const paypalPlanId = getPayPalMembershipPlanId(product);
+            if (
+                !product ||
+                product.billingType !== "subscription" ||
+                !paypalPlanId
+            ) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid or unconfigured PayPal subscription product",
+                );
+            }
+            const requestOrigin = String(req.get("origin") || "").trim();
+            let returnUrl;
+            try {
+                returnUrl = new URL(String(req.body?.returnUrl || ""));
+            } catch {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_RETURN_URL",
+                    "Invalid return URL",
+                );
+            }
+            if (
+                !requestOrigin ||
+                returnUrl.origin !== requestOrigin ||
+                !["http:", "https:"].includes(returnUrl.protocol)
+            ) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_RETURN_URL",
+                    "Return URL must use the requesting site origin",
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            let existingSubscription =
+                await getCurrentPayPalMembershipSubscriptionForUser(auth.userId);
+            const existingStatus = String(
+                existingSubscription?.status || "",
+            ).toUpperCase();
+            const pendingExpired =
+                ["APPROVAL_PENDING", "APPROVED"].includes(existingStatus) &&
+                Date.now() - Number(existingSubscription?.created_at || 0) >
+                    30 * 60 * 1000;
+            if (pendingExpired && existingSubscription) {
+                if (existingSubscription.paypal_subscription_id) {
+                    try {
+                        await cancelPayPalSubscription({
+                            subscriptionId:
+                                existingSubscription.paypal_subscription_id,
+                            reason: "Expired incomplete FreeSaveVideo checkout",
+                        });
+                    } catch (error) {
+                        if (
+                            !(error instanceof PayPalRequestError) ||
+                            error.status !== 422
+                        ) {
+                            throw error;
+                        }
+                    }
+                }
+                await closePayPalMembershipSubscriptionRecord({
+                    id: existingSubscription.id,
+                    providerData: { checkout_expired_at: Date.now() },
+                });
+                existingSubscription = null;
+            }
+            if (
+                existingSubscription &&
+                !existingSubscription.cancel_at_period_end &&
+                ["APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED", "PAST_DUE"].includes(
+                    String(existingSubscription.status).toUpperCase(),
+                )
+            ) {
+                return jsonError(
+                    res,
+                    409,
+                    "PAYPAL_SUBSCRIPTION_ALREADY_EXISTS",
+                    "An active PayPal membership subscription already exists",
+                );
+            }
+            const paypalPlan = await getPayPalPlan(paypalPlanId);
+            if (!isMatchingPayPalMembershipPlan({ product, paypalPlan })) {
+                return jsonError(
+                    res,
+                    503,
+                    "PAYPAL_PLAN_MISMATCH",
+                    "PayPal subscription plan price or billing interval is misconfigured",
+                );
+            }
+            await ensureMembershipCheckoutPlan(product.planKey);
+            const outTradeNo = `psb_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            const record = await createPayPalMembershipSubscriptionRecord({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                outTradeNo,
+                productKey: product.key,
+                planKey: product.planKey,
+                paypalPlanId,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                providerData: attribution ? { attribution } : null,
+            });
+            pendingRecord = record;
+            const successUrl = new URL(returnUrl);
+            successUrl.searchParams.set("paypal_membership", "return");
+            successUrl.searchParams.set("subscription_id", String(record.id));
+            const cancelUrl = new URL(returnUrl);
+            cancelUrl.searchParams.set("paypal_membership", "cancelled");
+            cancelUrl.searchParams.set("subscription_id", String(record.id));
+            const paypalSubscription = await createPayPalSubscription({
+                planId: paypalPlanId,
+                outTradeNo,
+                returnUrl: successUrl.toString(),
+                cancelUrl: cancelUrl.toString(),
+            });
+            const approvalUrl = getPayPalSubscriptionApprovalUrl(
+                paypalSubscription,
+            );
+            if (!paypalSubscription?.id || !approvalUrl) {
+                return jsonError(
+                    res,
+                    502,
+                    "PAYPAL_INVALID_RESPONSE",
+                    "PayPal subscription response is incomplete",
+                );
+            }
+            const subscription = await attachPayPalMembershipSubscription({
+                id: record.id,
+                paypalSubscriptionId: paypalSubscription.id,
+                providerData: { paypal_status: paypalSubscription.status },
+            });
+            return res.json({
+                status: "success",
+                data: {
+                    subscription,
+                    paypal: {
+                        subscriptionId: paypalSubscription.id,
+                        status: paypalSubscription.status,
+                        approvalUrl,
+                    },
+                },
+            });
+        } catch (error) {
+            if (pendingRecord?.id && !pendingRecord.paypal_subscription_id) {
+                try {
+                    await closePayPalMembershipSubscriptionRecord({
+                        id: pendingRecord.id,
+                        providerData: {
+                            create_failed_at: Date.now(),
+                            create_failed_message: String(error?.message || "").slice(
+                                0,
+                                500,
+                            ),
+                        },
+                    });
+                } catch (closeError) {
+                    console.error(
+                        "Failed to close incomplete PayPal subscription record:",
+                        closeError,
+                    );
+                }
+            }
+            console.error(
+                "POST /payments/memberships/paypal/subscriptions error:",
+                error,
+            );
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CREATE_SUBSCRIPTION_FAILED",
+                "Failed to create PayPal subscription",
+            );
+        }
+    });
+
+    router.get("/memberships/paypal/subscription", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            let subscription = await getCurrentPayPalMembershipSubscriptionForUser(
+                auth.userId,
+            );
+            if (
+                subscription?.paypal_subscription_id &&
+                isPayPalCheckoutConfigured()
+            ) {
+                try {
+                    const paypalSubscription = await getPayPalSubscription(
+                        subscription.paypal_subscription_id,
+                    );
+                    const paypalStatus = String(
+                        paypalSubscription?.status || subscription.status,
+                    ).toUpperCase();
+                    const updated = await updatePayPalMembershipSubscriptionStatus({
+                        paypalSubscriptionId: subscription.paypal_subscription_id,
+                        status: paypalStatus,
+                        cancelAtPeriodEnd: ["CANCELLED", "EXPIRED"].includes(
+                            paypalStatus,
+                        ),
+                        providerData: { paypal_status: paypalStatus },
+                    });
+                    subscription = updated
+                        ? { ...subscription, ...updated }
+                        : subscription;
+                } catch (error) {
+                    console.error("PayPal subscription status sync failed:", {
+                        subscriptionId: subscription.paypal_subscription_id,
+                        message: error?.message,
+                    });
+                }
+            }
+            return res.json({ status: "success", data: { subscription } });
+        } catch (error) {
+            console.error("GET /payments/memberships/paypal/subscription error:", error);
+            return jsonError(res, 500, "SERVER_ERROR", "Failed to load subscription");
+        }
+    });
+
+    router.post("/memberships/paypal/subscriptions/:id/cancel", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            const id = Number.parseInt(req.params.id, 10);
+            const subscription = Number.isFinite(id)
+                ? await getPayPalMembershipSubscriptionForUser({
+                      id,
+                      clerkUserId: auth.userId,
+                  })
+                : null;
+            if (!subscription?.paypal_subscription_id) {
+                return jsonError(res, 404, "NOT_FOUND", "Subscription not found");
+            }
+            if (!subscription.cancel_at_period_end) {
+                try {
+                    await cancelPayPalSubscription({
+                        subscriptionId: subscription.paypal_subscription_id,
+                        reason: "Cancelled by the FreeSaveVideo member",
+                    });
+                } catch (error) {
+                    if (!(error instanceof PayPalRequestError) || error.status !== 422) {
+                        throw error;
+                    }
+                }
+            }
+            const updated = await updatePayPalMembershipSubscriptionStatus({
+                paypalSubscriptionId: subscription.paypal_subscription_id,
+                status: "CANCELLED",
+                cancelAtPeriodEnd: true,
+                providerData: { cancelled_by: "user", cancelled_at: Date.now() },
+            });
+            return res.json({ status: "success", data: { subscription: updated } });
+        } catch (error) {
+            console.error(
+                "POST /payments/memberships/paypal/subscriptions/:id/cancel error:",
+                error,
+            );
+            return jsonError(
+                res,
+                502,
+                "PAYPAL_CANCEL_FAILED",
+                "Failed to cancel PayPal subscription",
             );
         }
     });

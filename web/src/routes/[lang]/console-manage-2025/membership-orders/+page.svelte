@@ -229,6 +229,7 @@
                     <option value="CREATED">CREATED</option>
                     <option value="PAID">PAID</option>
                     <option value="FAILED">FAILED</option>
+                    <option value="REFUNDED">REFUNDED</option>
                     <option value="CLOSED">CLOSED</option>
                 </select>
             </label>
@@ -237,6 +238,7 @@
                 <select bind:value={provider} on:change={applyFilters} disabled={loading}>
                     <option value="">全部</option>
                     <option value="wechat">wechat</option>
+                    <option value="paypal">paypal</option>
                 </select>
             </label>
         </div>
@@ -366,7 +368,7 @@
     .status { display: inline-flex; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
     .status-paid { color: #12824b; background: rgba(18, 130, 75, 0.14); }
     .status-created { color: #9a6600; background: rgba(188, 129, 0, 0.14); }
-    .status-failed, .status-closed { color: #b23b3b; background: rgba(178, 59, 59, 0.14); }
+    .status-failed, .status-refunded, .status-closed { color: #b23b3b; background: rgba(178, 59, 59, 0.14); }
     .loading, .empty { padding: calc(var(--padding) * 3); text-align: center; color: var(--subtext); }
     .error-message { padding: var(--padding); margin-bottom: var(--padding); border-radius: var(--border-radius); background: var(--red); color: var(--white); }
     @media (max-width: 800px) { .admin-container { padding: var(--padding); } input { min-width: 100%; } }

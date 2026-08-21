@@ -149,6 +149,7 @@ export const createPayPalOrder = async ({
     amountFen,
     currency,
     points,
+    description,
 }) =>
     await paypalRequestJson({
         method: "POST",
@@ -161,7 +162,8 @@ export const createPayPalOrder = async ({
                     reference_id: outTradeNo,
                     custom_id: outTradeNo,
                     invoice_id: outTradeNo,
-                    description: `FreeSaveVideo ${points} credits`,
+                    description:
+                        description || `FreeSaveVideo ${points} credits`,
                     amount: {
                         currency_code: currency,
                         value: formatPayPalAmount(amountFen),
@@ -179,6 +181,59 @@ export const createPayPalOrder = async ({
             },
         },
     });
+
+export const createPayPalSubscription = async ({
+    planId,
+    outTradeNo,
+    returnUrl,
+    cancelUrl,
+}) =>
+    await paypalRequestJson({
+        method: "POST",
+        path: "/v1/billing/subscriptions",
+        requestId: `subscription-${outTradeNo}`,
+        body: {
+            plan_id: planId,
+            custom_id: outTradeNo,
+            application_context: {
+                brand_name: "FreeSaveVideo",
+                shipping_preference: "NO_SHIPPING",
+                user_action: "SUBSCRIBE_NOW",
+                return_url: returnUrl,
+                cancel_url: cancelUrl,
+            },
+        },
+    });
+
+export const getPayPalSubscription = async (subscriptionId) =>
+    await paypalRequestJson({
+        method: "GET",
+        path: `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    });
+
+export const getPayPalPlan = async (planId) =>
+    await paypalRequestJson({
+        method: "GET",
+        path: `/v1/billing/plans/${encodeURIComponent(planId)}`,
+    });
+
+export const cancelPayPalSubscription = async ({ subscriptionId, reason }) =>
+    await paypalRequestJson({
+        method: "POST",
+        path: `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`,
+        requestId: `cancel-${subscriptionId}`,
+        body: {
+            reason: reason || "Cancelled by the subscriber",
+        },
+    });
+
+export const getPayPalSubscriptionApprovalUrl = (subscription) => {
+    const links = Array.isArray(subscription?.links) ? subscription.links : [];
+    const approve = links.find(
+        (link) => String(link?.rel || "").trim().toLowerCase() === "approve",
+    );
+    return typeof approve?.href === "string" ? approve.href : null;
+};
 
 export const capturePayPalOrder = async ({ paypalOrderId, outTradeNo }) =>
     await paypalRequestJson({

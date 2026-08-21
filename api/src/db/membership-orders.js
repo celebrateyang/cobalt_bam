@@ -5,6 +5,7 @@ export const MEMBERSHIP_ORDER_STATUS = Object.freeze({
     paid: "PAID",
     closed: "CLOSED",
     failed: "FAILED",
+    refunded: "REFUNDED",
 });
 
 const CHECKOUT_PLAN_METADATA = Object.freeze({
@@ -173,6 +174,14 @@ export const getMembershipOrderById = async (id) => {
     return result.rows[0] || null;
 };
 
+export const getMembershipOrderByOutTradeNo = async (outTradeNo) => {
+    const result = await query(
+        `SELECT * FROM membership_orders WHERE out_trade_no = $1`,
+        [outTradeNo],
+    );
+    return result.rows[0] || null;
+};
+
 export const updateMembershipOrderProviderData = async (id, providerData) => {
     const now = Date.now();
     const result = await query(
@@ -219,7 +228,8 @@ export const listMembershipOrders = async ({
             WHEN 'CREATED' THEN 1
             WHEN 'PAID' THEN 2
             WHEN 'FAILED' THEN 3
-            WHEN 'CLOSED' THEN 4
+            WHEN 'REFUNDED' THEN 4
+            WHEN 'CLOSED' THEN 5
             ELSE 99
         END`,
     };
@@ -455,6 +465,7 @@ export const markMembershipOrderPaid = async ({
             FROM subscriptions
             WHERE user_id = $1
               AND provider = $2
+              AND provider_subscription_id LIKE 'mbr_%'
               AND status = 'active'
               AND current_period_end > $3
             ORDER BY current_period_end DESC, id DESC
@@ -465,7 +476,19 @@ export const markMembershipOrderPaid = async ({
         );
 
         const current = currentResult.rows[0] || null;
-        const periodStart = current?.current_period_end || resolvedPaidAt;
+        let periodStart = current?.current_period_end || resolvedPaidAt;
+        const maxActiveResult = await client.query(
+            `SELECT MAX(current_period_end)::bigint AS max_end
+             FROM subscriptions
+             WHERE user_id = $1
+               AND status = 'active'
+               AND current_period_end > $2`,
+            [order.user_id, resolvedPaidAt],
+        );
+        periodStart = Math.max(
+            periodStart,
+            Number(maxActiveResult.rows[0]?.max_end) || 0,
+        );
         const periodEnd = periodStart + durationMs;
         let subscription = null;
 
@@ -514,7 +537,7 @@ export const markMembershipOrderPaid = async ({
                     order.provider,
                     order.clerk_user_id,
                     order.out_trade_no,
-                    periodStart,
+                    resolvedPaidAt,
                     periodEnd,
                     now,
                 ],
@@ -550,6 +573,96 @@ export const markMembershipOrderPaid = async ({
             order: updatedOrderResult.rows[0] || null,
             subscription,
         };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const reverseMembershipOrderPayment = async ({
+    providerTransactionId,
+    rawNotify,
+    refundedAmountFen,
+    refundCurrency,
+    fullReversal = false,
+}) => {
+    const client = await getClient();
+    const now = Date.now();
+    try {
+        await client.query("BEGIN");
+        const orderResult = await client.query(
+            `SELECT * FROM membership_orders
+             WHERE provider = 'paypal' AND provider_transaction_id = $1
+             FOR UPDATE`,
+            [providerTransactionId],
+        );
+        const order = orderResult.rows[0] || null;
+        if (!order) {
+            await client.query("ROLLBACK");
+            return { ok: false, code: "ORDER_NOT_FOUND" };
+        }
+        if (order.status === MEMBERSHIP_ORDER_STATUS.refunded) {
+            await client.query("COMMIT");
+            return { ok: true, code: "ALREADY_REFUNDED", order };
+        }
+        const isFullRefund =
+            fullReversal ||
+            (Number.isFinite(Number(refundedAmountFen)) &&
+                Number(refundedAmountFen) >= Number(order.amount_fen) &&
+                String(refundCurrency || "").toUpperCase() ===
+                    String(order.currency || "").toUpperCase());
+        if (!isFullRefund) {
+            const updated = await client.query(
+                `UPDATE membership_orders
+                 SET raw_notify = COALESCE(raw_notify, '{}'::jsonb) || $2::jsonb,
+                     updated_at = $3
+                 WHERE id = $1 RETURNING *`,
+                [order.id, rawNotify || {}, now],
+            );
+            await client.query("COMMIT");
+            return {
+                ok: true,
+                code: "PARTIAL_REFUND_RECORDED",
+                order: updated.rows[0] || null,
+            };
+        }
+        const entitlementResult = await client.query(
+            `SELECT * FROM subscriptions
+             WHERE provider = 'paypal'
+               AND provider_subscription_id = $1
+             FOR UPDATE`,
+            [order.out_trade_no],
+        );
+        const entitlement = entitlementResult.rows[0] || null;
+        if (entitlement) {
+            const durationMs = Math.max(1, Number(order.duration_days) || 1) * 86400000;
+            const reducedEnd = Math.max(
+                Number(entitlement.current_period_start) || now,
+                (Number(entitlement.current_period_end) || now) - durationMs,
+            );
+            await client.query(
+                `UPDATE subscriptions
+                 SET current_period_end = $2,
+                     status = CASE WHEN $2 > $3 THEN 'active' ELSE 'canceled' END,
+                     updated_at = $3
+                 WHERE id = $1`,
+                [entitlement.id, reducedEnd, now],
+            );
+        }
+        const updated = await client.query(
+            `UPDATE membership_orders
+             SET status = $2,
+                 raw_notify = COALESCE(raw_notify, '{}'::jsonb) || $3::jsonb,
+                 updated_at = $4
+             WHERE id = $1 RETURNING *`,
+            [order.id, MEMBERSHIP_ORDER_STATUS.refunded, rawNotify || {}, now],
+        );
+        await client.query("COMMIT");
+        return { ok: true, code: "REFUNDED", order: updated.rows[0] || null };
     } catch (error) {
         try {
             await client.query("ROLLBACK");

@@ -41,6 +41,7 @@ const config: Config<{
     plan?: string;
     used?: number;
     feature?: string;
+    status?: string;
 }> = {
     fallbackLocale: defaultLocale,
     translations: Object.keys(parsedLocfiles).reduce((obj, lang) => {

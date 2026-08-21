@@ -8,6 +8,7 @@ import {
     getPayPalOrderStatus,
     getPayPalPayerActionUrl,
     getPayPalRequestIssue,
+    getPayPalSubscriptionApprovalUrl,
     parsePayPalAmount,
 } from "./paypal.js";
 
@@ -73,4 +74,17 @@ test("extracts the first PayPal request issue", () => {
 
     assert.equal(issue, "ORDER_NOT_APPROVED");
     assert.equal(getPayPalRequestIssue({}), null);
+});
+
+test("extracts the PayPal subscription approval URL", () => {
+    assert.equal(
+        getPayPalSubscriptionApprovalUrl({
+            links: [
+                { rel: "self", href: "https://api-m.paypal.com/subscription/I-1" },
+                { rel: "approve", href: "https://www.paypal.com/agree/I-1" },
+            ],
+        }),
+        "https://www.paypal.com/agree/I-1",
+    );
+    assert.equal(getPayPalSubscriptionApprovalUrl({ links: [] }), null);
 });

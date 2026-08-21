@@ -1199,6 +1199,12 @@ export const setupSignalingServer = (httpServer) => {
                 return;
             }
 
+            const ownPeer =
+                currentUserRole === "creator" ? session.creator : session.joiner;
+            if (ownPeer?.ws !== socket) {
+                return;
+            }
+
             const peer =
                 currentUserRole === "creator" ? session.joiner : session.creator;
             if (peer && isWsOpen(peer.ws)) {

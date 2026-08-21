@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import createFilename from "../create-filename.js";
 import { buildYoutubeResult } from "./youtube.js";
 
 const mediaUrl = (itag) =>
@@ -54,6 +55,10 @@ test("falls back from unavailable AV1 to VP9", () => {
     });
     assert.equal(result.filenameAttributes.extension, "webm");
     assert.equal(result.filenameAttributes.youtubeFormat, "vp9");
+    assert.equal(
+        createFilename(result.filenameAttributes, "classic", false, false),
+        "Codec fallback_youtube_video-id_1920x1080_vp9.webm",
+    );
 });
 
 test("keeps AV1 when the requested codec is available", () => {

@@ -66,7 +66,9 @@ export default (f, style, isAudioOnly, isAudioMuted) => {
                 }
                 return `${infoBase.join("_")}_audio`;
             }
-            filename = classicTags.join("_");
+            filename = f.titleInClassic
+                ? `${title}_${classicTags.join("_")}`
+                : classicTags.join("_");
             break;
         case "basic":
             if (isAudioOnly) return title;

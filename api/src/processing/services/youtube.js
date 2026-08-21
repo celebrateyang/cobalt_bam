@@ -678,6 +678,7 @@ const buildFilenameAttributes = ({
         service: "youtube",
         id,
         title,
+        titleInClassic: true,
         author: artist,
         resolution,
         qualityLabel,

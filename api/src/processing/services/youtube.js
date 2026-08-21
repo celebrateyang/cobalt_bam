@@ -649,6 +649,8 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
         return !["0", "false", "no", "off"].includes(raw);
     })();
 
+    // Let yt-dlp choose YouTube clients. Nightly tracks YouTube client changes,
+    // while a pinned player_client list quickly becomes stale.
     const args = [
         ...runner.prefixArgs,
         "--ignore-config",
@@ -658,7 +660,6 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
         "--no-warnings",
         "--retries", "2",
         "--socket-timeout", "15",
-        "--extractor-args", "youtube:player_client=android_vr,android,web",
     ];
 
     if (forceIpv4) {

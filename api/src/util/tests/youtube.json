@@ -1,5 +1,27 @@
 [
     {
+        "name": "new video with automatic client selection",
+        "url": "https://www.youtube.com/watch?v=Ct9Eoj8Fo5M",
+        "params": {
+            "videoQuality": "360"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "legacy video with automatic client selection",
+        "url": "https://www.youtube.com/watch?v=Qv2QDDnUwYw",
+        "params": {
+            "videoQuality": "360"
+        },
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
         "name": "4k video (h264, 1440)",
         "url": "https://www.youtube.com/watch?v=vPwaXytZcgI",
         "params": {

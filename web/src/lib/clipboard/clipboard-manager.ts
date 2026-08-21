@@ -17,6 +17,19 @@ export interface FileItem {
     blob: Blob;
 }
 
+export type ClipboardMessageStatus = 'sending' | 'delivered' | 'unconfirmed' | 'failed';
+
+export interface ClipboardMessage {
+    id: string;
+    clientId: string;
+    direction: 'outgoing' | 'incoming';
+    kind: 'text';
+    text: string;
+    createdAt: number;
+    receivedAt?: number;
+    status: ClipboardMessageStatus;
+}
+
 interface ReceivingFile {
     id: string;
     name: string;
@@ -42,6 +55,11 @@ const BUFFER_CHECK_INTERVAL = 10; // 10ms buffer check interval
 const RETRY_TIMEOUT = 3000; // 3秒后检查缺失的chunks
 const MAX_RETRY_COUNT = 5; // 最大重传次数
 const RETRY_DELAY = 1000; // 重传延迟
+const TEXT_ACK_TIMEOUT = 5000;
+const MAX_STORED_MESSAGES = 100;
+const MAX_STORED_TEXT_LENGTH = 500_000;
+const MESSAGE_STORAGE_PREFIX = 'clipboard_messages:';
+const CLIENT_ID_STORAGE_KEY = 'clipboard_client_id';
 
 // Store for reactive state
 export const clipboardState = writable({
@@ -57,7 +75,7 @@ export const clipboardState = writable({
     files: [] as File[],
     receivedFiles: [] as FileItem[],
     textContent: '',
-    receivedText: '',
+    messages: [] as ClipboardMessage[],
     dragover: false,
     sendingFiles: false,
     receivingFiles: false,
@@ -103,8 +121,11 @@ export class ClipboardManager {
     }>();
     private currentSessionType: 'random' | 'personal' = 'random';
     private currentDeviceId: string | null = null;
+    private clientId = '';
+    private pendingTextAcks = new Map<string, ReturnType<typeof setTimeout>>();
 
     constructor() {
+        this.clientId = this.getOrCreateClientId();
         this.loadStoredSession();
         this.startStatusCheck();
         this.setupVisibilityChangeHandler(); // 新增：设置页面可见性变化处理
@@ -129,7 +150,8 @@ export class ClipboardManager {
                         sessionId: session.sessionId,
                         isCreator: session.isCreator,
                         sessionType:
-                            session.sessionType === 'personal' ? 'personal' : 'random'
+                            session.sessionType === 'personal' ? 'personal' : 'random',
+                        messages: this.loadMessages(session.sessionId)
                     }));
                     this.currentSessionType =
                         session.sessionType === 'personal' ? 'personal' : 'random';
@@ -152,7 +174,134 @@ export class ClipboardManager {
                 sessionType,
                 timestamp: Date.now()
             }));
+            const messages = this.loadMessages(sessionId);
+            clipboardState.update(state => ({ ...state, messages }));
         }
+    }
+
+    private createMessageId(): string {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+        return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    private getOrCreateClientId(): string {
+        if (typeof window === 'undefined') return this.createMessageId();
+
+        const storedClientId = sessionStorage.getItem(CLIENT_ID_STORAGE_KEY);
+        if (storedClientId) return storedClientId;
+
+        const clientId = this.createMessageId();
+        sessionStorage.setItem(CLIENT_ID_STORAGE_KEY, clientId);
+        return clientId;
+    }
+
+    private getMessageStorageKey(sessionId: string): string {
+        return `${MESSAGE_STORAGE_PREFIX}${sessionId}`;
+    }
+
+    private sanitizeMessages(value: unknown): ClipboardMessage[] {
+        if (!Array.isArray(value)) return [];
+
+        const messages = value.filter((message): message is ClipboardMessage => {
+            if (!message || typeof message !== 'object') return false;
+            const candidate = message as Partial<ClipboardMessage>;
+            return typeof candidate.id === 'string'
+                && typeof candidate.clientId === 'string'
+                && (candidate.direction === 'outgoing' || candidate.direction === 'incoming')
+                && candidate.kind === 'text'
+                && typeof candidate.text === 'string'
+                && typeof candidate.createdAt === 'number'
+                && ['sending', 'delivered', 'unconfirmed', 'failed'].includes(candidate.status || '');
+        });
+
+        return this.limitStoredMessages(messages.map(message => (
+            message.status === 'sending' ? { ...message, status: 'unconfirmed' } : message
+        )));
+    }
+
+    private limitStoredMessages(messages: ClipboardMessage[]): ClipboardMessage[] {
+        const limited: ClipboardMessage[] = [];
+        let totalTextLength = 0;
+
+        for (let index = messages.length - 1; index >= 0 && limited.length < MAX_STORED_MESSAGES; index--) {
+            const message = messages[index];
+            if (totalTextLength + message.text.length > MAX_STORED_TEXT_LENGTH && limited.length > 0) {
+                break;
+            }
+            limited.unshift(message);
+            totalTextLength += message.text.length;
+        }
+
+        return limited;
+    }
+
+    private loadMessages(sessionId: string): ClipboardMessage[] {
+        if (typeof window === 'undefined' || !sessionId) return [];
+
+        try {
+            const stored = sessionStorage.getItem(this.getMessageStorageKey(sessionId));
+            return stored ? this.sanitizeMessages(JSON.parse(stored)) : [];
+        } catch (error) {
+            console.warn('Failed to restore clipboard messages:', error);
+            sessionStorage.removeItem(this.getMessageStorageKey(sessionId));
+            return [];
+        }
+    }
+
+    private persistMessages(messages: ClipboardMessage[], sessionId = this.getCurrentState().sessionId): void {
+        if (typeof window === 'undefined' || !sessionId) return;
+
+        try {
+            sessionStorage.setItem(
+                this.getMessageStorageKey(sessionId),
+                JSON.stringify(this.limitStoredMessages(messages)),
+            );
+        } catch (error) {
+            console.warn('Failed to persist clipboard messages:', error);
+        }
+    }
+
+    private setMessages(update: (messages: ClipboardMessage[]) => ClipboardMessage[]): void {
+        clipboardState.update(state => {
+            const messages = this.limitStoredMessages(update(state.messages));
+            this.persistMessages(messages, state.sessionId);
+            return { ...state, messages };
+        });
+    }
+
+    private updateMessage(
+        messageId: string,
+        update: (message: ClipboardMessage) => ClipboardMessage,
+    ): void {
+        this.setMessages(messages => messages.map(message => (
+            message.id === messageId ? update(message) : message
+        )));
+    }
+
+    private clearPendingTextAck(messageId: string): void {
+        const timer = this.pendingTextAcks.get(messageId);
+        if (timer) clearTimeout(timer);
+        this.pendingTextAcks.delete(messageId);
+    }
+
+    private markPendingTextMessagesUnconfirmed(): void {
+        this.pendingTextAcks.forEach(timer => clearTimeout(timer));
+        this.pendingTextAcks.clear();
+        this.setMessages(messages => messages.map(message => (
+            message.status === 'sending' ? { ...message, status: 'unconfirmed' } : message
+        )));
+    }
+
+    private waitForTextAcknowledgement(messageId: string): void {
+        this.clearPendingTextAck(messageId);
+        this.pendingTextAcks.set(messageId, setTimeout(() => {
+            this.pendingTextAcks.delete(messageId);
+            this.updateMessage(messageId, message => (
+                message.status === 'sending' ? { ...message, status: 'unconfirmed' } : message
+            ));
+        }, TEXT_ACK_TIMEOUT));
     }
 
     private clearStoredSession(): void {
@@ -985,7 +1134,9 @@ export class ClipboardManager {
             const url = `${origin}/clipboard?session=${sessionId}`;
             navigator.clipboard.writeText(url);
         }
-    } cleanup(): void {
+    } cleanup(preserveSession = false): void {
+        const activeSessionId = this.getCurrentState().sessionId;
+
         // Clear reconnection timer
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
@@ -1015,7 +1166,10 @@ export class ClipboardManager {
         }
         if (this.statusInterval) {
             clearInterval(this.statusInterval);
+            this.statusInterval = null;
         }
+
+        this.markPendingTextMessagesUnconfirmed();
 
         // 移除页面可见性监听器
         if (typeof window !== 'undefined') {
@@ -1030,8 +1184,8 @@ export class ClipboardManager {
 
         clipboardState.update(state => ({
             ...state,
-            sessionId: '',
-            sessionType: 'random',
+            sessionId: preserveSession ? state.sessionId : '',
+            sessionType: preserveSession ? state.sessionType : 'random',
             isConnected: false,
             peerConnected: false,
             qrCodeUrl: '',
@@ -1039,6 +1193,7 @@ export class ClipboardManager {
             showError: false,
             waitingForCreator: false,
             files: [], // 清空文件列表
+            messages: preserveSession ? state.messages : [],
             sendingFiles: false,
             receivingFiles: false,
             transferProgress: 0,
@@ -1061,8 +1216,17 @@ export class ClipboardManager {
         this.peerIsSelectingFiles = false; // 重置对端文件选择状态
         this.cancelTransmission = false; // 重置取消传输标志
         this.currentSendingFileId = null; // 重置当前发送文件ID
-        this.currentSessionType = 'random';
-        this.clearStoredSession();
+        if (!preserveSession) {
+            if (typeof window !== 'undefined' && activeSessionId) {
+                sessionStorage.removeItem(this.getMessageStorageKey(activeSessionId));
+            }
+            this.currentSessionType = 'random';
+            this.clearStoredSession();
+        }
+    }
+
+    dispose(): void {
+        this.cleanup(true);
     }
 
     // 清除错误消息
@@ -2060,12 +2224,14 @@ export class ClipboardManager {
             }
 
             clipboardState.update(state => ({ ...state, peerConnected: false }));
+            this.markPendingTextMessagesUnconfirmed();
 
             this.resolveBufferedAmountLow();
         };
 
         this.dataChannel.onerror = (error) => {
             console.error('Data channel error:', error);
+            this.markPendingTextMessagesUnconfirmed();
             // 移动端错误恢复机制
             const isMobile = typeof window !== 'undefined' &&
                 (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -2136,14 +2302,53 @@ export class ClipboardManager {
 
             switch (message.type) {
                 case 'text':
+                    {
+                    const messageId = typeof message.messageId === 'string' && message.messageId
+                        ? message.messageId
+                        : this.createMessageId();
+                    const existingMessage = this.getCurrentState().messages.find(
+                        (item: ClipboardMessage) => item.id === messageId && item.direction === 'incoming',
+                    );
+                    if (existingMessage) {
+                        if (message.messageId) this.sendTextAcknowledgement(messageId);
+                        break;
+                    }
+
                     // Convert array back to ArrayBuffer for decryption
                     const encryptedBuffer = new Uint8Array(message.content).buffer;
                     const decryptedText = await this.decryptData(encryptedBuffer);
-                    clipboardState.update(state => ({
-                        ...state,
-                        receivedText: decryptedText,
-                        activeTab: 'text'
-                    }));
+                    const receivedAt = Date.now();
+                    const createdAt = Number.isFinite(message.createdAt) ? message.createdAt : receivedAt;
+                    const incomingMessage: ClipboardMessage = {
+                        id: messageId,
+                        clientId: typeof message.clientId === 'string' ? message.clientId : 'peer',
+                        direction: 'incoming',
+                        kind: 'text',
+                        text: decryptedText,
+                        createdAt,
+                        receivedAt,
+                        status: 'delivered',
+                    };
+                    clipboardState.update(state => {
+                        const messages = this.limitStoredMessages([...state.messages, incomingMessage]);
+                        this.persistMessages(messages, state.sessionId);
+                        return { ...state, messages, activeTab: 'text' };
+                    });
+                    if (message.messageId) this.sendTextAcknowledgement(messageId);
+                    break;
+                    }
+
+                case 'text_ack':
+                    if (typeof message.messageId === 'string') {
+                        this.clearPendingTextAck(message.messageId);
+                        this.updateMessage(message.messageId, currentMessage => ({
+                            ...currentMessage,
+                            status: 'delivered',
+                            receivedAt: Number.isFinite(message.receivedAt)
+                                ? message.receivedAt
+                                : Date.now(),
+                        }));
+                    }
                     break;
 
                 case 'file_start':
@@ -2641,24 +2846,79 @@ export class ClipboardManager {
 
     // Public methods for sending data
     async sendText(text: string): Promise<void> {
+        const normalizedText = text.trim();
+        if (!normalizedText) return;
+
+        const message: ClipboardMessage = {
+            id: this.createMessageId(),
+            clientId: this.clientId,
+            direction: 'outgoing',
+            kind: 'text',
+            text: normalizedText,
+            createdAt: Date.now(),
+            status: 'sending',
+        };
+
+        clipboardState.update(state => {
+            const messages = this.limitStoredMessages([...state.messages, message]);
+            this.persistMessages(messages, state.sessionId);
+            return { ...state, messages, activeTab: 'text' };
+        });
+
+        await this.transmitTextMessage(message);
+    }
+
+    async retryText(messageId: string): Promise<void> {
+        const message = this.getCurrentState().messages.find(
+            (item: ClipboardMessage) => item.id === messageId && item.direction === 'outgoing',
+        );
+        if (!message) return;
+
+        await this.transmitTextMessage(message);
+    }
+
+    private async transmitTextMessage(message: ClipboardMessage): Promise<void> {
+        this.clearPendingTextAck(message.id);
+        this.updateMessage(message.id, currentMessage => ({
+            ...currentMessage,
+            status: 'sending',
+            receivedAt: undefined,
+        }));
+
         if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
             console.error('Data channel not ready');
+            this.updateMessage(message.id, currentMessage => ({ ...currentMessage, status: 'failed' }));
             return;
-        } try {
-            // 自动切换到文本分享标签
-            clipboardState.update(state => ({ ...state, activeTab: 'text' }));
+        }
 
-            const encryptedText = await this.encryptData(text);
-            // Convert ArrayBuffer to Array for JSON serialization
+        try {
+            const encryptedText = await this.encryptData(message.text);
             const encryptedArray = Array.from(new Uint8Array(encryptedText));
-            const message = {
+            this.dataChannel.send(JSON.stringify({
                 type: 'text',
-                content: encryptedArray
-            };
-
-            this.dataChannel.send(JSON.stringify(message));
+                messageId: message.id,
+                clientId: message.clientId,
+                createdAt: message.createdAt,
+                content: encryptedArray,
+            }));
+            this.waitForTextAcknowledgement(message.id);
         } catch (error) {
             console.error('Error sending text:', error);
+            this.updateMessage(message.id, currentMessage => ({ ...currentMessage, status: 'failed' }));
+        }
+    }
+
+    private sendTextAcknowledgement(messageId: string): void {
+        if (!this.dataChannel || this.dataChannel.readyState !== 'open') return;
+
+        try {
+            this.dataChannel.send(JSON.stringify({
+                type: 'text_ack',
+                messageId,
+                receivedAt: Date.now(),
+            }));
+        } catch (error) {
+            console.warn('Failed to acknowledge text message:', error);
         }
     }
 

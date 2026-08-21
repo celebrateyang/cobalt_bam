@@ -1,832 +1,485 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from 'svelte';
+    import { createEventDispatcher, onMount, tick } from 'svelte';
     import SettingsCategory from '$components/settings/SettingsCategory.svelte';
-    import ActionButton from '$components/buttons/ActionButton.svelte';
     import { t } from '$lib/i18n/translations';
-    
-    const dispatch = createEventDispatcher();
-    
+    import type { ClipboardMessage } from '$lib/clipboard/clipboard-manager';
+
+    const dispatch = createEventDispatcher<{
+        sendText: { text: string };
+        retryText: { messageId: string };
+    }>();
+
     export let textContent: string;
-    export let receivedText: string;
+    export let messages: ClipboardMessage[];
     export let peerConnected: boolean;
-    
-    let previousReceivedText = '';
-    let showNewMessageNotification = false;
-    let isNewMessage = false;
-    let receivedTextElement: HTMLElement;
-    
-    // 监听接收文本的变化
-    $: if (receivedText !== previousReceivedText && receivedText && previousReceivedText !== '') {
-        handleNewTextReceived();
-        previousReceivedText = receivedText;
+
+    let messageListElement: HTMLDivElement | null = null;
+    let previousMessageCount = 0;
+    let copiedMessageId = '';
+    let showNewMessageButton = false;
+    let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+    $: latestOutgoingMessage = [...messages].reverse().find(message => message.direction === 'outgoing');
+    $: statusAnnouncement = latestOutgoingMessage ? getStatusLabel(latestOutgoingMessage) : '';
+
+    $: if (messages.length !== previousMessageCount) {
+        const previousCount = previousMessageCount;
+        previousMessageCount = messages.length;
+        void handleMessageCountChange(previousCount);
     }
-    
-    // 初始化时记录当前文本
+
     onMount(() => {
-        previousReceivedText = receivedText;
+        previousMessageCount = messages.length;
+        void scrollToLatest('auto');
+
+        return () => {
+            if (copyResetTimer) clearTimeout(copyResetTimer);
+        };
     });
-    
-    function handleNewTextReceived() {
-        // 显示新消息通知
-        showNewMessageNotification = true;
-        isNewMessage = true;
-        
-        // 滚动到接收文本区域
-        if (receivedTextElement) {
-            receivedTextElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }
-        
-        // 3秒后隐藏通知
-        setTimeout(() => {
-            showNewMessageNotification = false;
-        }, 3000);
-        
-        // 5秒后移除新消息高亮
-        setTimeout(() => {
-            isNewMessage = false;
-        }, 5000);
-        
-        // 可选：播放提示音
-        playNotificationSound();
-    }
-      function playNotificationSound() {
-        try {
-            // 创建一个短暂的提示音
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
-        } catch (error) {
-            // 如果音频播放失败，忽略错误
-            console.log('Audio notification not available');
+
+    async function handleMessageCountChange(previousCount: number): Promise<void> {
+        if (typeof window === 'undefined' || messages.length <= previousCount) return;
+
+        const latestMessage = messages[messages.length - 1];
+        const shouldScroll = previousCount === 0
+            || latestMessage?.direction === 'outgoing'
+            || isNearBottom();
+
+        await tick();
+        if (shouldScroll) {
+            await scrollToLatest(previousCount === 0 ? 'auto' : 'smooth');
+        } else if (latestMessage?.direction === 'incoming') {
+            showNewMessageButton = true;
         }
     }
-    
+
+    function isNearBottom(): boolean {
+        if (!messageListElement) return true;
+        const distance = messageListElement.scrollHeight
+            - messageListElement.scrollTop
+            - messageListElement.clientHeight;
+        return distance < 72;
+    }
+
+    async function scrollToLatest(behavior: ScrollBehavior = 'smooth'): Promise<void> {
+        await tick();
+        if (!messageListElement) return;
+        messageListElement.scrollTo({ top: messageListElement.scrollHeight, behavior });
+        showNewMessageButton = false;
+    }
+
+    function handleListScroll(): void {
+        if (isNearBottom()) showNewMessageButton = false;
+    }
+
     function sendText(): void {
-        if (textContent.trim()) {
-            dispatch('sendText', { text: textContent });
+        const text = textContent.trim();
+        if (!text || !peerConnected) return;
+
+        dispatch('sendText', { text });
+        textContent = '';
+    }
+
+    function handleComposerKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+        event.preventDefault();
+        sendText();
+    }
+
+    function retryText(messageId: string): void {
+        if (!peerConnected) return;
+        dispatch('retryText', { messageId });
+    }
+
+    async function copyMessage(message: ClipboardMessage): Promise<void> {
+        try {
+            await navigator.clipboard.writeText(message.text);
+            copiedMessageId = message.id;
+            if (copyResetTimer) clearTimeout(copyResetTimer);
+            copyResetTimer = setTimeout(() => {
+                copiedMessageId = '';
+            }, 1800);
+        } catch (error) {
+            console.warn('Unable to copy clipboard message:', error);
         }
     }
-    
-    function clearReceivedText(): void {
-        isNewMessage = false;
-        showNewMessageNotification = false;
-        dispatch('clearText');
+
+    function formatTime(timestamp: number): string {
+        return new Intl.DateTimeFormat(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(timestamp);
     }
-    
-    function copyReceivedText(): void {
-        if (receivedText && navigator.clipboard) {
-            navigator.clipboard.writeText(receivedText);
-            isNewMessage = false;
+
+    function getStatusLabel(message: ClipboardMessage): string {
+        switch (message.status) {
+            case 'sending': return t.get('clipboard.chat.sending');
+            case 'delivered': return t.get('clipboard.chat.delivered');
+            case 'unconfirmed': return t.get('clipboard.chat.unconfirmed');
+            case 'failed': return t.get('clipboard.chat.failed');
         }
-    }
-    
-    function dismissNotification() {
-        showNewMessageNotification = false;
-        isNewMessage = false;
     }
 </script>
 
-<!-- 新消息通知 -->
-{#if showNewMessageNotification}
-    <div class="new-message-notification" on:click={dismissNotification}>
-        <div class="notification-content">
-            <div class="notification-icon">📩</div>
-            <div class="notification-text">
-                <strong>{$t('clipboard.new_message_received')}</strong>
-                <span>{$t('clipboard.click_to_view')}</span>
-            </div>
-            <button class="notification-close" on:click|stopPropagation={dismissNotification}>✕</button>
+<SettingsCategory title={$t('clipboard.chat.conversation')} sectionId="text-sharing">
+    <div class="chat-shell">
+        <div class="privacy-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 10V8a5 5 0 0 1 10 0v2m-11 0h12v10H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>{$t('clipboard.chat.session_only_notice')}</span>
         </div>
-    </div>
-{/if}
 
-<SettingsCategory title={$t('clipboard.send_text')} sectionId="text-sharing">
-    <div class="text-sharing-section">
-        <!-- 发送文本区域 - 移到上方 -->
-        <div class="send-text">
+        <div class="message-area">
+            <div
+                class="message-list"
+                bind:this={messageListElement}
+                on:scroll={handleListScroll}
+                role="log"
+                aria-label={$t('clipboard.chat.conversation')}
+                aria-live="polite"
+            >
+                {#if messages.length === 0}
+                    <div class="empty-state">
+                        <div class="empty-icon" aria-hidden="true">
+                            <svg width="38" height="38" viewBox="0 0 24 24">
+                                <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <strong>{$t('clipboard.chat.empty_title')}</strong>
+                        <span>{$t('clipboard.chat.empty_hint')}</span>
+                    </div>
+                {:else}
+                    {#each messages as message (message.id)}
+                        <div class:outgoing={message.direction === 'outgoing'} class="message-row">
+                            <div class="message-group">
+                                <div class="message-bubble">
+                                    <div class="message-text">{message.text}</div>
+                                </div>
+                                <div class="message-meta">
+                                    <button
+                                        type="button"
+                                        class="copy-button"
+                                        on:click={() => copyMessage(message)}
+                                        aria-label={$t('clipboard.chat.copy_message')}
+                                    >
+                                        {copiedMessageId === message.id
+                                            ? $t('clipboard.chat.copied')
+                                            : $t('clipboard.copy')}
+                                    </button>
+                                    <span>{formatTime(message.createdAt)}</span>
+                                    {#if message.direction === 'outgoing'}
+                                        <span class:warning={message.status === 'unconfirmed'} class:error={message.status === 'failed'} class="delivery-status">
+                                            {#if message.status === 'sending'}
+                                                <span class="status-spinner" aria-hidden="true"></span>
+                                            {:else if message.status === 'delivered'}
+                                                <span aria-hidden="true">✓</span>
+                                            {/if}
+                                            {getStatusLabel(message)}
+                                        </span>
+                                        {#if message.status === 'unconfirmed' || message.status === 'failed'}
+                                            <button
+                                                type="button"
+                                                class="retry-button"
+                                                disabled={!peerConnected}
+                                                on:click={() => retryText(message.id)}
+                                            >
+                                                {$t('clipboard.chat.retry')}
+                                            </button>
+                                        {/if}
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                {/if}
+            </div>
+
+            {#if showNewMessageButton}
+                <button type="button" class="new-message-button" on:click={() => scrollToLatest()}>
+                    ↓ {$t('clipboard.chat.new_messages')}
+                </button>
+            {/if}
+        </div>
+
+        {#if !peerConnected}
+            <div class="offline-notice" role="status">{$t('clipboard.chat.peer_offline')}</div>
+        {/if}
+
+        <div class="composer">
             <textarea
                 class="text-input"
                 bind:value={textContent}
-                placeholder={$t('clipboard.text_placeholder')}
+                placeholder={$t('clipboard.chat.placeholder')}
                 rows="3"
+                maxlength="100000"
                 disabled={!peerConnected}
+                on:keydown={handleComposerKeydown}
             ></textarea>
-            <ActionButton
-                id="send-text"
-                disabled={!peerConnected || !textContent.trim()}
-                click={sendText}
-            >
-                {$t('clipboard.send_text')}
-            </ActionButton>
-        </div>
-
-        <!-- 接收文本区域 - 移到下方 -->
-        <div class="received-text" class:new-message={isNewMessage} bind:this={receivedTextElement}>
-            {#if receivedText}
-                <div class="text-display">
-                    <div class="text-content">{receivedText}</div>
-                </div>
-                <div class="text-actions">
-                    <button
-                        class="copy-btn"
-                        on:click={copyReceivedText}
-                    >
-                        {$t('clipboard.copy')}
-                    </button>
-                    <button
-                        class="clear-btn"
-                        on:click={clearReceivedText}
-                    >
-                        {$t('clipboard.clear')}
-                    </button>
-                </div>
-            {:else}
-                <div class="empty-state">
-                    {$t('clipboard.no_text_received')}
-                </div>
-            {/if}
+            <div class="composer-footer">
+                <span class="send-hint">{$t('clipboard.chat.send_hint')}</span>
+                <button
+                    type="button"
+                    class="send-button"
+                    disabled={!peerConnected || !textContent.trim()}
+                    on:click={sendText}
+                >
+                    <span>{$t('clipboard.chat.send_message')}</span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m4 4 17 8-17 8 3-8zm3 8h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 </SettingsCategory>
 
+<span class="sr-only" aria-live="polite">{statusAnnouncement}</span>
+
 <style>
-    /* 新消息通知样式 */
-    .new-message-notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        animation: slideInRight 0.3s ease-out;
-        cursor: pointer;
-        max-width: 320px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-    }
-
-    .notification-content {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        gap: 0.75rem;
-        position: relative;
-    }
-
-    .notification-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .notification-text {
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-        color: white;
-        flex: 1;
-    }
-
-    .notification-text strong {
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-
-    .notification-text span {
-        font-size: 0.8rem;
-        opacity: 0.9;
-    }
-
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 1.1rem;
-        padding: 0.25rem;
-        border-radius: 4px;
-        transition: background-color 0.2s ease;
-        flex-shrink: 0;
-    }
-
-    .notification-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    .text-sharing-section {
-        display: flex;
-        flex-direction: column;
-        gap: 1.6rem;
-        padding: 1rem;
-    }
-
-    .send-text, .received-text {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 2rem;
-        background: rgba(255, 255, 255, 0.03);
+    .chat-shell {
+        overflow: hidden;
+        border: 1px solid rgba(112, 178, 35, 0.16);
         border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(8px);
-        transition: all 0.3s ease;
+        background: #fff;
+        box-shadow: 0 12px 34px rgba(33, 61, 16, 0.07);
+    }
+
+    .privacy-note {
+        display: flex;
+        min-height: 34px;
+        padding: 5px 16px;
         align-items: center;
+        justify-content: center;
+        gap: 7px;
+        color: #75806e;
+        border-bottom: 1px solid #edf2e9;
+        background: #f8fbf5;
+        font-size: 12px;
         text-align: center;
     }
 
-    /* 新消息状态的特殊样式 */
-    .received-text.new-message {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border-color: rgba(102, 126, 234, 0.3);
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
-        animation: glow 2s ease-in-out infinite alternate;
-    }
+    .privacy-note svg { flex: 0 0 auto; color: #70b223; }
+    .message-area { position: relative; }
 
-    @keyframes glow {
-        from {
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
-        }
-        to {
-            box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
-        }
-    }
-
-    .send-text:hover, .received-text:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        border-color: rgba(255, 255, 255, 0.15);
-    }
-
-    .received-text.new-message:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 35px rgba(102, 126, 234, 0.3);
-        border-color: rgba(102, 126, 234, 0.4);
-    }
-
-    .text-input {
-        width: 100%;
-        padding: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.02);
-        color: var(--text);
-        resize: vertical;
-        font-family: inherit;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        min-height: 100px;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(4px);
-        text-align: left;
-        align-self: center;
-        margin: 0 auto;
-        box-sizing: border-box;
-    }
-
-    .text-input:focus {
-        outline: none;
-        border-color: rgba(102, 126, 234, 0.5);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
-        transform: translateY(-1px);
-    }
-
-    .text-input:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-    }    .text-display {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.02);
-        overflow: hidden;
-        backdrop-filter: blur(4px);
-        transition: all 0.3s ease;
-        align-self: stretch;
-        width: 100%;
-    }
-
-    .text-display:hover {
-        border-color: rgba(255, 255, 255, 0.15);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }    .text-content {
-        padding: 1.5rem;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        color: var(--text);
-        line-height: 1.7;
-        font-size: 0.95rem;
-        background: rgba(255, 255, 255, 0.01);
-        min-height: 60px;
-        max-height: 200px;
+    .message-list {
+        height: min(48vh, 450px);
+        min-height: 300px;
         overflow-y: auto;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .text-content::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .text-content::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 3px;
-    }
-
-    .text-content::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-    }
-
-    .text-content::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }    .text-actions {
-        display: flex;
-        gap: 0.75rem;
-        padding: 1rem 1.5rem;
-        background: rgba(255, 255, 255, 0.01);
-        justify-content: center;
-        flex-wrap: wrap;
-        align-self: stretch;
-    }
-
-    .copy-btn, .clear-btn {
-        padding: 0.75rem 1.25rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.02);
-        color: var(--text);
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        min-height: 44px;
-    }
-
-    .copy-btn:hover {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border-color: rgba(102, 126, 234, 0.3);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
-    }
-
-    .clear-btn:hover {
-        background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(229, 57, 53, 0.1) 100%);
-        border-color: rgba(244, 67, 54, 0.3);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.2);
-    }
-
-    .copy-btn:active, .clear-btn:active {
-        transform: translateY(0) scale(0.95);
+        padding: 24px 22px;
+        background: radial-gradient(circle at 12% 15%, rgba(112, 178, 35, 0.055), transparent 24%), linear-gradient(180deg, #fdfefd 0%, #f8faf7 100%);
+        scrollbar-width: thin;
+        scrollbar-color: #cbd7c4 transparent;
     }
 
     .empty-state {
-        padding: 3rem 2rem;
+        display: flex;
+        min-height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        color: #899184;
         text-align: center;
-        color: var(--secondary);
-        background: rgba(255, 255, 255, 0.01);
-        border-radius: 12px;
-        border: 2px dashed rgba(255, 255, 255, 0.1);
-        font-style: italic;
-        backdrop-filter: blur(4px);
-        position: relative;
-        overflow: hidden;
     }
 
-    .empty-state::before {
-        content: '📭';
-        display: block;
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
+    .empty-state strong { color: #5e6759; font-size: 15px; font-weight: 600; }
+    .empty-state span { max-width: 320px; font-size: 13px; line-height: 1.55; }
+
+    .empty-icon {
+        display: grid;
+        width: 68px;
+        height: 68px;
+        margin-bottom: 5px;
+        place-items: center;
+        color: #83b94c;
+        border: 1px solid #dcebd0;
+        border-radius: 50%;
+        background: #f3f9ee;
     }
 
-    .empty-state::after {
-        content: '';
+    .message-row { display: flex; margin-bottom: 18px; justify-content: flex-start; }
+    .message-row.outgoing { justify-content: flex-end; }
+
+    .message-group {
+        display: flex;
+        max-width: min(78%, 680px);
+        min-width: 120px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .outgoing .message-group { align-items: flex-end; }
+
+    .message-bubble {
+        padding: 11px 14px;
+        color: #30362d;
+        border: 1px solid #e3e9df;
+        border-radius: 5px 16px 16px 16px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(38, 54, 29, 0.05);
+    }
+
+    .outgoing .message-bubble {
+        color: #fff;
+        border-color: #70b223;
+        border-radius: 16px 5px 16px 16px;
+        background: linear-gradient(135deg, #7dbc2e, #66a91b);
+        box-shadow: 0 6px 17px rgba(96, 157, 28, 0.18);
+    }
+
+    .message-text {
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.6;
+        user-select: text;
+    }
+
+    .message-meta {
+        display: flex;
+        min-height: 24px;
+        margin-top: 4px;
+        align-items: center;
+        gap: 7px;
+        color: #8a9286;
+        font-size: 11px;
+    }
+
+    .outgoing .message-meta { justify-content: flex-end; }
+
+    .copy-button, .retry-button {
+        padding: 2px 4px;
+        color: #698357;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .copy-button:hover, .retry-button:hover:not(:disabled) { color: #57960e; background: #edf6e6; }
+    .retry-button { color: #b4692b; font-weight: 600; }
+    .retry-button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    .delivery-status { display: inline-flex; align-items: center; gap: 3px; color: #6e9c3e; }
+    .delivery-status.warning { color: #b67a27; }
+    .delivery-status.error { color: #c85858; }
+
+    .status-spinner {
+        width: 9px;
+        height: 9px;
+        border: 1.5px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .new-message-button {
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
-        animation: shimmer 3s infinite;
+        right: 50%;
+        bottom: 12px;
+        transform: translateX(50%);
+        padding: 7px 13px;
+        color: #527f20;
+        border: 1px solid #cfe4bc;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 5px 16px rgba(40, 70, 22, 0.13);
+        font-size: 12px;
+        cursor: pointer;
     }
 
-    @keyframes shimmer {
-        0% {
-            left: -100%;
-        }
-        100% {
-            left: 100%;
-        }
-    }    /* 移动端响应式 */    /* PC/Desktop 优化 - 1024px 及以上 - 横向布局 */
-    @media (min-width: 1024px) {
-        .text-sharing-section {
-            flex-direction: row;
-            gap: 2rem;
-            padding: 0.5rem;
-            max-height: 55vh;
-            align-items: stretch;
-        }        .send-text, .received-text {
-            padding: 1.5rem;
-            flex: 1;
-            max-width: calc(50% - 1rem);
-            align-items: center;
-            text-align: center;
-            justify-content: center;
-        }
-          /* 确保标题在PC端居中 */
-        
-        /* 确保输入框在PC端居中 */
-        .text-input {
-            align-self: center;
-            margin: 0 auto;
-            display: block;
-        }
-          /* 调整发送文本区域 */
-        .send-text {
-            order: 1;
-        }
-        
-        /* 调整接收文本区域 */
-        .received-text {
-            order: 2;
-        }
-          .text-content {
-            max-height: 250px;
-            overflow-y: auto;
-        }
-        
-        .text-input {
-            min-height: 200px;
-            max-height: 250px;
-            resize: vertical;
-        }
-        
-        /* 优化PC端滚动条 */
-        .text-content::-webkit-scrollbar,
-        .text-input::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .text-content::-webkit-scrollbar-track,
-        .text-input::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 3px;
-        }
-        
-        .text-content::-webkit-scrollbar-thumb,
-        .text-input::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-        
-        .text-content::-webkit-scrollbar-thumb:hover,
-        .text-input::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-    }    /* 超大桌面屏幕优化 - 1440px 及以上 */
-    @media (min-width: 1440px) {
-        .text-sharing-section {
-            gap: 2.5rem;
-            max-height: 60vh;
-            padding: 1rem;
-        }
-          .send-text, .received-text {
-            padding: 2rem;
-            align-items: center;
-            text-align: center;
-            justify-content: center;
-        }
-          /* 确保大桌面端标题居中 */
-        
-        /* 确保大桌面端输入框居中 */
-        .text-input {
-            align-self: center;
-            margin: 0 auto;
-            display: block;
-        }
-        
-        .text-content {
-            max-height: 300px;
-        }
-        
-        .text-input {
-            min-height: 250px;
-            max-height: 300px;
-        }
-        
-        .text-actions {
-            gap: 1rem;
-        }
-        
-        .copy-btn, .clear-btn {
-            padding: 0.9rem 1.5rem;
-            font-size: 0.95rem;
-        }
-    }    /* 平板优化 - 768px 到 1023px */
-    @media (min-width: 768px) and (max-width: 1023px) {
-        .text-sharing-section {
-            gap: 1.8rem;
-            padding: 0.75rem;
-            max-height: 40vh;
-            overflow-y: auto;
-        }
-        
-        .send-text, .received-text {
-            padding: 1.75rem;
-        }
-        
-        .text-content {
-            max-height: 200px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .new-message-notification {
-            right: 10px;
-            left: 10px;
-            max-width: none;
-            top: 10px;
-        }
-
-        :global(#text-sharing .heading-container) {
-            display: none;
-        }
-
-        .text-sharing-section {
-            gap: 0.65rem;
-            padding: 0.2rem;
-            height: calc(100vh - 250px);
-            height: calc(100dvh - 250px);
-            min-height: 0;
-        }
-
-        .send-text, .received-text {
-            padding: 0.85rem;
-            gap: 0.65rem;
-            border-radius: 12px;
-            min-height: 0;
-            flex: 1;
-        }
-
-        .send-text {
-            justify-content: space-between;
-        }
-
-        .text-input {
-            min-height: 0;
-            max-height: none;
-            height: auto;
-            flex: 1;
-            padding: 0.7rem;
-            font-size: 0.88rem;
-            line-height: 1.35;
-        }
-
-        .send-text :global(.action-button) {
-            min-height: 36px;
-            padding: 0.45rem 0.9rem;
-            font-size: 0.82rem;
-        }
-
-        .text-display {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .text-content {
-            padding: 0.75rem;
-            font-size: 0.86rem;
-            min-height: 0;
-            max-height: none;
-            flex: 1;
-            line-height: 1.4;
-        }
-
-        .text-actions {
-            padding: 0.5rem 0.65rem;
-            gap: 0.4rem;
-        }
-
-        .copy-btn, .clear-btn {
-            padding: 0.5rem 0.7rem;
-            font-size: 0.78rem;
-            flex: 1;
-            justify-content: center;
-            min-height: 34px;
-            gap: 0.35rem;
-        }
-
-        .empty-state {
-            padding: 0.85rem 0.75rem;
-            min-height: 72px;
-            font-size: 0.82rem;
-        }
-
-        .empty-state::before {
-            display: none;
-        }
+    .offline-notice {
+        padding: 8px 16px;
+        color: #8a651f;
+        border-top: 1px solid #f0dfb8;
+        background: #fff9eb;
+        font-size: 12px;
+        text-align: center;
     }
 
-    @media (max-width: 480px) {
-        .notification-content {
-            padding: 0.75rem;
-            gap: 0.5rem;
-        }
-
-        .notification-text strong {
-            font-size: 0.9rem;
-        }
-
-        .notification-text span {
-            font-size: 0.75rem;
-        }
-
-        .text-sharing-section {
-            height: calc(100vh - 220px);
-            height: calc(100dvh - 220px);
-        }
-
-        .send-text, .received-text {
-            padding: 0.7rem;
-            border-radius: 10px;
-        }
-
-        .text-input {
-            padding: 0.65rem;
-            font-size: 0.84rem;
-        }
-
-        .text-content {
-            padding: 0.65rem;
-            font-size: 0.82rem;
-        }
-
-        .copy-btn, .clear-btn {
-            font-size: 0.75rem;
-        }
-    }
-    
-    /* ActionButton居中样式 */
-    .send-text :global(.action-button) {
-        align-self: center;
-        margin: 0 auto;
-        display: block;
-    }
-    
-    /* PC端ActionButton居中 */
-    @media (min-width: 1024px) {
-        .send-text :global(.action-button) {
-            align-self: center;
-            margin: 0 auto;
-            display: block;
-            width: auto;
-            max-width: 200px;
-        }
-    }
-    
-    /* 大桌面端ActionButton居中 */
-    @media (min-width: 1440px) {
-        .send-text :global(.action-button) {
-            align-self: center;
-            margin: 0 auto;
-            display: block;
-            width: auto;
-            max-width: 220px;
-        }
-    }
-
-    /* Layout overrides: keep left/right text boxes same height and align action row */
-    .send-text,
-    .received-text {
-        align-items: stretch;
-        text-align: left;
-        justify-content: flex-start;
-    }
-
-    .text-input,
-    .text-display {
-        width: 100%;
-        min-height: 180px;
-        max-height: 180px;
-    }
+    .composer { padding: 14px 16px 13px; border-top: 1px solid #e9eee6; background: #fff; }
 
     .text-input {
-        resize: none;
-        align-self: stretch;
-        margin: 0;
+        display: block;
+        width: 100%;
+        min-height: 78px;
+        box-sizing: border-box;
+        resize: vertical;
+        padding: 10px 12px;
+        color: #30362d;
+        border: 1px solid #dce4d7;
+        border-radius: 10px;
+        outline: none;
+        background: #fcfdfb;
+        font: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .text-content {
-        min-height: 100%;
-        max-height: 100%;
-        border-bottom: none;
-    }
+    .text-input:focus { border-color: #82bc45; box-shadow: 0 0 0 3px rgba(112, 178, 35, 0.1); }
+    .text-input:disabled { cursor: not-allowed; background: #f2f3f1; }
 
-    .text-actions {
-        margin-top: 0.75rem;
-        padding: 0;
-        background: transparent;
+    .composer-footer {
         display: flex;
-        flex-wrap: nowrap;
+        margin-top: 9px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .send-hint { color: #9aa095; font-size: 11px; }
+
+    .send-button {
+        display: inline-flex;
+        min-width: 112px;
+        height: 38px;
+        padding: 0 18px;
+        align-items: center;
         justify-content: center;
-        gap: 0.75rem;
+        gap: 7px;
+        color: #fff;
+        border: 0;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #79b92b, #65a91a);
+        box-shadow: 0 5px 14px rgba(101, 169, 26, 0.2);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
     }
 
-    .copy-btn,
-    .clear-btn {
-        flex: 1;
-        justify-content: center;
-        min-height: 44px;
+    .send-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(101, 169, 26, 0.27); }
+    .send-button:disabled { cursor: not-allowed; box-shadow: none; opacity: 0.45; }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 
-    .send-text :global(.action-button) {
-        min-height: 44px;
-    }
-
-    @media (min-width: 1024px) {
-        .text-input,
-        .text-display {
-            min-height: 220px;
-            max-height: 220px;
-        }
-    }
-
-    @media (min-width: 1440px) {
-        .text-input,
-        .text-display {
-            min-height: 260px;
-            max-height: 260px;
-        }
-    }
-
-    @media (min-width: 768px) and (max-width: 1023px) {
-        .text-input,
-        .text-display {
-            min-height: 190px;
-            max-height: 190px;
-        }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 768px) {
-        .text-input,
-        .text-display {
-            min-height: 0;
-            max-height: none;
-            height: auto;
-        }
-
-        .text-content {
-            min-height: 0;
-            max-height: none;
-            height: 100%;
-        }
-
-        .text-actions {
-            margin-top: 0.55rem;
-            gap: 0.4rem;
-        }
-
-        .copy-btn,
-        .clear-btn {
-            min-height: 34px;
-        }
-
-        .send-text :global(.action-button) {
-            min-height: 34px;
-        }
+        .chat-shell { border-radius: 12px; }
+        .message-list { height: min(52vh, 420px); min-height: 270px; padding: 18px 12px; }
+        .message-group { max-width: 88%; }
+        .composer { padding: 11px 12px; }
+        .send-hint { display: none; }
+        .composer-footer { justify-content: flex-end; }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        .send-button, .text-input { transition: none; }
+        .status-spinner { animation-duration: 1.8s; }
+        .message-list { scroll-behavior: auto; }
+    }
 </style>

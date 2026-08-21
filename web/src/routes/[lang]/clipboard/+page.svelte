@@ -8,7 +8,12 @@
     import TabNavigation from '$components/clipboard/TabNavigation.svelte';
     import TextSharing from '$components/clipboard/TextSharing.svelte';
 // Import clipboard manager
-    import { ClipboardManager, clipboardState, type FileItem } from '$lib/clipboard/clipboard-manager';
+    import {
+        ClipboardManager,
+        clipboardState,
+        type ClipboardMessage,
+        type FileItem,
+    } from '$lib/clipboard/clipboard-manager';
     import { getClerkToken } from '$lib/state/clerk';
     import env from '$lib/env';
     // Types
@@ -39,7 +44,7 @@
     let files: File[] = [];
     let receivedFiles: FileItem[] = [];
     let textContent = '';
-    let receivedText = '';
+    let messages: ClipboardMessage[] = [];
     const fallbackHost = env.HOST || 'freesavevideo.online';
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
     $: isEnglish = currentLang === 'en';
@@ -134,7 +139,7 @@
             receivedFiles = state.receivedFiles;
             // Don't overwrite textContent - it's managed by the TextSharing component binding
             // textContent = state.textContent;
-            receivedText = state.receivedText;
+            messages = state.messages;
             dragover = state.dragover;
             sendingFiles = state.sendingFiles;
             receivingFiles = state.receivingFiles;
@@ -250,19 +255,15 @@
             receivedFiles: state.receivedFiles.filter((_, i) => i !== event.detail.index)
         }));
     }    // Text sharing handlers
-    function handleSendText(event?: CustomEvent) {
+    function handleSendText(event?: CustomEvent<{ text: string }>) {
         const text = event?.detail?.text || textContent;
-        console.log('handleSendText called with text:', text);
-        console.log('clipboardManager exists:', !!clipboardManager);
-        console.log('dataChannel ready:', clipboardManager?.debugInfo?.dataChannel?.readyState);
-        console.log('peerConnected:', peerConnected);
-        
         if (text.trim()) {
-            clipboardManager?.sendText(text);
-        } else {
-            console.log('No text to send');
-        }    }    function handleClearText() {
-        clipboardState.update(state => ({ ...state, receivedText: '' }));
+            void clipboardManager?.sendText(text);
+        }
+    }
+
+    function handleRetryText(event: CustomEvent<{ messageId: string }>) {
+        void clipboardManager?.retryText(event.detail.messageId);
     }
 
     function handleClearError() {
@@ -390,7 +391,7 @@
     onDestroy(() => {
         clearInitialHeaderCollapseTimer();
         detachViewportListener?.();
-        clipboardManager?.cleanup();
+        clipboardManager?.dispose();
     });
 </script>
 
@@ -514,10 +515,10 @@
             <!-- Text Sharing Component -->
             {#if activeTab === 'text'}
                 <TextSharing
-                    {receivedText}
+                    {messages}
                     {peerConnected}
                     on:sendText={handleSendText}
-                    on:clearText={handleClearText}
+                    on:retryText={handleRetryText}
                     bind:textContent
                 />
             {/if}

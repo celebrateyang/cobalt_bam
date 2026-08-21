@@ -42,6 +42,7 @@
     let receivedText = '';
     const fallbackHost = env.HOST || 'freesavevideo.online';
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
+    $: isEnglish = currentLang === 'en';
     $: canonicalUrl = `https://${fallbackHost}/${currentLang}/clipboard`;
     $: transferJsonLd = {
         '@context': 'https://schema.org',
@@ -55,6 +56,36 @@
         isAccessibleForFree: true,
         description: String($t('general.seo.transfer.description')),
         featureList: ['cross-device file transfer', 'text sharing', 'QR code join', 'WebRTC data channel'],
+    };
+    $: transferFaqJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+            {
+                '@type': 'Question',
+                name: 'Do I need to upload files to a cloud drive first?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'No. The two browsers connect through a WebRTC data channel and transfer the selected files directly when the connection allows it.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'How do I connect my phone and computer?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Create a transfer session on one device, then scan its QR code or enter the session code on the other device.',
+                },
+            },
+            {
+                '@type': 'Question',
+                name: 'Can I send text as well as files?',
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Yes. After both devices connect, switch between the Files and Text tabs to transfer files or copy text between them.',
+                },
+            },
+        ],
     };
     let dragover = false;
     let sendingFiles = false;    let receivingFiles = false;
@@ -369,7 +400,11 @@
     <meta name="keywords" content={$t("general.seo.transfer.keywords")} />
     <meta property="og:title" content={$t("general.seo.transfer.title")} />
     <meta property="og:description" content={$t("general.seo.transfer.description")} />
+    <link rel="canonical" href={canonicalUrl} />
     {@html `<script type="application/ld+json">${JSON.stringify(transferJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {#if isEnglish}
+        {@html `<script type="application/ld+json">${JSON.stringify(transferFaqJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {/if}
 </svelte:head>
 
 
@@ -521,6 +556,37 @@
             bind:joinCode
         />
     {/if}
+
+    {#if isEnglish}
+        <article class="transfer-guide" aria-labelledby="transfer-guide-title">
+            <h2 id="transfer-guide-title">Send files from phone to computer without a cloud upload</h2>
+            <p>
+                FreeSaveVideo File Transfer connects two browsers with WebRTC. Create a session on one device,
+                scan the QR code or enter the session code on the other, then send files or text between them.
+            </p>
+
+            <h3>How to transfer files between devices</h3>
+            <ol>
+                <li>Open this page on the device that will start the transfer and create a session.</li>
+                <li>Scan the QR code with the second device, or enter the displayed session code.</li>
+                <li>Select one or more files and keep both browser tabs open until the transfer finishes.</li>
+            </ol>
+
+            <h3>Why use a browser-to-browser transfer?</h3>
+            <ul>
+                <li>No cloud-drive account or temporary upload link is required.</li>
+                <li>Files are split into small chunks, with missing chunks requested again when necessary.</li>
+                <li>Devices on the same local network can use a direct LAN connection when available.</li>
+                <li>The Text tab also moves links, notes, and short messages between devices.</li>
+            </ul>
+
+            <h3>Transfer tips</h3>
+            <p>
+                Keep both devices online and leave the transfer page open. For large files, avoid switching networks
+                while the transfer is running. Only send files that you own or are authorized to share.
+            </p>
+        </article>
+    {/if}
 </div>
 
 <style>    /* Main container styles */
@@ -533,7 +599,32 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.1);
-    }.clipboard-header {
+    }
+
+    .transfer-guide {
+        margin: 2.5rem auto 1rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(128, 128, 128, 0.24);
+        border-radius: 1rem;
+        background: rgba(128, 128, 128, 0.06);
+        line-height: 1.7;
+        text-align: left;
+    }
+
+    .transfer-guide h2,
+    .transfer-guide h3 {
+        line-height: 1.3;
+    }
+
+    .transfer-guide h3 {
+        margin-top: 1.5rem;
+    }
+
+    .transfer-guide li + li {
+        margin-top: 0.45rem;
+    }
+
+    .clipboard-header {
         text-align: center;
         margin-bottom: 0.75rem;
         padding: 0.35rem 0 0.85rem;

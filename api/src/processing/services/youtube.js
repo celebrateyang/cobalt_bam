@@ -607,6 +607,61 @@ const pickMergeCandidatePair = ({ videoCandidates, audioCandidates, profile }) =
     return best;
 };
 
+const getVideoCodecFallbackOrder = (preferredCodec) => {
+    const fallbackOrder = {
+        av1: ["vp9", "h264"],
+        vp9: ["h264", "av1"],
+        h264: ["vp9", "av1"],
+    };
+
+    return [preferredCodec, ...(fallbackOrder[preferredCodec] || ["h264", "vp9", "av1"])]
+        .filter((codec, index, codecs) => codec && codecs.indexOf(codec) === index);
+};
+
+const selectUsableVideoProfile = ({
+    candidates,
+    audioCandidates,
+    o,
+    targetQuality,
+}) => {
+    const requestedProfile = resolveRequestedProfile(o, targetQuality);
+
+    for (const codec of getVideoCodecFallbackOrder(requestedProfile.preferredCodec)) {
+        const profile = resolveRequestedProfile({ ...o, codec }, targetQuality);
+        if (codec !== requestedProfile.preferredCodec) {
+            profile.fallbackReason = `${requestedProfile.preferredCodec}_unavailable_to_${codec}`;
+        }
+
+        const directCandidates = pickSortedDirectCandidates({ candidates, profile });
+        const mergeVideoCandidates = pickSortedMergeVideoCandidates({ candidates, profile });
+        const mergePair = o.isAudioMuted
+            ? null
+            : pickMergeCandidatePair({
+                videoCandidates: mergeVideoCandidates,
+                audioCandidates,
+                profile,
+            });
+        const hasUsableVideo = directCandidates.length > 0
+            || (o.isAudioMuted ? mergeVideoCandidates.length > 0 : Boolean(mergePair));
+
+        if (hasUsableVideo) {
+            return {
+                profile,
+                directCandidates,
+                mergeVideoCandidates,
+                mergePair,
+            };
+        }
+    }
+
+    return {
+        profile: requestedProfile,
+        directCandidates: [],
+        mergeVideoCandidates: [],
+        mergePair: null,
+    };
+};
+
 const buildFilenameAttributes = ({
     id,
     title,
@@ -722,7 +777,7 @@ const runYtDlp = async ({ id, requestClientIp, cookieHeader, traceId }) => {
     }
 };
 
-const buildYoutubeResult = ({
+export const buildYoutubeResult = ({
     info,
     o,
     requestClientIp,
@@ -733,18 +788,9 @@ const buildYoutubeResult = ({
     const title = String(info.title || `youtube_${o.id}`).trim() || `youtube_${o.id}`;
     const artist = String(info.channel || info.uploader || "").trim();
     const subtitles = pickSubtitleUrl(info, o.subtitleLang);
-    const profile = resolveRequestedProfile(o, targetQuality);
     const candidates = collectCandidates({
         formats: allFormats,
         requestClientIp,
-    });
-    const directCandidates = pickSortedDirectCandidates({
-        candidates,
-        profile,
-    });
-    const mergeVideoCandidates = pickSortedMergeVideoCandidates({
-        candidates,
-        profile,
     });
     const audioCandidates = pickSortedAudioCandidates({
         candidates,
@@ -752,6 +798,25 @@ const buildYoutubeResult = ({
     const audioFallbackCandidates = pickSortedAudioFallbackCandidates({
         candidates,
     });
+    const videoSelection = o.isAudioOnly
+        ? {
+            profile: resolveRequestedProfile(o, targetQuality),
+            directCandidates: [],
+            mergeVideoCandidates: [],
+            mergePair: null,
+        }
+        : selectUsableVideoProfile({
+            candidates,
+            audioCandidates,
+            o,
+            targetQuality,
+        });
+    const {
+        profile,
+        directCandidates,
+        mergeVideoCandidates,
+        mergePair,
+    } = videoSelection;
 
     console.log(
         `======> [youtube] strategy quality_requested=${profile.requestedQuality} quality_effective=${profile.effectiveQuality} codec=${profile.preferredCodec} container=${profile.containerPreference} prefer_merge=${profile.preferMerge ? "yes" : "no"} fallback=${profile.fallbackReason || "none"}`,
@@ -829,12 +894,6 @@ const buildYoutubeResult = ({
             duration,
         };
     }
-
-    const mergePair = pickMergeCandidatePair({
-        videoCandidates: mergeVideoCandidates,
-        audioCandidates,
-        profile,
-    });
 
     if (profile.preferMerge && mergePair) {
         return {

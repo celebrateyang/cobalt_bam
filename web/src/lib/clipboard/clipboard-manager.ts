@@ -131,6 +131,9 @@ export class ClipboardManager {
     } & Record<string, unknown>) | null = null;
     private peerReleaseTimeout: ReturnType<typeof setTimeout> | null = null;
     private wsMessageQueue: Promise<void> = Promise.resolve();
+    private rtcGeneration = 0;
+    private rtcRetryTimer: ReturnType<typeof setTimeout> | null = null;
+    private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
     constructor() {
         this.clientId = this.getOrCreateClientId();
@@ -155,16 +158,15 @@ export class ClipboardManager {
             if (stored) {
                 try {
                     const session = JSON.parse(stored);
+                    this.currentSessionType =
+                        session.sessionType === 'personal' ? 'personal' : 'random';
                     clipboardState.update(state => ({
                         ...state,
                         sessionId: session.sessionId,
                         isCreator: session.isCreator,
-                        sessionType:
-                            session.sessionType === 'personal' ? 'personal' : 'random',
+                        sessionType: this.currentSessionType,
                         messages: this.loadMessages(session.sessionId)
                     }));
-                    this.currentSessionType =
-                        session.sessionType === 'personal' ? 'personal' : 'random';
                 } catch (e) {
                     this.clearStoredSession();
                 }
@@ -182,6 +184,7 @@ export class ClipboardManager {
                 sessionId,
                 isCreator,
                 sessionType,
+                clientId: this.clientId,
                 timestamp: Date.now()
             }));
             const messages = this.loadMessages(sessionId);
@@ -317,6 +320,14 @@ export class ClipboardManager {
     private clearStoredSession(): void {
         this.currentSessionType = 'random';
         if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('clipboard_session');
+            if (!stored) return;
+            try {
+                const session = JSON.parse(stored);
+                if (session.clientId && session.clientId !== this.clientId) return;
+            } catch {
+                // Remove malformed or legacy state below.
+            }
             localStorage.removeItem('clipboard_session');
         }
     } private startStatusCheck(): void {
@@ -385,8 +396,6 @@ export class ClipboardManager {
 
                 this.ws.onopen = () => {
                     console.log('🔗 WebSocket connected');
-                    this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
-                    this.reconnectDelay = 1000; // Reset delay
                     clipboardState.update(state => ({ ...state, isConnected: true }));
                     resolve();
                 };
@@ -413,7 +422,8 @@ export class ClipboardManager {
                         peerIsSelectingFiles: this.peerIsSelectingFiles,
                         fileSelectDuration: this.fileSelectStartTime ? Date.now() - this.fileSelectStartTime : 0
                     });
-                    if (this.ws === socket) this.ws = null;
+                    if (this.ws !== socket) return;
+                    this.ws = null;
 
                     if (event.code === 4002) {
                         this.closePeerTransport();
@@ -513,6 +523,8 @@ export class ClipboardManager {
 
         // Wait before reconnecting (exponential backoff)
         this.reconnectTimer = setTimeout(async () => {
+            this.reconnectTimer = null;
+            let shouldRetry = false;
             try {
                 await this.connectWebSocket();
                 await this.rejoinSession();
@@ -567,11 +579,10 @@ export class ClipboardManager {
                 console.error('❌ Reconnection failed:', error);
                 // Exponential backoff: increase delay for next attempt
                 this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000); // Max 30 seconds
-
-                // Try again
-                this.handleReconnection();
+                shouldRetry = true;
             } finally {
                 this.isReconnecting = false;
+                if (shouldRetry) void this.handleReconnection();
             }
         }, this.reconnectDelay);
     }
@@ -585,21 +596,8 @@ export class ClipboardManager {
 
         console.log('🔄 开始重新加入会话，完整重建连接链路...');
 
-        // 完全清理旧的 WebRTC 连接
-        if (this.dataChannel) {
-            console.log('🔄 清理旧的 DataChannel');
-            this.dataChannel.close();
-            this.dataChannel = null;
-        }
-
-        if (this.peerConnection) {
-            console.log('🔄 清理旧的 PeerConnection');
-            this.peerConnection.close();
-            this.peerConnection = null;
-        }
-
-        // 重置连接状态
-        this.dataChannelForceConnected = false;
+        // 完全清理旧的 WebRTC 连接和密钥
+        this.closePeerTransport();
 
         // 更新UI状态为重连中
         clipboardState.update(state => ({
@@ -1207,15 +1205,8 @@ export class ClipboardManager {
             this.currentReceivingFile.retryTimer = undefined;
         }
 
-        if (this.dataChannel) {
-            this.dataChannel.close();
-            this.dataChannel = null;
-        }
+        this.closePeerTransport();
         this.resetBufferedAmountWaiters();
-        if (this.peerConnection) {
-            this.peerConnection.close();
-            this.peerConnection = null;
-        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -1335,7 +1326,13 @@ export class ClipboardManager {
         }, 5000);
     }
 
-    private closePeerTransport(): void {
+    private closePeerTransport(clearKeys = true): void {
+        this.rtcGeneration += 1;
+        if (this.rtcRetryTimer) {
+            clearTimeout(this.rtcRetryTimer);
+            this.rtcRetryTimer = null;
+        }
+        this.pendingIceCandidates = [];
         this.dataChannelForceConnected = false;
         if (this.dataChannel) {
             this.dataChannel.close();
@@ -1345,8 +1342,10 @@ export class ClipboardManager {
             this.peerConnection.close();
             this.peerConnection = null;
         }
-        this.remotePublicKey = null;
-        this.sharedKey = null;
+        if (clearKeys) {
+            this.remotePublicKey = null;
+            this.sharedKey = null;
+        }
         this.markPendingTextMessagesUnconfirmed();
         clipboardState.update(state => ({
             ...state,
@@ -1836,6 +1835,8 @@ export class ClipboardManager {
         switch (message.type) {
             case 'session_created':
                 this.pendingPersonalSessionRequest = null;
+                this.reconnectAttempts = 0;
+                this.reconnectDelay = 1000;
                 this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
                 clipboardState.update(state => ({
                     ...state,
@@ -1853,6 +1854,8 @@ export class ClipboardManager {
                 break;
 
             case 'session_reconnected':
+                this.reconnectAttempts = 0;
+                this.reconnectDelay = 1000;
                 this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
                 clipboardState.update(state => ({
                     ...state,
@@ -1873,6 +1876,8 @@ export class ClipboardManager {
             case 'session_joined':
                 console.log('Session joined successfully, setting up WebRTC...');
                 this.pendingPersonalSessionRequest = null;
+                this.reconnectAttempts = 0;
+                this.reconnectDelay = 1000;
                 this.closePeerTransport();
                 await this.importRemotePublicKey(message.publicKey);
                 await this.deriveSharedKey();
@@ -1920,32 +1925,25 @@ export class ClipboardManager {
 
             case 'waiting_for_creator':
                 console.log('Waiting for creator to reconnect...');
+                this.closePeerTransport();
                 clipboardState.update(state => ({
                     ...state,
                     isJoining: false,
                     waitingForCreator: true,
-                    errorMessage: message.message || '等待创建者重新连接',
+                    errorMessage: t.get('clipboard.messages.waiting_creator_reconnect'),
                     showError: true
                 }));
                 break;
 
             case 'peer_disconnected':
                 console.log('Peer disconnected');
+                this.closePeerTransport();
                 clipboardState.update(state => ({
                     ...state,
                     peerConnected: false,
-                    errorMessage: '对端已断开连接',
+                    errorMessage: t.get('clipboard.messages.peer_disconnected'),
                     showError: true
                 }));
-                // 清理 WebRTC 连接但保持 WebSocket 连接
-                if (this.peerConnection) {
-                    this.peerConnection.close();
-                    this.peerConnection = null;
-                }
-                if (this.dataChannel) {
-                    this.dataChannel.close();
-                    this.dataChannel = null;
-                }
                 break;
 
             case 'creator_reconnected':
@@ -2151,8 +2149,10 @@ export class ClipboardManager {
         }
     }    // WebRTC setup and handlers
     private async setupWebRTC(isInitiator: boolean): Promise<void> {
+        let failedPeerConnection: RTCPeerConnection | null = null;
+        const generation = ++this.rtcGeneration;
         try {
-            this.peerConnection = new RTCPeerConnection({
+            const peerConnection = new RTCPeerConnection({
                 iceServers: [
                     // Google (全球通用，国内部分可用)
                     { urls: 'stun:stun.l.google.com:19302' },
@@ -2170,16 +2170,19 @@ export class ClipboardManager {
                 iceCandidatePoolSize: 10,
                 iceTransportPolicy: 'all' // 明确允许所有传输方式，包括局域网
             });
+            failedPeerConnection = peerConnection;
+            this.peerConnection = peerConnection;
 
             // Update state with peer connection
             clipboardState.update(state => ({
                 ...state,
-                peerConnection: this.peerConnection
+                peerConnection
             }));
 
             // 添加ICE连接状态监听
-            this.peerConnection.oniceconnectionstatechange = () => {
-                const iceState = this.peerConnection?.iceConnectionState;
+            peerConnection.oniceconnectionstatechange = () => {
+                if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
+                const iceState = peerConnection.iceConnectionState;
                 console.log('🧊 ICE connection state changed:', iceState);
 
                 // 文件选择期间忽略ICE状态变化（本端或对端任一方在选择文件）
@@ -2198,16 +2201,18 @@ export class ClipboardManager {
                 }
             };
 
-            this.peerConnection.onicecandidate = (event) => {
-                if (event.candidate && this.ws) {
+            peerConnection.onicecandidate = (event) => {
+                if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
+                if (event.candidate && this.ws?.readyState === WebSocket.OPEN) {
                     console.log('📡 Sending ICE candidate:', event.candidate.type);
                     this.ws.send(JSON.stringify({
                         type: 'ice_candidate',
                         candidate: event.candidate
                     }));
                 }
-            }; this.peerConnection.onconnectionstatechange = () => {
-                const state = this.peerConnection?.connectionState;
+            }; peerConnection.onconnectionstatechange = () => {
+                if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
+                const state = peerConnection.connectionState;
                 console.log('🔗 Peer connection state changed:', state);
 
                 // 文件选择期间忽略连接状态变化（本端或对端任一方在选择文件）
@@ -2226,10 +2231,14 @@ export class ClipboardManager {
 
                 if (state === 'connected') {
                     console.log('🎉 Peer connected!');
-                    clipboardState.update(state => ({ ...state, peerConnected: true }));
+                    clipboardState.update(current => ({
+                        ...current,
+                        peerConnected: this.dataChannel?.readyState === 'open',
+                    }));
 
                     // Check for LAN connection
-                    this.peerConnection?.getStats().then(stats => {
+                    peerConnection.getStats().then(stats => {
+                        if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
                         stats.forEach(report => {
                             if (report.type === 'candidate-pair' && report.state === 'succeeded') {
                                 const localCandidate = stats.get(report.localCandidateId);
@@ -2260,8 +2269,12 @@ export class ClipboardManager {
                     // 移动端额外确认连接状态
                     if (isMobile) {
                         setTimeout(() => {
+                            if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
                             console.log('📱 Mobile peer connection confirmation');
-                            clipboardState.update(state => ({ ...state, peerConnected: true }));
+                            clipboardState.update(current => ({
+                                ...current,
+                                peerConnected: this.dataChannel?.readyState === 'open',
+                            }));
                         }, 150);
                     }
                 } else if (state === 'failed') {
@@ -2275,7 +2288,11 @@ export class ClipboardManager {
                     // 移动端使用更短的重试间隔
                     const retryDelay = isMobile ? 1000 : 2000;
                     setTimeout(() => {
-                        if (this.peerConnection?.connectionState === 'failed') {
+                        if (
+                            this.peerConnection === peerConnection
+                            && this.rtcGeneration === generation
+                            && peerConnection.connectionState === 'failed'
+                        ) {
                             console.log(`🔄 Attempting to restart peer connection (${isMobile ? 'mobile' : 'desktop'})...`);
                             this.restartWebRTC();
                         }
@@ -2292,7 +2309,11 @@ export class ClipboardManager {
                     // 移动端快速恢复尝试
                     if (isMobile) {
                         setTimeout(() => {
-                            if (this.peerConnection?.connectionState === 'disconnected') {
+                            if (
+                                this.peerConnection === peerConnection
+                                && this.rtcGeneration === generation
+                                && peerConnection.connectionState === 'disconnected'
+                            ) {
                                 console.log('📱 Mobile reconnection attempt...');
                                 this.restartWebRTC();
                             }
@@ -2301,27 +2322,28 @@ export class ClipboardManager {
 
                 }
             }; if (isInitiator) {
-                this.dataChannel = this.peerConnection.createDataChannel('files', {
+                this.dataChannel = peerConnection.createDataChannel('files', {
                     ordered: true,
-                    maxPacketLifeTime: 4000 // 允许最长 4 秒重传窗口
                 });
                 this.setupDataChannel();
 
                 // 为移动端增加延迟，确保ICE candidates收集完成
                 await new Promise(resolve => setTimeout(resolve, 500));
+                if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
 
-                const offer = await this.peerConnection.createOffer();
-                await this.peerConnection.setLocalDescription(offer);
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
 
                 console.log('📤 Sending offer to peer...');
-                if (this.ws) {
+                if (this.ws?.readyState === WebSocket.OPEN) {
                     this.ws.send(JSON.stringify({
                         type: 'offer',
                         offer
                     }));
                 }
             } else {
-                this.peerConnection.ondatachannel = (event) => {
+                peerConnection.ondatachannel = (event) => {
+                    if (this.peerConnection !== peerConnection || this.rtcGeneration !== generation) return;
                     console.log('📥 Data channel received');
                     this.dataChannel = event.channel;
                     this.setupDataChannel();
@@ -2329,10 +2351,14 @@ export class ClipboardManager {
             }
         } catch (error) {
             console.error('Error setting up WebRTC:', error);
-            // 添加错误恢复
-            setTimeout(() => {
+            if (this.peerConnection !== failedPeerConnection || this.rtcGeneration !== generation) return;
+            this.closePeerTransport(false);
+            const retryGeneration = this.rtcGeneration;
+            this.rtcRetryTimer = setTimeout(() => {
+                this.rtcRetryTimer = null;
+                if (this.rtcGeneration !== retryGeneration || !this.sharedKey) return;
                 console.log('🔄 Retrying WebRTC setup...');
-                this.setupWebRTC(isInitiator);
+                void this.setupWebRTC(isInitiator);
             }, 3000);
         }
     }
@@ -2354,15 +2380,8 @@ export class ClipboardManager {
         try {
             console.log('🔄 Restarting WebRTC connection...');
 
-            // 清理现有连接
-            if (this.dataChannel) {
-                this.dataChannel.close();
-                this.dataChannel = null;
-            }
-            if (this.peerConnection) {
-                this.peerConnection.close();
-                this.peerConnection = null;
-            }
+            if (!this.sharedKey) return;
+            this.closePeerTransport(false);
 
             // 获取当前状态以确定是否为发起者
             let currentState: any = {};
@@ -2396,6 +2415,17 @@ export class ClipboardManager {
 
         channel.onopen = () => {
             if (this.dataChannel !== channel) return;
+            if (!this.sharedKey) {
+                console.error('Data channel opened before encryption key was ready');
+                channel.close();
+                clipboardState.update(state => ({
+                    ...state,
+                    peerConnected: false,
+                    errorMessage: t.get('clipboard.messages.connection_error'),
+                    showError: true,
+                }));
+                return;
+            }
             console.log('🎉 Data channel opened!');
             console.log('📊 Data channel state:', channel.readyState);
 
@@ -2479,11 +2509,13 @@ export class ClipboardManager {
     private async handleOffer(offer: RTCSessionDescriptionInit): Promise<void> {
         try {
             if (this.peerConnection) {
-                await this.peerConnection.setRemoteDescription(offer);
-                const answer = await this.peerConnection.createAnswer();
-                await this.peerConnection.setLocalDescription(answer);
+                const peerConnection = this.peerConnection;
+                await peerConnection.setRemoteDescription(offer);
+                await this.flushPendingIceCandidates(peerConnection);
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
 
-                if (this.ws) {
+                if (this.peerConnection === peerConnection && this.ws?.readyState === WebSocket.OPEN) {
                     this.ws.send(JSON.stringify({
                         type: 'answer',
                         answer
@@ -2498,7 +2530,9 @@ export class ClipboardManager {
     private async handleAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
         try {
             if (this.peerConnection) {
-                await this.peerConnection.setRemoteDescription(answer);
+                const peerConnection = this.peerConnection;
+                await peerConnection.setRemoteDescription(answer);
+                await this.flushPendingIceCandidates(peerConnection);
             }
         } catch (error) {
             console.error('Error handling answer:', error);
@@ -2507,13 +2541,34 @@ export class ClipboardManager {
 
     private async handleIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
         try {
-            if (this.peerConnection) {
-                await this.peerConnection.addIceCandidate(candidate);
+            const peerConnection = this.peerConnection;
+            if (!peerConnection) return;
+            if (!peerConnection.remoteDescription) {
+                if (this.pendingIceCandidates.length < 128) {
+                    this.pendingIceCandidates.push(candidate);
+                }
+                return;
             }
+            await peerConnection.addIceCandidate(candidate);
         } catch (error) {
             console.error('Error handling ICE candidate:', error);
         }
-    } private async handleDataChannelMessage(data: any): Promise<void> {
+    }
+
+    private async flushPendingIceCandidates(peerConnection: RTCPeerConnection): Promise<void> {
+        if (this.peerConnection !== peerConnection || !peerConnection.remoteDescription) return;
+        const candidates = this.pendingIceCandidates.splice(0);
+        for (const candidate of candidates) {
+            if (this.peerConnection !== peerConnection) return;
+            try {
+                await peerConnection.addIceCandidate(candidate);
+            } catch (error) {
+                console.warn('Failed to apply queued ICE candidate:', error);
+            }
+        }
+    }
+
+    private async handleDataChannelMessage(data: any): Promise<void> {
         // 检查是否为二进制数据
         if (data instanceof ArrayBuffer) {
             await this.handleBinaryMessage(data);

@@ -595,7 +595,7 @@ export const setupSignalingServer = (httpServer) => {
     );
 
     // Clean up expired clipboard sessions.
-    setInterval(() => {
+    const clipboardCleanupInterval = setInterval(() => {
         const now = Date.now();
         for (const [sessionId, session] of clipboardSessions.entries()) {
             const isExpired = now - session.createdAt > CLIPBOARD_SESSION_TTL_MS;
@@ -607,6 +607,8 @@ export const setupSignalingServer = (httpServer) => {
             }
         }
     }, 5 * 60 * 1000);
+    clipboardCleanupInterval.unref?.();
+    wss.once("close", () => clearInterval(clipboardCleanupInterval));
 
     wss.on("connection", (ws, req) => {
         const connectionId = Math.random().toString(36).slice(2, 10);
@@ -938,11 +940,11 @@ export const setupSignalingServer = (httpServer) => {
                     return;
                 }
 
-                if (
-                    isClipboardPeerOnline(personalSession.creator, now) &&
-                    personalSession.creator?.deviceId !== ticket.deviceId
-                ) {
-                    if (message?.forceReplace !== true) {
+                if (personalSession.creator && personalSession.creator.ws !== socket) {
+                    const creatorOnline = isClipboardPeerOnline(personalSession.creator, now);
+                    const isDifferentDevice =
+                        personalSession.creator?.deviceId !== ticket.deviceId;
+                    if (creatorOnline && isDifferentDevice && message?.forceReplace !== true) {
                         sendClipboardError(
                             socket,
                             "SESSION_FULL_ONLINE",
@@ -1002,6 +1004,9 @@ export const setupSignalingServer = (httpServer) => {
                     sessionId = message.existingSessionId;
                     sessionType = "random";
                     userRole = "creator";
+                    if (existingSession.creator?.ws !== socket) {
+                        closeReplacedClipboardPeer(existingSession.creator);
+                    }
                     existingSession.creator = buildPeer({
                         socket,
                         publicKey: message.publicKey,
@@ -1121,19 +1126,20 @@ export const setupSignalingServer = (httpServer) => {
                 }
             }
 
-            const joinerOnline = isClipboardPeerOnline(session.joiner, now);
-            if (joinerOnline) {
-                if (!isPersonal) {
+            const existingJoiner = session.joiner;
+            const joinerOnline = isClipboardPeerOnline(existingJoiner, now);
+            if (existingJoiner && existingJoiner.ws !== socket) {
+                if (joinerOnline && !isPersonal) {
                     sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session is full");
                     return;
                 }
 
-                if (
-                    session.joiner?.deviceId &&
-                    message?.deviceId &&
-                    session.joiner.deviceId !== message.deviceId
-                ) {
-                    if (message?.forceReplace !== true) {
+                if (joinerOnline && isPersonal) {
+                    const isDifferentDevice =
+                        existingJoiner.deviceId &&
+                        message?.deviceId &&
+                        existingJoiner.deviceId !== message.deviceId;
+                    if (isDifferentDevice && message?.forceReplace !== true) {
                         sendClipboardError(
                             socket,
                             "SESSION_FULL_ONLINE",
@@ -1142,10 +1148,10 @@ export const setupSignalingServer = (httpServer) => {
                         );
                         return;
                     }
-
-                    closeReplacedClipboardPeer(session.joiner);
-                    session.joiner = null;
                 }
+
+                closeReplacedClipboardPeer(existingJoiner);
+                session.joiner = null;
             }
 
             sessionId = targetSessionId;

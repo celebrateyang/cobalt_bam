@@ -125,9 +125,10 @@
     
     // Clipboard manager instance
     let clipboardManager: ClipboardManager;
+    let unsubscribeClipboardState: (() => void) | null = null;
 
-    $: if (clipboardManager) {
-        clipboardState.subscribe(state => {
+    $: if (clipboardManager && !unsubscribeClipboardState) {
+        unsubscribeClipboardState = clipboardState.subscribe(state => {
             sessionId = state.sessionId;
             isConnected = state.isConnected;
             isCreating = state.isCreating;
@@ -407,6 +408,8 @@
     onDestroy(() => {
         clearInitialHeaderCollapseTimer();
         detachViewportListener?.();
+        unsubscribeClipboardState?.();
+        unsubscribeClipboardState = null;
         clipboardManager?.dispose();
     });
 </script>

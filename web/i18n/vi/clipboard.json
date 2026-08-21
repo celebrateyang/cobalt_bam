@@ -65,6 +65,11 @@
     "receiving": "Đang nhận",
     "received_files": "File Đã Nhận",
     "disconnect": "Ngắt kết nối",
+    "replace_old_device": "Ngắt kết nối cũ và tiếp tục",
+    "replace_device_confirm": "Ngắt thiết bị cũ và tiếp tục trên thiết bị này?",
+    "release_peer_slot": "Cho phép thiết bị khác",
+    "releasing_peer_slot": "Đang giải phóng...",
+    "release_peer_confirm": "Ngắt thiết bị đang kết nối và giải phóng vị trí?",
     "collapse_header": "Ẩn phần giới thiệu",
     "expand_header": "Hiện phần giới thiệu",
     "file_transfer": {
@@ -128,7 +133,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "Không thể thay kết nối cũ. Hãy kết nối lại và thử lần nữa.",
+        "peer_slot_released": "Đã xóa thiết bị đang kết nối. Thiết bị khác có thể tham gia.",
+        "session_replaced": "Thiết bị này đã bị ngắt vì thiết bị khác đã thay thế vị trí.",
+        "peer_remove_forbidden": "Chỉ người tạo phiên mới có thể giải phóng thiết bị đang kết nối.",
+        "release_peer_failed": "Máy chủ chưa xác nhận giải phóng kết nối. Hãy cập nhật backend rồi thử lại."
     },
     "error": {
         "session_not_found": "Không tìm thấy phiên hoặc đã hết hạn",

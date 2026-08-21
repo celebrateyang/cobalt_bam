@@ -65,6 +65,11 @@
     "receiving": "Recibiendo",
     "received_files": "Archivos Recibidos",
     "disconnect": "Desconectar",
+    "replace_old_device": "Desconectar el dispositivo anterior y continuar",
+    "replace_device_confirm": "¿Desconectar el dispositivo anterior y continuar aquí?",
+    "release_peer_slot": "Permitir otro dispositivo",
+    "releasing_peer_slot": "Liberando...",
+    "release_peer_confirm": "¿Desconectar el dispositivo actual y liberar su lugar?",
     "collapse_header": "Ocultar introducción",
     "expand_header": "Mostrar introducción",
     "file_transfer": {
@@ -129,7 +134,12 @@
         "personal_ws_ticket_invalid": "La autorización de la sesión personal caducó. Inténtalo de nuevo.",
         "personal_session_forbidden": "Solo se puede acceder a esta sesión personal con la misma cuenta.",
         "open_personal_failed": "No se pudo abrir la sesión personal. Inténtalo de nuevo.",
-        "join_personal_failed": "No se pudo acceder a la sesión personal. Inténtalo de nuevo."
+        "join_personal_failed": "No se pudo acceder a la sesión personal. Inténtalo de nuevo.",
+        "replace_session_failed": "No se pudo sustituir la conexión anterior. Vuelve a conectarte.",
+        "peer_slot_released": "Se eliminó el dispositivo conectado. Ya puede unirse otro dispositivo.",
+        "session_replaced": "Este dispositivo se desconectó porque otro ocupó su lugar.",
+        "peer_remove_forbidden": "Solo quien creó la sesión puede liberar el dispositivo conectado.",
+        "release_peer_failed": "El servidor no confirmó la liberación. Actualiza el backend e inténtalo de nuevo."
     },
     "entry": {
         "personal_transfer": "Transferir entre mis dispositivos",

@@ -78,6 +78,11 @@
     "receiving": "接收中",
     "received_files": "已接收文件",
     "disconnect": "断开连接",
+    "replace_old_device": "清空旧连接并继续",
+    "replace_device_confirm": "确定断开占用名额的旧设备，并在此设备继续吗？",
+    "release_peer_slot": "允许其他设备加入",
+    "releasing_peer_slot": "正在释放...",
+    "release_peer_confirm": "确定断开当前对端设备并释放名额吗？",
     "collapse_header": "收起说明",
     "expand_header": "展开说明",
     "file_transfer": {
@@ -141,7 +146,12 @@
         "personal_ws_ticket_invalid": "固定会话授权已过期，请重试。",
         "personal_session_forbidden": "该固定会话仅允许同一账号加入。",
         "open_personal_failed": "打开固定会话失败，请稍后重试。",
-        "join_personal_failed": "加入固定会话失败，请稍后重试。"
+        "join_personal_failed": "加入固定会话失败，请稍后重试。",
+        "replace_session_failed": "无法替换旧连接，请重新连接后重试。",
+        "peer_slot_released": "已移除当前对端设备，现在可以让其他设备加入。",
+        "session_replaced": "另一台设备已接管此名额，本设备已断开连接。",
+        "peer_remove_forbidden": "只有会话创建方可以释放已连接设备。",
+        "release_peer_failed": "未收到服务端的释放确认，请确认后端已更新并重试。"
     },
     "error": {
         "session_not_found": "会话不存在或已过期",

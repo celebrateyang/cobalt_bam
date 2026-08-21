@@ -102,6 +102,9 @@
     
     // Error handling state
     let errorMessage = '';
+    let errorCode = '';
+    let canReplaceSession = false;
+    let isReleasingPeer = false;
     let showError = false;
     let waitingForCreator = false;
     let showLinkCopied = false;
@@ -148,6 +151,9 @@
             dataChannel = state.dataChannel;
             peerConnection = state.peerConnection;
             errorMessage = state.errorMessage;
+            errorCode = state.errorCode;
+            canReplaceSession = state.canReplaceSession;
+            isReleasingPeer = state.isReleasingPeer;
             showError = state.showError;
             waitingForCreator = state.waitingForCreator;
         });
@@ -204,6 +210,16 @@
 
     function handleCleanup() {
         clipboardManager?.cleanup();
+    }
+
+    function handleReplaceOccupiedSession() {
+        if (!window.confirm($t('clipboard.replace_device_confirm'))) return;
+        clipboardManager?.replaceOccupiedPersonalSession();
+    }
+
+    function handleRemoveConnectedPeer() {
+        if (!window.confirm($t('clipboard.release_peer_confirm'))) return;
+        clipboardManager?.removeConnectedPeer();
     }
 
     function handleTabChange(event: CustomEvent<'files' | 'text'>) {
@@ -472,6 +488,11 @@
                     <strong>{waitingForCreator ? '等待中' : errorMessage.includes('成功') ? '成功' : '提示'}</strong>
                     <p>{errorMessage}</p>
                 </div>
+                {#if errorCode === 'SESSION_FULL_ONLINE' && canReplaceSession}
+                    <button class="error-action" type="button" on:click={handleReplaceOccupiedSession}>
+                        {$t('clipboard.replace_old_device')}
+                    </button>
+                {/if}
                 <button class="error-close" on:click={handleClearError} aria-label="关闭">
                     ✕
                 </button>
@@ -532,6 +553,11 @@
                 <!-- Session ID and copy link removed for cleaner UI when connected -->
                 
                 <div class="session-actions">
+                    {#if isCreator && peerConnected}
+                        <button class="btn-secondary release" on:click={handleRemoveConnectedPeer} disabled={isReleasingPeer}>
+                            {isReleasingPeer ? $t('clipboard.releasing_peer_slot') : $t('clipboard.release_peer_slot')}
+                        </button>
+                    {/if}
                     <button class="btn-secondary danger" on:click={handleCleanup}>
                         {$t('clipboard.disconnect')}
                     </button>
@@ -885,6 +911,23 @@
         opacity: 1;
     }
 
+    .error-action {
+        flex-shrink: 0;
+        padding: 0.5rem 0.8rem;
+        color: #b42318;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .error-action:hover {
+        background: #fff;
+        border-color: rgba(239, 68, 68, 0.55);
+    }
+
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -1041,6 +1084,22 @@
     .btn-secondary.danger:hover {
         background: rgba(239, 68, 68, 0.15);
         border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-secondary.release {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.32);
+        color: #b56a08;
+    }
+
+    .btn-secondary.release:hover {
+        background: rgba(245, 158, 11, 0.16);
+        border-color: rgba(245, 158, 11, 0.45);
+    }
+
+    .btn-secondary.release:disabled {
+        cursor: wait;
+        opacity: 0.65;
     }
 
     /* Enhanced card-like sections */

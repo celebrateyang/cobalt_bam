@@ -65,6 +65,11 @@
     "receiving": "Wird empfangen",
     "received_files": "Empfangene Dateien",
     "disconnect": "Verbindung trennen",
+    "replace_old_device": "Alte Verbindung trennen und fortfahren",
+    "replace_device_confirm": "Das alte Gerät von diesem Platz trennen und hier fortfahren?",
+    "release_peer_slot": "Anderes Gerät zulassen",
+    "releasing_peer_slot": "Wird freigegeben...",
+    "release_peer_confirm": "Das aktuell verbundene Gerät trennen und den Platz freigeben?",
     "collapse_header": "Intro ausblenden",
     "expand_header": "Intro einblenden",
     "file_transfer": {
@@ -96,6 +101,11 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "Die alte Verbindung konnte nicht ersetzt werden. Bitte erneut verbinden.",
+        "peer_slot_released": "Das verbundene Gerät wurde entfernt. Ein anderes Gerät kann jetzt beitreten.",
+        "session_replaced": "Dieses Gerät wurde getrennt, weil ein anderes Gerät seinen Platz übernommen hat.",
+        "peer_remove_forbidden": "Nur der Sitzungsersteller kann das verbundene Gerät entfernen.",
+        "release_peer_failed": "Der Server hat die Freigabe nicht bestätigt. Bitte aktualisiere das Backend und versuche es erneut."
     }
 }

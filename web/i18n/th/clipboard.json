@@ -65,6 +65,11 @@
     "receiving": "กำลังรับ",
     "received_files": "ไฟล์ที่ได้รับ",
     "disconnect": "ตัดการเชื่อมต่อ",
+    "replace_old_device": "ตัดการเชื่อมต่อเดิมแล้วดำเนินการต่อ",
+    "replace_device_confirm": "ตัดการเชื่อมต่ออุปกรณ์เดิมและดำเนินการต่อที่นี่หรือไม่?",
+    "release_peer_slot": "อนุญาตอุปกรณ์อื่น",
+    "releasing_peer_slot": "กำลังปล่อยการเชื่อมต่อ...",
+    "release_peer_confirm": "ตัดการเชื่อมต่ออุปกรณ์ปัจจุบันและคืนช่องว่างหรือไม่?",
     "collapse_header": "ซ่อนคำแนะนำ",
     "expand_header": "แสดงคำแนะนำ",
     "file_transfer": {
@@ -128,7 +133,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "ไม่สามารถแทนที่การเชื่อมต่อเดิมได้ โปรดเชื่อมต่อใหม่",
+        "peer_slot_released": "นำอุปกรณ์ที่เชื่อมต่อออกแล้ว อุปกรณ์อื่นสามารถเข้าร่วมได้",
+        "session_replaced": "อุปกรณ์นี้ถูกตัดการเชื่อมต่อเนื่องจากอุปกรณ์อื่นเข้ามาแทนที่",
+        "peer_remove_forbidden": "เฉพาะผู้สร้างเซสชันเท่านั้นที่ปล่อยอุปกรณ์ที่เชื่อมต่อได้",
+        "release_peer_failed": "เซิร์ฟเวอร์ไม่ยืนยันการปล่อยการเชื่อมต่อ โปรดอัปเดตแบ็กเอนด์แล้วลองอีกครั้ง"
     },
     "error": {
         "session_not_found": "ไม่พบเซสชันหรือหมดอายุ",

@@ -65,6 +65,11 @@
     "receiving": "수신 중",
     "received_files": "수신된 파일",
     "disconnect": "연결 해제",
+    "replace_old_device": "이전 연결 해제 후 계속",
+    "replace_device_confirm": "이전 기기의 연결을 해제하고 이 기기에서 계속할까요?",
+    "release_peer_slot": "다른 기기 허용",
+    "releasing_peer_slot": "연결 해제 중...",
+    "release_peer_confirm": "현재 연결된 기기의 연결을 해제하고 자리를 비울까요?",
     "collapse_header": "소개 숨기기",
     "expand_header": "소개 보기",
     "file_transfer": {
@@ -132,7 +137,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "이전 연결을 교체하지 못했습니다. 다시 연결해 주세요.",
+        "peer_slot_released": "연결된 기기를 제거했습니다. 이제 다른 기기가 참여할 수 있습니다.",
+        "session_replaced": "다른 기기가 이 자리를 사용하여 현재 기기의 연결이 해제되었습니다.",
+        "peer_remove_forbidden": "세션 생성자만 연결된 기기를 해제할 수 있습니다.",
+        "release_peer_failed": "서버에서 해제 확인을 받지 못했습니다. 백엔드를 업데이트한 뒤 다시 시도하세요."
     },
     "entry": {
         "personal_transfer": "Transfer Between My Devices",

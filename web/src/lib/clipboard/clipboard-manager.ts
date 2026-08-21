@@ -85,6 +85,9 @@ export const clipboardState = writable({
     dataChannel: null as RTCDataChannel | null,
     peerConnection: null as RTCPeerConnection | null,
     errorMessage: '' as string,
+    errorCode: '' as string,
+    canReplaceSession: false as boolean,
+    isReleasingPeer: false as boolean,
     showError: false as boolean,
     waitingForCreator: false as boolean
 });
@@ -123,6 +126,10 @@ export class ClipboardManager {
     private currentDeviceId: string | null = null;
     private clientId = '';
     private pendingTextAcks = new Map<string, ReturnType<typeof setTimeout>>();
+    private pendingPersonalSessionRequest: ({
+        type: 'create_session' | 'join_session';
+    } & Record<string, unknown>) | null = null;
+    private peerReleaseTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() {
         this.clientId = this.getOrCreateClientId();
@@ -134,6 +141,8 @@ export class ClipboardManager {
         clipboardState.update(state => ({
             ...state,
             errorMessage: '',
+            errorCode: '',
+            canReplaceSession: false,
             showError: false
         }));
     }
@@ -355,19 +364,15 @@ export class ClipboardManager {
     private getWebSocketURL(): string {
         if (typeof window === 'undefined') return 'ws://localhost:9000/ws';
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        let host = window.location.host;
-
-        // 生产环境使用API域名进行WebSocket连接
-        if (window.location.hostname === 'freesavevideo.online') {
-            host = 'api.freesavevideo.online';
-        }
-        // 开发环境处理
-        else if (host.includes('localhost') || host.includes('127.0.0.1')) {
-            host = '192.168.1.12:5173';
+        const api = currentApiURL();
+        if (api.startsWith('/')) {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws`;
         }
 
-        const wsUrl = `${protocol}//${host}/ws`;
+        const parsed = new URL(api, window.location.origin);
+        const protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${parsed.host}/ws`;
         console.log('Constructed WebSocket URL:', wsUrl);
         return wsUrl;
     } private async connectWebSocket(): Promise<void> {
@@ -399,6 +404,25 @@ export class ClipboardManager {
                         peerIsSelectingFiles: this.peerIsSelectingFiles,
                         fileSelectDuration: this.fileSelectStartTime ? Date.now() - this.fileSelectStartTime : 0
                     });
+
+                    if (event.code === 4002) {
+                        this.closePeerTransport();
+                        this.clearStoredSession();
+                        this.pendingPersonalSessionRequest = null;
+                        clipboardState.update(state => ({
+                            ...state,
+                            sessionId: '',
+                            isConnected: false,
+                            peerConnected: false,
+                            isCreator: false,
+                            isReleasingPeer: false,
+                            errorMessage: t.get('clipboard.messages.session_replaced'),
+                            errorCode: 'SESSION_REPLACED',
+                            canReplaceSession: false,
+                            showError: true,
+                        }));
+                        return;
+                    }
 
                     // 文件选择期间完全忽略 WebSocket 关闭事件（本端或对端任一方在选择文件）
                     if (this.isSelectingFiles || this.peerIsSelectingFiles) {
@@ -991,7 +1015,11 @@ export class ClipboardManager {
     // Public API methods
     async createSession(): Promise<void> {
         try {
-            clipboardState.update(state => ({ ...state, isCreating: true }));
+            clipboardState.update(state => ({
+                ...state,
+                isCreating: true,
+                sessionType: 'random',
+            }));
             await this.generateKeyPair();
             await this.connectWebSocket();
 
@@ -1013,7 +1041,11 @@ export class ClipboardManager {
 
     async openPersonalSession(): Promise<void> {
         try {
-            clipboardState.update(state => ({ ...state, isCreating: true }));
+            clipboardState.update(state => ({
+                ...state,
+                isCreating: true,
+                sessionType: 'personal',
+            }));
 
             const ticket = await this.requestPersonalSession('open');
             await this.generateKeyPair();
@@ -1023,14 +1055,15 @@ export class ClipboardManager {
             this.currentSessionType = 'personal';
 
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({
+                this.pendingPersonalSessionRequest = {
                     type: 'create_session',
                     sessionType: 'personal',
                     sessionId: ticket.sessionId,
                     wsTicket: ticket.wsTicket,
                     deviceId: this.currentDeviceId,
                     publicKey: publicKeyArray,
-                }));
+                };
+                this.ws.send(JSON.stringify(this.pendingPersonalSessionRequest));
             } else {
                 throw new Error('WebSocket not ready');
             }
@@ -1044,7 +1077,11 @@ export class ClipboardManager {
     async joinSession(joinCode: string): Promise<void> {
         try {
             console.log('Starting join session process...');
-            clipboardState.update(state => ({ ...state, isJoining: true }));
+            clipboardState.update(state => ({
+                ...state,
+                isJoining: true,
+                sessionType: 'random',
+            }));
 
             await this.generateKeyPair();
             await this.connectWebSocket();
@@ -1073,7 +1110,11 @@ export class ClipboardManager {
 
     async joinPersonalSession(): Promise<void> {
         try {
-            clipboardState.update(state => ({ ...state, isJoining: true }));
+            clipboardState.update(state => ({
+                ...state,
+                isJoining: true,
+                sessionType: 'personal',
+            }));
 
             const ticket = await this.requestPersonalSession('join');
             await this.generateKeyPair();
@@ -1083,14 +1124,15 @@ export class ClipboardManager {
             this.currentSessionType = 'personal';
 
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({
+                this.pendingPersonalSessionRequest = {
                     type: 'join_session',
                     sessionType: 'personal',
                     sessionId: ticket.sessionId,
                     wsTicket: ticket.wsTicket,
                     deviceId: this.currentDeviceId,
-                    publicKey: publicKeyArray
-                }));
+                    publicKey: publicKeyArray,
+                };
+                this.ws.send(JSON.stringify(this.pendingPersonalSessionRequest));
             } else {
                 throw new Error('WebSocket not ready');
             }
@@ -1142,6 +1184,10 @@ export class ClipboardManager {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
         }
+        if (this.peerReleaseTimeout) {
+            clearTimeout(this.peerReleaseTimeout);
+            this.peerReleaseTimeout = null;
+        }
         this.isReconnecting = false;
         this.reconnectAttempts = 0;
 
@@ -1190,6 +1236,9 @@ export class ClipboardManager {
             peerConnected: false,
             qrCodeUrl: '',
             errorMessage: '',
+            errorCode: '',
+            canReplaceSession: false,
+            isReleasingPeer: false,
             showError: false,
             waitingForCreator: false,
             files: [], // 清空文件列表
@@ -1221,8 +1270,79 @@ export class ClipboardManager {
                 sessionStorage.removeItem(this.getMessageStorageKey(activeSessionId));
             }
             this.currentSessionType = 'random';
+            this.pendingPersonalSessionRequest = null;
             this.clearStoredSession();
         }
+    }
+
+    replaceOccupiedPersonalSession(): void {
+        if (
+            !this.pendingPersonalSessionRequest
+            || !this.ws
+            || this.ws.readyState !== WebSocket.OPEN
+        ) {
+            this.showError(t.get('clipboard.messages.replace_session_failed'));
+            return;
+        }
+
+        const request = {
+            ...this.pendingPersonalSessionRequest,
+            forceReplace: true,
+        };
+        const isCreating = request.type === 'create_session';
+        clipboardState.update(state => ({
+            ...state,
+            isCreating,
+            isJoining: !isCreating,
+            errorMessage: '',
+            errorCode: '',
+            canReplaceSession: false,
+            showError: false,
+        }));
+        this.ws.send(JSON.stringify(request));
+    }
+
+    removeConnectedPeer(): void {
+        const state = this.getCurrentState();
+        if (!state.isCreator || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.showError(t.get('clipboard.messages.release_peer_failed'));
+            return;
+        }
+
+        if (this.peerReleaseTimeout) clearTimeout(this.peerReleaseTimeout);
+        clipboardState.update(current => ({ ...current, isReleasingPeer: true }));
+        this.ws.send(JSON.stringify({ type: 'remove_peer' }));
+        this.peerReleaseTimeout = setTimeout(() => {
+            this.peerReleaseTimeout = null;
+            if (!this.getCurrentState().isReleasingPeer) return;
+            clipboardState.update(current => ({
+                ...current,
+                isReleasingPeer: false,
+                errorMessage: t.get('clipboard.messages.release_peer_failed'),
+                errorCode: 'PEER_REMOVE_TIMEOUT',
+                showError: true,
+            }));
+        }, 5000);
+    }
+
+    private closePeerTransport(): void {
+        if (this.dataChannel) {
+            this.dataChannel.close();
+            this.dataChannel = null;
+        }
+        if (this.peerConnection) {
+            this.peerConnection.close();
+            this.peerConnection = null;
+        }
+        this.remotePublicKey = null;
+        this.sharedKey = null;
+        this.markPendingTextMessagesUnconfirmed();
+        clipboardState.update(state => ({
+            ...state,
+            peerConnected: false,
+            dataChannel: null,
+            peerConnection: null,
+        }));
     }
 
     dispose(): void {
@@ -1234,6 +1354,8 @@ export class ClipboardManager {
         clipboardState.update(state => ({
             ...state,
             errorMessage: '',
+            errorCode: '',
+            canReplaceSession: false,
             showError: false,
             waitingForCreator: false
         }));
@@ -1702,6 +1824,7 @@ export class ClipboardManager {
 
         switch (message.type) {
             case 'session_created':
+                this.pendingPersonalSessionRequest = null;
                 this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
                 clipboardState.update(state => ({
                     ...state,
@@ -1710,7 +1833,27 @@ export class ClipboardManager {
                     isCreating: false,
                     isCreator: true,
                     errorMessage: '',
+                    errorCode: '',
+                    canReplaceSession: false,
                     showError: false
+                }));
+                await this.generateQRCode(message.sessionId);
+                this.saveSession(message.sessionId, true, this.currentSessionType);
+                break;
+
+            case 'session_reconnected':
+                this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
+                clipboardState.update(state => ({
+                    ...state,
+                    sessionId: message.sessionId,
+                    sessionType: this.currentSessionType,
+                    isCreating: false,
+                    isCreator: true,
+                    peerConnected: false,
+                    errorMessage: '',
+                    errorCode: '',
+                    canReplaceSession: false,
+                    showError: false,
                 }));
                 await this.generateQRCode(message.sessionId);
                 this.saveSession(message.sessionId, true, this.currentSessionType);
@@ -1718,6 +1861,7 @@ export class ClipboardManager {
 
             case 'session_joined':
                 console.log('Session joined successfully, setting up WebRTC...');
+                this.pendingPersonalSessionRequest = null;
                 await this.importRemotePublicKey(message.publicKey);
                 await this.deriveSharedKey();
                 this.currentSessionType = message.sessionType === 'personal' ? 'personal' : this.currentSessionType;
@@ -1733,6 +1877,8 @@ export class ClipboardManager {
                     isJoining: false,
                     waitingForCreator: false,
                     errorMessage: '',
+                    errorCode: '',
+                    canReplaceSession: false,
                     showError: false
                 }));
                 if (joinedSessionId) {
@@ -1742,6 +1888,7 @@ export class ClipboardManager {
                 break;
 
             case 'peer_joined':
+            case 'peer_already_joined':
                 console.log('Peer joined, setting up WebRTC...');
                 await this.importRemotePublicKey(message.publicKey);
                 await this.deriveSharedKey();
@@ -1786,6 +1933,48 @@ export class ClipboardManager {
                     this.dataChannel.close();
                     this.dataChannel = null;
                 }
+                break;
+
+            case 'creator_reconnected':
+                console.log('Creator reconnected, rebuilding WebRTC...');
+                await this.importRemotePublicKey(message.publicKey);
+                await this.deriveSharedKey();
+                await this.setupWebRTC(false);
+                break;
+
+            case 'peer_removed':
+                if (this.peerReleaseTimeout) {
+                    clearTimeout(this.peerReleaseTimeout);
+                    this.peerReleaseTimeout = null;
+                }
+                this.closePeerTransport();
+                clipboardState.update(state => ({
+                    ...state,
+                    peerConnected: false,
+                    isReleasingPeer: false,
+                    errorMessage: t.get('clipboard.messages.peer_slot_released'),
+                    errorCode: '',
+                    canReplaceSession: false,
+                    showError: true,
+                }));
+                break;
+
+            case 'session_replaced':
+                this.closePeerTransport();
+                this.clearStoredSession();
+                this.pendingPersonalSessionRequest = null;
+                clipboardState.update(state => ({
+                    ...state,
+                    sessionId: '',
+                    isConnected: false,
+                    peerConnected: false,
+                    isCreator: false,
+                    isReleasingPeer: false,
+                    errorMessage: t.get('clipboard.messages.session_replaced'),
+                    errorCode: 'SESSION_REPLACED',
+                    canReplaceSession: false,
+                    showError: true,
+                }));
                 break;
 
             case 'offer':
@@ -1897,6 +2086,9 @@ export class ClipboardManager {
                         case 'PERSONAL_SESSION_FORBIDDEN':
                             errorMessage = t.get('clipboard.messages.personal_session_forbidden');
                             break;
+                        case 'PEER_REMOVE_FORBIDDEN':
+                            errorMessage = t.get('clipboard.messages.peer_remove_forbidden');
+                            break;
                         default:
                             break;
                     }
@@ -1915,12 +2107,22 @@ export class ClipboardManager {
                     }
                 }
 
+                if (this.peerReleaseTimeout) {
+                    clearTimeout(this.peerReleaseTimeout);
+                    this.peerReleaseTimeout = null;
+                }
+                if (message.code === 'SESSION_FULL_ONLINE' && this.pendingPersonalSessionRequest) {
+                    this.closePeerTransport();
+                }
                 clipboardState.update(state => ({
                     ...state,
                     isCreating: false,
                     isJoining: false,
                     waitingForCreator: false,
                     errorMessage,
+                    errorCode: typeof message.code === 'string' ? message.code : '',
+                    canReplaceSession: message.canReplace === true,
+                    isReleasingPeer: false,
                     showError: true
                 }));
                 break;
@@ -1936,6 +2138,9 @@ export class ClipboardManager {
     }    // WebRTC setup and handlers
     private async setupWebRTC(isInitiator: boolean): Promise<void> {
         try {
+            if (this.peerConnection || this.dataChannel) {
+                this.closePeerTransport();
+            }
             this.peerConnection = new RTCPeerConnection({
                 iceServers: [
                     // Google (全球通用，国内部分可用)

@@ -65,6 +65,11 @@
     "receiving": "Получение",
     "received_files": "Полученные файлы",
     "disconnect": "Отключиться",
+    "replace_old_device": "Отключить старое устройство и продолжить",
+    "replace_device_confirm": "Отключить старое устройство и продолжить здесь?",
+    "release_peer_slot": "Разрешить другое устройство",
+    "releasing_peer_slot": "Освобождение...",
+    "release_peer_confirm": "Отключить текущее устройство и освободить место?",
     "collapse_header": "Скрыть инфо",
     "expand_header": "Показать инфо",
     "file_transfer": {
@@ -128,7 +133,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "Не удалось заменить старое подключение. Подключитесь снова.",
+        "peer_slot_released": "Подключённое устройство удалено. Теперь может присоединиться другое.",
+        "session_replaced": "Это устройство отключено, потому что его место заняло другое.",
+        "peer_remove_forbidden": "Освободить подключённое устройство может только создатель сеанса.",
+        "release_peer_failed": "Сервер не подтвердил освобождение места. Обновите серверную часть и повторите попытку."
     },
     "error": {
         "session_not_found": "Сессия не найдена или истекла",

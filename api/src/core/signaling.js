@@ -33,6 +33,7 @@ const CLIPBOARD_MESSAGE_TYPES = new Set([
     "answer",
     "ice_candidate",
     "disconnect",
+    "remove_peer",
     "file_selection_start",
     "file_selection_complete",
     "recovery",
@@ -740,6 +741,9 @@ export const setupSignalingServer = (httpServer) => {
                     case "disconnect":
                         handleDisconnect(sessionId, userRole, ws);
                         break;
+                    case "remove_peer":
+                        handleRemoveClipboardPeer(ws, sessionId, userRole);
+                        break;
                     case "keep_alive":
                         sendJson(ws, {
                             type: "keep_alive_ack",
@@ -837,12 +841,36 @@ export const setupSignalingServer = (httpServer) => {
             );
         });
 
-        const sendClipboardError = (socket, code, message) => {
+        const sendClipboardError = (socket, code, message, details = {}) => {
             sendJson(socket, {
                 type: "error",
                 code,
                 message,
+                ...details,
             });
+        };
+
+        const closeReplacedClipboardPeer = (peer) => {
+            if (!peer?.ws) return;
+
+            const replacementNotice = {
+                type: "session_replaced",
+                code: "SESSION_REPLACED",
+                message: "This session slot was released for another device",
+            };
+
+            try {
+                if (!isWsOpen(peer.ws)) return;
+                peer.ws.send(JSON.stringify(replacementNotice), () => {
+                    try {
+                        peer.ws.close(4002, "SESSION_REPLACED");
+                    } catch {
+                        // ignore
+                    }
+                });
+            } catch {
+                // ignore
+            }
         };
 
         const buildPeer = ({
@@ -914,8 +942,18 @@ export const setupSignalingServer = (httpServer) => {
                     isClipboardPeerOnline(personalSession.creator, now) &&
                     personalSession.creator?.deviceId !== ticket.deviceId
                 ) {
-                    sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session has no free online slot");
-                    return;
+                    if (message?.forceReplace !== true) {
+                        sendClipboardError(
+                            socket,
+                            "SESSION_FULL_ONLINE",
+                            "Session has no free online slot",
+                            { canReplace: true },
+                        );
+                        return;
+                    }
+
+                    closeReplacedClipboardPeer(personalSession.creator);
+                    personalSession.creator = null;
                 }
 
                 sessionId = targetSessionId;
@@ -1095,8 +1133,18 @@ export const setupSignalingServer = (httpServer) => {
                     message?.deviceId &&
                     session.joiner.deviceId !== message.deviceId
                 ) {
-                    sendClipboardError(socket, "SESSION_FULL_ONLINE", "Session is full");
-                    return;
+                    if (message?.forceReplace !== true) {
+                        sendClipboardError(
+                            socket,
+                            "SESSION_FULL_ONLINE",
+                            "Session is full",
+                            { canReplace: true },
+                        );
+                        return;
+                    }
+
+                    closeReplacedClipboardPeer(session.joiner);
+                    session.joiner = null;
                 }
             }
 
@@ -1156,6 +1204,29 @@ export const setupSignalingServer = (httpServer) => {
             if (peer && isWsOpen(peer.ws)) {
                 sendJson(peer.ws, message);
             }
+        }
+
+        function handleRemoveClipboardPeer(socket, currentSessionId, currentUserRole) {
+            if (!currentSessionId || currentUserRole !== "creator") {
+                sendClipboardError(
+                    socket,
+                    "PEER_REMOVE_FORBIDDEN",
+                    "Only the session creator can release the connected device",
+                );
+                return;
+            }
+
+            const session = clipboardSessions.get(currentSessionId);
+            if (!session || session.creator?.ws !== socket) {
+                sendClipboardError(socket, "SESSION_NOT_FOUND", "Session does not exist");
+                return;
+            }
+
+            const removedPeer = session.joiner;
+            session.joiner = null;
+            session.updatedAt = Date.now();
+            closeReplacedClipboardPeer(removedPeer);
+            sendJson(socket, { type: "peer_removed" });
         }
 
         function handleDisconnect(currentSessionId, currentUserRole, currentSocket = null) {

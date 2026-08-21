@@ -65,6 +65,11 @@
     "receiving": "受信中",
     "received_files": "受信したファイル",
     "disconnect": "切断",
+    "replace_old_device": "古い接続を解除して続行",
+    "replace_device_confirm": "古いデバイスの接続を解除し、このデバイスで続行しますか？",
+    "release_peer_slot": "別のデバイスを許可",
+    "releasing_peer_slot": "解放中...",
+    "release_peer_confirm": "現在接続中のデバイスを切断して枠を空けますか？",
     "collapse_header": "イントロを非表示",
     "expand_header": "イントロを表示",
     "file_transfer": {
@@ -128,7 +133,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "古い接続を置き換えられませんでした。再接続してお試しください。",
+        "peer_slot_released": "接続中のデバイスを解除しました。別のデバイスが参加できます。",
+        "session_replaced": "別のデバイスがこの枠を使用したため、このデバイスは切断されました。",
+        "peer_remove_forbidden": "接続中のデバイスを解除できるのはセッション作成者だけです。",
+        "release_peer_failed": "サーバーから解放確認を受信できませんでした。バックエンドを更新して再試行してください。"
     },
     "error": {
         "session_not_found": "セッションが見つからないか期限切れです",

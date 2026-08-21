@@ -78,6 +78,11 @@
     "receiving": "Receiving",
     "received_files": "Received Files",
     "disconnect": "Disconnect",
+    "replace_old_device": "Clear old connection and continue",
+    "replace_device_confirm": "Disconnect the old device from this slot and continue here?",
+    "release_peer_slot": "Allow another device",
+    "releasing_peer_slot": "Releasing...",
+    "release_peer_confirm": "Disconnect the currently connected device and free its slot?",
     "collapse_header": "Hide intro",
     "expand_header": "Show intro",
     "file_transfer": {
@@ -141,7 +146,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "Could not replace the old connection. Please reconnect and try again.",
+        "peer_slot_released": "The connected device was removed. Another device can now join.",
+        "session_replaced": "This device was disconnected because another device took its place.",
+        "peer_remove_forbidden": "Only the session creator can release the connected device.",
+        "release_peer_failed": "The server did not confirm the release. Make sure the backend is updated and try again."
     },
     "error": {
         "session_not_found": "Session not found or expired",

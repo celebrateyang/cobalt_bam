@@ -65,6 +65,11 @@
     "receiving": "Réception",
     "received_files": "Fichiers reçus",
     "disconnect": "Déconnecter",
+    "replace_old_device": "Déconnecter l’ancien appareil et continuer",
+    "replace_device_confirm": "Déconnecter l’ancien appareil et continuer ici ?",
+    "release_peer_slot": "Autoriser un autre appareil",
+    "releasing_peer_slot": "Libération...",
+    "release_peer_confirm": "Déconnecter l’appareil actuel et libérer sa place ?",
     "collapse_header": "Masquer l'intro",
     "expand_header": "Afficher l'intro",
     "file_transfer": {
@@ -123,7 +128,12 @@
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",
         "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again."
+        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "replace_session_failed": "Impossible de remplacer l’ancienne connexion. Reconnectez-vous.",
+        "peer_slot_released": "L’appareil connecté a été retiré. Un autre appareil peut maintenant rejoindre.",
+        "session_replaced": "Cet appareil a été déconnecté car un autre a pris sa place.",
+        "peer_remove_forbidden": "Seul le créateur de la session peut libérer l’appareil connecté.",
+        "release_peer_failed": "Le serveur n’a pas confirmé la libération. Mettez le backend à jour puis réessayez."
     },
     "entry": {
         "personal_transfer": "Transfer Between My Devices",

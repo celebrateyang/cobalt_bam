@@ -18,6 +18,15 @@
         }
     },
     {
+        "name": "photo carousel (PolarisPostRootQuery regression)",
+        "url": "https://www.instagram.com/p/DcBsRaHGwaL/",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "picker"
+        }
+    },
+    {
         "name": "reel",
         "url": "https://www.instagram.com/reel/DFQe23tOWKz/",
         "params": {},

@@ -92,6 +92,13 @@ const embedHeaders = {
     "User-Agent": genericUserAgent,
 }
 
+// Instagram retired the legacy xdt_shortcode_media persisted query in June 2026.
+// PolarisPostRootQuery returns the same media in the mobile-api-shaped `items` array.
+const postQuery = {
+    docId: '27128499623469141',
+    friendlyName: 'PolarisPostRootQuery',
+};
+
 const cachedDtsg = {
     value: '',
     expiry: 0
@@ -464,20 +471,23 @@ export default function instagram(obj) {
         const label = cookie ? "graphql cookie" : "graphql anon";
         const variables = {
             shortcode: id,
-            fetch_tagged_user_count: null,
-            hoisted_comment_id: null,
-            hoisted_reply_id: null
+            __relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider: false,
         };
+        const rootMedia = (gql_data) =>
+            gql_data?.xdt_api__v1__media__shortcode__web_info?.items?.[0];
         const hasMedia = (gql_data) => (
+            rootMedia(gql_data) != null
+            ||
             gql_data?.xdt_shortcode_media != null
             || gql_data?.shortcode_media != null
         );
+        const normalizeMedia = (gql_data) => rootMedia(gql_data) || { gql_data };
 
         // Prefer a lightweight GET request; this avoids CSRF/LSD plumbing and is often
         // less likely to be blocked than the full POST form.
         try {
             const getURL = new URL('https://www.instagram.com/graphql/query');
-            getURL.searchParams.set('doc_id', '8845758582119845');
+            getURL.searchParams.set('doc_id', postQuery.docId);
             getURL.searchParams.set('variables', JSON.stringify(variables));
 
             const getReq = await fetchLogged(label, getURL, {
@@ -497,11 +507,12 @@ export default function instagram(obj) {
                 "graphql data",
                 `method=GET`,
                 `has_data=${gql_data ? "yes" : "no"}`,
+                `has_root=${rootMedia(gql_data) ? "yes" : "no"}`,
                 `has_xdt=${gql_data?.xdt_shortcode_media ? "yes" : "no"}`,
                 `has_shortcode=${gql_data?.shortcode_media ? "yes" : "no"}`
             );
 
-            if (hasMedia(gql_data)) return { gql_data };
+            if (hasMedia(gql_data)) return normalizeMedia(gql_data);
             if (!cookie) return { gql_data };
         } catch {}
 
@@ -520,15 +531,15 @@ export default function instagram(obj) {
                 ...headers,
                 ...(combinedCookie ? { cookie: combinedCookie } : {}),
                 'content-type': 'application/x-www-form-urlencoded',
-                'X-FB-Friendly-Name': 'PolarisPostActionLoadPostQueryQuery',
+                'X-FB-Friendly-Name': postQuery.friendlyName,
             },
             body: new URLSearchParams({
                 ...body,
                 fb_api_caller_class: 'RelayModern',
-                fb_api_req_friendly_name: 'PolarisPostActionLoadPostQueryQuery',
+                fb_api_req_friendly_name: postQuery.friendlyName,
                 variables: JSON.stringify(variables),
                 server_timestamps: true,
-                doc_id: '8845758582119845'
+                doc_id: postQuery.docId
             }).toString()
         });
 
@@ -540,11 +551,12 @@ export default function instagram(obj) {
             "graphql data",
             `method=POST`,
             `has_data=${gql_data ? "yes" : "no"}`,
+            `has_root=${rootMedia(gql_data) ? "yes" : "no"}`,
             `has_xdt=${gql_data?.xdt_shortcode_media ? "yes" : "no"}`,
             `has_shortcode=${gql_data?.shortcode_media ? "yes" : "no"}`
         );
 
-        return { gql_data };
+        return normalizeMedia(gql_data);
     }
 
     async function getErrorContext(id) {

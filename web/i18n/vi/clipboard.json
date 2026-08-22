@@ -154,6 +154,17 @@
         "personal_login_upsell": "Muon dung ma khong can quet QR? Hay dang nhap va dung phien ca nhan, thao tac se don gian hon."
     },
     "personal": {
+        "checking": "Đang kiểm tra phiên…",
+        "checking_hint": "Đang kiểm tra trạng thái kết nối của các thiết bị khác.",
+        "action_create": "Bắt đầu phiên cá nhân",
+        "action_join": "Tham gia phiên hiện tại",
+        "action_resume": "Quay lại phiên hiện tại",
+        "action_manage": "Thay thế thiết bị đã kết nối",
+        "status_empty": "Chưa có phiên cá nhân nào được bắt đầu.",
+        "status_other_device": "Một thiết bị khác đang chờ kết nối.",
+        "status_current_device": "Thiết bị này đã có một phiên cá nhân đang hoạt động.",
+        "status_full": "Hai thiết bị đang trực tuyến. Bạn có thể thay thế một thiết bị.",
+        "two_device_limit": "Mỗi phiên cá nhân chỉ hỗ trợ hai thiết bị kết nối cùng lúc.",
         "open": "Mở phiên cá nhân của tôi",
         "join": "Tham gia phiên cá nhân của tôi",
         "opened_title": "Phiên cá nhân của tôi đã sẵn sàng",

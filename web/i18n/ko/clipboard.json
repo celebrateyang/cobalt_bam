@@ -152,6 +152,17 @@
         "personal_login_upsell": "QR 스캔 없이 사용하려면 로그인 후 전용 세션을 사용하세요. 더 간단합니다."
     },
     "personal": {
+        "checking": "세션 확인 중…",
+        "checking_hint": "다른 기기의 연결 상태를 확인하고 있습니다.",
+        "action_create": "전용 세션 시작",
+        "action_join": "현재 세션 참여",
+        "action_resume": "현재 세션으로 돌아가기",
+        "action_manage": "연결된 기기 교체",
+        "status_empty": "아직 전용 세션이 시작되지 않았습니다.",
+        "status_other_device": "다른 기기가 연결을 기다리고 있습니다.",
+        "status_current_device": "이 기기에 활성 전용 세션이 있습니다.",
+        "status_full": "두 기기가 온라인 상태입니다. 한 기기를 교체할 수 있습니다.",
+        "two_device_limit": "각 전용 세션에는 동시에 두 기기만 연결할 수 있습니다.",
         "open": "내 전용 세션 열기",
         "join": "내 전용 세션 참가",
         "opened_title": "내 전용 세션이 준비되었습니다",

@@ -143,6 +143,17 @@
         "personal_login_upsell": "Vous voulez l'utiliser sans scanner de QR ? Connectez-vous et utilisez votre session personnelle, c'est plus simple."
     },
     "personal": {
+        "checking": "Vérification de la session…",
+        "checking_hint": "Vérification de l’état de connexion de vos autres appareils.",
+        "action_create": "Démarrer une session personnelle",
+        "action_join": "Rejoindre la session actuelle",
+        "action_resume": "Revenir à la session actuelle",
+        "action_manage": "Remplacer un appareil connecté",
+        "status_empty": "Aucune session personnelle n’a encore été démarrée.",
+        "status_other_device": "Un autre appareil attend votre connexion.",
+        "status_current_device": "Cet appareil possède déjà une session personnelle active.",
+        "status_full": "Deux appareils sont en ligne. Vous pouvez remplacer l’un d’eux.",
+        "two_device_limit": "Chaque session personnelle accepte seulement deux appareils connectés à la fois.",
         "open": "Ouvrir ma session personnelle",
         "join": "Rejoindre ma session personnelle",
         "opened_title": "Ma session personnelle est prête",

@@ -150,7 +150,7 @@ const getClipboardSessionOnlinePeers = (session, now = Date.now()) => {
     return online;
 };
 
-export const getClipboardPersonalSessionRuntime = (sessionId) => {
+export const getClipboardPersonalSessionRuntime = (sessionId, deviceId = null) => {
     const session = clipboardSessions.get(sessionId);
     if (!session || session.type !== "personal") {
         return {
@@ -158,15 +158,37 @@ export const getClipboardPersonalSessionRuntime = (sessionId) => {
             onlinePeers: 0,
             maxPeers: 2,
             expiresAt: null,
+            currentDeviceConnected: false,
+            currentDeviceRole: null,
+            recommendedAction: "create",
         };
     }
 
-    const onlinePeers = getClipboardSessionOnlinePeers(session);
+    const now = Date.now();
+    const creatorOnline = isClipboardPeerOnline(session.creator, now);
+    const joinerOnline = isClipboardPeerOnline(session.joiner, now);
+    const onlinePeers = Number(creatorOnline) + Number(joinerOnline);
+    const currentDeviceRole = deviceId && creatorOnline && session.creator?.deviceId === deviceId
+        ? "creator"
+        : deviceId && joinerOnline && session.joiner?.deviceId === deviceId
+            ? "joiner"
+            : null;
+    const recommendedAction = currentDeviceRole
+        ? "resume"
+        : !creatorOnline
+            ? "create"
+            : !joinerOnline
+                ? "join"
+                : "manage";
+
     return {
         hasActiveSession: onlinePeers > 0,
         onlinePeers,
         maxPeers: session.maxPeers || 2,
         expiresAt: session.createdAt + CLIPBOARD_SESSION_TTL_MS,
+        currentDeviceConnected: currentDeviceRole !== null,
+        currentDeviceRole,
+        recommendedAction,
     };
 };
 

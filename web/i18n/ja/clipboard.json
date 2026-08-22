@@ -154,6 +154,17 @@
         "personal_login_upsell": "QRスキャンなしで使うには、ログインして専用セッションを使うと、より簡単です。"
     },
     "personal": {
+        "checking": "セッションを確認中…",
+        "checking_hint": "他のデバイスの接続状態を確認しています。",
+        "action_create": "専用セッションを開始",
+        "action_join": "現在のセッションに参加",
+        "action_resume": "現在のセッションに戻る",
+        "action_manage": "接続デバイスを入れ替える",
+        "status_empty": "専用セッションはまだ開始されていません。",
+        "status_other_device": "別のデバイスが接続を待っています。",
+        "status_current_device": "このデバイスには有効な専用セッションがあります。",
+        "status_full": "2台のデバイスがオンラインです。1台を入れ替えられます。",
+        "two_device_limit": "各専用セッションで同時に接続できるデバイスは2台までです。",
         "open": "自分専用セッションを開く",
         "join": "自分専用セッションに参加",
         "opened_title": "自分専用セッションの準備ができました",

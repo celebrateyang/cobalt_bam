@@ -54,12 +54,37 @@ Response `200`:
       "onlinePeers": 1,
       "maxPeers": 2,
       "expiresAt": 1760000000000
-    }
+    },
+    "onlinePeers": 1,
+    "maxPeers": 2,
+    "currentDeviceConnected": false,
+    "currentDeviceRole": null,
+    "recommendedAction": "join"
   }
 }
 ```
 
-### 2) Open Personal Session (idempotent)
+The client may pass `deviceId` as a query parameter. `recommendedAction` is one of
+`create | join | resume | manage`. The response is only a UI hint; the role is
+resolved again when the client requests an entry ticket.
+
+### 2) Enter Personal Session (recommended)
+
+`POST /user/clipboard/personal/enter`
+
+Purpose:
+
+- Provide one entry action for the UI instead of asking the user to choose create or join.
+- Resume the current device's role when it is already connected.
+- Otherwise select the currently available creator or joiner role.
+- Return `manage` when both slots are occupied; the WebSocket attach then uses the
+  existing replacement-confirmation flow.
+
+The request uses the same device payload as `open` and `join`. The response also
+contains `action: create | join`, `recommendedAction`, `currentDeviceConnected`,
+and `currentDeviceRole`.
+
+### 3) Open Personal Session (legacy-compatible)
 
 `POST /user/clipboard/personal/open`
 
@@ -96,7 +121,7 @@ Response `200`:
 }
 ```
 
-### 3) Join Personal Session (one-click on second device)
+### 4) Join Personal Session (legacy-compatible)
 
 `POST /user/clipboard/personal/join`
 
@@ -147,7 +172,7 @@ Error `409` when both peers are online:
 }
 ```
 
-### 4) Reset Personal Code
+### 5) Reset Personal Code
 
 `POST /user/clipboard/personal/reset-code`
 

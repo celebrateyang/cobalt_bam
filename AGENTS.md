@@ -148,3 +148,8 @@
   - stop further edits immediately,
   - restore text before continuing feature changes.
 
+## Build ownership (must-follow)
+- Do not run `pnpm build`, `pnpm run build`, or `pnpm -C web build` for development tasks in this repository.
+- The user runs production builds manually because builds are resource-intensive and often fail in the agent environment.
+- Use targeted checks and tests instead, such as `pnpm -C web check`, API tests, syntax checks, and i18n encoding checks.
+

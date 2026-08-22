@@ -4,8 +4,11 @@ import { currentApiURL } from '$lib/api/api-url';
 import QRCode from 'qrcode';
 import { t } from '$lib/i18n/translations';
 import {
+    enterClipboardPersonalSession,
+    getClipboardPersonalSessionStatus,
     joinClipboardPersonalSession,
     openClipboardPersonalSession,
+    type ClipboardPersonalRecommendedAction,
     type ClipboardPersonalSessionTicket,
 } from '$lib/api/clipboard-personal';
 
@@ -89,7 +92,12 @@ export const clipboardState = writable({
     canReplaceSession: false as boolean,
     isReleasingPeer: false as boolean,
     showError: false as boolean,
-    waitingForCreator: false as boolean
+    waitingForCreator: false as boolean,
+    personalStatusLoading: false as boolean,
+    personalRecommendedAction: 'create' as ClipboardPersonalRecommendedAction,
+    personalOnlinePeers: 0,
+    personalMaxPeers: 2,
+    personalCurrentDeviceConnected: false,
 });
 
 export class ClipboardManager {
@@ -994,7 +1002,7 @@ export class ClipboardManager {
     }
 
     private async requestPersonalSession(
-        action: 'open' | 'join',
+        action: 'open' | 'join' | 'enter',
     ): Promise<ClipboardPersonalSessionTicket> {
         this.currentDeviceId = this.getOrCreateDeviceId();
         const payload = {
@@ -1005,7 +1013,9 @@ export class ClipboardManager {
 
         const response = action === 'open'
             ? await openClipboardPersonalSession(payload)
-            : await joinClipboardPersonalSession(payload);
+            : action === 'join'
+                ? await joinClipboardPersonalSession(payload)
+                : await enterClipboardPersonalSession(payload);
 
         if (response.status !== 'success') {
             const code = response.error.code || 'UNKNOWN_ERROR';
@@ -1018,6 +1028,33 @@ export class ClipboardManager {
         }
 
         return response.data;
+    }
+
+    async loadPersonalSessionStatus(): Promise<void> {
+        this.currentDeviceId = this.getOrCreateDeviceId();
+        clipboardState.update(state => ({ ...state, personalStatusLoading: true }));
+
+        const response = await getClipboardPersonalSessionStatus(this.currentDeviceId);
+        if (response.status !== 'success') {
+            clipboardState.update(state => ({
+                ...state,
+                personalStatusLoading: false,
+                personalRecommendedAction: 'create',
+                personalOnlinePeers: 0,
+                personalMaxPeers: 2,
+                personalCurrentDeviceConnected: false,
+            }));
+            return;
+        }
+
+        clipboardState.update(state => ({
+            ...state,
+            personalStatusLoading: false,
+            personalRecommendedAction: response.data.recommendedAction,
+            personalOnlinePeers: response.data.onlinePeers,
+            personalMaxPeers: response.data.maxPeers,
+            personalCurrentDeviceConnected: response.data.currentDeviceConnected,
+        }));
     }
 
     // Public API methods
@@ -1273,6 +1310,44 @@ export class ClipboardManager {
             this.currentSessionType = 'random';
             this.pendingPersonalSessionRequest = null;
             this.clearStoredSession();
+        }
+    }
+
+    async enterPersonalSession(): Promise<void> {
+        try {
+            clipboardState.update(state => ({
+                ...state,
+                isCreating: true,
+                isJoining: false,
+                sessionType: 'personal',
+            }));
+
+            const ticket = await this.requestPersonalSession('enter');
+            const action = ticket.action === 'join' ? 'join' : 'create';
+            await this.generateKeyPair();
+            await this.connectWebSocket();
+            const publicKeyArray = Array.from(new Uint8Array(await this.exportPublicKey()));
+
+            this.currentSessionType = 'personal';
+            const requestType = action === 'create' ? 'create_session' : 'join_session';
+            this.pendingPersonalSessionRequest = {
+                type: requestType,
+                sessionType: 'personal',
+                sessionId: ticket.sessionId,
+                wsTicket: ticket.wsTicket,
+                deviceId: this.currentDeviceId,
+                publicKey: publicKeyArray,
+            };
+
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify(this.pendingPersonalSessionRequest));
+            } else {
+                throw new Error('WebSocket not ready');
+            }
+        } catch (error) {
+            console.error('Error entering personal session:', error);
+            clipboardState.update(state => ({ ...state, isCreating: false, isJoining: false }));
+            this.showError(t.get('clipboard.messages.open_personal_failed'));
         }
     }
 

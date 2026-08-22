@@ -91,6 +91,17 @@
         "personal_login_upsell": "Ohne QR-Scan nutzen? Melden Sie sich an und verwenden Sie Ihre persoenliche Sitzung, das ist einfacher."
     },
     "personal": {
+        "checking": "Sitzung wird geprüft…",
+        "checking_hint": "Der Verbindungsstatus Ihrer anderen Geräte wird geprüft.",
+        "action_create": "Persönliche Sitzung starten",
+        "action_join": "Aktueller Sitzung beitreten",
+        "action_resume": "Zur aktuellen Sitzung zurückkehren",
+        "action_manage": "Verbundenes Gerät ersetzen",
+        "status_empty": "Es wurde noch keine persönliche Sitzung gestartet.",
+        "status_other_device": "Ein anderes Gerät wartet auf die Verbindung.",
+        "status_current_device": "Dieses Gerät hat bereits eine aktive persönliche Sitzung.",
+        "status_full": "Zwei Geräte sind online. Sie können eines davon ersetzen.",
+        "two_device_limit": "Pro persönlicher Sitzung können nur zwei Geräte gleichzeitig verbunden sein.",
         "open": "Meine persönliche Sitzung öffnen",
         "join": "Meiner persönlichen Sitzung beitreten",
         "opened_title": "Meine persönliche Sitzung ist bereit",

@@ -18,6 +18,17 @@
         "personal_login_upsell": "Want to use it without scanning QR codes? Sign in and use your personal session for a simpler flow."
     },
     "personal": {
+        "checking": "Checking session…",
+        "checking_hint": "Checking the connection status of your other devices.",
+        "action_create": "Start Personal Session",
+        "action_join": "Join Current Session",
+        "action_resume": "Return to Current Session",
+        "action_manage": "Replace a Connected Device",
+        "status_empty": "No personal session has been started yet.",
+        "status_other_device": "Another device is waiting for you to connect.",
+        "status_current_device": "This device already has an active personal session.",
+        "status_full": "Two devices are online. You can replace one of them.",
+        "two_device_limit": "Each personal session supports only two connected devices at a time.",
         "open": "Open My Personal Session",
         "join": "Join My Personal Session",
         "opened_title": "My Personal Session Is Ready",

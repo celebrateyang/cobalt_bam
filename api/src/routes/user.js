@@ -1496,7 +1496,15 @@ if (!isClerkApiConfigured) {
                     auth.userId,
                     profile.codeVersion,
                 );
-                const runtime = getClipboardPersonalSessionRuntime(sessionId);
+                const rawDeviceId = Array.isArray(req.query?.deviceId)
+                    ? req.query.deviceId[0]
+                    : req.query?.deviceId;
+                const deviceId = typeof rawDeviceId === "string"
+                    && rawDeviceId.trim()
+                    && rawDeviceId.trim().length <= 128
+                    ? rawDeviceId.trim()
+                    : null;
+                const runtime = getClipboardPersonalSessionRuntime(sessionId, deviceId);
 
                 return res.json({
                     status: "success",
@@ -1504,6 +1512,11 @@ if (!isClerkApiConfigured) {
                         personalCode: profile.personalCode,
                         codeVersion: profile.codeVersion,
                         hasActiveSession: runtime.hasActiveSession,
+                        onlinePeers: runtime.onlinePeers,
+                        maxPeers: runtime.maxPeers,
+                        currentDeviceConnected: runtime.currentDeviceConnected,
+                        currentDeviceRole: runtime.currentDeviceRole,
+                        recommendedAction: runtime.recommendedAction,
                         activeSession: runtime.hasActiveSession
                             ? {
                                 sessionId,
@@ -1521,6 +1534,78 @@ if (!isClerkApiConfigured) {
                     500,
                     "SERVER_ERROR",
                     "Failed to load personal clipboard session",
+                );
+            }
+        });
+
+        router.post("/clipboard/personal/enter", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                }
+
+                const parsed = parseClipboardDeviceInput(req.body);
+                if (!parsed.ok) {
+                    return jsonError(res, 422, "INVALID_DEVICE", parsed.message);
+                }
+
+                await ensureLocalUserByClerkId(auth.userId);
+                const profile = await getOrCreateClipboardPersonalProfile(auth.userId);
+                if (!profile) {
+                    return jsonError(res, 404, "USER_NOT_FOUND", "User not found");
+                }
+
+                const sessionId = buildClipboardPersonalSessionId(
+                    auth.userId,
+                    profile.codeVersion,
+                );
+                const runtime = getClipboardPersonalSessionRuntime(sessionId, parsed.deviceId);
+                const role = runtime.currentDeviceRole
+                    || (runtime.recommendedAction === "create" ? "creator" : "joiner");
+                const action = role === "creator" ? "create" : "join";
+                const ticket = createClipboardPersonalWsTicket({
+                    clerkUserId: auth.userId,
+                    sessionId,
+                    deviceId: parsed.deviceId,
+                    codeVersion: profile.codeVersion,
+                    action,
+                });
+
+                await touchClipboardPersonalDevice({
+                    clerkUserId: auth.userId,
+                    deviceId: parsed.deviceId,
+                    deviceName: parsed.deviceName,
+                    platform: parsed.platform,
+                    ip: req.ip || null,
+                    userAgent: typeof req.headers?.["user-agent"] === "string"
+                        ? req.headers["user-agent"]
+                        : null,
+                });
+
+                return res.json({
+                    status: "success",
+                    data: {
+                        sessionType: "personal",
+                        sessionId,
+                        codeVersion: profile.codeVersion,
+                        maxPeers: runtime.maxPeers,
+                        onlinePeers: runtime.onlinePeers,
+                        recommendedAction: runtime.recommendedAction,
+                        currentDeviceConnected: runtime.currentDeviceConnected,
+                        currentDeviceRole: runtime.currentDeviceRole,
+                        action,
+                        wsTicket: ticket.token,
+                        wsTicketExpiresAt: ticket.expiresAt,
+                    },
+                });
+            } catch (error) {
+                console.error("POST /user/clipboard/personal/enter error:", error);
+                return jsonError(
+                    res,
+                    500,
+                    "SERVER_ERROR",
+                    "Failed to enter personal clipboard session",
                 );
             }
         });

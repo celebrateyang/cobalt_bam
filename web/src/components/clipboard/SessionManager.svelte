@@ -18,6 +18,11 @@
     export let sessionType: 'random' | 'personal' = 'random';
     export let qrCodeUrl: string;
     export let hasSignedInSession: boolean = false;
+    export let personalStatusLoading: boolean = false;
+    export let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' = 'create';
+    export let personalOnlinePeers: number = 0;
+    export let personalMaxPeers: number = 2;
+    export let personalCurrentDeviceConnected: boolean = false;
     
     // Copy states
     let showSessionIdCopied = false;
@@ -41,12 +46,8 @@
         dispatch('cleanup');
     }
 
-    function handleOpenPersonalSession() {
-        dispatch('openPersonalSession');
-    }
-
-    function handleJoinPersonalSession() {
-        dispatch('joinPersonalSession');
+    function handleEnterPersonalSession() {
+        dispatch('enterPersonalSession');
     }
 
     function toggleRandomDrawer() {
@@ -172,6 +173,18 @@
 
     $: isPersonalSession = sessionType === 'personal';
     $: shouldShowRandomSessionOptions = !hasSignedInSession || showRandomDrawer;
+    $: personalActionLabel = personalStatusLoading
+        ? $t('clipboard.personal.checking')
+        : $t(`clipboard.personal.action_${personalRecommendedAction}`);
+    $: personalStatusHint = personalStatusLoading
+        ? $t('clipboard.personal.checking_hint')
+        : personalCurrentDeviceConnected
+            ? $t('clipboard.personal.status_current_device')
+            : personalRecommendedAction === 'join'
+                ? $t('clipboard.personal.status_other_device')
+                : personalRecommendedAction === 'manage'
+                    ? $t('clipboard.personal.status_full')
+                    : $t('clipboard.personal.status_empty');
 </script>
 
 {#if !isConnected}
@@ -180,21 +193,20 @@
             {#if hasSignedInSession}
                 <div class="setup-option personal-session">
                     <h3>{$t("clipboard.entry.personal_transfer")}</h3>
-                    <p>{$t("clipboard.entry.personal_default_hint")}</p>
+                    <p>{personalStatusHint}</p>
+                    <p class="device-limit-hint">
+                        {$t("clipboard.personal.two_device_limit")}
+                        {#if !personalStatusLoading}
+                            <span>({personalOnlinePeers}/{personalMaxPeers})</span>
+                        {/if}
+                    </p>
                     <div class="personal-actions">
                         <ActionButton
-                            id="open-personal-session"
-                            disabled={isCreating || isJoining}
-                            click={handleOpenPersonalSession}
+                            id="enter-personal-session"
+                            disabled={isCreating || isJoining || personalStatusLoading}
+                            click={handleEnterPersonalSession}
                         >
-                            {$t("clipboard.personal.open")}
-                        </ActionButton>
-                        <ActionButton
-                            id="join-personal-session"
-                            disabled={isCreating || isJoining}
-                            click={handleJoinPersonalSession}
-                        >
-                            {$t("clipboard.personal.join")}
+                            {personalActionLabel}
                         </ActionButton>
                     </div>
                 </div>
@@ -459,6 +471,17 @@
         color: var(--secondary);
         line-height: 1.4;
         font-size: 0.85rem;
+    }
+
+    .setup-option .device-limit-hint {
+        margin-top: -0.45rem;
+        font-size: 0.78rem;
+        color: var(--secondary);
+    }
+
+    .device-limit-hint span {
+        margin-left: 0.3rem;
+        font-variant-numeric: tabular-nums;
     }
 
     .personal-actions {

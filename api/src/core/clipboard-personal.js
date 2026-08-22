@@ -84,7 +84,12 @@ export const verifyClipboardPersonalWsTicket = (token) => {
     const [encodedHeader, encodedPayload, signature] = parts;
     const expected = sign(`${encodedHeader}.${encodedPayload}`);
 
-    if (signature !== expected) {
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expected);
+    if (
+        signatureBuffer.length !== expectedBuffer.length
+        || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
         return { ok: false, reason: "invalid_signature" };
     }
 

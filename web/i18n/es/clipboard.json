@@ -149,6 +149,17 @@
         "personal_login_upsell": "¿Quieres usarlo sin escanear códigos QR? Inicia sesión y usa tu sesión personal para simplificar el proceso."
     },
     "personal": {
+        "checking": "Comprobando sesión…",
+        "checking_hint": "Comprobando el estado de conexión de tus otros dispositivos.",
+        "action_create": "Iniciar sesión personal",
+        "action_join": "Unirse a la sesión actual",
+        "action_resume": "Volver a la sesión actual",
+        "action_manage": "Reemplazar un dispositivo conectado",
+        "status_empty": "Todavía no se ha iniciado ninguna sesión personal.",
+        "status_other_device": "Otro dispositivo está esperando la conexión.",
+        "status_current_device": "Este dispositivo ya tiene una sesión personal activa.",
+        "status_full": "Hay dos dispositivos conectados. Puedes reemplazar uno de ellos.",
+        "two_device_limit": "Cada sesión personal admite solo dos dispositivos conectados a la vez.",
         "open": "Abrir mi sesión personal",
         "join": "Unirme a mi sesión personal",
         "opened_title": "Mi sesión personal está lista",

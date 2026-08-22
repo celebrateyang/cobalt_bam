@@ -8,7 +8,10 @@ import {
     buildClipboardPersonalSessionId,
     createClipboardPersonalWsTicket,
 } from "./clipboard-personal.js";
-import { setupSignalingServer } from "./signaling.js";
+import {
+    getClipboardPersonalSessionRuntime,
+    setupSignalingServer,
+} from "./signaling.js";
 
 const openSocket = async (url) => {
     const socket = new WebSocket(url);
@@ -120,6 +123,18 @@ test("a third personal-session device can replace the occupied joiner", async ()
         }));
         await createdPromise;
 
+        assert.deepEqual(
+            {
+                action: getClipboardPersonalSessionRuntime(sessionId, "creator-device").recommendedAction,
+                role: getClipboardPersonalSessionRuntime(sessionId, "creator-device").currentDeviceRole,
+            },
+            { action: "resume", role: "creator" },
+        );
+        assert.equal(
+            getClipboardPersonalSessionRuntime(sessionId, "new-device").recommendedAction,
+            "join",
+        );
+
         const oldJoiner = await openSocket(harness.url);
         sockets.push(oldJoiner);
         const oldJoinedPromise = nextMessage(oldJoiner, "session_joined");
@@ -133,6 +148,18 @@ test("a third personal-session device can replace the occupied joiner", async ()
             publicKey: [2],
         }));
         await Promise.all([oldJoinedPromise, firstPeerPromise]);
+
+        assert.equal(
+            getClipboardPersonalSessionRuntime(sessionId, "third-device").recommendedAction,
+            "manage",
+        );
+        assert.deepEqual(
+            {
+                action: getClipboardPersonalSessionRuntime(sessionId, "old-device").recommendedAction,
+                role: getClipboardPersonalSessionRuntime(sessionId, "old-device").currentDeviceRole,
+            },
+            { action: "resume", role: "joiner" },
+        );
 
         const replacement = await openSocket(harness.url);
         sockets.push(replacement);

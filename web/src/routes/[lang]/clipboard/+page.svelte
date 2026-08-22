@@ -109,6 +109,11 @@
     let waitingForCreator = false;
     let showLinkCopied = false;
     let hasSignedInSession = false;
+    let personalStatusLoading = false;
+    let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' = 'create';
+    let personalOnlinePeers = 0;
+    let personalMaxPeers = 2;
+    let personalCurrentDeviceConnected = false;
 
     const COMPACT_VIEWPORT_MAX_WIDTH = 768;
     const HEADER_AUTO_COLLAPSE_DELAY_MS = 3000;
@@ -157,6 +162,11 @@
             isReleasingPeer = state.isReleasingPeer;
             showError = state.showError;
             waitingForCreator = state.waitingForCreator;
+            personalStatusLoading = state.personalStatusLoading;
+            personalRecommendedAction = state.personalRecommendedAction;
+            personalOnlinePeers = state.personalOnlinePeers;
+            personalMaxPeers = state.personalMaxPeers;
+            personalCurrentDeviceConnected = state.personalCurrentDeviceConnected;
         });
     }
 
@@ -201,12 +211,8 @@
         }
     }
 
-    function handleOpenPersonalSession() {
-        void clipboardManager?.openPersonalSession();
-    }
-
-    function handleJoinPersonalSession() {
-        void clipboardManager?.joinPersonalSession();
+    function handleEnterPersonalSession() {
+        void clipboardManager?.enterPersonalSession();
     }
 
     function handleCleanup() {
@@ -366,6 +372,9 @@
         
         if (typeof window !== 'undefined') {
             hasSignedInSession = Boolean(await getClerkToken());
+            if (hasSignedInSession) {
+                await clipboardManager.loadPersonalSessionStatus();
+            }
             const viewportQuery = window.matchMedia(`(max-width: ${COMPACT_VIEWPORT_MAX_WIDTH}px)`);
 
             const applyViewportMatch = (matches: boolean) => {
@@ -396,11 +405,7 @@
                 joinCode = sessionParam;
                 await clipboardManager.joinSession(joinCode);
             } else if (modeParam === 'personal' && hasSignedInSession && (autoStartPersonal || autoJoinPersonal)) {
-                if (autoJoinPersonal) {
-                    await clipboardManager.joinPersonalSession();
-                } else {
-                    await clipboardManager.openPersonalSession();
-                }
+                await clipboardManager.enterPersonalSession();
             }
         }
     });
@@ -578,10 +583,14 @@
             {sessionType}
             {qrCodeUrl}
             {hasSignedInSession}
+            {personalStatusLoading}
+            {personalRecommendedAction}
+            {personalOnlinePeers}
+            {personalMaxPeers}
+            {personalCurrentDeviceConnected}
             on:createSession={handleCreateSession}
             on:joinSession={handleJoinSession}
-            on:openPersonalSession={handleOpenPersonalSession}
-            on:joinPersonalSession={handleJoinPersonalSession}
+            on:enterPersonalSession={handleEnterPersonalSession}
             on:cleanup={handleCleanup}
             bind:joinCode
         />

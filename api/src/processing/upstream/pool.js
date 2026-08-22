@@ -130,6 +130,32 @@ const canTryNode = (node, now) => {
     return false;
 };
 
+export const orderUpstreamCandidates = (
+    candidates,
+    { regions, preferredCnURLs = env.upstreamCnURLs } = {},
+) => {
+    if (!Array.isArray(regions) || regions.length !== 1 || regions[0] !== REGION_CN) {
+        return [...candidates];
+    }
+
+    const preferredOrder = new Map(
+        (preferredCnURLs || [])
+            .map(normalizeURL)
+            .filter(Boolean)
+            .map((url, index) => [url, index]),
+    );
+    if (preferredOrder.size === 0) return [...candidates];
+
+    return candidates
+        .map((node, index) => ({
+            node,
+            index,
+            priority: preferredOrder.get(node.url) ?? Number.MAX_SAFE_INTEGER,
+        }))
+        .sort((a, b) => a.priority - b.priority || a.index - b.index)
+        .map(({ node }) => node);
+};
+
 export const selectUpstreamNode = (excluded = new Set(), { regions } = {}) => {
     refreshUpstreamPool();
 
@@ -145,6 +171,16 @@ export const selectUpstreamNode = (excluded = new Set(), { regions } = {}) => {
     );
 
     if (candidates.length === 0) return null;
+
+    const orderedCandidates = orderUpstreamCandidates(candidates, { regions });
+    if (
+        regions?.length === 1 &&
+        regions[0] === REGION_CN &&
+        orderedCandidates[0]?.url &&
+        env.upstreamCnURLs?.length > 0
+    ) {
+        return orderedCandidates[0];
+    }
 
     for (let i = 0; i < state.nodes.length; i++) {
         const idx = (state.cursor + i) % state.nodes.length;

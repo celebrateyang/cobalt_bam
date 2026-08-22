@@ -208,6 +208,12 @@ const logResultStatus = (payload) => {
     return payload.status || payload.error?.code || "?";
 };
 
+export const isStructuredUpstreamError = ({ responseOk, body, requireStatus = true }) =>
+    !responseOk &&
+    requireStatus &&
+    body?.status === "error" &&
+    typeof body?.error?.code === "string";
+
 const cnServiceTokens = new Set([
     "bilibili",
     "cctv",
@@ -438,6 +444,27 @@ export const requestUpstream = async ({
                             reason: `http_${response.status}`,
                             retryAfterSeconds: 5,
                         });
+                        continue;
+                    }
+
+                    // A regional upstream can be healthy while lacking the
+                    // service-specific session needed for this particular
+                    // request. Preserve its structured business error and try
+                    // the next node instead of aborting the whole pool on 4xx.
+                    if (isStructuredUpstreamError({
+                        responseOk: response.ok,
+                        body,
+                        requireStatus,
+                    })) {
+                        lastErrorResult = {
+                            status: response.status,
+                            body,
+                            upstreamOrigin: node.origin,
+                            upstreamUrl: node.url,
+                        };
+                        console.warn(
+                            `[UPSTREAM FAILOVER] service=${service} upstream=${node.origin} region=${node.region} reason=structured_http_error http=${response.status} status=${logResultStatus(body)} elapsed_ms=${elapsedMs}`,
+                        );
                         continue;
                     }
                     return null;

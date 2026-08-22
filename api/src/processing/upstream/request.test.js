@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildUpstreamDownloadBody, resolveRegionPlan } from "./request.js";
+import {
+    buildUpstreamDownloadBody,
+    isStructuredUpstreamError,
+    resolveRegionPlan,
+} from "./request.js";
 
 test("forwards the Bilibili Direct Bridge intent to a regional upstream", () => {
     assert.deepEqual(
@@ -42,5 +46,26 @@ test("routes Tencent Video to the domestic upstream first", () => {
             name: "cn-first",
             groups: [["cn"], ["global"]],
         },
+    );
+});
+
+test("fails over after a structured 4xx business error", () => {
+    assert.equal(
+        isStructuredUpstreamError({
+            responseOk: false,
+            body: {
+                status: "error",
+                error: { code: "error.api.fetch.fail" },
+            },
+        }),
+        true,
+    );
+
+    assert.equal(
+        isStructuredUpstreamError({
+            responseOk: false,
+            body: { message: "unauthorized" },
+        }),
+        false,
     );
 });

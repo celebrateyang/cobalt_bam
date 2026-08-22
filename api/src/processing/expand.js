@@ -19,6 +19,7 @@ const BILIBILI_HEADERS = Object.freeze({
 });
 
 const BILIBILI_UGC_SEASON_PAGE_EXPAND_LIMIT = 30;
+const BILIBILI_UGC_SEASON_EXPAND_LIMIT = 100;
 const BILIBILI_LONG_VIDEO_COLLECTION_LIMIT_SECONDS = 180 * 60;
 const BILIBILI_MEDIA_LIST_EXPAND_LIMIT = 100;
 
@@ -857,12 +858,42 @@ const getBilibiliPlaybackAvailability = async ({ bvid, cid, duration }) => {
     }
 };
 
+const bilibiliCurrentUgcSection = (data) => {
+    const sections = Array.isArray(data?.ugc_season?.sections)
+        ? data.ugc_season.sections
+        : [];
+    const currentBvid = toStringId(data?.bvid);
+    const section = currentBvid
+        ? sections.find((candidate) => (
+            candidate?.episodes?.some((episode) => episode?.bvid === currentBvid)
+        ))
+        : undefined;
+
+    if (section) {
+        return {
+            id: toStringId(section.id),
+            title: section.title,
+            episodes: section.episodes ?? [],
+        };
+    }
+
+    return {
+        episodes: sections.flatMap((candidate) => candidate?.episodes ?? []),
+    };
+};
+
 const bilibiliUgcSeasonFromView = async (data) => {
     const season = data?.ugc_season;
     if (!season?.sections?.length) return;
 
     const seasonId = toStringId(season?.id);
-    const episodes = season.sections.flatMap((section) => section?.episodes ?? []);
+    const currentSection = bilibiliCurrentUgcSection(data);
+    const episodes = currentSection.episodes;
+    // A normal video URL should remain usable even when Bilibili attaches an
+    // exceptionally large UGC season. Expanding it would trigger one playback
+    // availability request per episode and can hit upstream rate limits before
+    // the user can download the video they actually submitted.
+    if (episodes.length > BILIBILI_UGC_SEASON_EXPAND_LIMIT) return;
     const items = episodes
         .map((ep) => {
             // Bilibili can return arc.duration for the entire multi-page video, while the
@@ -912,10 +943,12 @@ const bilibiliUgcSeasonFromView = async (data) => {
     return {
         service: "bilibili",
         kind: "bilibili-ugc-season",
-        collectionKey: seasonId
-            ? buildCollectionKey("bilibili", "ugc-season", seasonId)
+        collectionKey: currentSection.id
+            ? buildCollectionKey("bilibili", "ugc-section", currentSection.id)
+            : seasonId
+                ? buildCollectionKey("bilibili", "ugc-season", seasonId)
             : undefined,
-        title: season.title,
+        title: currentSection.title || season.title,
         items: checkedItems,
     };
 };
@@ -925,8 +958,9 @@ const bilibiliUgcSeasonPagesFromView = async (data) => {
     if (!season?.sections?.length) return;
 
     const seasonId = toStringId(season?.id);
+    const currentSection = bilibiliCurrentUgcSection(data);
     const episodes = uniqBy(
-        season.sections.flatMap((section) => section?.episodes ?? []),
+        currentSection.episodes,
         (ep) => ep?.bvid,
     ).filter((ep) => ep?.bvid);
 
@@ -997,10 +1031,12 @@ const bilibiliUgcSeasonPagesFromView = async (data) => {
     return {
         service: "bilibili",
         kind: "bilibili-ugc-season-pages",
-        collectionKey: seasonId
-            ? buildCollectionKey("bilibili", "ugc-season-pages", seasonId)
+        collectionKey: currentSection.id
+            ? buildCollectionKey("bilibili", "ugc-section-pages", currentSection.id)
+            : seasonId
+                ? buildCollectionKey("bilibili", "ugc-season-pages", seasonId)
             : undefined,
-        title: season.title,
+        title: currentSection.title || season.title,
         items: uniqueItems,
     };
 };

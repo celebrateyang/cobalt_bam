@@ -49,6 +49,14 @@ test("recognizes configured platforms independently from URL patterns", () => {
     assert.equal(identifyService("https://b23.tv/", enabled)?.service, "bilibili");
 });
 
+test("identifies a Bilibili creator collection index explicitly", () => {
+    const result = extract(
+        new URL("https://www.bilibili.com/list/473168952"),
+        new Set(["bilibili"]),
+    );
+    assert.equal(result.error, "bilibili.space.unsupported");
+});
+
 test("exposes explicit platform request metadata on eligible errors", () => {
     const response = createResponse("error", {
         code: "error.api.platform.unsupported",

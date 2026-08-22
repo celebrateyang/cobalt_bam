@@ -402,8 +402,13 @@ export function extract(url, enabledServices = env.enabledServices) {
 
     if (!host) {
         if (
-            url.hostname === "space.bilibili.com" &&
-            /^\/\d+\/lists\/?$/.test(url.pathname)
+            (
+                url.hostname === "space.bilibili.com" &&
+                /^\/\d+\/lists\/?$/.test(url.pathname)
+            ) || (
+                (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
+                /^\/list\/\d+\/?$/.test(url.pathname)
+            )
         ) {
             return {
                 error: "bilibili.space.unsupported",
@@ -469,8 +474,15 @@ export function extract(url, enabledServices = env.enabledServices) {
 
         if (
             host === "bilibili" &&
-            url.hostname === "space.bilibili.com" &&
-            /^\/\d+\/lists\/?$/.test(url.pathname)
+            (
+                (
+                    url.hostname === "space.bilibili.com" &&
+                    /^\/\d+\/lists\/?$/.test(url.pathname)
+                ) || (
+                    (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
+                    /^\/list\/\d+\/?$/.test(url.pathname)
+                )
+            )
         ) {
             return {
                 error: "bilibili.space.unsupported",

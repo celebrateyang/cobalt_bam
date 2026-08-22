@@ -468,6 +468,88 @@ test("a Bilibili video URL expands its collection when every item is within 50 m
     }
 });
 
+test("a video in an exceptionally large Bilibili collection stays single", async () => {
+    const episodes = Array.from({ length: 101 }, (_, index) => ({
+        bvid: index === 0 ? "BV1Current" : `BV1Sibling${index}`,
+        title: `Episode ${index + 1}`,
+        page: { cid: 1000 + index, duration: 120 },
+    }));
+    const view = {
+        code: 0,
+        data: {
+            bvid: "BV1Current",
+            title: "Current video",
+            cid: 1000,
+            duration: 120,
+            pages: [{ page: 1, cid: 1000, duration: 120, part: "Current" }],
+            ugc_season: {
+                id: 999,
+                title: "Huge collection",
+                sections: [{ episodes }],
+            },
+        },
+    };
+
+    const result = await withMockedFetch(
+        view,
+        () => expandURL("https://www.bilibili.com/video/BV1Current"),
+    );
+
+    assert.equal(result.kind, "single");
+    assert.deepEqual(result.items.map((item) => item.url), [
+        "https://www.bilibili.com/video/BV1Current?p=1",
+    ]);
+});
+
+test("a Bilibili video expands only its containing section", async () => {
+    const currentSection = {
+        id: 202,
+        title: "Current chapter",
+        episodes: [
+            { bvid: "BV1Before", title: "Before", page: { cid: 301, duration: 120 } },
+            { bvid: "BV1Current", title: "Current", page: { cid: 302, duration: 120 } },
+            { bvid: "BV1After", title: "After", page: { cid: 303, duration: 120 } },
+        ],
+    };
+    const view = {
+        code: 0,
+        data: {
+            bvid: "BV1Current",
+            title: "Current",
+            cid: 302,
+            duration: 120,
+            pages: [{ page: 1, cid: 302, duration: 120, part: "Current" }],
+            ugc_season: {
+                id: 100,
+                title: "Parent collection",
+                sections: [
+                    {
+                        id: 201,
+                        title: "Other chapter",
+                        episodes: [
+                            { bvid: "BV1Other", title: "Other", page: { cid: 200, duration: 120 } },
+                        ],
+                    },
+                    currentSection,
+                ],
+            },
+        },
+    };
+
+    const result = await withMockedFetch(
+        view,
+        () => expandURL("https://www.bilibili.com/video/BV1Current"),
+    );
+
+    assert.equal(result.kind, "bilibili-ugc-season");
+    assert.equal(result.title, "Current chapter");
+    assert.equal(result.collectionKey, "bilibili:ugc-section:202");
+    assert.deepEqual(result.items.map((item) => item.url), [
+        "https://www.bilibili.com/video/BV1Current",
+        "https://www.bilibili.com/video/BV1After",
+    ]);
+});
+
 test("a Bilibili season starts at the submitted episode and marks preview-only items restricted", async () => {
     const episodes = [
         { bvid: "BV1First", title: "EP1", page: { cid: 301, duration: 600 } },

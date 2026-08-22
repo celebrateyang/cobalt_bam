@@ -65,6 +65,11 @@
     "receiving": "Wird empfangen",
     "received_files": "Empfangene Dateien",
     "disconnect": "Verbindung trennen",
+    "end_session": "Diese Sitzung beenden",
+    "leave_session": "Diese Sitzung verlassen",
+    "leaving_session": "Sitzung wird verlassen…",
+    "end_session_confirm": "Diese Sitzung beenden? Das andere Gerät wird ebenfalls getrennt und laufende Übertragungen werden beendet.",
+    "leave_session_confirm": "Diese Sitzung verlassen? Das startende Gerät wartet weiter auf ein anderes Gerät.",
     "replace_old_device": "Alte Verbindung trennen und fortfahren",
     "replace_device_confirm": "Das alte Gerät von diesem Platz trennen und hier fortfahren?",
     "release_peer_slot": "Anderes Gerät zulassen",
@@ -108,6 +113,8 @@
         "opened_hint": "Melden Sie sich auf Ihrem anderen Gerät mit demselben Konto an und klicken Sie auf \"Meiner persönlichen Sitzung beitreten\", um Dateien und Text zu übertragen."
     },
     "messages": {
+        "peer_left_session": "Das andere Gerät hat die Sitzung verlassen. Ein neues Gerät kann jetzt beitreten.",
+        "session_ended_by_creator": "Das startende Gerät hat diese Sitzung beendet.",
         "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
         "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
         "personal_session_forbidden": "This personal session can only be joined by the same account.",

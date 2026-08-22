@@ -65,6 +65,11 @@
     "receiving": "受信中",
     "received_files": "受信したファイル",
     "disconnect": "切断",
+    "end_session": "このセッションを終了",
+    "leave_session": "このセッションから退出",
+    "leaving_session": "退出中…",
+    "end_session_confirm": "このセッションを終了しますか？もう一方のデバイスも切断され、未完了の転送は停止します。",
+    "leave_session_confirm": "このセッションから退出しますか？開始したデバイスは別のデバイスの参加を待ち続けます。",
     "replace_old_device": "古い接続を解除して続行",
     "replace_device_confirm": "古いデバイスの接続を解除し、このデバイスで続行しますか？",
     "release_peer_slot": "別のデバイスを許可",
@@ -91,6 +96,8 @@
         "remove": "ファイルを削除"
     },
     "messages": {
+        "peer_left_session": "もう一方のデバイスが退出しました。新しいデバイスが参加できます。",
+        "session_ended_by_creator": "開始したデバイスがこのセッションを終了しました。",
         "connection_restored": "接続が完全に復元されました",
         "websocket_connected_partial": "WebSocketが接続されましたが、ファイル転送が利用できない可能性があります。接続を再確立してください",
         "rebuilding_connection": "接続を再構築中...",

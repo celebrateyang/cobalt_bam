@@ -33,6 +33,7 @@ const CLIPBOARD_MESSAGE_TYPES = new Set([
     "answer",
     "ice_candidate",
     "disconnect",
+    "leave_session",
     "remove_peer",
     "file_selection_start",
     "file_selection_complete",
@@ -765,6 +766,9 @@ export const setupSignalingServer = (httpServer) => {
                     case "disconnect":
                         handleDisconnect(sessionId, userRole, ws);
                         break;
+                    case "leave_session":
+                        handleLeaveClipboardSession(ws, sessionId, userRole);
+                        break;
                     case "remove_peer":
                         handleRemoveClipboardPeer(ws, sessionId, userRole);
                         break;
@@ -1261,6 +1265,63 @@ export const setupSignalingServer = (httpServer) => {
             session.updatedAt = Date.now();
             closeReplacedClipboardPeer(removedPeer);
             sendJson(socket, { type: "peer_removed" });
+        }
+
+        function handleLeaveClipboardSession(socket, currentSessionId, currentUserRole) {
+            if (!currentSessionId || !currentUserRole) {
+                sendClipboardError(socket, "SESSION_NOT_JOINED", "Not joined to any session");
+                return;
+            }
+
+            const session = clipboardSessions.get(currentSessionId);
+            const ownPeer = currentUserRole === "creator"
+                ? session?.creator
+                : session?.joiner;
+            if (!session || ownPeer?.ws !== socket) {
+                sendClipboardError(socket, "SESSION_NOT_FOUND", "Session does not exist");
+                return;
+            }
+
+            if (currentUserRole === "creator") {
+                const joinedPeer = session.joiner;
+                clipboardSessions.delete(currentSessionId);
+                sendJson(socket, {
+                    type: "session_left",
+                    role: "creator",
+                    scope: "session",
+                });
+
+                if (joinedPeer && isWsOpen(joinedPeer.ws)) {
+                    sendJson(joinedPeer.ws, {
+                        type: "session_ended",
+                        reason: "creator_left",
+                    });
+                    setTimeout(() => {
+                        try {
+                            joinedPeer.ws.close(4003, "SESSION_ENDED");
+                        } catch {
+                            // ignore
+                        }
+                    }, 25).unref?.();
+                }
+                return;
+            }
+
+            session.joiner = null;
+            session.updatedAt = Date.now();
+            sendJson(socket, {
+                type: "session_left",
+                role: "joiner",
+                scope: "device",
+            });
+            if (session.creator && isWsOpen(session.creator.ws)) {
+                sendJson(session.creator.ws, {
+                    type: "peer_left",
+                    reason: "joiner_left",
+                });
+            } else if (!session.creator) {
+                clipboardSessions.delete(currentSessionId);
+            }
         }
 
         function handleDisconnect(currentSessionId, currentUserRole, currentSocket = null) {

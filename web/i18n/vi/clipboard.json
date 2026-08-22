@@ -65,6 +65,11 @@
     "receiving": "Đang nhận",
     "received_files": "File Đã Nhận",
     "disconnect": "Ngắt kết nối",
+    "end_session": "Kết thúc phiên này",
+    "leave_session": "Rời khỏi phiên này",
+    "leaving_session": "Đang rời khỏi…",
+    "end_session_confirm": "Kết thúc phiên này? Thiết bị còn lại cũng sẽ bị ngắt kết nối và các lượt truyền chưa hoàn tất sẽ dừng lại.",
+    "leave_session_confirm": "Rời khỏi phiên này? Thiết bị khởi tạo sẽ tiếp tục chờ một thiết bị khác.",
     "replace_old_device": "Ngắt kết nối cũ và tiếp tục",
     "replace_device_confirm": "Ngắt thiết bị cũ và tiếp tục trên thiết bị này?",
     "release_peer_slot": "Cho phép thiết bị khác",
@@ -91,6 +96,8 @@
         "remove": "Xóa file"
     },
     "messages": {
+        "peer_left_session": "Thiết bị còn lại đã rời đi. Một thiết bị mới hiện có thể tham gia.",
+        "session_ended_by_creator": "Thiết bị khởi tạo đã kết thúc phiên này.",
         "connection_restored": "Kết nối đã được khôi phục hoàn toàn",
         "websocket_connected_partial": "WebSocket đã kết nối, nhưng chuyển file có thể không khả dụng, vui lòng thử thiết lập lại kết nối",
         "rebuilding_connection": "Đang xây dựng lại kết nối...",

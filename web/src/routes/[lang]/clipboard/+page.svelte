@@ -105,6 +105,7 @@
     let errorCode = '';
     let canReplaceSession = false;
     let isReleasingPeer = false;
+    let isLeavingSession = false;
     let showError = false;
     let waitingForCreator = false;
     let showLinkCopied = false;
@@ -160,6 +161,7 @@
             errorCode = state.errorCode;
             canReplaceSession = state.canReplaceSession;
             isReleasingPeer = state.isReleasingPeer;
+            isLeavingSession = state.isLeavingSession;
             showError = state.showError;
             waitingForCreator = state.waitingForCreator;
             personalStatusLoading = state.personalStatusLoading;
@@ -215,8 +217,12 @@
         void clipboardManager?.enterPersonalSession();
     }
 
-    function handleCleanup() {
-        clipboardManager?.cleanup();
+    function handleLeaveSession() {
+        const confirmationKey = isCreator
+            ? 'clipboard.end_session_confirm'
+            : 'clipboard.leave_session_confirm';
+        if (!window.confirm($t(confirmationKey))) return;
+        clipboardManager?.leaveSession();
     }
 
     function handleReplaceOccupiedSession() {
@@ -566,8 +572,12 @@
                             {isReleasingPeer ? $t('clipboard.releasing_peer_slot') : $t('clipboard.release_peer_slot')}
                         </button>
                     {/if}
-                    <button class="btn-secondary danger" on:click={handleCleanup}>
-                        {$t('clipboard.disconnect')}
+                    <button class="btn-secondary danger" on:click={handleLeaveSession} disabled={isLeavingSession}>
+                        {isLeavingSession
+                            ? $t('clipboard.leaving_session')
+                            : isCreator
+                                ? $t('clipboard.end_session')
+                                : $t('clipboard.leave_session')}
                     </button>
                 </div>
             </div>
@@ -591,7 +601,6 @@
             on:createSession={handleCreateSession}
             on:joinSession={handleJoinSession}
             on:enterPersonalSession={handleEnterPersonalSession}
-            on:cleanup={handleCleanup}
             bind:joinCode
         />
     {/if}

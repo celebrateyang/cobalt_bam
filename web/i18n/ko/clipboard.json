@@ -65,6 +65,11 @@
     "receiving": "수신 중",
     "received_files": "수신된 파일",
     "disconnect": "연결 해제",
+    "end_session": "이 세션 종료",
+    "leave_session": "이 세션 나가기",
+    "leaving_session": "나가는 중…",
+    "end_session_confirm": "이 세션을 종료할까요? 다른 기기도 연결이 끊기고 완료되지 않은 전송이 중단됩니다.",
+    "leave_session_confirm": "이 세션에서 나갈까요? 시작한 기기는 다른 기기의 참여를 계속 기다립니다.",
     "replace_old_device": "이전 연결 해제 후 계속",
     "replace_device_confirm": "이전 기기의 연결을 해제하고 이 기기에서 계속할까요?",
     "release_peer_slot": "다른 기기 허용",
@@ -91,6 +96,8 @@
         "remove": "파일 제거"
     },
     "messages": {
+        "peer_left_session": "다른 기기가 나갔습니다. 이제 새 기기가 참여할 수 있습니다.",
+        "session_ended_by_creator": "시작한 기기가 이 세션을 종료했습니다.",
         "connection_restored": "연결이 완전히 복원되었습니다",
         "websocket_connected_partial": "WebSocket이 연결되었지만 파일 전송을 사용할 수 없습니다. 연결을 다시 설정해 보세요",
         "rebuilding_connection": "연결 재구축 중...",

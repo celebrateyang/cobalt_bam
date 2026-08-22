@@ -255,6 +255,19 @@ Rules:
 - If peer count is 2 and one peer is offline, oldest offline peer can be replaced.
 - If 2 peers are online, reject with `SESSION_FULL_ONLINE`.
 
+### Intentional leave behavior
+
+Clients send `leave_session` only for an explicit user action. Closing a tab,
+refreshing, or losing the network continues to use the recoverable disconnect
+path.
+
+- Creator leaves: delete the running session, acknowledge with `session_left`
+  (`scope=session`), notify the joiner with `session_ended`, and close the
+  joiner's socket with code `4003`.
+- Joiner leaves: release only the joiner slot, acknowledge with `session_left`
+  (`scope=device`), and notify the creator with `peer_left`.
+- `peer_disconnected` remains reserved for an unexpected transport disconnect.
+
 ## Download -> Transfer Default Flow
 
 Source integration point:

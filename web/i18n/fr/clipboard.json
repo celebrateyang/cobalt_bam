@@ -65,6 +65,11 @@
     "receiving": "Réception",
     "received_files": "Fichiers reçus",
     "disconnect": "Déconnecter",
+    "end_session": "Terminer cette session",
+    "leave_session": "Quitter cette session",
+    "leaving_session": "Déconnexion…",
+    "end_session_confirm": "Terminer cette session ? L’autre appareil sera aussi déconnecté et les transferts en cours seront arrêtés.",
+    "leave_session_confirm": "Quitter cette session ? L’appareil initiateur continuera d’attendre un autre appareil.",
     "replace_old_device": "Déconnecter l’ancien appareil et continuer",
     "replace_device_confirm": "Déconnecter l’ancien appareil et continuer ici ?",
     "release_peer_slot": "Autoriser un autre appareil",
@@ -91,6 +96,8 @@
         "remove": "Supprimer le fichier"
     },
     "messages": {
+        "peer_left_session": "L’autre appareil a quitté la session. Un nouvel appareil peut maintenant la rejoindre.",
+        "session_ended_by_creator": "L’appareil initiateur a terminé cette session.",
         "connection_restored": "Connexion entièrement restaurée",
         "websocket_connected_partial": "WebSocket connecté, mais le transfert de fichiers peut ne pas être disponible, veuillez essayer de rétablir la connexion",
         "rebuilding_connection": "Reconstruction de la connexion...",

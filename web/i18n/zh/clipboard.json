@@ -89,6 +89,11 @@
     "receiving": "接收中",
     "received_files": "已接收文件",
     "disconnect": "断开连接",
+    "end_session": "结束本次会话",
+    "leave_session": "退出本次会话",
+    "leaving_session": "正在退出…",
+    "end_session_confirm": "确定结束本次会话吗？另一台设备也会断开，未完成的传输将停止。",
+    "leave_session_confirm": "确定退出本次会话吗？发起设备将继续等待其他设备加入。",
     "replace_old_device": "清空旧连接并继续",
     "replace_device_confirm": "确定断开占用名额的旧设备，并在此设备继续吗？",
     "release_peer_slot": "允许其他设备加入",
@@ -115,6 +120,8 @@
         "remove": "删除文件"
     },
     "messages": {
+        "peer_left_session": "另一台设备已退出，当前会话可以等待新设备加入。",
+        "session_ended_by_creator": "发起设备已结束本次会话。",
         "connection_restored": "连接完全恢复",
         "websocket_connected_partial": "WebSocket 已连接，但文件传输功能可能不可用，请尝试重新建立连接",
         "rebuilding_connection": "正在重建连接...",

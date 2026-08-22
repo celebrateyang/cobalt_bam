@@ -91,6 +91,7 @@ export const clipboardState = writable({
     errorCode: '' as string,
     canReplaceSession: false as boolean,
     isReleasingPeer: false as boolean,
+    isLeavingSession: false as boolean,
     showError: false as boolean,
     waitingForCreator: false as boolean,
     personalStatusLoading: false as boolean,
@@ -138,6 +139,7 @@ export class ClipboardManager {
         type: 'create_session' | 'join_session';
     } & Record<string, unknown>) | null = null;
     private peerReleaseTimeout: ReturnType<typeof setTimeout> | null = null;
+    private leaveSessionTimeout: ReturnType<typeof setTimeout> | null = null;
     private wsMessageQueue: Promise<void> = Promise.resolve();
     private rtcGeneration = 0;
     private rtcRetryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -447,6 +449,17 @@ export class ClipboardManager {
                             errorMessage: t.get('clipboard.messages.session_replaced'),
                             errorCode: 'SESSION_REPLACED',
                             canReplaceSession: false,
+                            showError: true,
+                        }));
+                        return;
+                    }
+
+                    if (event.code === 4003) {
+                        this.cleanup();
+                        clipboardState.update(state => ({
+                            ...state,
+                            errorMessage: t.get('clipboard.messages.session_ended_by_creator'),
+                            errorCode: 'SESSION_ENDED',
                             showError: true,
                         }));
                         return;
@@ -1221,7 +1234,7 @@ export class ClipboardManager {
             const url = `${origin}/clipboard?session=${sessionId}`;
             navigator.clipboard.writeText(url);
         }
-    } cleanup(preserveSession = false): void {
+    } cleanup(preserveSession = false, destroyManager = false): void {
         const activeSessionId = this.getCurrentState().sessionId;
 
         // Clear reconnection timer
@@ -1232,6 +1245,10 @@ export class ClipboardManager {
         if (this.peerReleaseTimeout) {
             clearTimeout(this.peerReleaseTimeout);
             this.peerReleaseTimeout = null;
+        }
+        if (this.leaveSessionTimeout) {
+            clearTimeout(this.leaveSessionTimeout);
+            this.leaveSessionTimeout = null;
         }
         this.isReconnecting = false;
         this.reconnectAttempts = 0;
@@ -1248,7 +1265,7 @@ export class ClipboardManager {
             this.ws.close();
             this.ws = null;
         }
-        if (this.statusInterval) {
+        if (destroyManager && this.statusInterval) {
             clearInterval(this.statusInterval);
             this.statusInterval = null;
         }
@@ -1256,7 +1273,7 @@ export class ClipboardManager {
         this.markPendingTextMessagesUnconfirmed();
 
         // 移除页面可见性监听器
-        if (typeof window !== 'undefined') {
+        if (destroyManager && typeof window !== 'undefined') {
             document.removeEventListener('visibilitychange', this.checkConnectionAfterVisibilityChange);
         }
 
@@ -1272,11 +1289,13 @@ export class ClipboardManager {
             sessionType: preserveSession ? state.sessionType : 'random',
             isConnected: false,
             peerConnected: false,
+            isCreator: false,
             qrCodeUrl: '',
             errorMessage: '',
             errorCode: '',
             canReplaceSession: false,
             isReleasingPeer: false,
+            isLeavingSession: false,
             showError: false,
             waitingForCreator: false,
             files: [], // 清空文件列表
@@ -1401,6 +1420,21 @@ export class ClipboardManager {
         }, 5000);
     }
 
+    leaveSession(): void {
+        const state = this.getCurrentState();
+        if (!state.sessionId || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.cleanup();
+            return;
+        }
+
+        clipboardState.update(current => ({ ...current, isLeavingSession: true }));
+        this.ws.send(JSON.stringify({ type: 'leave_session' }));
+        this.leaveSessionTimeout = setTimeout(() => {
+            this.leaveSessionTimeout = null;
+            this.cleanup();
+        }, 2000);
+    }
+
     private closePeerTransport(clearKeys = true): void {
         this.rtcGeneration += 1;
         if (this.rtcRetryTimer) {
@@ -1431,7 +1465,7 @@ export class ClipboardManager {
     }
 
     dispose(): void {
-        this.cleanup(true);
+        this.cleanup(true, true);
     }
 
     // 清除错误消息
@@ -2018,6 +2052,35 @@ export class ClipboardManager {
                     peerConnected: false,
                     errorMessage: t.get('clipboard.messages.peer_disconnected'),
                     showError: true
+                }));
+                break;
+
+            case 'peer_left':
+                this.closePeerTransport();
+                clipboardState.update(state => ({
+                    ...state,
+                    peerConnected: false,
+                    errorMessage: t.get('clipboard.messages.peer_left_session'),
+                    errorCode: '',
+                    showError: true,
+                }));
+                break;
+
+            case 'session_left':
+                if (this.leaveSessionTimeout) {
+                    clearTimeout(this.leaveSessionTimeout);
+                    this.leaveSessionTimeout = null;
+                }
+                this.cleanup();
+                break;
+
+            case 'session_ended':
+                this.cleanup();
+                clipboardState.update(state => ({
+                    ...state,
+                    errorMessage: t.get('clipboard.messages.session_ended_by_creator'),
+                    errorCode: 'SESSION_ENDED',
+                    showError: true,
                 }));
                 break;
 

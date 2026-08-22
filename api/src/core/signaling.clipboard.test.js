@@ -69,6 +69,38 @@ const personalTicket = ({ owner, sessionId, deviceId, action }) =>
         action,
     }).token;
 
+const connectPersonalPair = async (harness, sockets) => {
+    const owner = `user_${Date.now()}_${Math.random()}`;
+    const sessionId = buildClipboardPersonalSessionId(owner, 1);
+    const creator = await openSocket(harness.url);
+    sockets.push(creator);
+    const createdPromise = nextMessage(creator, "session_created");
+    creator.send(JSON.stringify({
+        type: "create_session",
+        sessionType: "personal",
+        sessionId,
+        deviceId: "creator-device",
+        wsTicket: personalTicket({ owner, sessionId, deviceId: "creator-device", action: "create" }),
+        publicKey: [1],
+    }));
+    await createdPromise;
+
+    const joiner = await openSocket(harness.url);
+    sockets.push(joiner);
+    const joinedPromise = nextMessage(joiner, "session_joined");
+    const peerPromise = nextMessage(creator, "peer_joined");
+    joiner.send(JSON.stringify({
+        type: "join_session",
+        sessionType: "personal",
+        sessionId,
+        deviceId: "joiner-device",
+        wsTicket: personalTicket({ owner, sessionId, deviceId: "joiner-device", action: "join" }),
+        publicKey: [2],
+    }));
+    await Promise.all([joinedPromise, peerPromise]);
+    return { creator, joiner, sessionId };
+};
+
 test("creator can release a random-session peer", async () => {
     const harness = await createHarness();
     const sockets = [];
@@ -296,6 +328,64 @@ test("rejoining from the same personal joiner device replaces its stale socket",
         ]);
         assert.equal(staleReplaced.code, "SESSION_REPLACED");
         assert.equal(secondJoined.sessionId, sessionId);
+    } finally {
+        await harness.close(sockets);
+    }
+});
+
+test("creator explicitly ending a session disconnects the joiner and removes runtime", async () => {
+    const harness = await createHarness();
+    const sockets = [];
+
+    try {
+        const { creator, joiner, sessionId } = await connectPersonalPair(harness, sockets);
+        const creatorLeftPromise = nextMessage(creator, "session_left");
+        const endedPromise = nextMessage(joiner, "session_ended");
+        creator.send(JSON.stringify({ type: "leave_session" }));
+
+        const [creatorLeft, ended] = await Promise.all([creatorLeftPromise, endedPromise]);
+        assert.equal(creatorLeft.scope, "session");
+        assert.equal(ended.reason, "creator_left");
+        assert.equal(getClipboardPersonalSessionRuntime(sessionId).hasActiveSession, false);
+    } finally {
+        await harness.close(sockets);
+    }
+});
+
+test("joiner explicitly leaving releases only the joiner slot", async () => {
+    const harness = await createHarness();
+    const sockets = [];
+
+    try {
+        const { creator, joiner, sessionId } = await connectPersonalPair(harness, sockets);
+        const joinerLeftPromise = nextMessage(joiner, "session_left");
+        const peerLeftPromise = nextMessage(creator, "peer_left");
+        joiner.send(JSON.stringify({ type: "leave_session" }));
+
+        const [joinerLeft, peerLeft] = await Promise.all([joinerLeftPromise, peerLeftPromise]);
+        assert.equal(joinerLeft.scope, "device");
+        assert.equal(peerLeft.reason, "joiner_left");
+        const runtime = getClipboardPersonalSessionRuntime(sessionId, "third-device");
+        assert.equal(runtime.onlinePeers, 1);
+        assert.equal(runtime.recommendedAction, "join");
+    } finally {
+        await harness.close(sockets);
+    }
+});
+
+test("an unexpected creator disconnect keeps the joiner available for recovery", async () => {
+    const harness = await createHarness();
+    const sockets = [];
+
+    try {
+        const { creator, joiner, sessionId } = await connectPersonalPair(harness, sockets);
+        const disconnectedPromise = nextMessage(joiner, "peer_disconnected");
+        creator.terminate();
+        await disconnectedPromise;
+
+        const runtime = getClipboardPersonalSessionRuntime(sessionId, "replacement-creator");
+        assert.equal(runtime.onlinePeers, 1);
+        assert.equal(runtime.recommendedAction, "create");
     } finally {
         await harness.close(sockets);
     }

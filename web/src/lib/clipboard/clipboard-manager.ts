@@ -9,6 +9,7 @@ import {
     joinClipboardPersonalSession,
     openClipboardPersonalSession,
     type ClipboardPersonalRecommendedAction,
+    type ClipboardPersonalSessionState,
     type ClipboardPersonalSessionTicket,
 } from '$lib/api/clipboard-personal';
 
@@ -99,6 +100,9 @@ export const clipboardState = writable({
     personalOnlinePeers: 0,
     personalMaxPeers: 2,
     personalCurrentDeviceConnected: false,
+    personalCreatorOnline: false,
+    personalJoinerOnline: false,
+    personalSessionState: 'empty' as ClipboardPersonalSessionState,
 });
 
 export class ClipboardManager {
@@ -1056,18 +1060,39 @@ export class ClipboardManager {
                 personalOnlinePeers: 0,
                 personalMaxPeers: 2,
                 personalCurrentDeviceConnected: false,
+                personalCreatorOnline: false,
+                personalJoinerOnline: false,
+                personalSessionState: 'empty',
             }));
             return;
         }
 
-        clipboardState.update(state => ({
-            ...state,
-            personalStatusLoading: false,
-            personalRecommendedAction: response.data.recommendedAction,
-            personalOnlinePeers: response.data.onlinePeers,
-            personalMaxPeers: response.data.maxPeers,
-            personalCurrentDeviceConnected: response.data.currentDeviceConnected,
-        }));
+        let shouldReturnToEntry = false;
+        clipboardState.update(state => {
+            shouldReturnToEntry = response.data.sessionState === 'empty'
+                && state.sessionType === 'personal'
+                && Boolean(state.sessionId)
+                && !state.isCreating
+                && !state.isJoining;
+            return {
+                ...state,
+                personalStatusLoading: false,
+                personalRecommendedAction: response.data.recommendedAction,
+                personalOnlinePeers: response.data.onlinePeers,
+                personalMaxPeers: response.data.maxPeers,
+                personalCurrentDeviceConnected: response.data.currentDeviceConnected,
+                personalCreatorOnline: response.data.creatorOnline,
+                personalJoinerOnline: response.data.joinerOnline,
+                personalSessionState: response.data.sessionState,
+            };
+        });
+
+        if (shouldReturnToEntry) {
+            this.returnToPersonalEntry(
+                t.get('clipboard.messages.session_ended_by_creator'),
+                'SESSION_ENDED',
+            );
+        }
     }
 
     private returnToPersonalEntry(message = '', errorCode = ''): void {
@@ -1087,6 +1112,9 @@ export class ClipboardManager {
             personalOnlinePeers: 0,
             personalMaxPeers: 2,
             personalCurrentDeviceConnected: false,
+            personalCreatorOnline: false,
+            personalJoinerOnline: false,
+            personalSessionState: 'empty',
             errorMessage: message,
             errorCode,
             showError: Boolean(message),
@@ -2081,6 +2109,7 @@ export class ClipboardManager {
                     errorMessage: t.get('clipboard.messages.peer_disconnected'),
                     showError: true
                 }));
+                void this.loadPersonalSessionStatus();
                 break;
 
             case 'peer_left':

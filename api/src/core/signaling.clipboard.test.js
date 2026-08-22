@@ -385,7 +385,14 @@ test("an unexpected creator disconnect keeps the joiner available for recovery",
 
         const runtime = getClipboardPersonalSessionRuntime(sessionId, "replacement-creator");
         assert.equal(runtime.onlinePeers, 1);
+        assert.equal(runtime.creatorOnline, false);
+        assert.equal(runtime.joinerOnline, true);
+        assert.equal(runtime.sessionState, "waiting_creator_reconnect");
         assert.equal(runtime.recommendedAction, "create");
+
+        const joinerRuntime = getClipboardPersonalSessionRuntime(sessionId, "joiner-device");
+        assert.equal(joinerRuntime.currentDeviceRole, "joiner");
+        assert.equal(joinerRuntime.recommendedAction, "restart");
     } finally {
         await harness.close(sockets);
     }

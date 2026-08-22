@@ -19,10 +19,12 @@
     export let qrCodeUrl: string;
     export let hasSignedInSession: boolean = false;
     export let personalStatusLoading: boolean = false;
-    export let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' = 'create';
+    export let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' | 'restart' = 'create';
     export let personalOnlinePeers: number = 0;
     export let personalMaxPeers: number = 2;
     export let personalCurrentDeviceConnected: boolean = false;
+    export let personalSessionState: 'empty' | 'waiting_joiner' | 'connected' | 'waiting_creator_reconnect' = 'empty';
+    export let isLeavingSession: boolean = false;
     
     // Copy states
     let showSessionIdCopied = false;
@@ -42,8 +44,8 @@
         dispatch('joinSession');
     }
     
-    function handleCleanup() {
-        dispatch('cleanup');
+    function handleLeaveSession() {
+        dispatch('leaveSession');
     }
 
     function handleEnterPersonalSession() {
@@ -175,9 +177,13 @@
     $: shouldShowRandomSessionOptions = !hasSignedInSession || showRandomDrawer;
     $: personalActionLabel = personalStatusLoading
         ? $t('clipboard.personal.checking')
-        : $t(`clipboard.personal.action_${personalRecommendedAction}`);
+        : personalRecommendedAction === 'restart'
+            ? $t('clipboard.personal.action_create')
+            : $t(`clipboard.personal.action_${personalRecommendedAction}`);
     $: personalStatusHint = personalStatusLoading
         ? $t('clipboard.personal.checking_hint')
+        : personalSessionState === 'waiting_creator_reconnect'
+            ? $t('clipboard.messages.waiting_creator_reconnect')
         : personalCurrentDeviceConnected
             ? $t('clipboard.personal.status_current_device')
             : personalRecommendedAction === 'join'
@@ -404,8 +410,12 @@
     
     <!-- Disconnect Section -->
     <div class="disconnect-section">
-        <ActionButton id="cleanup" click={handleCleanup}>
-            {$t("clipboard.disconnect")}
+        <ActionButton id="leave-session" click={handleLeaveSession} disabled={isLeavingSession}>
+            {isLeavingSession
+                ? $t('clipboard.leaving_session')
+                : isCreator
+                    ? $t('clipboard.end_session')
+                    : $t('clipboard.leave_session')}
         </ActionButton>
     </div>
 {/if}

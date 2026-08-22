@@ -20,10 +20,14 @@ export type ClipboardPersonalSessionTicket = {
     recommendedAction?: ClipboardPersonalRecommendedAction;
     currentDeviceConnected?: boolean;
     currentDeviceRole?: ClipboardPersonalDeviceRole;
+    creatorOnline?: boolean;
+    joinerOnline?: boolean;
+    sessionState?: ClipboardPersonalSessionState;
 };
 
-export type ClipboardPersonalRecommendedAction = "create" | "join" | "resume" | "manage";
+export type ClipboardPersonalRecommendedAction = "create" | "join" | "resume" | "manage" | "restart";
 export type ClipboardPersonalDeviceRole = "creator" | "joiner" | null;
+export type ClipboardPersonalSessionState = "empty" | "waiting_joiner" | "connected" | "waiting_creator_reconnect";
 
 export type ClipboardPersonalSessionStatus = {
     personalCode: string;
@@ -33,6 +37,9 @@ export type ClipboardPersonalSessionStatus = {
     maxPeers: number;
     currentDeviceConnected: boolean;
     currentDeviceRole: ClipboardPersonalDeviceRole;
+    creatorOnline: boolean;
+    joinerOnline: boolean;
+    sessionState: ClipboardPersonalSessionState;
     recommendedAction: ClipboardPersonalRecommendedAction;
     activeSession: {
         sessionId: string;

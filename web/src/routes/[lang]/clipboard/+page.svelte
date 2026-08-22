@@ -111,10 +111,13 @@
     let showLinkCopied = false;
     let hasSignedInSession = false;
     let personalStatusLoading = false;
-    let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' = 'create';
+    let personalRecommendedAction: 'create' | 'join' | 'resume' | 'manage' | 'restart' = 'create';
     let personalOnlinePeers = 0;
     let personalMaxPeers = 2;
     let personalCurrentDeviceConnected = false;
+    let personalSessionState: 'empty' | 'waiting_joiner' | 'connected' | 'waiting_creator_reconnect' = 'empty';
+    let personalStatusPollTimer: ReturnType<typeof setInterval> | null = null;
+    let detachPersonalStatusListeners: (() => void) | null = null;
 
     const COMPACT_VIEWPORT_MAX_WIDTH = 768;
     const HEADER_AUTO_COLLAPSE_DELAY_MS = 3000;
@@ -169,6 +172,7 @@
             personalOnlinePeers = state.personalOnlinePeers;
             personalMaxPeers = state.personalMaxPeers;
             personalCurrentDeviceConnected = state.personalCurrentDeviceConnected;
+            personalSessionState = state.personalSessionState;
         });
     }
 
@@ -380,6 +384,19 @@
             hasSignedInSession = Boolean(await getClerkToken());
             if (hasSignedInSession) {
                 await clipboardManager.loadPersonalSessionStatus();
+                const refreshPersonalStatus = () => {
+                    if (document.visibilityState === 'visible' && (!isConnected || !peerConnected)) {
+                        void clipboardManager?.loadPersonalSessionStatus();
+                    }
+                };
+                const handleVisibilityChange = () => refreshPersonalStatus();
+                window.addEventListener('focus', refreshPersonalStatus);
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                personalStatusPollTimer = setInterval(refreshPersonalStatus, 15_000);
+                detachPersonalStatusListeners = () => {
+                    window.removeEventListener('focus', refreshPersonalStatus);
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                };
             }
             const viewportQuery = window.matchMedia(`(max-width: ${COMPACT_VIEWPORT_MAX_WIDTH}px)`);
 
@@ -419,6 +436,10 @@
     onDestroy(() => {
         clearInitialHeaderCollapseTimer();
         detachViewportListener?.();
+        if (personalStatusPollTimer) clearInterval(personalStatusPollTimer);
+        personalStatusPollTimer = null;
+        detachPersonalStatusListeners?.();
+        detachPersonalStatusListeners = null;
         unsubscribeClipboardState?.();
         unsubscribeClipboardState = null;
         clipboardManager?.dispose();
@@ -598,9 +619,12 @@
             {personalOnlinePeers}
             {personalMaxPeers}
             {personalCurrentDeviceConnected}
+            {personalSessionState}
+            {isLeavingSession}
             on:createSession={handleCreateSession}
             on:joinSession={handleJoinSession}
             on:enterPersonalSession={handleEnterPersonalSession}
+            on:leaveSession={handleLeaveSession}
             bind:joinCode
         />
     {/if}

@@ -1516,6 +1516,9 @@ if (!isClerkApiConfigured) {
                         maxPeers: runtime.maxPeers,
                         currentDeviceConnected: runtime.currentDeviceConnected,
                         currentDeviceRole: runtime.currentDeviceRole,
+                        creatorOnline: runtime.creatorOnline,
+                        joinerOnline: runtime.joinerOnline,
+                        sessionState: runtime.sessionState,
                         recommendedAction: runtime.recommendedAction,
                         activeSession: runtime.hasActiveSession
                             ? {
@@ -1561,8 +1564,10 @@ if (!isClerkApiConfigured) {
                     profile.codeVersion,
                 );
                 const runtime = getClipboardPersonalSessionRuntime(sessionId, parsed.deviceId);
-                const role = runtime.currentDeviceRole
-                    || (runtime.recommendedAction === "create" ? "creator" : "joiner");
+                const role = runtime.recommendedAction === "restart"
+                    ? "creator"
+                    : runtime.currentDeviceRole
+                        || (runtime.recommendedAction === "create" ? "creator" : "joiner");
                 const action = role === "creator" ? "create" : "join";
                 const ticket = createClipboardPersonalWsTicket({
                     clerkUserId: auth.userId,
@@ -1594,6 +1599,9 @@ if (!isClerkApiConfigured) {
                         recommendedAction: runtime.recommendedAction,
                         currentDeviceConnected: runtime.currentDeviceConnected,
                         currentDeviceRole: runtime.currentDeviceRole,
+                        creatorOnline: runtime.creatorOnline,
+                        joinerOnline: runtime.joinerOnline,
+                        sessionState: runtime.sessionState,
                         action,
                         wsTicket: ticket.token,
                         wsTicketExpiresAt: ticket.expiresAt,

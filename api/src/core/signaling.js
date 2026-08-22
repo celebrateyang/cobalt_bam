@@ -10,6 +10,7 @@ import { verifyClipboardPersonalWsTicket } from "./clipboard-personal.js";
 
 const CLIPBOARD_SESSION_TTL_MS = 30 * 60 * 1000;
 const CLIPBOARD_PEER_ONLINE_WINDOW_MS = 45 * 1000;
+const CLIPBOARD_CREATOR_RECONNECT_GRACE_MS = 30 * 1000;
 const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
 const CHAT_ALLOW_SELF_MATCH = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_ALLOW_SELF_MATCH || "").toLowerCase().trim(),
@@ -161,6 +162,9 @@ export const getClipboardPersonalSessionRuntime = (sessionId, deviceId = null) =
             expiresAt: null,
             currentDeviceConnected: false,
             currentDeviceRole: null,
+            creatorOnline: false,
+            joinerOnline: false,
+            sessionState: "empty",
             recommendedAction: "create",
         };
     }
@@ -174,13 +178,18 @@ export const getClipboardPersonalSessionRuntime = (sessionId, deviceId = null) =
         : deviceId && joinerOnline && session.joiner?.deviceId === deviceId
             ? "joiner"
             : null;
-    const recommendedAction = currentDeviceRole
-        ? "resume"
-        : !creatorOnline
-            ? "create"
-            : !joinerOnline
-                ? "join"
-                : "manage";
+    const sessionState = creatorOnline
+        ? (joinerOnline ? "connected" : "waiting_joiner")
+        : (joinerOnline ? "waiting_creator_reconnect" : "empty");
+    const recommendedAction = currentDeviceRole === "joiner" && !creatorOnline
+        ? "restart"
+        : currentDeviceRole
+            ? "resume"
+            : !creatorOnline
+                ? "create"
+                : !joinerOnline
+                    ? "join"
+                    : "manage";
 
     return {
         hasActiveSession: onlinePeers > 0,
@@ -189,8 +198,17 @@ export const getClipboardPersonalSessionRuntime = (sessionId, deviceId = null) =
         expiresAt: session.createdAt + CLIPBOARD_SESSION_TTL_MS,
         currentDeviceConnected: currentDeviceRole !== null,
         currentDeviceRole,
+        creatorOnline,
+        joinerOnline,
+        sessionState,
         recommendedAction,
     };
+};
+
+const clearClipboardCreatorReconnectTimer = (session) => {
+    if (!session?.creatorReconnectTimer) return;
+    clearTimeout(session.creatorReconnectTimer);
+    session.creatorReconnectTimer = null;
 };
 
 export const invalidateClipboardPersonalSession = (
@@ -227,6 +245,7 @@ export const invalidateClipboardPersonalSession = (
         }
     }
 
+    clearClipboardCreatorReconnectTimer(session);
     clipboardSessions.delete(sessionId);
     return {
         invalidated: true,
@@ -625,6 +644,7 @@ export const setupSignalingServer = (httpServer) => {
             const hasOnlinePeers = getClipboardSessionOnlinePeers(session, now) > 0;
 
             if (isExpired && !hasOnlinePeers) {
+                clearClipboardCreatorReconnectTimer(session);
                 clipboardSessions.delete(sessionId);
                 console.log(`Cleaned up expired session: ${sessionId}`);
             }
@@ -954,6 +974,7 @@ export const setupSignalingServer = (httpServer) => {
                         maxPeers: 2,
                         createdAt: now,
                         updatedAt: now,
+                        creatorReconnectTimer: null,
                     };
                     clipboardSessions.set(targetSessionId, personalSession);
                 }
@@ -982,6 +1003,15 @@ export const setupSignalingServer = (httpServer) => {
 
                     closeReplacedClipboardPeer(personalSession.creator);
                     personalSession.creator = null;
+                }
+
+                clearClipboardCreatorReconnectTimer(personalSession);
+                if (personalSession.joiner?.deviceId === ticket.deviceId) {
+                    const formerJoiner = personalSession.joiner;
+                    personalSession.joiner = null;
+                    if (formerJoiner.ws !== socket) {
+                        closeReplacedClipboardPeer(formerJoiner);
+                    }
                 }
 
                 sessionId = targetSessionId;
@@ -1284,6 +1314,7 @@ export const setupSignalingServer = (httpServer) => {
 
             if (currentUserRole === "creator") {
                 const joinedPeer = session.joiner;
+                clearClipboardCreatorReconnectTimer(session);
                 clipboardSessions.delete(currentSessionId);
                 sendJson(socket, {
                     type: "session_left",
@@ -1320,6 +1351,7 @@ export const setupSignalingServer = (httpServer) => {
                     reason: "joiner_left",
                 });
             } else if (!session.creator) {
+                clearClipboardCreatorReconnectTimer(session);
                 clipboardSessions.delete(currentSessionId);
             }
         }
@@ -1352,7 +1384,40 @@ export const setupSignalingServer = (httpServer) => {
             session.updatedAt = Date.now();
 
             if (!session.creator && !session.joiner) {
+                clearClipboardCreatorReconnectTimer(session);
                 clipboardSessions.delete(currentSessionId);
+            } else if (
+                session.type === "personal" &&
+                currentUserRole === "creator" &&
+                session.joiner
+            ) {
+                clearClipboardCreatorReconnectTimer(session);
+                const expectedJoiner = session.joiner;
+                session.creatorReconnectTimer = setTimeout(() => {
+                    if (
+                        clipboardSessions.get(currentSessionId) !== session ||
+                        session.creator ||
+                        session.joiner !== expectedJoiner
+                    ) return;
+
+                    session.creatorReconnectTimer = null;
+                    clipboardSessions.delete(currentSessionId);
+                    if (isWsOpen(expectedJoiner.ws)) {
+                        sendJson(expectedJoiner.ws, {
+                            type: "session_ended",
+                            reason: "creator_reconnect_timeout",
+                        });
+                        const closeTimer = setTimeout(() => {
+                            try {
+                                expectedJoiner.ws.close(4003, "Creator reconnect timeout");
+                            } catch {
+                                // ignore
+                            }
+                        }, 25);
+                        closeTimer.unref?.();
+                    }
+                }, CLIPBOARD_CREATOR_RECONNECT_GRACE_MS);
+                session.creatorReconnectTimer.unref?.();
             }
         }
     });

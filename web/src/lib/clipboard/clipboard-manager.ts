@@ -144,6 +144,7 @@ export class ClipboardManager {
     private rtcGeneration = 0;
     private rtcRetryTimer: ReturnType<typeof setTimeout> | null = null;
     private pendingIceCandidates: RTCIceCandidateInit[] = [];
+    private personalStatusRequestId = 0;
 
     constructor() {
         this.clientId = this.getOrCreateClientId();
@@ -455,13 +456,10 @@ export class ClipboardManager {
                     }
 
                     if (event.code === 4003) {
-                        this.cleanup();
-                        clipboardState.update(state => ({
-                            ...state,
-                            errorMessage: t.get('clipboard.messages.session_ended_by_creator'),
-                            errorCode: 'SESSION_ENDED',
-                            showError: true,
-                        }));
+                        this.returnToPersonalEntry(
+                            t.get('clipboard.messages.session_ended_by_creator'),
+                            'SESSION_ENDED',
+                        );
                         return;
                     }
 
@@ -1044,10 +1042,12 @@ export class ClipboardManager {
     }
 
     async loadPersonalSessionStatus(): Promise<void> {
+        const requestId = ++this.personalStatusRequestId;
         this.currentDeviceId = this.getOrCreateDeviceId();
         clipboardState.update(state => ({ ...state, personalStatusLoading: true }));
 
         const response = await getClipboardPersonalSessionStatus(this.currentDeviceId);
+        if (requestId !== this.personalStatusRequestId) return;
         if (response.status !== 'success') {
             clipboardState.update(state => ({
                 ...state,
@@ -1068,6 +1068,31 @@ export class ClipboardManager {
             personalMaxPeers: response.data.maxPeers,
             personalCurrentDeviceConnected: response.data.currentDeviceConnected,
         }));
+    }
+
+    private returnToPersonalEntry(message = '', errorCode = ''): void {
+        this.cleanup();
+        clipboardState.update(state => ({
+            ...state,
+            sessionId: '',
+            sessionType: 'random',
+            isConnected: false,
+            isCreating: false,
+            isJoining: false,
+            isCreator: false,
+            peerConnected: false,
+            waitingForCreator: false,
+            personalStatusLoading: false,
+            personalRecommendedAction: 'create',
+            personalOnlinePeers: 0,
+            personalMaxPeers: 2,
+            personalCurrentDeviceConnected: false,
+            errorMessage: message,
+            errorCode,
+            showError: Boolean(message),
+        }));
+
+        void this.loadPersonalSessionStatus();
     }
 
     // Public API methods
@@ -1288,6 +1313,8 @@ export class ClipboardManager {
             sessionId: preserveSession ? state.sessionId : '',
             sessionType: preserveSession ? state.sessionType : 'random',
             isConnected: false,
+            isCreating: false,
+            isJoining: false,
             peerConnected: false,
             isCreator: false,
             qrCodeUrl: '',
@@ -1323,6 +1350,7 @@ export class ClipboardManager {
         this.cancelTransmission = false; // 重置取消传输标志
         this.currentSendingFileId = null; // 重置当前发送文件ID
         if (!preserveSession) {
+            this.personalStatusRequestId += 1;
             if (typeof window !== 'undefined' && activeSessionId) {
                 sessionStorage.removeItem(this.getMessageStorageKey(activeSessionId));
             }
@@ -2071,17 +2099,14 @@ export class ClipboardManager {
                     clearTimeout(this.leaveSessionTimeout);
                     this.leaveSessionTimeout = null;
                 }
-                this.cleanup();
+                this.returnToPersonalEntry();
                 break;
 
             case 'session_ended':
-                this.cleanup();
-                clipboardState.update(state => ({
-                    ...state,
-                    errorMessage: t.get('clipboard.messages.session_ended_by_creator'),
-                    errorCode: 'SESSION_ENDED',
-                    showError: true,
-                }));
+                this.returnToPersonalEntry(
+                    t.get('clipboard.messages.session_ended_by_creator'),
+                    'SESSION_ENDED',
+                );
                 break;
 
             case 'creator_reconnected':

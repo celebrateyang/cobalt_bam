@@ -646,8 +646,8 @@
     let creditProductsErrorKey = "";
     let membershipProductsErrorKey = "";
     let selectedPaymentProvider: PaymentProvider = "wechat";
-    let requestedProductsProvider: PaymentProvider | null = null;
-    let requestedMembershipProductsProvider: PaymentProvider | null = null;
+    let creditProductsRequestVersion = 0;
+    let membershipProductsRequestVersion = 0;
     let paypalMembershipStatusLoading = false;
     let paypalMembershipCancelLoading = false;
     let lastPayPalMembershipUserId: string | null = null;
@@ -792,10 +792,7 @@
     const fetchCreditProducts = async () => {
         const provider = selectedPaymentProvider;
         if (!provider) return;
-        if (creditProductsLoading) return;
-        if (requestedProductsProvider === provider) return;
-
-        requestedProductsProvider = provider;
+        const requestVersion = ++creditProductsRequestVersion;
         creditProductsLoading = true;
         creditProductsErrorKey = "";
 
@@ -812,6 +809,13 @@
                 );
             }
 
+            if (
+                requestVersion !== creditProductsRequestVersion ||
+                selectedPaymentProvider !== provider
+            ) {
+                return;
+            }
+
             creditProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
@@ -823,19 +827,23 @@
             );
             trackCreditProductListViewed(provider, trackedProducts);
         } catch (error) {
-            creditProductsErrorKey = "auth.credit_products_load_failed";
+            if (
+                requestVersion === creditProductsRequestVersion &&
+                selectedPaymentProvider === provider
+            ) {
+                creditProductsErrorKey = "auth.credit_products_load_failed";
+            }
             console.debug("load credit products failed", error);
         } finally {
-            creditProductsLoading = false;
+            if (requestVersion === creditProductsRequestVersion) {
+                creditProductsLoading = false;
+            }
         }
     };
 
     const fetchMembershipProducts = async () => {
-        const provider: PaymentProvider = isChinese ? "wechat" : "paypal";
-        if (membershipProductsLoading) return;
-        if (requestedMembershipProductsProvider === provider) return;
-
-        requestedMembershipProductsProvider = provider;
+        const provider = selectedPaymentProvider;
+        const requestVersion = ++membershipProductsRequestVersion;
         membershipProductsLoading = true;
         membershipProductsErrorKey = "";
 
@@ -852,20 +860,38 @@
                 );
             }
 
+            if (
+                requestVersion !== membershipProductsRequestVersion ||
+                selectedPaymentProvider !== provider
+            ) {
+                return;
+            }
+
             membershipProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
             publicMembershipLimits = data?.data?.limits ?? null;
         } catch (error) {
-            membershipProductsErrorKey = "auth.membership_products_load_failed";
+            if (
+                requestVersion === membershipProductsRequestVersion &&
+                selectedPaymentProvider === provider
+            ) {
+                membershipProductsErrorKey = "auth.membership_products_load_failed";
+            }
             console.debug("load membership products failed", error);
         } finally {
-            membershipProductsLoading = false;
+            if (requestVersion === membershipProductsRequestVersion) {
+                membershipProductsLoading = false;
+            }
         }
     };
 
     const fetchPayPalMembershipSubscription = async () => {
-        if (!$clerkUser || isChinese || paypalMembershipStatusLoading) return;
+        if (
+            !$clerkUser ||
+            selectedPaymentProvider !== "paypal" ||
+            paypalMembershipStatusLoading
+        ) return;
         if (lastPayPalMembershipUserId === $clerkUser.id) return;
         paypalMembershipStatusLoading = true;
         try {
@@ -934,13 +960,10 @@
 
     $: if (browser && selectedPaymentProvider) {
         void fetchCreditProducts();
-    }
-
-    $: if (browser) {
         void fetchMembershipProducts();
     }
 
-    $: if (browser && $clerkUser && !isChinese) {
+    $: if (browser && $clerkUser && selectedPaymentProvider === "paypal") {
         void fetchPayPalMembershipSubscription();
     }
 
@@ -1715,7 +1738,7 @@
         ) {
             if (membershipProductsLoading) return;
             const productKey =
-                !isChinese
+                selectedPaymentProvider === "paypal"
                     ? "member_monthly_recurring"
                     : checkoutIntent === "membership_3day" ||
                         checkoutIntent === "membership_weekly"
@@ -1735,7 +1758,7 @@
                 window.history.replaceState({}, "", url.toString());
             } catch {}
 
-            if (isChinese) {
+            if (selectedPaymentProvider === "wechat") {
                 void startMembershipWechatPay(membershipProduct.key);
             } else {
                 void startPayPalMembershipSubscription(membershipProduct.key);
@@ -1801,9 +1824,10 @@
         if (provider === selectedPaymentProvider) return;
 
         selectedPaymentProvider = provider;
-        requestedProductsProvider = null;
         creditProducts = [];
+        membershipProducts = [];
         creditProductsErrorKey = "";
+        membershipProductsErrorKey = "";
         purchaseErrorKey = "";
         purchaseNoticeKey = "";
         clearActiveOrder();
@@ -2474,11 +2498,11 @@
                                 </div>
                             {/if}
 
-                            {#if !isChinese && paypalMembershipSubscription?.cancel_at_period_end}
+                            {#if selectedPaymentProvider === "paypal" && paypalMembershipSubscription?.cancel_at_period_end}
                                 <div class="subtext notice">
                                     {$t("auth.membership_subscription_cancel_at_end")}
                                 </div>
-                            {:else if !isChinese && paypalMembershipSubscription && ["APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED", "PAST_DUE"].includes(paypalMembershipSubscription.status)}
+                            {:else if selectedPaymentProvider === "paypal" && paypalMembershipSubscription && ["APPROVAL_PENDING", "APPROVED", "ACTIVE", "SUSPENDED", "PAST_DUE"].includes(paypalMembershipSubscription.status)}
                                 <div class="membership-subscription-actions">
                                     <span class="subtext">
                                         {$t("auth.membership_subscription_status", {
@@ -2542,7 +2566,7 @@
                                             </div>
 
                                             <div class="product-actions">
-                                                {#if isChinese}
+                                                {#if selectedPaymentProvider === "wechat"}
                                                     <button
                                                         class="button elevated active"
                                                         disabled={purchaseLoading ||

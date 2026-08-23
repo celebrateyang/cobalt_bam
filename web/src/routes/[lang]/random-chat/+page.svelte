@@ -4,12 +4,17 @@
     import { onDestroy, onMount } from "svelte";
 
     import env from "$lib/env";
+    import {
+        getRandomChatCampaignIntent,
+        trackRandomChatEvent,
+    } from "$lib/analytics/random-chat";
     import { t } from "$lib/i18n/translations";
     import {
         requireMembershipFeature,
         showMembershipUpgradeDialog,
     } from "$lib/membership/gate";
     import type {
+        ChatMatchPhase,
         ChatMatchProfile,
         ChatTargetGender,
         ChatSelfGender,
@@ -47,15 +52,37 @@
     let showSettings = false;
     let matchEndReason = "";
     let errorMessage = "";
+    let chatStage:
+        | "idle"
+        | "searching"
+        | ChatMatchPhase
+        | "ended" = "idle";
+    let textDraft = "";
+    let textMessages: Array<{
+        id: string;
+        text: string;
+        sentAt: number;
+        own: boolean;
+    }> = [];
+    let incomingVideoInvite = false;
+    let videoInviteSent = false;
+    let mediaBusy = false;
 
     let chatPrefs: RandomChatPreferences = defaultRandomChatPreferences;
 
     let expiresAt = 0;
-    let countdown = "10:00";
+    let countdown = "00:00";
     let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
     const fallbackHost = env.HOST || "freesavevideo.online";
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
+    $: campaignIntent = getRandomChatCampaignIntent(currentLang);
+    $: isAsiaPracticeMarket = ["zh", "ja", "ko", "vi", "th"].includes(
+        currentLang,
+    );
+    $: communityImage = isAsiaPracticeMarket
+        ? "/images/random-chat/western-community-selfies.webp"
+        : "/images/random-chat/asian-women-community-selfies.webp";
     $: canonicalUrl = `https://${fallbackHost}/${currentLang}/random-chat`;
     $: randomChatJsonLd = {
         "@context": "https://schema.org",
@@ -68,7 +95,7 @@
         operatingSystem: "Any",
         isAccessibleForFree: false,
         description: String($t("random-chat.meta.description")),
-        featureList: ["1v1 video matching", "10-minute sessions", "WebRTC media", "country and language preferences"],
+        featureList: ["ephemeral text icebreakers", "mutual video consent", "10-minute video sessions", "country, language, and gender preferences"],
     };
 
     const updateChatPref = <K extends keyof RandomChatPreferences>(
@@ -137,18 +164,22 @@
         updateChatPref("showSafetyNotice", getCheckboxValue(event));
     };
 
+    const handleUseTextIcebreakerChange = (event: Event) => {
+        updateChatPref("useTextIcebreaker", getCheckboxValue(event));
+    };
+
     const clearCountdown = () => {
         if (countdownTimer) {
             clearInterval(countdownTimer);
             countdownTimer = null;
         }
-        countdown = "10:00";
+        countdown = "00:00";
         expiresAt = 0;
     };
 
     const updateCountdown = () => {
         if (!expiresAt) {
-            countdown = "10:00";
+            countdown = "00:00";
             return;
         }
 
@@ -175,6 +206,12 @@
         localStream = null;
         remoteStream = null;
         peerProfile = null;
+        chatStage = "ended";
+        textDraft = "";
+        textMessages = [];
+        incomingVideoInvite = false;
+        videoInviteSent = false;
+        mediaBusy = false;
         clearCountdown();
     };
 
@@ -201,23 +238,42 @@
             chatPrefs.uiLanguage === "auto"
                 ? ""
                 : String(chatPrefs.uiLanguage).toLowerCase();
-        const profileLanguage =
-            chatPrefs.uiLanguage === "auto"
-                ? currentLang.toLowerCase()
-                : String(chatPrefs.uiLanguage).toLowerCase();
+        const profileLanguage = currentLang.toLowerCase();
+        const localeCountry: Record<string, RandomChatCountry> = {
+            en: "US",
+            de: "DE",
+            fr: "FR",
+            es: "ES",
+            zh: "CN",
+            ja: "JP",
+            ko: "KR",
+            vi: "VN",
+            th: "TH",
+            ru: "RU",
+        };
+        const targetRegion: "asia" | "western" | "any" = [
+            "en",
+            "de",
+            "fr",
+            "es",
+        ].includes(currentLang)
+            ? "asia"
+            : ["zh", "ja", "ko", "vi", "th"].includes(currentLang)
+              ? "western"
+              : "any";
 
         return {
             profile: {
                 selfGender: chatPrefs.selfGender,
-                // There is no server-side geo profile yet, so we map selected country
-                // into profile to make country preference mutually matchable.
-                country: chatPrefs.targetCountry,
+                country: localeCountry[currentLang] || "ANY",
                 language: profileLanguage,
+                useTextIcebreaker: chatPrefs.useTextIcebreaker,
             },
             filters: {
                 targetGender: chatPrefs.targetGender,
                 targetCountry: chatPrefs.targetCountry,
                 language: languageFilter,
+                targetRegion,
             },
         };
     };
@@ -225,12 +281,21 @@
     const startMatching = async () => {
         if (checkingMembership) return;
         checkingMembership = true;
+        trackRandomChatEvent("matching_requested", {
+            campaign_intent: campaignIntent,
+            use_text_icebreaker: chatPrefs.useTextIcebreaker,
+        });
         const allowed = await requireMembershipFeature("random_chat").finally(
             () => {
                 checkingMembership = false;
             },
         );
-        if (!allowed) return;
+        if (!allowed) {
+            trackRandomChatEvent("membership_gate_shown", {
+                campaign_intent: campaignIntent,
+            });
+            return;
+        }
 
         matchEndReason = "";
         errorMessage = "";
@@ -239,6 +304,7 @@
             await ensureManagerConnected();
             await manager?.startMatching(buildMatchPayload());
             searching = true;
+            chatStage = "searching";
             hasStartedOnce = true;
         } catch (error) {
             if (
@@ -258,6 +324,7 @@
     const cancelMatching = () => {
         manager?.cancelMatching();
         searching = false;
+        chatStage = "idle";
         localStream = null;
         remoteStream = null;
         peerProfile = null;
@@ -287,12 +354,87 @@
             await ensureManagerConnected();
             await manager?.nextMatch(buildMatchPayload());
             searching = true;
+            chatStage = "searching";
         } catch (error) {
             errorMessage =
                 error instanceof Error
                     ? error.message
                     : $t("random-chat.error.next_match_failed");
         }
+    };
+
+    const sendTextMessage = () => {
+        const text = Array.from(textDraft.trim()).slice(0, 500).join("");
+        if (!text || chatStage !== "icebreaker") return;
+
+        const id =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        manager?.sendText(text, id);
+        trackRandomChatEvent("text_message_sent", {
+            campaign_intent: campaignIntent,
+        });
+        textMessages = [
+            ...textMessages,
+            { id, text, sentAt: Date.now(), own: true },
+        ];
+        textDraft = "";
+    };
+
+    const handleTextKeydown = (event: KeyboardEvent) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendTextMessage();
+        }
+    };
+
+    const inviteVideo = async () => {
+        if (mediaBusy || chatStage !== "icebreaker") return;
+        mediaBusy = true;
+        try {
+            await manager?.inviteVideo();
+            videoInviteSent = true;
+            trackRandomChatEvent("video_invite_sent", {
+                campaign_intent: campaignIntent,
+            });
+        } catch (error) {
+            errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : $t("random-chat.error.media_failed");
+            manager?.declineVideo();
+        } finally {
+            mediaBusy = false;
+        }
+    };
+
+    const acceptVideo = async () => {
+        if (mediaBusy || chatStage !== "icebreaker") return;
+        mediaBusy = true;
+        try {
+            await manager?.acceptVideo();
+            incomingVideoInvite = false;
+            trackRandomChatEvent("video_invite_accepted", {
+                campaign_intent: campaignIntent,
+            });
+        } catch (error) {
+            errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : $t("random-chat.error.media_failed");
+            manager?.declineVideo();
+        } finally {
+            mediaBusy = false;
+        }
+    };
+
+    const declineVideo = () => {
+        manager?.declineVideo();
+        incomingVideoInvite = false;
+        trackRandomChatEvent("video_invite_declined", {
+            campaign_intent: campaignIntent,
+        });
     };
 
     const toggleFullscreen = async () => {
@@ -337,8 +479,12 @@
         remoteVideoEl.muted = chatPrefs.muteRemoteOnJoin;
     }
 
-    $: statusText = inCall
-        ? $t("random-chat.status.in_call")
+    $: statusText = chatStage === "icebreaker"
+        ? $t("random-chat.status.icebreaker")
+        : chatStage === "video_connecting"
+          ? $t("random-chat.status.video_connecting")
+          : chatStage === "video"
+            ? $t("random-chat.status.in_call")
         : searching
           ? $t("random-chat.status.searching")
           : $t("random-chat.status.ready");
@@ -346,6 +492,9 @@
     onMount(() => {
         chatPrefs = loadRandomChatPreferences();
         manager = new RandomAvChatManager();
+        trackRandomChatEvent("page_viewed", {
+            campaign_intent: getRandomChatCampaignIntent(currentLang),
+        });
 
         const onFullscreenChange = () => {
             isFullscreen = !!document.fullscreenElement;
@@ -376,19 +525,71 @@
             }),
             manager.on("enqueued", () => {
                 searching = true;
+                chatStage = "searching";
+                trackRandomChatEvent("queue_entered", {
+                    campaign_intent: campaignIntent,
+                });
             }),
             manager.on("queue_cancelled", () => {
                 searching = false;
+                trackRandomChatEvent("queue_cancelled", {
+                    campaign_intent: campaignIntent,
+                });
             }),
-            manager.on("matched", ({ expiresAt: matchExpiresAt, peer }) => {
+            manager.on("matched", ({ phase, icebreakerExpiresAt, videoExpiresAt, peer }) => {
                 searching = false;
                 inCall = true;
+                chatStage = phase;
                 matchEndReason = "";
                 peerProfile = peer || null;
-                startCountdown(matchExpiresAt);
+                textMessages = [];
+                incomingVideoInvite = false;
+                videoInviteSent = false;
+                const deadline = phase === "icebreaker"
+                    ? icebreakerExpiresAt
+                    : videoExpiresAt;
+                if (deadline) startCountdown(deadline);
+                trackRandomChatEvent("match_created", {
+                    campaign_intent: campaignIntent,
+                    phase,
+                });
+                if (phase === "icebreaker") {
+                    trackRandomChatEvent("icebreaker_started", {
+                        campaign_intent: campaignIntent,
+                    });
+                }
+            }),
+            manager.on("text", ({ clientMessageId, text, sentAt }) => {
+                textMessages = [
+                    ...textMessages,
+                    { id: clientMessageId || `${sentAt}`, text, sentAt, own: false },
+                ];
+            }),
+            manager.on("video_invited", () => {
+                incomingVideoInvite = true;
+            }),
+            manager.on("video_accepted", () => {
+                videoInviteSent = true;
+            }),
+            manager.on("phase_changed", ({ phase, videoExpiresAt }) => {
+                chatStage = phase;
+                incomingVideoInvite = false;
+                if (phase === "video_connecting" || phase === "video") {
+                    textDraft = "";
+                    textMessages = [];
+                    if (videoExpiresAt) startCountdown(videoExpiresAt);
+                }
+                trackRandomChatEvent(
+                    phase === "video" ? "video_connected" : "video_connection_started",
+                    { campaign_intent: campaignIntent },
+                );
             }),
             manager.on("match_ended", ({ reason }) => {
                 matchEndReason = reason;
+                trackRandomChatEvent("match_ended", {
+                    campaign_intent: campaignIntent,
+                    reason,
+                });
                 resetUiAfterCall();
                 scheduleNextMatch();
             }),
@@ -433,12 +634,103 @@
 </svelte:head>
 
 <div class="random-chat-page">
+    <section class="community-hero">
+        <div class="community-copy">
+            <span class="community-eyebrow">{$t("random-chat.community.eyebrow")}</span>
+            <h1>{$t("random-chat.header.title")}</h1>
+            <p class="community-lead">{$t("random-chat.header.subtitle")}</p>
+            <div class="community-points" aria-label={$t("random-chat.community.features_label")}>
+                <span>{$t("random-chat.community.feature_members")}</span>
+                <span>{$t("random-chat.community.feature_text_first")}</span>
+                <span>{$t("random-chat.community.feature_filters")}</span>
+            </div>
+            <p class="membership-disclosure">
+                {$t("random-chat.header.membership_disclosure")}
+            </p>
+        </div>
+
+        <figure class="community-preview">
+            <img
+                src={communityImage}
+                alt={$t("random-chat.community.image_alt")}
+                width="1536"
+                height="1024"
+                loading="eager"
+                fetchpriority="high"
+            />
+            <figcaption>
+                <strong>{$t("random-chat.community.preview_title")}</strong>
+                <span>{$t("random-chat.community.preview_disclaimer")}</span>
+            </figcaption>
+        </figure>
+    </section>
+
     {#if !clerkEnabled}
         <div class="notice error">{$t("random-chat.notice.clerk_disabled")}</div>
     {:else}
         <section class="stage" bind:this={stageEl}>
             <div class="panel panel-remote">
-                {#if inCall && remoteStream}
+                {#if chatStage === "icebreaker"}
+                    <div class="icebreaker-panel">
+                        <header class="icebreaker-head">
+                            <div>
+                                <strong>{$t("random-chat.icebreaker.title")}</strong>
+                                <span>{$t("random-chat.icebreaker.subtitle")}</span>
+                            </div>
+                            <span class="icebreaker-timer">{countdown}</span>
+                        </header>
+
+                        <div class="message-list" aria-live="polite">
+                            {#if textMessages.length === 0}
+                                <div class="starter-card">
+                                    {$t("random-chat.icebreaker.starter")}
+                                </div>
+                            {/if}
+                            {#each textMessages as message (message.id)}
+                                <div class:own={message.own} class="message-row">
+                                    <span>{message.text}</span>
+                                </div>
+                            {/each}
+                        </div>
+
+                        {#if incomingVideoInvite}
+                            <div class="video-invite-card">
+                                <strong>{$t("random-chat.icebreaker.invite_received")}</strong>
+                                <span>{$t("random-chat.icebreaker.decline_warning")}</span>
+                                <div class="invite-actions">
+                                    <button on:click={acceptVideo} disabled={mediaBusy}>
+                                        {$t("random-chat.action.accept_video")}
+                                    </button>
+                                    <button class="danger" on:click={declineVideo} disabled={mediaBusy}>
+                                        {$t("random-chat.action.decline_video")}
+                                    </button>
+                                </div>
+                            </div>
+                        {:else}
+                            <div class="message-compose">
+                                <textarea
+                                    bind:value={textDraft}
+                                    maxlength="500"
+                                    rows="2"
+                                    placeholder={$t("random-chat.icebreaker.placeholder")}
+                                    on:keydown={handleTextKeydown}
+                                ></textarea>
+                                <button on:click={sendTextMessage} disabled={!textDraft.trim()}>
+                                    {$t("random-chat.action.send")}
+                                </button>
+                            </div>
+                            <button
+                                class="video-invite-button"
+                                on:click={inviteVideo}
+                                disabled={mediaBusy || videoInviteSent}
+                            >
+                                {videoInviteSent
+                                    ? $t("random-chat.icebreaker.invite_sent")
+                                    : $t("random-chat.action.invite_video")}
+                            </button>
+                        {/if}
+                    </div>
+                {:else if inCall && remoteStream}
                     <video class="video" bind:this={remoteVideoEl} autoplay playsinline></video>
                 {:else}
                     <div class="brand-area">
@@ -456,14 +748,21 @@
             </div>
 
             <div class="panel panel-local">
-                <video
-                    class="video"
-                    class:mirrored={chatPrefs.mirrorLocalVideo}
-                    bind:this={localVideoEl}
-                    autoplay
-                    playsinline
-                    muted
-                ></video>
+                {#if localStream}
+                    <video
+                        class="video"
+                        class:mirrored={chatPrefs.mirrorLocalVideo}
+                        bind:this={localVideoEl}
+                        autoplay
+                        playsinline
+                        muted
+                    ></video>
+                {:else}
+                    <div class="local-placeholder">
+                        <strong>{$t("random-chat.icebreaker.camera_off")}</strong>
+                        <span>{$t("random-chat.icebreaker.camera_off_detail")}</span>
+                    </div>
+                {/if}
 
                 <div class="overlay-top">
                     <button class="overlay-btn" on:click={toggleFullscreen}>
@@ -609,6 +908,18 @@
                 <label class="toggle">
                     <input
                         type="checkbox"
+                        checked={chatPrefs.useTextIcebreaker}
+                        on:change={handleUseTextIcebreakerChange}
+                    />
+                    <span>
+                        {$t("random-chat.settings.text_icebreaker")}
+                        <small>{$t("random-chat.settings.text_icebreaker_detail")}</small>
+                    </span>
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
                         checked={chatPrefs.autoNext}
                         on:change={handleAutoNextChange}
                     />
@@ -651,7 +962,128 @@
         width: min(1380px, calc(100% - 24px));
         margin: 10px auto 24px;
         display: grid;
-        gap: 12px;
+        gap: 16px;
+    }
+
+    .community-hero {
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        grid-template-columns: minmax(0, 0.82fr) minmax(520px, 1.18fr);
+        align-items: stretch;
+        min-height: 430px;
+        overflow: hidden;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at 12% 12%, rgba(var(--accent-rgb), 0.2), transparent 35%),
+            linear-gradient(145deg, var(--popup-bg), rgba(var(--accent-rgb), 0.06));
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+    }
+
+    .community-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 14px;
+        padding: clamp(28px, 5vw, 68px);
+        z-index: 2;
+    }
+
+    .community-eyebrow {
+        width: fit-content;
+        padding: 6px 11px;
+        border: 1px solid rgba(var(--accent-rgb), 0.38);
+        border-radius: 999px;
+        color: var(--accent-strong);
+        background: rgba(var(--accent-rgb), 0.1);
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .community-copy h1 {
+        max-width: 700px;
+        margin: 0;
+        font-size: clamp(2rem, 4.3vw, 4.4rem);
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+        text-wrap: balance;
+    }
+
+    .community-lead {
+        max-width: 630px;
+        margin: 0;
+        color: var(--subtext);
+        font-size: clamp(1rem, 1.4vw, 1.18rem);
+        line-height: 1.6;
+    }
+
+    .community-points {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .community-points span {
+        padding: 7px 10px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 0.82rem;
+    }
+
+    .membership-disclosure {
+        margin: 2px 0 0;
+        color: var(--subtext);
+        font-size: 0.82rem;
+    }
+
+    .community-preview {
+        position: relative;
+        min-width: 0;
+        margin: 0;
+        overflow: hidden;
+        background: #111;
+    }
+
+    .community-preview::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+            linear-gradient(90deg, rgba(8, 8, 8, 0.35), transparent 18%),
+            linear-gradient(0deg, rgba(8, 8, 8, 0.7), transparent 32%);
+    }
+
+    .community-preview img {
+        width: 100%;
+        height: 100%;
+        min-height: 430px;
+        display: block;
+        object-fit: cover;
+    }
+
+    .community-preview figcaption {
+        position: absolute;
+        z-index: 2;
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+        display: grid;
+        gap: 3px;
+        color: #fff;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    .community-preview figcaption span {
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 0.76rem;
+        line-height: 1.35;
     }
 
     .stage {
@@ -746,6 +1178,151 @@
 
     .video.mirrored {
         transform: scaleX(-1);
+    }
+
+    .local-placeholder {
+        height: 100%;
+        display: grid;
+        place-content: center;
+        gap: 8px;
+        padding: 24px;
+        text-align: center;
+        color: #f4f4f4;
+    }
+
+    .local-placeholder span {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.9rem;
+    }
+
+    .icebreaker-panel {
+        height: 100%;
+        min-height: 360px;
+        display: grid;
+        grid-template-rows: auto 1fr auto auto;
+        gap: 12px;
+        padding: 18px;
+        color: #f7f7f7;
+    }
+
+    .icebreaker-head,
+    .icebreaker-head > div,
+    .video-invite-card {
+        display: grid;
+        gap: 5px;
+    }
+
+    .icebreaker-head {
+        grid-template-columns: 1fr auto;
+        align-items: start;
+    }
+
+    .icebreaker-head span,
+    .video-invite-card span {
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 0.86rem;
+    }
+
+    .icebreaker-timer {
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(var(--accent-rgb), 0.2);
+        color: #fff !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .message-list {
+        min-height: 150px;
+        max-height: 38vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px;
+    }
+
+    .starter-card {
+        margin: auto;
+        max-width: 420px;
+        padding: 14px;
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.72);
+        background: rgba(255, 255, 255, 0.07);
+        text-align: center;
+    }
+
+    .message-row {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .message-row.own {
+        justify-content: flex-end;
+    }
+
+    .message-row span {
+        max-width: 82%;
+        border-radius: 13px 13px 13px 4px;
+        padding: 9px 11px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    .message-row.own span {
+        border-radius: 13px 13px 4px 13px;
+        background: rgba(var(--accent-rgb), 0.76);
+    }
+
+    .message-compose {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+    }
+
+    .message-compose textarea {
+        resize: none;
+        border-radius: 11px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(0, 0, 0, 0.26);
+        color: #fff;
+        padding: 9px 10px;
+    }
+
+    .message-compose button,
+    .video-invite-button,
+    .invite-actions button {
+        border: 1px solid rgba(var(--accent-rgb), 0.8);
+        border-radius: 10px;
+        background: rgba(var(--accent-rgb), 0.78);
+        color: #fff;
+        padding: 9px 13px;
+        cursor: pointer;
+    }
+
+    .message-compose button:disabled,
+    .video-invite-button:disabled,
+    .invite-actions button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .video-invite-card {
+        border-radius: 12px;
+        border: 1px solid rgba(var(--accent-rgb), 0.5);
+        background: rgba(var(--accent-rgb), 0.12);
+        padding: 12px;
+    }
+
+    .invite-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+    .invite-actions .danger {
+        border-color: rgba(214, 69, 69, 0.9);
+        background: rgba(214, 69, 69, 0.84);
     }
 
     .overlay-top,
@@ -974,7 +1551,34 @@
         height: 16px;
     }
 
+    .toggle span {
+        display: grid;
+        gap: 3px;
+    }
+
+    .toggle small {
+        color: var(--subtext);
+        line-height: 1.35;
+    }
+
     @media (max-width: 980px) {
+        .community-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .community-copy {
+            padding: 28px 24px 22px;
+        }
+
+        .community-copy h1 {
+            font-size: clamp(2rem, 9vw, 3.5rem);
+        }
+
+        .community-preview img {
+            min-height: 0;
+            aspect-ratio: 3 / 2;
+        }
+
         .stage {
             grid-template-columns: 1fr;
         }

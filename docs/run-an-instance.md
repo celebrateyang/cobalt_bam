@@ -50,7 +50,7 @@ requirements:
 
 if you're running outside Docker and want YouTube or the generic fallback extractor to work reliably, install `yt-dlp` and make sure it's available in `PATH`. if it's installed somewhere custom, set `YTDLP_BIN` to the executable path.
 
-### optional: PayPal credits and membership checkout
+git### optional: PayPal credits and membership checkout
 
 PayPal provides international checkout with one-time USD credit orders, a
 US$9.99 30-day membership pass, and automatically renewing memberships.

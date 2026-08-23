@@ -959,7 +959,7 @@
 
 <style>
     .random-chat-page {
-        width: min(1380px, calc(100% - 24px));
+        width: min(1540px, calc(100% - 24px));
         margin: 10px auto 24px;
         display: grid;
         gap: 16px;
@@ -969,9 +969,9 @@
         position: relative;
         isolation: isolate;
         display: grid;
-        grid-template-columns: minmax(0, 0.82fr) minmax(520px, 1.18fr);
+        grid-template-columns: minmax(0, 1.18fr) minmax(520px, 0.82fr);
         align-items: stretch;
-        min-height: 430px;
+        min-height: 360px;
         overflow: hidden;
         border: 1px solid var(--popup-stroke);
         border-radius: 22px;
@@ -985,8 +985,8 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 14px;
-        padding: clamp(28px, 5vw, 68px);
+        gap: 10px;
+        padding: clamp(24px, 3vw, 44px);
         z-index: 2;
     }
 
@@ -1006,8 +1006,8 @@
     .community-copy h1 {
         max-width: 700px;
         margin: 0;
-        font-size: clamp(2rem, 4.3vw, 4.4rem);
-        line-height: 0.98;
+        font-size: clamp(2.2rem, 3.2vw, 3.65rem);
+        line-height: 1.02;
         letter-spacing: -0.045em;
         text-wrap: balance;
     }
@@ -1016,23 +1016,23 @@
         max-width: 630px;
         margin: 0;
         color: var(--subtext);
-        font-size: clamp(1rem, 1.4vw, 1.18rem);
-        line-height: 1.6;
+        font-size: clamp(0.96rem, 1.15vw, 1.08rem);
+        line-height: 1.5;
     }
 
     .community-points {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
     }
 
     .community-points span {
-        padding: 7px 10px;
+        padding: 6px 9px;
         border: 1px solid var(--popup-stroke);
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.05);
         color: var(--text);
-        font-size: 0.82rem;
+        font-size: 0.78rem;
     }
 
     .membership-disclosure {
@@ -1044,6 +1044,7 @@
     .community-preview {
         position: relative;
         min-width: 0;
+        min-height: 360px;
         margin: 0;
         overflow: hidden;
         background: #111;
@@ -1061,9 +1062,10 @@
     }
 
     .community-preview img {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        min-height: 430px;
         display: block;
         object-fit: cover;
     }
@@ -1089,7 +1091,7 @@
     .stage {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        min-height: 62vh;
+        min-height: clamp(400px, 52vh, 600px);
         border-radius: 16px;
         overflow: hidden;
         border: 1px solid var(--popup-stroke);
@@ -1372,7 +1374,7 @@
     }
 
     .dock-btn {
-        min-height: 76px;
+        min-height: 68px;
         border-radius: 14px;
         border: 1px solid var(--popup-stroke);
         background: var(--popup-bg);
@@ -1561,6 +1563,33 @@
         line-height: 1.35;
     }
 
+    @media (min-width: 981px) and (max-height: 900px) {
+        .community-hero {
+            min-height: 340px;
+        }
+
+        .community-copy {
+            gap: 8px;
+            padding: 26px 34px;
+        }
+
+        .community-copy h1 {
+            font-size: clamp(2.1rem, 3vw, 3.35rem);
+        }
+
+        .community-preview {
+            min-height: 340px;
+        }
+
+        .stage {
+            min-height: clamp(360px, 45vh, 480px);
+        }
+
+        .dock-btn {
+            min-height: 64px;
+        }
+    }
+
     @media (max-width: 980px) {
         .community-hero {
             grid-template-columns: 1fr;
@@ -1574,7 +1603,14 @@
             font-size: clamp(2rem, 9vw, 3.5rem);
         }
 
+        .community-preview {
+            min-height: 0;
+        }
+
         .community-preview img {
+            position: relative;
+            inset: auto;
+            height: auto;
             min-height: 0;
             aspect-ratio: 3 / 2;
         }
@@ -1595,6 +1631,54 @@
 
         .dock {
             grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .random-chat-page {
+            width: calc(100% - 16px);
+            margin-top: 8px;
+            gap: 12px;
+        }
+
+        .community-hero {
+            min-height: 0;
+            border-radius: 16px;
+        }
+
+        .community-copy {
+            gap: 8px;
+            padding: 22px 18px 18px;
+        }
+
+        .community-copy h1 {
+            font-size: clamp(2rem, 10vw, 2.6rem);
+            line-height: 1.04;
+        }
+
+        .community-lead {
+            font-size: 0.94rem;
+            line-height: 1.45;
+        }
+
+        .community-preview img {
+            aspect-ratio: 16 / 9;
+        }
+
+        .stage {
+            min-height: 0;
+        }
+
+        .panel {
+            min-height: 240px;
+        }
+
+        .dock-btn {
+            min-height: 60px;
+        }
+
+        .dock > :last-child {
+            grid-column: 1 / -1;
         }
     }
 </style>

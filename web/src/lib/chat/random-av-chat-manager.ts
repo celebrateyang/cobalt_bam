@@ -1,6 +1,7 @@
 import { currentApiURL } from "$lib/api/api-url";
 
 type MatchRole = "initiator" | "receiver";
+export type ChatMatchPhase = "icebreaker" | "video_connecting" | "video";
 export type ChatSelfGender = "unspecified" | "male" | "female";
 export type ChatTargetGender = "any" | "male" | "female";
 
@@ -8,12 +9,14 @@ export type ChatMatchProfile = {
     selfGender?: ChatSelfGender;
     country?: string;
     language?: string;
+    useTextIcebreaker?: boolean;
 };
 
 export type ChatMatchFilters = {
     targetGender?: ChatTargetGender;
     targetCountry?: string;
     language?: string;
+    targetRegion?: "any" | "asia" | "western";
 };
 
 export type ChatMatchEnqueueOptions = {
@@ -31,9 +34,15 @@ type ChatEventMap = {
     matched: {
         matchId: string;
         role: MatchRole;
-        expiresAt: number;
+        phase: ChatMatchPhase;
+        icebreakerExpiresAt: number | null;
+        videoExpiresAt: number | null;
         peer?: ChatMatchProfile;
     };
+    text: { clientMessageId: string; text: string; sentAt: number };
+    video_invited: undefined;
+    video_accepted: undefined;
+    phase_changed: { phase: ChatMatchPhase; videoExpiresAt: number | null };
     match_ended: { reason: string };
     local_stream: { stream: MediaStream };
     remote_stream: { stream: MediaStream };
@@ -65,6 +74,10 @@ export class RandomAvChatManager {
     private matchId: string | null = null;
 
     private role: MatchRole | null = null;
+
+    private phase: ChatMatchPhase | null = null;
+
+    private videoConnectedSent = false;
 
     private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
@@ -185,7 +198,9 @@ export class RandomAvChatManager {
             throw new Error("WebSocket is not connected");
         }
 
-        await this.ensureLocalMedia();
+        if (options?.profile?.useTextIcebreaker === false) {
+            await this.ensureLocalMedia();
+        }
 
         this.send({
             type: "chat_match_enqueue",
@@ -199,7 +214,9 @@ export class RandomAvChatManager {
             throw new Error("WebSocket is not connected");
         }
 
-        await this.ensureLocalMedia();
+        if (options?.profile?.useTextIcebreaker === false) {
+            await this.ensureLocalMedia();
+        }
 
         this.send({
             type: "chat_next",
@@ -219,6 +236,24 @@ export class RandomAvChatManager {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.send({ type: "chat_leave" });
         }
+    }
+
+    sendText(text: string, clientMessageId: string): void {
+        this.send({ type: "chat_text", text, clientMessageId });
+    }
+
+    async inviteVideo(): Promise<void> {
+        await this.ensureLocalMedia();
+        this.send({ type: "chat_video_invite" });
+    }
+
+    async acceptVideo(): Promise<void> {
+        await this.ensureLocalMedia();
+        this.send({ type: "chat_video_accept" });
+    }
+
+    declineVideo(): void {
+        this.send({ type: "chat_video_decline" });
     }
 
     async disconnect(closeSocket = true): Promise<void> {
@@ -281,6 +316,27 @@ export class RandomAvChatManager {
             case "chat_matched":
                 await this.handleMatched(message);
                 break;
+            case "chat_text":
+                this.emit("text", {
+                    clientMessageId:
+                        typeof message?.clientMessageId === "string"
+                            ? message.clientMessageId
+                            : "",
+                    text: typeof message?.text === "string" ? message.text : "",
+                    sentAt: Number.isFinite(message?.sentAt)
+                        ? Number(message.sentAt)
+                        : Date.now(),
+                });
+                break;
+            case "chat_video_invited":
+                this.emit("video_invited", undefined);
+                break;
+            case "chat_video_accepted":
+                this.emit("video_accepted", undefined);
+                break;
+            case "chat_phase_changed":
+                await this.handlePhaseChanged(message);
+                break;
             case "chat_offer":
                 await this.handleOffer(message.offer);
                 break;
@@ -320,30 +376,73 @@ export class RandomAvChatManager {
             message?.role === "initiator" || message?.role === "receiver"
                 ? message.role
                 : null;
-        const expiresAt = Number.isFinite(message?.expiresAt)
-            ? Number(message.expiresAt)
-            : Date.now() + 10 * 60 * 1000;
+        const phase = this.normalizePhase(message?.phase);
+        const icebreakerExpiresAt = Number.isFinite(message?.icebreakerExpiresAt)
+            ? Number(message.icebreakerExpiresAt)
+            : null;
+        const videoExpiresAt = Number.isFinite(message?.videoExpiresAt)
+            ? Number(message.videoExpiresAt)
+            : null;
 
-        if (!matchId || !role) {
+        if (!matchId || !role || !phase) {
             this.emit("error", { message: "Invalid match payload" });
             return;
         }
 
         this.matchId = matchId;
         this.role = role;
+        this.phase = phase;
+        this.videoConnectedSent = false;
         this.pendingIceCandidates = [];
-
-        await this.ensurePeerConnection();
-        await this.ensureLocalMedia();
 
         const peer =
             message?.peer && typeof message.peer === "object"
                 ? (message.peer as ChatMatchProfile)
                 : undefined;
 
-        this.emit("matched", { matchId, role, expiresAt, peer });
+        this.emit("matched", {
+            matchId,
+            role,
+            phase,
+            icebreakerExpiresAt,
+            videoExpiresAt,
+            peer,
+        });
 
-        if (role === "initiator") {
+        if (phase === "video_connecting") {
+            await this.startVideoNegotiation();
+        }
+    }
+
+    private normalizePhase(value: unknown): ChatMatchPhase | null {
+        return value === "icebreaker" ||
+            value === "video_connecting" ||
+            value === "video"
+            ? value
+            : null;
+    }
+
+    private async handlePhaseChanged(message: any): Promise<void> {
+        const phase = this.normalizePhase(message?.phase);
+        if (!phase || !this.matchId) return;
+
+        this.phase = phase;
+        const videoExpiresAt = Number.isFinite(message?.videoExpiresAt)
+            ? Number(message.videoExpiresAt)
+            : null;
+        this.emit("phase_changed", { phase, videoExpiresAt });
+
+        if (phase === "video_connecting") {
+            await this.startVideoNegotiation();
+        }
+    }
+
+    private async startVideoNegotiation(): Promise<void> {
+        if (this.phase !== "video_connecting" && this.phase !== "video") return;
+        await this.ensureLocalMedia();
+        await this.ensurePeerConnection();
+
+        if (this.role === "initiator" && !this.pc?.localDescription) {
             await this.createAndSendOffer();
         }
     }
@@ -376,7 +475,12 @@ export class RandomAvChatManager {
             if (!this.pc) return;
 
             const state = this.pc.connectionState;
+            if (state === "connected" && !this.videoConnectedSent) {
+                this.videoConnectedSent = true;
+                this.send({ type: "chat_video_connected" });
+            }
             if (state === "failed" || state === "closed" || state === "disconnected") {
+                this.send({ type: "chat_leave" });
                 this.emit("match_ended", { reason: state });
                 this.resetCallState();
             }
@@ -423,6 +527,7 @@ export class RandomAvChatManager {
     }
 
     private async handleOffer(offer: RTCSessionDescriptionInit): Promise<void> {
+        if (this.phase !== "video_connecting" && this.phase !== "video") return;
         await this.ensurePeerConnection();
         await this.ensureLocalMedia();
 
@@ -449,7 +554,10 @@ export class RandomAvChatManager {
     }
 
     private async handleAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
-        if (!this.pc) return;
+        if (
+            !this.pc ||
+            (this.phase !== "video_connecting" && this.phase !== "video")
+        ) return;
 
         await this.pc.setRemoteDescription(answer);
 
@@ -465,6 +573,7 @@ export class RandomAvChatManager {
         candidate: RTCIceCandidateInit,
     ): Promise<void> {
         if (!candidate) return;
+        if (this.phase !== "video_connecting" && this.phase !== "video") return;
 
         if (!this.pc || !this.pc.remoteDescription) {
             this.pendingIceCandidates.push(candidate);
@@ -477,6 +586,8 @@ export class RandomAvChatManager {
     private resetCallState(): void {
         this.matchId = null;
         this.role = null;
+        this.phase = null;
+        this.videoConnectedSent = false;
         this.pendingIceCandidates = [];
         this.attachedTrackIds.clear();
 

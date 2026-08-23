@@ -12,15 +12,27 @@ const CLIPBOARD_SESSION_TTL_MS = 30 * 60 * 1000;
 const CLIPBOARD_PEER_ONLINE_WINDOW_MS = 45 * 1000;
 const CLIPBOARD_CREATOR_RECONNECT_GRACE_MS = 30 * 1000;
 const CHAT_MATCH_TTL_MS = 10 * 60 * 1000;
+const CHAT_ICEBREAKER_TTL_MS = 3 * 60 * 1000;
+const CHAT_TEXT_MAX_CODE_POINTS = 500;
+const CHAT_TEXT_RATE_WINDOW_MS = 1000;
+const CHAT_TEXT_RATE_BURST = 3;
 const CHAT_ALLOW_SELF_MATCH = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_ALLOW_SELF_MATCH || "").toLowerCase().trim(),
 );
 const CHAT_SELF_GENDERS = new Set(["unspecified", "male", "female"]);
 const CHAT_TARGET_GENDERS = new Set(["any", "male", "female"]);
+const CHAT_TARGET_REGIONS = new Set(["any", "asia", "western"]);
+const CHAT_ASIA_COUNTRIES = new Set(["CN", "JP", "KR", "TH", "VN"]);
+const CHAT_WESTERN_COUNTRIES = new Set(["US", "DE", "FR", "ES"]);
 const CHAT_MESSAGE_TYPES = new Set([
     "chat_auth",
     "chat_match_enqueue",
     "chat_match_cancel",
+    "chat_text",
+    "chat_video_invite",
+    "chat_video_accept",
+    "chat_video_decline",
+    "chat_video_connected",
     "chat_offer",
     "chat_answer",
     "chat_ice_candidate",
@@ -93,7 +105,12 @@ const normalizeTargetGender = (value) => {
     return CHAT_TARGET_GENDERS.has(raw) ? raw : "any";
 };
 
-const normalizeChatPreferences = (message) => {
+const normalizeTargetRegion = (value) => {
+    const raw = normalizeText(value, 16).toLowerCase();
+    return CHAT_TARGET_REGIONS.has(raw) ? raw : "any";
+};
+
+export const normalizeChatPreferences = (message) => {
     const profileInput =
         message?.profile && typeof message.profile === "object"
             ? message.profile
@@ -108,16 +125,18 @@ const normalizeChatPreferences = (message) => {
             selfGender: normalizeSelfGender(profileInput.selfGender),
             country: normalizeCountry(profileInput.country),
             language: normalizeLanguage(profileInput.language),
+            useTextIcebreaker: profileInput.useTextIcebreaker !== false,
         },
         filters: {
             targetGender: normalizeTargetGender(filtersInput.targetGender),
             targetCountry: normalizeCountry(filtersInput.targetCountry),
             language: normalizeLanguage(filtersInput.language),
+            targetRegion: normalizeTargetRegion(filtersInput.targetRegion),
         },
     };
 };
 
-const isMatchCompatible = (filters, peerProfile) => {
+export const isMatchCompatible = (filters, peerProfile) => {
     if (
         filters.targetGender !== "any" &&
         peerProfile.selfGender !== filters.targetGender
@@ -130,6 +149,14 @@ const isMatchCompatible = (filters, peerProfile) => {
         peerProfile.country !== filters.targetCountry
     ) {
         return false;
+    }
+
+    if (filters.targetCountry === "ANY" && filters.targetRegion !== "any") {
+        const countries =
+            filters.targetRegion === "asia"
+                ? CHAT_ASIA_COUNTRIES
+                : CHAT_WESTERN_COUNTRIES;
+        if (!countries.has(peerProfile.country)) return false;
     }
 
     if (filters.language && peerProfile.language !== filters.language) {
@@ -205,6 +232,17 @@ export const getClipboardPersonalSessionRuntime = (sessionId, deviceId = null) =
     };
 };
 
+export const getChatInitialPhase = (aProfile, bProfile) =>
+    aProfile?.useTextIcebreaker !== false ||
+    bProfile?.useTextIcebreaker !== false
+        ? "icebreaker"
+        : "video_connecting";
+
+export const normalizeChatText = (value) => {
+    if (typeof value !== "string") return "";
+    return Array.from(value.trim()).slice(0, CHAT_TEXT_MAX_CODE_POINTS).join("");
+};
+
 const clearClipboardCreatorReconnectTimer = (session) => {
     if (!session?.creatorReconnectTimer) return;
     clearTimeout(session.creatorReconnectTimer);
@@ -253,16 +291,24 @@ export const invalidateClipboardPersonalSession = (
     };
 };
 
-export const setupSignalingServer = (httpServer) => {
+export const setupSignalingServer = (httpServer, options = {}) => {
     const wss = new WebSocketServer({
         server: httpServer,
         path: "/ws",
     });
+    const chatIcebreakerTtlMs =
+        Number(options.chatIcebreakerTtlMs) > 0
+            ? Number(options.chatIcebreakerTtlMs)
+            : CHAT_ICEBREAKER_TTL_MS;
+    const chatMatchTtlMs =
+        Number(options.chatMatchTtlMs) > 0
+            ? Number(options.chatMatchTtlMs)
+            : CHAT_MATCH_TTL_MS;
 
     // random chat queue: [{ clerkUserId, ws, enqueuedAt, profile, filters }]
     const chatQueue = [];
 
-    // random chat matches: matchId -> { a, b, startedAt, expiresAt, timer }
+    // random chat matches: matchId -> phase-controlled ephemeral match state
     const chatMatches = new Map();
 
     // ws -> matchId
@@ -303,8 +349,11 @@ export const setupSignalingServer = (httpServer) => {
         const match = chatMatches.get(matchId);
         if (!match) return;
 
+        const previousPhase = match.phase;
         chatMatches.delete(matchId);
-        clearTimeout(match.timer);
+        clearTimeout(match.icebreakerTimer);
+        clearTimeout(match.videoTimer);
+        match.phase = "ended";
         wsChatMatchId.delete(match.a.ws);
         wsChatMatchId.delete(match.b.ws);
 
@@ -316,25 +365,88 @@ export const setupSignalingServer = (httpServer) => {
             type: "chat_match_ended",
             reason,
         });
+        console.log(
+            `[random-chat] match=${match.id} phase=ended previousPhase=${previousPhase} reason=${reason} durationMs=${Date.now() - match.createdAt}`,
+        );
+    };
+
+    const getChatMatchSide = (match, ws) => {
+        if (match.a.ws === ws) return "a";
+        if (match.b.ws === ws) return "b";
+        return null;
+    };
+
+    const sendChatError = (ws, code, message) => {
+        sendJson(ws, { type: "chat_error", code, message });
+    };
+
+    const transitionChatMatchToVideo = (match) => {
+        if (!match || match.phase !== "icebreaker") return false;
+        if (!match.videoConsent.a || !match.videoConsent.b) return false;
+
+        clearTimeout(match.icebreakerTimer);
+        match.icebreakerTimer = null;
+        match.phase = "video_connecting";
+        match.videoStartedAt = Date.now();
+        match.videoExpiresAt = match.videoStartedAt + chatMatchTtlMs;
+        match.videoTimer = setTimeout(() => {
+            endChatMatch(match.id, "timeout");
+        }, chatMatchTtlMs);
+        match.videoTimer.unref?.();
+
+        for (const peer of [match.a, match.b]) {
+            sendJson(peer.ws, {
+                type: "chat_phase_changed",
+                phase: match.phase,
+                videoExpiresAt: match.videoExpiresAt,
+            });
+        }
+        console.log(
+            `[random-chat] match=${match.id} phase=video_connecting icebreakerMs=${Date.now() - match.createdAt}`,
+        );
+        return true;
     };
 
     const createChatMatch = (a, b) => {
         const matchId = Math.random().toString(36).slice(2, 12);
-        const startedAt = Date.now();
-        const expiresAt = startedAt + CHAT_MATCH_TTL_MS;
-
-        const timer = setTimeout(() => {
-            endChatMatch(matchId, "timeout");
-        }, CHAT_MATCH_TTL_MS);
+        const createdAt = Date.now();
+        const phase = getChatInitialPhase(a.profile, b.profile);
+        const icebreakerRequired = phase === "icebreaker";
+        const icebreakerExpiresAt = icebreakerRequired
+            ? createdAt + chatIcebreakerTtlMs
+            : null;
+        const videoExpiresAt = icebreakerRequired
+            ? null
+            : createdAt + chatMatchTtlMs;
 
         const match = {
             id: matchId,
             a,
             b,
-            startedAt,
-            expiresAt,
-            timer,
+            phase,
+            createdAt,
+            icebreakerRequired,
+            icebreakerExpiresAt,
+            icebreakerTimer: null,
+            videoStartedAt: icebreakerRequired ? null : createdAt,
+            videoExpiresAt,
+            videoTimer: null,
+            videoConsent: { a: !icebreakerRequired, b: !icebreakerRequired },
+            videoConnected: { a: false, b: false },
+            textRate: { a: [], b: [] },
         };
+
+        if (icebreakerRequired) {
+            match.icebreakerTimer = setTimeout(() => {
+                endChatMatch(matchId, "icebreaker_timeout");
+            }, chatIcebreakerTtlMs);
+            match.icebreakerTimer.unref?.();
+        } else {
+            match.videoTimer = setTimeout(() => {
+                endChatMatch(matchId, "timeout");
+            }, chatMatchTtlMs);
+            match.videoTimer.unref?.();
+        }
 
         chatMatches.set(matchId, match);
         wsChatMatchId.set(a.ws, matchId);
@@ -344,16 +456,25 @@ export const setupSignalingServer = (httpServer) => {
             type: "chat_matched",
             matchId,
             role: "initiator",
-            expiresAt,
+            phase,
+            icebreakerRequired,
+            icebreakerExpiresAt,
+            videoExpiresAt,
             peer: match.b.profile,
         });
         sendJson(b.ws, {
             type: "chat_matched",
             matchId,
             role: "receiver",
-            expiresAt,
+            phase,
+            icebreakerRequired,
+            icebreakerExpiresAt,
+            videoExpiresAt,
             peer: match.a.profile,
         });
+        console.log(
+            `[random-chat] match=${matchId} phase=${phase} icebreakerRequired=${icebreakerRequired}`,
+        );
     };
 
     const tryCreateChatMatches = () => {
@@ -429,6 +550,15 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
+        if (!['video_connecting', 'video'].includes(match.phase)) {
+            sendChatError(
+                ws,
+                "VIDEO_NOT_AUTHORIZED",
+                "Mutual video consent is required",
+            );
+            return;
+        }
+
         const peer = match.a.ws === ws ? match.b.ws : match.a.ws;
         if (!isWsOpen(peer)) {
             endChatMatch(matchId, "peer_disconnected");
@@ -441,6 +571,97 @@ export const setupSignalingServer = (httpServer) => {
         });
     };
 
+    const handleChatText = (ws, message) => {
+        const matchId = wsChatMatchId.get(ws);
+        const match = matchId ? chatMatches.get(matchId) : null;
+        if (!match) {
+            sendChatError(ws, "NOT_IN_MATCH", "Not in an active match");
+            return;
+        }
+        if (match.phase !== "icebreaker") {
+            sendChatError(ws, "TEXT_NOT_ALLOWED", "Text is only available during icebreaker");
+            return;
+        }
+
+        const side = getChatMatchSide(match, ws);
+        const text = normalizeChatText(message?.text);
+        if (!side || !text) {
+            sendChatError(ws, "INVALID_CHAT_TEXT", "Message must contain text");
+            return;
+        }
+
+        const now = Date.now();
+        const recent = match.textRate[side].filter(
+            (sentAt) => now - sentAt < CHAT_TEXT_RATE_WINDOW_MS,
+        );
+        if (recent.length >= CHAT_TEXT_RATE_BURST) {
+            match.textRate[side] = recent;
+            sendChatError(ws, "CHAT_TEXT_RATE_LIMITED", "Messages are being sent too quickly");
+            return;
+        }
+        recent.push(now);
+        match.textRate[side] = recent;
+
+        const peer = side === "a" ? match.b.ws : match.a.ws;
+        sendJson(peer, {
+            type: "chat_text",
+            clientMessageId: normalizeText(message?.clientMessageId, 80),
+            text,
+            sentAt: now,
+        });
+    };
+
+    const handleChatVideoConsent = (ws, action) => {
+        const matchId = wsChatMatchId.get(ws);
+        const match = matchId ? chatMatches.get(matchId) : null;
+        if (!match) {
+            sendChatError(ws, "NOT_IN_MATCH", "Not in an active match");
+            return;
+        }
+        if (match.phase !== "icebreaker") {
+            sendChatError(ws, "VIDEO_CONSENT_NOT_ALLOWED", "Video consent is not available now");
+            return;
+        }
+
+        const side = getChatMatchSide(match, ws);
+        if (!side) return;
+        const peer = side === "a" ? match.b.ws : match.a.ws;
+
+        if (action === "decline") {
+            endChatMatch(match.id, "video_declined");
+            return;
+        }
+
+        match.videoConsent[side] = true;
+        sendJson(peer, {
+            type: action === "invite" ? "chat_video_invited" : "chat_video_accepted",
+        });
+        transitionChatMatchToVideo(match);
+    };
+
+    const handleChatVideoConnected = (ws) => {
+        const matchId = wsChatMatchId.get(ws);
+        const match = matchId ? chatMatches.get(matchId) : null;
+        if (!match || !["video_connecting", "video"].includes(match.phase)) return;
+        const side = getChatMatchSide(match, ws);
+        if (!side) return;
+        match.videoConnected[side] = true;
+        if (
+            match.phase === "video_connecting" &&
+            match.videoConnected.a &&
+            match.videoConnected.b
+        ) {
+            match.phase = "video";
+            for (const peer of [match.a, match.b]) {
+                sendJson(peer.ws, {
+                    type: "chat_phase_changed",
+                    phase: "video",
+                    videoExpiresAt: match.videoExpiresAt,
+                });
+            }
+        }
+    };
+
     const getRandomChatEligibility = async (clerkUserId) => {
         const user = await getUserByClerkId(clerkUserId);
         if (!user || user.is_disabled) {
@@ -449,6 +670,17 @@ export const setupSignalingServer = (httpServer) => {
 
         return getMembershipFeatureEligibility(user.id, "random_chat");
     };
+    const resolveRandomChatEligibility =
+        typeof options.getChatEligibility === "function"
+            ? options.getChatEligibility
+            : getRandomChatEligibility;
+    const verifyRandomChatToken =
+        typeof options.verifyChatToken === "function"
+            ? options.verifyChatToken
+            : (token) =>
+                  verifyToken(token, {
+                      secretKey: process.env.CLERK_SECRET_KEY,
+                  });
 
     const sendChatMembershipRequired = (ws, type = "chat_error") => {
         if (type === "chat_auth_failed") {
@@ -478,7 +710,7 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
-        if (!process.env.CLERK_SECRET_KEY) {
+        if (!process.env.CLERK_SECRET_KEY && !options.verifyChatToken) {
             sendJson(ws, {
                 type: "chat_auth_failed",
                 reason: "clerk_not_configured",
@@ -488,9 +720,7 @@ export const setupSignalingServer = (httpServer) => {
         }
 
         try {
-            const payload = await verifyToken(token, {
-                secretKey: process.env.CLERK_SECRET_KEY,
-            });
+            const payload = await verifyRandomChatToken(token);
 
             const clerkUserId =
                 typeof payload?.sub === "string" ? payload.sub.trim() : "";
@@ -503,7 +733,7 @@ export const setupSignalingServer = (httpServer) => {
                 return;
             }
 
-            const eligibility = await getRandomChatEligibility(clerkUserId);
+            const eligibility = await resolveRandomChatEligibility(clerkUserId);
             if (!eligibility.eligible) {
                 sendChatMembershipRequired(ws, "chat_auth_failed");
                 return;
@@ -535,7 +765,7 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
-        const eligibility = await getRandomChatEligibility(authState.clerkUserId);
+        const eligibility = await resolveRandomChatEligibility(authState.clerkUserId);
         if (!eligibility.eligible) {
             sendChatMembershipRequired(ws);
             return;
@@ -599,7 +829,7 @@ export const setupSignalingServer = (httpServer) => {
             return;
         }
 
-        const eligibility = await getRandomChatEligibility(authState.clerkUserId);
+        const eligibility = await resolveRandomChatEligibility(authState.clerkUserId);
         if (!eligibility.eligible) {
             sendChatMembershipRequired(ws);
             return;
@@ -824,6 +1054,21 @@ export const setupSignalingServer = (httpServer) => {
                         break;
                     case "chat_match_cancel":
                         handleChatCancel(ws);
+                        break;
+                    case "chat_text":
+                        handleChatText(ws, message);
+                        break;
+                    case "chat_video_invite":
+                        handleChatVideoConsent(ws, "invite");
+                        break;
+                    case "chat_video_accept":
+                        handleChatVideoConsent(ws, "accept");
+                        break;
+                    case "chat_video_decline":
+                        handleChatVideoConsent(ws, "decline");
+                        break;
+                    case "chat_video_connected":
+                        handleChatVideoConnected(ws);
                         break;
                     case "chat_offer":
                         forwardChatSignaling(ws, "chat_offer", {
@@ -1423,5 +1668,12 @@ export const setupSignalingServer = (httpServer) => {
     });
 
     console.log(`${Green("[✅]")} WebSocket signaling server started successfully`);
+    wss.once("close", () => {
+        for (const match of chatMatches.values()) {
+            clearTimeout(match.icebreakerTimer);
+            clearTimeout(match.videoTimer);
+        }
+        chatMatches.clear();
+    });
     return wss;
 };

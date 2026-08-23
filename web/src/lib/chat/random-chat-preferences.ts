@@ -31,11 +31,12 @@ export type RandomChatTargetGender = (typeof RANDOM_CHAT_TARGET_GENDER_OPTIONS)[
 export type RandomChatUiLanguage = "auto" | (typeof uiLanguageKeys)[number];
 
 export type RandomChatPreferences = {
-    schemaVersion: 1;
+    schemaVersion: 2;
     selfGender: RandomChatSelfGender;
     targetGender: RandomChatTargetGender;
     targetCountry: RandomChatCountry;
     uiLanguage: RandomChatUiLanguage;
+    useTextIcebreaker: boolean;
     autoNext: boolean;
     mirrorLocalVideo: boolean;
     muteRemoteOnJoin: boolean;
@@ -43,11 +44,12 @@ export type RandomChatPreferences = {
 };
 
 export const defaultRandomChatPreferences: RandomChatPreferences = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     selfGender: "unspecified",
     targetGender: "any",
     targetCountry: "ANY",
     uiLanguage: "auto",
+    useTextIcebreaker: true,
     autoNext: true,
     mirrorLocalVideo: true,
     muteRemoteOnJoin: false,
@@ -81,7 +83,7 @@ export const normalizeRandomChatPreferences = (
             : {};
 
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         selfGender: isSelfGender(source.selfGender)
             ? source.selfGender
             : defaultRandomChatPreferences.selfGender,
@@ -94,6 +96,10 @@ export const normalizeRandomChatPreferences = (
         uiLanguage: isUiLanguage(source.uiLanguage)
             ? source.uiLanguage
             : defaultRandomChatPreferences.uiLanguage,
+        useTextIcebreaker:
+            typeof source.useTextIcebreaker === "boolean"
+                ? source.useTextIcebreaker
+                : defaultRandomChatPreferences.useTextIcebreaker,
         autoNext:
             typeof source.autoNext === "boolean"
                 ? source.autoNext

@@ -75,6 +75,7 @@
     let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
     const fallbackHost = env.HOST || "freesavevideo.online";
+    const asiaMarketLanguages = new Set(["zh", "ja", "ko", "th", "vi"]);
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || "en";
     $: campaignIntent = getRandomChatCampaignIntent(currentLang);
     $: isAsiaPracticeMarket = ["zh", "ja", "ko", "vi", "th"].includes(
@@ -84,18 +85,59 @@
         ? "/images/random-chat/western-community-selfies.webp"
         : "/images/random-chat/asian-women-community-selfies.webp";
     $: canonicalUrl = `https://${fallbackHost}/${currentLang}/random-chat`;
+    $: seoMarket = asiaMarketLanguages.has(currentLang) ? "asia" : "western";
+    $: seoTitle = String($t(`random-chat.seo.${seoMarket}.title`));
+    $: seoIntro = String($t(`random-chat.seo.${seoMarket}.intro`));
+    $: seoRegionTitle = String($t(`random-chat.seo.${seoMarket}.region_title`));
+    $: seoRegionBody = String($t(`random-chat.seo.${seoMarket}.region_body`));
+    $: seoFaqItems = [
+        {
+            question: String($t("random-chat.seo.membership_question")),
+            answer: String($t("random-chat.header.subtitle")),
+        },
+        {
+            question: String($t("random-chat.seo.safety_question")),
+            answer: `${String($t("random-chat.safety.main"))} ${String($t("random-chat.safety.time_limit"))}`,
+        },
+    ];
     $: randomChatJsonLd = {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "@id": `${canonicalUrl}#app`,
-        name: "FreeSaveVideo Random 1v1 Video Chat",
-        url: canonicalUrl,
-        applicationCategory: "SocialNetworkingApplication",
-        applicationSubCategory: "Random Video Chat",
-        operatingSystem: "Any",
-        isAccessibleForFree: false,
-        description: String($t("random-chat.meta.description")),
-        featureList: ["ephemeral text icebreakers", "mutual video consent", "10-minute video sessions", "country, language, and gender preferences"],
+        "@graph": [
+            {
+                "@type": "WebApplication",
+                "@id": `${canonicalUrl}#app`,
+                name: seoTitle,
+                url: canonicalUrl,
+                inLanguage: currentLang,
+                applicationCategory: "SocialNetworkingApplication",
+                applicationSubCategory: "Random Video Chat",
+                operatingSystem: "Any",
+                isAccessibleForFree: false,
+                description: seoIntro,
+                featureList: [
+                    seoRegionTitle,
+                    String($t("random-chat.seo.filters_body")),
+                    String($t("random-chat.header.subtitle")),
+                    "ephemeral text icebreakers",
+                    "mutual video consent",
+                    "10-minute video sessions",
+                    "country, language, and gender preferences",
+                ],
+            },
+            {
+                "@type": "FAQPage",
+                "@id": `${canonicalUrl}#faq`,
+                inLanguage: currentLang,
+                mainEntity: seoFaqItems.map((item) => ({
+                    "@type": "Question",
+                    name: item.question,
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: item.answer,
+                    },
+                })),
+            },
+        ],
     };
 
     const updateChatPref = <K extends keyof RandomChatPreferences>(
@@ -625,11 +667,8 @@
 </script>
 
 <svelte:head>
-    <title>{$t("random-chat.meta.title")}</title>
-    <meta
-        name="description"
-        content={$t("random-chat.meta.description")}
-    />
+    <title>{seoTitle} | FreeSaveVideo</title>
+    <meta name="description" content={seoIntro} />
     {@html `<script type="application/ld+json">${JSON.stringify(randomChatJsonLd).replace(/</g, "\\u003c")}</script>`}
 </svelte:head>
 
@@ -845,6 +884,39 @@
             </div>
         {/if}
     {/if}
+
+    <section class="seo-content" aria-labelledby="random-chat-seo-title">
+        <div class="seo-heading">
+            <span class="seo-eyebrow">{$t("tabs.member_only")} · {seoRegionTitle}</span>
+            <h1 id="random-chat-seo-title">{seoTitle}</h1>
+            <p>{seoIntro}</p>
+        </div>
+
+        <div class="seo-grid">
+            <article class="seo-card">
+                <h2>{seoRegionTitle}</h2>
+                <p>{seoRegionBody}</p>
+            </article>
+            <article class="seo-card">
+                <h2>{$t("random-chat.field.country")} · {$t("random-chat.field.language")}</h2>
+                <p>{$t("random-chat.seo.filters_body")}</p>
+            </article>
+            <article class="seo-card">
+                <h2>{$t("random-chat.brand.subtitle")}</h2>
+                <p>{$t("random-chat.header.subtitle")}</p>
+            </article>
+        </div>
+
+        <div class="seo-faq" id="faq">
+            <h2>{$t("random-chat.seo.faq_title")}</h2>
+            {#each seoFaqItems as item}
+                <details>
+                    <summary>{item.question}</summary>
+                    <p>{item.answer}</p>
+                </details>
+            {/each}
+        </div>
+    </section>
 
     {#if showSettings}
         <div class="settings-mask" role="button" tabindex="0" on:click={() => (showSettings = false)} on:keydown={(event) => event.key === "Escape" && (showSettings = false)}>
@@ -1086,6 +1158,102 @@
         color: rgba(255, 255, 255, 0.76);
         font-size: 0.76rem;
         line-height: 1.35;
+    }
+
+    .seo-content {
+        margin-top: 8px;
+        padding: clamp(24px, 4vw, 52px);
+        border: 1px solid var(--popup-stroke);
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at 8% 0%, rgba(var(--accent-rgb), 0.12), transparent 30%),
+            var(--popup-bg);
+    }
+
+    .seo-heading {
+        max-width: 880px;
+    }
+
+    .seo-eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: var(--accent);
+        font-size: 0.76rem;
+        font-weight: 760;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .seo-heading h1 {
+        margin: 0;
+        max-width: 780px;
+        color: var(--text);
+        font-size: clamp(2rem, 4.5vw, 4rem);
+        line-height: 1.04;
+        letter-spacing: -0.045em;
+    }
+
+    .seo-heading p {
+        margin: 18px 0 0;
+        max-width: 760px;
+        color: var(--subtext);
+        font-size: clamp(1rem, 1.6vw, 1.16rem);
+        line-height: 1.75;
+    }
+
+    .seo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 30px;
+    }
+
+    .seo-card {
+        padding: 20px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 14px;
+        background: rgba(var(--accent-rgb), 0.035);
+    }
+
+    .seo-card h2,
+    .seo-faq h2 {
+        margin: 0;
+        color: var(--text);
+        font-size: 1.02rem;
+        line-height: 1.4;
+    }
+
+    .seo-card p,
+    .seo-faq p {
+        margin: 10px 0 0;
+        color: var(--subtext);
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+
+    .seo-faq {
+        margin-top: 34px;
+        max-width: 900px;
+    }
+
+    .seo-faq > h2 {
+        margin-bottom: 12px;
+        font-size: 1.3rem;
+    }
+
+    .seo-faq details {
+        border-top: 1px solid var(--popup-stroke);
+        padding: 14px 2px;
+    }
+
+    .seo-faq details:last-child {
+        border-bottom: 1px solid var(--popup-stroke);
+    }
+
+    .seo-faq summary {
+        color: var(--text);
+        font-weight: 680;
+        cursor: pointer;
     }
 
     .stage {
@@ -1631,6 +1799,10 @@
 
         .dock {
             grid-template-columns: 1fr 1fr;
+        }
+
+        .seo-grid {
+            grid-template-columns: 1fr;
         }
     }
 

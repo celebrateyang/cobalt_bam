@@ -159,14 +159,10 @@
     const targetGenderLabel = (value: ChatTargetGender) =>
         $t(`random-chat.gender.target.${value}`);
 
-    const cycleSelfGender = () => {
-        const idx = RANDOM_CHAT_SELF_GENDER_OPTIONS.indexOf(chatPrefs.selfGender);
-        const next =
-            RANDOM_CHAT_SELF_GENDER_OPTIONS[
-                (idx + 1) % RANDOM_CHAT_SELF_GENDER_OPTIONS.length
-            ];
-        updateChatPref("selfGender", next);
-    };
+    const uiLanguageLabel = (value: RandomChatUiLanguage) =>
+        value === "auto"
+            ? $t("random-chat.language.auto")
+            : (languages as Record<string, string>)[String(value)] || String(value);
 
     const getSelectValue = (event: Event) =>
         (event.currentTarget as HTMLSelectElement).value;
@@ -707,12 +703,144 @@
     {#if !clerkEnabled}
         <div class="notice error">{$t("random-chat.notice.clerk_disabled")}</div>
     {:else}
-        <section class="stage" bind:this={stageEl}>
-            <div class="panel panel-remote">
-                {#if chatStage === "icebreaker"}
+        <section
+            class:stage-video={chatStage === "video" || chatStage === "video_connecting"}
+            class="chat-workspace"
+            id="random-chat-workspace"
+            bind:this={stageEl}
+        >
+            <header class="workspace-head">
+                <div class="workspace-status">
+                    <span class:active={searching || inCall} class="status-dot"></span>
+                    <div>
+                        <strong>{statusText}</strong>
+                        <span>{$t("random-chat.header.membership_disclosure")}</span>
+                    </div>
+                </div>
+                <div class="workspace-tools">
+                    {#if chatStage === "video" || chatStage === "video_connecting"}
+                        <button class="tool-btn" on:click={toggleFullscreen}>
+                            {isFullscreen
+                                ? $t("random-chat.action.exit_fullscreen")
+                                : $t("random-chat.action.fullscreen")}
+                        </button>
+                    {/if}
+                    <button class="tool-btn" on:click={() => (showSettings = true)}>
+                        {$t("random-chat.action.settings")}
+                    </button>
+                </div>
+            </header>
+
+            {#if chatStage === "idle" || chatStage === "ended"}
+                <div class="ready-layout">
+                    <div class="ready-intro">
+                        <span class="step-label">01</span>
+                        <div class="ready-copy">
+                            <span class="member-badge">{$t("tabs.member_only")}</span>
+                            <h2>{$t("random-chat.brand.title")}</h2>
+                            <p>{$t("random-chat.header.subtitle")}</p>
+                        </div>
+                        <div class="privacy-note">
+                            <span class="privacy-icon" aria-hidden="true"></span>
+                            <div>
+                                <strong>{$t("random-chat.icebreaker.camera_off")}</strong>
+                                <span>{$t("random-chat.icebreaker.camera_off_detail")}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="preference-card">
+                        <div class="preference-head">
+                            <span class="step-label">02</span>
+                            <strong>{$t("random-chat.settings.title")}</strong>
+                        </div>
+
+                        <div class="preference-grid">
+                            <label class="quick-field">
+                                <span>{$t("random-chat.field.target_gender")}</span>
+                                <select value={chatPrefs.targetGender} on:change={handleTargetGenderChange}>
+                                    {#each RANDOM_CHAT_TARGET_GENDER_OPTIONS as value}
+                                        <option value={value}>{targetGenderLabel(value)}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                            <label class="quick-field">
+                                <span>{$t("random-chat.field.country")}</span>
+                                <select value={chatPrefs.targetCountry} on:change={handleCountryChange}>
+                                    {#each RANDOM_CHAT_COUNTRY_OPTIONS as value}
+                                        <option value={value}>{countryLabel(value)}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                            <label class="quick-field">
+                                <span>{$t("random-chat.field.language")}</span>
+                                <select value={chatPrefs.uiLanguage} on:change={handleUiLanguageChange}>
+                                    <option value="auto">{$t("random-chat.language.auto")}</option>
+                                    {#each Object.entries(languages) as [langCode, langName]}
+                                        <option value={langCode}>{langName}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                            <label class="quick-field">
+                                <span>{$t("random-chat.field.i_am")}</span>
+                                <select value={chatPrefs.selfGender} on:change={handleSelfGenderChange}>
+                                    {#each RANDOM_CHAT_SELF_GENDER_OPTIONS as value}
+                                        <option value={value}>{selfGenderLabel(value)}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                        </div>
+
+                        <label class="icebreaker-choice">
+                            <input
+                                type="checkbox"
+                                checked={chatPrefs.useTextIcebreaker}
+                                on:change={handleUseTextIcebreakerChange}
+                            />
+                            <span>
+                                <strong>{$t("random-chat.settings.text_icebreaker")}</strong>
+                                <small>{$t("random-chat.settings.text_icebreaker_detail")}</small>
+                            </span>
+                        </label>
+
+                        <button
+                            class="primary-action"
+                            on:click={startMatching}
+                            disabled={checkingMembership}
+                        >
+                            <span class="step-label">03</span>
+                            <span>
+                                <strong>{$t("random-chat.action.start")}</strong>
+                                <small>{$t("random-chat.safety.time_limit")}</small>
+                            </span>
+                            <span class="action-arrow" aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                </div>
+            {:else if chatStage === "searching"}
+                <div class="searching-view">
+                    <div class="search-radar" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="searching-copy">
+                        <span class="member-badge">{$t("tabs.member_only")}</span>
+                        <h2>{$t("random-chat.brand.searching_users")}</h2>
+                        <p>
+                            {countryLabel(chatPrefs.targetCountry)} ·
+                            {targetGenderLabel(chatPrefs.targetGender)} ·
+                            {uiLanguageLabel(chatPrefs.uiLanguage)}
+                        </p>
+                    </div>
+                    <button class="secondary-action danger" on:click={cancelMatching}>
+                        {$t("random-chat.action.cancel_matching")}
+                    </button>
+                </div>
+            {:else if chatStage === "icebreaker"}
+                <div class="conversation-layout">
                     <div class="icebreaker-panel">
                         <header class="icebreaker-head">
                             <div>
+                                <span class="conversation-kicker">{$t("random-chat.status.icebreaker")}</span>
                                 <strong>{$t("random-chat.icebreaker.title")}</strong>
                                 <span>{$t("random-chat.icebreaker.subtitle")}</span>
                             </div>
@@ -721,9 +849,7 @@
 
                         <div class="message-list" aria-live="polite">
                             {#if textMessages.length === 0}
-                                <div class="starter-card">
-                                    {$t("random-chat.icebreaker.starter")}
-                                </div>
+                                <div class="starter-card">{$t("random-chat.icebreaker.starter")}</div>
                             {/if}
                             {#each textMessages as message (message.id)}
                                 <div class:own={message.own} class="message-row">
@@ -769,96 +895,66 @@
                             </button>
                         {/if}
                     </div>
-                {:else if inCall && remoteStream}
-                    <video class="video" bind:this={remoteVideoEl} autoplay playsinline></video>
-                {:else}
-                    <div class="brand-area">
-                        <div class="member-badge">{$t("tabs.member_only")}</div>
-                        <div class="brand-title">{$t("random-chat.brand.title")}</div>
-                        <div class="brand-subtitle">{$t("random-chat.brand.subtitle")}</div>
-                        <div class="online-indicator">
-                            <span class="dot"></span>
-                            {searching
-                                ? $t("random-chat.brand.searching_users")
-                                : $t("random-chat.brand.users_online")}
-                        </div>
-                    </div>
-                {/if}
-            </div>
 
-            <div class="panel panel-local">
-                {#if localStream}
-                    <video
-                        class="video"
-                        class:mirrored={chatPrefs.mirrorLocalVideo}
-                        bind:this={localVideoEl}
-                        autoplay
-                        playsinline
-                        muted
-                    ></video>
-                {:else}
-                    <div class="local-placeholder">
+                    <aside class="match-context">
+                        <span class="context-icon" aria-hidden="true"></span>
                         <strong>{$t("random-chat.icebreaker.camera_off")}</strong>
-                        <span>{$t("random-chat.icebreaker.camera_off_detail")}</span>
+                        <p>{$t("random-chat.icebreaker.camera_off_detail")}</p>
+                        {#if peerProfile}
+                            <div class="peer-summary">
+                                <span>{$t("random-chat.peer_profile")}</span>
+                                <strong>
+                                    {selfGenderLabel(peerProfile.selfGender || "unspecified")}
+                                    {peerProfile.country ? ` · ${peerProfile.country}` : ""}
+                                </strong>
+                            </div>
+                        {/if}
+                        <button class="secondary-action danger" on:click={leaveMatch}>
+                            {$t("random-chat.action.end_chat")}
+                        </button>
+                    </aside>
+                </div>
+            {:else}
+                <div class="video-stage">
+                    {#if remoteStream}
+                        <video class="video remote-video" bind:this={remoteVideoEl} autoplay playsinline></video>
+                    {:else}
+                        <div class="video-connecting">
+                            <div class="search-radar compact" aria-hidden="true">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <strong>{statusText}</strong>
+                        </div>
+                    {/if}
+
+                    {#if localStream}
+                        <div class="local-video-pip">
+                            <video
+                                class:mirrored={chatPrefs.mirrorLocalVideo}
+                                class="video"
+                                bind:this={localVideoEl}
+                                autoplay
+                                playsinline
+                                muted
+                            ></video>
+                            <span>{$t("random-chat.field.i_am")}</span>
+                        </div>
+                    {/if}
+
+                    <div class="video-status-bar">
+                        <span class="chip">{statusText}</span>
+                        <span class="chip timer-chip">{countdown}</span>
                     </div>
-                {/if}
-
-                <div class="overlay-top">
-                    <button class="overlay-btn" on:click={toggleFullscreen}>
-                        {isFullscreen
-                            ? $t("random-chat.action.exit_fullscreen")
-                            : $t("random-chat.action.fullscreen")}
-                    </button>
-                    <button class="overlay-btn" on:click={() => (showSettings = true)}>
-                        {$t("random-chat.action.settings")}
-                    </button>
+                    <div class="video-actions">
+                        <button class="secondary-action danger" on:click={leaveMatch}>
+                            {$t("random-chat.action.end_chat")}
+                        </button>
+                        <button class="secondary-action next" on:click={nextMatch} disabled={checkingMembership}>
+                            {$t("random-chat.action.next")}
+                        </button>
+                    </div>
                 </div>
-
-                <div class="overlay-bottom">
-                    <span class="chip">
-                        {connected
-                            ? $t("random-chat.connection.connected")
-                            : $t("random-chat.connection.disconnected")}
-                    </span>
-                    <span class="chip">{statusText}</span>
-                    <span class="chip">{countdown}</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="dock">
-            <button
-                class="dock-btn start"
-                on:click={startMatching}
-                disabled={checkingMembership || searching || inCall}
-            >
-                {$t("random-chat.action.start")}
-            </button>
-            <button class="dock-btn stop" on:click={inCall ? leaveMatch : cancelMatching} disabled={!searching && !inCall}>
-                {$t("random-chat.action.stop")}
-            </button>
-            <button
-                class="dock-btn next"
-                on:click={nextMatch}
-                disabled={checkingMembership || !hasStartedOnce}
-            >
-                {$t("random-chat.action.next")}
-            </button>
-            <label class="dock-btn neutral dock-select-wrap">
-                <span>{$t("random-chat.field.country")}</span>
-                <select
-                    class="dock-select"
-                    value={chatPrefs.targetCountry}
-                    on:change={handleCountryChange}
-                >
-                    {#each RANDOM_CHAT_COUNTRY_OPTIONS as value}
-                        <option value={value}>{countryLabel(value)}</option>
-                    {/each}
-                </select>
-            </label>
-            <button class="dock-btn neutral" on:click={cycleSelfGender}>
-                {$t("random-chat.field.i_am")}: {selfGenderLabel(chatPrefs.selfGender)}
-            </button>
+            {/if}
         </section>
 
         {#if chatPrefs.showSafetyNotice}
@@ -1041,9 +1137,9 @@
         position: relative;
         isolation: isolate;
         display: grid;
-        grid-template-columns: minmax(0, 1.18fr) minmax(520px, 0.82fr);
+        grid-template-columns: minmax(0, 1.25fr) minmax(460px, 0.75fr);
         align-items: stretch;
-        min-height: 360px;
+        min-height: 260px;
         overflow: hidden;
         border: 1px solid var(--popup-stroke);
         border-radius: 22px;
@@ -1058,7 +1154,7 @@
         flex-direction: column;
         justify-content: center;
         gap: 10px;
-        padding: clamp(24px, 3vw, 44px);
+        padding: clamp(22px, 2.5vw, 34px);
         z-index: 2;
     }
 
@@ -1078,7 +1174,7 @@
     .community-copy h1 {
         max-width: 700px;
         margin: 0;
-        font-size: clamp(2.2rem, 3.2vw, 3.65rem);
+        font-size: clamp(2rem, 2.8vw, 3.15rem);
         line-height: 1.02;
         letter-spacing: -0.045em;
         text-wrap: balance;
@@ -1116,7 +1212,7 @@
     .community-preview {
         position: relative;
         min-width: 0;
-        min-height: 360px;
+        min-height: 260px;
         margin: 0;
         overflow: hidden;
         background: #111;
@@ -1256,87 +1352,279 @@
         cursor: pointer;
     }
 
-    .stage {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        min-height: clamp(400px, 52vh, 600px);
-        border-radius: 16px;
+    .chat-workspace {
         overflow: hidden;
+        min-height: 440px;
         border: 1px solid var(--popup-stroke);
+        border-radius: 20px;
+        background: var(--popup-bg);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .workspace-head {
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--popup-stroke);
         background: var(--popup-bg);
     }
 
-    .panel {
-        position: relative;
-        min-height: 360px;
-        border-right: 1px solid var(--popup-stroke);
-        background: #090909;
-    }
-
-    .panel:last-child {
-        border-right: none;
-    }
-
-    .panel-remote {
-        background:
-            linear-gradient(140deg, rgba(var(--accent-rgb), 0.2), transparent 45%),
-            radial-gradient(circle at 80% 90%, rgba(var(--accent-rgb), 0.14), transparent 38%),
-            #0d0d0d;
-    }
-
-    .panel-local {
-        background: #060606;
-    }
-
-    .brand-area {
-        height: 100%;
-        display: grid;
-        place-content: center;
-        text-align: center;
+    .workspace-status,
+    .workspace-tools,
+    .workspace-status > div {
+        display: flex;
+        align-items: center;
         gap: 10px;
-        color: #f7f7f7;
+    }
+
+    .workspace-status > div {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .workspace-status span:last-child {
+        color: var(--subtext);
+        font-size: 0.8rem;
+    }
+
+    .status-dot {
+        width: 11px;
+        height: 11px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #a8a8a8;
+        box-shadow: 0 0 0 5px rgba(168, 168, 168, 0.15);
+    }
+
+    .status-dot.active {
+        background: #52db6e;
+        box-shadow: 0 0 0 5px rgba(82, 219, 110, 0.18);
+    }
+
+    .tool-btn {
+        min-height: 38px;
+        padding: 7px 12px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 10px;
+        color: var(--text);
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .ready-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(520px, 1.1fr);
+        min-height: 400px;
+    }
+
+    .ready-intro {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding: clamp(26px, 3vw, 42px);
+        background:
+            radial-gradient(circle at 12% 14%, rgba(var(--accent-rgb), 0.22), transparent 34%),
+            linear-gradient(145deg, rgba(var(--accent-rgb), 0.08), transparent 62%);
+    }
+
+    .step-label {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        color: var(--accent-strong);
+        background: rgba(var(--accent-rgb), 0.13);
+        font-size: 0.72rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ready-copy {
+        display: grid;
+        gap: 12px;
+    }
+
+    .ready-copy h2 {
+        margin: 0;
+        font-size: clamp(1.8rem, 3vw, 3rem);
+        line-height: 1.06;
+        letter-spacing: -0.035em;
+    }
+
+    .ready-copy p {
+        max-width: 580px;
+        margin: 0;
+        color: var(--subtext);
+        line-height: 1.6;
     }
 
     .member-badge {
         width: fit-content;
-        margin: 0 auto;
         padding: 5px 10px;
         border: 1px solid rgba(var(--accent-rgb), 0.5);
         border-radius: 999px;
         color: var(--accent);
-        background: rgba(0, 0, 0, 0.34);
+        background: rgba(var(--accent-rgb), 0.08);
         font-size: 0.72rem;
         font-weight: 750;
         letter-spacing: 0.08em;
         text-transform: uppercase;
     }
 
-    .brand-title {
-        font-size: clamp(1.6rem, 3.1vw, 2.8rem);
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-    }
-
-    .brand-subtitle {
-        font-size: 0.98rem;
-        color: rgba(255, 255, 255, 0.7);
-    }
-
-    .online-indicator {
-        margin-top: 8px;
-        color: rgba(255, 255, 255, 0.85);
-        display: inline-flex;
+    .privacy-note {
+        display: flex;
         align-items: center;
-        gap: 8px;
-        justify-content: center;
+        gap: 12px;
+        margin-top: auto;
+        padding: 14px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.05);
     }
 
-    .dot {
-        width: 10px;
+    .privacy-note > div {
+        display: grid;
+        gap: 3px;
+    }
+
+    .privacy-note span:last-child,
+    .match-context p {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .privacy-icon,
+    .context-icon {
+        width: 30px;
+        height: 24px;
+        flex: 0 0 auto;
+        border: 2px solid var(--accent-strong);
+        border-radius: 7px;
+        position: relative;
+    }
+
+    .privacy-icon::after,
+    .context-icon::after {
+        content: "";
+        position: absolute;
+        top: 5px;
+        right: -8px;
+        width: 8px;
         height: 10px;
-        border-radius: 999px;
-        background: #52db6e;
-        box-shadow: 0 0 0 6px rgba(82, 219, 110, 0.2);
+        border-radius: 0 4px 4px 0;
+        background: var(--accent-strong);
+    }
+
+    .preference-card {
+        display: grid;
+        align-content: center;
+        gap: 18px;
+        padding: clamp(24px, 3vw, 40px);
+    }
+
+    .preference-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.05rem;
+    }
+
+    .preference-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .quick-field {
+        display: grid;
+        gap: 7px;
+        color: var(--subtext);
+        font-size: 0.82rem;
+    }
+
+    .quick-field select {
+        width: 100%;
+        min-height: 44px;
+        padding: 8px 10px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 11px;
+        color: var(--text);
+        background: transparent;
+    }
+
+    .icebreaker-choice {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        padding: 12px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 12px;
+        cursor: pointer;
+    }
+
+    .icebreaker-choice input {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+    }
+
+    .icebreaker-choice span {
+        display: grid;
+        gap: 3px;
+    }
+
+    .icebreaker-choice small {
+        color: var(--subtext);
+        line-height: 1.4;
+    }
+
+    .primary-action {
+        width: 100%;
+        min-height: 68px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid rgba(var(--accent-rgb), 0.95);
+        border-radius: 14px;
+        color: #fff;
+        background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.96), rgba(var(--accent-rgb), 0.7));
+        box-shadow: 0 12px 28px rgba(var(--accent-rgb), 0.2);
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .primary-action .step-label {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    .primary-action > span:nth-child(2) {
+        display: grid;
+        gap: 2px;
+    }
+
+    .primary-action small {
+        color: rgba(255, 255, 255, 0.78);
+    }
+
+    .primary-action:disabled,
+    .secondary-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .action-arrow {
+        font-size: 1.5rem;
     }
 
     .video {
@@ -1350,28 +1638,227 @@
         transform: scaleX(-1);
     }
 
-    .local-placeholder {
-        height: 100%;
+    .searching-view {
+        min-height: 410px;
         display: grid;
         place-content: center;
-        gap: 8px;
-        padding: 24px;
+        justify-items: center;
+        gap: 22px;
+        padding: 36px 20px;
         text-align: center;
-        color: #f4f4f4;
+        background:
+            radial-gradient(circle at 50% 46%, rgba(var(--accent-rgb), 0.16), transparent 30%),
+            linear-gradient(145deg, rgba(var(--accent-rgb), 0.08), transparent 64%);
     }
 
-    .local-placeholder span {
-        color: rgba(255, 255, 255, 0.66);
-        font-size: 0.9rem;
+    .searching-copy {
+        display: grid;
+        justify-items: center;
+        gap: 8px;
+    }
+
+    .searching-copy h2 {
+        margin: 0;
+        font-size: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .searching-copy p {
+        margin: 0;
+        color: var(--subtext);
+    }
+
+    .search-radar {
+        position: relative;
+        width: 116px;
+        height: 116px;
+        display: grid;
+        place-items: center;
+    }
+
+    .search-radar::after {
+        content: "";
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--accent-strong);
+        box-shadow: 0 0 0 9px rgba(var(--accent-rgb), 0.14);
+    }
+
+    .search-radar span {
+        position: absolute;
+        inset: 14px;
+        border: 1px solid rgba(var(--accent-rgb), 0.5);
+        border-radius: 999px;
+        animation: radar-pulse 1.8s ease-out infinite;
+    }
+
+    .search-radar span:nth-child(2) {
+        animation-delay: 0.6s;
+    }
+
+    .search-radar span:nth-child(3) {
+        animation-delay: 1.2s;
+    }
+
+    .search-radar.compact {
+        width: 88px;
+        height: 88px;
+    }
+
+    @keyframes radar-pulse {
+        from {
+            opacity: 0.8;
+            transform: scale(0.3);
+        }
+        to {
+            opacity: 0;
+            transform: scale(1.25);
+        }
+    }
+
+    .secondary-action {
+        min-height: 44px;
+        padding: 9px 18px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 11px;
+        color: var(--text);
+        background: var(--popup-bg);
+        cursor: pointer;
+    }
+
+    .secondary-action.danger {
+        border-color: rgba(214, 69, 69, 0.62);
+        color: #fff;
+        background: rgba(190, 48, 48, 0.92);
+    }
+
+    .secondary-action.next {
+        border-color: rgba(var(--accent-rgb), 0.7);
+        color: #fff;
+        background: rgba(var(--accent-rgb), 0.85);
+    }
+
+    .conversation-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+        min-height: 480px;
+        background: #0b0b0b;
+    }
+
+    .match-context {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 26px 22px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f7f7f7;
+        background:
+            radial-gradient(circle at 100% 0%, rgba(var(--accent-rgb), 0.2), transparent 38%),
+            #111;
+    }
+
+    .match-context .context-icon {
+        border-color: var(--accent);
+    }
+
+    .peer-summary {
+        width: 100%;
+        display: grid;
+        gap: 4px;
+        margin-top: 8px;
+        padding: 12px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .peer-summary span {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.78rem;
+    }
+
+    .match-context .secondary-action {
+        width: 100%;
+        margin-top: auto;
+    }
+
+    .video-stage {
+        position: relative;
+        min-height: clamp(430px, 62vh, 720px);
+        overflow: hidden;
+        background: #050505;
+    }
+
+    .remote-video {
+        position: absolute;
+        inset: 0;
+    }
+
+    .video-connecting {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        color: #fff;
+        background:
+            radial-gradient(circle at 50% 45%, rgba(var(--accent-rgb), 0.2), transparent 32%),
+            #080808;
+    }
+
+    .local-video-pip {
+        position: absolute;
+        z-index: 3;
+        top: 18px;
+        right: 18px;
+        width: min(24vw, 250px);
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.72);
+        border-radius: 14px;
+        background: #111;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    }
+
+    .local-video-pip span {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        padding: 4px 7px;
+        border-radius: 7px;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.52);
+        font-size: 0.74rem;
+    }
+
+    .video-status-bar,
+    .video-actions {
+        position: absolute;
+        z-index: 4;
+        left: 16px;
+        bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .video-actions {
+        left: auto;
+        right: 16px;
+    }
+
+    .timer-chip {
+        font-variant-numeric: tabular-nums;
     }
 
     .icebreaker-panel {
         height: 100%;
-        min-height: 360px;
+        min-height: 480px;
         display: grid;
         grid-template-rows: auto 1fr auto auto;
         gap: 12px;
-        padding: 18px;
+        padding: clamp(18px, 2.5vw, 30px);
         color: #f7f7f7;
     }
 
@@ -1385,6 +1872,14 @@
     .icebreaker-head {
         grid-template-columns: 1fr auto;
         align-items: start;
+    }
+
+    .conversation-kicker {
+        color: var(--accent) !important;
+        font-size: 0.72rem !important;
+        font-weight: 780;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
     }
 
     .icebreaker-head span,
@@ -1495,36 +1990,6 @@
         background: rgba(214, 69, 69, 0.84);
     }
 
-    .overlay-top,
-    .overlay-bottom {
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        display: flex;
-        gap: 8px;
-    }
-
-    .overlay-top {
-        top: 12px;
-        justify-content: flex-end;
-    }
-
-    .overlay-bottom {
-        bottom: 12px;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .overlay-btn {
-        padding: 8px 12px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #f5f5f5;
-        background: rgba(6, 6, 6, 0.45);
-        backdrop-filter: blur(4px);
-        cursor: pointer;
-    }
-
     .chip {
         border-radius: 999px;
         border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1533,88 +1998,6 @@
         padding: 6px 10px;
         font-size: 0.82rem;
         line-height: 1;
-    }
-
-    .dock {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 10px;
-    }
-
-    .dock-btn {
-        min-height: 68px;
-        border-radius: 14px;
-        border: 1px solid var(--popup-stroke);
-        background: var(--popup-bg);
-        color: var(--text);
-        cursor: pointer;
-        font-size: 1rem;
-        transition: transform 0.12s ease, box-shadow 0.12s ease;
-    }
-
-    .dock-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    .dock-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .dock-btn.start {
-        background: linear-gradient(
-            135deg,
-            rgba(var(--accent-rgb), 0.86),
-            rgba(var(--accent-rgb), 0.66)
-        );
-        color: #fff;
-        border-color: rgba(var(--accent-rgb), 0.98);
-    }
-
-    .dock-btn.stop {
-        background: rgba(214, 69, 69, 0.88);
-        color: #fff;
-        border-color: rgba(214, 69, 69, 0.92);
-    }
-
-    .dock-btn.next {
-        background: rgba(255, 188, 72, 0.92);
-        color: #2a2a2a;
-        border-color: rgba(255, 188, 72, 0.96);
-    }
-
-    .dock-btn.neutral {
-        background: var(--popup-bg);
-    }
-
-    .dock-select-wrap {
-        display: grid;
-        align-content: center;
-        justify-items: stretch;
-        gap: 6px;
-        padding: 8px 10px;
-        cursor: default;
-    }
-
-    .dock-select-wrap span {
-        font-size: 0.82rem;
-        color: var(--subtext);
-        text-align: left;
-        line-height: 1;
-    }
-
-    .dock-select {
-        width: 100%;
-        min-height: 34px;
-        border-radius: 8px;
-        border: 1px solid var(--popup-stroke);
-        background: transparent;
-        color: var(--text);
-        padding: 4px 8px;
-        font-size: 0.92rem;
     }
 
     .safety {
@@ -1733,34 +2116,30 @@
 
     @media (min-width: 981px) and (max-height: 900px) {
         .community-hero {
-            min-height: 340px;
+            min-height: 230px;
         }
 
         .community-copy {
             gap: 8px;
-            padding: 26px 34px;
+            padding: 22px 30px;
         }
 
         .community-copy h1 {
-            font-size: clamp(2.1rem, 3vw, 3.35rem);
+            font-size: clamp(1.9rem, 2.6vw, 2.85rem);
         }
 
         .community-preview {
-            min-height: 340px;
+            min-height: 230px;
         }
 
-        .stage {
-            min-height: clamp(360px, 45vh, 480px);
-        }
-
-        .dock-btn {
-            min-height: 64px;
+        .ready-layout {
+            min-height: 370px;
         }
     }
 
     @media (max-width: 980px) {
         .community-hero {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
         }
 
         .community-copy {
@@ -1768,37 +2147,32 @@
         }
 
         .community-copy h1 {
-            font-size: clamp(2rem, 9vw, 3.5rem);
+            font-size: clamp(1.9rem, 5vw, 2.8rem);
         }
 
-        .community-preview {
-            min-height: 0;
-        }
-
-        .community-preview img {
-            position: relative;
-            inset: auto;
-            height: auto;
-            min-height: 0;
-            aspect-ratio: 3 / 2;
-        }
-
-        .stage {
+        .ready-layout {
             grid-template-columns: 1fr;
         }
 
-        .panel {
-            border-right: none;
-            border-bottom: 1px solid var(--popup-stroke);
-            min-height: 300px;
+        .ready-intro {
+            min-height: 280px;
         }
 
-        .panel:last-child {
-            border-bottom: none;
+        .conversation-layout {
+            grid-template-columns: 1fr;
         }
 
-        .dock {
-            grid-template-columns: 1fr 1fr;
+        .match-context {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: none;
+        }
+
+        .match-context .secondary-action {
+            width: auto;
+        }
+
+        .local-video-pip {
+            width: min(34vw, 220px);
         }
 
         .seo-grid {
@@ -1834,23 +2208,74 @@
         }
 
         .community-preview img {
-            aspect-ratio: 16 / 9;
+            position: relative;
+            inset: auto;
+            height: auto;
+            aspect-ratio: 16 / 8;
         }
 
-        .stage {
+        .community-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .community-preview {
             min-height: 0;
         }
 
-        .panel {
-            min-height: 240px;
+        .workspace-head {
+            align-items: flex-start;
+            padding: 12px;
         }
 
-        .dock-btn {
-            min-height: 60px;
+        .workspace-status span:last-child {
+            display: none;
         }
 
-        .dock > :last-child {
-            grid-column: 1 / -1;
+        .ready-intro,
+        .preference-card {
+            padding: 22px 16px;
+        }
+
+        .ready-intro {
+            min-height: 250px;
+        }
+
+        .preference-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .conversation-layout,
+        .icebreaker-panel {
+            min-height: 520px;
+        }
+
+        .message-compose {
+            grid-template-columns: 1fr;
+        }
+
+        .video-stage {
+            min-height: 68vh;
+        }
+
+        .local-video-pip {
+            top: 12px;
+            right: 12px;
+            width: 34vw;
+        }
+
+        .video-status-bar {
+            left: 10px;
+            bottom: 72px;
+        }
+
+        .video-actions {
+            right: 10px;
+            left: 10px;
+            bottom: 12px;
+        }
+
+        .video-actions .secondary-action {
+            flex: 1;
         }
     }
 </style>

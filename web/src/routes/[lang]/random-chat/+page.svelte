@@ -756,7 +756,7 @@
                         </div>
 
                         <div class="preference-grid">
-                            <label class="quick-field">
+                            <label class="quick-field primary-filter">
                                 <span>{$t("random-chat.field.target_gender")}</span>
                                 <select value={chatPrefs.targetGender} on:change={handleTargetGenderChange}>
                                     {#each RANDOM_CHAT_TARGET_GENDER_OPTIONS as value}
@@ -764,7 +764,7 @@
                                     {/each}
                                 </select>
                             </label>
-                            <label class="quick-field">
+                            <label class="quick-field primary-filter">
                                 <span>{$t("random-chat.field.country")}</span>
                                 <select value={chatPrefs.targetCountry} on:change={handleCountryChange}>
                                     {#each RANDOM_CHAT_COUNTRY_OPTIONS as value}
@@ -1546,8 +1546,25 @@
     .quick-field {
         display: grid;
         gap: 7px;
+        padding: 11px;
+        border: 1px solid transparent;
+        border-radius: 13px;
         color: var(--subtext);
         font-size: 0.82rem;
+    }
+
+    .quick-field.primary-filter {
+        border-color: rgba(var(--accent-rgb), 0.42);
+        background:
+            linear-gradient(135deg, rgba(var(--accent-rgb), 0.14), rgba(var(--accent-rgb), 0.045)),
+            var(--popup-bg);
+        box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.08);
+    }
+
+    .quick-field.primary-filter > span {
+        color: var(--accent-strong);
+        font-size: 0.9rem;
+        font-weight: 780;
     }
 
     .quick-field select {
@@ -1558,6 +1575,14 @@
         border-radius: 11px;
         color: var(--text);
         background: transparent;
+    }
+
+    .quick-field.primary-filter select {
+        min-height: 48px;
+        border-color: rgba(var(--accent-rgb), 0.48);
+        background: rgba(var(--accent-rgb), 0.055);
+        font-size: 0.98rem;
+        font-weight: 680;
     }
 
     .icebreaker-choice {

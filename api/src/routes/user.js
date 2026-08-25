@@ -62,6 +62,13 @@ import {
     markFeedbackSeenForUser,
     processFeedback,
 } from "../db/feedback.js";
+import {
+    confirmRandomChatAdultByClerkId,
+    countPendingRandomChatReports,
+    getRandomChatAdultStatusByClerkId,
+    listRandomChatReports,
+    reviewRandomChatReport,
+} from "../db/random-chat-safety.js";
 import { requireAuth as requireAdminAuth } from "../middleware/admin-auth.js";
 import {
     buildClipboardPersonalSessionId,
@@ -718,6 +725,54 @@ router.post("/admin/feedback/:id/process", requireAdminAuth, async (req, res) =>
             "SERVER_ERROR",
             "Failed to process feedback",
         );
+    }
+});
+
+router.get("/admin/random-chat-reports", requireAdminAuth, async (req, res) => {
+    try {
+        const result = await listRandomChatReports({
+            page: req.query?.page,
+            limit: req.query?.limit,
+            status: typeof req.query?.status === "string" ? req.query.status : "",
+        });
+        return res.json({ status: "success", data: result });
+    } catch (error) {
+        console.error("GET /user/admin/random-chat-reports error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load chat reports");
+    }
+});
+
+router.get("/admin/random-chat-reports/stats", requireAdminAuth, async (_req, res) => {
+    try {
+        const pending = await countPendingRandomChatReports();
+        return res.json({ status: "success", data: { pending } });
+    } catch (error) {
+        console.error("GET /user/admin/random-chat-reports/stats error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load chat report stats");
+    }
+});
+
+router.post("/admin/random-chat-reports/:id/review", requireAdminAuth, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params?.id, 10);
+        const status = typeof req.body?.status === "string" ? req.body.status.trim() : "";
+        const adminNote = typeof req.body?.adminNote === "string"
+            ? req.body.adminNote.trim().slice(0, 4000)
+            : "";
+        if (!Number.isFinite(id) || id <= 0 || !["reviewed", "actioned", "dismissed"].includes(status)) {
+            return jsonError(res, 400, "INVALID_INPUT", "Invalid report review");
+        }
+        const report = await reviewRandomChatReport({
+            id,
+            status,
+            adminNote,
+            reviewedBy: req.user?.username || req.user?.email || "admin",
+        });
+        if (!report) return jsonError(res, 404, "NOT_FOUND", "Report not found");
+        return res.json({ status: "success", data: { report } });
+    } catch (error) {
+        console.error("POST /user/admin/random-chat-reports/:id/review error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to review chat report");
     }
 });
 
@@ -1389,12 +1444,20 @@ if (!isClerkApiConfigured) {
                     user.id,
                     "random_chat",
                 );
+                const adultStatus = await getRandomChatAdultStatusByClerkId(auth.userId);
 
                 return res.json({
                     status: "success",
                     data: {
                         ...eligibility,
+                        eligible: eligibility.eligible && adultStatus.confirmed,
+                        reason: eligibility.eligible && !adultStatus.confirmed
+                            ? "AGE_CONFIRMATION_REQUIRED"
+                            : eligibility.reason,
                         requireMembership: true,
+                        requireAdultConfirmation: true,
+                        adultConfirmed: adultStatus.confirmed,
+                        adultConfirmedAt: adultStatus.confirmedAt,
                     },
                 });
             } catch (error) {
@@ -1538,6 +1601,32 @@ if (!isClerkApiConfigured) {
                     "SERVER_ERROR",
                     "Failed to load personal clipboard session",
                 );
+            }
+        });
+
+        router.post("/chat/age-confirmation", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) {
+                    return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                }
+                if (req.body?.isAdult !== true) {
+                    return jsonError(
+                        res,
+                        400,
+                        "AGE_CONFIRMATION_REQUIRED",
+                        "You must confirm that you are at least 18 years old",
+                    );
+                }
+                const user = await ensureLocalUserByClerkId(auth.userId);
+                if (!user || user.is_disabled) {
+                    return jsonError(res, 403, "ACCOUNT_DISABLED", "Account disabled");
+                }
+                const confirmation = await confirmRandomChatAdultByClerkId(auth.userId);
+                return res.json({ status: "success", data: confirmation });
+            } catch (error) {
+                console.error("POST /user/chat/age-confirmation error:", error);
+                return jsonError(res, 500, "SERVER_ERROR", "Failed to save age confirmation");
             }
         });
 

@@ -21,6 +21,7 @@ import IconSpeakerphone from "@tabler/icons-svelte/IconSpeakerphone.svelte";
 import IconCat from "@tabler/icons-svelte/IconCat.svelte";
 import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
+import IconFlag from "@tabler/icons-svelte/IconFlag.svelte";
 
     $: lang = $page.params.lang;
     $: pathname = $page.url.pathname;
@@ -29,6 +30,7 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
         pathname === `/${lang}/console-manage-2025/`;
 
     let unprocessedFeedback = 0;
+    let pendingChatReports = 0;
     let feedbackStatsTimer: ReturnType<typeof setInterval> | null = null;
 
     const loadFeedbackStats = async () => {
@@ -46,6 +48,14 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
             const count = Number(data?.data?.unprocessed);
             unprocessedFeedback =
                 Number.isFinite(count) && count > 0 ? count : 0;
+            const reportRes = await fetch(`${currentApiURL()}/user/admin/random-chat-reports/stats`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const reportData = await reportRes.json().catch(() => ({}));
+            const reportCount = Number(reportData?.data?.pending);
+            if (reportRes.ok && reportData?.status === "success") {
+                pendingChatReports = Number.isFinite(reportCount) && reportCount > 0 ? reportCount : 0;
+            }
         } catch {
             // Keep the last known count during transient failures.
         }
@@ -58,6 +68,7 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
         feedbackStatsTimer = setInterval(loadFeedbackStats, 60_000);
         window.addEventListener("focus", handleStatsRefresh);
         window.addEventListener("admin-feedback-updated", handleStatsRefresh);
+        window.addEventListener("admin-chat-report-updated", handleStatsRefresh);
     });
 
     onDestroy(() => {
@@ -65,6 +76,7 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
         if (typeof window === "undefined") return;
         window.removeEventListener("focus", handleStatsRefresh);
         window.removeEventListener("admin-feedback-updated", handleStatsRefresh);
+        window.removeEventListener("admin-chat-report-updated", handleStatsRefresh);
     });
 
     const handleLogout = () => {
@@ -175,6 +187,14 @@ import IconDatabase from "@tabler/icons-svelte/IconDatabase.svelte";
                         iconColor="green"
                     >
                         <IconBulb />
+                    </PageNavTab>
+                    <PageNavTab
+                        tabPath="/{lang}/console-manage-2025/chat-reports"
+                        tabTitle="聊天举报"
+                        iconColor="gray"
+                        badgeCount={pendingChatReports}
+                    >
+                        <IconFlag />
                     </PageNavTab>
                     <PageNavTab
                         tabPath="/{lang}/console-manage-2025/feedback"

@@ -36,6 +36,7 @@ const createHarness = async (options = {}) => {
     const wss = setupSignalingServer(server, {
         verifyChatToken: async (token) => ({ sub: token }),
         getChatEligibility: async () => ({ eligible: true }),
+        getChatBlockedUsers: async () => [],
         ...options,
     });
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -201,6 +202,47 @@ test("declining video ends the icebreaker for both users", async () => {
         b.send(JSON.stringify({ type: "chat_video_decline" }));
         assert.equal((await endedA).reason, "video_declined");
         assert.equal((await endedB).reason, "video_declined");
+    } finally {
+        await harness.close(sockets);
+    }
+});
+
+test("reporting derives the peer on the server and ends the match", async () => {
+    let savedReport = null;
+    const harness = await createHarness({
+        createChatReport: async (report) => {
+            savedReport = report;
+            return { id: 42 };
+        },
+    });
+    const sockets = [];
+    try {
+        const a = await openAndAuth(harness.url, "reporter");
+        const b = await openAndAuth(harness.url, "reported");
+        sockets.push(a, b);
+        const [matchA] = await enqueuePair(a, b);
+        const received = nextMessage(a, "chat_report_received");
+        const endedA = nextMessage(a, "chat_match_ended");
+        const endedB = nextMessage(b, "chat_match_ended");
+
+        a.send(JSON.stringify({
+            type: "chat_report",
+            reason: "harassment",
+            details: "Repeated insults",
+            reportedClerkUserId: "spoofed_user",
+        }));
+
+        assert.equal((await received).reportId, 42);
+        assert.equal((await endedA).reason, "reported");
+        assert.equal((await endedB).reason, "reported");
+        assert.deepEqual(savedReport, {
+            matchId: matchA.matchId,
+            reporterClerkUserId: "reporter",
+            reportedClerkUserId: "reported",
+            reason: "harassment",
+            details: "Repeated insults",
+            phase: "icebreaker",
+        });
     } finally {
         await harness.close(sockets);
     }

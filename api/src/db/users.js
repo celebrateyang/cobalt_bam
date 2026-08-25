@@ -5,6 +5,7 @@ import { initReferralDatabase } from "./referrals.js";
 import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
 import { ensureMembershipOrdersSchema } from "./membership-orders.js";
 import { ensurePayPalMembershipSubscriptionsSchema } from "./paypal-membership-subscriptions.js";
+import { ensureRandomChatSafetySchema } from "./random-chat-safety.js";
 import { initDownloadAttemptsDatabase } from "./download-attempts.js";
 import { initPlatformRequestsDatabase } from "./platform-requests.js";
 import { initCuriousCatDatabase } from "./curious-cat.js";
@@ -676,6 +677,7 @@ export const initUserDatabase = async () => {
 
     await ensureMembershipOrdersSchema();
     await ensurePayPalMembershipSubscriptionsSchema();
+    await ensureRandomChatSafetySchema();
     await ensureClipboardPersonalSchema();
 
     console.log("✅ User database initialized");

@@ -5,6 +5,11 @@ import {
     getMembershipFeatureEligibility,
     getUserByClerkId,
 } from "../db/users.js";
+import {
+    createRandomChatReport,
+    getRandomChatAdultStatusByClerkId,
+    getRandomChatBlockedClerkIds,
+} from "../db/random-chat-safety.js";
 import { Green } from "../misc/console-text.js";
 import { verifyClipboardPersonalWsTicket } from "./clipboard-personal.js";
 
@@ -19,6 +24,13 @@ const CHAT_TEXT_RATE_BURST = 3;
 const CHAT_ALLOW_SELF_MATCH = ["1", "true", "yes", "on"].includes(
     String(process.env.CHAT_ALLOW_SELF_MATCH || "").toLowerCase().trim(),
 );
+const CHAT_REPORT_REASONS = new Set([
+    "inappropriate_content",
+    "harassment",
+    "suspected_minor",
+    "spam_or_scam",
+    "other",
+]);
 const CHAT_SELF_GENDERS = new Set(["unspecified", "male", "female"]);
 const CHAT_TARGET_GENDERS = new Set(["any", "male", "female"]);
 const CHAT_TARGET_REGIONS = new Set(["any", "asia", "western"]);
@@ -38,6 +50,7 @@ const CHAT_MESSAGE_TYPES = new Set([
     "chat_ice_candidate",
     "chat_leave",
     "chat_next",
+    "chat_report",
 ]);
 const CLIPBOARD_MESSAGE_TYPES = new Set([
     "create_session",
@@ -502,6 +515,12 @@ export const setupSignalingServer = (httpServer, options = {}) => {
                     continue;
                 }
                 if (
+                    a.blockedClerkUserIds?.has(chatQueue[i].clerkUserId) ||
+                    chatQueue[i].blockedClerkUserIds?.has(a.clerkUserId)
+                ) {
+                    continue;
+                }
+                if (
                     !isMatchCompatible(a.filters, chatQueue[i].profile) ||
                     !isMatchCompatible(chatQueue[i].filters, a.profile)
                 ) {
@@ -662,13 +681,58 @@ export const setupSignalingServer = (httpServer, options = {}) => {
         }
     };
 
+    const handleChatReport = async (ws, authState, message) => {
+        const matchId = wsChatMatchId.get(ws);
+        const match = matchId ? chatMatches.get(matchId) : null;
+        if (!match || !authState.authenticated || !authState.clerkUserId) {
+            sendChatError(ws, "NOT_IN_MATCH", "Reports require an active match");
+            return;
+        }
+
+        const side = getChatMatchSide(match, ws);
+        if (!side) {
+            sendChatError(ws, "NOT_IN_MATCH", "Reports require an active match");
+            return;
+        }
+        const reason = normalizeText(message?.reason, 40).toLowerCase();
+        if (!CHAT_REPORT_REASONS.has(reason)) {
+            sendChatError(ws, "INVALID_REPORT_REASON", "Select a valid report reason");
+            return;
+        }
+        const reportedPeer = side === "a" ? match.b : match.a;
+        try {
+            const report = await persistRandomChatReport({
+                matchId,
+                reporterClerkUserId: authState.clerkUserId,
+                reportedClerkUserId: reportedPeer.clerkUserId,
+                reason,
+                details: normalizeText(message?.details, 500),
+                phase: match.phase,
+            });
+            sendJson(ws, {
+                type: "chat_report_received",
+                reportId: report?.id || null,
+            });
+            endChatMatch(matchId, "reported");
+        } catch (error) {
+            console.error(`[random-chat] report failed match=${matchId}:`, error);
+            sendChatError(ws, "REPORT_FAILED", "Failed to submit report");
+        }
+    };
+
     const getRandomChatEligibility = async (clerkUserId) => {
         const user = await getUserByClerkId(clerkUserId);
         if (!user || user.is_disabled) {
             return { eligible: false, reason: "MEMBERSHIP_REQUIRED" };
         }
 
-        return getMembershipFeatureEligibility(user.id, "random_chat");
+        const membership = await getMembershipFeatureEligibility(user.id, "random_chat");
+        if (!membership.eligible) return membership;
+        const adultStatus = await getRandomChatAdultStatusByClerkId(clerkUserId);
+        if (!adultStatus.confirmed) {
+            return { eligible: false, reason: "AGE_CONFIRMATION_REQUIRED" };
+        }
+        return membership;
     };
     const resolveRandomChatEligibility =
         typeof options.getChatEligibility === "function"
@@ -681,21 +745,36 @@ export const setupSignalingServer = (httpServer, options = {}) => {
                   verifyToken(token, {
                       secretKey: process.env.CLERK_SECRET_KEY,
                   });
+    const resolveRandomChatBlockedUsers =
+        typeof options.getChatBlockedUsers === "function"
+            ? options.getChatBlockedUsers
+            : getRandomChatBlockedClerkIds;
+    const persistRandomChatReport =
+        typeof options.createChatReport === "function"
+            ? options.createChatReport
+            : createRandomChatReport;
 
-    const sendChatMembershipRequired = (ws, type = "chat_error") => {
+    const sendChatEligibilityRequired = (ws, reason, type = "chat_error") => {
+        const ageRequired = reason === "AGE_CONFIRMATION_REQUIRED";
         if (type === "chat_auth_failed") {
             sendJson(ws, {
                 type,
-                reason: "membership_required",
-                message: "Active membership is required for random chat",
+                reason: ageRequired
+                    ? "age_confirmation_required"
+                    : "membership_required",
+                message: ageRequired
+                    ? "Confirm that you are at least 18 years old"
+                    : "Active membership is required for random chat",
             });
             return;
         }
 
         sendJson(ws, {
             type,
-            code: "MEMBERSHIP_REQUIRED",
-            message: "Active membership is required for random chat",
+            code: ageRequired ? "AGE_CONFIRMATION_REQUIRED" : "MEMBERSHIP_REQUIRED",
+            message: ageRequired
+                ? "Confirm that you are at least 18 years old"
+                : "Active membership is required for random chat",
         });
     };
 
@@ -735,7 +814,7 @@ export const setupSignalingServer = (httpServer, options = {}) => {
 
             const eligibility = await resolveRandomChatEligibility(clerkUserId);
             if (!eligibility.eligible) {
-                sendChatMembershipRequired(ws, "chat_auth_failed");
+                sendChatEligibilityRequired(ws, eligibility.reason, "chat_auth_failed");
                 return;
             }
 
@@ -767,7 +846,7 @@ export const setupSignalingServer = (httpServer, options = {}) => {
 
         const eligibility = await resolveRandomChatEligibility(authState.clerkUserId);
         if (!eligibility.eligible) {
-            sendChatMembershipRequired(ws);
+            sendChatEligibilityRequired(ws, eligibility.reason);
             return;
         }
 
@@ -792,6 +871,9 @@ export const setupSignalingServer = (httpServer, options = {}) => {
             enqueuedAt: Date.now(),
             profile,
             filters,
+            blockedClerkUserIds: new Set(
+                await resolveRandomChatBlockedUsers(authState.clerkUserId),
+            ),
         });
 
         sendJson(ws, {
@@ -831,7 +913,7 @@ export const setupSignalingServer = (httpServer, options = {}) => {
 
         const eligibility = await resolveRandomChatEligibility(authState.clerkUserId);
         if (!eligibility.eligible) {
-            sendChatMembershipRequired(ws);
+            sendChatEligibilityRequired(ws, eligibility.reason);
             return;
         }
 
@@ -853,6 +935,9 @@ export const setupSignalingServer = (httpServer, options = {}) => {
             enqueuedAt: Date.now(),
             profile,
             filters,
+            blockedClerkUserIds: new Set(
+                await resolveRandomChatBlockedUsers(authState.clerkUserId),
+            ),
         });
 
         sendJson(ws, {
@@ -1090,6 +1175,9 @@ export const setupSignalingServer = (httpServer, options = {}) => {
                         break;
                     case "chat_next":
                         await handleChatNext(ws, chatAuthState, message);
+                        break;
+                    case "chat_report":
+                        await handleChatReport(ws, chatAuthState, message);
                         break;
                     default:
                         sendJson(ws, {

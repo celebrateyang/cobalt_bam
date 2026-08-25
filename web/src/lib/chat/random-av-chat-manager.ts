@@ -42,6 +42,7 @@ type ChatEventMap = {
     text: { clientMessageId: string; text: string; sentAt: number };
     video_invited: undefined;
     video_accepted: undefined;
+    report_received: { reportId: number | null };
     phase_changed: { phase: ChatMatchPhase; videoExpiresAt: number | null };
     match_ended: { reason: string };
     local_stream: { stream: MediaStream };
@@ -256,6 +257,10 @@ export class RandomAvChatManager {
         this.send({ type: "chat_video_decline" });
     }
 
+    reportMatch(reason: string, details = ""): void {
+        this.send({ type: "chat_report", reason, details });
+    }
+
     async disconnect(closeSocket = true): Promise<void> {
         this.leaveMatch();
         this.cancelMatching();
@@ -333,6 +338,13 @@ export class RandomAvChatManager {
                 break;
             case "chat_video_accepted":
                 this.emit("video_accepted", undefined);
+                break;
+            case "chat_report_received":
+                this.emit("report_received", {
+                    reportId: Number.isFinite(Number(message?.reportId))
+                        ? Number(message.reportId)
+                        : null,
+                });
                 break;
             case "chat_phase_changed":
                 await this.handlePhaseChanged(message);

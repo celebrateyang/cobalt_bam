@@ -32,6 +32,10 @@
         saveRandomChatPreferences,
     } from "$lib/chat/random-chat-preferences";
     import { clerkEnabled, getClerkToken } from "$lib/state/clerk";
+    import {
+        confirmRandomChatAdult,
+        fetchRandomChatEligibility,
+    } from "$lib/api/random-chat-safety";
 
     let manager: RandomAvChatManager | null = null;
 
@@ -67,6 +71,13 @@
     let incomingVideoInvite = false;
     let videoInviteSent = false;
     let mediaBusy = false;
+    let adultConfirmed = false;
+    let adultConfirmationChecked = false;
+    let ageConfirmationBusy = false;
+    let showReportDialog = false;
+    let reportReason = "inappropriate_content";
+    let reportDetails = "";
+    let reportBusy = false;
 
     let chatPrefs: RandomChatPreferences = defaultRandomChatPreferences;
 
@@ -92,12 +103,28 @@
     $: seoRegionBody = String($t(`random-chat.seo.${seoMarket}.region_body`));
     $: seoFaqItems = [
         {
-            question: String($t("random-chat.seo.membership_question")),
-            answer: String($t("random-chat.header.subtitle")),
+            question: String($t("random-chat.faq.who.question")),
+            answer: String($t("random-chat.faq.who.answer")),
         },
         {
-            question: String($t("random-chat.seo.safety_question")),
-            answer: `${String($t("random-chat.safety.main"))} ${String($t("random-chat.safety.time_limit"))}`,
+            question: String($t("random-chat.faq.camera.question")),
+            answer: String($t("random-chat.faq.camera.answer")),
+        },
+        {
+            question: String($t("random-chat.faq.country.question")),
+            answer: String($t("random-chat.faq.country.answer")),
+        },
+        {
+            question: String($t("random-chat.faq.duration.question")),
+            answer: String($t("random-chat.faq.duration.answer")),
+        },
+        {
+            question: String($t("random-chat.faq.price.question")),
+            answer: String($t("random-chat.faq.price.answer")),
+        },
+        {
+            question: String($t("random-chat.faq.report.question")),
+            answer: String($t("random-chat.faq.report.answer")),
         },
     ];
     $: randomChatJsonLd = {
@@ -206,6 +233,26 @@
         updateChatPref("useTextIcebreaker", getCheckboxValue(event));
     };
 
+    const ensureAdultConfirmation = async () => {
+        const token = await getClerkToken();
+        if (!token) throw new Error($t("random-chat.error.missing_clerk_token"));
+        const eligibility = await fetchRandomChatEligibility(token);
+        adultConfirmed = eligibility.adultConfirmed;
+        if (adultConfirmed) return true;
+        if (!adultConfirmationChecked) {
+            errorMessage = $t("random-chat.age.required_error");
+            return false;
+        }
+        ageConfirmationBusy = true;
+        try {
+            const result = await confirmRandomChatAdult(token);
+            adultConfirmed = result.confirmed;
+            return adultConfirmed;
+        } finally {
+            ageConfirmationBusy = false;
+        }
+    };
+
     const clearCountdown = () => {
         if (countdownTimer) {
             clearInterval(countdownTimer);
@@ -250,6 +297,8 @@
         incomingVideoInvite = false;
         videoInviteSent = false;
         mediaBusy = false;
+        reportBusy = false;
+        showReportDialog = false;
         clearCountdown();
     };
 
@@ -332,6 +381,15 @@
             trackRandomChatEvent("membership_gate_shown", {
                 campaign_intent: campaignIntent,
             });
+            return;
+        }
+
+        try {
+            if (!(await ensureAdultConfirmation())) return;
+        } catch (error) {
+            errorMessage = error instanceof Error
+                ? error.message
+                : $t("random-chat.age.confirm_failed");
             return;
         }
 
@@ -475,6 +533,18 @@
         });
     };
 
+    const openReportDialog = () => {
+        reportReason = "inappropriate_content";
+        reportDetails = "";
+        showReportDialog = true;
+    };
+
+    const submitReport = () => {
+        if (!manager || !inCall || reportBusy) return;
+        reportBusy = true;
+        manager.reportMatch(reportReason, reportDetails.trim());
+    };
+
     const toggleFullscreen = async () => {
         if (typeof document === "undefined") return;
 
@@ -559,6 +629,11 @@
                     void showMembershipUpgradeDialog("random_chat");
                     return;
                 }
+                if (reason === "age_confirmation_required") {
+                    adultConfirmed = false;
+                    errorMessage = $t("random-chat.age.required_error");
+                    return;
+                }
                 errorMessage = message;
             }),
             manager.on("enqueued", () => {
@@ -609,6 +684,11 @@
             manager.on("video_accepted", () => {
                 videoInviteSent = true;
             }),
+            manager.on("report_received", () => {
+                reportBusy = false;
+                showReportDialog = false;
+                errorMessage = "";
+            }),
             manager.on("phase_changed", ({ phase, videoExpiresAt }) => {
                 chatStage = phase;
                 incomingVideoInvite = false;
@@ -643,7 +723,16 @@
                     void showMembershipUpgradeDialog("random_chat");
                     return;
                 }
+                if (code === "AGE_CONFIRMATION_REQUIRED") {
+                    searching = false;
+                    adultConfirmed = false;
+                    errorMessage = $t("random-chat.age.required_error");
+                    return;
+                }
                 errorMessage = message;
+                if (code === "REPORT_FAILED") {
+                    reportBusy = false;
+                }
             }),
         ];
 
@@ -803,10 +892,22 @@
                             </span>
                         </label>
 
+                        <label class:confirmed={adultConfirmed} class="age-confirmation">
+                            <input
+                                type="checkbox"
+                                bind:checked={adultConfirmationChecked}
+                                disabled={adultConfirmed || ageConfirmationBusy}
+                            />
+                            <span>
+                                <strong>{$t("random-chat.age.confirm_label")}</strong>
+                                <small>{$t("random-chat.age.confirm_detail")}</small>
+                            </span>
+                        </label>
+
                         <button
                             class="primary-action"
                             on:click={startMatching}
-                            disabled={checkingMembership}
+                            disabled={checkingMembership || ageConfirmationBusy}
                         >
                             <span class="step-label">03</span>
                             <span>
@@ -912,6 +1013,9 @@
                         <button class="secondary-action danger" on:click={leaveMatch}>
                             {$t("random-chat.action.end_chat")}
                         </button>
+                        <button class="report-action" on:click={openReportDialog}>
+                            {$t("random-chat.action.report")}
+                        </button>
                     </aside>
                 </div>
             {:else}
@@ -946,6 +1050,9 @@
                         <span class="chip timer-chip">{countdown}</span>
                     </div>
                     <div class="video-actions">
+                        <button class="secondary-action report" on:click={openReportDialog}>
+                            {$t("random-chat.action.report")}
+                        </button>
                         <button class="secondary-action danger" on:click={leaveMatch}>
                             {$t("random-chat.action.end_chat")}
                         </button>
@@ -981,6 +1088,33 @@
         {/if}
     {/if}
 
+    <section class="trust-content" aria-labelledby="random-chat-why-title">
+        <article class="why-card">
+            <span class="seo-eyebrow">{$t("random-chat.why.eyebrow")}</span>
+            <h2 id="random-chat-why-title">{$t("random-chat.why.title")}</h2>
+            <p>{$t("random-chat.why.body")}</p>
+        </article>
+
+        <div class="safe-section">
+            <div class="safe-heading">
+                <span class="seo-eyebrow">{$t("random-chat.safe.eyebrow")}</span>
+                <h2>{$t("random-chat.safe.title")}</h2>
+                <p>{$t("random-chat.safe.intro")}</p>
+            </div>
+            <div class="safe-grid">
+                {#each ["members", "camera", "consent", "limit", "leave", "report"] as item}
+                    <article class="safe-card">
+                        <span class="safe-check" aria-hidden="true">✓</span>
+                        <div>
+                            <h3>{$t(`random-chat.safe.${item}.title`)}</h3>
+                            <p>{$t(`random-chat.safe.${item}.body`)}</p>
+                        </div>
+                    </article>
+                {/each}
+            </div>
+        </div>
+    </section>
+
     <section class="seo-content" aria-labelledby="random-chat-seo-title">
         <div class="seo-heading">
             <span class="seo-eyebrow">{$t("tabs.member_only")} · {seoRegionTitle}</span>
@@ -1013,6 +1147,41 @@
             {/each}
         </div>
     </section>
+
+{#if showReportDialog}
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+    <div class="settings-mask" role="presentation" on:click={() => !reportBusy && (showReportDialog = false)}>
+            <div class="report-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
+                <header class="settings-head">
+                    <div>
+                        <h2>{$t("random-chat.report.title")}</h2>
+                        <p>{$t("random-chat.report.subtitle")}</p>
+                    </div>
+                    <button class="close-btn" on:click={() => (showReportDialog = false)} disabled={reportBusy}>
+                        {$t("random-chat.action.close")}
+                    </button>
+                </header>
+                <label class="field">
+                    <span>{$t("random-chat.report.reason")}</span>
+                    <select bind:value={reportReason}>
+                        <option value="inappropriate_content">{$t("random-chat.report.inappropriate_content")}</option>
+                        <option value="harassment">{$t("random-chat.report.harassment")}</option>
+                        <option value="suspected_minor">{$t("random-chat.report.suspected_minor")}</option>
+                        <option value="spam_or_scam">{$t("random-chat.report.spam_or_scam")}</option>
+                        <option value="other">{$t("random-chat.report.other")}</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>{$t("random-chat.report.details")}</span>
+                    <textarea bind:value={reportDetails} maxlength="500" rows="4"></textarea>
+                </label>
+                <p class="report-warning">{$t("random-chat.report.ends_match")}</p>
+                <button class="secondary-action danger" on:click={submitReport} disabled={reportBusy}>
+                    {$t("random-chat.report.submit")}
+                </button>
+            </div>
+        </div>
+    {/if}
 
     {#if showSettings}
         <div class="settings-mask" role="button" tabindex="0" on:click={() => (showSettings = false)} on:keydown={(event) => event.key === "Escape" && (showSettings = false)}>
@@ -1254,6 +1423,85 @@
         color: rgba(255, 255, 255, 0.76);
         font-size: 0.76rem;
         line-height: 1.35;
+    }
+
+    .trust-content {
+        display: grid;
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .why-card,
+    .safe-section {
+        padding: clamp(24px, 4vw, 44px);
+        border: 1px solid var(--popup-stroke);
+        border-radius: 20px;
+        background: var(--popup-bg);
+    }
+
+    .why-card {
+        background:
+            radial-gradient(circle at 92% 10%, rgba(var(--accent-rgb), 0.16), transparent 34%),
+            var(--popup-bg);
+    }
+
+    .why-card h2,
+    .safe-heading h2 {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(1.7rem, 3vw, 2.65rem);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+    }
+
+    .why-card p,
+    .safe-heading p {
+        max-width: 850px;
+        margin: 14px 0 0;
+        color: var(--subtext);
+        font-size: 1rem;
+        line-height: 1.75;
+    }
+
+    .safe-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 26px;
+    }
+
+    .safe-card {
+        display: flex;
+        gap: 12px;
+        padding: 18px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 14px;
+        background: rgba(var(--accent-rgb), 0.035);
+    }
+
+    .safe-check {
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        color: var(--accent-strong);
+        background: rgba(var(--accent-rgb), 0.13);
+        font-weight: 800;
+    }
+
+    .safe-card h3 {
+        margin: 1px 0 0;
+        color: var(--text);
+        font-size: 0.98rem;
+    }
+
+    .safe-card p {
+        margin: 7px 0 0;
+        color: var(--subtext);
+        font-size: 0.88rem;
+        line-height: 1.6;
     }
 
     .seo-content {
@@ -1611,6 +1859,38 @@
         line-height: 1.4;
     }
 
+    .age-confirmation {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        padding: 12px;
+        border: 1px solid rgba(214, 69, 69, 0.38);
+        border-radius: 12px;
+        background: rgba(214, 69, 69, 0.055);
+        cursor: pointer;
+    }
+
+    .age-confirmation.confirmed {
+        border-color: rgba(var(--accent-rgb), 0.4);
+        background: rgba(var(--accent-rgb), 0.06);
+    }
+
+    .age-confirmation input {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+    }
+
+    .age-confirmation span {
+        display: grid;
+        gap: 3px;
+    }
+
+    .age-confirmation small {
+        color: var(--subtext);
+        line-height: 1.4;
+    }
+
     .primary-action {
         width: 100%;
         min-height: 68px;
@@ -1761,6 +2041,22 @@
         border-color: rgba(var(--accent-rgb), 0.7);
         color: #fff;
         background: rgba(var(--accent-rgb), 0.85);
+    }
+
+    .secondary-action.report,
+    .report-action {
+        border-color: rgba(255, 255, 255, 0.28);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .report-action {
+        width: 100%;
+        min-height: 42px;
+        margin-top: 2px;
+        border-style: solid;
+        border-radius: 10px;
+        cursor: pointer;
     }
 
     .conversation-layout {
@@ -2162,6 +2458,40 @@
         }
     }
 
+    .report-panel {
+        width: min(520px, 96vw);
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 16px;
+        color: var(--text);
+        background: var(--popup-bg);
+    }
+
+    .report-panel .settings-head > div {
+        display: grid;
+        gap: 4px;
+    }
+
+    .report-panel .settings-head p,
+    .report-warning {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .report-panel textarea {
+        resize: vertical;
+        min-height: 90px;
+        padding: 9px 10px;
+        border: 1px solid var(--popup-stroke);
+        border-radius: 10px;
+        color: var(--text);
+        background: transparent;
+    }
+
     @media (max-width: 980px) {
         .community-hero {
             grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
@@ -2203,6 +2533,10 @@
         .seo-grid {
             grid-template-columns: 1fr;
         }
+
+        .safe-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
     @media (max-width: 640px) {
@@ -2237,6 +2571,10 @@
             inset: auto;
             height: auto;
             aspect-ratio: 16 / 8;
+        }
+
+        .safe-grid {
+            grid-template-columns: 1fr;
         }
 
         .community-hero {

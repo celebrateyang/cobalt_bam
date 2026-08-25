@@ -100,7 +100,26 @@
     $: seoTitle = String($t(`random-chat.seo.${seoMarket}.title`));
     $: seoIntro = String($t(`random-chat.seo.${seoMarket}.intro`));
     $: seoRegionTitle = String($t(`random-chat.seo.${seoMarket}.region_title`));
-    $: seoRegionBody = String($t(`random-chat.seo.${seoMarket}.region_body`));
+    $: chatScenarioItems = [
+        {
+            key: "first_meeting",
+            prompts: [
+                String($t("random-chat.scenarios.first_meeting.prompt_1")),
+                String($t("random-chat.scenarios.first_meeting.prompt_2")),
+            ],
+        },
+        {
+            key: "practice",
+            prompts: [
+                String($t("random-chat.scenarios.practice.prompt_1")),
+                String($t("random-chat.scenarios.practice.prompt_2")),
+            ],
+        },
+        {
+            key: "switch",
+            prompts: [String($t("random-chat.scenarios.switch.prompt_1"))],
+        },
+    ];
     $: seoFaqItems = [
         {
             question: String($t("random-chat.faq.who.question")),
@@ -1117,24 +1136,23 @@
 
     <section class="seo-content" aria-labelledby="random-chat-seo-title">
         <div class="seo-heading">
-            <span class="seo-eyebrow">{$t("tabs.member_only")} · {seoRegionTitle}</span>
-            <h1 id="random-chat-seo-title">{seoTitle}</h1>
-            <p>{seoIntro}</p>
+            <span class="seo-eyebrow">{$t("random-chat.scenarios.eyebrow")}</span>
+            <h2 id="random-chat-seo-title">{$t("random-chat.scenarios.title")}</h2>
+            <p>{$t("random-chat.scenarios.intro")}</p>
         </div>
 
-        <div class="seo-grid">
-            <article class="seo-card">
-                <h2>{seoRegionTitle}</h2>
-                <p>{seoRegionBody}</p>
-            </article>
-            <article class="seo-card">
-                <h2>{$t("random-chat.field.country")} · {$t("random-chat.field.language")}</h2>
-                <p>{$t("random-chat.seo.filters_body")}</p>
-            </article>
-            <article class="seo-card">
-                <h2>{$t("random-chat.brand.subtitle")}</h2>
-                <p>{$t("random-chat.header.subtitle")}</p>
-            </article>
+        <div class="seo-grid scenario-grid">
+            {#each chatScenarioItems as scenario, index}
+                <article class="seo-card scenario-card">
+                    <span class="scenario-number" aria-hidden="true">{index + 1}</span>
+                    <h3>{$t(`random-chat.scenarios.${scenario.key}.title`)}</h3>
+                    <ul>
+                        {#each scenario.prompts as prompt}
+                            <li>{prompt}</li>
+                        {/each}
+                    </ul>
+                </article>
+            {/each}
         </div>
 
         <div class="seo-faq" id="faq">
@@ -1528,7 +1546,7 @@
         text-transform: uppercase;
     }
 
-    .seo-heading h1 {
+    .seo-heading h2 {
         margin: 0;
         max-width: 780px;
         color: var(--text);
@@ -1559,7 +1577,6 @@
         background: rgba(var(--accent-rgb), 0.035);
     }
 
-    .seo-card h2,
     .seo-faq h2 {
         margin: 0;
         color: var(--text);
@@ -1567,7 +1584,6 @@
         line-height: 1.4;
     }
 
-    .seo-card p,
     .seo-faq p {
         margin: 10px 0 0;
         color: var(--subtext);
@@ -1857,6 +1873,43 @@
     .icebreaker-choice small {
         color: var(--subtext);
         line-height: 1.4;
+    }
+
+    .scenario-card {
+        position: relative;
+        padding-top: 48px;
+    }
+
+    .scenario-number {
+        position: absolute;
+        top: 16px;
+        left: 20px;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        color: var(--accent-strong);
+        background: rgba(var(--accent-rgb), 0.12);
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .scenario-card h3 {
+        margin: 0;
+        color: var(--text);
+        font-size: 1.04rem;
+        line-height: 1.4;
+    }
+
+    .scenario-card ul {
+        display: grid;
+        gap: 9px;
+        margin: 13px 0 0;
+        padding-left: 1.15rem;
+        color: var(--subtext);
+        font-size: 0.92rem;
+        line-height: 1.6;
     }
 
     .age-confirmation {

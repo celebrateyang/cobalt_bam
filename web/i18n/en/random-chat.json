@@ -6,7 +6,7 @@
     "header.membership_disclosure": "Random Chat is available to active FreeSaveVideo members.",
     "community.eyebrow": "Members-only cross-cultural chat",
     "community.features_label": "Random Chat highlights",
-    "community.feature_members": "Meet people across Asia",
+    "community.feature_members": "Find people by country and language",
     "community.feature_text_first": "Text before video",
     "community.feature_filters": "Country, language and gender filters",
     "community.image_alt": "Illustrative community preview featuring adult Asian women in natural selfie portraits",
@@ -149,5 +149,16 @@
     "faq.price.question": "Is Random Chat free?",
     "faq.price.answer": "No. An active FreeSaveVideo membership is required. Random Chat sessions do not consume points; available plans, prices and billing terms are shown on the account page.",
     "faq.report.question": "How do I report someone?",
-    "faq.report.answer": "Select Report during a chat, choose a reason and submit. The match ends immediately, you will not be matched with that member again, and the report is sent for review."
+    "faq.report.answer": "Select Report during a chat, choose a reason and submit. The match ends immediately, you will not be matched with that member again, and the report is sent for review.",
+    "scenarios.eyebrow": "A simple way to begin",
+    "scenarios.title": "What can you talk about in 10 minutes?",
+    "scenarios.intro": "You do not need a perfect introduction. Start with one easy question and let the conversation develop naturally.",
+    "scenarios.first_meeting.title": "Meet someone new",
+    "scenarios.first_meeting.prompt_1": "Where are you joining from?",
+    "scenarios.first_meeting.prompt_2": "What do you enjoy doing in your free time?",
+    "scenarios.practice.title": "Discover everyday culture",
+    "scenarios.practice.prompt_1": "Talk about food, music, travel or daily life.",
+    "scenarios.practice.prompt_2": "Ask how something is different where they live.",
+    "scenarios.switch.title": "Meet another partner",
+    "scenarios.switch.prompt_1": "Conversation not clicking? End it anytime and meet someone else."
 }

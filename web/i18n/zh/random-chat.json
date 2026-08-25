@@ -6,7 +6,7 @@
     "header.membership_disclosure": "随机聊天仅向有效的 FreeSaveVideo 会员开放。",
     "community.eyebrow": "会员专属真人英语交流",
     "community.features_label": "随机聊天特点",
-    "community.feature_members": "认识欧美英语交流伙伴",
+    "community.feature_members": "按国家和语言寻找英语交流伙伴",
     "community.feature_text_first": "视频前先文字破冰",
     "community.feature_filters": "按国家、语言和性别筛选",
     "community.image_alt": "欧美成年用户自然自拍组成的社区示意预览",
@@ -149,5 +149,16 @@
     "faq.price.question": "随机聊天免费吗？",
     "faq.price.answer": "不免费，需要有效的 FreeSaveVideo 会员。随机聊天不会消耗积分；可用套餐、价格和计费规则以账户页面为准。",
     "faq.report.question": "如何举报用户？",
-    "faq.report.answer": "在聊天中点击“举报”，选择原因并提交。本轮匹配会立即结束，双方不会再次匹配，举报会进入后台审核。"
+    "faq.report.answer": "在聊天中点击“举报”，选择原因并提交。本轮匹配会立即结束，双方不会再次匹配，举报会进入后台审核。",
+    "scenarios.eyebrow": "从一个简单问题开始",
+    "scenarios.title": "10 分钟，可以聊什么？",
+    "scenarios.intro": "不需要准备完美的开场白。先问一个轻松的问题，让对话自然展开。",
+    "scenarios.first_meeting.title": "第一次见面",
+    "scenarios.first_meeting.prompt_1": "Where are you from?",
+    "scenarios.first_meeting.prompt_2": "What do you do in your free time?",
+    "scenarios.practice.title": "练习真实口语",
+    "scenarios.practice.prompt_1": "聊聊学校、工作、旅行或美食。",
+    "scenarios.practice.prompt_2": "试着不先翻译，直接用英语解释一件事。",
+    "scenarios.switch.title": "换一个伙伴",
+    "scenarios.switch.prompt_1": "聊不来？可以随时结束本轮，认识下一位伙伴。"
 }

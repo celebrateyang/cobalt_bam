@@ -60,6 +60,7 @@ export const createDirectCdnPipeline = (
     mimeType: string,
     request: CobaltSaveRequestBody,
     oldTaskId?: string,
+    options?: { useRangeRequests?: boolean },
 ) => {
     const candidates = urls.filter((value, index, list) => (
         typeof value === "string" && value.length > 0 && list.indexOf(value) === index
@@ -81,6 +82,7 @@ export const createDirectCdnPipeline = (
                 maxChunkBytes: 4 * 1024 * 1024,
                 fastChunkMs: 2500,
                 slowChunkMs: 8000,
+                useRangeRequests: options?.useRangeRequests,
             },
             resume: {
                 enabled: true,

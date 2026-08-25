@@ -17,6 +17,7 @@ type FetchWorkerTuning = {
     maxChunkBytes?: number,
     fastChunkMs?: number,
     slowChunkMs?: number,
+    useRangeRequests?: boolean,
 };
 
 type FetchWorkerResume = {
@@ -219,6 +220,7 @@ const normalizeTuning = (tuning?: FetchWorkerTuning) => {
         initialChunkBytes: normalizedInitialChunkBytes,
         fastChunkMs: normalizedFastChunkMs,
         slowChunkMs: normalizedSlowChunkMs,
+        useRangeRequests: tuning?.useRangeRequests !== false,
     };
 };
 
@@ -473,7 +475,11 @@ const fetchFile = async (
             const rangeStart = receivedBytes;
             let requestedRangeEnd: number | undefined;
 
-            if (expectedSizeReliable && expectedSize) {
+            if (runtimeTuning.useRangeRequests === false) {
+                // Some direct CDNs reject browser Range requests even though a
+                // normal GET is downloadable. In that mode, fetch the resource
+                // once and keep the Direct Bridge entirely client-side.
+            } else if (expectedSizeReliable && expectedSize) {
                 if (receivedBytes >= expectedSize) {
                     break;
                 }

@@ -47,6 +47,9 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.muscdn.com') ||
             host.endsWith('.akamaized.net') ||
             host.endsWith('.bilivideo.com') ||
+            host === 'mpvideo.qpic.cn' ||
+            host.endsWith('.mpvideo.qpic.cn') ||
+            host.endsWith('.video.qq.com') ||
             host === 'ugcws.video.gtimg.com' ||
             host === 'apd-vlive.apdcdn.tc.qq.com' ||
             (
@@ -149,14 +152,22 @@ const installFreeSaveVideoPageBridge = () => {
             return;
         }
 
-        void downloadInPageContext(url, filename, {
-            id: `page-download-${Date.now()}`,
-            kind: 'video',
+        void chrome.runtime.sendMessage({
+            type: 'FSV_DOWNLOAD_URL',
             url,
-            label: filename || 'Video',
-            source: 'api',
-            format: /\.m3u8(?:$|[?#])/i.test(url) ? 'm3u8' : 'mp4',
-        }).then(() => {
+            filename,
+            media: {
+                id: `page-download-${Date.now()}`,
+                kind: 'video',
+                url,
+                label: filename || 'Video',
+                source: 'api',
+                format: /\.m3u8(?:$|[?#])/i.test(url) ? 'm3u8' : 'mp4',
+            },
+        } satisfies ExtensionMessage).then((response) => {
+            if (response?.ok !== true) {
+                throw new Error(response?.error || 'Extension download failed.');
+            }
             window.postMessage({
                 source: 'freesavevideo-extension',
                 type: 'FSV_EXTENSION_DOWNLOAD_RESULT',

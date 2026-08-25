@@ -683,6 +683,7 @@ export const savingHandler = async ({
                 guessMimeTypeFromFilename(response.filename),
                 selectedRequest,
                 effectiveTaskId,
+                { useRangeRequests: false },
             );
             applyQueueMeta(effectiveTaskId, response, queueMeta);
             return response;

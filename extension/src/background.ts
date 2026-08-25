@@ -455,7 +455,13 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         void chrome.tabs.create({ url: buildFreeSaveVideoUrl(message.url) });
     }
     if (message.type === 'FSV_DOWNLOAD_URL') {
-        void downloadWithChrome(message);
+        void downloadWithChrome(message)
+            .then(() => sendResponse({ ok: true }))
+            .catch((error) => sendResponse({
+                ok: false,
+                error: error instanceof Error ? error.message : 'Extension download failed.',
+            }));
+        return true;
     }
     if (message.type === 'FSV_CONVERT_IMAGE_TO_JPEG') {
         void convertImageToJpeg(message.url, message.filename)

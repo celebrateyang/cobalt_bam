@@ -23,6 +23,7 @@ export type CobaltFetchTuning = {
     maxChunkBytes?: number,
     fastChunkMs?: number,
     slowChunkMs?: number,
+    useRangeRequests?: boolean,
 };
 
 export type CobaltFetchResume = {

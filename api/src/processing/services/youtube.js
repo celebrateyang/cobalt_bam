@@ -326,12 +326,15 @@ const getAutoPreferredContainer = (codec) => {
 };
 
 const resolveRequestedProfile = (o, targetQuality) => {
-    const preferredCodec = String(o.codec || "h264").toLowerCase();
+    const requestedCodec = String(o.codec || "h264").toLowerCase();
     const containerPreference = String(o.container || "auto").toLowerCase();
     const requestedQuality = targetQuality > 0 ? targetQuality : 1080;
+    const preferredCodec = containerPreference === "mp4" ? "h264" : requestedCodec;
 
     let effectiveQuality = requestedQuality;
-    let fallbackReason;
+    let fallbackReason = requestedCodec !== preferredCodec
+        ? `${requestedCodec}_mp4_requires_h264`
+        : undefined;
 
     if (preferredCodec === "h264" && effectiveQuality > 1080) {
         effectiveQuality = 1080;
@@ -472,7 +475,26 @@ const filterVideoCandidates = ({ candidates, mode, profile }) => {
             if (mode === "videoOnly" && !isVideoOnly) return false;
 
             if (candidate.videoCodec !== profile.preferredCodec) return false;
-            if (!matchesContainerPreference(candidate, profile.containerPreference)) return false;
+            if (
+                candidate.height > 0
+                && profile.effectiveQuality > 0
+                && profile.effectiveQuality < 9000
+                && candidate.height > profile.effectiveQuality
+            ) return false;
+
+            if (mode === "muxed") {
+                if (!matchesContainerPreference(candidate, profile.preferredContainer)) return false;
+
+                if (
+                    profile.preferredContainer === "mp4"
+                    && (candidate.videoCodec !== "h264" || candidate.audioCodec !== "aac")
+                ) return false;
+
+                if (
+                    profile.preferredContainer === "webm"
+                    && !["opus", "vorbis"].includes(candidate.audioCodec)
+                ) return false;
+            }
 
             return true;
         })
@@ -534,21 +556,20 @@ const pickSortedAudioFallbackCandidates = ({ candidates }) => {
 const getMergeOutputContainer = ({ videoCandidate, audioCandidate, profile }) => {
     if (profile.containerPreference === "mkv") return "mkv";
 
-    const audioLooksLikeMp4 =
-        audioCandidate.ext === "m4a"
-        || audioCandidate.ext === "mp4"
-        || audioCandidate.audioCodec === "aac";
+    const hasCompatibleMp4Audio = audioCandidate.audioCodec === "aac";
 
-    if (videoCandidate.ext === "mp4" && audioLooksLikeMp4) {
+    if (
+        profile.preferredCodec === "h264"
+        && profile.containerPreference !== "webm"
+        && videoCandidate.ext === "mp4"
+        && hasCompatibleMp4Audio
+    ) {
         return "mp4";
     }
 
-    const audioLooksLikeWebm =
-        audioCandidate.ext === "webm"
-        || audioCandidate.audioCodec === "opus"
-        || audioCandidate.audioCodec === "vorbis";
+    const hasCompatibleWebmAudio = ["opus", "vorbis"].includes(audioCandidate.audioCodec);
 
-    if (videoCandidate.ext === "webm" && audioLooksLikeWebm) {
+    if (profile.preferredCodec !== "h264" && hasCompatibleWebmAudio) {
         return "webm";
     }
 
@@ -611,7 +632,7 @@ const getVideoCodecFallbackOrder = (preferredCodec) => {
     const fallbackOrder = {
         av1: ["vp9", "h264"],
         vp9: ["h264", "av1"],
-        h264: ["vp9", "av1"],
+        h264: [],
     };
 
     return [preferredCodec, ...(fallbackOrder[preferredCodec] || ["h264", "vp9", "av1"])]
@@ -627,7 +648,9 @@ const selectUsableVideoProfile = ({
     const requestedProfile = resolveRequestedProfile(o, targetQuality);
 
     for (const codec of getVideoCodecFallbackOrder(requestedProfile.preferredCodec)) {
-        const profile = resolveRequestedProfile({ ...o, codec }, targetQuality);
+        const profile = codec === requestedProfile.preferredCodec
+            ? requestedProfile
+            : resolveRequestedProfile({ ...o, codec }, targetQuality);
         if (codec !== requestedProfile.preferredCodec) {
             profile.fallbackReason = `${requestedProfile.preferredCodec}_unavailable_to_${codec}`;
         }

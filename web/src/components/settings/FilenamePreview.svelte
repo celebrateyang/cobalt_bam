@@ -27,7 +27,7 @@
     let { downloadMode, youtubeVideoCodec, audioFormat, videoQuality } =
         $settings.save;
 
-    let youtubeVideoExt = youtubeVideoCodec === "vp9" ? "webm" : "mp4";
+    let youtubeVideoExt = youtubeVideoCodec === "h264" ? "mp4" : "webm";
 
     audioFormat = audioFormat !== "best" ? audioFormat : "opus";
     videoQuality = videoQuality !== "max" ? videoQuality : "2160";

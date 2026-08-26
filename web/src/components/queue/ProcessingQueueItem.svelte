@@ -31,6 +31,7 @@
     import IconReload from "@tabler/icons-svelte/IconReload.svelte";
     import IconLoader2 from "@tabler/icons-svelte/IconLoader2.svelte";
     import IconExclamationCircle from "@tabler/icons-svelte/IconExclamationCircle.svelte";
+    import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
 
     import IconFile from "@tabler/icons-svelte/IconFile.svelte";
     import IconMovie from "@tabler/icons-svelte/IconMovie.svelte";
@@ -66,6 +67,18 @@
     let downloading = false;
     let hasResumeSnapshot = false;
     $: hasResumeSnapshot = info.state === "error" && hasFetchResumeStateForTask(id);
+    const getWechatBrowserHandoffUrl = (item: CobaltQueueItem) => {
+        if (item.state !== "error" || item.errorCode !== "queue.fetch.bad_response") return null;
+        try {
+            const sourceHost = new URL(item.originalRequest?.url || "").hostname;
+            if (sourceHost !== "mp.weixin.qq.com") return null;
+        } catch {
+            return null;
+        }
+        const fetchStep = item.pipeline.find((step) => step.worker === "fetch");
+        return fetchStep?.worker === "fetch" ? fetchStep.workerArgs.url : null;
+    };
+    $: browserHandoffUrl = getWechatBrowserHandoffUrl(info);
 
     const retry = async (info: CobaltQueueItem) => {
         const originalRequest = info.originalRequest;
@@ -381,6 +394,19 @@
                         <span>{$t("button.continue")}</span>
                     {/if}
                 </button>
+            {/if}
+            {#if browserHandoffUrl}
+                <a
+                    class="button action-button"
+                    href={browserHandoffUrl}
+                    download={info.filename}
+                    target="_blank"
+                    rel="noreferrer noopener nofollow"
+                    aria-label={$t("button.download")}
+                    title={$t("button.download")}
+                >
+                    <IconDownload />
+                </a>
             {/if}
             <button
                 class="button action-button"

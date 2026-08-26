@@ -59,6 +59,7 @@ import {
     createDownloadAttempt,
     DOWNLOAD_ATTEMPT_STATUS,
 } from "../db/download-attempts.js";
+import { isBrowserQueuedDownload } from "./browser-queue.js";
 
 // 社交媒体路由
 import socialMediaRouter from "../routes/social-media.js";
@@ -1304,12 +1305,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
 
             const resultBodyStatus = result?.body?.status ?? "unknown";
             const isBatchRequest = normalizedRequest?.batch === true;
-            const isBrowserQueuedRequest =
-                resultBodyStatus === "local-processing" ||
-                (
-                    normalizedRequest?.localProcessing === "forced" &&
-                    resultBodyStatus === "tunnel"
-                );
+            const isBrowserQueuedRequest = isBrowserQueuedDownload({
+                request: normalizedRequest,
+                response: result?.body,
+            });
             const shouldDeferPointsCharge = isBrowserQueuedRequest;
             let pointsOutcome = "skipped";
             let pointsRequired = null;

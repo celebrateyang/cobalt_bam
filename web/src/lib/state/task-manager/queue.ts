@@ -11,6 +11,7 @@ import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { saveFileToAutoSaveDirectory } from "$lib/storage/auto-save";
 
 import type { CobaltQueue, CobaltQueueItem, CobaltQueueItemRunning, UUID } from "$lib/types/queue";
+import type { CobaltFetchFailureDiagnostic } from "$lib/types/workers";
 
 const clearPipelineCache = (queueItem: CobaltQueueItem) => {
     if (queueItem.state === "running") {
@@ -220,7 +221,12 @@ const finalizeQueueHold = async (id: UUID) => {
     }
 };
 
-const releaseQueueHold = async (id: UUID, reason: string, errorCode?: string) => {
+const releaseQueueHold = async (
+    id: UUID,
+    reason: string,
+    errorCode?: string,
+    failureDiagnostic?: CobaltFetchFailureDiagnostic,
+) => {
     const item = get(queue)[id];
     if (!item) {
         console.log(`[queue] releaseQueueHold: item not found id=${id}`);
@@ -238,6 +244,7 @@ const releaseQueueHold = async (id: UUID, reason: string, errorCode?: string) =>
         queueId: id,
         itemId: id,
         errorCode,
+        failureDiagnostic,
     }).catch((error) => {
         console.error(`[queue] releaseQueueHold: API call failed holdId=${holdId} error=`, error);
         return null;
@@ -288,7 +295,12 @@ export function addItem(item: CobaltQueueItem) {
     schedule();
 }
 
-export function itemError(id: UUID, workerId: UUID, error: string) {
+export function itemError(
+    id: UUID,
+    workerId: UUID,
+    error: string,
+    failureDiagnostic?: CobaltFetchFailureDiagnostic,
+) {
     console.log(`[queue] itemError: id=${id} workerId=${workerId} error=${error}`);
 
     let switchedToFallback = false;
@@ -321,6 +333,7 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
                 ...queueData[id],
                 state: "error",
                 errorCode: error,
+                failureDiagnostic,
             }
         } else {
             console.log(`[queue] itemError: item NOT found in queue id=${id}`);
@@ -335,7 +348,7 @@ export function itemError(id: UUID, workerId: UUID, error: string) {
     }
     maybeShowQueueRefreshHint(error);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
-    const pendingRelease = releaseQueueHold(id, "queue_error", error);
+    const pendingRelease = releaseQueueHold(id, "queue_error", error, failureDiagnostic);
     pendingPointsReleases.set(id, pendingRelease);
     void pendingRelease.finally(() => {
         if (pendingPointsReleases.get(id) === pendingRelease) {

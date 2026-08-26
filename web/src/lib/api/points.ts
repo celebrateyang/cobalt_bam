@@ -18,6 +18,14 @@ export type PointsHoldRequestContext = {
     queueId?: string;
     itemId?: string;
     errorCode?: string;
+    failureDiagnostic?: {
+        candidateHost?: string;
+        candidateIndex?: number;
+        candidateCount?: number;
+        httpStatus?: number;
+        contentType?: string;
+        failureKind?: string;
+    };
 };
 
 
@@ -63,6 +71,7 @@ export const finalizePointsHold = async (
             queueId: context?.queueId,
             itemId: context?.itemId,
             errorCode: context?.errorCode,
+            failureDiagnostic: context?.failureDiagnostic,
         }),
     }).catch(() => null);
 
@@ -111,6 +120,7 @@ export const releasePointsHold = async (
             queueId: context?.queueId,
             itemId: context?.itemId,
             errorCode: context?.errorCode,
+            failureDiagnostic: context?.failureDiagnostic,
         }),
     }).catch((error) => {
         console.error(`[points] releasePointsHold: fetch failed holdId=${holdId} requestId=${requestId} error=`, error);

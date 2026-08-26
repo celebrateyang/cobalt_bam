@@ -1,5 +1,9 @@
 import type { CobaltSaveRequestBody } from "$lib/types/api";
-import type { CobaltPipelineItem, CobaltPipelineResultFileType } from "$lib/types/workers";
+import type {
+    CobaltFetchFailureDiagnostic,
+    CobaltPipelineItem,
+    CobaltPipelineResultFileType,
+} from "$lib/types/workers";
 
 export type UUID = string;
 
@@ -29,6 +33,7 @@ type CobaltQueueItemBase = {
     mimeType: string;
     mediaType: CobaltPipelineResultFileType;
     canRetry?: boolean;
+    failureDiagnostic?: CobaltFetchFailureDiagnostic;
     originalRequest?: CobaltSaveRequestBody;
     points?: CobaltQueueItemPoints;
     collectionMemory?: CobaltQueueItemCollectionMemory;

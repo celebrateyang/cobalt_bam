@@ -146,6 +146,7 @@ const getHeaderValue = (headers, name) => {
 
 const buildHoldLogContext = (req) => {
     const rawUrl = req.body?.url ?? req.body?.targetUrl ?? null;
+    const diagnostic = req.body?.failureDiagnostic ?? req.body?.failure_diagnostic ?? {};
 
     return {
         ip: sanitizeLogValue(req.ip, 80),
@@ -165,6 +166,20 @@ const buildHoldLogContext = (req) => {
         queueId: sanitizeLogValue(req.body?.queueId ?? req.body?.queue_id ?? null, 120),
         itemId: sanitizeLogValue(req.body?.itemId ?? req.body?.item_id ?? null, 120),
         errorCode: sanitizeLogValue(req.body?.errorCode ?? req.body?.error_code ?? null, 120),
+        failureDiagnostic: {
+            candidateHost: sanitizeLogValue(diagnostic?.candidateHost, 120),
+            candidateIndex: Number.isInteger(diagnostic?.candidateIndex)
+                ? diagnostic.candidateIndex
+                : null,
+            candidateCount: Number.isInteger(diagnostic?.candidateCount)
+                ? diagnostic.candidateCount
+                : null,
+            httpStatus: Number.isInteger(diagnostic?.httpStatus)
+                ? diagnostic.httpStatus
+                : null,
+            contentType: sanitizeLogValue(diagnostic?.contentType, 120),
+            failureKind: sanitizeLogValue(diagnostic?.failureKind, 40),
+        },
         url: sanitizeLogValue(rawUrl, 200),
     };
 };

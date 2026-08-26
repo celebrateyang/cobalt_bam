@@ -149,7 +149,7 @@ export const runFetchWorker = async (
                 clearFetchResumeState(parentId, resumeSlot);
             }
             killWorker(worker, unsubscribe, startTimeout);
-            return itemError(parentId, workerId, eventData.error);
+            return itemError(parentId, workerId, eventData.error, eventData.diagnostic);
         }
     }
 }

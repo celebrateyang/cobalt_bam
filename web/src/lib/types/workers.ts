@@ -41,6 +41,15 @@ export type CobaltFetchValidation = {
     requireReliableSize?: boolean,
 };
 
+export type CobaltFetchFailureDiagnostic = {
+    candidateHost?: string;
+    candidateIndex?: number;
+    candidateCount?: number;
+    httpStatus?: number;
+    contentType?: string;
+    failureKind?: "http_status" | "html_response" | "content_type" | "network";
+};
+
 type CobaltPipelineItemBase = {
     workerId: UUID,
     parentId: UUID,

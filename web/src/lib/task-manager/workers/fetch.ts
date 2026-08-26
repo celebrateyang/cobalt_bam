@@ -362,7 +362,38 @@ const fetchFile = async (
         };
     };
 
-    const error = async (code: string, resumeSnapshot?: Awaited<ReturnType<typeof buildResumeSnapshot>>) => {
+    const buildFailureDiagnostic = (
+        failureKind: "http_status" | "html_response" | "content_type" | "network",
+        response?: Response,
+    ) => {
+        let candidateHost: string | undefined;
+        try {
+            candidateHost = new URL(activeUrl).hostname;
+        } catch {
+            // Never forward an unparsed URL because it may contain signed query data.
+        }
+        return {
+            candidateHost,
+            candidateIndex,
+            candidateCount: candidates.length,
+            httpStatus: response?.status,
+            contentType: response?.headers.get("Content-Type")?.slice(0, 120) || undefined,
+            failureKind,
+        };
+    };
+
+    const error = async (
+        code: string,
+        resumeSnapshot?: Awaited<ReturnType<typeof buildResumeSnapshot>>,
+        diagnostic?: ReturnType<typeof buildFailureDiagnostic>,
+    ) => {
+        const effectiveDiagnostic = diagnostic ?? (
+            code === "queue.fetch.network_error" ||
+            code === "queue.fetch.timeout" ||
+            code === "queue.fetch.stalled"
+                ? buildFailureDiagnostic("network")
+                : undefined
+        );
         stopTimers();
         if (storage) {
             if (resumeSnapshot) {
@@ -381,6 +412,7 @@ const fetchFile = async (
             cobaltFetchWorker: {
                 error: code,
                 resume: resumeSnapshot,
+                diagnostic: effectiveDiagnostic,
             }
         });
         return self.close();
@@ -623,7 +655,11 @@ const fetchFile = async (
                     retries = 0;
                     continue;
                 }
-                return error("queue.fetch.bad_response", await buildResumeSnapshot());
+                return error(
+                    "queue.fetch.bad_response",
+                    await buildResumeSnapshot(),
+                    buildFailureDiagnostic("http_status", response),
+                );
             }
 
             if (resumedRequest && response.status === 200) {
@@ -669,7 +705,11 @@ const fetchFile = async (
                     retries = 0;
                     continue;
                 }
-                return error("queue.fetch.bad_response", await buildResumeSnapshot());
+                return error(
+                    "queue.fetch.bad_response",
+                    await buildResumeSnapshot(),
+                    buildFailureDiagnostic("html_response", response),
+                );
             }
             if (
                 runtimeValidation.expectedContentTypePrefixes.length > 0 &&
@@ -679,7 +719,11 @@ const fetchFile = async (
                 ))
             ) {
                 await response.body?.cancel().catch(() => undefined);
-                return error("queue.fetch.bad_response", await buildResumeSnapshot());
+                return error(
+                    "queue.fetch.bad_response",
+                    await buildResumeSnapshot(),
+                    buildFailureDiagnostic("content_type", response),
+                );
             }
 
             const contentRangeHeader = response.headers.get("Content-Range");

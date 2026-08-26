@@ -141,7 +141,7 @@ the web client sends a stable `queueId` (1-120 ASCII letters, numbers, `_`, or `
 
 the api claims a queue id before contacting the source platform. concurrent duplicates are rejected, and completed responses are replayed without another extraction. queued responses are replayed only while their hold remains active; finalized queue ids cannot be reused for a new extraction.
 
-direct bridge responses do not create holds because they do not enter the browser processing queue. their immediate points charge and cached idempotent response are committed in the same database transaction, so a lost response can be retried without another charge. first-download grace is reserved on a queue hold and consumed only when that hold is finalized.
+direct bridge responses normally do not create holds because they do not enter the browser processing queue. WeChat article batch redirects are the exception: the web app fetches those CDN URLs through its processing queue, so they use a hold and charge only after the file completes. other direct bridge responses commit their immediate points charge and cached idempotent response in the same database transaction, so a lost response can be retried without another charge. first-download grace is reserved on a queue hold and consumed only when that hold is finalized.
 
 ### success path (hold -> finalize)
 1) client sends `POST /` with a stable `queueId`

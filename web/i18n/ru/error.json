@@ -1,6 +1,7 @@
 {
     "api.douyin.user.unsupported": "Stranicy profilya Douyin poka ne podderzhivayutsya. Otkroyte konkretnoe video, skopiruyte ssylku na nego i poprobuyte snova.",
     "api.bilibili.space.unsupported": "Stranicy spiskov kollekcij Bilibili space poka ne podderzhivayutsya napryamuyu. Otkroyte konkretnoe video v kollekcii, skopiruyte ego ssylku i poprobuyte snova.",
+    "api.bilibili.list.missing_video": "Eta stranica vseh video avtora Bilibili ne ukazyvaet tekuschee video. Otkroyte video v spiske i skopiruyte URL s bvid.",
     "api.capacity": "Сервер обработки сейчас перегружен. Повторите попытку позже.",
     "api.generic": "При обработке запроса произошла ошибка. Повторите попытку позже.",
     "api.unknown_response": "Сервер обработки вернул неизвестный ответ. Повторите попытку позже.",

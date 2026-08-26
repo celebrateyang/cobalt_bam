@@ -31,6 +31,26 @@ for (const [serviceName, service] of Object.entries(services)) {
     }
 }
 
+const normalizeBilibiliCreatorListVideoURL = (url) => {
+    if (!(url instanceof URL)) return null;
+    if (!["www.bilibili.com", "bilibili.com"].includes(url.hostname)) return null;
+    if (!/^\/list\/\d+\/?$/i.test(url.pathname)) return null;
+
+    const bvid = String(url.searchParams.get("bvid") || "").trim();
+    const oid = String(url.searchParams.get("oid") || "").trim();
+    const selectedId = /^BV[0-9A-Za-z]+$/i.test(bvid)
+        ? bvid
+        : /^\d+$/.test(oid)
+            ? oid
+            : null;
+    if (!selectedId) return null;
+
+    const canonical = new URL(`https://www.bilibili.com/video/${selectedId}`);
+    const partId = String(url.searchParams.get("p") || "").trim();
+    if (/^\d+$/.test(partId)) canonical.searchParams.set("p", partId);
+    return canonical;
+};
+
 function aliasURL(url) {
     assert(url instanceof URL);
 
@@ -82,6 +102,8 @@ function aliasURL(url) {
         case "bilibili":
             if (host.tld === 'tv') {
                 url = new URL(`https://bilibili.com/_tv${url.pathname}`);
+            } else {
+                url = normalizeBilibiliCreatorListVideoURL(url) || url;
             }
             break;
 
@@ -394,6 +416,8 @@ export function extract(url, enabledServices = env.enabledServices) {
         url = new URL(url);
     }
 
+    url = normalizeBilibiliCreatorListVideoURL(url) || url;
+
     const platform = normalizePlatformDomain(url, { allowBareDomain: false });
     if (!platform) return { error: "link.invalid" };
 
@@ -402,13 +426,20 @@ export function extract(url, enabledServices = env.enabledServices) {
 
     if (!host) {
         if (
-            (
-                url.hostname === "space.bilibili.com" &&
-                /^\/\d+\/lists\/?$/.test(url.pathname)
-            ) || (
-                (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
-                /^\/list\/\d+\/?$/.test(url.pathname)
-            )
+            (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
+            /^\/list\/\d+\/?$/.test(url.pathname)
+        ) {
+            return {
+                error: "bilibili.list.missing_video",
+                context: {
+                    service: friendlyServiceName("bilibili"),
+                }
+            };
+        }
+
+        if (
+            url.hostname === "space.bilibili.com" &&
+            /^\/\d+\/lists\/?$/.test(url.pathname)
         ) {
             return {
                 error: "bilibili.space.unsupported",
@@ -474,15 +505,21 @@ export function extract(url, enabledServices = env.enabledServices) {
 
         if (
             host === "bilibili" &&
-            (
-                (
-                    url.hostname === "space.bilibili.com" &&
-                    /^\/\d+\/lists\/?$/.test(url.pathname)
-                ) || (
-                    (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
-                    /^\/list\/\d+\/?$/.test(url.pathname)
-                )
-            )
+            (url.hostname === "www.bilibili.com" || url.hostname === "bilibili.com") &&
+            /^\/list\/\d+\/?$/.test(url.pathname)
+        ) {
+            return {
+                error: "bilibili.list.missing_video",
+                context: {
+                    service: friendlyServiceName(host),
+                }
+            };
+        }
+
+        if (
+            host === "bilibili" &&
+            url.hostname === "space.bilibili.com" &&
+            /^\/\d+\/lists\/?$/.test(url.pathname)
         ) {
             return {
                 error: "bilibili.space.unsupported",

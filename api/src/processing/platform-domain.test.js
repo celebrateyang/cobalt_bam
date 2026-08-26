@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { normalizePlatformDomain } from "./platform-domain.js";
-import { extract, identifyService } from "./url.js";
+import { extract, identifyService, normalizeURL } from "./url.js";
 import { createResponse } from "./request.js";
 
 test("normalizes public URLs to registrable domains", () => {
@@ -54,7 +54,37 @@ test("identifies a Bilibili creator collection index explicitly", () => {
         new URL("https://www.bilibili.com/list/473168952"),
         new Set(["bilibili"]),
     );
-    assert.equal(result.error, "bilibili.space.unsupported");
+    assert.equal(result.error, "bilibili.list.missing_video");
+});
+
+test("normalizes a Bilibili creator list player to its selected video", () => {
+    const enabled = new Set(["bilibili"]);
+    const input = "https://www.bilibili.com/list/234579272?oid=116962193641784&bvid=BV1oEgr6qEY6&p=2";
+
+    assert.equal(
+        normalizeURL(input).toString(),
+        "https://www.bilibili.com/video/BV1oEgr6qEY6?p=2",
+    );
+    assert.deepEqual(extract(new URL(input), enabled), {
+        host: "bilibili",
+        patternMatch: {
+            comId: "BV1oEgr6qEY6",
+            partId: "2",
+        },
+    });
+});
+
+test("falls back to oid for a Bilibili creator list player without bvid", () => {
+    assert.deepEqual(
+        extract(
+            new URL("https://www.bilibili.com/list/234579272?oid=116962193641784"),
+            new Set(["bilibili"]),
+        ),
+        {
+            host: "bilibili",
+            patternMatch: { comId: "116962193641784" },
+        },
+    );
 });
 
 test("exposes explicit platform request metadata on eligible errors", () => {

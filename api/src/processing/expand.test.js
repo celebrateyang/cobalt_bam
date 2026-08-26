@@ -639,3 +639,11 @@ test("an explicit Bilibili collection URL is blocked when an item exceeds 50 min
     assert.equal(result.error.code, "error.api.bilibili.collection_has_long_video");
     assert.equal(result.error.context.limit, 50);
 });
+
+test("a bare Bilibili creator list asks for a selected video", async () => {
+    const result = await expandURL("https://www.bilibili.com/list/234579272");
+
+    assert.equal(result.kind, "error");
+    assert.equal(result.error.code, "error.api.bilibili.list.missing_video");
+    assert.deepEqual(result.items, undefined);
+});

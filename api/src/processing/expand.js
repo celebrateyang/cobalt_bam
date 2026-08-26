@@ -1295,6 +1295,34 @@ const expandBilibili = async (inputUrl) => {
         };
     }
 
+    // The newer creator-wide player uses /list/:mid for every item and stores
+    // the selected video's identity in bvid/oid. Resolve only that current
+    // video; never interpret this page as a request for the creator's archive.
+    if (/^\/list\/\d+\/?$/i.test(url.pathname)) {
+        const selectedBvid = String(url.searchParams.get("bvid") || "").trim();
+        const selectedAid = String(url.searchParams.get("oid") || "").trim();
+        const selectedId = /^BV[0-9A-Za-z]+$/i.test(selectedBvid)
+            ? selectedBvid
+            : /^\d+$/.test(selectedAid)
+                ? selectedAid
+                : null;
+
+        if (!selectedId) {
+            return {
+                service: "bilibili",
+                kind: "error",
+                error: {
+                    code: "error.api.bilibili.list.missing_video",
+                },
+            };
+        }
+
+        const selectedUrl = new URL(`https://www.bilibili.com/video/${selectedId}`);
+        const partId = String(url.searchParams.get("p") || "").trim();
+        if (/^\d+$/.test(partId)) selectedUrl.searchParams.set("p", partId);
+        return expandBilibili(selectedUrl.toString());
+    }
+
     // These are alternate entry points for the same Bilibili media list:
     // - /list/ml:id is the legacy desktop player
     // - /medialist/play/ml:id is an older desktop entry point

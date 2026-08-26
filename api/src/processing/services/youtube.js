@@ -109,6 +109,21 @@ const getBoundIpFromUrl = (rawUrl) => {
     }
 };
 
+const isHlsManifestFormat = (format, rawUrl) => {
+    const protocol = String(format?.protocol || "").toLowerCase();
+    if (protocol.includes("m3u8") || protocol.includes("hls")) return true;
+
+    try {
+        const parsed = new URL(rawUrl);
+        const pathname = parsed.pathname.toLowerCase();
+        return pathname.endsWith(".m3u8")
+            || pathname.includes("/manifest/hls_")
+            || pathname.includes("/hls_playlist/");
+    } catch {
+        return false;
+    }
+};
+
 const runProcess = (command, args, timeoutMs) => new Promise((resolve) => {
     const child = spawn(command, args, {
         stdio: ["ignore", "pipe", "pipe"],
@@ -378,6 +393,7 @@ const collectCandidates = ({ formats, requestClientIp }) => {
                 audioCodec: normalizeAudioCodec(format?.acodec),
                 hasVideo,
                 hasAudio,
+                rangeDownloadable: !isHlsManifestFormat(format, url),
             };
         })
         .filter(Boolean);
@@ -473,6 +489,10 @@ const filterVideoCandidates = ({ candidates, mode, profile }) => {
 
             if (mode === "muxed" && !isMuxed) return false;
             if (mode === "videoOnly" && !isVideoOnly) return false;
+            // Local processing fetches complete byte ranges before merging. HLS
+            // URLs are playlists rather than media files, so treating one as a
+            // range-downloadable input causes partial files and futile resumes.
+            if (!candidate.rangeDownloadable) return false;
 
             if (candidate.videoCodec !== profile.preferredCodec) return false;
             if (
@@ -507,7 +527,11 @@ const filterVideoCandidates = ({ candidates, mode, profile }) => {
 
 const filterAudioCandidates = ({ candidates }) => {
     return candidates
-        .filter((candidate) => candidate.hasAudio && !candidate.hasVideo)
+        .filter((candidate) => (
+            candidate.hasAudio
+            && !candidate.hasVideo
+            && candidate.rangeDownloadable
+        ))
         .map((candidate) => ({
             ...candidate,
             audioScore: scoreAudioCandidate(candidate),
@@ -542,7 +566,7 @@ const pickSortedAudioCandidates = ({ candidates }) => {
 
 const pickSortedAudioFallbackCandidates = ({ candidates }) => {
     return candidates
-        .filter((candidate) => candidate.hasAudio)
+        .filter((candidate) => candidate.hasAudio && candidate.rangeDownloadable)
         .map((candidate) => ({
             ...candidate,
             audioFallbackScore: scoreAudioFallbackCandidate(candidate),

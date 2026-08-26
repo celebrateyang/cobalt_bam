@@ -7,6 +7,9 @@ import { buildYoutubeResult } from "./youtube.js";
 const mediaUrl = (itag) =>
     `https://rr.example.googlevideo.com/videoplayback?itag=${itag}&c=VISIONOS`;
 
+const hlsUrl = (itag) =>
+    `https://manifest.googlevideo.com/api/manifest/hls_playlist/itag/${itag}/playlist/index.m3u8`;
+
 const buildResult = (formats, overrides = {}, targetQuality = 1080) => buildYoutubeResult({
     info: {
         id: "video-id",
@@ -213,4 +216,110 @@ test("caps compatible H.264 MP4 output at 1080p", () => {
     assert.equal(result.filenameAttributes.resolution, "1920x1080");
     assert.equal(result.filenameAttributes.extension, "mp4");
     assert.equal(result.filenameAttributes.youtubeFormat, "h264");
+});
+
+test("prefers a range-downloadable MP4 over a higher-scoring HLS video format", () => {
+    const result = buildResult([
+        {
+            format_id: "270",
+            ext: "mp4",
+            // Some extractor versions report an HTTPS protocol even though the
+            // URL itself is still an HLS manifest.
+            protocol: "https",
+            width: 1920,
+            height: 1080,
+            tbr: 2509.399,
+            vcodec: "avc1.640028",
+            acodec: "none",
+            url: hlsUrl("270"),
+        },
+        {
+            format_id: "137",
+            ext: "mp4",
+            protocol: "https",
+            width: 1920,
+            height: 1080,
+            tbr: 229.037,
+            vcodec: "avc1.640028",
+            acodec: "none",
+            url: mediaUrl("137"),
+        },
+        {
+            format_id: "140",
+            ext: "m4a",
+            protocol: "https",
+            tbr: 129.474,
+            vcodec: "none",
+            acodec: "mp4a.40.2",
+            url: mediaUrl("140"),
+        },
+    ], {
+        codec: "h264",
+    });
+
+    assert.equal(result.error, undefined);
+    assert.equal(result.type, "merge");
+    assert.deepEqual(result.originalRequest.itag, {
+        video: "137",
+        audio: "140",
+    });
+});
+
+test("does not use an HLS audio playlist as a local-processing input", () => {
+    const result = buildResult([
+        {
+            format_id: "hls-audio",
+            ext: "m4a",
+            protocol: "m3u8_native",
+            tbr: 256,
+            vcodec: "none",
+            acodec: "mp4a.40.2",
+            url: hlsUrl("hls-audio"),
+        },
+        {
+            format_id: "140",
+            ext: "m4a",
+            protocol: "https",
+            tbr: 129.474,
+            vcodec: "none",
+            acodec: "mp4a.40.2",
+            url: mediaUrl("140"),
+        },
+    ], {
+        isAudioOnly: true,
+        codec: "h264",
+    });
+
+    assert.equal(result.error, undefined);
+    assert.equal(result.type, "proxy");
+    assert.equal(result.originalRequest.itag.audio, "140");
+});
+
+test("rejects HLS-only inputs instead of downloading a playlist as media", () => {
+    const result = buildResult([
+        {
+            format_id: "270",
+            ext: "mp4",
+            protocol: "m3u8_native",
+            width: 1920,
+            height: 1080,
+            tbr: 2509.399,
+            vcodec: "avc1.640028",
+            acodec: "none",
+            url: hlsUrl("270"),
+        },
+        {
+            format_id: "hls-audio",
+            ext: "m4a",
+            protocol: "m3u8_native",
+            tbr: 256,
+            vcodec: "none",
+            acodec: "mp4a.40.2",
+            url: hlsUrl("hls-audio"),
+        },
+    ], {
+        codec: "h264",
+    });
+
+    assert.equal(result.error, "youtube.no_matching_format");
 });

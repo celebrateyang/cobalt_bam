@@ -1,4 +1,4 @@
-FROM node:20-bullseye-slim AS base
+FROM node:20-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
@@ -17,6 +17,8 @@ RUN pnpm deploy --filter=@imput/cobalt-api --prod /prod/api
 
 FROM base AS api
 WORKDIR /app
+ARG YTDLP_VERSION=2026.8.19
+ENV PATH="/opt/yt-dlp/bin:$PATH"
 
 # 安装 curl
 RUN apt-get update && \
@@ -26,10 +28,11 @@ RUN apt-get update && \
         fonts-noto-core \
         fonts-noto-cjk \
         python3 \
-        python3-pip \
+        python3-venv \
         unzip \
         vim && \
-    pip3 install --no-cache-dir yt-dlp && \
+    python3 -m venv /opt/yt-dlp && \
+    /opt/yt-dlp/bin/pip install --no-cache-dir "yt-dlp==${YTDLP_VERSION}" && \
     fc-cache -f && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

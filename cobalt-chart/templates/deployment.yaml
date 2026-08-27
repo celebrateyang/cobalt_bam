@@ -83,6 +83,16 @@ spec:
               value: 0x4AAAAAAAw8jRb9G7cWXnbd
             - name: COOKIE_PATH
               value: src/cookies.json
+            - name: GENERIC_EXTRACTOR_ENABLED
+              value: {{ ternary "1" "0" .Values.genericExtractor.enabled | quote }}
+            - name: GENERIC_USE_UPSTREAM
+              value: {{ ternary "1" "0" .Values.genericExtractor.useUpstream | quote }}
+            - name: GENERIC_FORCE_TUNNEL
+              value: {{ ternary "1" "0" .Values.genericExtractor.forceTunnel | quote }}
+            - name: GENERIC_HTML_PROBE_TIMEOUT_MS
+              value: {{ .Values.genericExtractor.htmlProbeTimeoutMs | default 5000 | quote }}
+            - name: GENERIC_YTDLP_TIMEOUT_MS
+              value: {{ .Values.genericExtractor.ytDlpTimeoutMs | default 45000 | quote }}
             {{- with .Values.upstream }}
             {{- if or .urls .globalUrls .cnUrls }}
             {{- if .urls }}

@@ -352,6 +352,12 @@ const isLinkedInExtractor = (info) => {
     return extractor === "linkedin" || extractorKey === "linkedin";
 };
 
+const isWSJExtractor = (info) => {
+    const extractor = String(info?.extractor || "").toLowerCase();
+    const extractorKey = String(info?.extractor_key || "").toLowerCase();
+    return extractor === "wsj" || extractorKey === "wsj";
+};
+
 const isWatermarkedFormat = (format = {}) => {
     const fields = [
         format?.format_id,
@@ -367,6 +373,7 @@ const isWatermarkedFormat = (format = {}) => {
 export const collectCandidates = (formats = [], info = {}) => {
     const trustSohuMp4AsMuxed = isSohuExtractor(info);
     const trustLinkedInMp4AsMuxed = isLinkedInExtractor(info);
+    const trustWSJMp4AsMuxed = isWSJExtractor(info);
 
     return formats
         .map((format) => {
@@ -392,7 +399,10 @@ export const collectCandidates = (formats = [], info = {}) => {
                 || (trustSohuMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"))
                 // LinkedIn public posts expose progressive MP4 files in HTML,
                 // but yt-dlp labels their audio extension as none.
-                || (trustLinkedInMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"));
+                || (trustLinkedInMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"))
+                // WSJ exposes muxed progressive MP4 renditions alongside HLS,
+                // while some yt-dlp versions label those MP4s as video-only.
+                || (trustWSJMp4AsMuxed && ext === "mp4" && !protocol.includes("m3u8"));
 
             return {
                 url,
@@ -511,6 +521,13 @@ const pickBestHlsAudio = ({ candidates, preferredFamily }) => {
                 + (candidate.ext === "mp4" ? 20 : 0),
         }))
         .sort((a, b) => b.score - a.score)[0];
+};
+
+export const shouldPreferDirectVideo = (directVideo, hlsVideo) => {
+    return Boolean(
+        directVideo
+        && (!hlsVideo || directVideo.height >= hlsVideo.height)
+    );
 };
 
 const buildResponseBase = ({ info, url }) => {
@@ -711,6 +728,25 @@ export default async function extractWithYtDlp({
                             : "mkv",
                     height: videoOnly.height,
                 }),
+            };
+        }
+
+        // Prefer a muxed progressive file when it reaches the requested HLS
+        // rendition. This avoids an unnecessary server-side HLS audio/video
+        // merge for sites such as WSJ that publish both delivery formats.
+        if (shouldPreferDirectVideo(directVideo, hlsVideo)) {
+            return {
+                ...withSelectedHeaders(base, directVideo),
+                urls: directVideo.url,
+                bestAudio: normalizeAudioExt(directVideo.ext),
+                filenameAttributes: buildFilenameAttributes({
+                    originUrl: url,
+                    title: base.title,
+                    uploader: base.uploader,
+                    extension: directVideo.ext || "mp4",
+                    height: directVideo.height,
+                }),
+                isHLS: false,
             };
         }
 

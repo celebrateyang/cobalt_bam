@@ -17,6 +17,14 @@ tunnelLifespanSeconds: 1800
 # Tunnel request rate limit per client IP per minute.
 tunnelRateLimitMax: 120
 
+genericExtractor:
+  # Allow yt-dlp-supported sites to work without a dedicated service adapter.
+  enabled: true
+  useUpstream: true
+  forceTunnel: false
+  htmlProbeTimeoutMs: 5000
+  ytDlpTimeoutMs: 45000
+
 upstream:
   urls: "https://api3.freesavevideo.online"
   globalUrls: ""

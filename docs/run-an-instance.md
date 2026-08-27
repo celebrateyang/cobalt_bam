@@ -137,8 +137,8 @@ sudo service nscd start
 | `INSTAGRAM_UPSTREAM_API_KEY` | not used | `11111111-1111-1111-1111-111111111111` | optional `Api-Key` value (sent as `Authorization: Api-Key ...`) for `INSTAGRAM_UPSTREAM_URL`. |
 | `INSTAGRAM_UPSTREAM_TIMEOUT_MS` | `12000` | `8000` | request timeout (ms) for upstream fallback. |
 | `DOUYIN_UPSTREAM_MIN_BYTES` | `8388608` | `16777216` | route large Douyin files (bytes) through upstream fallback (default 8 MB). |
-| `GENERIC_EXTRACTOR_ENABLED` | `1` | `0` | enables the generic unsupported-site fallback extractor. |
-| `GENERIC_USE_UPSTREAM` | `1` | `0` | tries upstream before local generic extraction when `UPSTREAM_URLS` or `INSTAGRAM_UPSTREAM_URL` is configured. |
+| `GENERIC_EXTRACTOR_ENABLED` | `1` | `1` | enables the generic unsupported-site fallback extractor. Keep URL safety validation enabled when exposing this publicly. |
+| `GENERIC_USE_UPSTREAM` | `1` | `1` | tries upstream before local generic extraction when `UPSTREAM_URLS` or `INSTAGRAM_UPSTREAM_URL` is configured. |
 | `GENERIC_HTML_PROBE_TIMEOUT_MS` | `3000` | `5000` | timeout in ms for the lightweight generic HTML probe stage. |
 | `GENERIC_YTDLP_TIMEOUT_MS` | `35000` | `45000` | timeout in ms for generic `yt-dlp` extraction. |
 | `GENERIC_FORCE_TUNNEL` | `1` | `0` | forces generic fallback downloads through cobalt tunnels instead of redirecting. |

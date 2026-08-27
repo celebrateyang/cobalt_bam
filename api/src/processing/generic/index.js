@@ -2,6 +2,7 @@ import { env } from "../../config.js";
 
 import htmlProbe from "./html-probe.js";
 import extractWithYtDlp from "./yt-dlp.js";
+import { parseSafeGenericURL, validateGenericURL } from "./url-safety.js";
 
 const normalizeInputUrl = (value) => {
     if (value instanceof URL) {
@@ -26,16 +27,7 @@ const normalizeInputUrl = (value) => {
 
 export const canAttemptGenericURL = (value) => {
     const normalized = normalizeInputUrl(value);
-    if (!normalized) {
-        return false;
-    }
-
-    try {
-        const parsed = new URL(normalized);
-        return ["http:", "https:"].includes(parsed.protocol);
-    } catch {
-        return false;
-    }
+    return Boolean(normalized && parseSafeGenericURL(normalized));
 };
 
 export const getGenericServiceHost = (value) => {
@@ -53,6 +45,10 @@ const shouldTryHtmlProbe = (request) => {
 export default async function extractGeneric(request) {
     const url = normalizeInputUrl(request?.url);
     if (!canAttemptGenericURL(url)) {
+        return { error: "link.invalid" };
+    }
+
+    if (!await validateGenericURL(url)) {
         return { error: "link.invalid" };
     }
 

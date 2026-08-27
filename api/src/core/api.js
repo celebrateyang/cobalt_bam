@@ -27,6 +27,8 @@ import { expandURL } from "../processing/expand.js";
 import extractGeneric, {
     canAttemptGenericURL,
     getGenericServiceHost,
+    shouldAttemptGenericFallbackForError,
+    shouldUseGenericUpstreamResponse,
 } from "../processing/generic/index.js";
 import { requestUpstream } from "../processing/upstream/request.js";
 import { setupTunnelHandler } from "./itunnel.js";
@@ -247,8 +249,6 @@ const isUpstreamServer = (() => {
     return raw === "true" || raw === "1";
 })();
 const serverRole = isUpstreamServer ? "upstream" : "api";
-const genericFallbackErrors = new Set(["platform.unsupported"]);
-
 const isClerkAuthConfigured =
     !!process.env.CLERK_SECRET_KEY && !!process.env.CLERK_PUBLISHABLE_KEY;
 
@@ -494,15 +494,33 @@ const attemptGenericFallback = async ({ request, requestClientIp }) => {
         payload: request,
         requestClientIp,
     });
-    if (upstream?.body?.status && upstream.body.status !== "error") {
+    if (shouldUseGenericUpstreamResponse(upstream?.body)) {
         console.log(
             `[GENERIC RESULT] extractor=upstream host=${genericHost} status=${upstream.body.status}`,
         );
         return upstream;
     }
 
+    const upstreamTunnelFallback =
+        upstream?.body?.status === "tunnel"
+            ? upstream
+            : null;
+
+    if (upstreamTunnelFallback) {
+        console.log(
+            `[GENERIC DEFER] extractor=upstream host=${genericHost} status=tunnel reason=prefer_local_direct`,
+        );
+    }
+
     const extracted = await extractGeneric(request);
     if (extracted?.error) {
+        if (upstreamTunnelFallback) {
+            console.log(
+                `[GENERIC FALLBACK] extractor=upstream host=${genericHost} status=tunnel reason=local_failed`,
+            );
+            return upstreamTunnelFallback;
+        }
+
         const errorCode = extracted.error === "link.invalid"
             ? "error.api.link.invalid"
             : "error.api.fetch.fail";
@@ -1242,7 +1260,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             let result;
 
             if ("error" in parsed) {
-                if (genericFallbackErrors.has(parsed.error)) {
+                if (shouldAttemptGenericFallbackForError(parsed.error)) {
                     const genericResult = await attemptGenericFallback({
                         request: {
                             ...normalizedRequest,
@@ -1261,7 +1279,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         context = { domain: parsed.domain };
                     } else if (parsed?.context) {
                         context = parsed.context;
-                    } else if (genericFallbackErrors.has(parsed.error) && canAttemptGenericURL(normalizedRequest.url)) {
+                    } else if (shouldAttemptGenericFallbackForError(parsed.error) && canAttemptGenericURL(normalizedRequest.url)) {
                         context = { service: getGenericServiceHost(normalizedRequest.url) };
                     }
                     if (membershipReservation?.usageEvent?.id) {

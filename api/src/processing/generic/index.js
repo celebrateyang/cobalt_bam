@@ -4,6 +4,8 @@ import htmlProbe from "./html-probe.js";
 import extractWithYtDlp from "./yt-dlp.js";
 import { parseSafeGenericURL, validateGenericURL } from "./url-safety.js";
 
+const genericFallbackErrors = new Set(["platform.unsupported", "link.unsupported"]);
+
 const normalizeInputUrl = (value) => {
     if (value instanceof URL) {
         return value.toString();
@@ -36,6 +38,18 @@ export const getGenericServiceHost = (value) => {
     } catch {
         return "generic";
     }
+};
+
+export const shouldUseGenericUpstreamResponse = (body) => {
+    return Boolean(
+        body?.status
+        && body.status !== "error"
+        && body.status !== "tunnel"
+    );
+};
+
+export const shouldAttemptGenericFallbackForError = (error) => {
+    return genericFallbackErrors.has(error);
 };
 
 const shouldTryHtmlProbe = (request) => {

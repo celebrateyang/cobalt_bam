@@ -95,6 +95,53 @@ test("keeps portable TikTok media on Direct Bridge", () => {
     assert.equal(response.body.directUrl, mediaUrl);
 });
 
+test("returns a generic progressive MP4 as a direct redirect", () => {
+    const mediaUrl = "https://m.wsj.net/video/example/video.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "generic",
+        r: {
+            service: "www.wsj.com",
+            urls: mediaUrl,
+            isHLS: false,
+            filenameAttributes: {
+                service: "www.wsj.com",
+                id: "generic",
+                title: "WSJ video",
+                extension: "mp4",
+            },
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, mediaUrl);
+    assert.equal(response.body.directUrl, mediaUrl);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
+test("keeps generic HLS media on the processing tunnel", () => {
+    const response = matchAction({
+        ...baseArgs,
+        host: "generic",
+        r: {
+            service: "example.com",
+            urls: "https://cdn.example.com/video.m3u8",
+            isHLS: true,
+            filenameAttributes: {
+                service: "example.com",
+                id: "generic",
+                title: "HLS video",
+                extension: "mp4",
+            },
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "tunnel");
+    assert.equal(response.body.type, "remux");
+});
+
 test("returns portable Douyin media through Direct Bridge", () => {
     const mediaUrl = "https://v26.douyinvod.com/video/example.mp4";
     const backupUrl = "https://v3.bytevod.com/video/example.mp4";

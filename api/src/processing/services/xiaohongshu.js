@@ -47,6 +47,21 @@ const canonicalNoteUrl = (noteId, xsecToken, originURL) => {
     return `https://${hostname}/explore/${noteId}?xsec_token=${encodeQueryValue(xsecToken)}`;
 };
 
+export const isUnavailableRedirectUrl = (value) => {
+    try {
+        const parsed = new URL(value);
+        return (
+            parsed.pathname === "/404"
+            || (
+                parsed.pathname === "/explore"
+                && parsed.searchParams.has("target_note_id")
+            )
+        );
+    } catch {
+        return false;
+    }
+};
+
 const extractInitialState = (html) => {
     const match = html.match(/<script>window\.__INITIAL_STATE__=(.*?)<\/script>/s);
     if (!match) return null;
@@ -247,8 +262,20 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     let xsecToken = token;
 
     if (!noteId) {
+        const submittedShortUrl = (() => {
+            try {
+                const parsed = new URL(url);
+                if (["xhslink.com", "xhslink.cn"].includes(parsed.hostname)) {
+                    return parsed.toString();
+                }
+            } catch {
+                // fall back to the legacy short-link domain below
+            }
+
+            return `https://xhslink.com/${shareType}/${shareId}`;
+        })();
         const patternMatch = await resolveRedirectingURL(
-            `https://xhslink.com/${shareType}/${shareId}`,
+            submittedShortUrl,
             dispatcher
         );
 
@@ -267,14 +294,7 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
     });
 
     const html = await res.text();
-    const redirectedToUnavailable = (() => {
-        try {
-            const finalUrl = new URL(res.url || noteUrl);
-            return finalUrl.pathname === "/404";
-        } catch {
-            return false;
-        }
-    })();
+    const redirectedToUnavailable = isUnavailableRedirectUrl(res.url || noteUrl);
 
     let note;
     try {

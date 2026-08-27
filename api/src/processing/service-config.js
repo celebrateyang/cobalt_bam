@@ -364,7 +364,7 @@ export const services = {
             "discovery/item/:id",
             ":shareType/:shareId",
         ],
-        altDomains: ["rednote.com", "xhslink.com"],
+        altDomains: ["rednote.com", "xhslink.com", "xhslink.cn"],
     },
     zhshjn: {
         patterns: [

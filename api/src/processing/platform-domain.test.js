@@ -47,6 +47,28 @@ test("recognizes configured platforms independently from URL patterns", () => {
     assert.equal(identifyService("https://youtube.com/", enabled)?.enabled, true);
     assert.equal(identifyService("https://youtu.be/", enabled)?.service, "youtube");
     assert.equal(identifyService("https://b23.tv/", enabled)?.service, "bilibili");
+    assert.equal(identifyService("https://xhslink.cn/o/example", enabled)?.service, "xiaohongshu");
+});
+
+test("recognizes xhslink.cn shares and normalizes target_note_id redirects", () => {
+    const enabled = new Set(["xiaohongshu"]);
+    assert.deepEqual(
+        extract(new URL("https://xhslink.cn/o/5r94IdOkdEW"), enabled),
+        {
+            host: "xiaohongshu",
+            patternMatch: {
+                shareType: "o",
+                shareId: "5r94IdOkdEW",
+            },
+        },
+    );
+
+    assert.equal(
+        normalizeURL(
+            "https://www.xiaohongshu.com/explore?target_note_id=6a8bdb6d0000000023011886&xsec_token=test-token&ignored=1",
+        ).toString(),
+        "https://www.xiaohongshu.com/explore/6a8bdb6d0000000023011886?xsec_token=test-token",
+    );
 });
 
 test("identifies a Bilibili creator collection index explicitly", () => {

@@ -185,6 +185,12 @@ function aliasURL(url) {
             }
             break;
 
+        case "xiaohongshu":
+            if (url.pathname === "/explore" && url.searchParams.get("target_note_id")) {
+                url.pathname = `/explore/${encodeURIComponent(url.searchParams.get("target_note_id"))}`;
+            }
+            break;
+
         case "loom":
             const idPart = parts[parts.length - 1];
             if (idPart.length > 32) {
@@ -351,7 +357,10 @@ function getHostIfValid(url) {
     const host = psl.parse(url.hostname);
     if (host.error) return;
 
-    const serviceName = serviceNameForURL(url, host);
+    const derivedServiceName = serviceNameForURL(url, host);
+    const serviceName = services[derivedServiceName]
+        ? derivedServiceName
+        : serviceByPlatformDomain.get(host.domain);
     const service = services[serviceName];
     if (!service) return;
 

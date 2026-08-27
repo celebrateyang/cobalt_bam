@@ -95,6 +95,25 @@ test("keeps portable TikTok media on Direct Bridge", () => {
     assert.equal(response.body.directUrl, mediaUrl);
 });
 
+test("returns Xiaohongshu video through Direct Bridge", () => {
+    const mediaUrl = "https://sns-video-hw.xhscdn.com/stream/example.mp4";
+    const response = matchAction({
+        ...baseArgs,
+        host: "xiaohongshu",
+        r: {
+            urls: mediaUrl,
+            urlCandidates: [mediaUrl],
+            filename: "xiaohongshu_note.mp4",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, mediaUrl);
+    assert.equal(response.body.directUrl, mediaUrl);
+    assert.deepEqual(response.body.directUrlCandidates, [mediaUrl]);
+});
+
 test("returns a generic progressive MP4 as a direct redirect", () => {
     const mediaUrl = "https://m.wsj.net/video/example/video.mp4";
     const response = matchAction({

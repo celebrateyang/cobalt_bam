@@ -3,6 +3,8 @@ import { genericUserAgent } from "../../config.js";
 import { createStream } from "../../stream/manage.js";
 import extractGeneric from "../generic/index.js";
 
+const mobileUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
+
 const https = (url) => {
     return url.replace(/^http:/i, 'https:');
 }
@@ -260,9 +262,10 @@ const attemptGenericFallback = async ({ noteId, xsecToken, isAudioOnly, url }) =
 export default async function ({ id, token, shareType, shareId, h265, isAudioOnly, dispatcher, url }) {
     let noteId = id;
     let xsecToken = token;
+    let submittedShortUrl;
 
     if (!noteId) {
-        const submittedShortUrl = (() => {
+        submittedShortUrl = (() => {
             try {
                 const parsed = new URL(url);
                 if (["xhslink.com", "xhslink.cn"].includes(parsed.hostname)) {
@@ -285,10 +288,14 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
 
     if (!noteId) return { error: "fetch.short_link" };
 
-    const noteUrl = canonicalNoteUrl(noteId, xsecToken, url);
+    // Xiaohongshu currently serves complete note hydration for app share links
+    // only when the original short URL is followed with a mobile identity. A
+    // reconstructed /explore URL can be redirected to a security/empty page.
+    const noteUrl = submittedShortUrl || canonicalNoteUrl(noteId, xsecToken, url);
     const res = await fetch(noteUrl, {
         headers: {
-            "user-agent": genericUserAgent,
+            "user-agent": submittedShortUrl ? mobileUserAgent : genericUserAgent,
+            "referer": "https://www.xiaohongshu.com/",
         },
         dispatcher,
     });
@@ -334,6 +341,8 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
 
         return {
             urls: https(videoURL),
+            urlCandidates: [https(videoURL)],
+            directClientDownload: true,
             filename: videoFilename,
             audioFilename: audioFilename,
         }

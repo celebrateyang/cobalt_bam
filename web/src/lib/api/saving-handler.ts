@@ -124,7 +124,8 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
         response.service === "bilibili" ||
         response.service === "douyin" ||
         response.service === "tencent_video" ||
-        response.service === "wechat_channels"
+        response.service === "wechat_channels" ||
+        response.service === "xiaohongshu"
     ) &&
     typeof response.directUrl === "string" &&
     response.directUrl.length > 0

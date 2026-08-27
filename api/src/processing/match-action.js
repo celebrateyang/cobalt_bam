@@ -354,6 +354,20 @@ export default function({
                     };
                     break;
 
+                case "xiaohongshu":
+                    responseType = "redirect";
+                    params = {
+                        url: r.urls,
+                        directUrl: r.urls,
+                        directUrlCandidates: [r.urls, ...(r.urlCandidates || [])]
+                            .filter((value, index, list) => (
+                                typeof value === "string" &&
+                                value.length > 0 &&
+                                list.indexOf(value) === index
+                            )),
+                    };
+                    break;
+
                 case "tiktok":
                     if (r.tiktokVideoSourceKind === "yt-dlp") {
                         // TikTok's webapp-prime URLs can be bound to the egress
@@ -392,7 +406,6 @@ export default function({
                 case "ourjiangsu":
                 case "toutiao":
                 case "weibo":
-                case "xiaohongshu":
                 case "newgrounds":
                 case "kuaishou":
                     params = { type: "proxy" };

@@ -798,62 +798,61 @@ export const learnPages: LearnPage[] = [
     },
     {
         slug: 'cobalt-tools-savefrom-alternative',
-        title: 'Cobalt.tools and SaveFrom alternatives: what to compare',
+        title: 'Cobalt.tools or SaveFrom not downloading YouTube? Try a playlist-ready alternative',
         description:
-            'Compare public-link video downloader workflows, batch and playlist support, audio extraction, queue reliability, local conversion, and privacy boundaries.',
-        updatedAt: '2026-08-27',
+            'When Cobalt.tools or SaveFrom cannot download YouTube reliably, compare an alternative that supports public YouTube videos, playlists, queues, retries, and audio extraction.',
+        updatedAt: '2026-08-28',
         readingTime: '7 min read',
         category: 'Downloader comparison',
         summary:
-            'If you are comparing alternatives to Cobalt.tools or SaveFrom, look beyond a single download box. The useful differences appear in supported public links, batch and playlist handling, output choices, retry behavior, local processing, and clear usage boundaries.',
+            'FreeSaveVideo is a YouTube downloader alternative to test when Cobalt.tools is disrupted or SaveFrom does not provide a working YouTube flow. It handles public single-video links and can expand YouTube playlists into a selectable download queue.',
         keyTakeaways: [
-            'Test the public links and platforms you actually use instead of relying on a generic supported-sites claim.',
-            'For repeated work, batch queues, playlist expansion, retries, and predictable file saving matter as much as one successful download.',
-            'FreeSaveVideo combines public-link downloads with batch and playlist tools, audio and muted-video options, queue controls, and browser-side local conversion.',
+            'FreeSaveVideo currently supports publicly accessible YouTube video links, with available video, audio, muted-video, and quality options determined by the source.',
+            'A YouTube playlist can be expanded so you can select items, add them to a queue, monitor each result, and retry an individual failure.',
+            'Cobalt.tools still exposes YouTube settings, so a current disruption should not be misrepresented as permanent removal; test the live workflow before choosing an alternative.',
         ],
         sections: [
             {
-                heading: 'Why people look for a downloader alternative',
+                heading: 'Why YouTube downloads may fail on Cobalt.tools or SaveFrom',
                 body: [
-                    'A downloader that works for one public link may not fit a recurring creator, research, or archiving workflow. Platform changes, regional availability, output choices, and queue behavior can all affect whether a tool remains useful.',
-                    'That is why searches for a Cobalt.tools alternative, a SaveFrom alternative, or a general online video downloader alternative should start with the task rather than the brand name.',
+                    'YouTube changes frequently, so a downloader may keep its YouTube settings while the public instance is temporarily unable to process a link. On August 27, 2026, the Cobalt status page reported disrupted processing nodes and YouTube health-check failures. That supports describing the service as currently disrupted or unreliable, not as permanently removing YouTube.',
+                    'SaveFrom users may also find that the public site no longer provides a normal, dependable YouTube download path. In either case, the useful question is whether another tool can complete a permitted public download now.',
                 ],
             },
             {
-                heading: 'Start with the links you actually use',
+                heading: 'Test one public YouTube video from start to finish',
                 body: [
-                    'Create a small, permission-safe test set from the public platforms and content types you use most. Include a normal video, a short-form post, and a playlist or collection when relevant. A useful comparison records whether the link is recognized, which formats appear, and whether the final file saves correctly.',
-                    'No downloader works with every URL. Private, paywalled, deleted, membership-only, and DRM-protected content should be treated as unsupported rather than as something to bypass.',
+                    'FreeSaveVideo currently accepts publicly accessible YouTube video links. Paste a link, inspect the formats returned by the source, and complete the final save instead of judging a tool only by whether it recognizes the title.',
+                    'Available results can include video, audio extraction, muted video, and different quality choices. Not every source returns every option, and private, paid, deleted, membership-only, or DRM-protected content is not supported.',
                 ],
             },
             {
-                heading: 'Compare the complete workflow',
+                heading: 'Use a YouTube playlist instead of copying every link',
                 body: [
-                    'Single-link success is only the first step. For repeated work, check whether the tool can expand playlists, place several items in a queue, retry failed items, extract audio, create a muted-video option, and save files to a predictable location.',
-                    'Also separate online downloading from local media work. FreeSaveVideo includes browser-side remux and format-conversion tools for supported local files, so those files can be processed locally when the browser supports the workflow.',
+                    'FreeSaveVideo can expand a public YouTube playlist into individual entries. You can choose the videos you need, add them to the processing queue, and follow each item separately rather than manually copying every watch URL.',
+                    'The queue makes playlist work practical: one failed item can be retried without restarting the entire list, and supported browsers can use a selected save folder to keep batch output organized.',
                 ],
             },
             {
-                heading: 'Where FreeSaveVideo fits',
+                heading: 'What makes the playlist workflow different',
                 body: [
-                    'FreeSaveVideo is an alternative to consider when you need more than a one-link form. It supports public-link downloading across many services, plus single, batch, playlist, and collection workflows. Available results may include video, audio extraction, or muted video depending on the source.',
-                    'Its queue can retry items and work with a selected save folder where browser capabilities allow it. The product also provides local browser tools for remuxing and format conversion. Availability still depends on the source link, browser, region, and upstream platform behavior.',
-                    'FreeSaveVideo is an independent product and is not affiliated with Cobalt.tools or SaveFrom.',
+                    'For creators, course owners, researchers, and editors working with authorized material, the bottleneck is often not one video. It is organizing a list, seeing which item failed, extracting audio where needed, and finding all saved files afterward.',
+                    'FreeSaveVideo combines playlist expansion with selectable items, per-item status, retry controls, audio and muted-video choices, and optional folder saving. It also includes browser-side remux and format-conversion tools for supported local files.',
                 ],
             },
             {
-                heading: 'Choose with permission, privacy, and cost in mind',
+                heading: 'Run a fair three-step comparison',
                 body: [
-                    'Use any downloader only for public material you own or are allowed to save. Avoid tools that imply they can bypass access controls. For local files, prefer transparent local processing when possible, and review where downloaded files are stored.',
-                    'Finally, check the current result and pricing before committing to a workflow. Some FreeSaveVideo actions may require sign-in, points, or membership, while availability and output choices vary by link.',
+                    'First, test one public YouTube video you own or are allowed to save. Second, test a public playlist and confirm that you can select entries, monitor the queue, retry a failure, and find the saved files. Third, compare sign-in, points, membership, and other current limits before starting a larger job.',
+                    'FreeSaveVideo is independent and is not affiliated with Cobalt.tools or SaveFrom. Use all downloader tools only for content you own, have permission to save, or are otherwise allowed to download.',
                 ],
             },
         ],
         table: {
             headers: ['Need', 'What to verify', 'FreeSaveVideo behavior'],
             rows: [
-                ['Public links', 'Recognition and final file delivery', 'Supports public links across many services'],
-                ['Batch or playlists', 'Expansion, queueing, and per-item status', 'Includes batch, playlist, and collection workflows'],
+                ['YouTube video', 'Recognition, formats, and final file delivery', 'Supports publicly accessible YouTube links'],
+                ['YouTube playlist', 'Expansion, item selection, and per-item status', 'Expands public playlists into a selectable queue'],
                 ['Output choices', 'Video, audio, muted video, and available quality', 'Options depend on the source result'],
                 ['Longer queues', 'Retries and predictable file saving', 'Queue controls include retry and optional folder saving'],
                 ['Local files', 'Whether conversion requires an upload', 'Supported remux and conversion can run in the browser'],
@@ -866,16 +865,16 @@ export const learnPages: LearnPage[] = [
                 a: 'No. FreeSaveVideo is an independent product. Those names are used only to help people compare downloader workflows.',
             },
             {
-                q: 'Does FreeSaveVideo work with every video link?',
-                a: 'No. Results depend on the public source, browser, region, and upstream platform. Private, paywalled, deleted, membership-only, and DRM-protected media are not supported.',
+                q: 'Can FreeSaveVideo download a YouTube playlist?',
+                a: 'Yes, for supported public playlists. It expands the playlist, lets you choose items, and processes them in a queue with per-item status and retry controls.',
             },
             {
                 q: 'Is every FreeSaveVideo workflow free?',
                 a: 'Not necessarily. Some actions may require sign-in, points, or membership. Check the current result and pricing shown in the product before starting a larger task.',
             },
             {
-                q: 'What should I test before switching downloader tools?',
-                a: 'Test several public links you are allowed to save, including the platforms and content types you use most. Compare recognition, formats, final file delivery, queue behavior, and file-saving location.',
+                q: 'Has Cobalt.tools permanently removed YouTube?',
+                a: 'Do not assume that from a temporary failure. Cobalt.tools still exposes YouTube settings, while its public status can report disrupted YouTube processing. Test the current official instance and describe the observed status accurately.',
             },
         ],
         relatedDownloads: ['youtube-download', 'tiktok-no-watermark', 'instagram-video-download'],
@@ -884,6 +883,8 @@ export const learnPages: LearnPage[] = [
             'cobalt tools alternative',
             'cobalt.tools alternative',
             'savefrom alternative',
+            'youtube downloader alternative',
+            'youtube playlist downloader',
             'online video downloader alternative',
             'batch video downloader',
         ],

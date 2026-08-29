@@ -877,7 +877,7 @@ export const learnPages: LearnPage[] = [
                 a: 'Do not assume that from a temporary failure. Cobalt.tools still exposes YouTube settings, while its public status can report disrupted YouTube processing. Test the current official instance and describe the observed status accurately.',
             },
         ],
-        relatedDownloads: ['youtube-download', 'tiktok-no-watermark', 'instagram-video-download'],
+        relatedDownloads: ['youtube-playlist-downloader', 'youtube-download', 'playlist-downloader'],
         relatedGuides: ['youtube-download-guide', 'tiktok-download-guide', 'instagram-download-guide'],
         keywords: [
             'cobalt tools alternative',

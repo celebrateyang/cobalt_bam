@@ -33,7 +33,7 @@
     "api.content.platform_restricted": "Loại liên kết {{ service }} này bị nền tảng giới hạn (ví dụ tường phí hoặc giới hạn bản quyền theo khu vực), nên tôi không thể tải xuống. Hãy thử một liên kết video công khai khác!",
     "api.content.video.live": "video này hiện đang phát trực tiếp, nên tôi chưa thể tải xuống. đợi phát trực tiếp kết thúc, sau đó thử lại!",
     "api.content.video.private": "video này riêng tư, nên tôi không thể truy cập. thay đổi khả năng hiển thị của nó hoặc thử video khác!",
-    "api.content.video.age": "video này bị hạn chế độ tuổi, nên tôi không thể truy cập ẩn danh. thử video khác!",
+    "api.content.video.age": "video YouTube này bị giới hạn độ tuổi và yêu cầu đăng nhập YouTube để xác nhận tuổi. hiện tại chúng tôi không thể tải video này xuống; hãy thử một video không bị giới hạn độ tuổi. lần thử không thành công này không bị trừ điểm.",
     "api.content.video.region": "video này bị khóa khu vực và máy chủ xử lý ở một vị trí khác. thử video khác!",
     "api.youtube.disabled": "tải youtube tạm thời bị tắt do hạn chế từ phía youtube. chúng tôi đang tìm cách giải quyết.<br><br>bạn có thể cài đặt plugin thủ công để tải video youtube. để biết hướng dẫn, vui lòng <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">xem video này</a>.",
     "api.youtube.link.unsupported": "Chua ho tro trang kenh YouTube. Hay sao chep lien ket cua mot video YouTube cu the hoac playlist, roi thu lai.",

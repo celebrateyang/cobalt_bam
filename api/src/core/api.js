@@ -130,6 +130,7 @@ const readableDownloadErrors = new Map([
     ["error.api.bilibili.space.unsupported", "Bilibili space collection index pages are not supported. Ask the user to open one video inside the collection and submit that video URL."],
     ["error.api.bilibili.list.missing_video", "This Bilibili creator video list does not identify a selected video. Ask the user to open one video in the list and copy the URL containing bvid."],
     ["error.api.youtube.login", "YouTube could not be processed because the upstream node may need refreshed YouTube cookies or account tokens. Ask the user to try again later."],
+    ["error.api.content.video.age", "This YouTube video is age-restricted and requires a signed-in, age-verified YouTube account. The download was not processed and no points were charged."],
     ["error.api.youtube.link.unsupported", "YouTube channel pages are not supported. Ask the user to submit a specific video URL or playlist URL."],
     ["error.api.member.limit.exceeded", "The membership download limit has been reached."],
     ["error.api.membership.limit.exceeded", "The membership download limit has been reached."],

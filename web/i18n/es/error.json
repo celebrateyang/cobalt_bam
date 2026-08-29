@@ -33,7 +33,7 @@
     "api.content.platform_restricted": "Este tipo de enlace de {{ service }} está restringido por la plataforma (por ejemplo, muro de pago o derechos regionales), así que no puedo descargarlo. ¡Prueba con un enlace de video público!",
     "api.content.video.live": "este video está actualmente en vivo, así que aún no puedo descargarlo. ¡espera a que el stream en vivo termine e intenta de nuevo!",
     "api.content.video.private": "este video es privado, así que no puedo acceder a él. ¡cambia su visibilidad o intenta otro!",
-    "api.content.video.age": "este video tiene restricción de edad, así que no puedo acceder a él anónimamente. ¡intenta otro!",
+    "api.content.video.age": "este video de YouTube tiene restricción de edad y exige iniciar sesión en YouTube para confirmar la edad. ahora mismo no podemos descargarlo; prueba con un video sin restricción de edad. no se descontaron puntos por este intento fallido.",
     "api.content.video.region": "este video está bloqueado por región, y el servidor de procesamiento está en una ubicación diferente. ¡intenta otro!",
     "api.youtube.disabled": "la descarga de youtube está temporalmente deshabilitada debido a restricciones del lado de youtube. ya estamos buscando maneras de evitarlas.<br><br>puedes instalar manualmente un plugin para descargar videos de youtube. para el tutorial, por favor <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">mira este video</a>.",
     "api.youtube.link.unsupported": "Las paginas de canal de YouTube aun no son compatibles. Copia el enlace de un video concreto de YouTube o de una playlist e intentalo de nuevo.",

@@ -33,7 +33,7 @@
     "api.content.platform_restricted": "この種類の {{ service }} リンクは、プラットフォーム側の制限（有料会員限定や地域制限など）によりダウンロードできません。公開されている動画リンクを試してください。",
     "api.content.video.live": "この動画は現在ライブ配信中のため、まだダウンロードできません。ライブ配信が終了するまで待ってから、もう一度試してください！",
     "api.content.video.private": "この動画はプライベートなので、アクセスできません。公開設定を変更するか、別の動画を試してください！",
-    "api.content.video.age": "この動画は年齢制限があるため、匿名でアクセスできません。別の動画を試してください！",
+    "api.content.video.age": "このYouTube動画には年齢制限があり、年齢確認のためYouTubeへのログインが必要です。現在この動画はダウンロードできないため、年齢制限のない動画をお試しください。今回の失敗ではポイントは差し引かれていません。",
     "api.content.video.region": "この動画は地域制限されており、処理サーバーは別の場所にあります。別の動画を試してください！",
     "api.youtube.disabled": "YouTubeのダウンロードはYouTube側の制限により一時的に無効になっています。私たちはすでにそれらを回避する方法を探しています。<br><br>YouTube動画をダウンロードするためのプラグインを手動でインストールできます。チュートリアルについては、<a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">このビデオをご覧ください</a>。",
     "api.youtube.link.unsupported": "まだ YouTube のチャンネルページには対応していません。YouTube の個別動画または playlist のリンクをコピーして、もう一度お試しください。",

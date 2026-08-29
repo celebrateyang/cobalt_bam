@@ -29,7 +29,7 @@
     "api.content.platform_restricted": "这类 {{ service }} 链接通常受平台限制（例如付费会员墙或地区版权限制），因此我无法下载。请尝试可公开访问的视频链接。",
     "api.content.video.live": "该视频当前正在直播，因此我无法下载。请等直播结束后再试！",
     "api.content.video.private": "该视频是私密的，因此我无法访问。请更改其可见性或尝试其他视频！",
-    "api.content.video.age": "该视频有年龄限制，因此我无法匿名访问。请尝试其他视频！",
+    "api.content.video.age": "该 YouTube 视频设有年龄限制，需要登录 YouTube 并完成年龄验证后才能访问。当前暂时无法下载此视频，请尝试其他无年龄限制的视频。本次失败不会扣除积分。",
     "api.content.video.region": "该视频有地区限制，而处理服务器位于不同位置。请尝试其他视频！",
     "api.youtube.disabled": "YouTube 下载服务暂时不可用，请稍后重试。",
     "api.douyin.user.unsupported": "暂不支持抖音用户主页。请打开具体视频，复制该视频的分享链接后再试。",

@@ -33,7 +33,7 @@
     "api.content.platform_restricted": "Ce type de lien {{ service }} est limité par la plateforme (par exemple paywall ou droits régionaux), je ne peux donc pas le télécharger. Essaie plutôt un lien vidéo public !",
     "api.content.video.live": "cette vidéo est actuellement en direct, donc je ne peux pas encore la télécharger. attendez que le direct se termine, puis réessayez !",
     "api.content.video.private": "cette vidéo est privée, donc je ne peux pas y accéder. modifiez sa visibilité ou essayez-en une autre !",
-    "api.content.video.age": "cette vidéo est soumise à une restriction d'âge, donc je ne peux pas y accéder anonymement. essayez-en une autre !",
+    "api.content.video.age": "cette vidéo YouTube est soumise à une restriction d'âge et nécessite une connexion à YouTube pour confirmer l'âge. nous ne pouvons pas la télécharger pour le moment ; essayez une vidéo sans restriction d'âge. aucun point n'a été déduit pour cet échec.",
     "api.content.video.region": "cette vidéo est verrouillée par région, et le serveur de traitement est dans un autre endroit. essayez-en une autre !",
     "api.youtube.disabled": "le téléchargement youtube est temporairement désactivé en raison de restrictions du côté de youtube. nous cherchons déjà des moyens de les contourner.<br><br>vous pouvez installer manuellement un plugin pour télécharger des vidéos youtube. pour le tutoriel, veuillez <a href=\"https://www.bilibili.com/video/BV1Bp4EzeEJo\" target=\"_blank\" style=\"color: var(--blue); text-decoration: underline;\">regarder cette vidéo</a>.",
     "api.youtube.link.unsupported": "Les pages de chaine YouTube ne sont pas encore prises en charge. Copiez le lien d une video YouTube precise ou d une playlist, puis reessayez.",

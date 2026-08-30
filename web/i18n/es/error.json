@@ -23,6 +23,7 @@
     "api.link.invalid": "tu enlace no es válido o este servicio aún no es compatible. ¿has pegado el enlace correcto?",
     "api.link.unsupported": "{{ service }} es compatible, pero no pude reconocer tu enlace. ¿has pegado el correcto?",
     "api.fetch.fail": "algo salió mal al obtener información de {{ service }} y no pude encontrar nada para ti. ¿estás seguro de que tu enlace funciona? si funciona y aún ves este error, ¡háznoslo saber e intentaremos ayudar!",
+    "api.wechat_channels.app_only": "este video solo se puede ver dentro de WeChat, por lo que no se puede descargar desde el enlace compartido. prueba con otro video de acceso público.",
     "api.fetch.critical": "el módulo de {{ service }} devolvió un error que no reconozco. intenta de nuevo en unos segundos, pero si el problema persiste, ¡háznoslo saber!",
     "api.fetch.empty": "no pude encontrar ningún medio que pueda descargar para ti. ¿estás seguro de que pegaste el enlace correcto?",
     "api.fetch.rate": "el servidor de procesamiento de FreeSaveVideo fue limitado por la api de {{ service }}. ¡intenta de nuevo en unos segundos!",

@@ -23,6 +23,7 @@
     "api.link.invalid": "votre lien n'est pas valide ou ce service n'est pas encore pris en charge. avez-vous collé le bon lien ?",
     "api.link.unsupported": "{{ service }} est pris en charge, mais je n'ai pas pu reconnaître votre lien. avez-vous collé le bon ?",
     "api.fetch.fail": "quelque chose s'est mal passé lors de la récupération des informations de {{ service }} et je n'ai rien pu trouver pour vous. êtes-vous sûr que votre lien fonctionne ? si c'est le cas et que vous voyez toujours cette erreur, faites-le nous savoir et nous essaierons d'aider !",
+    "api.wechat_channels.app_only": "cette vidéo est uniquement disponible dans WeChat et ne peut donc pas être téléchargée depuis son lien de partage. essayez une autre vidéo accessible publiquement.",
     "api.fetch.critical": "le module {{ service }} a renvoyé une erreur que je ne reconnais pas. réessayez dans quelques secondes, mais si le problème persiste, faites-le nous savoir !",
     "api.fetch.empty": "impossible de trouver des médias que je puisse télécharger pour vous. êtes-vous sûr d'avoir collé le bon lien ?",
     "api.fetch.rate": "le serveur de traitement FreeSaveVideo a été limité en débit par l'API {{ service }}. réessayez dans quelques secondes !",

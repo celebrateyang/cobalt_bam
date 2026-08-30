@@ -92,6 +92,9 @@ export default async function({ shortUri, articleId, url }) {
         console.warn(
             `[wechat_channels] extraction failed: ${error?.code || error?.name || "Error"}: ${error?.message || "unknown"}`
         );
+        if (error?.code === "WECHAT_CHANNELS_APP_ONLY") {
+            return { error: "wechat_channels.app_only" };
+        }
         return { error: "fetch.fail" };
     }
 }

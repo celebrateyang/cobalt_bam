@@ -119,6 +119,7 @@ const readableDownloadErrors = new Map([
     ["error.api.auth.clerk.invalid", "User authentication is invalid or expired."],
     ["error.api.fetch.empty", "No downloadable media was found at this URL."],
     ["error.api.fetch.fail", "The target site could not be fetched or returned an unusable response."],
+    ["error.api.wechat_channels.app_only", "This WeChat Channels video is only available inside WeChat and cannot be downloaded from its shared link."],
     ["error.api.generic", "The download request failed because of an unexpected server error."],
     ["error.api.invalid_body", "The submitted request body is invalid."],
     ["error.api.link.invalid", "The submitted URL is invalid or unsupported."],

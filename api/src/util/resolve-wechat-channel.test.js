@@ -99,3 +99,42 @@ test("authenticated resolver maps Yuanbao playable_url into Finder request", asy
         globalThis.fetch = originalFetch;
     }
 });
+
+test("authenticated resolver identifies videos limited to the WeChat app", async () => {
+    const originalFetch = globalThis.fetch;
+
+    globalThis.fetch = async (url) => {
+        if (String(url).includes("yuanbao.tencent.com")) {
+            return new Response(
+                JSON.stringify({
+                    code: 0,
+                    msg: "success",
+                    data: { wx_export_id: "", playable_url: "" },
+                }),
+                { status: 200, headers: { "content-type": "application/json" } }
+            );
+        }
+
+        return new Response(
+            JSON.stringify({
+                errCode: 0,
+                data: {
+                    errMsg: { type: 4, title: "Open this content in WeChat" },
+                    sceneInfo: { dynamicExportId: "export/app-only" },
+                },
+            }),
+            { status: 201, headers: { "content-type": "application/json" } }
+        );
+    };
+
+    try {
+        await assert.rejects(
+            resolveWechatChannel("https://weixin.qq.com/sph/AppOnly123", {
+                yuanbaoCookie: "session=legitimate-test-cookie",
+            }),
+            { code: "WECHAT_CHANNELS_APP_ONLY" }
+        );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});

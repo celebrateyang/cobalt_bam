@@ -23,6 +23,7 @@
     "api.link.invalid": "liên kết của bạn không hợp lệ hoặc dịch vụ này chưa được hỗ trợ. bạn đã dán đúng liên kết chưa?",
     "api.link.unsupported": "{{ service }} được hỗ trợ, nhưng tôi không thể nhận ra liên kết của bạn. bạn đã dán đúng chưa?",
     "api.fetch.fail": "có gì đó không ổn khi lấy thông tin từ {{ service }} và tôi không thể tìm thấy gì cho bạn. bạn có chắc liên kết của bạn hoạt động không? nếu có và bạn vẫn thấy lỗi này, hãy cho chúng tôi biết và chúng tôi sẽ cố gắng giúp đỡ!",
+    "api.wechat_channels.app_only": "video này chỉ có thể xem trong WeChat nên không thể tải xuống từ liên kết chia sẻ. vui lòng thử một video khác được truy cập công khai.",
     "api.fetch.critical": "module {{ service }} trả về lỗi mà tôi không nhận ra. thử lại sau vài giây, nhưng nếu vấn đề vẫn tiếp tục, hãy cho chúng tôi biết!",
     "api.fetch.empty": "không thể tìm thấy phương tiện nào mà tôi có thể tải cho bạn. bạn có chắc đã dán đúng liên kết không?",
     "api.fetch.rate": "máy chủ xử lý FreeSaveVideo bị giới hạn tốc độ bởi api {{ service }}. thử lại sau vài giây!",

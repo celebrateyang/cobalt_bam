@@ -128,7 +128,11 @@ export const getYuanbaoParseResult = async (
 
     const data = response.data;
     if (!data?.wx_export_id && !data?.playable_url) {
-        throw new Error("Yuanbao response contained neither wx_export_id nor playable_url");
+        const error = new Error(
+            "Yuanbao response contained neither wx_export_id nor playable_url"
+        );
+        error.code = "YUANBAO_EMPTY_PARSE_RESULT";
+        throw error;
     }
     return data;
 };
@@ -217,10 +221,26 @@ export const resolveWechatChannel = async (
         return normalizeFeed(data, { resolutionMode: "short_uri_metadata" });
     }
 
-    const parsed = await getYuanbaoParseResult(shareUrl, {
-        cookie: yuanbaoCookie,
-        headers: yuanbaoHeaders,
-    });
+    let parsed;
+    try {
+        parsed = await getYuanbaoParseResult(shareUrl, {
+            cookie: yuanbaoCookie,
+            headers: yuanbaoHeaders,
+        });
+    } catch (error) {
+        if (error?.code !== "YUANBAO_EMPTY_PARSE_RESULT") throw error;
+
+        const preview = await getFeedByShortUri(shortUri);
+        if (preview?.errMsg?.type === 4) {
+            const appOnlyError = new Error(
+                preview.errMsg.title || "This video is only available in WeChat"
+            );
+            appOnlyError.code = "WECHAT_CHANNELS_APP_ONLY";
+            throw appOnlyError;
+        }
+
+        throw error;
+    }
     const playable = parsed.playable_url ? new URL(parsed.playable_url) : null;
     const exportId = playable?.searchParams.get("eid") || parsed.wx_export_id;
     const generalToken = playable?.searchParams.get("token") || "";

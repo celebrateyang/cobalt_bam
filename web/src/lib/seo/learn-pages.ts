@@ -889,6 +889,89 @@ export const learnPages: LearnPage[] = [
             'batch video downloader',
         ],
     },
+    {
+        slug: 'youtube-playlist-only-one-video-fix',
+        title: 'YouTube playlist only shows one video? Check the URL before retrying',
+        description:
+            'Fix a YouTube playlist that only detects one video by checking the list parameter, public access, playlist type, unavailable entries, and queue results.',
+        updatedAt: '2026-08-30',
+        readingTime: '6 min read',
+        category: 'YouTube troubleshooting',
+        summary:
+            'If a playlist downloader returns only one video, the copied URL may identify the watch page without a usable playlist, or the remaining entries may not be publicly available. Check the list parameter and playlist type before retrying.',
+        keyTakeaways: [
+            'Use a full youtube.com/playlist?list=... URL or a watch URL that still contains a usable list parameter.',
+            'Channel homepages, Watch Later, generated Mix/Radio lists, private playlists, and members-only pages are not supported playlist inputs.',
+            'An unavailable item should remain an individual queue failure while other public playlist items continue.',
+        ],
+        sections: [
+            {
+                heading: 'Confirm that the copied URL still contains the playlist ID',
+                body: [
+                    'A normal watch URL identifies one video. A playlist workflow also needs the list parameter, such as youtube.com/playlist?list=... or youtube.com/watch?v=...&list=.... Some share actions copy only the current video and remove the playlist context.',
+                    'Open the playlist page itself, copy the complete address, and confirm that the list value is still present before pasting it into FreeSaveVideo.',
+                ],
+            },
+            {
+                heading: 'Do not use a channel homepage as a playlist',
+                body: [
+                    'A channel homepage, Videos tab, search result, subscription feed, or comment URL does not describe one finite public playlist. Open the specific playlist you want and copy its URL instead.',
+                    'If you only need the current video, use the individual watch URL and keep the task in single-video mode.',
+                ],
+            },
+            {
+                heading: 'Check whether the playlist type can be expanded publicly',
+                body: [
+                    'The playlist and its entries must be accessible without signing in. Private, members-only, paid, deleted, or region-restricted videos may be missing or unavailable.',
+                    'Watch Later uses the WL identifier and belongs to the signed-in account. Generated Mix and Radio identifiers commonly begin with RD or RL and change dynamically. FreeSaveVideo intentionally excludes these cases rather than attempting to bypass access controls.',
+                ],
+            },
+            {
+                heading: 'Review each detected item instead of restarting the list',
+                body: [
+                    'After a supported public playlist expands, select only the videos you need and choose from the formats available for each source item. A playlist does not guarantee that every video exposes the same video, audio, or quality options.',
+                    'Each selected video becomes its own queue task. If one item fails because it was removed or restricted, the remaining public items can continue and the failed item stays visible for inspection or retry.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Symptom', 'Likely cause', 'What to do'],
+            rows: [
+                ['Only one video appears', 'The copied link lost its list parameter', 'Copy the full playlist URL again'],
+                ['Nothing expands', 'A channel, feed, or search page was used', 'Open a specific public playlist'],
+                ['Sign-in is required', 'Private, Watch Later, paid, or members-only content', 'Use an eligible public playlist'],
+                ['Some items fail', 'Deleted, private, or region-restricted entries', 'Continue other tasks and inspect failures separately'],
+                ['Different formats appear', 'Source videos expose different resources', 'Choose an available format per item'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Why did FreeSaveVideo detect only the current YouTube video?',
+                a: 'The copied URL may not contain a usable list parameter. Copy the full public playlist URL instead of the standalone watch link.',
+            },
+            {
+                q: 'Can a YouTube channel page be downloaded as a playlist?',
+                a: 'No. A channel page is not a specific finite playlist. Open the playlist you want and copy its URL.',
+            },
+            {
+                q: 'Can FreeSaveVideo expand Watch Later or YouTube Mix?',
+                a: 'No. Watch Later is account-bound, while generated Mix and Radio lists are dynamic. Use a normal publicly accessible playlist with a stable list ID.',
+            },
+            {
+                q: 'Will one unavailable video stop the entire playlist?',
+                a: 'No. Other detected items can continue as separate queue tasks, while the failed item remains available for inspection or retry.',
+            },
+        ],
+        relatedDownloads: ['youtube-playlist-downloader', 'youtube-download', 'playlist-downloader'],
+        relatedGuides: ['youtube-download-guide', 'youtube-shorts-download-guide'],
+        keywords: [
+            'youtube playlist only one video',
+            'youtube playlist not working',
+            'youtube playlist downloader error',
+            'youtube playlist list parameter',
+            'download youtube playlist',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

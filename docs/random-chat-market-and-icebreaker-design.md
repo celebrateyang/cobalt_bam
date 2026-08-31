@@ -88,7 +88,7 @@ The current products are:
 | --- | --- | --- |
 | WeChat Pay | `member_3day` | CNY 6, 3 days |
 | WeChat Pay | `member_monthly` | CNY 50, 30 days |
-| WeChat Pay | `member_yearly` | CNY 500, 365 days |
+| WeChat Pay | `member_yearly` | CNY 298, 365 days |
 | PayPal | `member_monthly_recurring` | USD 7.99 monthly subscription |
 | PayPal | `member_yearly_recurring` | USD 79.99 yearly subscription |
 | PayPal | `member_monthly_onetime` | USD 9.99, 30-day pass |

@@ -1377,7 +1377,6 @@
                 paypalSdkInstance = sdk;
                 paypalSdkLocale = requestedLocale;
                 paypalSdkReady = true;
-                purchaseErrorKey = "";
             }
             return sdk;
         })().catch((error) => {
@@ -1401,7 +1400,6 @@
         (!paypalSdkReady || paypalSdkLocale !== desiredPayPalLocale)
     ) {
         void preparePayPalSdk().catch((error) => {
-            purchaseErrorKey = "auth.payment_create_failed";
             console.error("prepare PayPal SDK failed", error);
         });
     }
@@ -2549,6 +2547,16 @@
                                                             {$t("auth.badge_recommended")}
                                                         </span>
                                                     {/if}
+                                                    {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
+                                                        <span class="promotion-label">
+                                                            {$t("auth.membership_teacher_day_offer")}
+                                                        </span>
+                                                    {/if}
+                                                    {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
+                                                        <div class="product-original-price">
+                                                            {formatAmount(50000, "CNY")}
+                                                        </div>
+                                                    {/if}
                                                     <div class="product-price">
                                                         {formatAmount(
                                                             product.amountFen,
@@ -3610,6 +3618,22 @@
         font-weight: 900;
         color: var(--secondary);
         letter-spacing: -0.02em;
+    }
+
+    .product-original-price {
+        color: var(--subtext);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: line-through;
+    }
+
+    .promotion-label {
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+        text-align: right;
     }
 
     .product-subtitle {

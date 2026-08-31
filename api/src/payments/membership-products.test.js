@@ -75,7 +75,7 @@ test("offers the new membership prices without reselling the legacy 7-day plan",
             key: "member_yearly",
             planKey: "member_yearly",
             durationDays: 365,
-            amountFen: 50000,
+            amountFen: 29800,
             currency: "CNY",
         },
     ]);

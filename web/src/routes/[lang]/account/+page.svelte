@@ -631,9 +631,22 @@
             product.key === "member_yearly"
                 ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
                 : `${formatAmount(product.amountFen, product.currency)} / ${$t("auth.membership_month_short")}`;
+        if (
+            selectedPaymentProvider === "wechat" &&
+            product.key === "member_yearly"
+        ) {
+            return $t("auth.membership_yearly_promo_subtitle", {
+                price: perMonth,
+            });
+        }
         return product.key === "member_yearly"
             ? $t("auth.membership_yearly_subtitle", { price: perMonth })
             : $t("auth.membership_monthly_subtitle");
+    };
+
+    const formatMembershipOriginalYearlySubtitle = () => {
+        const perMonth = `${formatAmount(Math.round(50000 / 12), "CNY")} / ${$t("auth.membership_month_short")}`;
+        return $t("auth.membership_yearly_subtitle", { price: perMonth });
     };
 
     let creditProducts: CreditProduct[] = [];
@@ -2533,6 +2546,11 @@
                                                     <div class="product-points">
                                                         {membershipPlanLabel(product.planKey)}
                                                     </div>
+                                                    {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
+                                                        <div class="subtext product-subtitle product-subtitle-original">
+                                                            {formatMembershipOriginalYearlySubtitle()}
+                                                        </div>
+                                                    {/if}
                                                     <div class="subtext product-subtitle">
                                                         {formatMembershipProductSubtitle(product)}
                                                     </div>
@@ -2548,7 +2566,7 @@
                                                         </span>
                                                     {/if}
                                                     {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
-                                                        <span class="promotion-label">
+                                                        <span class="membership-promotion-label">
                                                             {$t("auth.membership_teacher_day_offer")}
                                                         </span>
                                                     {/if}
@@ -3628,7 +3646,7 @@
         text-decoration: line-through;
     }
 
-    .promotion-label {
+    .membership-promotion-label {
         color: var(--red);
         font-size: 12px;
         font-weight: 800;
@@ -3639,6 +3657,10 @@
     .product-subtitle {
         padding: 0;
         opacity: 0.85;
+    }
+
+    .product-subtitle-original {
+        text-decoration: line-through;
     }
 
     .product-left {

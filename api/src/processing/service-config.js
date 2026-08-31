@@ -121,6 +121,11 @@ export const services = {
         ],
         altDomains: ["ddinstagram.com"],
     },
+    iqiyi: {
+        patterns: [
+            "v_:pageId.html",
+        ],
+    },
     kuaishou: {
         patterns: [
             "short-video/:id",

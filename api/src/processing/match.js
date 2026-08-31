@@ -51,6 +51,7 @@ import weibo from "./services/weibo.js";
 import zhshjn from "./services/zhshjn.js";
 import wechatChannels from "./services/wechat-channels.js";
 import tencentVideo from "./services/tencent-video.js";
+import iqiyi from "./services/iqiyi.js";
 
 let freebind;
 const twitterUpstreamFallbackErrors = new Set([
@@ -437,6 +438,14 @@ export default async function({ host, patternMatch, params, authType }) {
 
                 r = await tencentVideo({
                     ...patternMatch,
+                });
+                break;
+
+            case "iqiyi":
+                r = await iqiyi({
+                    pageId: patternMatch.pageId,
+                    quality: params.videoQuality,
+                    url,
                 });
                 break;
 

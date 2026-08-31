@@ -5,6 +5,7 @@ const friendlyNames = {
     twitch: "twitch clips",
     douyin: "Douyin",
     haokan: "Haokan",
+    iqiyi: "iQIYI",
     kuaishou: "Kuaishou",
     kugou: "Kugou Music",
     naver: "Naver",

@@ -340,6 +340,7 @@ export default function({
                     break;
 
                 case "tencent_video":
+                case "iqiyi":
                 case "wechat_channels":
                     responseType = "redirect";
                     params = {

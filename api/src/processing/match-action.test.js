@@ -252,6 +252,26 @@ test("returns Tencent Video MP4 candidates through Direct Bridge", () => {
     assert.equal(response.body.tunnelUrl, undefined);
 });
 
+test("returns an iQIYI progressive TS through Direct Bridge", () => {
+    const directUrl = "https://pcw-data.video.iqiyi.com/videos/v1ts/video.ts?qd_sc=signed";
+    const response = matchAction({
+        ...baseArgs,
+        host: "iqiyi",
+        r: {
+            service: "iqiyi",
+            urls: directUrl,
+            directClientDownload: true,
+            filename: "iqiyi_video.ts",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.service, "iqiyi");
+    assert.equal(response.body.directUrl, directUrl);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test("keeps forced Tencent Video downloads on Direct Bridge", () => {
     const directUrl = "https://ugcws.video.gtimg.com/video.mp4?vkey=key";
     const response = matchAction({

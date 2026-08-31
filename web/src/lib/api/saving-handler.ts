@@ -123,6 +123,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
         response.service === "deeplearningai" ||
         response.service === "bilibili" ||
         response.service === "douyin" ||
+        response.service === "iqiyi" ||
         response.service === "tencent_video" ||
         response.service === "wechat_channels" ||
         response.service === "xiaohongshu"

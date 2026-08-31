@@ -12,7 +12,7 @@ const MAX_RESULTS = 80;
 const MEDIA_EXTENSIONS: Array<{ re: RegExp; kind: MediaKind; label: string }> = [
     { re: /\.(m3u8)(?:[?#]|$)/i, kind: 'playlist', label: 'HLS playlist' },
     { re: /\.(mpd)(?:[?#]|$)/i, kind: 'playlist', label: 'DASH manifest' },
-    { re: /\.(mp4|webm|mov|m4v|avi|mkv)(?:[?#]|$)/i, kind: 'video', label: 'Video file' },
+    { re: /\.(mp4|webm|mov|m4v|avi|mkv|ts)(?:[?#]|$)/i, kind: 'video', label: 'Video file' },
     { re: /\.(mp3|m4a|aac|ogg|opus|wav|flac)(?:[?#]|$)/i, kind: 'audio', label: 'Audio file' },
     { re: /\.(vtt|srt|ass)(?:[?#]|$)/i, kind: 'subtitle', label: 'Subtitle file' },
     { re: /\.(jpg|jpeg|png|webp|gif|avif)(?:[?#]|$)/i, kind: 'image', label: 'Image file' },

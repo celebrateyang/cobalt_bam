@@ -47,6 +47,7 @@ const isAllowedPageBridgeUrl = (value: string) => {
             host.endsWith('.muscdn.com') ||
             host.endsWith('.akamaized.net') ||
             host.endsWith('.bilivideo.com') ||
+            host.endsWith('.video.iqiyi.com') ||
             host === 'mpvideo.qpic.cn' ||
             host.endsWith('.mpvideo.qpic.cn') ||
             host.endsWith('.video.qq.com') ||

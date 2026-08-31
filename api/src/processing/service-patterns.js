@@ -55,6 +55,9 @@ export const testers = {
         pattern.shareId?.length <= 16 ||
         (pattern.username?.length <= 30 && pattern.storyId?.length <= 24),
 
+    "iqiyi": pattern =>
+        /^[0-9a-z]{6,32}$/i.test(pattern.pageId || ""),
+
     "kuaishou": pattern =>
         pattern.id?.length <= 32 ||
         pattern.shortLink?.length <= 16 ||

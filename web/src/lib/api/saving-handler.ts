@@ -123,7 +123,6 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
         response.service === "deeplearningai" ||
         response.service === "bilibili" ||
         response.service === "douyin" ||
-        response.service === "iqiyi" ||
         response.service === "tencent_video" ||
         response.service === "wechat_channels" ||
         response.service === "xiaohongshu"
@@ -607,6 +606,27 @@ export const savingHandler = async ({
 
     if (response.status === "redirect") {
         const redirectUrl = normalizeTunnelUrl(response.url) || response.url;
+
+        if (
+            response.service === "iqiyi" &&
+            typeof response.directUrl === "string" &&
+            response.directUrl.length > 0
+        ) {
+            const outputFilename = response.filename.replace(/\.ts$/i, ".mp4");
+            downloadButtonState.set("done");
+            createSavePipeline({
+                status: "local-processing",
+                type: "remux",
+                service: "iqiyi",
+                tunnel: [response.directUrl],
+                output: {
+                    type: "video/mp4",
+                    filename: outputFilename,
+                },
+            } as any, selectedRequest, effectiveTaskId);
+            applyQueueMeta(effectiveTaskId, response, queueMeta);
+            return response;
+        }
 
         if (isSoundCloudDownloadResponse(response)) {
             const directCandidates = [

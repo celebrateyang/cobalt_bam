@@ -133,8 +133,10 @@ const makeRemuxArgs = (info: CobaltLocalProcessingResponse) => {
     }
 
     if (
-        info.service === "weibo" &&
-        info.source?.kind === "hls" &&
+        (
+            (info.service === "weibo" && info.source?.kind === "hls") ||
+            info.service === "iqiyi"
+        ) &&
         info.output.filename.endsWith(".mp4")
     ) {
         ffargs.push("-bsf:a", "aac_adtstoasc");

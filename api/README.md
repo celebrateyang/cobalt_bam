@@ -59,7 +59,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | :--------  | :-----                                                                                                               |
 | amazon live | supports public `amazon.com/live/video/:id` and `amazon.com/vdp/:id` replay links with available HLS qualities.     |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
-| iqiyi      | supports public, free iQIYI `v_*.html` videos through a direct CDN download without player ads.                       |
+| iqiyi      | supports public, free iQIYI `v_*.html` videos as server-remuxed MP4 files without player ads.                       |
 | facebook   | supports public accessible videos content only.                                                                      |
 | haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |
 | naver      | supports public Naver Shorts share links and media-id links.                                                        |

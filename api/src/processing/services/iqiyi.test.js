@@ -75,7 +75,7 @@ test("selects only the target non-preview program video", () => {
     assert.equal(selected.video.vid, "main");
 });
 
-test("returns the complete main-program TS through Direct Bridge", async () => {
+test("returns the complete main-program TS as the server remux source", async () => {
     const playerData = {
         code: "A00000",
         data: {
@@ -108,7 +108,8 @@ test("returns the complete main-program TS through Direct Bridge", async () => {
     });
 
     assert.equal(result.service, "iqiyi");
-    assert.equal(result.directClientDownload, true);
-    assert.equal(result.filenameAttributes.extension, "ts");
+    assert.equal(result.directClientDownload, undefined);
+    assert.equal(result.filenameAttributes.extension, "mp4");
+    assert.equal(new URL(result.urls).pathname.endsWith(".ts"), true);
     assert.equal(result.urls.includes("ads.example"), false);
 });

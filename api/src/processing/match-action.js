@@ -340,7 +340,6 @@ export default function({
                     break;
 
                 case "tencent_video":
-                case "iqiyi":
                 case "wechat_channels":
                     responseType = "redirect";
                     params = {
@@ -353,6 +352,12 @@ export default function({
                                 list.indexOf(value) === index
                             )),
                     };
+                    break;
+
+                case "iqiyi":
+                    // iQIYI exposes the feature as a progressive MPEG-TS object.
+                    // Remux it on the API so browsers receive a playable MP4.
+                    params = { type: "remux" };
                     break;
 
                 case "xiaohongshu":
@@ -539,6 +544,7 @@ export default function({
     const keepTikTokServerTunnel =
         host === "tiktok" &&
         r.tiktokVideoSourceKind === "yt-dlp";
+    const keepIqiyiServerTunnel = host === "iqiyi";
     if (
         alwaysProxy &&
         responseType === "redirect" &&
@@ -565,7 +571,8 @@ export default function({
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge &&
-        !keepTikTokServerTunnel
+        !keepTikTokServerTunnel &&
+        !keepIqiyiServerTunnel
     ) {
         const isPreferredWithExtra =
             localProcessing === "preferred" && extraProcessingTypes.has(params.type);

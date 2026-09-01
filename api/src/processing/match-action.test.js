@@ -252,24 +252,26 @@ test("returns Tencent Video MP4 candidates through Direct Bridge", () => {
     assert.equal(response.body.tunnelUrl, undefined);
 });
 
-test("returns an iQIYI progressive TS through Direct Bridge", () => {
-    const directUrl = "https://pcw-data.video.iqiyi.com/videos/v1ts/video.ts?qd_sc=signed";
+test("keeps iQIYI TS input on the server remux tunnel", () => {
+    const sourceUrl = "https://pcw-data.video.iqiyi.com/videos/v1ts/video.ts?qd_sc=signed";
     const response = matchAction({
         ...baseArgs,
         host: "iqiyi",
+        localProcessing: "forced",
+        alwaysProxy: true,
         r: {
             service: "iqiyi",
-            urls: directUrl,
-            directClientDownload: true,
-            filename: "iqiyi_video.ts",
+            urls: sourceUrl,
+            filename: "iqiyi_video.mp4",
         },
     });
 
     assert.equal(response.status, 200);
-    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.status, "tunnel");
     assert.equal(response.body.service, "iqiyi");
-    assert.equal(response.body.directUrl, directUrl);
-    assert.equal(response.body.tunnelUrl, undefined);
+    assert.equal(response.body.type, "remux");
+    assert.match(response.body.url, /\/tunnel\?/);
+    assert.equal(response.body.directUrl, undefined);
 });
 
 test("keeps forced Tencent Video downloads on Direct Bridge", () => {

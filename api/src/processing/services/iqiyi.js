@@ -164,14 +164,13 @@ export default async function({ pageId, quality, url, fetchImpl = fetch }) {
         return {
             service: "iqiyi",
             urls: directUrl,
-            directClientDownload: true,
             duration: Number(video.duration) || undefined,
             filenameAttributes: {
                 service: "iqiyi",
                 id: tvid,
                 title: videoInfo.title || `iqiyi_${tvid}`,
                 resolution: height ? `${height}p` : undefined,
-                extension: "ts",
+                extension: "mp4",
             },
         };
     } catch (error) {

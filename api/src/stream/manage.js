@@ -446,8 +446,13 @@ const shouldUseInternalFfmpegInputs = (streamInfo) =>
 
 const shouldUseDirectFfmpegInputs = (streamInfo) =>
     isFfmpegStreamType(streamInfo?.type) &&
-    ['amazon', 'bjnews', 'cctv', 'dailymotion', 'niconico', 'weibo'].includes(streamInfo?.service) &&
-    streamInfo?.isHLS === true;
+    (
+        streamInfo?.service === 'iqiyi' ||
+        (
+            ['amazon', 'bjnews', 'cctv', 'dailymotion', 'niconico', 'weibo'].includes(streamInfo?.service) &&
+            streamInfo?.isHLS === true
+        )
+    );
 
 const buildIndexedOriginalRequest = (originalRequest, index, total) =>
     originalRequest
@@ -495,8 +500,8 @@ function wrapStream(streamInfo) {
 
     // FFmpeg usually reads from signed public tunnels, but Vimeo HLS merge/remux
     // works more reliably through localhost itunnels to avoid auth failures.
-    // CCTV and NicoNico HLS inputs are already resolved locally and can be read
-    // by ffmpeg with their extracted headers, without nesting public tunnels.
+    // CCTV and NicoNico HLS inputs, plus iQIYI's progressive TS object, are
+    // already resolved and can be read by ffmpeg without nesting public tunnels.
     if (
         isFfmpegStreamType(streamInfo.type) &&
         !useInternalFfmpegInputs &&

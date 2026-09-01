@@ -313,6 +313,11 @@ const remux = async (streamInfo, res) => {
 
     if (format === 'mp4') {
         args.push('-movflags', 'faststart+frag_keyframe+empty_moov');
+        if (streamInfo.service === 'iqiyi' && streamInfo.type !== 'mute') {
+            // iQIYI's progressive MPEG-TS object carries AAC in ADTS framing.
+            // MP4 requires AudioSpecificConfig instead.
+            args.push('-bsf:a', 'aac_adtstoasc');
+        }
     }
 
     if (

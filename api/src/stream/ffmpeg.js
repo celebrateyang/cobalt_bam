@@ -1,5 +1,6 @@
 import ffmpeg from "ffmpeg-static";
 import { spawn } from "child_process";
+import { Readable } from "node:stream";
 import { create as contentDisposition } from "content-disposition-header";
 
 import { env } from "../config.js";
@@ -145,7 +146,7 @@ const buildInputArgs = (url, streamInfo) => {
     return ['-i', url];
 }
 
-const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
+const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) => {
     let process;
     let finalized = false;
     let muxBytes = 0;
@@ -194,12 +195,18 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier) => {
         process = spawn(...getCommand(args), {
             windowsHide: true,
             stdio: [
-                'inherit', 'inherit', 'pipe',
+                inputStream ? 'pipe' : 'inherit', 'inherit', 'pipe',
                 'pipe'
             ],
         });
 
         const [, , ffmpegError, muxOutput] = process.stdio;
+
+        if (inputStream && process.stdin) {
+            inputStream.on('error', error => shutdown('input-stream-error', error));
+            process.stdin.on('error', error => shutdown('ffmpeg-stdin-error', error));
+            inputStream.pipe(process.stdin);
+        }
 
         ffmpegError?.on('data', chunk => {
             stderrBuffer += chunk.toString();
@@ -252,7 +259,39 @@ const remux = async (streamInfo, res) => {
     console.log('[ffmpeg.remux] URLs:', urls.map(redactUrl));
     console.log('[ffmpeg.remux] URLs length:', urls.length);
 
-    const args = urls.flatMap(url => buildInputArgs(url, streamInfo));
+    let inputStream;
+    let args;
+
+    if (streamInfo.service === 'iqiyi' && urls.length === 1) {
+        // The Linux ffmpeg-static build can segfault while reading this CDN over
+        // HTTPS. Let Node handle HTTP/TLS and stream the MPEG-TS bytes to stdin.
+        let sourceResponse;
+        try {
+            sourceResponse = await fetch(urls[0], {
+                headers: streamInfo.headers,
+                redirect: 'follow',
+                signal: AbortSignal.timeout(120_000),
+            });
+        } catch (error) {
+            console.warn('[ffmpeg.remux][iqiyi] source fetch error:', {
+                error: error?.message || String(error),
+            });
+            return closeResponse(res);
+        }
+
+        if (!sourceResponse.ok || !sourceResponse.body) {
+            console.warn('[ffmpeg.remux][iqiyi] source fetch failed:', {
+                status: sourceResponse.status,
+                hasBody: Boolean(sourceResponse.body),
+            });
+            return closeResponse(res);
+        }
+
+        inputStream = Readable.fromWeb(sourceResponse.body);
+        args = ['-f', 'mpegts', '-i', 'pipe:0'];
+    } else {
+        args = urls.flatMap(url => buildInputArgs(url, streamInfo));
+    }
 
     // if the stream type is merge, we expect two URLs
     if (streamInfo.type === 'merge' && urls.length !== 2) {
@@ -342,7 +381,7 @@ const remux = async (streamInfo, res) => {
     console.log('[ffmpeg.remux] Final FFmpeg args:', redactFfmpegArgs(args));
     console.log('[ffmpeg.remux] About to call render...');
 
-    await render(res, streamInfo, args);
+    await render(res, streamInfo, args, undefined, inputStream);
 }
 
 const convertAudio = async (streamInfo, res) => {

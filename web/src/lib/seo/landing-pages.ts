@@ -4350,6 +4350,131 @@ export const seoLandingPages: SeoLandingPage[] = [
             }),
         },
     },
+    {
+        slug: 'youtube-playlist-to-mp3',
+        examples: [
+            {
+                title: 'Public YouTube playlist audio example',
+                description:
+                    'Copy a public playlist URL with its list parameter, then choose audio for the detected items that expose an audio result.',
+                urls: [
+                    'https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3',
+                ],
+            },
+        ],
+        supportedLinkFormats: [
+            'youtube.com/playlist?list={playlistId}',
+            'youtube.com/watch?v={videoId}&list={playlistId}',
+            'Public playlist entries that expose a usable audio result.',
+            'Private, members-only, Watch Later, and generated Mix/Radio lists are excluded.',
+        ],
+        locales: {
+            zh: zh({
+                metaTitle: `YouTube Playlist 转 MP3 - 合集音频批量下载 | ${ZH_BRAND}`,
+                metaDescription:
+                    '粘贴公开 YouTube Playlist 地址，展开可用视频，选择需要的条目和音频格式后加入批量队列。支持单项失败重试，不必逐条复制链接。',
+                metaKeywords: [
+                    'youtube playlist 转 mp3',
+                    'youtube 合集音频下载',
+                    'youtube playlist 音频下载',
+                    'youtube 批量转 mp3',
+                ],
+                h1: 'YouTube Playlist 转 MP3 / 音频',
+                lede: '粘贴带 list 参数的公开 Playlist，展开可用视频后，只选择需要的条目及其音频结果，并通过队列批量保存。',
+                stepsTitle: '如何批量提取 YouTube Playlist 音频',
+                steps: [
+                    '打开你有权保存的公开 Playlist，复制保留 list 参数的完整地址。',
+                    '粘贴地址并等待列表展开；频道主页、私人列表和 Watch Later 无法作为输入。',
+                    '勾选需要的条目，并在每个条目的可用结果中选择音频。',
+                    '启动队列；某个条目不可用时，其余任务仍可继续，失败项可以单独重试。',
+                ],
+                featuresTitle: 'Playlist 音频工作流',
+                features: [
+                    '一次展开公开 Playlist，不需要逐条复制 watch 地址。',
+                    '可以只选择部分视频，而不是强制处理整个列表。',
+                    '每个条目的音频选项取决于源站实际返回结果。',
+                    '单项失败不会要求重新开始整个 Playlist。',
+                    '兼容的桌面浏览器可使用指定文件夹保存。',
+                ],
+                faqTitle: 'YouTube Playlist 转音频常见问题',
+                faqs: [
+                    {
+                        q: '可以把整个 YouTube Playlist 批量转成 MP3 吗？',
+                        a: '可以处理受支持的公开 Playlist，并为检测到且提供音频结果的条目选择音频。具体格式取决于每个源视频实际返回的资源。',
+                    },
+                    {
+                        q: '可以只提取 Playlist 中部分视频的音频吗？',
+                        a: '可以。列表展开后只勾选需要的条目，再选择其可用音频结果。',
+                    },
+                    {
+                        q: '为什么某些条目没有 MP3 或音频选项？',
+                        a: '视频可能不可用、受地区限制，或者源结果没有提供独立音频。其他可用条目仍可继续处理。',
+                    },
+                    {
+                        q: '支持私人或会员 Playlist 吗？',
+                        a: '不支持。Playlist 和视频必须无需登录即可公开访问，并且你应拥有保存权限。',
+                    },
+                ],
+            }),
+            en: en({
+                metaTitle: `YouTube Playlist to MP3 - Batch Audio Downloader | ${EN_BRAND}`,
+                metaDescription:
+                    'Turn supported public YouTube playlist items into batch audio tasks. Expand a playlist, select videos, choose available audio results, and retry items separately.',
+                metaKeywords: [
+                    'youtube playlist to mp3',
+                    'youtube playlist audio downloader',
+                    'download youtube playlist audio',
+                    'youtube playlist mp3 downloader',
+                ],
+                h1: 'YouTube Playlist to MP3 and Audio',
+                lede: 'Paste a public playlist URL with its list parameter, select the videos you need, and choose an available audio result for each item before starting the queue.',
+                stepsTitle: 'How to download audio from a YouTube playlist',
+                steps: [
+                    'Open a public playlist you are allowed to save and copy the complete URL with its list parameter.',
+                    'Paste the URL and wait for the playlist to expand. Channel pages, private lists, and Watch Later are not valid inputs.',
+                    'Select the items you need and choose an available audio result for each one.',
+                    'Start the queue. Other items can continue if one entry is unavailable, and a failed task can be retried separately.',
+                ],
+                featuresTitle: 'Playlist audio workflow',
+                features: [
+                    'Expands one supported public playlist instead of requiring every watch URL.',
+                    'Lets you select only the playlist entries you need.',
+                    'Shows audio choices per item when the source returns them.',
+                    'Keeps individual failures separate from the rest of the queue.',
+                    'Supports folder auto-save in compatible desktop browsers.',
+                ],
+                faqTitle: 'YouTube playlist audio questions',
+                faqs: [
+                    {
+                        q: 'Can I convert a whole YouTube playlist to MP3?',
+                        a: 'You can process a supported public playlist and choose audio for detected entries that expose an audio result. Exact formats depend on each source video.',
+                    },
+                    {
+                        q: 'Can I download audio from only part of a playlist?',
+                        a: 'Yes. Select only the entries you need after the playlist expands, then choose their available audio results.',
+                    },
+                    {
+                        q: 'Why does one playlist item have no audio option?',
+                        a: 'The video may be unavailable or restricted, or its source result may not expose separate audio. Other eligible items can continue.',
+                    },
+                    {
+                        q: 'Can private or members-only playlists be converted?',
+                        a: 'No. The playlist and videos must be publicly accessible without signing in, and you must have permission to save them.',
+                    },
+                ],
+            }),
+            ...buildGenericLocales({
+                platform: 'YouTube Playlist',
+                kind: 'audio',
+                contentKey: 'audio',
+                keywords: [
+                    'youtube playlist to mp3',
+                    'youtube playlist audio downloader',
+                    'download youtube playlist audio',
+                ],
+            }),
+        },
+    },
 ];
 
 export const seoLandingSlugs = seoLandingPages.map((page) => page.slug);

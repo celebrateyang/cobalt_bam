@@ -75,6 +75,12 @@ const normalizeDownloadSourceUrl = (value) => {
     return trimmed;
 };
 
+export const hasDownloadSourceConflict = (storedSourceUrl, sourceUrl) => (
+    Boolean(storedSourceUrl) &&
+    Boolean(sourceUrl) &&
+    normalizeDownloadSourceUrl(storedSourceUrl) !== normalizeDownloadSourceUrl(sourceUrl)
+);
+
 export const resolveDownloadRequestAction = ({
     request,
     sourceUrl,
@@ -1525,9 +1531,7 @@ export const createPointsHold = async ({
 
             if (
                 existingHold &&
-                existingHold.source_url &&
-                sourceUrl &&
-                existingHold.source_url !== sourceUrl
+                hasDownloadSourceConflict(existingHold.source_url, sourceUrl)
             ) {
                 await client.query("ROLLBACK");
                 return { ok: false, code: "IDEMPOTENCY_CONFLICT" };

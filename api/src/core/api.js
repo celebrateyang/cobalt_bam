@@ -137,6 +137,8 @@ const readableDownloadErrors = new Map([
     ["error.api.membership.limit.exceeded", "The membership download limit has been reached."],
     ["error.api.points.insufficient", "The user does not have enough points for this download."],
     ["error.api.points.unavailable", "Points service is temporarily unavailable."],
+    ["error.api.request.conflict", "This download request conflicts with an earlier request. Please start a new download."],
+    ["error.api.request.in_progress", "This download request is already being processed. Please wait for it to finish."],
     ["error.api.rate_exceeded", "The same download was submitted too frequently."],
     ["error.api.upstream.circuit_open", "The upstream processing node is in circuit cooldown after recent failures. Ask the user to retry in about 1 minute."],
     ["error.api.upstream.timeout", "The upstream processing node did not respond in time. This may be a temporary tunnel or processing delay. Ask the user to retry shortly."],
@@ -151,6 +153,12 @@ const getReadableDownloadError = (code, fallback = "The download request failed.
     if (!code) return fallback;
     return readableDownloadErrors.get(code) || fallback;
 };
+
+const getIdempotencyErrorCode = (code) => (
+    code === "IDEMPOTENCY_IN_PROGRESS"
+        ? "error.api.request.in_progress"
+        : "error.api.request.conflict"
+);
 
 const getUrlHost = (url) => {
     try {
@@ -1136,7 +1144,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         .json(claim.responseBody);
                 }
                 if (!claim.ok) {
-                    return failDownload("error.api.points.unavailable", null, {
+                    return failDownload(getIdempotencyErrorCode(claim.code), null, {
                         pointsOutcome: "idempotency_conflict",
                         metadata: { idempotencyCode: claim.code },
                     });
@@ -1422,7 +1430,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             ) {
                                 pointsOutcome = "idempotency_conflict";
                                 return failDownload(
-                                    "error.api.points.unavailable",
+                                    getIdempotencyErrorCode(hold.code),
                                     null,
                                     {
                                         pointsOutcome,

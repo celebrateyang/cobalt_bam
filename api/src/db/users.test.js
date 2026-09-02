@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
     calculateFirstDownloadGraceCharge,
+    hasDownloadSourceConflict,
     resolveDownloadRequestAction,
 } from "./users.js";
 
@@ -99,6 +100,26 @@ test("replays legacy quoted URLs when the retry supplies a URL object", () => {
             now,
         }),
         { action: "replay" },
+    );
+});
+
+test("does not treat a legacy quoted hold URL as an idempotency conflict", () => {
+    assert.equal(
+        hasDownloadSourceConflict(
+            '"https://example.com/video?p=3"',
+            new URL("https://example.com/video?p=3"),
+        ),
+        false,
+    );
+});
+
+test("detects reuse of a hold queue id for a different URL", () => {
+    assert.equal(
+        hasDownloadSourceConflict(
+            '"https://example.com/original"',
+            "https://example.com/other",
+        ),
+        true,
     );
 });
 

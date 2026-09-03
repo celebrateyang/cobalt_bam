@@ -5,6 +5,7 @@
 
     import { t } from "$lib/i18n/translations";
     import { requireDownloadAuth } from "$lib/auth/download-auth";
+    import { platformRequestLabel } from "$lib/platform-request-labels";
     import {
         platformRequestsApi,
         type PlatformPreview,
@@ -226,11 +227,17 @@
         {:else}
             <div class="request-grid">
                 {#each requests as item}
+                    {@const platformLabel = platformRequestLabel(item.domain)}
                     <article class="request-card">
                         <div class="card-top">
                             <div>
-                                <a class="domain" href={`/${lang}/requests/${item.id}`}>{item.domain}</a>
-                                <span class={`status status-${item.status}`}>{statusLabel(item.status)}</span>
+                                <div class="platform-heading">
+                                    <a class="domain" href={`/${lang}/requests/${item.id}`}>{item.domain}</a>
+                                    <span class={`status status-${item.status}`}>{statusLabel(item.status)}</span>
+                                </div>
+                                {#if platformLabel}
+                                    <p class="platform-label">{platformLabel}</p>
+                                {/if}
                             </div>
                             <a class="external-link" href={item.homepageUrl} target="_blank" rel="nofollow noreferrer noopener" aria-label={$t("requests.visit_platform")}>
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -310,9 +317,11 @@
     .request-card { min-width: 0; min-height: 132px; padding: 21px; border: 1px solid color-mix(in srgb, var(--text) 11%, transparent); border-radius: 18px; background: var(--background); box-shadow: 0 8px 26px rgba(24, 39, 16, .045); display: grid; align-content: space-between; gap: 20px; transition: transform .2s, box-shadow .2s, border-color .2s; }
     .request-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--brand) 45%, transparent); box-shadow: 0 16px 36px rgba(32, 61, 13, .09); }
     .card-top, .card-bottom { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
-    .card-top > div { min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .card-top > div { min-width: 0; display: grid; gap: 8px; }
+    .platform-heading { min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .domain { color: var(--text); font-size: 1.08rem; font-weight: 850; text-decoration: none; overflow-wrap: anywhere; }
     .domain:hover { color: var(--accent); }
+    .platform-label { color: color-mix(in srgb, var(--text) 62%, transparent); font-size: .9rem; line-height: 1.45; }
     .external-link { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--accent); background: color-mix(in srgb, var(--brand) 10%, var(--background)); transition: background .18s, transform .18s; }
     .external-link svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
     .status { padding: 5px 9px; border-radius: 999px; color: color-mix(in srgb, var(--text) 62%, transparent); font-size: .72rem; font-weight: 800; background: color-mix(in srgb, var(--text) 6%, var(--background)); }

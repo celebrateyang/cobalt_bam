@@ -24,6 +24,7 @@ ENV PATH="/opt/yt-dlp/bin:$PATH"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
+        ffmpeg \
         fontconfig \
         fonts-noto-core \
         fonts-noto-cjk \

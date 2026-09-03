@@ -48,11 +48,16 @@ const killProcess = (p) => {
     }, 5000);
 }
 
-const getCommand = (args) => {
+const getCommand = (args, streamInfo) => {
+    const executable =
+        streamInfo?.service === 'iqiyi' && process.platform !== 'win32'
+            ? '/usr/bin/ffmpeg'
+            : ffmpeg;
+
     if (typeof env.processingPriority === 'number' && !isNaN(env.processingPriority)) {
-        return ['nice', ['-n', env.processingPriority.toString(), ffmpeg, ...args]]
+        return ['nice', ['-n', env.processingPriority.toString(), executable, ...args]]
     }
-    return [ffmpeg, args]
+    return [executable, args]
 }
 
 const toRawHeaders = (headers) =>
@@ -192,7 +197,7 @@ const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) 
             });
         }
 
-        process = spawn(...getCommand(args), {
+        process = spawn(...getCommand(args, streamInfo), {
             windowsHide: true,
             stdio: [
                 inputStream ? 'pipe' : 'inherit', 'inherit', 'pipe',

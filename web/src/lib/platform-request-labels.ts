@@ -1,5 +1,5 @@
 const PLATFORM_LABELS: Record<string, string> = {
-    "bilivideo.com": "哔哩哔哩（B站）",
+    "bilivideo.com": "哔哩哔哩视频 CDN 域名（B站主站已支持）",
     "magnific.com": "Magnific AI",
     "qq.com": "微信视频号、微信公众号",
     "qy.net": "爱奇艺",

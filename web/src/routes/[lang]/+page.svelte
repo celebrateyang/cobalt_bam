@@ -97,6 +97,7 @@
     const platformsList = [
         "douyin",
         "bilibili",
+        "iqiyi",
         "kuaishou",
         "haokan",
         "toutiao",
@@ -115,6 +116,7 @@
 
     const capabilityPlatformLabels = {
         bilibili: { zh: "B\u7AD9", default: "Bilibili" },
+        iqiyi: { zh: "\u7231\u5947\u827A", default: "iQIYI" },
         douyin: { zh: "\u6296\u97F3", default: "Douyin" },
         tiktok: { zh: "TikTok", default: "TikTok" },
         kuaishou: { zh: "\u5FEB\u624B", default: "Kuaishou" },

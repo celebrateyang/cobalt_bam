@@ -10,6 +10,10 @@
             "name": "Trình tải xuống video Bilibili",
             "desc": "Hỗ trợ anime, video tải lên của người dùng và video khóa học. Giữ nguyên độ rõ nét và phụ đề."
         },
+        "iqiyi": {
+            "name": "Trình tải video iQIYI",
+            "desc": "Lưu video iQIYI công khai, miễn phí dưới dạng MP4 có thể phát, không kèm clip quảng cáo riêng của trình phát."
+        },
         "kuaishou": {
             "name": "Xóa hình mờ Kuaishou",
             "desc": "Sao chép liên kết Kuaishou để phân tích. Tải xuống hàng loạt hiệu quả hơn."

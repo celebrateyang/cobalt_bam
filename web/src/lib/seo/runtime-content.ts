@@ -19,6 +19,7 @@ type PlatformKey =
     | 'haokan'
     | 'weibo'
     | 'bilibili'
+    | 'iqiyi'
     | 'xiaohongshu'
     | 'facebook'
     | 'generic';
@@ -65,6 +66,7 @@ export const getPlatformKey = (slug: string): PlatformKey => {
     if (slug.includes('haokan')) return 'haokan';
     if (slug.includes('weibo')) return 'weibo';
     if (slug.includes('bilibili')) return 'bilibili';
+    if (slug.includes('iqiyi')) return 'iqiyi';
     if (slug.includes('xiaohongshu')) return 'xiaohongshu';
     if (slug.includes('facebook')) return 'facebook';
     return 'generic';

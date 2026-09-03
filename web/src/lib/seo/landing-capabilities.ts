@@ -228,6 +228,21 @@ const bilibiliPlaylist = capability(
     ],
 );
 
+const iqiyi = capability(
+    ['iqiyi.com/v_*.html', '公开免费视频', '正片识别', 'MP4 输出'],
+    [
+        '爱奇艺解析器支持具体的 iqiyi.com/v_*.html 公开免费视频页，并通过页面视频标识查询对应的播放数据。',
+        '系统会校验目标视频 ID、正片播放列表、时长与爱奇艺 CDN 地址，排除独立播放器广告片段，再由服务器将 MPEG-TS 无损封装为可播放的 MP4。VIP、付费、DRM、登录后可见或地区受限内容不受支持。',
+    ],
+    [['爱奇艺具体视频页', '使用包含 v_ 视频标识、无需登录即可播放的公开免费视频地址。']],
+    ['iqiyi.com/v_*.html', 'Public free videos', 'Main-program detection', 'MP4 output'],
+    [
+        'The iQIYI extractor supports concrete public, free iqiyi.com/v_*.html video pages and resolves playback data for the requested video identifier.',
+        'It validates the target video ID, program playlist, duration, and iQIYI CDN, excludes separate player ad clips, and server-remuxes MPEG-TS to playable MP4. VIP, paid, DRM, login-only, and region-restricted content is unsupported.',
+    ],
+    [['Concrete iQIYI video pages', 'Use a public, free playback URL containing the v_ video identifier.']],
+);
+
 const haokan = capability(
     ['haokan.baidu.com/v', 'vid 参数', '多清晰度比较', 'MP4 输出'],
     [
@@ -584,6 +599,7 @@ export const landingCapabilityDetails: Record<string, LocalizedCapability> = {
     'douyin-mp3-download': douyinAudio,
     'douyin-collection-download': douyinCollection,
     'bilibili-playlist-download': bilibiliPlaylist,
+    'iqiyi-video-download': iqiyi,
     'haokan-video-download': haokan,
     'kuaishou-no-watermark': kuaishou,
     'naver-video-download': naver,

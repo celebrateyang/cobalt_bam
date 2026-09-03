@@ -10,6 +10,10 @@
             "name": "Bilibili Video Downloader",
             "desc": "Unterstützt Anime, Uploader-Beiträge und Kursvideos. Bewahrt Klarheit und Untertitel."
         },
+        "iqiyi": {
+            "name": "iQIYI Video-Downloader",
+            "desc": "Öffentliche, kostenlose iQIYI-Videos als abspielbare MP4-Dateien speichern; separate Player-Werbeclips werden ausgeschlossen."
+        },
         "kuaishou": {
             "name": "Kuaishou Wasserzeichen-Entferner",
             "desc": "Kopieren Sie Kuaishou-Links zum Analysieren. Batch-Download ist effizienter."

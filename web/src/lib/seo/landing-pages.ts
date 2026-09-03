@@ -2209,6 +2209,163 @@ export const seoLandingPages: SeoLandingPage[] = [
         },
     },
     {
+        slug: 'iqiyi-video-download',
+        locales: {
+            zh: zh({
+                metaTitle: `爱奇艺视频下载_免费在线解析并保存 MP4 | ${ZH_BRAND}`,
+                metaDescription:
+                    '免费在线下载公开的爱奇艺视频。复制 iqiyi.com/v_*.html 视频链接，粘贴到 FreeSaveVideo，解析正片并排除播放器广告片段，保存为可播放的 MP4。',
+                metaKeywords: [
+                    '爱奇艺视频下载',
+                    '爱奇艺视频解析',
+                    '爱奇艺视频在线下载',
+                    '爱奇艺视频下载到本地',
+                    '爱奇艺视频转MP4',
+                    'iqiyi视频下载',
+                    '爱奇艺无广告视频下载',
+                ],
+                h1: '爱奇艺视频下载',
+                lede: '粘贴公开、免费的 iqiyi.com/v_*.html 视频地址，提取正片资源，忽略播放器广告片段，并保存为浏览器可播放的 MP4。',
+                stepsTitle: '如何下载爱奇艺视频',
+                steps: [
+                    '在爱奇艺网页中打开具体的公开免费视频，复制地址栏里的 iqiyi.com/v_*.html 链接。',
+                    '把链接粘贴到下方输入框，保持自动模式，然后点击下载开始解析。',
+                    '等待服务器提取正片并封装为 MP4，完成后保存到手机或电脑。',
+                ],
+                featuresTitle: '爱奇艺解析下载功能',
+                features: [
+                    '支持公开、免费且无需登录即可访问的爱奇艺具体视频页。',
+                    '只选择与目标视频匹配的正片播放流，忽略独立的播放器广告视频。',
+                    '服务器将源站 MPEG-TS 无损封装为兼容性更好的 MP4，无需用户转换格式。',
+                    '不提供 VIP、付费、DRM、私密、登录后可见或地区受限内容的绕过。',
+                ],
+                faqTitle: '爱奇艺视频下载常见问题',
+                faqs: [
+                    {
+                        q: 'FreeSaveVideo 支持哪些爱奇艺链接？',
+                        a: '目前支持公开、免费的 iqiyi.com/v_*.html 具体视频页。首页、搜索页、频道页以及没有具体视频 ID 的地址不属于支持的输入。',
+                    },
+                    {
+                        q: '下载结果会包含爱奇艺播放器广告吗？',
+                        a: '解析器会校验目标视频 ID、正片播放列表、时长和 CDN 地址，只选择正片资源，不把独立广告视频拼入下载文件。',
+                    },
+                    {
+                        q: '为什么下载结果是 MP4，而源站可能使用 TS？',
+                        a: '爱奇艺的正片资源可能采用 MPEG-TS 容器。服务器会在不重新编码画面和声音的情况下封装为 MP4，以提高浏览器和本地播放器兼容性。',
+                    },
+                    {
+                        q: '可以下载爱奇艺 VIP、付费或 DRM 视频吗？',
+                        a: '不可以。只支持源站公开提供、无需登录或付费即可访问的内容，不绕过会员、DRM、地区或账户限制。',
+                    },
+                    {
+                        q: '爱奇艺视频下载失败怎么办？',
+                        a: '先确认链接是具体的公开免费视频页并能在未登录状态播放，然后重新复制地址栏链接再试。源视频下架、地区限制或源站接口变化也可能导致失败。',
+                    },
+                ],
+                heroTags: ['公开免费视频', '正片识别', '忽略播放器广告', 'MP4 输出'],
+                facts: [
+                    '输入格式：iqiyi.com/v_*.html',
+                    '输出格式：MP4',
+                    '处理方式：服务端提取并无损封装',
+                ],
+                supportedLinksTitle: '支持的爱奇艺链接',
+                supportedLinks: [
+                    {
+                        title: '爱奇艺具体视频页',
+                        description: '使用包含 v_ 视频标识的公开播放页地址，不要使用首页、搜索页或频道页。',
+                    },
+                ],
+                exampleTitle: '爱奇艺链接示例',
+                exampleUrl: 'https://www.iqiyi.com/v_dwo67tu164.html',
+                exampleInput: '公开、免费的爱奇艺具体视频页',
+                exampleResult: '识别正片并输出可播放的 MP4，不包含独立播放器广告片段。',
+                exampleActions: ['复制具体视频页地址', '粘贴并解析', '保存 MP4'],
+            }),
+            en: en({
+                metaTitle: `iQIYI Video Downloader - Save Public Videos as MP4 | ${EN_BRAND}`,
+                metaDescription:
+                    'Download public, free iQIYI videos online. Paste an iqiyi.com/v_*.html link to extract the main program without player ad clips and save a playable MP4.',
+                metaKeywords: [
+                    'iqiyi video downloader',
+                    'download iqiyi video',
+                    'iqiyi mp4 download',
+                    'save iqiyi video',
+                    'iqiyi video download online',
+                ],
+                h1: 'iQIYI Video Downloader',
+                lede: 'Paste a public, free iqiyi.com/v_*.html video page to identify the main program, exclude separate player ad clips, and save a browser-compatible MP4.',
+                stepsTitle: 'How to download a public iQIYI video',
+                steps: [
+                    'Open the specific public, free video on iQIYI and copy its iqiyi.com/v_*.html page URL.',
+                    'Paste the URL below, keep automatic mode selected, and start the download.',
+                    'Wait while the server extracts the main program and remuxes it to MP4, then save the completed file.',
+                ],
+                featuresTitle: 'iQIYI download capabilities',
+                features: [
+                    'Supports concrete public, free iQIYI video pages that are accessible without signing in.',
+                    'Validates the target video ID, program playlist, duration, and CDN before selecting the main program.',
+                    'Excludes separate player advertisement clips and remuxes the MPEG-TS source to MP4 without re-encoding.',
+                    'Does not bypass VIP, payment, DRM, login, privacy, availability, or regional restrictions.',
+                ],
+                faqTitle: 'iQIYI video download FAQ',
+                faqs: [
+                    {
+                        q: 'Which iQIYI links are supported?',
+                        a: 'Use a concrete public, free iqiyi.com/v_*.html video page. Home, search, channel, and non-video pages are not supported inputs.',
+                    },
+                    {
+                        q: 'Does the downloaded file include iQIYI player ads?',
+                        a: 'The extractor selects the playlist belonging to the requested video and does not append separate advertisement video assets.',
+                    },
+                    {
+                        q: 'Why is the download delivered as MP4?',
+                        a: 'The source program can use an MPEG-TS container. The server remuxes its existing video and audio streams into MP4 for wider playback compatibility.',
+                    },
+                    {
+                        q: 'Can it download VIP, paid, or DRM-protected iQIYI videos?',
+                        a: 'No. It supports only publicly available, free content and does not bypass membership, DRM, account, or regional controls.',
+                    },
+                    {
+                        q: 'What should I do when an iQIYI link fails?',
+                        a: 'Confirm that it is a specific public video page playable while signed out, copy the address again, and retry. Removed, restricted, or changed source pages may remain unavailable.',
+                    },
+                ],
+                heroTags: ['Public free videos', 'Main-program detection', 'Player ads excluded', 'MP4 output'],
+                facts: [
+                    'Input: iqiyi.com/v_*.html',
+                    'Output: MP4',
+                    'Processing: server-side extraction and lossless remux',
+                ],
+                supportedLinksTitle: 'Supported iQIYI links',
+                supportedLinks: [
+                    {
+                        title: 'Concrete iQIYI video pages',
+                        description: 'Use a public playback page containing the v_ video identifier, not a homepage, search result, or channel page.',
+                    },
+                ],
+                exampleTitle: 'Example iQIYI URL',
+                exampleUrl: 'https://www.iqiyi.com/v_dwo67tu164.html',
+                exampleInput: 'A concrete public, free iQIYI video page',
+                exampleResult: 'The main program is returned as a playable MP4 without separate player ad clips.',
+                exampleActions: ['Copy the video page URL', 'Paste and process', 'Save the MP4'],
+            }),
+            ...buildGenericLocales({
+                platform: 'iQIYI',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: ['iQIYI video downloader', 'download iQIYI video', 'iQIYI MP4'],
+            }),
+        },
+        supportedLinkFormats: ['https://www.iqiyi.com/v_<video-id>.html'],
+        examples: [
+            {
+                title: 'Public iQIYI video page',
+                description: 'A concrete public and free iQIYI playback page.',
+                urls: ['https://www.iqiyi.com/v_dwo67tu164.html'],
+            },
+        ],
+    },
+    {
         slug: 'haokan-video-download',
         locales: {
             zh: {

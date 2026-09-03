@@ -46,6 +46,12 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'bilibili',
     },
     {
+        platform: 'iQIYI',
+        downloadSlug: 'iqiyi-video-download',
+        guideSlug: 'iqiyi-download-guide',
+        homeKey: 'iqiyi',
+    },
+    {
         platform: 'Kuaishou',
         downloadSlug: 'kuaishou-no-watermark',
         guideSlug: 'kuaishou-download-guide',
@@ -176,6 +182,7 @@ const strategicDownloadOrder = [
     'douyin-no-watermark',
     'tiktok-no-watermark',
     'bilibili-video-download',
+    'iqiyi-video-download',
     'xiaohongshu-video-download',
     'kuaishou-no-watermark',
     'naver-video-download',
@@ -204,6 +211,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'iqiyi-video-download',
     'tiktok-no-watermark',
     'tiktok-collection-download',
     'tiktok-mp3-download',

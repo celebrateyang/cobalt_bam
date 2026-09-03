@@ -10,6 +10,10 @@
             "name": "Descargador de videos de Bilibili",
             "desc": "Soporta anime, envíos de usuarios y videos de cursos. Preserva la claridad y los subtítulos."
         },
+        "iqiyi": {
+            "name": "Descargador de videos iQIYI",
+            "desc": "Descarga videos públicos y gratuitos de iQIYI como MP4 reproducibles, sin clips publicitarios separados del reproductor."
+        },
         "kuaishou": {
             "name": "Eliminador de marca de agua de Kuaishou",
             "desc": "Copie enlaces de Kuaishou para analizar. La descarga por lotes es más eficiente."

@@ -78,6 +78,14 @@ export const guidePages: GuidePage[] = [
         platform: 'Bilibili',
     },
     {
+        slug: 'iqiyi-download-guide',
+        landingSlug: 'iqiyi-video-download',
+        platform: 'iQIYI',
+        enTitle: 'How to Download Public iQIYI Videos as MP4',
+        enDescription:
+            'Learn how to copy a public, free iQIYI v_*.html video URL, extract the main program without player ad clips, and save the server-remuxed MP4.',
+    },
+    {
         slug: 'instagram-download-guide',
         landingSlug: 'instagram-video-download',
         platform: 'Instagram',

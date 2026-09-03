@@ -10,6 +10,10 @@
             "name": "Téléchargeur vidéo Bilibili",
             "desc": "Prend en charge les animes, les soumissions des utilisateurs et les vidéos de cours. Préserve la clarté et les sous-titres."
         },
+        "iqiyi": {
+            "name": "Téléchargeur de vidéos iQIYI",
+            "desc": "Enregistrez les vidéos iQIYI publiques et gratuites en MP4 lisible, sans les clips publicitaires séparés du lecteur."
+        },
         "kuaishou": {
             "name": "Suppresseur de filigrane Kuaishou",
             "desc": "Copiez les liens Kuaishou pour analyser. Le téléchargement par lots est plus efficace."

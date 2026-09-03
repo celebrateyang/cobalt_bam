@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-17",
+  "updatedAt": "2026-09-03",
   "productFaqs": [
     {
       "q": "Which links work best?",
@@ -26,11 +26,12 @@
   ],
   "productAdvantages": [
     "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
+    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, iQIYI, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
     "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
     "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
   ],
   "releaseNotes": [
+    "2026-09-03: Added public, free iQIYI video extraction, player-ad exclusion, and server-remuxed MP4 delivery.",
     "2026-08-17: Updated public collection, multi-part detection, and batch task instructions.",
     "2026-08-17: Added supported link types for public videos, playlists, collections, and batch downloads.",
     "2026-08-17: Clarified public-content boundaries, privacy, and browser save workflows."
@@ -192,6 +193,20 @@
         "q": "Why does a Weibo link fail?",
         "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
       }
+    ],
+    "iqiyi": [
+      {
+        "q": "Does iQIYI downloading include player advertisements?",
+        "a": "No. The extractor validates the requested video and selects its main-program playlist instead of appending separate player advertisement assets."
+      },
+      {
+        "q": "Why does FreeSaveVideo remux iQIYI video to MP4?",
+        "a": "The public source can be packaged as MPEG-TS. Server-side remuxing preserves the existing audio and video streams while producing an MP4 that is easier to play and save."
+      },
+      {
+        "q": "Are iQIYI VIP or DRM videos supported?",
+        "a": "No. Only public, free videos available without bypassing membership, payment, DRM, login, account, or regional controls are supported."
+      }
     ]
   },
   "platformPlaybooks": {
@@ -336,6 +351,19 @@
         "The Weibo video is public and playable",
         "You copied a video address, not a profile or comment page",
         "The result shows an available MP4 option"
+      ]
+    },
+    "iqiyi": {
+      "heading": "Reliable iQIYI video download workflow",
+      "notes": [
+        "Use the concrete public iqiyi.com/v_*.html playback page, not a homepage, search result, or channel page.",
+        "The server identifies the main program, excludes separate player ad clips, and remuxes the source to MP4.",
+        "Only public, free content is eligible; VIP, paid, DRM, login-only, removed, and region-restricted videos are unsupported."
+      ],
+      "checklist": [
+        "Public free iQIYI video confirmed",
+        "Concrete v_*.html URL copied",
+        "Server-remuxed MP4 saved after processing"
       ]
     }
   },
@@ -521,6 +549,26 @@
           "Go back to the specific video page and choose Copy video address.",
           "Confirm the video is still public and playable.",
           "If the short link expired, copy the video address again and retry."
+        ]
+      }
+    ],
+    "iqiyi": [
+      {
+        "title": "A non-video or restricted iQIYI page was copied",
+        "symptoms": "Parsing returns no media or reports that the link is unsupported.",
+        "fixes": [
+          "Open the specific video before copying the address.",
+          "Use an iqiyi.com/v_*.html page that plays while signed out.",
+          "Do not use VIP, paid, DRM, login-only, search, channel, or homepage URLs."
+        ]
+      },
+      {
+        "title": "The source video changed or became unavailable",
+        "symptoms": "The page previously worked, but extraction or MP4 processing now fails.",
+        "fixes": [
+          "Confirm that the source page still plays publicly.",
+          "Copy a fresh URL and retry once.",
+          "Try another public, free iQIYI video to distinguish a source-specific restriction."
         ]
       }
     ]

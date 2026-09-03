@@ -44,6 +44,10 @@
             "name": "Bilibili Video Downloader",
             "desc": "Supports anime, uploader submissions, and course videos. Preserves clarity and subtitles."
         },
+        "iqiyi": {
+            "name": "iQIYI Video Downloader",
+            "desc": "Download public, free iQIYI videos as playable MP4 files while excluding separate player ad clips."
+        },
         "kuaishou": {
             "name": "Kuaishou Watermark Remover",
             "desc": "Copy Kuaishou links to analyze. Batch downloading is more efficient."

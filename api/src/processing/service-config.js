@@ -29,6 +29,10 @@ export const services = {
         ],
         subdomains: ["m"],
     },
+    bilibili_cdn: {
+        patterns: ["*"],
+        subdomains: "*",
+    },
     cctv: {
         patterns: [
             ":year/:month/:day/:id.shtml",

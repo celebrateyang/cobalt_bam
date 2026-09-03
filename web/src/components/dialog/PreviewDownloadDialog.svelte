@@ -26,6 +26,7 @@
     export let extensionUrls: string[] = [];
     export let mediaType: "video" | "audio" | "image" = "video";
     export let autoSave = true;
+    export let noticeText = "";
     export let extensionPromptTitleKey = "";
     export let extensionPromptBodyKey = "";
     export let extensionPromptKey = "preview";
@@ -463,6 +464,10 @@
             </div>
         </header>
 
+        {#if noticeText}
+            <p class="media-notice" role="note">{noticeText}</p>
+        {/if}
+
         <div class="preview-frame" class:preview-frame--audio={mediaType === "audio"}>
             {#if mediaType === "audio"}
                 <audio src={filePreviewUrl || activeUrl} controls></audio>
@@ -562,6 +567,17 @@
     .header :global(svg) {
         color: var(--secondary);
         flex: 0 0 auto;
+    }
+
+    .media-notice {
+        margin: 0;
+        padding: 11px 13px;
+        border: 1px solid color-mix(in srgb, var(--secondary) 30%, var(--button-stroke));
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--secondary) 9%, var(--background));
+        color: var(--subtext);
+        font-size: .88rem;
+        line-height: 1.5;
     }
 
     .header-actions {

@@ -12,6 +12,9 @@ export const testers = {
         pattern.comShortLink?.length <= 16 ||
         pattern.tvId?.length <= 24,
 
+    "bilibili_cdn": pattern =>
+        typeof pattern._ === "string" && pattern._.length > 0 && pattern._.length <= 8192,
+
     "cctv": pattern =>
         pattern.year?.length === 4 &&
         pattern.month?.length <= 2 &&

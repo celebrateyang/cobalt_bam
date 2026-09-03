@@ -10,6 +10,7 @@ import { normalizePlatformDomain } from "./platform-domain.js";
 const serviceByPlatformDomain = new Map([
     ["12371.cn", "cctv"],
     ["b23.tv", "bilibili"],
+    ["bilivideo.com", "bilibili_cdn"],
     ["baidu.com", "haokan"],
     ["dai.ly", "dailymotion"],
     ["deeplearning.ai", "deeplearningai"],
@@ -106,7 +107,6 @@ function aliasURL(url) {
                 url = normalizeBilibiliCreatorListVideoURL(url) || url;
             }
             break;
-
         case "b23":
             if (url.hostname === 'b23.tv' && parts.length === 2) {
                 url = new URL(`https://bilibili.com/_shortLink/${parts[1]}`);
@@ -328,6 +328,11 @@ function cleanURL(url) {
             if (url.searchParams.get("fid")) {
                 limitQuery("fid");
             }
+            break;
+        case "bilivideo":
+            // Bilibili CDN URLs are signed. Removing their query string makes
+            // an otherwise valid temporary media URL unusable.
+            stripQuery = false;
             break;
         case "wechat_channels":
             if (url.searchParams.get("id")) {

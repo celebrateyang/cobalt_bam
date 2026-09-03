@@ -122,6 +122,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     (
         response.service === "deeplearningai" ||
         response.service === "bilibili" ||
+        response.service === "bilibili_cdn" ||
         response.service === "douyin" ||
         response.service === "tencent_video" ||
         response.service === "wechat_channels" ||
@@ -154,13 +155,16 @@ const openPreviewDownloadDialog = (
     extensionUrls?: string[],
 ) => {
     const extensionPrompt =
-        response.service === "bilibili"
+        response.service === "bilibili" || response.service === "bilibili_cdn"
             ? {
                 extensionPromptTitleKey: "dialog.bilibili_download.extension.title",
                 extensionPromptBodyKey: "dialog.bilibili_download.extension.body",
                 extensionPromptKey: "bilibili",
             }
             : {};
+    const cdnNotice = response.service === "bilibili_cdn"
+        ? { noticeText: get(t)("error.api.bilibili.cdn.notice") }
+        : {};
 
     downloadButtonState.set("done");
     createDialog({
@@ -173,6 +177,7 @@ const openPreviewDownloadDialog = (
         mediaType: "video",
         autoSave: true,
         ...extensionPrompt,
+        ...cdnNotice,
     });
 };
 

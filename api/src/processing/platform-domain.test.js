@@ -50,6 +50,23 @@ test("recognizes configured platforms independently from URL patterns", () => {
     assert.equal(identifyService("https://xhslink.cn/o/example", enabled)?.service, "xiaohongshu");
 });
 
+test("recognizes Bilibili CDN media URLs and preserves their signature", () => {
+    const enabled = new Set(["bilibili_cdn"]);
+    const input = "https://upos-sz-mirrorcos.bilivideo.com/upgcxcode/example.m4s?deadline=1999999999&token=abc";
+
+    assert.deepEqual(identifyService(input, enabled), {
+        service: "bilibili_cdn",
+        domain: "bilivideo.com",
+        enabled: true,
+    });
+    assert.deepEqual(extract(input, enabled), {
+        host: "bilibili_cdn",
+        patternMatch: {
+            _: "upgcxcode/example.m4s?deadline=1999999999&token=abc",
+        },
+    });
+});
+
 test("recognizes xhslink.cn shares and normalizes target_note_id redirects", () => {
     const enabled = new Set(["xiaohongshu"]);
     assert.deepEqual(

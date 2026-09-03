@@ -1,6 +1,7 @@
 const friendlyNames = {
     amazon: "Amazon Live",
     cctv: "CCTV",
+    bilibili_cdn: "Bilibili CDN",
     bsky: "bluesky",
     twitch: "twitch clips",
     douyin: "Douyin",

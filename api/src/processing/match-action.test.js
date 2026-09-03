@@ -208,6 +208,27 @@ test("returns a Bilibili progressive MP4 as a Direct Bridge redirect", () => {
     ]);
 });
 
+test("returns a submitted Bilibili CDN resource through Direct Bridge", () => {
+    const directUrl = "https://upos-sz-mirrorcos.bilivideo.com/upgcxcode/example.m4s?deadline=1999999999";
+    const response = matchAction({
+        ...baseArgs,
+        host: "bilibili_cdn",
+        r: {
+            service: "bilibili_cdn",
+            urls: directUrl,
+            directClientDownload: true,
+            filename: "bilibili-cdn.mp4",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.url, directUrl);
+    assert.equal(response.body.directUrl, directUrl);
+    assert.equal(response.body.service, "bilibili_cdn");
+    assert.deepEqual(response.body.directUrlCandidates, [directUrl]);
+});
+
 test("returns WeChat Channels MP4 candidates through Direct Bridge", () => {
     const h264 = "https://finder.video.qq.com/251/h264.mp4";
     const h265 = "https://finder.video.qq.com/251/h265.mp4";

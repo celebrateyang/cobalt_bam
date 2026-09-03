@@ -13,6 +13,7 @@ import { friendlyServiceName } from "./service-alias.js";
 import amazon from "./services/amazon.js";
 import analdin from "./services/analdin.js";
 import bilibili from "./services/bilibili.js";
+import bilibiliCdn from "./services/bilibili-cdn.js";
 import bjnews from "./services/bjnews.js";
 import newsHtml from "./services/news-html.js";
 import cctv from "./services/cctv.js";
@@ -410,6 +411,10 @@ export default async function({ host, patternMatch, params, authType }) {
                     preferProgressiveMp4: !isAudioOnly && !isAudioMuted,
                     forceProgressiveMp4: params.bilibiliDirectBridge === true,
                 });
+                break;
+
+            case "bilibili_cdn":
+                r = await bilibiliCdn({ url });
                 break;
 
             case "cctv":

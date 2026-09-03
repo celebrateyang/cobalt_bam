@@ -287,6 +287,19 @@ export default function({
                     }
                     break;
 
+                case "bilibili_cdn":
+                    if (r.directClientDownload === true && typeof r.urls === "string") {
+                        responseType = "redirect";
+                        params = {
+                            url: r.urls,
+                            directUrl: r.urls,
+                            directUrlCandidates: [r.urls],
+                        };
+                    } else {
+                        params = { type: "proxy" };
+                    }
+                    break;
+
                 case "youtube":
                     params = { type: r.type };
                     break;
@@ -530,6 +543,9 @@ export default function({
     const keepBilibiliDirectBridge =
         host === "bilibili" &&
         r.directClientDownload === true;
+    const keepBilibiliCdnDirectBridge =
+        host === "bilibili_cdn" &&
+        r.directClientDownload === true;
     const keepSoundcloudDirectBridge =
         host === "soundcloud" &&
         r.directClientDownload === true &&
@@ -549,6 +565,7 @@ export default function({
         alwaysProxy &&
         responseType === "redirect" &&
         !keepBilibiliDirectBridge &&
+        !keepBilibiliCdnDirectBridge &&
         !keepSoundcloudDirectBridge &&
         !keepWechatDirectBridge &&
         !keepTencentVideoDirectBridge

@@ -32,6 +32,7 @@
         margin: 2px auto 12px;
         padding: 12px 14px;
         box-sizing: border-box;
+        flex-shrink: 0;
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;

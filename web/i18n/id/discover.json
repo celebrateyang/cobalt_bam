@@ -1,0 +1,61 @@
+{
+    "title": "🌟 Temukan Video Menakjubkan",
+    "subtitle": "Konten premium dari pembuat konten global terkemuka",
+    "filter": {
+        "all": "Semua Platform"
+    },
+    "section": {
+        "trending": "Sedang tren",
+        "pinned": "Disematkan",
+        "featured": "Unggulan",
+        "latest": "Terbaru"
+    },
+    "status": {
+        "loading": "Memuat...",
+        "parsing": "Parsing/Antri",
+        "still_parsing": "Masih parsing, harap tunggu sebentar",
+        "error": "Pemuatan gagal",
+        "empty": {
+            "title": "Tidak ada video",
+            "description": "Belum ada konten video yang ditambahkan"
+        }
+    },
+    "account": {
+        "videoCount": "{{count}} video"
+    },
+    "action": {
+        "copy": "📋 Salin",
+        "copied": "✓ Disalin",
+        "copyTitle": "Salin alamat video",
+        "copyFailed": "Penyalinan gagal:",
+        "manualCopy": "Tidak dapat menyalin secara otomatis, silakan salin secara manual:\n{{url}}",
+        "closeDialog": "Klik \"OK\" untuk menutup pesan ini",
+        "creator_batch": "Selengkapnya dari pencipta",
+        "creator_batch_title": "{{name}} · Kelompok",
+        "load_more": "Muat lebih banyak"
+    },
+    "menu": {
+        "resources": "Temukan Sumber Daya",
+        "beauty": "Temukan Kecantikan"
+    },
+    "resources": {
+        "title": "Temukan Sumber Daya",
+        "subtitle": "Jelajahi kategori dan unduh dari tautan yang tersedia",
+        "empty": {
+            "title": "Belum ada sumber daya",
+            "description": "Tidak ada kategori atau tautan yang ditambahkan"
+        },
+        "empty_links": {
+            "title": "Tidak ada tautan",
+            "description": "Kategori ini belum memiliki tautan unduhan"
+        },
+        "select": {
+            "title": "Pilih kategori",
+            "description": "Pilih kategori di sebelah kiri untuk melihat tautan"
+        },
+        "action": {
+            "downloading": "Mengunduh..."
+        },
+        "batch_limit_hint": "Batas kumpulan: {{max}}"
+    }
+}

@@ -1,0 +1,149 @@
+{
+    "feedback": {
+        "desc": "Laporkan masalah pengunduhan dan saran."
+    },
+    "capabilities": {
+        "supported": {
+            "title": "Platform populer di satu tempat",
+            "desc": "Gunakan alur kerja yang sama untuk tautan publik yang didukung di seluler dan desktop."
+        },
+        "collection": {
+            "title": "Unduhan koleksi / playlist",
+            "desc": "Deteksi otomatis tautan koleksi, musim, dan daftar putar serta antri set lengkap jika didukung. Contoh link: halaman multi-bagian atau koleksi Bilibili, link playlist TikTok, dan link playlist YouTube seperti https://www.youtube.com/playlist?list=PLsyeobzWxl7poL9JTVyndKe62ieoN-MZ3"
+        },
+        "batch": {
+            "title": "Unduhan batch",
+            "desc": "Tempel beberapa tautan yang dipisahkan oleh spasi atau jeda baris dan proses bersama-sama."
+        },
+        "watermark": {
+            "title": "Unduh tanpa tanda air",
+            "desc": "Simpan file video bersih ketika platform menyediakan sumber tanpa tanda air."
+        },
+        "audio": {
+            "title": "Mode audio saja dan senyap",
+            "desc": "Beralih antara mode otomatis, hanya audio, dan senyap sebelum mengunduh."
+        },
+        "aria": "Kemampuan mengunduh"
+    },
+    "points_balloon": {
+        "aria": "Pengingat poin rendah",
+        "title": "Poin hampir habis",
+        "text": "Klik untuk mempelajari cara mendapatkan lebih banyak poin.",
+        "cta": "Buka akun",
+        "points_label": "poin",
+        "close": "tolak"
+    },
+    "platforms": {
+        "title": "Unduh Tanpa Tanda Air dari Platform Populer",
+        "description": "Mendukung 100+ situs populer termasuk TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, CCTV, YouTube, Instagram, Threads, Twitter, Facebook, dll. Analisis dan unduh file HD langsung di ponsel dan PC.",
+        "douyin": {
+            "name": "Pengunduh TikTok/Douyin",
+            "desc": "Mendukung TikTok/Douyin versi domestik dan internasional. Penghapusan tanda air sekali klik, menjaga audio dan video HD."
+        },
+        "bilibili": {
+            "name": "Pengunduh Video Bilibili",
+            "desc": "Mendukung anime, pengiriman pengunggah, dan video kursus. Mempertahankan kejelasan dan subtitle."
+        },
+        "iqiyi": {
+            "name": "Pengunduh Video iQIYI",
+            "desc": "Unduh video iQIYI publik gratis sebagai file MP4 yang dapat diputar tanpa menyertakan klip iklan pemutar terpisah."
+        },
+        "kuaishou": {
+            "name": "Penghilang Tanda Air Kuaishou",
+            "desc": "Salin tautan Kuaishou untuk dianalisis. Pengunduhan batch lebih efisien."
+        },
+        "haokan": {
+            "name": "Pengunduh Video Haokan",
+            "desc": "Tempel tautan video Haokan/Baidu untuk menyimpan varian kualitas MP4 yang tersedia, termasuk opsi HD bila disediakan oleh sumbernya."
+        },
+        "toutiao": {
+            "name": "Pengunduh Video Toutiao",
+            "desc": "Tempel tautan video Toutiao publik untuk menyimpan varian kualitas MP4 yang tersedia, termasuk opsi HD ketika sumber menyediakannya."
+        },
+        "sohu": {
+            "name": "Pengunduh Video Sohu",
+            "desc": "Unduh halaman Video Sohu publik sebagai MP4, dengan mode audio saja dan bisu tersedia."
+        },
+        "weibo": {
+            "name": "Weibo Pengunduh Video",
+            "desc": "Salin alamat video Weibo atau tautan pendek t.cn untuk mengekstrak opsi kualitas MP4 yang tersedia."
+        },
+        "amazon": {
+            "name": "Pengunduh Amazon Live",
+            "desc": "Simpan video replay Amazon Live publik dari tautan amazon.com/live/video atau amazon.com/vdp dengan opsi kualitas HLS yang tersedia."
+        },
+        "xiaohongshu": {
+            "name": "Pengunduh Video Xiaohongshu",
+            "desc": "Menghapus tanda air dalam aplikasi, menjaga gambar sampul dan suara HD asli."
+        },
+        "instagram": {
+            "name": "Pengunduh Reel Instagram",
+            "desc": "Mendukung Reel, postingan, dan video cerita. Simpan langsung ke perangkat lokal Anda."
+        },
+        "youtube": {
+            "name": "Pengunduh Video YouTube",
+            "desc": "Pengunduhan video dan audio YouTube langsung kini didukung. Tempel tautan dan unduh secara instan. Mendukung YouTube Shorts dan berbagai pilihan kualitas."
+        },
+        "facebook": {
+            "name": "Pengunduh Video Facebook",
+            "desc": "Mengurai tautan berbagi publik dan pribadi. Berbagai resolusi tersedia."
+        },
+        "twitter": {
+            "name": "Pengunduh Video X (Twitter)",
+            "desc": "Salin tautan tweet untuk mengekstrak video asli dengan tetap menjaga kejelasan."
+        },
+        "naver": {
+            "name": "NAVER Pengunduh Video",
+            "desc": "Simpan video NAVER publik dari tautan naver.me dan m.naver.com/shorts."
+        },
+        "niconico": {
+            "name": "Pengunduh Video NicoNico",
+            "desc": "Simpan tontonan NicoNico publik dan video pendek dengan opsi kualitas HLS yang tersedia."
+        },
+        "threads": {
+            "name": "Pengunduh Video Threads",
+            "desc": "Tempel tautan postingan Thread publik untuk menyimpan video atau foto yang tersedia secara langsung."
+        }
+    },
+    "cards": {
+        "videorecord": {
+            "desc": "Buat, pindahkan, dan ubah ukuran slide, lalu rekam tutorial papan tulis dengan overlay kamera di browser Anda. Tidak diperlukan instalasi."
+        },
+        "random_video": {
+            "desc": "Mencocokkan secara acak satu pengguna online untuk obrolan video 1v1 10 menit."
+        },
+        "remux": {
+            "desc": "remuxing sering kali memperbaiki masalah kompatibilitas dengan perangkat lunak lama. cepat, lossless, dan semuanya diproses di perangkat."
+        },
+        "file_transfer": {
+            "desc": "Cara terbaik untuk mentransfer file antar perangkat tanpa menginstal aplikasi. Berbagi file P2P yang aman, sinkronisasi clipboard lintas platform. Cepat, gratis, dan pribadi."
+        },
+        "discover_trends": {
+            "desc": "Koleksi video terpanas di web. Video kecantikan yang dikurasi, klip lucu, dan tren viral. Diperbarui setiap hari."
+        }
+    },
+    "hero": {
+        "eyebrow": "Daftar putar dan pengunduh video batch",
+        "title": "Unduh Daftar Putar dan Banyak Video di Satu Tempat",
+        "subtitle": "Mendukung TikTok, YouTube, Instagram, Facebook, X, Bilibili, WeChat, Reddit, Pinterest, Vimeo, Twitch, SoundCloud, dan banyak lagi. Tempelkan satu tautan, satu daftar putar, atau beberapa tautan.",
+        "trust": "Pengunduhan video tunggal masih berfungsi. Anda juga dapat mengelompokkan tautan, mengunduh daftar putar YouTube yang didukung, mengekstrak audio, dan menyimpannya ke folder di browser yang kompatibel."
+    },
+    "tools": {
+        "title": "Lebih banyak alat",
+        "description": "Butuh lebih dari sekadar mengunduh? Alat-alat ini hanya berjarak satu ketukan tanpa mengambil alih beranda."
+    },
+    "ecosystem": {
+        "badge": "Produk ekosistem FreeSaveVideo",
+        "title": "Belajar bahasa dari video tanpa terus-menerus berhenti sejenak untuk mencari kata",
+        "description": "NoPainStudy menawarkan definisi kata instan, subtitle dinamis, latihan berbicara, dan ulasan cerdas.",
+        "action": "Jelajahi NoPainStudy"
+    },
+    "extension": {
+        "badge": "Gratis · Chrome",
+        "title": "Unduh langsung dari halaman web mana pun",
+        "description": "Menemukan video atau gambar di situs seperti Taobao? Gunakan ekstensi untuk mendeteksi dan mengunduhnya dalam satu klik.",
+        "install": "Instal ekstensi Chrome",
+        "installed": "Ekstensi Chrome terpasang",
+        "checking": "Memeriksa ekstensi..."
+    }
+}

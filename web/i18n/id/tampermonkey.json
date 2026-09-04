@@ -1,0 +1,138 @@
+{
+    "seo": {
+        "title": "Tutorial unduh YouTube Tampermonkey (Bilibili) | Panduan skrip pengguna gratis",
+        "description": "Alur kerja skrip pengguna Tampermonkey langkah demi langkah untuk menyimpan video YouTube. Termasuk video tutorial Bilibili saya, langkah-langkah pengaturan, dan catatan keselamatan.",
+        "keywords": "unduh YouTube Tampermonkey, skrip unduh YouTube, Greasemonkey, tutorial Bilibili, pengunduh userscript, unduh video YouTube Tampermonkey",
+        "brand": "FreeSaveVideo"
+    },
+    "hero": {
+        "badge": "Tutorial bilibili",
+        "title": "Unduh video YouTube dengan skrip pengguna Tampermonkey",
+        "summary": "Ikuti panduan Bilibili saya untuk menginstal Tampermonkey dan menambahkan skrip unduhan YouTube. Ini tetap merupakan alur kerja lanjutan/cadangan opsional.",
+        "primary_cta": "Coba pengunduhnya",
+        "secondary_cta": "Tonton di Bilibili"
+    },
+    "video": {
+        "title": "Tonton pengaturan Tampermonkey selengkapnya",
+        "description": "Video menunjukkan di mana mengambil skrip pengguna, cara mengaktifkannya, dan cara memicu pengunduhan di laman tontonan YouTube.",
+        "runtime": "Sekitar. 4 menit",
+        "open": "Buka tutorialnya"
+    },
+    "highlights": {
+        "title": "Apa yang Anda dapatkan",
+        "points": {
+            "reliable": "Penggantian ketika platform memblokir unduhan langsung.",
+            "safe": "Simpan skrip di browser Anda sendiri; tidak diperlukan akun.",
+            "multi": "Bekerja di Chrome, Edge, Firefox, dan browser berbasis Chromium lainnya.",
+            "combo": "Pasangkan skrip dengan freesavevideo.online untuk mencakup lebih banyak situs."
+        }
+    },
+    "steps": {
+        "title": "Cara menggunakan skrip",
+        "install": {
+            "title": "Instal Tampermonkey",
+            "desc": "Tambahkan ekstensi Tampermonkey dari Toko Web Chrome atau toko pengaya browser Anda, lalu sematkan untuk akses cepat."
+        },
+        "script": {
+            "title": "Tambahkan skrip unduhan YouTube",
+            "desc": "Buka tautan skrip dari deskripsi video Bilibili atau komentar yang disematkan, tinjau kodenya, dan klik \"Instal\" di Tampermonkey."
+        },
+        "download": {
+            "title": "Buka video YouTube dan pilih kualitasnya",
+            "desc": "Segarkan laman tontonan YouTube; skrip menunjukkan tombol unduh. Pilih kualitas MP4, lalu biarkan skrip mengambil medianya."
+        },
+        "legal": {
+            "title": "Tetap patuh",
+            "desc": "Unduh hanya konten yang haknya Anda miliki. Hormati Persyaratan Layanan YouTube dan aturan hak cipta setempat."
+        }
+    },
+    "faq": {
+        "title": "FAQ",
+        "items": {
+            "quality": {
+                "q": "Kualitas apa yang didukung skrip?",
+                "a": "Sebagian besar skrip menyediakan 720p atau 1080p. Resolusi sangat tinggi atau video dengan batasan usia mungkin memerlukan penggabungan DASH, yang dilewati oleh beberapa skrip."
+            },
+            "broken": {
+                "q": "Bagaimana jika skrip berhenti bekerja?",
+                "a": "YouTube sering diperbarui. Periksa deskripsi Bilibili untuk pembaruan, instal ulang skrip terbaru, atau beralih ke freesavevideo.online untuk platform lain."
+            },
+            "safe": {
+                "q": "Apakah ini aman dan legal?",
+                "a": "Skrip berjalan secara lokal di browser Anda. Namun, hanya unduh video yang Anda miliki atau izin simpannya, dan hindari distribusi ulang secara komersial."
+            }
+        }
+    },
+    "cta": {
+        "title": "Butuh pengunduh cadangan?",
+        "subtitle": "Gunakan freesavevideo.online langsung untuk TikTok, Instagram, Facebook, dan lainnya. Untuk YouTube, aliran Tampermonkey ini bersifat opsional.",
+        "primary": "Buka pengunduh",
+        "secondary": "Tonton kembali tutorialnya"
+    },
+    "guide": {
+        "page_title": "Panduan pengunduhan YouTube Tampermonkey",
+        "page_desc": "Penyiapan dua langkah, pengunduhan tiga langkah, ditambah perbaikan untuk penghentian dan perintah penyimpanan.",
+        "hero_badge": "Panduan Unduh YouTube",
+        "back_home": "Kembali ke Rumah",
+        "plugin_link": "Dapatkan Tampermonkey",
+        "bilibili_link": "Tonton di Bilibili",
+        "video_points": {
+            "1": "Pemasangan skrip dan tombol untuk MP4/MP3.",
+            "2": "Apa yang harus dilakukan ketika kemajuan terhenti sekitar 2%.",
+            "3": "Cara mengizinkan pop-up agar dialog simpan muncul."
+        },
+        "fallback": {
+            "title": "Penyematan diblokir atau tidak stabil di seluler",
+            "desc": "Buka tutorial di tab baru.",
+            "cta": "Tonton di Bilibili"
+        },
+        "prep": {
+            "title": "Pengaturan inti (2 langkah)",
+            "subtitle": "Instal extensionnya, lalu scriptnya. Setelah itu, tombol unduh muncul di halaman YouTube.",
+            "steps": {
+                "1": "Instal ekstensi: cari dan instal \"Tampermonkey\" dari toko ekstensi browser Anda.",
+                "2": "Instal skrip: temukan skrip \"Alat YouTube\", klik \"Instal skrip ini\", dan konfirmasikan penambahannya ke Tampermonkey."
+            }
+        },
+        "flow": {
+            "title": "Alur pengunduhan",
+            "subtitle": "Klik tombol untuk menyelesaikan pengunduhan.",
+            "steps": {
+                "1": "Buka video YouTube apa pun; tombol baru dari skrip muncul di bawah video.",
+                "2": "Klik tombol MP4 dan pilih resolusi (misalnya 720p) dari dropdown.",
+                "3": "Klik unduh untuk memulai. Kemajuan mungkin terhenti sekitar 2%—tunggu dan kemajuan akan terus berlanjut.",
+                "4": "Setelah selesai, jika pop-up diblokir, klik \"Izinkan\" di bilah alamat, lalu pilih lokasi penyimpanan."
+            }
+        },
+        "notice": {
+            "title": "FAQ Singkat",
+            "items": {
+                "1": "Terhenti sebentar pada ~2% adalah normal—tunggu dan akan dilanjutkan.",
+                "2": "Jika tidak ada dialog simpan yang muncul, izinkan pop-up dan coba lagi."
+            }
+        },
+        "faq2": {
+            "title": "Pemecahan masalah",
+            "items": {
+                "no_buttons": {
+                    "title": "Tidak ada tombol unduh di bawah video YouTube",
+                    "steps": {
+                        "1": "Chrome > Ekstensi > Kelola ekstensi > temukan Tampermonkey > Detail.",
+                        "2": "Aktifkan “Izinkan situs ini menjalankan skrip” (atau skrip pengguna).",
+                        "3": "Restart browser dan buka kembali halaman YouTube."
+                    }
+                },
+                "no_save": {
+                    "title": "Tidak ada dialog penyimpanan setelah pengunduhan selesai",
+                    "steps": {
+                        "1": "Setelah selesai, bilah alamat mungkin menampilkan “Aktifkan pop-up di YouTube untuk mengunduh video secara otomatis.” Klik Izinkan.",
+                        "2": "Jika terlewat, buka Pengaturan situs > Pop-up dan pengalihan, dan izinkan youtube.com."
+                    }
+                }
+            },
+            "screenshot_title": "Izin pop-up Chrome",
+            "screenshot_note": "Di bilah alamat, izinkan “Pop-up dan pengalihan.”",
+            "screenshot_alt": "Contoh Chrome yang mengaktifkan pop-up dan pengalihan untuk YouTube"
+        }
+    }
+}

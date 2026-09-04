@@ -1,0 +1,25 @@
+{
+    "save": "index",
+    "videorecord": "Papan Tulis",
+    "clipboard": "papan klip",
+    "discover": "temukan",
+    "random_video": "video acak",
+    "settings": "pengaturan",
+    "account": "akun",
+    "member_only": "anggota",
+    "updates": "pembaruan",
+    "donate": "donasi",
+    "about": "tentang",
+    "remux": "remux",
+    "history": "sejarah",
+    "faq": "FAQ",
+    "requests": "permintaan platform",
+    "more": "lebih lanjut",
+    "feature": {
+        "media_downloader": "Pengunduh Media",
+        "feedback": "Umpan Balik",
+        "file_transfer": "Transfer Berkas",
+        "discover_trends": "Temukan Tren"
+    },
+    "ai_video": "Video AI"
+}

@@ -1,0 +1,67 @@
+{
+    "cobalt": "FreeSaveVideo",
+    "meowbalt": "FreeSaveVideo",
+    "beta": "stabil",
+    "or": "atau",
+    "embed.description": "Unduh video gratis dari YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Amazon Live, NAVER, Instagram, Threads, Facebook, dan Twitter. Tidak diperlukan registrasi. Unduhan cepat dan bebas tanda air.",
+    "guide": {
+        "title": "Cara Download Video Online dengan FreeSaveVideo",
+        "description1": "FreeSaveVideo memungkinkan Anda mengunduh video online tanpa menginstal perangkat lunak. Tempel tautan platform yang didukung, termasuk tautan NAVER / Naver Korea, dan simpan video HD yang tersedia jika memungkinkan.",
+        "description2": "Anda dapat memproses tautan tunggal, unduhan batch, halaman koleksi dan daftar putar, lalu beralih ke mode audio saja atau senyap sebelum menyimpan."
+    },
+    "notification": {
+        "title": "Pemberitahuan:",
+        "close": "Tutup notifikasi",
+        "youtube_restriction": "Pengunduhan langsung YouTube kini didukung. Jika tautan tertentu gagal diurai, coba lagi nanti atau kirim masukan."
+    },
+    "promotions": {
+        "finditbuddy": {
+            "title": "FinditBuddy membantu Anda mengingat lokasi suatu benda dan menemukannya nanti",
+            "features": {
+                "1": "Catat dengan cerdas di mana setiap item ditempatkan",
+                "2": "Hemat ruangan, rak, kotak, dan detail catatan dalam hitungan detik",
+                "3": "Cari berdasarkan nama item jika Anda lupa di mana item tersebut disimpan",
+                "4": "Jaga penyimpanan di rumah tetap teratur untuk keperluan sehari-hari",
+                "5": "Menghabiskan lebih sedikit waktu untuk mencari barang yang salah tempat"
+            },
+            "visit": "Kunjungi FinditBuddy"
+        },
+        "yumcheck": {
+            "title": "Analisis bahan makanan, kueri dan analisis otomatis foto",
+            "features": {
+                "1": "Ambil foto daftar bahan untuk analisis bahan sekali klik dan penilaian risiko kesehatan",
+                "2": "Bandingkan bahan tambahan makanan dengan standar UE untuk pemahaman multidimensi",
+                "3": "Pindai nomor standar makanan untuk interpretasi cepat informasi peraturan",
+                "4": "Analisis laporan tes darah yang cerdas, membuat laporan darah dapat dimengerti oleh orang awam"
+            },
+            "visit": "Kunjungi YumCheck"
+        }
+    },
+    "pwa": {
+        "install_prompt": "Situs web ini mendukung instalasi ke desktop",
+        "install": "Instal",
+        "close": "Tutup"
+    },
+    "language_suggestion": {
+        "prompt": "Lihat halaman ini dalam",
+        "switch": "Ganti bahasa",
+        "dismiss": "Abaikan saran bahasa"
+    },
+    "seo": {
+        "home": {
+            "title": "Daftar Putar & Pengunduh Video Batch - FreeSaveVideo",
+            "description": "Unduh daftar putar publik, koleksi, dan beberapa tautan video yang didukung di satu tempat. Tinjau tugas batch, coba lagi kegagalan, pilih kualitas yang tersedia, dan simpan ke folder di browser yang kompatibel. Ini juga mendukung video Saluran WeChat publik dan unduhan multi-video yang dapat dipilih dari artikel Akun Resmi WeChat.",
+            "keywords": "pengunduh daftar putar, pengunduh video batch, unduh banyak video, pengunduh daftar putar YouTube, pengunduh video massal, simpan video ke folder, pengunduh video online pengunduh video Saluran WeChat, pengunduhan video Akun Resmi WeChat, unduh video mp.weixin.qq.com"
+        },
+        "transfer": {
+            "title": "Transfer File Online Gratis - Tidak Perlu Aplikasi | Bagikan P2P | Lintas Perangkat",
+            "description": "Cara terbaik untuk mentransfer file antar perangkat tanpa menginstal aplikasi. Berbagi file P2P yang aman, sinkronisasi clipboard lintas platform. Cepat, gratis, dan pribadi.",
+            "keywords": "transfer file, tanpa berbagi file aplikasi, transfer file p2p, salin tempel lintas perangkat, jatuhkan file online, alternatif snapdrop"
+        },
+        "discover": {
+            "title": "Temukan Video Trending - Klip Cantik, Lucu, Viral | Pembaruan Harian",
+            "description": "Koleksi video terpanas di web. Video kecantikan yang dikurasi, klip lucu, dan tren viral. Diperbarui setiap hari.",
+            "keywords": "video trending, video kecantikan, video lucu, klip viral, video panas, rekomendasi video"
+        }
+    }
+}

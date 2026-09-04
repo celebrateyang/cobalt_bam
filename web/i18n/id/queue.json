@@ -1,0 +1,29 @@
+{
+    "title": "antrian",
+    "state": {
+        "running": {
+            "fetch": "mengambil",
+            "remux": "mengolah ulang",
+            "encode": "pengkodean"
+        },
+        "starting": {
+            "fetch": "memulai pengambilan",
+            "remux": "memulai remux",
+            "encode": "memulai penyandian"
+        },
+        "retrying": "mencoba lagi",
+        "waiting": "menunggu",
+        "auto_saving": "menyimpan ke perangkat Anda...",
+        "auto_saved": "Disimpan ke: {{ value }}",
+        "auto_save_failed": "Penyimpanan otomatis gagal. Klik Simpan untuk menyimpan file ini."
+    },
+    "waiting_notice": "Saat ini ada {{ count }} video dalam antrean. Harap tunggu untuk diunduh.",
+    "success_notice": "Berhasil mengunduh video {{ count }} dalam kumpulan ini.",
+    "save_all_done": "Simpan semua yang diunduh",
+    "save_clicked": "Simpan diklik",
+    "manual_save_warning": "Penting: setelah video selesai, klik Simpan untuk item apa pun yang tidak disimpan otomatis. Jika Anda memilih folder untuk penyimpanan otomatis batch, lihat folder itu terlebih dahulu; jika tidak, periksa unduhan browser (Ctrl+J) atau folder Unduhan perangkat Anda.",
+    "keep_awake_warning": "Pengunduhan batch sedang berjalan. Biarkan perangkat ini tetap aktif hingga setiap item selesai, lalu klik \"Simpan\" untuk file yang sudah selesai.",
+    "keep_awake_auto_save_warning": "Pengunduhan batch sedang berjalan. Jaga agar perangkat ini tetap aktif; setiap file yang sudah selesai akan disimpan ke folder pilihan Anda secara otomatis.",
+    "save_started": "Simpan dimulai",
+    "network_stalled_waiting": "Jaringan untuk sementara lambat. Pengunduhan masih menunggu data dan akan dilanjutkan secara otomatis ketika koneksi pulih."
+}

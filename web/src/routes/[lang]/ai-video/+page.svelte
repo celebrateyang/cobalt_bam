@@ -22,7 +22,7 @@
         type PendingAiVideoImport,
     } from "$lib/api/ai-video";
 
-    const languages = ["de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"];
+    const languages = ["de", "en", "es", "fr", "id", "ja", "ko", "ru", "th", "vi", "zh"];
     const terminalStatuses = new Set(["draft_ready", "completed", "failed", "cancelled", "deleted"]);
     const deletableStatuses = new Set(["draft_ready", "completed", "failed", "cancelled"]);
     let eligible: boolean | null = null;

@@ -356,6 +356,7 @@
             vi: "VN",
             th: "TH",
             ru: "RU",
+            id: "ID",
         };
         const targetRegion: "asia" | "western" | "any" = [
             "en",
@@ -364,7 +365,7 @@
             "es",
         ].includes(currentLang)
             ? "asia"
-            : ["zh", "ja", "ko", "vi", "th"].includes(currentLang)
+            : ["zh", "ja", "ko", "vi", "th", "id"].includes(currentLang)
               ? "western"
               : "any";
 

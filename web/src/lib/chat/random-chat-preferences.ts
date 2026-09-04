@@ -13,6 +13,7 @@ export const RANDOM_CHAT_COUNTRY_OPTIONS = [
     "ES",
     "RU",
     "VN",
+    "ID",
 ] as const;
 
 export const RANDOM_CHAT_SELF_GENDER_OPTIONS = [

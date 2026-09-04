@@ -1,0 +1,192 @@
+{
+    "seo": {
+        "title": "Perekam Video Papan Tulis - Rekam Tutorial Slide Online | FreeSaveVideo",
+        "description": "Buat, pindahkan, dan ubah ukuran slide, lalu rekam tutorial papan tulis dengan overlay kamera di browser Anda. Tidak diperlukan instalasi.",
+        "keywords": "perekam papan tulis,perekam slide,perekam video online,perekam excalidraw,perekaman tutorial",
+        "app_name": "Perekam Video Papan Tulis"
+    },
+    "controls": {
+        "drag_controls": "Kontrol seret",
+        "open_settings": "Buka pengaturan",
+        "toggle_teleprompter": "Alihkan teleprompter",
+        "starting": "Mulai...",
+        "countdown": "Hitung mundur {{value}}",
+        "record": "Catatan",
+        "resume": "Lanjutkan",
+        "pause": "Jeda",
+        "stopping": "Menghentikan...",
+        "stop_with_duration": "Hentikan {{value}}"
+    },
+    "slides": {
+        "title": "Slide",
+        "move_up": "Naik",
+        "move_down": "Pindah ke bawah",
+        "duplicate": "Ganda",
+        "delete": "Hapus",
+        "add": "Tambahkan slide"
+    },
+    "teleprompter": {
+        "placeholder": "Tempel skrip Anda di sini...\nHanya Anda yang dapat melihatnya; itu tidak akan muncul dalam rekaman.",
+        "title": "Teleprompter",
+        "drag_title": "Seret teleprompter",
+        "drag": "Seret",
+        "play": "Mainkan",
+        "pause": "Jeda",
+        "reset": "Setel ulang",
+        "speed": "Kecepatan",
+        "opacity": "Opasitas",
+        "font_size": "Ukuran font"
+    },
+    "camera": {
+        "drag_overlay": "Seret hamparan kamera"
+    },
+    "shortcuts": {
+        "whiteboard_title": "Papan Tulis",
+        "whiteboard_body": "Gunakan toolbar atas Excalidraw untuk memilih/menggambar/teks/zoom/pan.",
+        "recording_title": "Rekaman",
+        "recording_body": "P untuk memulai/berhenti, K untuk menjeda/melanjutkan."
+    },
+    "settings": {
+        "title": "Pengaturan perekaman",
+        "dialog": "Pengaturan perekaman",
+        "close": "Tutup pengaturan perekaman",
+        "aspect": {
+            "title": "Rasio aspek",
+            "youtube": "YouTube",
+            "classic": "Klasik",
+            "portrait": "Potret",
+            "short_video": "Video Pendek",
+            "square": "Kotak"
+        },
+        "background": {
+            "title": "Latar Belakang",
+            "random": "Latar belakang acak",
+            "light_preset": "Latar belakang putih + teks gelap",
+            "swatch": "Latar Belakang {{value}}"
+        },
+        "canvas": {
+            "title": "Gaya kanvas",
+            "corner_radius": "Radius sudut",
+            "inner_padding": "Bantalan kanvas"
+        },
+        "preview": {
+            "title": "Pratinjau"
+        },
+        "teleprompter_opacity": {
+            "title": "Opasitas teleprompter"
+        },
+        "export": {
+            "title": "Format ekspor",
+            "webm": "WebM (kompatibilitas lebih baik)",
+            "mp4": "MP4 (bawaan)",
+            "note": "Ekspor default adalah MP4. Jika perekaman MP4 tidak didukung oleh browser, maka secara otomatis akan dikembalikan ke WebM."
+        },
+        "countdown": {
+            "title": "Hitung mundur sebelum merekam",
+            "enable": "Aktifkan hitung mundur",
+            "seconds": "Detik"
+        },
+        "camera": {
+            "title": "Kamera (gambar-dalam-gambar)",
+            "show": "Tampilkan kamera saat merekam",
+            "fill_frame": "Isi seluruh bingkai rekaman dengan kamera",
+            "size": "Ukuran",
+            "radius": "Radius sudut",
+            "margin": "Margin",
+            "mirror": "Kamera cermin",
+            "corner_tl": "Kiri atas",
+            "corner_tr": "Kanan atas",
+            "corner_bl": "Kiri bawah",
+            "corner_br": "Kanan bawah",
+            "offset_x": "X diimbangi",
+            "offset_y": "Y diimbangi",
+            "reset_offset": "Setel ulang offset kamera"
+        },
+        "preflight": {
+            "title": "Merekam sebelum penerbangan",
+            "run": "Jalankan sebelum penerbangan",
+            "last_run": "Terakhir dijalankan",
+            "never": "Belum dijalankan"
+        },
+        "mic": {
+            "title": "Mikrofon",
+            "include_audio": "Sertakan audio mikrofon dalam rekaman",
+            "device_none": "Tidak ada mikrofon yang terdeteksi",
+            "device_fallback": "Mikrofon {{value}}",
+            "refresh": "Segarkan perangkat",
+            "test": "Uji mikrofon",
+            "testing": "Pengujian...",
+            "hum_reduction": "Mengurangi dengungan listrik (filter takik)",
+            "mains_frequency": "Frekuensi listrik",
+            "hum_hint": "Menerapkan takik harmonik high-pass + 50/60Hz sebelum perekaman."
+        },
+        "cursor": {
+            "title": "Sorotan kursor",
+            "enable": "Tampilkan sorotan kursor saat merekam"
+        }
+    },
+    "notice": {
+        "before_unload": "Perekaman sedang berlangsung. Meninggalkan halaman ini dapat mengganggu perekaman dan kehilangan data ekspor.",
+        "pagehide_autostop": "Halaman dipindahkan ke latar belakang. Perekaman telah dihentikan secara otomatis untuk melindungi integritas file.",
+        "whiteboard_temporarily_unavailable": "Bingkai papan tulis untuk sementara tidak tersedia. Menunggu pemulihan...",
+        "whiteboard_load_failed": "Papan tulis gagal dimuat. Silakan segarkan dan coba lagi.",
+        "mic_test_unsupported": "Browser saat ini tidak mendukung pengujian level mikrofon.",
+        "mic_test_low_input": "Input mikrofon terlalu rendah. Silakan periksa perangkat input atau izin.",
+        "mic_test_passed": "Tes mikrofon lulus.",
+        "mic_test_failed": "Tes mikrofon gagal. Harap izinkan izin mikrofon di browser.",
+        "preflight_canvas_not_ready": "Preflight gagal: kanvas belum siap.",
+        "preflight_mediarecorder_unsupported": "Preflight gagal: browser saat ini tidak mendukung MediaRecorder.",
+        "preflight_capturestream_unsupported": "Preflight gagal: browser saat ini tidak mendukung canvas.captureStream.",
+        "preflight_no_mic_device": "Preflight gagal: tidak ada perangkat mikrofon yang terdeteksi.",
+        "preflight_passed": "Pra-penerbangan berhasil: {{mime}}{{camera}}{{mic}}",
+        "media": {
+            "camera": "Kamera",
+            "mic": "Mikrofon"
+        },
+        "mp4_fallback_webm": "Browser saat ini tidak mendukung perekaman MP4. Kembali ke WebM.",
+        "webm_fallback_mp4": "Browser saat ini tidak mendukung perekaman WebM. Jatuh kembali ke MP4.",
+        "no_supported_mime": "Browser saat ini tidak mendukung codec rekaman apa pun yang dapat digunakan. Perekaman mungkin gagal dimulai.",
+        "record_will_include_mic": "Rekaman akan menyertakan audio mikrofon. Harap konfirmasi izin mikrofon diberikan.",
+        "record_start_canvas_unavailable": "Gagal memulai perekaman: aliran kanvas tidak tersedia.",
+        "record_crop_fallback": "Perekaman gagal. Kembali ke pengambilan kanvas penuh.",
+        "video_track_ended": "Trek video berakhir secara tidak terduga. Perekaman berhenti otomatis.",
+        "mic_track_ended": "Trek mikrofon berakhir. Rekaman berikutnya tidak akan memiliki audio.",
+        "mic_unavailable_video_only": "Mikrofon tidak tersedia. Merekam video saja.",
+        "recorder_init_failed": "Inisialisasi perekam gagal. Coba ubah format ekspor atau browser.",
+        "recorder_error_stopping": "Terjadi kesalahan perekam. Mencoba berhenti dan mengekspor dengan aman.",
+        "no_output_chunks": "Tidak ada potongan yang dapat diekspor yang dihasilkan. Silakan coba merekam lagi.",
+        "output_too_small": "File keluaran terlalu kecil. Perekaman mungkin terlalu singkat atau terputus.",
+        "stop_cause": {
+            "user": "berhenti secara manual",
+            "pagehide": "halaman berlatar belakang",
+            "video_ended": "trek video berakhir",
+            "recorder_error": "kesalahan perekam",
+            "timeout": "menghentikan batas waktu",
+            "unknown": "tidak diketahui"
+        },
+        "export_complete": "Ekspor selesai: {{ext}} ({{size_kb}} KB) 路 Alasan berhenti: {{cause}}{{tail}}",
+        "export_tail": ", segmen terakhir mungkin tidak lengkap ({{seconds}} tanpa potongan baru)",
+        "record_started_with_audio": "Perekaman dimulai (dengan mikrofon).",
+        "record_started_without_audio": "Perekaman dimulai (tidak ada trek audio).",
+        "record_start_failed": "Gagal memulai perekaman. Silakan periksa izin browser dan dukungan codec.",
+        "stop_failed": "Gagal menghentikan perekaman. Silakan coba lagi.",
+        "stop_timeout_forced": "Waktu penghentian perekaman habis. Penyelesaian paksa diterapkan.",
+        "pause_unsupported": "Browser saat ini tidak mendukung perekaman jeda.",
+        "resume_unsupported": "Browser saat ini tidak mendukung perekaman resume."
+    },
+    "embed": {
+        "create_prompt": "Masukkan URL situs web yang akan disematkan (https://...)",
+        "edit_prompt": "Edit URL yang disematkan",
+        "invalid_url_alert": "Silakan masukkan tautan yang dimulai dengan http(s)"
+    },
+    "environment": {
+        "checking_label": "Pemeriksaan kompatibilitas",
+        "checking_title": "Memeriksa browser Anda",
+        "checking_body": "Mempersiapkan perekam...",
+        "blocked_label": "Perangkat tidak didukung",
+        "mobile_title": "Gunakan perekam ini di komputer",
+        "mobile_body": "Halaman rekaman ini memiliki performa yang tinggi di ponsel. Silakan buka di desktop atau laptop untuk pengalaman yang lebih lancar.",
+        "wechat_title": "Buka halaman ini di Chrome atau Edge",
+        "wechat_body": "Browser dalam aplikasi WeChat tidak mendukung perekam ini dengan andal. Silakan salin tautannya dan buka di Chrome atau Microsoft Edge."
+    }
+}

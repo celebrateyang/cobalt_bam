@@ -350,7 +350,13 @@ const vi = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocale
         'Chỉ tải nội dung công khai. Tôn trọng bản quyền và ghi nguồn cho tác giả.',
 });
 
-type GenericLocaleLang = 'es' | 'fr' | 'de' | 'ja' | 'ko' | 'ru' | 'th' | 'vi';
+const id = (page: Omit<SeoLandingLocaleContent, 'disclaimer'>): SeoLandingLocaleContent => ({
+    ...withFaqs(page, 'id'),
+    disclaimer:
+        'Unduh hanya konten yang tersedia untuk umum. Hormati hak cipta dan cantumkan kredit kepada kreator.',
+});
+
+type GenericLocaleLang = 'es' | 'fr' | 'de' | 'ja' | 'ko' | 'ru' | 'th' | 'vi' | 'id';
 type ContentLabelKey =
     | 'video'
     | 'video_gif'
@@ -452,6 +458,14 @@ const contentLabels: Record<GenericLocaleLang, Record<ContentLabelKey, string>> 
         reels_video_photo: 'reels, video hoặc ảnh',
         spotlight_story: 'video Spotlight hoặc Story',
         audio: 'âm thanh',
+    },
+    id: {
+        video: 'video',
+        video_gif: 'video atau GIF',
+        video_image_gif: 'video, gambar, atau GIF',
+        reels_video_photo: 'reels, video, atau foto',
+        spotlight_story: 'video Spotlight atau Story',
+        audio: 'audio',
     },
 };
 
@@ -716,6 +730,41 @@ const localeTemplates: Record<GenericLocaleLang, LocaleTemplate> = {
         faqA2:
             'Nội dung có thể bị hạn chế hoặc liên kết hết hạn. Hãy thử liên kết khác hoặc thử lại sau.',
     },
+    id: {
+        title: (platform, kind) =>
+            kind === 'audio'
+                ? `Pengunduh audio ${platform}`
+                : `Pengunduh video ${platform}`,
+        description: (platform, contentLabel) =>
+            `Unduh ${contentLabel} dari ${platform}: salin tautan → tempel → simpan. Berfungsi langsung di browser, tanpa aplikasi.`,
+        h1: (platform, kind) =>
+            kind === 'audio'
+                ? `Pengunduh audio ${platform}`
+                : `Pengunduh video ${platform}`,
+        lede: (platform, contentLabel) =>
+            `Tempel tautan ${platform} untuk mengunduh ${contentLabel}.`,
+        stepsTitle: (platform, kind) =>
+            kind === 'audio'
+                ? `Cara mengunduh audio dari ${platform}`
+                : `Cara mengunduh video dari ${platform}`,
+        step1: (platform) => `Buka ${platform}, lalu salin tautan bagikan.`,
+        step2: 'Tempel tautan di bawah ini, lalu klik unduh.',
+        step3: (kind) =>
+            kind === 'audio'
+                ? 'Pilih opsi audio yang tersedia, lalu simpan.'
+                : 'Pilih kualitas yang tersedia, lalu simpan.',
+        featuresTitle: 'Fitur utama',
+        featurePublicOnly: 'Hanya mendukung konten publik.',
+        featureQualityVideo: 'Opsi HD tersedia jika sumber mendukungnya.',
+        featureQualityAudio: 'Opsi kualitas tersedia jika sumber mendukungnya.',
+        featureDevice: 'Berfungsi di perangkat seluler dan desktop.',
+        faqTitle: 'Pertanyaan umum',
+        faqQ1: 'Bisakah saya mengunduh konten privat?',
+        faqA1: 'Tidak. Hanya konten publik yang dapat diunduh.',
+        faqQ2: 'Mengapa unduhan terkadang gagal?',
+        faqA2:
+            'Konten mungkin dibatasi atau tautannya sudah kedaluwarsa. Coba tautan lain atau ulangi nanti.',
+    },
 };
 
 const genericLocaleWrappers: Record<
@@ -730,6 +779,7 @@ const genericLocaleWrappers: Record<
     ru,
     th,
     vi,
+    id,
 };
 
 const wrapGenericLocale = (
@@ -782,6 +832,7 @@ const buildGenericLocales = (params: GenericLocaleParams) => ({
     ru: buildGenericLocale('ru', params),
     th: buildGenericLocale('th', params),
     vi: buildGenericLocale('vi', params),
+    id: buildGenericLocale('id', params),
 });
 
 export const seoLandingPages: SeoLandingPage[] = [

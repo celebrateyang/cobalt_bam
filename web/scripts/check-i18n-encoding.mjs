@@ -21,6 +21,7 @@ const forbiddenMarkdownScripts = {
     en: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
     es: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
     fr: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
+    id: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
     vi: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
     ja: /[\p{Script=Cyrillic}\p{Script=Hangul}\p{Script=Thai}\uE000-\uF8FF]/u,
     ko: /[\p{Script=Cyrillic}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\uE000-\uF8FF]/u,

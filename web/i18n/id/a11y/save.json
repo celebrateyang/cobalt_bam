@@ -1,0 +1,12 @@
+{
+    "link_area": "area masukan tautan",
+    "link_area.turnstile": "area masukan tautan. memeriksa apakah Anda bukan robot.",
+    "clear_input": "masukan yang jelas",
+    "download": "unduh",
+    "download.think": "memproses tautan...",
+    "download.check": "memverifikasi unduhan...",
+    "download.done": "pengunduhan selesai",
+    "download.error": "kesalahan pengunduhan",
+    "tutorial.shortcut.photos": "tambahkan pintasan foto",
+    "tutorial.shortcut.files": "tambahkan pintasan file"
+}

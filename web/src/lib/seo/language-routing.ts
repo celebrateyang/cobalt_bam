@@ -1,4 +1,4 @@
-export const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'] as const;
+export const supportedLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'] as const;
 
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
@@ -17,6 +17,7 @@ const countryLanguageMap: Record<string, SupportedLanguage> = {
     FR: 'fr',
     GB: 'en',
     HK: 'zh',
+    ID: 'id',
     JP: 'ja',
     KR: 'ko',
     LU: 'fr',

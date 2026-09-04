@@ -1,0 +1,5 @@
+{
+    "title": "seret atau pilih file",
+    "title.drop": "letakkan filenya di sini!",
+    "accept": "format yang didukung: {{ formats }}."
+}

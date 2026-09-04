@@ -1,0 +1,4 @@
+{
+    "button.next": "buka log perubahan lama ({{ value }})",
+    "button.previous": "buka log perubahan yang lebih baru ({{ value }})"
+}

@@ -1,0 +1,74 @@
+{
+    "description": "remuxing sering kali memperbaiki masalah kompatibilitas dengan perangkat lunak lama. cepat, lossless, dan semuanya diproses di perangkat.",
+    "hero": {
+        "title": "konversi video dan ekstrak audio",
+        "subtitle": "mengubah MP4 menjadi MP3 atau mengkonversi antara format video umum"
+    },
+    "steps": {
+        "upload": "pilih file",
+        "upload_hint": "klik untuk memilih atau meletakkan file di bawah; pemilihan batch didukung",
+        "choose_output": "pilih keluaran",
+        "process_download": "konversi dan unduh"
+    },
+    "seo": {
+        "title": "konverter video & ekstraktor audio",
+        "description": "ekstrak audio dari file video dan mengkonversi format video seperti avi ke mp4 langsung di browser Anda. pemrosesan lokal, tidak ada unggahan.",
+        "keywords": "pengonversi video, ekstraktor audio, avi ke mp4, ekstrak audio dari video, browser ffmpeg, pemrosesan video lokal, Pengonversi Video MP4 ke MP3, pengonversi MP3 gratis, pengonversi audio online"
+    },
+    "modes": {
+        "extract_audio": "ekstrak audio",
+        "convert_video": "mengonversi video"
+    },
+    "labels": {
+        "output_format": "format keluaran",
+        "bitrate": "kecepatan bit",
+        "target_format": "format sasaran",
+        "mode": "modus",
+        "input": "masukan"
+    },
+    "mode": {
+        "fast": "cepat (salin dulu)",
+        "compatible": "kompatibel (selalu transkode)"
+    },
+    "buttons": {
+        "start": "mulai memproses",
+        "start_extract": "ekstrak",
+        "start_convert": "konversikan ke",
+        "cancel": "batal",
+        "save_file": "unduh file",
+        "remove": "hapus",
+        "clear_done": "selesai"
+    },
+    "tips": {
+        "local_only": "file diproses secara lokal di browser Anda dan tidak diunggah ke server.",
+        "format_mp3": "MP3 menawarkan kompatibilitas pemutaran dan berbagi terluas.",
+        "format_m4a": "M4A biasanya menjaga kualitas baik dalam file yang lebih kecil.",
+        "format_wav": "WAV adalah audio yang tidak terkompresi dan menghasilkan file yang lebih besar.",
+        "keep_open": "halaman mungkin berhenti merespons sebentar saat memproses. tetap terbuka; file yang lebih besar mungkin memerlukan waktu satu menit atau lebih lama."
+    },
+    "progress": {
+        "batch": "kemajuan kumpulan",
+        "processing": "pemrosesan",
+        "preparing": "menyiapkan konversi; permulaan pertama mungkin memakan waktu beberapa detik...",
+        "extracting": "mengekstraksi",
+        "converting": "mengonversi menjadi",
+        "complete_ready": "konversi selesai, siap diunduh"
+    },
+    "status": {
+        "queued": "mengantri",
+        "processing": "pemrosesan",
+        "done": "selesai",
+        "error": "kesalahan"
+    },
+    "empty": {
+        "no_files": "belum ada file dalam antrian. letakkan satu atau lebih file untuk memulai."
+    },
+    "errors": {
+        "cancelled": "pemrosesan dibatalkan.",
+        "out_of_memory": "browser kehabisan memori. coba file yang lebih kecil atau tutup tab lain.",
+        "no_audio_stream": "file ini tidak memiliki aliran audio untuk diekstraksi.",
+        "no_video_stream": "file ini tidak memiliki aliran video untuk dikonversi.",
+        "no_storage": "browser ini tidak dapat menyediakan penyimpanan sementara untuk pemrosesan lokal.",
+        "generic": "pemrosesan gagal. coba format lain atau alihkan ke mode kompatibel."
+    }
+}

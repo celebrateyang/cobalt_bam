@@ -1,0 +1,7 @@
+{
+    "status": {
+        "default": "status antrian",
+        "ongoing": "pemrosesan antrian",
+        "completed": "antrian selesai"
+    }
+}

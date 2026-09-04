@@ -32,7 +32,7 @@ export const siteCapabilities = {
         'https://freesavevideo.online/zh',
         'https://api.freesavevideo.online/',
     ],
-    languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'],
+    languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'],
     summary:
         'FreeSaveVideo is a browser-based media downloader for public online videos, including WeChat Channels and videos embedded in WeChat Official Account articles, plus local media conversion, whiteboard recording, file transfer, discovery, and random 1v1 video chat.',
     commonUseCases: [

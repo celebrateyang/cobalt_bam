@@ -120,7 +120,7 @@ for (const [slug, urls] of Object.entries(examplePages)) {
     );
 }
 
-for (const lang of ['de', 'en', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'zh']) {
+for (const lang of ['de', 'en', 'es', 'fr', 'id', 'ja', 'ko', 'ru', 'th', 'vi', 'zh']) {
     const html = readOutput(lang, 'download.html');
     const scripts = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)];
     assert(scripts.length >= 2, `${lang} download directory is missing JSON-LD`);

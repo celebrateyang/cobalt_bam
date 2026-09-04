@@ -31,7 +31,7 @@ import { readMediaImportToken } from "../ai-video/media-import-token.js";
 import { sanitizeOutputFilename } from "../ai-video/subtitles.js";
 
 const router = express.Router();
-const supportedLanguages = new Set(["auto", "de", "en", "es", "fr", "ja", "ko", "ru", "th", "vi", "zh"]);
+const supportedLanguages = new Set(["auto", "de", "en", "es", "fr", "id", "ja", "ko", "ru", "th", "vi", "zh"]);
 const jsonError = (res, status, code, message, context) => res.status(status).json({ status: "error", error: { code, message, ...(context ? { context } : {}) } });
 const absoluteApiUrl = (path) => new URL(path, process.env.API_URL || "http://localhost").toString();
 const mapClerkUser = (user) => ({

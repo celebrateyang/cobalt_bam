@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const languages = ['de', 'en', 'es', 'fr', 'ja', 'ko', 'ru', 'th', 'vi', 'zh'];
+const languages = ['de', 'en', 'es', 'fr', 'id', 'ja', 'ko', 'ru', 'th', 'vi', 'zh'];
 const outputRoot = join(process.cwd(), '.svelte-kit', 'output', 'prerendered', 'pages');
 const failures = [];
 
@@ -13,7 +13,7 @@ const pageFileForPath = (pathname) => {
     return join(outputRoot, `${normalized}.html`);
 };
 
-const seoHrefPattern = /^\/(?:de|en|es|fr|ja|ko|ru|th|vi|zh)\/(?:download|guide|learn|faq|free-video-tools|youtube-video-downloader)(?:\/|$)/;
+const seoHrefPattern = /^\/(?:de|en|es|fr|id|ja|ko|ru|th|vi|zh)\/(?:download|guide|learn|faq|free-video-tools|youtube-video-downloader)(?:\/|$)/;
 
 for (const lang of languages) {
     const homepageFile = join(outputRoot, `${lang}.html`);

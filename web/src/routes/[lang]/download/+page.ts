@@ -14,7 +14,7 @@ import {
 
 export const prerender = true;
 
-const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
+const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'];
 
 export const entries = () => languages.map((lang) => ({ lang }));
 

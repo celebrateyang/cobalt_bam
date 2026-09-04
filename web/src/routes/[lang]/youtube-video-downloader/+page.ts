@@ -4,7 +4,7 @@ import { redirect } from '@sveltejs/kit';
 export const prerender = true;
 
 export const entries = () => {
-    const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'];
+    const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'];
     return languages.map(lang => ({ lang }));
 };
 

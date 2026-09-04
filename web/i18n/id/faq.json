@@ -1,0 +1,120 @@
+{
+    "title": "Pertanyaan yang Sering Diajukan (FAQ)",
+    "description": "Jawaban tentang unduhan, format, poin, dan pemecahan masalah bebas tanda air.",
+    "seo": {
+        "title": "FAQ | FreeSaveVideo - Pengunduh video bebas tanda air",
+        "description": "FreeSaveVideo FAQ untuk Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), unduhan Facebook. Pelajari tentang penyimpanan tanpa tanda air, pengunduhan batch, format, poin, dan pemecahan masalah. Ini juga mendukung video Saluran WeChat publik dan unduhan multi-video yang dapat dipilih dari artikel Akun Resmi WeChat.",
+        "keywords": "FAQ, Pengunduh Douyin, Pengunduh Bilibili, Pengunduh Kuaishou, Amazon Live, Pengunduh NAVER, unduhan naver.me, Pengunduh Xiaohongshu, Pengunduh TikTok, pengunduhan tanpa tanda air, pengunduhan batch, poin, Pengunduh video Haokan, Unduhan Haokan, Pengunduh video Toutiao, Pengunduhan video Toutiao, Pengunduh Toutiao MP4, Pengunduh NicoNico, pengunduhan nicovideo, Pengunduh video Sohu, Amazon Live pengunduh, pengunduhan tayangan ulang Amazon Live, pengunduhan amazon.com/live/video, pengunduhan video vdp amazon Pengunduh video Saluran WeChat, pengunduhan video Akun Resmi WeChat, pengunduhan video mp.weixin.qq.com"
+    },
+    "toc": {
+        "title": "Tautan cepat"
+    },
+    "search": {
+        "placeholder": "FAQ Pencarian (tanda air, batch, poin, gagal…)",
+        "clear": "Hapus",
+        "no_results": "Tidak ditemukan pertanyaan yang cocok."
+    },
+    "actions": {
+        "home": "Kembali ke pengunduh",
+        "feedback": "Laporkan masalah",
+        "youtube": "Panduan YouTube",
+        "account": "Akun & poin"
+    },
+    "sections": {
+        "basics": "Memulai",
+        "features": "Fitur & format",
+        "points": "Akun & poin",
+        "troubleshooting": "Pemecahan masalah",
+        "privacy": "Kebijakan & privasi"
+    },
+    "items": {
+        "what_is": {
+            "q": "Apa itu FreeSaveVideo?",
+            "a": "FreeSaveVideo adalah pengunduh media online.\nTempel tautan berbagi, pilih mode, dan unduh.\nMendukung Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, dan banyak lagi."
+        },
+        "how_to_use": {
+            "q": "Bagaimana cara mengunduh video (bebas tanda air)?",
+            "a": "1) Salin tautan berbagi\n2) Tempel di halaman beranda\n3) Pilih Otomatis / Audio / Diam\n4) Klik Parse/Unduh dan simpan."
+        },
+        "supported_platforms": {
+            "q": "Platform dan jenis tautan apa yang didukung?",
+            "a": "100+ layanan didukung, termasuk Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, dan banyak lagi.\nKualitas, audio, dan file tambahan bergantung pada platform dan sumber postingan. Ini juga mendukung video Saluran WeChat publik dan unduhan multi-video yang dapat dipilih dari artikel Akun Resmi WeChat."
+        },
+        "youtube_supported": {
+            "q": "Apakah ini mendukung pengunduhan YouTube?",
+            "a": "Ya. Pengunduhan YouTube kini didukung secara langsung. Cukup tempel tautan YouTube dan unduh secara normal tanpa skrip atau plugin browser. Jika tautan tertentu gagal, coba lagi nanti atau kirim masukan."
+        },
+        "mobile_ios": {
+            "q": "Apakah ini berfungsi di seluler? Bagaimana cara menyimpan di iOS?",
+            "a": "Ya, ini berfungsi di seluler/tablet/desktop.\nDi iOS, jika Anda dapat melihat pratinjau tetapi tidak dapat menyimpan, ikuti instruksi Pintasan Siri bawaan untuk menyimpan ke Foto/File dari lembar berbagi."
+        },
+        "watermark_free": {
+            "q": "Apakah video yang didownload akan memiliki watermark?",
+            "a": "Untuk platform yang menyediakan sumber bebas tanda air, kami mencoba mengembalikan file bersih secara default.\nJika tanda air dimasukkan ke dalam video atau platform mengubah aturannya, tanda air tersebut mungkin tidak dapat dihapus."
+        },
+        "quality_options": {
+            "q": "Dapatkah saya mendownload kualitas HD/asli? Mengapa kualitasnya berbeda-beda?",
+            "a": "Kualitas tergantung pada apa yang disediakan oleh postingan asli dan batasan platform.\nJika tersedia beberapa opsi, pilih opsi yang lebih tinggi. Jika tidak, sumber tersebut mungkin tidak menawarkan alternatif lain."
+        },
+        "audio_only": {
+            "q": "Dapatkah saya mengunduh video audio saja atau tanpa suara?",
+            "a": "Ya. Pilih Audio untuk file audio saja, atau Dibisukan untuk menghapus trek audio.\nFormat yang didukung bervariasi berdasarkan platform (misalnya MP3/M4A/MP4)."
+        },
+        "batch_download": {
+            "q": "Bagaimana cara mengunduh banyak tautan sekaligus?",
+            "a": "Tempel beberapa link sekaligus (dipisahkan dengan spasi atau baris baru).\nKetika mode batch terdeteksi, Anda dapat memprosesnya bersama-sama dan melacak kemajuannya."
+        },
+        "playlist_collection": {
+            "q": "Apakah Anda mendukung unduhan daftar putar/koleksi/serial?",
+            "a": "Ya. Untuk tautan yang didukung, aplikasi akan mencoba mendeteksi koleksi/episode/daftar putar dan menawarkan entri batch.\nJika gagal mendeteksi, tempelkan setiap tautan item ke mode batch."
+        },
+        "batch_save_location": {
+            "q": "Kemana perginya video saya setelah diunduh?",
+            "a": "Unduhan tunggal: file biasanya disimpan oleh browser Anda. Tekan Ctrl+J untuk membuka daftar unduhan di Chrome, Edge, Firefox, atau Opera, dan periksa pengaturan Unduhan browser untuk folder penyimpanan. Di Safari, gunakan tombol unduh di toolbar; di Mac, Option+Command+L menampilkan daftar unduhan.\nUnduhan batch: jika Anda memilih folder untuk penyimpanan otomatis saat batch dimulai, videonya ada di folder itu. Coba ingat kembali jalur yang Anda pilih, atau periksa nama folder tersimpan yang ditampilkan dalam antrean unduhan. Jika Anda memilih penyimpanan manual, atau browser Anda tidak mendukung penyimpanan folder otomatis, video yang sudah selesai akan tetap berada di antrean unduhan di kanan atas terlebih dahulu. Klik \"Simpan\" pada setiap item; setelah itu lokasinya mengikuti pengaturan download browser anda.\nSeluler/iOS: saat berbagi atau menggunakan panel penyimpanan sistem, file mungkin ada di Foto atau aplikasi File di bawah Unduhan/Terbaru. Jika Anda menutup atau menyegarkan halaman sebelum menyimpan item antrean, file sementara mungkin hilang dan Anda mungkin perlu mengunduh lagi."
+        },
+        "batch_browser_restart": {
+            "q": "Apakah download koleksi akan tetap ada setelah saya menutup dan membuka kembali browser?",
+            "a": "Biasanya tidak. Setelah browser dimulai ulang, data antrean sementara mungkin dihapus. Kami menyarankan untuk menyimpan setiap item ke disk segera setelah antrian selesai untuk menghindari kehilangan konten. Perilaku ini membantu mengontrol penggunaan memori browser."
+        },
+        "batch_browser_compatibility": {
+            "q": "Browser manakah yang kurang ramah untuk download koleksi?",
+            "a": "Quark Browser saat ini diketahui kurang kompatibel dengan unduhan koleksi dan mungkin gagal menyimpan atau menjeda secara tidak terduga. Kami merekomendasikan penggunaan Chrome terbaru untuk keandalan yang lebih baik."
+        },
+        "need_login": {
+            "q": "Mengapa terkadang saya diminta untuk masuk?",
+            "a": "Pengunduhan dasar biasanya tidak memerlukan akun.\nUntuk mengurangi penyalahgunaan dan spam, fitur seperti laporan masalah, tugas batch, atau penagihan poin mungkin memerlukan login."
+        },
+        "points_how": {
+            "q": "Apa itu poin dan bagaimana cara penagihannya?",
+            "a": "Jika poin diaktifkan di situs ini, pengunduhan dapat menggunakan poin berdasarkan durasi media: sekitar 2 poin per menit (dibulatkan ke atas).\nKami memeriksa saldo Anda sebelum memulai. Jika tidak mencukupi, Anda akan diminta untuk membeli lebih banyak."
+        },
+        "points_buy": {
+            "q": "Dimana saya bisa cek atau beli poin?",
+            "a": "Buka halaman Akun untuk melihat saldo Anda saat ini dan opsi pembelian.\nSetelah pembayaran, saldo biasanya disegarkan secara otomatis."
+        },
+        "failed_parse": {
+            "q": "Parse gagal atau acara tidak didukung. Apa yang harus saya lakukan?",
+            "a": "Pastikan tautan dapat diakses publik (tidak bersifat pribadi, berbayar, atau memerlukan login).\nCoba salin ulang tautan yang dibagikan, segarkan halaman, ganti jaringan, atau coba lagi nanti (aturan platform sering berubah).\nJika masih gagal, gunakan “Laporkan masalah” di halaman beranda dan sertakan link dan pesan kesalahan."
+        },
+        "slow_download": {
+            "q": "Pengunduhan lambat atau terus gagal. Ada tip?",
+            "a": "Kecepatan bergantung pada pelambatan jaringan dan platform Anda.\nCoba Wi‑Fi untuk video berdurasi panjang, ganti jaringan, atau coba lagi nanti. Jika masalah terus berlanjut, laporkan dengan tautan dan stempel waktu."
+        },
+        "private_paid": {
+            "q": "Dapatkah mengunduh konten pribadi/berbayar/yang memerlukan login?",
+            "a": "Tidak. FreeSaveVideo hanya menangani konten yang dapat diakses publik.\nHarap hormati hak cipta dan hak pencipta."
+        },
+        "privacy_logs": {
+            "q": "Apakah Anda menyimpan tautan atau file saya? Apakah aman?",
+            "a": "Kami tidak pernah meminta kata sandi platform Anda.\nTautan dan data media digunakan sementara selama pemrosesan. Penerapan yang berbeda mungkin menyimpan log akses minimal untuk pencegahan penyalahgunaan dan proses debug.\nSitus ini mungkin menjalankan analisis/iklan pihak ketiga untuk pengoperasian dan peningkatan."
+        },
+        "feedback_contact": {
+            "q": "Bagaimana cara melaporkan masalah atau meminta fitur baru?",
+            "a": "Gunakan entri umpan balik dalam aplikasi untuk pemecahan masalah tercepat.\nAnda juga dapat mengirim email: merayakanyang@gmail.com"
+        },
+        "wechat_supported": {
+            "q": "Dapatkah saya mengunduh saluran WeChat dan video artikel Akun Resmi WeChat?",
+            "a": "Ya. Tempelkan tautan berbagi Saluran WeChat publik atau tautan artikel Akun Resmi mp.weixin.qq.com. Jika sebuah artikel berisi beberapa video, pilih item yang Anda inginkan sebelum masuk ke antrean unduhan. Konten pribadi, yang dihapus, dan hanya untuk login tidak didukung."
+        }
+    }
+}

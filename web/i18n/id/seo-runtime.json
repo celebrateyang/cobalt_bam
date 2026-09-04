@@ -1,0 +1,576 @@
+{
+    "updatedAt": "2026-09-03",
+    "productFaqs": [
+        {
+            "q": "Tautan mana yang paling berhasil?",
+            "a": "Gunakan URL video publik tertentu, URL postingan, URL Shorts, atau URL playlist/koleksi yang didukung. Laman profil, laman beranda saluran, laman penelusuran, tautan pribadi, dan konten khusus keanggotaan bukanlah target unduhan yang dapat diandalkan."
+        },
+        {
+            "q": "Apakah FreeSaveVideo mendukung daftar putar dan unduhan batch?",
+            "a": "Ya. Alur kerja daftar putar, koleksi, dan multi-tautan yang didukung dapat diubah menjadi tugas batch sehingga pengguna dapat meninjau dan menyimpan beberapa video publik dari satu halaman."
+        },
+        {
+            "q": "Di mana file yang diunduh disimpan?",
+            "a": "Unduhan langsung disimpan ke folder unduhan default browser. Antrean unduhan selesai di dalam FreeSaveVideo terlebih dahulu, lalu pengguna mengklik Simpan untuk menyimpan file secara lokal."
+        },
+        {
+            "q": "Apakah FreeSaveVideo hanya pengunduh?",
+            "a": "Tidak. Ini juga mencakup alat browser seperti MP4 ke MP3, ekstraksi audio, konversi video, perekaman papan tulis, transfer file lintas perangkat, Discover, dan obrolan video 1v1 acak."
+        }
+    ],
+    "productTips": [
+        "Untuk hasil terbaik, tempelkan video publik, postingan, video Shorts, playlist, atau URL koleksi tertentu, bukan halaman beranda profil atau saluran.",
+        "Gunakan mode batch untuk beberapa tautan dan hasil daftar putar; tugas antrian dapat mencoba lagi dan melanjutkan setelah gangguan.",
+        "Atur opsi kualitas, format, audio saja, atau bisu sebelum menguraikan saat Anda memerlukan keluaran tertentu.",
+        "Gunakan halaman unduhan khusus platform jika tersedia karena halaman tersebut menjelaskan jenis tautan yang paling sesuai."
+    ],
+    "productAdvantages": [
+        "Hapus batas konten publik: FreeSaveVideo ditujukan untuk tautan yang dapat diakses publik, bukan media pribadi atau berbayar.",
+        "Cakupan platform luas di Amazon Live, YouTube, TikTok, Douyin, Bilibili, iQIYI, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, dan banyak lagi.",
+        "Alur kerja batch, playlist, koleksi, audio, mute, dan antrian dibangun ke dalam pengalaman browser.",
+        "Alat lokal yang sadar privasi memproses file pengguna di browser bila memungkinkan alih-alih mengharuskan pengunggahan."
+    ],
+    "releaseNotes": [
+        "2026-09-03: Menambahkan ekstraksi video iQIYI publik dan gratis, pengecualian iklan pemutar, dan pengiriman MP4 yang di-remux di server.",
+        "2026-08-17: Koleksi publik yang diperbarui, deteksi multi-bagian, dan instruksi tugas batch.",
+        "2026-08-17: Menambahkan jenis tautan yang didukung untuk video publik, daftar putar, koleksi, dan unduhan batch.",
+        "17-08-2026: Memperjelas batasan konten publik, privasi, dan alur kerja penyimpanan browser."
+    ],
+    "freeTools": [
+        {
+            "title": "Obrolan video acak",
+            "desc": "Tidak perlu poin",
+            "path": "obrolan acak"
+        },
+        {
+            "title": "Konversi format video",
+            "desc": "Tidak perlu poin",
+            "path": "remux"
+        },
+        {
+            "title": "Temukan",
+            "desc": "Tidak perlu poin",
+            "path": "temukan"
+        },
+        {
+            "title": "Rekaman papan tulis",
+            "desc": "Tidak perlu poin",
+            "path": "rekaman video"
+        },
+        {
+            "title": "Transfer berkas",
+            "desc": "Tidak perlu poin",
+            "path": "papan klip"
+        }
+    ],
+    "platformFaqs": {
+        "tiktok": [
+            {
+                "q": "Apa yang harus saya lakukan jika URL TikTok gagal?",
+                "a": "Gunakan URL berbagi postingan (bukan URL profil), coba lagi, lalu ganti jaringan jika diperlukan."
+            },
+            {
+                "q": "Mengapa kualitas TikTok lebih rendah dari yang diharapkan?",
+                "a": "Sesuaikan pengaturan kualitas dan parsing lagi. Opsi akhir bergantung pada media sumber."
+            },
+            {
+                "q": "Mengapa tautan tayangan slide TikTok gagal mengembalikan media?",
+                "a": "Beberapa postingan slideshow dan aset yang dilindungi musik mengekspos media yang dapat diunduh secara terbatas. Coba URL postingan lain atau gunakan percobaan ulang antrean."
+            },
+            {
+                "q": "Mengapa TikTok tidak menunjukkan hasil untuk tautan profil yang disalin?",
+                "a": "Tautan profil bukan halaman media langsung. Buka postingan tertentu dan salin URL pembagiannya untuk diurai."
+            }
+        ],
+        "douyin": [
+            {
+                "q": "Mengapa tautan Douyin saya tidak dapat diunduh?",
+                "a": "Gunakan URL berbagi postingan, bukan URL pencarian/penemuan."
+            },
+            {
+                "q": "Bagaimana cara menangani tugas antrian Douyin yang terputus?",
+                "a": "Untuk tugas antrian Douyin, klik \"Lanjutkan\" untuk melanjutkan setelah gangguan, lalu klik \"Simpan\" setelah selesai."
+            },
+            {
+                "q": "Mengapa Douyin tidak menunjukkan izin atau hasil kosong pada beberapa tautan?",
+                "a": "Beberapa tautan bersama mengarah ke pos yang dibatasi atau dibatasi wilayah. Buka halaman postingan asli, konfirmasi akses publik, lalu parsing lagi dalam mode antrian."
+            }
+        ],
+        "instagram": [
+            {
+                "q": "Apakah Instagram mungkin mengalami kegagalan sesekali?",
+                "a": "Fluktuasi sisi sumber sementara dapat terjadi. Coba lagi dan konfirmasikan akses publik."
+            },
+            {
+                "q": "Mengapa tautan Instagram Story gagal setelah beberapa waktu?",
+                "a": "Cerita dapat kedaluwarsa dengan cepat. Gunakan URL cerita publik yang tersedia saat ini dan uraikan sesegera mungkin."
+            },
+            {
+                "q": "Mengapa Instagram tidak mengembalikan media untuk konten pribadi?",
+                "a": "Konten pribadi tidak dapat diakses publik untuk diuraikan. Gunakan URL postingan yang dapat diakses publik."
+            }
+        ],
+        "youtube": [
+            {
+                "q": "Mengapa penguraian YouTube lambat?",
+                "a": "Video panjang dan puncak lalu lintas meningkatkan waktu penguraian. Mode antrian disarankan."
+            },
+            {
+                "q": "Mengapa saya tidak bisa langsung mendownload live streaming YouTube?",
+                "a": "Streaming langsung dan upload baru mungkin memerlukan pemrosesan dari sisi sumber terlebih dahulu. Coba lagi nanti atau antri tugas dan lanjutkan jika terganggu."
+            },
+            {
+                "q": "Mengapa URL YouTube diurai tetapi menampilkan opsi terbatas?",
+                "a": "Opsi yang tersedia bergantung pada metadata sumber, aturan wilayah, dan ketersediaan format. Sesuaikan pengaturan keluaran dan parsing lagi."
+            }
+        ],
+        "bilibili": [
+            {
+                "q": "Di mana file Bilibili saya setelah antrian selesai?",
+                "a": "Mode antrian memerlukan klik Simpan yang eksplisit setelah tugas selesai."
+            },
+            {
+                "q": "Mengapa konten multi-bagian Bilibili hanya mengunduh satu bagian?",
+                "a": "Tempelkan video multi-bagian publik lengkap atau URL koleksi yang didukung. FreeSaveVideo memperluas item yang saat ini dapat dideteksi sehingga Anda dapat memilih beberapa bagian untuk antrian batch. Jika hanya satu item yang tersisa, andalkan hasil parse saat ini."
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "q": "Mengapa unduhan Xiaohongshu tidak stabil?",
+                "a": "Gunakan mode antrian dan Lanjutkan. Ketersediaan media di sisi sumber dapat bervariasi."
+            },
+            {
+                "q": "Mengapa Xiaohongshu mengembalikan opsi audio saja atau video yang hilang?",
+                "a": "Beberapa catatan memaparkan varian media yang terbatas. Sesuaikan pengaturan kualitas atau format, lalu parsing ulang tautan yang sama dan coba lagi nanti jika diperlukan."
+            }
+        ],
+        "facebook": [
+            {
+                "q": "Mengapa saya tidak dapat menemukan file Facebook saya?",
+                "a": "Mode langsung menyimpan ke folder browser; mode antrian memerlukan Simpan setelah selesai."
+            }
+        ],
+        "generic": [
+            {
+                "q": "Apa yang harus saya periksa terlebih dahulu ketika parsing gagal?",
+                "a": "Verifikasi akses URL publik, periksa pengaturan, lalu coba lagi dengan mode antrian."
+            }
+        ],
+        "toutiao": [
+            {
+                "q": "Apa yang harus saya periksa ketika tautan Toutiao gagal?",
+                "a": "Pastikan URL mengarah ke halaman detail video Toutiao publik, bukan halaman pencarian, halaman feed, atau halaman komentar."
+            },
+            {
+                "q": "Mengapa opsi HD tidak ada?",
+                "a": "Pilihan kualitas yang tersedia bergantung pada varian MP4 yang dikembalikan oleh Toutiao untuk video tersebut."
+            }
+        ],
+        "haokan": [
+            {
+                "q": "Bagaimana cara mengunduh video Haokan ke ponsel saya?",
+                "a": "Salin URL video publik haokan.baidu.com, tempelkan ke FreeSaveVideo, lalu simpan hasil MP4 yang tersedia dari browser seluler Anda."
+            },
+            {
+                "q": "Apakah ini sama dengan menginstal aplikasi Haokan?",
+                "a": "Tidak. FreeSaveVideo mengekstrak hasil yang dapat diunduh dari tautan video publik. Itu tidak menyediakan penginstal aplikasi Haokan, pemulihan, atau peringkat pemain lokal."
+            },
+            {
+                "q": "Dapatkah saya menggunakan tautan Haokan dari hasil pencarian Baidu?",
+                "a": "Ya, jika hasilnya membuka halaman video Haokan publik seperti haokan.baidu.com/v?vid=... daripada halaman download aplikasi atau daftar pencarian."
+            }
+        ],
+        "weibo": [
+            {
+                "q": "Bagaimana cara menyalin URL video Weibo?",
+                "a": "Buka halaman video Weibo, klik Salin alamat video di pemutar, lalu tempelkan tautan pendek t.cn atau URL halaman video Weibo yang disalin ke FreeSaveVideo."
+            },
+            {
+                "q": "Dapatkah saya menempelkan tautan pendek t.cn?",
+                "a": "Ya. Weibo sering menyalin tautan pendek t.cn, dan FreeSaveVideo dapat mengurai tautan video publik Weibo yang didukung."
+            },
+            {
+                "q": "Mengapa tautan Weibo gagal?",
+                "a": "Pastikan itu adalah video yang dapat diputar publik, bukan profil, halaman komentar, postingan pribadi, atau video yang dihapus. Salin ulang alamat video jika link sumber sudah habis masa berlakunya."
+            }
+        ],
+        "iqiyi": [
+            {
+                "q": "Apakah pengunduhan iQIYI menyertakan iklan pemain?",
+                "a": "Tidak. Ekstraktor memvalidasi video yang diminta dan memilih daftar putar program utamanya alih-alih menambahkan aset iklan pemutar terpisah."
+            },
+            {
+                "q": "Mengapa FreeSaveVideo melakukan remux video iQIYI ke MP4?",
+                "a": "Sumber publik dapat dikemas sebagai MPEG-TS. Remuxing sisi server mempertahankan aliran audio dan video yang ada sambil menghasilkan MP4 yang lebih mudah untuk diputar dan disimpan."
+            },
+            {
+                "q": "Apakah video iQIYI VIP atau DRM didukung?",
+                "a": "Tidak. Hanya video publik dan gratis yang tersedia tanpa melewati keanggotaan, pembayaran, DRM, login, akun, atau kontrol regional yang didukung."
+            }
+        ]
+    },
+    "platformPlaybooks": {
+        "tiktok": {
+            "heading": "Catatan alur kerja TikTok",
+            "notes": [
+                "Gunakan URL postingan tertentu.",
+                "Coba lagi sekali, lalu ganti jaringan.",
+                "Lebih memilih mode antrian untuk media yang lebih panjang."
+            ],
+            "checklist": [
+                "URL postingan publik dikonfirmasi",
+                "Pengaturan kualitas dikonfigurasi",
+                "Disimpan setelah antrian selesai"
+            ]
+        },
+        "douyin": {
+            "heading": "Catatan alur kerja Douyin",
+            "notes": [
+                "Hindari URL pencarian/penemuan.",
+                "Gunakan Lanjutkan pada gangguan.",
+                "Sesuaikan pengaturan kualitas sebelum mengurai ulang."
+            ],
+            "checklist": [
+                "URL postingan tertentu dikonfirmasi",
+                "Mode langsung vs antrian dipilih",
+                "Langkah Penyimpanan Terakhir selesai"
+            ]
+        },
+        "instagram": {
+            "heading": "Catatan alur kerja Instagram",
+            "notes": [
+                "Fluktuasi sisi sumber mungkin terjadi.",
+                "Pilihan bergantung pada media sumber.",
+                "Mode antrian meningkatkan stabilitas."
+            ],
+            "checklist": [
+                "Akses publik terverifikasi",
+                "Mode antrian digunakan saat dibutuhkan",
+                "Lokasi file dikonfirmasi"
+            ]
+        },
+        "youtube": {
+            "heading": "Catatan alur kerja YouTube",
+            "notes": [
+                "Video panjang mungkin diuraikan dengan lambat.",
+                "Setel preferensi audio sebelum menguraikan lagi.",
+                "Gunakan Lanjutkan untuk menghindari restart penuh."
+            ],
+            "checklist": [
+                "URL video dikonfirmasi",
+                "Preferensi keluaran disetel",
+                "Disimpan setelah antrian selesai"
+            ]
+        },
+        "bilibili": {
+            "heading": "Catatan alur kerja Bilibili",
+            "notes": [
+                "Mode langsung disimpan ke folder browser.",
+                "Mode antrian perlu Simpan secara eksplisit.",
+                "Papar ulang setelah perubahan kualitas."
+            ],
+            "checklist": [
+                "URL publik dikonfirmasi",
+                "Mode dan pengaturan diperiksa",
+                "Jalur file akhir diverifikasi"
+            ]
+        },
+        "xiaohongshu": {
+            "heading": "Catatan alur kerja Xiaohongshu",
+            "notes": [
+                "Gunakan mode antrian pada jaringan yang tidak stabil.",
+                "Jumlah opsi bergantung pada sumber.",
+                "Coba lagi nanti jika sumber terbatas."
+            ],
+            "checklist": [
+                "URL publik dikonfirmasi",
+                "Mode antrian dipilih",
+                "Simpan alur selesai"
+            ]
+        },
+        "facebook": {
+            "heading": "Catatan alur kerja Facebook",
+            "notes": [
+                "Periksa mode langsung vs antrian terlebih dahulu.",
+                "Antrian perlu diselesaikan plus Simpan.",
+                "Lanjutkan melanjutkan tugas yang terhenti."
+            ],
+            "checklist": [
+                "URL publik dikonfirmasi",
+                "Modenya jelas",
+                "Simpan jalur dicentang"
+            ]
+        },
+        "generic": {
+            "heading": "Catatan alur kerja umum",
+            "notes": [
+                "Gunakan URL publik yang dapat dibagikan.",
+                "Antrian + resume pada jaringan yang tidak stabil.",
+                "Tetapkan kualitas sebelum menguraikan lagi."
+            ],
+            "checklist": [
+                "URL valid dan bersifat publik",
+                "Pengaturan sesuai dengan keluaran target",
+                "Lokasi file akhir dikonfirmasi"
+            ]
+        },
+        "toutiao": {
+            "heading": "Catatan alur kerja unduhan Toutiao",
+            "notes": [
+                "Gunakan halaman detail video publik atau tautan berbagi seluler.",
+                "Hindari menempelkan hasil pencarian atau halaman feed Toutiao.",
+                "Periksa daftar kualitas yang diuraikan sebelum menyimpan."
+            ],
+            "checklist": [
+                "URL mengarah ke video Toutiao publik",
+                "Video sumber masih diputar",
+                "Opsi MP4 muncul di hasil"
+            ]
+        },
+        "haokan": {
+            "heading": "Catatan alur kerja unduhan Haokan",
+            "notes": [
+                "Gunakan URL video publik haokan.baidu.com yang sebenarnya, bukan laman hasil penelusuran.",
+                "Simpan varian MP4 yang tersedia ketika penguraian berhasil.",
+                "Perlakukan pemasangan aplikasi, pemulihan aplikasi, dan penelusuran peringkat pemain sebagai maksud yang berbeda dari ekstraksi tautan video."
+            ],
+            "checklist": [
+                "Halaman video Haokan publik dikonfirmasi",
+                "haokan.baidu.com/v?vid=... URL disalin",
+                "Hasil MP4 disimpan dari browser"
+            ]
+        },
+        "weibo": {
+            "heading": "Daftar periksa pengunduhan video Weibo",
+            "notes": [
+                "Gunakan Salin alamat video dari pemutar video Weibo jika memungkinkan.",
+                "Tautan pendek t.cn yang disalin dapat langsung ditempel.",
+                "Jika penguraian gagal, buka kembali video asli dan salin kembali alamatnya."
+            ],
+            "checklist": [
+                "Video Weibo bersifat publik dan dapat diputar",
+                "Anda menyalin alamat video, bukan halaman profil atau komentar",
+                "Hasilnya menunjukkan opsi MP4 yang tersedia"
+            ]
+        },
+        "iqiyi": {
+            "heading": "Alur kerja pengunduhan video iQIYI yang andal",
+            "notes": [
+                "Gunakan laman pemutaran iqiyi.com/v_*.html publik yang nyata, bukan laman beranda, hasil penelusuran, atau laman saluran.",
+                "Server mengidentifikasi program utama, mengecualikan klip iklan pemutar terpisah, dan me-remux sumber ke MP4.",
+                "Hanya konten publik dan gratis yang memenuhi syarat; Video VIP, berbayar, DRM, khusus login, dihapus, dan dibatasi wilayah tidak didukung."
+            ],
+            "checklist": [
+                "Video iQIYI gratis untuk publik dikonfirmasi",
+                "URL v_*.html nyata disalin",
+                "MP4 yang di-remux di server disimpan setelah pemrosesan"
+            ]
+        }
+    },
+    "platformFailureCases": {
+        "tiktok": [
+            {
+                "title": "URL profil digunakan sebagai ganti URL kiriman",
+                "symptoms": "Tidak ada media yang dapat diunduh atau kegagalan parse umum.",
+                "fixes": [
+                    "Salin URL berbagi kiriman yang tepat.",
+                    "Coba lagi parsing setelah peralihan jaringan jika diperlukan.",
+                    "Gunakan mode antrian untuk unduhan yang panjang."
+                ]
+            },
+            {
+                "title": "Tautan profil atau kotak tepi tayangan slide",
+                "symptoms": "Parse mengembalikan hasil kosong atau opsi media terbatas.",
+                "fixes": [
+                    "Gunakan URL berbagi kiriman tertentu, bukan tautan profil.",
+                    "Coba lagi dalam mode antrian pada jaringan yang tidak stabil.",
+                    "Beralih ke postingan publik lain ketika aset sumber dibatasi."
+                ]
+            }
+        ],
+        "douyin": [
+            {
+                "title": "URL penelusuran/penemuan disalin",
+                "symptoms": "Tidak ada hasil atau penguraian tidak stabil meskipun URL tampak valid.",
+                "fixes": [
+                    "Buka detail kiriman dan salin URL berbagi kiriman.",
+                    "Parsing lagi dengan mode antrian.",
+                    "Lanjutkan dengan Lanjutkan saat interupsi."
+                ]
+            },
+            {
+                "title": "Postingan terbatas atau tautan berbagi wilayah terbatas",
+                "symptoms": "Tautan terbuka tidak konsisten atau penguraian tidak menghasilkan izin/hasil kosong.",
+                "fixes": [
+                    "Verifikasi postingan dapat diakses publik di jaringan Anda saat ini.",
+                    "Salin URL berbagi dari halaman posting yang tepat.",
+                    "Gunakan mode antrian dan Lanjutkan ketika kondisi jaringan tidak stabil."
+                ]
+            }
+        ],
+        "instagram": [
+            {
+                "title": "Fluktuasi sisi sumber sementara",
+                "symptoms": "Kegagalan parsing yang terputus-putus.",
+                "fixes": [
+                    "Coba lagi setelah interval singkat.",
+                    "Konfirmasi aksesibilitas publik.",
+                    "Gunakan mode antrian untuk percobaan ulang."
+                ]
+            },
+            {
+                "title": "Cerita kedaluwarsa atau konten pribadi",
+                "symptoms": "Tidak ada media yang dapat diunduh meskipun URL terlihat valid.",
+                "fixes": [
+                    "Konfirmasi cerita masih tayang.",
+                    "Gunakan URL postingan publik jika memungkinkan.",
+                    "Coba lagi dengan cepat sebelum konten sementara kedaluwarsa."
+                ]
+            }
+        ],
+        "youtube": [
+            {
+                "title": "Penundaan penguraian video yang panjang",
+                "symptoms": "Kemajuan lambat selama penguraian atau pengunduhan.",
+                "fixes": [
+                    "Tetap jalankan tugas antrian.",
+                    "Lanjutkan dengan Lanjutkan jika terputus.",
+                    "Gunakan preferensi audio ketika hanya audio yang diperlukan."
+                ]
+            },
+            {
+                "title": "Streaming langsung atau upload baru belum siap",
+                "symptoms": "Parsing berhasil dengan lambat atau mengembalikan opsi yang tidak lengkap.",
+                "fixes": [
+                    "Tunggu pemrosesan sisi sumber selesai dan coba lagi.",
+                    "Gunakan mode antrian untuk tugas yang panjang.",
+                    "Lanjutkan dengan Lanjutkan jika terjadi gangguan jaringan."
+                ]
+            }
+        ],
+        "bilibili": [
+            {
+                "title": "Antrian selesai tetapi tidak ada file lokal",
+                "symptoms": "Status tugas selesai ditampilkan tetapi file tidak ada.",
+                "fixes": [
+                    "Klik Simpan setelah antrian selesai.",
+                    "Periksa folder browser hanya untuk mode langsung.",
+                    "Verifikasi lokasi penyimpanan akhir."
+                ]
+            },
+            {
+                "title": "Postingan multi-bagian dipetakan ke satu segmen",
+                "symptoms": "Hasil download hanya mencakup satu episode atau fragmen.",
+                "fixes": [
+                    "Tempelkan kembali video multi-bagian publik lengkap atau URL koleksi yang didukung.",
+                    "Pilih bagian yang diperlukan dari daftar yang diperluas secara otomatis, lalu tambahkan ke antrian batch.",
+                    "Jika hanya satu item yang masih terdeteksi, konfirmasikan bahwa URL dapat diakses publik dan coba lagi nanti."
+                ]
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "title": "Throughput tidak stabil",
+                "symptoms": "Kecepatan menurun atau tugas terganggu.",
+                "fixes": [
+                    "Beralih ke mode antrian.",
+                    "Lanjutkan dari breakpoint dengan Lanjutkan.",
+                    "Coba lagi nanti jika media sisi sumber terbatas."
+                ]
+            },
+            {
+                "title": "Varian media terbatas dari catatan sumber",
+                "symptoms": "Hanya sebagian format yang muncul, atau opsi video tidak ada.",
+                "fixes": [
+                    "Papar ulang setelah menyesuaikan pengaturan kualitas dan format.",
+                    "Coba lagi nanti saat aset sisi sumber disegarkan.",
+                    "Gunakan mode antrian untuk meningkatkan stabilitas penyelesaian."
+                ]
+            }
+        ],
+        "facebook": [
+            {
+                "title": "Kebingungan langsung vs antrian",
+                "symptoms": "Pengunduhan tampaknya selesai tetapi file tidak ditemukan.",
+                "fixes": [
+                    "Mode langsung disimpan ke folder browser.",
+                    "Mode antrian memerlukan tindakan Simpan.",
+                    "Periksa status antrian dan jalur lokal."
+                ]
+            }
+        ],
+        "generic": [
+            {
+                "title": "Kegagalan penguraian URL yang tampak valid",
+                "symptoms": "Tidak ada keluaran yang dikembalikan berulang kali.",
+                "fixes": [
+                    "Konfirmasikan URL mengarah ke konten spesifik publik.",
+                    "Sesuaikan pengaturan dan parsing ulang.",
+                    "Gunakan mode antrian dengan resume."
+                ]
+            }
+        ],
+        "toutiao": [
+            {
+                "title": "URL Toutiao terbuka tetapi penguraian gagal",
+                "symptoms": "Halaman dapat dijangkau, tetapi tidak ada hasil yang dapat diunduh yang dikembalikan.",
+                "fixes": [
+                    "Konfirmasikan bahwa URL adalah halaman video tertentu.",
+                    "Coba tautan berbagi aplikasi seluler atau URL web kanonik.",
+                    "Coba lagi dengan video publik lain jika sumbernya dihapus atau dibatasi."
+                ]
+            }
+        ],
+        "haokan": [
+            {
+                "title": "Hasil pencarian atau halaman pemasangan aplikasi disalin",
+                "symptoms": "Parsing tidak mengembalikan media karena URL-nya bukan halaman video Haokan langsung.",
+                "fixes": [
+                    "Buka video Haokan tertentu sebelum menyalin URL-nya.",
+                    "Gunakan tautan haokan.baidu.com/v?vid=... bila tersedia.",
+                    "Jangan tempel halaman penginstal aplikasi Haokan, pemulihan, atau peringkat pemain."
+                ]
+            },
+            {
+                "title": "Video dibatasi atau tidak tersedia",
+                "symptoms": "Halaman terbuka, tetapi tidak ada opsi MP4 yang dapat diunduh yang dikembalikan.",
+                "fixes": [
+                    "Konfirmasikan bahwa video tersebut bersifat publik dan masih online.",
+                    "Coba lagi sekali dalam mode antrian jika jaringan tidak stabil.",
+                    "Coba video Haokan publik lainnya ketika aset sumber terbatas."
+                ]
+            }
+        ],
+        "weibo": [
+            {
+                "title": "Profil, halaman komentar, atau tautan kedaluwarsa telah disalin",
+                "symptoms": "Halaman terbuka di Weibo, tetapi FreeSaveVideo tidak dapat menampilkan hasil video yang dapat diputar.",
+                "fixes": [
+                    "Kembali ke halaman video tertentu dan pilih Salin alamat video.",
+                    "Konfirmasikan bahwa video masih bersifat publik dan dapat diputar.",
+                    "Jika tautan pendek sudah habis masa berlakunya, salin lagi alamat videonya dan coba lagi."
+                ]
+            }
+        ],
+        "iqiyi": [
+            {
+                "title": "Halaman iQIYI non-video atau yang dibatasi telah disalin",
+                "symptoms": "Parsing tidak menghasilkan media atau laporan bahwa tautan tidak didukung.",
+                "fixes": [
+                    "Buka video tertentu sebelum menyalin alamatnya.",
+                    "Gunakan halaman iqiyi.com/v_*.html yang diputar saat logout.",
+                    "Jangan gunakan URL VIP, berbayar, DRM, khusus login, penelusuran, saluran, atau beranda."
+                ]
+            },
+            {
+                "title": "Video sumber berubah atau tidak tersedia",
+                "symptoms": "Halaman sebelumnya berfungsi, tetapi ekstraksi atau pemrosesan MP4 sekarang gagal.",
+                "fixes": [
+                    "Konfirmasikan bahwa halaman sumber masih diputar secara publik.",
+                    "Salin URL baru dan coba lagi sekali.",
+                    "Coba video iQIYI publik dan gratis lainnya untuk membedakan batasan spesifik sumber."
+                ]
+            }
+        ]
+    }
+}

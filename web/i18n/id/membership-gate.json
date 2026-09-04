@@ -1,0 +1,20 @@
+{
+    "eyebrow": "akses anggota",
+    "title": "{{feature}} disertakan dalam keanggotaan",
+    "reason.membership_required": "Bergabunglah sebagai anggota untuk mulai menggunakan fitur ini.",
+    "reason.entitlement_missing": "Keanggotaan Anda saat ini tidak mencakup fitur ini. Lihat opsi keanggotaan Anda atau segarkan status paket Anda.",
+    "feature.ai_video_studio": "Studio video AI",
+    "feature.video_recording": "perekaman video",
+    "feature.random_chat": "obrolan acak",
+    "benefit.ai_video_studio": "AI menyoroti klip dengan subtitle yang diterjemahkan",
+    "benefit.video_recording": "Studio perekaman video browser lengkap",
+    "benefit.random_chat": "Obrolan video acak khusus anggota",
+    "note.ai_video_studio": "Pemrosesan video AI tunduk pada batasan penggunaan wajar.",
+    "note.unmetered": "Tidak ada kuota penggunaan yang diterapkan untuk fitur ini.",
+    "action.not_now": "jangan sekarang",
+    "action.sign_in": "masuk",
+    "action.view_membership": "lihat keanggotaan",
+    "action.close": "tutup",
+    "error.title": "pemeriksaan keanggotaan gagal",
+    "error.body": "Kami tidak dapat memverifikasi keanggotaan Anda saat ini. Silakan coba lagi."
+}

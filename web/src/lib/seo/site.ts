@@ -1,4 +1,4 @@
-export const supportedSeoLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de'] as const;
+export const supportedSeoLanguages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'] as const;
 
 export type SupportedSeoLanguage = (typeof supportedSeoLanguages)[number];
 
@@ -25,4 +25,3 @@ export const machineReadablePaths = [
     '/llm.txt',
     '/.well-known/llms.txt',
 ] as const;
-

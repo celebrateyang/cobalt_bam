@@ -120,16 +120,7 @@
 
     @media (max-width: 600px) {
         .ecosystem-card {
-            width: calc(100% - 28px);
-            margin: 0 auto 8px;
-            grid-template-columns: auto minmax(0, 1fr);
-            gap: 10px;
-        }
-
-        .ecosystem-link {
-            grid-column: 1 / -1;
-            width: 100%;
-            box-sizing: border-box;
+            display: none;
         }
     }
 </style>

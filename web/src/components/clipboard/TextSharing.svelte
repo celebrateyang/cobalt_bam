@@ -194,7 +194,7 @@
                                         <span class="burn-status">
                                             {message.expiresAt === undefined
                                                 ? $t('clipboard.chat.burn_waiting')
-                                                : $t('clipboard.chat.burn_countdown', { count: Math.max(0, Math.ceil((message.expiresAt - now) / 1000)) })}
+                                                : $t('clipboard.chat.burn_countdown').replace('{count}', String(Math.max(0, Math.ceil((message.expiresAt - now) / 1000))))}
                                         </span>
                                     {/if}
                                     {#if message.direction === 'outgoing'}

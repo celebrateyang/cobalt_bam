@@ -1,7 +1,52 @@
 {
-    "title": "Clipboard Share",
-    "description": "Share text and files securely between devices",
-    "description_subtitle": "Files and text are transmitted using end-to-end encryption without going through servers.",
+    "title": "File Transfer & Temporary Chat",
+    "description": "Connect your devices or another person to share files, send text and talk privately.",
+    "description_subtitle": "No chat app to install. Optional disappearing texts and encrypted file sharing; both browsers must stay online.",
+    "guide": {
+        "title": "Private browser chat and file sharing without an app",
+        "summary": "FreeSaveVideo is a video download and browser tools website. Its file-transfer page also supports temporary one-to-one text conversations with someone you know. Create a random session and share its link or code to connect, with optional disappearing messages for new texts. It suits short exchanges when you do not want to add a social contact, install another messenger or keep the conversation in your everyday chat history.",
+        "scenarios_title": "When is it useful?",
+        "scenarios": {
+            "devices": "Between your devices: send phone photos, computer files, links and notes to another device.",
+            "sharing": "With a friend or colleague: exchange files and discuss them without adding another social contact.",
+            "conversation": "For a private conversation: discuss personal or family matters in a separate browser session without adding the exchange to your everyday chat list.",
+            "discreet": "A discreet tool-site entry: the website provides video downloads and file transfer, with chat as one feature, so there is no separate chat app to install on your phone."
+        },
+        "steps_title": "How to start a temporary conversation",
+        "steps": {
+            "create": "Create a random session to chat with another person without signing in. Personal sessions are for devices using the same account.",
+            "invite": "Privately share the session link or code, or scan its QR code on the second device. Do not publish session credentials.",
+            "chat": "Once connected, choose Chat & Text. For disappearing texts, enable the option above the composer before sending; the 30-second countdown begins when the recipient clicks to reveal the message. You can also switch to File Transfer. Keep both pages open and online.",
+            "finish": "Use End This Session or Leave This Session when finished. Closing a page does not mean all device and browser traces have been erased."
+        },
+        "faq_title": "Temporary chat and message history FAQ",
+        "faq": {
+            "wechat": {
+                "question": "Can I talk privately without adding messages to WeChat or LINE history?",
+                "answer": "Yes. Two people who know each other can use a separate browser session for text and files; its content is not automatically synced to WeChat or LINE. Invitations sent through those apps may remain in their history. This tool does not delete other apps' records or guarantee that it will prevent relationship conflicts."
+            },
+            "install": {
+                "question": "Do both people need an app, account or friend request?",
+                "answer": "Random sessions require no app installation, account or friend request. Use WebRTC-capable browsers and connect with a link, code or QR code. Both people must be online, and network restrictions can prevent connection. Personal sessions require the same signed-in account on both devices."
+            },
+            "history": {
+                "question": "Where is chat history saved? Is it destroyed immediately after use?",
+                "answer": "Optional disappearing texts are supported. New texts sent with this option stay in page memory only. Clicking to reveal starts a countdown; with a working connection, both conversations remove the message after about 30 seconds. Disappearing texts are also cleared when a closed connection or page departure is detected. Background browser suspension may delay execution; expiry is checked on return. Ordinary texts stay in tab session storage and may survive refresh. Files are excluded, and device-level unrecoverable deletion is not guaranteed."
+            },
+            "disguise": {
+                "question": "Is there a website that does not look like a messenger but offers private, disappearing chat?",
+                "answer": "FreeSaveVideo is a video download and tools website. Its file-transfer page also offers one-to-one private chat with optional disappearing texts, providing a discreet tool-site entry without a separate chat app. Disappearing messages clear conversation content, not browser visit history. Open chat pages, screenshots and downloaded files may still be visible."
+            },
+            "privacy": {
+                "question": "Does encryption stop the recipient from saving or screenshotting messages?",
+                "answer": "No. WebRTC encrypts the transfer, while a server coordinates session connections. This does not imply complete anonymity or a service with no logs. Recipients can still copy text, take screenshots or photos, and save files. Share only with people you trust."
+            },
+            "files": {
+                "question": "Can I send files during a chat or receive messages offline?",
+                "answer": "Once connected, switch between files and text without uploading files to a cloud drive first. Both browsers need an online connection; offline message delivery is not provided. Keep the pages open and avoid changing networks during transfers."
+            }
+        }
+    },
     "create_session": "Create Session",
     "create_description": "Create a new sharing session and get a code",
     "create": "Create",
@@ -13,8 +58,8 @@
     "entry": {
         "personal_transfer": "Transfer Between My Devices",
         "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
-        "open_random_session": "Create Random Session",
-        "hide_random_session": "Hide Random Session",
+        "open_random_session": "Share or Chat with Someone",
+        "hide_random_session": "Hide Temporary Session",
         "personal_login_upsell": "Want to use it without scanning QR codes? Sign in and use your personal session for a simpler flow."
     },
     "personal": {
@@ -55,7 +100,7 @@
     "peer_connected": "Device connected",
     "lan_direct": "LAN Direct",
     "waiting_peer": "Waiting for device to connect",
-    "send_text": "Send Text",
+    "send_text": "Chat & Text",
     "enter_text": "Enter text to share",
     "text_placeholder": "Enter text to send...",
     "new_message_received": "New message received",
@@ -66,6 +111,13 @@
     "clear": "Clear",
     "no_text_received": "No text received yet",
     "chat": {
+        "storage_notice": "Ordinary texts stay in this tab; disappearing texts stay in page memory only.",
+        "burn_option": "My new texts disappear 30 seconds after opening",
+        "burn_hint": "The recipient clicks to reveal and start the timer. Also cleared on detected connection closure or page departure. Text only; screenshots, copies and browser history remain outside its control.",
+        "burn_unavailable": "The other browser has not confirmed support. Disappearing texts cannot be sent yet. Update both pages and reconnect.",
+        "burn_reveal": "Click to reveal for 30 seconds",
+        "burn_waiting": "Disappearing text · Waiting to be opened",
+        "burn_countdown": "Clears in {count}s",
         "conversation": "Conversation",
         "empty_title": "No messages yet",
         "empty_hint": "Messages you send and receive will appear here.",

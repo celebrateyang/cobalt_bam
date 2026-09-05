@@ -42,6 +42,13 @@
     "clear": "Xóa",
     "no_text_received": "Chưa nhận văn bản nào",
     "chat": {
+        "storage_notice": "Văn bản thường được lưu trong thẻ này; tin tự xóa chỉ nằm trong bộ nhớ của trang.",
+        "burn_option": "Xóa văn bản mới tôi gửi sau 30 giây kể từ khi mở",
+        "burn_hint": "Người nhận nhấn để đọc và bắt đầu đếm ngược. Tin cũng bị xóa khi phát hiện đóng kết nối hoặc rời trang. Chỉ áp dụng cho văn bản, không xóa ảnh chụp, bản sao hay lịch sử trình duyệt.",
+        "burn_unavailable": "Trình duyệt bên kia chưa xác nhận hỗ trợ. Hãy tải lại cả hai trang và kết nối lại trước khi gửi tin tự xóa.",
+        "burn_reveal": "Nhấn để đọc trong 30 giây",
+        "burn_waiting": "Tin tự xóa · Chưa mở",
+        "burn_countdown": "Xóa sau {count} giây",
         "conversation": "Lịch sử tin nhắn",
         "empty_title": "Chưa có tin nhắn",
         "empty_hint": "Tin nhắn đã gửi và nhận sẽ xuất hiện ở đây.",

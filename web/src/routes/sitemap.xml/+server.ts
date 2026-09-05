@@ -68,6 +68,11 @@ const urlEntry = (
 function generateSitemap(): string {
     const urls: string[] = [];
 
+    for (const lang of ['en', 'zh']) {
+        const path = `/${lang}/clipboard`;
+        urls.push(urlEntry(`${site}${path}`, '2026-09-05', 'monthly', '0.8', buildAlternateLinks(path, ['en', 'zh'])));
+    }
+
     urls.push(urlEntry(`${site}/en/learn`, lastModified.seoPages, 'weekly', '0.8'));
     for (const slug of learnSlugs) {
         const article = getLearnPage(slug);

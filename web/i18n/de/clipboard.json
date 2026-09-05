@@ -42,6 +42,13 @@
     "clear": "Löschen",
     "no_text_received": "Noch kein Text empfangen",
     "chat": {
+        "storage_notice": "Normale Texte bleiben in diesem Tab; selbstlöschende Texte nur im Seitenspeicher.",
+        "burn_option": "Meine neuen Texte 30 Sekunden nach dem Öffnen löschen",
+        "burn_hint": "Der Empfänger öffnet den Text per Klick und startet den Timer. Auch bei erkannter Verbindungstrennung oder Verlassen der Seite wird gelöscht. Nur Text; keine Screenshots, Kopien oder Browserverläufe.",
+        "burn_unavailable": "Die Unterstützung im anderen Browser ist noch nicht bestätigt. Beide Seiten aktualisieren und erneut verbinden, bevor selbstlöschende Texte gesendet werden.",
+        "burn_reveal": "Für 30 Sekunden anzeigen",
+        "burn_waiting": "Selbstlöschender Text · Noch nicht geöffnet",
+        "burn_countdown": "Löschung in {count} s",
         "conversation": "Unterhaltung",
         "empty_title": "Noch keine Nachrichten",
         "empty_hint": "Gesendete und empfangene Nachrichten werden hier angezeigt.",

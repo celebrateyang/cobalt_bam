@@ -33,6 +33,8 @@
     let isJoining = false;
     let isCreator = false;
     let peerConnected = false;
+    let peerSupportsEphemeral = false;
+    let burnAfterRead = false;
     let sessionType: 'random' | 'personal' = 'random';
     let qrCodeUrl = '';
     let isLAN = false; // 新增：LAN状态
@@ -47,50 +49,37 @@
     let messages: ClipboardMessage[] = [];
     const fallbackHost = env.HOST || 'freesavevideo.online';
     $: currentLang = $page.url.pathname.match(/^\/([a-z]{2})/)?.[1] || 'en';
-    $: isEnglish = currentLang === 'en';
+    $: hasLocalizedGuide = currentLang === 'en' || currentLang === 'zh';
+    const faqKeys = ['wechat', 'install', 'history', 'disguise', 'privacy', 'files'];
+    $: transferFaqs = hasLocalizedGuide ? faqKeys.map((key) => ({
+        question: String($t(`clipboard.guide.faq.${key}.question`)),
+        answer: String($t(`clipboard.guide.faq.${key}.answer`)),
+    })) : [];
     $: canonicalUrl = `https://${fallbackHost}/${currentLang}/clipboard`;
     $: transferJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         '@id': `${canonicalUrl}#app`,
-        name: 'FreeSaveVideo File Transfer',
+        name: `FreeSaveVideo - ${$t('clipboard.title')}`,
+        inLanguage: currentLang,
         url: canonicalUrl,
         applicationCategory: 'UtilitiesApplication',
-        applicationSubCategory: 'File Transfer',
+        applicationSubCategory: 'File transfer and temporary one-to-one text chat',
         operatingSystem: 'Any',
         isAccessibleForFree: true,
         description: String($t('general.seo.transfer.description')),
-        featureList: ['cross-device file transfer', 'text sharing', 'QR code join', 'WebRTC data channel'],
+        featureList: ['cross-device file transfer', 'temporary one-to-one text chat', 'optional texts disappearing 30 seconds after opening', 'no-account random sessions', 'QR code and link join', 'encrypted WebRTC data channel'],
     };
     $: transferFaqJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: [
-            {
-                '@type': 'Question',
-                name: 'Do I need to upload files to a cloud drive first?',
-                acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'No. The two browsers connect through a WebRTC data channel and transfer the selected files directly when the connection allows it.',
-                },
-            },
-            {
-                '@type': 'Question',
-                name: 'How do I connect my phone and computer?',
-                acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Create a transfer session on one device, then scan its QR code or enter the session code on the other device.',
-                },
-            },
-            {
-                '@type': 'Question',
-                name: 'Can I send text as well as files?',
-                acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Yes. After both devices connect, switch between the Files and Text tabs to transfer files or copy text between them.',
-                },
-            },
-        ],
+        '@id': `${canonicalUrl}#faq`,
+        inLanguage: currentLang,
+        mainEntity: transferFaqs.map(({ question, answer }) => ({
+            '@type': 'Question',
+            name: question,
+            acceptedAnswer: { '@type': 'Answer', text: answer },
+        })),
     };
     let dragover = false;
     let sendingFiles = false;    let receivingFiles = false;
@@ -144,6 +133,7 @@
             isJoining = state.isJoining;
             isCreator = state.isCreator;
             peerConnected = state.peerConnected;
+            peerSupportsEphemeral = state.peerSupportsEphemeral;
             sessionType = state.sessionType;
             qrCodeUrl = state.qrCodeUrl;
             isLAN = state.isLAN; // 新增：订阅LAN状态
@@ -288,10 +278,10 @@
             receivedFiles: state.receivedFiles.filter((_, i) => i !== event.detail.index)
         }));
     }    // Text sharing handlers
-    function handleSendText(event?: CustomEvent<{ text: string }>) {
+    function handleSendText(event?: CustomEvent<{ text: string; ephemeral: boolean }>) {
         const text = event?.detail?.text || textContent;
         if (text.trim()) {
-            void clipboardManager?.sendText(text);
+            void clipboardManager?.sendText(text, event?.detail.ephemeral ?? false);
         }
     }
 
@@ -452,9 +442,10 @@
     <meta name="keywords" content={$t("general.seo.transfer.keywords")} />
     <meta property="og:title" content={$t("general.seo.transfer.title")} />
     <meta property="og:description" content={$t("general.seo.transfer.description")} />
-    <link rel="canonical" href={canonicalUrl} />
+    <meta name="twitter:title" content={$t("general.seo.transfer.title")} />
+    <meta name="twitter:description" content={$t("general.seo.transfer.description")} />
     {@html `<script type="application/ld+json">${JSON.stringify(transferJsonLd).replace(/</g, '\\u003c')}</script>`}
-    {#if isEnglish}
+    {#if hasLocalizedGuide}
         {@html `<script type="application/ld+json">${JSON.stringify(transferFaqJsonLd).replace(/</g, '\\u003c')}</script>`}
     {/if}
 </svelte:head>
@@ -573,8 +564,11 @@
                 <TextSharing
                     {messages}
                     {peerConnected}
+                    {peerSupportsEphemeral}
+                    bind:burnAfterRead
                     on:sendText={handleSendText}
                     on:retryText={handleRetryText}
+                    on:revealText={(event) => clipboardManager?.revealText(event.detail.messageId)}
                     bind:textContent
                 />
             {/if}
@@ -629,34 +623,29 @@
         />
     {/if}
 
-    {#if isEnglish}
+    {#if hasLocalizedGuide}
         <article class="transfer-guide" aria-labelledby="transfer-guide-title">
-            <h2 id="transfer-guide-title">Send files from phone to computer without a cloud upload</h2>
-            <p>
-                FreeSaveVideo File Transfer connects two browsers with WebRTC. Create a session on one device,
-                scan the QR code or enter the session code on the other, then send files or text between them.
-            </p>
-
-            <h3>How to transfer files between devices</h3>
-            <ol>
-                <li>Open this page on the device that will start the transfer and create a session.</li>
-                <li>Scan the QR code with the second device, or enter the displayed session code.</li>
-                <li>Select one or more files and keep both browser tabs open until the transfer finishes.</li>
-            </ol>
-
-            <h3>Why use a browser-to-browser transfer?</h3>
+            <h2 id="transfer-guide-title">{$t('clipboard.guide.title')}</h2>
+            <p>{$t('clipboard.guide.summary')}</p>
+            <h3>{$t('clipboard.guide.scenarios_title')}</h3>
             <ul>
-                <li>No cloud-drive account or temporary upload link is required.</li>
-                <li>Files are split into small chunks, with missing chunks requested again when necessary.</li>
-                <li>Devices on the same local network can use a direct LAN connection when available.</li>
-                <li>The Text tab also moves links, notes, and short messages between devices.</li>
+                {#each ['devices', 'sharing', 'conversation', 'discreet'] as key}
+                    <li>{$t(`clipboard.guide.scenarios.${key}`)}</li>
+                {/each}
             </ul>
-
-            <h3>Transfer tips</h3>
-            <p>
-                Keep both devices online and leave the transfer page open. For large files, avoid switching networks
-                while the transfer is running. Only send files that you own or are authorized to share.
-            </p>
+            <h3>{$t('clipboard.guide.steps_title')}</h3>
+            <ol>
+                {#each ['create', 'invite', 'chat', 'finish'] as key}
+                    <li>{$t(`clipboard.guide.steps.${key}`)}</li>
+                {/each}
+            </ol>
+            <section id="faq" aria-labelledby="transfer-faq-title">
+                <h2 id="transfer-faq-title">{$t('clipboard.guide.faq_title')}</h2>
+                {#each transferFaqs as faq}
+                    <h3>{faq.question}</h3>
+                    <p>{faq.answer}</p>
+                {/each}
+            </section>
         </article>
     {/if}
 </div>

@@ -59,7 +59,12 @@ export const buildLlmsFullText = (): string => {
     });
 
     const toolLines = toolCapabilities.map(
-        (tool) => `- ${tool.name}: ${canonicalOrigin}/en${tool.path} -- ${tool.description}`,
+        (tool) => [
+            `- ${tool.name}: ${canonicalOrigin}/en${tool.path} -- ${tool.description}`,
+            tool.useCases?.length ? `  Use cases: ${tool.useCases.join(' ')}` : null,
+            tool.requirements?.length ? `  Requirements: ${tool.requirements.join('; ')}.` : null,
+            tool.limitations?.length ? `  Limitations: ${tool.limitations.join(' ')}` : null,
+        ].filter(Boolean).join('\n'),
     );
 
     return `# FreeSaveVideo full AI search context

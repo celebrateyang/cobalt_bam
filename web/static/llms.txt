@@ -20,7 +20,7 @@
 - Supports public WeChat Channels share links and detects multiple embedded videos in public WeChat Official Account articles for selectable batch downloads.
 - Provides local browser tools for MP4 to MP3, audio extraction, M4A/WAV export, AVI to MP4, and MP4/WebM conversion.
 - Provides a whiteboard and teleprompter recorder with camera/microphone capture and MP4/WebM export.
-- Provides browser-based file/text transfer between devices.
+- Provides browser-based file/text transfer and temporary one-to-one text chat with someone you know.
 - Provides Discover pages for public video discovery and a random 1v1 video chat feature.
 
 ## Supported Service Summary
@@ -40,9 +40,22 @@ Different platforms expose different capabilities. Some support video, audio, no
 - FAQ: https://freesavevideo.online/en/faq
 - Video converter/audio extractor: https://freesavevideo.online/en/remux
 - Whiteboard recorder: https://freesavevideo.online/en/videorecord
-- File transfer: https://freesavevideo.online/en/clipboard
+- Temporary private chat and file transfer: https://freesavevideo.online/en/clipboard
+- Chinese temporary private chat and file transfer: https://freesavevideo.online/zh/clipboard
 - Discover: https://freesavevideo.online/en/discover
 - Random video chat: https://freesavevideo.online/en/random-chat
+
+## Temporary Private Chat and File Transfer
+- Start a separate browser conversation to exchange files or discuss personal matters without adding a social contact or installing another messenger.
+- Random sessions require no account. Share a session link, code or QR code privately. Personal sessions require the same signed-in account on both devices.
+- Both browsers must be online and support WebRTC. Network restrictions may prevent connection; offline message delivery is not provided.
+- Messages use encrypted WebRTC data channels. A server coordinates connections. This is not a claim of complete anonymity or no service logs.
+- Optional disappearing texts: enable the option before sending. Both pages must confirm support; older clients cannot receive these texts as ordinary messages. The recipient clicks to reveal, starting a roughly 30-second countdown on both connected pages.
+- Disappearing text content stays in page memory only and is cleared on expiry or detected connection closure/page departure. Background suspension can delay execution; expiry is checked on return. Files and earlier ordinary messages are not affected.
+- Ordinary session messages are saved in the tab's sessionStorage and may survive refresh or browser session restoration. Browser history is not hidden or deleted, and device-level unrecoverable erasure is not guaranteed.
+- The video download and tools website provides a naturally discreet entry to its file-transfer and text-chat feature without a standalone messenger app. It has no additional calculator disguise or invisible mode. Browser history, open chat pages, screenshots, downloaded files and invitations sent through WeChat or LINE may remain visible.
+- Recipients can retain copies. The tool does not guarantee protection from phone inspection or prevention of relationship conflicts.
+- This invited text session is separate from the site's random stranger video-chat feature.
 
 ## Localized Entry Points
 - English: https://freesavevideo.online/en
@@ -97,5 +110,5 @@ Localized download and guide directories follow the same language prefix pattern
 ## Policy Notes
 - Public informational pages are intended to be indexed and retrieved.
 - Private or admin-only pages are not intended for search indexing.
-- FreeSaveVideo supports public content only. Users should respect copyrights, creator rights, and platform rules.
+- The online downloader supports public source content only; clipboard sessions can carry users' own files and messages. Users should respect copyrights, creator rights, and platform rules.
 - Local media tools process files in the browser where possible and do not require uploading private local files to the API server.

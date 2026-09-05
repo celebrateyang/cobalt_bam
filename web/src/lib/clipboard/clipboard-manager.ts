@@ -32,7 +32,11 @@ export interface ClipboardMessage {
     createdAt: number;
     receivedAt?: number;
     status: ClipboardMessageStatus;
+    ephemeral?: boolean;
+    expiresAt?: number;
 }
+
+export const EPHEMERAL_READ_MS = 30_000;
 
 interface ReceivingFile {
     id: string;
@@ -74,6 +78,7 @@ export const clipboardState = writable({
     isJoining: false,
     isCreator: false,
     peerConnected: false,
+    peerSupportsEphemeral: false,
     qrCodeUrl: '',
     activeTab: 'files' as 'files' | 'text',
     files: [] as File[],
@@ -139,6 +144,33 @@ export class ClipboardManager {
     private currentDeviceId: string | null = null;
     private clientId = '';
     private pendingTextAcks = new Map<string, ReturnType<typeof setTimeout>>();
+    private ephemeralMessageIds = new Set<string>();
+    private ephemeralGeneration = 0;
+    private ephemeralPageActive = true;
+    private ephemeralExpiryTimer: ReturnType<typeof setInterval> | null = null;
+    private handleEphemeralPageHide = () => {
+        this.ephemeralPageActive = false;
+        this.purgeEphemeralMessages(true);
+    };
+    private handleEphemeralPageShow = () => {
+        this.ephemeralPageActive = true;
+        this.pruneExpiredMessages();
+    };
+    private pruneExpiredMessages = () => {
+        const now = Date.now();
+        const messages = this.getCurrentState().messages;
+        if (messages.some((message: ClipboardMessage) => message.ephemeral && message.expiresAt !== undefined && message.expiresAt <= now)) {
+            this.setMessages(items => items.filter(message => {
+                if (!message.ephemeral || message.expiresAt === undefined || message.expiresAt > now) return true;
+                this.clearPendingTextAck(message.id);
+                return false;
+            }));
+        }
+        if (!this.getCurrentState().messages.some((message: ClipboardMessage) => message.ephemeral && message.expiresAt !== undefined)) {
+            if (this.ephemeralExpiryTimer) clearInterval(this.ephemeralExpiryTimer);
+            this.ephemeralExpiryTimer = null;
+        }
+    };
     private pendingPersonalSessionRequest: ({
         type: 'create_session' | 'join_session';
     } & Record<string, unknown>) | null = null;
@@ -155,6 +187,11 @@ export class ClipboardManager {
         this.loadStoredSession();
         this.startStatusCheck();
         this.setupVisibilityChangeHandler(); // 新增：设置页面可见性变化处理
+        if (typeof window !== 'undefined') {
+            document.addEventListener('visibilitychange', this.pruneExpiredMessages);
+            window.addEventListener('pageshow', this.handleEphemeralPageShow);
+            window.addEventListener('pagehide', this.handleEphemeralPageHide);
+        }
 
         // 清除任何现有的错误状态
         clipboardState.update(state => ({
@@ -202,7 +239,10 @@ export class ClipboardManager {
                 clientId: this.clientId,
                 timestamp: Date.now()
             }));
-            const messages = this.loadMessages(sessionId);
+            // A signaling reconnect must not discard live, memory-only messages.
+            const current = this.getCurrentState();
+            const messages = current.sessionId === sessionId && current.messages.length
+                ? current.messages : this.loadMessages(sessionId);
             clipboardState.update(state => ({ ...state, messages }));
         }
     }
@@ -239,6 +279,7 @@ export class ClipboardManager {
                 && typeof candidate.clientId === 'string'
                 && (candidate.direction === 'outgoing' || candidate.direction === 'incoming')
                 && candidate.kind === 'text'
+                && !candidate.ephemeral
                 && typeof candidate.text === 'string'
                 && typeof candidate.createdAt === 'number'
                 && ['sending', 'delivered', 'unconfirmed', 'failed'].includes(candidate.status || '');
@@ -284,7 +325,7 @@ export class ClipboardManager {
         try {
             sessionStorage.setItem(
                 this.getMessageStorageKey(sessionId),
-                JSON.stringify(this.limitStoredMessages(messages)),
+                JSON.stringify(this.limitStoredMessages(messages.filter(message => !message.ephemeral))),
             );
         } catch (error) {
             console.warn('Failed to persist clipboard messages:', error);
@@ -306,6 +347,56 @@ export class ClipboardManager {
         this.setMessages(messages => messages.map(message => (
             message.id === messageId ? update(message) : message
         )));
+    }
+
+    private sendEphemeralControl(message: Record<string, unknown>): boolean {
+        if (this.dataChannel?.readyState !== 'open') return false;
+        try {
+            this.dataChannel.send(JSON.stringify(message));
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private purgeEphemeralMessages(notifyPeer = false): void {
+        this.ephemeralGeneration += 1;
+        if (notifyPeer && this.getCurrentState().peerSupportsEphemeral) {
+            this.sendEphemeralControl({ type: 'text_ephemeral_clear_v1' });
+        }
+        this.setMessages(messages => messages.filter(message => {
+            if (!message.ephemeral) return true;
+            this.clearPendingTextAck(message.id);
+            return false;
+        }));
+        if (this.ephemeralExpiryTimer) clearInterval(this.ephemeralExpiryTimer);
+        this.ephemeralExpiryTimer = null;
+    }
+
+    private startEphemeralExpiry(messageId: string, remainingMs = EPHEMERAL_READ_MS): void {
+        const deadline = Date.now() + Math.max(0, Math.min(EPHEMERAL_READ_MS, remainingMs));
+        this.clearPendingTextAck(messageId);
+        this.updateMessage(messageId, message => message.ephemeral ? {
+            ...message,
+            status: 'delivered',
+            expiresAt: Math.min(message.expiresAt ?? deadline, deadline),
+        } : message);
+        if (!this.ephemeralExpiryTimer) {
+            this.ephemeralExpiryTimer = setInterval(this.pruneExpiredMessages, 250);
+        }
+        this.pruneExpiredMessages();
+    }
+
+    revealText(messageId: string): void {
+        this.pruneExpiredMessages();
+        if (!this.ephemeralPageActive) return;
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+        const message = this.getCurrentState().messages.find((item: ClipboardMessage) =>
+            item.id === messageId && item.direction === 'incoming' && item.ephemeral);
+        if (!message || message.expiresAt !== undefined) return;
+        // Do not reveal until the read receipt can be queued on the live channel.
+        if (!this.sendEphemeralControl({ type: 'text_ephemeral_read_v1', messageId, remainingMs: EPHEMERAL_READ_MS, expiresAt: Date.now() + EPHEMERAL_READ_MS })) return;
+        this.startEphemeralExpiry(messageId);
     }
 
     private clearPendingTextAck(messageId: string): void {
@@ -1328,6 +1419,9 @@ export class ClipboardManager {
         // 移除页面可见性监听器
         if (destroyManager && typeof window !== 'undefined') {
             document.removeEventListener('visibilitychange', this.checkConnectionAfterVisibilityChange);
+            document.removeEventListener('visibilitychange', this.pruneExpiredMessages);
+            window.removeEventListener('pageshow', this.handleEphemeralPageShow);
+            window.removeEventListener('pagehide', this.handleEphemeralPageHide);
         }
 
         // 停止文件选择保活机制
@@ -1492,6 +1586,9 @@ export class ClipboardManager {
     }
 
     private closePeerTransport(clearKeys = true): void {
+        this.purgeEphemeralMessages(true);
+        this.ephemeralMessageIds.clear();
+        clipboardState.update(state => ({ ...state, peerSupportsEphemeral: false }));
         this.rtcGeneration += 1;
         if (this.rtcRetryTimer) {
             clearTimeout(this.rtcRetryTimer);
@@ -2589,6 +2686,7 @@ export class ClipboardManager {
         if (!this.dataChannel) return;
 
         const channel = this.dataChannel;
+        clipboardState.update(state => ({ ...state, peerSupportsEphemeral: false }));
 
         this.resetBufferedAmountWaiters();
 
@@ -2623,6 +2721,8 @@ export class ClipboardManager {
 
             this.dataChannelForceConnected = false;
 
+            this.sendEphemeralControl({ type: 'text_features', ephemeralVersion: 1, requestReply: true });
+
             // 强制设置 peerConnected 为 true 并保持
             console.log('🔄 Force setting peerConnected to true');
             clipboardState.update(state => ({ ...state, peerConnected: true }));
@@ -2646,6 +2746,8 @@ export class ClipboardManager {
 
         channel.onclose = () => {
             if (this.dataChannel !== channel) return;
+            this.purgeEphemeralMessages();
+            clipboardState.update(state => ({ ...state, peerSupportsEphemeral: false }));
             this.dataChannelForceConnected = false;
             console.log('❌ Data channel closed', {
                 isSelectingFiles: this.isSelectingFiles,
@@ -2675,6 +2777,7 @@ export class ClipboardManager {
 
         channel.onerror = (error) => {
             if (this.dataChannel !== channel) return;
+            this.purgeEphemeralMessages(true);
             console.error('Data channel error:', error);
             this.markPendingTextMessagesUnconfirmed();
             // 移动端错误恢复机制
@@ -2688,14 +2791,18 @@ export class ClipboardManager {
                     }
                 }, 500);
             }
-        }; channel.onmessage = async (event) => {
-            if (this.dataChannel !== channel) return;
-            try {
-                await this.handleDataChannelMessage(event.data);
-            } catch (error) {
-                console.error('Error handling data channel message:', error);
-            }
         };
+        // Keep decryption ordered with read/clear controls and duplicate deliveries.
+        let messageQueue = Promise.resolve();
+        channel.onmessage = (event) => {
+            messageQueue = messageQueue.then(async () => {
+                if (this.dataChannel !== channel) return;
+                await this.handleDataChannelMessage(event.data);
+            }).catch(() => console.error('Error handling data channel message'));
+        };
+        if (channel.readyState === 'open') {
+            this.sendEphemeralControl({ type: 'text_features', ephemeralVersion: 1, requestReply: true });
+        }
     }
 
     private async handleOffer(offer: RTCSessionDescriptionInit): Promise<void> {
@@ -2772,8 +2879,37 @@ export class ClipboardManager {
             const message = typeof data === 'string' ? JSON.parse(data) : data;
 
             switch (message.type) {
+                case 'text_features':
+                    clipboardState.update(state => ({ ...state, peerSupportsEphemeral: message.ephemeralVersion === 1 }));
+                    if (message.requestReply === true) {
+                        this.sendEphemeralControl({ type: 'text_features', ephemeralVersion: 1 });
+                    }
+                    break;
+                case 'text_ephemeral_clear_v1':
+                    this.purgeEphemeralMessages();
+                    break;
+                case 'text_ephemeral_read_v1': {
+                    const outgoing = this.getCurrentState().messages.find((item: ClipboardMessage) =>
+                        item.id === message.messageId && item.direction === 'outgoing' && item.ephemeral);
+                    if (outgoing && Number.isFinite(message.remainingMs) && message.remainingMs >= 0) {
+                        // An absolute deadline prevents a queued receipt from starting
+                        // a fresh 30 seconds after background suspension. Never extend
+                        // our local lifetime beyond 30 seconds even with clock skew.
+                        const remaining = Number.isFinite(message.expiresAt)
+                            ? Math.min(message.remainingMs, Math.max(0, message.expiresAt - Date.now()))
+                            : message.remainingMs;
+                        this.startEphemeralExpiry(outgoing.id, remaining);
+                    }
+                    break;
+                }
+                case 'text_ephemeral_v1':
                 case 'text':
                     {
+                    const ephemeral = message.type === 'text_ephemeral_v1';
+                    if (ephemeral && !this.ephemeralPageActive) break;
+                    const ephemeralGeneration = this.ephemeralGeneration;
+                    const channel = this.dataChannel;
+                    const generation = this.rtcGeneration;
                     const messageId = typeof message.messageId === 'string' && message.messageId
                         ? message.messageId
                         : this.createMessageId();
@@ -2782,12 +2918,20 @@ export class ClipboardManager {
                     );
                     if (existingMessage) {
                         if (message.messageId) this.sendTextAcknowledgement(messageId);
+                        if (existingMessage.ephemeral && existingMessage.expiresAt !== undefined) {
+                            this.sendEphemeralControl({ type: 'text_ephemeral_read_v1', messageId, remainingMs: Math.max(0, existingMessage.expiresAt - Date.now()), expiresAt: existingMessage.expiresAt });
+                        }
                         break;
                     }
+                    // Keep only IDs after deletion so retries cannot resurrect content.
+                    if (this.ephemeralMessageIds.has(messageId)) break;
 
                     // Convert array back to ArrayBuffer for decryption
                     const encryptedBuffer = new Uint8Array(message.content).buffer;
                     const decryptedText = await this.decryptData(encryptedBuffer);
+                    if (this.dataChannel !== channel || this.rtcGeneration !== generation || channel?.readyState !== 'open') break;
+                    if (ephemeral && this.ephemeralGeneration !== ephemeralGeneration) break;
+                    if (ephemeral) this.ephemeralMessageIds.add(messageId);
                     const receivedAt = Date.now();
                     const createdAt = Number.isFinite(message.createdAt) ? message.createdAt : receivedAt;
                     const incomingMessage: ClipboardMessage = {
@@ -2799,6 +2943,7 @@ export class ClipboardManager {
                         createdAt,
                         receivedAt,
                         status: 'delivered',
+                        ephemeral,
                     };
                     clipboardState.update(state => {
                         const messages = this.limitStoredMessages([...state.messages, incomingMessage]);
@@ -3316,9 +3461,14 @@ export class ClipboardManager {
     }
 
     // Public methods for sending data
-    async sendText(text: string): Promise<void> {
+    async sendText(text: string, ephemeral = false): Promise<void> {
         const normalizedText = text.trim();
         if (!normalizedText) return;
+        if (ephemeral && !this.ephemeralPageActive) return;
+        if (ephemeral && !this.getCurrentState().peerSupportsEphemeral) {
+            this.showError(t.get('clipboard.chat.burn_unavailable'));
+            return;
+        }
 
         const message: ClipboardMessage = {
             id: this.createMessageId(),
@@ -3328,7 +3478,9 @@ export class ClipboardManager {
             text: normalizedText,
             createdAt: Date.now(),
             status: 'sending',
+            ephemeral,
         };
+        if (ephemeral) this.ephemeralMessageIds.add(message.id);
 
         clipboardState.update(state => {
             const messages = this.limitStoredMessages([...state.messages, message]);
@@ -3340,15 +3492,19 @@ export class ClipboardManager {
     }
 
     async retryText(messageId: string): Promise<void> {
+        this.pruneExpiredMessages();
         const message = this.getCurrentState().messages.find(
             (item: ClipboardMessage) => item.id === messageId && item.direction === 'outgoing',
         );
-        if (!message) return;
+        if (!message || message.expiresAt !== undefined) return;
 
         await this.transmitTextMessage(message);
     }
 
     private async transmitTextMessage(message: ClipboardMessage): Promise<void> {
+        if (message.ephemeral && !this.getCurrentState().peerSupportsEphemeral) return;
+        const channel = this.dataChannel;
+        const generation = this.rtcGeneration;
         this.clearPendingTextAck(message.id);
         this.updateMessage(message.id, currentMessage => ({
             ...currentMessage,
@@ -3364,9 +3520,11 @@ export class ClipboardManager {
 
         try {
             const encryptedText = await this.encryptData(message.text);
+            if (this.dataChannel !== channel || this.rtcGeneration !== generation || channel?.readyState !== 'open') return;
+            if (message.ephemeral && !this.getCurrentState().messages.some((item: ClipboardMessage) => item.id === message.id)) return;
             const encryptedArray = Array.from(new Uint8Array(encryptedText));
             this.dataChannel.send(JSON.stringify({
-                type: 'text',
+                type: message.ephemeral ? 'text_ephemeral_v1' : 'text',
                 messageId: message.id,
                 clientId: message.clientId,
                 createdAt: message.createdAt,

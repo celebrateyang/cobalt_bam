@@ -42,6 +42,13 @@
     "clear": "Limpiar",
     "no_text_received": "Aún no se ha recibido texto",
     "chat": {
+        "storage_notice": "Los textos normales se guardan en esta pestaña; los temporales solo en la memoria de la página.",
+        "burn_option": "Borrar mis nuevos textos 30 segundos después de abrirlos",
+        "burn_hint": "El destinatario pulsa para leer e iniciar el temporizador. También se borran al detectar el cierre de la conexión o la salida de la página. Solo texto; no borra capturas, copias ni el historial del navegador.",
+        "burn_unavailable": "El otro navegador aún no ha confirmado la compatibilidad. Actualizad ambas páginas y volved a conectar antes de enviar textos temporales.",
+        "burn_reveal": "Pulsa para leer durante 30 segundos",
+        "burn_waiting": "Texto temporal · Sin abrir",
+        "burn_countdown": "Se borra en {count} s",
         "conversation": "Conversación",
         "empty_title": "Aún no hay mensajes",
         "empty_hint": "Los mensajes enviados y recibidos aparecerán aquí.",

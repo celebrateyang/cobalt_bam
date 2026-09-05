@@ -66,6 +66,13 @@
     "clear": "Hapus",
     "no_text_received": "Belum ada teks yang diterima",
     "chat": {
+        "storage_notice": "Teks biasa disimpan di tab ini; teks sementara hanya disimpan di memori halaman.",
+        "burn_option": "Hapus teks baru saya 30 detik setelah dibuka",
+        "burn_hint": "Penerima mengeklik untuk membaca dan memulai hitung mundur. Teks juga dihapus saat penutupan koneksi atau keluarnya halaman terdeteksi. Hanya teks; tangkapan layar, salinan, dan riwayat browser tidak dihapus.",
+        "burn_unavailable": "Browser lain belum mengonfirmasi dukungan. Muat ulang kedua halaman dan sambungkan kembali sebelum mengirim teks sementara.",
+        "burn_reveal": "Klik untuk membaca selama 30 detik",
+        "burn_waiting": "Teks sementara · Belum dibuka",
+        "burn_countdown": "Dihapus dalam {count} dtk",
         "conversation": "Percakapan",
         "empty_title": "Belum ada pesan",
         "empty_hint": "Pesan yang Anda kirim dan terima akan muncul di sini.",

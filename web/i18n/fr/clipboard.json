@@ -42,6 +42,13 @@
     "clear": "Effacer",
     "no_text_received": "Aucun texte reçu pour le moment",
     "chat": {
+        "storage_notice": "Les textes ordinaires restent dans cet onglet ; les textes éphémères restent uniquement en mémoire de la page.",
+        "burn_option": "Effacer mes nouveaux textes 30 secondes après leur ouverture",
+        "burn_hint": "Le destinataire clique pour lire et lancer le compte à rebours. Effacement aussi à la détection de la fermeture de la connexion ou du départ de la page. Texte uniquement ; captures, copies et historique du navigateur non effacés.",
+        "burn_unavailable": "L'autre navigateur n'a pas encore confirmé la compatibilité. Actualisez les deux pages et reconnectez-vous avant d'envoyer des textes éphémères.",
+        "burn_reveal": "Cliquer pour lire pendant 30 secondes",
+        "burn_waiting": "Texte éphémère · En attente d'ouverture",
+        "burn_countdown": "Effacement dans {count} s",
         "conversation": "Conversation",
         "empty_title": "Aucun message",
         "empty_hint": "Les messages envoyés et reçus apparaîtront ici.",

@@ -22,6 +22,9 @@ export type ToolCapability = {
     localProcessing: boolean;
     description: string;
     features: string[];
+    useCases?: string[];
+    requirements?: string[];
+    limitations?: string[];
 };
 
 export const siteCapabilities = {
@@ -36,6 +39,7 @@ export const siteCapabilities = {
     summary:
         'FreeSaveVideo is a browser-based media downloader for public online videos, including WeChat Channels and videos embedded in WeChat Official Account articles, plus local media conversion, whiteboard recording, file transfer, discovery, and random 1v1 video chat.',
     commonUseCases: [
+        'Start a temporary one-to-one browser text conversation with someone you know, or share files between devices.',
         'Download publicly accessible online videos from supported platforms in a browser.',
         'Expand supported playlists or collections and process multiple links as a visible batch queue.',
         'Extract audio, create MP3 output, save muted video, or convert local media formats.',
@@ -57,11 +61,13 @@ export const siteCapabilities = {
         'copyright infringement or uses that violate creator rights or platform rules',
     ],
     policy: [
-        'Only publicly accessible online content is supported.',
+        'The online downloader supports only publicly accessible source content; this restriction does not describe files or messages shared in clipboard sessions.',
         'Users should respect copyright, creator rights, and platform rules.',
         'Local media tools process files in the browser when possible and do not need server upload.',
     ],
     primaryPages: [
+        'https://freesavevideo.online/en/clipboard',
+        'https://freesavevideo.online/zh/clipboard',
         'https://freesavevideo.online/en/download',
         'https://freesavevideo.online/en/guide',
         'https://freesavevideo.online/en/learn',
@@ -72,6 +78,8 @@ export const siteCapabilities = {
         'https://freesavevideo.online/llms-full.txt',
     ],
     searchIntents: [
+        'temporary private browser chat without installing an app',
+        'one-to-one text and file sharing without adding a social contact',
         'free online video downloader',
         'download public short videos in a browser',
         'no watermark video download when available',
@@ -96,6 +104,7 @@ export const siteCapabilities = {
         'video format conversion',
         'whiteboard and teleprompter recording',
         'cross-device file and text transfer',
+        'temporary one-to-one browser text chat',
         'Discover video feed',
         'random 1v1 video chat',
     ],
@@ -526,13 +535,27 @@ export const toolCapabilities: ToolCapability[] = [
     },
     {
         id: 'clipboard',
-        name: 'Cross-device file and text transfer',
+        name: 'Temporary private chat and cross-device file transfer',
         path: '/clipboard',
-        category: 'File transfer',
+        category: 'File transfer and text communication',
         localProcessing: true,
         description:
-            'Transfer files and text between devices using browser sessions, QR/code joining, and WebRTC data channels.',
-        features: ['file transfer', 'text sharing', 'QR join', 'personal session', 'random session'],
+            'Share files or have a temporary one-to-one text conversation within a video download and tools website, providing a discreet entry without a separate messenger app. Random sessions require no account. Encrypted WebRTC text chat offers optional disappearing messages, removed about 30 seconds after the recipient clicks to reveal them.',
+        features: ['file transfer', 'one-to-one text chat', 'optional 30-second disappearing texts', 'QR/code/link join', 'same-account personal session', 'no-account random session'],
+        useCases: [
+            'Use a discreet text-chat feature within a video download and file-transfer website instead of installing a standalone messenger.',
+            'Move files, links and notes between phone and computer.',
+            'Discuss shared files with a friend or colleague without adding a social contact.',
+            'Use a separate browser conversation for personal or family matters instead of adding messages to everyday WeChat or LINE history.',
+        ],
+        requirements: ['Two online WebRTC-capable browsers', 'A privately shared session link, code or QR code', 'Keep both pages open; network restrictions may prevent connection', 'Both pages must confirm disappearing-text support; enable it before sending new texts'],
+        limitations: [
+            'Ordinary messages use tab sessionStorage and may survive refresh. Disappearing texts stay in page memory only; no persistence of their content is implemented.',
+            'Disappearing texts clear after opening or on detected connection closure/page departure. Background suspension may delay cleanup; expiry is checked on return.',
+            'Disappearing mode applies only to new texts, not files or earlier ordinary messages. No calculator disguise or offline message delivery.',
+            'Does not delete WeChat/LINE invitations, browser history, screenshots or downloaded files.',
+            'Recipients can retain copies; encrypted transport does not guarantee anonymity, no service logs or protection from phone inspection.',
+        ],
     },
     {
         id: 'discover',

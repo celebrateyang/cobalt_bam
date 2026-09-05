@@ -5,13 +5,18 @@
     import type { ClipboardMessage } from '$lib/clipboard/clipboard-manager';
 
     const dispatch = createEventDispatcher<{
-        sendText: { text: string };
+        sendText: { text: string; ephemeral: boolean };
         retryText: { messageId: string };
+        revealText: { messageId: string };
     }>();
 
     export let textContent: string;
     export let messages: ClipboardMessage[];
     export let peerConnected: boolean;
+    export let peerSupportsEphemeral = false;
+    export let burnAfterRead = false;
+    let now = Date.now();
+    $: visibleMessages = messages.filter(message => message.expiresAt === undefined || message.expiresAt > now);
 
     let messageListElement: HTMLDivElement | null = null;
     let previousMessageCount = 0;
@@ -29,10 +34,17 @@
     }
 
     onMount(() => {
+        const updateClock = () => { now = Date.now(); };
+        const clockTimer = setInterval(updateClock, 250);
+        document.addEventListener('visibilitychange', updateClock);
+        window.addEventListener('pageshow', updateClock);
         previousMessageCount = messages.length;
         void scrollToLatest('auto');
 
         return () => {
+            clearInterval(clockTimer);
+            document.removeEventListener('visibilitychange', updateClock);
+            window.removeEventListener('pageshow', updateClock);
             if (copyResetTimer) clearTimeout(copyResetTimer);
         };
     });
@@ -74,9 +86,9 @@
 
     function sendText(): void {
         const text = textContent.trim();
-        if (!text || !peerConnected) return;
+        if (!text || !peerConnected || (burnAfterRead && !peerSupportsEphemeral)) return;
 
-        dispatch('sendText', { text });
+        dispatch('sendText', { text, ephemeral: burnAfterRead });
         textContent = '';
     }
 
@@ -92,6 +104,7 @@
     }
 
     async function copyMessage(message: ClipboardMessage): Promise<void> {
+        if (message.ephemeral) return;
         try {
             await navigator.clipboard.writeText(message.text);
             copiedMessageId = message.id;
@@ -127,7 +140,7 @@
             <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M7 10V8a5 5 0 0 1 10 0v2m-11 0h12v10H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <span>{$t('clipboard.chat.session_only_notice')}</span>
+            <span>{$t('clipboard.chat.storage_notice')}</span>
         </div>
 
         <div class="message-area">
@@ -139,7 +152,7 @@
                 aria-label={$t('clipboard.chat.conversation')}
                 aria-live="polite"
             >
-                {#if messages.length === 0}
+                {#if visibleMessages.length === 0}
                     <div class="empty-state">
                         <div class="empty-icon" aria-hidden="true">
                             <svg width="38" height="38" viewBox="0 0 24 24">
@@ -150,13 +163,21 @@
                         <span>{$t('clipboard.chat.empty_hint')}</span>
                     </div>
                 {:else}
-                    {#each messages as message (message.id)}
+                    {#each visibleMessages as message (message.id)}
                         <div class:outgoing={message.direction === 'outgoing'} class="message-row">
                             <div class="message-group">
                                 <div class="message-bubble">
-                                    <div class="message-text">{message.text}</div>
+                                    {#if message.ephemeral && message.direction === 'incoming' && message.expiresAt === undefined}
+                                        <button type="button" class="reveal-button" disabled={!peerConnected}
+                                            on:click={() => dispatch('revealText', { messageId: message.id })}>
+                                            {$t('clipboard.chat.burn_reveal')}
+                                        </button>
+                                    {:else}
+                                        <div class="message-text">{message.text}</div>
+                                    {/if}
                                 </div>
                                 <div class="message-meta">
+                                    {#if !message.ephemeral}
                                     <button
                                         type="button"
                                         class="copy-button"
@@ -167,7 +188,15 @@
                                             ? $t('clipboard.chat.copied')
                                             : $t('clipboard.copy')}
                                     </button>
+                                    {/if}
                                     <span>{formatTime(message.createdAt)}</span>
+                                    {#if message.ephemeral}
+                                        <span class="burn-status">
+                                            {message.expiresAt === undefined
+                                                ? $t('clipboard.chat.burn_waiting')
+                                                : $t('clipboard.chat.burn_countdown', { count: Math.max(0, Math.ceil((message.expiresAt - now) / 1000)) })}
+                                        </span>
+                                    {/if}
                                     {#if message.direction === 'outgoing'}
                                         <span class:warning={message.status === 'unconfirmed'} class:error={message.status === 'failed'} class="delivery-status">
                                             {#if message.status === 'sending'}
@@ -177,7 +206,7 @@
                                             {/if}
                                             {getStatusLabel(message)}
                                         </span>
-                                        {#if message.status === 'unconfirmed' || message.status === 'failed'}
+                                        {#if message.expiresAt === undefined && (message.status === 'unconfirmed' || message.status === 'failed')}
                                             <button
                                                 type="button"
                                                 class="retry-button"
@@ -207,6 +236,16 @@
         {/if}
 
         <div class="composer">
+            <label class="burn-option">
+                <input type="checkbox" bind:checked={burnAfterRead} />
+                <span>{$t('clipboard.chat.burn_option')}</span>
+            </label>
+            {#if burnAfterRead}
+                <p class="burn-help">{$t('clipboard.chat.burn_hint')}</p>
+                {#if !peerSupportsEphemeral}
+                    <p class="burn-help" role="status">{$t('clipboard.chat.burn_unavailable')}</p>
+                {/if}
+            {/if}
             <textarea
                 class="text-input"
                 bind:value={textContent}
@@ -221,7 +260,7 @@
                 <button
                     type="button"
                     class="send-button"
-                    disabled={!peerConnected || !textContent.trim()}
+                    disabled={!peerConnected || !textContent.trim() || (burnAfterRead && !peerSupportsEphemeral)}
                     on:click={sendText}
                 >
                     <span>{$t('clipboard.chat.send_message')}</span>
@@ -237,6 +276,11 @@
 <span class="sr-only" aria-live="polite">{statusAnnouncement}</span>
 
 <style>
+    .burn-option { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.6rem; }
+    .burn-help { font-size: 0.78rem; line-height: 1.5; margin: 0 0 0.7rem; color: #52634b; }
+    .burn-status { color: #52634b; }
+    .reveal-button { padding: 0.5rem; border: 1px solid currentColor; border-radius: 8px; color: inherit; background: transparent; cursor: pointer; font: inherit; }
+    .reveal-button:disabled { opacity: 0.6; cursor: not-allowed; }
     .chat-shell {
         overflow: hidden;
         border: 1px solid rgba(112, 178, 35, 0.16);

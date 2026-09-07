@@ -10,15 +10,13 @@ import { getDownloadSeoLanguages, getGuideSeoLanguages } from '$lib/seo/route-lo
 const site = env.HOST ? `https://${env.HOST}` : 'https://freesavevideo.online';
 const languages = [...supportedSeoLanguages];
 const lastModified = {
-    site: '2026-07-17',
-    seoPages: '2026-09-03',
+    site: '2026-09-06',
 };
 
-// Google classifies the generic non-EN/ZH home and download-directory routes as
-// soft 404s. They remain available in the product UI, but do not provide enough
-// distinct search value to submit as canonical sitemap entries.
+// Keep the existing home submission scope. The EN/ZH directories now provide
+// task selection guidance and only link to routes available in their language.
 const sitemapHubLanguages = ['en', 'zh'];
-const languageHubPages = [''];
+const languageHubPages = ['', 'download'];
 const englishSupportPages = ['guide', 'faq'];
 
 const escapeXml = (value: string): string =>
@@ -53,14 +51,14 @@ const buildAlternateLinks = (
 
 const urlEntry = (
     loc: string,
-    lastmod: string,
+    lastmod: string | undefined,
     changefreq: string,
     priority: string,
     alternates = '',
 ) => `
     <url>
         <loc>${escapeXml(loc)}</loc>
-        <lastmod>${lastmod}</lastmod>
+        ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
         <changefreq>${changefreq}</changefreq>
         <priority>${priority}</priority>${alternates}
     </url>`;
@@ -73,13 +71,13 @@ function generateSitemap(): string {
         urls.push(urlEntry(`${site}${path}`, '2026-09-05', 'monthly', '0.8', buildAlternateLinks(path, ['en', 'zh'])));
     }
 
-    urls.push(urlEntry(`${site}/en/learn`, lastModified.seoPages, 'weekly', '0.8'));
+    urls.push(urlEntry(`${site}/en/learn`, '2026-09-06', 'weekly', '0.8'));
     for (const slug of learnSlugs) {
         const article = getLearnPage(slug);
         urls.push(
             urlEntry(
                 `${site}/en/learn/${slug}`,
-                article?.updatedAt ?? lastModified.seoPages,
+                article?.updatedAt,
                 'weekly',
                 '0.8',
             ),
@@ -94,7 +92,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    page === '' ? lastModified.site : lastModified.seoPages,
+                    lastModified.site,
                     changefreq,
                     priority,
                     buildAlternateLinks(path),
@@ -105,7 +103,7 @@ function generateSitemap(): string {
 
     for (const page of englishSupportPages) {
         urls.push(
-            urlEntry(`${site}/en/${page}`, lastModified.seoPages, 'weekly', '0.7'),
+            urlEntry(`${site}/en/${page}`, '2026-09-06', 'weekly', '0.7', buildAlternateLinks(`/en/${page}`, ['en'])),
         );
     }
 
@@ -116,7 +114,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    lastModified.seoPages,
+                    slug === 'youtube-download' && lang === 'id' ? '2026-09-06' : undefined,
                     'weekly',
                     '0.9',
                     buildAlternateLinks(path, availableLanguages),
@@ -134,7 +132,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    lastModified.seoPages,
+                    ['youtube-download-guide', 'youtube-shorts-download-guide'].includes(slug) && ['en', 'zh'].includes(lang) ? '2026-09-06' : undefined,
                     'monthly',
                     '0.7',
                     buildAlternateLinks(path, availableLanguages),

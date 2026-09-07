@@ -92,9 +92,10 @@
         return Boolean(guide && isEnglishOnlyDownloadSlug(guide.landingSlug));
     };
     $: seoDetailLanguages = getSeoDetailLanguages(currentPath);
-    $: alternateLanguages = currentPath.startsWith("/learn") || isEnglishOnlyPath(currentPath)
+    $: alternateLanguages = (currentPath.startsWith("/learn") || isEnglishOnlyPath(currentPath)
         ? ["en"]
-        : seoDetailLanguages ?? supportedLanguages;
+        : seoDetailLanguages ?? supportedLanguages)
+        .filter((lang) => !shouldNoindexLocalizedPath(currentPath, lang));
     $: defaultAlternateLanguage = alternateLanguages.includes("en")
         ? "en"
         : alternateLanguages.includes("zh")

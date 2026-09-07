@@ -11,6 +11,7 @@
         "i18n:check-encoding": "node ./scripts/check-i18n-encoding.mjs",
         "check:homepage-prerender": "node ./scripts/check-homepage-prerender.mjs",
         "check:seo-prerender": "node ./scripts/check-seo-prerender.mjs",
+        "test:seo-contracts": "node ./scripts/test-seo-contracts.mjs",
         "test:homepage": "pnpm build && pnpm check:homepage-prerender",
         "test:seo": "pnpm build && pnpm check:seo-prerender",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

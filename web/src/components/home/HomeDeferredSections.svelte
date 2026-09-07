@@ -2,7 +2,7 @@
     import { t } from "$lib/i18n/translations";
     import {
         homePlatformToDownloadSlug,
-        isInternationalDownloadSlug,
+        isDownloadAvailableInLanguage,
     } from "$lib/seo/internal-links";
 
     export let currentLocale: string;
@@ -19,7 +19,7 @@
         const downloadSlug = homePlatformToDownloadSlug[slug];
         if (
             downloadSlug &&
-            (currentLocale !== "en" || isInternationalDownloadSlug(downloadSlug))
+            isDownloadAvailableInLanguage(downloadSlug, currentLocale)
         ) {
             return `/${currentLocale}/download/${downloadSlug}`;
         }

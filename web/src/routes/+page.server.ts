@@ -3,7 +3,7 @@ import type { PageServerLoadEvent } from './$types';
 
 import { getPreferredLanguage, getRequestCountry } from '$lib/seo/language-routing';
 
-export const load = ({ request, cookies }: PageServerLoadEvent) => {
+export const load = ({ request, cookies, url, setHeaders }: PageServerLoadEvent) => {
     const cookieLang = cookies.get('preferred-language');
     const lang = getPreferredLanguage({
         cookieHeader: cookieLang ? `preferred-language=${encodeURIComponent(cookieLang)}` : request.headers.get('cookie'),
@@ -12,5 +12,6 @@ export const load = ({ request, cookies }: PageServerLoadEvent) => {
         userAgent: request.headers.get('user-agent'),
     });
 
-    throw redirect(302, `/${lang}`);
+    setHeaders({ 'Cache-Control': 'private, no-store', Vary: 'Cookie, Accept-Language, CF-IPCountry, User-Agent' });
+    throw redirect(302, `/${lang}${url.search}`);
 };

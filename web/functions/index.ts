@@ -15,7 +15,14 @@ export const onRequest: PagesFunction = async ({ request }) => {
         userAgent: request.headers.get('user-agent'),
     });
 
-    const target = new URL(`/${lang}/`, url);
+    const target = new URL(`/${lang}`, url);
     target.search = url.search;
-    return Response.redirect(target.toString(), 302);
+    return new Response(null, {
+        status: 302,
+        headers: {
+            Location: target.toString(),
+            'Cache-Control': 'private, no-store',
+            Vary: 'Cookie, Accept-Language, CF-IPCountry, User-Agent',
+        },
+    });
 };

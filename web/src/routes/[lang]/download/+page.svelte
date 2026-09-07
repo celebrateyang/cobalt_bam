@@ -1,5 +1,7 @@
 ﻿<script lang="ts">
     import env from '$lib/env';
+    import { getDirectoryCopy } from '$lib/seo/directory-copy';
+    import { jsonLdScript } from '$lib/seo/json-ld';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
@@ -17,13 +19,10 @@
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
     $: isZh = data.lang === 'zh';
-    $: pageTitle = isZh ? '下载目录' : 'Download directory';
-    $: seoTitle = isZh
-        ? '各平台视频下载器目录 | FreeSaveVideo'
-        : 'Video Downloaders by Platform | FreeSaveVideo';
-    $: pageDesc = isZh
-        ? '按平台查找公开视频下载器，支持 YouTube、TikTok、B站、抖音等平台，并提供批量、合集下载指南与常见问题。'
-        : 'Find a public video downloader for YouTube, TikTok, Instagram, Bilibili and more, with batch and playlist download guides.';
+    $: copy = getDirectoryCopy(data.lang);
+    $: pageTitle = copy.title;
+    $: seoTitle = `${pageTitle} | FreeSaveVideo`;
+    $: pageDesc = copy.description;
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download`;
 
     $: breadcrumbJsonLd = {
@@ -33,7 +32,7 @@
             {
                 '@type': 'ListItem',
                 position: 1,
-                name: isZh ? '首页' : 'Home',
+                name: copy.home,
                 item: `https://${fallbackHost}/${data.lang}`,
             },
             {
@@ -68,8 +67,8 @@
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
     <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
-    {@html `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c')}</script>`}
-    {@html `<script type="application/ld+json">${JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c')}</script>`}
+    {@html jsonLdScript(breadcrumbJsonLd)}
+    {@html jsonLdScript(itemListJsonLd)}
 </svelte:head>
 
 <div class="page">
@@ -79,15 +78,15 @@
 
     <main class="container" tabindex="-1" data-first-focus data-focus-ring-hidden>
         <section class="hero card">
-            <p class="eyebrow">{isZh ? '平台聚合页' : 'Platform index'}</p>
+            <p class="eyebrow">FreeSaveVideo</p>
             <h1>{pageTitle}</h1>
             <p class="lede">{pageDesc}</p>
             <div class="hero-links">
                 <a class="hero-link" href={`/${data.lang}`}>
-                    {isZh ? '返回首页下载' : 'Back to home downloader'}
+                    {copy.home}
                 </a>
                 <a class="hero-link" href={`/${data.lang}/guide`}>
-                    {isZh ? '查看下载指南' : 'Browse guides'}
+                    {copy.guides}
                 </a>
                 {#if data.lang === 'en'}
                     <a class="hero-link" href="/en/learn">
@@ -95,10 +94,27 @@
                     </a>
                 {/if}
                 <a class="hero-link" href={`/${data.lang}/faq`}>
-                    FAQ
+                    {copy.faq}
                 </a>
             </div>
         </section>
+
+        {#if isZh || data.lang === 'en'}
+            <section class="card">
+                <h2>{isZh ? '先确定要保存什么' : 'Start with the type of link you have'}</h2>
+                <ul class="task-list">
+                    <li><a href={`/${data.lang}/download/youtube-download`}>{isZh ? '单个 YouTube 视频' : 'One YouTube video'}</a> — {isZh ? '使用 watch 或 youtu.be 链接。画质和音频格式以解析结果为准。' : 'Use a watch or youtu.be URL. Quality and audio formats depend on the returned results.'}</li>
+                    <li><a href={`/${data.lang}/download/youtube-shorts-download`}>YouTube Shorts</a> — {isZh ? '复制 Shorts 分享链接，保存单条短视频。' : 'Copy a Shorts share link to save one short video.'}</li>
+                    <li><a href={`/${data.lang}/download/youtube-playlist-downloader`}>{isZh ? 'YouTube 公开播放列表' : 'A public YouTube playlist'}</a> — {isZh ? '保留 list 参数，展开后选择条目；播放列表不同于频道主页。' : 'Keep the list parameter and select entries after expansion. A channel homepage is not a playlist.'}</li>
+                    <li><a href={`/${data.lang}/download/youtube-playlist-to-mp3`}>{isZh ? '播放列表音频' : 'Playlist audio'}</a> — {isZh ? '为可用条目选择音频。并非每个结果都提供 MP3，不要通过改扩展名转换格式。' : 'Choose audio for available entries. MP3 is not available for every result; renaming an extension does not convert a file.'}</li>
+                    {#if data.lang === 'en'}
+                        <li><a href="/en/download/batch-video-downloader">Multiple separate video links</a> — Paste the individual URLs into the batch workflow when your videos are not in one playlist.</li>
+                    {/if}
+                </ul>
+                <p>{isZh ? '仅处理受支持、公开可访问且你有权保存的内容。遇到失败时，先确认原链接能否播放，再区分链接解析失败与文件保存失败。' : 'Use supported, publicly accessible content you have permission to save. If a task fails, first check whether the source plays, then distinguish a link extraction error from a file saving error.'}</p>
+                <a href={`/${data.lang}/guide/youtube-download-guide`}>{isZh ? '查看 YouTube 链接、设备保存和失败排查指南' : 'Read the YouTube link, device saving, and troubleshooting guide'}</a>
+            </section>
+        {/if}
 
         <section class="grid" aria-label={pageTitle}>
             {#each data.cards as item}
@@ -106,19 +122,13 @@
                     <h2>{item.h1}</h2>
                     <p>{item.lede}</p>
 
-                    <div class="chips">
-                        {#each item.keywords as keyword}
-                            <span class="chip">{keyword}</span>
-                        {/each}
-                    </div>
-
                     <div class="actions">
                         <a class="btn btn-primary" href={`/${data.lang}/download/${item.slug}`}>
-                            {isZh ? '打开下载页' : 'Open download page'}
+                            {copy.open}
                         </a>
                         {#if item.guideSlug}
                             <a class="btn" href={`/${data.lang}/guide/${item.guideSlug}`}>
-                                {isZh ? '查看指南' : 'View guide'}
+                                {copy.guide}
                             </a>
                         {/if}
                     </div>
@@ -129,6 +139,7 @@
 </div>
 
 <style>
+    .task-list { display: grid; gap: 12px; padding-left: 22px; line-height: 1.7; }
     .page {
         width: 100%;
         display: flex;
@@ -242,25 +253,6 @@
         opacity: 0.86;
         line-height: 1.55;
         min-height: 48px;
-    }
-
-    .chips {
-        margin-top: 12px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .chip {
-        display: inline-flex;
-        align-items: center;
-        min-height: 26px;
-        padding: 4px 9px;
-        border-radius: 999px;
-        border: 1px solid var(--button-stroke);
-        background: var(--button-elevated);
-        color: var(--subtext);
-        font-size: 0.78rem;
     }
 
     .actions {

@@ -2953,6 +2953,23 @@ export const seoLandingPages: SeoLandingPage[] = [
     {
         slug: 'youtube-download',
         locales: {
+            id: id({
+                metaTitle: `Pengunduh Video YouTube dan Playlist Publik | ${EN_BRAND}`,
+                metaDescription: 'Unduh video YouTube publik, Shorts, atau item playlist yang didukung. Tempel tautan, pilih kualitas video atau audio yang tersedia, lalu simpan hasilnya.',
+                metaKeywords: ['unduh video youtube', 'pengunduh youtube', 'unduh playlist youtube'],
+                h1: 'Pengunduh video YouTube',
+                lede: 'Tempel tautan video YouTube, Shorts, atau playlist publik untuk melihat hasil yang tersedia. Pilihan kualitas dan audio bergantung pada video sumber dan hasil pemrosesan.',
+                stepsTitle: 'Cara menyimpan video YouTube',
+                steps: ['Salin tautan video, Shorts, atau playlist publik. Gunakan halaman video tertentu, bukan beranda kanal.', 'Tempel tautan ke pengunduh dan tunggu hasilnya. Untuk playlist, pertahankan parameter list lalu pilih item yang diperlukan.', 'Pilih format video atau audio yang tersedia, mulai unduhan, lalu periksa file dalam riwayat unduhan browser.'],
+                featuresTitle: 'Tautan dan hasil yang didukung',
+                features: ['Tautan watch?v= dan youtu.be untuk satu video.', 'Tautan shorts/ untuk satu video Shorts.', 'Playlist publik dapat dibuka menjadi item yang dapat dipilih.', 'Kualitas HD dan pilihan audio hanya tersedia jika sumber dan hasil pemrosesan menyediakannya.'],
+                faqTitle: 'Pertanyaan tentang unduhan YouTube',
+                faqs: [
+                    { q: 'Apakah playlist pribadi dapat diunduh?', a: 'Tidak. Playlist dan videonya harus dapat diakses secara publik tanpa login. Gunakan hanya konten yang boleh Anda simpan.' },
+                    { q: 'Mengapa tidak ada MP3 atau kualitas yang saya inginkan?', a: 'Tidak semua video menyediakan setiap format. Pilih opsi yang muncul pada hasil. Mengganti ekstensi nama file tidak mengonversi formatnya.' },
+                    { q: 'Di mana file disimpan di ponsel?', a: 'Periksa riwayat unduhan browser dan aplikasi pengelola file. File tidak selalu masuk ke galeri secara otomatis.' },
+                ],
+            }),
             zh: zh({
                 metaTitle: `YouTube视频下载器 - 快速稳定，支持HD与Playlist批量下载 | ${ZH_BRAND}`,
                 metaDescription:

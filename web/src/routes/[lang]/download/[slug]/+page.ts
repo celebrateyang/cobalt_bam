@@ -32,7 +32,7 @@ export const load: PageLoad = async ({ params }) => {
 
     const linkAudience = params.lang === 'zh' ? 'all' : 'international';
     const guide = guidePages.find((item) => item.landingSlug === params.slug);
-    const relatedPages = getRelatedDownloadLinks(params.slug, 6, linkAudience)
+    const relatedPages = getRelatedDownloadLinks(params.slug, 6, linkAudience, params.lang)
         .map((item) => getSeoLandingPage(item.slug))
         .filter((page): page is NonNullable<typeof page> => Boolean(page))
         .filter((page) => getDownloadSeoLanguages(page.slug).includes(params.lang));

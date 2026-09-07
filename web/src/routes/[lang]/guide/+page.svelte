@@ -23,6 +23,7 @@
     const featuredDownloads = getHubDownloadLinks(
         6,
         data.lang === 'en' ? 'international' : 'all',
+        data.lang,
     );
 </script>
 

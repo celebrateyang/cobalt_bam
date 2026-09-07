@@ -39,12 +39,10 @@
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
-    $: contentUpdatedAt = runtimeContent.updatedAt;
     $: platformKey = getPlatformKey(data.slug);
     $: productFaqs = runtimeContent.productFaqs;
     $: productTips = runtimeContent.productTips;
     $: productAdvantages = runtimeContent.productAdvantages;
-    $: releaseNotes = runtimeContent.releaseNotes;
     $: platformFaqs = runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
     $: platformPlaybook =
         runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
@@ -551,20 +549,6 @@
         </section>
         {/if}
 
-        {#if releaseNotes.length}
-        <section class="card updates">
-            <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
-            <p class="update-meta">
-                {isZh ? '最后更新：' : 'Last updated: '}
-                <time datetime={contentUpdatedAt}>{contentUpdatedAt}</time>
-            </p>
-            <ul class="feature-list">
-                {#each releaseNotes as note}
-                    <li>{note}</li>
-                {/each}
-            </ul>
-        </section>
-        {/if}
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
     </main>
@@ -1082,15 +1066,6 @@
         opacity: 0.82;
     }
 
-    .updates .feature-list {
-        margin-top: 0;
-    }
-
-    .update-meta {
-        margin: 0 0 10px;
-        color: var(--download-muted);
-        font-size: 0.9rem;
-    }
 
     .disclaimer {
         margin: 4px 0 0;

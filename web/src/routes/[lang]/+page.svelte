@@ -368,13 +368,14 @@
     $: homeHubHeading =
         currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u4e0e\u6307\u5357" : "Popular Video Downloader Links";
     $: homeInternalLinks = currentLocale === "zh"
-        ? getHubDownloadLinks(9, "all")
+        ? getHubDownloadLinks(9, "all", currentLocale)
               .filter((item) => item.slug !== "naver-video-download")
               .slice(0, 8)
-        : getHubDownloadLinks(8, currentLocale === "en" ? "international" : "all");
+        : getHubDownloadLinks(8, currentLocale === "en" ? "international" : "all", currentLocale);
     $: homeGuideLinks = getHubGuideLinks(
         4,
         currentLocale === "en" ? "international" : "all",
+        currentLocale,
     );
     const zhPlatformNames: Record<string, string> = {
         Douyin: "\u6296\u97f3",

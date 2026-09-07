@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { jsonLdScript } from '$lib/seo/json-ld';
     import { page } from "$app/stores";
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
@@ -67,14 +68,16 @@
     $: canonicalPathname = normalizePathname($page.url.pathname);
     $: canonicalUrl = `https://${fallbackHost}${canonicalPathname}`;
     $: siteUrl = `https://${fallbackHost}`;
-    $: youtubeGuideUrl = `${siteUrl}/${lang}/youtube-video-downloader`;
+    $: youtubeGuideUrl = `${siteUrl}/${lang}/download/youtube-download`;
     $: featuredDownloads = getHubDownloadLinks(
         6,
         lang === "en" ? "international" : "all",
+        lang,
     );
     $: featuredGuides = getHubGuideLinks(
         4,
         lang === "en" ? "international" : "all",
+        lang,
     );
 
     $: title = $t("faq.title");
@@ -159,9 +162,7 @@
     <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
 
     {#if faqJsonLd}
-        <script type="application/ld+json">
-            {JSON.stringify(faqJsonLd)}
-        </script>
+        {@html jsonLdScript(faqJsonLd)}
     {/if}
 </svelte:head>
 
@@ -176,7 +177,7 @@
             <a class="btn" href={`/${lang}?feedback=1`}>
                 {$t("faq.actions.feedback")}
             </a>
-            <a class="btn" href={`/${lang}/youtube-video-downloader`}>
+            <a class="btn" href={`/${lang}/download/youtube-download`}>
                 {$t("faq.actions.youtube")}
             </a>
             <a class="btn" href={`/${lang}/account`}>

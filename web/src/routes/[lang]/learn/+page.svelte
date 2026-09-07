@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { jsonLdScript } from '$lib/seo/json-ld';
     import env from '$lib/env';
 
     export let data: {
@@ -39,9 +40,7 @@
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v3.png`} />
-    <script type="application/ld+json">
-        {JSON.stringify(itemListJsonLd)}
-    </script>
+    {@html jsonLdScript(itemListJsonLd)}
 </svelte:head>
 
 <main class="learn-page" tabindex="-1" data-first-focus data-focus-ring-hidden>

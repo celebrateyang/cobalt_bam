@@ -134,6 +134,10 @@ const crossLinkEntries: CrossLinkEntry[] = [
         downloadSlug: 'youtube-playlist-downloader',
     },
     {
+        platform: 'YouTube Playlist Audio',
+        downloadSlug: 'youtube-playlist-to-mp3',
+    },
+    {
         platform: 'Batch Video',
         downloadSlug: 'batch-video-downloader',
         guideSlug: 'how-to-download-multiple-videos',
@@ -179,6 +183,10 @@ const entryByDownloadSlug = new Map(
 );
 
 const strategicDownloadOrder = [
+    'youtube-download',
+    'youtube-playlist-downloader',
+    'youtube-shorts-download',
+    'youtube-playlist-to-mp3',
     'douyin-no-watermark',
     'tiktok-no-watermark',
     'bilibili-video-download',
@@ -198,9 +206,6 @@ const strategicDownloadOrder = [
     'instagram-video-download',
     'batch-video-downloader',
     'playlist-downloader',
-    'youtube-playlist-downloader',
-    'youtube-download',
-    'youtube-shorts-download',
     'facebook-video-download',
     'twitter-x-video-download',
     'snapchat-video-download',
@@ -211,6 +216,9 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'youtube-download',
+    'youtube-playlist-downloader',
+    'youtube-shorts-download',
     'iqiyi-video-download',
     'tiktok-no-watermark',
     'tiktok-collection-download',
@@ -220,9 +228,6 @@ const internationalDownloadSlugs = new Set([
     'instagram-video-download',
     'batch-video-downloader',
     'playlist-downloader',
-    'youtube-playlist-downloader',
-    'youtube-download',
-    'youtube-shorts-download',
     'facebook-video-download',
     'twitter-x-video-download',
     'snapchat-video-download',
@@ -281,7 +286,15 @@ export const isEnglishOnlyDownloadSlug = (slug: string): boolean =>
     englishOnlyDownloadSlugs.has(slug);
 
 const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
-    audience === 'all' || internationalDownloadSlugs.has(slug);
+    audience === 'all' || internationalDownloadSlugs.has(slug) || slug === 'youtube-playlist-to-mp3';
+
+// Keep links and route generation on the same language policy. Do not advertise
+// translated URLs merely because an English fallback can render their content.
+export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'youtube-playlist-to-mp3') return lang === 'en' || lang === 'zh';
+    if (isEnglishOnlyDownloadSlug(slug)) return lang === 'en';
+    return isInternationalDownloadSlug(slug) || lang === 'zh';
+};
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     'tiktok-no-watermark': [
@@ -420,6 +433,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     ],
     'youtube-download': [
         'youtube-playlist-downloader',
+        'youtube-playlist-to-mp3',
         'playlist-downloader',
         'batch-video-downloader',
         'youtube-shorts-download',
@@ -431,6 +445,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
     ],
     'youtube-playlist-downloader': [
         'youtube-download',
+        'youtube-playlist-to-mp3',
         'playlist-downloader',
         'batch-video-downloader',
         'youtube-shorts-download',
@@ -537,6 +552,7 @@ const prioritizeDownloads = (
     limit: number,
     excludeSlugs: string[] = [],
     audience: LinkAudience = 'all',
+    lang?: string,
 ): FeaturedDownloadLink[] => {
     const excluded = new Set(excludeSlugs.filter(Boolean));
     if (anchorSlug) excluded.add(anchorSlug);
@@ -553,6 +569,7 @@ const prioritizeDownloads = (
     for (const slug of orderedCandidates) {
         if (seen.has(slug) || excluded.has(slug)) continue;
         if (!matchesAudience(slug, audience)) continue;
+        if (lang && !isDownloadAvailableInLanguage(slug, lang)) continue;
         seen.add(slug);
 
         const entry = entryByDownloadSlug.get(slug);
@@ -568,20 +585,24 @@ const prioritizeDownloads = (
 export const getHubDownloadLinks = (
     limit = 8,
     audience: LinkAudience = 'all',
-): FeaturedDownloadLink[] => prioritizeDownloads(null, limit, [], audience);
+    lang?: string,
+): FeaturedDownloadLink[] => prioritizeDownloads(null, limit, [], audience, lang);
 
 export const getRelatedDownloadLinks = (
     currentDownloadSlug: string,
     limit = 4,
     audience: LinkAudience = 'all',
-): FeaturedDownloadLink[] => prioritizeDownloads(currentDownloadSlug, limit, [], audience);
+    lang?: string,
+): FeaturedDownloadLink[] => prioritizeDownloads(currentDownloadSlug, limit, [], audience, lang);
 
 export const getHubGuideLinks = (
     limit = 6,
     audience: LinkAudience = 'all',
+    lang?: string,
 ): FeaturedGuideLink[] =>
     [...featuredGuideLinks]
         .filter((item) => matchesAudience(getGuidePageDownloadSlug(item.slug), audience))
+        .filter((item) => !lang || isDownloadAvailableInLanguage(getGuidePageDownloadSlug(item.slug), lang))
         .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
         .slice(0, limit);
 
@@ -589,9 +610,11 @@ export const getRelatedGuideLinks = (
     currentGuideSlug: string,
     limit = 4,
     audience: LinkAudience = 'all',
+    lang?: string,
 ): FeaturedGuideLink[] =>
     [...featuredGuideLinks]
         .filter((item) => item.slug !== currentGuideSlug)
+        .filter((item) => !lang || isDownloadAvailableInLanguage(getGuidePageDownloadSlug(item.slug), lang))
         .filter((item) => matchesAudience(getGuidePageDownloadSlug(item.slug), audience))
         .sort((a, b) => getGuidePriority(a.slug) - getGuidePriority(b.slug))
         .slice(0, limit);

@@ -44,8 +44,12 @@ export const getCookieLanguage = (cookieHeader: string | null | undefined): Supp
     const match = cookieHeader.match(/(?:^|;)\s*preferred-language=([^;]+)/i);
     if (!match) return null;
 
-    const value = decodeURIComponent(match[1]);
-    return isSupportedLanguage(value) ? value : null;
+    try {
+        const value = decodeURIComponent(match[1]);
+        return isSupportedLanguage(value) ? value : null;
+    } catch {
+        return null;
+    }
 };
 
 export const getAcceptLanguage = (header: string | null | undefined): SupportedLanguage | null => {
@@ -61,8 +65,8 @@ export const getAcceptLanguage = (header: string | null | undefined): SupportedL
         })
         .sort((a, b) => b.quality - a.quality);
 
-    for (const { code } of languages) {
-        if (isSupportedLanguage(code)) return code;
+    for (const { code, quality } of languages) {
+        if (quality > 0 && isSupportedLanguage(code)) return code;
     }
 
     return null;

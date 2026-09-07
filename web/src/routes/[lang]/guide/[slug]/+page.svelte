@@ -1,5 +1,6 @@
 <script lang="ts">
     import env from '$lib/env';
+    import { getYoutubeGuideContent } from '$lib/seo/youtube-guide-content';
     import { getGuidePage } from '$lib/seo/guide-pages';
     import { getSeoLandingLocale, getSeoLandingPage, EN_BRAND, ZH_BRAND } from '$lib/seo/landing-pages';
     import { getRelatedDownloadLinks, getRelatedGuideLinks } from '$lib/seo/internal-links';
@@ -16,7 +17,8 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
-    $: baseLocaleContent = getSeoLandingLocale(data.landing, data.lang);
+    $: dedicatedGuide = getYoutubeGuideContent(data.slug, data.lang);
+    $: baseLocaleContent = { ...getSeoLandingLocale(data.landing, data.lang), ...dedicatedGuide };
     $: localeContent =
         data.lang === 'en'
             ? {
@@ -34,6 +36,10 @@
         description: (platform: string) => string;
     };
     const guideSeoCopy: Record<string, GuideSeoCopy> = {
+        id: {
+            title: (platform) => `Cara mengunduh video ${platform}`,
+            description: (platform) => `Panduan menyalin tautan ${platform} yang didukung, memilih format yang tersedia, menyimpan file, dan memeriksa kesalahan tautan.`,
+        },
         de: {
             title: (platform) => `So laden Sie ${platform}-Videos herunter`,
             description: (platform) => `Schritt-für-Schritt-Anleitung zum Kopieren eines unterstützten ${platform}-Links, Einfügen in den Downloader und Speichern der verfügbaren Formate.`,
@@ -77,12 +83,12 @@
     };
     $: localizedGuideCopy = guideSeoCopy[data.lang] ?? guideSeoCopy.en;
     $: guideTitle =
-        data.lang === 'en' && data.guide.enTitle
+        dedicatedGuide ? dedicatedGuide.metaTitle : data.lang === 'en' && data.guide.enTitle
             ? data.guide.enTitle
             : localizedGuideCopy.title(data.guide.platform);
     $: pageTitle = `${guideTitle} - ${isZh ? ZH_BRAND : EN_BRAND}`;
     $: pageDesc =
-        data.lang === 'en' && data.guide.enDescription
+        dedicatedGuide ? dedicatedGuide.metaDescription : data.lang === 'en' && data.guide.enDescription
             ? data.guide.enDescription
             : localizedGuideCopy.description(data.guide.platform);
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -97,11 +103,13 @@
         data.slug,
         6,
         data.lang === 'en' ? 'international' : 'all',
+        data.lang,
     );
     $: relatedDownloads = getRelatedDownloadLinks(
         data.guide.landingSlug,
         6,
         data.lang === 'en' ? 'international' : 'all',
+        data.lang,
     );
     $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
     $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
@@ -133,18 +141,16 @@
     const ctaHint = isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : 'Open the downloader';
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: hasLocalizedRuntime = data.lang === 'en' || data.lang === 'zh';
-    $: contentUpdatedAt = runtimeContent.updatedAt;
     $: platformKey = getPlatformKey(data.slug);
-    $: productFaqs = runtimeContent.productFaqs;
-    $: productTips = runtimeContent.productTips;
-    $: productAdvantages = runtimeContent.productAdvantages;
-    $: releaseNotes = runtimeContent.releaseNotes;
-    $: platformFaqs = runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
+    $: productFaqs = dedicatedGuide ? [] : runtimeContent.productFaqs;
+    $: productTips = dedicatedGuide ? [] : runtimeContent.productTips;
+    $: productAdvantages = dedicatedGuide ? [] : runtimeContent.productAdvantages;
+    $: platformFaqs = dedicatedGuide ? [] : runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
     $: platformPlaybook =
-        runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
+        dedicatedGuide ? { heading: '', notes: [], checklist: [] } : runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
-        runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
-    $: landingFaqs = data.guide.landingSlug === 'youtube-download'
+        dedicatedGuide ? [] : runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: landingFaqs = !dedicatedGuide && data.guide.landingSlug === 'youtube-download'
         ? localeContent.faqs.slice(1)
         : localeContent.faqs;
     $: freeTools = runtimeContent.freeTools.map((tool) => ({
@@ -279,6 +285,15 @@
                     ></iframe>
                 </div>
             </section>
+        {/if}
+
+        {#if dedicatedGuide}
+            {#each dedicatedGuide.sections as section}
+                <section class="card details">
+                    <h2>{section.title}</h2>
+                    {#each section.paragraphs as paragraph}<p>{paragraph}</p>{/each}
+                </section>
+            {/each}
         {/if}
 
         <section class="grid">
@@ -450,20 +465,6 @@
         </section>
         {/if}
 
-        {#if releaseNotes.length}
-        <section class="card updates">
-            <h2>{isZh ? '内容更新记录' : 'Content update notes'}</h2>
-            <p class="update-meta">
-                {isZh ? '最后更新：' : 'Last updated: '}
-                <time datetime={contentUpdatedAt}>{contentUpdatedAt}</time>
-            </p>
-            <ul>
-                {#each releaseNotes as note}
-                    <li>{note}</li>
-                {/each}
-            </ul>
-        </section>
-        {/if}
 
         <p class="disclaimer">{localeContent.disclaimer}</p>
     </main>
@@ -785,21 +786,7 @@
         margin-bottom: 0;
     }
 
-    .updates ul {
-        margin: 0;
-        padding: 0 0 0 18px;
-        color: var(--secondary);
-        opacity: 0.9;
-        line-height: 1.6;
-        display: grid;
-        gap: 8px;
-    }
 
-    .update-meta {
-        margin: 0 0 10px;
-        color: var(--subtext);
-        font-size: 0.9rem;
-    }
 
     .faq-list {
         display: grid;

@@ -3,8 +3,7 @@
 import { guidePages } from '$lib/seo/guide-pages';
 import {
     getDownloadPriority,
-    isEnglishOnlyDownloadSlug,
-    isInternationalDownloadSlug,
+    isDownloadAvailableInLanguage,
 } from '$lib/seo/internal-links';
 import {
     getSeoLandingLocale,
@@ -19,12 +18,8 @@ const languages = ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', '
 export const entries = () => languages.map((lang) => ({ lang }));
 
 export const load: PageLoad = async ({ params }) => {
-    const internationalOnly = params.lang === 'en';
     const cards = seoLandingSlugs
-        .filter((slug) => {
-            if (isEnglishOnlyDownloadSlug(slug)) return params.lang === 'en';
-            return !internationalOnly || isInternationalDownloadSlug(slug);
-        })
+        .filter((slug) => isDownloadAvailableInLanguage(slug, params.lang))
         .map((slug) => {
             const landing = getSeoLandingPage(slug);
             if (!landing) return null;

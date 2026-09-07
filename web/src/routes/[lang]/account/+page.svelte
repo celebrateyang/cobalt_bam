@@ -680,7 +680,9 @@
     let paypalSdkPromise: Promise<PayPalSdkInstance> | null = null;
     let paypalSdkLocale = "";
     let paypalSdkPromiseLocale = "";
-    const PAYPAL_PAYMENT_VISIBLE = true;
+    // Temporarily route all locales to WeChat Pay while PayPal is unavailable.
+    // Keep the PayPal implementation in place so it can be restored quickly.
+    const PAYPAL_PAYMENT_VISIBLE = false;
     const PAYPAL_LOCALE_BY_LANGUAGE: Record<string, string> = {
         de: "de-DE",
         en: "en-US",

@@ -44,6 +44,22 @@ test("normalizeFeed returns complete CDN URLs without generating signatures", ()
     assert.equal(result.videos[1].url.endsWith("&token=server-returned"), true);
 });
 
+test("normalizeFeed exposes Finder's original rendition before transcoded videos", () => {
+    const result = normalizeFeed({
+        feedInfo: {
+            originVideoUrl:
+                "https://finder.video.qq.com/251/original.mp4",
+            h264VideoInfo: {
+                videoUrl: "https://finder.video.qq.com/251/h264.mp4",
+            },
+        },
+    });
+
+    assert.equal(result.videos.length, 2);
+    assert.equal(result.videos[0].quality, "original");
+    assert.equal(result.videos[0].url.endsWith("original.mp4"), true);
+});
+
 test("authenticated resolver maps Yuanbao playable_url into Finder request", async () => {
     const originalFetch = globalThis.fetch;
     const calls = [];

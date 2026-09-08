@@ -187,6 +187,14 @@ export const normalizeFeed = (data, context = {}) => {
     const author = data?.authorInfo || {};
     const videos = [];
 
+    addVideo(
+        videos,
+        feed.originVideoUrl ? {
+            videoUrl: feed.originVideoUrl,
+            quality: "original",
+        } : null,
+        { quality: "original" }
+    );
     addVideo(videos, feed.h264VideoInfo, { codec: "h264" });
     addVideo(videos, feed.h265VideoInfo, { codec: "h265" });
     addVideo(videos, feed.videoUrl ? { videoUrl: feed.videoUrl } : null);

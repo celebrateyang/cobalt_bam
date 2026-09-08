@@ -24,14 +24,15 @@ const readYuanbaoCookie = async (
     .replace(/^cookie\s*:\s*/i, "");
 
 export const buildWechatChannelResult = (feed, shortUri) => {
+    const original = feed.videos.find((video) => video.quality === "original");
     const h264 = feed.videos.find((video) => video.codec === "h264");
     const fallback = feed.videos.find((video) => !video.codec);
     const h265 = feed.videos.find((video) => video.codec === "h265");
-    const primary = h264 || fallback || h265;
+    const primary = original || h264 || fallback || h265;
 
     if (!primary?.url) return { error: "fetch.fail" };
 
-    const candidates = [primary.url, h264?.url, fallback?.url, h265?.url]
+    const candidates = [primary.url, original?.url, h264?.url, fallback?.url, h265?.url]
         .filter((value, index, list) => value && list.indexOf(value) === index);
     const width = primary.width || h264?.width || fallback?.width;
     const height = primary.height || h264?.height || fallback?.height;
@@ -47,7 +48,9 @@ export const buildWechatChannelResult = (feed, shortUri) => {
             title: feed.title || `wechat_channels_${shortUri}`,
             author: feed.author || undefined,
             resolution: width && height ? `${width}x${height}` : undefined,
-            qualityLabel: primary.codec === "h264"
+            qualityLabel: primary.quality === "original"
+                ? "Original"
+                : primary.codec === "h264"
                 ? "H.264"
                 : primary.codec === "h265" ? "H.265" : "MP4",
             extension: "mp4",

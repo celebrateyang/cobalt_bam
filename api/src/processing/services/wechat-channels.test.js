@@ -25,6 +25,25 @@ test("prefers H.264 and retains H.265 as a Direct Bridge fallback", () => {
     assert.equal(result.filenameAttributes.resolution, "1328x720");
 });
 
+test("prefers Finder's original rendition and retains transcodes as fallbacks", () => {
+    const original = "https://finder.video.qq.com/251/original.mp4";
+    const h264 = "https://finder.video.qq.com/251/h264.mp4";
+    const h265 = "https://finder.video.qq.com/251/h265.mp4";
+    const result = buildWechatChannelResult({
+        title: "Original video",
+        videos: [
+            { quality: "original", url: original, width: 1920, height: 1080 },
+            { codec: "h264", url: h264, width: 1280, height: 720 },
+            { codec: "h265", url: h265, width: 1280, height: 720 },
+        ],
+    }, "Original123");
+
+    assert.equal(result.urls, original);
+    assert.deepEqual(result.urlCandidates, [h264, h265]);
+    assert.equal(result.filenameAttributes.qualityLabel, "Original");
+    assert.equal(result.filenameAttributes.resolution, "1920x1080");
+});
+
 test("fails cleanly when Finder returns no downloadable video", () => {
     assert.deepEqual(
         buildWechatChannelResult({ videos: [] }, "AievImkslV"),

@@ -76,6 +76,7 @@ import {
     NowPaymentsRequestError,
     createNowPayment,
     getNowPayment,
+    getNowPaymentsMinimumAmount,
     getNowPaymentsPayCurrencies,
     getNowPaymentsStatus,
     isDecimalAtLeast,
@@ -273,10 +274,12 @@ const normalizeProvider = (rawProvider, fallback = "wechat") => {
     return fallback;
 };
 
-const buildPublicProducts = (provider) => {
+const buildPublicProducts = (provider, { nowPaymentsMinimumFen = 0 } = {}) => {
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
-        return NOWPAYMENTS_CREDIT_PRODUCTS.map((product) => ({
+        return NOWPAYMENTS_CREDIT_PRODUCTS.filter(
+            (product) => product.amountFen >= nowPaymentsMinimumFen,
+        ).map((product) => ({
             key: product.key,
             points: product.points,
             unitPriceFen: product.unitPriceFen,
@@ -690,18 +693,41 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
     });
 };
 
-router.get("/credits/products", (req, res) => {
-    const provider = normalizeProvider(req.query?.provider, "wechat");
-    res.json({
-        status: "success",
-        data: {
-            provider,
-            products: buildPublicProducts(provider),
-            ...(provider === "nowpayments"
-                ? { payCurrencies: getNowPaymentsPayCurrencies() }
-                : {}),
-        },
-    });
+router.get("/credits/products", async (req, res) => {
+    try {
+        const provider = normalizeProvider(req.query?.provider, "wechat");
+        let nowPaymentsMinimum = null;
+        if (provider === "nowpayments" && isNowPaymentsConfigured()) {
+            nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
+                currencyFrom: "usd",
+                currencyTo: getNowPaymentsPayCurrencies()[0],
+            });
+        }
+        res.json({
+            status: "success",
+            data: {
+                provider,
+                products: buildPublicProducts(provider, {
+                    nowPaymentsMinimumFen:
+                        nowPaymentsMinimum?.minimumFen || 0,
+                }),
+                ...(provider === "nowpayments"
+                    ? {
+                          payCurrencies: getNowPaymentsPayCurrencies(),
+                          minimumAmount: nowPaymentsMinimum,
+                      }
+                    : {}),
+            },
+        });
+    } catch (error) {
+        console.error("GET /payments/credits/products error:", error);
+        return jsonError(
+            res,
+            502,
+            "PRODUCTS_UNAVAILABLE",
+            "Failed to load payment limits",
+        );
+    }
 });
 
 router.get("/memberships/products", (req, res) => {
@@ -1191,6 +1217,20 @@ if (!isClerkAuthConfigured) {
                     "INVALID_PAY_CURRENCY",
                     "Unsupported payment currency or network",
                     { allowed: getNowPaymentsPayCurrencies() },
+                );
+            }
+
+            const minimum = await getNowPaymentsMinimumAmount({
+                currencyFrom: "usd",
+                currencyTo: payCurrency,
+            });
+            if (product.amountFen < minimum.minimumFen) {
+                return jsonError(
+                    res,
+                    400,
+                    "BELOW_NOWPAYMENTS_MINIMUM",
+                    "Selected product is below the current NOWPayments minimum",
+                    { minimum },
                 );
             }
 

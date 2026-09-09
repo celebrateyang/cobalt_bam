@@ -6,6 +6,7 @@ import {
     isDecimalAtLeast,
     minorUnitsToDecimal,
     parseDecimalToMinorUnits,
+    parseDecimalToCeilMinorUnits,
     sortNowPaymentsPayload,
     verifyNowPaymentsIpnSignature,
 } from "./nowpayments.js";
@@ -16,6 +17,13 @@ test("formats and parses NOWPayments USD amounts exactly", () => {
     assert.equal(parseDecimalToMinorUnits("1.99"), 199);
     assert.equal(parseDecimalToMinorUnits(5), 500);
     assert.ok(Number.isNaN(parseDecimalToMinorUnits("1.999")));
+});
+
+test("rounds NOWPayments minimum amounts up to the next cent", () => {
+    assert.equal(parseDecimalToCeilMinorUnits("19.20910391"), 1921);
+    assert.equal(parseDecimalToCeilMinorUnits("19.9900"), 1999);
+    assert.equal(parseDecimalToCeilMinorUnits("20"), 2000);
+    assert.equal(Number.isNaN(parseDecimalToCeilMinorUnits("1e2")), true);
 });
 
 test("compares crypto decimal amounts without floating-point rounding", () => {

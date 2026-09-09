@@ -2,6 +2,8 @@ import crypto from "node:crypto";
 
 const DEFAULT_API_BASE = "https://api.nowpayments.io";
 const DEFAULT_PAY_CURRENCIES = ["usdttrc20"];
+const MIN_AMOUNT_CACHE_MS = 5 * 60 * 1000;
+const minimumAmountCache = new Map();
 
 const normalizeCurrency = (value) =>
     String(value || "")
@@ -133,6 +135,16 @@ export const parseDecimalToMinorUnits = (value) => {
     return Number.isSafeInteger(minor) ? minor : Number.NaN;
 };
 
+export const parseDecimalToCeilMinorUnits = (value) => {
+    const normalized = String(value ?? "").trim();
+    if (!/^\d+(?:\.\d+)?$/.test(normalized)) return Number.NaN;
+    const [whole, fraction = ""] = normalized.split(".");
+    const firstTwo = fraction.slice(0, 2).padEnd(2, "0");
+    const roundUp = /[1-9]/.test(fraction.slice(2)) ? 1 : 0;
+    const minor = Number(whole) * 100 + Number(firstTwo) + roundUp;
+    return Number.isSafeInteger(minor) ? minor : Number.NaN;
+};
+
 const normalizeUnsignedDecimal = (value) => {
     const raw = String(value ?? "").trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) return null;
@@ -196,6 +208,45 @@ export const getNowPayment = async (paymentId) => {
         method: "GET",
         path: `/v1/payment/${encodeURIComponent(normalized)}`,
     });
+};
+
+export const getNowPaymentsMinimumAmount = async ({
+    currencyFrom = "usd",
+    currencyTo,
+}) => {
+    const from = normalizeCurrency(currencyFrom);
+    const to = resolveNowPaymentsPayCurrency(currencyTo);
+    if (!from || !to) throw new Error("unsupported NOWPayments currency");
+
+    const cacheKey = `${from}:${to}`;
+    const cached = minimumAmountCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    const query = new URLSearchParams({
+        currency_from: from,
+        currency_to: to,
+        fiat_equivalent: from,
+    });
+    const data = await nowPaymentsRequestJson({
+        method: "GET",
+        path: `/v1/min-amount?${query.toString()}`,
+    });
+    const minimumFen = parseDecimalToCeilMinorUnits(data?.fiat_equivalent);
+    if (!Number.isSafeInteger(minimumFen) || minimumFen <= 0) {
+        throw new Error("NOWPayments returned an invalid minimum amount");
+    }
+
+    const value = {
+        minimumFen,
+        minimumAmount: String(data.fiat_equivalent),
+        currencyFrom: from,
+        currencyTo: to,
+    };
+    minimumAmountCache.set(cacheKey, {
+        value,
+        expiresAt: Date.now() + MIN_AMOUNT_CACHE_MS,
+    });
+    return value;
 };
 
 export const sortNowPaymentsPayload = (value) => {

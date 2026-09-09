@@ -15,7 +15,7 @@ const deriveIpnCallbackUrl = () => {
     if (!apiUrl) return "";
     try {
         const url = new URL(apiUrl);
-        url.pathname = "/payment/nowpayments/ipn";
+        url.pathname = "/payments/nowpayments/ipn";
         url.search = "";
         url.hash = "";
         return url.toString();

@@ -799,7 +799,7 @@ router.post("/nowpayments/ipn", async (req, res) => {
 
         return res.status(200).json({ status: "success" });
     } catch (error) {
-        console.error("POST /payment/nowpayments/ipn error:", error);
+        console.error("POST /payments/nowpayments/ipn error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "server error");
     }
 });

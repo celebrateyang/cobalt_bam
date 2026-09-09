@@ -190,7 +190,7 @@ paypal:
 nowpayments:
   enabled: true
   secretName: nowpayments-secret
-  ipnCallbackUrl: "https://api.freesavevideo.online/payment/nowpayments/ipn"
+  ipnCallbackUrl: "https://api.freesavevideo.online/payments/nowpayments/ipn"
   payCurrencies: "usdttrc20"
 
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)

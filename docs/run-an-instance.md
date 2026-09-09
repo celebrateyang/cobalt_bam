@@ -101,14 +101,14 @@ NOWPayments provides one-time USD-priced credit packs paid in USDT. Configure:
 
 - `NOWPAYMENTS_API_KEY`
 - `NOWPAYMENTS_IPN_SECRET`
-- `NOWPAYMENTS_IPN_CALLBACK_URL` (defaults to `<API_URL>/payment/nowpayments/ipn`)
+- `NOWPAYMENTS_IPN_CALLBACK_URL` (defaults to `<API_URL>/payments/nowpayments/ipn`)
 - `NOWPAYMENTS_PAY_CURRENCIES` (comma separated; defaults to `usdttrc20`)
 - `NOWPAYMENTS_API_BASE` (optional; defaults to `https://api.nowpayments.io`)
 
 The production IPN listener is:
 
 ```text
-https://api.freesavevideo.online/payment/nowpayments/ipn
+https://api.freesavevideo.online/payments/nowpayments/ipn
 ```
 
 The API validates `x-nowpayments-sig` with HMAC-SHA512, binds the remote

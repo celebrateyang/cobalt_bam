@@ -464,7 +464,7 @@ export const initUserDatabase = async () => {
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             clerk_user_id TEXT NOT NULL,
-            provider TEXT NOT NULL, -- wechat | paypal
+            provider TEXT NOT NULL, -- wechat | paypal | nowpayments
             product_key TEXT NOT NULL,
             points INTEGER NOT NULL,
             amount_fen INTEGER NOT NULL,

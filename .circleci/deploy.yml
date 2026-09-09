@@ -125,6 +125,16 @@ jobs:
               fi
             done
       - run:
+          name: Verify NOWPayments secret
+          command: |
+            for key in NOWPAYMENTS_API_KEY NOWPAYMENTS_IPN_SECRET; do
+              encoded_value="$(kubectl -n infra get secret nowpayments-secret -o "jsonpath={.data.${key}}")"
+              if [ -z "${encoded_value}" ]; then
+                echo "nowpayments-secret is missing required key: ${key}" >&2
+                exit 1
+              fi
+            done
+      - run:
           name: Delete existing deployment to avoid usually stuck
           command: |
             kubectl delete deployment cobalt-cobalt-chart -n infra || true

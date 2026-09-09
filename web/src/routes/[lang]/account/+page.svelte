@@ -54,7 +54,8 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat" | "paypal";
+        provider: "wechat" | "paypal" | "nowpayments";
+        provider_data?: Record<string, unknown> | null;
     };
 
     type Membership = {
@@ -103,7 +104,15 @@
         | (CreditOrder & { kind: "credit" })
         | (MembershipOrder & { kind: "membership" });
 
-    type PaymentProvider = "wechat" | "paypal";
+    type PaymentProvider = "wechat" | "paypal" | "nowpayments";
+    type NowPaymentsCheckout = {
+        paymentId: string;
+        status: string;
+        payAddress: string;
+        payAmount: string;
+        payCurrency: string;
+        expirationEstimateDate?: string | null;
+    };
     type PayPalSdkInstance = {
         findEligibleMethods: (options: {
             currencyCode: string;
@@ -672,6 +681,10 @@
     let activeOrder: ActivePaymentOrder | null = null;
     let codeUrl = "";
     let qrDataUrl = "";
+    let nowPayment: NowPaymentsCheckout | null = null;
+    let nowPaymentsPayCurrencies: string[] = [];
+    let selectedNowPaymentsCurrency = "";
+    let cryptoAddressCopied = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
@@ -680,8 +693,7 @@
     let paypalSdkPromise: Promise<PayPalSdkInstance> | null = null;
     let paypalSdkLocale = "";
     let paypalSdkPromiseLocale = "";
-    // Temporarily route all locales to WeChat Pay while PayPal is unavailable.
-    // Keep the PayPal implementation in place so it can be restored quickly.
+    // PayPal remains disabled. Chinese checkout uses WeChat; other locales use USDT.
     const PAYPAL_PAYMENT_VISIBLE = false;
     const PAYPAL_LOCALE_BY_LANGUAGE: Record<string, string> = {
         de: "de-DE",
@@ -719,20 +731,27 @@
 
     $: isChinese = $page.params.lang === "zh";
     $: if (
-        PAYPAL_PAYMENT_VISIBLE &&
         !isChinese &&
-        selectedPaymentProvider !== "paypal"
+        selectedPaymentProvider !== "nowpayments"
     ) {
-        selectedPaymentProvider = "paypal";
+        selectedPaymentProvider = "nowpayments";
+        clearActiveOrder();
+    }
+    $: if (isChinese && selectedPaymentProvider !== "wechat") {
+        selectedPaymentProvider = "wechat";
         clearActiveOrder();
     }
     $: topupSubtitleKey =
-        selectedPaymentProvider === "paypal"
+        selectedPaymentProvider === "nowpayments"
+            ? "auth.topup_subtitle_nowpayments"
+            : selectedPaymentProvider === "paypal"
             ? "auth.topup_subtitle_paypal"
             : "auth.topup_subtitle_wechat";
 
     const PAYPAL_BEST_VALUE_PRODUCT_KEY = "paypal_usd_999";
     const PAYPAL_RECOMMENDED_PRODUCT_KEY = "paypal_usd_499";
+    const NOWPAYMENTS_BEST_VALUE_PRODUCT_KEY = "nowpayments_usd_999";
+    const NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY = "nowpayments_usd_499";
     const WECHAT_RECOMMENDED_PRODUCT_KEY = "points_1000";
 
     const sortCreditProductsForDisplay = (
@@ -771,23 +790,34 @@
                 return Number(b.points) - Number(a.points);
             });
 
-        if (selectedPaymentProvider === "paypal") {
+        if (
+            selectedPaymentProvider === "paypal" ||
+            selectedPaymentProvider === "nowpayments"
+        ) {
+            const preferredBest =
+                selectedPaymentProvider === "nowpayments"
+                    ? NOWPAYMENTS_BEST_VALUE_PRODUCT_KEY
+                    : PAYPAL_BEST_VALUE_PRODUCT_KEY;
+            const preferredRecommended =
+                selectedPaymentProvider === "nowpayments"
+                    ? NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY
+                    : PAYPAL_RECOMMENDED_PRODUCT_KEY;
             const fallbackBest = ranked[0]?.key ?? null;
             const fallbackRecommended =
                 ranked.find((product) => product.key !== fallbackBest)?.key ?? null;
 
             bestValueProductKey =
-                ranked.some((product) => product.key === PAYPAL_BEST_VALUE_PRODUCT_KEY)
-                    ? PAYPAL_BEST_VALUE_PRODUCT_KEY
+                ranked.some((product) => product.key === preferredBest)
+                    ? preferredBest
                     : fallbackBest;
 
             recommendedValueProductKey =
                 ranked.some(
                     (product) =>
-                        product.key === PAYPAL_RECOMMENDED_PRODUCT_KEY &&
+                        product.key === preferredRecommended &&
                         product.key !== bestValueProductKey,
                 )
-                    ? PAYPAL_RECOMMENDED_PRODUCT_KEY
+                    ? preferredRecommended
                     : fallbackRecommended;
         } else {
             bestValueProductKey = ranked[0]?.key ?? null;
@@ -834,11 +864,31 @@
             creditProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
+            if (provider === "nowpayments") {
+                nowPaymentsPayCurrencies = Array.isArray(
+                    data?.data?.payCurrencies,
+                )
+                    ? data.data.payCurrencies.filter(
+                          (value: unknown): value is string =>
+                              typeof value === "string" && Boolean(value),
+                      )
+                    : [];
+                if (
+                    !nowPaymentsPayCurrencies.includes(
+                        selectedNowPaymentsCurrency,
+                    )
+                ) {
+                    selectedNowPaymentsCurrency =
+                        nowPaymentsPayCurrencies[0] || "";
+                }
+            }
             const trackedProducts = sortCreditProductsForDisplay(
                 creditProducts,
                 provider === "wechat"
                     ? WECHAT_RECOMMENDED_PRODUCT_KEY
-                    : PAYPAL_RECOMMENDED_PRODUCT_KEY,
+                    : provider === "nowpayments"
+                      ? NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY
+                      : PAYPAL_RECOMMENDED_PRODUCT_KEY,
             );
             trackCreditProductListViewed(provider, trackedProducts);
         } catch (error) {
@@ -993,7 +1043,29 @@
         activeOrder = null;
         codeUrl = "";
         qrDataUrl = "";
+        nowPayment = null;
+        cryptoAddressCopied = false;
         orderStatusLoading = false;
+    };
+
+    const hydrateNowPaymentFromOrder = (order: CreditOrder) => {
+        const data = order.provider_data || {};
+        const paymentId = String(data.nowpayments_payment_id || "");
+        const payAddress = String(data.pay_address || "");
+        const payAmount = String(data.pay_amount || "");
+        const payCurrency = String(data.pay_currency || "");
+        if (!paymentId || !payAddress || !payAmount || !payCurrency) return;
+        nowPayment = {
+            paymentId,
+            status: String(data.nowpayments_status || "waiting"),
+            payAddress,
+            payAmount,
+            payCurrency,
+            expirationEstimateDate:
+                typeof data.expiration_estimate_date === "string"
+                    ? data.expiration_estimate_date
+                    : null,
+        };
     };
 
     onDestroy(() => {
@@ -1065,8 +1137,14 @@
 
             const order = data?.data?.order as CreditOrder | undefined;
             if (order) {
-                if (showWechatModal && order.provider === "wechat") {
+                if (
+                    showWechatModal &&
+                    ["wechat", "nowpayments"].includes(order.provider)
+                ) {
                     activeOrder = { ...order, kind: "credit" };
+                    if (order.provider === "nowpayments") {
+                        hydrateNowPaymentFromOrder(order);
+                    }
                 }
                 if (order.status === "PAID") {
                     stopPolling();
@@ -1234,6 +1312,85 @@
             console.debug("create wechat pay order failed", error);
         } finally {
             purchaseLoading = false;
+        }
+    };
+
+    const startNowPaymentsPay = async (productKey: string) => {
+        if (purchaseLoading || !$clerkUser) return;
+        if (activeOrder?.status === "CREATED") return;
+
+        purchaseLoading = true;
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+        lastPaymentResumeKey = "";
+
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+
+            const res = await fetch(
+                `${currentApiURL()}/payments/credits/nowpayments`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        productKey,
+                        payCurrency: selectedNowPaymentsCurrency || undefined,
+                        attribution: getOrderAttribution(),
+                    }),
+                },
+            );
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to create order");
+            }
+
+            const order = data?.data?.order as CreditOrder | undefined;
+            const payment = data?.data?.nowpayments as
+                | NowPaymentsCheckout
+                | undefined;
+            if (!order?.id || !payment?.payAddress || !payment?.payAmount) {
+                throw new Error("invalid create order response");
+            }
+
+            trackCheckoutStarted({
+                id: productKey,
+                name: `${order.points} credits`,
+                value: order.amount_fen / 100,
+                currency: order.currency,
+                provider: order.provider,
+                kind: "credit",
+            });
+
+            activeOrder = { ...order, kind: "credit" };
+            nowPayment = payment;
+            qrDataUrl = await QRCode.toDataURL(payment.payAddress, {
+                width: 220,
+                margin: 1,
+                color: { dark: "#000000", light: "#ffffff" },
+            });
+            startPolling(order.id);
+        } catch (error) {
+            purchaseErrorKey = "auth.payment_create_failed";
+            console.debug("create NOWPayments order failed", error);
+        } finally {
+            purchaseLoading = false;
+        }
+    };
+
+    const copyCryptoAddress = async () => {
+        if (!nowPayment?.payAddress) return;
+        try {
+            await navigator.clipboard.writeText(nowPayment.payAddress);
+            cryptoAddressCopied = true;
+            setTimeout(() => {
+                cryptoAddressCopied = false;
+            }, 2000);
+        } catch {
+            cryptoAddressCopied = false;
         }
     };
 
@@ -1818,6 +1975,8 @@
 
         if (selectedPaymentProvider === "paypal") {
             void startPayPalPay(product.key);
+        } else if (selectedPaymentProvider === "nowpayments") {
+            void startNowPaymentsPay(product.key);
         } else {
             void startWechatPay(product.key);
         }
@@ -2360,6 +2519,17 @@
                             </div>
                         {/if}
 
+                        {#if selectedPaymentProvider === "nowpayments" && nowPaymentsPayCurrencies.length > 1}
+                            <label class="crypto-network-select">
+                                <span>{$t("auth.nowpayments_network")}</span>
+                                <select bind:value={selectedNowPaymentsCurrency}>
+                                    {#each nowPaymentsPayCurrencies as payCurrency}
+                                        <option value={payCurrency}>{payCurrency.toUpperCase()}</option>
+                                    {/each}
+                                </select>
+                            </label>
+                        {/if}
+
                         {#if creditProductsLoading}
                             <div class="subtext">{$t("auth.loading")}</div>
                         {:else if creditProductsErrorKey}
@@ -2410,6 +2580,17 @@
                                                     on:click={() => startWechatPay(product.key)}
                                                 >
                                                     {$t("auth.wechat_pay")}
+                                                </button>
+                                            {:else if selectedPaymentProvider === "nowpayments"}
+                                                <button
+                                                    class="button elevated active"
+                                                    disabled={purchaseLoading ||
+                                                        activeOrder?.status === "CREATED" ||
+                                                        product.enabled === false}
+                                                    on:click={() =>
+                                                        startNowPaymentsPay(product.key)}
+                                                >
+                                                    {$t("auth.nowpayments_pay")}
                                                 </button>
                                             {:else}
                                                 <div class="paypal-button-slot">
@@ -2755,6 +2936,116 @@
                                 </button>
                                 <button class="button elevated" on:click={clearActiveOrder}>
                                     {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {/if}
+
+        {#if activeOrder?.kind === "credit" && activeOrder.provider === "nowpayments" && nowPayment}
+            <div
+                class="payment-overlay"
+                role="presentation"
+                on:click={clearActiveOrder}
+            >
+                <div class="payment-modal" on:click|stopPropagation>
+                    <div class="payment-header">
+                        <div class="payment-title">
+                            {$t("auth.nowpayments_qr_pay_title")}
+                        </div>
+                        <button class="button elevated" on:click={clearActiveOrder}>
+                            {$t("auth.close")}
+                        </button>
+                    </div>
+
+                    <div class="subtext payment-subtitle">
+                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
+                        - {activeOrder.points} {$t("auth.points_label")}
+                    </div>
+
+                    <div class="payment-body">
+                        <div class="payment-qr">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="payment-success">
+                                    {$t("auth.payment_success")}
+                                </div>
+                            {:else if qrDataUrl}
+                                <img
+                                    class="payment-qr-image"
+                                    src={qrDataUrl}
+                                    alt={$t("auth.nowpayments_qr_alt")}
+                                />
+                            {:else}
+                                <div class="payment-qr-placeholder">
+                                    {$t("auth.qr_generating")}
+                                </div>
+                            {/if}
+                        </div>
+
+                        <div class="payment-status crypto-payment-status">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="subtext payment-hint">
+                                    {$t("auth.payment_paid_hint")}
+                                </div>
+                            {:else if activeOrder.status === "CLOSED"}
+                                <div class="subtext error">
+                                    {$t("auth.payment_expired")}
+                                </div>
+                            {:else if activeOrder.status === "FAILED"}
+                                <div class="subtext error">
+                                    {$t("auth.payment_failed")}
+                                </div>
+                            {:else}
+                                <div class="payment-wait">
+                                    {$t("auth.payment_waiting")}
+                                </div>
+                                <div class="crypto-payment-details">
+                                    <div class="crypto-payment-row">
+                                        <span>{$t("auth.nowpayments_send_exact")}</span>
+                                        <strong>{nowPayment.payAmount} {nowPayment.payCurrency.toUpperCase()}</strong>
+                                    </div>
+                                    <div class="crypto-payment-row">
+                                        <span>{$t("auth.nowpayments_network")}</span>
+                                        <strong>{nowPayment.payCurrency.toUpperCase()}</strong>
+                                    </div>
+                                    <div class="crypto-address-label">
+                                        {$t("auth.nowpayments_address")}
+                                    </div>
+                                    <code class="crypto-address">{nowPayment.payAddress}</code>
+                                    <button
+                                        class="button elevated"
+                                        on:click={copyCryptoAddress}
+                                    >
+                                        {$t(
+                                            cryptoAddressCopied
+                                                ? "auth.address_copied"
+                                                : "auth.copy_address",
+                                        )}
+                                    </button>
+                                </div>
+                                <div class="subtext payment-hint">
+                                    {$t("auth.nowpayments_waiting_hint")}
+                                </div>
+                            {/if}
+
+                            <div class="payment-actions">
+                                {#if activeOrder.status === "CREATED"}
+                                    <button
+                                        class="button elevated"
+                                        on:click={() => {
+                                            if (activeOrder) {
+                                                checkActiveOrderStatus(activeOrder);
+                                            }
+                                        }}
+                                        disabled={orderStatusLoading}
+                                    >
+                                        {$t("auth.check_status")}
+                                    </button>
+                                {/if}
+                                <button class="button elevated" on:click={clearActiveOrder}>
+                                    {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.close")}
                                 </button>
                             </div>
                         </div>
@@ -3661,6 +3952,26 @@
         opacity: 0.85;
     }
 
+    .crypto-network-select {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--subtext);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .crypto-network-select select {
+        min-width: 160px;
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: var(--surface-1);
+        color: var(--text);
+        padding: 8px 10px;
+        font: inherit;
+    }
+
     .product-subtitle-original {
         text-decoration: line-through;
     }
@@ -3818,6 +4129,49 @@
         flex-direction: column;
         gap: 10px;
         justify-content: space-between;
+    }
+
+    .crypto-payment-status {
+        min-width: 0;
+    }
+
+    .crypto-payment-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .crypto-payment-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--subtext);
+        font-size: 13px;
+    }
+
+    .crypto-payment-row strong {
+        color: var(--text);
+        text-align: right;
+    }
+
+    .crypto-address-label {
+        color: var(--subtext);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .crypto-address {
+        display: block;
+        overflow-wrap: anywhere;
+        border: 1px solid var(--surface-2);
+        border-radius: 12px;
+        background: var(--surface-1);
+        color: var(--text);
+        padding: 10px;
+        font-size: 12px;
+        line-height: 1.5;
+        user-select: all;
     }
 
     .payment-success {

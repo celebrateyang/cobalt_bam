@@ -727,8 +727,10 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         app.use('/user', userRouter);
         app.use('/platform-requests', platformRequestsRouter);
         app.use('/payments', paymentsRouter);
+        // NOWPayments dashboard is configured with the singular /payment IPN URL.
+        app.use('/payment', paymentsRouter);
     } else {
-        app.use(['/social', '/user', '/platform-requests', '/payments'], (_, res) => {
+        app.use(['/social', '/user', '/platform-requests', '/payments', '/payment'], (_, res) => {
             res.sendStatus(404);
         });
     }

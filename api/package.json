@@ -19,6 +19,7 @@
         "test:membership-features": "node --test src/core/membership-features.test.js",
         "test:membership-products": "node --test src/payments/membership-products.test.js",
         "test:paypal": "node --test src/payments/paypal.test.js",
+        "test:nowpayments": "node --test src/payments/nowpayments.test.js",
         "test:collection-window": "node --test src/processing/collection-window.test.js",
         "test:match-action": "node --test src/processing/match-action.test.js",
         "test:platform-requests": "node --test src/processing/platform-domain.test.js",

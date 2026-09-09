@@ -87,6 +87,45 @@ export const updateCreditOrderProviderData = async (id, providerData) => {
     return result.rows[0] || null;
 };
 
+export const updatePendingCreditOrder = async ({
+    id,
+    status,
+    providerData = null,
+    rawNotify = null,
+}) => {
+    const allowedStatuses = new Set([
+        CREDIT_ORDER_STATUS.created,
+        CREDIT_ORDER_STATUS.closed,
+        CREDIT_ORDER_STATUS.failed,
+    ]);
+    if (!allowedStatuses.has(status)) {
+        throw new Error("invalid pending credit order status");
+    }
+
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE credit_orders
+        SET status = $2,
+            provider_data = COALESCE(provider_data, '{}'::jsonb) || $3::jsonb,
+            raw_notify = COALESCE($4::jsonb, raw_notify),
+            updated_at = $5
+        WHERE id = $1
+          AND status = $6
+        RETURNING *;
+        `,
+        [
+            id,
+            status,
+            providerData || {},
+            rawNotify,
+            now,
+            CREDIT_ORDER_STATUS.created,
+        ],
+    );
+    return result.rows[0] || null;
+};
+
 export const hasPaidCreditOrderByClerkUserId = async (clerkUserId) => {
     if (typeof clerkUserId !== "string" || !clerkUserId.trim()) {
         return false;

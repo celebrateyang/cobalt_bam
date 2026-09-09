@@ -211,6 +211,23 @@ spec:
                   key: PAYPAL_MEMBERSHIP_YEARLY_PLAN_ID
                   optional: true
             {{- end }}
+            {{- if .Values.nowpayments.enabled }}
+            # NOWPayments - international USD credit packs paid with USDT
+            - name: NOWPAYMENTS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.nowpayments.secretName | quote }}
+                  key: NOWPAYMENTS_API_KEY
+            - name: NOWPAYMENTS_IPN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.nowpayments.secretName | quote }}
+                  key: NOWPAYMENTS_IPN_SECRET
+            - name: NOWPAYMENTS_IPN_CALLBACK_URL
+              value: {{ .Values.nowpayments.ipnCallbackUrl | quote }}
+            - name: NOWPAYMENTS_PAY_CURRENCIES
+              value: {{ .Values.nowpayments.payCurrencies | quote }}
+            {{- end }}
             {{- if .Values.aiVideo.enabled }}
             - name: AI_VIDEO_ENABLED
               value: "1"

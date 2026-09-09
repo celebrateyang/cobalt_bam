@@ -8,6 +8,7 @@ import {
     getCreditOrderById,
     getCreditOrderByOutTradeNo,
     markCreditOrderPaid,
+    updatePendingCreditOrder,
     updateCreditOrderProviderData,
 } from "../db/credit-orders.js";
 import {
@@ -71,6 +72,19 @@ import {
     parsePayPalAmount,
     verifyPayPalWebhookSignature,
 } from "../payments/paypal.js";
+import {
+    NowPaymentsRequestError,
+    createNowPayment,
+    getNowPayment,
+    getNowPaymentsPayCurrencies,
+    getNowPaymentsStatus,
+    isDecimalAtLeast,
+    isNowPaymentsConfigured,
+    parseDecimalToMinorUnits,
+    resolveNowPaymentsPayCurrency,
+    toPublicNowPayment,
+    verifyNowPaymentsIpnSignature,
+} from "../payments/nowpayments.js";
 
 const router = express.Router();
 
@@ -157,10 +171,17 @@ const PAYPAL_CREDIT_PRODUCTS = [
     },
 ];
 
+const NOWPAYMENTS_CREDIT_PRODUCTS = PAYPAL_CREDIT_PRODUCTS.map((product) => ({
+    ...product,
+    key: product.key.replace(/^paypal_/, "nowpayments_"),
+}));
+
 const getWechatProductByKey = (key) =>
     WECHAT_CREDIT_PRODUCTS.find((p) => p.key === key);
 const getPayPalProductByKey = (key) =>
     PAYPAL_CREDIT_PRODUCTS.find((p) => p.key === key);
+const getNowPaymentsProductByKey = (key) =>
+    NOWPAYMENTS_CREDIT_PRODUCTS.find((p) => p.key === key);
 const isClerkApiConfigured = !!process.env.CLERK_SECRET_KEY;
 const isClerkAuthConfigured =
     isClerkApiConfigured && !!process.env.CLERK_PUBLISHABLE_KEY;
@@ -246,13 +267,24 @@ const normalizeProvider = (rawProvider, fallback = "wechat") => {
     const normalized = String(rawProvider || "")
         .trim()
         .toLowerCase();
-    if (["wechat", "paypal"].includes(normalized)) {
+    if (["wechat", "paypal", "nowpayments"].includes(normalized)) {
         return normalized;
     }
     return fallback;
 };
 
 const buildPublicProducts = (provider) => {
+    if (provider === "nowpayments") {
+        const enabled = isNowPaymentsConfigured();
+        return NOWPAYMENTS_CREDIT_PRODUCTS.map((product) => ({
+            key: product.key,
+            points: product.points,
+            unitPriceFen: product.unitPriceFen,
+            amountFen: product.amountFen,
+            currency: product.currency,
+            enabled,
+        }));
+    }
     if (provider === "paypal") {
         const enabled = isPayPalCheckoutConfigured();
         return PAYPAL_CREDIT_PRODUCTS.map((product) => ({
@@ -276,6 +308,7 @@ const buildPublicProducts = (provider) => {
 };
 
 const buildPublicMembershipProducts = (provider) => {
+    if (provider === "nowpayments") return [];
     if (provider === "paypal") {
         const checkoutEnabled = isPayPalCheckoutConfigured();
         return PAYPAL_MEMBERSHIP_PRODUCTS.map((product) => ({
@@ -553,6 +586,110 @@ const markPayPalOrderPaidFromOrder = async ({
         : await markCreditOrderPaid(payment);
 };
 
+const getNowPaymentsProviderData = (payment) => ({
+    nowpayments_payment_id: String(payment?.payment_id || ""),
+    nowpayments_status: getNowPaymentsStatus(payment),
+    pay_address: String(payment?.pay_address || ""),
+    pay_amount: String(payment?.pay_amount ?? ""),
+    pay_currency: String(payment?.pay_currency || "").toLowerCase(),
+    actually_paid: String(payment?.actually_paid ?? ""),
+    outcome_amount: String(payment?.outcome_amount ?? ""),
+    outcome_currency: String(payment?.outcome_currency || "").toLowerCase(),
+    expiration_estimate_date: payment?.expiration_estimate_date || null,
+    nowpayments_updated_at: payment?.updated_at || null,
+});
+
+const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
+    const outTradeNo = String(payment?.order_id || "").trim();
+    const paymentId = String(payment?.payment_id || "").trim();
+    if (!outTradeNo || !/^\d+$/.test(paymentId)) {
+        return { ok: false, code: "INVALID_PAYMENT_UPDATE" };
+    }
+
+    const order = await getCreditOrderByOutTradeNo(outTradeNo);
+    if (!order) return { ok: false, code: "ORDER_NOT_FOUND" };
+    if (order.provider !== "nowpayments") {
+        return { ok: false, code: "PROVIDER_MISMATCH", order };
+    }
+
+    const storedPaymentId = String(
+        order?.provider_data?.nowpayments_payment_id || "",
+    ).trim();
+    if (!storedPaymentId || storedPaymentId !== paymentId) {
+        return { ok: false, code: "PAYMENT_ID_MISMATCH", order };
+    }
+
+    const storedPayCurrency = String(
+        order?.provider_data?.pay_currency || "",
+    ).toLowerCase();
+    const receivedPayCurrency = String(payment?.pay_currency || "").toLowerCase();
+    if (
+        storedPayCurrency &&
+        receivedPayCurrency &&
+        storedPayCurrency !== receivedPayCurrency
+    ) {
+        return { ok: false, code: "PAY_CURRENCY_MISMATCH", order };
+    }
+
+    const providerData = getNowPaymentsProviderData(payment);
+    const status = getNowPaymentsStatus(payment);
+    await updatePendingCreditOrder({
+        id: order.id,
+        status:
+            status === "expired"
+                ? "CLOSED"
+                : status === "failed"
+                  ? "FAILED"
+                  : "CREATED",
+        providerData,
+        rawNotify,
+    });
+
+    if (status !== "finished") {
+        return { ok: true, code: "PENDING", order, paymentStatus: status };
+    }
+
+    const totalFen = parseDecimalToMinorUnits(payment?.price_amount);
+    const priceCurrency = String(payment?.price_currency || "").toUpperCase();
+    if (
+        !Number.isFinite(totalFen) ||
+        totalFen !== Number(order.amount_fen) ||
+        priceCurrency !== String(order.currency || "").toUpperCase()
+    ) {
+        await updatePendingCreditOrder({
+            id: order.id,
+            status: "FAILED",
+            providerData: {
+                ...providerData,
+                validation_error: "PRICE_MISMATCH",
+            },
+            rawNotify,
+        });
+        return { ok: false, code: "AMOUNT_MISMATCH", order };
+    }
+
+    if (!isDecimalAtLeast(payment?.actually_paid, payment?.pay_amount)) {
+        await updatePendingCreditOrder({
+            id: order.id,
+            status: "FAILED",
+            providerData: {
+                ...providerData,
+                validation_error: "UNDERPAID",
+            },
+            rawNotify,
+        });
+        return { ok: false, code: "UNDERPAID", order };
+    }
+
+    return await markCreditOrderPaid({
+        outTradeNo,
+        providerTransactionId: paymentId,
+        paidAt: Date.now(),
+        rawNotify,
+        totalFen,
+    });
+};
+
 router.get("/credits/products", (req, res) => {
     const provider = normalizeProvider(req.query?.provider, "wechat");
     res.json({
@@ -560,6 +697,9 @@ router.get("/credits/products", (req, res) => {
         data: {
             provider,
             products: buildPublicProducts(provider),
+            ...(provider === "nowpayments"
+                ? { payCurrencies: getNowPaymentsPayCurrencies() }
+                : {}),
         },
     });
 });
@@ -574,6 +714,68 @@ router.get("/memberships/products", (req, res) => {
             limits: MEMBER_DOWNLOAD_LIMITS,
         },
     });
+});
+
+router.post("/nowpayments/ipn", async (req, res) => {
+    try {
+        if (!isNowPaymentsConfigured()) {
+            return jsonError(
+                res,
+                500,
+                "NOWPAYMENTS_NOT_CONFIGURED",
+                "NOWPayments is not configured",
+            );
+        }
+
+        const signature = req.header("x-nowpayments-sig");
+        if (
+            !verifyNowPaymentsIpnSignature({
+                signature,
+                payload: req.body || {},
+            })
+        ) {
+            console.warn("NOWPayments IPN signature invalid");
+            return jsonError(res, 401, "INVALID_SIGNATURE", "invalid signature");
+        }
+
+        const result = await applyNowPaymentsPaymentUpdate({
+            payment: req.body || {},
+            rawNotify: {
+                source: "nowpayments_ipn",
+                signature,
+                payment: req.body || {},
+            },
+        });
+
+        if (!result.ok) {
+            console.error("NOWPayments IPN rejected", {
+                code: result.code,
+                orderId: req.body?.order_id || null,
+                paymentId: req.body?.payment_id || null,
+            });
+            const retryable = result.code === "ORDER_NOT_FOUND";
+            if (retryable) {
+                return jsonError(
+                    res,
+                    500,
+                    result.code,
+                    "NOWPayments update rejected",
+                );
+            }
+
+            // The signature is valid and permanent validation failures will not
+            // improve on retry. Acknowledge them to avoid an endless IPN loop.
+            return res.status(200).json({
+                status: "ignored",
+                code: result.code,
+            });
+        }
+
+        return res.status(200).json({ status: "success" });
+    } catch (error) {
+        console.error("POST /payment/nowpayments/ipn error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "server error");
+    }
 });
 
 router.post("/wechat/notify", async (req, res) => {
@@ -880,6 +1082,15 @@ if (!isClerkAuthConfigured) {
         );
     });
 
+    router.post("/credits/nowpayments", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
     router.post("/credits/paypal/config", (_, res) => {
         return jsonError(
             res,
@@ -944,6 +1155,134 @@ if (!isClerkAuthConfigured) {
     });
 } else {
     router.use(clerkMiddleware());
+
+    router.post("/credits/nowpayments", async (req, res) => {
+        let createdOrder = null;
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isNowPaymentsConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "NOWPAYMENTS_NOT_CONFIGURED",
+                    "NOWPayments is not configured on this server",
+                );
+            }
+
+            const product = getNowPaymentsProductByKey(req.body?.productKey);
+            if (!product) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid credit product",
+                );
+            }
+            const payCurrency = resolveNowPaymentsPayCurrency(
+                req.body?.payCurrency,
+            );
+            if (!payCurrency) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PAY_CURRENCY",
+                    "Unsupported payment currency or network",
+                    { allowed: getNowPaymentsPayCurrencies() },
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const outTradeNo = `cpt_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            createdOrder = await createCreditOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "nowpayments",
+                productKey: product.key,
+                points: product.points,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+                providerData: {
+                    ...(attribution ? { attribution } : {}),
+                    pay_currency: payCurrency,
+                },
+            });
+
+            const payment = await createNowPayment({
+                outTradeNo,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                payCurrency,
+                points: product.points,
+            });
+            const publicPayment = toPublicNowPayment(payment);
+            if (
+                !/^\d+$/.test(publicPayment.paymentId) ||
+                !publicPayment.payAddress ||
+                !publicPayment.payAmount ||
+                publicPayment.payCurrency !== payCurrency ||
+                String(payment?.order_id || "") !== outTradeNo ||
+                parseDecimalToMinorUnits(payment?.price_amount) !==
+                    product.amountFen ||
+                String(payment?.price_currency || "").toUpperCase() !==
+                    product.currency
+            ) {
+                throw new Error("NOWPayments returned an invalid payment response");
+            }
+
+            const order = await updateCreditOrderProviderData(createdOrder.id, {
+                ...getNowPaymentsProviderData(payment),
+                created_response: payment,
+            });
+            return res.json({
+                status: "success",
+                data: {
+                    order,
+                    nowpayments: publicPayment,
+                    payCurrencies: getNowPaymentsPayCurrencies(),
+                },
+            });
+        } catch (error) {
+            if (createdOrder?.id) {
+                try {
+                    await updatePendingCreditOrder({
+                        id: createdOrder.id,
+                        status: "FAILED",
+                        providerData: {
+                            create_error:
+                                error instanceof NowPaymentsRequestError
+                                    ? {
+                                          status: error.status,
+                                          data: error.data || null,
+                                      }
+                                    : { message: error?.message || "unknown" },
+                        },
+                    });
+                } catch (updateError) {
+                    console.error(
+                        "Failed to close NOWPayments credit order:",
+                        updateError,
+                    );
+                }
+            }
+            console.error("POST /payments/credits/nowpayments error:", {
+                name: error?.name,
+                message: error?.message,
+                status: error?.status,
+            });
+            return jsonError(
+                res,
+                error instanceof NowPaymentsRequestError ? 502 : 500,
+                "NOWPAYMENTS_CREATE_FAILED",
+                "Failed to create NOWPayments payment",
+            );
+        }
+    });
 
     router.post("/credits/paypal/config", async (req, res) => {
         try {
@@ -1971,6 +2310,39 @@ if (!isClerkAuthConfigured) {
                 } catch (error) {
                     console.error(
                         "PayPal sync order status failed:",
+                        order?.out_trade_no,
+                        error,
+                    );
+                }
+            }
+
+            if (
+                shouldSync &&
+                order.provider === "nowpayments" &&
+                order.status !== "PAID" &&
+                isNowPaymentsConfigured()
+            ) {
+                try {
+                    const paymentId = String(
+                        order?.provider_data?.nowpayments_payment_id || "",
+                    ).trim();
+                    if (paymentId) {
+                        const payment = await getNowPayment(paymentId);
+                        const result = await applyNowPaymentsPaymentUpdate({
+                            payment,
+                            rawNotify: {
+                                source: "nowpayments_payment_sync",
+                                payment,
+                            },
+                        });
+                        if (result?.order) {
+                            resolvedOrder =
+                                (await getCreditOrderById(order.id)) || result.order;
+                        }
+                    }
+                } catch (error) {
+                    console.error(
+                        "NOWPayments sync order status failed:",
                         order?.out_trade_no,
                         error,
                     );

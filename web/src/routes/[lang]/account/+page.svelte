@@ -86,6 +86,8 @@
         currency: string;
         billingType?: "one_time" | "subscription";
         enabled?: boolean;
+        entitlements?: string[];
+        limits?: MembershipLimits;
     };
 
     type MembershipOrder = {
@@ -94,7 +96,8 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat" | "paypal";
+        provider: "wechat" | "paypal" | "nowpayments";
+        provider_data?: Record<string, unknown> | null;
         product_key: string;
         plan_key: string;
         duration_days: number;
@@ -611,7 +614,9 @@
     const membershipPlanLabel = (planKey: string | undefined | null) => {
         if (planKey === "member_3day") return $t("auth.membership_3day");
         if (planKey === "member_weekly") return $t("auth.membership_weekly");
-        if (planKey === "member_yearly") return $t("auth.membership_yearly");
+        if (planKey === "member_yearly" || planKey === "member_yearly_crypto") {
+            return $t("auth.membership_yearly");
+        }
         return $t("auth.membership_monthly");
     };
 
@@ -636,6 +641,10 @@
         if (product.key === "member_monthly_onetime") {
             return $t("auth.membership_monthly_onetime_subtitle");
         }
+        if (product.key === "member_yearly_nowpayments_founder") {
+            const perMonth = `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`;
+            return $t("auth.membership_yearly_subtitle", { price: perMonth });
+        }
         const perMonth =
             product.key === "member_yearly"
                 ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
@@ -657,6 +666,13 @@
         const perMonth = `${formatAmount(Math.round(50000 / 12), "CNY")} / ${$t("auth.membership_month_short")}`;
         return $t("auth.membership_yearly_subtitle", { price: perMonth });
     };
+
+    const membershipProductHasEntitlement = (
+        product: MembershipProduct,
+        entitlement: string,
+    ) =>
+        !Array.isArray(product.entitlements) ||
+        product.entitlements.includes(entitlement);
 
     let creditProducts: CreditProduct[] = [];
     let displayedCreditProducts: CreditProduct[] = [];
@@ -1048,7 +1064,9 @@
         orderStatusLoading = false;
     };
 
-    const hydrateNowPaymentFromOrder = (order: CreditOrder) => {
+    const hydrateNowPaymentFromOrder = (
+        order: CreditOrder | MembershipOrder,
+    ) => {
         const data = order.provider_data || {};
         const paymentId = String(data.nowpayments_payment_id || "");
         const payAddress = String(data.pay_address || "");
@@ -1207,6 +1225,9 @@
             const order = data?.data?.order as MembershipOrder | undefined;
             if (order) {
                 activeOrder = { ...order, kind: "membership" };
+                if (order.provider === "nowpayments") {
+                    hydrateNowPaymentFromOrder(order);
+                }
                 if (order.status === "PAID") {
                     stopPolling();
                     purchaseNoticeKey = "auth.membership_payment_success";
@@ -1315,7 +1336,10 @@
         }
     };
 
-    const startNowPaymentsPay = async (productKey: string) => {
+    const startNowPaymentsPay = async (
+        productKey: string,
+        kind: "credit" | "membership" = "credit",
+    ) => {
         if (purchaseLoading || !$clerkUser) return;
         if (activeOrder?.status === "CREATED") return;
 
@@ -1329,7 +1353,9 @@
             if (!token) throw new Error("missing token");
 
             const res = await fetch(
-                `${currentApiURL()}/payments/credits/nowpayments`,
+                `${currentApiURL()}/payments/${
+                    kind === "membership" ? "memberships" : "credits"
+                }/nowpayments`,
                 {
                     method: "POST",
                     headers: {
@@ -1348,7 +1374,10 @@
                 throw new Error(data?.error?.message || "failed to create order");
             }
 
-            const order = data?.data?.order as CreditOrder | undefined;
+            const order = data?.data?.order as
+                | CreditOrder
+                | MembershipOrder
+                | undefined;
             const payment = data?.data?.nowpayments as
                 | NowPaymentsCheckout
                 | undefined;
@@ -1358,14 +1387,20 @@
 
             trackCheckoutStarted({
                 id: productKey,
-                name: `${order.points} credits`,
+                name:
+                    kind === "membership"
+                        ? (order as MembershipOrder).plan_key
+                        : `${(order as CreditOrder).points} credits`,
                 value: order.amount_fen / 100,
                 currency: order.currency,
                 provider: order.provider,
-                kind: "credit",
+                kind,
             });
 
-            activeOrder = { ...order, kind: "credit" };
+            activeOrder =
+                kind === "membership"
+                    ? { ...(order as MembershipOrder), kind: "membership" }
+                    : { ...(order as CreditOrder), kind: "credit" };
             nowPayment = payment;
             qrDataUrl = await QRCode.toDataURL(payment.payAddress, {
                 width: 220,
@@ -1910,6 +1945,8 @@
             const productKey =
                 selectedPaymentProvider === "paypal"
                     ? "member_monthly_recurring"
+                    : selectedPaymentProvider === "nowpayments"
+                      ? "member_yearly_nowpayments_founder"
                     : checkoutIntent === "membership_3day" ||
                         checkoutIntent === "membership_weekly"
                       ? "member_3day"
@@ -1930,6 +1967,8 @@
 
             if (selectedPaymentProvider === "wechat") {
                 void startMembershipWechatPay(membershipProduct.key);
+            } else if (selectedPaymentProvider === "nowpayments") {
+                void startNowPaymentsPay(membershipProduct.key, "membership");
             } else {
                 void startPayPalMembershipSubscription(membershipProduct.key);
             }
@@ -2739,7 +2778,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="product-right">
-                                                    {#if product.key === "member_yearly" || product.key === "member_yearly_recurring"}
+                                                    {#if product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder"}
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
@@ -2769,9 +2808,15 @@
 
                                             <div class="membership-benefits">
                                                 <span>{$t("auth.membership_benefit_no_points")}</span>
-                                                <span>{$t("auth.membership_benefit_ai_video")}</span>
-                                                <span>{$t("auth.membership_benefit_video_recording")}</span>
-                                                <span>{$t("auth.membership_benefit_random_chat")}</span>
+                                                {#if membershipProductHasEntitlement(product, "ai_video_studio")}
+                                                    <span>{$t("auth.membership_benefit_ai_video")}</span>
+                                                {/if}
+                                                {#if membershipProductHasEntitlement(product, "video_recording")}
+                                                    <span>{$t("auth.membership_benefit_video_recording")}</span>
+                                                {/if}
+                                                {#if membershipProductHasEntitlement(product, "random_chat")}
+                                                    <span>{$t("auth.membership_benefit_random_chat")}</span>
+                                                {/if}
                                             </div>
 
                                             <div class="product-actions">
@@ -2787,6 +2832,20 @@
                                                             )}
                                                     >
                                                         {$t("auth.wechat_pay")}
+                                                    </button>
+                                                {:else if selectedPaymentProvider === "nowpayments"}
+                                                    <button
+                                                        class="button elevated active"
+                                                        disabled={purchaseLoading ||
+                                                            activeOrder?.status === "CREATED" ||
+                                                            product.enabled === false}
+                                                        on:click={() =>
+                                                            startNowPaymentsPay(
+                                                                product.key,
+                                                                "membership",
+                                                            )}
+                                                    >
+                                                        {$t("auth.nowpayments_pay")}
                                                     </button>
                                                 {:else if product.billingType === "subscription"}
                                                     <button
@@ -2944,7 +3003,7 @@
             </div>
         {/if}
 
-        {#if activeOrder?.kind === "credit" && activeOrder.provider === "nowpayments" && nowPayment}
+        {#if activeOrder && activeOrder.provider === "nowpayments" && nowPayment}
             <div
                 class="payment-overlay"
                 role="presentation"
@@ -2962,14 +3021,22 @@
 
                     <div class="subtext payment-subtitle">
                         {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
-                        - {activeOrder.points} {$t("auth.points_label")}
+                        {#if activeOrder.kind === "credit"}
+                            - {activeOrder.points} {$t("auth.points_label")}
+                        {:else}
+                            - {membershipPlanLabel(activeOrder.plan_key)}
+                        {/if}
                     </div>
 
                     <div class="payment-body">
                         <div class="payment-qr">
                             {#if activeOrder.status === "PAID"}
                                 <div class="payment-success">
-                                    {$t("auth.payment_success")}
+                                    {$t(
+                                        activeOrder.kind === "membership"
+                                            ? "auth.membership_payment_success"
+                                            : "auth.payment_success",
+                                    )}
                                 </div>
                             {:else if qrDataUrl}
                                 <img

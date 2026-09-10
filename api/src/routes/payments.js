@@ -19,6 +19,7 @@ import {
     markMembershipOrderPaid,
     reverseMembershipOrderPayment,
     updateMembershipOrderProviderData,
+    updatePendingMembershipOrder,
 } from "../db/membership-orders.js";
 import {
     applyPayPalMembershipPayment,
@@ -41,9 +42,11 @@ import {
     verifyWechatpaySignature,
 } from "../payments/wechatpay.js";
 import {
+    NOWPAYMENTS_MEMBERSHIP_PRODUCTS,
     PAYPAL_MEMBERSHIP_PRODUCTS,
     WECHAT_MEMBERSHIP_PRODUCTS,
     getMembershipProductDescription,
+    getNowPaymentsMembershipProductByKey,
     getPayPalMembershipPlanId,
     getPayPalMembershipProductByKey,
     getWechatMembershipProductByKey,
@@ -310,8 +313,26 @@ const buildPublicProducts = (provider, { nowPaymentsMinimumFen = 0 } = {}) => {
     }));
 };
 
-const buildPublicMembershipProducts = (provider) => {
-    if (provider === "nowpayments") return [];
+const buildPublicMembershipProducts = (
+    provider,
+    { nowPaymentsMinimumFen = 0 } = {},
+) => {
+    if (provider === "nowpayments") {
+        const enabled = isNowPaymentsConfigured();
+        return NOWPAYMENTS_MEMBERSHIP_PRODUCTS.filter(
+            (product) => product.amountFen >= nowPaymentsMinimumFen,
+        ).map((product) => ({
+            key: product.key,
+            planKey: product.planKey,
+            durationDays: product.durationDays,
+            amountFen: product.amountFen,
+            currency: product.currency,
+            billingType: product.billingType,
+            entitlements: product.entitlements,
+            limits: product.limits,
+            enabled,
+        }));
+    }
     if (provider === "paypal") {
         const checkoutEnabled = isPayPalCheckoutConfigured();
         return PAYPAL_MEMBERSHIP_PRODUCTS.map((product) => ({
@@ -609,7 +630,10 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
         return { ok: false, code: "INVALID_PAYMENT_UPDATE" };
     }
 
-    const order = await getCreditOrderByOutTradeNo(outTradeNo);
+    const isMembershipOrder = outTradeNo.startsWith("mbr_");
+    const order = isMembershipOrder
+        ? await getMembershipOrderByOutTradeNo(outTradeNo)
+        : await getCreditOrderByOutTradeNo(outTradeNo);
     if (!order) return { ok: false, code: "ORDER_NOT_FOUND" };
     if (order.provider !== "nowpayments") {
         return { ok: false, code: "PROVIDER_MISMATCH", order };
@@ -636,7 +660,10 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
 
     const providerData = getNowPaymentsProviderData(payment);
     const status = getNowPaymentsStatus(payment);
-    await updatePendingCreditOrder({
+    const updatePendingOrder = isMembershipOrder
+        ? updatePendingMembershipOrder
+        : updatePendingCreditOrder;
+    await updatePendingOrder({
         id: order.id,
         status:
             status === "expired"
@@ -659,7 +686,7 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
         totalFen !== Number(order.amount_fen) ||
         priceCurrency !== String(order.currency || "").toUpperCase()
     ) {
-        await updatePendingCreditOrder({
+        await updatePendingOrder({
             id: order.id,
             status: "FAILED",
             providerData: {
@@ -672,7 +699,7 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
     }
 
     if (!isDecimalAtLeast(payment?.actually_paid, payment?.pay_amount)) {
-        await updatePendingCreditOrder({
+        await updatePendingOrder({
             id: order.id,
             status: "FAILED",
             providerData: {
@@ -684,7 +711,10 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
         return { ok: false, code: "UNDERPAID", order };
     }
 
-    return await markCreditOrderPaid({
+    const markOrderPaid = isMembershipOrder
+        ? markMembershipOrderPaid
+        : markCreditOrderPaid;
+    return await markOrderPaid({
         outTradeNo,
         providerTransactionId: paymentId,
         paidAt: Date.now(),
@@ -730,16 +760,45 @@ router.get("/credits/products", async (req, res) => {
     }
 });
 
-router.get("/memberships/products", (req, res) => {
-    const provider = normalizeProvider(req.query?.provider, "wechat");
-    res.json({
-        status: "success",
-        data: {
-            provider,
-            products: buildPublicMembershipProducts(provider),
-            limits: MEMBER_DOWNLOAD_LIMITS,
-        },
-    });
+router.get("/memberships/products", async (req, res) => {
+    try {
+        const provider = normalizeProvider(req.query?.provider, "wechat");
+        let nowPaymentsMinimum = null;
+        if (provider === "nowpayments" && isNowPaymentsConfigured()) {
+            nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
+                currencyFrom: "usd",
+                currencyTo: getNowPaymentsPayCurrencies()[0],
+            });
+        }
+        const products = buildPublicMembershipProducts(provider, {
+            nowPaymentsMinimumFen: nowPaymentsMinimum?.minimumFen || 0,
+        });
+        res.json({
+            status: "success",
+            data: {
+                provider,
+                products,
+                limits:
+                    provider === "nowpayments" && products.length === 1
+                        ? products[0].limits
+                        : MEMBER_DOWNLOAD_LIMITS,
+                ...(provider === "nowpayments"
+                    ? {
+                          payCurrencies: getNowPaymentsPayCurrencies(),
+                          minimumAmount: nowPaymentsMinimum,
+                      }
+                    : {}),
+            },
+        });
+    } catch (error) {
+        console.error("GET /payments/memberships/products error:", error);
+        return jsonError(
+            res,
+            502,
+            "PRODUCTS_UNAVAILABLE",
+            "Failed to load membership payment limits",
+        );
+    }
 });
 
 router.post("/nowpayments/ipn", async (req, res) => {
@@ -1153,6 +1212,15 @@ if (!isClerkAuthConfigured) {
         );
     });
 
+    router.post("/memberships/nowpayments", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
     router.use("/memberships/paypal", (_, res) => {
         return jsonError(
             res,
@@ -1320,6 +1388,156 @@ if (!isClerkAuthConfigured) {
                 error instanceof NowPaymentsRequestError ? 502 : 500,
                 "NOWPAYMENTS_CREATE_FAILED",
                 "Failed to create NOWPayments payment",
+            );
+        }
+    });
+
+    router.post("/memberships/nowpayments", async (req, res) => {
+        let createdOrder = null;
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isNowPaymentsConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "NOWPAYMENTS_NOT_CONFIGURED",
+                    "NOWPayments is not configured on this server",
+                );
+            }
+
+            const product = getNowPaymentsMembershipProductByKey(
+                req.body?.productKey,
+            );
+            if (!product) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PRODUCT",
+                    "Invalid membership product",
+                );
+            }
+            const payCurrency = resolveNowPaymentsPayCurrency(
+                req.body?.payCurrency,
+            );
+            if (!payCurrency) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PAY_CURRENCY",
+                    "Unsupported payment currency or network",
+                    { allowed: getNowPaymentsPayCurrencies() },
+                );
+            }
+
+            const minimum = await getNowPaymentsMinimumAmount({
+                currencyFrom: "usd",
+                currencyTo: payCurrency,
+            });
+            if (product.amountFen < minimum.minimumFen) {
+                return jsonError(
+                    res,
+                    400,
+                    "BELOW_NOWPAYMENTS_MINIMUM",
+                    "Selected product is below the current NOWPayments minimum",
+                    { minimum },
+                );
+            }
+
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            await ensureMembershipCheckoutPlan(product.planKey);
+
+            const outTradeNo = `mbr_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            createdOrder = await createMembershipOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "nowpayments",
+                productKey: product.key,
+                planKey: product.planKey,
+                durationDays: product.durationDays,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+                providerData: {
+                    ...(attribution ? { attribution } : {}),
+                    pay_currency: payCurrency,
+                },
+            });
+
+            const payment = await createNowPayment({
+                outTradeNo,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                payCurrency,
+                description: getMembershipProductDescription(product.key),
+            });
+            const publicPayment = toPublicNowPayment(payment);
+            if (
+                !/^\d+$/.test(publicPayment.paymentId) ||
+                !publicPayment.payAddress ||
+                !publicPayment.payAmount ||
+                publicPayment.payCurrency !== payCurrency ||
+                String(payment?.order_id || "") !== outTradeNo ||
+                parseDecimalToMinorUnits(payment?.price_amount) !==
+                    product.amountFen ||
+                String(payment?.price_currency || "").toUpperCase() !==
+                    product.currency
+            ) {
+                throw new Error("NOWPayments returned an invalid payment response");
+            }
+
+            const order = await updateMembershipOrderProviderData(
+                createdOrder.id,
+                {
+                    ...getNowPaymentsProviderData(payment),
+                    created_response: payment,
+                },
+            );
+            return res.json({
+                status: "success",
+                data: {
+                    order,
+                    nowpayments: publicPayment,
+                    payCurrencies: getNowPaymentsPayCurrencies(),
+                },
+            });
+        } catch (error) {
+            if (createdOrder?.id) {
+                try {
+                    await updatePendingMembershipOrder({
+                        id: createdOrder.id,
+                        status: "FAILED",
+                        providerData: {
+                            create_error:
+                                error instanceof NowPaymentsRequestError
+                                    ? {
+                                          status: error.status,
+                                          data: error.data || null,
+                                      }
+                                    : { message: error?.message || "unknown" },
+                        },
+                    });
+                } catch (updateError) {
+                    console.error(
+                        "Failed to close NOWPayments membership order:",
+                        updateError,
+                    );
+                }
+            }
+            console.error("POST /payments/memberships/nowpayments error:", {
+                name: error?.name,
+                message: error?.message,
+                status: error?.status,
+            });
+            return jsonError(
+                res,
+                error instanceof NowPaymentsRequestError ? 502 : 500,
+                "NOWPAYMENTS_CREATE_FAILED",
+                "Failed to create NOWPayments membership payment",
             );
         }
     });
@@ -2483,6 +2701,40 @@ if (!isClerkAuthConfigured) {
                 } catch (error) {
                     console.error(
                         "WeChat Pay sync membership order status failed:",
+                        order?.out_trade_no,
+                        error,
+                    );
+                }
+            }
+
+            if (
+                shouldSync &&
+                order.provider === "nowpayments" &&
+                order.status !== "PAID" &&
+                isNowPaymentsConfigured()
+            ) {
+                try {
+                    const paymentId = String(
+                        order?.provider_data?.nowpayments_payment_id || "",
+                    ).trim();
+                    if (paymentId) {
+                        const payment = await getNowPayment(paymentId);
+                        const result = await applyNowPaymentsPaymentUpdate({
+                            payment,
+                            rawNotify: {
+                                source: "nowpayments_membership_payment_sync",
+                                payment,
+                            },
+                        });
+                        if (result?.order) {
+                            resolvedOrder =
+                                (await getMembershipOrderById(order.id)) ||
+                                result.order;
+                        }
+                    }
+                } catch (error) {
+                    console.error(
+                        "NOWPayments sync membership order status failed:",
                         order?.out_trade_no,
                         error,
                     );

@@ -3,9 +3,21 @@ import test from "node:test";
 
 import {
     calculateFirstDownloadGraceCharge,
+    getMembershipDownloadLimits,
     hasDownloadSourceConflict,
     resolveDownloadRequestAction,
 } from "./users.js";
+
+test("uses stricter fair-use limits for the crypto annual plan", () => {
+    assert.deepEqual(getMembershipDownloadLimits("member_yearly_crypto"), {
+        dailySuccessfulDownloads: 100,
+        monthlySuccessfulDownloads: 1000,
+    });
+    assert.deepEqual(getMembershipDownloadLimits("member_yearly"), {
+        dailySuccessfulDownloads: 300,
+        monthlySuccessfulDownloads: 5000,
+    });
+});
 
 test("charges the full amount when enough points are available", () => {
     assert.deepEqual(

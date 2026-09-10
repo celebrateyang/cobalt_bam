@@ -21,7 +21,20 @@ const CHECKOUT_PLAN_METADATA = Object.freeze({
         name: "Yearly Member",
         description: "Yearly membership for downloads without points",
     }),
+    member_yearly_crypto: Object.freeze({
+        name: "Founding Annual Member",
+        description:
+            "365-day membership for standard downloads without points",
+        entitlements: Object.freeze(["member_download", "video_recording"]),
+    }),
 });
+
+const DEFAULT_MEMBERSHIP_ENTITLEMENTS = Object.freeze([
+    "member_download",
+    "ai_video_studio",
+    "video_recording",
+    "random_chat",
+]);
 
 export const ensureMembershipCheckoutPlan = async (planKey) => {
     const metadata = CHECKOUT_PLAN_METADATA[planKey];
@@ -31,6 +44,7 @@ export const ensureMembershipCheckoutPlan = async (planKey) => {
 
     const client = await getClient();
     const now = Date.now();
+    const entitlements = metadata.entitlements || DEFAULT_MEMBERSHIP_ENTITLEMENTS;
 
     try {
         await client.query("BEGIN");
@@ -57,16 +71,10 @@ export const ensureMembershipCheckoutPlan = async (planKey) => {
             `INSERT INTO plan_entitlements (plan_id, entitlement_key)
              SELECT p.id, entitlement.key
              FROM plans p
-             CROSS JOIN (
-                VALUES
-                    ('member_download'),
-                    ('ai_video_studio'),
-                    ('video_recording'),
-                    ('random_chat')
-             ) AS entitlement(key)
+             CROSS JOIN unnest($2::text[]) AS entitlement(key)
              WHERE p.key = $1
              ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
-            [planKey],
+            [planKey, entitlements],
         );
         await client.query("COMMIT");
     } catch (error) {
@@ -193,6 +201,45 @@ export const updateMembershipOrderProviderData = async (id, providerData) => {
         RETURNING *;
         `,
         [id, providerData, now],
+    );
+    return result.rows[0] || null;
+};
+
+export const updatePendingMembershipOrder = async ({
+    id,
+    status,
+    providerData = null,
+    rawNotify = null,
+}) => {
+    const allowedStatuses = new Set([
+        MEMBERSHIP_ORDER_STATUS.created,
+        MEMBERSHIP_ORDER_STATUS.closed,
+        MEMBERSHIP_ORDER_STATUS.failed,
+    ]);
+    if (!allowedStatuses.has(status)) {
+        throw new Error("invalid pending membership order status");
+    }
+
+    const now = Date.now();
+    const result = await query(
+        `
+        UPDATE membership_orders
+        SET status = $2,
+            provider_data = COALESCE(provider_data, '{}'::jsonb) || $3::jsonb,
+            raw_notify = COALESCE($4::jsonb, raw_notify),
+            updated_at = $5
+        WHERE id = $1
+          AND status = $6
+        RETURNING *;
+        `,
+        [
+            id,
+            status,
+            providerData || {},
+            rawNotify,
+            now,
+            MEMBERSHIP_ORDER_STATUS.created,
+        ],
     );
     return result.rows[0] || null;
 };

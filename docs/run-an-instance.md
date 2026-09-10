@@ -95,9 +95,10 @@ all `BILLING.SUBSCRIPTION.*` events used for activation, payment failure,
 suspension, cancellation, and expiry. Membership time is granted only after a
 successful sale event; approval alone does not grant access.
 
-### optional: NOWPayments USDT credit checkout
+### optional: NOWPayments USDT credit and membership checkout
 
-NOWPayments provides one-time USD-priced credit packs paid in USDT. Configure:
+NOWPayments provides one-time USD-priced credit packs and the founding annual
+membership paid in USDT. Configure:
 
 - `NOWPAYMENTS_API_KEY`
 - `NOWPAYMENTS_IPN_SECRET`
@@ -112,9 +113,13 @@ https://api.freesavevideo.online/payments/nowpayments/ipn
 ```
 
 The API validates `x-nowpayments-sig` with HMAC-SHA512, binds the remote
-`payment_id` to the local order, and grants credits only for a fully paid
-`finished` payment. `confirming`, `confirmed`, and `partially_paid` do not grant
-credits. Never expose the API key or IPN secret to the browser or commit them.
+`payment_id` to the local order, and grants credits or membership time only for
+a fully paid `finished` payment. `confirming`, `confirmed`, and `partially_paid`
+do not grant access. The authenticated checkout endpoints are
+`POST /payments/credits/nowpayments` and
+`POST /payments/memberships/nowpayments`. Repeated IPNs and order-status syncs
+are idempotent. Never expose the API key or IPN secret to the browser or commit
+them.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):

@@ -2086,6 +2086,18 @@ export const MEMBER_DOWNLOAD_LIMITS = Object.freeze({
     monthlySuccessfulDownloads: 5000,
 });
 
+export const MEMBERSHIP_PLAN_DOWNLOAD_LIMITS = Object.freeze({
+    member_yearly_crypto: Object.freeze({
+        dailySuccessfulDownloads: 100,
+        monthlySuccessfulDownloads: 1000,
+    }),
+});
+
+export const getMembershipDownloadLimits = (planKey) => {
+    const configured = MEMBERSHIP_PLAN_DOWNLOAD_LIMITS[String(planKey || "")];
+    return configured || MEMBER_DOWNLOAD_LIMITS;
+};
+
 const CHINA_TIME_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 const startOfChinaDay = (now = Date.now()) => {
@@ -2106,9 +2118,10 @@ const startOfChinaMonth = (now = Date.now()) => {
 const normalizeMembershipRow = (row, usage = null) => {
     if (!row) return null;
 
+    const planLimits = getMembershipDownloadLimits(row.plan_key);
     const limits = {
-        dailySuccessfulDownloads: MEMBER_DOWNLOAD_LIMITS.dailySuccessfulDownloads,
-        monthlySuccessfulDownloads: MEMBER_DOWNLOAD_LIMITS.monthlySuccessfulDownloads,
+        dailySuccessfulDownloads: planLimits.dailySuccessfulDownloads,
+        monthlySuccessfulDownloads: planLimits.monthlySuccessfulDownloads,
     };
     const usageCounts = usage || {
         dailySuccessfulDownloads: 0,

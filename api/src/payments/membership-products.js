@@ -51,11 +51,30 @@ export const PAYPAL_MEMBERSHIP_PRODUCTS = Object.freeze([
     }),
 ]);
 
+export const NOWPAYMENTS_MEMBERSHIP_PRODUCTS = Object.freeze([
+    Object.freeze({
+        key: "member_yearly_nowpayments_founder",
+        planKey: "member_yearly_crypto",
+        durationDays: 365,
+        amountFen: 1999,
+        currency: "USD",
+        billingType: "one_time",
+        entitlements: Object.freeze(["member_download", "video_recording"]),
+        limits: Object.freeze({
+            dailySuccessfulDownloads: 100,
+            monthlySuccessfulDownloads: 1000,
+        }),
+    }),
+]);
+
 export const getWechatMembershipProductByKey = (key) =>
     WECHAT_MEMBERSHIP_PRODUCTS.find((product) => product.key === key);
 
 export const getPayPalMembershipProductByKey = (key) =>
     PAYPAL_MEMBERSHIP_PRODUCTS.find((product) => product.key === key);
+
+export const getNowPaymentsMembershipProductByKey = (key) =>
+    NOWPAYMENTS_MEMBERSHIP_PRODUCTS.find((product) => product.key === key);
 
 export const getPayPalMembershipPlanId = (product) =>
     product?.paypalPlanEnv
@@ -69,5 +88,8 @@ export const getMembershipProductDescription = (key) => {
     if (key === "member_monthly_onetime") return "One-month membership pass";
     if (key === "member_monthly_recurring") return "Monthly membership subscription";
     if (key === "member_yearly_recurring") return "Yearly membership subscription";
+    if (key === "member_yearly_nowpayments_founder") {
+        return "FreeSaveVideo Founding Annual Pass";
+    }
     throw new Error(`Unsupported membership product description: ${key}`);
 };

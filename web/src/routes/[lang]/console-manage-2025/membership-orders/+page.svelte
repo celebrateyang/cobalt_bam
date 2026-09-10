@@ -80,7 +80,8 @@
             ? "7天会员"
             : order.plan_key === "member_monthly"
             ? "月会员"
-            : order.plan_key === "member_yearly"
+            : order.plan_key === "member_yearly" ||
+                order.plan_key === "member_yearly_crypto"
               ? "年会员"
               : order.plan_key;
 
@@ -239,6 +240,7 @@
                     <option value="">全部</option>
                     <option value="wechat">wechat</option>
                     <option value="paypal">paypal</option>
+                    <option value="nowpayments">nowpayments</option>
                 </select>
             </label>
         </div>

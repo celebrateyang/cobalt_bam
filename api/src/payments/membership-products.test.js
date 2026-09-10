@@ -2,12 +2,44 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    NOWPAYMENTS_MEMBERSHIP_PRODUCTS,
     PAYPAL_MEMBERSHIP_PRODUCTS,
     WECHAT_MEMBERSHIP_PRODUCTS,
     getMembershipProductDescription,
+    getNowPaymentsMembershipProductByKey,
     getPayPalMembershipProductByKey,
     getWechatMembershipProductByKey,
 } from "./membership-products.js";
+
+test("offers one NOWPayments founding annual pass", () => {
+    assert.deepEqual(NOWPAYMENTS_MEMBERSHIP_PRODUCTS, [
+        {
+            key: "member_yearly_nowpayments_founder",
+            planKey: "member_yearly_crypto",
+            durationDays: 365,
+            amountFen: 1999,
+            currency: "USD",
+            billingType: "one_time",
+            entitlements: ["member_download", "video_recording"],
+            limits: {
+                dailySuccessfulDownloads: 100,
+                monthlySuccessfulDownloads: 1000,
+            },
+        },
+    ]);
+    assert.equal(
+        getNowPaymentsMembershipProductByKey(
+            "member_yearly_nowpayments_founder",
+        )?.amountFen,
+        1999,
+    );
+    assert.equal(
+        getMembershipProductDescription(
+            "member_yearly_nowpayments_founder",
+        ),
+        "FreeSaveVideo Founding Annual Pass",
+    );
+});
 
 test("offers PayPal recurring monthly/yearly plans and a one-month pass", () => {
     assert.deepEqual(

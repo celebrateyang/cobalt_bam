@@ -183,7 +183,7 @@ paypal:
   environment: live
   secretName: paypal-secret
 
-# NOWPayments - international USD credit packs paid with USDT
+# NOWPayments - international USD credit packs paid with crypto
 # The Kubernetes Secret must contain:
 # - NOWPAYMENTS_API_KEY
 # - NOWPAYMENTS_IPN_SECRET
@@ -191,7 +191,8 @@ nowpayments:
   enabled: true
   secretName: nowpayments-secret
   ipnCallbackUrl: "https://api.freesavevideo.online/payments/nowpayments/ipn"
-  payCurrencies: "usdttrc20"
+  payCurrencies: "usdcmatic,eth,usdttrc20,btc"
+  payoutCurrency: "usdttrc20"
 
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:

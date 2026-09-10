@@ -212,7 +212,7 @@ spec:
                   optional: true
             {{- end }}
             {{- if .Values.nowpayments.enabled }}
-            # NOWPayments - international USD credit packs paid with USDT
+            # NOWPayments - international USD-priced checkout paid with crypto
             - name: NOWPAYMENTS_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -227,6 +227,8 @@ spec:
               value: {{ .Values.nowpayments.ipnCallbackUrl | quote }}
             - name: NOWPAYMENTS_PAY_CURRENCIES
               value: {{ .Values.nowpayments.payCurrencies | quote }}
+            - name: NOWPAYMENTS_PAYOUT_CURRENCY
+              value: {{ .Values.nowpayments.payoutCurrency | quote }}
             {{- end }}
             {{- if .Values.aiVideo.enabled }}
             - name: AI_VIDEO_ENABLED

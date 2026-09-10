@@ -700,6 +700,7 @@
     let nowPayment: NowPaymentsCheckout | null = null;
     let nowPaymentsPayCurrencies: string[] = [];
     let selectedNowPaymentsCurrency = "";
+    let nowPaymentsMinimumFen = 0;
     let cryptoAddressCopied = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -709,7 +710,7 @@
     let paypalSdkPromise: Promise<PayPalSdkInstance> | null = null;
     let paypalSdkLocale = "";
     let paypalSdkPromiseLocale = "";
-    // PayPal remains disabled. Chinese checkout uses WeChat; other locales use USDT.
+    // PayPal remains disabled. Chinese checkout uses WeChat; other locales use crypto.
     const PAYPAL_PAYMENT_VISIBLE = false;
     const PAYPAL_LOCALE_BY_LANGUAGE: Record<string, string> = {
         de: "de-DE",
@@ -775,6 +776,7 @@
         recommendedKey: string | null,
     ) =>
         [...products].sort((a, b) => {
+            if (a.enabled !== b.enabled) return a.enabled === false ? 1 : -1;
             if (a.key === recommendedKey) return -1;
             if (b.key === recommendedKey) return 1;
             return 0;
@@ -850,7 +852,18 @@
         recommendedValueProductKey,
     );
 
-    const fetchCreditProducts = async () => {
+    const cryptoPaymentOptionLabel = (currency: string) => {
+        const normalized = String(currency || "").toLowerCase();
+        if (normalized === "usdttrc20") return "USDT (TRON)";
+        if (normalized === "usdcmatic") return "USDC (Polygon)";
+        if (normalized === "btc") return "BTC (Bitcoin)";
+        if (normalized === "eth") return "ETH (Ethereum)";
+        return normalized.toUpperCase();
+    };
+
+    const fetchCreditProducts = async (
+        payCurrency = selectedNowPaymentsCurrency,
+    ) => {
         const provider = selectedPaymentProvider;
         if (!provider) return;
         const requestVersion = ++creditProductsRequestVersion;
@@ -859,9 +872,11 @@
 
         try {
             const apiBase = currentApiURL();
-            const res = await fetch(
-                `${apiBase}/payments/credits/products?provider=${provider}`,
-            );
+            const query = new URLSearchParams({ provider });
+            if (provider === "nowpayments" && payCurrency) {
+                query.set("payCurrency", payCurrency);
+            }
+            const res = await fetch(`${apiBase}/payments/credits/products?${query}`);
             const data = await res.json().catch(() => ({}));
 
             if (!res.ok || data?.status !== "success") {
@@ -872,7 +887,9 @@
 
             if (
                 requestVersion !== creditProductsRequestVersion ||
-                selectedPaymentProvider !== provider
+                selectedPaymentProvider !== provider ||
+                (provider === "nowpayments" &&
+                    payCurrency !== selectedNowPaymentsCurrency)
             ) {
                 return;
             }
@@ -881,6 +898,9 @@
                 ? data.data.products
                 : [];
             if (provider === "nowpayments") {
+                nowPaymentsMinimumFen = Number(
+                    data?.data?.minimumAmount?.minimumFen || 0,
+                );
                 nowPaymentsPayCurrencies = Array.isArray(
                     data?.data?.payCurrencies,
                 )
@@ -922,7 +942,9 @@
         }
     };
 
-    const fetchMembershipProducts = async () => {
+    const fetchMembershipProducts = async (
+        payCurrency = selectedNowPaymentsCurrency,
+    ) => {
         const provider = selectedPaymentProvider;
         const requestVersion = ++membershipProductsRequestVersion;
         membershipProductsLoading = true;
@@ -930,8 +952,12 @@
 
         try {
             const apiBase = currentApiURL();
+            const query = new URLSearchParams({ provider });
+            if (provider === "nowpayments" && payCurrency) {
+                query.set("payCurrency", payCurrency);
+            }
             const res = await fetch(
-                `${apiBase}/payments/memberships/products?provider=${provider}`,
+                `${apiBase}/payments/memberships/products?${query}`,
             );
             const data = await res.json().catch(() => ({}));
 
@@ -943,7 +969,9 @@
 
             if (
                 requestVersion !== membershipProductsRequestVersion ||
-                selectedPaymentProvider !== provider
+                selectedPaymentProvider !== provider ||
+                (provider === "nowpayments" &&
+                    payCurrency !== selectedNowPaymentsCurrency)
             ) {
                 return;
             }
@@ -1040,8 +1068,8 @@
     };
 
     $: if (browser && selectedPaymentProvider) {
-        void fetchCreditProducts();
-        void fetchMembershipProducts();
+        void fetchCreditProducts(selectedNowPaymentsCurrency);
+        void fetchMembershipProducts(selectedNowPaymentsCurrency);
     }
 
     $: if (browser && $clerkUser && selectedPaymentProvider === "paypal") {
@@ -2563,10 +2591,18 @@
                                 <span>{$t("auth.nowpayments_network")}</span>
                                 <select bind:value={selectedNowPaymentsCurrency}>
                                     {#each nowPaymentsPayCurrencies as payCurrency}
-                                        <option value={payCurrency}>{payCurrency.toUpperCase()}</option>
+                                        <option value={payCurrency}>{cryptoPaymentOptionLabel(payCurrency)}</option>
                                     {/each}
                                 </select>
                             </label>
+                        {/if}
+
+                        {#if selectedPaymentProvider === "nowpayments" && nowPaymentsMinimumFen > 0}
+                            <div class="subtext">
+                                {$t("auth.nowpayments_current_minimum", {
+                                    value: formatAmount(nowPaymentsMinimumFen, "USD"),
+                                })}
+                            </div>
                         {/if}
 
                         {#if creditProductsLoading}

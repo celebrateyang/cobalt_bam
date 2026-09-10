@@ -81,6 +81,7 @@ import {
     getNowPayment,
     getNowPaymentsMinimumAmount,
     getNowPaymentsPayCurrencies,
+    getNowPaymentsPayoutCurrency,
     getNowPaymentsStatus,
     isDecimalAtLeast,
     isNowPaymentsConfigured,
@@ -663,6 +664,30 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
     const updatePendingOrder = isMembershipOrder
         ? updatePendingMembershipOrder
         : updatePendingCreditOrder;
+
+    if (status === "finished") {
+        const expectedOutcomeCurrency = String(
+            order?.provider_data?.expected_outcome_currency ||
+                getNowPaymentsPayoutCurrency(),
+        ).toLowerCase();
+        const receivedOutcomeCurrency = String(
+            payment?.outcome_currency || "",
+        ).toLowerCase();
+        if (receivedOutcomeCurrency !== expectedOutcomeCurrency) {
+            await updatePendingOrder({
+                id: order.id,
+                status: "FAILED",
+                providerData: {
+                    ...providerData,
+                    validation_error: "OUTCOME_CURRENCY_MISMATCH",
+                    expected_outcome_currency: expectedOutcomeCurrency,
+                },
+                rawNotify,
+            });
+            return { ok: false, code: "OUTCOME_CURRENCY_MISMATCH", order };
+        }
+    }
+
     await updatePendingOrder({
         id: order.id,
         status:
@@ -727,10 +752,23 @@ router.get("/credits/products", async (req, res) => {
     try {
         const provider = normalizeProvider(req.query?.provider, "wechat");
         let nowPaymentsMinimum = null;
+        let selectedPayCurrency = null;
         if (provider === "nowpayments" && isNowPaymentsConfigured()) {
+            selectedPayCurrency = resolveNowPaymentsPayCurrency(
+                req.query?.payCurrency,
+            );
+            if (!selectedPayCurrency) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PAY_CURRENCY",
+                    "Unsupported payment currency or network",
+                    { allowed: getNowPaymentsPayCurrencies() },
+                );
+            }
             nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: "usd",
-                currencyTo: getNowPaymentsPayCurrencies()[0],
+                currencyFrom: selectedPayCurrency,
+                currencyTo: selectedPayCurrency,
             });
         }
         res.json({
@@ -744,6 +782,8 @@ router.get("/credits/products", async (req, res) => {
                 ...(provider === "nowpayments"
                     ? {
                           payCurrencies: getNowPaymentsPayCurrencies(),
+                          selectedPayCurrency,
+                          payoutCurrency: selectedPayCurrency,
                           minimumAmount: nowPaymentsMinimum,
                       }
                     : {}),
@@ -764,10 +804,23 @@ router.get("/memberships/products", async (req, res) => {
     try {
         const provider = normalizeProvider(req.query?.provider, "wechat");
         let nowPaymentsMinimum = null;
+        let selectedPayCurrency = null;
         if (provider === "nowpayments" && isNowPaymentsConfigured()) {
+            selectedPayCurrency = resolveNowPaymentsPayCurrency(
+                req.query?.payCurrency,
+            );
+            if (!selectedPayCurrency) {
+                return jsonError(
+                    res,
+                    400,
+                    "INVALID_PAY_CURRENCY",
+                    "Unsupported payment currency or network",
+                    { allowed: getNowPaymentsPayCurrencies() },
+                );
+            }
             nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: "usd",
-                currencyTo: getNowPaymentsPayCurrencies()[0],
+                currencyFrom: selectedPayCurrency,
+                currencyTo: getNowPaymentsPayoutCurrency(),
             });
         }
         const products = buildPublicMembershipProducts(provider, {
@@ -785,6 +838,8 @@ router.get("/memberships/products", async (req, res) => {
                 ...(provider === "nowpayments"
                     ? {
                           payCurrencies: getNowPaymentsPayCurrencies(),
+                          selectedPayCurrency,
+                          payoutCurrency: getNowPaymentsPayoutCurrency(),
                           minimumAmount: nowPaymentsMinimum,
                       }
                     : {}),
@@ -1289,7 +1344,7 @@ if (!isClerkAuthConfigured) {
             }
 
             const minimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: "usd",
+                currencyFrom: payCurrency,
                 currencyTo: payCurrency,
             });
             if (product.amountFen < minimum.minimumFen) {
@@ -1318,6 +1373,7 @@ if (!isClerkAuthConfigured) {
                 providerData: {
                     ...(attribution ? { attribution } : {}),
                     pay_currency: payCurrency,
+                    expected_outcome_currency: payCurrency,
                 },
             });
 
@@ -1326,6 +1382,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 payCurrency,
+                payoutCurrency: payCurrency,
                 points: product.points,
             });
             const publicPayment = toPublicNowPayment(payment);
@@ -1433,8 +1490,8 @@ if (!isClerkAuthConfigured) {
             }
 
             const minimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: "usd",
-                currencyTo: payCurrency,
+                currencyFrom: payCurrency,
+                currencyTo: getNowPaymentsPayoutCurrency(),
             });
             if (product.amountFen < minimum.minimumFen) {
                 return jsonError(
@@ -1465,6 +1522,7 @@ if (!isClerkAuthConfigured) {
                 providerData: {
                     ...(attribution ? { attribution } : {}),
                     pay_currency: payCurrency,
+                    expected_outcome_currency: getNowPaymentsPayoutCurrency(),
                 },
             });
 
@@ -1473,6 +1531,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 payCurrency,
+                payoutCurrency: getNowPaymentsPayoutCurrency(),
                 description: getMembershipProductDescription(product.key),
             });
             const publicPayment = toPublicNowPayment(payment);

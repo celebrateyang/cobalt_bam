@@ -95,15 +95,18 @@ all `BILLING.SUBSCRIPTION.*` events used for activation, payment failure,
 suspension, cancellation, and expiry. Membership time is granted only after a
 successful sale event; approval alone does not grant access.
 
-### optional: NOWPayments USDT credit and membership checkout
+### optional: NOWPayments crypto credit and membership checkout
 
 NOWPayments provides one-time USD-priced credit packs and the founding annual
-membership paid in USDT. Configure:
+membership paid with supported cryptocurrencies. Configure:
 
 - `NOWPAYMENTS_API_KEY`
 - `NOWPAYMENTS_IPN_SECRET`
 - `NOWPAYMENTS_IPN_CALLBACK_URL` (defaults to `<API_URL>/payments/nowpayments/ipn`)
-- `NOWPAYMENTS_PAY_CURRENCIES` (comma separated; defaults to `usdttrc20`)
+- `NOWPAYMENTS_PAY_CURRENCIES` (comma separated; defaults to
+  `usdcmatic,eth,usdttrc20,btc`)
+- `NOWPAYMENTS_PAYOUT_CURRENCY` (defaults to `usdttrc20`; used as the membership
+  settlement currency)
 - `NOWPAYMENTS_API_BASE` (optional; defaults to `https://api.nowpayments.io`)
 
 The production IPN listener is:
@@ -120,6 +123,14 @@ do not grant access. The authenticated checkout endpoints are
 `POST /payments/memberships/nowpayments`. Repeated IPNs and order-status syncs
 are idempotent. Never expose the API key or IPN secret to the browser or commit
 them.
+
+The default customer choices put the low-minimum USDC on Polygon and ETH first,
+followed by USDT on TRON and BTC. Credit purchases settle into the matching
+Custody balance, avoiding an exchange on each small order; the merchant can
+batch-convert accumulated balances later. Membership purchases settle in the
+configured payout currency (USDT TRC20 by default). Minimum amounts are checked
+against the actual settlement currency for each flow. Enable the matching
+Custody balances for every currency listed in `NOWPAYMENTS_PAY_CURRENCIES`.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):

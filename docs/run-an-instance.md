@@ -103,10 +103,8 @@ membership paid with supported cryptocurrencies. Configure:
 - `NOWPAYMENTS_API_KEY`
 - `NOWPAYMENTS_IPN_SECRET`
 - `NOWPAYMENTS_IPN_CALLBACK_URL` (defaults to `<API_URL>/payments/nowpayments/ipn`)
-- `NOWPAYMENTS_PAY_CURRENCIES` (comma separated; defaults to
-  `usdcmatic,eth,usdttrc20,btc`)
-- `NOWPAYMENTS_PAYOUT_CURRENCY` (defaults to `usdttrc20`; used as the membership
-  settlement currency)
+- `NOWPAYMENTS_PAYOUT_CURRENCY` (defaults to `usdttrc20`; must match the account's
+  actual hosted-checkout settlement currency)
 - `NOWPAYMENTS_API_BASE` (optional; defaults to `https://api.nowpayments.io`)
 
 The production IPN listener is:
@@ -115,22 +113,23 @@ The production IPN listener is:
 https://api.freesavevideo.online/payments/nowpayments/ipn
 ```
 
-The API validates `x-nowpayments-sig` with HMAC-SHA512, binds the remote
-`payment_id` to the local order, and grants credits or membership time only for
-a fully paid `finished` payment. `confirming`, `confirmed`, and `partially_paid`
-do not grant access. The authenticated checkout endpoints are
+The checkout endpoints create a hosted NOWPayments invoice without a
+`pay_currency`, so the customer chooses the enabled coin and network on the
+NOWPayments page. Enabled choices are controlled by the merchant account's Coin
+settings. The API validates `x-nowpayments-sig` with HMAC-SHA512, binds the
+remote `invoice_id` and subsequent `payment_id` to the local order, and grants
+credits or membership time only for a fully paid `finished` payment.
+`confirming`, `confirmed`, and `partially_paid` do not grant access. The
+authenticated checkout endpoints are
 `POST /payments/credits/nowpayments` and
 `POST /payments/memberships/nowpayments`. Repeated IPNs and order-status syncs
 are idempotent. Never expose the API key or IPN secret to the browser or commit
 them.
 
-The default customer choices put the low-minimum USDC on Polygon and ETH first,
-followed by USDT on TRON and BTC. Credit purchases settle into the matching
-Custody balance, avoiding an exchange on each small order; the merchant can
-batch-convert accumulated balances later. Membership purchases settle in the
-configured payout currency (USDT TRC20 by default). Minimum amounts are checked
-against the actual settlement currency for each flow. Enable the matching
-Custody balances for every currency listed in `NOWPAYMENTS_PAY_CURRENCIES`.
+NOWPayments applies its current minimum after the customer selects a coin. The
+hosted page may hide or reject a coin whose network or settlement minimum is
+above the invoice price. The configured payout currency is used to validate the
+final `outcome_currency` before granting the purchase.
 
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):

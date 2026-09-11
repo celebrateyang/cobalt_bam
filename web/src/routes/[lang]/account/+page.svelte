@@ -108,13 +108,11 @@
         | (MembershipOrder & { kind: "membership" });
 
     type PaymentProvider = "wechat" | "paypal" | "nowpayments";
-    type NowPaymentsCheckout = {
-        paymentId: string;
-        status: string;
-        payAddress: string;
-        payAmount: string;
-        payCurrency: string;
-        expirationEstimateDate?: string | null;
+    type NowPaymentsInvoice = {
+        invoiceId: string;
+        invoiceUrl: string;
+        priceAmount: string;
+        priceCurrency: string;
     };
     type PayPalSdkInstance = {
         findEligibleMethods: (options: {
@@ -185,6 +183,7 @@
     let lastFocusedSectionKey = "";
     let paymentResumeTimer: ReturnType<typeof setTimeout> | null = null;
     let lastPaymentResumeKey = "";
+    let nowPaymentsReturnHandled = false;
 
     onMount(() => {
         if (clerkEnabled) {
@@ -697,11 +696,6 @@
     let activeOrder: ActivePaymentOrder | null = null;
     let codeUrl = "";
     let qrDataUrl = "";
-    let nowPayment: NowPaymentsCheckout | null = null;
-    let nowPaymentsPayCurrencies: string[] = [];
-    let selectedNowPaymentsCurrency = "";
-    let nowPaymentsMinimumFen = 0;
-    let cryptoAddressCopied = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
@@ -852,18 +846,7 @@
         recommendedValueProductKey,
     );
 
-    const cryptoPaymentOptionLabel = (currency: string) => {
-        const normalized = String(currency || "").toLowerCase();
-        if (normalized === "usdttrc20") return "USDT (TRON)";
-        if (normalized === "usdcmatic") return "USDC (Polygon)";
-        if (normalized === "btc") return "BTC (Bitcoin)";
-        if (normalized === "eth") return "ETH (Ethereum)";
-        return normalized.toUpperCase();
-    };
-
-    const fetchCreditProducts = async (
-        payCurrency = selectedNowPaymentsCurrency,
-    ) => {
+    const fetchCreditProducts = async () => {
         const provider = selectedPaymentProvider;
         if (!provider) return;
         const requestVersion = ++creditProductsRequestVersion;
@@ -873,9 +856,6 @@
         try {
             const apiBase = currentApiURL();
             const query = new URLSearchParams({ provider });
-            if (provider === "nowpayments" && payCurrency) {
-                query.set("payCurrency", payCurrency);
-            }
             const res = await fetch(`${apiBase}/payments/credits/products?${query}`);
             const data = await res.json().catch(() => ({}));
 
@@ -887,9 +867,7 @@
 
             if (
                 requestVersion !== creditProductsRequestVersion ||
-                selectedPaymentProvider !== provider ||
-                (provider === "nowpayments" &&
-                    payCurrency !== selectedNowPaymentsCurrency)
+                selectedPaymentProvider !== provider
             ) {
                 return;
             }
@@ -897,27 +875,6 @@
             creditProducts = Array.isArray(data?.data?.products)
                 ? data.data.products
                 : [];
-            if (provider === "nowpayments") {
-                nowPaymentsMinimumFen = Number(
-                    data?.data?.minimumAmount?.minimumFen || 0,
-                );
-                nowPaymentsPayCurrencies = Array.isArray(
-                    data?.data?.payCurrencies,
-                )
-                    ? data.data.payCurrencies.filter(
-                          (value: unknown): value is string =>
-                              typeof value === "string" && Boolean(value),
-                      )
-                    : [];
-                if (
-                    !nowPaymentsPayCurrencies.includes(
-                        selectedNowPaymentsCurrency,
-                    )
-                ) {
-                    selectedNowPaymentsCurrency =
-                        nowPaymentsPayCurrencies[0] || "";
-                }
-            }
             const trackedProducts = sortCreditProductsForDisplay(
                 creditProducts,
                 provider === "wechat"
@@ -942,9 +899,7 @@
         }
     };
 
-    const fetchMembershipProducts = async (
-        payCurrency = selectedNowPaymentsCurrency,
-    ) => {
+    const fetchMembershipProducts = async () => {
         const provider = selectedPaymentProvider;
         const requestVersion = ++membershipProductsRequestVersion;
         membershipProductsLoading = true;
@@ -953,9 +908,6 @@
         try {
             const apiBase = currentApiURL();
             const query = new URLSearchParams({ provider });
-            if (provider === "nowpayments" && payCurrency) {
-                query.set("payCurrency", payCurrency);
-            }
             const res = await fetch(
                 `${apiBase}/payments/memberships/products?${query}`,
             );
@@ -969,9 +921,7 @@
 
             if (
                 requestVersion !== membershipProductsRequestVersion ||
-                selectedPaymentProvider !== provider ||
-                (provider === "nowpayments" &&
-                    payCurrency !== selectedNowPaymentsCurrency)
+                selectedPaymentProvider !== provider
             ) {
                 return;
             }
@@ -1068,8 +1018,8 @@
     };
 
     $: if (browser && selectedPaymentProvider) {
-        void fetchCreditProducts(selectedNowPaymentsCurrency);
-        void fetchMembershipProducts(selectedNowPaymentsCurrency);
+        void fetchCreditProducts();
+        void fetchMembershipProducts();
     }
 
     $: if (browser && $clerkUser && selectedPaymentProvider === "paypal") {
@@ -1087,31 +1037,7 @@
         activeOrder = null;
         codeUrl = "";
         qrDataUrl = "";
-        nowPayment = null;
-        cryptoAddressCopied = false;
         orderStatusLoading = false;
-    };
-
-    const hydrateNowPaymentFromOrder = (
-        order: CreditOrder | MembershipOrder,
-    ) => {
-        const data = order.provider_data || {};
-        const paymentId = String(data.nowpayments_payment_id || "");
-        const payAddress = String(data.pay_address || "");
-        const payAmount = String(data.pay_amount || "");
-        const payCurrency = String(data.pay_currency || "");
-        if (!paymentId || !payAddress || !payAmount || !payCurrency) return;
-        nowPayment = {
-            paymentId,
-            status: String(data.nowpayments_status || "waiting"),
-            payAddress,
-            payAmount,
-            payCurrency,
-            expirationEstimateDate:
-                typeof data.expiration_estimate_date === "string"
-                    ? data.expiration_estimate_date
-                    : null,
-        };
     };
 
     onDestroy(() => {
@@ -1188,9 +1114,6 @@
                     ["wechat", "nowpayments"].includes(order.provider)
                 ) {
                     activeOrder = { ...order, kind: "credit" };
-                    if (order.provider === "nowpayments") {
-                        hydrateNowPaymentFromOrder(order);
-                    }
                 }
                 if (order.status === "PAID") {
                     stopPolling();
@@ -1221,6 +1144,7 @@
     const fetchMembershipOrderStatus = async (
         orderId: number,
         sync = false,
+        showPaymentModal = true,
     ): Promise<MembershipOrder | null> => {
         if (!orderId) return null;
 
@@ -1252,9 +1176,8 @@
 
             const order = data?.data?.order as MembershipOrder | undefined;
             if (order) {
-                activeOrder = { ...order, kind: "membership" };
-                if (order.provider === "nowpayments") {
-                    hydrateNowPaymentFromOrder(order);
+                if (showPaymentModal) {
+                    activeOrder = { ...order, kind: "membership" };
                 }
                 if (order.status === "PAID") {
                     stopPolling();
@@ -1290,13 +1213,21 @@
         void fetchOrderStatus(order.id, true);
     };
 
-    const startPolling = (orderId: number) => {
+    const startPolling = (
+        orderId: number,
+        kind: "credit" | "membership" = activeOrder?.kind || "credit",
+        showPaymentModal = true,
+    ) => {
         stopPolling();
         pollTimer = setInterval(() => {
-            if (activeOrder?.kind === "membership") {
-                void fetchMembershipOrderStatus(orderId);
+            if (kind === "membership") {
+                void fetchMembershipOrderStatus(
+                    orderId,
+                    false,
+                    showPaymentModal,
+                );
             } else {
-                void fetchOrderStatus(orderId);
+                void fetchOrderStatus(orderId, false, showPaymentModal);
             }
         }, 2000);
     };
@@ -1379,6 +1310,14 @@
         try {
             const token = await getClerkToken();
             if (!token) throw new Error("missing token");
+            const returnUrl = new URL(window.location.href);
+            returnUrl.searchParams.set(
+                "section",
+                kind === "membership" ? "membership" : "topup",
+            );
+            returnUrl.searchParams.delete("nowpayments");
+            returnUrl.searchParams.delete("nowpayments_order");
+            returnUrl.searchParams.delete("nowpayments_kind");
 
             const res = await fetch(
                 `${currentApiURL()}/payments/${
@@ -1392,7 +1331,7 @@
                     },
                     body: JSON.stringify({
                         productKey,
-                        payCurrency: selectedNowPaymentsCurrency || undefined,
+                        returnUrl: returnUrl.toString(),
                         attribution: getOrderAttribution(),
                     }),
                 },
@@ -1406,10 +1345,10 @@
                 | CreditOrder
                 | MembershipOrder
                 | undefined;
-            const payment = data?.data?.nowpayments as
-                | NowPaymentsCheckout
+            const invoice = data?.data?.nowpayments as
+                | NowPaymentsInvoice
                 | undefined;
-            if (!order?.id || !payment?.payAddress || !payment?.payAmount) {
+            if (!order?.id || !invoice?.invoiceId || !invoice?.invoiceUrl) {
                 throw new Error("invalid create order response");
             }
 
@@ -1425,17 +1364,7 @@
                 kind,
             });
 
-            activeOrder =
-                kind === "membership"
-                    ? { ...(order as MembershipOrder), kind: "membership" }
-                    : { ...(order as CreditOrder), kind: "credit" };
-            nowPayment = payment;
-            qrDataUrl = await QRCode.toDataURL(payment.payAddress, {
-                width: 220,
-                margin: 1,
-                color: { dark: "#000000", light: "#ffffff" },
-            });
-            startPolling(order.id);
+            window.location.assign(invoice.invoiceUrl);
         } catch (error) {
             purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create NOWPayments order failed", error);
@@ -1444,16 +1373,36 @@
         }
     };
 
-    const copyCryptoAddress = async () => {
-        if (!nowPayment?.payAddress) return;
-        try {
-            await navigator.clipboard.writeText(nowPayment.payAddress);
-            cryptoAddressCopied = true;
-            setTimeout(() => {
-                cryptoAddressCopied = false;
-            }, 2000);
-        } catch {
-            cryptoAddressCopied = false;
+    const resumeNowPaymentsCheckout = async () => {
+        if (!browser || nowPaymentsReturnHandled || !$clerkUser) return;
+        const result = $page.url.searchParams.get("nowpayments");
+        if (result !== "return" && result !== "cancel") return;
+
+        nowPaymentsReturnHandled = true;
+        const orderId = Number.parseInt(
+            $page.url.searchParams.get("nowpayments_order") || "",
+            10,
+        );
+        const kind =
+            $page.url.searchParams.get("nowpayments_kind") === "membership"
+                ? "membership"
+                : "credit";
+
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("nowpayments");
+        cleanUrl.searchParams.delete("nowpayments_order");
+        cleanUrl.searchParams.delete("nowpayments_kind");
+        window.history.replaceState({}, "", cleanUrl.toString());
+
+        if (!Number.isSafeInteger(orderId) || orderId <= 0) return;
+        const order =
+            kind === "membership"
+                ? await fetchMembershipOrderStatus(orderId, true, false)
+                : await fetchOrderStatus(orderId, true, false);
+        if (!order) return;
+        if (result === "return" && order.status === "CREATED") {
+            purchaseNoticeKey = "auth.payment_waiting";
+            startPolling(orderId, kind, false);
         }
     };
 
@@ -2058,6 +2007,10 @@
         consumeRecommendedCheckoutIntent();
     }
 
+    $: if (browser && $clerkUser && !nowPaymentsReturnHandled) {
+        void resumeNowPaymentsCheckout();
+    }
+
     const selectPaymentProvider = (provider: PaymentProvider) => {
         if (!isChinese) return;
         if (provider === selectedPaymentProvider) return;
@@ -2586,25 +2539,6 @@
                             </div>
                         {/if}
 
-                        {#if selectedPaymentProvider === "nowpayments" && nowPaymentsPayCurrencies.length > 1}
-                            <label class="crypto-network-select">
-                                <span>{$t("auth.nowpayments_network")}</span>
-                                <select bind:value={selectedNowPaymentsCurrency}>
-                                    {#each nowPaymentsPayCurrencies as payCurrency}
-                                        <option value={payCurrency}>{cryptoPaymentOptionLabel(payCurrency)}</option>
-                                    {/each}
-                                </select>
-                            </label>
-                        {/if}
-
-                        {#if selectedPaymentProvider === "nowpayments" && nowPaymentsMinimumFen > 0}
-                            <div class="subtext">
-                                {$t("auth.nowpayments_current_minimum", {
-                                    value: formatAmount(nowPaymentsMinimumFen, "USD"),
-                                })}
-                            </div>
-                        {/if}
-
                         {#if creditProductsLoading}
                             <div class="subtext">{$t("auth.loading")}</div>
                         {:else if creditProductsErrorKey}
@@ -3039,123 +2973,6 @@
             </div>
         {/if}
 
-        {#if activeOrder && activeOrder.provider === "nowpayments" && nowPayment}
-            <div
-                class="payment-overlay"
-                role="presentation"
-                on:click={clearActiveOrder}
-            >
-                <div class="payment-modal" on:click|stopPropagation>
-                    <div class="payment-header">
-                        <div class="payment-title">
-                            {$t("auth.nowpayments_qr_pay_title")}
-                        </div>
-                        <button class="button elevated" on:click={clearActiveOrder}>
-                            {$t("auth.close")}
-                        </button>
-                    </div>
-
-                    <div class="subtext payment-subtitle">
-                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
-                        {#if activeOrder.kind === "credit"}
-                            - {activeOrder.points} {$t("auth.points_label")}
-                        {:else}
-                            - {membershipPlanLabel(activeOrder.plan_key)}
-                        {/if}
-                    </div>
-
-                    <div class="payment-body">
-                        <div class="payment-qr">
-                            {#if activeOrder.status === "PAID"}
-                                <div class="payment-success">
-                                    {$t(
-                                        activeOrder.kind === "membership"
-                                            ? "auth.membership_payment_success"
-                                            : "auth.payment_success",
-                                    )}
-                                </div>
-                            {:else if qrDataUrl}
-                                <img
-                                    class="payment-qr-image"
-                                    src={qrDataUrl}
-                                    alt={$t("auth.nowpayments_qr_alt")}
-                                />
-                            {:else}
-                                <div class="payment-qr-placeholder">
-                                    {$t("auth.qr_generating")}
-                                </div>
-                            {/if}
-                        </div>
-
-                        <div class="payment-status crypto-payment-status">
-                            {#if activeOrder.status === "PAID"}
-                                <div class="subtext payment-hint">
-                                    {$t("auth.payment_paid_hint")}
-                                </div>
-                            {:else if activeOrder.status === "CLOSED"}
-                                <div class="subtext error">
-                                    {$t("auth.payment_expired")}
-                                </div>
-                            {:else if activeOrder.status === "FAILED"}
-                                <div class="subtext error">
-                                    {$t("auth.payment_failed")}
-                                </div>
-                            {:else}
-                                <div class="payment-wait">
-                                    {$t("auth.payment_waiting")}
-                                </div>
-                                <div class="crypto-payment-details">
-                                    <div class="crypto-payment-row">
-                                        <span>{$t("auth.nowpayments_send_exact")}</span>
-                                        <strong>{nowPayment.payAmount} {nowPayment.payCurrency.toUpperCase()}</strong>
-                                    </div>
-                                    <div class="crypto-payment-row">
-                                        <span>{$t("auth.nowpayments_network")}</span>
-                                        <strong>{nowPayment.payCurrency.toUpperCase()}</strong>
-                                    </div>
-                                    <div class="crypto-address-label">
-                                        {$t("auth.nowpayments_address")}
-                                    </div>
-                                    <code class="crypto-address">{nowPayment.payAddress}</code>
-                                    <button
-                                        class="button elevated"
-                                        on:click={copyCryptoAddress}
-                                    >
-                                        {$t(
-                                            cryptoAddressCopied
-                                                ? "auth.address_copied"
-                                                : "auth.copy_address",
-                                        )}
-                                    </button>
-                                </div>
-                                <div class="subtext payment-hint">
-                                    {$t("auth.nowpayments_waiting_hint")}
-                                </div>
-                            {/if}
-
-                            <div class="payment-actions">
-                                {#if activeOrder.status === "CREATED"}
-                                    <button
-                                        class="button elevated"
-                                        on:click={() => {
-                                            if (activeOrder) {
-                                                checkActiveOrderStatus(activeOrder);
-                                            }
-                                        }}
-                                        disabled={orderStatusLoading}
-                                    >
-                                        {$t("auth.check_status")}
-                                    </button>
-                                {/if}
-                                <button class="button elevated" on:click={clearActiveOrder}>
-                                    {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.close")}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {/if}
     {:else}
         <section class="card">
             <div class="actions">
@@ -4055,26 +3872,6 @@
         opacity: 0.85;
     }
 
-    .crypto-network-select {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        color: var(--subtext);
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .crypto-network-select select {
-        min-width: 160px;
-        border: 1px solid var(--surface-2);
-        border-radius: 12px;
-        background: var(--surface-1);
-        color: var(--text);
-        padding: 8px 10px;
-        font: inherit;
-    }
-
     .product-subtitle-original {
         text-decoration: line-through;
     }
@@ -4232,49 +4029,6 @@
         flex-direction: column;
         gap: 10px;
         justify-content: space-between;
-    }
-
-    .crypto-payment-status {
-        min-width: 0;
-    }
-
-    .crypto-payment-details {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        min-width: 0;
-    }
-
-    .crypto-payment-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        color: var(--subtext);
-        font-size: 13px;
-    }
-
-    .crypto-payment-row strong {
-        color: var(--text);
-        text-align: right;
-    }
-
-    .crypto-address-label {
-        color: var(--subtext);
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .crypto-address {
-        display: block;
-        overflow-wrap: anywhere;
-        border: 1px solid var(--surface-2);
-        border-radius: 12px;
-        background: var(--surface-1);
-        color: var(--text);
-        padding: 10px;
-        font-size: 12px;
-        line-height: 1.5;
-        user-select: all;
     }
 
     .payment-success {

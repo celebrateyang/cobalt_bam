@@ -77,17 +77,14 @@ import {
 } from "../payments/paypal.js";
 import {
     NowPaymentsRequestError,
-    createNowPayment,
+    createNowInvoice,
     getNowPayment,
-    getNowPaymentsMinimumAmount,
-    getNowPaymentsPayCurrencies,
     getNowPaymentsPayoutCurrency,
     getNowPaymentsStatus,
     isDecimalAtLeast,
     isNowPaymentsConfigured,
     parseDecimalToMinorUnits,
-    resolveNowPaymentsPayCurrency,
-    toPublicNowPayment,
+    toPublicNowInvoice,
     verifyNowPaymentsIpnSignature,
 } from "../payments/nowpayments.js";
 
@@ -278,12 +275,10 @@ const normalizeProvider = (rawProvider, fallback = "wechat") => {
     return fallback;
 };
 
-const buildPublicProducts = (provider, { nowPaymentsMinimumFen = 0 } = {}) => {
+const buildPublicProducts = (provider) => {
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
-        return NOWPAYMENTS_CREDIT_PRODUCTS.filter(
-            (product) => product.amountFen >= nowPaymentsMinimumFen,
-        ).map((product) => ({
+        return NOWPAYMENTS_CREDIT_PRODUCTS.map((product) => ({
             key: product.key,
             points: product.points,
             unitPriceFen: product.unitPriceFen,
@@ -314,15 +309,10 @@ const buildPublicProducts = (provider, { nowPaymentsMinimumFen = 0 } = {}) => {
     }));
 };
 
-const buildPublicMembershipProducts = (
-    provider,
-    { nowPaymentsMinimumFen = 0 } = {},
-) => {
+const buildPublicMembershipProducts = (provider) => {
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
-        return NOWPAYMENTS_MEMBERSHIP_PRODUCTS.filter(
-            (product) => product.amountFen >= nowPaymentsMinimumFen,
-        ).map((product) => ({
+        return NOWPAYMENTS_MEMBERSHIP_PRODUCTS.map((product) => ({
             key: product.key,
             planKey: product.planKey,
             durationDays: product.durationDays,
@@ -359,6 +349,58 @@ const buildPublicMembershipProducts = (
         billingType: "one_time",
         enabled: true,
     }));
+};
+
+const parseNowPaymentsReturnUrl = (req) => {
+    const rawReturnUrl = String(req.body?.returnUrl || "").trim();
+    const rawOrigin = String(req.header("origin") || "").trim();
+    let returnUrl;
+    let requestOrigin;
+    try {
+        returnUrl = new URL(rawReturnUrl);
+        requestOrigin = new URL(rawOrigin);
+    } catch {
+        return null;
+    }
+    if (
+        returnUrl.origin !== requestOrigin.origin ||
+        (returnUrl.protocol !== "https:" &&
+            !(
+                returnUrl.protocol === "http:" &&
+                ["localhost", "127.0.0.1"].includes(returnUrl.hostname)
+            ))
+    ) {
+        return null;
+    }
+    return returnUrl;
+};
+
+const buildNowPaymentsReturnUrls = ({ returnUrl, orderId, kind }) => {
+    const makeUrl = (result) => {
+        const url = new URL(returnUrl.toString());
+        url.hash = "";
+        url.searchParams.set("nowpayments", result);
+        url.searchParams.set("nowpayments_order", String(orderId));
+        url.searchParams.set("nowpayments_kind", kind);
+        return url.toString();
+    };
+    return {
+        successUrl: makeUrl("return"),
+        cancelUrl: makeUrl("cancel"),
+    };
+};
+
+const isTrustedNowPaymentsInvoiceUrl = (value) => {
+    try {
+        const url = new URL(String(value || ""));
+        return (
+            url.protocol === "https:" &&
+            (url.hostname === "nowpayments.io" ||
+                url.hostname.endsWith(".nowpayments.io"))
+        );
+    } catch {
+        return false;
+    }
 };
 
 const isMatchingPayPalMembershipPlan = ({ product, paypalPlan }) => {
@@ -613,6 +655,7 @@ const markPayPalOrderPaidFromOrder = async ({
 
 const getNowPaymentsProviderData = (payment) => ({
     nowpayments_payment_id: String(payment?.payment_id || ""),
+    nowpayments_invoice_id: String(payment?.invoice_id || ""),
     nowpayments_status: getNowPaymentsStatus(payment),
     pay_address: String(payment?.pay_address || ""),
     pay_amount: String(payment?.pay_amount ?? ""),
@@ -643,7 +686,15 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
     const storedPaymentId = String(
         order?.provider_data?.nowpayments_payment_id || "",
     ).trim();
-    if (!storedPaymentId || storedPaymentId !== paymentId) {
+    const storedInvoiceId = String(
+        order?.provider_data?.nowpayments_invoice_id || "",
+    ).trim();
+    const receivedInvoiceId = String(payment?.invoice_id || "").trim();
+    if (storedInvoiceId) {
+        if (storedInvoiceId !== receivedInvoiceId) {
+            return { ok: false, code: "INVOICE_ID_MISMATCH", order };
+        }
+    } else if (!storedPaymentId || storedPaymentId !== paymentId) {
         return { ok: false, code: "PAYMENT_ID_MISMATCH", order };
     }
 
@@ -751,41 +802,13 @@ const applyNowPaymentsPaymentUpdate = async ({ payment, rawNotify }) => {
 router.get("/credits/products", async (req, res) => {
     try {
         const provider = normalizeProvider(req.query?.provider, "wechat");
-        let nowPaymentsMinimum = null;
-        let selectedPayCurrency = null;
-        if (provider === "nowpayments" && isNowPaymentsConfigured()) {
-            selectedPayCurrency = resolveNowPaymentsPayCurrency(
-                req.query?.payCurrency,
-            );
-            if (!selectedPayCurrency) {
-                return jsonError(
-                    res,
-                    400,
-                    "INVALID_PAY_CURRENCY",
-                    "Unsupported payment currency or network",
-                    { allowed: getNowPaymentsPayCurrencies() },
-                );
-            }
-            nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: selectedPayCurrency,
-                currencyTo: selectedPayCurrency,
-            });
-        }
         res.json({
             status: "success",
             data: {
                 provider,
-                products: buildPublicProducts(provider, {
-                    nowPaymentsMinimumFen:
-                        nowPaymentsMinimum?.minimumFen || 0,
-                }),
+                products: buildPublicProducts(provider),
                 ...(provider === "nowpayments"
-                    ? {
-                          payCurrencies: getNowPaymentsPayCurrencies(),
-                          selectedPayCurrency,
-                          payoutCurrency: selectedPayCurrency,
-                          minimumAmount: nowPaymentsMinimum,
-                      }
+                    ? { checkoutMode: "hosted_invoice" }
                     : {}),
             },
         });
@@ -803,29 +826,7 @@ router.get("/credits/products", async (req, res) => {
 router.get("/memberships/products", async (req, res) => {
     try {
         const provider = normalizeProvider(req.query?.provider, "wechat");
-        let nowPaymentsMinimum = null;
-        let selectedPayCurrency = null;
-        if (provider === "nowpayments" && isNowPaymentsConfigured()) {
-            selectedPayCurrency = resolveNowPaymentsPayCurrency(
-                req.query?.payCurrency,
-            );
-            if (!selectedPayCurrency) {
-                return jsonError(
-                    res,
-                    400,
-                    "INVALID_PAY_CURRENCY",
-                    "Unsupported payment currency or network",
-                    { allowed: getNowPaymentsPayCurrencies() },
-                );
-            }
-            nowPaymentsMinimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: selectedPayCurrency,
-                currencyTo: getNowPaymentsPayoutCurrency(),
-            });
-        }
-        const products = buildPublicMembershipProducts(provider, {
-            nowPaymentsMinimumFen: nowPaymentsMinimum?.minimumFen || 0,
-        });
+        const products = buildPublicMembershipProducts(provider);
         res.json({
             status: "success",
             data: {
@@ -836,12 +837,7 @@ router.get("/memberships/products", async (req, res) => {
                         ? products[0].limits
                         : MEMBER_DOWNLOAD_LIMITS,
                 ...(provider === "nowpayments"
-                    ? {
-                          payCurrencies: getNowPaymentsPayCurrencies(),
-                          selectedPayCurrency,
-                          payoutCurrency: getNowPaymentsPayoutCurrency(),
-                          minimumAmount: nowPaymentsMinimum,
-                      }
+                    ? { checkoutMode: "hosted_invoice" }
                     : {}),
             },
         });
@@ -1330,33 +1326,15 @@ if (!isClerkAuthConfigured) {
                     "Invalid credit product",
                 );
             }
-            const payCurrency = resolveNowPaymentsPayCurrency(
-                req.body?.payCurrency,
-            );
-            if (!payCurrency) {
+            const checkoutReturnUrl = parseNowPaymentsReturnUrl(req);
+            if (!checkoutReturnUrl) {
                 return jsonError(
                     res,
                     400,
-                    "INVALID_PAY_CURRENCY",
-                    "Unsupported payment currency or network",
-                    { allowed: getNowPaymentsPayCurrencies() },
+                    "INVALID_RETURN_URL",
+                    "Invalid checkout return URL",
                 );
             }
-
-            const minimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: payCurrency,
-                currencyTo: payCurrency,
-            });
-            if (product.amountFen < minimum.minimumFen) {
-                return jsonError(
-                    res,
-                    400,
-                    "BELOW_NOWPAYMENTS_MINIMUM",
-                    "Selected product is below the current NOWPayments minimum",
-                    { minimum },
-                );
-            }
-
             const clerkUser = await clerkClient.users.getUser(auth.userId);
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
             const outTradeNo = `cpt_${nanoid(20)}`;
@@ -1372,44 +1350,46 @@ if (!isClerkAuthConfigured) {
                 outTradeNo,
                 providerData: {
                     ...(attribution ? { attribution } : {}),
-                    pay_currency: payCurrency,
-                    expected_outcome_currency: payCurrency,
+                    checkout_mode: "hosted_invoice",
+                    expected_outcome_currency: getNowPaymentsPayoutCurrency(),
                 },
             });
 
-            const payment = await createNowPayment({
+            const returnUrls = buildNowPaymentsReturnUrls({
+                returnUrl: checkoutReturnUrl,
+                orderId: createdOrder.id,
+                kind: "credit",
+            });
+            const invoice = await createNowInvoice({
                 outTradeNo,
                 amountFen: product.amountFen,
                 currency: product.currency,
-                payCurrency,
-                payoutCurrency: payCurrency,
                 points: product.points,
+                ...returnUrls,
             });
-            const publicPayment = toPublicNowPayment(payment);
+            const publicInvoice = toPublicNowInvoice(invoice);
             if (
-                !/^\d+$/.test(publicPayment.paymentId) ||
-                !publicPayment.payAddress ||
-                !publicPayment.payAmount ||
-                publicPayment.payCurrency !== payCurrency ||
-                String(payment?.order_id || "") !== outTradeNo ||
-                parseDecimalToMinorUnits(payment?.price_amount) !==
+                !/^\d+$/.test(publicInvoice.invoiceId) ||
+                !isTrustedNowPaymentsInvoiceUrl(publicInvoice.invoiceUrl) ||
+                String(invoice?.order_id || "") !== outTradeNo ||
+                parseDecimalToMinorUnits(invoice?.price_amount) !==
                     product.amountFen ||
-                String(payment?.price_currency || "").toUpperCase() !==
+                String(invoice?.price_currency || "").toUpperCase() !==
                     product.currency
             ) {
-                throw new Error("NOWPayments returned an invalid payment response");
+                throw new Error("NOWPayments returned an invalid invoice response");
             }
 
             const order = await updateCreditOrderProviderData(createdOrder.id, {
-                ...getNowPaymentsProviderData(payment),
-                created_response: payment,
+                nowpayments_invoice_id: publicInvoice.invoiceId,
+                invoice_url: publicInvoice.invoiceUrl,
+                created_response: invoice,
             });
             return res.json({
                 status: "success",
                 data: {
                     order,
-                    nowpayments: publicPayment,
-                    payCurrencies: getNowPaymentsPayCurrencies(),
+                    nowpayments: publicInvoice,
                 },
             });
         } catch (error) {
@@ -1440,11 +1420,23 @@ if (!isClerkAuthConfigured) {
                 message: error?.message,
                 status: error?.status,
             });
+            const rejectedByNowPayments =
+                error instanceof NowPaymentsRequestError &&
+                Number(error.status) >= 400 &&
+                Number(error.status) < 500;
             return jsonError(
                 res,
-                error instanceof NowPaymentsRequestError ? 502 : 500,
-                "NOWPAYMENTS_CREATE_FAILED",
-                "Failed to create NOWPayments payment",
+                rejectedByNowPayments
+                    ? 400
+                    : error instanceof NowPaymentsRequestError
+                      ? 502
+                      : 500,
+                rejectedByNowPayments
+                    ? "NOWPAYMENTS_INVOICE_REJECTED"
+                    : "NOWPAYMENTS_CREATE_FAILED",
+                rejectedByNowPayments
+                    ? "NOWPayments rejected this invoice"
+                    : "Failed to create NOWPayments invoice",
             );
         }
     });
@@ -1476,33 +1468,15 @@ if (!isClerkAuthConfigured) {
                     "Invalid membership product",
                 );
             }
-            const payCurrency = resolveNowPaymentsPayCurrency(
-                req.body?.payCurrency,
-            );
-            if (!payCurrency) {
+            const checkoutReturnUrl = parseNowPaymentsReturnUrl(req);
+            if (!checkoutReturnUrl) {
                 return jsonError(
                     res,
                     400,
-                    "INVALID_PAY_CURRENCY",
-                    "Unsupported payment currency or network",
-                    { allowed: getNowPaymentsPayCurrencies() },
+                    "INVALID_RETURN_URL",
+                    "Invalid checkout return URL",
                 );
             }
-
-            const minimum = await getNowPaymentsMinimumAmount({
-                currencyFrom: payCurrency,
-                currencyTo: getNowPaymentsPayoutCurrency(),
-            });
-            if (product.amountFen < minimum.minimumFen) {
-                return jsonError(
-                    res,
-                    400,
-                    "BELOW_NOWPAYMENTS_MINIMUM",
-                    "Selected product is below the current NOWPayments minimum",
-                    { minimum },
-                );
-            }
-
             const clerkUser = await clerkClient.users.getUser(auth.userId);
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
             await ensureMembershipCheckoutPlan(product.planKey);
@@ -1521,47 +1495,49 @@ if (!isClerkAuthConfigured) {
                 outTradeNo,
                 providerData: {
                     ...(attribution ? { attribution } : {}),
-                    pay_currency: payCurrency,
+                    checkout_mode: "hosted_invoice",
                     expected_outcome_currency: getNowPaymentsPayoutCurrency(),
                 },
             });
 
-            const payment = await createNowPayment({
+            const returnUrls = buildNowPaymentsReturnUrls({
+                returnUrl: checkoutReturnUrl,
+                orderId: createdOrder.id,
+                kind: "membership",
+            });
+            const invoice = await createNowInvoice({
                 outTradeNo,
                 amountFen: product.amountFen,
                 currency: product.currency,
-                payCurrency,
-                payoutCurrency: getNowPaymentsPayoutCurrency(),
                 description: getMembershipProductDescription(product.key),
+                ...returnUrls,
             });
-            const publicPayment = toPublicNowPayment(payment);
+            const publicInvoice = toPublicNowInvoice(invoice);
             if (
-                !/^\d+$/.test(publicPayment.paymentId) ||
-                !publicPayment.payAddress ||
-                !publicPayment.payAmount ||
-                publicPayment.payCurrency !== payCurrency ||
-                String(payment?.order_id || "") !== outTradeNo ||
-                parseDecimalToMinorUnits(payment?.price_amount) !==
+                !/^\d+$/.test(publicInvoice.invoiceId) ||
+                !isTrustedNowPaymentsInvoiceUrl(publicInvoice.invoiceUrl) ||
+                String(invoice?.order_id || "") !== outTradeNo ||
+                parseDecimalToMinorUnits(invoice?.price_amount) !==
                     product.amountFen ||
-                String(payment?.price_currency || "").toUpperCase() !==
+                String(invoice?.price_currency || "").toUpperCase() !==
                     product.currency
             ) {
-                throw new Error("NOWPayments returned an invalid payment response");
+                throw new Error("NOWPayments returned an invalid invoice response");
             }
 
             const order = await updateMembershipOrderProviderData(
                 createdOrder.id,
                 {
-                    ...getNowPaymentsProviderData(payment),
-                    created_response: payment,
+                    nowpayments_invoice_id: publicInvoice.invoiceId,
+                    invoice_url: publicInvoice.invoiceUrl,
+                    created_response: invoice,
                 },
             );
             return res.json({
                 status: "success",
                 data: {
                     order,
-                    nowpayments: publicPayment,
-                    payCurrencies: getNowPaymentsPayCurrencies(),
+                    nowpayments: publicInvoice,
                 },
             });
         } catch (error) {
@@ -1592,11 +1568,23 @@ if (!isClerkAuthConfigured) {
                 message: error?.message,
                 status: error?.status,
             });
+            const rejectedByNowPayments =
+                error instanceof NowPaymentsRequestError &&
+                Number(error.status) >= 400 &&
+                Number(error.status) < 500;
             return jsonError(
                 res,
-                error instanceof NowPaymentsRequestError ? 502 : 500,
-                "NOWPAYMENTS_CREATE_FAILED",
-                "Failed to create NOWPayments membership payment",
+                rejectedByNowPayments
+                    ? 400
+                    : error instanceof NowPaymentsRequestError
+                      ? 502
+                      : 500,
+                rejectedByNowPayments
+                    ? "NOWPAYMENTS_INVOICE_REJECTED"
+                    : "NOWPAYMENTS_CREATE_FAILED",
+                rejectedByNowPayments
+                    ? "NOWPayments rejected this invoice"
+                    : "Failed to create NOWPayments membership invoice",
             );
         }
     });

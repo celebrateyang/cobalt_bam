@@ -218,6 +218,47 @@ export const createNowPayment = async ({
     });
 };
 
+export const createNowInvoice = async ({
+    outTradeNo,
+    amountFen,
+    currency = "USD",
+    points,
+    description,
+    successUrl,
+    cancelUrl,
+}) => {
+    const config = getNowPaymentsConfig();
+    for (const [name, value] of [
+        ["success URL", successUrl],
+        ["cancel URL", cancelUrl],
+    ]) {
+        let parsed;
+        try {
+            parsed = new URL(String(value || ""));
+        } catch {
+            throw new Error(`invalid NOWPayments ${name}`);
+        }
+        if (!(["https:", "http:"].includes(parsed.protocol))) {
+            throw new Error(`invalid NOWPayments ${name}`);
+        }
+    }
+
+    return await nowPaymentsRequestJson({
+        method: "POST",
+        path: "/v1/invoice",
+        body: {
+            price_amount: minorUnitsToDecimal(amountFen),
+            price_currency: String(currency).toLowerCase(),
+            ipn_callback_url: config.ipnCallbackUrl,
+            order_id: outTradeNo,
+            order_description:
+                description || `FreeSaveVideo ${points} credits`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+        },
+    });
+};
+
 export const getNowPayment = async (paymentId) => {
     const normalized = String(paymentId || "").trim();
     if (!/^\d+$/.test(normalized)) {
@@ -341,4 +382,11 @@ export const toPublicNowPayment = (payment) => ({
         typeof payment?.expiration_estimate_date === "string"
             ? payment.expiration_estimate_date
             : null,
+});
+
+export const toPublicNowInvoice = (invoice) => ({
+    invoiceId: String(invoice?.id || ""),
+    invoiceUrl: String(invoice?.invoice_url || ""),
+    priceAmount: String(invoice?.price_amount ?? ""),
+    priceCurrency: normalizeCurrency(invoice?.price_currency),
 });

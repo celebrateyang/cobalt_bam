@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    createNowInvoice,
     createNowPayment,
     createNowPaymentsSignature,
     getNowPaymentsConfig,
@@ -11,8 +12,70 @@ import {
     parseDecimalToMinorUnits,
     parseDecimalToCeilMinorUnits,
     sortNowPaymentsPayload,
+    toPublicNowInvoice,
     verifyNowPaymentsIpnSignature,
 } from "./nowpayments.js";
+
+test("creates a hosted invoice without fixing the customer pay currency", async () => {
+    const previous = {
+        apiKey: process.env.NOWPAYMENTS_API_KEY,
+        callbackUrl: process.env.NOWPAYMENTS_IPN_CALLBACK_URL,
+        fetch: globalThis.fetch,
+    };
+    process.env.NOWPAYMENTS_API_KEY = "test-api-key";
+    process.env.NOWPAYMENTS_IPN_CALLBACK_URL =
+        "https://example.com/payments/nowpayments/ipn";
+    let requestedUrl = "";
+    let requestBody = null;
+    globalThis.fetch = async (url, options) => {
+        requestedUrl = String(url);
+        requestBody = JSON.parse(options.body);
+        return new Response(
+            JSON.stringify({
+                id: 4522625843,
+                order_id: "cpt_example",
+                price_amount: 1.99,
+                price_currency: "usd",
+                invoice_url:
+                    "https://nowpayments.io/payment/?iid=4522625843",
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+        );
+    };
+    try {
+        const invoice = await createNowInvoice({
+            outTradeNo: "cpt_example",
+            amountFen: 199,
+            points: 600,
+            successUrl: "https://example.com/en/account?payment=return",
+            cancelUrl: "https://example.com/en/account?payment=cancel",
+        });
+        assert.equal(new URL(requestedUrl).pathname, "/v1/invoice");
+        assert.equal(requestBody.price_amount, "1.99");
+        assert.equal(requestBody.price_currency, "usd");
+        assert.equal("pay_currency" in requestBody, false);
+        assert.equal("payout_currency" in requestBody, false);
+        assert.equal(
+            requestBody.ipn_callback_url,
+            "https://example.com/payments/nowpayments/ipn",
+        );
+        assert.deepEqual(toPublicNowInvoice(invoice), {
+            invoiceId: "4522625843",
+            invoiceUrl: "https://nowpayments.io/payment/?iid=4522625843",
+            priceAmount: "1.99",
+            priceCurrency: "usd",
+        });
+    } finally {
+        globalThis.fetch = previous.fetch;
+        for (const [name, value] of [
+            ["NOWPAYMENTS_API_KEY", previous.apiKey],
+            ["NOWPAYMENTS_IPN_CALLBACK_URL", previous.callbackUrl],
+        ]) {
+            if (value === undefined) delete process.env[name];
+            else process.env[name] = value;
+        }
+    }
+});
 
 test("defaults to low-minimum customer crypto choices first", () => {
     const previousPayCurrencies = process.env.NOWPAYMENTS_PAY_CURRENCIES;

@@ -192,7 +192,7 @@ nowpayments:
   secretName: nowpayments-secret
   ipnCallbackUrl: "https://api.freesavevideo.online/payments/nowpayments/ipn"
   payCurrencies: "usdcmatic,eth,usdttrc20,btc"
-  payoutCurrency: "usdttrc20"
+  payoutCurrency: "usdcmatic"
 
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:

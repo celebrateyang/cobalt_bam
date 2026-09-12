@@ -85,7 +85,7 @@ test("defaults to low-minimum customer crypto choices first", () => {
     try {
         const config = getNowPaymentsConfig();
         assert.deepEqual(config.payCurrencies, ["usdcmatic", "eth", "usdttrc20", "btc"]);
-        assert.equal(config.payoutCurrency, "usdttrc20");
+        assert.equal(config.payoutCurrency, "usdcmatic");
     } finally {
         if (previousPayCurrencies === undefined) {
             delete process.env.NOWPAYMENTS_PAY_CURRENCIES;

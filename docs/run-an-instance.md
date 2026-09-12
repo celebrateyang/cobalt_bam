@@ -103,7 +103,7 @@ membership paid with supported cryptocurrencies. Configure:
 - `NOWPAYMENTS_API_KEY`
 - `NOWPAYMENTS_IPN_SECRET`
 - `NOWPAYMENTS_IPN_CALLBACK_URL` (defaults to `<API_URL>/payments/nowpayments/ipn`)
-- `NOWPAYMENTS_PAYOUT_CURRENCY` (defaults to `usdttrc20`; must match the account's
+- `NOWPAYMENTS_PAYOUT_CURRENCY` (defaults to `usdcmatic`; must match the account's
   actual hosted-checkout settlement currency)
 - `NOWPAYMENTS_API_BASE` (optional; defaults to `https://api.nowpayments.io`)
 

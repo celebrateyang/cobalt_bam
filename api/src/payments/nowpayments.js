@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 const DEFAULT_API_BASE = "https://api.nowpayments.io";
 const DEFAULT_PAY_CURRENCIES = ["usdcmatic", "eth", "usdttrc20", "btc"];
-const DEFAULT_PAYOUT_CURRENCY = "usdttrc20";
+const DEFAULT_PAYOUT_CURRENCY = "usdcmatic";
 const MIN_AMOUNT_CACHE_MS = 5 * 60 * 1000;
 const minimumAmountCache = new Map();
 const minimumAmountInflight = new Map();

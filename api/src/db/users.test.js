@@ -8,10 +8,18 @@ import {
     resolveDownloadRequestAction,
 } from "./users.js";
 
-test("uses stricter fair-use limits for the crypto annual plan", () => {
+test("uses the shared fair-use limits for crypto membership plans", () => {
+    assert.deepEqual(getMembershipDownloadLimits("member_3day_crypto"), {
+        dailySuccessfulDownloads: 300,
+        monthlySuccessfulDownloads: 5000,
+    });
+    assert.deepEqual(getMembershipDownloadLimits("member_monthly_crypto"), {
+        dailySuccessfulDownloads: 300,
+        monthlySuccessfulDownloads: 5000,
+    });
     assert.deepEqual(getMembershipDownloadLimits("member_yearly_crypto"), {
-        dailySuccessfulDownloads: 100,
-        monthlySuccessfulDownloads: 1000,
+        dailySuccessfulDownloads: 300,
+        monthlySuccessfulDownloads: 5000,
     });
     assert.deepEqual(getMembershipDownloadLimits("member_yearly"), {
         dailySuccessfulDownloads: 300,

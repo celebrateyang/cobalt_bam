@@ -940,19 +940,6 @@
         opacity: 0.7;
     }
 
-    .notification-link {
-        color: #1976d2;
-        text-decoration: underline;
-        font-weight: 500;
-        margin: 0 4px;
-        transition: color 0.2s;
-    }
-
-    .notification-link:hover {
-        color: #1565c0;
-        text-decoration: none;
-    }
-
     /* 深色模式下的通知样式 */
     @media (prefers-color-scheme: dark) {
         .notification {
@@ -961,13 +948,6 @@
             border-color: #2e7d32;
         }
 
-        .notification-link {
-            color: #64b5f6;
-        }
-
-        .notification-link:hover {
-            color: #90caf9;
-        }
     }
 
     @keyframes slideIn {

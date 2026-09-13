@@ -2087,10 +2087,9 @@ export const MEMBER_DOWNLOAD_LIMITS = Object.freeze({
 });
 
 export const MEMBERSHIP_PLAN_DOWNLOAD_LIMITS = Object.freeze({
-    member_yearly_crypto: Object.freeze({
-        dailySuccessfulDownloads: 100,
-        monthlySuccessfulDownloads: 1000,
-    }),
+    member_3day_crypto: MEMBER_DOWNLOAD_LIMITS,
+    member_monthly_crypto: MEMBER_DOWNLOAD_LIMITS,
+    member_yearly_crypto: MEMBER_DOWNLOAD_LIMITS,
 });
 
 export const getMembershipDownloadLimits = (planKey) => {

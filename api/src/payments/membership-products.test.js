@@ -11,8 +11,34 @@ import {
     getWechatMembershipProductByKey,
 } from "./membership-products.js";
 
-test("offers one NOWPayments founding annual pass", () => {
+test("offers three NOWPayments one-time membership passes", () => {
     assert.deepEqual(NOWPAYMENTS_MEMBERSHIP_PRODUCTS, [
+        {
+            key: "member_monthly_nowpayments",
+            planKey: "member_monthly_crypto",
+            durationDays: 30,
+            amountFen: 499,
+            currency: "USD",
+            billingType: "one_time",
+            entitlements: ["member_download", "video_recording"],
+            limits: {
+                dailySuccessfulDownloads: 300,
+                monthlySuccessfulDownloads: 5000,
+            },
+        },
+        {
+            key: "member_3day_nowpayments",
+            planKey: "member_3day_crypto",
+            durationDays: 3,
+            amountFen: 199,
+            currency: "USD",
+            billingType: "one_time",
+            entitlements: ["member_download", "video_recording"],
+            limits: {
+                dailySuccessfulDownloads: 300,
+                monthlySuccessfulDownloads: 5000,
+            },
+        },
         {
             key: "member_yearly_nowpayments_founder",
             planKey: "member_yearly_crypto",
@@ -22,16 +48,32 @@ test("offers one NOWPayments founding annual pass", () => {
             billingType: "one_time",
             entitlements: ["member_download", "video_recording"],
             limits: {
-                dailySuccessfulDownloads: 100,
-                monthlySuccessfulDownloads: 1000,
+                dailySuccessfulDownloads: 300,
+                monthlySuccessfulDownloads: 5000,
             },
         },
     ]);
+    assert.equal(
+        getNowPaymentsMembershipProductByKey("member_3day_nowpayments")?.amountFen,
+        199,
+    );
+    assert.equal(
+        getNowPaymentsMembershipProductByKey("member_monthly_nowpayments")?.amountFen,
+        499,
+    );
     assert.equal(
         getNowPaymentsMembershipProductByKey(
             "member_yearly_nowpayments_founder",
         )?.amountFen,
         1999,
+    );
+    assert.equal(
+        getMembershipProductDescription("member_3day_nowpayments"),
+        "3-day crypto membership pass",
+    );
+    assert.equal(
+        getMembershipProductDescription("member_monthly_nowpayments"),
+        "30-day crypto membership pass",
     );
     assert.equal(
         getMembershipProductDescription(

@@ -611,7 +611,9 @@
     };
 
     const membershipPlanLabel = (planKey: string | undefined | null) => {
-        if (planKey === "member_3day") return $t("auth.membership_3day");
+        if (planKey === "member_3day" || planKey === "member_3day_crypto") {
+            return $t("auth.membership_3day");
+        }
         if (planKey === "member_weekly") return $t("auth.membership_weekly");
         if (planKey === "member_yearly" || planKey === "member_yearly_crypto") {
             return $t("auth.membership_yearly");
@@ -625,7 +627,10 @@
     };
 
     const formatMembershipProductSubtitle = (product: MembershipProduct) => {
-        if (product.key === "member_3day") {
+        if (
+            product.key === "member_3day" ||
+            product.key === "member_3day_nowpayments"
+        ) {
             return $t("auth.membership_3day_subtitle");
         }
         if (product.key === "member_weekly") {
@@ -1919,15 +1924,19 @@
             checkoutIntent === "membership_monthly"
         ) {
             if (membershipProductsLoading) return;
+            const wantsShortPass =
+                checkoutIntent === "membership_3day" ||
+                checkoutIntent === "membership_weekly";
             const productKey =
                 selectedPaymentProvider === "paypal"
                     ? "member_monthly_recurring"
                     : selectedPaymentProvider === "nowpayments"
-                      ? "member_yearly_nowpayments_founder"
-                    : checkoutIntent === "membership_3day" ||
-                        checkoutIntent === "membership_weekly"
-                      ? "member_3day"
-                      : "member_monthly";
+                      ? wantsShortPass
+                          ? "member_3day_nowpayments"
+                          : "member_monthly_nowpayments"
+                      : wantsShortPass
+                        ? "member_3day"
+                        : "member_monthly";
             const membershipProduct = membershipProducts.find(
                 (candidate) =>
                     candidate.key === productKey &&
@@ -2752,7 +2761,7 @@
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
-                                                    {:else if product.key === "member_3day" || product.key === "member_monthly_recurring"}
+                                                    {:else if product.key === "member_3day" || product.key === "member_monthly_recurring" || product.key === "member_monthly_nowpayments"}
                                                         <span class="badge rec">
                                                             {$t("auth.badge_recommended")}
                                                         </span>

@@ -21,6 +21,16 @@ const CHECKOUT_PLAN_METADATA = Object.freeze({
         name: "Yearly Member",
         description: "Yearly membership for downloads without points",
     }),
+    member_3day_crypto: Object.freeze({
+        name: "3-Day Crypto Member",
+        description: "3-day crypto membership for standard downloads without points",
+        entitlements: Object.freeze(["member_download", "video_recording"]),
+    }),
+    member_monthly_crypto: Object.freeze({
+        name: "Monthly Crypto Member",
+        description: "30-day crypto membership for standard downloads without points",
+        entitlements: Object.freeze(["member_download", "video_recording"]),
+    }),
     member_yearly_crypto: Object.freeze({
         name: "Founding Annual Member",
         description:

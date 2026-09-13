@@ -51,7 +51,36 @@ export const PAYPAL_MEMBERSHIP_PRODUCTS = Object.freeze([
     }),
 ]);
 
+const NOWPAYMENTS_MEMBERSHIP_ENTITLEMENTS = Object.freeze([
+    "member_download",
+    "video_recording",
+]);
+const NOWPAYMENTS_MEMBERSHIP_LIMITS = Object.freeze({
+    dailySuccessfulDownloads: 300,
+    monthlySuccessfulDownloads: 5000,
+});
+
 export const NOWPAYMENTS_MEMBERSHIP_PRODUCTS = Object.freeze([
+    Object.freeze({
+        key: "member_monthly_nowpayments",
+        planKey: "member_monthly_crypto",
+        durationDays: 30,
+        amountFen: 499,
+        currency: "USD",
+        billingType: "one_time",
+        entitlements: NOWPAYMENTS_MEMBERSHIP_ENTITLEMENTS,
+        limits: NOWPAYMENTS_MEMBERSHIP_LIMITS,
+    }),
+    Object.freeze({
+        key: "member_3day_nowpayments",
+        planKey: "member_3day_crypto",
+        durationDays: 3,
+        amountFen: 199,
+        currency: "USD",
+        billingType: "one_time",
+        entitlements: NOWPAYMENTS_MEMBERSHIP_ENTITLEMENTS,
+        limits: NOWPAYMENTS_MEMBERSHIP_LIMITS,
+    }),
     Object.freeze({
         key: "member_yearly_nowpayments_founder",
         planKey: "member_yearly_crypto",
@@ -59,11 +88,8 @@ export const NOWPAYMENTS_MEMBERSHIP_PRODUCTS = Object.freeze([
         amountFen: 1999,
         currency: "USD",
         billingType: "one_time",
-        entitlements: Object.freeze(["member_download", "video_recording"]),
-        limits: Object.freeze({
-            dailySuccessfulDownloads: 100,
-            monthlySuccessfulDownloads: 1000,
-        }),
+        entitlements: NOWPAYMENTS_MEMBERSHIP_ENTITLEMENTS,
+        limits: NOWPAYMENTS_MEMBERSHIP_LIMITS,
     }),
 ]);
 
@@ -88,6 +114,8 @@ export const getMembershipProductDescription = (key) => {
     if (key === "member_monthly_onetime") return "One-month membership pass";
     if (key === "member_monthly_recurring") return "Monthly membership subscription";
     if (key === "member_yearly_recurring") return "Yearly membership subscription";
+    if (key === "member_3day_nowpayments") return "3-day crypto membership pass";
+    if (key === "member_monthly_nowpayments") return "30-day crypto membership pass";
     if (key === "member_yearly_nowpayments_founder") {
         return "FreeSaveVideo Founding Annual Pass";
     }

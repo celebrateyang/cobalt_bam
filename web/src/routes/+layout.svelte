@@ -414,7 +414,7 @@
         }
     }
 
-    [data-reduce-motion="true"] :global(*) {
+    :global([data-reduce-motion="true"] *) {
         animation: none !important;
         transition: none !important;
     }

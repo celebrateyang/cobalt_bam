@@ -12,6 +12,11 @@
     let error = "";
     $: lang = $page.params.lang || "en";
 
+    const formatVoteTime = (timestamp: number) => new Intl.DateTimeFormat(lang, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(timestamp);
+
     const loadRequest = async () => {
         const id = Number.parseInt($page.params.id || "", 10);
         const response = await platformRequestsApi.get(id);
@@ -59,7 +64,14 @@
                 <section><h2>{$t("requests.admin_note")}</h2><p>{request.adminNote}</p></section>
             {/if}
             <div class="vote-panel">
-                <div><strong>{request.voteCount}</strong><span>{$t("requests.votes")}</span></div>
+                <div class="vote-summary">
+                    <div><strong>{request.voteCount}</strong><span>{$t("requests.votes")}</span></div>
+                    {#if request.lastVotedAt != null}
+                        <time datetime={new Date(request.lastVotedAt).toISOString()}>
+                            {$t("requests.last_vote", { value: formatVoteTime(request.lastVotedAt) })}
+                        </time>
+                    {/if}
+                </div>
                 <button class:active={request.votedByMe} type="button" on:click={toggleVote} disabled={voting}>
                     {request.votedByMe ? $t("requests.voted") : $t("requests.vote")}
                 </button>
@@ -82,9 +94,11 @@
     .external, button { min-height: 44px; padding: 0 16px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; font-weight: 750; text-decoration: none; }
     .external { color: var(--button-text); background: var(--primary); }
     .vote-panel { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 22px; border-top: 1px solid var(--separator); }
-    .vote-panel > div { display: flex; align-items: baseline; gap: 8px; }
+    .vote-summary { display: grid; gap: 5px; }
+    .vote-summary > div { display: flex; align-items: baseline; gap: 8px; }
     .vote-panel strong { font-size: 2rem; }
     .vote-panel span { color: var(--secondary); }
+    .vote-panel time { color: var(--secondary); font-size: .82rem; }
     button { border: 1px solid var(--separator); background: var(--background); color: var(--text); cursor: pointer; }
     button.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 18%, var(--background)); }
     .notice { padding: 24px; border: 1px solid var(--separator); border-radius: 14px; }

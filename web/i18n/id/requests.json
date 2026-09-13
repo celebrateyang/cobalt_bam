@@ -34,6 +34,7 @@
     "loading": "memuat permintaan…",
     "empty": "Belum ada permintaan platform yang cocok dengan filter ini.",
     "vote_count": "{{ count }} suara",
+    "last_vote": "Suara terakhir: {{ value }}",
     "previous": "sebelumnya",
     "next": "selanjutnya",
     "not_found": "Permintaan platform ini tidak dapat ditemukan.",

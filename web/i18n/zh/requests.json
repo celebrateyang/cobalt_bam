@@ -34,6 +34,7 @@
     "loading": "正在加载需求…",
     "empty": "当前筛选条件下还没有平台需求。",
     "vote_count": "{{ count }} 票",
+    "last_vote": "最近投票：{{ value }}",
     "previous": "上一页",
     "next": "下一页",
     "not_found": "没有找到这个平台需求。",

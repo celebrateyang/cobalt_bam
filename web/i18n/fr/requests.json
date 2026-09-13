@@ -34,6 +34,7 @@
     "loading": "chargement des demandes…",
     "empty": "Aucune demande ne correspond à ces filtres.",
     "vote_count": "{{ count }} votes",
+    "last_vote": "Dernier vote : {{ value }}",
     "previous": "précédent",
     "next": "suivant",
     "not_found": "Cette demande est introuvable.",

@@ -34,6 +34,7 @@
     "loading": "đang tải đề xuất…",
     "empty": "Không có đề xuất phù hợp với bộ lọc này.",
     "vote_count": "{{ count }} phiếu",
+    "last_vote": "Bình chọn gần nhất: {{ value }}",
     "previous": "trước",
     "next": "tiếp",
     "not_found": "Không tìm thấy đề xuất này.",

@@ -34,6 +34,7 @@
     "loading": "cargando solicitudes…",
     "empty": "No hay solicitudes con estos filtros.",
     "vote_count": "{{ count }} votos",
+    "last_vote": "Último voto: {{ value }}",
     "previous": "anterior",
     "next": "siguiente",
     "not_found": "No se encontró esta solicitud.",

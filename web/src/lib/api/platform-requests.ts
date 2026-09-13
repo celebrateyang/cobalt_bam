@@ -14,6 +14,7 @@ export type PlatformRequest = {
     adminNote: string | null;
     createdAt: number;
     updatedAt: number;
+    lastVotedAt: number | null;
     supportedAt: number | null;
 };
 

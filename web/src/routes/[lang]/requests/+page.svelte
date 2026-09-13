@@ -30,6 +30,11 @@
 
     const statusLabel = (value: PlatformRequestStatus) => $t(`requests.status_${value}`);
 
+    const formatVoteTime = (timestamp: number) => new Intl.DateTimeFormat(lang, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(timestamp);
+
     const loadRequests = async () => {
         loading = true;
         const response = await platformRequestsApi.list({
@@ -247,7 +252,14 @@
                         </div>
                         {#if item.adminNote}<p class="note">{item.adminNote}</p>{/if}
                         <div class="card-bottom">
-                            <span>{$t("requests.vote_count", { count: item.voteCount })}</span>
+                            <div class="vote-meta">
+                                <span>{$t("requests.vote_count", { count: item.voteCount })}</span>
+                                {#if item.lastVotedAt != null}
+                                    <time datetime={new Date(item.lastVotedAt).toISOString()}>
+                                        {$t("requests.last_vote", { value: formatVoteTime(item.lastVotedAt) })}
+                                    </time>
+                                {/if}
+                            </div>
                             <button
                                 class:active={item.votedByMe}
                                 type="button"
@@ -329,7 +341,9 @@
     .status-supported { color: var(--accent); background: color-mix(in srgb, var(--brand) 13%, var(--background)); }
     .status-rejected { color: var(--error); background: color-mix(in srgb, var(--error) 9%, var(--background)); }
     .note { color: color-mix(in srgb, var(--text) 62%, transparent); line-height: 1.5; }
-    .card-bottom > span { color: var(--accent); font-size: .9rem; font-weight: 700; }
+    .vote-meta { display: grid; gap: 4px; }
+    .vote-meta span { color: var(--accent); font-size: .9rem; font-weight: 700; }
+    .vote-meta time { color: color-mix(in srgb, var(--text) 55%, transparent); font-size: .78rem; }
     .empty { padding: 46px; text-align: center; color: color-mix(in srgb, var(--text) 58%, transparent); border: 1px dashed color-mix(in srgb, var(--text) 18%, transparent); border-radius: 18px; background: color-mix(in srgb, var(--text) 2%, var(--background)); }
     .pagination { display: flex; align-items: center; justify-content: center; gap: 12px; }
     @media (max-width: 760px) {

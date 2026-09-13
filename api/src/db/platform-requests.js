@@ -13,6 +13,7 @@ const mapRequest = (row) => row ? ({
     adminNote: row.admin_note ?? null,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
+    lastVotedAt: row.last_voted_at == null ? null : Number(row.last_voted_at),
     supportedAt: row.supported_at == null ? null : Number(row.supported_at),
 }) : null;
 
@@ -54,6 +55,9 @@ export const initPlatformRequestsDatabase = async () => {
 export const findPlatformRequestByDomain = async (domain, clerkUserId = null) => {
     const result = await query(
         `SELECT pr.*,
+                (SELECT MAX(vote.created_at)
+                 FROM platform_request_votes vote
+                 WHERE vote.request_id = pr.id) AS last_voted_at,
                 CASE WHEN $2::text IS NULL THEN false ELSE EXISTS (
                     SELECT 1 FROM platform_request_votes prv
                     WHERE prv.request_id = pr.id AND prv.clerk_user_id = $2
@@ -69,6 +73,9 @@ export const findPlatformRequestByDomain = async (domain, clerkUserId = null) =>
 export const getPlatformRequest = async (id, clerkUserId = null) => {
     const result = await query(
         `SELECT pr.*,
+                (SELECT MAX(vote.created_at)
+                 FROM platform_request_votes vote
+                 WHERE vote.request_id = pr.id) AS last_voted_at,
                 CASE WHEN $2::text IS NULL THEN false ELSE EXISTS (
                     SELECT 1 FROM platform_request_votes prv
                     WHERE prv.request_id = pr.id AND prv.clerk_user_id = $2
@@ -119,6 +126,9 @@ export const listPlatformRequests = async ({
 
     const result = await query(
         `SELECT pr.*,
+                (SELECT MAX(vote.created_at)
+                 FROM platform_request_votes vote
+                 WHERE vote.request_id = pr.id) AS last_voted_at,
                 CASE WHEN ${clerkParam}::text IS NULL THEN false ELSE EXISTS (
                     SELECT 1 FROM platform_request_votes prv
                     WHERE prv.request_id = pr.id AND prv.clerk_user_id = ${clerkParam}
@@ -158,7 +168,11 @@ export const createPlatformRequest = async ({ domain, homepageUrl, userId, clerk
 
         if (!inserted.rows[0]) {
             const existing = await client.query(
-                `SELECT pr.*, EXISTS (
+                `SELECT pr.*,
+                        (SELECT MAX(vote.created_at)
+                         FROM platform_request_votes vote
+                         WHERE vote.request_id = pr.id) AS last_voted_at,
+                        EXISTS (
                     SELECT 1 FROM platform_request_votes prv
                     WHERE prv.request_id = pr.id AND prv.user_id = $2
                  ) AS voted_by_me
@@ -176,7 +190,10 @@ export const createPlatformRequest = async ({ domain, homepageUrl, userId, clerk
             [request.id, userId, clerkUserId, now],
         );
         const updated = await client.query(
-            `UPDATE platform_requests SET vote_count = 1, updated_at = $2 WHERE id = $1 RETURNING *, true AS voted_by_me`,
+            `UPDATE platform_requests
+             SET vote_count = 1, updated_at = $2
+             WHERE id = $1
+             RETURNING *, true AS voted_by_me, $2::bigint AS last_voted_at`,
             [request.id, now],
         );
         await client.query("COMMIT");
@@ -228,7 +245,13 @@ export const setPlatformRequestVote = async ({ requestId, userId, clerkUserId, v
         }
 
         const result = await client.query(
-            `SELECT pr.*, $2::boolean AS voted_by_me FROM platform_requests pr WHERE pr.id = $1`,
+            `SELECT pr.*,
+                    $2::boolean AS voted_by_me,
+                    (SELECT MAX(vote.created_at)
+                     FROM platform_request_votes vote
+                     WHERE vote.request_id = pr.id) AS last_voted_at
+             FROM platform_requests pr
+             WHERE pr.id = $1`,
             [requestId, voted],
         );
         await client.query("COMMIT");
@@ -244,13 +267,21 @@ export const setPlatformRequestVote = async ({ requestId, userId, clerkUserId, v
 export const updatePlatformRequest = async ({ id, status, adminNote }) => {
     const now = Date.now();
     const result = await query(
-        `UPDATE platform_requests
-         SET status = $2,
-             admin_note = $3,
-             supported_at = CASE WHEN $2 = 'supported' THEN COALESCE(supported_at, $4) ELSE NULL END,
-             updated_at = $4
-         WHERE id = $1
-         RETURNING *, false AS voted_by_me`,
+        `WITH updated AS (
+            UPDATE platform_requests
+            SET status = $2,
+                admin_note = $3,
+                supported_at = CASE WHEN $2 = 'supported' THEN COALESCE(supported_at, $4) ELSE NULL END,
+                updated_at = $4
+            WHERE id = $1
+            RETURNING *
+         )
+         SELECT updated.*,
+                false AS voted_by_me,
+                (SELECT MAX(vote.created_at)
+                 FROM platform_request_votes vote
+                 WHERE vote.request_id = updated.id) AS last_voted_at
+         FROM updated`,
         [id, status, adminNote, now],
     );
     return mapRequest(result.rows[0]);

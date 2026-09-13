@@ -34,6 +34,7 @@
     "loading": "Wünsche werden geladen…",
     "empty": "Keine Plattformwünsche entsprechen diesen Filtern.",
     "vote_count": "{{ count }} Stimmen",
+    "last_vote": "Letzte Stimme: {{ value }}",
     "previous": "zurück",
     "next": "weiter",
     "not_found": "Dieser Plattformwunsch wurde nicht gefunden.",

@@ -50,6 +50,7 @@ export const initPlatformRequestsDatabase = async () => {
     await query(`CREATE INDEX IF NOT EXISTS idx_platform_requests_ranking ON platform_requests(status, vote_count DESC, created_at DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_platform_requests_created_at ON platform_requests(created_at DESC);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_platform_request_votes_user ON platform_request_votes(user_id, created_at DESC);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_platform_request_votes_request_created_at ON platform_request_votes(request_id, created_at DESC);`);
 };
 
 export const findPlatformRequestByDomain = async (domain, clerkUserId = null) => {

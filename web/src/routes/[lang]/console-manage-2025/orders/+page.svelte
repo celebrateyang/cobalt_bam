@@ -286,6 +286,18 @@
     {:else}
         <div class="table-wrap">
             <table class="orders-table">
+                <colgroup>
+                    <col class="col-id" />
+                    <col class="col-user" />
+                    <col class="col-product" />
+                    <col class="col-status" />
+                    <col class="col-points" />
+                    <col class="col-amount" />
+                    <col class="col-provider" />
+                    <col class="col-order-number" />
+                    <col class="col-paid-at" />
+                    <col class="col-created-at" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -375,7 +387,12 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="mono">{o.product_key}</td>
+                            <td>
+                                <span
+                                    class="mono selectable product-key"
+                                    title={o.product_key}>{o.product_key}</span
+                                >
+                            </td>
                             <td>
                                 <span
                                     class={`status-badge status-${String(
@@ -397,7 +414,7 @@
                                  </div>
                              </td>
                             <td class="mono">{formatDate(o.paid_at)}</td>
-                            <td class="mono">{formatDate(o.created_at)}</td>
+                            <td class="mono date-cell">{formatDate(o.created_at)}</td>
                         </tr>
                     {/each}
                 </tbody>
@@ -574,7 +591,48 @@
     table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 1200px;
+        table-layout: fixed;
+        min-width: 1312px;
+    }
+
+    .col-id {
+        width: 54px;
+    }
+
+    .col-user {
+        width: 280px;
+    }
+
+    .col-product {
+        width: 120px;
+    }
+
+    .col-status {
+        width: 104px;
+    }
+
+    .col-points {
+        width: 72px;
+    }
+
+    .col-amount {
+        width: 80px;
+    }
+
+    .col-provider {
+        width: 124px;
+    }
+
+    .col-order-number {
+        width: 180px;
+    }
+
+    .col-paid-at {
+        width: 126px;
+    }
+
+    .col-created-at {
+        width: 172px;
     }
 
     thead th {
@@ -661,7 +719,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 260px;
+        min-width: 0;
     }
 
     .avatar {
@@ -722,6 +780,13 @@
         white-space: nowrap;
     }
 
+    .product-key {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .status-created {
         border-color: #1d4ed8;
         background: #2563eb;
@@ -745,8 +810,8 @@
     .order-no-cell {
         display: flex;
         align-items: center;
-        min-width: 240px;
-        max-width: 360px;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .order-no {
@@ -754,6 +819,10 @@
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .date-cell {
         white-space: nowrap;
     }
 

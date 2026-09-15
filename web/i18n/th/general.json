@@ -2,7 +2,7 @@
     "cobalt": "FreeSaveVideo",
     "meowbalt": "FreeSaveVideo",
     "beta": "เบต้า",
-    "embed.description": "ดาวน์โหลดวิดีโอฟรีจาก Amazon Live, YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Instagram, Threads, Facebook และ Twitter ไม่จำเป็นต้องลงทะเบียน ดาวน์โหลดวิดีโอได้ง่ายและรวดเร็ว",
+    "embed.description": "ดาวน์โหลดวิดีโอสาธารณะจาก Amazon Live, YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Instagram, Threads, Facebook และ X (Twitter) ผ่าน FreeSaveVideo เว็บไซต์อย่างเป็นทางการกำหนดให้เข้าสู่ระบบก่อนดาวน์โหลด",
     "guide": {
         "title": "วิธีดาวน์โหลดวิดีโอออนไลน์ด้วย FreeSaveVideo",
         "description1": "FreeSaveVideo ช่วยให้คุณดาวน์โหลดวิดีโอออนไลน์ได้โดยไม่ต้องติดตั้งซอฟต์แวร์ เพียงวางลิงก์จากแพลตฟอร์มที่รองรับ ก็สามารถบันทึกวิดีโอ HD แบบไม่มีลายน้ำได้เมื่อมีให้ใช้งาน",
@@ -35,17 +35,33 @@
             "keywords": "วิดีโอยอดนิยม, คลิปสาวสวย, คลิปตลก, คลิปไวรัล, วิดีโอมาแรง, แนะนำวิดีโอ"
         }
     },
+    "or": "หรือ",
+    "notification": {
+        "title": "ประกาศ:",
+        "close": "ปิดประกาศ",
+        "youtube_restriction": "ขณะนี้รองรับการดาวน์โหลด YouTube โดยตรงแล้ว หากวิเคราะห์ลิงก์ใดไม่สำเร็จ โปรดลองใหม่ภายหลังหรือส่งความคิดเห็น"
+    },
     "promotions": {
-        "finditbuddy": {
-            "title": "FinditBuddy helps you remember where things are and find them later",
+        "yumcheck": {
+            "title": "วิเคราะห์ส่วนผสมอาหารจากภาพโดยอัตโนมัติ",
             "features": {
-                "1": "Smartly record where each item is placed",
-                "2": "Save room, shelf, box, and note details in seconds",
-                "3": "Search by item name when you forget where it was stored",
-                "4": "Keep home storage organized for daily essentials",
-                "5": "Spend less time looking for misplaced things"
+                "1": "ถ่ายภาพรายการส่วนผสมเพื่อวิเคราะห์และประเมินความเสี่ยงต่อสุขภาพได้ในครั้งเดียว",
+                "2": "เปรียบเทียบวัตถุเจือปนอาหารกับมาตรฐานสหภาพยุโรปเพื่อดูข้อมูลหลายมิติ",
+                "3": "สแกนเลขมาตรฐานอาหารเพื่อดูคำอธิบายข้อกำหนดได้อย่างรวดเร็ว",
+                "4": "วิเคราะห์ผลตรวจเลือดอย่างชาญฉลาดให้อ่านเข้าใจได้ง่าย"
             },
-            "visit": "Visit FinditBuddy"
+            "visit": "ไปที่ YumCheck"
+        },
+        "finditbuddy": {
+            "title": "FinditBuddy ช่วยจดจำตำแหน่งสิ่งของและค้นหาได้ในภายหลัง",
+            "features": {
+                "1": "บันทึกตำแหน่งของสิ่งของแต่ละชิ้นอย่างเป็นระบบ",
+                "2": "บันทึกห้อง ชั้น กล่อง และหมายเหตุได้ภายในไม่กี่วินาที",
+                "3": "ค้นหาด้วยชื่อสิ่งของเมื่อจำไม่ได้ว่าเก็บไว้ที่ไหน",
+                "4": "จัดระเบียบของใช้ประจำวันภายในบ้าน",
+                "5": "ลดเวลาที่เสียไปกับการค้นหาของที่วางผิดที่"
+            },
+            "visit": "ไปที่ FinditBuddy"
         }
     }
 }

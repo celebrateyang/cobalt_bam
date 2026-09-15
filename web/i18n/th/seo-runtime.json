@@ -2,37 +2,37 @@
   "updatedAt": "2026-08-17",
   "productFaqs": [
     {
-      "q": "Which links work best?",
-      "a": "Use a specific public video URL, post URL, Shorts URL, or supported playlist/collection URL. Profile pages, channel homepages, search pages, private links, and membership-only content are not reliable download targets."
+      "q": "ลิงก์แบบใดใช้งานได้ดีที่สุด?",
+      "a": "ใช้ URL ของวิดีโอหรือโพสต์สาธารณะที่เจาะจง, URL ของ Shorts หรือ URL เพลย์ลิสต์/คอลเลกชันที่รองรับ หน้าโปรไฟล์ หน้าหลักช่อง หน้าค้นหา ลิงก์ส่วนตัว และเนื้อหาสำหรับสมาชิกไม่ใช่เป้าหมายดาวน์โหลดที่รองรับ"
     },
     {
-      "q": "Does FreeSaveVideo support playlists and batch downloads?",
-      "a": "Yes. Supported playlist, collection, and multi-link workflows can be turned into batch tasks so users can review and save several public videos from one page."
+      "q": "FreeSaveVideo รองรับเพลย์ลิสต์และการดาวน์โหลดเป็นชุดหรือไม่?",
+      "a": "รองรับ เพลย์ลิสต์ คอลเลกชัน และหลายลิงก์ที่ระบบรองรับสามารถสร้างเป็นงานชุด เพื่อให้ตรวจสอบและบันทึกวิดีโอสาธารณะหลายรายการจากหน้าเดียว"
     },
     {
-      "q": "Where are downloaded files saved?",
-      "a": "Direct downloads are saved to the browser default download folder. Queue downloads finish inside FreeSaveVideo first, then the user clicks Save to store the file locally."
+      "q": "ไฟล์ที่ดาวน์โหลดถูกบันทึกไว้ที่ไหน?",
+      "a": "การดาวน์โหลดโดยตรงจะบันทึกลงโฟลเดอร์ดาวน์โหลดเริ่มต้นของเบราว์เซอร์ ส่วนการดาวน์โหลดผ่านคิวจะเสร็จใน FreeSaveVideo ก่อน แล้วผู้ใช้จึงกดบันทึกเพื่อเก็บไฟล์ในอุปกรณ์"
     },
     {
-      "q": "Is FreeSaveVideo only a downloader?",
-      "a": "No. It also includes browser tools such as MP4 to MP3, audio extraction, video conversion, whiteboard recording, cross-device file transfer, Discover, and random 1v1 video chat."
+      "q": "FreeSaveVideo เป็นเพียงเครื่องมือดาวน์โหลดหรือไม่?",
+      "a": "ไม่ใช่ ยังมีเครื่องมือบนเบราว์เซอร์ เช่น แปลง MP4 เป็น MP3 แยกเสียง แปลงวิดีโอ บันทึกไวท์บอร์ด ส่งไฟล์ข้ามอุปกรณ์ Discover และวิดีโอแชตแบบสุ่ม 1 ต่อ 1"
     }
   ],
   "productTips": [
-    "For best results, paste a specific public video, post, Shorts, playlist, or collection URL rather than a profile or channel homepage.",
-    "Use batch mode for multiple links and playlist results; queue tasks can retry and continue after interruptions.",
-    "Set quality, format, audio-only, or mute options before parsing when you need a specific output.",
-    "Use the platform-specific download pages when available because they explain the exact link type that works best."
+    "เพื่อผลลัพธ์ที่ดีที่สุด ให้วาง URL ของวิดีโอ โพสต์ Shorts เพลย์ลิสต์ หรือคอลเลกชันสาธารณะที่เจาะจง แทนหน้าโปรไฟล์หรือหน้าหลักช่อง",
+    "ใช้โหมดชุดสำหรับหลายลิงก์และผลลัพธ์จากเพลย์ลิสต์ งานในคิวสามารถลองใหม่และทำต่อหลังการหยุดชะงักได้",
+    "ตั้งค่าคุณภาพ รูปแบบ เสียงอย่างเดียว หรือปิดเสียงก่อนวิเคราะห์ลิงก์เมื่อต้องการไฟล์เฉพาะแบบ",
+    "ใช้หน้าดาวน์โหลดเฉพาะแพลตฟอร์มหากมี เพราะหน้าดังกล่าวอธิบายประเภทลิงก์ที่เหมาะที่สุด"
   ],
   "productAdvantages": [
-    "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
-    "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
-    "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
+    "ขอบเขตเนื้อหาสาธารณะชัดเจน: FreeSaveVideo ใช้กับลิงก์ที่เข้าถึงได้แบบสาธารณะ ไม่ใช่สื่อส่วนตัวหรือมีเพย์วอลล์",
+    "ครอบคลุมแพลตฟอร์มหลากหลาย เช่น Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit และอื่น ๆ",
+    "มีขั้นตอนสำหรับงานชุด เพลย์ลิสต์ คอลเลกชัน เสียง ปิดเสียง และคิวอยู่ในประสบการณ์ใช้งานบนเบราว์เซอร์",
+    "เครื่องมือภายในอุปกรณ์ที่คำนึงถึงความเป็นส่วนตัวจะประมวลผลไฟล์ในเบราว์เซอร์เมื่อทำได้ แทนการบังคับให้อัปโหลด"
   ],
   "releaseNotes": [
-    "Clarified best link types for public video, playlist, collection, and batch download workflows.",
-    "Added stronger public-content, privacy, and browser-tool positioning across download pages."
+    "อธิบายประเภทลิงก์ที่เหมาะสำหรับวิดีโอสาธารณะ เพลย์ลิสต์ คอลเลกชัน และการดาวน์โหลดเป็นชุดให้ชัดเจนขึ้น",
+    "ปรับคำอธิบายเรื่องขอบเขตเนื้อหาสาธารณะ ความเป็นส่วนตัว และเครื่องมือบนเบราว์เซอร์ในหน้าดาวน์โหลด"
   ],
   "freeTools": [
     {
@@ -162,16 +162,16 @@
     ],
     "weibo": [
       {
-        "q": "How do I copy a Weibo video URL?",
-        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
+        "q": "คัดลอก URL วิดีโอ Weibo อย่างไร?",
+        "a": "เปิดหน้าวิดีโอ Weibo คลิกคัดลอกที่อยู่วิดีโอบนเครื่องเล่น แล้ววางลิงก์สั้น t.cn หรือ URL หน้าวิดีโอ Weibo ที่คัดลอกไว้ใน FreeSaveVideo"
       },
       {
-        "q": "Can I paste a t.cn short link?",
-        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
+        "q": "วางลิงก์สั้น t.cn ได้หรือไม่?",
+        "a": "ได้ Weibo มักคัดลอกเป็นลิงก์สั้น t.cn และ FreeSaveVideo สามารถวิเคราะห์ลิงก์วิดีโอ Weibo สาธารณะที่รองรับ"
       },
       {
-        "q": "Why does a Weibo link fail?",
-        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
+        "q": "เหตุใดลิงก์ Weibo จึงใช้ไม่ได้?",
+        "a": "ตรวจสอบว่าเป็นวิดีโอสาธารณะที่เล่นได้ ไม่ใช่โปรไฟล์ หน้าความคิดเห็น โพสต์ส่วนตัว หรือวิดีโอที่ถูกลบ หากลิงก์ต้นทางหมดอายุ ให้คัดลอกที่อยู่วิดีโอใหม่"
       }
     ]
   },
@@ -294,16 +294,16 @@
       ]
     },
     "weibo": {
-      "heading": "Weibo video download checklist",
+      "heading": "รายการตรวจสอบการดาวน์โหลดวิดีโอ Weibo",
       "notes": [
-        "Use Copy video address from the Weibo video player when possible.",
-        "A copied t.cn short link can be pasted directly.",
-        "If parsing fails, reopen the original video and copy the address again."
+        "ใช้คำสั่งคัดลอกที่อยู่วิดีโอจากเครื่องเล่น Weibo เมื่อทำได้",
+        "สามารถวางลิงก์สั้น t.cn ที่คัดลอกมาได้โดยตรง",
+        "หากวิเคราะห์ไม่สำเร็จ ให้เปิดวิดีโอต้นฉบับอีกครั้งแล้วคัดลอกที่อยู่ใหม่"
       ],
       "checklist": [
-        "The Weibo video is public and playable",
-        "You copied a video address, not a profile or comment page",
-        "The result shows an available MP4 option"
+        "วิดีโอ Weibo เป็นสาธารณะและเล่นได้",
+        "คัดลอกที่อยู่วิดีโอ ไม่ใช่หน้าโปรไฟล์หรือหน้าความคิดเห็น",
+        "ผลลัพธ์แสดงตัวเลือก MP4 ที่ใช้ได้"
       ]
     }
   },
@@ -463,12 +463,12 @@
     ],
     "weibo": [
       {
-        "title": "A profile, comment page, or expired link was copied",
-        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
+        "title": "คัดลอกโปรไฟล์ หน้าความคิดเห็น หรือลิงก์ที่หมดอายุ",
+        "symptoms": "หน้าเปิดใน Weibo ได้ แต่ FreeSaveVideo ไม่สามารถแสดงผลลัพธ์วิดีโอที่เล่นได้",
         "fixes": [
-          "Go back to the specific video page and choose Copy video address.",
-          "Confirm the video is still public and playable.",
-          "If the short link expired, copy the video address again and retry."
+          "กลับไปยังหน้าวิดีโอที่เจาะจงแล้วเลือกคัดลอกที่อยู่วิดีโอ",
+          "ตรวจสอบว่าวิดีโอยังเป็นสาธารณะและเล่นได้",
+          "หากลิงก์สั้นหมดอายุ ให้คัดลอกที่อยู่วิดีโอใหม่แล้วลองอีกครั้ง"
         ]
       }
     ]

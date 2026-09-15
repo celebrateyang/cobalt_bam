@@ -13,9 +13,8 @@ const lastModified = {
     site: '2026-09-06',
 };
 
-// Keep the existing home submission scope. The EN/ZH directories now provide
-// task selection guidance and only link to routes available in their language.
-const sitemapHubLanguages = ['en', 'zh'];
+// Include localized hubs that have complete, indexable task-selection content.
+const sitemapHubLanguages = ['en', 'zh', 'th'];
 const languageHubPages = ['', 'download'];
 const englishSupportPages = ['guide', 'faq'];
 
@@ -95,7 +94,7 @@ function generateSitemap(): string {
                     lastModified.site,
                     changefreq,
                     priority,
-                    buildAlternateLinks(path),
+                    buildAlternateLinks(path, sitemapHubLanguages),
                 ),
             );
         }

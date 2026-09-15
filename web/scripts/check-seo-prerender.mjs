@@ -33,8 +33,8 @@ assert(
 );
 const sitemapUrls = sitemap.match(/<loc>/g) ?? [];
 assert(
-    sitemapUrls.length < 100,
-    `Focused sitemap must stay below 100 URLs; found ${sitemapUrls.length}`,
+    sitemapUrls.length <= 50_000,
+    `Sitemap must stay within the 50,000 URL protocol limit; found ${sitemapUrls.length}`,
 );
 const sitemapLocs = new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]));
 const sitemapAlternates = [
@@ -78,7 +78,6 @@ assert(
 for (const slug of [
     'batch-video-downloader',
     'playlist-downloader',
-    'youtube-playlist-downloader',
 ]) {
     const html = readOutput('en', 'download', `${slug}.html`);
     assert(
@@ -90,6 +89,16 @@ for (const slug of [
         `${slug} must not advertise untranslated language alternates`,
     );
 }
+
+const youtubePlaylistHtml = readOutput('en', 'download', 'youtube-playlist-downloader.html');
+assert(
+    youtubePlaylistHtml.includes('rel="canonical" href="https://freesavevideo.online/en/download/youtube-playlist-downloader"'),
+    'youtube-playlist-downloader is missing its canonical URL',
+);
+assert(
+    youtubePlaylistHtml.includes('hreflang="th" href="https://freesavevideo.online/th/download/youtube-playlist-downloader"'),
+    'youtube-playlist-downloader is missing its localized Thai alternate',
+);
 
 const examplePages = {
     'batch-video-downloader': [
@@ -145,7 +154,8 @@ assert(
 );
 
 const guideTitles = {
-    en: 'How to Download YouTube Videos',
+    en: 'How to Download YouTube Videos: Links, Mobile Saving and Errors',
+    th: 'วิธีดาวน์โหลดวิดีโอ YouTube',
 };
 for (const [lang, expectedTitle] of Object.entries(guideTitles)) {
     const guide = readOutput(lang, 'guide', 'youtube-download-guide.html');

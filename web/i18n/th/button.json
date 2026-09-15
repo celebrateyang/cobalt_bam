@@ -6,6 +6,11 @@
     "download.audio": "ดาวน์โหลดเสียง",
     "download.video": "ดาวน์โหลดวิดีโอ",
     "download": "ดาวน์โหลด",
+    "buy_points": "ซื้อพอยต์",
+    "free_points": "รับพอยต์ฟรี",
+    "invite_points": "เชิญเพื่อน",
+    "membership": "สมาชิกรายเดือน",
+    "promotion_points": "ช่วยแนะนำเว็บไซต์",
     "share": "แชร์",
     "copy": "คัดลอก",
     "copy.section": "คัดลอกลิงก์ส่วน",
@@ -17,5 +22,8 @@
     "save": "บันทึก",
     "export": "ส่งออก",
     "yes": "ใช่",
-    "no": "ไม่"
+    "no": "ไม่",
+    "clear": "ล้าง",
+    "remove": "นำออก",
+    "retry": "ลองอีกครั้ง"
 }

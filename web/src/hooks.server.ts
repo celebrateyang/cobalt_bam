@@ -24,6 +24,8 @@ const shouldSkipLangRedirect = (pathname: string) => {
 
 export const handle: Handle = async ({ event, resolve }) => {
     const pathname = event.url.pathname;
+    const localizedRoute = getLocalizedRoute(pathname);
+    const documentLanguage = localizedRoute?.lang ?? 'en';
     const isNavigationRequest =
         event.request.method === 'GET' || event.request.method === 'HEAD';
 
@@ -45,8 +47,10 @@ export const handle: Handle = async ({ event, resolve }) => {
         })}${pathname}`);
     }
 
-    const response = await resolve(event);
-    const localizedRoute = getLocalizedRoute(pathname);
+    const response = await resolve(event, {
+        transformPageChunk: ({ html }) =>
+            html.replace('__FSV_DOCUMENT_LANGUAGE__', documentLanguage),
+    });
     if (
         localizedRoute &&
         shouldNoindexLocalizedPath(localizedRoute.path, localizedRoute.lang)

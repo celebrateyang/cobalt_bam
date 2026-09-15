@@ -9,8 +9,9 @@
     sectionId="general"
 />
 
-these terms are applicable only when using the official FreeSaveVideo instance.
-in other cases, you may need to contact the hoster for accurate info.
+ข้อกำหนดนี้ใช้กับเว็บไซต์ FreeSaveVideo อย่างเป็นทางการเท่านั้น หากคุณใช้เซิร์ฟเวอร์ของบุคคลอื่น โปรดติดต่อผู้ให้บริการรายนั้นเพื่อดูข้อกำหนดที่ถูกต้อง
+
+การใช้เว็บไซต์ต่อไปหมายความว่าคุณตกลงใช้บริการกับเนื้อหาที่คุณมีสิทธิ์บันทึกเท่านั้น และจะไม่ใช้บริการเพื่อหลีกเลี่ยงการควบคุมการเข้าถึง การชำระเงิน หรือ DRM
 </section>
 
 <section id="saving">
@@ -19,12 +20,9 @@ in other cases, you may need to contact the hoster for accurate info.
     sectionId="saving"
 />
 
-saving functionality simplifies downloading content from the internet and takes zero liability for what the saved content is used for.
-processing servers work like advanced proxies and don't ever write any content to disk.
-everything is handled in RAM and permanently purged once the tunnel is done.
-we have no downloading logs and can't identify anyone.
+ฟังก์ชันดาวน์โหลดช่วยให้บันทึกเนื้อหาสาธารณะที่แพลตฟอร์มและระบบรองรับ เซิร์ฟเวอร์อาจทำหน้าที่วิเคราะห์ลิงก์ รวมแทร็ก หรือส่งต่อไฟล์ ข้อมูลสื่อของ tunnel ปกติจะประมวลผลในหน่วยความจำและไม่ถูกเก็บเป็นไฟล์สื่อถาวรบนดิสก์
 
-[you can read more about how tunnels work in our privacy policy.](privacy)
+FreeSaveVideo เก็บบันทึกคำขอและข้อมูลบัญชีบางส่วนตามที่อธิบายใน [นโยบายความเป็นส่วนตัว](privacy) เพื่อความปลอดภัย การคิดคะแนน การตรวจสอบสถานะ และการแก้ไขข้อผิดพลาด
 </section>
 
 <section id="responsibility">
@@ -33,13 +31,9 @@ we have no downloading logs and can't identify anyone.
     sectionId="responsibility"
 />
 
-you (end user) are responsible for what you do with our tools, how you use and distribute resulting content.
-please be mindful when using content of others and always credit original creators.
-make sure you don't violate any terms or licenses.
+คุณเป็นผู้รับผิดชอบต่อ URL ที่ส่งเข้าไป ไฟล์ที่บันทึก และวิธีใช้หรือเผยแพร่ผลลัพธ์ ดาวน์โหลดเฉพาะเนื้อหาสาธารณะที่คุณเป็นเจ้าของ ได้รับอนุญาต หรือกฎหมายอนุญาต และปฏิบัติตามลิขสิทธิ์ ใบอนุญาต และข้อกำหนดของแพลตฟอร์มต้นทาง
 
-when used in educational purposes, always cite sources and credit original creators.
-
-fair use and credits benefit everyone.
+หากใช้เพื่อการศึกษา การวิจัย หรือการอ้างอิง โปรดระบุแหล่งที่มาและให้เครดิตผู้สร้างอย่างเหมาะสม การที่เนื้อหาเข้าถึงได้แบบสาธารณะไม่ได้หมายความว่ามีสิทธิ์นำไปเผยแพร่ซ้ำหรือใช้เชิงพาณิชย์โดยอัตโนมัติ
 </section>
 
 <section id="abuse">
@@ -48,9 +42,7 @@ fair use and credits benefit everyone.
     sectionId="abuse"
 />
 
-we have no way of detecting abusive behavior automatically, as FreeSaveVideo is 100% anonymous.
+เราอาจจำกัดหรือระงับบัญชี คำขอ หรือแหล่งที่มาที่มีรูปแบบการใช้งานผิดปกติ ละเมิดสิทธิ์ รบกวนบริการ หรือสร้างความเสี่ยงต่อผู้ใช้และระบบ
 
-
-please note that this email is not intended for user support.
-if you're experiencing issues, contact us via any preferred method on [the support page](community).
+หากพบการละเมิดหรือมีปัญหาในการใช้งาน โปรดติดต่อผ่าน [หน้าช่วยเหลือ](../../support) หรือช่องรายงานปัญหาในเว็บไซต์
 </section>

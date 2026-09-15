@@ -11,9 +11,9 @@
     sectionId="general"
 />
 
-FreeSaveVideo's privacy policy is simple: we don't collect or store anything about you. what you do is solely your business, not ours or anyone else's.
+นโยบายนี้ใช้กับเว็บไซต์ FreeSaveVideo อย่างเป็นทางการเท่านั้น หากคุณใช้เซิร์ฟเวอร์ของบุคคลอื่น โปรดตรวจสอบนโยบายของผู้ให้บริการรายนั้น
 
-these terms are applicable only when using the official FreeSaveVideo instance. in other cases, you may need to contact the hoster for accurate info.
+FreeSaveVideo เก็บและประมวลผลข้อมูลบางส่วนที่จำเป็นต่อการให้บริการ ความปลอดภัย การป้องกันการใช้งานผิดปกติ การจัดการบัญชีและคะแนน และการแก้ไขข้อผิดพลาด รายละเอียดสำคัญอธิบายไว้ด้านล่าง
 </section>
 
 <section id="local">
@@ -22,7 +22,7 @@ these terms are applicable only when using the official FreeSaveVideo instance. 
     sectionId="local"
 />
 
-tools that use on-device processing work offline, locally, and never send any data anywhere. they are explicitly marked as such whenever applicable.
+เครื่องมือที่ระบุชัดเจนว่าประมวลผลบนอุปกรณ์ เช่น การแปลงไฟล์หรือแยกเสียงในเบราว์เซอร์ จะประมวลผลไฟล์ภายในอุปกรณ์ของคุณเมื่อเบราว์เซอร์รองรับ อย่างไรก็ตาม หน้าเว็บยังอาจเชื่อมต่อกับบริการโฮสต์ การยืนยันตัวตน การวิเคราะห์ หรือโฆษณาตามที่อธิบายในนโยบายนี้
 </section>
 
 <section id="saving">
@@ -31,9 +31,9 @@ tools that use on-device processing work offline, locally, and never send any da
     sectionId="saving"
 />
 
-when using saving functionality, in some cases FreeSaveVideo will encrypt & temporarily store information needed for tunneling. it's stored in processing server's RAM for 90 seconds and irreversibly purged afterwards. no one has access to it, even instance owners, as long as they don't modify the official FreeSaveVideo image.
+เมื่อคุณส่งคำขอดาวน์โหลด เว็บไซต์อาจประมวลผลและบันทึกรหัสคำขอ เวลา บัญชีหรืออีเมลที่เกี่ยวข้อง แพลตฟอร์ม สถานะ และรายละเอียดข้อผิดพลาด ข้อมูลนี้ใช้สำหรับการตรวจสอบการดาวน์โหลด การคิดคะแนน การป้องกันการใช้งานผิดปกติ และการแก้ไขปัญหา บันทึกการพยายามดาวน์โหลดของระบบปัจจุบันมีงานล้างข้อมูลโดยตั้งค่าเริ่มต้นไว้ที่ 2 วัน แต่ข้อมูลบัญชี การชำระเงิน การใช้สิทธิ์ หรือข้อมูลที่ผู้ใช้เลือกให้ระบบจดจำอาจถูกเก็บไว้นานกว่าตามวัตถุประสงค์ของฟีเจอร์นั้น
 
-processed/tunneled files are never cached anywhere. everything is tunneled live. FreeSaveVideo's saving functionality is essentially a fancy proxy service.
+ในบางกรณี FreeSaveVideo จะสร้างข้อมูลชั่วคราวสำหรับการส่งไฟล์ผ่านเซิร์ฟเวอร์ ข้อมูลที่ใช้เปิด tunnel จะอยู่ในหน่วยความจำของเซิร์ฟเวอร์เป็นเวลาจำกัด และไฟล์สื่อที่ส่งผ่าน tunnel จะไม่ถูกจัดเก็บเป็นไฟล์ถาวรบนดิสก์โดยกระบวนการดาวน์โหลดปกติ
 </section>
 
 <section id="encryption">
@@ -42,7 +42,7 @@ processed/tunneled files are never cached anywhere. everything is tunneled live.
     sectionId="encryption"
 />
 
-temporarily stored tunnel data is encrypted using the AES-256 standard. decryption keys are only included in the access link and never logged/cached/stored anywhere. only the end user has access to the link & encryption keys. keys are generated uniquely for each requested tunnel.
+ข้อมูล tunnel ชั่วคราวถูกเข้ารหัสด้วย AES-256 และสร้างคีย์แยกสำหรับแต่ละคำขอ คีย์ถอดรหัสถูกส่งผ่านลิงก์สำหรับเข้าถึงไฟล์ โปรดอย่าแชร์ลิงก์ดาวน์โหลดกับบุคคลที่ไม่เกี่ยวข้อง
 </section>
 
 {#if env.PLAUSIBLE_ENABLED}
@@ -52,15 +52,31 @@ temporarily stored tunnel data is encrypted using the AES-256 standard. decrypti
     sectionId="plausible"
 />
 
-for sake of privacy, we use [plausible's anonymous traffic analytics](https://plausible.io/) to get an approximate number of active FreeSaveVideo users. no identifiable information about you or your requests is ever stored. all data is anonymized and aggregated. the plausible instance we use is hosted & managed by us.
+เมื่อเปิดใช้ Plausible เว็บไซต์จะใช้ข้อมูลการเข้าชมแบบสรุปเพื่อวัดการใช้งาน คุณสามารถปิดการวิเคราะห์ส่วนนี้ได้ใน <a href="../../settings/privacy#analytics">การตั้งค่าความเป็นส่วนตัว</a>
 
-plausible doesn't use cookies and is fully compliant with GDPR, CCPA, and PECR.
-
-[learn more about plausible's dedication to privacy.](https://plausible.io/privacy-focused-web-analytics)
-
-if you wish to opt out of anonymous analytics, you can do it in <a href="../settings/privacy#analytics">privacy settings</a>.
+[อ่านข้อมูลเกี่ยวกับแนวทางความเป็นส่วนตัวของ Plausible](https://plausible.io/privacy-focused-web-analytics)
 </section>
 {/if}
+
+<section id="third-party">
+<SectionHeading
+    title="บริการวิเคราะห์และโฆษณาของบุคคลที่สาม"
+    sectionId="third-party"
+/>
+
+เว็บไซต์อย่างเป็นทางการอาจโหลด Microsoft Clarity, Meta Pixel, Google Analytics และ Google AdSense เพื่อวิเคราะห์การใช้งาน วัดแคมเปญ และแสดงโฆษณา ผู้ให้บริการเหล่านี้อาจได้รับข้อมูลทางเทคนิค เช่น ที่อยู่ IP โดยประมาณ ข้อมูลอุปกรณ์ เบราว์เซอร์ หน้าเว็บที่เข้าชม และตัวระบุหรือคุกกี้ตามการตั้งค่าของเบราว์เซอร์และนโยบายของแต่ละบริการ ข้อมูลคำขอดาวน์โหลดไม่ได้ถูกส่งให้บริการโฆษณาโดยเจตนาผ่านโค้ดวิเคราะห์ของหน้าเว็บ
+
+คุณสามารถใช้การตั้งค่าความเป็นส่วนตัว การป้องกันการติดตาม หรือการจัดการคุกกี้ของเบราว์เซอร์เพื่อจำกัดบริการเหล่านี้ การปิดกั้นสคริปต์บางรายการอาจมีผลต่อการวัดผลหรือโฆษณา แต่ไม่ควรเปลี่ยนสิทธิ์ของคุณในเนื้อหาที่ดาวน์โหลด
+</section>
+
+<section id="account">
+<SectionHeading
+    title="บัญชีและการชำระเงิน"
+    sectionId="account"
+/>
+
+เว็บไซต์อย่างเป็นทางการใช้ Clerk สำหรับการสมัคร การเข้าสู่ระบบ และเซสชันบัญชี ข้อมูลการชำระเงินอาจถูกประมวลผลโดยผู้ให้บริการชำระเงินที่แสดงในหน้าชำระเงิน FreeSaveVideo เก็บข้อมูลธุรกรรมและสิทธิ์ที่จำเป็นสำหรับการเพิ่มคะแนน เปิดสมาชิก ตรวจสอบการชำระเงิน และให้บริการหลังการขาย แต่ไม่ได้รับหมายเลขบัตรเต็มจากแบบฟอร์มที่ผู้ให้บริการชำระเงินเป็นผู้ดำเนินการ
+</section>
 
 <section id="cloudflare">
 <SectionHeading
@@ -68,9 +84,7 @@ if you wish to opt out of anonymous analytics, you can do it in <a href="../sett
     sectionId="cloudflare"
 />
 
-we use cloudflare services for ddos & bot protection. we also use cloudflare pages for deploying & hosting the static web app. all of these are required to provide the best experience for everyone. it's the most private & reliable provider that we know of.
+เราใช้ Cloudflare สำหรับการโฮสต์หน้าเว็บ การส่งเนื้อหา และการป้องกัน DDoS หรือบอต Cloudflare จึงอาจประมวลผลข้อมูลเครือข่ายและคำขอที่จำเป็นต่อการรักษาความปลอดภัยและส่งหน้าเว็บ
 
-cloudflare is fully compliant with GDPR and HIPAA.
-
-[learn more about cloudflare's dedication to privacy.](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
+[อ่านข้อมูลด้านความเป็นส่วนตัวและการคุ้มครองข้อมูลของ Cloudflare](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
 </section>

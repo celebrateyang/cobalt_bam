@@ -20,6 +20,7 @@
 
     $: localeContent = getSeoLandingLocale(data.landing, data.lang);
     $: isZh = data.lang === 'zh';
+    $: isTh = data.lang === 'th';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download/${data.slug}`;
     $: guideUrl = data.guideSlug ? `/${data.lang}/guide/${data.guideSlug}` : null;
     $: faqUrl = `/${data.lang}/faq`;
@@ -28,13 +29,15 @@
     $: downloadIndexUrl = `/${data.lang}/download`;
     $: learnUrl = '/en/learn';
     $: homeUrl = `/${data.lang}`;
-    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : 'Popular video downloader directory';
+    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอยอดนิยม' : 'Popular video downloader directory';
     $: currentGuideLabel = isZh
         ? `${localeContent.h1}\u4f7f\u7528\u6307\u5357`
-        : `How to use ${localeContent.h1}`;
-    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : 'Popular download guides';
-    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : 'Video download FAQ';
-    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : 'Trending video discovery';
+        : isTh
+          ? `คู่มือการใช้ ${localeContent.h1}`
+          : `How to use ${localeContent.h1}`;
+    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : 'Popular download guides';
+    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : 'Video download FAQ';
+    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : 'Trending video discovery';
     $: pageTitle = localeContent.metaTitle;
     $: pageDesc = localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
@@ -87,13 +90,13 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isZh ? '\u9996\u9875' : 'Home',
+                      name: isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isZh ? '\u4e0b\u8f7d' : 'Download',
+                      name: isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : 'Download',
                       item: `https://${fallbackHost}/${data.lang}/download`,
                   },
                   {
@@ -146,7 +149,7 @@
                   name: localeContent.h1,
                   description: pageDesc,
                   applicationCategory: 'MultimediaApplication',
-                  operatingSystem: isZh ? '\u6d4f\u89c8\u5668' : 'Web browser',
+                  operatingSystem: isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : 'Web browser',
                   featureList: localeContent.features,
                   knowsAbout: [
                       localeContent.h1,
@@ -224,7 +227,7 @@
                 <h1>{localeContent.h1}</h1>
                 <p class="lede">{localeContent.lede}</p>
                 {#if localeContent.heroTags?.length}
-                    <ul class="hero-tags" aria-label={isZh ? '支持功能' : 'Supported features'}>
+                    <ul class="hero-tags" aria-label={isZh ? '支持功能' : isTh ? 'คุณสมบัติที่รองรับ' : 'Supported features'}>
                         {#each localeContent.heroTags as tag}
                             <li>{tag}</li>
                         {/each}
@@ -236,7 +239,7 @@
                     <svelte:component this={OmniboxComponent} />
                 {:else}
                     <a class="downloader-fallback" href={homeUrl}>
-                        {isZh ? '打开下载器' : 'Open downloader'}
+                        {isZh ? '打开下载器' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : 'Open downloader'}
                     </a>
                 {/if}
             </div>
@@ -297,16 +300,16 @@
             </section>
         {/if}
 
-        <nav class="crumb-links" aria-label="Breadcrumb">
-            <a href={homeUrl}>{isZh ? '\u9996\u9875' : 'Home'}</a>
+        <nav class="crumb-links" aria-label={isTh ? 'เส้นทางนำทาง' : 'Breadcrumb'}>
+            <a href={homeUrl}>{isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home'}</a>
             <span>/</span>
-            <a href={downloadIndexUrl}>{isZh ? '\u4e0b\u8f7d' : 'Download'}</a>
+            <a href={downloadIndexUrl}>{isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : 'Download'}</a>
             <span>/</span>
             <span class="crumb-current">{localeContent.h1}</span>
         </nav>
 
         {#if localeContent.facts?.length}
-            <section class="card fact-summary" aria-label={isZh ? '产品能力说明' : 'Product capability summary'}>
+            <section class="card fact-summary" aria-label={isZh ? '产品能力说明' : isTh ? 'สรุปความสามารถของบริการ' : 'Product capability summary'}>
                 {#each localeContent.facts as fact}
                     <p>{fact}</p>
                 {/each}
@@ -335,10 +338,10 @@
 
         {#if productTips.length || productAdvantages.length}
         <section class="card practical">
-            <h2>{isZh ? '实用下载提示' : 'Practical download tips'}</h2>
+            <h2>{isZh ? '实用下载提示' : isTh ? 'คำแนะนำสำหรับการดาวน์โหลด' : 'Practical download tips'}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isZh ? '下载与保存' : 'Download and save flow'}</h3>
+                    <h3>{isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : 'Download and save flow'}</h3>
                     <ul class="feature-list">
                         {#each productTips as tip}
                             <li>{tip}</li>
@@ -346,7 +349,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isZh ? '平台优势' : 'Platform advantages'}</h3>
+                    <h3>{isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : 'Platform advantages'}</h3>
                     <ul class="feature-list">
                         {#each productAdvantages as item}
                             <li>{item}</li>
@@ -359,7 +362,7 @@
 
         {#if platformFaqs.length}
         <section class="card practical">
-            <h2>{isZh ? '按平台排查常见问题' : 'Platform-specific troubleshooting'}</h2>
+            <h2>{isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
                 {#each platformFaqs as item}
                     <details class="faq-item">
@@ -376,7 +379,7 @@
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : 'Key guidance'}</h3>
+                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : 'Key guidance'}</h3>
                     <ul class="feature-list">
                         {#each platformPlaybook.notes as note}
                             <li>{note}</li>
@@ -384,7 +387,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : 'Success checklist'}</h3>
+                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : 'Success checklist'}</h3>
                     <ul class="feature-list">
                         {#each platformPlaybook.checklist as item}
                             <li>{item}</li>
@@ -397,7 +400,7 @@
 
         {#if platformFailureCases.length}
         <section class="card practical">
-            <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : 'Failure cases and fix paths'}</h2>
+            <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
                 {#each platformFailureCases as failure}
                     <article class="failure-case">
@@ -426,10 +429,10 @@
         </section>
 
         <section class="card related">
-            <h2>{isZh ? '\u76f8\u5173\u9875\u9762' : 'Related links'}</h2>
+            <h2>{isZh ? '\u76f8\u5173\u9875\u9762' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
             <div class="related-grid">
                 <section class="related-column">
-                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : 'Core pages'}</h3>
+                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : isTh ? 'หน้าหลัก' : 'Core pages'}</h3>
                     <div class="related-links">
                         <a class="related-link related-link--primary" href={downloadIndexUrl}>
                             {downloadHubLabel}
@@ -457,7 +460,7 @@
                 </section>
 
                 <section class="related-column">
-                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : 'Similar downloads'}</h3>
+                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : isTh ? 'เครื่องมือดาวน์โหลดที่คล้ายกัน' : 'Similar downloads'}</h3>
                     <div class="related-links">
                         {#each data.relatedPages.slice(0, 6) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
@@ -537,7 +540,7 @@
 
         {#if freeTools.length}
         <section class="card related">
-            <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : 'Free tools without points'}</h2>
+            <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : isTh ? 'เครื่องมือฟรีที่ไม่ใช้คะแนน' : 'Free tools without points'}</h2>
             <div class="related-links">
                 {#each freeTools as tool}
                     <a class="related-link related-link--download" href={tool.href}>

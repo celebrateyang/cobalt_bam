@@ -48,7 +48,7 @@ for (const lang of languages) {
         if (html.includes(forbidden)) fail(lang, `forbidden free-price signal found: ${forbidden}`);
     }
 
-    if (lang === 'en' && /href="\/en\/download\/(?:douyin|bilibili|kuaishou|naver|toutiao|weibo|haokan|xiaohongshu)[^"]*"/.test(html)) {
+    if (lang === 'en' && /href="\/en\/download\/(?:douyin|bilibili|kuaishou|toutiao|weibo|haokan|xiaohongshu)[^"]*"/.test(html)) {
         fail(lang, 'English homepage links to a non-international download landing page');
     }
 

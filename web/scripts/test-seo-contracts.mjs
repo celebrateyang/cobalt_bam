@@ -177,7 +177,7 @@ test('sitemap contains the repaired hubs and bilingual audio route without noind
     const { shouldNoindexLocalizedPath } = load('src/lib/seo/indexing.ts');
     const response = load('src/routes/sitemap.xml/+server.ts').GET();
     const xml = await response.text();
-    for (const path of ['/en/download', '/zh/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
+    for (const path of ['/en/download', '/zh/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
     assert(!xml.includes('/fr/download/youtube-playlist-to-mp3'));
     const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
     assert.equal(new Set(locations).size, locations.length);
@@ -187,4 +187,25 @@ test('sitemap contains the repaired hubs and bilingual audio route without noind
     }
     assert(!xml.includes('<lastmod>undefined</lastmod>'));
     assert(!xml.includes('2026-09-03'));
+});
+
+test('Thai downloader copy matches production account, public-content and logging behavior', () => {
+    const faq = load('i18n/th/faq.json').items;
+    const home = load('i18n/th/home.json');
+    const privacy = readFileSync(resolve(root, 'i18n/th/about/privacy.md'), 'utf8');
+    const about = readFileSync(resolve(root, 'i18n/th/about/general.md'), 'utf8');
+    const appTemplate = readFileSync(resolve(root, 'src/app.html'), 'utf8');
+    const hooks = readFileSync(resolve(root, 'src/hooks.server.ts'), 'utf8');
+
+    assert.match(faq.youtube_supported.a, /YouTube/);
+    assert.match(faq.youtube_supported.a, /สาธารณะ/);
+    assert.match(faq.need_login.a, /เข้าสู่ระบบ/);
+    assert.match(home.platforms.facebook.desc, /สาธารณะ/);
+    assert.match(faq.supported_platforms.a, /yt-dlp/);
+    assert.doesNotMatch(faq.supported_platforms.a, /100\+/);
+    assert.doesNotMatch(privacy, /URL ต้นทาง/);
+    assert.match(privacy, /2 วัน/);
+    assert.doesNotMatch(about, /นโยบายไม่เก็บบันทึก/);
+    assert.match(appTemplate, /lang="__FSV_DOCUMENT_LANGUAGE__"/);
+    assert.match(hooks, /transformPageChunk/);
 });

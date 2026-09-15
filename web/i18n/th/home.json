@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "ดาวน์โหลดไม่มีลายน้ำจากแพลตฟอร์มยอดนิยม",
-        "description": "รองรับเว็บไซต์ยอดนิยมกว่า 100 แห่ง รวมถึง TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook และอื่นๆ วิเคราะห์และดาวน์โหลดไฟล์ HD ได้ทั้งมือถือและพีซี",
+        "description": "เว็บไซต์นี้รองรับแพลตฟอร์มหลักที่แสดงในรายการบริการ รวมถึง YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Haokan, Amazon Live, NAVER, Instagram และ Facebook โดยใช้เทคโนโลยีพื้นฐานจาก yt-dlp",
         "douyin": {
             "name": "ดาวน์โหลด TikTok/Douyin",
             "desc": "รองรับ TikTok/Douyin ทั้งเวอร์ชันในประเทศและต่างประเทศ ลบลายน้ำในคลิกเดียว คงคุณภาพเสียงและวิดีโอระดับ HD"
@@ -31,12 +31,12 @@
             "desc": "ดาวน์โหลดวิดีโอสาธารณะจาก Sohu Video เป็น MP4 พร้อมโหมดเฉพาะเสียงและปิดเสียง"
         },
         "weibo": {
-            "name": "Weibo Video Downloader",
-            "desc": "Copy the Weibo video address or t.cn short link to extract available MP4 quality options."
+            "name": "เครื่องมือดาวน์โหลดวิดีโอ Weibo",
+            "desc": "คัดลอกที่อยู่วิดีโอ Weibo หรือลิงก์สั้น t.cn เพื่อดูตัวเลือกคุณภาพ MP4 ที่ใช้ได้"
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "เครื่องมือดาวน์โหลด Amazon Live",
+            "desc": "บันทึกวิดีโอย้อนหลัง Amazon Live แบบสาธารณะจากลิงก์ amazon.com/live/video หรือ amazon.com/vdp พร้อมตัวเลือกคุณภาพ HLS ที่มี"
         },
         "xiaohongshu": {
             "name": "บันทึกวิดีโอ Xiaohongshu",
@@ -48,27 +48,27 @@
         },
         "youtube": {
             "name": "ดาวน์โหลดวิดีโอ YouTube",
-            "desc": "โปรดดูวิดีโอสอน: วิธีใช้ Tampermonkey เพื่อดาวน์โหลดวิดีโอ YouTube"
+            "desc": "รองรับวิดีโอ YouTube สาธารณะ, Shorts และเพลย์ลิสต์สาธารณะที่ตรวจพบ พร้อมตัวเลือกวิดีโอหรือเสียงตามผลการวิเคราะห์"
         },
         "facebook": {
             "name": "ดาวน์โหลดวิดีโอ Facebook",
-            "desc": "วิเคราะห์ทั้งลิงก์สาธารณะและส่วนตัว มีความละเอียดให้เลือกหลายแบบ"
+            "desc": "วางลิงก์วิดีโอ Facebook สาธารณะ แล้วเลือกความละเอียดที่มีในผลการวิเคราะห์ ไม่รองรับโพสต์ส่วนตัวหรือเนื้อหาที่ต้องเข้าสู่ระบบ"
         },
         "twitter": {
             "name": "บันทึกวิดีโอ X (Twitter)",
             "desc": "คัดลอกลิงก์ทวีตเพื่อดึงวิดีโอต้นฉบับโดยยังคงความชัดเจน"
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "เครื่องมือดาวน์โหลดวิดีโอ NAVER",
+            "desc": "บันทึกวิดีโอ NAVER แบบสาธารณะจากลิงก์ naver.me และ m.naver.com/shorts"
         },
         "niconico": {
-            "name": "NicoNico Video Downloader",
-            "desc": "Save public NicoNico watch and shorts videos with available quality options."
+            "name": "เครื่องมือดาวน์โหลดวิดีโอ NicoNico",
+            "desc": "บันทึกวิดีโอหน้ารับชมและวิดีโอสั้น NicoNico แบบสาธารณะด้วยตัวเลือกคุณภาพที่มี"
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "เครื่องมือดาวน์โหลดวิดีโอ Threads",
+            "desc": "วางลิงก์โพสต์ Threads แบบสาธารณะเพื่อบันทึกวิดีโอหรือรูปภาพที่มีได้โดยตรง"
         }
     },
     "cards": {
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "รองรับมากกว่า 100 เว็บไซต์",
-            "desc": "ใช้งานได้กับแพลตฟอร์มวิดีโอยอดนิยมทั้งบนมือถือและเดสก์ท็อป"
+            "title": "รองรับแพลตฟอร์มหลักหลายสิบแห่ง",
+            "desc": "FreeSaveVideo รองรับแพลตฟอร์มหลักที่แสดงในรายการบริการ โดยใช้เทคโนโลยีพื้นฐานจาก yt-dlp"
         },
         "collection": {
             "title": "ดาวน์โหลดชุดรวม / playlist",
@@ -125,14 +125,25 @@
             "title": "โหมดเสียงอย่างเดียว / ปิดเสียง",
             "desc": "สลับระหว่างอัตโนมัติ เสียงอย่างเดียว และปิดเสียงก่อนดาวน์โหลด"
         },
-        "aria": "Download capabilities"
+        "aria": "ความสามารถในการดาวน์โหลด"
     },
     "extension": {
-        "badge": "ฟรี ? Chrome",
+        "badge": "ฟรี · Chrome",
         "title": "ดาวน์โหลดตรงจากทุกเว็บเพจ",
         "description": "พบวิดีโอหรือรูปภาพในเว็บเช่น Taobao? ใช้ส่วนขยายเพื่อตรวจจับและดาวน์โหลดได้ในคลิกเดียว",
         "install": "ติดตั้งส่วนขยาย Chrome",
         "installed": "ติดตั้งส่วนขยาย Chrome แล้ว",
         "checking": "กำลังตรวจสอบส่วนขยาย..."
+    },
+    "feedback": {
+        "desc": "แจ้งปัญหาการดาวน์โหลดและส่งข้อเสนอแนะ"
+    },
+    "points_balloon": {
+        "aria": "การแจ้งเตือนพอยต์ใกล้หมด",
+        "title": "พอยต์ใกล้หมดแล้ว",
+        "text": "คลิกเพื่อดูวิธีรับพอยต์เพิ่ม",
+        "cta": "ไปที่บัญชี",
+        "points_label": "พอยต์",
+        "close": "ปิด"
     }
 }

@@ -12,6 +12,7 @@
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
     $: isZh = data.lang === 'zh';
+    $: isTh = data.lang === 'th';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/free-video-tools`;
     $: pageTitle = isZh
         ? 'FreeSaveVideo 是什么？在线视频下载与免费浏览器工具介绍'
@@ -164,11 +165,13 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '支持的视频与媒体平台' : 'Supported video and media platforms'}</h2>
+        <h2>{isZh ? '支持的视频与媒体平台' : isTh ? 'แพลตฟอร์มวิดีโอและสื่อที่รองรับ' : 'Supported video and media platforms'}</h2>
         <p>
             {isZh
-                ? 'FreeSaveVideo 支持 100+ 热门视频、音频和社交平台，包括 Amazon Live 公开回放。不同平台可用的视频、音频、无水印、合集或 playlist 能力不同。'
-                : 'FreeSaveVideo supports 100+ popular video, audio, and social platforms, including public Amazon Live replays. Video, audio, no-watermark, collection, and playlist support depends on each source.'}
+                ? 'FreeSaveVideo 支持服务列表中展示的视频、音频和社交平台，包括公开视频与 Amazon Live 公开回放。不同平台提供的视频、音频、无水印、合集或 playlist 能力不同。'
+                : isTh
+                  ? 'FreeSaveVideo รองรับแพลตฟอร์มวิดีโอ เสียง และโซเชียลที่แสดงในรายการบริการ รวมถึงเนื้อหาสาธารณะและวิดีโอย้อนหลัง Amazon Live แบบสาธารณะ ความสามารถด้านวิดีโอ เสียง แบบไม่มีลายน้ำ คอลเลกชัน หรือ playlist แตกต่างกันตามแพลตฟอร์ม'
+                  : 'FreeSaveVideo supports the video, audio, and social platforms shown in the service list, including public content and public Amazon Live replays. Video, audio, no-watermark, collection, and playlist capabilities vary by platform.'}
         </p>
         <div class="service-list">
             {#each serviceNames as service}

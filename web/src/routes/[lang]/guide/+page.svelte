@@ -16,10 +16,13 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
     const isZh = data.lang === 'zh';
-    const pageTitle = isZh ? '下载指南' : 'Download Guides';
+    const isTh = data.lang === 'th';
+    const pageTitle = isZh ? '下载指南' : isTh ? 'คู่มือดาวน์โหลดวิดีโอ' : 'Download Guides';
     const pageDesc = isZh
         ? '为常见平台提供下载步骤与常见问题，一步一步完成。'
-        : 'Step-by-step download guides for popular platforms.';
+        : isTh
+          ? 'คำแนะนำทีละขั้นตอนสำหรับดาวน์โหลดเนื้อหาสาธารณะจากแพลตฟอร์มยอดนิยม พร้อมข้อจำกัดและวิธีแก้ปัญหาที่พบบ่อย'
+          : 'Step-by-step download guides for popular platforms.';
     const featuredDownloads = getHubDownloadLinks(
         6,
         data.lang === 'en' ? 'international' : 'all',
@@ -47,7 +50,7 @@
 
     <main class="container">
         <section class="hero">
-            <p class="eyebrow">{isZh ? '指南中心' : 'Guide hub'}</p>
+            <p class="eyebrow">{isZh ? '指南中心' : isTh ? 'ศูนย์รวมคู่มือ' : 'Guide hub'}</p>
             <h1>{pageTitle}</h1>
             <p class="lede">{pageDesc}</p>
         </section>
@@ -61,13 +64,13 @@
                     </div>
                     <div class="actions">
                         <a class="btn ghost" href={`/${data.lang}/guide/${guide.slug}`}>
-                            {isZh ? '查看指南' : 'View guide'}
+                            {isZh ? '查看指南' : isTh ? 'อ่านคู่มือ' : 'View guide'}
                         </a>
                         <a
                             class="btn primary"
                             href={`/${data.lang}/download/${guide.landingSlug}`}
                         >
-                            {isZh ? '去下载' : 'Download'}
+                            {isZh ? '去下载' : isTh ? 'ดาวน์โหลด' : 'Download'}
                         </a>
                     </div>
                 </article>
@@ -75,13 +78,13 @@
         </section>
 
         <section class="card link-hub">
-            <h2>{isZh ? '延伸链接' : 'Related links'}</h2>
+            <h2>{isZh ? '延伸链接' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
             <div class="link-grid">
                 <a class="link-item link-item--primary" href={`/${data.lang}/download`}>
-                    Download directory
+                    {isTh ? 'รายการเครื่องมือดาวน์โหลด' : 'Download directory'}
                 </a>
                 <a class="link-item link-item--primary" href={`/${data.lang}/faq`}>
-                    {isZh ? '常见问题（FAQ）' : 'Frequently asked questions'}
+                    {isZh ? '常见问题（FAQ）' : isTh ? 'คำถามที่พบบ่อย' : 'Frequently asked questions'}
                 </a>
                 {#if data.lang === 'en'}
                     <a class="link-item link-item--primary" href="/en/learn">
@@ -89,11 +92,11 @@
                     </a>
                 {/if}
                 <a class="link-item link-item--primary" href={`/${data.lang}`}>
-                    {isZh ? '返回首页下载' : 'Back to home downloader'}
+                    {isZh ? '返回首页下载' : isTh ? 'กลับไปยังเครื่องมือดาวน์โหลดหน้าหลัก' : 'Back to home downloader'}
                 </a>
                 {#each featuredDownloads as item}
                     <a class="link-item" href={`/${data.lang}/download/${item.slug}`}>
-                        {item.platform} {isZh ? '下载页' : 'download page'}
+                        {item.platform} {isZh ? '下载页' : isTh ? 'หน้าดาวน์โหลด' : 'download page'}
                     </a>
                 {/each}
             </div>

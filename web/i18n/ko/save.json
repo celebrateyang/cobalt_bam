@@ -26,12 +26,14 @@
     "wechat.notice.copied_body": "WeChat 오른쪽 상단 메뉴에서 \"브라우저에서 열기\"를 선택한 뒤, Chrome 또는 Edge에 링크를 붙여 넣어 주세요.",
     "wechat.notice.copy_failed_title": "복사에 실패했습니다",
     "wechat.notice.copy_failed_body": "현재 페이지 URL을 수동으로 복사한 뒤 Chrome 또는 Edge에서 열어 주세요.",
-    "location.summary": "Where is my video saved?",
-    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
-    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
-    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
-    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
-    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
-    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "location.summary": "다운로드한 동영상은 어디에 저장되나요?",
+    "location.default": "폴더를 선택하지 않았다면 브라우저의 다운로드 목록이나 기기의 다운로드 폴더를 확인하세요.",
+    "location.desktop": "컴퓨터: 브라우저의 다운로드 아이콘을 클릭하거나 Ctrl+J를 누른 뒤 파일 또는 저장 폴더를 여세요.",
+    "location.ios": "iPhone/iPad: 파일 앱의 다운로드 폴더 또는 Safari에서 선택한 폴더를 확인하세요.",
+    "location.android": "Android: 다운로드 알림, Chrome 다운로드 또는 파일 > 다운로드를 확인하세요.",
+    "location.wechat": "WeChat 등 인앱 브라우저에서는 다운로드가 차단될 수 있습니다. 파일을 찾을 수 없다면 Chrome 또는 Safari에서 이 페이지를 여세요.",
+    "location.after_click": "다운로드를 누르면 브라우저가 저장 위치를 물을 수 있습니다. 폴더를 선택했다면 그 위치를 먼저 확인하세요.",
+    "location.batch_auto": "일괄 자동 저장 파일은 일괄 작업을 시작할 때 선택한 폴더에 저장됩니다.",
+    "batch.detected": "링크 {{ count }}개 감지됨 — 일괄 모드",
+    "batch.too_many": "링크가 너무 많습니다: {{ count }}개(최대 {{ max }}개)"
 }

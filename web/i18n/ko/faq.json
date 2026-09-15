@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo는 무엇인가요?",
-            "a": "FreeSaveVideo는 온라인 미디어 다운로더입니다.\n공유 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nDouyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등을 지원합니다."
+            "a": "FreeSaveVideo는 지원 플랫폼의 공개 동영상, 오디오, 이미지와 GIF를 저장하는 온라인 도구입니다.\n공개 콘텐츠 링크를 붙여넣고 모드를 선택한 뒤 다운로드하세요.\nYouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER(네이버), Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook 등을 지원합니다."
         },
         "how_to_use": {
             "q": "영상(무워터마크)을 어떻게 다운로드하나요?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "지원 플랫폼/링크는 무엇인가요?",
-            "a": "100개 이상의 서비스를 지원합니다. 대표적으로 Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Amazon Live, NAVER(네이버), Toutiao, Xiaohongshu, Instagram, X(Twitter), Facebook 등이 있습니다.\n화질/오디오/추가 파일은 플랫폼과 원본 게시물에 따라 달라집니다. 공개 WeChat Channels 동영상과 WeChat 공식 계정 글에 포함된 여러 동영상의 선택 다운로드도 지원합니다."
+            "a": "홈의 서비스 목록에 표시된 플랫폼을 지원합니다. 대표적으로 YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER(네이버), Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook 등이 있습니다. 플랫폼 분석에는 100개 이상의 서비스를 처리할 수 있는 yt-dlp 기반 기술도 사용합니다.\n실제로 제공되는 화질, 오디오와 추가 파일은 플랫폼 및 공개 원본 콘텐츠에 따라 달라집니다. 공개 WeChat Channels 동영상과 WeChat 공식 계정 글에 포함된 여러 동영상의 선택 다운로드도 지원합니다."
         },
         "youtube_supported": {
             "q": "YouTube 다운로드를 지원하나요?",
-            "a": "이 사이트에서는 YouTube 직접 분석이 비활성화되어 있습니다.\nYouTube가 필요하면 내부 가이드의 브라우저 스크립트/확장 방식으로 이용하세요."
+            "a": "네. 공개 YouTube 개별 동영상, Shorts와 공개 재생목록을 지원합니다. 해당 동영상 또는 재생목록 URL을 홈 입력란에 붙여넣으세요.\n채널 홈, 비공개·회원 전용·유료·DRM 콘텐츠와 연령 확인 또는 로그인이 필요한 콘텐츠는 지원하지 않습니다."
         },
         "mobile_ios": {
             "q": "모바일에서도 되나요? iOS에 저장은?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "가끔 로그인하라고 하는 이유는?",
-            "a": "기본 다운로드는 보통 계정이 필요 없습니다.\n남용/스팸 방지를 위해 문제 신고, 배치 작업, 포인트 결제 등은 로그인이 필요할 수 있습니다."
+            "a": "공식 사이트에서는 다운로드 전에 로그인해야 합니다. 로그인은 남용 방지, 접근 제어, 일괄 작업과 포인트 기능 운영에 사용됩니다."
         },
         "points_how": {
             "q": "포인트는 무엇이고 어떻게 과금되나요?",
@@ -105,8 +105,8 @@
             "a": "아니요. FreeSaveVideo는 공개 콘텐츠만 처리합니다.\n저작권을 존중해주세요."
         },
         "privacy_logs": {
-            "q": "링크나 파일을 저장하나요? 안전한가요?",
-            "a": "플랫폼 비밀번호를 요구하지 않습니다.\n링크와 미디어 데이터는 처리 중에만 임시 사용됩니다. 배포 환경에 따라 남용 방지/디버깅을 위해 최소한의 로그를 보관할 수 있습니다.\n이 사이트는 운영/개선을 위해 제3자 분석/광고를 사용할 수 있습니다."
+            "q": "사이트는 개인정보를 어떻게 처리하나요?",
+            "a": "원본 플랫폼의 비밀번호를 요구하지 않습니다. 서비스 운영을 위해 요청 ID, 시간, 계정 또는 이메일, 플랫폼, 처리 상태와 오류 정보를 기록할 수 있으며, 이 정보는 모니터링, 포인트 정산, 남용 방지와 문제 해결에 사용됩니다. 현재 다운로드 시도 기록은 기본적으로 2일 후 정리되며 계정, 결제, 접근 및 사용자가 저장한 기능 데이터는 더 오래 보관될 수 있습니다.\n사이트는 운영과 개선을 위해 분석 및 광고 서비스를 사용할 수 있습니다. 자세한 내용은 개인정보 보호정책을 확인하세요."
         },
         "feedback_contact": {
             "q": "문제 신고나 기능 요청은 어떻게 하나요?",

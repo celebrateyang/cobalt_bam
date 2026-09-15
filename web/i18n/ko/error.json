@@ -66,8 +66,8 @@
     "api.bilibili.cdn.expired": "이 임시 Bilibili CDN 링크는 만료되었거나 거부되었습니다. 원본 Bilibili 동영상 페이지 링크를 붙여 넣어 주세요.",
     "api.bilibili.cdn.not_media": "이 Bilibili CDN 링크에서 오디오나 동영상을 가져오지 못했습니다. 원본 Bilibili 동영상 페이지 링크를 붙여 넣어 주세요.",
     "api.bilibili.cdn.notice": "이 링크는 임시 Bilibili CDN 리소스로 영상이나 오디오만 포함할 수 있습니다. 전체 동영상은 원본 Bilibili 동영상 페이지 링크를 사용해 주세요.",
-    "api.upstream.network": "The processing link is temporarily unstable. Your video may still be fine. Please try again in a few seconds.",
-    "api.upstream.incomplete": "The processing node returned an incomplete response during a temporary link fluctuation. Please try again in a few seconds.",
-    "api.youtube.timeout": "YouTube parsing itself took longer than expected this time. The video may still be downloadable. Please try again later.",
+    "api.upstream.network": "처리 연결이 일시적으로 불안정합니다. 동영상에는 문제가 없을 수 있으니 몇 초 후 다시 시도하세요.",
+    "api.upstream.incomplete": "일시적인 연결 문제로 처리 서버가 불완전한 응답을 반환했습니다. 몇 초 후 다시 시도하세요.",
+    "api.youtube.timeout": "이번에는 YouTube 분석에 예상보다 오래 걸렸습니다. 다운로드할 수 있는 동영상일 수 있으니 잠시 후 다시 시도하세요.",
     "api.bilibili.collection_has_long_video": "이 Bilibili 컬렉션에 {{ limit }}분을 넘는 동영상이 있어 일괄 다운로드가 비활성화됩니다. 각 동영상을 열어 하나씩 다운로드해 주세요."
 }

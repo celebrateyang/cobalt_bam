@@ -74,7 +74,7 @@ export const getPlatformKey = (slug: string): PlatformKey => {
 
 export const getSeoRuntimeContent = (lang: string): RuntimeContent => {
     const locale = contentByLocale[lang] ?? contentByLocale[fallbackLocale];
-    if (lang !== 'en' && lang !== 'zh' && lang !== 'th') {
+    if (lang !== 'en' && lang !== 'zh' && lang !== 'ja' && lang !== 'th') {
         const platformFaqs = Object.fromEntries(
             Object.keys(locale.platformFaqs).map((key) => [key, []]),
         ) as unknown as RuntimeContent['platformFaqs'];

@@ -12,6 +12,7 @@
     const fallbackHost = env.HOST || 'freesavevideo.online';
 
     $: isZh = data.lang === 'zh';
+    $: isJa = data.lang === 'ja';
     $: isTh = data.lang === 'th';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/free-video-tools`;
     $: pageTitle = isZh
@@ -21,6 +22,12 @@
         ? 'FreeSaveVideo 是一个以公开视频下载为核心的浏览器工具站，提供批量下载、合集解析、MP4 转 MP3、音频提取、视频格式转换、白板录制、文件传输、资源发现和随机视频聊天。'
         : 'FreeSaveVideo is a browser-based public video downloader and media toolkit with batch downloads, playlist parsing, MP4 to MP3, audio extraction, video conversion, whiteboard recording, file transfer, discovery, and random video chat.';
     $: langPrefix = `/${data.lang}`;
+    $: localizedPageTitle = isJa
+        ? 'FreeSaveVideo とは？オンライン動画ダウンローダーと無料ブラウザツール'
+        : pageTitle;
+    $: localizedPageDesc = isJa
+        ? 'FreeSaveVideo は公開動画のダウンロードを中心に、一括処理、プレイリスト解析、MP4 から MP3 への変換、音声抽出、動画変換、録画、ファイル転送などを提供するブラウザメディアツールです。'
+        : pageDesc;
     $: primaryServices = capabilityServices.slice(0, 14);
     $: serviceNames = [
         ...primaryServices.map((service) => service.name),
@@ -30,6 +37,39 @@
         ...tool,
         href: `${langPrefix}${tool.path}`,
     }));
+    const jaCoreFeatures = [
+        'オンライン動画ダウンロード',
+        '一括ダウンロード',
+        'コレクションとプレイリストの解析',
+        'WeChat 公式アカウント記事内の複数動画選択',
+        '利用可能な場合の音声のみ・ミュート保存',
+        'MP4 から MP3 への変換と音声抽出',
+        '動画形式の変換',
+        'ホワイトボードとプロンプター録画',
+        '端末間のファイル・テキスト転送',
+        '動画の発見と1対1ビデオチャット',
+    ];
+    const jaPolicy = [
+        'オンラインダウンローダーは公開状態でアクセスできる配信元コンテンツのみ対応します。',
+        '著作権、制作者の権利、配信元プラットフォームの規約を守ってください。',
+        'ローカルメディアツールは、可能な場合にブラウザ内でファイルを処理します。',
+    ];
+    const jaFaqs = [
+        {
+            q: 'FreeSaveVideo では何ができますか？',
+            a: '公開動画のオンラインダウンロードを中心に、一括ダウンロード、プレイリスト解析、MP4 から MP3 への変換、音声抽出、動画変換、録画、ファイル転送、動画の発見などを提供します。',
+        },
+        {
+            q: 'どのプラットフォームに対応していますか？',
+            a: '対応サービス一覧に表示される YouTube、TikTok、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit、NicoNico、NAVER、Amazon Live、WeChat Channels などの公開コンテンツに対応します。利用可能な形式は解析結果によって異なります。',
+        },
+        {
+            q: 'ローカル動画の変換時にファイルはアップロードされますか？',
+            a: '動画変換、MP4 から MP3 への変換、音声抽出は、対応ブラウザではローカルファイルをブラウザ内で処理します。',
+        },
+    ];
+    $: displayedCoreFeatures = isJa ? jaCoreFeatures : siteCapabilities.coreFeatures;
+    $: displayedPolicy = isJa ? jaPolicy : siteCapabilities.policy;
     $: appJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
@@ -41,7 +81,7 @@
         operatingSystem: 'Any',
         browserRequirements: 'Requires JavaScript and a modern web browser.',
         isAccessibleForFree: true,
-        description: pageDesc,
+        description: localizedPageDesc,
         featureList: siteCapabilities.coreFeatures,
         knowsAbout: [
             ...siteCapabilities.commonUseCases,
@@ -57,7 +97,7 @@
     $: faqJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: (isZh
+        mainEntity: (isJa ? jaFaqs : isZh
             ? [
                   {
                       q: 'FreeSaveVideo 主要提供哪些功能？',
@@ -107,7 +147,7 @@
     $: serviceItemListJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        name: isZh ? '\u652f\u6301\u7684\u4e0b\u8f7d\u5e73\u53f0' : 'Supported download platforms',
+        name: isJa ? '対応ダウンロードプラットフォーム' : isZh ? '\u652f\u6301\u7684\u4e0b\u8f7d\u5e73\u53f0' : 'Supported download platforms',
         itemListElement: primaryServices.map((service, index) => ({
             '@type': 'ListItem',
             position: index + 1,
@@ -121,18 +161,18 @@
 </script>
 
 <svelte:head>
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDesc} />
+    <title>{localizedPageTitle}</title>
+    <meta name="description" content={localizedPageDesc} />
     <meta
         name="keywords"
         content="FreeSaveVideo,online video downloader,public video downloader,batch video downloader,playlist downloader,collection downloader,YouTube downloader,TikTok downloader,Douyin downloader,Bilibili downloader,Amazon Live downloader,Amazon Live replay download,MP4 to MP3,video converter,audio extractor,whiteboard recorder,file transfer"
     />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={pageDesc} />
+    <meta property="og:title" content={localizedPageTitle} />
+    <meta property="og:description" content={localizedPageDesc} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:title" content={localizedPageTitle} />
+    <meta name="twitter:description" content={localizedPageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og-share-v3.png`} />
     {#each structuredData as ld}
         {@html `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`}
@@ -141,34 +181,38 @@
 
 <main class="geo-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <section class="hero">
-        <p class="eyebrow">{isZh ? '产品事实页' : 'Product fact page'}</p>
-        <h1>{isZh ? 'FreeSaveVideo 是什么？' : 'What is FreeSaveVideo?'}</h1>
+        <p class="eyebrow">{isJa ? '製品情報' : isZh ? '产品事实页' : 'Product fact page'}</p>
+        <h1>{isJa ? 'FreeSaveVideo とは？' : isZh ? 'FreeSaveVideo 是什么？' : 'What is FreeSaveVideo?'}</h1>
         <p>
             {isZh
                 ? 'FreeSaveVideo 是一个以公开视频下载为核心的网站，同时提供多个免费的浏览器媒体工具，覆盖下载、转换、录制、传输、发现和视频社交场景。'
+                : isJa
+                  ? 'FreeSaveVideo は、公開動画のダウンロードを中心に、変換、録画、ファイル転送、動画の発見などを提供するブラウザメディアツールです。'
                 : siteCapabilities.summary}
         </p>
         <div class="hero-actions">
-            <a href={`${langPrefix}`}>{isZh ? '打开下载器' : 'Open downloader'}</a>
-            <a href={`${langPrefix}/download`}>{isZh ? '查看下载目录' : 'View download directory'}</a>
+            <a href={`${langPrefix}`}>{isJa ? 'ダウンローダーを開く' : isZh ? '打开下载器' : 'Open downloader'}</a>
+            <a href={`${langPrefix}/download`}>{isJa ? 'ダウンロード一覧を見る' : isZh ? '查看下载目录' : 'View download directory'}</a>
             <a href="/capabilities.json">capabilities.json</a>
         </div>
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '主要功能' : 'Main capabilities'}</h2>
+        <h2>{isJa ? '主な機能' : isZh ? '主要功能' : 'Main capabilities'}</h2>
         <div class="feature-grid">
-            {#each siteCapabilities.coreFeatures as feature}
+            {#each displayedCoreFeatures as feature}
                 <span>{feature}</span>
             {/each}
         </div>
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '支持的视频与媒体平台' : isTh ? 'แพลตฟอร์มวิดีโอและสื่อที่รองรับ' : 'Supported video and media platforms'}</h2>
+        <h2>{isJa ? '対応する動画・メディアプラットフォーム' : isZh ? '支持的视频与媒体平台' : isTh ? 'แพลตฟอร์มวิดีโอและสื่อที่รองรับ' : 'Supported video and media platforms'}</h2>
         <p>
             {isZh
                 ? 'FreeSaveVideo 支持服务列表中展示的视频、音频和社交平台，包括公开视频与 Amazon Live 公开回放。不同平台提供的视频、音频、无水印、合集或 playlist 能力不同。'
+                : isJa
+                  ? 'FreeSaveVideo は対応サービス一覧に表示される動画、音声、ソーシャルプラットフォームの公開コンテンツに対応します。動画、音声、透かしなし、コレクション、プレイリストの可否はプラットフォームによって異なります。'
                 : isTh
                   ? 'FreeSaveVideo รองรับแพลตฟอร์มวิดีโอ เสียง และโซเชียลที่แสดงในรายการบริการ รวมถึงเนื้อหาสาธารณะและวิดีโอย้อนหลัง Amazon Live แบบสาธารณะ ความสามารถด้านวิดีโอ เสียง แบบไม่มีลายน้ำ คอลเลกชัน หรือ playlist แตกต่างกันตามแพลตฟอร์ม'
                   : 'FreeSaveVideo supports the video, audio, and social platforms shown in the service list, including public content and public Amazon Live replays. Video, audio, no-watermark, collection, and playlist capabilities vary by platform.'}
@@ -181,7 +225,7 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '免费浏览器工具' : 'Free browser tools'}</h2>
+        <h2>{isJa ? '無料ブラウザツール' : isZh ? '免费浏览器工具' : 'Free browser tools'}</h2>
         <div class="tool-grid">
             {#each toolLinks as tool}
                 <article>
@@ -198,16 +242,16 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '隐私与使用边界' : 'Privacy and use boundaries'}</h2>
+        <h2>{isJa ? 'プライバシーと利用範囲' : isZh ? '隐私与使用边界' : 'Privacy and use boundaries'}</h2>
         <ul>
-            {#each siteCapabilities.policy as item}
+            {#each displayedPolicy as item}
                 <li>{item}</li>
             {/each}
         </ul>
     </section>
 
     <section class="fact-block">
-        <h2>{isZh ? '常见问题' : 'FAQ'}</h2>
+        <h2>{isJa ? 'よくある質問' : isZh ? '常见问题' : 'FAQ'}</h2>
         <div class="faq-list">
             {#each faqJsonLd.mainEntity as item}
                 <details>

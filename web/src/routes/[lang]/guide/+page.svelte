@@ -16,6 +16,7 @@
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
     const isZh = data.lang === 'zh';
+    const isJa = data.lang === 'ja';
     const isTh = data.lang === 'th';
     const pageTitle = isZh ? '下载指南' : isTh ? 'คู่มือดาวน์โหลดวิดีโอ' : 'Download Guides';
     const pageDesc = isZh
@@ -28,17 +29,29 @@
         data.lang === 'en' ? 'international' : 'all',
         data.lang,
     );
+    const localizedPageTitle = isJa ? '動画ダウンロードガイド' : pageTitle;
+    const localizedPageDesc = isJa
+        ? 'プラットフォーム別に、公開動画の保存手順、対応リンク、よくある問題を確認できます。'
+        : pageDesc;
+    const hubEyebrow = isJa ? 'ダウンロードガイド' : isZh ? '下载教程' : isTh ? 'คู่มือการดาวน์โหลด' : 'Guide hub';
+    const viewGuideLabel = isJa ? 'ガイドを見る' : isZh ? '查看教程' : isTh ? 'ดูคำแนะนำ' : 'View guide';
+    const downloadLabel = isJa ? 'ダウンロード' : isZh ? '去下载' : isTh ? 'ดาวน์โหลด' : 'Download';
+    const relatedLabel = isJa ? '関連リンク' : isZh ? '相关入口' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links';
+    const directoryLabel = isJa ? '動画ダウンロード一覧' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอ' : 'Download directory';
+    const faqLabel = isJa ? 'よくある質問' : isZh ? '常见问题 FAQ' : isTh ? 'คำถามที่พบบ่อย' : 'Frequently asked questions';
+    const homeLabel = isJa ? 'ダウンローダーのホームへ戻る' : isZh ? '返回下载首页' : isTh ? 'กลับไปยังหน้าแรกของเครื่องมือดาวน์โหลด' : 'Back to home downloader';
+    const downloadPageSuffix = isJa ? 'ダウンロードページ' : isZh ? '下载页' : isTh ? 'หน้าดาวน์โหลด' : 'download page';
 </script>
 
 <svelte:head>
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDesc} />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={pageDesc} />
+    <title>{localizedPageTitle}</title>
+    <meta name="description" content={localizedPageDesc} />
+    <meta property="og:title" content={localizedPageTitle} />
+    <meta property="og:description" content={localizedPageDesc} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:title" content={localizedPageTitle} />
+    <meta name="twitter:description" content={localizedPageDesc} />
     <meta name="twitter:image" content={`https://${fallbackHost}/og.png`} />
     <meta name="twitter:image:alt" content="FreeSaveVideo video downloader preview" />
 </svelte:head>
@@ -50,9 +63,9 @@
 
     <main class="container">
         <section class="hero">
-            <p class="eyebrow">{isZh ? '指南中心' : isTh ? 'ศูนย์รวมคู่มือ' : 'Guide hub'}</p>
-            <h1>{pageTitle}</h1>
-            <p class="lede">{pageDesc}</p>
+            <p class="eyebrow">{hubEyebrow}</p>
+            <h1>{localizedPageTitle}</h1>
+            <p class="lede">{localizedPageDesc}</p>
         </section>
 
         <section class="grid">
@@ -64,13 +77,13 @@
                     </div>
                     <div class="actions">
                         <a class="btn ghost" href={`/${data.lang}/guide/${guide.slug}`}>
-                            {isZh ? '查看指南' : isTh ? 'อ่านคู่มือ' : 'View guide'}
+                            {viewGuideLabel}
                         </a>
                         <a
                             class="btn primary"
                             href={`/${data.lang}/download/${guide.landingSlug}`}
                         >
-                            {isZh ? '去下载' : isTh ? 'ดาวน์โหลด' : 'Download'}
+                            {downloadLabel}
                         </a>
                     </div>
                 </article>
@@ -78,13 +91,13 @@
         </section>
 
         <section class="card link-hub">
-            <h2>{isZh ? '延伸链接' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
+            <h2>{relatedLabel}</h2>
             <div class="link-grid">
                 <a class="link-item link-item--primary" href={`/${data.lang}/download`}>
-                    {isTh ? 'รายการเครื่องมือดาวน์โหลด' : 'Download directory'}
+                    {directoryLabel}
                 </a>
                 <a class="link-item link-item--primary" href={`/${data.lang}/faq`}>
-                    {isZh ? '常见问题（FAQ）' : isTh ? 'คำถามที่พบบ่อย' : 'Frequently asked questions'}
+                    {faqLabel}
                 </a>
                 {#if data.lang === 'en'}
                     <a class="link-item link-item--primary" href="/en/learn">
@@ -92,11 +105,11 @@
                     </a>
                 {/if}
                 <a class="link-item link-item--primary" href={`/${data.lang}`}>
-                    {isZh ? '返回首页下载' : isTh ? 'กลับไปยังเครื่องมือดาวน์โหลดหน้าหลัก' : 'Back to home downloader'}
+                    {homeLabel}
                 </a>
                 {#each featuredDownloads as item}
                     <a class="link-item" href={`/${data.lang}/download/${item.slug}`}>
-                        {item.platform} {isZh ? '下载页' : isTh ? 'หน้าดาวน์โหลด' : 'download page'}
+                        {item.platform} {downloadPageSuffix}
                     </a>
                 {/each}
             </div>

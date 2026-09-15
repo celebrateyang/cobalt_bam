@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "人気プラットフォームから透かしなしでダウンロード",
-        "description": "TikTok、Bilibili、Sohu Video、Haokan、Amazon Live、NAVER、快手、酷狗音楽、小紅書、YouTube、NicoNico、Instagram、Threads、Twitter、Facebookなど100以上の人気サイトに対応。スマホやPCでHDファイルを直接解析してダウンロードできます。",
+        "description": "対応サービス一覧にある YouTube、TikTok、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit、NicoNico、NAVER、Amazon Live などの公開コンテンツを、スマートフォンやパソコンから保存できます。",
         "douyin": {
             "name": "TikTok/抖音ダウンローダー",
             "desc": "国内外のTikTok/抖音に対応。ワンクリックで透かしを削除し、HD音声と画質を維持します。"
@@ -31,12 +31,12 @@
             "desc": "公開されている Sohu Video を MP4 で保存できます。音声のみとミュート保存にも対応します。"
         },
         "weibo": {
-            "name": "Weibo Video Downloader",
-            "desc": "Copy the Weibo video address or t.cn short link to extract available MP4 quality options."
+            "name": "Weibo 動画ダウンローダー",
+            "desc": "Weibo の動画アドレスまたは t.cn 短縮リンクを貼り付け、利用可能な MP4 画質を選択できます。"
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Amazon Live ダウンローダー",
+            "desc": "公開 Amazon Live リプレイの amazon.com/live/video または amazon.com/vdp リンクから、利用可能な HLS 画質を保存できます。"
         },
         "xiaohongshu": {
             "name": "小紅書動画保存",
@@ -48,19 +48,19 @@
         },
         "youtube": {
             "name": "YouTube動画ダウンローダー",
-            "desc": "動画チュートリアルをご覧ください：Tampermonkeyを使ってYouTube動画をダウンロードする方法。"
+            "desc": "公開されている YouTube 動画、Shorts、公開プレイリストを解析し、利用可能な動画または音声形式を保存できます。"
         },
         "facebook": {
             "name": "Facebook動画ダウンローダー",
-            "desc": "公開および非公開の共有リンクを解析。複数の解像度が利用可能です。"
+            "desc": "公開 Facebook 動画の共有リンクを解析し、提供されている場合は複数の解像度から選択できます。"
         },
         "twitter": {
             "name": "X (Twitter) 動画保存",
             "desc": "ツイートのリンクをコピーして、画質を維持したままオリジナル動画を抽出します。"
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "NAVER 動画ダウンローダー",
+            "desc": "naver.me と m.naver.com/shorts の公開 NAVER 動画を保存できます。"
         },
         "niconico": {
             "name": "NicoNico 動画ダウンロード",
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ 対応サイト",
-            "desc": "モバイルとデスクトップの人気動画サイトで使えます。"
+            "title": "対応プラットフォーム",
+            "desc": "対応サービス一覧に表示される公開動画サイトを、モバイルとパソコンから利用できます。"
         },
         "collection": {
             "title": "合集 / playlist ダウンロード",
@@ -125,14 +125,25 @@
             "title": "音声のみ / ミュート保存",
             "desc": "ダウンロード前に自動、音声のみ、ミュートを切り替えられます。"
         },
-        "aria": "Download capabilities"
+        "aria": "ダウンロード機能"
     },
     "extension": {
-        "badge": "無料 ? Chrome",
+        "badge": "無料・Chrome",
         "title": "Webページから直接ダウンロード",
         "description": "Taobaoなどのサイトで動画や画像を見つけたら、拡張機能で検出してワンクリックで保存できます。",
         "install": "Chrome拡張機能をインストール",
         "installed": "Chrome拡張機能はインストール済み",
         "checking": "拡張機能を確認中..."
+    },
+    "feedback": {
+        "desc": "ダウンロードの問題やご意見を報告できます。"
+    },
+    "points_balloon": {
+        "aria": "ポイント残高低下のお知らせ",
+        "title": "ポイントが少なくなっています",
+        "text": "クリックして無料ポイントの獲得方法を確認できます。",
+        "cta": "アカウントへ移動",
+        "points_label": "ポイント",
+        "close": "閉じる"
     }
 }

@@ -4,7 +4,7 @@
     "reset": "リセット",
     "done": "完了",
     "download.audio": "音声をダウンロード",
-    "download.video": "FreeSaveVideoFreeSaveVideo?",
+    "download.video": "動画をダウンロード",
     "download": "ダウンロード",
     "share": "共有",
     "copy": "コピー",
@@ -20,5 +20,10 @@
     "no": "いいえ",
     "clear": "クリア",
     "remove": "削除",
-    "retry": "再試行"
+    "retry": "再試行",
+    "buy_points": "ポイントを購入",
+    "free_points": "無料ポイントを獲得",
+    "invite_points": "友達を招待",
+    "membership": "月間会員",
+    "promotion_points": "サイトを紹介"
 }

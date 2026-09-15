@@ -14,7 +14,7 @@ const lastModified = {
 };
 
 // Include localized hubs that have complete, indexable task-selection content.
-const sitemapHubLanguages = ['en', 'zh', 'th'];
+const sitemapHubLanguages = ['en', 'zh', 'ja', 'th'];
 const languageHubPages = ['', 'download'];
 const englishSupportPages = ['guide', 'faq'];
 

@@ -177,7 +177,7 @@ test('sitemap contains the repaired hubs and bilingual audio route without noind
     const { shouldNoindexLocalizedPath } = load('src/lib/seo/indexing.ts');
     const response = load('src/routes/sitemap.xml/+server.ts').GET();
     const xml = await response.text();
-    for (const path of ['/en/download', '/zh/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
+    for (const path of ['/en/download', '/zh/download', '/ja', '/ja/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
     assert(!xml.includes('/fr/download/youtube-playlist-to-mp3'));
     const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
     assert.equal(new Set(locations).size, locations.length);
@@ -208,4 +208,21 @@ test('Thai downloader copy matches production account, public-content and loggin
     assert.doesNotMatch(about, /นโยบายไม่เก็บบันทึก/);
     assert.match(appTemplate, /lang="__FSV_DOCUMENT_LANGUAGE__"/);
     assert.match(hooks, /transformPageChunk/);
+});
+
+test('Japanese downloader copy matches production account, public-content and logging behavior', () => {
+    const faq = load('i18n/ja/faq.json').items;
+    const home = load('i18n/ja/home.json');
+    const privacy = readFileSync(resolve(root, 'i18n/ja/about/privacy.md'), 'utf8');
+    const about = readFileSync(resolve(root, 'i18n/ja/about/general.md'), 'utf8');
+
+    assert.match(faq.youtube_supported.a, /YouTube/);
+    assert.match(faq.youtube_supported.a, /公開/);
+    assert.match(faq.need_login.a, /ログイン/);
+    assert.match(home.platforms.facebook.desc, /公開/);
+    assert.match(faq.supported_platforms.a, /yt-dlp/);
+    assert.doesNotMatch(faq.supported_platforms.a, /100\+|100以上/);
+    assert.doesNotMatch(privacy, /URL.*(?:保存|保持|記録)|(?:保存|保持|記録).*URL/);
+    assert.match(privacy, /2 日/);
+    assert.doesNotMatch(about, /ゼロログ/);
 });

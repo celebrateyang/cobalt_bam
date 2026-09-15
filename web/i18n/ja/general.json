@@ -3,7 +3,7 @@
     "meowbalt": "FreeSaveVideo",
     "beta": "ベータ版",
     "or": "または",
-    "embed.description": "Amazon Live、YouTube、TikTok、Bilibili、Sohu Video、Instagram、Threads、Facebook、Twitterから無料で動画をダウンロードします。登録不要。簡単で高速な動画ダウンロード。",
+    "embed.description": "Amazon Live、YouTube、TikTok、Bilibili、Sohu Video、Instagram、Threads、Facebook、X/Twitter など、対応プラットフォームの公開動画を保存できます。公式サイトではログインが必要です。",
     "guide": {
         "title": "FreeSaveVideo で動画をオンライン保存する方法",
         "description1": "FreeSaveVideo ならソフトをインストールせずに動画をオンライン保存できます。対応サービスのリンクを貼り付けるだけで、可能な場合は透かしなしの HD 動画を保存できます。",
@@ -12,19 +12,19 @@
     "notification": {
         "title": "お知らせ：",
         "close": "通知を閉じる",
-        "youtube_restriction": "YouTubeのダウンロードはサポートされていませんが、ダウンロード手順についてはこちらの動画を参照してください：https://www.bilibili.com/video/BV1Bp4EzeEJo"
+        "youtube_restriction": "公開 YouTube 動画、Shorts、公開プレイリストに対応しています。非公開、メンバー限定、有料、DRM 保護、ログインが必要なコンテンツは利用できません。"
     },
     "promotions": {
         "finditbuddy": {
-            "title": "FinditBuddy helps you remember where things are and find them later",
+            "title": "FinditBuddy で物の保管場所を記録して、後からすぐ見つける",
             "features": {
-                "1": "Smartly record where each item is placed",
-                "2": "Save room, shelf, box, and note details in seconds",
-                "3": "Search by item name when you forget where it was stored",
-                "4": "Keep home storage organized for daily essentials",
-                "5": "Spend less time looking for misplaced things"
+                "1": "物を置いた場所を簡単に記録",
+                "2": "部屋、棚、箱、メモをすばやく保存",
+                "3": "保管場所を忘れたら物の名前で検索",
+                "4": "日用品の収納を整理",
+                "5": "探し物にかかる時間を短縮"
             },
-            "visit": "Visit FinditBuddy"
+            "visit": "FinditBuddy を見る"
         },
         "yumcheck": {
             "title": "食品成分分析、写真自動クエリと分析",

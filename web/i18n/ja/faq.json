@@ -3,7 +3,7 @@
     "description": "無水印ダウンロード、形式、ポイント、トラブル対応の回答。",
     "seo": {
         "title": "FAQ | FreeSaveVideo - 無水印動画ダウンローダー",
-        "description": "FreeSaveVideo FAQ：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook のダウンロード。無水印、バッチ、形式、ポイント、対処法を解説。 公開 WeChat Channels 動画と、WeChat 公式アカウント記事内の複数動画の選択ダウンロードにも対応します。",
+        "description": "FreeSaveVideo の対応プラットフォーム、公開 YouTube 動画・Shorts・プレイリスト、形式、一括ダウンロード、ポイント、保存場所、問題解決について説明します。",
         "keywords": "FAQ, 動画ダウンローダー, Douyinダウンロード, Bilibiliダウンロード, Kuaishouダウンロード, 酷狗音楽ダウンロード, 小红书ダウンロード, TikTokダウンロード, 無水印ダウンロード, バッチダウンロード, ポイント課金, Haokan downloader, Haokan 動画ダウンロード, Toutiao video downloader, Toutiao 動画ダウンロード, NicoNico downloader, nicovideo download, Sohu video downloader, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download WeChat Channels 動画ダウンロード, WeChat 公式アカウン動画保存, mp.weixin.qq.com 動画ダウンロード"
     },
     "toc": {
@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideoとは？",
-            "a": "FreeSaveVideoはオンラインのメディアダウンローダーです。\n共有リンクを貼り付け、モードを選んでダウンロードします。\nDouyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook などに対応。"
+            "a": "FreeSaveVideo は、対応プラットフォームの公開動画、音声、画像を保存するためのオンラインメディアダウンローダーです。共有リンクを貼り付け、利用可能な形式を選んでダウンロードします。"
         },
         "how_to_use": {
             "q": "動画を（無水印で）ダウンロードするには？",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "対応プラットフォームとリンクは？",
-            "a": "100以上のサービスに対応。代表例：Douyin/TikTok、Bilibili、Sohu Video、Kuaishou、酷狗音楽、小红书、NicoNico、Instagram、X(Twitter)、Amazon Live、Facebook。\n画質・音声・追加ファイルはプラットフォームと投稿内容によって異なります。 公開 WeChat Channels 動画と、WeChat 公式アカウント記事内の複数動画の選択ダウンロードにも対応します。"
+            "a": "サイトの対応サービス一覧に表示されるプラットフォームを利用できます。主な例は YouTube、TikTok、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit、NicoNico、NAVER、Amazon Live、WeChat Channels などです。解析には幅広いサイトに対応する yt-dlp の基盤技術も利用していますが、このサイトで案内する対応範囲はサービス一覧が基準です。対応するリンク形式と利用可能な画質・音声は、各プラットフォームが公開している内容によって異なります。"
         },
         "youtube_supported": {
             "q": "YouTubeは対応していますか？",
-            "a": "このサイトではYouTubeの直接解析は無効です。\n必要な場合は、サイト内のガイドでブラウザのスクリプト/拡張を利用してください。"
+            "a": "はい。公開されている YouTube の個別動画、Shorts、公開プレイリストに対応しています。動画またはプレイリストの URL を貼り付け、表示された画質や音声を選択してください。非公開、メンバー限定、有料、DRM 保護、年齢確認やログインが必要な動画、チャンネルホームは対象外です。"
         },
         "mobile_ios": {
             "q": "モバイルでも使えますか？iOSでの保存方法は？",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "なぜログインが必要になることがあるの？",
-            "a": "基本的なダウンロードは通常ログイン不要です。\n悪用やスパム防止のため、問題報告やバッチ、ポイント機能ではログインが必要になる場合があります。"
+            "a": "公式サイトでは、ダウンロード、ポイント計算、利用履歴、問題報告などの機能を提供するためログインが必要です。ログインセッションが無効または期限切れの場合は、再度ログインしてください。"
         },
         "points_how": {
             "q": "ポイントとは？課金方法は？",
@@ -105,8 +105,8 @@
             "a": "いいえ。FreeSaveVideoは公開コンテンツのみ対応です。\n著作権と権利者を尊重してください。"
         },
         "privacy_logs": {
-            "q": "リンクやファイルは保存されますか？安全ですか？",
-            "a": "プラットフォームのパスワードは要求しません。\nリンクやデータは処理中に一時利用されます。環境によっては不正防止やデバッグのため最小限のアクセスログを保存する場合があります。\n本サイトは運営/改善のため第三者の解析や広告を使用する場合があります。"
+            "q": "安全性とプライバシーについて確認するには？",
+            "a": "FreeSaveVideo が配信元プラットフォームのパスワードを要求することはありません。公式サイトでは Clerk によるログイン、Cloudflare、アクセス解析、広告サービスを使用し、セキュリティ、ポイント計算、稼働確認、問題調査に必要な情報を処理します。詳しくはプライバシーポリシーをご確認ください。"
         },
         "feedback_contact": {
             "q": "不具合報告や要望は？",

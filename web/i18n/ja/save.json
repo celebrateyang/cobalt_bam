@@ -26,12 +26,14 @@
     "wechat.notice.copied_body": "WeChat右上のメニューから「ブラウザーで開く」を選び、ChromeまたはEdgeにリンクを貼り付けてください。",
     "wechat.notice.copy_failed_title": "コピーに失敗しました",
     "wechat.notice.copy_failed_body": "このページのURLを手動でコピーして、ChromeまたはEdgeで開いてください。",
-    "location.summary": "Where is my video saved?",
-    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
-    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
-    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
-    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
-    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
-    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "location.summary": "動画はどこに保存されますか？",
+    "location.default": "フォルダを選択していない場合は、ブラウザのダウンロード一覧または端末のダウンロードフォルダを確認してください。",
+    "location.desktop": "パソコン：ブラウザのダウンロードアイコンをクリックするか Ctrl+J を押し、ファイルまたは保存先フォルダを開いてください。",
+    "location.ios": "iPhone/iPad：ファイル App の「ダウンロード」、または Safari で選択したフォルダを確認してください。",
+    "location.android": "Android：ダウンロード通知、Chrome のダウンロード、またはファイル管理アプリのダウンロードフォルダを確認してください。",
+    "location.wechat": "WeChat などのアプリ内ブラウザではダウンロードが制限される場合があります。ファイルが見つからない場合は Chrome または Safari でこのページを開いてください。",
+    "location.after_click": "「ダウンロード」を押すと、ブラウザが保存先を確認する場合があります。フォルダを選択した場合は、まずそのフォルダを確認してください。",
+    "location.batch_auto": "一括自動保存では、開始時に選択したフォルダへ動画が保存されます。",
+    "batch.detected": "{{ count }} 件のリンクを検出しました — 一括モード",
+    "batch.too_many": "リンクが多すぎます：{{ count }} 件（上限 {{ max }} 件）"
 }

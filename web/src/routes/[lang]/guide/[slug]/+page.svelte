@@ -31,6 +31,7 @@
               }
             : baseLocaleContent;
     $: isZh = data.lang === 'zh';
+    $: isJa = data.lang === 'ja';
     $: isTh = data.lang === 'th';
     type GuideSeoCopy = {
         title: (platform: string) => string;
@@ -117,11 +118,15 @@
     $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : 'Popular download guides';
     $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : 'Video download FAQ';
     $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : 'Trending video discovery';
+    $: localizedDownloadHubLabel = isJa ? '人気動画ダウンローダー一覧' : downloadHubLabel;
+    $: localizedGuideHubLabel = isJa ? '人気プラットフォームのダウンロードガイド' : guideHubLabel;
+    $: localizedFaqLabel = isJa ? '動画ダウンロードのよくある質問' : faqLabel;
+    $: localizedDiscoverLabel = isJa ? '人気動画を探す' : discoverLabel;
     const relatedGuideLabel = (slug: string, platform: string) => {
         const guide = getGuidePage(slug);
         const landing = guide ? getSeoLandingPage(guide.landingSlug) : null;
         const label = landing ? getSeoLandingLocale(landing, data.lang).h1 : platform;
-        return isZh ? `${label}\u6307\u5357` : isTh ? `วิธีดาวน์โหลด ${label}` : `How to download ${label}`;
+        return isJa ? `${label} の保存方法` : isZh ? `${label}\u6307\u5357` : isTh ? `วิธีดาวน์โหลด ${label}` : `How to download ${label}`;
     };
     const relatedDownloadLabel = (slug: string, platform: string) => {
         const landing = getSeoLandingPage(slug);
@@ -138,10 +143,10 @@
         ? '\u5982\u679c\u4f60\u590d\u5236\u5230\u7684\u662f search \u6216 jingxuan \u9875\u9762\uff0c\u53ef\u4ee5\u5148\u770b\u4e0b\u9762\u7684\u6f14\u793a\uff0c\u6309\u6d41\u7a0b\u6253\u5f00\u5177\u4f53\u89c6\u9891\u540e\u518d\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002'
         : 'If you copied a search or jingxuan page instead of a video share link, this tutorial shows how to open the actual video first and copy the right URL.';
 
-    $: ctaLabel = isZh ? '\u53bb\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลดเลย' : 'Download Now';
-    $: ctaHint = isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : 'Open the downloader';
+    $: ctaLabel = isJa ? '今すぐダウンロード' : isZh ? '\u53bb\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลดเลย' : 'Download Now';
+    $: ctaHint = isJa ? 'ダウンローダーを開く' : isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : 'Open the downloader';
     $: runtimeContent = getSeoRuntimeContent(data.lang);
-    $: hasLocalizedRuntime = data.lang === 'en' || data.lang === 'zh' || data.lang === 'th';
+    $: hasLocalizedRuntime = data.lang === 'en' || data.lang === 'zh' || data.lang === 'ja' || data.lang === 'th';
     $: platformKey = getPlatformKey(data.slug);
     $: productFaqs = dedicatedGuide ? [] : runtimeContent.productFaqs;
     $: productTips = dedicatedGuide ? [] : runtimeContent.productTips;
@@ -190,13 +195,13 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home',
+                      name: isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isZh ? '\u6307\u5357' : isTh ? 'คู่มือ' : 'Guide',
+                      name: isJa ? 'ガイド' : isZh ? '\u6307\u5357' : isTh ? 'คู่มือ' : 'Guide',
                       item: `https://${fallbackHost}/${data.lang}/guide`,
                   },
                   {
@@ -253,7 +258,7 @@
     <main class="container">
         <section class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">{isZh ? '\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลด' : 'Download guide'}</p>
+                <p class="eyebrow">{isJa ? 'ダウンロードガイド' : isZh ? '\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลด' : 'Download guide'}</p>
                 <h1>{guideTitle}</h1>
                 <p class="lede">{localeContent.lede}</p>
                 <div class="cta-row">
@@ -308,10 +313,12 @@
             </section>
             {#if hasLocalizedRuntime}
             <section class="card details">
-                <h2>{isZh ? '\u4f7f\u7528\u8bf4\u660e' : isTh ? 'ข้อควรรู้ในการใช้งาน' : 'Usage notes'}</h2>
+                <h2>{isJa ? '利用上の注意' : isZh ? '\u4f7f\u7528\u8bf4\u660e' : isTh ? 'ข้อควรรู้ในการใช้งาน' : 'Usage notes'}</h2>
                 <p>
                     {isZh
                         ? '\u590d\u5236\u94fe\u63a5\u540e\u76f4\u63a5\u7c98\u8d34\u5230\u4e0b\u8f7d\u9875\u5373\u53ef\u89e3\u6790\u3002\u89e3\u6790\u7ed3\u679c\u4ee5\u5e73\u53f0\u8fd4\u56de\u7684\u8d44\u6e90\u4e3a\u51c6\u3002'
+                        : isJa
+                          ? '公開コンテンツの URL をコピーしてダウンローダーへ貼り付けてください。結果はその時点で配信元プラットフォームが提供するファイルによって異なります。'
                         : isTh
                           ? 'คัดลอก URL ของเนื้อหาสาธารณะแล้ววางในเครื่องมือดาวน์โหลด ผลลัพธ์ขึ้นอยู่กับไฟล์ที่แพลตฟอร์มต้นทางมีให้ในขณะนั้น'
                           : 'Copy the link and paste it into the downloader. Results depend on what the platform provides.'}
@@ -319,6 +326,8 @@
                 <p>
                     {isZh
                         ? '\u5982\u679c\u94fe\u63a5\u65e0\u6cd5\u89e3\u6790\uff0c\u8bf7\u786e\u8ba4\u5185\u5bb9\u53ef\u516c\u5f00\u8bbf\u95ee\uff0c\u5fc5\u8981\u65f6\u66f4\u6362\u7f51\u7edc\u6216\u7a0d\u540e\u518d\u8bd5\u3002'
+                        : isJa
+                          ? '解析できない場合は、公開状態で閲覧できることを確認し、URL をコピーし直してから、時間をおくかネットワークを変えて再試行してください。'
                         : isTh
                           ? 'หากวิเคราะห์ลิงก์ไม่สำเร็จ ให้ตรวจสอบว่าเนื้อหาเปิดดูได้แบบสาธารณะ คัดลอก URL ใหม่ แล้วลองอีกครั้งภายหลังหรือเปลี่ยนเครือข่าย'
                           : 'If a link fails, confirm it is publicly accessible and try again later or switch networks.'}
@@ -329,10 +338,10 @@
 
         {#if productTips.length || productAdvantages.length}
         <section class="card practical">
-            <h2>{isZh ? '产品能力与使用建议' : isTh ? 'ความสามารถและคำแนะนำการใช้งาน' : 'Product strengths and usage notes'}</h2>
+            <h2>{isJa ? '製品機能と利用のヒント' : isZh ? '产品能力与使用建议' : isTh ? 'ความสามารถและคำแนะนำการใช้งาน' : 'Product strengths and usage notes'}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : 'Download and save flow'}</h3>
+                    <h3>{isJa ? 'ダウンロードと保存の流れ' : isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : 'Download and save flow'}</h3>
                     <ul>
                         {#each productTips as tip}
                             <li>{tip}</li>
@@ -340,7 +349,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : 'Platform advantages'}</h3>
+                    <h3>{isJa ? 'プラットフォーム別の特長' : isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : 'Platform advantages'}</h3>
                     <ul>
                         {#each productAdvantages as item}
                             <li>{item}</li>
@@ -353,7 +362,7 @@
 
         {#if platformFaqs.length}
         <section class="card practical">
-            <h2>{isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : 'Platform-specific troubleshooting'}</h2>
+            <h2>{isJa ? 'プラットフォーム別の問題解決' : isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
                 {#each platformFaqs as item}
                     <details class="faq-item">
@@ -370,7 +379,7 @@
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : 'Key guidance'}</h3>
+                    <h3>{isJa ? '重要なポイント' : isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : 'Key guidance'}</h3>
                     <ul>
                         {#each platformPlaybook.notes as note}
                             <li>{note}</li>
@@ -378,7 +387,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : 'Success checklist'}</h3>
+                    <h3>{isJa ? '成功確認チェックリスト' : isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : 'Success checklist'}</h3>
                     <ul>
                         {#each platformPlaybook.checklist as item}
                             <li>{item}</li>
@@ -391,7 +400,7 @@
 
         {#if platformFailureCases.length}
         <section class="card practical">
-            <h2>{isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : 'Failure cases and fix paths'}</h2>
+            <h2>{isJa ? '失敗例と解決方法' : isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
                 {#each platformFailureCases as failure}
                     <article class="failure-case">
@@ -422,16 +431,16 @@
 
         {#if freeTools.length}
         <section class="card related">
-            <h2>{isZh ? '\u5ef6\u4f38\u94fe\u63a5' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
+            <h2>{isJa ? '関連リンク' : isZh ? '\u5ef6\u4f38\u94fe\u63a5' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
             <div class="related-links">
                 <a class="related-link related-link--primary" href={downloadHubUrl}>
-                    {downloadHubLabel}
+                    {localizedDownloadHubLabel}
                 </a>
                 <a class="related-link related-link--primary" href={downloadUrl}>
                     {currentDownloadLabel}
                 </a>
                 <a class="related-link related-link--primary" href={guideIndexUrl}>
-                    {guideHubLabel}
+                    {localizedGuideHubLabel}
                 </a>
                 {#if data.lang === 'en'}
                     <a class="related-link related-link--primary" href={learnUrl}>
@@ -439,10 +448,10 @@
                     </a>
                 {/if}
                 <a class="related-link related-link--primary" href={faqUrl}>
-                    {faqLabel}
+                    {localizedFaqLabel}
                 </a>
                 <a class="related-link related-link--primary" href={discoverUrl}>
-                    {discoverLabel}
+                    {localizedDiscoverLabel}
                 </a>
                 {#each relatedGuides as guide}
                     <a class="related-link" href={`/${data.lang}/guide/${guide.slug}`}>
@@ -458,7 +467,7 @@
         </section>
 
         <section class="card related">
-            <h2>{isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : isTh ? 'เครื่องมือฟรีที่ไม่ใช้คะแนน' : 'Free tools without points'}</h2>
+            <h2>{isJa ? 'ポイント不要の無料ツール' : isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : isTh ? 'เครื่องมือฟรีที่ไม่ใช้คะแนน' : 'Free tools without points'}</h2>
             <div class="related-links">
                 {#each freeTools as tool}
                     <a class="related-link" href={tool.href}>

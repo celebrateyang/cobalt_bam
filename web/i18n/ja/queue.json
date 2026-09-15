@@ -13,17 +13,17 @@
         },
         "retrying": "再試行中",
         "waiting": "待機中",
-        "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to: {{ value }}",
-        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
+        "auto_saving": "端末へ保存中...",
+        "auto_saved": "保存先：{{ value }}",
+        "auto_save_failed": "自動保存に失敗しました。このファイルを残すには「保存」を押してください。"
     },
-    "waiting_notice": "There are currently {{ count }} videos in queue. Please wait for download.",
+    "waiting_notice": "現在 {{ count }} 本の動画が待機中です。ダウンロードまでお待ちください。",
     "success_notice": "このバッチで {{ count }} 本の動画を正常にダウンロードしました。",
-    "save_all_done": "Save all downloaded",
+    "save_all_done": "完了した項目をすべて保存",
     "save_clicked": "保存クリック済み",
-    "manual_save_warning": "Important: after videos finish, click Save for any item that was not auto-saved. If you chose a folder for batch auto-save, look in that folder first; otherwise check browser downloads (Ctrl+J) or your device Downloads folder.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
-    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
-    "save_started": "Save started",
+    "manual_save_warning": "重要：動画の完了後、自動保存されていない項目は「保存」を押してください。一括自動保存用のフォルダを選んだ場合はそのフォルダを、それ以外はブラウザのダウンロード一覧（Ctrl+J）または端末のダウンロードフォルダを確認してください。",
+    "keep_awake_warning": "一括ダウンロード中です。すべて完了するまで端末をスリープさせず、完了したファイルの「保存」を押してください。",
+    "keep_awake_auto_save_warning": "一括ダウンロード中です。端末をスリープさせないでください。完了したファイルは選択したフォルダへ自動保存されます。",
+    "save_started": "保存を開始しました",
     "network_stalled_waiting": "ネットワークが一時的に不安定です。ダウンロードはデータを待機しており、回復後に自動的に続行します。"
 }

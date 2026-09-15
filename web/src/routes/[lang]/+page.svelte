@@ -196,6 +196,8 @@
     const buildGuideLabel = (title: string) =>
         currentLocale === "zh"
             ? `${title}\u8BF4\u660E`
+            : currentLocale === "ja"
+              ? `${title} ガイド`
             : currentLocale === "th"
               ? `คู่มือ${title}`
               : `${title} guide`;
@@ -369,6 +371,8 @@
             label:
                 currentLocale === "zh"
                     ? "FreeSaveVideo \u4ecb\u7ecd"
+                    : currentLocale === "ja"
+                      ? "FreeSaveVideo の概要"
                     : currentLocale === "th"
                       ? "ภาพรวม FreeSaveVideo"
                       : "FreeSaveVideo overview",
@@ -377,6 +381,8 @@
     $: homeHubHeading =
         currentLocale === "zh"
             ? "\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u4e0e\u6307\u5357"
+            : currentLocale === "ja"
+              ? "人気動画ダウンローダーとガイド"
             : currentLocale === "th"
               ? "เครื่องมือและคู่มือดาวน์โหลดวิดีโอยอดนิยม"
               : "Popular Video Downloader Links";
@@ -404,12 +410,16 @@
     const homeLinkLabel = (platform: string) =>
         currentLocale === "zh"
             ? `${localizedPlatformName(platform)}\u89c6\u9891\u4e0b\u8f7d`
+            : currentLocale === "ja"
+              ? `${platform} 動画ダウンローダー`
             : currentLocale === "th"
               ? `ดาวน์โหลดวิดีโอ ${platform}`
               : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>
         currentLocale === "zh"
             ? `${localizedPlatformName(platform)}\u4e0b\u8f7d\u6307\u5357`
+            : currentLocale === "ja"
+              ? `${platform} 動画の保存方法`
             : currentLocale === "th"
               ? `วิธีดาวน์โหลดวิดีโอ ${platform}`
               : `How to download ${platform} videos`;
@@ -418,12 +428,16 @@
             q:
                 currentLocale === "zh"
                     ? "\u5982\u4f55\u4e0b\u8f7d\u6296\u97f3\u3001B\u7ad9\u3001NicoNico\u3001Amazon Live\u3001\u5feb\u624b\u3001\u5c0f\u7ea2\u4e66\u7b49\u5e73\u53f0\u7684\u89c6\u9891\uff1f"
+                    : currentLocale === "ja"
+                      ? "対応プラットフォームの動画を保存するには？"
                     : currentLocale === "th"
                       ? "ดาวน์โหลดวิดีโอจากแพลตฟอร์มที่รองรับได้อย่างไร?"
                       : "How to download videos from Douyin, Bilibili, NicoNico, Amazon Live, Kuaishou or Xiaohongshu?",
             a:
                 currentLocale === "zh"
                     ? "\u590d\u5236\u89c6\u9891\u94fe\u63a5\uff0c\u7c98\u8d34\u5230\u8f93\u5165\u6846\uff0c\u4fdd\u6301\u81ea\u52a8\u6a21\u5f0f\uff0c\u70b9\u51fb\u4e0b\u8f7d\u5373\u53ef\u751f\u6210\u53ef\u7528\u7684\u4e0b\u8f7d\u7ed3\u679c\u3002"
+                    : currentLocale === "ja"
+                      ? "公開動画の URL をコピーして入力欄へ貼り付け、自動モードでダウンロードを押し、検出された結果を選択してください。"
                     : currentLocale === "th"
                       ? "คัดลอก URL ของวิดีโอสาธารณะ วางลงในช่อง เลือกโหมดอัตโนมัติ แล้วกดดาวน์โหลด จากนั้นเลือกผลลัพธ์ที่ระบบตรวจพบ"
                       : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link.",
@@ -432,12 +446,16 @@
             q:
                 currentLocale === "zh"
                     ? "\u53ef\u4ee5\u6279\u91cf\u89e3\u6790\u6216\u5207\u6362\u97f3\u9891\u3001\u9759\u97f3\u6a21\u5f0f\u5417\uff1f"
+                    : currentLocale === "ja"
+                      ? "複数リンクや音声のみの保存に対応していますか？"
                     : currentLocale === "th"
                       ? "ดาวน์โหลดหลายลิงก์หรือเลือกเฉพาะเสียงได้ไหม?"
                       : "Can I batch process or grab audio-only files?",
             a:
                 currentLocale === "zh"
                     ? "\u652f\u6301\u6279\u91cf\u89e3\u6790\u5165\u53e3\uff0c\u4e0b\u8f7d\u6a21\u5f0f\u53ef\u5728\u81ea\u52a8\u3001\u97f3\u9891\u548c\u9759\u97f3\u4e4b\u95f4\u5207\u6362\u3002\u957f\u89c6\u9891\u4f1a\u5c55\u793a\u8fdb\u5ea6\u548c\u901f\u5ea6\u3002"
+                    : currentLocale === "ja"
+                      ? "複数リンクと対応プレイリストを一括処理できます。開始前に自動、音声のみ、ミュートを選び、キューで進行状況を確認できます。"
                     : currentLocale === "th"
                       ? "รองรับหลายลิงก์และเพลย์ลิสต์ที่ตรวจพบ คุณสามารถเลือกโหมดอัตโนมัติ เฉพาะเสียง หรือปิดเสียงก่อนเริ่มงาน และติดตามความคืบหน้าในคิว"
                       : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress.",
@@ -446,12 +464,16 @@
             q:
                 currentLocale === "zh"
                     ? "\u624b\u673a\u4e5f\u80fd\u7528\u5417\uff0c\u4f1a\u4e0d\u4f1a\u6709\u6c34\u5370\uff1f"
+                    : currentLocale === "ja"
+                      ? "モバイルで利用できますか？透かしなしで保存できますか？"
                     : currentLocale === "th"
                       ? "ใช้บนมือถือได้ไหม และผลลัพธ์ไม่มีลายน้ำหรือไม่?"
                       : "Is it mobile-friendly and watermark-free?",
             a:
                 currentLocale === "zh"
                     ? "\u5b8c\u5168\u7f51\u9875\u7248\uff0c\u624b\u673a\u3001\u5e73\u677f\u548c\u7535\u8111\u90fd\u53ef\u76f4\u63a5\u4f7f\u7528\uff1b\u65e0\u6c34\u5370\u8f93\u51fa\u4ee5\u5e73\u53f0\u53ef\u7528\u8d44\u6e90\u4e3a\u51c6\u3002"
+                    : currentLocale === "ja"
+                      ? "スマートフォン、タブレット、パソコンのブラウザで利用できます。HD や透かしなしの選択肢は、配信元が提供する場合に表示されます。"
                     : currentLocale === "th"
                       ? "ใช้งานผ่านเบราว์เซอร์บนมือถือ แท็บเล็ต และคอมพิวเตอร์ได้ ตัวเลือก HD หรือไม่มีลายน้ำจะแสดงเฉพาะเมื่อแหล่งต้นทางมีให้"
                       : "It runs in the browser on mobile/desktop and returns watermark-free HD files.",
@@ -551,11 +573,15 @@
         open
             ? currentLocale === "zh"
                 ? "\u6536\u8d77"
+                : currentLocale === "ja"
+                  ? "閉じる"
                 : currentLocale === "th"
                   ? "ย่อ"
                   : "Collapse"
             : currentLocale === "zh"
               ? "\u5c55\u5f00"
+              : currentLocale === "ja"
+                ? "開く"
               : currentLocale === "th"
                 ? "เปิด"
                 : "Open";
@@ -750,18 +776,18 @@
         <section class="home-internal-hub" aria-label={homeHubHeading}>
             <div class="home-internal-primary-links">
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
-                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : currentLocale === "th" ? "รายการเครื่องมือดาวน์โหลดวิดีโอ" : "Video download directory"}
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : currentLocale === "ja" ? "動画ダウンロード一覧" : currentLocale === "th" ? "รายการเครื่องมือดาวน์โหลดวิดีโอ" : "Video download directory"}
                 </a>
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
-                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : currentLocale === "th" ? "คู่มือดาวน์โหลดวิดีโอ" : "Video download guides"}
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : currentLocale === "ja" ? "動画ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลดวิดีโอ" : "Video download guides"}
                 </a>
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
-                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : "Video download FAQ"}
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "動画ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : "Video download FAQ"}
                 </a>
             </div>
             <div class="home-internal-link-groups">
                 <div class="home-internal-link-group">
-                    <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : currentLocale === "th" ? "เครื่องมือดาวน์โหลดยอดนิยม" : "Popular downloaders"}</h3>
+                    <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : currentLocale === "ja" ? "人気ダウンローダー" : currentLocale === "th" ? "เครื่องมือดาวน์โหลดยอดนิยม" : "Popular downloaders"}</h3>
                     <div class="home-internal-links">
                         {#each homeInternalLinks as item}
                             <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
@@ -771,7 +797,7 @@
                     </div>
                 </div>
                 <div class="home-internal-link-group">
-                    <h3>{currentLocale === "zh" ? "\u4e0b\u8f7d\u6559\u7a0b" : currentLocale === "th" ? "คู่มือดาวน์โหลด" : "Download guides"}</h3>
+                    <h3>{currentLocale === "zh" ? "\u4e0b\u8f7d\u6559\u7a0b" : currentLocale === "ja" ? "ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลด" : "Download guides"}</h3>
                     <div class="home-internal-links">
                         {#each homeGuideLinks as item}
                             <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
@@ -808,7 +834,7 @@
     <details class="seo-disclosure home-deferred-disclosure" bind:open={homeDeferredOpen}>
         <summary>
             <h2>
-                {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : currentLocale === "th" ? "แพลตฟอร์มที่รองรับและข้อควรรู้" : "Supported platforms and download notes"}
+                {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : currentLocale === "ja" ? "対応プラットフォームと利用上の注意" : currentLocale === "th" ? "แพลตฟอร์มที่รองรับและข้อควรรู้" : "Supported platforms and download notes"}
             </h2>
             <span class="seo-disclosure-hint">
                 {disclosureLabel(homeDeferredOpen)}
@@ -824,10 +850,10 @@
         <section class="home-faq" aria-labelledby="home-faq-title">
             <div class="home-faq-heading">
                 <h2 id="home-faq-title">
-                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : "Download FAQ"}
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : "Download FAQ"}
                 </h2>
                 <a href={`/${currentLocale}/faq`}>
-                    {currentLocale === "zh" ? "\u67e5\u770b\u5168\u90e8" : currentLocale === "th" ? "ดูทั้งหมด" : "View all"}
+                    {currentLocale === "zh" ? "\u67e5\u770b\u5168\u90e8" : currentLocale === "ja" ? "すべて見る" : currentLocale === "th" ? "ดูทั้งหมด" : "View all"}
                 </a>
             </div>
             <div class="home-faq-list">

@@ -99,6 +99,10 @@ assert(
     youtubePlaylistHtml.includes('hreflang="th" href="https://freesavevideo.online/th/download/youtube-playlist-downloader"'),
     'youtube-playlist-downloader is missing its localized Thai alternate',
 );
+assert(
+    youtubePlaylistHtml.includes('hreflang="ja" href="https://freesavevideo.online/ja/download/youtube-playlist-downloader"'),
+    'youtube-playlist-downloader is missing its localized Japanese alternate',
+);
 
 const examplePages = {
     'batch-video-downloader': [
@@ -155,6 +159,7 @@ assert(
 
 const guideTitles = {
     en: 'How to Download YouTube Videos: Links, Mobile Saving and Errors',
+    ja: 'YouTube 動画保存ガイド：リンク、モバイル保存、エラー対処',
     th: 'วิธีดาวน์โหลดวิดีโอ YouTube',
 };
 for (const [lang, expectedTitle] of Object.entries(guideTitles)) {

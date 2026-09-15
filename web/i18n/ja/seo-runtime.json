@@ -2,37 +2,37 @@
   "updatedAt": "2026-08-17",
   "productFaqs": [
     {
-      "q": "Which links work best?",
-      "a": "Use a specific public video URL, post URL, Shorts URL, or supported playlist/collection URL. Profile pages, channel homepages, search pages, private links, and membership-only content are not reliable download targets."
+      "q": "どのようなリンクが適していますか？",
+      "a": "特定の公開動画、投稿、Shorts、または対応するプレイリスト・コレクションの URL を使用してください。プロフィール、チャンネルホーム、検索ページ、非公開リンク、メンバー限定コンテンツはダウンロード対象になりません。"
     },
     {
-      "q": "Does FreeSaveVideo support playlists and batch downloads?",
-      "a": "Yes. Supported playlist, collection, and multi-link workflows can be turned into batch tasks so users can review and save several public videos from one page."
+      "q": "プレイリストと一括ダウンロードに対応していますか？",
+      "a": "はい。対応する公開プレイリスト、コレクション、複数リンクは一括タスクに変換し、複数の動画を確認して保存できます。"
     },
     {
-      "q": "Where are downloaded files saved?",
-      "a": "Direct downloads are saved to the browser default download folder. Queue downloads finish inside FreeSaveVideo first, then the user clicks Save to store the file locally."
+      "q": "ダウンロードしたファイルはどこに保存されますか？",
+      "a": "直接ダウンロードはブラウザの標準ダウンロード先へ保存されます。キュー処理では FreeSaveVideo 内で完了した後、「保存」を押して端末へ保存します。"
     },
     {
-      "q": "Is FreeSaveVideo only a downloader?",
-      "a": "No. It also includes browser tools such as MP4 to MP3, audio extraction, video conversion, whiteboard recording, cross-device file transfer, Discover, and random 1v1 video chat."
+      "q": "FreeSaveVideo はダウンローダーだけですか？",
+      "a": "いいえ。MP4 から MP3 への変換、音声抽出、動画変換、ホワイトボード録画、端末間ファイル転送、Discover、ランダム1対1ビデオチャットなどのブラウザツールもあります。"
     }
   ],
   "productTips": [
-    "For best results, paste a specific public video, post, Shorts, playlist, or collection URL rather than a profile or channel homepage.",
-    "Use batch mode for multiple links and playlist results; queue tasks can retry and continue after interruptions.",
-    "Set quality, format, audio-only, or mute options before parsing when you need a specific output.",
-    "Use the platform-specific download pages when available because they explain the exact link type that works best."
+    "最適な結果を得るには、プロフィールやチャンネルホームではなく、特定の公開動画、投稿、Shorts、プレイリスト、コレクションの URL を貼り付けてください。",
+    "複数リンクやプレイリストには一括モードを使用してください。キューでは失敗したタスクを再試行できます。",
+    "出力を指定する場合は、解析前に画質、形式、音声のみ、またはミュートを設定してください。",
+    "プラットフォーム別ダウンロードページには、適切なリンク形式の説明があります。"
   ],
   "productAdvantages": [
-    "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
-    "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
-    "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
+    "FreeSaveVideo は非公開・有料コンテンツではなく、公開状態でアクセスできるリンクのみを対象とします。",
+    "Amazon Live、YouTube、TikTok、Douyin、Bilibili、Sohu Video、NicoNico、Kuaishou、Kugou Music、小紅書、Instagram、Threads、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit などに対応します。",
+    "一括、プレイリスト、コレクション、音声のみ、ミュート、キューの各処理をブラウザから利用できます。",
+    "ローカルツールは、可能な場合にファイルをアップロードせずブラウザ内で処理します。"
   ],
   "releaseNotes": [
-    "Clarified best link types for public video, playlist, collection, and batch download workflows.",
-    "Added stronger public-content, privacy, and browser-tool positioning across download pages."
+    "公開動画、プレイリスト、コレクション、一括ダウンロードに適したリンク形式を明確にしました。",
+    "ダウンロードページの公開コンテンツ範囲、プライバシー、ブラウザツールの説明を改善しました。"
   ],
   "freeTools": [
     {
@@ -162,16 +162,44 @@
     ],
     "weibo": [
       {
-        "q": "How do I copy a Weibo video URL?",
-        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
+        "q": "Weibo 動画の URL をコピーするには？",
+        "a": "Weibo の動画ページを開き、プレーヤーの動画アドレスをコピーして、t.cn 短縮リンクまたは Weibo 動画ページの URL を FreeSaveVideo に貼り付けてください。"
       },
       {
-        "q": "Can I paste a t.cn short link?",
-        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
+        "q": "t.cn の短縮リンクを貼り付けられますか？",
+        "a": "はい。Weibo でコピーされる t.cn 短縮リンクを含む、対応する公開 Weibo 動画リンクを解析できます。"
       },
       {
-        "q": "Why does a Weibo link fail?",
-        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
+        "q": "Weibo リンクが失敗するのはなぜですか？",
+        "a": "プロフィール、コメントページ、非公開投稿、削除済み動画ではなく、公開再生できる動画か確認してください。リンクが期限切れの場合は動画アドレスを再度コピーしてください。"
+      }
+    ],
+    "haokan": [
+      {
+        "q": "Haokan 動画をスマートフォンへ保存するには？",
+        "a": "公開 haokan.baidu.com 動画の URL をコピーして FreeSaveVideo に貼り付け、モバイルブラウザから利用可能な MP4 を保存してください。"
+      },
+      {
+        "q": "Haokan アプリのインストールと同じですか？",
+        "a": "いいえ。FreeSaveVideo は公開動画リンクから保存可能な結果を抽出します。Haokan アプリのインストーラー、復旧、プレーヤーランキングは提供しません。"
+      },
+      {
+        "q": "Baidu の検索結果にある Haokan リンクを使えますか？",
+        "a": "検索一覧やアプリのダウンロードページではなく、haokan.baidu.com/v?vid=... などの公開 Haokan 動画ページが開く場合に利用できます。"
+      }
+    ],
+    "iqiyi": [
+      {
+        "q": "iQIYI のダウンロードにプレーヤー広告は含まれますか？",
+        "a": "いいえ。抽出処理は対象動画を確認し、別の広告素材を追加せず本編のプレイリストを選択します。"
+      },
+      {
+        "q": "iQIYI 動画を MP4 にリマックスするのはなぜですか？",
+        "a": "公開ソースが MPEG-TS で配信される場合があるためです。サーバー側のリマックスは映像と音声を維持しながら、再生・保存しやすい MP4 を生成します。"
+      },
+      {
+        "q": "iQIYI の VIP または DRM 動画に対応していますか？",
+        "a": "いいえ。会員資格、支払い、DRM、ログイン、アカウント、地域制限を回避せず利用できる公開・無料動画のみ対応します。"
       }
     ]
   },
@@ -294,16 +322,42 @@
       ]
     },
     "weibo": {
-      "heading": "Weibo video download checklist",
+      "heading": "Weibo 動画ダウンロードの確認事項",
       "notes": [
-        "Use Copy video address from the Weibo video player when possible.",
-        "A copied t.cn short link can be pasted directly.",
-        "If parsing fails, reopen the original video and copy the address again."
+        "可能であれば Weibo 動画プレーヤーから動画アドレスをコピーしてください。",
+        "コピーした t.cn 短縮リンクは直接貼り付けられます。",
+        "解析に失敗した場合は元の動画を開き直してアドレスを再度コピーしてください。"
       ],
       "checklist": [
-        "The Weibo video is public and playable",
-        "You copied a video address, not a profile or comment page",
-        "The result shows an available MP4 option"
+        "Weibo 動画が公開され再生可能",
+        "プロフィールやコメントではなく動画アドレスをコピー済み",
+        "利用可能な MP4 が結果に表示されている"
+      ]
+    },
+    "haokan": {
+      "heading": "Haokan ダウンロード手順",
+      "notes": [
+        "検索結果ではなく、公開 haokan.baidu.com 動画の URL を使用してください。",
+        "解析できた場合は利用可能な MP4 を保存してください。",
+        "アプリのインストールや復旧、プレーヤーランキングは動画リンクの解析とは異なる目的です。"
+      ],
+      "checklist": [
+        "公開 Haokan 動画ページを確認",
+        "haokan.baidu.com/v?vid=... の URL をコピー",
+        "ブラウザから MP4 を保存"
+      ]
+    },
+    "iqiyi": {
+      "heading": "iQIYI 動画を安定して保存する手順",
+      "notes": [
+        "ホーム、検索結果、チャンネルではなく、公開 iqiyi.com/v_*.html 再生ページを使用してください。",
+        "サーバーは本編を識別し、別の広告クリップを除外して MP4 にリマックスします。",
+        "公開・無料コンテンツのみ対象です。VIP、有料、DRM、ログイン必須、削除済み、地域制限付き動画は利用できません。"
+      ],
+      "checklist": [
+        "公開・無料の iQIYI 動画を確認",
+        "具体的な v_*.html URL をコピー",
+        "処理後の MP4 を保存"
       ]
     }
   },
@@ -463,12 +517,52 @@
     ],
     "weibo": [
       {
-        "title": "A profile, comment page, or expired link was copied",
-        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
+        "title": "プロフィール、コメント、期限切れリンクをコピーした",
+        "symptoms": "Weibo ではページが開きますが、再生可能な動画結果を返せません。",
         "fixes": [
-          "Go back to the specific video page and choose Copy video address.",
-          "Confirm the video is still public and playable.",
-          "If the short link expired, copy the video address again and retry."
+          "対象動画ページへ戻り、動画アドレスをコピーしてください。",
+          "動画が現在も公開され再生できるか確認してください。",
+          "短縮リンクが期限切れなら動画アドレスを再度コピーして試してください。"
+        ]
+      }
+    ],
+    "haokan": [
+      {
+        "title": "検索結果またはアプリページをコピーした",
+        "symptoms": "直接の Haokan 動画ページではないためメディアが返されません。",
+        "fixes": [
+          "URL をコピーする前に対象の Haokan 動画を開いてください。",
+          "可能であれば haokan.baidu.com/v?vid=... リンクを使用してください。",
+          "アプリのインストール、復旧、ランキングページは貼り付けないでください。"
+        ]
+      },
+      {
+        "title": "動画が制限または削除されている",
+        "symptoms": "ページは開きますが、保存可能な MP4 が返されません。",
+        "fixes": [
+          "動画が公開され、現在も配信されているか確認してください。",
+          "ネットワークが不安定な場合はキューモードで一度再試行してください。",
+          "配信元の素材が制限されている場合は別の公開 Haokan 動画を試してください。"
+        ]
+      }
+    ],
+    "iqiyi": [
+      {
+        "title": "動画以外または制限付きの iQIYI ページをコピーした",
+        "symptoms": "メディアが返らないか、未対応リンクと表示されます。",
+        "fixes": [
+          "アドレスをコピーする前に対象動画を開いてください。",
+          "ログアウト状態でも再生できる iqiyi.com/v_*.html ページを使用してください。",
+          "VIP、有料、DRM、ログイン必須、検索、チャンネル、ホームページは使用できません。"
+        ]
+      },
+      {
+        "title": "配信元動画が変更または削除された",
+        "symptoms": "以前は利用できましたが、抽出または MP4 処理に失敗します。",
+        "fixes": [
+          "配信元ページが現在も公開再生できるか確認してください。",
+          "新しい URL をコピーして一度再試行してください。",
+          "別の公開・無料 iQIYI 動画で、特定動画だけの制限か確認してください。"
         ]
       }
     ]

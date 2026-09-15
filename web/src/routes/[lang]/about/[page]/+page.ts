@@ -1,10 +1,8 @@
 import type { ComponentType, SvelteComponent } from 'svelte';
-import { get } from 'svelte/store';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-import locale from '$lib/i18n/locale';
 import type { DefaultImport } from '$lib/types/generic';
 import { defaultLocale } from '$lib/i18n/translations';
 
@@ -15,7 +13,10 @@ export const load: PageLoad = async ({ params }) => {
         file => file.endsWith(`${locale}/about/${params.page}.md`)
     );
 
-    const componentPath = getPage(get(locale)) || getPage(defaultLocale);
+    // Use the route language directly. During SSR/prerendering the locale store can
+    // still contain the default locale, which previously embedded the English page
+    // in localized routes such as /ja/about/privacy and /th/about/privacy.
+    const componentPath = getPage(params.lang) || getPage(defaultLocale);
     if (componentPath) {
         type Component = ComponentType<SvelteComponent>;
         const componentImport = pages[componentPath] as DefaultImport<Component>;

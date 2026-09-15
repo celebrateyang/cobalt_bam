@@ -15,19 +15,6 @@
     export let data;
 
     $: currentLang = data.lang;
-    $: legalTitles = currentLang === "zh"
-        ? {
-              refund: "退款政策",
-              copyright: "版权政策",
-              dmca: "DMCA / 版权投诉",
-              contact: "联系我们",
-          }
-        : {
-              refund: "Refund Policy",
-              copyright: "Copyright Policy",
-              dmca: "DMCA / Copyright Complaint",
-              contact: "Contact",
-          };
 </script>
 
 <PageNav
@@ -72,28 +59,28 @@
             </PageNavTab>
             <PageNavTab
                 tabPath="/{currentLang}/about/refund"
-                tabTitle={legalTitles.refund}
+                tabTitle={$t("about.page.refund")}
                 iconColor="gray"
             >
                 <IconChecklist />
             </PageNavTab>
             <PageNavTab
                 tabPath="/{currentLang}/about/copyright"
-                tabTitle={legalTitles.copyright}
+                tabTitle={$t("about.page.copyright")}
                 iconColor="gray"
             >
                 <IconLicense />
             </PageNavTab>
             <PageNavTab
                 tabPath="/{currentLang}/about/dmca"
-                tabTitle={legalTitles.dmca}
+                tabTitle={$t("about.page.dmca")}
                 iconColor="gray"
             >
                 <IconChecklist />
             </PageNavTab>
             <PageNavTab
                 tabPath="/{currentLang}/about/contact"
-                tabTitle={legalTitles.contact}
+                tabTitle={$t("about.page.contact")}
                 iconColor="gray"
             >
                 <IconUsersGroup />

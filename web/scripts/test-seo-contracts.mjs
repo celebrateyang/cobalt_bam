@@ -86,6 +86,28 @@ const links = load('src/lib/seo/internal-links.ts');
 const { supportedLanguages } = load('src/lib/seo/language-routing.ts');
 const { seoLandingSlugs, getSeoLandingPage, getSeoLandingLocale } = load('src/lib/seo/landing-pages.ts');
 
+test('remux delegates its canonical link to the shared language layout', () => {
+    const layout = readFileSync(resolve(root, 'src/routes/[lang]/+layout.svelte'), 'utf8');
+    const remux = readFileSync(resolve(root, 'src/routes/[lang]/remux/+page.svelte'), 'utf8');
+    const canonicalLinks = source => [...source.matchAll(/<link\b[^>]*\brel\s*=\s*["']canonical["'][^>]*>/g)];
+    assert.equal(canonicalLinks(remux).length, 0, 'remux must not duplicate the layout canonical');
+    const layoutLinks = canonicalLinks(layout);
+    assert.equal(layoutLinks.length, 1, 'the shared layout must own exactly one canonical');
+    assert.match(layoutLinks[0][0], /href=\{canonicalUrl\}/);
+    assert.match(remux, /url:\s*canonicalUrl/, 'keep the localized URL in WebApplication JSON-LD');
+    // Render the real canonical declarations in isolation from the browser-only UI.
+    // Remux is dynamic SSR, so this check must not depend on prerendered HTML files.
+    const source = `<script>export let canonicalUrl;</script><svelte:head>${layoutLinks.map(match => match[0]).join('')}</svelte:head>`;
+    const filename = resolve(root, 'src/routes/[lang]/+layout.svelte');
+    const head = evaluate(compile(source, { filename, generate: 'ssr' }).js.code, filename).default;
+    for (const lang of supportedLanguages) {
+        const canonicalUrl = `https://freesavevideo.online/${lang}/remux`;
+        const rendered = canonicalLinks(head.render({ canonicalUrl }).head);
+        assert.equal(rendered.length, 1, lang);
+        assert(rendered[0][0].includes(`href="${canonicalUrl}"`), lang);
+    }
+});
+
 test('all directory, home and related links resolve in their advertised language', async () => {
     const downloads = load('src/routes/[lang]/download/+page.ts');
     const guides = load('src/routes/[lang]/guide/+page.ts');

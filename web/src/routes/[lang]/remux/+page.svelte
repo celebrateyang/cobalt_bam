@@ -662,7 +662,6 @@
     <title>{seoTitle}</title>
     <meta name="description" content={seoDescription} />
     <meta name="keywords" content={seoKeywords} />
-    <link rel="canonical" href={canonicalUrl} />
     <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={seoDescription} />
     <meta property="og:type" content="website" />

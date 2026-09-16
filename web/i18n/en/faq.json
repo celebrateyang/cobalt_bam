@@ -42,7 +42,7 @@
         },
         "supported_platforms": {
             "q": "Which platforms and link types are supported?",
-            "a": "100+ services are supported, including Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, and more.\nQuality, audio, and extra files depend on the platform and source post. It also supports public WeChat Channels videos and selectable multi-video downloads from WeChat Official Account articles."
+            "a": "Check the current supported services list and download directory for supported platforms and link types, including YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X (Twitter), and Facebook. Only publicly accessible content is supported, not private, paid, or login-required content.\nAvailable quality, audio, and extra files depend on the platform, source post, and parsing result. Public WeChat Channels videos and selectable multi-video downloads from WeChat Official Account articles are also supported."
         },
         "youtube_supported": {
             "q": "Does it support YouTube downloads?",

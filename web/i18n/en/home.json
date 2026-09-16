@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "Watermark-Free Download from Popular Platforms",
-        "description": "Supports 100+ popular sites including TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, CCTV, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analyze and download HD files directly on mobile and PC.",
+        "description": "Supports publicly accessible content from the platforms shown in the supported services list, including YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X (Twitter), and Facebook. Save available formats on mobile or desktop; quality depends on the source and parsing result.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Supports domestic and international versions of TikTok/Douyin. One-click watermark removal, keeping HD audio and video."
@@ -86,7 +86,7 @@
         },
         "facebook": {
             "name": "Facebook Video Downloader",
-            "desc": "Parses both public and private share links. Multiple resolutions available."
+            "desc": "Parses public Facebook videos and Reels and shows the resolutions available from the source. Private or login-required content is not supported."
         },
         "twitter": {
             "name": "X (Twitter) Video Saver",

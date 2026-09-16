@@ -4,8 +4,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ 支持站点",
-            "desc": "手机和电脑都能直接解析热门视频平台链接。"
+            "title": "热门平台集中下载",
+            "desc": "粘贴支持平台的公开视频链接，在手机或电脑上保存源站提供的格式。"
         },
         "collection": {
             "title": "合集 / Playlist 下载",
@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "热门平台无水印下载",
-        "description": "覆盖抖音、B站、搜狐视频、NicoNico、快手、酷狗音乐、好看视频、微博、小红书、CCTV、Amazon Live、NAVER、YouTube、Instagram、Threads、Twitter、Facebook 等 100+ 热门站点，手机和电脑都能直接解析高清文件。",
+        "description": "支持当前「支持的网站」列表中的公开内容，包括抖音、B站、搜狐视频、NicoNico、快手、微博、小红书、CCTV、Amazon Live、NAVER、YouTube、Instagram、Threads、X（Twitter）和 Facebook 等。在手机或电脑上保存可用格式；清晰度以源站提供的资源和实际解析结果为准。",
         "douyin": {
             "name": "抖音无水印下载",
             "desc": "支持国内外版抖音/TikTok，一键去水印，保持高清音画。"
@@ -86,7 +86,7 @@
         },
         "facebook": {
             "name": "Facebook 视频下载",
-            "desc": "公开/私密分享链接均可解析，多种分辨率可选。"
+            "desc": "解析公开的 Facebook 视频与 Reels，显示源站提供的可用分辨率。不支持私密或必须登录的内容。"
         },
         "twitter": {
             "name": "X(Twitter) 视频保存",

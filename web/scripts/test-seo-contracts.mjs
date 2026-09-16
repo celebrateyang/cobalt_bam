@@ -313,6 +313,58 @@ test('sitemap contains the repaired hubs and bilingual audio route without noind
     assert(!xml.includes('2026-09-03'));
 });
 
+test('English and Chinese home and FAQ copy avoid unsupported service and private-content promises', async () => {
+    const faqPage = await component('src/routes/[lang]/faq/+page.svelte');
+    const homeSections = await component('src/components/home/HomeDeferredSections.svelte');
+    try {
+        for (const lang of ['en', 'zh']) {
+            const home = load(`i18n/${lang}/home.json`);
+            const faq = load(`i18n/${lang}/faq.json`);
+            assert.doesNotMatch(JSON.stringify({ home, faq }), /100\s*\+/, lang);
+            assert.doesNotMatch(home.platforms.facebook.desc, /public and private|\u516c\u5f00\/\u79c1\u5bc6/, lang);
+            if (lang === 'en') {
+                assert.match(home.platforms.description, /supported services list/);
+                assert.match(home.platforms.description, /source and parsing result/);
+                assert.match(home.platforms.facebook.desc, /public Facebook videos and Reels/);
+                assert.match(home.platforms.facebook.desc, /Private or login-required content is not supported/);
+                assert.match(faq.items.supported_platforms.a, /Only publicly accessible content is supported/);
+            } else {
+                assert.match(home.platforms.description, /\u652f\u6301\u7684\u7f51\u7ad9/);
+                assert.match(home.platforms.description, /\u5b9e\u9645\u89e3\u6790\u7ed3\u679c/);
+                assert.match(home.platforms.facebook.desc, /\u516c\u5f00\u7684 Facebook/);
+                assert.match(home.platforms.facebook.desc, /\u4e0d\u652f\u6301\u79c1\u5bc6\u6216\u5fc5\u987b\u767b\u5f55/);
+                assert.match(faq.items.supported_platforms.a, /\u4ec5\u652f\u6301\u516c\u5f00\u53ef\u8bbf\u95ee\u7684\u5185\u5bb9/);
+            }
+            setTestLocale(lang, '');
+            const homeHtml = homeSections.render({
+                currentLocale: lang,
+                canonicalUrl: `https://freesavevideo.online/${lang}`,
+                platformCards: Object.entries(home.platforms)
+                    .filter(([, value]) => typeof value === 'object')
+                    .map(([slug, value]) => ({ slug, ...value })),
+                guideDescription1: '',
+                guideDescription2: '',
+            }).html;
+            assert(homeHtml.includes(escapeText(home.platforms.description)), lang);
+            assert(homeHtml.includes(escapeText(home.platforms.facebook.desc)), lang);
+            assert.doesNotMatch(homeHtml, /100\s*\+|public and private|\u516c\u5f00\/\u79c1\u5bc6/, lang);
+            setTestLocale(lang);
+            const rendered = faqPage.render({});
+            assert(rendered.html.includes(escapeText(faq.items.supported_platforms.a)), lang);
+            assert.doesNotMatch(rendered.html, /100\s*\+/, lang);
+            const schema = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+                .map(match => JSON.parse(match[1])).find(item => item['@type'] === 'FAQPage');
+            assert(schema, lang);
+            const supported = schema.mainEntity.find(item => item.name === faq.items.supported_platforms.q);
+            assert.equal(supported?.acceptedAnswer.text, faq.items.supported_platforms.a, lang);
+            assert.doesNotMatch(JSON.stringify(schema), /100\s*\+/, lang);
+        }
+    } finally {
+        testTranslations.set(key => key);
+        testPage.set({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') });
+    }
+});
+
 test('Thai downloader copy matches production account, public-content and logging behavior', () => {
     const faq = load('i18n/th/faq.json').items;
     const home = load('i18n/th/home.json');

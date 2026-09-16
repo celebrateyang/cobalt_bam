@@ -41,7 +41,7 @@
     "api.content.video.private": "video ini bersifat pribadi, jadi saya tidak dapat mengaksesnya. ubah visibilitasnya atau coba yang lain!",
     "api.content.video.age": "video YouTube ini dikenai pembatasan usia dan memerlukan login ke YouTube untuk mengonfirmasi usia Anda. kami tidak dapat mendownloadnya saat ini, jadi silakan coba video tanpa batasan usia. tidak ada poin yang dikurangi untuk upaya yang gagal ini.",
     "api.content.video.region": "video ini wilayahnya dikunci, dan server pemrosesan berada di lokasi yang berbeda. coba yang lain!",
-    "api.youtube.disabled": "Layanan pengunduhan YouTube untuk sementara tidak tersedia. Silakan coba lagi nanti.",
+    "api.youtube.disabled": "Video YouTube ini belum dapat diunduh saat ini. Pastikan videonya publik lalu coba lagi nanti.",
     "api.youtube.link.unsupported": "Halaman saluran YouTube belum didukung. Salin tautan ke video YouTube atau daftar putar tertentu, lalu coba lagi.",
     "api.content.post.unavailable": "tidak dapat menemukan apa pun tentang postingan ini. visibilitasnya mungkin terbatas atau mungkin tidak ada sama sekali. pastikan tautan Anda berfungsi dan coba lagi dalam beberapa detik!",
     "api.content.post.private": "postingan ini dari akun pribadi, jadi saya tidak dapat mengaksesnya. sudahkah Anda menempelkan tautan yang benar?",

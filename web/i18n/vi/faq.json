@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "FreeSaveVideo là gì?",
-            "a": "FreeSaveVideo là công cụ tải media online.\nDán liên kết, chọn chế độ và tải file.\nHỗ trợ Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook và nhiều nền tảng khác."
+            "a": "FreeSaveVideo là công cụ trực tuyến để lưu video, âm thanh, hình ảnh và GIF công khai từ các nền tảng được hỗ trợ.\nDán liên kết nội dung công khai, chọn chế độ rồi tải tệp.\nHỗ trợ YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook và các nền tảng khác."
         },
         "how_to_use": {
             "q": "Cách tải video (không logo)?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "Hỗ trợ nền tảng và loại link nào?",
-            "a": "Trang hỗ trợ 100+ dịch vụ. Phổ biến: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng và bài đăng gốc. Cũng hỗ trợ video WeChat Channels công khai và tải có chọn lọc nhiều video trong bài viết tài khoản chính thức WeChat."
+            "a": "Hỗ trợ các nền tảng hiển thị trong danh sách dịch vụ, gồm YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter) và Facebook. Hệ thống cũng sử dụng công nghệ dựa trên yt-dlp, có khả năng xử lý hơn 100 dịch vụ.\nChất lượng, âm thanh và tệp bổ sung phụ thuộc nền tảng cùng nội dung công khai từ nguồn. Video WeChat Channels công khai và lựa chọn nhiều video trong bài viết công khai của tài khoản chính thức WeChat cũng được hỗ trợ."
         },
         "youtube_supported": {
             "q": "Có hỗ trợ YouTube không?",
-            "a": "Tải trực tiếp YouTube đã bị tắt trên trang này.\nNếu cần, hãy dùng hướng dẫn trong trang với script/extension trình duyệt."
+            "a": "Có. Trang hỗ trợ video YouTube công khai riêng lẻ, Shorts và danh sách phát công khai. Hãy dán URL video hoặc danh sách phát vào ô trên trang chủ.\nKhông hỗ trợ trang chủ kênh, nội dung riêng tư, chỉ dành cho thành viên, trả phí hoặc có DRM, cũng như nội dung yêu cầu xác minh tuổi hay đăng nhập."
         },
         "mobile_ios": {
             "q": "Dùng trên điện thoại được không? Lưu trên iOS thế nào?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "Vì sao đôi khi cần đăng nhập?",
-            "a": "Tải cơ bản thường không cần tài khoản.\nĐể giảm spam/lạm dụng, các chức năng như báo lỗi, batch hoặc tính điểm có thể yêu cầu đăng nhập."
+            "a": "Trang web chính thức yêu cầu đăng nhập trước khi tải xuống. Đăng nhập được dùng để ngăn lạm dụng, kiểm soát truy cập và quản lý tác vụ hàng loạt cùng điểm."
         },
         "points_how": {
             "q": "Điểm là gì và tính như thế nào?",
@@ -105,8 +105,8 @@
             "a": "Không. FreeSaveVideo chỉ xử lý nội dung công khai.\nHãy tôn trọng bản quyền."
         },
         "privacy_logs": {
-            "q": "Bạn có lưu link hoặc file của tôi không? Có an toàn không?",
-            "a": "Chúng tôi không yêu cầu mật khẩu nền tảng.\nLink và dữ liệu chỉ được dùng tạm thời trong quá trình xử lý. Một số triển khai có thể lưu log tối thiểu để chống lạm dụng và debug.\nTrang này có thể dùng phân tích/quảng cáo bên thứ ba để vận hành và cải thiện."
+            "q": "Trang web xử lý dữ liệu cá nhân như thế nào?",
+            "a": "Chúng tôi không yêu cầu mật khẩu của nền tảng nguồn. Để vận hành dịch vụ, hệ thống có thể ghi nhận mã và thời gian yêu cầu, tài khoản hoặc email, nền tảng, trạng thái xử lý và lỗi. Dữ liệu này được dùng để giám sát, quản lý điểm, ngăn lạm dụng và khắc phục sự cố. Bản ghi về lần thử tải xuống hiện được dọn mặc định sau hai ngày; dữ liệu tài khoản, thanh toán, truy cập và tính năng do người dùng lưu có thể được giữ lâu hơn.\nTrang web có thể sử dụng dịch vụ phân tích và quảng cáo. Xem Chính sách quyền riêng tư để biết chi tiết."
         },
         "feedback_contact": {
             "q": "Báo lỗi hoặc yêu cầu tính năng như thế nào?",

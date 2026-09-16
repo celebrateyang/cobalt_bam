@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "¿Qué es FreeSaveVideo?",
-            "a": "FreeSaveVideo es un descargador de medios en línea.\nPega un enlace compartido, elige un modo y descarga el archivo.\nSoporta Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook y más."
+            "a": "FreeSaveVideo es una herramienta en línea para guardar vídeos, audio, imágenes y GIF públicos de plataformas compatibles.\nPega el enlace del contenido público, elige un modo y descarga el archivo.\nAdmite YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook y otras plataformas."
         },
         "how_to_use": {
             "q": "¿Cómo descargo un video (sin marca de agua)?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "¿Qué plataformas y tipos de enlace se admiten?",
-            "a": "Este sitio cubre 100+ servicios. Los más comunes incluyen Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) y Amazon Live, Facebook.\nLa calidad disponible, el audio y archivos extra dependen de la plataforma y de la publicación original. También admite vídeos públicos de WeChat Channels y la descarga selectiva de varios vídeos incluidos en artículos de cuentas oficiales de WeChat."
+            "a": "Se admiten las plataformas mostradas en la lista de servicios, como YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter) y Facebook. El análisis también utiliza tecnología basada en yt-dlp, capaz de procesar más de 100 servicios.\nLa calidad, el audio y los archivos adicionales disponibles dependen de la plataforma y del contenido público original. También se admiten vídeos públicos de WeChat Channels y la selección de varios vídeos en artículos públicos de cuentas oficiales de WeChat."
         },
         "youtube_supported": {
             "q": "¿Soporta descargas de YouTube?",
-            "a": "La descarga directa de YouTube está desactivada en este sitio.\nSi necesitas YouTube, usa la guía interna para un flujo con script/extensión del navegador."
+            "a": "Sí. Se admiten vídeos públicos individuales, Shorts y listas de reproducción públicas de YouTube. Pega la URL del vídeo o de la lista en el campo de la página principal.\nNo se admiten páginas de canal, contenido privado, exclusivo para miembros, de pago o con DRM, ni contenido que requiera verificar la edad o iniciar sesión."
         },
         "mobile_ios": {
             "q": "¿Funciona en móvil? ¿Cómo guardar en iOS?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "¿Por qué a veces me pide iniciar sesión?",
-            "a": "Las descargas básicas normalmente no requieren cuenta.\nPara reducir abuso y spam, funciones como reportes, tareas por lotes o puntos pueden requerir inicio de sesión."
+            "a": "El sitio oficial requiere iniciar sesión antes de descargar. El inicio de sesión se utiliza para prevenir abusos, controlar el acceso y gestionar las tareas por lotes y los puntos."
         },
         "points_how": {
             "q": "¿Qué son los puntos y cómo se cobran?",
@@ -105,8 +105,8 @@
             "a": "No. FreeSaveVideo solo maneja contenido público.\nRespeta los derechos de autor."
         },
         "privacy_logs": {
-            "q": "¿Guardan mis enlaces o archivos? ¿Es seguro?",
-            "a": "Nunca pedimos contraseñas de las plataformas.\nLos enlaces y datos se usan temporalmente durante el procesamiento. Algunas implementaciones pueden guardar logs mínimos para prevención de abuso y depuración.\nEste sitio puede usar analíticas/anuncios de terceros para operar y mejorar."
+            "q": "¿Cómo trata el sitio los datos personales?",
+            "a": "No solicitamos la contraseña de la plataforma de origen. Para operar el servicio podemos registrar el identificador y la hora de la solicitud, la cuenta o el correo electrónico, la plataforma, el estado y los errores. Estos datos se usan para supervisión, puntos, prevención de abusos y resolución de problemas. Los registros actuales de intentos de descarga se eliminan por defecto después de dos días; los datos de cuenta, pago, acceso y funciones guardadas por el usuario pueden conservarse durante más tiempo.\nEl sitio puede utilizar servicios de análisis y publicidad. Consulta la Política de privacidad para obtener más información."
         },
         "feedback_contact": {
             "q": "¿Cómo reporto problemas o pido funciones?",

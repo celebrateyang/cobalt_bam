@@ -1,76 +1,21 @@
-<script lang="ts">
-    import env from "$lib/env";
-    import { t } from "$lib/i18n/translations";
+<script lang="ts">import { t } from "$lib/i18n/translations"; import SectionHeading from "$components/misc/SectionHeading.svelte";</script>
+<section id="general"><SectionHeading title={$t("about.heading.general")} sectionId="general" />
 
-    import SectionHeading from "$components/misc/SectionHeading.svelte";
-</script>
-
-<section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
-
-chính sách bảo mật của FreeSaveVideo rất đơn giản: chúng tôi không thu thập hoặc lưu trữ bất kỳ thứ gì về bạn. những gì bạn làm hoàn toàn là việc của bạn, không phải của chúng tôi hoặc bất kỳ ai khác.
-
-các điều khoản này chỉ áp dụng khi sử dụng phiên bản FreeSaveVideo chính thức. trong các trường hợp khác, bạn có thể cần liên hệ với người lưu trữ để biết thông tin chính xác.
+Chính sách này áp dụng cho trang FreeSaveVideo chính thức. Chúng tôi xử lý dữ liệu cần thiết để cung cấp dịch vụ, quản lý tài khoản và điểm, bảo mật, ngăn lạm dụng, giám sát và khắc phục sự cố.
 </section>
+<section id="saving"><SectionHeading title={$t("about.heading.saving")} sectionId="saving" />
 
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
+Hệ thống có thể ghi nhận mã và thời gian yêu cầu, tài khoản hoặc email, nền tảng, trạng thái xử lý và lỗi. Thông tin này được dùng để giám sát, quản lý điểm, ngăn lạm dụng và hỗ trợ. Bản ghi về lần thử tải xuống hiện được dọn mặc định sau hai ngày. Dữ liệu tài khoản, thanh toán, truy cập và tính năng do người dùng lưu có thể được giữ lâu hơn khi dịch vụ hoặc pháp luật yêu cầu.
 
-các công cụ sử dụng xử lý trên thiết bị hoạt động ngoại tuyến, cục bộ và không bao giờ gửi bất kỳ dữ liệu nào đi đâu. chúng được đánh dấu rõ ràng như vậy bất cứ khi nào có thể.
+Dữ liệu media cần đường hầm được xử lý tạm thời trong lúc truyền và không được dùng làm kho lưu trữ media lâu dài.
 </section>
+<section id="encryption"><SectionHeading title={$t("about.heading.encryption")} sectionId="encryption" />
 
-<section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
-
-khi sử dụng chức năng lưu, trong một số trường hợp FreeSaveVideo sẽ mã hóa & lưu trữ tạm thời thông tin cần thiết cho truyền. nó được lưu trữ trong RAM của máy chủ xử lý trong 90 giây và xóa vĩnh viễn sau đó. không ai có quyền truy cập vào nó, thậm chí cả chủ sở hữu phiên bản, miễn là họ không sửa đổi hình ảnh FreeSaveVideo chính thức.
-
-các file được xử lý/truyền không bao giờ được lưu vào bộ nhớ cache ở bất kỳ đâu. mọi thứ đều được truyền trực tiếp. chức năng lưu của FreeSaveVideo về cơ bản là một dịch vụ proxy ưa thích.
+Dữ liệu đường hầm tạm thời được bảo vệ bằng AES-256 và mỗi đường hầm dùng một khóa riêng. Người nhận được liên kết đường hầm có thể truy cập tệp; đừng công khai hoặc chia sẻ với người không đáng tin cậy.
 </section>
+<section id="third-party"><SectionHeading title="Phân tích, quảng cáo và nhà cung cấp" sectionId="third-party" />
 
-<section id="encryption">
-<SectionHeading
-    title={$t("about.heading.encryption")}
-    sectionId="encryption"
-/>
+Tùy cấu hình, trang có thể dùng Plausible, Microsoft Clarity, Meta Pixel, Google Analytics hoặc Google AdSense. Các nhà cung cấp này có thể xử lý vị trí gần đúng theo IP, dữ liệu thiết bị và trình duyệt, trang đã xem, cookie hoặc mã nhận dạng quảng cáo. Phân tích trang không cố ý gửi nội dung yêu cầu tải xuống dưới dạng sự kiện phân tích.
 
-dữ liệu đường hầm được lưu trữ tạm thời được mã hóa bằng tiêu chuẩn AES-256. khóa giải mã chỉ được bao gồm trong liên kết truy cập và không bao giờ được ghi log/lưu/lưu trữ ở bất kỳ đâu. chỉ người dùng cuối mới có quyền truy cập vào liên kết & khóa mã hóa. khóa được tạo duy nhất cho mỗi đường hầm được yêu cầu.
-</section>
-
-{#if env.PLAUSIBLE_ENABLED}
-<section id="plausible">
-<SectionHeading
-    title={$t("about.heading.plausible")}
-    sectionId="plausible"
-/>
-
-vì quyền riêng tư, chúng tôi sử dụng [phân tích lưu lượng ẩn danh của plausible](https://plausible.io/) để có số lượng người dùng FreeSaveVideo hoạt động gần đúng. không có thông tin nhận dạng nào về bạn hoặc các yêu cầu của bạn được lưu trữ. tất cả dữ liệu đều được ẩn danh và tổng hợp. phiên bản plausible mà chúng tôi sử dụng được lưu trữ & quản lý bởi chúng tôi.
-
-plausible không sử dụng cookie và tuân thủ hoàn toàn GDPR, CCPA và PECR.
-
-[tìm hiểu thêm về sự cống hiến của plausible cho quyền riêng tư.](https://plausible.io/privacy-focused-web-analytics)
-
-nếu bạn muốn từ chối phân tích ẩn danh, bạn có thể làm trong <a href="../settings/privacy#analytics">cài đặt quyền riêng tư</a>.
-</section>
-{/if}
-
-<section id="cloudflare">
-<SectionHeading
-    title={$t("about.heading.cloudflare")}
-    sectionId="cloudflare"
-/>
-
-chúng tôi sử dụng các dịch vụ cloudflare để bảo vệ ddos & bot. chúng tôi cũng sử dụng cloudflare pages để triển khai & lưu trữ ứng dụng web tĩnh. tất cả những điều này đều cần thiết để cung cấp trải nghiệm tốt nhất cho mọi người. đó là nhà cung cấp riêng tư & đáng tin cậy nhất mà chúng tôi biết.
-
-cloudflare tuân thủ hoàn toàn GDPR và HIPAA.
-
-[tìm hiểu thêm về sự cống hiến của cloudflare cho quyền riêng tư.](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
+Clerk có thể quản lý đăng nhập. Nhà cung cấp thanh toán xử lý dữ liệu thanh toán; FreeSaveVideo có thể lưu đơn hàng, trạng thái giao dịch và quyền truy cập nhưng không trực tiếp lưu toàn bộ số thẻ. Cloudflare cung cấp lưu trữ, phân phối và bảo mật, đồng thời có thể xử lý dữ liệu kết nối và bảo mật.
 </section>

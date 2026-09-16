@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Descarga sin marca de agua de plataformas populares",
-        "description": "Soporta mas de 100 sitios populares, incluidos TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analiza y descarga archivos HD directamente en movil y PC.",
+        "description": "Admite contenido público de las plataformas mostradas en la lista de servicios, entre ellas YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) y Facebook. Consulta y guarda los formatos disponibles desde el móvil o el ordenador.",
         "douyin": {
             "name": "Descargador de TikTok/Douyin",
             "desc": "Soporta versiones nacionales e internacionales de TikTok/Douyin. Eliminación de marca de agua con un clic, manteniendo audio y video en HD."
@@ -48,11 +48,11 @@
         },
         "youtube": {
             "name": "Descargador de videos de YouTube",
-            "desc": "Por favor, vea el tutorial en video: cómo usar Tampermonkey para descargar videos de YouTube."
+            "desc": "Pega un enlace de un vídeo público, Short o lista de reproducción pública de YouTube y guarda los formatos de vídeo o audio que ofrezca la fuente."
         },
         "facebook": {
             "name": "Descargador de videos de Facebook",
-            "desc": "Analiza enlaces compartidos públicos y privados. Múltiples resoluciones disponibles."
+            "desc": "Analiza vídeos y reels públicos de Facebook y muestra las resoluciones disponibles en la fuente. No admite contenido privado ni contenido que requiera iniciar sesión."
         },
         "twitter": {
             "name": "Guardador de videos de X (Twitter)",
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ sitios compatibles",
-            "desc": "Funciona en plataformas de video populares tanto en movil como en escritorio."
+            "title": "Plataformas compatibles",
+            "desc": "Procesa contenido público de las principales plataformas incluidas en la lista de servicios. El análisis también utiliza tecnología basada en yt-dlp; los formatos y la calidad dependen del contenido original."
         },
         "collection": {
             "title": "Descarga de colecciones / playlists",
@@ -127,8 +127,10 @@
         },
         "aria": "Download capabilities"
     },
+    "feedback": { "desc": "Comunica problemas de descarga y sugerencias." },
+    "points_balloon": { "aria": "Aviso de pocos puntos", "title": "Quedan pocos puntos", "text": "Consulta cómo conseguir más puntos.", "cta": "Ir a la cuenta", "points_label": "puntos", "close": "cerrar" },
     "extension": {
-        "badge": "Gratis ? Chrome",
+        "badge": "Gratis · Chrome",
         "title": "Descarga directamente desde cualquier web",
         "description": "¿Encontraste un video o una imagen en una web como Taobao? Usa la extensión para detectarlo y descargarlo con un clic.",
         "install": "Instalar extensión de Chrome",

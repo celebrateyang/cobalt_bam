@@ -2,6 +2,7 @@ import de from '$i18n/de/seo-runtime.json';
 import en from '$i18n/en/seo-runtime.json';
 import es from '$i18n/es/seo-runtime.json';
 import fr from '$i18n/fr/seo-runtime.json';
+import id from '$i18n/id/seo-runtime.json';
 import ja from '$i18n/ja/seo-runtime.json';
 import ko from '$i18n/ko/seo-runtime.json';
 import ru from '$i18n/ru/seo-runtime.json';
@@ -46,6 +47,7 @@ const contentByLocale: Record<string, RuntimeContent> = {
     en: en as RuntimeContent,
     es: es as RuntimeContent,
     fr: fr as RuntimeContent,
+    id: id as RuntimeContent,
     ja: ja as RuntimeContent,
     ko: ko as RuntimeContent,
     ru: ru as RuntimeContent,

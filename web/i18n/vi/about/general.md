@@ -1,44 +1,13 @@
-﻿<script lang="ts">
-    import { t } from "$lib/i18n/translations";
-    import { partners, contacts, docs } from "$lib/env";
+<script lang="ts">import { t } from "$lib/i18n/translations"; import SectionHeading from "$components/misc/SectionHeading.svelte";</script>
+<section id="summary"><SectionHeading title={$t("about.heading.summary")} sectionId="summary" />
 
-    import SectionHeading from "$components/misc/SectionHeading.svelte";
-</script>
-
-<section id="summary">
-<SectionHeading
-    title={$t("about.heading.summary")}
-    sectionId="summary"
-/>
-
-FreeSaveVideo giúp bạn lưu nội dung công khai từ các trang web yêu thích: video, âm thanh, ảnh hoặc GIF. Chỉ cần dán liên kết là có thể bắt đầu.
-
-Không quảng cáo, không trình theo dõi, không tường phí. Đây là một ứng dụng web tiện lợi.
+FreeSaveVideo là công cụ web để lưu nội dung công khai từ các nền tảng được hỗ trợ, gồm video, âm thanh, hình ảnh và GIF. Công cụ hoạt động trong trình duyệt trên điện thoại và máy tính. Trang chính thức có thể hiển thị quảng cáo và dùng các dịch vụ phân tích nêu trong Chính sách quyền riêng tư.
 </section>
+<section id="privacy"><SectionHeading title={$t("about.heading.privacy")} sectionId="privacy" />
 
-
-<section id="privacy">
-<SectionHeading
-    title={$t("about.heading.privacy")}
-    sectionId="privacy"
-/>
-
-Mọi yêu cầu gửi tới backend đều ẩn danh và thông tin về tunnel được mã hóa.
-Chúng tôi không ghi log và không theo dõi cá nhân.
-
-Khi cần xử lý thêm, FreeSaveVideo xử lý tệp ngay trong quá trình truyền.
-
-Bạn cũng có thể [bật tunnel bắt buộc](../../settings/privacy#tunnel) để bảo vệ quyền riêng tư.
+Yêu cầu tải xuống được gửi đến máy chủ để phân tích và chuyển tệp. Khi một tính năng yêu cầu đăng nhập, yêu cầu có thể được liên kết với tài khoản. Thông tin yêu cầu và trạng thái xử lý có thể được ghi nhận cho mục đích bảo mật, điểm, giám sát và khắc phục sự cố. Mã hóa đường hầm không làm người dùng ẩn danh với máy chủ. Xem [Chính sách quyền riêng tư](privacy).
 </section>
+<section id="local"><SectionHeading title={$t("about.heading.local")} sectionId="local" />
 
-
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
-
-Các tính năng mới như [remuxing](../../remux) chạy cục bộ trên thiết bị của bạn.
-Xử lý trên thiết bị không gửi tệp cục bộ qua internet.
+Các công cụ được ghi là xử lý cục bộ, như [remux](../../remux), xử lý tệp đã chọn trong trình duyệt mà không tải tệp đó lên máy chủ để chuyển đổi. Bản thân trang vẫn có thể kết nối với dịch vụ lưu trữ, xác thực, phân tích hoặc quảng cáo.
 </section>
-

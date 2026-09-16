@@ -4,53 +4,25 @@
 </script>
 
 <section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
+<SectionHeading title={$t("about.heading.general")} sectionId="general" />
 
-estos términos son aplicables solo cuando se usa la instancia oficial de FreeSaveVideo.
-en otros casos, es posible que necesites contactar al anfitrión para obtener información precisa.
+Estas condiciones se aplican al sitio oficial de FreeSaveVideo. La herramienta ayuda a guardar contenido público de plataformas compatibles cuando el usuario tiene derecho a hacerlo. No debe utilizarse para eludir controles de acceso a contenido privado, de pago, exclusivo para miembros o protegido mediante DRM.
 </section>
 
 <section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
+<SectionHeading title={$t("about.heading.saving")} sectionId="saving" />
 
-la funcionalidad de guardado simplifica la descarga de contenido de internet y no asume ninguna responsabilidad por el uso que se le dé al contenido guardado.
-los servidores de procesamiento funcionan como proxies avanzados y nunca escriben ningún contenido en el disco.
-todo se maneja en RAM y se purga permanentemente una vez que el túnel está hecho.
-no tenemos registros de descarga y no podemos identificar a nadie.
-
-[puedes leer más sobre cómo funcionan los túneles en nuestra política de privacidad.](privacy)
+El servidor analiza páginas públicas compatibles y, cuando es necesario, combina o entrega flujos multimedia al navegador. La información de solicitudes, cuentas y estados se trata conforme a la [Política de privacidad](privacy).
 </section>
 
 <section id="responsibility">
-<SectionHeading
-    title={$t("about.heading.responsibility")}
-    sectionId="responsibility"
-/>
+<SectionHeading title={$t("about.heading.responsibility")} sectionId="responsibility" />
 
-tú (usuario final) eres responsable de lo que haces con nuestras herramientas, cómo usas y distribuyes el contenido resultante.
-por favor ten cuidado al usar contenido de otros y siempre acredita a los creadores originales.
-asegúrate de no violar ningún término o licencia.
-
-cuando se use con fines educativos, siempre cita las fuentes y acredita a los creadores originales.
-
-el uso justo y los créditos benefician a todos.
+El usuario es responsable del contenido que envía, de los archivos descargados y de su uso o distribución. Utiliza únicamente contenido público que te pertenezca, que tengas permiso para guardar o que la ley permita guardar. Respeta las condiciones de la plataforma de origen y los derechos de terceros.
 </section>
 
 <section id="abuse">
-<SectionHeading
-    title={$t("about.heading.abuse")}
-    sectionId="abuse"
-/>
+<SectionHeading title={$t("about.heading.abuse")} sectionId="abuse" />
 
-no tenemos forma de detectar comportamiento abusivo automáticamente, ya que FreeSaveVideo es 100% anónimo.
-
-
-ten en cuenta que este correo electrónico no está destinado a soporte de usuarios.
-si estás experimentando problemas, contáctanos a través de cualquier método preferido en [la página de soporte](community).
+Podemos limitar o suspender solicitudes, cuentas o fuentes concretas cuando detectemos abuso, solicitudes automatizadas excesivas, intentos de eludir controles de acceso o denuncias válidas de infracción. Utiliza la [página de contacto](contact) para solicitar ayuda o comunicar un problema.
 </section>

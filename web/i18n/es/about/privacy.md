@@ -1,76 +1,32 @@
 <script lang="ts">
-    import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
-
     import SectionHeading from "$components/misc/SectionHeading.svelte";
 </script>
 
 <section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
+<SectionHeading title={$t("about.heading.general")} sectionId="general" />
 
-la política de privacidad de FreeSaveVideo es simple: no recopilamos ni almacenamos nada sobre ti. lo que haces es únicamente tu asunto, no el nuestro ni el de nadie más.
-
-estos términos son aplicables solo cuando se usa la instancia oficial de FreeSaveVideo. en otros casos, es posible que necesites contactar al anfitrión para obtener información precisa.
-</section>
-
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
-
-las herramientas que usan procesamiento en el dispositivo funcionan sin conexión, localmente, y nunca envían datos a ningún lugar. están explícitamente marcadas como tales cuando sea aplicable.
+Esta política se aplica al sitio oficial de FreeSaveVideo. Tratamos los datos necesarios para prestar el servicio, gestionar cuentas y puntos, proteger la seguridad, evitar abusos, supervisar el sistema y resolver problemas.
 </section>
 
 <section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
+<SectionHeading title={$t("about.heading.saving")} sectionId="saving" />
 
-cuando se usa la funcionalidad de guardado, en algunos casos FreeSaveVideo encriptará y almacenará temporalmente la información necesaria para la canalización. se almacena en la RAM del servidor de procesamiento durante 90 segundos y se purga irreversiblemente después. nadie tiene acceso a ella, ni siquiera los propietarios de instancias, siempre y cuando no modifiquen la imagen oficial de FreeSaveVideo.
+Podemos registrar el identificador y la hora de la solicitud, la cuenta o dirección de correo electrónico, la plataforma, el estado del procesamiento y los errores. Esta información se utiliza para supervisión, puntos, prevención de abusos y asistencia. Los registros actuales de intentos de descarga se eliminan por defecto después de dos días. Los datos de cuenta, pago, acceso y funciones guardadas por el usuario pueden conservarse durante más tiempo cuando sea necesario para prestar el servicio o cumplir obligaciones legales.
 
-los archivos procesados/canalizados nunca se almacenan en caché en ningún lugar. todo se canaliza en vivo. la funcionalidad de guardado de FreeSaveVideo es esencialmente un servicio de proxy elegante.
+Los datos multimedia que requieren un túnel se procesan temporalmente durante la transferencia y no se utilizan como almacenamiento multimedia permanente.
 </section>
 
 <section id="encryption">
-<SectionHeading
-    title={$t("about.heading.encryption")}
-    sectionId="encryption"
-/>
+<SectionHeading title={$t("about.heading.encryption")} sectionId="encryption" />
 
-los datos de túnel almacenados temporalmente se encriptan usando el estándar AES-256. las claves de descifrado solo se incluyen en el enlace de acceso y nunca se registran/almacenan en caché/almacenan en ningún lugar. solo el usuario final tiene acceso al enlace y las claves de encriptación. las claves se generan de manera única para cada túnel solicitado.
+Los datos temporales del túnel están protegidos mediante AES-256 y cada túnel utiliza una clave única. Quien reciba el enlace del túnel puede acceder al archivo; no lo publiques ni lo compartas con personas que no sean de confianza.
 </section>
 
-{#if env.PLAUSIBLE_ENABLED}
-<section id="plausible">
-<SectionHeading
-    title={$t("about.heading.plausible")}
-    sectionId="plausible"
-/>
+<section id="third-party">
+<SectionHeading title="Análisis, publicidad y proveedores" sectionId="third-party" />
 
-por el bien de la privacidad, usamos [análisis de tráfico anónimo de plausible](https://plausible.io/) para obtener un número aproximado de usuarios activos de FreeSaveVideo. nunca se almacena información identificable sobre ti o tus solicitudes. todos los datos se anonimizan y agregan. la instancia de plausible que usamos está alojada y gestionada por nosotros.
+Según la configuración, el sitio oficial puede usar Plausible, Microsoft Clarity, Meta Pixel, Google Analytics o Google AdSense. Estos proveedores pueden tratar ubicación aproximada basada en IP, datos del dispositivo y navegador, páginas visitadas, cookies o identificadores publicitarios. El análisis de páginas no envía intencionadamente el contenido de la solicitud de descarga como evento analítico.
 
-plausible no usa cookies y es totalmente compatible con GDPR, CCPA y PECR.
-
-[aprende más sobre la dedicación de plausible a la privacidad.](https://plausible.io/privacy-focused-web-analytics)
-
-si deseas optar por no participar en análisis anónimos, puedes hacerlo en <a href="../settings/privacy#analytics">configuración de privacidad</a>.
-</section>
-{/if}
-
-<section id="cloudflare">
-<SectionHeading
-    title={$t("about.heading.cloudflare")}
-    sectionId="cloudflare"
-/>
-
-usamos servicios de cloudflare para protección contra DDoS y bots. también usamos cloudflare pages para desplegar y alojar la aplicación web estática. todos estos son necesarios para proporcionar la mejor experiencia para todos. es el proveedor más privado y confiable que conocemos.
-
-cloudflare es totalmente compatible con GDPR y HIPAA.
-
-[aprende más sobre la dedicación de cloudflare a la privacidad.](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
+Clerk puede gestionar el inicio de sesión. Los proveedores de pago procesan los datos de pago; FreeSaveVideo puede conservar pedidos, estados de transacción y derechos de acceso, pero no almacena directamente el número completo de la tarjeta. Cloudflare presta servicios de alojamiento, entrega y seguridad y puede tratar datos de conexión y seguridad.
 </section>

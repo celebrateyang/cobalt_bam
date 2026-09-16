@@ -35,7 +35,7 @@
     },
     "platforms": {
         "title": "Unduh Tanpa Tanda Air dari Platform Populer",
-        "description": "Mendukung 100+ situs populer termasuk TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, CCTV, YouTube, Instagram, Threads, Twitter, Facebook, dll. Analisis dan unduh file HD langsung di ponsel dan PC.",
+        "description": "Mendukung konten publik dari platform yang tercantum dalam daftar layanan, termasuk YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter), dan Facebook. Periksa lalu simpan format yang tersedia di ponsel atau komputer.",
         "douyin": {
             "name": "Pengunduh TikTok/Douyin",
             "desc": "Mendukung TikTok/Douyin versi domestik dan internasional. Penghapusan tanda air sekali klik, menjaga audio dan video HD."
@@ -86,7 +86,7 @@
         },
         "facebook": {
             "name": "Pengunduh Video Facebook",
-            "desc": "Mengurai tautan berbagi publik dan pribadi. Berbagai resolusi tersedia."
+            "desc": "Mengurai video dan Reels Facebook publik serta menampilkan resolusi yang tersedia dari sumber. Konten pribadi atau yang memerlukan login tidak didukung."
         },
         "twitter": {
             "name": "Pengunduh Video X (Twitter)",

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
-        "description": "Unterstuetzt ueber 100 beliebte Websites, darunter TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook usw. Analysieren und laden Sie HD-Dateien direkt auf Mobilgeraeten und PCs herunter.",
+        "description": "Unterstützt öffentliche Inhalte der in der Diensteliste aufgeführten Plattformen, darunter YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) und Facebook. Prüfen und speichern Sie verfügbare Formate auf Mobilgeräten oder Computern.",
         "douyin": {
             "name": "TikTok/Douyin Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
@@ -48,11 +48,11 @@
         },
         "youtube": {
             "name": "YouTube Video Downloader",
-            "desc": "Bitte sehen Sie sich das Video-Tutorial an: So verwenden Sie Tampermonkey, um YouTube-Videos herunterzuladen."
+            "desc": "Fügen Sie den Link zu einem öffentlichen YouTube-Video, Short oder einer öffentlichen Playlist ein und speichern Sie die von der Quelle angebotenen Video- oder Audioformate."
         },
         "facebook": {
             "name": "Facebook Video Downloader",
-            "desc": "Analysiert sowohl öffentliche als auch private Freigabelinks. Mehrere Auflösungen verfügbar."
+            "desc": "Analysiert öffentliche Facebook-Videos und Reels und zeigt die von der Quelle angebotenen Auflösungen. Private oder anmeldepflichtige Inhalte werden nicht unterstützt."
         },
         "twitter": {
             "name": "X (Twitter) Video Saver",
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ unterstuetzte Seiten",
-            "desc": "Funktioniert auf beliebten Videoplattformen auf Mobilgeraeten und Desktop."
+            "title": "Unterstützte Plattformen",
+            "desc": "Verarbeitet öffentliche Inhalte wichtiger Plattformen aus der Diensteliste. Für die Analyse wird auch Technologie auf Basis von yt-dlp eingesetzt; Formate und Qualität hängen vom Quellinhalt ab."
         },
         "collection": {
             "title": "Sammlung / Playlist herunterladen",
@@ -127,8 +127,10 @@
         },
         "aria": "Download capabilities"
     },
+    "feedback": { "desc": "Melden Sie Downloadprobleme und Vorschläge." },
+    "points_balloon": { "aria": "Hinweis bei wenigen Punkten", "title": "Nur noch wenige Punkte", "text": "Erfahren Sie, wie Sie weitere Punkte erhalten.", "cta": "Zum Konto", "points_label": "Punkte", "close": "schließen" },
     "extension": {
-        "badge": "Kostenlos ? Chrome",
+        "badge": "Kostenlos · Chrome",
         "title": "Direkt von jeder Webseite herunterladen",
         "description": "Video oder Bild auf einer Seite wie Taobao gefunden? Mit der Erweiterung kannst du es mit einem Klick erkennen und herunterladen.",
         "install": "Chrome-Erweiterung installieren",

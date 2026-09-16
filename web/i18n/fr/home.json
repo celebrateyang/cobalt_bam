@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Téléchargement sans filigrane depuis des plateformes populaires",
-        "description": "Prend en charge plus de 100 sites populaires, dont TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook, etc. Analysez et telechargez des fichiers HD directement sur mobile et PC.",
+        "description": "Prend en charge le contenu public des plateformes affichées dans la liste des services, notamment YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) et Facebook. Consultez et enregistrez les formats disponibles sur mobile ou ordinateur.",
         "douyin": {
             "name": "Téléchargeur TikTok/Douyin",
             "desc": "Prend en charge les versions nationales et internationales de TikTok/Douyin. Suppression du filigrane en un clic, conservant l'audio et la vidéo HD."
@@ -48,11 +48,11 @@
         },
         "youtube": {
             "name": "Téléchargeur vidéo YouTube",
-            "desc": "Veuillez regarder le tutoriel vidéo : comment utiliser Tampermonkey pour télécharger des vidéos YouTube."
+            "desc": "Collez le lien d'une vidéo publique, d'un Short ou d'une playlist publique YouTube, puis enregistrez les formats vidéo ou audio proposés par la source."
         },
         "facebook": {
             "name": "Téléchargeur vidéo Facebook",
-            "desc": "Analyse les liens de partage publics et privés. Plusieurs résolutions disponibles."
+            "desc": "Analyse les vidéos et reels Facebook publics et affiche les résolutions proposées par la source. Le contenu privé ou nécessitant une connexion n'est pas pris en charge."
         },
         "twitter": {
             "name": "Sauvegarde vidéo X (Twitter)",
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ sites pris en charge",
-            "desc": "Fonctionne sur les plateformes video populaires sur mobile et ordinateur."
+            "title": "Plateformes prises en charge",
+            "desc": "Traite le contenu public des principales plateformes de la liste des services. L'analyse utilise aussi une technologie basée sur yt-dlp ; les formats et la qualité dépendent du contenu source."
         },
         "collection": {
             "title": "Telechargement de collections / playlists",
@@ -127,8 +127,10 @@
         },
         "aria": "Download capabilities"
     },
+    "feedback": { "desc": "Signalez les problèmes de téléchargement et vos suggestions." },
+    "points_balloon": { "aria": "Alerte de points faibles", "title": "Il reste peu de points", "text": "Découvrez comment obtenir plus de points.", "cta": "Accéder au compte", "points_label": "points", "close": "fermer" },
     "extension": {
-        "badge": "Gratuit ? Chrome",
+        "badge": "Gratuit · Chrome",
         "title": "Téléchargez directement depuis toute page web",
         "description": "Vous avez trouvé une vidéo ou une image sur un site comme Taobao ? Utilisez l’extension pour la détecter et la télécharger en un clic.",
         "install": "Installer l’extension Chrome",

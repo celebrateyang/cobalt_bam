@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Was ist FreeSaveVideo?",
-            "a": "FreeSaveVideo ist ein Online-Medien-Downloader.\nLink teilen, einfügen, Modus wählen und Datei herunterladen.\nUnterstützt Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook und mehr."
+            "a": "FreeSaveVideo ist ein Online-Werkzeug zum Speichern öffentlicher Videos, Audiodateien, Bilder und GIFs von unterstützten Plattformen.\nFügen Sie den Link zum öffentlichen Inhalt ein, wählen Sie einen Modus und laden Sie die Datei herunter.\nUnterstützt werden unter anderem YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter) und Facebook."
         },
         "how_to_use": {
             "q": "Wie lade ich ein Video (ohne Wasserzeichen) herunter?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "Welche Plattformen und Linktypen werden unterstützt?",
-            "a": "Diese Seite unterstützt über 100 Dienste. Häufig: Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) und Amazon Live, Facebook.\nQualität, Audio und Zusatzdateien hängen von Plattform und Originalpost ab. Unterstützt auch öffentliche WeChat-Channels-Videos und die Auswahl mehrerer Videos aus WeChat-Official-Account-Artikeln."
+            "a": "Unterstützt werden die Plattformen aus der Diensteliste, darunter YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter) und Facebook. Die Analyse nutzt auch Technologie auf Basis von yt-dlp, die mehr als 100 Dienste verarbeiten kann.\nVerfügbare Qualität, Audio- und Zusatzdateien hängen von der Plattform und dem öffentlichen Quellinhalt ab. Öffentliche WeChat-Channels-Videos und die Auswahl mehrerer Videos aus öffentlichen WeChat-Official-Account-Artikeln werden ebenfalls unterstützt."
         },
         "youtube_supported": {
             "q": "Wird YouTube unterstützt?",
-            "a": "Direktes YouTube-Parsing ist auf dieser Seite deaktiviert.\nFür YouTube nutze bitte den internen Leitfaden mit Skript/Plugin."
+            "a": "Ja. Öffentliche einzelne YouTube-Videos, Shorts und öffentliche Playlists werden unterstützt. Fügen Sie die URL des Videos oder der Playlist in das Feld auf der Startseite ein.\nKanalstartseiten, private, kostenpflichtige, nur für Mitglieder bestimmte oder DRM-geschützte Inhalte sowie Inhalte mit Altersprüfung oder Anmeldepflicht werden nicht unterstützt."
         },
         "mobile_ios": {
             "q": "Funktioniert es auf dem Handy? Wie speichere ich auf iOS?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "Warum muss ich mich manchmal anmelden?",
-            "a": "Grundlegende Downloads benötigen normalerweise kein Konto.\nZur Missbrauchs- und Spamvermeidung können Funktionen wie Meldungen, Batch oder Punkte eine Anmeldung erfordern."
+            "a": "Auf der offiziellen Website ist vor dem Download eine Anmeldung erforderlich. Sie dient dem Missbrauchsschutz, der Zugriffskontrolle sowie der Verwaltung von Batch-Aufgaben und Punkten."
         },
         "points_how": {
             "q": "Was sind Punkte und wie werden sie berechnet?",
@@ -105,8 +105,8 @@
             "a": "Nein. FreeSaveVideo verarbeitet nur öffentlich zugängliche Inhalte.\nBitte Urheberrecht respektieren."
         },
         "privacy_logs": {
-            "q": "Speichert ihr meine Links oder Dateien? Ist es sicher?",
-            "a": "Wir fragen nie nach deinen Plattform-Passwörtern.\nLinks und Mediendaten werden nur temporär verarbeitet. Manche Deployments können minimale Zugriff-Logs für Missbrauchsschutz und Debugging führen.\nDiese Seite kann Drittanbieter-Analytics/Ads nutzen, um Betrieb und Verbesserung zu ermöglichen."
+            "q": "Wie verarbeitet die Website personenbezogene Daten?",
+            "a": "Wir fragen nicht nach dem Passwort der Quellplattform. Für den Betrieb können Anfrage-ID und -zeit, Konto oder E-Mail-Adresse, Plattform, Verarbeitungsstatus und Fehler protokolliert werden. Diese Daten dienen Überwachung, Punkteabrechnung, Missbrauchsschutz und Fehlerbehebung. Aktuelle Aufzeichnungen über Downloadversuche werden standardmäßig nach zwei Tagen bereinigt; Konto-, Zahlungs-, Zugriffs- und vom Nutzer gespeicherte Funktionsdaten können länger aufbewahrt werden.\nDie Website kann Analyse- und Werbedienste einsetzen. Einzelheiten stehen in der Datenschutzerklärung."
         },
         "feedback_contact": {
             "q": "Wie melde ich Probleme oder wünsche Funktionen?",

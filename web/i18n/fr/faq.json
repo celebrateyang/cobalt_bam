@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Qu'est‑ce que FreeSaveVideo ?",
-            "a": "FreeSaveVideo est un téléchargeur de médias en ligne.\nCollez un lien partagé, choisissez un mode et téléchargez le fichier.\nIl prend en charge Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter), Amazon Live, Facebook et plus."
+            "a": "FreeSaveVideo est un outil en ligne permettant d'enregistrer des vidéos, fichiers audio, images et GIF publics depuis les plateformes compatibles.\nCollez le lien du contenu public, choisissez un mode et téléchargez le fichier.\nYouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook et d'autres plateformes sont pris en charge."
         },
         "how_to_use": {
             "q": "Comment télécharger une vidéo (sans filigrane) ?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "Quelles plateformes et quels liens sont pris en charge ?",
-            "a": "Ce site couvre plus de 100 services. Les plus courants : Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Xiaohongshu, Instagram, X(Twitter) et Amazon Live, Facebook.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu original. Prend aussi en charge les vidéos publiques WeChat Channels et la sélection de plusieurs vidéos dans les articles de comptes officiels WeChat."
+            "a": "Les plateformes affichées dans la liste des services sont prises en charge, notamment YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter) et Facebook. L'analyse utilise aussi une technologie basée sur yt-dlp, capable de traiter plus de 100 services.\nLa qualité, l'audio et les fichiers supplémentaires dépendent de la plateforme et du contenu public d'origine. Les vidéos publiques WeChat Channels et la sélection de plusieurs vidéos dans les articles publics de comptes officiels WeChat sont également prises en charge."
         },
         "youtube_supported": {
             "q": "YouTube est-il pris en charge ?",
-            "a": "Le téléchargement direct YouTube est désactivé sur ce site.\nSi vous en avez besoin, utilisez le guide interne avec un script/extension de navigateur."
+            "a": "Oui. Les vidéos publiques individuelles, les Shorts et les playlists publiques YouTube sont pris en charge. Collez l'URL de la vidéo ou de la playlist dans le champ de la page d'accueil.\nLes pages de chaîne, les contenus privés, réservés aux membres, payants ou protégés par DRM, ainsi que les contenus nécessitant une vérification d'âge ou une connexion, ne sont pas pris en charge."
         },
         "mobile_ios": {
             "q": "Fonctionne-t-il sur mobile ? Comment enregistrer sur iOS ?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "Pourquoi dois-je parfois me connecter ?",
-            "a": "Les téléchargements basiques ne nécessitent généralement pas de compte.\nPour limiter les abus et le spam, des fonctions comme les rapports, les lots ou la facturation en points peuvent nécessiter une connexion."
+            "a": "Le site officiel exige une connexion avant le téléchargement. La connexion sert à prévenir les abus, contrôler l'accès et gérer les tâches par lot et les points."
         },
         "points_how": {
             "q": "Que sont les points et comment sont-ils facturés ?",
@@ -105,8 +105,8 @@
             "a": "Non. FreeSaveVideo ne gère que le contenu public.\nRespectez les droits d'auteur."
         },
         "privacy_logs": {
-            "q": "Stockez-vous mes liens ou fichiers ? Est-ce sûr ?",
-            "a": "Nous ne demandons jamais vos mots de passe.\nLes liens et données sont utilisés temporairement pendant le traitement. Certains déploiements peuvent garder des logs minimaux pour la prévention d'abus et le débogage.\nCe site peut utiliser des analytics/publicités tiers pour fonctionner et s'améliorer."
+            "q": "Comment le site traite-t-il les données personnelles ?",
+            "a": "Nous ne demandons pas le mot de passe de la plateforme source. Pour exploiter le service, nous pouvons enregistrer l'identifiant et l'heure de la requête, le compte ou l'adresse e-mail, la plateforme, l'état du traitement et les erreurs. Ces données servent à la supervision, aux points, à la prévention des abus et au dépannage. Les enregistrements actuels des tentatives de téléchargement sont supprimés par défaut après deux jours ; les données de compte, de paiement, d'accès et de fonctions enregistrées par l'utilisateur peuvent être conservées plus longtemps.\nLe site peut utiliser des services d'analyse et de publicité. Consultez la Politique de confidentialité pour plus de détails."
         },
         "feedback_contact": {
             "q": "Comment signaler un problème ou demander une fonctionnalité ?",

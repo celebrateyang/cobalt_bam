@@ -1,44 +1,13 @@
-﻿<script lang="ts">
-    import { t } from "$lib/i18n/translations";
-    import { partners, contacts, docs } from "$lib/env";
+<script lang="ts">import { t } from "$lib/i18n/translations"; import SectionHeading from "$components/misc/SectionHeading.svelte";</script>
+<section id="summary"><SectionHeading title={$t("about.heading.summary")} sectionId="summary" />
 
-    import SectionHeading from "$components/misc/SectionHeading.svelte";
-</script>
-
-<section id="summary">
-<SectionHeading
-    title={$t("about.heading.summary")}
-    sectionId="summary"
-/>
-
-FreeSaveVideo hilft dir, öffentliche Inhalte von deinen Lieblingswebsites zu speichern: Videos, Audio, Fotos oder GIFs. Füge einfach den Link ein und starte direkt.
-
-Keine Werbung, keine Tracker, keine Paywalls. Nur eine praktische Web-App für Mobilgeräte und Desktop.
+FreeSaveVideo ist ein Web-Werkzeug zum Speichern öffentlicher Inhalte unterstützter Plattformen, darunter Videos, Audio, Bilder und GIFs. Es funktioniert im Browser auf Mobilgeräten und Computern. Die offizielle Website kann Werbung anzeigen und die in der Datenschutzerklärung beschriebenen Analysedienste einsetzen.
 </section>
+<section id="privacy"><SectionHeading title={$t("about.heading.privacy")} sectionId="privacy" />
 
-
-<section id="privacy">
-<SectionHeading
-    title={$t("about.heading.privacy")}
-    sectionId="privacy"
-/>
-
-Alle Anfragen an das Backend sind anonym, und Informationen zu Tunneln werden verschlüsselt.
-Wir haben eine strikte Zero-Log-Richtlinie und verfolgen keine einzelnen Personen.
-
-Wenn eine Anfrage zusätzliche Verarbeitung braucht, verarbeitet FreeSaveVideo Dateien direkt während der Übertragung. Verarbeitete Teile werden per Tunnel direkt an den Client gesendet und nicht auf die Festplatte geschrieben.
-
-Zusätzlich kannst du [erzwungenes Tunneling aktivieren](../../settings/privacy#tunnel), um deine Privatsphäre zu schützen.
+Downloadanfragen werden zur Analyse und Übertragung an den Server gesendet. Wenn eine Funktion eine Anmeldung erfordert, kann die Anfrage dem Konto zugeordnet werden. Anfrage- und Statusinformationen können für Sicherheit, Punkte, Überwachung und Fehlerbehebung protokolliert werden. Tunnelverschlüsselung macht Nutzer gegenüber dem Server nicht anonym. Einzelheiten stehen in der [Datenschutzerklärung](privacy).
 </section>
+<section id="local"><SectionHeading title={$t("about.heading.local")} sectionId="local" />
 
-
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
-
-Neue Funktionen wie [Remuxing](../../remux) laufen lokal auf deinem Gerät.
-Die Verarbeitung auf dem Gerät ist effizient und sendet keine lokalen Dateien über das Internet.
+Als lokal gekennzeichnete Werkzeuge wie [Remux](../../remux) verarbeiten die ausgewählte Datei im Browser, ohne sie zur Konvertierung auf den Server hochzuladen. Die Seite selbst kann weiterhin Verbindungen zu Hosting-, Authentifizierungs-, Analyse- oder Werbediensten herstellen.
 </section>
-

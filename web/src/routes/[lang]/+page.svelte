@@ -193,6 +193,58 @@
         return true;
     };
 
+    const additionalHomeCopy: Record<string, Record<string, string>> = {
+        es: {
+            overview: "Resumen de FreeSaveVideo", hub: "Descargadores y guías de vídeo populares", collapse: "Cerrar", open: "Abrir",
+            directory: "Directorio de descargadores", guideDirectory: "Guías de descarga", faqDirectory: "Preguntas frecuentes de descarga",
+            popular: "Descargadores populares", guides: "Guías de descarga", notes: "Plataformas compatibles y notas de uso", faq: "Preguntas frecuentes", viewAll: "Ver todo",
+            q1: "¿Cómo guardo vídeos de las plataformas compatibles?", a1: "Copia la URL del vídeo público, pégala en el campo, pulsa descargar en modo automático y elige uno de los resultados detectados.",
+            q2: "¿Admite varios enlaces o descargas de solo audio?", a2: "Puedes procesar varios enlaces y listas compatibles por lotes. Elige automático, solo audio o sin sonido antes de empezar y consulta el progreso en la cola.",
+            q3: "¿Funciona en móviles y permite guardar sin marca de agua?", a3: "Funciona en navegadores de móviles, tabletas y ordenadores. Las opciones HD o sin marca de agua solo aparecen cuando la plataforma de origen las ofrece.",
+        },
+        fr: {
+            overview: "Présentation de FreeSaveVideo", hub: "Téléchargeurs et guides vidéo populaires", collapse: "Fermer", open: "Ouvrir",
+            directory: "Répertoire des téléchargeurs vidéo", guideDirectory: "Guides de téléchargement vidéo", faqDirectory: "FAQ sur le téléchargement",
+            popular: "Téléchargeurs populaires", guides: "Guides de téléchargement", notes: "Plateformes prises en charge et conseils d'utilisation", faq: "FAQ sur le téléchargement", viewAll: "Tout afficher",
+            q1: "Comment enregistrer une vidéo d'une plateforme prise en charge ?", a1: "Copiez l'URL de la vidéo publique, collez-la dans le champ, lancez le téléchargement en mode automatique puis choisissez un résultat détecté.",
+            q2: "Plusieurs liens et l'audio seul sont-ils pris en charge ?", a2: "Vous pouvez traiter par lot plusieurs liens et playlists compatibles. Choisissez automatique, audio seul ou muet avant de commencer, puis suivez la progression dans la file.",
+            q3: "Le service fonctionne-t-il sur mobile et sans filigrane ?", a3: "Il fonctionne dans les navigateurs mobiles, tablettes et ordinateurs. Les options HD ou sans filigrane apparaissent uniquement lorsqu'elles sont proposées par la source.",
+        },
+        de: {
+            overview: "FreeSaveVideo im Überblick", hub: "Beliebte Video-Downloader und Anleitungen", collapse: "Schließen", open: "Öffnen",
+            directory: "Verzeichnis der Video-Downloader", guideDirectory: "Video-Download-Anleitungen", faqDirectory: "Häufige Downloadfragen",
+            popular: "Beliebte Downloader", guides: "Download-Anleitungen", notes: "Unterstützte Plattformen und Nutzungshinweise", faq: "Häufige Downloadfragen", viewAll: "Alle anzeigen",
+            q1: "Wie speichere ich Videos von unterstützten Plattformen?", a1: "Kopieren Sie die URL des öffentlichen Videos, fügen Sie sie ein, starten Sie den Download im Automatikmodus und wählen Sie ein erkanntes Ergebnis.",
+            q2: "Werden mehrere Links und reine Audiodownloads unterstützt?", a2: "Mehrere Links und unterstützte Playlists können als Batch verarbeitet werden. Wählen Sie vorher Automatik, nur Audio oder stumm und verfolgen Sie den Fortschritt in der Warteschlange.",
+            q3: "Funktioniert es mobil und ohne Wasserzeichen?", a3: "Es funktioniert in Browsern auf Smartphones, Tablets und Computern. HD- oder wasserzeichenfreie Optionen erscheinen nur, wenn die Quelle sie anbietet.",
+        },
+        vi: {
+            overview: "Tổng quan FreeSaveVideo", hub: "Công cụ và hướng dẫn tải video phổ biến", collapse: "Thu gọn", open: "Mở",
+            directory: "Danh mục công cụ tải video", guideDirectory: "Hướng dẫn tải video", faqDirectory: "Câu hỏi thường gặp về tải xuống",
+            popular: "Công cụ tải phổ biến", guides: "Hướng dẫn tải xuống", notes: "Nền tảng được hỗ trợ và lưu ý sử dụng", faq: "Câu hỏi thường gặp", viewAll: "Xem tất cả",
+            q1: "Làm cách nào để lưu video từ nền tảng được hỗ trợ?", a1: "Sao chép URL video công khai, dán vào ô, nhấn tải xuống ở chế độ tự động rồi chọn kết quả được phát hiện.",
+            q2: "Có hỗ trợ nhiều liên kết hoặc chỉ tải âm thanh không?", a2: "Bạn có thể xử lý hàng loạt nhiều liên kết và danh sách phát được hỗ trợ. Chọn tự động, chỉ âm thanh hoặc tắt tiếng trước khi bắt đầu và theo dõi tiến trình trong hàng đợi.",
+            q3: "Có dùng được trên di động và tải không logo không?", a3: "Có thể dùng trên trình duyệt điện thoại, máy tính bảng và máy tính. Tùy chọn HD hoặc không logo chỉ xuất hiện khi nguồn cung cấp.",
+        },
+        id: {
+            overview: "Ringkasan FreeSaveVideo", hub: "Pengunduh dan panduan video populer", collapse: "Tutup", open: "Buka",
+            directory: "Direktori pengunduh video", guideDirectory: "Panduan unduhan video", faqDirectory: "Tanya jawab unduhan video",
+            popular: "Pengunduh populer", guides: "Panduan unduhan", notes: "Platform yang didukung dan catatan penggunaan", faq: "Tanya jawab unduhan", viewAll: "Lihat semua",
+            q1: "Bagaimana cara menyimpan video dari platform yang didukung?", a1: "Salin URL video publik, tempel ke kolom, tekan unduh dalam mode otomatis, lalu pilih hasil yang terdeteksi.",
+            q2: "Apakah beberapa tautan atau unduhan audio saja didukung?", a2: "Beberapa tautan dan daftar putar yang didukung dapat diproses sebagai batch. Pilih otomatis, audio saja, atau tanpa suara sebelum mulai dan pantau kemajuan di antrean.",
+            q3: "Apakah bisa digunakan di ponsel dan tanpa tanda air?", a3: "Layanan bekerja di peramban ponsel, tablet, dan komputer. Opsi HD atau tanpa tanda air hanya muncul jika disediakan oleh sumber.",
+        },
+        ru: {
+            overview: "Обзор FreeSaveVideo", hub: "Популярные загрузчики видео и руководства", collapse: "Свернуть", open: "Открыть",
+            directory: "Каталог загрузчиков видео", guideDirectory: "Руководства по загрузке", faqDirectory: "Вопросы о загрузке видео",
+            popular: "Популярные загрузчики", guides: "Руководства по загрузке", notes: "Поддерживаемые платформы и примечания", faq: "Частые вопросы о загрузке", viewAll: "Показать все",
+            q1: "Как сохранить видео с поддерживаемой платформы?", a1: "Скопируйте URL публичного видео, вставьте его в поле, нажмите загрузку в автоматическом режиме и выберите найденный результат.",
+            q2: "Поддерживаются несколько ссылок и загрузка только аудио?", a2: "Несколько ссылок и поддерживаемые плейлисты можно обработать пакетно. До запуска выберите автоматический режим, только аудио или без звука и следите за очередью.",
+            q3: "Работает ли сервис на телефоне и без водяного знака?", a3: "Сервис работает в браузерах телефонов, планшетов и компьютеров. HD и варианты без водяного знака появляются только тогда, когда их предоставляет источник.",
+        },
+    };
+    const extraHomeText = (key: string, fallback: string) => additionalHomeCopy[currentLocale]?.[key] ?? fallback;
+
     const buildGuideLabel = (title: string) =>
         currentLocale === "zh"
             ? `${title}\u8BF4\u660E`
@@ -202,6 +254,12 @@
               ? `คู่มือ${title}`
             : currentLocale === "ko"
               ? `${title} 가이드`
+              : currentLocale === "es" ? `Guía de ${title}`
+              : currentLocale === "fr" ? `Guide ${title}`
+              : currentLocale === "de" ? `${title}-Anleitung`
+              : currentLocale === "vi" ? `Hướng dẫn ${title}`
+              : currentLocale === "id" ? `Panduan ${title}`
+              : currentLocale === "ru" ? `Руководство: ${title}`
               : `${title} guide`;
 
     const LOW_POINTS_THRESHOLD = 20;
@@ -379,7 +437,7 @@
                       ? "ภาพรวม FreeSaveVideo"
                     : currentLocale === "ko"
                       ? "FreeSaveVideo 개요"
-                      : "FreeSaveVideo overview",
+                      : extraHomeText("overview", "FreeSaveVideo overview"),
         },
     ];
     $: homeHubHeading =
@@ -391,7 +449,7 @@
               ? "เครื่องมือและคู่มือดาวน์โหลดวิดีโอยอดนิยม"
             : currentLocale === "ko"
               ? "인기 동영상 다운로더와 가이드"
-              : "Popular Video Downloader Links";
+              : extraHomeText("hub", "Popular Video Downloader Links");
     $: homeInternalLinks = currentLocale === "zh"
         ? getHubDownloadLinks(9, "all", currentLocale)
               .filter((item) => item.slug !== "naver-video-download")
@@ -422,6 +480,12 @@
               ? `ดาวน์โหลดวิดีโอ ${platform}`
             : currentLocale === "ko"
               ? `${platform} 동영상 다운로더`
+              : currentLocale === "es" ? `Descargador de vídeos de ${platform}`
+              : currentLocale === "fr" ? `Téléchargeur vidéo ${platform}`
+              : currentLocale === "de" ? `${platform}-Video-Downloader`
+              : currentLocale === "vi" ? `Tải video ${platform}`
+              : currentLocale === "id" ? `Pengunduh video ${platform}`
+              : currentLocale === "ru" ? `Загрузчик видео ${platform}`
               : `${platform} video downloader`;
     const homeGuideLabel = (platform: string) =>
         currentLocale === "zh"
@@ -432,6 +496,12 @@
               ? `วิธีดาวน์โหลดวิดีโอ ${platform}`
             : currentLocale === "ko"
               ? `${platform} 동영상 다운로드 방법`
+              : currentLocale === "es" ? `Cómo descargar vídeos de ${platform}`
+              : currentLocale === "fr" ? `Comment télécharger des vidéos ${platform}`
+              : currentLocale === "de" ? `${platform}-Videos herunterladen`
+              : currentLocale === "vi" ? `Cách tải video ${platform}`
+              : currentLocale === "id" ? `Cara mengunduh video ${platform}`
+              : currentLocale === "ru" ? `Как скачать видео ${platform}`
               : `How to download ${platform} videos`;
     $: faqItems = [
         {
@@ -444,7 +514,7 @@
                       ? "ดาวน์โหลดวิดีโอจากแพลตฟอร์มที่รองรับได้อย่างไร?"
                     : currentLocale === "ko"
                       ? "지원 플랫폼의 동영상을 어떻게 저장하나요?"
-                      : "How to download videos from Douyin, Bilibili, NicoNico, Amazon Live, Kuaishou or Xiaohongshu?",
+                      : extraHomeText("q1", "How to download videos from supported platforms?"),
             a:
                 currentLocale === "zh"
                     ? "\u590d\u5236\u89c6\u9891\u94fe\u63a5\uff0c\u7c98\u8d34\u5230\u8f93\u5165\u6846\uff0c\u4fdd\u6301\u81ea\u52a8\u6a21\u5f0f\uff0c\u70b9\u51fb\u4e0b\u8f7d\u5373\u53ef\u751f\u6210\u53ef\u7528\u7684\u4e0b\u8f7d\u7ed3\u679c\u3002"
@@ -454,7 +524,7 @@
                       ? "คัดลอก URL ของวิดีโอสาธารณะ วางลงในช่อง เลือกโหมดอัตโนมัติ แล้วกดดาวน์โหลด จากนั้นเลือกผลลัพธ์ที่ระบบตรวจพบ"
                     : currentLocale === "ko"
                       ? "공개 동영상 URL을 복사해 입력란에 붙여넣고 자동 모드에서 다운로드를 누른 뒤 감지된 결과를 선택하세요."
-                      : "Copy the video link, paste it into the box, keep ‘Auto’ mode and click download to get a clean link.",
+                      : extraHomeText("a1", "Copy the public video URL, paste it into the box, use Auto mode and choose a detected result."),
         },
         {
             q:
@@ -466,7 +536,7 @@
                       ? "ดาวน์โหลดหลายลิงก์หรือเลือกเฉพาะเสียงได้ไหม?"
                     : currentLocale === "ko"
                       ? "여러 링크나 오디오 전용 저장을 지원하나요?"
-                      : "Can I batch process or grab audio-only files?",
+                      : extraHomeText("q2", "Can I process several links or download audio only?"),
             a:
                 currentLocale === "zh"
                     ? "\u652f\u6301\u6279\u91cf\u89e3\u6790\u5165\u53e3\uff0c\u4e0b\u8f7d\u6a21\u5f0f\u53ef\u5728\u81ea\u52a8\u3001\u97f3\u9891\u548c\u9759\u97f3\u4e4b\u95f4\u5207\u6362\u3002\u957f\u89c6\u9891\u4f1a\u5c55\u793a\u8fdb\u5ea6\u548c\u901f\u5ea6\u3002"
@@ -476,7 +546,7 @@
                       ? "รองรับหลายลิงก์และเพลย์ลิสต์ที่ตรวจพบ คุณสามารถเลือกโหมดอัตโนมัติ เฉพาะเสียง หรือปิดเสียงก่อนเริ่มงาน และติดตามความคืบหน้าในคิว"
                     : currentLocale === "ko"
                       ? "여러 링크와 지원되는 재생목록을 일괄 처리할 수 있습니다. 시작 전에 자동, 오디오 전용 또는 음소거를 선택하고 대기열에서 진행 상황을 확인하세요."
-                      : "Batch mode is available and you can switch between auto, audio-only or muted downloads. Long videos show progress.",
+                      : extraHomeText("a2", "Batch mode supports multiple links and compatible playlists. Choose Auto, audio-only or mute before starting and follow the queue."),
         },
         {
             q:
@@ -488,7 +558,7 @@
                       ? "ใช้บนมือถือได้ไหม และผลลัพธ์ไม่มีลายน้ำหรือไม่?"
                     : currentLocale === "ko"
                       ? "모바일에서 사용할 수 있고 워터마크 없이 저장할 수 있나요?"
-                      : "Is it mobile-friendly and watermark-free?",
+                      : extraHomeText("q3", "Does it work on mobile and without a watermark?"),
             a:
                 currentLocale === "zh"
                     ? "\u5b8c\u5168\u7f51\u9875\u7248\uff0c\u624b\u673a\u3001\u5e73\u677f\u548c\u7535\u8111\u90fd\u53ef\u76f4\u63a5\u4f7f\u7528\uff1b\u65e0\u6c34\u5370\u8f93\u51fa\u4ee5\u5e73\u53f0\u53ef\u7528\u8d44\u6e90\u4e3a\u51c6\u3002"
@@ -498,7 +568,7 @@
                       ? "ใช้งานผ่านเบราว์เซอร์บนมือถือ แท็บเล็ต และคอมพิวเตอร์ได้ ตัวเลือก HD หรือไม่มีลายน้ำจะแสดงเฉพาะเมื่อแหล่งต้นทางมีให้"
                     : currentLocale === "ko"
                       ? "스마트폰, 태블릿, 컴퓨터 브라우저에서 사용할 수 있습니다. HD 또는 워터마크 없는 옵션은 원본 플랫폼이 제공할 때만 표시됩니다."
-                      : "It runs in the browser on mobile/desktop and returns watermark-free HD files.",
+                      : extraHomeText("a3", "It works in mobile and desktop browsers. HD or watermark-free options appear only when the source provides them."),
         },
     ];
     $: siteUrl = `https://${fallbackHost}`;
@@ -601,7 +671,7 @@
                   ? "ย่อ"
                 : currentLocale === "ko"
                   ? "접기"
-                  : "Collapse"
+                  : extraHomeText("collapse", "Collapse")
             : currentLocale === "zh"
               ? "\u5c55\u5f00"
               : currentLocale === "ja"
@@ -610,7 +680,7 @@
                 ? "เปิด"
               : currentLocale === "ko"
                 ? "펼치기"
-                : "Open";
+                : extraHomeText("open", "Open");
 
     const runOnIdle = (callback: () => void, timeout = 2500) => {
         if (!browser) return () => {};
@@ -802,18 +872,18 @@
         <section class="home-internal-hub" aria-label={homeHubHeading}>
             <div class="home-internal-primary-links">
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/download`}>
-                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : currentLocale === "ja" ? "動画ダウンロード一覧" : currentLocale === "th" ? "รายการเครื่องมือดาวน์โหลดวิดีโอ" : currentLocale === "ko" ? "동영상 다운로드 목록" : "Video download directory"}
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55" : currentLocale === "ja" ? "動画ダウンロード一覧" : currentLocale === "th" ? "รายการเครื่องมือดาวน์โหลดวิดีโอ" : currentLocale === "ko" ? "동영상 다운로드 목록" : extraHomeText("directory", "Video download directory")}
                 </a>
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/guide`}>
-                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : currentLocale === "ja" ? "動画ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลดวิดีโอ" : currentLocale === "ko" ? "동영상 다운로드 가이드" : "Video download guides"}
+                    {currentLocale === "zh" ? "\u89c6\u9891\u4e0b\u8f7d\u6307\u5357" : currentLocale === "ja" ? "動画ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลดวิดีโอ" : currentLocale === "ko" ? "동영상 다운로드 가이드" : extraHomeText("guideDirectory", "Video download guides")}
                 </a>
                 <a class="home-hub-link home-hub-link--primary" href={`/${currentLocale}/faq`}>
-                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "動画ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : currentLocale === "ko" ? "동영상 다운로드 FAQ" : "Video download FAQ"}
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "動画ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : currentLocale === "ko" ? "동영상 다운로드 FAQ" : extraHomeText("faqDirectory", "Video download FAQ")}
                 </a>
             </div>
             <div class="home-internal-link-groups">
                 <div class="home-internal-link-group">
-                    <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : currentLocale === "ja" ? "人気ダウンローダー" : currentLocale === "th" ? "เครื่องมือดาวน์โหลดยอดนิยม" : currentLocale === "ko" ? "인기 다운로더" : "Popular downloaders"}</h3>
+                    <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : currentLocale === "ja" ? "人気ダウンローダー" : currentLocale === "th" ? "เครื่องมือดาวน์โหลดยอดนิยม" : currentLocale === "ko" ? "인기 다운로더" : extraHomeText("popular", "Popular downloaders")}</h3>
                     <div class="home-internal-links">
                         {#each homeInternalLinks as item}
                             <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
@@ -823,7 +893,7 @@
                     </div>
                 </div>
                 <div class="home-internal-link-group">
-                    <h3>{currentLocale === "zh" ? "\u4e0b\u8f7d\u6559\u7a0b" : currentLocale === "ja" ? "ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลด" : currentLocale === "ko" ? "다운로드 가이드" : "Download guides"}</h3>
+                    <h3>{currentLocale === "zh" ? "\u4e0b\u8f7d\u6559\u7a0b" : currentLocale === "ja" ? "ダウンロードガイド" : currentLocale === "th" ? "คู่มือดาวน์โหลด" : currentLocale === "ko" ? "다운로드 가이드" : extraHomeText("guides", "Download guides")}</h3>
                     <div class="home-internal-links">
                         {#each homeGuideLinks as item}
                             <a class="home-hub-link" href={`/${currentLocale}/guide/${item.slug}`}>
@@ -860,7 +930,7 @@
     <details class="seo-disclosure home-deferred-disclosure" bind:open={homeDeferredOpen}>
         <summary>
             <h2>
-                {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : currentLocale === "ja" ? "対応プラットフォームと利用上の注意" : currentLocale === "th" ? "แพลตฟอร์มที่รองรับและข้อควรรู้" : currentLocale === "ko" ? "지원 플랫폼 및 이용 안내" : "Supported platforms and download notes"}
+                {currentLocale === "zh" ? "\u652f\u6301\u5e73\u53f0\u4e0e\u4e0b\u8f7d\u8bf4\u660e" : currentLocale === "ja" ? "対応プラットフォームと利用上の注意" : currentLocale === "th" ? "แพลตฟอร์มที่รองรับและข้อควรรู้" : currentLocale === "ko" ? "지원 플랫폼 및 이용 안내" : extraHomeText("notes", "Supported platforms and download notes")}
             </h2>
             <span class="seo-disclosure-hint">
                 {disclosureLabel(homeDeferredOpen)}
@@ -876,10 +946,10 @@
         <section class="home-faq" aria-labelledby="home-faq-title">
             <div class="home-faq-heading">
                 <h2 id="home-faq-title">
-                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : currentLocale === "ko" ? "다운로드 FAQ" : "Download FAQ"}
+                    {currentLocale === "zh" ? "\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898" : currentLocale === "ja" ? "ダウンロードのよくある質問" : currentLocale === "th" ? "คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลด" : currentLocale === "ko" ? "다운로드 FAQ" : extraHomeText("faq", "Download FAQ")}
                 </h2>
                 <a href={`/${currentLocale}/faq`}>
-                    {currentLocale === "zh" ? "\u67e5\u770b\u5168\u90e8" : currentLocale === "ja" ? "すべて見る" : currentLocale === "th" ? "ดูทั้งหมด" : currentLocale === "ko" ? "전체 보기" : "View all"}
+                    {currentLocale === "zh" ? "\u67e5\u770b\u5168\u90e8" : currentLocale === "ja" ? "すべて見る" : currentLocale === "th" ? "ดูทั้งหมด" : currentLocale === "ko" ? "전체 보기" : extraHomeText("viewAll", "View all")}
                 </a>
             </div>
             <div class="home-faq-list">

@@ -26,12 +26,9 @@
     "wechat.notice.copied_body": "En WeChat, toca el menú de la esquina superior derecha y elige \"Abrir en el navegador\", luego pega el enlace en Chrome o Edge.",
     "wechat.notice.copy_failed_title": "Error al copiar",
     "wechat.notice.copy_failed_body": "Copia manualmente la URL de esta página y ábrela en Chrome o Edge.",
-    "location.summary": "Where is my video saved?",
-    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
-    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
-    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
-    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
-    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
-    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "location.summary": "¿Dónde se guarda mi vídeo?", "location.default": "Si no elegiste una carpeta, consulta la lista de descargas del navegador o la carpeta Descargas del dispositivo.",
+    "location.desktop": "Ordenador: pulsa el icono de descargas del navegador o Ctrl+J y abre el archivo o su carpeta.", "location.ios": "iPhone/iPad: abre Archivos y revisa Descargas o la carpeta elegida en Safari.",
+    "location.android": "Android: revisa la notificación, Descargas de Chrome o Archivos > Descargas.", "location.wechat": "WeChat y otros navegadores integrados pueden bloquear descargas. Abre la página en Chrome o Safari si no encuentras el archivo.",
+    "location.after_click": "El navegador puede preguntar dónde guardar el archivo. Si elegiste una carpeta, revísala primero.", "location.batch_auto": "El guardado automático por lotes usa la carpeta elegida al iniciar el lote.",
+    "batch.detected": "{{ count }} enlaces detectados — modo por lotes", "batch.too_many": "demasiados enlaces: {{ count }} (máximo {{ max }})"
 }

@@ -26,12 +26,9 @@
     "wechat.notice.copied_body": "Dans WeChat, appuyez sur le menu en haut à droite puis choisissez « Ouvrir dans le navigateur », puis collez le lien dans Chrome ou Edge.",
     "wechat.notice.copy_failed_title": "Échec de la copie",
     "wechat.notice.copy_failed_body": "Copiez manuellement l’URL de cette page, puis ouvrez-la dans Chrome ou Edge.",
-    "location.summary": "Where is my video saved?",
-    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
-    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
-    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
-    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
-    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
-    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "location.summary": "Où ma vidéo est-elle enregistrée ?", "location.default": "Si vous n'avez pas choisi de dossier, consultez la liste des téléchargements du navigateur ou le dossier Téléchargements de l'appareil.",
+    "location.desktop": "Ordinateur : cliquez sur l'icône des téléchargements ou appuyez sur Ctrl+J, puis ouvrez le fichier ou son dossier.", "location.ios": "iPhone/iPad : ouvrez Fichiers et consultez Téléchargements ou le dossier choisi dans Safari.",
+    "location.android": "Android : consultez la notification, les téléchargements Chrome ou Fichiers > Téléchargements.", "location.wechat": "WeChat et les navigateurs intégrés peuvent bloquer les téléchargements. Ouvrez la page dans Chrome ou Safari si le fichier est introuvable.",
+    "location.after_click": "Le navigateur peut demander où enregistrer le fichier. Si vous avez choisi un dossier, vérifiez-le d'abord.", "location.batch_auto": "L'enregistrement automatique par lot utilise le dossier choisi au démarrage.",
+    "batch.detected": "{{ count }} liens détectés — mode par lot", "batch.too_many": "trop de liens : {{ count }} (maximum {{ max }})"
 }

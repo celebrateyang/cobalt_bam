@@ -1,76 +1,21 @@
-<script lang="ts">
-    import env from "$lib/env";
-    import { t } from "$lib/i18n/translations";
+<script lang="ts">import { t } from "$lib/i18n/translations"; import SectionHeading from "$components/misc/SectionHeading.svelte";</script>
+<section id="general"><SectionHeading title={$t("about.heading.general")} sectionId="general" />
 
-    import SectionHeading from "$components/misc/SectionHeading.svelte";
-</script>
-
-<section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
-
-la politique de confidentialité de FreeSaveVideo est simple : nous ne collectons ni ne stockons rien à votre sujet. ce que vous faites relève uniquement de votre responsabilité, pas de la nôtre ni de celle de quiconque.
-
-ces conditions ne sont applicables que lors de l'utilisation de l'instance officielle FreeSaveVideo. dans d'autres cas, vous devrez peut-être contacter l'hébergeur pour obtenir des informations précises.
+Cette politique s'applique au site officiel FreeSaveVideo. Nous traitons les données nécessaires à la fourniture du service, aux comptes et points, à la sécurité, à la prévention des abus, à la supervision et au dépannage.
 </section>
+<section id="saving"><SectionHeading title={$t("about.heading.saving")} sectionId="saving" />
 
-<section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
+Nous pouvons enregistrer l'identifiant et l'heure de la requête, le compte ou l'adresse e-mail, la plateforme, l'état du traitement et les erreurs. Ces informations servent à la supervision, aux points, à la prévention des abus et à l'assistance. Les enregistrements actuels des tentatives de téléchargement sont supprimés par défaut après deux jours. Les données de compte, de paiement, d'accès et de fonctions enregistrées par l'utilisateur peuvent être conservées plus longtemps lorsque le service ou la loi l'exige.
 
-les outils qui utilisent le traitement sur l'appareil fonctionnent hors ligne, localement, et n'envoient jamais de données nulle part. ils sont explicitement marqués comme tels lorsque cela est applicable.
+Les données multimédias nécessitant un tunnel sont traitées temporairement pendant le transfert et ne constituent pas un stockage multimédia permanent.
 </section>
+<section id="encryption"><SectionHeading title={$t("about.heading.encryption")} sectionId="encryption" />
 
-<section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
-
-lors de l'utilisation de la fonctionnalité d'enregistrement, dans certains cas, FreeSaveVideo chiffrera et stockera temporairement les informations nécessaires à la tunnelisation. elles sont stockées dans la RAM du serveur de traitement pendant 90 secondes et purgées irréversiblement par la suite. personne n'y a accès, même les propriétaires d'instance, tant qu'ils ne modifient pas l'image officielle FreeSaveVideo.
-
-les fichiers traités/tunnelisés ne sont jamais mis en cache nulle part. tout est tunnelisé en direct. la fonctionnalité d'enregistrement de FreeSaveVideo est essentiellement un service proxy sophistiqué.
+Les données temporaires du tunnel sont protégées par AES-256 et chaque tunnel utilise une clé unique. Toute personne recevant le lien du tunnel peut accéder au fichier ; ne le publiez pas et ne le partagez pas avec une personne non fiable.
 </section>
+<section id="third-party"><SectionHeading title="Analyse, publicité et prestataires" sectionId="third-party" />
 
-<section id="encryption">
-<SectionHeading
-    title={$t("about.heading.encryption")}
-    sectionId="encryption"
-/>
+Selon la configuration, le site peut utiliser Plausible, Microsoft Clarity, Meta Pixel, Google Analytics ou Google AdSense. Ces prestataires peuvent traiter une localisation IP approximative, des informations sur l'appareil et le navigateur, les pages visitées, des cookies ou des identifiants publicitaires. L'analyse des pages n'envoie pas intentionnellement le contenu de la demande de téléchargement comme événement analytique.
 
-les données de tunnel temporairement stockées sont chiffrées à l'aide de la norme AES-256. les clés de déchiffrement ne sont incluses que dans le lien d'accès et ne sont jamais enregistrées/mises en cache/stockées nulle part. seul l'utilisateur final a accès au lien et aux clés de chiffrement. les clés sont générées de manière unique pour chaque tunnel demandé.
-</section>
-
-{#if env.PLAUSIBLE_ENABLED}
-<section id="plausible">
-<SectionHeading
-    title={$t("about.heading.plausible")}
-    sectionId="plausible"
-/>
-
-par souci de confidentialité, nous utilisons [les analyses de trafic anonymes de plausible](https://plausible.io/) pour obtenir un nombre approximatif d'utilisateurs actifs de FreeSaveVideo. aucune information identifiable sur vous ou vos demandes n'est jamais stockée. toutes les données sont anonymisées et agrégées. l'instance plausible que nous utilisons est hébergée et gérée par nous.
-
-plausible n'utilise pas de cookies et est entièrement conforme au RGPD, CCPA et PECR.
-
-[en savoir plus sur l'engagement de plausible envers la confidentialité.](https://plausible.io/privacy-focused-web-analytics)
-
-si vous souhaitez vous désinscrire des analyses anonymes, vous pouvez le faire dans <a href="../settings/privacy#analytics">les paramètres de confidentialité</a>.
-</section>
-{/if}
-
-<section id="cloudflare">
-<SectionHeading
-    title={$t("about.heading.cloudflare")}
-    sectionId="cloudflare"
-/>
-
-nous utilisons les services cloudflare pour la protection DDoS et anti-robots. nous utilisons également cloudflare pages pour déployer et héberger l'application web statique. tout cela est nécessaire pour offrir la meilleure expérience à tous. c'est le fournisseur le plus privé et fiable que nous connaissions.
-
-cloudflare est entièrement conforme au RGPD et HIPAA.
-
-[en savoir plus sur l'engagement de cloudflare envers la confidentialité.](https://www.cloudflare.com/trust-hub/privacy-and-data-protection/)
+Clerk peut gérer la connexion. Les prestataires de paiement traitent les données de paiement ; FreeSaveVideo peut conserver les commandes, états de transaction et droits d'accès, mais ne stocke pas directement le numéro complet de la carte. Cloudflare fournit l'hébergement, la distribution et la sécurité et peut traiter des données de connexion et de sécurité.
 </section>

@@ -1,56 +1,17 @@
-<script lang="ts">
-    import { t } from "$lib/i18n/translations";
-    import SectionHeading from "$components/misc/SectionHeading.svelte";
-</script>
+<script lang="ts">import { t } from "$lib/i18n/translations"; import SectionHeading from "$components/misc/SectionHeading.svelte";</script>
+<section id="general"><SectionHeading title={$t("about.heading.general")} sectionId="general" />
 
-<section id="general">
-<SectionHeading
-    title={$t("about.heading.general")}
-    sectionId="general"
-/>
-
-các điều khoản này chỉ áp dụng khi sử dụng phiên bản FreeSaveVideo chính thức.
-trong các trường hợp khác, bạn có thể cần liên hệ với người lưu trữ để biết thông tin chính xác.
+Các điều khoản này áp dụng cho trang FreeSaveVideo chính thức. Công cụ giúp lưu nội dung công khai từ nền tảng được hỗ trợ khi người dùng có quyền làm vậy. Không được dùng công cụ để vượt qua kiểm soát truy cập đối với nội dung riêng tư, trả phí, chỉ dành cho thành viên hoặc được bảo vệ bằng DRM.
 </section>
+<section id="saving"><SectionHeading title={$t("about.heading.saving")} sectionId="saving" />
 
-<section id="saving">
-<SectionHeading
-    title={$t("about.heading.saving")}
-    sectionId="saving"
-/>
-
-chức năng lưu đơn giản hóa việc tải xuống nội dung từ internet và không chịu trách nhiệm cho việc nội dung đã lưu được sử dụng như thế nào.
-các máy chủ xử lý hoạt động như proxy nâng cao và không bao giờ ghi bất kỳ nội dung nào vào đĩa.
-mọi thứ được xử lý trong RAM và xóa vĩnh viễn sau khi đường hầm hoàn tất.
-chúng tôi không có log tải xuống và không thể xác định bất kỳ ai.
-
-[bạn có thể đọc thêm về cách đường hầm hoạt động trong chính sách bảo mật của chúng tôi.](privacy)
+Máy chủ phân tích các trang công khai được hỗ trợ và khi cần sẽ ghép hoặc chuyển luồng media đến trình duyệt. Thông tin yêu cầu, tài khoản và trạng thái được xử lý theo [Chính sách quyền riêng tư](privacy).
 </section>
+<section id="responsibility"><SectionHeading title={$t("about.heading.responsibility")} sectionId="responsibility" />
 
-<section id="responsibility">
-<SectionHeading
-    title={$t("about.heading.responsibility")}
-    sectionId="responsibility"
-/>
-
-bạn (người dùng cuối) chịu trách nhiệm cho những gì bạn làm với các công cụ của chúng tôi, cách bạn sử dụng và phân phối nội dung kết quả.
-vui lòng lưu ý khi sử dụng nội dung của người khác và luôn ghi công các nhà sáng tạo gốc.
-đảm bảo bạn không vi phạm bất kỳ điều khoản hoặc giấy phép nào.
-
-khi được sử dụng cho mục đích giáo dục, luôn trích dẫn nguồn và ghi công các nhà sáng tạo gốc.
-
-sử dụng hợp lý và ghi công mang lại lợi ích cho tất cả mọi người.
+Người dùng chịu trách nhiệm về nội dung gửi lên, tệp đã tải và việc sử dụng hoặc phân phối chúng. Chỉ dùng nội dung công khai thuộc sở hữu của bạn, được phép lưu hoặc pháp luật cho phép lưu. Hãy tuân thủ điều khoản của nền tảng nguồn và quyền của bên thứ ba.
 </section>
+<section id="abuse"><SectionHeading title={$t("about.heading.abuse")} sectionId="abuse" />
 
-<section id="abuse">
-<SectionHeading
-    title={$t("about.heading.abuse")}
-    sectionId="abuse"
-/>
-
-chúng tôi không có cách nào để phát hiện hành vi lạm dụng tự động, vì FreeSaveVideo hoàn toàn ẩn danh.
-
-
-vui lòng lưu ý rằng email này không dành cho hỗ trợ người dùng.
-nếu bạn gặp vấn đề, hãy liên hệ với chúng tôi qua bất kỳ phương thức ưa thích nào trên [trang hỗ trợ](community).
+Chúng tôi có thể hạn chế hoặc đình chỉ yêu cầu, tài khoản hoặc nguồn cụ thể khi phát hiện lạm dụng, yêu cầu tự động quá mức, hành vi vượt kiểm soát truy cập hoặc báo cáo vi phạm hợp lệ. Hãy dùng [trang liên hệ](contact) để được hỗ trợ.
 </section>

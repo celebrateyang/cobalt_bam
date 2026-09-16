@@ -1,44 +1,24 @@
-﻿<script lang="ts">
+<script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import { partners, contacts, docs } from "$lib/env";
-
     import SectionHeading from "$components/misc/SectionHeading.svelte";
 </script>
 
 <section id="summary">
-<SectionHeading
-    title={$t("about.heading.summary")}
-    sectionId="summary"
-/>
+<SectionHeading title={$t("about.heading.summary")} sectionId="summary" />
 
-FreeSaveVideo te ayuda a guardar contenido público de tus sitios favoritos: videos, audio, fotos o GIFs. Pega el enlace y empieza al instante.
-
-Sin anuncios, rastreadores ni muros de pago. Solo una app web práctica para móvil y escritorio.
+FreeSaveVideo es una herramienta web para guardar contenido público de plataformas compatibles, como vídeos, audio, imágenes y GIF. Funciona desde el navegador de móviles y ordenadores. El sitio oficial puede mostrar publicidad y utilizar los servicios de análisis descritos en la Política de privacidad.
 </section>
-
 
 <section id="privacy">
-<SectionHeading
-    title={$t("about.heading.privacy")}
-    sectionId="privacy"
-/>
+<SectionHeading title={$t("about.heading.privacy")} sectionId="privacy" />
 
-Todas las solicitudes al backend son anónimas y la información sobre los túneles está cifrada.
-Tenemos una política estricta de cero registros y no rastreamos a personas individuales.
+Las solicitudes de descarga se envían al servidor para su análisis y entrega. Cuando una función requiere iniciar sesión, la solicitud puede asociarse a la cuenta. Se puede registrar información de la solicitud y del estado del procesamiento para seguridad, puntos, supervisión y resolución de problemas.
 
-Cuando una solicitud necesita procesamiento adicional, FreeSaveVideo procesa los archivos sobre la marcha. Las partes procesadas se envían directamente al cliente por un túnel y nunca se guardan en disco.
-
-También puedes [activar el túnel forzado](../../settings/privacy#tunnel) para proteger tu privacidad.
+El cifrado y las claves únicas de los túneles reducen el riesgo de adivinar o alterar el enlace, pero no hacen que el usuario sea anónimo frente al servidor. Consulta la [Política de privacidad](privacy) para conocer los plazos de conservación y los terceros utilizados.
 </section>
-
 
 <section id="local">
-<SectionHeading
-    title={$t("about.heading.local")}
-    sectionId="local"
-/>
+<SectionHeading title={$t("about.heading.local")} sectionId="local" />
 
-Las funciones nuevas, como [remuxing](../../remux), funcionan localmente en tu dispositivo.
-El procesamiento en el dispositivo es eficiente y no envía archivos locales por internet.
+Las herramientas marcadas como procesamiento local, como [remux](../../remux), procesan el archivo elegido en el navegador sin subirlo al servidor para convertirlo. La propia página aún puede conectarse a servicios de alojamiento, autenticación, análisis o publicidad.
 </section>
-

@@ -30,7 +30,7 @@
     "items": {
         "what_is": {
             "q": "Apa itu FreeSaveVideo?",
-            "a": "FreeSaveVideo adalah pengunduh media online.\nTempel tautan berbagi, pilih mode, dan unduh.\nMendukung Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, dan banyak lagi."
+            "a": "FreeSaveVideo adalah alat daring untuk menyimpan video, audio, gambar, dan GIF publik dari platform yang didukung.\nTempel tautan konten publik, pilih mode, lalu unduh berkas.\nMendukung YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), Facebook, dan platform lainnya."
         },
         "how_to_use": {
             "q": "Bagaimana cara mengunduh video (bebas tanda air)?",
@@ -38,11 +38,11 @@
         },
         "supported_platforms": {
             "q": "Platform dan jenis tautan apa yang didukung?",
-            "a": "100+ layanan didukung, termasuk Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Amazon Live, NAVER, Xiaohongshu, Instagram, X(Twitter), Facebook, dan banyak lagi.\nKualitas, audio, dan file tambahan bergantung pada platform dan sumber postingan. Ini juga mendukung video Saluran WeChat publik dan unduhan multi-video yang dapat dipilih dari artikel Akun Resmi WeChat."
+            "a": "Platform yang ditampilkan dalam daftar layanan didukung, termasuk YouTube, Douyin/TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Amazon Live, NAVER, Weibo, Xiaohongshu, Instagram, Threads, X(Twitter), dan Facebook. Analisis juga memakai teknologi berbasis yt-dlp yang mampu menangani lebih dari 100 layanan.\nKualitas, audio, dan berkas tambahan bergantung pada platform serta konten publik sumber. Video WeChat Channels publik dan pemilihan beberapa video dari artikel publik Akun Resmi WeChat juga didukung."
         },
         "youtube_supported": {
             "q": "Apakah ini mendukung pengunduhan YouTube?",
-            "a": "Ya. Pengunduhan YouTube kini didukung secara langsung. Cukup tempel tautan YouTube dan unduh secara normal tanpa skrip atau plugin browser. Jika tautan tertentu gagal, coba lagi nanti atau kirim masukan."
+            "a": "Ya. Video YouTube publik individual, Shorts, dan daftar putar publik didukung. Tempel URL video atau daftar putar ke kolom di halaman utama.\nHalaman kanal, konten pribadi, khusus anggota, berbayar atau ber-DRM, serta konten yang memerlukan verifikasi usia atau login tidak didukung."
         },
         "mobile_ios": {
             "q": "Apakah ini berfungsi di seluler? Bagaimana cara menyimpan di iOS?",
@@ -82,7 +82,7 @@
         },
         "need_login": {
             "q": "Mengapa terkadang saya diminta untuk masuk?",
-            "a": "Pengunduhan dasar biasanya tidak memerlukan akun.\nUntuk mengurangi penyalahgunaan dan spam, fitur seperti laporan masalah, tugas batch, atau penagihan poin mungkin memerlukan login."
+            "a": "Situs resmi mewajibkan login sebelum mengunduh. Login digunakan untuk mencegah penyalahgunaan, mengendalikan akses, serta mengelola tugas batch dan poin."
         },
         "points_how": {
             "q": "Apa itu poin dan bagaimana cara penagihannya?",
@@ -105,8 +105,8 @@
             "a": "Tidak. FreeSaveVideo hanya menangani konten yang dapat diakses publik.\nHarap hormati hak cipta dan hak pencipta."
         },
         "privacy_logs": {
-            "q": "Apakah Anda menyimpan tautan atau file saya? Apakah aman?",
-            "a": "Kami tidak pernah meminta kata sandi platform Anda.\nTautan dan data media digunakan sementara selama pemrosesan. Penerapan yang berbeda mungkin menyimpan log akses minimal untuk pencegahan penyalahgunaan dan proses debug.\nSitus ini mungkin menjalankan analisis/iklan pihak ketiga untuk pengoperasian dan peningkatan."
+            "q": "Bagaimana situs menangani data pribadi?",
+            "a": "Kami tidak meminta kata sandi platform sumber. Untuk mengoperasikan layanan, sistem dapat mencatat ID dan waktu permintaan, akun atau email, platform, status pemrosesan, dan kesalahan. Data ini digunakan untuk pemantauan, pengelolaan poin, pencegahan penyalahgunaan, dan pemecahan masalah. Catatan percobaan unduhan saat ini dibersihkan secara bawaan setelah dua hari; data akun, pembayaran, akses, dan fitur yang disimpan pengguna dapat disimpan lebih lama.\nSitus dapat menggunakan layanan analitik dan periklanan. Lihat Kebijakan Privasi untuk detailnya."
         },
         "feedback_contact": {
             "q": "Bagaimana cara melaporkan masalah atau meminta fitur baru?",

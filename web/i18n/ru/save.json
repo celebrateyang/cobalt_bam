@@ -18,12 +18,12 @@
     "wechat.notice.copied_body": "В WeChat нажмите меню в правом верхнем углу и выберите «Открыть в браузере», затем вставьте ссылку в Chrome или Edge.",
     "wechat.notice.copy_failed_title": "Не удалось скопировать",
     "wechat.notice.copy_failed_body": "Скопируйте URL этой страницы вручную и откройте его в Chrome или Edge.",
-    "location.summary": "Where is my video saved?",
-    "location.default": "If you did not choose a folder, check the browser downloads list or your device Downloads folder.",
-    "location.desktop": "Desktop: click the browser download icon or press Ctrl+J, then open the file or its folder.",
-    "location.ios": "iPhone/iPad: open the Files app and check Downloads, or the folder Safari asked you to choose.",
-    "location.android": "Android: check the download notification, Chrome Downloads, or Files > Downloads.",
-    "location.wechat": "In WeChat or in-app browsers, downloads may be blocked. Open this page in Chrome or Safari if you cannot find the file.",
-    "location.after_click": "After you click Download, the browser may ask where to save it. If you choose a folder, look there first.",
-    "location.batch_auto": "For batch auto-save, videos are saved to the folder you selected when starting the batch."
+    "tutorial.title": "Как сохранить на iOS?", "tutorial.intro": "Для удобного сохранения медиа на iOS используйте сопутствующую команду Siri в меню «Поделиться».",
+    "tutorial.step.1": "Добавьте сопутствующие команды Siri:", "tutorial.step.2": "Нажмите кнопку «Поделиться» в окне сохранения FreeSaveVideo.", "tutorial.step.3": "Выберите нужную команду в меню «Поделиться».",
+    "tutorial.outro": "Эти команды работают только из приложения FreeSaveVideo; ссылки из других приложений не поддерживаются.", "tutorial.shortcut.photos": "В Фото", "tutorial.shortcut.files": "В Файлы",
+    "location.summary": "Где сохранено видео?", "location.default": "Если папка не выбрана, проверьте список загрузок браузера или папку Загрузки на устройстве.",
+    "location.desktop": "Компьютер: нажмите значок загрузок или Ctrl+J, затем откройте файл или его папку.", "location.ios": "iPhone/iPad: откройте приложение Файлы и проверьте Загрузки либо папку, выбранную в Safari.",
+    "location.android": "Android: проверьте уведомление, загрузки Chrome или Файлы > Загрузки.", "location.wechat": "WeChat и встроенные браузеры могут блокировать загрузки. Если файл не найден, откройте страницу в Chrome или Safari.",
+    "location.after_click": "Браузер может спросить место сохранения. Сначала проверьте выбранную папку.", "location.batch_auto": "Автосохранение пакета использует папку, выбранную при запуске.",
+    "batch.detected": "обнаружено ссылок: {{ count }} — пакетный режим", "batch.too_many": "слишком много ссылок: {{ count }} (максимум {{ max }})"
 }

@@ -1,7 +1,7 @@
 {
     "platforms": {
         "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",
-        "description": "Ho tro hon 100 trang pho bien, gom TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER, Xiaohongshu, YouTube, Instagram, Threads, Twitter, Facebook va nhieu nen tang khac. Phan tich va tai file HD truc tiep tren dien thoai va PC.",
+        "description": "Hỗ trợ nội dung công khai từ các nền tảng hiển thị trong danh sách dịch vụ, gồm YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) và Facebook. Kiểm tra rồi lưu định dạng có sẵn trên điện thoại hoặc máy tính.",
         "douyin": {
             "name": "Trình tải xuống TikTok/Douyin",
             "desc": "Hỗ trợ các phiên bản TikTok/Douyin trong nước và quốc tế. Xóa hình mờ bằng một cú nhấp chuột, giữ nguyên âm thanh và video HD."
@@ -48,11 +48,11 @@
         },
         "youtube": {
             "name": "Trình tải xuống video YouTube",
-            "desc": "Vui lòng xem video hướng dẫn: cách sử dụng Tampermonkey để tải video YouTube."
+            "desc": "Dán liên kết video công khai, Shorts hoặc danh sách phát công khai trên YouTube và lưu định dạng video hay âm thanh mà nguồn cung cấp."
         },
         "facebook": {
             "name": "Trình tải xuống video Facebook",
-            "desc": "Phân tích cả liên kết chia sẻ công khai và riêng tư. Có nhiều độ phân giải."
+            "desc": "Phân tích video và Reels Facebook công khai, đồng thời hiển thị độ phân giải mà nguồn cung cấp. Không hỗ trợ nội dung riêng tư hoặc yêu cầu đăng nhập."
         },
         "twitter": {
             "name": "Lưu video X (Twitter)",
@@ -106,8 +106,8 @@
     },
     "capabilities": {
         "supported": {
-            "title": "100+ trang duoc ho tro",
-            "desc": "Hoat dong tren cac nen tang video pho bien ca tren di dong va may tinh."
+            "title": "Nền tảng được hỗ trợ",
+            "desc": "Xử lý nội dung công khai từ các nền tảng chính trong danh sách dịch vụ. Hệ thống cũng dùng công nghệ dựa trên yt-dlp để phân tích; định dạng và chất lượng phụ thuộc nội dung nguồn."
         },
         "collection": {
             "title": "Tai bo suu tap / playlist",
@@ -127,8 +127,10 @@
         },
         "aria": "Download capabilities"
     },
+    "feedback": { "desc": "Báo cáo lỗi tải xuống và góp ý." },
+    "points_balloon": { "aria": "Nhắc nhở sắp hết điểm", "title": "Điểm sắp hết", "text": "Xem cách nhận thêm điểm.", "cta": "Đến tài khoản", "points_label": "điểm", "close": "đóng" },
     "extension": {
-        "badge": "Miễn phí ? Chrome",
+        "badge": "Miễn phí · Chrome",
         "title": "Tải trực tiếp từ mọi trang web",
         "description": "Tìm thấy video hoặc hình ảnh trên trang như Taobao? Dùng tiện ích để phát hiện và tải xuống chỉ với một nhấp chuột.",
         "install": "Cài tiện ích Chrome",

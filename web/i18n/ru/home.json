@@ -31,12 +31,12 @@
             "desc": "Скачивайте публичные видео Sohu Video в MP4, включая режимы только аудио и без звука."
         },
         "weibo": {
-            "name": "Weibo Video Downloader",
-            "desc": "Copy the Weibo video address or t.cn short link to extract available MP4 quality options."
+            "name": "Weibo Загрузчик видео",
+            "desc": "Скопируйте адрес видео Weibo или короткую ссылку t.cn, чтобы извлечь доступные параметры качества MP4."
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Amazon Live Загрузчик",
+            "desc": "Сохраняйте общедоступные видеоповторы Amazon Live по ссылкам amazon.com/live/video или amazon.com/vdp с доступными параметрами качества HLS."
         },
         "xiaohongshu": {
             "name": "Сохранить видео из Xiaohongshu",
@@ -59,16 +59,16 @@
             "desc": "Скопируйте ссылку на твит, чтобы извлечь оригинальное видео с сохранением качества."
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "NAVER Загрузчик видео",
+            "desc": "Сохраняйте общедоступные видео NAVER по ссылкам naver.me и m.naver.com/shorts."
         },
         "niconico": {
-            "name": "NicoNico Video Downloader",
-            "desc": "Save public NicoNico watch and shorts videos with available quality options."
+            "name": "NicoNico Загрузчик видео",
+            "desc": "Сохраняйте общедоступные обычные и короткие видео NicoNico с доступными вариантами качества."
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "Загрузчик видео тем",
+            "desc": "Вставьте ссылку на публикацию общедоступных тем, чтобы напрямую сохранить доступные видео или фотографии."
         }
     },
     "cards": {
@@ -125,10 +125,19 @@
             "title": "Только аудио и беззвучный режим",
             "desc": "Перед загрузкой можно переключаться между авто, только аудио и беззвучным режимом."
         },
-        "aria": "Download capabilities"
+        "aria": "Возможности загрузки"
     },
-    "feedback": { "desc": "Сообщайте о проблемах загрузки и присылайте предложения." },
-    "points_balloon": { "aria": "Напоминание о баллах", "title": "Баллы заканчиваются", "text": "Узнайте, как получить больше баллов.", "cta": "Перейти в аккаунт", "points_label": "баллы", "close": "закрыть" },
+    "feedback": {
+        "desc": "Сообщайте о проблемах загрузки и присылайте предложения."
+    },
+    "points_balloon": {
+        "aria": "Напоминание о баллах",
+        "title": "Баллы заканчиваются",
+        "text": "Узнайте, как получить больше баллов.",
+        "cta": "Перейти в аккаунт",
+        "points_label": "баллы",
+        "close": "закрыть"
+    },
     "extension": {
         "badge": "Бесплатно · Chrome",
         "title": "Скачивайте прямо с любой веб-страницы",

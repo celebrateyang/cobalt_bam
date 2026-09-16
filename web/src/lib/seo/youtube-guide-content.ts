@@ -8,6 +8,7 @@ type GuideContent = Partial<SeoLandingLocaleContent> & {
 
 export function getYoutubeGuideContent(slug: string, lang: string): GuideContent | null {
     if (!['youtube-download-guide', 'youtube-shorts-download-guide'].includes(slug)) return null;
+    if (!['en', 'ja', 'zh'].includes(lang)) return null;
     if (lang !== 'en' && lang !== 'zh' && lang !== 'ja') return null;
     const shorts = slug === 'youtube-shorts-download-guide';
     if (lang === 'ja') return {

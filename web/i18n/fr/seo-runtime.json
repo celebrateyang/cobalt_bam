@@ -1,476 +1,576 @@
 {
-  "updatedAt": "2026-08-17",
-  "productFaqs": [
-    {
-      "q": "Which links work best?",
-      "a": "Use a specific public video URL, post URL, Shorts URL, or supported playlist/collection URL. Profile pages, channel homepages, search pages, private links, and membership-only content are not reliable download targets."
+    "updatedAt": "2026-08-17",
+    "productFaqs": [
+        {
+            "q": "Quels liens fonctionnent le mieux ?",
+            "a": "Utilisez une URL de vidéo publique spécifique, une URL de publication, une URL de short ou une URL de playlist/collection prise en charge. Les pages de profil, les pages d'accueil des chaînes, les pages de recherche, les liens privés et le contenu réservé aux membres ne sont pas des cibles de téléchargement fiables."
+        },
+        {
+            "q": "FreeSaveVideo prend-il en charge les listes de lecture et les téléchargements par lots ?",
+            "a": "Oui. Les flux de travail de liste de lecture, de collection et multi-liens pris en charge peuvent être transformés en tâches par lots afin que les utilisateurs puissent consulter et enregistrer plusieurs vidéos publiques à partir d'une seule page."
+        },
+        {
+            "q": "Où sont enregistrés les fichiers téléchargés ?",
+            "a": "Les téléchargements directs sont enregistrés dans le dossier de téléchargement par défaut du navigateur. Les téléchargements en file d'attente se terminent d'abord dans FreeSaveVideo, puis l'utilisateur clique sur Enregistrer pour stocker le fichier localement."
+        },
+        {
+            "q": "FreeSaveVideo est-il uniquement un téléchargeur ?",
+            "a": "Non. Il comprend également des outils de navigation tels que MP4 vers MP3, l'extraction audio, la conversion vidéo, l'enregistrement sur tableau blanc, le transfert de fichiers entre appareils, Discover et le chat vidéo aléatoire 1v1."
+        }
+    ],
+    "productTips": [
+        "Pour de meilleurs résultats, collez une vidéo publique spécifique, une publication, un short, une playlist ou une URL de collection plutôt qu'une page d'accueil de profil ou de chaîne.",
+        "Utilisez le mode batch pour plusieurs liens et résultats de playlist ; les tâches de file d'attente peuvent réessayer et continuer après des interruptions.",
+        "Définissez les options de qualité, de format, d'audio uniquement ou de sourdine avant d'analyser lorsque vous avez besoin d'une sortie spécifique.",
+        "Utilisez les pages de téléchargement spécifiques à la plate-forme lorsqu'elles sont disponibles, car elles expliquent le type de lien exact qui fonctionne le mieux."
+    ],
+    "productAdvantages": [
+        "Limite claire du contenu public : FreeSaveVideo est destiné aux liens accessibles au public, et non aux médias privés ou payants.",
+        "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
+        "Les workflows de lots, de listes de lecture, de collections, d'audio, de mise en sourdine et de file d'attente sont intégrés à l'expérience du navigateur.",
+        "Les outils locaux soucieux de la confidentialité traitent les fichiers utilisateur dans le navigateur lorsque cela est possible au lieu de nécessiter un téléchargement."
+    ],
+    "releaseNotes": [
+        "03/09/2026 : ajout de l’extraction des vidéos iQIYI publiques et gratuites, de l’exclusion des publicités du lecteur et de la livraison MP4 remuxée sur le serveur.",
+        "17/08/2026 : mise à jour de la détection des collections publiques et des contenus en plusieurs parties, ainsi que des instructions pour les tâches par lots.",
+        "17/08/2026 : Ajout des types de liens pris en charge pour les vidéos publiques, les listes de lecture, les collections et les téléchargements par lots.",
+        "17/08/2026 : Clarification des limites du contenu public, de la confidentialité et des flux de travail de sauvegarde du navigateur."
+    ],
+    "freeTools": [
+        {
+            "title": "Chat vidéo aléatoire",
+            "desc": "Aucun point requis",
+            "path": "random-chat"
+        },
+        {
+            "title": "Conversion de format vidéo",
+            "desc": "Aucun point requis",
+            "path": "remux"
+        },
+        {
+            "title": "Exploration de contenu",
+            "desc": "Aucun point requis",
+            "path": "discover"
+        },
+        {
+            "title": "Enregistrement sur tableau blanc",
+            "desc": "Aucun point requis",
+            "path": "videorecord"
+        },
+        {
+            "title": "Transfert de fichiers",
+            "desc": "Aucun point requis",
+            "path": "clipboard"
+        }
+    ],
+    "platformFaqs": {
+        "tiktok": [
+            {
+                "q": "Que dois-je faire si une URL TikTok échoue ?",
+                "a": "Utilisez une URL de partage de publication (et non une URL de profil), réessayez, puis changez de réseau si nécessaire."
+            },
+            {
+                "q": "Pourquoi la qualité de TikTok est-elle inférieure aux attentes ?",
+                "a": "Ajustez les paramètres de qualité et analysez à nouveau. Les options finales dépendent du média source."
+            },
+            {
+                "q": "Pourquoi un lien de diaporama TikTok ne renvoie-t-il pas de média ?",
+                "a": "Certaines publications de diaporamas et ressources musicales protégées exposent des médias téléchargeables limités. Essayez une autre URL de publication ou utilisez les tentatives de file d'attente."
+            },
+            {
+                "q": "Pourquoi TikTok n'affiche-t-il aucun résultat pour un lien de profil copié ?",
+                "a": "Les liens de profil ne sont pas des pages multimédias directes. Ouvrez une publication spécifique et copiez son URL de partage pour l'analyser."
+            }
+        ],
+        "douyin": [
+            {
+                "q": "Pourquoi mon lien Douyin ne se télécharge-t-il pas ?",
+                "a": "Utilisez une URL de partage de publication, pas des URL de recherche/découverte."
+            },
+            {
+                "q": "Comment dois-je gérer les tâches interrompues de la file d’attente Douyin ?",
+                "a": "Pour les tâches de la file d'attente Douyin, cliquez sur « Continuer » pour reprendre après les interruptions, puis cliquez sur « Enregistrer » une fois terminées."
+            },
+            {
+                "q": "Pourquoi Douyin affiche \"pas d'autorisation\" ou un resultat vide sur certains liens ?",
+                "a": "Certains liens partages pointent vers des publications limitees ou restreintes par region. Ouvrez la publication d'origine, verifiez l'acces public, puis relancez l'analyse en mode file d'attente."
+            }
+        ],
+        "instagram": [
+            {
+                "q": "Faut-il s’attendre à des échecs occasionnels sur Instagram ?",
+                "a": "Une fluctuation temporaire du côté de la source peut se produire. Réessayez et confirmez l’accès public."
+            },
+            {
+                "q": "Pourquoi un lien Instagram Story échoue-t-il après un certain temps ?",
+                "a": "Les histoires peuvent expirer rapidement. Utilisez une URL d'histoire publique actuellement disponible et analysez-la dès que possible."
+            },
+            {
+                "q": "Pourquoi Instagram ne renvoie aucun média pour le contenu privé ?",
+                "a": "Le contenu privé n'est pas accessible publiquement pour l'analyse. Utilisez plutôt des URL de publication accessibles au public."
+            }
+        ],
+        "youtube": [
+            {
+                "q": "Pourquoi l'analyse de YouTube est-elle lente ?",
+                "a": "Les longues vidéos et les pics de trafic augmentent le temps d'analyse. Le mode file d'attente est recommandé."
+            },
+            {
+                "q": "Pourquoi ne puis-je pas télécharger immédiatement une diffusion en direct YouTube ?",
+                "a": "Les flux en direct et les nouveaux téléchargements peuvent nécessiter d'abord un traitement côté source. Réessayez plus tard ou mettez la tâche en file d'attente et reprenez-la si elle est interrompue."
+            },
+            {
+                "q": "Pourquoi une URL YouTube est-elle analysée mais affiche-t-elle des options limitées ?",
+                "a": "Les options disponibles dépendent des métadonnées sources, des règles régionales et de la disponibilité du format. Ajustez les paramètres de sortie et analysez à nouveau."
+            }
+        ],
+        "bilibili": [
+            {
+                "q": "Où se trouve mon fichier Bilibili une fois la file d'attente terminée ?",
+                "a": "Le mode file d'attente nécessite un clic explicite sur Enregistrer une fois la tâche terminée."
+            },
+            {
+                "q": "Pourquoi Bilibili ne telecharge qu'une seule partie pour un contenu multi-parties ?",
+                "a": "Certains liens pointent seulement vers un segment unique. Copiez l'URL exacte du segment voulu et, si necessaire, ajoutez chaque segment separement dans la file d'attente."
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "q": "Pourquoi le téléchargement de Xiaohongshu est-il instable ?",
+                "a": "Utilisez le mode file d'attente et continuez. La disponibilité des médias côté source peut varier."
+            },
+            {
+                "q": "Pourquoi Xiaohongshu renvoie seulement l'audio ou des options video manquantes ?",
+                "a": "Certaines notes exposent des variantes media limitees. Ajustez la qualite ou le format, reanalysez le meme lien, puis reessayez plus tard si besoin."
+            }
+        ],
+        "facebook": [
+            {
+                "q": "Pourquoi ne puis-je pas trouver mon fichier Facebook ?",
+                "a": "Le mode direct enregistre dans le dossier du navigateur ; le mode file d'attente nécessite une sauvegarde une fois terminé."
+            }
+        ],
+        "generic": [
+            {
+                "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
+                "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
+            }
+        ],
+        "toutiao": [
+            {
+                "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
+                "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
+            },
+            {
+                "q": "Pourquoi les options HD manquent-elles ?",
+                "a": "Les options de qualité disponibles dépendent des variantes MP4 renvoyées par Toutiao pour cette vidéo."
+            }
+        ],
+        "weibo": [
+            {
+                "q": "Comment copier l'URL d'une vidéo Weibo ?",
+                "a": "Ouvrez la page vidéo Weibo, cliquez sur Copier l'adresse vidéo sur le lecteur, puis collez le lien court t.cn ou l'URL de la page vidéo Weibo copié dans FreeSaveVideo."
+            },
+            {
+                "q": "Puis-je coller un lien court t.cn ?",
+                "a": "Oui. Weibo copie souvent les liens courts t.cn et FreeSaveVideo peut analyser les liens vidéo publics Weibo pris en charge."
+            },
+            {
+                "q": "Pourquoi un lien Weibo échoue-t-il ?",
+                "a": "Assurez-vous qu'il s'agit d'une vidéo publique jouable, et non d'un profil, d'une page de commentaires, d'une publication privée ou d'une vidéo supprimée. Recopiez l'adresse vidéo si le lien source a expiré."
+            }
+        ],
+        "haokan": [
+            {
+                "q": "Comment télécharger des vidéos Haokan sur mon téléphone ?",
+                "a": "Copiez l'URL de la vidéo publique haokan.baidu.com, collez-la dans FreeSaveVideo, puis enregistrez un résultat MP4 disponible à partir de votre navigateur mobile."
+            },
+            {
+                "q": "Est-ce la même chose que l'installation de l'application Haokan ?",
+                "a": "Non. FreeSaveVideo extrait les résultats téléchargeables à partir de liens vidéo publics. Il ne fournit pas d'installateurs d'applications Haokan, de récupération ou de classement des joueurs locaux."
+            },
+            {
+                "q": "Puis-je utiliser les liens Haokan à partir des résultats de recherche Baidu ?",
+                "a": "Oui, si le résultat ouvre une page vidéo publique Haokan telle que haokan.baidu.com/v?vid=... plutôt qu'une page de téléchargement d'application ou une liste de recherche."
+            }
+        ],
+        "iqiyi": [
+            {
+                "q": "Le téléchargement de iQIYI inclut-il des publicités pour les joueurs ?",
+                "a": "Non. L'extracteur valide la vidéo demandée et sélectionne sa liste de lecture du programme principal au lieu d'ajouter des éléments publicitaires de lecteur distincts."
+            },
+            {
+                "q": "Pourquoi FreeSaveVideo remuxe-t-il la vidéo iQIYI vers MP4 ?",
+                "a": "La source publique peut être conditionnée au format MPEG-TS. Le remuxage côté serveur préserve les flux audio et vidéo existants tout en produisant un MP4 plus facile à lire et à enregistrer."
+            },
+            {
+                "q": "Les vidéos iQIYI VIP ou DRM sont-elles prises en charge ?",
+                "a": "Non. Seules les vidéos publiques et gratuites disponibles sans contourner l'adhésion, le paiement, DRM, la connexion, le compte ou les contrôles régionaux sont prises en charge."
+            }
+        ]
     },
-    {
-      "q": "Does FreeSaveVideo support playlists and batch downloads?",
-      "a": "Yes. Supported playlist, collection, and multi-link workflows can be turned into batch tasks so users can review and save several public videos from one page."
+    "platformPlaybooks": {
+        "tiktok": {
+            "heading": "Notes sur le flux de travail TikTok",
+            "notes": [
+                "Utilisez des URL de publication spécifiques.",
+                "Réessayez une fois, puis changez de réseau.",
+                "Préférez le mode file d’attente pour les médias plus longs."
+            ],
+            "checklist": [
+                "URL de la publication publique confirmée",
+                "Paramètres de qualité configurés",
+                "Enregistré après la fin de la file d'attente"
+            ]
+        },
+        "douyin": {
+            "heading": "Notes sur le flux de travail Douyin",
+            "notes": [
+                "Évitez les URL de recherche/découverte.",
+                "Utilisez Continuer en cas d'interruption.",
+                "Ajustez les paramètres de qualité avant de réanalyser."
+            ],
+            "checklist": [
+                "URL de publication spécifique confirmée",
+                "Mode direct ou file d'attente sélectionné",
+                "Étape de sauvegarde finale terminée"
+            ]
+        },
+        "instagram": {
+            "heading": "Notes de flux de travail Instagram",
+            "notes": [
+                "Des fluctuations du côté de la source sont possibles.",
+                "Les options dépendent du média source.",
+                "Le mode file d'attente améliore la stabilité."
+            ],
+            "checklist": [
+                "Accès public vérifié",
+                "Mode file d'attente utilisé en cas de besoin",
+                "Emplacement du fichier confirmé"
+            ]
+        },
+        "youtube": {
+            "heading": "Notes sur le flux de travail YouTube",
+            "notes": [
+                "Les longues vidéos peuvent être analysées lentement.",
+                "Définissez les préférences audio avant d’analyser à nouveau.",
+                "Utilisez Continuer pour éviter les redémarrages complets."
+            ],
+            "checklist": [
+                "URL de la vidéo confirmée",
+                "Ensemble de préférences de sortie",
+                "Enregistré après la fin de la file d'attente"
+            ]
+        },
+        "bilibili": {
+            "heading": "Notes sur le flux de travail Bilibili",
+            "notes": [
+                "Le mode direct enregistre dans le dossier du navigateur.",
+                "Le mode file d'attente nécessite une sauvegarde explicite.",
+                "Ré-analyser après les changements de qualité."
+            ],
+            "checklist": [
+                "URL publique confirmée",
+                "Mode et paramètres vérifiés",
+                "Chemin du fichier final vérifié"
+            ]
+        },
+        "xiaohongshu": {
+            "heading": "Notes sur le flux de travail de Xiaohongshu",
+            "notes": [
+                "Utilisez le mode file d'attente sur les réseaux instables.",
+                "Le nombre d’options dépend de la source.",
+                "Réessayez plus tard si la source est limitée."
+            ],
+            "checklist": [
+                "URL publique confirmée",
+                "Mode file d'attente sélectionné",
+                "Flux de sauvegarde terminé"
+            ]
+        },
+        "facebook": {
+            "heading": "Notes de flux de travail Facebook",
+            "notes": [
+                "Vérifiez d'abord le mode direct ou file d'attente.",
+                "La file d'attente doit être complétée et sauvegardée.",
+                "Continuer reprend les tâches interrompues."
+            ],
+            "checklist": [
+                "URL publique confirmée",
+                "Le mode est clair",
+                "Enregistrer le chemin vérifié"
+            ]
+        },
+        "generic": {
+            "heading": "Notes générales sur le flux de travail",
+            "notes": [
+                "Utilisez des URL publiques partageables.",
+                "File d'attente + reprise sur réseaux instables.",
+                "Définissez la qualité avant d’analyser à nouveau."
+            ],
+            "checklist": [
+                "L'URL est valide et publique",
+                "Les paramètres correspondent à la sortie cible",
+                "Emplacement final du fichier confirmé"
+            ]
+        },
+        "toutiao": {
+            "heading": "Notes générales sur le flux de travail",
+            "notes": [
+                "Utilisez des URL publiques partageables.",
+                "File d'attente + reprise sur réseaux instables.",
+                "Définissez la qualité avant d’analyser à nouveau."
+            ],
+            "checklist": [
+                "L'URL est valide et publique",
+                "Les paramètres correspondent à la sortie cible",
+                "Emplacement final du fichier confirmé"
+            ]
+        },
+        "weibo": {
+            "heading": "Liste de contrôle de téléchargement de vidéos Weibo",
+            "notes": [
+                "Utilisez Copier l'adresse vidéo du lecteur vidéo Weibo lorsque cela est possible.",
+                "Un lien court t.cn copié peut être collé directement.",
+                "Si l'analyse échoue, rouvrez la vidéo originale et copiez à nouveau l'adresse."
+            ],
+            "checklist": [
+                "La vidéo Weibo est publique et jouable",
+                "Vous avez copié une adresse vidéo, pas un profil ou une page de commentaires",
+                "Le résultat montre une option MP4 disponible"
+            ]
+        },
+        "haokan": {
+            "heading": "Haokan télécharger les notes de flux de travail",
+            "notes": [
+                "Utilisez l'URL publique exacte de la vidéo haokan.baidu.com, et non une page de résultats de recherche.",
+                "Enregistrez une variante MP4 disponible lorsque l'analyse réussit.",
+                "Traitez les recherches d'installation d'application, de récupération d'application et de classement des joueurs comme des intentions différentes de l'extraction de lien vidéo."
+            ],
+            "checklist": [
+                "Page vidéo publique Haokan confirmée",
+                "haokan.baidu.com/v?vid=... URL copiée",
+                "Résultat MP4 enregistré depuis le navigateur"
+            ]
+        },
+        "iqiyi": {
+            "heading": "Flux de travail de téléchargement vidéo iQIYI fiable",
+            "notes": [
+                "Utilisez la page de lecture publique concrète iqiyi.com/v_*.html, et non une page d'accueil, un résultat de recherche ou une page de chaîne.",
+                "Le serveur identifie le programme principal, exclut les clips publicitaires distincts du lecteur et remuxe la source sur MP4.",
+                "Seul le contenu public et gratuit est éligible ; Les vidéos VIP, payantes, DRM, de connexion uniquement, supprimées et restreintes à une région ne sont pas prises en charge."
+            ],
+            "checklist": [
+                "Vidéo publique gratuite iQIYI confirmée",
+                "URL concrète v_*.html copiée",
+                "MP4 remuxé par le serveur enregistré après le traitement"
+            ]
+        }
     },
-    {
-      "q": "Where are downloaded files saved?",
-      "a": "Direct downloads are saved to the browser default download folder. Queue downloads finish inside FreeSaveVideo first, then the user clicks Save to store the file locally."
-    },
-    {
-      "q": "Is FreeSaveVideo only a downloader?",
-      "a": "No. It also includes browser tools such as MP4 to MP3, audio extraction, video conversion, whiteboard recording, cross-device file transfer, Discover, and random 1v1 video chat."
+    "platformFailureCases": {
+        "tiktok": [
+            {
+                "title": "URL du profil utilisée à la place de l'URL de la publication",
+                "symptoms": "Aucun support téléchargeable ni échec d'analyse générique.",
+                "fixes": [
+                    "Copiez l'URL exacte du partage de publication.",
+                    "Réessayez l'analyse après le changement de réseau si nécessaire.",
+                    "Utilisez le mode file d'attente pour les téléchargements longs."
+                ]
+            },
+            {
+                "title": "Lien de profil ou cas de bord du diaporama",
+                "symptoms": "Parse renvoie un résultat vide ou des options multimédias limitées.",
+                "fixes": [
+                    "Utilisez une URL de partage de publication spécifique au lieu de liens de profil.",
+                    "Réessayez en mode file d'attente sur des réseaux instables.",
+                    "Basculez vers une autre publication publique lorsque les ressources sources sont restreintes."
+                ]
+            }
+        ],
+        "douyin": [
+            {
+                "title": "URL de recherche/découverte copiée",
+                "symptoms": "Aucun résultat ou analyse instable malgré une URL d'apparence valide.",
+                "fixes": [
+                    "Ouvrez les détails de la publication et copiez l'URL de partage de la publication.",
+                    "Analysez à nouveau avec le mode file d'attente.",
+                    "Reprendre avec Continuer en cas d'interruption."
+                ]
+            },
+            {
+                "title": "Publication restreinte ou lien partage limite par region",
+                "symptoms": "Le lien s'ouvre de facon incoherente ou l'analyse renvoie pas d'autorisation / resultat vide.",
+                "fixes": [
+                    "Verifiez que la publication est publiquement accessible sur votre reseau actuel.",
+                    "Copiez l'URL de partage depuis la page exacte de la publication.",
+                    "Utilisez le mode file d'attente et \"Continuer\" si le reseau est instable."
+                ]
+            }
+        ],
+        "instagram": [
+            {
+                "title": "Fluctuation temporaire côté source",
+                "symptoms": "Échecs d’analyse intermittents.",
+                "fixes": [
+                    "Réessayez après un court intervalle.",
+                    "Confirmez l’accessibilité publique.",
+                    "Utilisez le mode file d'attente pour les tentatives."
+                ]
+            },
+            {
+                "title": "Histoire expirée ou contenu privé",
+                "symptoms": "Aucun média téléchargeable malgré une URL d'apparence valide.",
+                "fixes": [
+                    "Confirmez que l'histoire est toujours en direct.",
+                    "Utilisez des URL de publication publiques lorsque cela est possible.",
+                    "Réessayez rapidement avant l'expiration du contenu temporaire."
+                ]
+            }
+        ],
+        "youtube": [
+            {
+                "title": "Long délai d'analyse vidéo",
+                "symptoms": "Progression lente pendant l'analyse ou le téléchargement.",
+                "fixes": [
+                    "Gardez la tâche de file d'attente en cours d'exécution.",
+                    "Reprendre avec Continuer en cas d'interruption.",
+                    "Utilisez les préférences audio lorsque seul l’audio est nécessaire."
+                ]
+            },
+            {
+                "title": "La diffusion en direct ou le nouveau téléchargement n'est pas prêt",
+                "symptoms": "L'analyse réussit lentement ou renvoie des options incomplètes.",
+                "fixes": [
+                    "Attendez la fin du traitement côté source et réessayez.",
+                    "Utilisez le mode file d'attente pour les tâches longues.",
+                    "Reprenez avec Continuer si une interruption du réseau se produit."
+                ]
+            }
+        ],
+        "bilibili": [
+            {
+                "title": "File d'attente terminée mais pas de fichier local",
+                "symptoms": "L'état de la tâche terminée est affiché mais le fichier est manquant.",
+                "fixes": [
+                    "Cliquez sur Enregistrer une fois la file d'attente terminée.",
+                    "Vérifiez le dossier du navigateur uniquement pour le mode direct.",
+                    "Vérifiez l'emplacement de sauvegarde final."
+                ]
+            },
+            {
+                "title": "Publication multi-parties associee a un seul segment",
+                "symptoms": "Le resultat de telechargement contient seulement un episode ou un fragment.",
+                "fixes": [
+                    "Ouvrez la page du segment exact et copiez cette URL de partage.",
+                    "Ajoutez chaque segment separement dans la file d'attente pour une collection complete.",
+                    "Confirmez la fin de chaque tache et cliquez sur \"Enregistrer\"."
+                ]
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "title": "Débit instable",
+                "symptoms": "Chutes de vitesse ou tâches interrompues.",
+                "fixes": [
+                    "Passez en mode file d'attente.",
+                    "Reprendre à partir du point d'arrêt avec Continuer.",
+                    "Réessayez plus tard si le support côté source est limité."
+                ]
+            },
+            {
+                "title": "Variantes media limitees dans la note source",
+                "symptoms": "Seuls des formats partiels apparaissent, ou les options video sont absentes.",
+                "fixes": [
+                    "Relancez l'analyse apres ajustement de la qualite et du format.",
+                    "Reessayez plus tard lorsque les ressources source sont actualisees.",
+                    "Utilisez le mode file d'attente pour ameliorer la stabilite de completion."
+                ]
+            }
+        ],
+        "facebook": [
+            {
+                "title": "Confusion directe et file d'attente",
+                "symptoms": "Le téléchargement semble terminé mais le fichier est introuvable.",
+                "fixes": [
+                    "Le mode direct enregistre dans le dossier du navigateur.",
+                    "Le mode file d’attente nécessite une action Enregistrer.",
+                    "Vérifiez l'état de la file d'attente et le chemin local."
+                ]
+            }
+        ],
+        "generic": [
+            {
+                "title": "Échec de l'analyse d'une URL d'apparence valide",
+                "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
+                "fixes": [
+                    "Confirmez que l'URL pointe vers un contenu public spécifique.",
+                    "Ajustez les paramètres et réanalysez.",
+                    "Utilisez le mode file d'attente avec reprise."
+                ]
+            }
+        ],
+        "toutiao": [
+            {
+                "title": "Échec de l'analyse d'une URL d'apparence valide",
+                "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
+                "fixes": [
+                    "Confirmez que l'URL pointe vers un contenu public spécifique.",
+                    "Ajustez les paramètres et réanalysez.",
+                    "Utilisez le mode file d'attente avec reprise."
+                ]
+            }
+        ],
+        "weibo": [
+            {
+                "title": "Un profil, une page de commentaire ou un lien expiré a été copié",
+                "symptoms": "La page s'ouvre dans Weibo, mais FreeSaveVideo ne peut pas renvoyer de résultat vidéo lisible.",
+                "fixes": [
+                    "Revenez à la page vidéo spécifique et choisissez Copier l'adresse vidéo.",
+                    "Confirmez que la vidéo est toujours publique et jouable.",
+                    "Si le lien court a expiré, copiez à nouveau l'adresse vidéo et réessayez."
+                ]
+            }
+        ],
+        "haokan": [
+            {
+                "title": "Résultat de recherche ou page d'installation de l'application copiée",
+                "symptoms": "L'analyse ne renvoie aucun média car l'URL n'est pas une page vidéo Haokan directe.",
+                "fixes": [
+                    "Ouvrez la vidéo Haokan spécifique avant de copier l'URL.",
+                    "Utilisez les liens haokan.baidu.com/v?vid=... lorsqu'ils sont disponibles.",
+                    "Ne collez pas les pages d'installation, de récupération ou de classement des joueurs de l'application Haokan."
+                ]
+            },
+            {
+                "title": "La vidéo est restreinte ou indisponible",
+                "symptoms": "La page s'ouvre, mais aucune option téléchargeable MP4 n'est renvoyée.",
+                "fixes": [
+                    "Confirmez que la vidéo est publique et toujours en ligne.",
+                    "Réessayez une fois en mode file d'attente si le réseau est instable.",
+                    "Essayez une autre vidéo publique Haokan lorsque les ressources sources sont limitées."
+                ]
+            }
+        ],
+        "iqiyi": [
+            {
+                "title": "Une page iQIYI non vidéo ou restreinte a été copiée",
+                "symptoms": "L'analyse ne renvoie aucun média ni ne signale que le lien n'est pas pris en charge.",
+                "fixes": [
+                    "Ouvrez la vidéo spécifique avant de copier l'adresse.",
+                    "Utilisez une page iqiyi.com/v_*.html qui est lue lorsque vous êtes déconnecté.",
+                    "N'utilisez pas d'URL VIP, payantes, DRM, de connexion uniquement, de recherche, de chaîne ou de page d'accueil."
+                ]
+            },
+            {
+                "title": "La vidéo source a changé ou est devenue indisponible",
+                "symptoms": "La page fonctionnait auparavant, mais l'extraction ou le traitement MP4 échoue désormais.",
+                "fixes": [
+                    "Confirmez que la page source est toujours lue publiquement.",
+                    "Copiez une nouvelle URL et réessayez une fois.",
+                    "Essayez une autre vidéo iQIYI publique et gratuite pour distinguer une restriction spécifique à la source."
+                ]
+            }
+        ]
     }
-  ],
-  "productTips": [
-    "For best results, paste a specific public video, post, Shorts, playlist, or collection URL rather than a profile or channel homepage.",
-    "Use batch mode for multiple links and playlist results; queue tasks can retry and continue after interruptions.",
-    "Set quality, format, audio-only, or mute options before parsing when you need a specific output.",
-    "Use the platform-specific download pages when available because they explain the exact link type that works best."
-  ],
-  "productAdvantages": [
-    "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
-    "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
-    "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
-  ],
-  "releaseNotes": [
-    "Clarified best link types for public video, playlist, collection, and batch download workflows.",
-    "Added stronger public-content, privacy, and browser-tool positioning across download pages."
-  ],
-  "freeTools": [
-    {
-      "title": "Chat vidéo aléatoire",
-      "desc": "Aucun point requis",
-      "path": "random-chat"
-    },
-    {
-      "title": "Conversion de format vidéo",
-      "desc": "Aucun point requis",
-      "path": "remux"
-    },
-    {
-      "title": "Exploration de contenu",
-      "desc": "Aucun point requis",
-      "path": "discover"
-    },
-    {
-      "title": "Enregistrement sur tableau blanc",
-      "desc": "Aucun point requis",
-      "path": "videorecord"
-    },
-    {
-      "title": "Transfert de fichiers",
-      "desc": "Aucun point requis",
-      "path": "clipboard"
-    }
-  ],
-  "platformFaqs": {
-    "tiktok": [
-      {
-        "q": "Que dois-je faire si une URL TikTok échoue ?",
-        "a": "Utilisez une URL de partage de publication (et non une URL de profil), réessayez, puis changez de réseau si nécessaire."
-      },
-      {
-        "q": "Pourquoi la qualité de TikTok est-elle inférieure aux attentes ?",
-        "a": "Ajustez les paramètres de qualité et analysez à nouveau. Les options finales dépendent du média source."
-      },
-      {
-        "q": "Pourquoi un lien de diaporama TikTok ne renvoie-t-il pas de média ?",
-        "a": "Certaines publications de diaporamas et ressources musicales protégées exposent des médias téléchargeables limités. Essayez une autre URL de publication ou utilisez les tentatives de file d'attente."
-      },
-      {
-        "q": "Pourquoi TikTok n'affiche-t-il aucun résultat pour un lien de profil copié ?",
-        "a": "Les liens de profil ne sont pas des pages multimédias directes. Ouvrez une publication spécifique et copiez son URL de partage pour l'analyser."
-      }
-    ],
-    "douyin": [
-      {
-        "q": "Pourquoi mon lien Douyin ne se télécharge-t-il pas ?",
-        "a": "Utilisez une URL de partage de publication, pas des URL de recherche/découverte."
-      },
-      {
-        "q": "Comment dois-je gérer les tâches interrompues de la file d’attente Douyin ?",
-        "a": "Pour les tâches de la file d'attente Douyin, cliquez sur « Continuer » pour reprendre après les interruptions, puis cliquez sur « Enregistrer » une fois terminées."
-      },
-      {
-        "q": "Pourquoi Douyin affiche \"pas d'autorisation\" ou un resultat vide sur certains liens ?",
-        "a": "Certains liens partages pointent vers des publications limitees ou restreintes par region. Ouvrez la publication d'origine, verifiez l'acces public, puis relancez l'analyse en mode file d'attente."
-      }
-    ],
-    "instagram": [
-      {
-        "q": "Faut-il s’attendre à des échecs occasionnels sur Instagram ?",
-        "a": "Une fluctuation temporaire du côté de la source peut se produire. Réessayez et confirmez l’accès public."
-      },
-      {
-        "q": "Pourquoi un lien Instagram Story échoue-t-il après un certain temps ?",
-        "a": "Les histoires peuvent expirer rapidement. Utilisez une URL d'histoire publique actuellement disponible et analysez-la dès que possible."
-      },
-      {
-        "q": "Pourquoi Instagram ne renvoie aucun média pour le contenu privé ?",
-        "a": "Le contenu privé n'est pas accessible publiquement pour l'analyse. Utilisez plutôt des URL de publication accessibles au public."
-      }
-    ],
-    "youtube": [
-      {
-        "q": "Pourquoi l'analyse de YouTube est-elle lente ?",
-        "a": "Les longues vidéos et les pics de trafic augmentent le temps d'analyse. Le mode file d'attente est recommandé."
-      },
-      {
-        "q": "Pourquoi ne puis-je pas télécharger immédiatement une diffusion en direct YouTube ?",
-        "a": "Les flux en direct et les nouveaux téléchargements peuvent nécessiter d'abord un traitement côté source. Réessayez plus tard ou mettez la tâche en file d'attente et reprenez-la si elle est interrompue."
-      },
-      {
-        "q": "Pourquoi une URL YouTube est-elle analysée mais affiche-t-elle des options limitées ?",
-        "a": "Les options disponibles dépendent des métadonnées sources, des règles régionales et de la disponibilité du format. Ajustez les paramètres de sortie et analysez à nouveau."
-      }
-    ],
-    "bilibili": [
-      {
-        "q": "Où se trouve mon fichier Bilibili une fois la file d'attente terminée ?",
-        "a": "Le mode file d'attente nécessite un clic explicite sur Enregistrer une fois la tâche terminée."
-      },
-      {
-        "q": "Pourquoi Bilibili ne telecharge qu'une seule partie pour un contenu multi-parties ?",
-        "a": "Certains liens pointent seulement vers un segment unique. Copiez l'URL exacte du segment voulu et, si necessaire, ajoutez chaque segment separement dans la file d'attente."
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "q": "Pourquoi le téléchargement de Xiaohongshu est-il instable ?",
-        "a": "Utilisez le mode file d'attente et continuez. La disponibilité des médias côté source peut varier."
-      },
-      {
-        "q": "Pourquoi Xiaohongshu renvoie seulement l'audio ou des options video manquantes ?",
-        "a": "Certaines notes exposent des variantes media limitees. Ajustez la qualite ou le format, reanalysez le meme lien, puis reessayez plus tard si besoin."
-      }
-    ],
-    "facebook": [
-      {
-        "q": "Pourquoi ne puis-je pas trouver mon fichier Facebook ?",
-        "a": "Le mode direct enregistre dans le dossier du navigateur ; le mode file d'attente nécessite une sauvegarde une fois terminé."
-      }
-    ],
-    "generic": [
-      {
-        "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
-        "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
-      }
-    ],
-    "toutiao": [
-      {
-        "q": "Que dois-je vérifier en premier lorsque l’analyse échoue ?",
-        "a": "Vérifiez l'accès à l'URL publique, vérifiez les paramètres, puis réessayez en mode file d'attente."
-      }
-    ],
-    "weibo": [
-      {
-        "q": "How do I copy a Weibo video URL?",
-        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
-      },
-      {
-        "q": "Can I paste a t.cn short link?",
-        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
-      },
-      {
-        "q": "Why does a Weibo link fail?",
-        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
-      }
-    ]
-  },
-  "platformPlaybooks": {
-    "tiktok": {
-      "heading": "Notes sur le flux de travail TikTok",
-      "notes": [
-        "Utilisez des URL de publication spécifiques.",
-        "Réessayez une fois, puis changez de réseau.",
-        "Préférez le mode file d’attente pour les médias plus longs."
-      ],
-      "checklist": [
-        "URL de la publication publique confirmée",
-        "Paramètres de qualité configurés",
-        "Enregistré après la fin de la file d'attente"
-      ]
-    },
-    "douyin": {
-      "heading": "Notes sur le flux de travail Douyin",
-      "notes": [
-        "Évitez les URL de recherche/découverte.",
-        "Utilisez Continuer en cas d'interruption.",
-        "Ajustez les paramètres de qualité avant de réanalyser."
-      ],
-      "checklist": [
-        "URL de publication spécifique confirmée",
-        "Mode direct ou file d'attente sélectionné",
-        "Étape de sauvegarde finale terminée"
-      ]
-    },
-    "instagram": {
-      "heading": "Notes de flux de travail Instagram",
-      "notes": [
-        "Des fluctuations du côté de la source sont possibles.",
-        "Les options dépendent du média source.",
-        "Le mode file d'attente améliore la stabilité."
-      ],
-      "checklist": [
-        "Accès public vérifié",
-        "Mode file d'attente utilisé en cas de besoin",
-        "Emplacement du fichier confirmé"
-      ]
-    },
-    "youtube": {
-      "heading": "Notes sur le flux de travail YouTube",
-      "notes": [
-        "Les longues vidéos peuvent être analysées lentement.",
-        "Définissez les préférences audio avant d’analyser à nouveau.",
-        "Utilisez Continuer pour éviter les redémarrages complets."
-      ],
-      "checklist": [
-        "URL de la vidéo confirmée",
-        "Ensemble de préférences de sortie",
-        "Enregistré après la fin de la file d'attente"
-      ]
-    },
-    "bilibili": {
-      "heading": "Notes sur le flux de travail Bilibili",
-      "notes": [
-        "Le mode direct enregistre dans le dossier du navigateur.",
-        "Le mode file d'attente nécessite une sauvegarde explicite.",
-        "Ré-analyser après les changements de qualité."
-      ],
-      "checklist": [
-        "URL publique confirmée",
-        "Mode et paramètres vérifiés",
-        "Chemin du fichier final vérifié"
-      ]
-    },
-    "xiaohongshu": {
-      "heading": "Notes sur le flux de travail de Xiaohongshu",
-      "notes": [
-        "Utilisez le mode file d'attente sur les réseaux instables.",
-        "Le nombre d’options dépend de la source.",
-        "Réessayez plus tard si la source est limitée."
-      ],
-      "checklist": [
-        "URL publique confirmée",
-        "Mode file d'attente sélectionné",
-        "Flux de sauvegarde terminé"
-      ]
-    },
-    "facebook": {
-      "heading": "Notes de flux de travail Facebook",
-      "notes": [
-        "Vérifiez d'abord le mode direct ou file d'attente.",
-        "La file d'attente doit être complétée et sauvegardée.",
-        "Continuer reprend les tâches interrompues."
-      ],
-      "checklist": [
-        "URL publique confirmée",
-        "Le mode est clair",
-        "Enregistrer le chemin vérifié"
-      ]
-    },
-    "generic": {
-      "heading": "Notes générales sur le flux de travail",
-      "notes": [
-        "Utilisez des URL publiques partageables.",
-        "File d'attente + reprise sur réseaux instables.",
-        "Définissez la qualité avant d’analyser à nouveau."
-      ],
-      "checklist": [
-        "L'URL est valide et publique",
-        "Les paramètres correspondent à la sortie cible",
-        "Emplacement final du fichier confirmé"
-      ]
-    },
-    "toutiao": {
-      "heading": "Notes générales sur le flux de travail",
-      "notes": [
-        "Utilisez des URL publiques partageables.",
-        "File d'attente + reprise sur réseaux instables.",
-        "Définissez la qualité avant d’analyser à nouveau."
-      ],
-      "checklist": [
-        "L'URL est valide et publique",
-        "Les paramètres correspondent à la sortie cible",
-        "Emplacement final du fichier confirmé"
-      ]
-    },
-    "weibo": {
-      "heading": "Weibo video download checklist",
-      "notes": [
-        "Use Copy video address from the Weibo video player when possible.",
-        "A copied t.cn short link can be pasted directly.",
-        "If parsing fails, reopen the original video and copy the address again."
-      ],
-      "checklist": [
-        "The Weibo video is public and playable",
-        "You copied a video address, not a profile or comment page",
-        "The result shows an available MP4 option"
-      ]
-    }
-  },
-  "platformFailureCases": {
-    "tiktok": [
-      {
-        "title": "URL du profil utilisée à la place de l'URL de la publication",
-        "symptoms": "Aucun support téléchargeable ni échec d'analyse générique.",
-        "fixes": [
-          "Copiez l'URL exacte du partage de publication.",
-          "Réessayez l'analyse après le changement de réseau si nécessaire.",
-          "Utilisez le mode file d'attente pour les téléchargements longs."
-        ]
-      },
-      {
-        "title": "Lien de profil ou cas de bord du diaporama",
-        "symptoms": "Parse renvoie un résultat vide ou des options multimédias limitées.",
-        "fixes": [
-          "Utilisez une URL de partage de publication spécifique au lieu de liens de profil.",
-          "Réessayez en mode file d'attente sur des réseaux instables.",
-          "Basculez vers une autre publication publique lorsque les ressources sources sont restreintes."
-        ]
-      }
-    ],
-    "douyin": [
-      {
-        "title": "URL de recherche/découverte copiée",
-        "symptoms": "Aucun résultat ou analyse instable malgré une URL d'apparence valide.",
-        "fixes": [
-          "Ouvrez les détails de la publication et copiez l'URL de partage de la publication.",
-          "Analysez à nouveau avec le mode file d'attente.",
-          "Reprendre avec Continuer en cas d'interruption."
-        ]
-      },
-      {
-        "title": "Publication restreinte ou lien partage limite par region",
-        "symptoms": "Le lien s'ouvre de facon incoherente ou l'analyse renvoie pas d'autorisation / resultat vide.",
-        "fixes": [
-          "Verifiez que la publication est publiquement accessible sur votre reseau actuel.",
-          "Copiez l'URL de partage depuis la page exacte de la publication.",
-          "Utilisez le mode file d'attente et \"Continuer\" si le reseau est instable."
-        ]
-      }
-    ],
-    "instagram": [
-      {
-        "title": "Fluctuation temporaire côté source",
-        "symptoms": "Échecs d’analyse intermittents.",
-        "fixes": [
-          "Réessayez après un court intervalle.",
-          "Confirmez l’accessibilité publique.",
-          "Utilisez le mode file d'attente pour les tentatives."
-        ]
-      },
-      {
-        "title": "Histoire expirée ou contenu privé",
-        "symptoms": "Aucun média téléchargeable malgré une URL d'apparence valide.",
-        "fixes": [
-          "Confirmez que l'histoire est toujours en direct.",
-          "Utilisez des URL de publication publiques lorsque cela est possible.",
-          "Réessayez rapidement avant l'expiration du contenu temporaire."
-        ]
-      }
-    ],
-    "youtube": [
-      {
-        "title": "Long délai d'analyse vidéo",
-        "symptoms": "Progression lente pendant l'analyse ou le téléchargement.",
-        "fixes": [
-          "Gardez la tâche de file d'attente en cours d'exécution.",
-          "Reprendre avec Continuer en cas d'interruption.",
-          "Utilisez les préférences audio lorsque seul l’audio est nécessaire."
-        ]
-      },
-      {
-        "title": "La diffusion en direct ou le nouveau téléchargement n'est pas prêt",
-        "symptoms": "L'analyse réussit lentement ou renvoie des options incomplètes.",
-        "fixes": [
-          "Attendez la fin du traitement côté source et réessayez.",
-          "Utilisez le mode file d'attente pour les tâches longues.",
-          "Reprenez avec Continuer si une interruption du réseau se produit."
-        ]
-      }
-    ],
-    "bilibili": [
-      {
-        "title": "File d'attente terminée mais pas de fichier local",
-        "symptoms": "L'état de la tâche terminée est affiché mais le fichier est manquant.",
-        "fixes": [
-          "Cliquez sur Enregistrer une fois la file d'attente terminée.",
-          "Vérifiez le dossier du navigateur uniquement pour le mode direct.",
-          "Vérifiez l'emplacement de sauvegarde final."
-        ]
-      },
-      {
-        "title": "Publication multi-parties associee a un seul segment",
-        "symptoms": "Le resultat de telechargement contient seulement un episode ou un fragment.",
-        "fixes": [
-          "Ouvrez la page du segment exact et copiez cette URL de partage.",
-          "Ajoutez chaque segment separement dans la file d'attente pour une collection complete.",
-          "Confirmez la fin de chaque tache et cliquez sur \"Enregistrer\"."
-        ]
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "title": "Débit instable",
-        "symptoms": "Chutes de vitesse ou tâches interrompues.",
-        "fixes": [
-          "Passez en mode file d'attente.",
-          "Reprendre à partir du point d'arrêt avec Continuer.",
-          "Réessayez plus tard si le support côté source est limité."
-        ]
-      },
-      {
-        "title": "Variantes media limitees dans la note source",
-        "symptoms": "Seuls des formats partiels apparaissent, ou les options video sont absentes.",
-        "fixes": [
-          "Relancez l'analyse apres ajustement de la qualite et du format.",
-          "Reessayez plus tard lorsque les ressources source sont actualisees.",
-          "Utilisez le mode file d'attente pour ameliorer la stabilite de completion."
-        ]
-      }
-    ],
-    "facebook": [
-      {
-        "title": "Confusion directe et file d'attente",
-        "symptoms": "Le téléchargement semble terminé mais le fichier est introuvable.",
-        "fixes": [
-          "Le mode direct enregistre dans le dossier du navigateur.",
-          "Le mode file d’attente nécessite une action Enregistrer.",
-          "Vérifiez l'état de la file d'attente et le chemin local."
-        ]
-      }
-    ],
-    "generic": [
-      {
-        "title": "Échec de l'analyse d'une URL d'apparence valide",
-        "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
-        "fixes": [
-          "Confirmez que l'URL pointe vers un contenu public spécifique.",
-          "Ajustez les paramètres et réanalysez.",
-          "Utilisez le mode file d'attente avec reprise."
-        ]
-      }
-    ],
-    "toutiao": [
-      {
-        "title": "Échec de l'analyse d'une URL d'apparence valide",
-        "symptoms": "Aucune sortie renvoyée à plusieurs reprises.",
-        "fixes": [
-          "Confirmez que l'URL pointe vers un contenu public spécifique.",
-          "Ajustez les paramètres et réanalysez.",
-          "Utilisez le mode file d'attente avec reprise."
-        ]
-      }
-    ],
-    "weibo": [
-      {
-        "title": "A profile, comment page, or expired link was copied",
-        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
-        "fixes": [
-          "Go back to the specific video page and choose Copy video address.",
-          "Confirm the video is still public and playable.",
-          "If the short link expired, copy the video address again and retry."
-        ]
-      }
-    ]
-  }
 }

@@ -835,6 +835,21 @@ const buildGenericLocales = (params: GenericLocaleParams) => ({
     id: buildGenericLocale('id', params),
 });
 
+const buildGenericWorkflowLocales = (
+    labels: Record<GenericLocaleLang, string>,
+    keywords: string[],
+) => ({
+    es: buildGenericLocale('es', { platform: labels.es, kind: 'video', contentKey: 'video', keywords }),
+    fr: buildGenericLocale('fr', { platform: labels.fr, kind: 'video', contentKey: 'video', keywords }),
+    de: buildGenericLocale('de', { platform: labels.de, kind: 'video', contentKey: 'video', keywords }),
+    ja: buildGenericLocale('ja', { platform: labels.ja, kind: 'video', contentKey: 'video', keywords }),
+    ko: buildGenericLocale('ko', { platform: labels.ko, kind: 'video', contentKey: 'video', keywords }),
+    ru: buildGenericLocale('ru', { platform: labels.ru, kind: 'video', contentKey: 'video', keywords }),
+    th: buildGenericLocale('th', { platform: labels.th, kind: 'video', contentKey: 'video', keywords }),
+    vi: buildGenericLocale('vi', { platform: labels.vi, kind: 'video', contentKey: 'video', keywords }),
+    id: buildGenericLocale('id', { platform: labels.id, kind: 'video', contentKey: 'video', keywords }),
+});
+
 export const seoLandingPages: SeoLandingPage[] = [
 
     {
@@ -1283,21 +1298,27 @@ export const seoLandingPages: SeoLandingPage[] = [
                 ],
             }),
             vi: vi({
-                metaTitle: `Trinh tai video Toutiao - Luu MP4 online | ${EN_BRAND}`,
+                metaTitle: `Trình tải video Toutiao - Lưu MP4 trực tuyến | ${EN_BRAND}`,
                 metaDescription:
-                    'Tai video Toutiao cong khai online. Dan lien ket www.toutiao.com hoac m.toutiao.com de trich xuat va luu cac tuy chon MP4 co san.',
-                metaKeywords: ['tai video toutiao', 'toutiao mp4 download', 'trinh tai toutiao', 'luu video toutiao'],
-                h1: 'Trinh tai video Toutiao',
-                lede: 'Dan lien ket video Toutiao cong khai de trich xuat cac ket qua MP4 co san ngay trong trinh duyet.',
-                stepsTitle: 'Cach tai video Toutiao',
-                steps: ['Sao chep lien ket video Toutiao cong khai.', 'Dan lien ket vao trinh tai ben duoi.', 'Chon chat luong co san va luu tep MP4.'],
-                featuresTitle: 'Tinh nang Toutiao',
-                features: ['Ho tro trang video cong khai va lien ket chia se di dong Toutiao.', 'Hien thi cac tuy chon MP4 khi nguon cung cap.', 'Khong can cai dat ung dung Toutiao.'],
-                faqTitle: 'FAQ',
+                    'Tải video Toutiao công khai trực tuyến. Dán liên kết www.toutiao.com hoặc m.toutiao.com để trích xuất và lưu các tùy chọn MP4 có sẵn.',
+                metaKeywords: ['tải video Toutiao', 'Toutiao MP4', 'trình tải Toutiao', 'lưu video Toutiao'],
+                h1: 'Trình tải video Toutiao',
+                lede: 'Dán liên kết video Toutiao công khai để trích xuất các kết quả MP4 có sẵn ngay trong trình duyệt.',
+                stepsTitle: 'Cách tải video Toutiao',
+                steps: ['Sao chép liên kết video Toutiao công khai.', 'Dán liên kết vào trình tải bên dưới.', 'Chọn chất lượng có sẵn và lưu tệp MP4.'],
+                featuresTitle: 'Tính năng Toutiao',
+                features: ['Hỗ trợ trang video công khai và liên kết chia sẻ di động Toutiao.', 'Hiển thị các tùy chọn MP4 khi nguồn cung cấp.', 'Không cần cài đặt ứng dụng Toutiao.'],
+                faqTitle: 'Câu hỏi thường gặp',
                 faqs: [
-                    { q: 'Co the tai video rieng tu khong?', a: 'Khong. Chi ho tro video Toutiao cong khai.' },
-                    { q: 'Vi sao lien ket that bai?', a: 'Video co the da bi xoa, bi gioi han hoac khong co bien the MP4 de tai.' },
+                    { q: 'Có thể tải video riêng tư không?', a: 'Không. Chỉ hỗ trợ video Toutiao công khai.' },
+                    { q: 'Vì sao liên kết thất bại?', a: 'Video có thể đã bị xóa, bị giới hạn hoặc không có biến thể MP4 để tải.' },
                 ],
+            }),
+            id: buildGenericLocale('id', {
+                platform: 'Toutiao',
+                kind: 'video',
+                contentKey: 'video',
+                keywords: ['pengunduh video Toutiao', 'unduh video Toutiao', 'simpan video Toutiao'],
             }),
         },
     },
@@ -4297,6 +4318,13 @@ export const seoLandingPages: SeoLandingPage[] = [
             'A playlist or collection URL should be pasted as one URL; the collection parser creates its item queue.',
         ],
         locales: {
+            ...buildGenericWorkflowLocales(
+                {
+                    es: 'varios enlaces', fr: 'plusieurs liens', de: 'mehrere Links', ja: '複数リンク', ko: '여러 링크',
+                    ru: 'нескольких ссылок', th: 'หลายลิงก์', vi: 'nhiều liên kết', id: 'banyak tautan',
+                },
+                ['batch video downloader', 'bulk video downloader', 'download multiple videos'],
+            ),
             en: en({
                 metaTitle: `Batch Video Downloader for Multiple Links - ${EN_BRAND}`,
                 metaDescription:
@@ -4388,6 +4416,13 @@ export const seoLandingPages: SeoLandingPage[] = [
             'TikTok: /playlist/{name}-{playlistId} URLs and public video URLs whose metadata includes a Playlist ID.',
         ],
         locales: {
+            ...buildGenericWorkflowLocales(
+                {
+                    es: 'listas de reproducción', fr: 'playlists', de: 'Playlists', ja: 'プレイリスト', ko: '재생목록',
+                    ru: 'плейлистов', th: 'เพลย์ลิสต์', vi: 'danh sách phát', id: 'daftar putar',
+                },
+                ['playlist downloader', 'video playlist downloader', 'collection video downloader'],
+            ),
             en: en({
                 metaTitle: `Playlist Downloader for Public Video Collections - ${EN_BRAND}`,
                 metaDescription:
@@ -4531,7 +4566,7 @@ export const seoLandingPages: SeoLandingPage[] = [
                 ],
                 featuresTitle: 'YouTube playlist support',
                 features: [
-                    'Supports public YouTube playlist URLs that can be parsed without an account.',
+                    'Supports public YouTube playlist URLs when their playlist items are available to the service.',
                     'Turns detected playlist videos into a selectable batch task.',
                     'Shows available MP4 or audio choices for each detected item when provided.',
                     'Keeps individual failures visible for retry instead of restarting the whole playlist.',

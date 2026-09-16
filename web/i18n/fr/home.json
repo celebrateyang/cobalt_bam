@@ -35,8 +35,8 @@
             "desc": "Copiez l adresse video Weibo ou un lien court t.cn pour extraire les options MP4 disponibles."
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Amazon Live Téléchargeur",
+            "desc": "Enregistrez les vidéos publiques de rediffusion Amazon Live à partir des liens amazon.com/live/video ou amazon.com/vdp avec les options de qualité HLS disponibles."
         },
         "xiaohongshu": {
             "name": "Sauvegarde vidéo Xiaohongshu",
@@ -59,16 +59,16 @@
             "desc": "Copiez les liens de tweet pour extraire les vidéos originales tout en maintenant la clarté."
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "NAVER Téléchargeur vidéo",
+            "desc": "Enregistrez des vidéos publiques NAVER à partir des liens naver.me et m.naver.com/shorts."
         },
         "niconico": {
             "name": "Telechargeur video NicoNico",
             "desc": "Enregistrez les videos publiques NicoNico watch et shorts avec les qualites disponibles."
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "Téléchargeur de vidéos de discussions",
+            "desc": "Collez un lien de publication de discussions publiques pour enregistrer directement les vidéos ou les photos disponibles."
         }
     },
     "cards": {
@@ -125,10 +125,19 @@
             "title": "Audio seul et mode muet",
             "desc": "Passez entre auto, audio seul et mode muet avant le telechargement."
         },
-        "aria": "Download capabilities"
+        "aria": "Capacités de téléchargement"
     },
-    "feedback": { "desc": "Signalez les problèmes de téléchargement et vos suggestions." },
-    "points_balloon": { "aria": "Alerte de points faibles", "title": "Il reste peu de points", "text": "Découvrez comment obtenir plus de points.", "cta": "Accéder au compte", "points_label": "points", "close": "fermer" },
+    "feedback": {
+        "desc": "Signalez les problèmes de téléchargement et vos suggestions."
+    },
+    "points_balloon": {
+        "aria": "Alerte de points faibles",
+        "title": "Il reste peu de points",
+        "text": "Découvrez comment obtenir plus de points.",
+        "cta": "Accéder au compte",
+        "points_label": "points",
+        "close": "fermer"
+    },
     "extension": {
         "badge": "Gratuit · Chrome",
         "title": "Téléchargez directement depuis toute page web",

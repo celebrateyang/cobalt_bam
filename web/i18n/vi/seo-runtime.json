@@ -1,476 +1,576 @@
 {
-  "updatedAt": "2026-08-17",
-  "productFaqs": [
-    {
-      "q": "Which links work best?",
-      "a": "Use a specific public video URL, post URL, Shorts URL, or supported playlist/collection URL. Profile pages, channel homepages, search pages, private links, and membership-only content are not reliable download targets."
+    "updatedAt": "2026-08-17",
+    "productFaqs": [
+        {
+            "q": "Liên kết nào hoạt động tốt nhất?",
+            "a": "Sử dụng URL công khai của video, URL bài đăng, URL video ngắn hoặc URL danh sách phát/bộ sưu tập được hỗ trợ. Các trang hồ sơ, trang chủ kênh, trang tìm kiếm, liên kết riêng tư và nội dung chỉ dành cho thành viên không phải là mục tiêu tải xuống đáng tin cậy."
+        },
+        {
+            "q": "FreeSaveVideo có hỗ trợ danh sách phát và tải xuống hàng loạt không?",
+            "a": "Vâng. Danh sách phát, bộ sưu tập và quy trình làm việc đa liên kết được hỗ trợ có thể được chuyển thành các tác vụ hàng loạt để người dùng có thể xem lại và lưu một số video công khai từ một trang."
+        },
+        {
+            "q": "Các tập tin tải xuống được lưu ở đâu?",
+            "a": "Tải xuống trực tiếp được lưu vào thư mục tải xuống mặc định của trình duyệt. Trước tiên, quá trình tải xuống hàng đợi hoàn tất bên trong FreeSaveVideo, sau đó người dùng nhấp vào Lưu để lưu trữ tệp cục bộ."
+        },
+        {
+            "q": "FreeSaveVideo chỉ là trình tải xuống phải không?",
+            "a": "Không. Nó cũng bao gồm các công cụ trình duyệt như MP4 đến MP3, trích xuất âm thanh, chuyển đổi video, ghi bảng trắng, truyền tệp giữa các thiết bị, Khám phá và trò chuyện video 1v1 ngẫu nhiên."
+        }
+    ],
+    "productTips": [
+        "Để có kết quả tốt nhất, hãy dán một video công khai, bài đăng, video ngắn, danh sách phát hoặc URL bộ sưu tập cụ thể thay vì dán trang chủ hồ sơ hoặc kênh.",
+        "Sử dụng chế độ hàng loạt cho nhiều liên kết và kết quả danh sách phát; nhiệm vụ hàng đợi có thể thử lại và tiếp tục sau khi bị gián đoạn.",
+        "Đặt các tùy chọn về chất lượng, định dạng, chỉ âm thanh hoặc tắt tiếng trước khi phân tích cú pháp khi bạn cần một đầu ra cụ thể.",
+        "Sử dụng các trang tải xuống dành riêng cho nền tảng khi có sẵn vì chúng giải thích chính xác loại liên kết hoạt động tốt nhất."
+    ],
+    "productAdvantages": [
+        "Ranh giới nội dung công khai rõ ràng: FreeSaveVideo dành cho các liên kết có thể truy cập công khai, không phải phương tiện riêng tư hoặc có tường phí.",
+        "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
+        "Quy trình làm việc hàng loạt, danh sách phát, bộ sưu tập, âm thanh, tắt tiếng và hàng đợi được tích hợp vào trải nghiệm trình duyệt.",
+        "Các công cụ cục bộ quan tâm đến quyền riêng tư sẽ xử lý tệp người dùng trong trình duyệt khi có thể thay vì yêu cầu tải lên."
+    ],
+    "releaseNotes": [
+        "03-09-2026: Đã thêm tính năng trích xuất video iQIYI công khai, miễn phí, loại trừ quảng cáo riêng của trình phát và xuất MP4 được remux trên máy chủ.",
+        "17-08-2026: Đã cập nhật khả năng nhận diện bộ sưu tập công khai, nội dung nhiều phần và hướng dẫn tác vụ hàng loạt.",
+        "17-08-2026: Đã thêm các loại liên kết được hỗ trợ cho video công khai, danh sách phát, bộ sưu tập và tải xuống hàng loạt.",
+        "17-08-2026: Làm rõ ranh giới nội dung công khai, quyền riêng tư và quy trình lưu trình duyệt."
+    ],
+    "freeTools": [
+        {
+            "title": "Trò chuyện video ngẫu nhiên",
+            "desc": "Không cần điểm",
+            "path": "random-chat"
+        },
+        {
+            "title": "Chuyển đổi định dạng video",
+            "desc": "Không cần điểm",
+            "path": "remux"
+        },
+        {
+            "title": "Khám phá nội dung",
+            "desc": "Không cần điểm",
+            "path": "discover"
+        },
+        {
+            "title": "Ghi hình bảng trắng",
+            "desc": "Không cần điểm",
+            "path": "videorecord"
+        },
+        {
+            "title": "Truyền tập tin",
+            "desc": "Không cần điểm",
+            "path": "clipboard"
+        }
+    ],
+    "platformFaqs": {
+        "tiktok": [
+            {
+                "q": "Tôi nên làm gì nếu URL TikTok không thành công?",
+                "a": "Sử dụng URL chia sẻ bài đăng (không phải URL hồ sơ), thử lại, sau đó chuyển mạng nếu cần."
+            },
+            {
+                "q": "Tại sao chất lượng TikTok thấp hơn mong đợi?",
+                "a": "Điều chỉnh cài đặt chất lượng và phân tích lại. Các tùy chọn cuối cùng phụ thuộc vào phương tiện nguồn."
+            },
+            {
+                "q": "Tại sao liên kết trình chiếu TikTok không trả về phương tiện?",
+                "a": "Một số bài đăng trình chiếu và nội dung được bảo vệ bằng âm nhạc hiển thị phương tiện có thể tải xuống hạn chế. Hãy thử một URL bài đăng khác hoặc sử dụng thử lại hàng đợi."
+            },
+            {
+                "q": "Tại sao TikTok không hiển thị kết quả cho liên kết hồ sơ được sao chép?",
+                "a": "Liên kết hồ sơ không phải là các trang truyền thông trực tiếp. Mở một bài đăng cụ thể và sao chép URL chia sẻ của nó để phân tích cú pháp."
+            }
+        ],
+        "douyin": [
+            {
+                "q": "Tại sao link Douyin của tôi không tải được?",
+                "a": "Sử dụng URL chia sẻ bài đăng, không phải URL tìm kiếm/khám phá."
+            },
+            {
+                "q": "Tôi nên xử lý các tác vụ trong hàng đợi Douyin bị gián đoạn như thế nào?",
+                "a": "Đối với các tác vụ trong hàng đợi Douyin, hãy nhấp vào \"Tiếp tục\" để tiếp tục sau khi bị gián đoạn, sau đó nhấp vào \"Lưu\" sau khi hoàn thành."
+            },
+            {
+                "q": "Vì sao một số liên kết Douyin báo \"không có quyền\" hoặc trả về kết quả trống?",
+                "a": "Một số liên kết chia sẻ trỏ tới bài đăng bị hạn chế hoặc giới hạn theo khu vực. Hãy mở bài gốc, xác nhận truy cập công khai, rồi phân tích lại ở chế độ hàng đợi."
+            }
+        ],
+        "instagram": [
+            {
+                "q": "Thỉnh thoảng Instagram có bị lỗi không?",
+                "a": "Biến động phía nguồn tạm thời có thể xảy ra. Hãy thử lại và xác nhận quyền truy cập công khai."
+            },
+            {
+                "q": "Tại sao liên kết Instagram Story không thành công sau một thời gian?",
+                "a": "Câu chuyện có thể hết hạn nhanh chóng. Sử dụng URL câu chuyện công khai hiện có và phân tích nó càng sớm càng tốt."
+            },
+            {
+                "q": "Tại sao Instagram không trả lại phương tiện nào cho nội dung riêng tư?",
+                "a": "Nội dung riêng tư không thể truy cập công khai để phân tích cú pháp. Thay vào đó, hãy sử dụng URL bài đăng có thể truy cập công khai."
+            }
+        ],
+        "youtube": [
+            {
+                "q": "Tại sao phân tích cú pháp YouTube chậm?",
+                "a": "Video dài và lưu lượng truy cập cao nhất làm tăng thời gian phân tích. Chế độ xếp hàng được khuyến khích."
+            },
+            {
+                "q": "Tại sao tôi không thể tải xuống luồng trực tiếp trên YouTube ngay lập tức?",
+                "a": "Sự kiện phát trực tiếp và video mới tải lên có thể cần được xử lý từ phía nguồn trước tiên. Thử lại sau hoặc xếp hàng nhiệm vụ và tiếp tục nếu bị gián đoạn."
+            },
+            {
+                "q": "Tại sao URL YouTube phân tích cú pháp nhưng hiển thị các tùy chọn hạn chế?",
+                "a": "Các tùy chọn có sẵn tùy thuộc vào siêu dữ liệu nguồn, quy tắc khu vực và tính khả dụng của định dạng. Điều chỉnh cài đặt đầu ra và phân tích lại."
+            }
+        ],
+        "bilibili": [
+            {
+                "q": "Tệp Bilibili của tôi ở đâu sau khi hoàn thành hàng đợi?",
+                "a": "Chế độ hàng đợi cần có nhấp chuột Lưu rõ ràng sau khi hoàn thành nhiệm vụ."
+            },
+            {
+                "q": "Vì sao nội dung nhiều phần trên Bilibili chỉ tải được một phần?",
+                "a": "Một số liên kết chỉ trỏ tới một phân đoạn. Hãy sao chép đúng URL phân đoạn bạn cần và thêm từng phân đoạn vào hàng đợi riêng khi cần."
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "q": "Tại sao tải xuống Xiaohongshu không ổn định?",
+                "a": "Sử dụng chế độ xếp hàng và Tiếp tục. Tính khả dụng của phương tiện truyền thông phía nguồn có thể khác nhau."
+            },
+            {
+                "q": "Vì sao Xiaohongshu chỉ trả về âm thanh hoặc thiếu tùy chọn video?",
+                "a": "Một số ghi chú chỉ cung cấp biến thể media hạn chế. Hãy chỉnh chất lượng hoặc định dạng, phân tích lại cùng liên kết và thử lại sau nếu cần."
+            }
+        ],
+        "facebook": [
+            {
+                "q": "Tại sao tôi không thể tìm thấy tập tin Facebook của mình?",
+                "a": "Chế độ trực tiếp lưu vào thư mục trình duyệt; chế độ xếp hàng yêu cầu Lưu sau khi hoàn thành."
+            }
+        ],
+        "generic": [
+            {
+                "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
+                "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
+            }
+        ],
+        "toutiao": [
+            {
+                "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
+                "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
+            },
+            {
+                "q": "Tại sao tùy chọn HD bị thiếu?",
+                "a": "Các tùy chọn chất lượng có sẵn tùy thuộc vào các biến thể MP4 được Toutiao trả về cho video đó."
+            }
+        ],
+        "weibo": [
+            {
+                "q": "Làm cách nào để sao chép URL video Weibo?",
+                "a": "Mở trang video Weibo, nhấp vào Sao chép địa chỉ video trên trình phát, sau đó dán liên kết ngắn t.cn đã sao chép hoặc URL trang video Weibo vào FreeSaveVideo."
+            },
+            {
+                "q": "Tôi có thể dán liên kết ngắn t.cn không?",
+                "a": "Vâng. Weibo thường sao chép các liên kết ngắn t.cn và FreeSaveVideo có thể phân tích cú pháp các liên kết video Weibo công khai được hỗ trợ."
+            },
+            {
+                "q": "Tại sao liên kết Weibo không thành công?",
+                "a": "Đảm bảo rằng đó là video có thể phát công khai chứ không phải hồ sơ, trang bình luận, bài đăng riêng tư hoặc video đã bị xóa. Sao chép lại địa chỉ video nếu link nguồn đã hết hạn."
+            }
+        ],
+        "haokan": [
+            {
+                "q": "Làm cách nào để tải video Haokan xuống điện thoại của tôi?",
+                "a": "Sao chép URL video haokan.baidu.com công khai, dán vào FreeSaveVideo, sau đó lưu kết quả MP4 có sẵn từ trình duyệt trên thiết bị di động của bạn."
+            },
+            {
+                "q": "Việc này có giống như việc cài đặt ứng dụng Haokan không?",
+                "a": "Không. FreeSaveVideo trích xuất kết quả có thể tải xuống từ các liên kết video công khai. Nó không cung cấp trình cài đặt ứng dụng Haokan, khôi phục hoặc xếp hạng người chơi cục bộ."
+            },
+            {
+                "q": "Tôi có thể sử dụng liên kết Haokan từ kết quả tìm kiếm của Baidu không?",
+                "a": "Có, nếu kết quả mở ra một trang video Haokan công khai, chẳng hạn như haokan.baidu.com/v?vid=... thay vì trang tải xuống ứng dụng hoặc danh sách tìm kiếm."
+            }
+        ],
+        "iqiyi": [
+            {
+                "q": "Việc tải xuống iQIYI có bao gồm quảng cáo của người chơi không?",
+                "a": "Không. Trình trích xuất xác thực video được yêu cầu và chọn danh sách phát của chương trình chính thay vì thêm nội dung quảng cáo trình phát riêng biệt."
+            },
+            {
+                "q": "Tại sao FreeSaveVideo làm lại video iQIYI thành MP4?",
+                "a": "Nguồn công khai có thể được đóng gói dưới dạng MPEG-TS. Tính năng làm lại phía máy chủ sẽ bảo tồn các luồng âm thanh và video hiện có trong khi tạo ra MP4 dễ phát và lưu hơn."
+            },
+            {
+                "q": "Video iQIYI VIP hoặc DRM có được hỗ trợ không?",
+                "a": "Không. Chỉ hỗ trợ các video công khai, miễn phí mà không cần bỏ qua tư cách thành viên, thanh toán, DRM, đăng nhập, tài khoản hoặc kiểm soát khu vực."
+            }
+        ]
     },
-    {
-      "q": "Does FreeSaveVideo support playlists and batch downloads?",
-      "a": "Yes. Supported playlist, collection, and multi-link workflows can be turned into batch tasks so users can review and save several public videos from one page."
+    "platformPlaybooks": {
+        "tiktok": {
+            "heading": "Ghi chú quy trình làm việc của TikTok",
+            "notes": [
+                "Sử dụng URL bài đăng cụ thể.",
+                "Thử lại một lần rồi chuyển mạng.",
+                "Thích chế độ xếp hàng cho phương tiện dài hơn."
+            ],
+            "checklist": [
+                "URL bài đăng công khai đã được xác nhận",
+                "Đã định cấu hình cài đặt chất lượng",
+                "Đã lưu sau khi hoàn thành hàng đợi"
+            ]
+        },
+        "douyin": {
+            "heading": "Ghi chú quy trình làm việc của Douyin",
+            "notes": [
+                "Tránh các URL tìm kiếm/khám phá.",
+                "Sử dụng Tiếp tục khi bị gián đoạn.",
+                "Điều chỉnh cài đặt chất lượng trước khi phân tích lại."
+            ],
+            "checklist": [
+                "URL bài đăng cụ thể đã được xác nhận",
+                "Đã chọn chế độ trực tiếp và hàng đợi",
+                "Bước Lưu cuối cùng đã hoàn tất"
+            ]
+        },
+        "instagram": {
+            "heading": "Ghi chú quy trình làm việc trên Instagram",
+            "notes": [
+                "Có thể xảy ra biến động phía nguồn.",
+                "Các tùy chọn phụ thuộc vào phương tiện nguồn.",
+                "Chế độ xếp hàng cải thiện tính ổn định."
+            ],
+            "checklist": [
+                "Đã xác minh quyền truy cập công khai",
+                "Chế độ xếp hàng được sử dụng khi cần thiết",
+                "Vị trí tệp đã được xác nhận"
+            ]
+        },
+        "youtube": {
+            "heading": "Ghi chú quy trình làm việc của YouTube",
+            "notes": [
+                "Video dài có thể phân tích cú pháp chậm.",
+                "Đặt tùy chọn âm thanh trước khi phân tích cú pháp lại.",
+                "Sử dụng Tiếp tục để tránh khởi động lại hoàn toàn."
+            ],
+            "checklist": [
+                "URL video đã được xác nhận",
+                "Đã đặt tùy chọn đầu ra",
+                "Đã lưu sau khi hoàn thành hàng đợi"
+            ]
+        },
+        "bilibili": {
+            "heading": "Ghi chú quy trình làm việc của Bilibili",
+            "notes": [
+                "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
+                "Chế độ xếp hàng cần Lưu rõ ràng.",
+                "Phân tích lại sau khi thay đổi chất lượng."
+            ],
+            "checklist": [
+                "URL công khai đã được xác nhận",
+                "Đã kiểm tra chế độ và cài đặt",
+                "Đã xác minh đường dẫn tệp cuối cùng"
+            ]
+        },
+        "xiaohongshu": {
+            "heading": "Ghi chú quy trình làm việc của Xiaohongshu",
+            "notes": [
+                "Sử dụng chế độ xếp hàng trên các mạng không ổn định.",
+                "Số lượng tùy chọn phụ thuộc vào nguồn.",
+                "Hãy thử lại sau nếu nguồn bị hạn chế."
+            ],
+            "checklist": [
+                "URL công khai đã được xác nhận",
+                "Đã chọn chế độ xếp hàng",
+                "Lưu luồng đã hoàn tất"
+            ]
+        },
+        "facebook": {
+            "heading": "Ghi chú quy trình làm việc của Facebook",
+            "notes": [
+                "Trước tiên hãy kiểm tra chế độ trực tiếp và hàng đợi.",
+                "Hàng đợi cần hoàn thành cộng với Lưu.",
+                "Tiếp tục tiếp tục các nhiệm vụ bị gián đoạn."
+            ],
+            "checklist": [
+                "URL công khai đã được xác nhận",
+                "Chế độ rõ ràng",
+                "Đã kiểm tra đường dẫn lưu"
+            ]
+        },
+        "generic": {
+            "heading": "Ghi chú quy trình công việc chung",
+            "notes": [
+                "Sử dụng các URL có thể chia sẻ công khai.",
+                "Xếp hàng + tiếp tục trên mạng không ổn định.",
+                "Đặt chất lượng trước khi phân tích cú pháp lại."
+            ],
+            "checklist": [
+                "URL hợp lệ và công khai",
+                "Cài đặt phù hợp với đầu ra mục tiêu",
+                "Đã xác nhận vị trí tệp cuối cùng"
+            ]
+        },
+        "toutiao": {
+            "heading": "Ghi chú quy trình công việc chung",
+            "notes": [
+                "Sử dụng các URL có thể chia sẻ công khai.",
+                "Xếp hàng + tiếp tục trên mạng không ổn định.",
+                "Đặt chất lượng trước khi phân tích cú pháp lại."
+            ],
+            "checklist": [
+                "URL hợp lệ và công khai",
+                "Cài đặt phù hợp với đầu ra mục tiêu",
+                "Đã xác nhận vị trí tệp cuối cùng"
+            ]
+        },
+        "weibo": {
+            "heading": "Weibo danh sách kiểm tra tải xuống video",
+            "notes": [
+                "Sử dụng Sao chép địa chỉ video từ trình phát video Weibo khi có thể.",
+                "Một liên kết ngắn t.cn đã sao chép có thể được dán trực tiếp.",
+                "Nếu phân tích cú pháp không thành công, hãy mở lại video gốc và sao chép lại địa chỉ."
+            ],
+            "checklist": [
+                "Video Weibo được công khai và có thể phát được",
+                "Bạn đã sao chép địa chỉ video chứ không phải hồ sơ hoặc trang bình luận",
+                "Kết quả hiển thị tùy chọn MP4 có sẵn"
+            ]
+        },
+        "haokan": {
+            "heading": "Haokan tải xuống ghi chú quy trình làm việc",
+            "notes": [
+                "Sử dụng URL video haokan.baidu.com công khai chính xác chứ không phải trang kết quả tìm kiếm.",
+                "Lưu biến thể MP4 có sẵn khi phân tích cú pháp thành công.",
+                "Hãy coi việc cài đặt ứng dụng, khôi phục ứng dụng và tìm kiếm xếp hạng người chơi là các mục đích khác nhau từ việc trích xuất liên kết video."
+            ],
+            "checklist": [
+                "Trang video Haokan công khai đã được xác nhận",
+                "haokan.baidu.com/v?vid=... Đã sao chép URL",
+                "MP4 kết quả được lưu từ trình duyệt"
+            ]
+        },
+        "iqiyi": {
+            "heading": "Quy trình tải xuống video iQIYI đáng tin cậy",
+            "notes": [
+                "Sử dụng trang phát lại iqiyi.com/v_*.html công khai cụ thể chứ không phải trang chủ, kết quả tìm kiếm hoặc trang kênh.",
+                "Máy chủ xác định chương trình chính, loại trừ các clip quảng cáo trình phát riêng biệt và chuyển nguồn sang MP4.",
+                "Chỉ nội dung công khai, miễn phí mới đủ điều kiện; Các video VIP, trả phí, DRM, chỉ đăng nhập, đã xóa và bị giới hạn khu vực đều không được hỗ trợ."
+            ],
+            "checklist": [
+                "Đã xác nhận video iQIYI miễn phí công khai",
+                "Đã sao chép URL v_*.html cụ thể",
+                "Đã lưu MP4 được làm lại từ máy chủ sau khi xử lý"
+            ]
+        }
     },
-    {
-      "q": "Where are downloaded files saved?",
-      "a": "Direct downloads are saved to the browser default download folder. Queue downloads finish inside FreeSaveVideo first, then the user clicks Save to store the file locally."
-    },
-    {
-      "q": "Is FreeSaveVideo only a downloader?",
-      "a": "No. It also includes browser tools such as MP4 to MP3, audio extraction, video conversion, whiteboard recording, cross-device file transfer, Discover, and random 1v1 video chat."
+    "platformFailureCases": {
+        "tiktok": [
+            {
+                "title": "URL hồ sơ được sử dụng thay vì URL bài đăng",
+                "symptoms": "Không có phương tiện có thể tải xuống hoặc lỗi phân tích cú pháp chung.",
+                "fixes": [
+                    "Sao chép URL chia sẻ bài đăng chính xác.",
+                    "Thử lại phân tích cú pháp sau khi chuyển đổi mạng nếu cần.",
+                    "Sử dụng chế độ xếp hàng để tải xuống lâu."
+                ]
+            },
+            {
+                "title": "Liên kết hồ sơ hoặc trường hợp cạnh trình chiếu",
+                "symptoms": "Phân tích cú pháp trả về kết quả trống hoặc tùy chọn phương tiện bị hạn chế.",
+                "fixes": [
+                    "Sử dụng URL chia sẻ bài đăng cụ thể thay vì liên kết hồ sơ.",
+                    "Thử lại ở chế độ xếp hàng trên mạng không ổn định.",
+                    "Chuyển sang bài đăng công khai khác khi nội dung nguồn bị hạn chế."
+                ]
+            }
+        ],
+        "douyin": [
+            {
+                "title": "Đã sao chép URL tìm kiếm/khám phá",
+                "symptoms": "Không có kết quả hoặc phân tích cú pháp không ổn định mặc dù URL có vẻ hợp lệ.",
+                "fixes": [
+                    "Mở chi tiết bài đăng và sao chép URL chia sẻ bài đăng.",
+                    "Phân tích lại bằng chế độ xếp hàng.",
+                    "Tiếp tục với Tiếp tục khi bị gián đoạn."
+                ]
+            },
+            {
+                "title": "Bài đăng bị giới hạn hoặc liên kết chia sẻ giới hạn theo khu vực",
+                "symptoms": "Liên kết mở không ổn định hoặc phân tích trả về không có quyền / kết quả trống.",
+                "fixes": [
+                    "Xác nhận bài đăng có thể truy cập công khai trong mạng hiện tại.",
+                    "Sao chép lại URL chia sẻ từ đúng trang bài đăng cụ thể.",
+                    "Dùng chế độ hàng đợi và \"Tiếp tục\" khi mạng không ổn định."
+                ]
+            }
+        ],
+        "instagram": [
+            {
+                "title": "Biến động phía nguồn tạm thời",
+                "symptoms": "Lỗi phân tích cú pháp không liên tục.",
+                "fixes": [
+                    "Thử lại sau khoảng thời gian ngắn.",
+                    "Xác nhận khả năng tiếp cận công cộng.",
+                    "Sử dụng chế độ xếp hàng để thử lại."
+                ]
+            },
+            {
+                "title": "Câu chuyện đã hết hạn hoặc nội dung riêng tư",
+                "symptoms": "Không có phương tiện có thể tải xuống mặc dù URL có vẻ hợp lệ.",
+                "fixes": [
+                    "Xác nhận câu chuyện vẫn còn tồn tại.",
+                    "Sử dụng URL bài đăng công khai khi có thể.",
+                    "Hãy thử lại nhanh chóng trước khi nội dung tạm thời hết hạn."
+                ]
+            }
+        ],
+        "youtube": [
+            {
+                "title": "Độ trễ phân tích video dài",
+                "symptoms": "Tiến trình chậm trong quá trình phân tích cú pháp hoặc tải xuống.",
+                "fixes": [
+                    "Giữ nhiệm vụ xếp hàng chạy.",
+                    "Tiếp tục với Continue nếu bị gián đoạn.",
+                    "Sử dụng tùy chọn âm thanh khi chỉ cần âm thanh."
+                ]
+            },
+            {
+                "title": "Phát trực tiếp hoặc tải lên mới chưa sẵn sàng",
+                "symptoms": "Phân tích cú pháp thành công chậm hoặc trả về các tùy chọn không đầy đủ.",
+                "fixes": [
+                    "Đợi quá trình xử lý phía nguồn hoàn tất và thử lại.",
+                    "Sử dụng chế độ xếp hàng cho các tác vụ dài.",
+                    "Tiếp tục với Tiếp tục nếu mạng bị gián đoạn."
+                ]
+            }
+        ],
+        "bilibili": [
+            {
+                "title": "Hàng đợi đã hoàn thành nhưng không có tệp cục bộ",
+                "symptoms": "Trạng thái hoàn thành nhiệm vụ được hiển thị nhưng tệp bị thiếu.",
+                "fixes": [
+                    "Nhấp vào Lưu sau khi hoàn thành hàng đợi.",
+                    "Chỉ kiểm tra thư mục trình duyệt cho chế độ trực tiếp.",
+                    "Xác minh vị trí lưu cuối cùng."
+                ]
+            },
+            {
+                "title": "Bài nhiều phần bị ánh xạ vào một phân đoạn duy nhất",
+                "symptoms": "Kết quả tải xuống chỉ có một tập hoặc một đoạn.",
+                "fixes": [
+                    "Mở đúng trang phân đoạn và sao chép URL chia sẻ đó.",
+                    "Nếu cần đủ bộ, hãy thêm từng phân đoạn thành tác vụ hàng đợi riêng.",
+                    "Sau khi mỗi tác vụ hoàn tất, bấm \"Lưu\" để ghi tệp cục bộ."
+                ]
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "title": "Thông lượng không ổn định",
+                "symptoms": "Tốc độ giảm hoặc nhiệm vụ bị gián đoạn.",
+                "fixes": [
+                    "Chuyển sang chế độ xếp hàng.",
+                    "Tiếp tục từ điểm dừng với Tiếp tục.",
+                    "Hãy thử lại sau nếu phương tiện phía nguồn bị hạn chế."
+                ]
+            },
+            {
+                "title": "Biến thể media bị giới hạn từ ghi chú nguồn",
+                "symptoms": "Chỉ xuất hiện một phần định dạng hoặc thiếu tùy chọn video.",
+                "fixes": [
+                    "Phân tích lại sau khi điều chỉnh chất lượng và định dạng.",
+                    "Thử lại sau khi tài nguyên phía nguồn được làm mới.",
+                    "Dùng chế độ hàng đợi để tăng độ ổn định khi hoàn tất tác vụ."
+                ]
+            }
+        ],
+        "facebook": [
+            {
+                "title": "Nhầm lẫn trực tiếp và hàng đợi",
+                "symptoms": "Quá trình tải xuống có vẻ hoàn tất nhưng không tìm thấy tệp.",
+                "fixes": [
+                    "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
+                    "Chế độ xếp hàng yêu cầu hành động Lưu.",
+                    "Kiểm tra trạng thái hàng đợi và đường dẫn cục bộ."
+                ]
+            }
+        ],
+        "generic": [
+            {
+                "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
+                "symptoms": "Không có đầu ra được trả lại nhiều lần.",
+                "fixes": [
+                    "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
+                    "Điều chỉnh cài đặt và phân tích lại.",
+                    "Sử dụng chế độ hàng đợi có hỗ trợ tiếp tục."
+                ]
+            }
+        ],
+        "toutiao": [
+            {
+                "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
+                "symptoms": "Không có đầu ra được trả lại nhiều lần.",
+                "fixes": [
+                    "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
+                    "Điều chỉnh cài đặt và phân tích lại.",
+                    "Sử dụng chế độ hàng đợi có hỗ trợ tiếp tục."
+                ]
+            }
+        ],
+        "weibo": [
+            {
+                "title": "Một hồ sơ, trang bình luận hoặc liên kết đã hết hạn đã được sao chép",
+                "symptoms": "Trang mở ra ở Weibo, nhưng FreeSaveVideo không thể trả về kết quả video có thể phát được.",
+                "fixes": [
+                    "Quay lại trang video cụ thể và chọn Sao chép địa chỉ video.",
+                    "Xác nhận video vẫn ở chế độ công khai và có thể phát được.",
+                    "Nếu liên kết ngắn đã hết hạn, hãy sao chép lại địa chỉ video và thử lại."
+                ]
+            }
+        ],
+        "haokan": [
+            {
+                "title": "Đã sao chép trang kết quả tìm kiếm hoặc trang cài đặt ứng dụng",
+                "symptoms": "Phân tích cú pháp không trả về phương tiện nào vì URL không phải là trang video Haokan trực tiếp.",
+                "fixes": [
+                    "Mở video Haokan cụ thể trước khi sao chép URL.",
+                    "Sử dụng các liên kết haokan.baidu.com/v?vid=... khi có sẵn.",
+                    "Không dán các trang cài đặt ứng dụng, khôi phục hoặc xếp hạng người chơi Haokan."
+                ]
+            },
+            {
+                "title": "Video bị hạn chế hoặc không có sẵn",
+                "symptoms": "Trang mở ra nhưng không có tùy chọn MP4 có thể tải xuống nào được trả về.",
+                "fixes": [
+                    "Xác nhận video ở chế độ công khai và vẫn trực tuyến.",
+                    "Thử lại một lần ở chế độ xếp hàng nếu mạng không ổn định.",
+                    "Hãy thử một video Haokan công khai khác khi nội dung nguồn bị giới hạn."
+                ]
+            }
+        ],
+        "iqiyi": [
+            {
+                "title": "Một trang iQIYI không có video hoặc bị hạn chế đã được sao chép",
+                "symptoms": "Phân tích cú pháp không trả về phương tiện hoặc báo cáo nào cho thấy liên kết không được hỗ trợ.",
+                "fixes": [
+                    "Mở video cụ thể trước khi sao chép địa chỉ.",
+                    "Sử dụng trang iqiyi.com/v_*.html phát khi đăng xuất.",
+                    "Không sử dụng URL VIP, trả phí, DRM, chỉ đăng nhập, tìm kiếm, kênh hoặc trang chủ."
+                ]
+            },
+            {
+                "title": "Video nguồn đã thay đổi hoặc không còn khả dụng",
+                "symptoms": "Trang trước đó đã hoạt động nhưng hiện tại việc trích xuất hoặc xử lý MP4 không thành công.",
+                "fixes": [
+                    "Xác nhận rằng trang nguồn vẫn phát công khai.",
+                    "Sao chép một URL mới và thử lại một lần.",
+                    "Hãy thử một video iQIYI công khai, miễn phí khác để phân biệt hạn chế theo nguồn cụ thể."
+                ]
+            }
+        ]
     }
-  ],
-  "productTips": [
-    "For best results, paste a specific public video, post, Shorts, playlist, or collection URL rather than a profile or channel homepage.",
-    "Use batch mode for multiple links and playlist results; queue tasks can retry and continue after interruptions.",
-    "Set quality, format, audio-only, or mute options before parsing when you need a specific output.",
-    "Use the platform-specific download pages when available because they explain the exact link type that works best."
-  ],
-  "productAdvantages": [
-    "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
-    "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
-    "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
-  ],
-  "releaseNotes": [
-    "Clarified best link types for public video, playlist, collection, and batch download workflows.",
-    "Added stronger public-content, privacy, and browser-tool positioning across download pages."
-  ],
-  "freeTools": [
-    {
-      "title": "Trò chuyện video ngẫu nhiên",
-      "desc": "Không cần điểm",
-      "path": "random-chat"
-    },
-    {
-      "title": "Chuyển đổi định dạng video",
-      "desc": "Không cần điểm",
-      "path": "remux"
-    },
-    {
-      "title": "Khám phá nội dung",
-      "desc": "Không cần điểm",
-      "path": "discover"
-    },
-    {
-      "title": "Ghi hình bảng trắng",
-      "desc": "Không cần điểm",
-      "path": "videorecord"
-    },
-    {
-      "title": "Truyền tập tin",
-      "desc": "Không cần điểm",
-      "path": "clipboard"
-    }
-  ],
-  "platformFaqs": {
-    "tiktok": [
-      {
-        "q": "Tôi nên làm gì nếu URL TikTok không thành công?",
-        "a": "Sử dụng URL chia sẻ bài đăng (không phải URL hồ sơ), thử lại, sau đó chuyển mạng nếu cần."
-      },
-      {
-        "q": "Tại sao chất lượng TikTok thấp hơn mong đợi?",
-        "a": "Điều chỉnh cài đặt chất lượng và phân tích lại. Các tùy chọn cuối cùng phụ thuộc vào phương tiện nguồn."
-      },
-      {
-        "q": "Tại sao liên kết trình chiếu TikTok không trả về phương tiện?",
-        "a": "Một số bài đăng trình chiếu và nội dung được bảo vệ bằng âm nhạc hiển thị phương tiện có thể tải xuống hạn chế. Hãy thử một URL bài đăng khác hoặc sử dụng thử lại hàng đợi."
-      },
-      {
-        "q": "Tại sao TikTok không hiển thị kết quả cho liên kết hồ sơ được sao chép?",
-        "a": "Liên kết hồ sơ không phải là các trang truyền thông trực tiếp. Mở một bài đăng cụ thể và sao chép URL chia sẻ của nó để phân tích cú pháp."
-      }
-    ],
-    "douyin": [
-      {
-        "q": "Tại sao link Douyin của tôi không tải được?",
-        "a": "Sử dụng URL chia sẻ bài đăng, không phải URL tìm kiếm/khám phá."
-      },
-      {
-        "q": "Tôi nên xử lý các tác vụ trong hàng đợi Douyin bị gián đoạn như thế nào?",
-        "a": "Đối với các tác vụ trong hàng đợi Douyin, hãy nhấp vào \"Tiếp tục\" để tiếp tục sau khi bị gián đoạn, sau đó nhấp vào \"Lưu\" sau khi hoàn thành."
-      },
-      {
-        "q": "Vì sao một số liên kết Douyin báo \"không có quyền\" hoặc trả về kết quả trống?",
-        "a": "Một số liên kết chia sẻ trỏ tới bài đăng bị hạn chế hoặc giới hạn theo khu vực. Hãy mở bài gốc, xác nhận truy cập công khai, rồi phân tích lại ở chế độ hàng đợi."
-      }
-    ],
-    "instagram": [
-      {
-        "q": "Thỉnh thoảng Instagram có bị lỗi không?",
-        "a": "Biến động phía nguồn tạm thời có thể xảy ra. Hãy thử lại và xác nhận quyền truy cập công khai."
-      },
-      {
-        "q": "Tại sao liên kết Instagram Story không thành công sau một thời gian?",
-        "a": "Câu chuyện có thể hết hạn nhanh chóng. Sử dụng URL câu chuyện công khai hiện có và phân tích nó càng sớm càng tốt."
-      },
-      {
-        "q": "Tại sao Instagram không trả lại phương tiện nào cho nội dung riêng tư?",
-        "a": "Nội dung riêng tư không thể truy cập công khai để phân tích cú pháp. Thay vào đó, hãy sử dụng URL bài đăng có thể truy cập công khai."
-      }
-    ],
-    "youtube": [
-      {
-        "q": "Tại sao phân tích cú pháp YouTube chậm?",
-        "a": "Video dài và lưu lượng truy cập cao nhất làm tăng thời gian phân tích. Chế độ xếp hàng được khuyến khích."
-      },
-      {
-        "q": "Tại sao tôi không thể tải xuống luồng trực tiếp trên YouTube ngay lập tức?",
-        "a": "Sự kiện phát trực tiếp và video mới tải lên có thể cần được xử lý từ phía nguồn trước tiên. Thử lại sau hoặc xếp hàng nhiệm vụ và tiếp tục nếu bị gián đoạn."
-      },
-      {
-        "q": "Tại sao URL YouTube phân tích cú pháp nhưng hiển thị các tùy chọn hạn chế?",
-        "a": "Các tùy chọn có sẵn tùy thuộc vào siêu dữ liệu nguồn, quy tắc khu vực và tính khả dụng của định dạng. Điều chỉnh cài đặt đầu ra và phân tích lại."
-      }
-    ],
-    "bilibili": [
-      {
-        "q": "Tệp Bilibili của tôi ở đâu sau khi hoàn thành hàng đợi?",
-        "a": "Chế độ hàng đợi cần có nhấp chuột Lưu rõ ràng sau khi hoàn thành nhiệm vụ."
-      },
-      {
-        "q": "Vì sao nội dung nhiều phần trên Bilibili chỉ tải được một phần?",
-        "a": "Một số liên kết chỉ trỏ tới một phân đoạn. Hãy sao chép đúng URL phân đoạn bạn cần và thêm từng phân đoạn vào hàng đợi riêng khi cần."
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "q": "Tại sao tải xuống Xiaohongshu không ổn định?",
-        "a": "Sử dụng chế độ xếp hàng và Tiếp tục. Tính khả dụng của phương tiện truyền thông phía nguồn có thể khác nhau."
-      },
-      {
-        "q": "Vì sao Xiaohongshu chỉ trả về âm thanh hoặc thiếu tùy chọn video?",
-        "a": "Một số ghi chú chỉ cung cấp biến thể media hạn chế. Hãy chỉnh chất lượng hoặc định dạng, phân tích lại cùng liên kết và thử lại sau nếu cần."
-      }
-    ],
-    "facebook": [
-      {
-        "q": "Tại sao tôi không thể tìm thấy tập tin Facebook của mình?",
-        "a": "Chế độ trực tiếp lưu vào thư mục trình duyệt; chế độ xếp hàng yêu cầu Lưu sau khi hoàn thành."
-      }
-    ],
-    "generic": [
-      {
-        "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
-        "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
-      }
-    ],
-    "toutiao": [
-      {
-        "q": "Tôi nên kiểm tra điều gì đầu tiên khi phân tích cú pháp không thành công?",
-        "a": "Xác minh quyền truy cập URL công khai, kiểm tra cài đặt rồi thử lại với chế độ hàng đợi."
-      }
-    ],
-    "weibo": [
-      {
-        "q": "How do I copy a Weibo video URL?",
-        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
-      },
-      {
-        "q": "Can I paste a t.cn short link?",
-        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
-      },
-      {
-        "q": "Why does a Weibo link fail?",
-        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
-      }
-    ]
-  },
-  "platformPlaybooks": {
-    "tiktok": {
-      "heading": "Ghi chú quy trình làm việc của TikTok",
-      "notes": [
-        "Sử dụng URL bài đăng cụ thể.",
-        "Thử lại một lần rồi chuyển mạng.",
-        "Thích chế độ xếp hàng cho phương tiện dài hơn."
-      ],
-      "checklist": [
-        "URL bài đăng công khai đã được xác nhận",
-        "Đã định cấu hình cài đặt chất lượng",
-        "Đã lưu sau khi hoàn thành hàng đợi"
-      ]
-    },
-    "douyin": {
-      "heading": "Ghi chú quy trình làm việc của Douyin",
-      "notes": [
-        "Tránh các URL tìm kiếm/khám phá.",
-        "Sử dụng Tiếp tục khi bị gián đoạn.",
-        "Điều chỉnh cài đặt chất lượng trước khi phân tích lại."
-      ],
-      "checklist": [
-        "URL bài đăng cụ thể đã được xác nhận",
-        "Đã chọn chế độ trực tiếp và hàng đợi",
-        "Bước Lưu cuối cùng đã hoàn tất"
-      ]
-    },
-    "instagram": {
-      "heading": "Ghi chú quy trình làm việc trên Instagram",
-      "notes": [
-        "Có thể xảy ra biến động phía nguồn.",
-        "Các tùy chọn phụ thuộc vào phương tiện nguồn.",
-        "Chế độ xếp hàng cải thiện tính ổn định."
-      ],
-      "checklist": [
-        "Đã xác minh quyền truy cập công khai",
-        "Chế độ xếp hàng được sử dụng khi cần thiết",
-        "Vị trí tệp đã được xác nhận"
-      ]
-    },
-    "youtube": {
-      "heading": "Ghi chú quy trình làm việc của YouTube",
-      "notes": [
-        "Video dài có thể phân tích cú pháp chậm.",
-        "Đặt tùy chọn âm thanh trước khi phân tích cú pháp lại.",
-        "Sử dụng Tiếp tục để tránh khởi động lại hoàn toàn."
-      ],
-      "checklist": [
-        "URL video đã được xác nhận",
-        "Đã đặt tùy chọn đầu ra",
-        "Đã lưu sau khi hoàn thành hàng đợi"
-      ]
-    },
-    "bilibili": {
-      "heading": "Ghi chú quy trình làm việc của Bilibili",
-      "notes": [
-        "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
-        "Chế độ xếp hàng cần Lưu rõ ràng.",
-        "Phân tích lại sau khi thay đổi chất lượng."
-      ],
-      "checklist": [
-        "URL công khai đã được xác nhận",
-        "Đã kiểm tra chế độ và cài đặt",
-        "Đã xác minh đường dẫn tệp cuối cùng"
-      ]
-    },
-    "xiaohongshu": {
-      "heading": "Ghi chú quy trình làm việc của Xiaohongshu",
-      "notes": [
-        "Sử dụng chế độ xếp hàng trên các mạng không ổn định.",
-        "Số lượng tùy chọn phụ thuộc vào nguồn.",
-        "Hãy thử lại sau nếu nguồn bị hạn chế."
-      ],
-      "checklist": [
-        "URL công khai đã được xác nhận",
-        "Đã chọn chế độ xếp hàng",
-        "Lưu luồng đã hoàn tất"
-      ]
-    },
-    "facebook": {
-      "heading": "Ghi chú quy trình làm việc của Facebook",
-      "notes": [
-        "Trước tiên hãy kiểm tra chế độ trực tiếp và hàng đợi.",
-        "Hàng đợi cần hoàn thành cộng với Lưu.",
-        "Tiếp tục tiếp tục các nhiệm vụ bị gián đoạn."
-      ],
-      "checklist": [
-        "URL công khai đã được xác nhận",
-        "Chế độ rõ ràng",
-        "Đã kiểm tra đường dẫn lưu"
-      ]
-    },
-    "generic": {
-      "heading": "Ghi chú quy trình công việc chung",
-      "notes": [
-        "Sử dụng các URL có thể chia sẻ công khai.",
-        "Xếp hàng + tiếp tục trên mạng không ổn định.",
-        "Đặt chất lượng trước khi phân tích cú pháp lại."
-      ],
-      "checklist": [
-        "URL hợp lệ và công khai",
-        "Cài đặt phù hợp với đầu ra mục tiêu",
-        "Đã xác nhận vị trí tệp cuối cùng"
-      ]
-    },
-    "toutiao": {
-      "heading": "Ghi chú quy trình công việc chung",
-      "notes": [
-        "Sử dụng các URL có thể chia sẻ công khai.",
-        "Xếp hàng + tiếp tục trên mạng không ổn định.",
-        "Đặt chất lượng trước khi phân tích cú pháp lại."
-      ],
-      "checklist": [
-        "URL hợp lệ và công khai",
-        "Cài đặt phù hợp với đầu ra mục tiêu",
-        "Đã xác nhận vị trí tệp cuối cùng"
-      ]
-    },
-    "weibo": {
-      "heading": "Weibo video download checklist",
-      "notes": [
-        "Use Copy video address from the Weibo video player when possible.",
-        "A copied t.cn short link can be pasted directly.",
-        "If parsing fails, reopen the original video and copy the address again."
-      ],
-      "checklist": [
-        "The Weibo video is public and playable",
-        "You copied a video address, not a profile or comment page",
-        "The result shows an available MP4 option"
-      ]
-    }
-  },
-  "platformFailureCases": {
-    "tiktok": [
-      {
-        "title": "URL hồ sơ được sử dụng thay vì URL bài đăng",
-        "symptoms": "Không có phương tiện có thể tải xuống hoặc lỗi phân tích cú pháp chung.",
-        "fixes": [
-          "Sao chép URL chia sẻ bài đăng chính xác.",
-          "Thử lại phân tích cú pháp sau khi chuyển đổi mạng nếu cần.",
-          "Sử dụng chế độ xếp hàng để tải xuống lâu."
-        ]
-      },
-      {
-        "title": "Liên kết hồ sơ hoặc trường hợp cạnh trình chiếu",
-        "symptoms": "Phân tích cú pháp trả về kết quả trống hoặc tùy chọn phương tiện bị hạn chế.",
-        "fixes": [
-          "Sử dụng URL chia sẻ bài đăng cụ thể thay vì liên kết hồ sơ.",
-          "Thử lại ở chế độ xếp hàng trên mạng không ổn định.",
-          "Chuyển sang bài đăng công khai khác khi nội dung nguồn bị hạn chế."
-        ]
-      }
-    ],
-    "douyin": [
-      {
-        "title": "Đã sao chép URL tìm kiếm/khám phá",
-        "symptoms": "Không có kết quả hoặc phân tích cú pháp không ổn định mặc dù URL có vẻ hợp lệ.",
-        "fixes": [
-          "Mở chi tiết bài đăng và sao chép URL chia sẻ bài đăng.",
-          "Phân tích lại bằng chế độ xếp hàng.",
-          "Tiếp tục với Tiếp tục khi bị gián đoạn."
-        ]
-      },
-      {
-        "title": "Bài đăng bị giới hạn hoặc liên kết chia sẻ giới hạn theo khu vực",
-        "symptoms": "Liên kết mở không ổn định hoặc phân tích trả về không có quyền / kết quả trống.",
-        "fixes": [
-          "Xác nhận bài đăng có thể truy cập công khai trong mạng hiện tại.",
-          "Sao chép lại URL chia sẻ từ đúng trang bài đăng cụ thể.",
-          "Dùng chế độ hàng đợi và \"Tiếp tục\" khi mạng không ổn định."
-        ]
-      }
-    ],
-    "instagram": [
-      {
-        "title": "Biến động phía nguồn tạm thời",
-        "symptoms": "Lỗi phân tích cú pháp không liên tục.",
-        "fixes": [
-          "Thử lại sau khoảng thời gian ngắn.",
-          "Xác nhận khả năng tiếp cận công cộng.",
-          "Sử dụng chế độ xếp hàng để thử lại."
-        ]
-      },
-      {
-        "title": "Câu chuyện đã hết hạn hoặc nội dung riêng tư",
-        "symptoms": "Không có phương tiện có thể tải xuống mặc dù URL có vẻ hợp lệ.",
-        "fixes": [
-          "Xác nhận câu chuyện vẫn còn tồn tại.",
-          "Sử dụng URL bài đăng công khai khi có thể.",
-          "Hãy thử lại nhanh chóng trước khi nội dung tạm thời hết hạn."
-        ]
-      }
-    ],
-    "youtube": [
-      {
-        "title": "Độ trễ phân tích video dài",
-        "symptoms": "Tiến trình chậm trong quá trình phân tích cú pháp hoặc tải xuống.",
-        "fixes": [
-          "Giữ nhiệm vụ xếp hàng chạy.",
-          "Tiếp tục với Continue nếu bị gián đoạn.",
-          "Sử dụng tùy chọn âm thanh khi chỉ cần âm thanh."
-        ]
-      },
-      {
-        "title": "Phát trực tiếp hoặc tải lên mới chưa sẵn sàng",
-        "symptoms": "Phân tích cú pháp thành công chậm hoặc trả về các tùy chọn không đầy đủ.",
-        "fixes": [
-          "Đợi quá trình xử lý phía nguồn hoàn tất và thử lại.",
-          "Sử dụng chế độ xếp hàng cho các tác vụ dài.",
-          "Tiếp tục với Tiếp tục nếu mạng bị gián đoạn."
-        ]
-      }
-    ],
-    "bilibili": [
-      {
-        "title": "Hàng đợi đã hoàn thành nhưng không có tệp cục bộ",
-        "symptoms": "Trạng thái hoàn thành nhiệm vụ được hiển thị nhưng tệp bị thiếu.",
-        "fixes": [
-          "Nhấp vào Lưu sau khi hoàn thành hàng đợi.",
-          "Chỉ kiểm tra thư mục trình duyệt cho chế độ trực tiếp.",
-          "Xác minh vị trí lưu cuối cùng."
-        ]
-      },
-      {
-        "title": "Bài nhiều phần bị ánh xạ vào một phân đoạn duy nhất",
-        "symptoms": "Kết quả tải xuống chỉ có một tập hoặc một đoạn.",
-        "fixes": [
-          "Mở đúng trang phân đoạn và sao chép URL chia sẻ đó.",
-          "Nếu cần đủ bộ, hãy thêm từng phân đoạn thành tác vụ hàng đợi riêng.",
-          "Sau khi mỗi tác vụ hoàn tất, bấm \"Lưu\" để ghi tệp cục bộ."
-        ]
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "title": "Thông lượng không ổn định",
-        "symptoms": "Tốc độ giảm hoặc nhiệm vụ bị gián đoạn.",
-        "fixes": [
-          "Chuyển sang chế độ xếp hàng.",
-          "Tiếp tục từ điểm dừng với Tiếp tục.",
-          "Hãy thử lại sau nếu phương tiện phía nguồn bị hạn chế."
-        ]
-      },
-      {
-        "title": "Biến thể media bị giới hạn từ ghi chú nguồn",
-        "symptoms": "Chỉ xuất hiện một phần định dạng hoặc thiếu tùy chọn video.",
-        "fixes": [
-          "Phân tích lại sau khi điều chỉnh chất lượng và định dạng.",
-          "Thử lại sau khi tài nguyên phía nguồn được làm mới.",
-          "Dùng chế độ hàng đợi để tăng độ ổn định khi hoàn tất tác vụ."
-        ]
-      }
-    ],
-    "facebook": [
-      {
-        "title": "Nhầm lẫn trực tiếp và hàng đợi",
-        "symptoms": "Quá trình tải xuống có vẻ hoàn tất nhưng không tìm thấy tệp.",
-        "fixes": [
-          "Chế độ trực tiếp lưu vào thư mục trình duyệt.",
-          "Chế độ xếp hàng yêu cầu hành động Lưu.",
-          "Kiểm tra trạng thái hàng đợi và đường dẫn cục bộ."
-        ]
-      }
-    ],
-    "generic": [
-      {
-        "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
-        "symptoms": "Không có đầu ra được trả lại nhiều lần.",
-        "fixes": [
-          "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
-          "Điều chỉnh cài đặt và phân tích lại.",
-          "Sử dụng chế độ xếp hàng với sơ yếu lý lịch."
-        ]
-      }
-    ],
-    "toutiao": [
-      {
-        "title": "Lỗi phân tích cú pháp URL có vẻ hợp lệ",
-        "symptoms": "Không có đầu ra được trả lại nhiều lần.",
-        "fixes": [
-          "Xác nhận URL trỏ đến nội dung cụ thể công khai.",
-          "Điều chỉnh cài đặt và phân tích lại.",
-          "Sử dụng chế độ xếp hàng với sơ yếu lý lịch."
-        ]
-      }
-    ],
-    "weibo": [
-      {
-        "title": "A profile, comment page, or expired link was copied",
-        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
-        "fixes": [
-          "Go back to the specific video page and choose Copy video address.",
-          "Confirm the video is still public and playable.",
-          "If the short link expired, copy the video address again and retry."
-        ]
-      }
-    ]
-  }
 }

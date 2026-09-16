@@ -13,17 +13,17 @@
         },
         "retrying": "Wiederholen",
         "waiting": "Warten",
-        "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to: {{ value }}",
-        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
+        "auto_saving": "Speichern auf Ihrem Gerät...",
+        "auto_saved": "Gespeichert unter: {{ value }}",
+        "auto_save_failed": "Das automatische Speichern ist fehlgeschlagen. Klicken Sie auf Speichern, um diese Datei zu behalten."
     },
     "waiting_notice": "Derzeit sind {{ count }} Videos in der Warteschlange. Bitte warten Sie geduldig.",
     "success_notice": "In diesem Batch wurden {{ count }} Videos erfolgreich heruntergeladen.",
-    "save_all_done": "Save all downloaded",
+    "save_all_done": "Speichern Sie alle heruntergeladenen Dateien",
     "save_clicked": "Speichern geklickt",
-    "manual_save_warning": "Important: after videos finish, click Save for any item that was not auto-saved. If you chose a folder for batch auto-save, look in that folder first; otherwise check browser downloads (Ctrl+J) or your device Downloads folder.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
-    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
-    "save_started": "Save started",
+    "manual_save_warning": "Wichtig: Klicken Sie nach Abschluss der Videos für jedes Element, das nicht automatisch gespeichert wurde, auf „Speichern“. Wenn Sie einen Ordner für die automatische Stapelspeicherung ausgewählt haben, schauen Sie zuerst in diesem Ordner nach. Andernfalls überprüfen Sie die Browser-Downloads (Ctrl+J) oder den Download-Ordner Ihres Geräts.",
+    "keep_awake_warning": "Der Batch-Download läuft. Halten Sie dieses Gerät aktiv, bis alle Elemente fertig sind, und klicken Sie dann für die fertigen Dateien auf „Speichern“.",
+    "keep_awake_auto_save_warning": "Der Batch-Download läuft. Halten Sie dieses Gerät wach; Jede fertige Datei wird automatisch in Ihrem ausgewählten Ordner gespeichert.",
+    "save_started": "Speichern gestartet",
     "network_stalled_waiting": "Das Netzwerk ist vorübergehend langsam. Der Download wartet weiter auf Daten und wird automatisch fortgesetzt."
 }

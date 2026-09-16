@@ -22,6 +22,15 @@
     $: isZh = data.lang === 'zh';
     $: isJa = data.lang === 'ja';
     $: isTh = data.lang === 'th';
+    const extraCopy: Record<string, Record<string, string>> = {
+        es: { directory: 'Directorio de descargadores populares', guide: 'Cómo usar', guides: 'Guías de descarga populares', faq: 'Preguntas frecuentes de descarga', discover: 'Descubrir vídeos populares', related: 'Enlaces relacionados', core: 'Páginas principales', similar: 'Descargas similares', home: 'Inicio', download: 'Descargar', breadcrumb: 'Ruta de navegación', browser: 'Navegador web', capability: 'Resumen de funciones', collection: 'Otros formatos de colecciones compatibles', practical: 'Consejos prácticos de descarga', flow: 'Proceso de descarga y guardado', advantages: 'Ventajas de la plataforma', troubleshooting: 'Solución de problemas por plataforma', guidance: 'Indicaciones clave', checklist: 'Lista de comprobación', failures: 'Casos de error y soluciones' },
+        fr: { directory: 'Répertoire des téléchargeurs populaires', guide: 'Comment utiliser', guides: 'Guides de téléchargement populaires', faq: 'FAQ sur le téléchargement', discover: 'Découvrir les vidéos populaires', related: 'Liens associés', core: 'Pages principales', similar: 'Téléchargements similaires', home: 'Accueil', download: 'Télécharger', breadcrumb: 'Fil d’Ariane', browser: 'Navigateur web', capability: 'Résumé des fonctionnalités', collection: 'Autres formats de collections compatibles', practical: 'Conseils pratiques de téléchargement', flow: 'Parcours de téléchargement et d’enregistrement', advantages: 'Avantages de la plateforme', troubleshooting: 'Dépannage par plateforme', guidance: 'Conseils essentiels', checklist: 'Liste de vérification', failures: 'Cas d’échec et solutions' },
+        de: { directory: 'Beliebte Video-Downloader', guide: 'Verwendung von', guides: 'Beliebte Download-Anleitungen', faq: 'Häufige Downloadfragen', discover: 'Beliebte Videos entdecken', related: 'Verwandte Links', core: 'Hauptseiten', similar: 'Ähnliche Downloads', home: 'Startseite', download: 'Download', breadcrumb: 'Brotkrümelnavigation', browser: 'Webbrowser', capability: 'Funktionsübersicht', collection: 'Weitere unterstützte Sammlungsformate', practical: 'Praktische Download-Tipps', flow: 'Download- und Speichervorgang', advantages: 'Plattformvorteile', troubleshooting: 'Plattformspezifische Fehlerbehebung', guidance: 'Wichtige Hinweise', checklist: 'Erfolgscheckliste', failures: 'Fehlerfälle und Lösungen' },
+        vi: { directory: 'Danh mục công cụ tải video phổ biến', guide: 'Cách sử dụng', guides: 'Hướng dẫn tải xuống phổ biến', faq: 'Câu hỏi thường gặp', discover: 'Khám phá video phổ biến', related: 'Liên kết liên quan', core: 'Trang chính', similar: 'Nội dung tải tương tự', home: 'Trang chủ', download: 'Tải xuống', breadcrumb: 'Đường dẫn điều hướng', browser: 'Trình duyệt web', capability: 'Tóm tắt tính năng', collection: 'Các định dạng bộ sưu tập khác được hỗ trợ', practical: 'Mẹo tải xuống hữu ích', flow: 'Quy trình tải và lưu', advantages: 'Ưu điểm nền tảng', troubleshooting: 'Khắc phục sự cố theo nền tảng', guidance: 'Hướng dẫn chính', checklist: 'Danh sách kiểm tra', failures: 'Trường hợp lỗi và cách khắc phục' },
+        id: { directory: 'Direktori pengunduh video populer', guide: 'Cara menggunakan', guides: 'Panduan unduhan populer', faq: 'Tanya jawab unduhan', discover: 'Temukan video populer', related: 'Tautan terkait', core: 'Halaman utama', similar: 'Unduhan serupa', home: 'Beranda', download: 'Unduh', breadcrumb: 'Jejak navigasi', browser: 'Peramban web', capability: 'Ringkasan kemampuan', collection: 'Format koleksi lain yang didukung', practical: 'Tips unduhan praktis', flow: 'Alur unduh dan simpan', advantages: 'Keunggulan platform', troubleshooting: 'Pemecahan masalah per platform', guidance: 'Panduan utama', checklist: 'Daftar pemeriksaan', failures: 'Kasus kegagalan dan solusi' },
+        ru: { directory: 'Каталог популярных загрузчиков', guide: 'Как использовать', guides: 'Популярные руководства', faq: 'Частые вопросы о загрузке', discover: 'Популярные видео', related: 'Связанные ссылки', core: 'Основные страницы', similar: 'Похожие загрузки', home: 'Главная', download: 'Скачать', breadcrumb: 'Навигационная цепочка', browser: 'Веб-браузер', capability: 'Обзор возможностей', collection: 'Другие поддерживаемые форматы подборок', practical: 'Практические советы по загрузке', flow: 'Процесс загрузки и сохранения', advantages: 'Преимущества платформы', troubleshooting: 'Устранение неполадок платформы', guidance: 'Основные рекомендации', checklist: 'Контрольный список', failures: 'Ошибки и способы исправления' },
+    };
+    $: localCopy = extraCopy[data.lang];
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/download/${data.slug}`;
     $: guideUrl = data.guideSlug ? `/${data.lang}/guide/${data.guideSlug}` : null;
     $: faqUrl = `/${data.lang}/faq`;
@@ -30,15 +39,15 @@
     $: downloadIndexUrl = `/${data.lang}/download`;
     $: learnUrl = '/en/learn';
     $: homeUrl = `/${data.lang}`;
-    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอยอดนิยม' : 'Popular video downloader directory';
+    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอยอดนิยม' : localCopy?.directory ?? 'Popular video downloader directory';
     $: currentGuideLabel = isZh
         ? `${localeContent.h1}\u4f7f\u7528\u6307\u5357`
         : isTh
           ? `คู่มือการใช้ ${localeContent.h1}`
-          : `How to use ${localeContent.h1}`;
-    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : 'Popular download guides';
-    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : 'Video download FAQ';
-    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : 'Trending video discovery';
+           : `${localCopy?.guide ?? 'How to use'} ${localeContent.h1}`;
+    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : localCopy?.guides ?? 'Popular download guides';
+    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : localCopy?.faq ?? 'Video download FAQ';
+    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : localCopy?.discover ?? 'Trending video discovery';
     $: localizedDownloadHubLabel = isJa ? '人気動画ダウンローダー一覧' : downloadHubLabel;
     $: localizedCurrentGuideLabel = isJa ? `${localeContent.h1} の使い方` : currentGuideLabel;
     $: localizedGuideHubLabel = isJa ? '人気プラットフォームのダウンロードガイド' : guideHubLabel;
@@ -96,13 +105,13 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home',
+                      name: isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : localCopy?.home ?? 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isJa ? 'ダウンロード' : isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : 'Download',
+                      name: isJa ? 'ダウンロード' : isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : localCopy?.download ?? 'Download',
                       item: `https://${fallbackHost}/${data.lang}/download`,
                   },
                   {
@@ -155,7 +164,7 @@
                   name: localeContent.h1,
                   description: pageDesc,
                   applicationCategory: 'MultimediaApplication',
-                  operatingSystem: isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : 'Web browser',
+                  operatingSystem: isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : localCopy?.browser ?? 'Web browser',
                   featureList: localeContent.features,
                   knowsAbout: [
                       localeContent.h1,
@@ -295,7 +304,7 @@
 
                 {#if data.landing.supportedLinkFormats?.length}
                     <div class="format-list">
-                        <h3>Other supported collection formats</h3>
+                        <h3>{localCopy?.collection ?? 'Other supported collection formats'}</h3>
                         <ul class="feature-list">
                             {#each data.landing.supportedLinkFormats as format}
                                 <li>{format}</li>
@@ -306,16 +315,16 @@
             </section>
         {/if}
 
-        <nav class="crumb-links" aria-label={isJa ? 'パンくずリスト' : isTh ? 'เส้นทางนำทาง' : 'Breadcrumb'}>
-            <a href={homeUrl}>{isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home'}</a>
+        <nav class="crumb-links" aria-label={isJa ? 'パンくずリスト' : isTh ? 'เส้นทางนำทาง' : localCopy?.breadcrumb ?? 'Breadcrumb'}>
+            <a href={homeUrl}>{isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : localCopy?.home ?? 'Home'}</a>
             <span>/</span>
-            <a href={downloadIndexUrl}>{isJa ? 'ダウンロード' : isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : 'Download'}</a>
+            <a href={downloadIndexUrl}>{isJa ? 'ダウンロード' : isZh ? '\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลด' : localCopy?.download ?? 'Download'}</a>
             <span>/</span>
             <span class="crumb-current">{localeContent.h1}</span>
         </nav>
 
         {#if localeContent.facts?.length}
-            <section class="card fact-summary" aria-label={isJa ? '製品機能の概要' : isZh ? '产品能力说明' : isTh ? 'สรุปความสามารถของบริการ' : 'Product capability summary'}>
+            <section class="card fact-summary" aria-label={isJa ? '製品機能の概要' : isZh ? '产品能力说明' : isTh ? 'สรุปความสามารถของบริการ' : localCopy?.capability ?? 'Product capability summary'}>
                 {#each localeContent.facts as fact}
                     <p>{fact}</p>
                 {/each}
@@ -344,10 +353,10 @@
 
         {#if productTips.length || productAdvantages.length}
         <section class="card practical">
-            <h2>{isJa ? '実用的なダウンロードのヒント' : isZh ? '实用下载提示' : isTh ? 'คำแนะนำสำหรับการดาวน์โหลด' : 'Practical download tips'}</h2>
+            <h2>{isJa ? '実用的なダウンロードのヒント' : isZh ? '实用下载提示' : isTh ? 'คำแนะนำสำหรับการดาวน์โหลด' : localCopy?.practical ?? 'Practical download tips'}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isJa ? 'ダウンロードと保存の流れ' : isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : 'Download and save flow'}</h3>
+                    <h3>{isJa ? 'ダウンロードと保存の流れ' : isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : localCopy?.flow ?? 'Download and save flow'}</h3>
                     <ul class="feature-list">
                         {#each productTips as tip}
                             <li>{tip}</li>
@@ -355,7 +364,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isJa ? 'プラットフォーム別の特長' : isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : 'Platform advantages'}</h3>
+                    <h3>{isJa ? 'プラットフォーム別の特長' : isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : localCopy?.advantages ?? 'Platform advantages'}</h3>
                     <ul class="feature-list">
                         {#each productAdvantages as item}
                             <li>{item}</li>
@@ -368,7 +377,7 @@
 
         {#if platformFaqs.length}
         <section class="card practical">
-            <h2>{isJa ? 'プラットフォーム別の問題解決' : isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : 'Platform-specific troubleshooting'}</h2>
+            <h2>{isJa ? 'プラットフォーム別の問題解決' : isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : localCopy?.troubleshooting ?? 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
                 {#each platformFaqs as item}
                     <details class="faq-item">
@@ -385,7 +394,7 @@
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : 'Key guidance'}</h3>
+                    <h3>{isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : localCopy?.guidance ?? 'Key guidance'}</h3>
                     <ul class="feature-list">
                         {#each platformPlaybook.notes as note}
                             <li>{note}</li>
@@ -393,7 +402,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : 'Success checklist'}</h3>
+                    <h3>{isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : localCopy?.checklist ?? 'Success checklist'}</h3>
                     <ul class="feature-list">
                         {#each platformPlaybook.checklist as item}
                             <li>{item}</li>
@@ -406,7 +415,7 @@
 
         {#if platformFailureCases.length}
         <section class="card practical">
-            <h2>{isJa ? '失敗例と解決方法' : isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : 'Failure cases and fix paths'}</h2>
+            <h2>{isJa ? '失敗例と解決方法' : isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : localCopy?.failures ?? 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
                 {#each platformFailureCases as failure}
                     <article class="failure-case">
@@ -435,10 +444,10 @@
         </section>
 
         <section class="card related">
-            <h2>{isJa ? '関連ページ' : isZh ? '\u76f8\u5173\u9875\u9762' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
+            <h2>{isJa ? '関連ページ' : isZh ? '\u76f8\u5173\u9875\u9762' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : localCopy?.related ?? 'Related links'}</h2>
             <div class="related-grid">
                 <section class="related-column">
-                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : isTh ? 'หน้าหลัก' : 'Core pages'}</h3>
+                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : isTh ? 'หน้าหลัก' : localCopy?.core ?? 'Core pages'}</h3>
                     <div class="related-links">
                         <a class="related-link related-link--primary" href={downloadIndexUrl}>
                             {localizedDownloadHubLabel}
@@ -466,7 +475,7 @@
                 </section>
 
                 <section class="related-column">
-                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : isTh ? 'เครื่องมือดาวน์โหลดที่คล้ายกัน' : 'Similar downloads'}</h3>
+                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : isTh ? 'เครื่องมือดาวน์โหลดที่คล้ายกัน' : localCopy?.similar ?? 'Similar downloads'}</h3>
                     <div class="related-links">
                         {#each data.relatedPages.slice(0, 6) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}

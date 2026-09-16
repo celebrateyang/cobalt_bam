@@ -3,11 +3,11 @@
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
         "description": "Unterstützt öffentliche Inhalte der in der Diensteliste aufgeführten Plattformen, darunter YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) und Facebook. Prüfen und speichern Sie verfügbare Formate auf Mobilgeräten oder Computern.",
         "douyin": {
-            "name": "TikTok/Douyin Downloader",
+            "name": "TikTok/Douyin-Downloader",
             "desc": "Unterstützt inländische und internationale Versionen von TikTok/Douyin. Entfernung von Wasserzeichen mit einem Klick, HD-Audio und -Video bleiben erhalten."
         },
         "bilibili": {
-            "name": "Bilibili Video Downloader",
+            "name": "Bilibili-Video-Downloader",
             "desc": "Unterstützt Anime, Uploader-Beiträge und Kursvideos. Bewahrt Klarheit und Untertitel."
         },
         "iqiyi": {
@@ -19,56 +19,56 @@
             "desc": "Kopieren Sie Kuaishou-Links zum Analysieren. Batch-Download ist effizienter."
         },
         "haokan": {
-            "name": "Haokan Video Downloader",
+            "name": "Haokan Video-Downloader",
             "desc": "Speichere oeffentliche Haokan/Baidu-Videos als verfuegbare MP4-Qualitaeten, einschliesslich HD, wenn die Quelle sie anbietet."
         },
         "toutiao": {
-            "name": "Toutiao Video Downloader",
+            "name": "Toutiao Video-Downloader",
             "desc": "Füge einen öffentlichen Toutiao-Videolink ein und speichere verfügbare MP4-Qualitäten, inklusive HD, wenn die Quelle sie anbietet."
         },
         "sohu": {
-            "name": "Sohu Video Downloader",
+            "name": "Sohu Video-Downloader",
             "desc": "Lade oeffentliche Videos von Sohu Video als MP4 herunter und nutze bei Bedarf Audio- oder Stumm-Modus."
         },
         "weibo": {
-            "name": "Weibo Video Downloader",
+            "name": "Weibo Video-Downloader",
             "desc": "Kopiere die Weibo-Videoadresse oder einen t.cn-Kurzlink, um verfuegbare MP4-Qualitaeten zu extrahieren."
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Amazon-Live-Downloader",
+            "desc": "Speichern Sie öffentliche Amazon Live-Replay-Videos von amazon.com/live/video- oder amazon.com/vdp-Links mit verfügbaren HLS-Qualitätsoptionen."
         },
         "xiaohongshu": {
-            "name": "Xiaohongshu Video Saver",
+            "name": "Xiaohongshu-Video-Downloader",
             "desc": "Entfernt In-App-Wasserzeichen, behält Titelbilder und originalen HD-Ton."
         },
         "instagram": {
-            "name": "Instagram Reels Downloader",
+            "name": "Instagram-Reels-Downloader",
             "desc": "Unterstützt Reels, Beiträge und Story-Videos. Speichern Sie direkt auf Ihrem lokalen Gerät."
         },
         "youtube": {
-            "name": "YouTube Video Downloader",
+            "name": "YouTube Video-Downloader",
             "desc": "Fügen Sie den Link zu einem öffentlichen YouTube-Video, Short oder einer öffentlichen Playlist ein und speichern Sie die von der Quelle angebotenen Video- oder Audioformate."
         },
         "facebook": {
-            "name": "Facebook Video Downloader",
+            "name": "Facebook-Video-Downloader",
             "desc": "Analysiert öffentliche Facebook-Videos und Reels und zeigt die von der Quelle angebotenen Auflösungen. Private oder anmeldepflichtige Inhalte werden nicht unterstützt."
         },
         "twitter": {
-            "name": "X (Twitter) Video Saver",
+            "name": "X-(Twitter)-Video-Downloader",
             "desc": "Kopieren Sie Tweet-Links, um Originalvideos bei gleichbleibender Klarheit zu extrahieren."
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "NAVER Video-Downloader",
+            "desc": "Speichern Sie öffentliche NAVER-Videos über die Links naver.me und m.naver.com/shorts."
         },
         "niconico": {
-            "name": "NicoNico Video Downloader",
+            "name": "NicoNico Video-Downloader",
             "desc": "Speichere oeffentliche NicoNico watch- und shorts-Videos mit verfuegbaren HLS-Qualitaeten."
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "Threads-Video-Downloader",
+            "desc": "Fügen Sie einen öffentlichen Threads-Beitragslink ein, um verfügbare Videos oder Fotos direkt zu speichern."
         }
     },
     "cards": {
@@ -125,10 +125,19 @@
             "title": "Nur-Audio und Stumm-Modus",
             "desc": "Wechsle vor dem Download zwischen Auto, Nur-Audio und Stumm-Modus."
         },
-        "aria": "Download capabilities"
+        "aria": "Download-Funktionen"
     },
-    "feedback": { "desc": "Melden Sie Downloadprobleme und Vorschläge." },
-    "points_balloon": { "aria": "Hinweis bei wenigen Punkten", "title": "Nur noch wenige Punkte", "text": "Erfahren Sie, wie Sie weitere Punkte erhalten.", "cta": "Zum Konto", "points_label": "Punkte", "close": "schließen" },
+    "feedback": {
+        "desc": "Melden Sie Downloadprobleme und Vorschläge."
+    },
+    "points_balloon": {
+        "aria": "Hinweis bei wenigen Punkten",
+        "title": "Nur noch wenige Punkte",
+        "text": "Erfahren Sie, wie Sie weitere Punkte erhalten.",
+        "cta": "Zum Konto",
+        "points_label": "Punkte",
+        "close": "schließen"
+    },
     "extension": {
         "badge": "Kostenlos · Chrome",
         "title": "Direkt von jeder Webseite herunterladen",

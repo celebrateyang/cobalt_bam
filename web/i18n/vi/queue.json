@@ -13,17 +13,17 @@
         },
         "retrying": "đang thử lại",
         "waiting": "đang chờ",
-        "auto_saving": "saving to your device...",
-        "auto_saved": "Saved to: {{ value }}",
-        "auto_save_failed": "Automatic save failed. Click Save to keep this file."
+        "auto_saving": "đang lưu vào thiết bị của bạn...",
+        "auto_saved": "Đã lưu vào: {{ value }}",
+        "auto_save_failed": "Tự động lưu không thành công. Bấm Lưu để giữ tập tin này."
     },
     "waiting_notice": "Hien co {{ count }} video trong hang doi. Vui long cho tai xuong.",
     "success_notice": "Đã tải xuống thành công {{ count }} video trong lô này.",
-    "save_all_done": "Save all downloaded",
+    "save_all_done": "Lưu tất cả đã tải xuống",
     "save_clicked": "Da bam luu",
-    "manual_save_warning": "Important: after videos finish, click Save for any item that was not auto-saved. If you chose a folder for batch auto-save, look in that folder first; otherwise check browser downloads (Ctrl+J) or your device Downloads folder.",
-    "keep_awake_warning": "Batch download is running. Keep this device awake until every item finishes, then click \"Save\" for the completed files.",
-    "keep_awake_auto_save_warning": "Batch download is running. Keep this device awake; each completed file will be saved to your selected folder automatically.",
-    "save_started": "Save started",
+    "manual_save_warning": "Quan trọng: sau khi video kết thúc, hãy nhấp vào Lưu cho bất kỳ mục nào chưa được lưu tự động. Nếu bạn chọn một thư mục để tự động lưu hàng loạt, trước tiên hãy xem thư mục đó; nếu không hãy kiểm tra các bản tải xuống của trình duyệt (Ctrl+J) hoặc thư mục Tải xuống trên thiết bị của bạn.",
+    "keep_awake_warning": "Tải xuống hàng loạt đang chạy. Giữ thiết bị này ở trạng thái hoạt động cho đến khi mọi mục hoàn tất, sau đó nhấp vào \"Lưu\" để lưu các tệp đã hoàn thành.",
+    "keep_awake_auto_save_warning": "Tải xuống hàng loạt đang chạy. Giữ thiết bị này luôn hoạt động; mỗi tệp hoàn thành sẽ tự động được lưu vào thư mục bạn đã chọn.",
+    "save_started": "Đã bắt đầu lưu",
     "network_stalled_waiting": "Mạng tạm thời chậm. Tải xuống vẫn đang chờ dữ liệu và sẽ tự động tiếp tục khi kết nối phục hồi."
 }

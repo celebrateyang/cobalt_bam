@@ -35,8 +35,8 @@
             "desc": "Copia la direccion del video de Weibo o un enlace corto t.cn para extraer opciones MP4 disponibles."
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Descargador de Amazon Live",
+            "desc": "Guarda repeticiones públicas de Amazon Live desde enlaces amazon.com/live/video o amazon.com/vdp con las calidades HLS disponibles."
         },
         "xiaohongshu": {
             "name": "Guardador de videos de Xiaohongshu",
@@ -59,16 +59,16 @@
             "desc": "Copie enlaces de tweets para extraer videos originales manteniendo la claridad."
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "Descargador de vídeos de NAVER",
+            "desc": "Guarda vídeos públicos de NAVER desde enlaces naver.me y m.naver.com/shorts."
         },
         "niconico": {
             "name": "Descargador de videos NicoNico",
             "desc": "Guarda videos publicos de NicoNico watch y shorts con las calidades disponibles."
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "Descargador de vídeos de Threads",
+            "desc": "Pega el enlace de una publicación pública de Threads para guardar los vídeos o fotos disponibles."
         }
     },
     "cards": {
@@ -125,10 +125,19 @@
             "title": "Solo audio y modo silencioso",
             "desc": "Cambia entre automatico, solo audio y modo sin sonido antes de descargar."
         },
-        "aria": "Download capabilities"
+        "aria": "Funciones de descarga"
     },
-    "feedback": { "desc": "Comunica problemas de descarga y sugerencias." },
-    "points_balloon": { "aria": "Aviso de pocos puntos", "title": "Quedan pocos puntos", "text": "Consulta cómo conseguir más puntos.", "cta": "Ir a la cuenta", "points_label": "puntos", "close": "cerrar" },
+    "feedback": {
+        "desc": "Comunica problemas de descarga y sugerencias."
+    },
+    "points_balloon": {
+        "aria": "Aviso de pocos puntos",
+        "title": "Quedan pocos puntos",
+        "text": "Consulta cómo conseguir más puntos.",
+        "cta": "Ir a la cuenta",
+        "points_label": "puntos",
+        "close": "cerrar"
+    },
     "extension": {
         "badge": "Gratis · Chrome",
         "title": "Descarga directamente desde cualquier web",

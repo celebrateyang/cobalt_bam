@@ -31,12 +31,12 @@
             "desc": "Tai video cong khai tu Sohu Video duoi dang MP4, co che do chi am thanh va tat tieng."
         },
         "weibo": {
-            "name": "Weibo Video Downloader",
-            "desc": "Copy the Weibo video address or t.cn short link to extract available MP4 quality options."
+            "name": "Weibo Trình tải xuống video",
+            "desc": "Sao chép địa chỉ video Weibo hoặc liên kết ngắn t.cn để trích xuất các tùy chọn chất lượng MP4 có sẵn."
         },
         "amazon": {
-            "name": "Amazon Live Downloader",
-            "desc": "Save public Amazon Live replay videos from amazon.com/live/video or amazon.com/vdp links with available HLS quality options."
+            "name": "Amazon Live Trình tải xuống",
+            "desc": "Lưu các video phát lại Amazon Live công khai từ các liên kết amazon.com/live/video hoặc amazon.com/vdp với các tùy chọn chất lượng HLS có sẵn."
         },
         "xiaohongshu": {
             "name": "Lưu video Xiaohongshu",
@@ -59,16 +59,16 @@
             "desc": "Sao chép liên kết tweet để trích xuất video gốc trong khi vẫn giữ nguyên độ rõ nét."
         },
         "naver": {
-            "name": "NAVER Video Downloader",
-            "desc": "Save public NAVER videos from naver.me and m.naver.com/shorts links."
+            "name": "NAVER Trình tải xuống video",
+            "desc": "Lưu các video NAVER công khai từ liên kết naver.me và m.naver.com/shorts."
         },
         "niconico": {
             "name": "Trinh tai video NicoNico",
             "desc": "Luu video NicoNico watch va shorts cong khai voi cac tuy chon chat luong co san."
         },
         "threads": {
-            "name": "Threads Video Downloader",
-            "desc": "Paste a public Threads post link to save available videos or photos directly."
+            "name": "Trình tải xuống video chủ đề",
+            "desc": "Dán liên kết bài đăng công khai trên Chủ đề để lưu trực tiếp các video hoặc ảnh có sẵn."
         }
     },
     "cards": {
@@ -125,10 +125,19 @@
             "title": "Chi audio va che do tat tieng",
             "desc": "Chuyen giua tu dong, chi audio va tat tieng truoc khi tai xuong."
         },
-        "aria": "Download capabilities"
+        "aria": "Khả năng tải xuống"
     },
-    "feedback": { "desc": "Báo cáo lỗi tải xuống và góp ý." },
-    "points_balloon": { "aria": "Nhắc nhở sắp hết điểm", "title": "Điểm sắp hết", "text": "Xem cách nhận thêm điểm.", "cta": "Đến tài khoản", "points_label": "điểm", "close": "đóng" },
+    "feedback": {
+        "desc": "Báo cáo lỗi tải xuống và góp ý."
+    },
+    "points_balloon": {
+        "aria": "Nhắc nhở sắp hết điểm",
+        "title": "Điểm sắp hết",
+        "text": "Xem cách nhận thêm điểm.",
+        "cta": "Đến tài khoản",
+        "points_label": "điểm",
+        "close": "đóng"
+    },
     "extension": {
         "badge": "Miễn phí · Chrome",
         "title": "Tải trực tiếp từ mọi trang web",

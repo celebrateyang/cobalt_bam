@@ -18,12 +18,21 @@
     const isZh = data.lang === 'zh';
     const isJa = data.lang === 'ja';
     const isTh = data.lang === 'th';
-    const pageTitle = isZh ? '下载指南' : isTh ? 'คู่มือดาวน์โหลดวิดีโอ' : 'Download Guides';
+    const extraCopy: Record<string, Record<string, string>> = {
+        es: { title: 'Guías de descarga de vídeos', desc: 'Guías paso a paso para guardar contenido público de plataformas populares, con límites y soluciones a problemas comunes.', eyebrow: 'Centro de guías', view: 'Ver guía', download: 'Descargar', related: 'Enlaces relacionados', directory: 'Directorio de descargas', faq: 'Preguntas frecuentes', home: 'Volver al descargador', suffix: 'página de descarga' },
+        fr: { title: 'Guides de téléchargement vidéo', desc: 'Guides pas à pas pour enregistrer le contenu public des plateformes populaires, avec limites et solutions aux problèmes courants.', eyebrow: 'Centre des guides', view: 'Voir le guide', download: 'Télécharger', related: 'Liens associés', directory: 'Répertoire des téléchargements', faq: 'Questions fréquentes', home: 'Retour au téléchargeur', suffix: 'page de téléchargement' },
+        de: { title: 'Video-Download-Anleitungen', desc: 'Schrittweise Anleitungen zum Speichern öffentlicher Inhalte beliebter Plattformen, einschließlich Grenzen und Fehlerbehebung.', eyebrow: 'Anleitungsübersicht', view: 'Anleitung öffnen', download: 'Herunterladen', related: 'Verwandte Links', directory: 'Downloadverzeichnis', faq: 'Häufige Fragen', home: 'Zurück zum Downloader', suffix: 'Downloadseite' },
+        vi: { title: 'Hướng dẫn tải video', desc: 'Hướng dẫn từng bước để lưu nội dung công khai từ các nền tảng phổ biến, kèm giới hạn và cách xử lý sự cố.', eyebrow: 'Trung tâm hướng dẫn', view: 'Xem hướng dẫn', download: 'Tải xuống', related: 'Liên kết liên quan', directory: 'Danh mục tải xuống', faq: 'Câu hỏi thường gặp', home: 'Quay lại trình tải xuống', suffix: 'trang tải xuống' },
+        id: { title: 'Panduan unduhan video', desc: 'Panduan langkah demi langkah untuk menyimpan konten publik dari platform populer, beserta batasan dan pemecahan masalah.', eyebrow: 'Pusat panduan', view: 'Lihat panduan', download: 'Unduh', related: 'Tautan terkait', directory: 'Direktori unduhan', faq: 'Pertanyaan umum', home: 'Kembali ke pengunduh', suffix: 'halaman unduhan' },
+        ru: { title: 'Руководства по загрузке видео', desc: 'Пошаговые инструкции по сохранению публичного контента популярных платформ, включая ограничения и устранение неполадок.', eyebrow: 'Центр руководств', view: 'Открыть руководство', download: 'Скачать', related: 'Связанные ссылки', directory: 'Каталог загрузок', faq: 'Частые вопросы', home: 'Вернуться к загрузчику', suffix: 'страница загрузки' },
+    };
+    const localCopy = extraCopy[data.lang];
+    const pageTitle = isZh ? '下载指南' : isTh ? 'คู่มือดาวน์โหลดวิดีโอ' : localCopy?.title ?? 'Download Guides';
     const pageDesc = isZh
         ? '为常见平台提供下载步骤与常见问题，一步一步完成。'
         : isTh
           ? 'คำแนะนำทีละขั้นตอนสำหรับดาวน์โหลดเนื้อหาสาธารณะจากแพลตฟอร์มยอดนิยม พร้อมข้อจำกัดและวิธีแก้ปัญหาที่พบบ่อย'
-          : 'Step-by-step download guides for popular platforms.';
+          : localCopy?.desc ?? 'Step-by-step download guides for popular platforms.';
     const featuredDownloads = getHubDownloadLinks(
         6,
         data.lang === 'en' ? 'international' : 'all',
@@ -33,14 +42,14 @@
     const localizedPageDesc = isJa
         ? 'プラットフォーム別に、公開動画の保存手順、対応リンク、よくある問題を確認できます。'
         : pageDesc;
-    const hubEyebrow = isJa ? 'ダウンロードガイド' : isZh ? '下载教程' : isTh ? 'คู่มือการดาวน์โหลด' : 'Guide hub';
-    const viewGuideLabel = isJa ? 'ガイドを見る' : isZh ? '查看教程' : isTh ? 'ดูคำแนะนำ' : 'View guide';
-    const downloadLabel = isJa ? 'ダウンロード' : isZh ? '去下载' : isTh ? 'ดาวน์โหลด' : 'Download';
-    const relatedLabel = isJa ? '関連リンク' : isZh ? '相关入口' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links';
-    const directoryLabel = isJa ? '動画ダウンロード一覧' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอ' : 'Download directory';
-    const faqLabel = isJa ? 'よくある質問' : isZh ? '常见问题 FAQ' : isTh ? 'คำถามที่พบบ่อย' : 'Frequently asked questions';
-    const homeLabel = isJa ? 'ダウンローダーのホームへ戻る' : isZh ? '返回下载首页' : isTh ? 'กลับไปยังหน้าแรกของเครื่องมือดาวน์โหลด' : 'Back to home downloader';
-    const downloadPageSuffix = isJa ? 'ダウンロードページ' : isZh ? '下载页' : isTh ? 'หน้าดาวน์โหลด' : 'download page';
+    const hubEyebrow = isJa ? 'ダウンロードガイド' : isZh ? '下载教程' : isTh ? 'คู่มือการดาวน์โหลด' : localCopy?.eyebrow ?? 'Guide hub';
+    const viewGuideLabel = isJa ? 'ガイドを見る' : isZh ? '查看教程' : isTh ? 'ดูคำแนะนำ' : localCopy?.view ?? 'View guide';
+    const downloadLabel = isJa ? 'ダウンロード' : isZh ? '去下载' : isTh ? 'ดาวน์โหลด' : localCopy?.download ?? 'Download';
+    const relatedLabel = isJa ? '関連リンク' : isZh ? '相关入口' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : localCopy?.related ?? 'Related links';
+    const directoryLabel = isJa ? '動画ダウンロード一覧' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอ' : localCopy?.directory ?? 'Download directory';
+    const faqLabel = isJa ? 'よくある質問' : isZh ? '常见问题 FAQ' : isTh ? 'คำถามที่พบบ่อย' : localCopy?.faq ?? 'Frequently asked questions';
+    const homeLabel = isJa ? 'ダウンローダーのホームへ戻る' : isZh ? '返回下载首页' : isTh ? 'กลับไปยังหน้าแรกของเครื่องมือดาวน์โหลด' : localCopy?.home ?? 'Back to home downloader';
+    const downloadPageSuffix = isJa ? 'ダウンロードページ' : isZh ? '下载页' : isTh ? 'หน้าดาวน์โหลด' : localCopy?.suffix ?? 'download page';
 </script>
 
 <svelte:head>

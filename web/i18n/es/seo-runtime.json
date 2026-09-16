@@ -1,476 +1,576 @@
 {
-  "updatedAt": "2026-08-17",
-  "productFaqs": [
-    {
-      "q": "Which links work best?",
-      "a": "Use a specific public video URL, post URL, Shorts URL, or supported playlist/collection URL. Profile pages, channel homepages, search pages, private links, and membership-only content are not reliable download targets."
+    "updatedAt": "2026-08-17",
+    "productFaqs": [
+        {
+            "q": "¿Qué enlaces funcionan mejor?",
+            "a": "Utilice la URL de un vídeo público concreto, una publicación, un YouTube Short o una lista de reproducción o colección compatible. Los perfiles, las páginas de inicio de canales, las búsquedas, los enlaces privados y el contenido exclusivo para miembros no son destinos de descarga compatibles."
+        },
+        {
+            "q": "¿FreeSaveVideo admite listas de reproducción y descargas por lotes?",
+            "a": "Sí. Los flujos de trabajo de listas de reproducción, colecciones y enlaces múltiples compatibles se pueden convertir en tareas por lotes para que los usuarios puedan revisar y guardar varios videos públicos desde una página."
+        },
+        {
+            "q": "¿Dónde se guardan los archivos descargados?",
+            "a": "Las descargas directas se guardan en la carpeta de descargas predeterminada del navegador. Las descargas en cola finalizan primero dentro de FreeSaveVideo y luego el usuario hace clic en Guardar para almacenar el archivo localmente."
+        },
+        {
+            "q": "¿FreeSaveVideo es solo un descargador?",
+            "a": "No. También incluye herramientas de navegador como MP4 a MP3, extracción de audio, conversión de video, grabación de pizarra, transferencia de archivos entre dispositivos, Discover y chat de video aleatorio 1v1."
+        }
+    ],
+    "productTips": [
+        "Para obtener mejores resultados, pegue un video público específico, una publicación, un cortometraje, una lista de reproducción o una URL de colección en lugar de la página de inicio de un perfil o canal.",
+        "Utilice el modo por lotes para múltiples enlaces y resultados de listas de reproducción; Las tareas en cola pueden volver a intentarse y continuar después de las interrupciones.",
+        "Configure las opciones de calidad, formato, solo audio o silencio antes de analizar cuando necesite una salida específica.",
+        "Utilice las páginas de descarga específicas de la plataforma cuando estén disponibles porque explican el tipo de enlace exacto que funciona mejor."
+    ],
+    "productAdvantages": [
+        "Límite claro del contenido público: FreeSaveVideo es para enlaces de acceso público, no para medios privados o de pago.",
+        "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
+        "Los flujos de trabajo por lotes, listas de reproducción, colecciones, audio, silencio y colas están integrados en la experiencia del navegador.",
+        "Las herramientas locales conscientes de la privacidad procesan los archivos del usuario en el navegador cuando es posible en lugar de requerir carga."
+    ],
+    "releaseNotes": [
+        "2026-09-03: Se añadió la extracción de vídeos públicos y gratuitos de iQIYI, la exclusión de anuncios del reproductor y la entrega de MP4 remultiplexado en el servidor.",
+        "2026-08-17: Se actualizaron la detección de colecciones públicas y contenidos con varias partes, y las instrucciones para tareas por lotes.",
+        "2026-08-17: Se agregaron tipos de enlaces admitidos para videos públicos, listas de reproducción, colecciones y descargas por lotes.",
+        "2026-08-17: Se aclararon los límites del contenido público, la privacidad y los flujos de trabajo para guardar en el navegador."
+    ],
+    "freeTools": [
+        {
+            "title": "Video chat aleatorio",
+            "desc": "No se requieren puntos",
+            "path": "random-chat"
+        },
+        {
+            "title": "Conversión de formato de vídeo",
+            "desc": "No se requieren puntos",
+            "path": "remux"
+        },
+        {
+            "title": "Explorar contenido",
+            "desc": "No se requieren puntos",
+            "path": "discover"
+        },
+        {
+            "title": "Grabación de pizarra",
+            "desc": "No se requieren puntos",
+            "path": "videorecord"
+        },
+        {
+            "title": "Transferencia de archivos",
+            "desc": "No se requieren puntos",
+            "path": "clipboard"
+        }
+    ],
+    "platformFaqs": {
+        "tiktok": [
+            {
+                "q": "¿Qué debo hacer si falla una URL de TikTok?",
+                "a": "Utilice una URL para compartir publicación (no una URL de perfil), vuelva a intentarlo y luego cambie de red si es necesario."
+            },
+            {
+                "q": "¿Por qué la calidad de TikTok es inferior a la esperada?",
+                "a": "Ajuste la configuración de calidad y analice nuevamente. Las opciones finales dependen del medio de origen."
+            },
+            {
+                "q": "¿Por qué el enlace de una presentación de diapositivas de TikTok no muestra los medios?",
+                "a": "Algunas publicaciones de presentaciones de diapositivas y recursos de música protegidos exponen medios descargables limitados. Pruebe con otra URL de publicación o utilice reintentos en cola."
+            },
+            {
+                "q": "¿Por qué TikTok no muestra resultados para un enlace de perfil copiado?",
+                "a": "Los enlaces de perfil no son páginas de medios directas. Abra una publicación específica y copie su URL compartida para analizarla."
+            }
+        ],
+        "douyin": [
+            {
+                "q": "¿Por qué no se descarga mi enlace Douyin?",
+                "a": "Utilice una URL para compartir publicaciones, no URL de búsqueda/descubrimiento."
+            },
+            {
+                "q": "¿Cómo debo manejar las tareas interrumpidas en la cola de Douyin?",
+                "a": "Para las tareas de la cola de Douyin, haga clic en \"Continuar\" para reanudarlas después de las interrupciones, luego haga clic en \"Guardar\" una vez finalizadas."
+            },
+            {
+                "q": "Por que Douyin muestra \"sin permiso\" o resultados vacios en algunos enlaces?",
+                "a": "Algunos enlaces compartidos apuntan a publicaciones restringidas o limitadas por region. Abre la publicacion original, confirma acceso publico y vuelve a analizar en modo cola."
+            }
+        ],
+        "instagram": [
+            {
+                "q": "¿Se espera algún fallo ocasional en Instagram?",
+                "a": "Pueden ocurrir fluctuaciones temporales del lado de la fuente. Vuelva a intentarlo y confirme el acceso público."
+            },
+            {
+                "q": "¿Por qué falla el enlace de una historia de Instagram después de un tiempo?",
+                "a": "Las historias pueden caducar rápidamente. Utilice una URL de historia pública disponible actualmente y analícela lo antes posible."
+            },
+            {
+                "q": "¿Por qué Instagram no devuelve medios para contenido privado?",
+                "a": "El contenido privado no es de acceso público para su análisis. En su lugar, utilice URL de publicaciones de acceso público."
+            }
+        ],
+        "youtube": [
+            {
+                "q": "¿Por qué el análisis de YouTube es lento?",
+                "a": "Los vídeos largos y los picos de tráfico aumentan el tiempo de análisis. Se recomienda el modo de cola."
+            },
+            {
+                "q": "¿Por qué no puedo descargar una transmisión en vivo de YouTube inmediatamente?",
+                "a": "Es posible que las transmisiones en vivo y las cargas nuevas necesiten primero un procesamiento del lado fuente. Vuelva a intentarlo más tarde o ponga en cola la tarea y reanúdela si se interrumpe."
+            },
+            {
+                "q": "¿Por qué una URL de YouTube se analiza pero muestra opciones limitadas?",
+                "a": "Las opciones disponibles dependen de los metadatos de origen, las reglas regionales y la disponibilidad del formato. Ajuste la configuración de salida y analice nuevamente."
+            }
+        ],
+        "bilibili": [
+            {
+                "q": "¿Dónde está mi archivo Bilibili después de completar la cola?",
+                "a": "El modo de cola necesita un clic explícito en Guardar después de completar la tarea."
+            },
+            {
+                "q": "Por que Bilibili solo descarga una parte en contenidos de varios segmentos?",
+                "a": "Algunos enlaces apuntan solo a un segmento. Copia la URL exacta del segmento que necesitas y, si hace falta, pon cada segmento en cola por separado."
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "q": "¿Por qué la descarga de Xiaohongshu es inestable?",
+                "a": "Utilice el modo de cola y continúe. La disponibilidad de medios del lado fuente puede variar."
+            },
+            {
+                "q": "Por que Xiaohongshu devuelve solo audio o faltan opciones de video?",
+                "a": "Algunas notas solo exponen variantes de medios limitadas. Ajusta calidad o formato, vuelve a analizar el mismo enlace y reintenta mas tarde si hace falta."
+            }
+        ],
+        "facebook": [
+            {
+                "q": "¿Por qué no puedo encontrar mi archivo de Facebook?",
+                "a": "El modo directo guarda en la carpeta del navegador; El modo de cola requiere Guardar una vez finalizado."
+            }
+        ],
+        "generic": [
+            {
+                "q": "¿Qué debo comprobar primero cuando falla el análisis?",
+                "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
+            }
+        ],
+        "toutiao": [
+            {
+                "q": "¿Qué debo comprobar primero cuando falla el análisis?",
+                "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
+            },
+            {
+                "q": "¿Por qué faltan las opciones HD?",
+                "a": "Las opciones de calidad disponibles dependen de las variantes MP4 devueltas por Toutiao para ese video."
+            }
+        ],
+        "weibo": [
+            {
+                "q": "¿Cómo copio la URL de un vídeo Weibo?",
+                "a": "Abra la página de video Weibo, haga clic en Copiar dirección de video en el reproductor, luego pegue el enlace corto t.cn o la URL de la página de video Weibo copiada en FreeSaveVideo."
+            },
+            {
+                "q": "¿Puedo pegar un enlace corto t.cn?",
+                "a": "Sí. Weibo a menudo copia enlaces cortos de t.cn y FreeSaveVideo puede analizar enlaces de vídeo públicos Weibo compatibles."
+            },
+            {
+                "q": "¿Por qué falla un enlace Weibo?",
+                "a": "Asegúrate de que sea un vídeo público reproducible, no un perfil, una página de comentarios, una publicación privada o un vídeo eliminado. Vuelva a copiar la dirección del video si el enlace de origen ha caducado."
+            }
+        ],
+        "haokan": [
+            {
+                "q": "¿Cómo descargo videos Haokan a mi teléfono?",
+                "a": "Copie la URL pública del video haokan.baidu.com, péguela en FreeSaveVideo y luego guarde un resultado MP4 disponible desde su navegador móvil."
+            },
+            {
+                "q": "¿Es lo mismo que instalar la aplicación Haokan?",
+                "a": "No. FreeSaveVideo extrae resultados descargables de enlaces de videos públicos. No proporciona instaladores de aplicaciones Haokan, recuperación ni clasificaciones de jugadores locales."
+            },
+            {
+                "q": "¿Puedo utilizar enlaces Haokan de los resultados de búsqueda de Baidu?",
+                "a": "Sí, si el resultado abre una página de video pública Haokan como haokan.baidu.com/v?vid=... en lugar de una página de descarga de aplicaciones o una lista de búsqueda."
+            }
+        ],
+        "iqiyi": [
+            {
+                "q": "¿La descarga de iQIYI incluye anuncios de reproductores?",
+                "a": "No. El extractor valida el video solicitado y selecciona su lista de reproducción del programa principal en lugar de agregar recursos publicitarios del reproductor separados."
+            },
+            {
+                "q": "¿Por qué FreeSaveVideo remuxiza el video iQIYI a MP4?",
+                "a": "La fuente pública se puede empaquetar como MPEG-TS. La remuxing del lado del servidor preserva las transmisiones de audio y video existentes al mismo tiempo que produce un MP4 que es más fácil de reproducir y guardar."
+            },
+            {
+                "q": "¿Se admiten vídeos iQIYI VIP o DRM?",
+                "a": "No. Solo se admiten videos públicos y gratuitos disponibles sin eludir los controles de membresía, pago, DRM, inicio de sesión, cuenta o regional."
+            }
+        ]
     },
-    {
-      "q": "Does FreeSaveVideo support playlists and batch downloads?",
-      "a": "Yes. Supported playlist, collection, and multi-link workflows can be turned into batch tasks so users can review and save several public videos from one page."
+    "platformPlaybooks": {
+        "tiktok": {
+            "heading": "Notas del flujo de trabajo de TikTok",
+            "notes": [
+                "Utilice URL de publicaciones específicas.",
+                "Vuelva a intentarlo una vez y luego cambie de red.",
+                "Prefiere el modo de cola para medios más largos."
+            ],
+            "checklist": [
+                "URL de publicación pública confirmada",
+                "Configuración de calidad configurada",
+                "Guardado después de completar la cola"
+            ]
+        },
+        "douyin": {
+            "heading": "Notas del flujo de trabajo de Douyin",
+            "notes": [
+                "Evite las URL de búsqueda/descubrimiento.",
+                "Utilice Continuar en caso de interrupción.",
+                "Ajuste la configuración de calidad antes de volver a analizar."
+            ],
+            "checklist": [
+                "URL de publicación específica confirmada",
+                "Modo directo vs modo cola seleccionado",
+                "Paso final de guardado completado"
+            ]
+        },
+        "instagram": {
+            "heading": "Notas del flujo de trabajo de Instagram",
+            "notes": [
+                "Es posible que haya fluctuaciones en el lado de la fuente.",
+                "Las opciones dependen del medio de origen.",
+                "El modo de cola mejora la estabilidad."
+            ],
+            "checklist": [
+                "Acceso público verificado",
+                "Modo de cola utilizado cuando sea necesario",
+                "Ubicación del archivo confirmada"
+            ]
+        },
+        "youtube": {
+            "heading": "Notas del flujo de trabajo de YouTube",
+            "notes": [
+                "Los vídeos largos pueden analizarse lentamente.",
+                "Establezca la preferencia de audio antes de volver a analizar.",
+                "Utilice Continuar para evitar reinicios completos."
+            ],
+            "checklist": [
+                "URL del vídeo confirmada",
+                "Conjunto de preferencias de salida",
+                "Guardado después de completar la cola"
+            ]
+        },
+        "bilibili": {
+            "heading": "Notas del flujo de trabajo de Bilibili",
+            "notes": [
+                "El modo directo guarda en la carpeta del navegador.",
+                "El modo de cola necesita un guardado explícito.",
+                "Vuelva a analizar después de cambios de calidad."
+            ],
+            "checklist": [
+                "URL pública confirmada",
+                "Modo y configuración comprobados",
+                "Ruta del archivo final verificada"
+            ]
+        },
+        "xiaohongshu": {
+            "heading": "Notas del flujo de trabajo de Xiaohongshu",
+            "notes": [
+                "Utilice el modo de cola en redes inestables.",
+                "El recuento de opciones depende de la fuente.",
+                "Vuelva a intentarlo más tarde si la fuente es limitada."
+            ],
+            "checklist": [
+                "URL pública confirmada",
+                "Modo de cola seleccionado",
+                "Guardar flujo completado"
+            ]
+        },
+        "facebook": {
+            "heading": "Notas del flujo de trabajo de Facebook",
+            "notes": [
+                "Primero verifique el modo directo versus el modo cola.",
+                "Es necesario completar la cola y guardar.",
+                "Continuar reanuda las tareas interrumpidas."
+            ],
+            "checklist": [
+                "URL pública confirmada",
+                "El modo es claro.",
+                "Guardar ruta marcada"
+            ]
+        },
+        "generic": {
+            "heading": "Notas generales sobre el flujo de trabajo",
+            "notes": [
+                "Utilice URL públicas para compartir.",
+                "Cola + reanudación en redes inestables.",
+                "Establezca la calidad antes de volver a analizar."
+            ],
+            "checklist": [
+                "La URL es válida y pública.",
+                "La configuración coincide con la salida objetivo",
+                "Ubicación final del archivo confirmada"
+            ]
+        },
+        "toutiao": {
+            "heading": "Notas generales sobre el flujo de trabajo",
+            "notes": [
+                "Utilice URL públicas para compartir.",
+                "Cola + reanudación en redes inestables.",
+                "Establezca la calidad antes de volver a analizar."
+            ],
+            "checklist": [
+                "La URL es válida y pública.",
+                "La configuración coincide con la salida objetivo",
+                "Ubicación final del archivo confirmada"
+            ]
+        },
+        "weibo": {
+            "heading": "Weibo lista de verificación de descarga de video",
+            "notes": [
+                "Utilice Copiar dirección de video del reproductor de video Weibo cuando sea posible.",
+                "Un enlace corto t.cn copiado se puede pegar directamente.",
+                "Si el análisis falla, vuelva a abrir el video original y copie la dirección nuevamente."
+            ],
+            "checklist": [
+                "El vídeo Weibo es público y reproducible.",
+                "Copiaste la dirección de un video, no un perfil o una página de comentarios.",
+                "El resultado muestra una opción MP4 disponible"
+            ]
+        },
+        "haokan": {
+            "heading": "Haokan descargar notas de flujo de trabajo",
+            "notes": [
+                "Utilice la URL pública exacta del vídeo haokan.baidu.com, no una página de resultados de búsqueda.",
+                "Guarde una variante MP4 disponible cuando el análisis sea exitoso.",
+                "Trate la instalación de aplicaciones, la recuperación de aplicaciones y las búsquedas de clasificación de jugadores como intenciones diferentes de la extracción de enlaces de video."
+            ],
+            "checklist": [
+                "Página de vídeo pública Haokan confirmada",
+                "haokan.baidu.com/v?vid=... URL copiada",
+                "Resultado MP4 guardado desde el navegador"
+            ]
+        },
+        "iqiyi": {
+            "heading": "Flujo de trabajo confiable de descarga de video iQIYI",
+            "notes": [
+                "Utilice la página de reproducción pública concreta iqiyi.com/v_*.html, no una página de inicio, un resultado de búsqueda o una página de canal.",
+                "El servidor identifica el programa principal, excluye los clips de anuncios del reproductor separados y remuxifica la fuente a MP4.",
+                "Sólo el contenido público y gratuito es elegible; No se admiten videos VIP, pagos, DRM, de solo inicio de sesión, eliminados y restringidos por región."
+            ],
+            "checklist": [
+                "Vídeo público gratuito iQIYI confirmado",
+                "URL concreta v_*.html copiada",
+                "MP4 remuxed en el servidor guardado después del procesamiento"
+            ]
+        }
     },
-    {
-      "q": "Where are downloaded files saved?",
-      "a": "Direct downloads are saved to the browser default download folder. Queue downloads finish inside FreeSaveVideo first, then the user clicks Save to store the file locally."
-    },
-    {
-      "q": "Is FreeSaveVideo only a downloader?",
-      "a": "No. It also includes browser tools such as MP4 to MP3, audio extraction, video conversion, whiteboard recording, cross-device file transfer, Discover, and random 1v1 video chat."
+    "platformFailureCases": {
+        "tiktok": [
+            {
+                "title": "URL de perfil utilizada en lugar de URL de publicación",
+                "symptoms": "No hay medios descargables ni fallos de análisis genéricos.",
+                "fixes": [
+                    "Copie la URL exacta para compartir la publicación.",
+                    "Vuelva a intentar el análisis después del cambio de red si es necesario.",
+                    "Utilice el modo de cola para descargas largas."
+                ]
+            },
+            {
+                "title": "Enlace de perfil o caso de presentación de diapositivas",
+                "symptoms": "Parse devuelve resultados vacíos u opciones de medios limitadas.",
+                "fixes": [
+                    "Utilice una URL para compartir publicación específica en lugar de enlaces de perfil.",
+                    "Vuelva a intentarlo en modo cola en redes inestables.",
+                    "Cambie a otra publicación pública cuando los recursos de origen estén restringidos."
+                ]
+            }
+        ],
+        "douyin": [
+            {
+                "title": "URL de búsqueda/descubrimiento copiada",
+                "symptoms": "No hay resultados o el análisis es inestable a pesar de que la URL parece válida.",
+                "fixes": [
+                    "Abra los detalles de la publicación y copie la URL para compartir la publicación.",
+                    "Analice nuevamente con el modo de cola.",
+                    "Reanudar con Continuar en caso de interrupción."
+                ]
+            },
+            {
+                "title": "Publicacion restringida o enlace compartido con limite regional",
+                "symptoms": "El enlace abre de forma inconsistente o el analisis devuelve sin permiso / resultado vacio.",
+                "fixes": [
+                    "Verifica que la publicacion sea accesible publicamente en tu red actual.",
+                    "Copia la URL compartida desde la pagina exacta de la publicacion.",
+                    "Usa modo cola y \"Continuar\" cuando la red sea inestable."
+                ]
+            }
+        ],
+        "instagram": [
+            {
+                "title": "Fluctuación temporal del lado de la fuente",
+                "symptoms": "Fallos de análisis intermitentes.",
+                "fixes": [
+                    "Vuelva a intentarlo después de un breve intervalo.",
+                    "Confirmar la accesibilidad pública.",
+                    "Utilice el modo de cola para los reintentos."
+                ]
+            },
+            {
+                "title": "Historia vencida o contenido privado",
+                "symptoms": "No hay medios descargables a pesar de que la URL parece válida.",
+                "fixes": [
+                    "Confirma que la historia aún está activa.",
+                    "Utilice URL de publicaciones públicas cuando sea posible.",
+                    "Vuelva a intentarlo rápidamente antes de que caduque el contenido temporal."
+                ]
+            }
+        ],
+        "youtube": [
+            {
+                "title": "Retraso prolongado en el análisis de vídeo",
+                "symptoms": "Progreso lento durante el análisis o la descarga.",
+                "fixes": [
+                    "Mantenga la tarea en cola en ejecución.",
+                    "Reanudar con Continuar si se interrumpe.",
+                    "Utilice la preferencia de audio cuando solo se necesite audio."
+                ]
+            },
+            {
+                "title": "La transmisión en vivo o la carga nueva no están listas",
+                "symptoms": "El análisis se realiza lentamente o devuelve opciones incompletas.",
+                "fixes": [
+                    "Espere a que finalice el procesamiento del lado fuente y vuelva a intentarlo.",
+                    "Utilice el modo de cola para tareas largas.",
+                    "Reanude con Continuar si ocurre una interrupción de la red."
+                ]
+            }
+        ],
+        "bilibili": [
+            {
+                "title": "Cola completada pero sin archivo local",
+                "symptoms": "Se muestra el estado de tarea realizada pero falta el archivo.",
+                "fixes": [
+                    "Haga clic en Guardar después de completar la cola.",
+                    "Verifique la carpeta del navegador solo para el modo directo.",
+                    "Verifique la ubicación final para guardar."
+                ]
+            },
+            {
+                "title": "Publicacion multiparte asociada solo a un segmento",
+                "symptoms": "El resultado de descarga incluye solo un episodio o fragmento.",
+                "fixes": [
+                    "Abre la pagina del segmento exacto y copia esa URL compartida.",
+                    "Pon cada segmento en cola por separado para completar la coleccion.",
+                    "Confirma que cada tarea termine y pulsa \"Guardar\" para archivo local."
+                ]
+            }
+        ],
+        "xiaohongshu": [
+            {
+                "title": "Rendimiento inestable",
+                "symptoms": "Caídas de velocidad o tareas interrumpidas.",
+                "fixes": [
+                    "Cambie al modo de cola.",
+                    "Reanudar desde el punto de interrupción con Continuar.",
+                    "Vuelva a intentarlo más tarde si los medios del lado fuente son limitados."
+                ]
+            },
+            {
+                "title": "Variantes de medios limitadas desde la nota de origen",
+                "symptoms": "Solo aparecen formatos parciales o faltan opciones de video.",
+                "fixes": [
+                    "Reanaliza despues de ajustar calidad y formato.",
+                    "Reintenta mas tarde cuando se actualicen los recursos del origen.",
+                    "Usa modo cola para mejorar la estabilidad de finalizacion."
+                ]
+            }
+        ],
+        "facebook": [
+            {
+                "title": "Confusión directa versus cola",
+                "symptoms": "La descarga parece completa pero no se encuentra el archivo.",
+                "fixes": [
+                    "El modo directo guarda en la carpeta del navegador.",
+                    "El modo de cola requiere la acción Guardar.",
+                    "Verifique el estado de la cola y la ruta local."
+                ]
+            }
+        ],
+        "generic": [
+            {
+                "title": "Error al analizar una URL que parece válida",
+                "symptoms": "No se devolvió ningún resultado repetidamente.",
+                "fixes": [
+                    "Confirme que la URL apunta a contenido público específico.",
+                    "Ajuste la configuración y vuelva a analizar.",
+                    "Utilice el modo de cola con reanudación."
+                ]
+            }
+        ],
+        "toutiao": [
+            {
+                "title": "Error al analizar una URL que parece válida",
+                "symptoms": "No se devolvió ningún resultado repetidamente.",
+                "fixes": [
+                    "Confirme que la URL apunta a contenido público específico.",
+                    "Ajuste la configuración y vuelva a analizar.",
+                    "Utilice el modo de cola con reanudación."
+                ]
+            }
+        ],
+        "weibo": [
+            {
+                "title": "Se copió un perfil, una página de comentarios o un enlace caducado.",
+                "symptoms": "La página se abre en Weibo, pero FreeSaveVideo no puede devolver un resultado de video reproducible.",
+                "fixes": [
+                    "Vuelva a la página de video específica y elija Copiar dirección de video.",
+                    "Confirma que el vídeo sigue siendo público y reproducible.",
+                    "Si el enlace corto expiró, copie la dirección del video nuevamente y vuelva a intentarlo."
+                ]
+            }
+        ],
+        "haokan": [
+            {
+                "title": "Resultado de la búsqueda o página de instalación de la aplicación copiada",
+                "symptoms": "El análisis no devuelve ningún medio porque la URL no es una página de vídeo directa Haokan.",
+                "fixes": [
+                    "Abra el video Haokan específico antes de copiar la URL.",
+                    "Utilice los enlaces haokan.baidu.com/v?vid=... cuando estén disponibles.",
+                    "No pegues las páginas de instalación de aplicaciones, recuperación o clasificación de jugadores Haokan."
+                ]
+            },
+            {
+                "title": "El vídeo está restringido o no está disponible.",
+                "symptoms": "La página se abre, pero no se devuelve ninguna opción MP4 descargable.",
+                "fixes": [
+                    "Confirma que el video es público y aún está en línea.",
+                    "Vuelva a intentarlo una vez en modo cola si la red es inestable.",
+                    "Pruebe con otro video público Haokan cuando los recursos de origen sean limitados."
+                ]
+            }
+        ],
+        "iqiyi": [
+            {
+                "title": "Se copió una página iQIYI restringida o sin vídeo",
+                "symptoms": "El análisis no devuelve medios ni informa de que el enlace no es compatible.",
+                "fixes": [
+                    "Abra el video específico antes de copiar la dirección.",
+                    "Utilice una página iqiyi.com/v_*.html que se reproduzca sin iniciar sesión.",
+                    "No utilice URL VIP, pagas, DRM, de solo inicio de sesión, de búsqueda, de canal o de página de inicio."
+                ]
+            },
+            {
+                "title": "El vídeo de origen cambió o dejó de estar disponible.",
+                "symptoms": "La página funcionaba anteriormente, pero la extracción o el procesamiento MP4 ahora falla.",
+                "fixes": [
+                    "Confirme que la página de origen todavía se reproduce públicamente.",
+                    "Copie una URL nueva y vuelva a intentarlo una vez.",
+                    "Pruebe con otro video iQIYI público y gratuito para distinguir una restricción específica de la fuente."
+                ]
+            }
+        ]
     }
-  ],
-  "productTips": [
-    "For best results, paste a specific public video, post, Shorts, playlist, or collection URL rather than a profile or channel homepage.",
-    "Use batch mode for multiple links and playlist results; queue tasks can retry and continue after interruptions.",
-    "Set quality, format, audio-only, or mute options before parsing when you need a specific output.",
-    "Use the platform-specific download pages when available because they explain the exact link type that works best."
-  ],
-  "productAdvantages": [
-    "Clear public-content boundary: FreeSaveVideo is for publicly accessible links, not private or paywalled media.",
-    "Broad platform coverage across Amazon Live, YouTube, TikTok, Douyin, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more.",
-    "Batch, playlist, collection, audio, mute, and queue workflows are built into the browser experience.",
-    "Privacy-conscious local tools process user files in the browser when possible instead of requiring upload."
-  ],
-  "releaseNotes": [
-    "Clarified best link types for public video, playlist, collection, and batch download workflows.",
-    "Added stronger public-content, privacy, and browser-tool positioning across download pages."
-  ],
-  "freeTools": [
-    {
-      "title": "Video chat aleatorio",
-      "desc": "No se requieren puntos",
-      "path": "random-chat"
-    },
-    {
-      "title": "Conversión de formato de vídeo",
-      "desc": "No se requieren puntos",
-      "path": "remux"
-    },
-    {
-      "title": "Explorar contenido",
-      "desc": "No se requieren puntos",
-      "path": "discover"
-    },
-    {
-      "title": "Grabación de pizarra",
-      "desc": "No se requieren puntos",
-      "path": "videorecord"
-    },
-    {
-      "title": "Transferencia de archivos",
-      "desc": "No se requieren puntos",
-      "path": "clipboard"
-    }
-  ],
-  "platformFaqs": {
-    "tiktok": [
-      {
-        "q": "¿Qué debo hacer si falla una URL de TikTok?",
-        "a": "Utilice una URL para compartir publicación (no una URL de perfil), vuelva a intentarlo y luego cambie de red si es necesario."
-      },
-      {
-        "q": "¿Por qué la calidad de TikTok es inferior a la esperada?",
-        "a": "Ajuste la configuración de calidad y analice nuevamente. Las opciones finales dependen del medio de origen."
-      },
-      {
-        "q": "¿Por qué el enlace de una presentación de diapositivas de TikTok no muestra los medios?",
-        "a": "Algunas publicaciones de presentaciones de diapositivas y recursos de música protegidos exponen medios descargables limitados. Pruebe con otra URL de publicación o utilice reintentos en cola."
-      },
-      {
-        "q": "¿Por qué TikTok no muestra resultados para un enlace de perfil copiado?",
-        "a": "Los enlaces de perfil no son páginas de medios directas. Abra una publicación específica y copie su URL compartida para analizarla."
-      }
-    ],
-    "douyin": [
-      {
-        "q": "¿Por qué no se descarga mi enlace Douyin?",
-        "a": "Utilice una URL para compartir publicaciones, no URL de búsqueda/descubrimiento."
-      },
-      {
-        "q": "¿Cómo debo manejar las tareas interrumpidas en la cola de Douyin?",
-        "a": "Para las tareas de la cola de Douyin, haga clic en \"Continuar\" para reanudarlas después de las interrupciones, luego haga clic en \"Guardar\" una vez finalizadas."
-      },
-      {
-        "q": "Por que Douyin muestra \"sin permiso\" o resultados vacios en algunos enlaces?",
-        "a": "Algunos enlaces compartidos apuntan a publicaciones restringidas o limitadas por region. Abre la publicacion original, confirma acceso publico y vuelve a analizar en modo cola."
-      }
-    ],
-    "instagram": [
-      {
-        "q": "¿Se espera algún fallo ocasional en Instagram?",
-        "a": "Pueden ocurrir fluctuaciones temporales del lado de la fuente. Vuelva a intentarlo y confirme el acceso público."
-      },
-      {
-        "q": "¿Por qué falla el enlace de una historia de Instagram después de un tiempo?",
-        "a": "Las historias pueden caducar rápidamente. Utilice una URL de historia pública disponible actualmente y analícela lo antes posible."
-      },
-      {
-        "q": "¿Por qué Instagram no devuelve medios para contenido privado?",
-        "a": "El contenido privado no es de acceso público para su análisis. En su lugar, utilice URL de publicaciones de acceso público."
-      }
-    ],
-    "youtube": [
-      {
-        "q": "¿Por qué el análisis de YouTube es lento?",
-        "a": "Los vídeos largos y los picos de tráfico aumentan el tiempo de análisis. Se recomienda el modo de cola."
-      },
-      {
-        "q": "¿Por qué no puedo descargar una transmisión en vivo de YouTube inmediatamente?",
-        "a": "Es posible que las transmisiones en vivo y las cargas nuevas necesiten primero un procesamiento del lado fuente. Vuelva a intentarlo más tarde o ponga en cola la tarea y reanúdela si se interrumpe."
-      },
-      {
-        "q": "¿Por qué una URL de YouTube se analiza pero muestra opciones limitadas?",
-        "a": "Las opciones disponibles dependen de los metadatos de origen, las reglas regionales y la disponibilidad del formato. Ajuste la configuración de salida y analice nuevamente."
-      }
-    ],
-    "bilibili": [
-      {
-        "q": "¿Dónde está mi archivo Bilibili después de completar la cola?",
-        "a": "El modo de cola necesita un clic explícito en Guardar después de completar la tarea."
-      },
-      {
-        "q": "Por que Bilibili solo descarga una parte en contenidos de varios segmentos?",
-        "a": "Algunos enlaces apuntan solo a un segmento. Copia la URL exacta del segmento que necesitas y, si hace falta, pon cada segmento en cola por separado."
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "q": "¿Por qué la descarga de Xiaohongshu es inestable?",
-        "a": "Utilice el modo de cola y continúe. La disponibilidad de medios del lado fuente puede variar."
-      },
-      {
-        "q": "Por que Xiaohongshu devuelve solo audio o faltan opciones de video?",
-        "a": "Algunas notas solo exponen variantes de medios limitadas. Ajusta calidad o formato, vuelve a analizar el mismo enlace y reintenta mas tarde si hace falta."
-      }
-    ],
-    "facebook": [
-      {
-        "q": "¿Por qué no puedo encontrar mi archivo de Facebook?",
-        "a": "El modo directo guarda en la carpeta del navegador; El modo de cola requiere Guardar una vez finalizado."
-      }
-    ],
-    "generic": [
-      {
-        "q": "¿Qué debo comprobar primero cuando falla el análisis?",
-        "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
-      }
-    ],
-    "toutiao": [
-      {
-        "q": "¿Qué debo comprobar primero cuando falla el análisis?",
-        "a": "Verifique el acceso a la URL pública, verifique la configuración y luego vuelva a intentarlo con el modo de cola."
-      }
-    ],
-    "weibo": [
-      {
-        "q": "How do I copy a Weibo video URL?",
-        "a": "Open the Weibo video page, click Copy video address on the player, then paste the copied t.cn short link or Weibo video page URL into FreeSaveVideo."
-      },
-      {
-        "q": "Can I paste a t.cn short link?",
-        "a": "Yes. Weibo often copies t.cn short links, and FreeSaveVideo can parse supported public Weibo video links."
-      },
-      {
-        "q": "Why does a Weibo link fail?",
-        "a": "Make sure it is a public playable video, not a profile, comment page, private post, or deleted video. Re-copy the video address if the source link has expired."
-      }
-    ]
-  },
-  "platformPlaybooks": {
-    "tiktok": {
-      "heading": "Notas del flujo de trabajo de TikTok",
-      "notes": [
-        "Utilice URL de publicaciones específicas.",
-        "Vuelva a intentarlo una vez y luego cambie de red.",
-        "Prefiere el modo de cola para medios más largos."
-      ],
-      "checklist": [
-        "URL de publicación pública confirmada",
-        "Configuración de calidad configurada",
-        "Guardado después de completar la cola"
-      ]
-    },
-    "douyin": {
-      "heading": "Notas del flujo de trabajo de Douyin",
-      "notes": [
-        "Evite las URL de búsqueda/descubrimiento.",
-        "Utilice Continuar en caso de interrupción.",
-        "Ajuste la configuración de calidad antes de volver a analizar."
-      ],
-      "checklist": [
-        "URL de publicación específica confirmada",
-        "Modo directo vs modo cola seleccionado",
-        "Paso final de guardado completado"
-      ]
-    },
-    "instagram": {
-      "heading": "Notas del flujo de trabajo de Instagram",
-      "notes": [
-        "Es posible que haya fluctuaciones en el lado de la fuente.",
-        "Las opciones dependen del medio de origen.",
-        "El modo de cola mejora la estabilidad."
-      ],
-      "checklist": [
-        "Acceso público verificado",
-        "Modo de cola utilizado cuando sea necesario",
-        "Ubicación del archivo confirmada"
-      ]
-    },
-    "youtube": {
-      "heading": "Notas del flujo de trabajo de YouTube",
-      "notes": [
-        "Los vídeos largos pueden analizarse lentamente.",
-        "Establezca la preferencia de audio antes de volver a analizar.",
-        "Utilice Continuar para evitar reinicios completos."
-      ],
-      "checklist": [
-        "URL del vídeo confirmada",
-        "Conjunto de preferencias de salida",
-        "Guardado después de completar la cola"
-      ]
-    },
-    "bilibili": {
-      "heading": "Notas del flujo de trabajo de Bilibili",
-      "notes": [
-        "El modo directo guarda en la carpeta del navegador.",
-        "El modo de cola necesita un guardado explícito.",
-        "Vuelva a analizar después de cambios de calidad."
-      ],
-      "checklist": [
-        "URL pública confirmada",
-        "Modo y configuración comprobados",
-        "Ruta del archivo final verificada"
-      ]
-    },
-    "xiaohongshu": {
-      "heading": "Notas del flujo de trabajo de Xiaohongshu",
-      "notes": [
-        "Utilice el modo de cola en redes inestables.",
-        "El recuento de opciones depende de la fuente.",
-        "Vuelva a intentarlo más tarde si la fuente es limitada."
-      ],
-      "checklist": [
-        "URL pública confirmada",
-        "Modo de cola seleccionado",
-        "Guardar flujo completado"
-      ]
-    },
-    "facebook": {
-      "heading": "Notas del flujo de trabajo de Facebook",
-      "notes": [
-        "Primero verifique el modo directo versus el modo cola.",
-        "Es necesario completar la cola y guardar.",
-        "Continuar reanuda las tareas interrumpidas."
-      ],
-      "checklist": [
-        "URL pública confirmada",
-        "El modo es claro.",
-        "Guardar ruta marcada"
-      ]
-    },
-    "generic": {
-      "heading": "Notas generales sobre el flujo de trabajo",
-      "notes": [
-        "Utilice URL públicas para compartir.",
-        "Cola + reanudación en redes inestables.",
-        "Establezca la calidad antes de volver a analizar."
-      ],
-      "checklist": [
-        "La URL es válida y pública.",
-        "La configuración coincide con la salida objetivo",
-        "Ubicación final del archivo confirmada"
-      ]
-    },
-    "toutiao": {
-      "heading": "Notas generales sobre el flujo de trabajo",
-      "notes": [
-        "Utilice URL públicas para compartir.",
-        "Cola + reanudación en redes inestables.",
-        "Establezca la calidad antes de volver a analizar."
-      ],
-      "checklist": [
-        "La URL es válida y pública.",
-        "La configuración coincide con la salida objetivo",
-        "Ubicación final del archivo confirmada"
-      ]
-    },
-    "weibo": {
-      "heading": "Weibo video download checklist",
-      "notes": [
-        "Use Copy video address from the Weibo video player when possible.",
-        "A copied t.cn short link can be pasted directly.",
-        "If parsing fails, reopen the original video and copy the address again."
-      ],
-      "checklist": [
-        "The Weibo video is public and playable",
-        "You copied a video address, not a profile or comment page",
-        "The result shows an available MP4 option"
-      ]
-    }
-  },
-  "platformFailureCases": {
-    "tiktok": [
-      {
-        "title": "URL de perfil utilizada en lugar de URL de publicación",
-        "symptoms": "No hay medios descargables ni fallos de análisis genéricos.",
-        "fixes": [
-          "Copie la URL exacta para compartir la publicación.",
-          "Vuelva a intentar el análisis después del cambio de red si es necesario.",
-          "Utilice el modo de cola para descargas largas."
-        ]
-      },
-      {
-        "title": "Enlace de perfil o caso de presentación de diapositivas",
-        "symptoms": "Parse devuelve resultados vacíos u opciones de medios limitadas.",
-        "fixes": [
-          "Utilice una URL para compartir publicación específica en lugar de enlaces de perfil.",
-          "Vuelva a intentarlo en modo cola en redes inestables.",
-          "Cambie a otra publicación pública cuando los recursos de origen estén restringidos."
-        ]
-      }
-    ],
-    "douyin": [
-      {
-        "title": "URL de búsqueda/descubrimiento copiada",
-        "symptoms": "No hay resultados o el análisis es inestable a pesar de que la URL parece válida.",
-        "fixes": [
-          "Abra los detalles de la publicación y copie la URL para compartir la publicación.",
-          "Analice nuevamente con el modo de cola.",
-          "Reanudar con Continuar en caso de interrupción."
-        ]
-      },
-      {
-        "title": "Publicacion restringida o enlace compartido con limite regional",
-        "symptoms": "El enlace abre de forma inconsistente o el analisis devuelve sin permiso / resultado vacio.",
-        "fixes": [
-          "Verifica que la publicacion sea accesible publicamente en tu red actual.",
-          "Copia la URL compartida desde la pagina exacta de la publicacion.",
-          "Usa modo cola y \"Continuar\" cuando la red sea inestable."
-        ]
-      }
-    ],
-    "instagram": [
-      {
-        "title": "Fluctuación temporal del lado de la fuente",
-        "symptoms": "Fallos de análisis intermitentes.",
-        "fixes": [
-          "Vuelva a intentarlo después de un breve intervalo.",
-          "Confirmar la accesibilidad pública.",
-          "Utilice el modo de cola para los reintentos."
-        ]
-      },
-      {
-        "title": "Historia vencida o contenido privado",
-        "symptoms": "No hay medios descargables a pesar de que la URL parece válida.",
-        "fixes": [
-          "Confirma que la historia aún está activa.",
-          "Utilice URL de publicaciones públicas cuando sea posible.",
-          "Vuelva a intentarlo rápidamente antes de que caduque el contenido temporal."
-        ]
-      }
-    ],
-    "youtube": [
-      {
-        "title": "Retraso prolongado en el análisis de vídeo",
-        "symptoms": "Progreso lento durante el análisis o la descarga.",
-        "fixes": [
-          "Mantenga la tarea en cola en ejecución.",
-          "Reanudar con Continuar si se interrumpe.",
-          "Utilice la preferencia de audio cuando solo se necesite audio."
-        ]
-      },
-      {
-        "title": "La transmisión en vivo o la carga nueva no están listas",
-        "symptoms": "El análisis se realiza lentamente o devuelve opciones incompletas.",
-        "fixes": [
-          "Espere a que finalice el procesamiento del lado fuente y vuelva a intentarlo.",
-          "Utilice el modo de cola para tareas largas.",
-          "Reanude con Continuar si ocurre una interrupción de la red."
-        ]
-      }
-    ],
-    "bilibili": [
-      {
-        "title": "Cola completada pero sin archivo local",
-        "symptoms": "Se muestra el estado de tarea realizada pero falta el archivo.",
-        "fixes": [
-          "Haga clic en Guardar después de completar la cola.",
-          "Verifique la carpeta del navegador solo para el modo directo.",
-          "Verifique la ubicación final para guardar."
-        ]
-      },
-      {
-        "title": "Publicacion multiparte asociada solo a un segmento",
-        "symptoms": "El resultado de descarga incluye solo un episodio o fragmento.",
-        "fixes": [
-          "Abre la pagina del segmento exacto y copia esa URL compartida.",
-          "Pon cada segmento en cola por separado para completar la coleccion.",
-          "Confirma que cada tarea termine y pulsa \"Guardar\" para archivo local."
-        ]
-      }
-    ],
-    "xiaohongshu": [
-      {
-        "title": "Rendimiento inestable",
-        "symptoms": "Caídas de velocidad o tareas interrumpidas.",
-        "fixes": [
-          "Cambie al modo de cola.",
-          "Reanudar desde el punto de interrupción con Continuar.",
-          "Vuelva a intentarlo más tarde si los medios del lado fuente son limitados."
-        ]
-      },
-      {
-        "title": "Variantes de medios limitadas desde la nota de origen",
-        "symptoms": "Solo aparecen formatos parciales o faltan opciones de video.",
-        "fixes": [
-          "Reanaliza despues de ajustar calidad y formato.",
-          "Reintenta mas tarde cuando se actualicen los recursos del origen.",
-          "Usa modo cola para mejorar la estabilidad de finalizacion."
-        ]
-      }
-    ],
-    "facebook": [
-      {
-        "title": "Confusión directa versus cola",
-        "symptoms": "La descarga parece completa pero no se encuentra el archivo.",
-        "fixes": [
-          "El modo directo guarda en la carpeta del navegador.",
-          "El modo de cola requiere la acción Guardar.",
-          "Verifique el estado de la cola y la ruta local."
-        ]
-      }
-    ],
-    "generic": [
-      {
-        "title": "Error al analizar una URL que parece válida",
-        "symptoms": "No se devolvió ningún resultado repetidamente.",
-        "fixes": [
-          "Confirme que la URL apunta a contenido público específico.",
-          "Ajuste la configuración y vuelva a analizar.",
-          "Utilice el modo de cola con currículum."
-        ]
-      }
-    ],
-    "toutiao": [
-      {
-        "title": "Error al analizar una URL que parece válida",
-        "symptoms": "No se devolvió ningún resultado repetidamente.",
-        "fixes": [
-          "Confirme que la URL apunta a contenido público específico.",
-          "Ajuste la configuración y vuelva a analizar.",
-          "Utilice el modo de cola con currículum."
-        ]
-      }
-    ],
-    "weibo": [
-      {
-        "title": "A profile, comment page, or expired link was copied",
-        "symptoms": "The page opens in Weibo, but FreeSaveVideo cannot return a playable video result.",
-        "fixes": [
-          "Go back to the specific video page and choose Copy video address.",
-          "Confirm the video is still public and playable.",
-          "If the short link expired, copy the video address again and retry."
-        ]
-      }
-    ]
-  }
 }

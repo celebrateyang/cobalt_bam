@@ -83,6 +83,69 @@
             description: (platform) => `分步骤说明如何复制受支持的 ${platform} 链接、粘贴到下载器、选择可用格式，并处理常见的链接错误。`,
         },
     };
+    type GuideUiCopy = {
+        directory: string;
+        guides: string;
+        faq: string;
+        discover: string;
+        relatedGuide: (label: string) => string;
+        douyinTitle: string;
+        douyinBody: string;
+        cta: string;
+        ctaHint: string;
+        usageTitle: string;
+        usageFirst: string;
+        usageSecond: string;
+        practical: string;
+        flow: string;
+        advantages: string;
+        troubleshooting: string;
+        guidance: string;
+        checklist: string;
+        failures: string;
+        related: string;
+    };
+    const guideUiCopy: Record<string, GuideUiCopy> = {
+        es: {
+            directory: 'Directorio de descargadores de vídeo populares', guides: 'Guías de descarga populares', faq: 'Preguntas frecuentes sobre descargas', discover: 'Descubrir vídeos populares',
+            relatedGuide: (label) => `Cómo descargar ${label}`, douyinTitle: 'Videotutorial: cómo copiar el enlace correcto de un vídeo de Douyin', douyinBody: 'Si copiaste una página de búsqueda o jingxuan en lugar del enlace para compartir un vídeo, este tutorial muestra cómo abrir primero el vídeo y copiar la URL correcta.',
+            cta: 'Descargar ahora', ctaHint: 'Abrir el descargador', usageTitle: 'Notas de uso', usageFirst: 'Copia la URL del contenido público y pégala en el descargador. Los resultados dependen de los archivos disponibles en la plataforma de origen.', usageSecond: 'Si el enlace falla, confirma que el contenido sea público, copia de nuevo la URL y vuelve a intentarlo más tarde o con otra red.',
+            practical: 'Funciones y consejos de uso', flow: 'Proceso de descarga y guardado', advantages: 'Ventajas de la plataforma', troubleshooting: 'Solución de problemas por plataforma', guidance: 'Indicaciones clave', checklist: 'Lista de comprobación', failures: 'Casos de error y soluciones', related: 'Enlaces relacionados',
+        },
+        fr: {
+            directory: 'Répertoire des téléchargeurs populaires', guides: 'Guides de téléchargement populaires', faq: 'FAQ sur le téléchargement', discover: 'Découvrir les vidéos populaires',
+            relatedGuide: (label) => `Comment télécharger ${label}`, douyinTitle: 'Tutoriel vidéo : copier le bon lien d’une vidéo Douyin', douyinBody: 'Si vous avez copié une page de recherche ou jingxuan au lieu du lien de partage d’une vidéo, ce tutoriel explique comment ouvrir la vidéo puis copier la bonne URL.',
+            cta: 'Télécharger maintenant', ctaHint: 'Ouvrir le téléchargeur', usageTitle: 'Conseils d’utilisation', usageFirst: 'Copiez l’URL du contenu public et collez-la dans le téléchargeur. Le résultat dépend des fichiers proposés par la plateforme source.', usageSecond: 'Si le lien échoue, vérifiez que le contenu est public, recopiez l’URL, puis réessayez plus tard ou avec un autre réseau.',
+            practical: 'Fonctions et conseils d’utilisation', flow: 'Parcours de téléchargement et d’enregistrement', advantages: 'Avantages de la plateforme', troubleshooting: 'Dépannage par plateforme', guidance: 'Conseils essentiels', checklist: 'Liste de vérification', failures: 'Cas d’échec et solutions', related: 'Liens associés',
+        },
+        de: {
+            directory: 'Beliebte Video-Downloader', guides: 'Beliebte Download-Anleitungen', faq: 'Häufige Fragen zum Download', discover: 'Beliebte Videos entdecken',
+            relatedGuide: (label) => `${label} herunterladen`, douyinTitle: 'Videoanleitung: Den richtigen Douyin-Videolink kopieren', douyinBody: 'Falls du statt eines Freigabelinks eine Such- oder jingxuan-Seite kopiert hast, zeigt diese Anleitung, wie du zuerst das Video öffnest und dann die richtige URL kopierst.',
+            cta: 'Jetzt herunterladen', ctaHint: 'Downloader öffnen', usageTitle: 'Nutzungshinweise', usageFirst: 'Kopiere die URL des öffentlichen Inhalts und füge sie in den Downloader ein. Das Ergebnis hängt von den Dateien ab, die die Quellplattform bereitstellt.', usageSecond: 'Wenn der Link nicht funktioniert, prüfe, ob der Inhalt öffentlich ist, kopiere die URL erneut und versuche es später oder über ein anderes Netzwerk.',
+            practical: 'Funktionen und Nutzungstipps', flow: 'Download- und Speichervorgang', advantages: 'Plattformvorteile', troubleshooting: 'Plattformspezifische Fehlerbehebung', guidance: 'Wichtige Hinweise', checklist: 'Erfolgscheckliste', failures: 'Fehlerfälle und Lösungen', related: 'Verwandte Links',
+        },
+        vi: {
+            directory: 'Danh mục công cụ tải video phổ biến', guides: 'Hướng dẫn tải xuống phổ biến', faq: 'Câu hỏi thường gặp về tải xuống', discover: 'Khám phá video phổ biến',
+            relatedGuide: (label) => `Cách tải ${label}`, douyinTitle: 'Video hướng dẫn: cách sao chép đúng liên kết video Douyin', douyinBody: 'Nếu bạn đã sao chép trang tìm kiếm hoặc jingxuan thay vì liên kết chia sẻ video, hướng dẫn này sẽ chỉ cách mở video trước rồi sao chép đúng URL.',
+            cta: 'Tải xuống ngay', ctaHint: 'Mở trình tải xuống', usageTitle: 'Lưu ý sử dụng', usageFirst: 'Sao chép URL của nội dung công khai và dán vào trình tải xuống. Kết quả phụ thuộc vào các tệp mà nền tảng nguồn cung cấp.', usageSecond: 'Nếu liên kết không hoạt động, hãy xác nhận nội dung là công khai, sao chép lại URL rồi thử lại sau hoặc đổi mạng.',
+            practical: 'Tính năng và mẹo sử dụng', flow: 'Quy trình tải và lưu', advantages: 'Ưu điểm nền tảng', troubleshooting: 'Khắc phục sự cố theo nền tảng', guidance: 'Hướng dẫn chính', checklist: 'Danh sách kiểm tra', failures: 'Trường hợp lỗi và cách khắc phục', related: 'Liên kết liên quan',
+        },
+        id: {
+            directory: 'Direktori pengunduh populer', guides: 'Panduan unduhan populer', faq: 'Tanya jawab unduhan', discover: 'Temukan video populer',
+            relatedGuide: (label) => `Cara mengunduh ${label}`, douyinTitle: 'Tutorial video: cara menyalin tautan video Douyin yang benar', douyinBody: 'Jika Anda menyalin halaman pencarian atau jingxuan, bukan tautan berbagi video, tutorial ini menunjukkan cara membuka videonya terlebih dahulu lalu menyalin URL yang benar.',
+            cta: 'Unduh sekarang', ctaHint: 'Buka pengunduh', usageTitle: 'Catatan penggunaan', usageFirst: 'Salin URL konten publik lalu tempelkan ke pengunduh. Hasil bergantung pada berkas yang disediakan platform sumber.', usageSecond: 'Jika tautan gagal, pastikan konten bersifat publik, salin ulang URL, lalu coba lagi nanti atau gunakan jaringan lain.',
+            practical: 'Fitur dan tips penggunaan', flow: 'Alur unduh dan simpan', advantages: 'Keunggulan platform', troubleshooting: 'Pemecahan masalah per platform', guidance: 'Panduan utama', checklist: 'Daftar pemeriksaan', failures: 'Kasus kegagalan dan solusi', related: 'Tautan terkait',
+        },
+        ru: {
+            directory: 'Каталог популярных загрузчиков', guides: 'Популярные руководства', faq: 'Частые вопросы о загрузке', discover: 'Популярные видео',
+            relatedGuide: (label) => `Как скачать ${label}`, douyinTitle: 'Видеоинструкция: как скопировать правильную ссылку на видео Douyin', douyinBody: 'Если вместо ссылки на видео вы скопировали страницу поиска или jingxuan, инструкция покажет, как сначала открыть видео, а затем скопировать правильный URL.',
+            cta: 'Скачать сейчас', ctaHint: 'Открыть загрузчик', usageTitle: 'Примечания по использованию', usageFirst: 'Скопируйте URL общедоступного контента и вставьте его в загрузчик. Результат зависит от файлов, доступных на исходной платформе.', usageSecond: 'Если ссылка не работает, убедитесь, что контент открыт для всех, скопируйте URL заново и повторите попытку позже или в другой сети.',
+            practical: 'Возможности и советы', flow: 'Процесс загрузки и сохранения', advantages: 'Преимущества платформы', troubleshooting: 'Устранение неполадок платформы', guidance: 'Основные рекомендации', checklist: 'Контрольный список', failures: 'Ошибки и способы исправления', related: 'Связанные ссылки',
+        },
+    };
+    $: uiCopy = guideUiCopy[data.lang];
+    const homeLabels: Record<string, string> = { es: 'Inicio', fr: 'Accueil', de: 'Startseite', vi: 'Trang chủ', id: 'Beranda', ru: 'Главная' };
+    const guideLabels: Record<string, string> = { es: 'Guía', fr: 'Guide', de: 'Anleitung', vi: 'Hướng dẫn', id: 'Panduan', ru: 'Руководство' };
     $: localizedGuideCopy = guideSeoCopy[data.lang] ?? guideSeoCopy.en;
     $: guideTitle =
         dedicatedGuide ? dedicatedGuide.metaTitle : data.lang === 'en' && data.guide.enTitle
@@ -113,11 +176,11 @@
         data.lang === 'en' ? 'international' : 'all',
         data.lang,
     );
-    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอยอดนิยม' : 'Popular video downloader directory';
+    $: downloadHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u89c6\u9891\u4e0b\u8f7d\u76ee\u5f55' : isTh ? 'รายการเครื่องมือดาวน์โหลดวิดีโอยอดนิยม' : uiCopy?.directory ?? 'Popular video downloader directory';
     $: currentDownloadLabel = isZh ? localeContent.h1 : localeContent.h1;
-    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : 'Popular download guides';
-    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : 'Video download FAQ';
-    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : 'Trending video discovery';
+    $: guideHubLabel = isZh ? '\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลดยอดนิยม' : uiCopy?.guides ?? 'Popular download guides';
+    $: faqLabel = isZh ? '\u89c6\u9891\u4e0b\u8f7d\u5e38\u89c1\u95ee\u9898' : isTh ? 'คำถามที่พบบ่อยเกี่ยวกับการดาวน์โหลดวิดีโอ' : uiCopy?.faq ?? 'Video download FAQ';
+    $: discoverLabel = isZh ? '\u70ed\u95e8\u89c6\u9891\u53d1\u73b0' : isTh ? 'ค้นพบวิดีโอยอดนิยม' : uiCopy?.discover ?? 'Trending video discovery';
     $: localizedDownloadHubLabel = isJa ? '人気動画ダウンローダー一覧' : downloadHubLabel;
     $: localizedGuideHubLabel = isJa ? '人気プラットフォームのダウンロードガイド' : guideHubLabel;
     $: localizedFaqLabel = isJa ? '動画ダウンロードのよくある質問' : faqLabel;
@@ -126,7 +189,7 @@
         const guide = getGuidePage(slug);
         const landing = guide ? getSeoLandingPage(guide.landingSlug) : null;
         const label = landing ? getSeoLandingLocale(landing, data.lang).h1 : platform;
-        return isJa ? `${label} の保存方法` : isZh ? `${label}\u6307\u5357` : isTh ? `วิธีดาวน์โหลด ${label}` : `How to download ${label}`;
+        return isJa ? `${label} の保存方法` : isZh ? `${label}\u6307\u5357` : isTh ? `วิธีดาวน์โหลด ${label}` : uiCopy?.relatedGuide(label) ?? `How to download ${label}`;
     };
     const relatedDownloadLabel = (slug: string, platform: string) => {
         const landing = getSeoLandingPage(slug);
@@ -138,15 +201,15 @@
         'https://player.bilibili.com/player.html?bvid=BV1sLB7BSEWu&page=1';
     $: douyinTutorialTitle = isZh
         ? '\u89c6\u9891\u6559\u7a0b\uff1a\u5982\u4f55\u83b7\u53d6\u6b63\u786e\u7684\u6296\u97f3\u89c6\u9891\u94fe\u63a5'
-        : 'Video tutorial: how to copy the correct Douyin video link';
+        : uiCopy?.douyinTitle ?? 'Video tutorial: how to copy the correct Douyin video link';
     $: douyinTutorialBody = isZh
         ? '\u5982\u679c\u4f60\u590d\u5236\u5230\u7684\u662f search \u6216 jingxuan \u9875\u9762\uff0c\u53ef\u4ee5\u5148\u770b\u4e0b\u9762\u7684\u6f14\u793a\uff0c\u6309\u6d41\u7a0b\u6253\u5f00\u5177\u4f53\u89c6\u9891\u540e\u518d\u590d\u5236\u5206\u4eab\u94fe\u63a5\u3002'
-        : 'If you copied a search or jingxuan page instead of a video share link, this tutorial shows how to open the actual video first and copy the right URL.';
+        : uiCopy?.douyinBody ?? 'If you copied a search or jingxuan page instead of a video share link, this tutorial shows how to open the actual video first and copy the right URL.';
 
-    $: ctaLabel = isJa ? '今すぐダウンロード' : isZh ? '\u53bb\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลดเลย' : 'Download Now';
-    $: ctaHint = isJa ? 'ダウンローダーを開く' : isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : 'Open the downloader';
+    $: ctaLabel = isJa ? '今すぐダウンロード' : isZh ? '\u53bb\u4e0b\u8f7d' : isTh ? 'ดาวน์โหลดเลย' : uiCopy?.cta ?? 'Download Now';
+    $: ctaHint = isJa ? 'ダウンローダーを開く' : isZh ? '\u8df3\u8f6c\u5230\u4e0b\u8f7d\u9875\u9762' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : uiCopy?.ctaHint ?? 'Open the downloader';
     $: runtimeContent = getSeoRuntimeContent(data.lang);
-    $: hasLocalizedRuntime = data.lang === 'en' || data.lang === 'zh' || data.lang === 'ja' || data.lang === 'th';
+    $: hasLocalizedRuntime = true;
     $: platformKey = getPlatformKey(data.slug);
     $: productFaqs = dedicatedGuide ? [] : runtimeContent.productFaqs;
     $: productTips = dedicatedGuide ? [] : runtimeContent.productTips;
@@ -195,13 +258,13 @@
                   {
                       '@type': 'ListItem',
                       position: 1,
-                      name: isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : 'Home',
+                      name: isJa ? 'ホーム' : isZh ? '\u9996\u9875' : isTh ? 'หน้าแรก' : homeLabels[data.lang] ?? 'Home',
                       item: `https://${fallbackHost}/${data.lang}`,
                   },
                   {
                       '@type': 'ListItem',
                       position: 2,
-                      name: isJa ? 'ガイド' : isZh ? '\u6307\u5357' : isTh ? 'คู่มือ' : 'Guide',
+                      name: isJa ? 'ガイド' : isZh ? '\u6307\u5357' : isTh ? 'คู่มือ' : guideLabels[data.lang] ?? 'Guide',
                       item: `https://${fallbackHost}/${data.lang}/guide`,
                   },
                   {
@@ -313,7 +376,7 @@
             </section>
             {#if hasLocalizedRuntime}
             <section class="card details">
-                <h2>{isJa ? '利用上の注意' : isZh ? '\u4f7f\u7528\u8bf4\u660e' : isTh ? 'ข้อควรรู้ในการใช้งาน' : 'Usage notes'}</h2>
+                <h2>{isJa ? '利用上の注意' : isZh ? '\u4f7f\u7528\u8bf4\u660e' : isTh ? 'ข้อควรรู้ในการใช้งาน' : uiCopy?.usageTitle ?? 'Usage notes'}</h2>
                 <p>
                     {isZh
                         ? '\u590d\u5236\u94fe\u63a5\u540e\u76f4\u63a5\u7c98\u8d34\u5230\u4e0b\u8f7d\u9875\u5373\u53ef\u89e3\u6790\u3002\u89e3\u6790\u7ed3\u679c\u4ee5\u5e73\u53f0\u8fd4\u56de\u7684\u8d44\u6e90\u4e3a\u51c6\u3002'
@@ -321,7 +384,7 @@
                           ? '公開コンテンツの URL をコピーしてダウンローダーへ貼り付けてください。結果はその時点で配信元プラットフォームが提供するファイルによって異なります。'
                         : isTh
                           ? 'คัดลอก URL ของเนื้อหาสาธารณะแล้ววางในเครื่องมือดาวน์โหลด ผลลัพธ์ขึ้นอยู่กับไฟล์ที่แพลตฟอร์มต้นทางมีให้ในขณะนั้น'
-                          : 'Copy the link and paste it into the downloader. Results depend on what the platform provides.'}
+                           : uiCopy?.usageFirst ?? 'Copy the link and paste it into the downloader. Results depend on what the platform provides.'}
                 </p>
                 <p>
                     {isZh
@@ -330,7 +393,7 @@
                           ? '解析できない場合は、公開状態で閲覧できることを確認し、URL をコピーし直してから、時間をおくかネットワークを変えて再試行してください。'
                         : isTh
                           ? 'หากวิเคราะห์ลิงก์ไม่สำเร็จ ให้ตรวจสอบว่าเนื้อหาเปิดดูได้แบบสาธารณะ คัดลอก URL ใหม่ แล้วลองอีกครั้งภายหลังหรือเปลี่ยนเครือข่าย'
-                          : 'If a link fails, confirm it is publicly accessible and try again later or switch networks.'}
+                           : uiCopy?.usageSecond ?? 'If a link fails, confirm it is publicly accessible and try again later or switch networks.'}
                 </p>
             </section>
             {/if}
@@ -338,10 +401,10 @@
 
         {#if productTips.length || productAdvantages.length}
         <section class="card practical">
-            <h2>{isJa ? '製品機能と利用のヒント' : isZh ? '产品能力与使用建议' : isTh ? 'ความสามารถและคำแนะนำการใช้งาน' : 'Product strengths and usage notes'}</h2>
+            <h2>{isJa ? '製品機能と利用のヒント' : isZh ? '产品能力与使用建议' : isTh ? 'ความสามารถและคำแนะนำการใช้งาน' : uiCopy?.practical ?? 'Product strengths and usage notes'}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isJa ? 'ダウンロードと保存の流れ' : isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : 'Download and save flow'}</h3>
+                    <h3>{isJa ? 'ダウンロードと保存の流れ' : isZh ? '下载与保存' : isTh ? 'ขั้นตอนดาวน์โหลดและบันทึกไฟล์' : uiCopy?.flow ?? 'Download and save flow'}</h3>
                     <ul>
                         {#each productTips as tip}
                             <li>{tip}</li>
@@ -349,7 +412,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isJa ? 'プラットフォーム別の特長' : isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : 'Platform advantages'}</h3>
+                    <h3>{isJa ? 'プラットフォーム別の特長' : isZh ? '平台优势' : isTh ? 'จุดเด่นของแพลตฟอร์ม' : uiCopy?.advantages ?? 'Platform advantages'}</h3>
                     <ul>
                         {#each productAdvantages as item}
                             <li>{item}</li>
@@ -362,7 +425,7 @@
 
         {#if platformFaqs.length}
         <section class="card practical">
-            <h2>{isJa ? 'プラットフォーム別の問題解決' : isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : 'Platform-specific troubleshooting'}</h2>
+            <h2>{isJa ? 'プラットフォーム別の問題解決' : isZh ? '按平台排查常见问题' : isTh ? 'แก้ปัญหาตามแพลตฟอร์ม' : uiCopy?.troubleshooting ?? 'Platform-specific troubleshooting'}</h2>
             <div class="faq-list">
                 {#each platformFaqs as item}
                     <details class="faq-item">
@@ -379,7 +442,7 @@
             <h2>{platformPlaybook.heading}</h2>
             <div class="practical-grid">
                 <section>
-                    <h3>{isJa ? '重要なポイント' : isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : 'Key guidance'}</h3>
+                    <h3>{isJa ? '重要なポイント' : isZh ? '\u5173\u952e\u5efa\u8bae' : isTh ? 'คำแนะนำสำคัญ' : uiCopy?.guidance ?? 'Key guidance'}</h3>
                     <ul>
                         {#each platformPlaybook.notes as note}
                             <li>{note}</li>
@@ -387,7 +450,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h3>{isJa ? '成功確認チェックリスト' : isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : 'Success checklist'}</h3>
+                    <h3>{isJa ? '成功確認チェックリスト' : isZh ? '\u6210\u529f\u68c0\u67e5\u6e05\u5355' : isTh ? 'รายการตรวจสอบก่อนดาวน์โหลด' : uiCopy?.checklist ?? 'Success checklist'}</h3>
                     <ul>
                         {#each platformPlaybook.checklist as item}
                             <li>{item}</li>
@@ -400,7 +463,7 @@
 
         {#if platformFailureCases.length}
         <section class="card practical">
-            <h2>{isJa ? '失敗例と解決方法' : isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : 'Failure cases and fix paths'}</h2>
+            <h2>{isJa ? '失敗例と解決方法' : isZh ? '\u5e73\u53f0\u6545\u969c\u6848\u4f8b\u4e0e\u4fee\u590d\u8def\u5f84' : isTh ? 'กรณีที่ล้มเหลวและวิธีแก้ไข' : uiCopy?.failures ?? 'Failure cases and fix paths'}</h2>
             <div class="case-grid">
                 {#each platformFailureCases as failure}
                     <article class="failure-case">
@@ -431,7 +494,7 @@
 
         {#if freeTools.length}
         <section class="card related">
-            <h2>{isJa ? '関連リンク' : isZh ? '\u5ef6\u4f38\u94fe\u63a5' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related links'}</h2>
+            <h2>{isJa ? '関連リンク' : isZh ? '\u5ef6\u4f38\u94fe\u63a5' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : uiCopy?.related ?? 'Related links'}</h2>
             <div class="related-links">
                 <a class="related-link related-link--primary" href={downloadHubUrl}>
                     {localizedDownloadHubLabel}

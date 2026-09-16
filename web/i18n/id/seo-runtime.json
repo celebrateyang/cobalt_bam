@@ -1,4 +1,10 @@
 {
+    "labels": {
+        "toolsWithoutPoints": "Alat tanpa penggunaan poin",
+        "downloadGuide": "Panduan unduhan",
+        "corePages": "Halaman utama",
+        "similarDownloads": "Unduhan serupa"
+    },
     "updatedAt": "2026-09-03",
     "productFaqs": [
         {

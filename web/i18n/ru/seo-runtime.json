@@ -1,4 +1,10 @@
 {
+    "labels": {
+        "toolsWithoutPoints": "Инструменты без расхода баллов",
+        "downloadGuide": "Руководство по загрузке",
+        "corePages": "Основные страницы",
+        "similarDownloads": "Похожие загрузки"
+    },
     "updatedAt": "2026-08-17",
     "productFaqs": [
         {

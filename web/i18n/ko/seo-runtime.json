@@ -1,4 +1,10 @@
 {
+  "labels": {
+    "toolsWithoutPoints": "포인트를 사용하지 않는 도구",
+    "downloadGuide": "다운로드 가이드",
+    "corePages": "주요 페이지",
+    "similarDownloads": "비슷한 다운로드 도구"
+  },
   "updatedAt": "2026-08-17",
   "productFaqs": [
     {

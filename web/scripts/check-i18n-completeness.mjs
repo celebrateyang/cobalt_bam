@@ -7,6 +7,12 @@ const i18nRoot = join(webRoot, 'i18n');
 const baselineLocale = 'en';
 const placeholderPattern = /(?<!{){[A-Za-z_][A-Za-z0-9_]*}(?!})|{{\s*[^{}]+?\s*}}|%[sdif]/g;
 const mustBeLocalized = new Map([
+    ['seo-runtime.json', new Set([
+        'labels.toolsWithoutPoints',
+        'labels.downloadGuide',
+        'labels.corePages',
+        'labels.similarDownloads',
+    ])],
     ['faq.json', new Set([
         'actions.directory',
         'actions.guides',

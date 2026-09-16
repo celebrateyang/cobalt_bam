@@ -1,4 +1,10 @@
 {
+  "labels": {
+    "toolsWithoutPoints": "ポイントを消費しないツール",
+    "downloadGuide": "ダウンロードガイド",
+    "corePages": "主なページ",
+    "similarDownloads": "関連するダウンローダー"
+  },
   "updatedAt": "2026-08-17",
   "productFaqs": [
     {

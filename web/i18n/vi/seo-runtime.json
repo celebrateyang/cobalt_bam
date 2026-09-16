@@ -1,4 +1,10 @@
 {
+    "labels": {
+        "toolsWithoutPoints": "Công cụ không tiêu hao điểm",
+        "downloadGuide": "Hướng dẫn tải xuống",
+        "corePages": "Trang chính",
+        "similarDownloads": "Nội dung tải tương tự"
+    },
     "updatedAt": "2026-08-17",
     "productFaqs": [
         {

@@ -327,7 +327,7 @@
     <main class="container">
         <section class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">{isJa ? 'ダウンロードガイド' : isZh ? '\u4e0b\u8f7d\u6307\u5357' : isTh ? 'คู่มือดาวน์โหลด' : 'Download guide'}</p>
+                <p class="eyebrow">{runtimeContent.labels.downloadGuide}</p>
                 <h1>{guideTitle}</h1>
                 <p class="lede">{localeContent.lede}</p>
                 <div class="cta-row">
@@ -536,7 +536,7 @@
         </section>
 
         <section class="card related">
-            <h2>{isJa ? 'ポイント不要の無料ツール' : isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : isTh ? 'เครื่องมือฟรีที่ไม่ใช้คะแนน' : 'Free tools without points'}</h2>
+            <h2>{runtimeContent.labels.toolsWithoutPoints}</h2>
             <div class="related-links">
                 {#each freeTools as tool}
                     <a class="related-link" href={tool.href}>

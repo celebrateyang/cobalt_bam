@@ -448,7 +448,7 @@
             <h2>{isJa ? '関連ページ' : isZh ? '\u76f8\u5173\u9875\u9762' : isTh ? 'ลิงก์ที่เกี่ยวข้อง' : localCopy?.related ?? 'Related links'}</h2>
             <div class="related-grid">
                 <section class="related-column">
-                    <h3>{isZh ? '\u6838\u5fc3\u5165\u53e3' : isTh ? 'หน้าหลัก' : localCopy?.core ?? 'Core pages'}</h3>
+                    <h3>{runtimeContent.labels.corePages}</h3>
                     <div class="related-links">
                         <a class="related-link related-link--primary" href={downloadIndexUrl}>
                             {localizedDownloadHubLabel}
@@ -476,7 +476,7 @@
                 </section>
 
                 <section class="related-column">
-                    <h3>{isZh ? '\u540c\u7c7b\u4e0b\u8f7d\u9875' : isTh ? 'เครื่องมือดาวน์โหลดที่คล้ายกัน' : localCopy?.similar ?? 'Similar downloads'}</h3>
+                    <h3>{runtimeContent.labels.similarDownloads}</h3>
                     <div class="related-links">
                         {#each data.relatedPages.slice(0, 6) as related}
                             {@const relatedLocale = getSeoLandingLocale(related, data.lang)}
@@ -556,7 +556,7 @@
 
         {#if freeTools.length}
         <section class="card related">
-            <h2>{isJa ? 'ポイント不要の無料ツール' : isZh ? '\u514d\u79ef\u5206\u5de5\u5177' : isTh ? 'เครื่องมือฟรีที่ไม่ใช้คะแนน' : 'Free tools without points'}</h2>
+            <h2>{runtimeContent.labels.toolsWithoutPoints}</h2>
             <div class="related-links">
                 {#each freeTools as tool}
                     <a class="related-link related-link--download" href={tool.href}>

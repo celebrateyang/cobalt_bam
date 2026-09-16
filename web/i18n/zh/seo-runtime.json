@@ -1,4 +1,10 @@
 {
+  "labels": {
+    "toolsWithoutPoints": "免积分工具",
+    "downloadGuide": "下载指南",
+    "corePages": "核心入口",
+    "similarDownloads": "同类下载页"
+  },
   "updatedAt": "2026-09-03",
   "productFaqs": [
     {

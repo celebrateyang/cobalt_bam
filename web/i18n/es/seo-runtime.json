@@ -1,4 +1,10 @@
 {
+    "labels": {
+        "toolsWithoutPoints": "Herramientas que no consumen puntos",
+        "downloadGuide": "Guía de descarga",
+        "corePages": "Páginas principales",
+        "similarDownloads": "Descargas similares"
+    },
     "updatedAt": "2026-08-17",
     "productFaqs": [
         {

@@ -32,6 +32,12 @@ type FreeTool = { title: string; desc: string; path: string };
 
 type RuntimeContent = {
     updatedAt: string;
+    labels: {
+        toolsWithoutPoints: string;
+        downloadGuide: string;
+        corePages: string;
+        similarDownloads: string;
+    };
     productFaqs: ProductFaqItem[];
     productTips: string[];
     productAdvantages: string[];

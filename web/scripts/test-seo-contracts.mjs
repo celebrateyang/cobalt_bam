@@ -6,6 +6,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import { compile, preprocess } from 'svelte/compiler';
 import * as svelteInternal from 'svelte/internal';
+import * as svelte from 'svelte';
 import * as svelteStore from 'svelte/store';
 
 // Load the real route/data modules without a production build or network calls.
@@ -21,6 +22,7 @@ const framework = {
         error(status, message) { throw Object.assign(new Error(message), { status }); },
     },
     'svelte/internal': svelteInternal,
+    svelte,
     'svelte/store': svelteStore,
     '$app/stores': { page: testPage },
     '$lib/i18n/translations': { t: testTranslations },
@@ -203,6 +205,47 @@ test('tools and FAQ SSR use localized copy and fixed route paths for every langu
         testTranslations.set(key => key);
         testPage.set({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') });
     }
+});
+
+test('every advertised download and guide detail renders localized shared labels', async t => {
+    const { getSeoRuntimeContent } = load('src/lib/seo/runtime-content.ts');
+    const englishLabels = getSeoRuntimeContent('en').labels;
+    for (const lang of supportedLanguages) {
+        for (const [key, value] of Object.entries(getSeoRuntimeContent(lang).labels)) {
+            assert.equal(typeof value, 'string', `${lang}/${key}`);
+            assert(value.trim().length > 0, `${lang}/${key}`);
+            if (lang !== 'en') assert.notEqual(value, englishLabels[key], `${lang}/${key}`);
+        }
+    }
+
+    const seenLanguages = new Set();
+    let renderedCount = 0;
+    for (const kind of ['download', 'guide']) {
+        const page = await component(`src/routes/[lang]/${kind}/[slug]/+page.svelte`);
+        const loader = load(`src/routes/[lang]/${kind}/[slug]/+page.ts`);
+        for (const params of loader.entries()) {
+            const labels = getSeoRuntimeContent(params.lang).labels;
+            const html = page.render({ data: await loader.load({ params }) }).html;
+            const context = `${params.lang}/${kind}/${params.slug}`;
+            const hasLabel = (tag, value) => [...html.matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]*)</${tag}>`, 'g'))]
+                .some(match => match[1] === escapeText(value));
+            assert(hasLabel('h2', labels.toolsWithoutPoints), context);
+            if (kind === 'download') {
+                assert(hasLabel('h3', labels.corePages), context);
+                assert(hasLabel('h3', labels.similarDownloads), context);
+            } else {
+                const eyebrow = html.match(/<p class="eyebrow[^\"]*">([^<]*)<\/p>/);
+                assert.equal(eyebrow?.[1], escapeText(labels.downloadGuide), context);
+            }
+            if (params.lang !== 'en') {
+                assert(!/>(Free tools without points|Download guide|Core pages|Similar downloads)</.test(html), context);
+            }
+            seenLanguages.add(params.lang);
+            renderedCount++;
+        }
+    }
+    assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages].sort());
+    t.diagnostic(`Verified localized shared labels on ${renderedCount} detail pages across ${seenLanguages.size} languages`);
 });
 
 test('YouTube guides render distinct instructional content and matching FAQ schema', async () => {

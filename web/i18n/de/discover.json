@@ -10,7 +10,9 @@
         "empty": {
             "title": "Keine Videos",
             "description": "Noch keine Videoinhalte hinzugefügt"
-        }
+        },
+        "parsing": "Analyse/Warteschlange",
+        "still_parsing": "Die Analyse läuft noch, bitte warten Sie einen Moment"
     },
     "account": {
         "videoCount": "{{count}} Videos"
@@ -21,6 +23,39 @@
         "copyTitle": "Videoadresse kopieren",
         "copyFailed": "Kopieren fehlgeschlagen:",
         "manualCopy": "Automatisches Kopieren nicht möglich, bitte manuell kopieren:\n{{url}}",
-        "closeDialog": "Klicken Sie auf \"OK\", um diese Meldung zu schließen"
+        "closeDialog": "Klicken Sie auf \"OK\", um diese Meldung zu schließen",
+        "creator_batch": "Mehr vom Ersteller",
+        "creator_batch_title": "{{name}} · Charge",
+        "load_more": "Mehr laden"
+    },
+    "section": {
+        "trending": "Im Trend",
+        "pinned": "Angepinnt",
+        "featured": "Hervorgehoben",
+        "latest": "Neueste"
+    },
+    "menu": {
+        "resources": "Entdecken Sie Ressourcen",
+        "beauty": "Entdecken Sie Schönheit"
+    },
+    "resources": {
+        "title": "Entdecken Sie Ressourcen",
+        "subtitle": "Durchsuchen Sie Kategorien und laden Sie sie über die verfügbaren Links herunter",
+        "empty": {
+            "title": "Noch keine Ressourcen",
+            "description": "Es wurden keine Kategorien oder Links hinzugefügt"
+        },
+        "empty_links": {
+            "title": "Keine Links",
+            "description": "Für diese Kategorie gibt es noch keine herunterladbaren Links"
+        },
+        "select": {
+            "title": "Wählen Sie eine Kategorie aus",
+            "description": "Wählen Sie links eine Kategorie aus, um Links anzuzeigen"
+        },
+        "action": {
+            "downloading": "Herunterladen..."
+        },
+        "batch_limit_hint": "Chargenlimit: {{max}}"
     }
 }

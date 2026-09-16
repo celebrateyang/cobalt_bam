@@ -20,5 +20,10 @@
     "no": "아니오",
     "clear": "지우기",
     "remove": "제거",
-    "retry": "재시도"
+    "retry": "재시도",
+    "buy_points": "포인트 구매",
+    "free_points": "무료 포인트 적립",
+    "invite_points": "친구 초대",
+    "membership": "월간 회원",
+    "promotion_points": "사이트 홍보"
 }

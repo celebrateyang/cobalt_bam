@@ -99,5 +99,17 @@
     "processing.community": "instancias de la comunidad",
     "processing.enable_custom.title": "usar un servidor de procesamiento personalizado",
     "processing.enable_custom.description": "FreeSaveVideo usará un servidor de procesamiento personalizado si lo eliges. aunque FreeSaveVideo tiene algunas medidas de seguridad en su lugar, no somos responsables de ningún daño realizado a través de una instancia de la comunidad, ya que no tenemos control sobre ellas.\n\npor favor ten cuidado con las instancias que uses y asegúrate de que estén alojadas por personas en las que confías.",
-    "processing.custom.placeholder": "dominio de instancia personalizada"
+    "processing.custom.placeholder": "dominio de instancia personalizada",
+    "local.storage": "almacenamiento del navegador",
+    "local.storage.description": "Las descargas y el procesamiento local pueden almacenar temporalmente archivos multimedia de gran tamaño en su navegador. Después de guardar los resultados completos, borre estos archivos para liberar espacio en el disco.",
+    "local.storage.loading": "comprobando archivos de procesamiento almacenados localmente...",
+    "local.storage.used": "Archivos de procesamiento almacenados localmente: {{ size }} (archivos {{ count }})",
+    "local.storage.empty": "Actualmente no hay archivos de procesamiento locales almacenados en su navegador.",
+    "local.storage.unavailable": "El almacenamiento de archivos local del navegador no está disponible aquí.",
+    "local.storage.clear": "borrar archivos de procesamiento local",
+    "local.storage.clearing": "borrando archivos de procesamiento local...",
+    "local.storage.cleared": "Los archivos de procesamiento local se han borrado.",
+    "local.storage.confirm": "¿Borrar todos los archivos de procesamiento local? Esto elimina las descargas no finalizadas y los resultados que no se han guardado en su dispositivo. Los archivos ya guardados en su carpeta de descargas no se ven afectados.",
+    "local.storage.processing": "Finalice o cancele las tareas de procesamiento activas antes de borrar los archivos locales.",
+    "local.storage.error": "No se pudieron leer ni borrar los archivos de procesamiento local."
 }

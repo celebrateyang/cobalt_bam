@@ -99,5 +99,17 @@
     "processing.community": "Community-Instanzen",
     "processing.enable_custom.title": "Einen benutzerdefinierten Verarbeitungsserver verwenden",
     "processing.enable_custom.description": "FreeSaveVideo verwendet einen benutzerdefinierten Verarbeitungsserver, wenn Sie dies wünschen. Obwohl FreeSaveVideo einige Sicherheitsmaßnahmen hat, sind wir nicht verantwortlich für Schäden, die über eine Community-Instanz verursacht werden, da wir keine Kontrolle über sie haben.\n\nBitte seien Sie achtsam, welche Instanzen Sie verwenden, und stellen Sie sicher, dass sie von Personen gehostet werden, denen Sie vertrauen.",
-    "processing.custom.placeholder": "Benutzerdefinierte Instanzdomäne"
+    "processing.custom.placeholder": "Benutzerdefinierte Instanzdomäne",
+    "local.storage": "Browserspeicher",
+    "local.storage.description": "Durch Downloads und lokale Verarbeitung können vorübergehend große Mediendateien in Ihrem Browser gespeichert werden. Nachdem Sie die abgeschlossenen Ergebnisse gespeichert haben, löschen Sie diese Dateien, um Speicherplatz freizugeben.",
+    "local.storage.loading": "Überprüfen lokal gespeicherter Verarbeitungsdateien ...",
+    "local.storage.used": "Lokal gespeicherte Verarbeitungsdateien: {{ size }} ({{ count }}-Dateien)",
+    "local.storage.empty": "In Ihrem Browser sind derzeit keine lokalen Verarbeitungsdateien gespeichert.",
+    "local.storage.unavailable": "Der lokale Browser-Dateispeicher ist hier nicht verfügbar.",
+    "local.storage.clear": "Löschen Sie lokale Verarbeitungsdateien",
+    "local.storage.clearing": "Lokale Verarbeitungsdateien löschen...",
+    "local.storage.cleared": "Lokale Verarbeitungsdateien wurden gelöscht.",
+    "local.storage.confirm": "Alle lokalen Verarbeitungsdateien löschen? Dadurch werden unvollendete Downloads und Ergebnisse entfernt, die nicht auf Ihrem Gerät gespeichert wurden. Dateien, die bereits in Ihrem Download-Ordner gespeichert sind, sind nicht betroffen.",
+    "local.storage.processing": "Beenden oder brechen Sie aktive Verarbeitungsaufgaben ab, bevor Sie lokale Dateien löschen.",
+    "local.storage.error": "Lokale Verarbeitungsdateien konnten nicht gelesen oder gelöscht werden."
 }

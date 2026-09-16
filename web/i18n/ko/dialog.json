@@ -109,5 +109,13 @@
     "tiktok_download.open_link": "링크 열기",
     "error.title": "문제가 발생했습니다",
     "bilibili_download.extension.title": "긴 Bilibili 동영상을 더 안정적으로 다운로드하려면 브라우저 확장프로그램을 설치하세요",
-    "bilibili_download.extension.body": "Bilibili CDN이 페이지에서의 가져오기를 차단할 때 FreeSaveVideo 확장프로그램이 브라우저를 통해 다운로드할 수 있어, 큰 파일 직접 다운로드가 더 안정적입니다."
+    "bilibili_download.extension.body": "Bilibili CDN이 페이지에서의 가져오기를 차단할 때 FreeSaveVideo 확장프로그램이 브라우저를 통해 다운로드할 수 있어, 큰 파일 직접 다운로드가 더 안정적입니다.",
+    "points_preview": {
+        "title": "다운로드 확인",
+        "body": "예상 {{ required }} 포인트가 차감됩니다. 계속하다?",
+        "balance": "{{ current }} 포인트가 있습니다. 이 다운로드에는 {{ required }} 포인트가 필요합니다. 간격: {{ gap }}.",
+        "balance_enough": "{{ current }} 포인트가 있습니다. 이 다운로드에는 {{ required }} 포인트가 필요합니다.",
+        "first_grace": "첫 번째 다운로드에서는 누락된 {{ required }} 포인트에 대해 자동 유예 덮개를 사용할 수 있으므로 계속할 수 있습니다.",
+        "unknown": "포인트를 추정할 수 없습니다. 실제 공제가 적용됩니다. 계속하다?"
+    }
 }

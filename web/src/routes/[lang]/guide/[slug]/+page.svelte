@@ -130,6 +130,12 @@
             cta: 'Tải xuống ngay', ctaHint: 'Mở trình tải xuống', usageTitle: 'Lưu ý sử dụng', usageFirst: 'Sao chép URL của nội dung công khai và dán vào trình tải xuống. Kết quả phụ thuộc vào các tệp mà nền tảng nguồn cung cấp.', usageSecond: 'Nếu liên kết không hoạt động, hãy xác nhận nội dung là công khai, sao chép lại URL rồi thử lại sau hoặc đổi mạng.',
             practical: 'Tính năng và mẹo sử dụng', flow: 'Quy trình tải và lưu', advantages: 'Ưu điểm nền tảng', troubleshooting: 'Khắc phục sự cố theo nền tảng', guidance: 'Hướng dẫn chính', checklist: 'Danh sách kiểm tra', failures: 'Trường hợp lỗi và cách khắc phục', related: 'Liên kết liên quan',
         },
+        ko: {
+            directory: '인기 동영상 다운로더 목록', guides: '인기 다운로드 가이드', faq: '다운로드 자주 묻는 질문', discover: '인기 동영상 둘러보기',
+            relatedGuide: (label) => `${label} 다운로드 방법`, douyinTitle: '동영상 안내: 올바른 Douyin 동영상 링크 복사 방법', douyinBody: '동영상 공유 링크 대신 검색 또는 jingxuan 페이지를 복사한 경우, 이 안내에서 실제 동영상을 먼저 연 다음 올바른 URL을 복사하는 방법을 확인할 수 있습니다.',
+            cta: '지금 다운로드', ctaHint: '다운로더 열기', usageTitle: '이용 안내', usageFirst: '공개 콘텐츠의 URL을 복사해 다운로더에 붙여 넣으세요. 결과는 원본 플랫폼에서 제공하는 파일에 따라 달라집니다.', usageSecond: '링크가 작동하지 않으면 콘텐츠가 공개 상태인지 확인하고 URL을 다시 복사한 뒤 나중에 다시 시도하거나 네트워크를 변경해 보세요.',
+            practical: '기능과 이용 팁', flow: '다운로드 및 저장 과정', advantages: '플랫폼별 장점', troubleshooting: '플랫폼별 문제 해결', guidance: '핵심 안내', checklist: '확인 목록', failures: '실패 사례와 해결 방법', related: '관련 링크',
+        },
         id: {
             directory: 'Direktori pengunduh populer', guides: 'Panduan unduhan populer', faq: 'Tanya jawab unduhan', discover: 'Temukan video populer',
             relatedGuide: (label) => `Cara mengunduh ${label}`, douyinTitle: 'Tutorial video: cara menyalin tautan video Douyin yang benar', douyinBody: 'Jika Anda menyalin halaman pencarian atau jingxuan, bukan tautan berbagi video, tutorial ini menunjukkan cara membuka videonya terlebih dahulu lalu menyalin URL yang benar.',
@@ -144,8 +150,8 @@
         },
     };
     $: uiCopy = guideUiCopy[data.lang];
-    const homeLabels: Record<string, string> = { es: 'Inicio', fr: 'Accueil', de: 'Startseite', vi: 'Trang chủ', id: 'Beranda', ru: 'Главная' };
-    const guideLabels: Record<string, string> = { es: 'Guía', fr: 'Guide', de: 'Anleitung', vi: 'Hướng dẫn', id: 'Panduan', ru: 'Руководство' };
+    const homeLabels: Record<string, string> = { es: 'Inicio', fr: 'Accueil', de: 'Startseite', vi: 'Trang chủ', ko: '홈', id: 'Beranda', ru: 'Главная' };
+    const guideLabels: Record<string, string> = { es: 'Guía', fr: 'Guide', de: 'Anleitung', vi: 'Hướng dẫn', ko: '가이드', id: 'Panduan', ru: 'Руководство' };
     $: localizedGuideCopy = guideSeoCopy[data.lang] ?? guideSeoCopy.en;
     $: guideTitle =
         dedicatedGuide ? dedicatedGuide.metaTitle : data.lang === 'en' && data.guide.enTitle

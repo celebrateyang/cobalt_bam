@@ -20,5 +20,10 @@
     "no": "không",
     "clear": "xóa",
     "remove": "loại bỏ",
-    "retry": "thử lại"
+    "retry": "thử lại",
+    "buy_points": "mua điểm",
+    "free_points": "kiếm điểm miễn phí",
+    "invite_points": "mời bạn bè",
+    "membership": "thành viên hàng tháng",
+    "promotion_points": "quảng bá trang web"
 }

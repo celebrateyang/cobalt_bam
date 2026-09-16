@@ -1,5 +1,6 @@
 {
     "picker.item.photo": "miniatura de foto",
     "picker.item.video": "miniatura de video",
-    "picker.item.gif": "miniatura de gif"
+    "picker.item.gif": "miniatura de gif",
+    "batch.select_item": "seleccionar elemento"
 }

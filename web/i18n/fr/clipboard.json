@@ -29,7 +29,7 @@
     "session_management": "Gestion de session",
     "scan_qr": "Scanner le code QR pour rejoindre depuis un autre appareil",
     "peer_connected": "Appareil connecté",
-    "lan_direct": "LAN Direct",
+    "lan_direct": "Réseau local direct",
     "waiting_peer": "En attente de connexion d'un appareil",
     "send_text": "Envoyer du texte",
     "enter_text": "Saisissez le texte à partager",
@@ -138,20 +138,25 @@
         "send_failed": "Échec de l'envoi : {error}",
         "transmission_cancelled_by_user": "Transmission annulée par l'utilisateur",
         "connection_disconnected": "Connexion déconnectée",
-        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
-        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
-        "personal_session_forbidden": "This personal session can only be joined by the same account.",
-        "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "personal_code_rotated": "Le code de session a été réinitialisé. Veuillez rouvrir votre session personnelle.",
+        "personal_ws_ticket_invalid": "L'autorisation de session personnelle a expiré. Veuillez réessayer.",
+        "personal_session_forbidden": "Cette session personnelle ne peut être rejointe que par le même compte.",
+        "open_personal_failed": "Échec de l'ouverture de la session personnelle. Veuillez réessayer.",
+        "join_personal_failed": "Impossible de rejoindre la session personnelle. Veuillez réessayer.",
         "replace_session_failed": "Impossible de remplacer l’ancienne connexion. Reconnectez-vous.",
         "peer_slot_released": "L’appareil connecté a été retiré. Un autre appareil peut maintenant rejoindre.",
         "session_replaced": "Cet appareil a été déconnecté car un autre a pris sa place.",
         "peer_remove_forbidden": "Seul le créateur de la session peut libérer l’appareil connecté.",
-        "release_peer_failed": "Le serveur n’a pas confirmé la libération. Mettez le backend à jour puis réessayez."
+        "release_peer_failed": "Le serveur n’a pas confirmé la libération. Mettez le backend à jour puis réessayez.",
+        "refuse_new_file_cancelled": "Transmission annulée, refus de commencer à recevoir un nouveau fichier : {fileName}",
+        "discard_chunk_cancelled": "Transmission annulée, suppression d'un morceau de fichier : fileId={fileId}, chunkIndex={chunkIndex}",
+        "ignore_end_signal_cancelled": "Transmission annulée, ignorant le signal de fin de fichier : {fileName}",
+        "peer_cancelled_transmission": "Transmission de fichiers annulée par un homologue",
+        "acknowledge_peer_cancel": "Transmission de fichiers annulée par un homologue"
     },
     "entry": {
-        "personal_transfer": "Transfer Between My Devices",
-        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "personal_transfer": "Transfert entre mes appareils",
+        "personal_default_hint": "Les utilisateurs connectés peuvent ouvrir ou rejoindre leur session personnelle en un seul clic.",
         "open_random_session": "Create Random Session",
         "hide_random_session": "Hide Random Session",
         "personal_login_upsell": "Vous voulez l'utiliser sans scanner de QR ? Connectez-vous et utilisez votre session personnelle, c'est plus simple."
@@ -172,5 +177,56 @@
         "join": "Rejoindre ma session personnelle",
         "opened_title": "Ma session personnelle est prête",
         "opened_hint": "Sur votre autre appareil connecté au même compte, cliquez sur \"Rejoindre ma session personnelle\" pour commencer à transférer des fichiers et du texte."
+    },
+    "guide": {
+        "title": "Chat sur navigateur privé et partage de fichiers sans application",
+        "summary": "FreeSaveVideo est un site Web de téléchargement de vidéos et d'outils de navigation. Sa page de transfert de fichiers prend également en charge les conversations textuelles temporaires en tête-à-tête avec quelqu'un que vous connaissez. Créez une session aléatoire et partagez son lien ou son code pour vous connecter, avec des messages facultatifs qui disparaissent pour les nouveaux textes. Il convient aux échanges courts lorsque vous ne souhaitez pas ajouter de contact social, installer un autre messager ou conserver la conversation dans votre historique de discussion quotidien.",
+        "scenarios_title": "Quand est-ce utile ?",
+        "scenarios": {
+            "devices": "Entre vos appareils : envoyez des photos de votre téléphone, des fichiers informatiques, des liens et des notes vers un autre appareil.",
+            "sharing": "Avec un ami ou un collègue : échangez des fichiers et discutez-en sans ajouter un autre contact social.",
+            "conversation": "Pour une conversation privée : discutez de questions personnelles ou familiales dans une session de navigateur distincte sans ajouter l'échange à votre liste de discussion quotidienne.",
+            "discreet": "Une entrée discrète sur le site d'outils : le site Web propose des téléchargements de vidéos et le transfert de fichiers, avec le chat comme fonctionnalité, il n'y a donc pas d'application de chat distincte à installer sur votre téléphone."
+        },
+        "steps_title": "Comment démarrer une conversation temporaire",
+        "steps": {
+            "create": "Créez une session aléatoire pour discuter avec une autre personne sans vous connecter. Les sessions personnelles sont destinées aux appareils utilisant le même compte.",
+            "invite": "Partagez en privé le lien ou le code de la session, ou scannez son code QR sur le deuxième appareil. Ne publiez pas les informations d’identification de session.",
+            "chat": "Une fois connecté, choisissez Chat et SMS. Pour les textes qui disparaissent, activez l'option au dessus du compositeur avant l'envoi ; le compte à rebours de 30 secondes commence lorsque le destinataire clique pour révéler le message. Vous pouvez également passer au transfert de fichiers. Gardez les deux pages ouvertes et en ligne.",
+            "finish": "Utilisez Terminer cette session ou Quitter cette session lorsque vous avez terminé. Fermer une page ne signifie pas que toutes les traces de l'appareil et du navigateur ont été effacées."
+        },
+        "faq_title": "FAQ sur l'historique des discussions et des messages temporaires",
+        "faq": {
+            "wechat": {
+                "question": "Puis-je parler en privé sans ajouter de messages à l'historique WeChat ou LINE ?",
+                "answer": "Oui. Deux personnes qui se connaissent peuvent utiliser une session de navigateur distincte pour le texte et les fichiers ; son contenu n'est pas automatiquement synchronisé avec WeChat ou LINE. Les invitations envoyées via ces applications peuvent rester dans leur historique. Cet outil ne supprime pas les enregistrements d'autres applications et ne garantit pas qu'il empêchera les conflits de relations."
+            },
+            "install": {
+                "question": "Les deux personnes ont-elles besoin d’une application, d’un compte ou d’une demande d’ami ?",
+                "answer": "Les sessions aléatoires ne nécessitent aucune installation d'application, aucune demande de compte ou d'ami. Utilisez des navigateurs compatibles WebRTC et connectez-vous avec un lien, un code ou un code QR. Les deux personnes doivent être en ligne et les restrictions du réseau peuvent empêcher la connexion. Les sessions personnelles nécessitent le même compte connecté sur les deux appareils."
+            },
+            "history": {
+                "question": "Où l’historique des discussions est-il enregistré ? Est-il détruit immédiatement après utilisation ?",
+                "answer": "Les textes facultatifs qui disparaissent sont pris en charge. Les nouveaux textes envoyés avec cette option restent uniquement dans la mémoire des pages. Cliquer pour révéler démarre un compte à rebours ; avec une connexion fonctionnelle, les deux conversations suppriment le message après environ 30 secondes. Les textes qui disparaissent sont également effacés lorsqu'une connexion fermée ou un départ de page est détecté. La suspension du navigateur en arrière-plan peut retarder l'exécution ; la péremption est vérifiée au retour. Les textes ordinaires restent dans le stockage de la session d'onglets et peuvent survivre à l'actualisation. Les fichiers sont exclus et la suppression irrécupérable au niveau de l'appareil n'est pas garantie."
+            },
+            "disguise": {
+                "question": "Existe-t-il un site Web qui ne ressemble pas à un messager mais propose un chat privé et disparaissant ?",
+                "answer": "FreeSaveVideo est un site Web de téléchargement de vidéos et d'outils. Sa page de transfert de fichiers propose également un chat privé en tête-à-tête avec des textes facultatifs qui disparaissent, offrant une entrée discrète sur le site d'outils sans application de chat séparée. Les messages qui disparaissent effacent le contenu de la conversation, pas l'historique des visites du navigateur. Les pages de discussion ouvertes, les captures d'écran et les fichiers téléchargés peuvent toujours être visibles."
+            },
+            "privacy": {
+                "question": "Le cryptage empêche-t-il le destinataire d'enregistrer ou de capturer des messages ?",
+                "answer": "Non. WebRTC crypte le transfert, tandis qu'un serveur coordonne les connexions de session. Cela n'implique pas un anonymat complet ou un service sans journaux. Les destinataires peuvent toujours copier du texte, prendre des captures d'écran ou des photos et enregistrer des fichiers. Partagez uniquement avec des personnes en qui vous avez confiance."
+            },
+            "files": {
+                "question": "Puis-je envoyer des fichiers pendant une conversation ou recevoir des messages hors ligne ?",
+                "answer": "Une fois connecté, basculez entre les fichiers et le texte sans télécharger au préalable les fichiers sur un lecteur cloud. Les deux navigateurs nécessitent une connexion en ligne ; la livraison de messages hors ligne n'est pas fournie. Gardez les pages ouvertes et évitez de changer de réseau pendant les transferts."
+            }
+        }
+    },
+    "error": {
+        "session_not_found": "Session introuvable ou expirée",
+        "session_full": "La séance est complète",
+        "connection_failed": "La connexion a échoué",
+        "encryption_failed": "Le cryptage a échoué"
     }
 }

@@ -1,6 +1,6 @@
 {
     "batch.select_item": "选择项目",
-    "picker.item.photo": "photo thumbnail",
-    "picker.item.video": "video thumbnail",
-    "picker.item.gif": "gif thumbnail"
+    "picker.item.photo": "照片缩略图",
+    "picker.item.video": "视频缩略图",
+    "picker.item.gif": "gif 缩略图"
 }

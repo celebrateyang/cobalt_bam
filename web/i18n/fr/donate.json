@@ -7,7 +7,7 @@
     "card.once": "don unique",
     "card.recurring": "don récurrent",
     "card.custom": "montant personnalisé (à partir de 2 $)",
-    "card.processor": "via {{value}}",
+    "card.processor": "traité par {{value}}",
     "card.option.5": "tasse de café",
     "card.option.10": "pizza grande taille",
     "card.option.15": "repas complet",

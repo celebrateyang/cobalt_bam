@@ -5,10 +5,11 @@
     "private": true,
     "scripts": {
         "dev": "vite dev",
-        "build": "vite build",
+        "build": "pnpm i18n:check-completeness && pnpm i18n:check-encoding && vite build",
         "preview": "vite preview",
         "indexnow:submit": "node ./scripts/submit-indexnow.mjs",
         "i18n:check-encoding": "node ./scripts/check-i18n-encoding.mjs",
+        "i18n:check-completeness": "node ./scripts/check-i18n-completeness.mjs",
         "check:homepage-prerender": "node ./scripts/check-homepage-prerender.mjs",
         "check:seo-prerender": "node ./scripts/check-seo-prerender.mjs",
         "test:seo-contracts": "node ./scripts/test-seo-contracts.mjs",

@@ -99,5 +99,17 @@
     "processing.community": "커뮤니티 인스턴스",
     "processing.enable_custom.title": "사용자 지정 처리 서버 사용",
     "processing.enable_custom.description": "선택하면 FreeSaveVideo가 사용자 지정 처리 서버를 사용합니다. FreeSaveVideo에는 몇 가지 보안 조치가 있지만 커뮤니티 인스턴스를 통해 발생한 손상에 대해서는 책임지지 않습니다.\n\n어떤 인스턴스를 사용할지 신중하게 선택하고 신뢰할 수 있는 사람이 호스팅하는지 확인하세요.",
-    "processing.custom.placeholder": "사용자 지정 인스턴스 도메인"
+    "processing.custom.placeholder": "사용자 지정 인스턴스 도메인",
+    "local.storage": "브라우저 저장 공간",
+    "local.storage.description": "다운로드 및 로컬 처리로 인해 대용량 미디어 파일이 브라우저에 일시적으로 저장될 수 있습니다. 완료된 결과를 저장한 후 해당 파일을 지워 디스크 공간을 확보하세요.",
+    "local.storage.loading": "로컬에 저장된 처리 파일을 확인하는 중...",
+    "local.storage.used": "로컬에 저장된 처리 파일: {{ size }}({{ count }} 파일)",
+    "local.storage.empty": "현재 귀하의 브라우저에는 로컬 처리 파일이 저장되어 있지 않습니다.",
+    "local.storage.unavailable": "여기서는 브라우저 로컬 파일 저장소를 사용할 수 없습니다.",
+    "local.storage.clear": "로컬 처리 파일 지우기",
+    "local.storage.clearing": "로컬 처리 파일을 지우는 중...",
+    "local.storage.cleared": "로컬 처리 파일이 지워졌습니다.",
+    "local.storage.confirm": "모든 로컬 처리 파일을 삭제하시겠습니까? 완료되지 않은 다운로드와 장치에 저장되지 않은 결과가 제거됩니다. 다운로드 폴더에 이미 저장된 파일은 영향을 받지 않습니다.",
+    "local.storage.processing": "로컬 파일을 지우기 전에 활성 처리 작업을 완료하거나 취소합니다.",
+    "local.storage.error": "로컬 처리 파일을 읽거나 지울 수 없습니다."
 }

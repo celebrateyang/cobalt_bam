@@ -93,11 +93,25 @@
         "file_count": "{{count}} Datei",
         "file_count_plural": "{{count}} Dateien",
         "total_size": "Gesamtgröße: {{size}}",
-        "download_all": "Alle herunterladen"
+        "download_all": "Alle herunterladen",
+        "drop_zone_text": "📁 Ziehen Sie Dateien hierher oder klicken Sie, um sie auszuwählen",
+        "transfer_in_progress": "Dateiübertragung läuft, bitte warten",
+        "selected_files": "Ausgewählte Dateien: (Automatisch gesendet oder auf Verbindung wartend)",
+        "sending_files": "Senden von Dateien:",
+        "sending_progress": "Fortschritt senden",
+        "receiving_progress": "Fortschritte erhalten",
+        "cancel_sending": "Senden abbrechen",
+        "cancel_receiving": "Empfang abbrechen",
+        "auto_sent": "✅ Dateien automatisch gesendet",
+        "waiting_connection": "⚠️ Warten auf die Verbindung zum automatischen Senden",
+        "no_received_files": "Noch keine Dateien erhalten",
+        "new_file_received": "Neue Datei erhalten!",
+        "download": "📥 Herunterladen",
+        "remove": "Datei entfernen"
     },
     "entry": {
-        "personal_transfer": "Transfer Between My Devices",
-        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "personal_transfer": "Übertragung zwischen meinen Geräten",
+        "personal_default_hint": "Angemeldete Benutzer können mit einem Klick ihre persönliche Sitzung öffnen oder daran teilnehmen.",
         "open_random_session": "Create Random Session",
         "hide_random_session": "Hide Random Session",
         "personal_login_upsell": "Ohne QR-Scan nutzen? Melden Sie sich an und verwenden Sie Ihre persoenliche Sitzung, das ist einfacher."
@@ -122,15 +136,104 @@
     "messages": {
         "peer_left_session": "Das andere Gerät hat die Sitzung verlassen. Ein neues Gerät kann jetzt beitreten.",
         "session_ended_by_creator": "Das startende Gerät hat diese Sitzung beendet.",
-        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
-        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
-        "personal_session_forbidden": "This personal session can only be joined by the same account.",
-        "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "personal_code_rotated": "Der Sitzungscode wurde zurückgesetzt. Bitte öffnen Sie Ihre persönliche Sitzung erneut.",
+        "personal_ws_ticket_invalid": "Die persönliche Sitzungsberechtigung ist abgelaufen. Bitte versuchen Sie es erneut.",
+        "personal_session_forbidden": "An dieser persönlichen Sitzung kann nur mit demselben Konto teilgenommen werden.",
+        "open_personal_failed": "Persönliche Sitzung konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
+        "join_personal_failed": "Beitritt zur persönlichen Sitzung fehlgeschlagen. Bitte versuchen Sie es erneut.",
         "replace_session_failed": "Die alte Verbindung konnte nicht ersetzt werden. Bitte erneut verbinden.",
         "peer_slot_released": "Das verbundene Gerät wurde entfernt. Ein anderes Gerät kann jetzt beitreten.",
         "session_replaced": "Dieses Gerät wurde getrennt, weil ein anderes Gerät seinen Platz übernommen hat.",
         "peer_remove_forbidden": "Nur der Sitzungsersteller kann das verbundene Gerät entfernen.",
-        "release_peer_failed": "Der Server hat die Freigabe nicht bestätigt. Bitte aktualisiere das Backend und versuche es erneut."
+        "release_peer_failed": "Der Server hat die Freigabe nicht bestätigt. Bitte aktualisiere das Backend und versuche es erneut.",
+        "connection_restored": "Verbindung vollständig wiederhergestellt",
+        "websocket_connected_partial": "WebSocket ist verbunden, aber die Dateiübertragung ist möglicherweise nicht verfügbar. Bitte versuchen Sie, die Verbindung erneut herzustellen",
+        "rebuilding_connection": "Verbindung wird wiederhergestellt...",
+        "recovering_connection": "Die Verbindung wird wiederhergestellt, bitte warten...",
+        "connection_recovered": "Verbindung wiederhergestellt",
+        "file_selection_interrupted": "Verbindung während der Dateiauswahl unterbrochen, Verbindung wird wiederhergestellt...",
+        "connection_unstable": "Die Verbindung ist während der Dateiauswahl instabil. Für eine bessere Übertragungsqualität wird empfohlen, die Verbindung wiederherzustellen",
+        "connection_check_failed": "Die Überprüfung des Verbindungsstatus ist fehlgeschlagen. Wir empfehlen Ihnen, die Seite zu aktualisieren, um die Verbindung wiederherzustellen",
+        "waiting_creator_reconnect": "Warten darauf, dass der Ersteller die Verbindung wiederherstellt",
+        "peer_disconnected": "Peer getrennt",
+        "connection_error": "Verbindungsfehler",
+        "session_expired": "Die Sitzung ist abgelaufen oder existiert nicht. Bitte erstellen Sie eine neue Sitzung",
+        "session_full": "Sitzung ist voll, Beitritt nicht möglich",
+        "protocol_error": "Fehler im Kommunikationsprotokoll",
+        "data_format_error": "Fehler im Datenformat",
+        "file_too_large": "Datei zu groß! {fileName} ({fileSize}MB) überschreitet das Limit von {maxSize}MB",
+        "files_too_large": "Dateien zu groß! Die folgenden Dateien überschreiten das Limit von {maxSize}MB: {fileNames}",
+        "file_sent_successfully": "Datei erfolgreich gesendet: {fileName}",
+        "file_received_partial": "Teilweise empfangene Datei: {fileName} ({missingCount} Blöcke fehlen)",
+        "connection_not_ready": "Verbindung nicht bereit, bitte warten Sie, bis die Verbindung hergestellt ist",
+        "file_sending_in_progress": "Der Dateiversand läuft. Bitte warten Sie, bis der aktuelle Sendevorgang abgeschlossen ist",
+        "receiving_files_wait": "Wenn Sie Dateien empfangen, warten Sie bitte, bis der Empfang abgeschlossen ist, bevor Sie sie senden",
+        "file_sending_cancelled": "Dateiversand abgebrochen",
+        "file_receiving_cancelled": "Dateiempfang abgebrochen",
+        "transmission_cancelled": "Übertragung abgebrochen",
+        "multiple_files_cancelled": "Das Senden mehrerer Dateien wurde abgebrochen und die verbleibenden Dateien wurden gestoppt",
+        "single_file_cancelled": "Senden einer einzelnen Datei abgebrochen: {fileName}",
+        "transmission_cancelled_no_end_signal": "Übertragung abgebrochen, file_end-Signal wird nicht gesendet: {fileName}",
+        "transmission_cancelled_during_flow_control": "Die Übertragung wurde während der Flusssteuerungswartezeit abgebrochen",
+        "files_sent_successfully": "{count} Dateien erfolgreich gesendet",
+    "send_failed": "Senden fehlgeschlagen: {error}",
+        "transmission_cancelled_by_user": "Übertragung vom Benutzer abgebrochen",
+        "connection_disconnected": "Verbindung getrennt",
+        "refuse_new_file_cancelled": "Übertragung abgebrochen, Empfang neuer Datei nicht möglich: {fileName}",
+        "discard_chunk_cancelled": "Übertragung abgebrochen, Dateiblock verworfen: fileId={fileId}, chunkIndex={chunkIndex}",
+        "ignore_end_signal_cancelled": "Übertragung abgebrochen, Dateiendesignal wird ignoriert: {fileName}",
+        "peer_cancelled_transmission": "Peer hat die Dateiübertragung abgebrochen",
+        "acknowledge_peer_cancel": "Peer hat die Dateiübertragung abgebrochen"
+    },
+    "guide": {
+        "title": "Privater Browser-Chat und Dateifreigabe ohne App",
+        "summary": "FreeSaveVideo ist eine Website zum Herunterladen von Videos und Browser-Tools. Die Dateiübertragungsseite unterstützt auch vorübergehende Einzel-Textgespräche mit jemandem, den Sie kennen. Erstellen Sie eine zufällige Sitzung und teilen Sie deren Link oder Code, um eine Verbindung herzustellen, mit optionalem Verschwinden von Nachrichten für neue Texte. Es eignet sich für kurze Austausche, wenn Sie keinen sozialen Kontakt hinzufügen, keinen weiteren Messenger installieren oder die Konversation nicht in Ihrem täglichen Chat-Verlauf behalten möchten.",
+        "scenarios_title": "Wann ist es sinnvoll?",
+        "scenarios": {
+            "devices": "Zwischen Ihren Geräten: Senden Sie Telefonfotos, Computerdateien, Links und Notizen an ein anderes Gerät.",
+            "sharing": "Mit einem Freund oder Kollegen: Tauschen Sie Dateien aus und diskutieren Sie darüber, ohne einen weiteren sozialen Kontakt hinzuzufügen.",
+            "conversation": "Für ein privates Gespräch: Besprechen Sie persönliche oder familiäre Angelegenheiten in einer separaten Browsersitzung, ohne den Austausch zu Ihrer täglichen Chat-Liste hinzuzufügen.",
+            "discreet": "Ein diskreter Tool-Site-Eintrag: Die Website bietet Video-Downloads und Dateiübertragungen mit Chat als einer Funktion, sodass Sie keine separate Chat-App auf Ihrem Telefon installieren müssen."
+        },
+        "steps_title": "So beginnen Sie ein vorübergehendes Gespräch",
+        "steps": {
+            "create": "Erstellen Sie eine zufällige Sitzung, um mit einer anderen Person zu chatten, ohne sich anzumelden. Persönliche Sitzungen gelten für Geräte, die dasselbe Konto verwenden.",
+            "invite": "Geben Sie den Sitzungslink oder -code privat weiter oder scannen Sie den QR-Code auf dem zweiten Gerät. Veröffentlichen Sie keine Sitzungsanmeldeinformationen.",
+            "chat": "Sobald die Verbindung hergestellt ist, wählen Sie „Chat & Text“. Für verschwindende Texte aktivieren Sie vor dem Senden die Option über dem Verfasser; Der 30-Sekunden-Countdown beginnt, wenn der Empfänger klickt, um die Nachricht anzuzeigen. Sie können auch zur Dateiübertragung wechseln. Halten Sie beide Seiten geöffnet und online.",
+            "finish": "Verwenden Sie „Diese Sitzung beenden“ oder „Diese Sitzung verlassen“, wenn Sie fertig sind. Das Schließen einer Seite bedeutet nicht, dass alle Geräte- und Browserspuren gelöscht wurden."
+        },
+        "faq_title": "FAQ zum temporären Chat- und Nachrichtenverlauf",
+        "faq": {
+            "wechat": {
+                "question": "Kann ich privat sprechen, ohne Nachrichten zum WeChat- oder LINE-Verlauf hinzuzufügen?",
+                "answer": "Ja. Zwei Personen, die sich kennen, können eine separate Browsersitzung für Texte und Dateien nutzen; Der Inhalt wird nicht automatisch mit WeChat oder LINE synchronisiert. Über diese Apps gesendete Einladungen bleiben möglicherweise in ihrem Verlauf. Dieses Tool löscht nicht die Datensätze anderer Apps und garantiert auch nicht, dass es Beziehungskonflikte verhindert."
+            },
+            "install": {
+                "question": "Brauchen beide Personen eine App, einen Account oder eine Freundschaftsanfrage?",
+                "answer": "Zufällige Sitzungen erfordern keine App-Installation, kein Konto oder keine Freundschaftsanfrage. Verwenden Sie WebRTC-fähige Browser und verbinden Sie sich mit einem Link, Code oder QR-Code. Beide Personen müssen online sein und Netzwerkbeschränkungen können die Verbindung verhindern. Für persönliche Sitzungen ist auf beiden Geräten dasselbe Anmeldekonto erforderlich."
+            },
+            "history": {
+                "question": "Wo wird der Chatverlauf gespeichert? Wird es sofort nach Gebrauch zerstört?",
+                "answer": "Optional verschwindende Texte werden unterstützt. Mit dieser Option gesendete neue Texte bleiben nur im Seitenspeicher. Durch Klicken zum Anzeigen wird ein Countdown gestartet. Bei einer funktionierenden Verbindung wird die Nachricht bei beiden Gesprächen nach etwa 30 Sekunden entfernt. Verschwindende Texte werden auch gelöscht, wenn eine geschlossene Verbindung oder ein Seitenabbruch erkannt wird. Das Anhalten des Browsers im Hintergrund kann die Ausführung verzögern. Das Ablaufdatum wird bei der Rückgabe überprüft. Gewöhnliche Texte bleiben im Tab-Sitzungsspeicher und können die Aktualisierung überleben. Dateien sind ausgeschlossen und eine nicht wiederherstellbare Löschung auf Geräteebene kann nicht garantiert werden."
+            },
+            "disguise": {
+                "question": "Gibt es eine Website, die nicht wie ein Messenger aussieht, aber einen privaten, verschwindenden Chat bietet?",
+                "answer": "FreeSaveVideo ist eine Website zum Herunterladen von Videos und Tools. Die Dateiübertragungsseite bietet auch einen privaten Eins-zu-eins-Chat mit optional verschwindenden Texten und ermöglicht so einen diskreten Zugriff auf die Tool-Site ohne separate Chat-App. Verschwindende Nachrichten löschen den Gesprächsinhalt, nicht den Browser-Besuchsverlauf. Geöffnete Chatseiten, Screenshots und heruntergeladene Dateien sind möglicherweise weiterhin sichtbar."
+            },
+            "privacy": {
+                "question": "Verhindert die Verschlüsselung, dass der Empfänger Nachrichten speichert oder Screenshots erstellt?",
+                "answer": "Nein. WebRTC verschlüsselt die Übertragung, während ein Server Sitzungsverbindungen koordiniert. Dies bedeutet keine vollständige Anonymität oder einen Dienst ohne Protokolle. Empfänger können weiterhin Texte kopieren, Screenshots oder Fotos machen und Dateien speichern. Teilen Sie es nur mit Personen, denen Sie vertrauen."
+            },
+            "files": {
+                "question": "Kann ich während eines Chats Dateien senden oder Nachrichten offline empfangen?",
+                "answer": "Sobald die Verbindung hergestellt ist, können Sie zwischen Dateien und Text wechseln, ohne die Dateien zuerst auf ein Cloud-Laufwerk hochladen zu müssen. Beide Browser benötigen eine Online-Verbindung; Eine Offline-Nachrichtenzustellung ist nicht vorgesehen. Halten Sie die Seiten geöffnet und vermeiden Sie es, während der Übertragung das Netzwerk zu wechseln."
+            }
+        }
+    },
+    "error": {
+        "session_not_found": "Sitzung nicht gefunden oder abgelaufen",
+        "session_full": "Die Sitzung ist voll",
+        "connection_failed": "Verbindung fehlgeschlagen",
+        "encryption_failed": "Die Verschlüsselung ist fehlgeschlagen"
     }
 }

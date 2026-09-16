@@ -1,5 +1,6 @@
 {
     "picker.item.photo": "写真のサムネイル",
     "picker.item.video": "動画のサムネイル",
-    "picker.item.gif": "GIFのサムネイル"
+    "picker.item.gif": "GIFのサムネイル",
+    "batch.select_item": "項目を選択"
 }

@@ -1,5 +1,6 @@
 {
-    "picker.item.photo": "photo thumbnail",
-    "picker.item.video": "video thumbnail",
-    "picker.item.gif": "gif thumbnail"
+    "picker.item.photo": "ภาพขนาดย่อของภาพถ่าย",
+    "picker.item.video": "ภาพขนาดย่อของวิดีโอ",
+    "picker.item.gif": "ภาพขนาดย่อ GIF",
+    "batch.select_item": "เลือกรายการ"
 }

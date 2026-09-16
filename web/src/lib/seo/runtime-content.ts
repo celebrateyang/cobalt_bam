@@ -76,32 +76,6 @@ export const getPlatformKey = (slug: string): PlatformKey => {
 
 export const getSeoRuntimeContent = (lang: string): RuntimeContent => {
     const locale = contentByLocale[lang] ?? contentByLocale[fallbackLocale];
-    if (lang !== 'en' && lang !== 'zh' && lang !== 'ja' && lang !== 'th') {
-        const platformFaqs = Object.fromEntries(
-            Object.keys(locale.platformFaqs).map((key) => [key, []]),
-        ) as unknown as RuntimeContent['platformFaqs'];
-        const platformPlaybooks = Object.fromEntries(
-            Object.keys(locale.platformPlaybooks).map((key) => [
-                key,
-                { heading: '', notes: [], checklist: [] },
-            ]),
-        ) as unknown as RuntimeContent['platformPlaybooks'];
-        const platformFailureCases = Object.fromEntries(
-            Object.keys(locale.platformFailureCases).map((key) => [key, []]),
-        ) as unknown as RuntimeContent['platformFailureCases'];
-
-        return {
-            ...locale,
-            productFaqs: [],
-            productTips: [],
-            productAdvantages: [],
-            releaseNotes: [],
-            freeTools: [],
-            platformFaqs,
-            platformPlaybooks,
-            platformFailureCases,
-        };
-    }
     return locale;
 };
 

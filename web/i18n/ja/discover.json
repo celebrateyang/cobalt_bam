@@ -10,7 +10,9 @@
         "empty": {
             "title": "動画がありません",
             "description": "まだ動画コンテンツが追加されていません"
-        }
+        },
+        "parsing": "解析中/キューに登録済み",
+        "still_parsing": "まだ解析中です。しばらくお待ちください"
     },
     "account": {
         "videoCount": "{{count}}本の動画"
@@ -21,6 +23,39 @@
         "copyTitle": "動画アドレスをコピー",
         "copyFailed": "コピーに失敗しました：",
         "manualCopy": "自動的にコピーできません。手動でコピーしてください：\n{{url}}",
-        "closeDialog": "「OK」をクリックしてこのメッセージを閉じる"
+        "closeDialog": "「OK」をクリックしてこのメッセージを閉じる",
+        "creator_batch": "クリエイターからの詳細",
+        "creator_batch_title": "{{name}} · バッチ",
+        "load_more": "さらにロードする"
+    },
+    "section": {
+        "trending": "トレンド",
+        "pinned": "固定された",
+        "featured": "注目の",
+        "latest": "最新の"
+    },
+    "menu": {
+        "resources": "リソースを発見する",
+        "beauty": "美を発見する"
+    },
+    "resources": {
+        "title": "リソースを発見する",
+        "subtitle": "カテゴリを参照し、利用可能なリンクからダウンロードします",
+        "empty": {
+            "title": "まだリソースがありません",
+            "description": "カテゴリやリンクが追加されていません"
+        },
+        "empty_links": {
+            "title": "リンクはありません",
+            "description": "このカテゴリにはダウンロード可能なリンクがまだありません"
+        },
+        "select": {
+            "title": "カテゴリを選択してください",
+            "description": "リンクを表示するには、左側のカテゴリを選択してください"
+        },
+        "action": {
+            "downloading": "ダウンロード中..."
+        },
+        "batch_limit_hint": "バッチ制限: {{max}}"
     }
 }

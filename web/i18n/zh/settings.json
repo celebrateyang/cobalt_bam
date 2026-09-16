@@ -42,7 +42,7 @@
     "audio.format.opus": "opus",
     "audio.format.description": "除“最佳”格式外，所有格式都会被转换，这意味着会有一些质量损失。只有选择“最佳”格式时，音频不会重新编码。",
     "audio.bitrate": "音频比特率",
-    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.kbps": "千字节/秒",
     "audio.bitrate.description": "比特率仅适用于音频转换。FreeSaveVideo无法提升源音频质量，因此选择超过128kbps的比特率可能会导致文件大小膨胀，但听觉上无差异。感知质量可能因格式而异。",
     "audio.youtube.dub": "YouTube",
     "audio.youtube.dub.title": "为配音视频使用浏览器语言",

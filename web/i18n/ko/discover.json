@@ -10,7 +10,9 @@
         "empty": {
             "title": "영상 없음",
             "description": "아직 추가된 영상 콘텐츠가 없습니다"
-        }
+        },
+        "parsing": "구문 분석 중/대기 중",
+        "still_parsing": "아직 구문 분석 중입니다. 잠시만 기다려 주세요."
     },
     "account": {
         "videoCount": "영상 {{count}}개"
@@ -21,6 +23,39 @@
         "copyTitle": "영상 주소 복사",
         "copyFailed": "복사 실패:",
         "manualCopy": "자동으로 복사할 수 없습니다. 수동으로 복사하세요:\n{{url}}",
-        "closeDialog": "\"확인\"을 클릭하여 이 메시지 닫기"
+        "closeDialog": "\"확인\"을 클릭하여 이 메시지 닫기",
+        "creator_batch": "크리에이터의 작품 더보기",
+        "creator_batch_title": "{{name}} · 배치",
+        "load_more": "더 로드하기"
+    },
+    "section": {
+        "trending": "인기 급상승",
+        "pinned": "고정됨",
+        "featured": "추천",
+        "latest": "최신"
+    },
+    "menu": {
+        "resources": "리소스 검색",
+        "beauty": "아름다움을 발견하세요"
+    },
+    "resources": {
+        "title": "리소스 검색",
+        "subtitle": "카테고리를 찾아보고 사용 가능한 링크에서 다운로드하세요.",
+        "empty": {
+            "title": "아직 리소스가 없습니다.",
+            "description": "카테고리나 링크가 추가되지 않았습니다."
+        },
+        "empty_links": {
+            "title": "링크 없음",
+            "description": "이 카테고리에는 아직 다운로드 가능한 링크가 없습니다."
+        },
+        "select": {
+            "title": "카테고리를 선택하세요",
+            "description": "링크를 보려면 왼쪽에서 카테고리를 선택하세요."
+        },
+        "action": {
+            "downloading": "다운로드 중..."
+        },
+        "batch_limit_hint": "배치 제한: {{max}}"
     }
 }

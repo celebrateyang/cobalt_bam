@@ -42,7 +42,7 @@
     "audio.format.opus": "opus",
     "audio.format.description": "tous les formats sauf \"meilleur\" sont convertis, ce qui signifie qu'il y aura une perte de qualité. l'audio n'est pas réencodé uniquement lorsque le format \"meilleur\" est sélectionné.",
     "audio.bitrate": "débit audio",
-    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.kbps": "Ko/s",
     "audio.bitrate.description": "le débit s'applique uniquement à la conversion audio. FreeSaveVideo ne peut pas améliorer la qualité audio source, donc choisir un débit supérieur à 128kbps peut gonfler la taille du fichier sans différence audible. la qualité perçue peut varier selon le format.",
     "audio.youtube.dub": "youtube",
     "audio.youtube.dub.title": "utiliser la langue du navigateur pour les vidéos doublées",
@@ -99,5 +99,17 @@
     "processing.community": "instances communautaires",
     "processing.enable_custom.title": "utiliser un serveur de traitement personnalisé",
     "processing.enable_custom.description": "FreeSaveVideo utilisera un serveur de traitement personnalisé si vous le choisissez. même si FreeSaveVideo a des mesures de sécurité en place, nous ne sommes pas responsables des dommages causés via une instance communautaire, car nous n'avons aucun contrôle sur elles.\n\nveuillez faire attention aux instances que vous utilisez et assurez-vous qu'elles sont hébergées par des personnes en qui vous avez confiance.",
-    "processing.custom.placeholder": "domaine d'instance personnalisé"
+    "processing.custom.placeholder": "domaine d'instance personnalisé",
+    "local.storage": "stockage du navigateur",
+    "local.storage.description": "les téléchargements et le traitement local peuvent stocker temporairement des fichiers multimédias volumineux dans votre navigateur. après avoir enregistré les résultats terminés, effacez ces fichiers pour libérer de l'espace disque.",
+    "local.storage.loading": "vérification des fichiers de traitement stockés localement...",
+    "local.storage.used": "fichiers de traitement stockés localement : {{ size }} (fichiers {{ count }})",
+    "local.storage.empty": "aucun fichier de traitement local n'est actuellement stocké dans votre navigateur.",
+    "local.storage.unavailable": "Le stockage des fichiers locaux du navigateur n'est pas disponible ici.",
+    "local.storage.clear": "effacer les fichiers de traitement locaux",
+    "local.storage.clearing": "suppression des fichiers de traitement locaux...",
+    "local.storage.cleared": "les fichiers de traitement locaux ont été effacés.",
+    "local.storage.confirm": "Effacer tous les fichiers de traitement locaux ? Cela supprime les téléchargements inachevés et les résultats qui n'ont pas été enregistrés sur votre appareil. Les fichiers déjà enregistrés dans votre dossier de téléchargements ne sont pas affectés.",
+    "local.storage.processing": "terminer ou annuler les tâches de traitement actives avant d’effacer les fichiers locaux.",
+    "local.storage.error": "impossible de lire ou d'effacer les fichiers de traitement locaux."
 }

@@ -153,7 +153,12 @@
         "peer_slot_released": "Se eliminó el dispositivo conectado. Ya puede unirse otro dispositivo.",
         "session_replaced": "Este dispositivo se desconectó porque otro ocupó su lugar.",
         "peer_remove_forbidden": "Solo quien creó la sesión puede liberar el dispositivo conectado.",
-        "release_peer_failed": "El servidor no confirmó la liberación. Actualiza el backend e inténtalo de nuevo."
+        "release_peer_failed": "El servidor no confirmó la liberación. Actualiza el backend e inténtalo de nuevo.",
+        "refuse_new_file_cancelled": "Transmisión cancelada, negándose a comenzar a recibir un nuevo archivo: {fileName}",
+        "discard_chunk_cancelled": "Transmisión cancelada, descartando fragmento de archivo: fileId={fileId}, chunkIndex={chunkIndex}",
+        "ignore_end_signal_cancelled": "Transmisión cancelada, ignorando la señal de fin de archivo: {fileName}",
+        "peer_cancelled_transmission": "Transmisión de archivos cancelada por pares",
+        "acknowledge_peer_cancel": "Transmisión de archivos cancelada por pares"
     },
     "entry": {
         "personal_transfer": "Transferir entre mis dispositivos",
@@ -178,5 +183,56 @@
         "join": "Unirme a mi sesión personal",
         "opened_title": "Mi sesión personal está lista",
         "opened_hint": "En tu otro dispositivo con la misma cuenta iniciada, pulsa \"Unirme a mi sesión personal\" para empezar a transferir archivos y texto."
+    },
+    "guide": {
+        "title": "Chat privado en navegador y uso compartido de archivos sin una aplicación",
+        "summary": "FreeSaveVideo es un sitio web de herramientas de navegación y descarga de videos. Su página de transferencia de archivos también admite conversaciones de texto temporales uno a uno con alguien que conoce. Cree una sesión aleatoria y comparta su enlace o código para conectarse, con mensajes opcionales que desaparecen para nuevos mensajes de texto. Es adecuado para intercambios cortos cuando no desea agregar un contacto social, instalar otro mensajero o mantener la conversación en su historial de chat diario.",
+        "scenarios_title": "¿Cuándo es útil?",
+        "scenarios": {
+            "devices": "Entre tus dispositivos: envía fotos del teléfono, archivos de computadora, enlaces y notas a otro dispositivo.",
+            "sharing": "Con un amigo o colega: intercambie archivos y discútalos sin agregar otro contacto social.",
+            "conversation": "Para una conversación privada: discuta asuntos personales o familiares en una sesión separada del navegador sin agregar el intercambio a su lista de chat diaria.",
+            "discreet": "Una entrada discreta al sitio de herramientas: el sitio web ofrece descargas de videos y transferencia de archivos, con el chat como una característica, por lo que no es necesario instalar una aplicación de chat separada en su teléfono."
+        },
+        "steps_title": "Cómo iniciar una conversación temporal",
+        "steps": {
+            "create": "Cree una sesión aleatoria para chatear con otra persona sin iniciar sesión. Las sesiones personales son para dispositivos que usan la misma cuenta.",
+            "invite": "Comparta de forma privada el enlace o código de la sesión, o escanee su código QR en el segundo dispositivo. No publique las credenciales de la sesión.",
+            "chat": "Una vez conectado, elija Chat y mensajes de texto. Para textos que desaparecen, habilite la opción encima del redactor antes de enviarlos; la cuenta regresiva de 30 segundos comienza cuando el destinatario hace clic para revelar el mensaje. También puedes cambiar a Transferencia de archivos. Mantenga ambas páginas abiertas y en línea.",
+            "finish": "Utilice Finalizar esta sesión o Salir de esta sesión cuando haya terminado. Cerrar una página no significa que se hayan borrado todos los rastros del dispositivo y del navegador."
+        },
+        "faq_title": "Preguntas frecuentes sobre el historial de mensajes y chat temporal",
+        "faq": {
+            "wechat": {
+                "question": "¿Puedo hablar en privado sin agregar mensajes al historial de WeChat o LINE?",
+                "answer": "Sí. Dos personas que se conocen pueden utilizar una sesión de navegador separada para texto y archivos; su contenido no se sincroniza automáticamente con WeChat o LINE. Las invitaciones enviadas a través de esas aplicaciones pueden permanecer en su historial. Esta herramienta no elimina los registros de otras aplicaciones ni garantiza que evitará conflictos de relación."
+            },
+            "install": {
+                "question": "¿Ambas personas necesitan una aplicación, una cuenta o una solicitud de amistad?",
+                "answer": "Las sesiones aleatorias no requieren instalación de aplicaciones, cuenta ni solicitud de amistad. Utilice navegadores compatibles con WebRTC y conéctese con un enlace, código o código QR. Ambas personas deben estar en línea y las restricciones de la red pueden impedir la conexión. Las sesiones personales requieren la misma cuenta iniciada en ambos dispositivos."
+            },
+            "history": {
+                "question": "¿Dónde se guarda el historial de chat? ¿Se destruye inmediatamente después de su uso?",
+                "answer": "Se admiten textos que desaparecen opcionales. Los nuevos mensajes de texto enviados con esta opción permanecen solo en la memoria de la página. Al hacer clic para revelar se inicia una cuenta regresiva; con una conexión funcional, ambas conversaciones eliminan el mensaje después de unos 30 segundos. Los textos que desaparecen también se borran cuando se detecta una conexión cerrada o una salida de página. La suspensión del navegador en segundo plano puede retrasar la ejecución; La caducidad se comprueba a la devolución. Los textos normales permanecen en el almacenamiento de la sesión de pestañas y pueden sobrevivir a la actualización. Los archivos están excluidos y no se garantiza la eliminación irrecuperable a nivel del dispositivo."
+            },
+            "disguise": {
+                "question": "¿Existe algún sitio web que no parezca un mensajero pero que ofrezca un chat privado que desaparece?",
+                "answer": "FreeSaveVideo es un sitio web de herramientas y descarga de vídeos. Su página de transferencia de archivos también ofrece chat privado uno a uno con textos que desaparecen opcionales, proporcionando una entrada discreta al sitio de herramientas sin una aplicación de chat separada. Los mensajes que desaparecen borran el contenido de la conversación, no el historial de visitas del navegador. Es posible que las páginas de chat abiertas, las capturas de pantalla y los archivos descargados aún estén visibles."
+            },
+            "privacy": {
+                "question": "¿El cifrado impide que el destinatario guarde o haga capturas de pantalla de los mensajes?",
+                "answer": "No. WebRTC cifra la transferencia, mientras que un servidor coordina las conexiones de la sesión. Esto no implica un anonimato total ni un servicio sin registros. Los destinatarios aún pueden copiar texto, tomar capturas de pantalla o fotografías y guardar archivos. Comparte solo con personas de tu confianza."
+            },
+            "files": {
+                "question": "¿Puedo enviar archivos durante un chat o recibir mensajes sin conexión?",
+                "answer": "Una vez conectado, cambie entre archivos y texto sin cargar primero los archivos en una unidad en la nube. Ambos navegadores necesitan una conexión en línea; No se proporciona la entrega de mensajes sin conexión. Mantenga las páginas abiertas y evite cambiar de red durante las transferencias."
+            }
+        }
+    },
+    "error": {
+        "session_not_found": "Sesión no encontrada o caducada",
+        "session_full": "La sesión está llena",
+        "connection_failed": "La conexión falló",
+        "encryption_failed": "Error de cifrado"
     }
 }

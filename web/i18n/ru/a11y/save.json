@@ -1,9 +1,12 @@
 {
     "link_area": "зона вставки ссылки",
-    "clear_input": "clear input",
+    "clear_input": "очистить ввод",
     "download": "скачать",
     "download.think": "обрабатываю ссылку...",
     "download.check": "проверяю загрузку...",
     "download.done": "загрузка завершена!",
-    "download.error": "ошибка загрузки"
+    "download.error": "ошибка загрузки",
+    "link_area.turnstile": "область ввода ссылки. проверяю, не робот ли ты.",
+    "tutorial.shortcut.photos": "добавить ярлык фотографий",
+    "tutorial.shortcut.files": "добавить ярлык файлов"
 }

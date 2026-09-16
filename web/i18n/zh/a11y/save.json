@@ -1,12 +1,12 @@
 {
-    "link_area": "link input area",
-    "link_area.turnstile": "link input area. checking if you're not a robot.",
-    "clear_input": "clear input",
+    "link_area": "链接输入区",
+    "link_area.turnstile": "链接输入区域。检查你是否不是机器人。",
+    "clear_input": "清除输入",
     "download": "download",
-    "download.think": "processing the link...",
-    "download.check": "verifying download...",
-    "download.done": "downloading done",
-    "download.error": "downloading error",
-    "tutorial.shortcut.photos": "add photos shortcut",
-    "tutorial.shortcut.files": "add files shortcut"
+    "download.think": "正在处理链接...",
+    "download.check": "正在验证下载...",
+    "download.done": "下载完成",
+    "download.error": "下载错误",
+    "tutorial.shortcut.photos": "添加照片快捷方式",
+    "tutorial.shortcut.files": "添加文件快捷方式"
 }

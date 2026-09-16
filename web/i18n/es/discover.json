@@ -10,10 +10,12 @@
         "empty": {
             "title": "Sin videos",
             "description": "Aún no se ha agregado contenido de video"
-        }
+        },
+        "parsing": "Analizando/En cola",
+        "still_parsing": "Aún analizando, espere un momento."
     },
     "account": {
-        "videoCount": "{{count}} videos"
+        "videoCount": "Vídeos de {{count}}"
     },
     "action": {
         "copy": "📋 Copiar",
@@ -21,6 +23,39 @@
         "copyTitle": "Copiar dirección del video",
         "copyFailed": "Falló la copia:",
         "manualCopy": "No se puede copiar automáticamente, por favor copia manualmente:\n{{url}}",
-        "closeDialog": "Haz clic en \"OK\" para cerrar este mensaje"
+        "closeDialog": "Haz clic en \"OK\" para cerrar este mensaje",
+        "creator_batch": "Más del creador",
+        "creator_batch_title": "{{name}} · Lote",
+        "load_more": "Cargar más"
+    },
+    "section": {
+        "trending": "Tendencia",
+        "pinned": "Fijado",
+        "featured": "Destacado",
+        "latest": "Lo último"
+    },
+    "menu": {
+        "resources": "Descubra recursos",
+        "beauty": "Descubre la belleza"
+    },
+    "resources": {
+        "title": "Descubra recursos",
+        "subtitle": "Explorar categorías y descargar desde enlaces disponibles",
+        "empty": {
+            "title": "Aún no hay recursos",
+            "description": "No se han agregado categorías ni enlaces."
+        },
+        "empty_links": {
+            "title": "Sin enlaces",
+            "description": "Esta categoría aún no tiene enlaces de descarga."
+        },
+        "select": {
+            "title": "Selecciona una categoría",
+            "description": "Elija una categoría a la izquierda para ver enlaces"
+        },
+        "action": {
+            "downloading": "Descargando..."
+        },
+        "batch_limit_hint": "Límite de lotes: {{max}}"
     }
 }

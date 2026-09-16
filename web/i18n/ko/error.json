@@ -26,7 +26,7 @@
     "api.wechat_channels.app_only": "이 동영상은 WeChat 앱 안에서만 볼 수 있어 공유 링크로 다운로드할 수 없습니다. 공개적으로 볼 수 있는 다른 동영상을 시도해 주세요.",
     "api.fetch.critical": "{{ service }} 모듈이 인식할 수 없는 오류를 반환했습니다. 몇 초 후에 다시 시도하되, 문제가 계속되면 알려주세요!",
     "api.fetch.empty": "다운로드할 수 있는 미디어를 찾을 수 없습니다. 올바른 링크를 붙여넣었나요?",
-    "api.fetch.rate": "FreeSaveVideo 처리 서버가 {{ service }} API에 의해 속도 제한되었습니다. 몇 초 후에 다시 시도하세요!",
+    "api.fetch.rate": "FreeSaveVideo 처리 서버가 {{ service }} API에 의해 속도 제한되었습니다. 약 {{ limit }}초 후에 다시 시도하세요!",
     "api.fetch.short_link": "짧은 링크에서 링크 정보를 가져올 수 없습니다. 작동하나요? 작동하는데도 이 오류가 계속 표시되면 알려주시면 도와드리겠습니다!",
     "api.tiktok.collection.unsupported": "단일 동영상이 아닌 TikTok 컬렉션 링크입니다. 컬렉션에서 동영상 하나를 열고 해당 동영상 링크를 복사한 후 다시 시도해 주세요. TikTok에서도 컬렉션을 찾을 수 없다면 삭제되었거나 비공개 상태일 수 있습니다.",
     "api.content.too_long": "요청한 미디어가 너무 깁니다. 현재 재생 시간 제한은 {{ limit }}분입니다. 더 짧은 것을 시도하세요!",
@@ -69,5 +69,18 @@
     "api.upstream.network": "처리 연결이 일시적으로 불안정합니다. 동영상에는 문제가 없을 수 있으니 몇 초 후 다시 시도하세요.",
     "api.upstream.incomplete": "일시적인 연결 문제로 처리 서버가 불완전한 응답을 반환했습니다. 몇 초 후 다시 시도하세요.",
     "api.youtube.timeout": "이번에는 YouTube 분석에 예상보다 오래 걸렸습니다. 다운로드할 수 있는 동영상일 수 있으니 잠시 후 다시 시도하세요.",
-    "api.bilibili.collection_has_long_video": "이 Bilibili 컬렉션에 {{ limit }}분을 넘는 동영상이 있어 일괄 다운로드가 비활성화됩니다. 각 동영상을 열어 하나씩 다운로드해 주세요."
+    "api.bilibili.collection_has_long_video": "이 Bilibili 컬렉션에 {{ limit }}분을 넘는 동영상이 있어 일괄 다운로드가 비활성화됩니다. 각 동영상을 열어 하나씩 다운로드해 주세요.",
+    "api.auth.clerk.missing": "다운로드하려면 로그인하세요.",
+    "api.auth.clerk.invalid": "로그인 세션이 유효하지 않거나 만료되었습니다. 다시 로그인해 주세요.",
+    "api.user.disabled": "귀하의 계정이 비활성화되었습니다. 이것이 실수라고 생각되면 지원팀에 문의하세요.",
+    "api.points.insufficient": "포인트가 부족해요. {{ current }}가 있고 {{ required }}가 필요합니다.",
+    "api.points.unavailable": "이 서버에는 포인트가 구성되어 있지 않습니다. 인스턴스 소유자에게 문의하세요.",
+    "queue.fetch.bad_response": "다운로드 서버가 잘못된 응답을 반환했습니다. 몇 초 후에 다시 시도해 보세요.",
+    "queue.fetch.no_file_reader": "다운로드 스트림을 읽을 수 없습니다. 몇 초 후에 다시 시도해 보세요.",
+    "queue.fetch.empty_tunnel": "다운로드가 빈 파일을 반환했습니다. 몇 초 후에 다시 시도해 보세요.",
+    "queue.fetch.corrupted_file": "다운로드한 파일 크기가 예상 크기와 일치하지 않습니다. 다시 시도해 보세요.",
+    "queue.fetch.network_error": "다운로드 중 네트워크 오류가 발생했습니다. 몇 초 후에 다시 시도해 보세요.",
+    "queue.fetch.crashed": "다운로드 작업자가 충돌했습니다. 몇 초 후에 다시 시도해 보세요.",
+    "queue.fetch.timeout": "다운로드 시간이 너무 오래 걸리고 시간이 초과되었습니다. 다시 시도해 보세요.",
+    "queue.fetch.stalled": "데이터가 수신되지 않아 다운로드가 중단되었습니다. 다시 시도해 보세요."
 }

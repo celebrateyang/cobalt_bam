@@ -42,7 +42,7 @@
     "audio.format.opus": "opus",
     "audio.format.description": "「最高」以外のすべての形式は変換され、品質が低下します。「最高」形式が選択されている場合のみ、オーディオは再エンコードされません。",
     "audio.bitrate": "オーディオビットレート",
-    "audio.bitrate.kbps": "kb/s",
+    "audio.bitrate.kbps": "kb/秒",
     "audio.bitrate.description": "ビットレートはオーディオ変換にのみ適用されます。FreeSaveVideoはソースオーディオの品質を向上させることはできないため、128kbpsを超えるビットレートを選択すると、聴覚的な違いなしにファイルサイズが膨らむ可能性があります。知覚される品質は形式によって異なる場合があります。",
     "audio.youtube.dub": "YouTube",
     "audio.youtube.dub.title": "吹き替え動画にブラウザの言語を使用",
@@ -99,5 +99,17 @@
     "processing.community": "コミュニティインスタンス",
     "processing.enable_custom.title": "カスタム処理サーバーを使用",
     "processing.enable_custom.description": "選択すると、FreeSaveVideoはカスタム処理サーバーを使用します。FreeSaveVideoにはいくつかのセキュリティ対策がありますが、コミュニティインスタンスを介して行われた損害については責任を負いません。私たちはそれらを制御できないためです。\n\nどのインスタンスを使用するかは慎重に判断し、信頼できる人がホストしていることを確認してください。",
-    "processing.custom.placeholder": "カスタムインスタンスドメイン"
+    "processing.custom.placeholder": "カスタムインスタンスドメイン",
+    "local.storage": "ブラウザストレージ",
+    "local.storage.description": "ダウンロードやローカル処理により、大きなメディア ファイルがブラウザに一時的に保存される場合があります。完了した結果を保存した後、これらのファイルをクリアしてディスク領域を解放します。",
+    "local.storage.loading": "ローカルに保存された処理ファイルをチェックしています...",
+    "local.storage.used": "ローカルに保存された処理ファイル: {{ size }} ({{ count }} ファイル)",
+    "local.storage.empty": "現在、ブラウザにローカル処理ファイルは保存されていません。",
+    "local.storage.unavailable": "ここではブラウザのローカル ファイル ストレージは利用できません。",
+    "local.storage.clear": "ローカル処理ファイルをクリアする",
+    "local.storage.clearing": "ローカル処理ファイルをクリアしています...",
+    "local.storage.cleared": "ローカル処理ファイルはクリアされました。",
+    "local.storage.confirm": "ローカル処理ファイルをすべてクリアしますか?これにより、未完了のダウンロードとデバイスに保存されていない結果が削除されます。ダウンロード フォルダーに既に保存されているファイルは影響を受けません。",
+    "local.storage.processing": "ローカル ファイルをクリアする前に、アクティブな処理タスクを終了またはキャンセルしてください。",
+    "local.storage.error": "ローカル処理ファイルの読み取りまたはクリアができませんでした。"
 }

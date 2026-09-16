@@ -1,12 +1,12 @@
 {
-    "link_area": "link input area",
-    "link_area.turnstile": "link input area. checking if you're not a robot.",
-    "clear_input": "clear input",
+    "link_area": "พื้นที่อินพุตลิงค์",
+    "link_area.turnstile": "พื้นที่อินพุตลิงค์ ตรวจสอบว่าคุณไม่ใช่หุ่นยนต์หรือไม่",
+    "clear_input": "อินพุตที่ชัดเจน",
     "download": "download",
-    "download.think": "processing the link...",
-    "download.check": "verifying download...",
-    "download.done": "downloading done",
-    "download.error": "downloading error",
-    "tutorial.shortcut.photos": "add photos shortcut",
-    "tutorial.shortcut.files": "add files shortcut"
+    "download.think": "กำลังประมวลผลลิงก์...",
+    "download.check": "กำลังตรวจสอบการดาวน์โหลด...",
+    "download.done": "ดาวน์โหลดเสร็จแล้ว",
+    "download.error": "เกิดข้อผิดพลาดในการดาวน์โหลด",
+    "tutorial.shortcut.photos": "เพิ่มทางลัดรูปภาพ",
+    "tutorial.shortcut.files": "เพิ่มทางลัดไฟล์"
 }

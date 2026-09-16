@@ -10,15 +10,25 @@
     },
     "promotions": {
         "finditbuddy": {
-            "title": "FinditBuddy helps you remember where things are and find them later",
+            "title": "FinditBuddy поможет вам запомнить, где что-то находится, и найти его позже.",
             "features": {
-                "1": "Smartly record where each item is placed",
-                "2": "Save room, shelf, box, and note details in seconds",
-                "3": "Search by item name when you forget where it was stored",
-                "4": "Keep home storage organized for daily essentials",
-                "5": "Spend less time looking for misplaced things"
+                "1": "Умно записывайте, где находится каждый предмет",
+                "2": "Сохраняйте информацию о комнате, полке, коробке и заметках за считанные секунды.",
+                "3": "Поиск по названию предмета, если вы забыли, где он хранился",
+                "4": "Организуйте домашнее хранилище для повседневных вещей",
+                "5": "Тратьте меньше времени на поиск неуместных вещей"
             },
-            "visit": "Visit FinditBuddy"
+            "visit": "Посетите FinditBuddy"
+        },
+        "yumcheck": {
+            "title": "Анализ пищевых ингредиентов, автоматический запрос и анализ фотографий",
+            "features": {
+                "1": "Сфотографируйте списки ингредиентов для анализа ингредиентов и оценки риска для здоровья одним щелчком мыши.",
+                "2": "Сравните пищевые добавки со стандартами ЕС для многомерного понимания",
+                "3": "Сканируйте номера стандартов пищевых продуктов для быстрой интерпретации нормативной информации.",
+                "4": "Интеллектуальный анализ отчетов по анализам крови, делающий отчеты крови понятными для обычных людей."
+            },
+            "visit": "Посетите YumCheck"
         }
     },
     "language_suggestion": {
@@ -31,6 +41,27 @@
             "title": "FreeSaveVideo - онлайн загрузчик видео",
             "description": "Скачивайте видео без водяных знаков онлайн через FreeSaveVideo. Вставьте ссылку из Douyin, TikTok, Bilibili, Sohu Video, NicoNico, Haokan, Toutiao, Xiaohongshu, Instagram, Threads, Facebook, Amazon Live, YouTube и других сервисов. Поддерживаются пакетная загрузка, коллекции, только аудио и беззвучный режим. Также поддерживаются публичные видео WeChat Channels и выбор нескольих видео из статей официальных аккаунтов WeChat.",
             "keywords": "онлайн загрузчик видео, скачать видео без водяных знаков, Douyin downloader, TikTok downloader, Bilibili downloader, пакетная загрузка, playlist downloader, Haokan downloader, скачать видео Haokan, Toutiao video downloader, Toutiao video download, Toutiao MP4 download, NicoNico downloader, nicovideo download, Sohu video downloader, download Sohu video, Amazon Live downloader, Amazon Live replay download, amazon.com/live/video download, amazon vdp video download скачать видео WeChat Channels, скачать видео WeChat Official Account, скачать видео mp.weixin.qq.com"
+        },
+        "transfer": {
+            "title": "Приватный чат, исчезающие тексты и передача файлов | FreeSaveVideo",
+            "description": "Частный чат в браузере на сайте видеоинструментов. Дополнительные тексты исчезают примерно через 30 секунд после открытия. Приложение не требуется. Оба остаются онлайн; история браузера сохраняется.",
+            "keywords": "временный приватный чат, исчезающие тексты, чат в браузере, чат без регистрации, индивидуальный чат, передача файлов, обмен файлами между устройствами, история чата WeChat, история чата LINE"
+        },
+        "discover": {
+            "title": "Откройте для себя популярные видео — клипы о красоте, смешных и вирусных клипах | Ежедневные обновления",
+            "description": "Сборник самых горячих видео в сети. Кураторские видеоролики о красоте, забавные клипы и вирусные тенденции. Обновляется ежедневно.",
+            "keywords": "трендовые видео, бьюти-видео, смешные видео, вирусные клипы, горячие видео, видеорекомендации"
         }
+    },
+    "or": "или",
+    "notification": {
+        "title": "Примечание:",
+        "close": "Закрыть уведомление",
+        "youtube_restriction": "Теперь поддерживается прямая загрузка YouTube. Если конкретную ссылку не удается проанализировать, повторите попытку позже или отправьте отзыв."
+    },
+    "pwa": {
+        "install_prompt": "Этот веб-сайт поддерживает установку на рабочий стол.",
+        "install": "Установить",
+        "close": "Закрыть"
     }
 }

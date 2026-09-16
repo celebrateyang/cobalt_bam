@@ -143,11 +143,11 @@
         "ignore_end_signal_cancelled": "Đã hủy truyền, bỏ qua tín hiệu kết thúc file: {fileName}",
         "peer_cancelled_transmission": "Đối tác đã hủy truyền file",
         "acknowledge_peer_cancel": "Đối tác đã hủy truyền file",
-        "personal_code_rotated": "Session code was reset. Please reopen your personal session.",
-        "personal_ws_ticket_invalid": "Personal session authorization expired. Please try again.",
-        "personal_session_forbidden": "This personal session can only be joined by the same account.",
-        "open_personal_failed": "Failed to open personal session. Please try again.",
-        "join_personal_failed": "Failed to join personal session. Please try again.",
+        "personal_code_rotated": "Mã phiên đã được đặt lại. Vui lòng mở lại phiên cá nhân của bạn.",
+        "personal_ws_ticket_invalid": "Ủy quyền phiên cá nhân đã hết hạn. Vui lòng thử lại.",
+        "personal_session_forbidden": "Phiên cá nhân này chỉ có thể được tham gia bởi cùng một tài khoản.",
+        "open_personal_failed": "Không mở được phiên cá nhân. Vui lòng thử lại.",
+        "join_personal_failed": "Không thể tham gia phiên cá nhân. Vui lòng thử lại.",
         "replace_session_failed": "Không thể thay kết nối cũ. Hãy kết nối lại và thử lần nữa.",
         "peer_slot_released": "Đã xóa thiết bị đang kết nối. Thiết bị khác có thể tham gia.",
         "session_replaced": "Thiết bị này đã bị ngắt vì thiết bị khác đã thay thế vị trí.",
@@ -161,8 +161,8 @@
         "encryption_failed": "Mã hóa thất bại"
     },
     "entry": {
-        "personal_transfer": "Transfer Between My Devices",
-        "personal_default_hint": "Signed-in users can open or join their personal session with one click.",
+        "personal_transfer": "Chuyển giữa các thiết bị của tôi",
+        "personal_default_hint": "Người dùng đã đăng nhập có thể mở hoặc tham gia phiên cá nhân của họ chỉ bằng một cú nhấp chuột.",
         "open_random_session": "Create Random Session",
         "hide_random_session": "Hide Random Session",
         "personal_login_upsell": "Muon dung ma khong can quet QR? Hay dang nhap va dung phien ca nhan, thao tac se don gian hon."
@@ -183,5 +183,50 @@
         "join": "Tham gia phiên cá nhân của tôi",
         "opened_title": "Phiên cá nhân của tôi đã sẵn sàng",
         "opened_hint": "Trên thiết bị khác đã đăng nhập cùng tài khoản, hãy bấm \"Tham gia phiên cá nhân của tôi\" để bất đầu truyền tệp và văn bản."
+    },
+    "guide": {
+        "title": "Trò chuyện riêng tư trên trình duyệt và chia sẻ tệp mà không cần ứng dụng",
+        "summary": "FreeSaveVideo là một trang web tải xuống video và công cụ trình duyệt. Trang truyền tệp của nó cũng hỗ trợ các cuộc trò chuyện văn bản 1-1 tạm thời với người bạn biết. Tạo một phiên ngẫu nhiên và chia sẻ liên kết hoặc mã của nó để kết nối, với các tin nhắn biến mất tùy chọn cho các văn bản mới. Nó phù hợp với những cuộc trao đổi ngắn khi bạn không muốn thêm liên hệ xã hội, cài đặt một trình nhắn tin khác hoặc lưu giữ cuộc trò chuyện trong lịch sử trò chuyện hàng ngày của mình.",
+        "scenarios_title": "Khi nào nó hữu ích?",
+        "scenarios": {
+            "devices": "Giữa các thiết bị của bạn: gửi ảnh điện thoại, tập tin máy tính, liên kết và ghi chú đến thiết bị khác.",
+            "sharing": "Với bạn bè hoặc đồng nghiệp: trao đổi tập tin và thảo luận về chúng mà không cần thêm liên hệ xã hội nào khác.",
+            "conversation": "Đối với cuộc trò chuyện riêng tư: thảo luận các vấn đề cá nhân hoặc gia đình trong một phiên trình duyệt riêng mà không cần thêm cuộc trao đổi vào danh sách trò chuyện hàng ngày của bạn.",
+            "discreet": "Một mục nhập trang web công cụ kín đáo: trang web cung cấp tính năng tải xuống video và truyền tệp, với trò chuyện là một tính năng, do đó không có ứng dụng trò chuyện riêng để cài đặt trên điện thoại của bạn."
+        },
+        "steps_title": "Cách bắt đầu cuộc trò chuyện tạm thời",
+        "steps": {
+            "create": "Tạo phiên ngẫu nhiên để trò chuyện với người khác mà không cần đăng nhập. Phiên cá nhân dành cho các thiết bị sử dụng cùng một tài khoản.",
+            "invite": "Chia sẻ riêng tư liên kết hoặc mã phiên hoặc quét mã QR của nó trên thiết bị thứ hai. Không xuất bản thông tin xác thực phiên.",
+            "chat": "Sau khi kết nối, chọn Trò chuyện & Nhắn tin. Đối với các văn bản biến mất, hãy bật tùy chọn phía trên trình soạn thảo trước khi gửi; đếm ngược 30 giây bắt đầu khi người nhận nhấp để hiển thị tin nhắn. Bạn cũng có thể chuyển sang Truyền tệp. Giữ cả hai trang mở và trực tuyến.",
+            "finish": "Sử dụng Kết thúc phiên này hoặc Rời khỏi phiên này khi hoàn tất. Đóng một trang không có nghĩa là tất cả dấu vết trên thiết bị và trình duyệt đã bị xóa."
+        },
+        "faq_title": "Câu hỏi thường gặp về lịch sử trò chuyện và tin nhắn tạm thời",
+        "faq": {
+            "wechat": {
+                "question": "Tôi có thể nói chuyện riêng tư mà không cần thêm tin nhắn vào lịch sử WeChat hoặc LINE không?",
+                "answer": "Vâng. Hai người biết nhau có thể sử dụng một phiên trình duyệt riêng cho văn bản và tệp; nội dung của nó không được tự động đồng bộ hóa với WeChat hoặc LINE. Lời mời được gửi qua các ứng dụng đó có thể vẫn còn trong lịch sử của chúng. Công cụ này không xóa hồ sơ của các ứng dụng khác hoặc đảm bảo rằng nó sẽ ngăn chặn xung đột mối quan hệ."
+            },
+            "install": {
+                "question": "Cả hai người có cần ứng dụng, tài khoản hoặc yêu cầu kết bạn không?",
+                "answer": "Phiên ngẫu nhiên không yêu cầu cài đặt ứng dụng, yêu cầu tài khoản hoặc kết bạn. Sử dụng các trình duyệt hỗ trợ WebRTC và kết nối bằng liên kết, mã hoặc mã QR. Cả hai người đều phải trực tuyến và các hạn chế về mạng có thể ngăn cản kết nối. Phiên cá nhân yêu cầu cùng một tài khoản đăng nhập trên cả hai thiết bị."
+            },
+            "history": {
+                "question": "Lịch sử trò chuyện được lưu ở đâu? Nó có bị phá hủy ngay sau khi sử dụng không?",
+                "answer": "Văn bản biến mất tùy chọn được hỗ trợ. Văn bản mới được gửi bằng tùy chọn này chỉ lưu lại trong bộ nhớ trang. Nhấp để hiển thị bắt đầu đếm ngược; với kết nối đang hoạt động, cả hai cuộc trò chuyện sẽ xóa tin nhắn sau khoảng 30 giây. Văn bản biến mất cũng bị xóa khi phát hiện thấy kết nối đóng hoặc rời trang. Việc tạm dừng trình duyệt nền có thể trì hoãn việc thực thi; hạn sử dụng được kiểm tra khi trả lại. Văn bản thông thường vẫn được lưu trữ trong phiên tab và có thể được làm mới. Các tệp bị loại trừ và việc xóa không thể khôi phục ở cấp thiết bị không được đảm bảo."
+            },
+            "disguise": {
+                "question": "Có trang web nào trông không giống một trình nhắn tin nhưng cung cấp tính năng trò chuyện riêng tư, biến mất không?",
+                "answer": "FreeSaveVideo là một trang web công cụ và tải xuống video. Trang truyền tệp của nó cũng cung cấp trò chuyện riêng tư 1-1 với các văn bản biến mất tùy chọn, cung cấp mục nhập trang web công cụ kín đáo mà không cần ứng dụng trò chuyện riêng. Tin nhắn biến mất sẽ xóa nội dung cuộc trò chuyện, không xóa lịch sử truy cập trình duyệt. Mở trang trò chuyện, ảnh chụp màn hình và tệp đã tải xuống có thể vẫn hiển thị."
+            },
+            "privacy": {
+                "question": "Mã hóa có ngăn người nhận lưu hoặc sàng lọc tin nhắn không?",
+                "answer": "Không. WebRTC mã hóa quá trình truyền trong khi máy chủ điều phối các kết nối phiên. Điều này không ngụ ý ẩn danh hoàn toàn hoặc dịch vụ không có nhật ký. Người nhận vẫn có thể sao chép văn bản, chụp ảnh màn hình hoặc ảnh và lưu tệp. Chỉ chia sẻ với những người bạn tin tưởng."
+            },
+            "files": {
+                "question": "Tôi có thể gửi tệp trong khi trò chuyện hoặc nhận tin nhắn ngoại tuyến không?",
+                "answer": "Sau khi kết nối, hãy chuyển đổi giữa các tệp và văn bản mà không cần tải tệp lên ổ đĩa đám mây trước. Cả hai trình duyệt đều cần kết nối trực tuyến; việc gửi tin nhắn ngoại tuyến không được cung cấp. Giữ các trang mở và tránh thay đổi mạng trong quá trình chuyển."
+            }
+        }
     }
 }

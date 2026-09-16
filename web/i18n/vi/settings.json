@@ -99,5 +99,17 @@
     "processing.community": "phiên bản cộng đồng",
     "processing.enable_custom.title": "sử dụng máy chủ xử lý tùy chỉnh",
     "processing.enable_custom.description": "FreeSaveVideo sẽ sử dụng máy chủ xử lý tùy chỉnh nếu bạn chọn. mặc dù FreeSaveVideo có một số biện pháp bảo mật, chúng tôi không chịu trách nhiệm cho bất kỳ thiệt hại nào qua phiên bản cộng đồng, vì chúng tôi không có quyền kiểm soát chúng.\n\nvui lòng lưu ý những phiên bản nào bạn sử dụng và đảm bảo chúng được lưu trữ bởi những người bạn tin tưởng.",
-    "processing.custom.placeholder": "tên miền phiên bản tùy chỉnh"
+    "processing.custom.placeholder": "tên miền phiên bản tùy chỉnh",
+    "local.storage": "lưu trữ trình duyệt",
+    "local.storage.description": "các lượt tải xuống và xử lý cục bộ có thể tạm thời lưu trữ các tệp phương tiện lớn trong trình duyệt của bạn. sau khi lưu kết quả đã hoàn thành, hãy xóa các tệp này để giải phóng dung lượng đĩa.",
+    "local.storage.loading": "kiểm tra các tập tin xử lý được lưu trữ cục bộ...",
+    "local.storage.used": "các tệp xử lý được lưu trữ cục bộ: {{ size }} (tệp {{ count }})",
+    "local.storage.empty": "hiện không có tệp xử lý cục bộ nào được lưu trữ trong trình duyệt của bạn.",
+    "local.storage.unavailable": "lưu trữ tệp cục bộ của trình duyệt không có sẵn ở đây.",
+    "local.storage.clear": "xóa các tập tin xử lý cục bộ",
+    "local.storage.clearing": "xóa các tập tin xử lý cục bộ...",
+    "local.storage.cleared": "các tập tin xử lý cục bộ đã bị xóa.",
+    "local.storage.confirm": "Xóa tất cả các tệp xử lý cục bộ? Thao tác này sẽ xóa các bản tải xuống chưa hoàn thành và các kết quả chưa được lưu vào thiết bị của bạn. Các tệp đã được lưu vào thư mục tải xuống của bạn sẽ không bị ảnh hưởng.",
+    "local.storage.processing": "hoàn thành hoặc hủy các tác vụ xử lý đang hoạt động trước khi xóa các tệp cục bộ.",
+    "local.storage.error": "không thể đọc hoặc xóa các tập tin xử lý cục bộ."
 }

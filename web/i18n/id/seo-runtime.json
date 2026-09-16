@@ -40,7 +40,7 @@
         {
             "title": "Obrolan video acak",
             "desc": "Tidak perlu poin",
-            "path": "obrolan acak"
+            "path": "random-chat"
         },
         {
             "title": "Konversi format video",
@@ -50,17 +50,17 @@
         {
             "title": "Temukan",
             "desc": "Tidak perlu poin",
-            "path": "temukan"
+            "path": "discover"
         },
         {
             "title": "Rekaman papan tulis",
             "desc": "Tidak perlu poin",
-            "path": "rekaman video"
+            "path": "videorecord"
         },
         {
             "title": "Transfer berkas",
             "desc": "Tidak perlu poin",
-            "path": "papan klip"
+            "path": "clipboard"
         }
     ],
     "platformFaqs": {

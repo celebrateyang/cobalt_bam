@@ -1,6 +1,6 @@
 {
     "seo": {
-        "title": "Whiteboard-Videorecorder – Folien-Tutorials online aufzeichnen | kostenloses Video speichern",
+        "title": "Whiteboard-Videorecorder – Folien-Tutorials online aufzeichnen | FreeSaveVideo",
         "description": "Erstellen, verschieben und skalieren Sie Folien und zeichnen Sie dann Whiteboard-Tutorials mit Kamera-Overlay in Ihrem Browser auf. Keine Installation erforderlich.",
         "keywords": "Whiteboard-Recorder, Folienrecorder, Online-Videorecorder, Excelidraw-Recorder, Tutorial-Aufzeichnung",
         "app_name": "Whiteboard-Videorecorder"
@@ -10,7 +10,7 @@
         "open_settings": "Einstellungen öffnen",
         "toggle_teleprompter": "Teleprompter umschalten",
         "starting": "Startet...",
-        "countdown": "Countdown {{value}}",
+        "countdown": "Start in {{value}}",
         "record": "Aufnehmen",
         "resume": "Fortsetzen",
         "pause": "Pausieren",

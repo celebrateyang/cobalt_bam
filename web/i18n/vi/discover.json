@@ -10,7 +10,9 @@
         "empty": {
             "title": "Không có video",
             "description": "Chưa có nội dung video nào được thêm"
-        }
+        },
+        "parsing": "Phân tích cú pháp/xếp hàng đợi",
+        "still_parsing": "Vẫn đang phân tích, vui lòng đợi một lát"
     },
     "account": {
         "videoCount": "{{count}} video"
@@ -21,6 +23,39 @@
         "copyTitle": "Sao chép địa chỉ video",
         "copyFailed": "Sao chép thất bại:",
         "manualCopy": "Không thể sao chép tự động, vui lòng sao chép thủ công:\n{{url}}",
-        "closeDialog": "Nhấp \"OK\" để đóng thông báo này"
+        "closeDialog": "Nhấp \"OK\" để đóng thông báo này",
+        "creator_batch": "Thông tin khác từ người sáng tạo",
+        "creator_batch_title": "{{name}} · Lô",
+        "load_more": "Tải thêm"
+    },
+    "section": {
+        "trending": "Xu hướng",
+        "pinned": "Đã ghim",
+        "featured": "Nổi bật",
+        "latest": "Mới nhất"
+    },
+    "menu": {
+        "resources": "Khám phá tài nguyên",
+        "beauty": "Khám phá vẻ đẹp"
+    },
+    "resources": {
+        "title": "Khám phá tài nguyên",
+        "subtitle": "Duyệt các danh mục và tải xuống từ các liên kết có sẵn",
+        "empty": {
+            "title": "Chưa có tài nguyên",
+            "description": "Không có danh mục hoặc liên kết nào được thêm vào"
+        },
+        "empty_links": {
+            "title": "Không có liên kết",
+            "description": "Thể loại này chưa có liên kết có thể tải xuống"
+        },
+        "select": {
+            "title": "Chọn một danh mục",
+            "description": "Chọn một danh mục ở bên trái để xem liên kết"
+        },
+        "action": {
+            "downloading": "Đang tải xuống..."
+        },
+        "batch_limit_hint": "Giới hạn lô: {{max}}"
     }
 }

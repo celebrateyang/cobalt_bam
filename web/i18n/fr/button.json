@@ -20,5 +20,10 @@
     "no": "non",
     "clear": "effacer",
     "remove": "supprimer",
-    "retry": "réessayer"
+    "retry": "réessayer",
+    "buy_points": "acheter des points",
+    "free_points": "gagner des points gratuits",
+    "invite_points": "inviter des amis",
+    "membership": "abonnement mensuel",
+    "promotion_points": "promouvoir le site"
 }

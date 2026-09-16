@@ -183,5 +183,50 @@
         "session_full": "Sesi sudah penuh",
         "connection_failed": "Koneksi gagal",
         "encryption_failed": "Enkripsi gagal"
+    },
+    "guide": {
+        "title": "Obrolan browser pribadi dan berbagi file tanpa aplikasi",
+        "summary": "FreeSaveVideo adalah situs pengunduhan video dan alat browser. Halaman transfer filenya juga mendukung percakapan teks sementara dengan seseorang yang Anda kenal. Buat sesi acak dan bagikan tautan atau kodenya untuk terhubung, dengan pesan opsional yang menghilang untuk teks baru. Ini cocok untuk percakapan singkat ketika Anda tidak ingin menambahkan kontak sosial, menginstal messenger lain, atau menyimpan percakapan di riwayat obrolan sehari-hari Anda.",
+        "scenarios_title": "Kapan ini berguna?",
+        "scenarios": {
+            "devices": "Antar perangkat Anda: kirim foto ponsel, file komputer, tautan, dan catatan ke perangkat lain.",
+            "sharing": "Dengan teman atau kolega: bertukar file dan mendiskusikannya tanpa menambahkan kontak sosial lainnya.",
+            "conversation": "Untuk percakapan pribadi: diskusikan masalah pribadi atau keluarga dalam sesi browser terpisah tanpa menambahkan percakapan ke daftar obrolan sehari-hari Anda.",
+            "discreet": "Entri situs alat yang rahasia: situs web ini menyediakan pengunduhan video dan transfer file, dengan obrolan sebagai salah satu fiturnya, sehingga tidak ada aplikasi obrolan terpisah untuk dipasang di ponsel Anda."
+        },
+        "steps_title": "Bagaimana memulai percakapan sementara",
+        "steps": {
+            "create": "Buat sesi acak untuk mengobrol dengan orang lain tanpa masuk. Sesi pribadi ditujukan untuk perangkat yang menggunakan akun yang sama.",
+            "invite": "Bagikan tautan atau kode sesi secara pribadi, atau pindai kode QR-nya di perangkat kedua. Jangan publikasikan kredensial sesi.",
+            "chat": "Setelah terhubung, pilih Obrolan & SMS. Untuk teks yang hilang, aktifkan opsi di atas komposer sebelum mengirim; hitungan mundur 30 detik dimulai ketika penerima mengklik untuk menampilkan pesan. Anda juga dapat beralih ke Transfer File. Biarkan kedua halaman tetap terbuka dan online.",
+            "finish": "Gunakan Akhiri Sesi Ini atau Tinggalkan Sesi Ini setelah selesai. Menutup halaman tidak berarti semua jejak perangkat dan browser telah terhapus."
+        },
+        "faq_title": "FAQ riwayat obrolan dan pesan sementara",
+        "faq": {
+            "wechat": {
+                "question": "Bisakah saya berbicara secara pribadi tanpa menambahkan pesan ke WeChat atau riwayat LINE?",
+                "answer": "Ya. Dua orang yang saling mengenal dapat menggunakan sesi browser terpisah untuk teks dan file; kontennya tidak secara otomatis disinkronkan ke WeChat atau LINE. Undangan yang dikirim melalui aplikasi tersebut mungkin tetap ada dalam riwayatnya. Alat ini tidak menghapus catatan aplikasi lain atau menjamin bahwa alat ini akan mencegah konflik hubungan."
+            },
+            "install": {
+                "question": "Apakah kedua orang tersebut memerlukan aplikasi, akun, atau permintaan pertemanan?",
+                "answer": "Sesi acak tidak memerlukan instalasi aplikasi, akun, atau permintaan pertemanan. Gunakan browser berkemampuan WebRTC dan sambungkan dengan tautan, kode, atau kode QR. Kedua orang tersebut harus online, dan pembatasan jaringan dapat menghalangi koneksi. Sesi pribadi memerlukan akun masuk yang sama di kedua perangkat."
+            },
+            "history": {
+                "question": "Di mana riwayat obrolan disimpan? Apakah langsung hancur setelah digunakan?",
+                "answer": "Teks menghilang opsional didukung. Teks baru yang dikirim dengan opsi ini hanya tinggal di memori halaman. Mengklik untuk mengungkapkan memulai hitungan mundur; dengan koneksi yang berfungsi, kedua percakapan menghapus pesan setelah sekitar 30 detik. Teks yang hilang juga dihapus ketika koneksi tertutup atau halaman keluar terdeteksi. Penangguhan browser di latar belakang dapat menunda eksekusi; kadaluwarsa diperiksa pada saat pengembalian. Teks biasa tetap berada di penyimpanan sesi tab dan mungkin terus disegarkan. File dikecualikan, dan penghapusan yang tidak dapat dipulihkan di tingkat perangkat tidak dijamin."
+            },
+            "disguise": {
+                "question": "Apakah ada situs web yang tidak tampak seperti pengirim pesan tetapi menawarkan obrolan pribadi yang menghilang?",
+                "answer": "FreeSaveVideo adalah situs pengunduhan video dan alat. Halaman transfer filenya juga menawarkan obrolan pribadi satu lawan satu dengan teks opsional yang dapat dihilangkan, menyediakan entri situs alat yang rahasia tanpa aplikasi obrolan terpisah. Hilangnya pesan menghapus konten percakapan, bukan riwayat kunjungan browser. Buka halaman chat, screenshot dan file download mungkin masih terlihat."
+            },
+            "privacy": {
+                "question": "Apakah enkripsi menghentikan penerima menyimpan atau mengambil tangkapan layar pesan?",
+                "answer": "Tidak. WebRTC mengenkripsi transfer, sementara server mengoordinasikan koneksi sesi. Ini tidak berarti anonimitas penuh atau layanan tanpa log. Penerima tetap dapat menyalin teks, mengambil tangkapan layar atau foto, dan menyimpan file. Bagikan hanya dengan orang yang Anda percayai."
+            },
+            "files": {
+                "question": "Bisakah saya mengirim file saat ngobrol atau menerima pesan secara offline?",
+                "answer": "Setelah terhubung, beralih antara file dan teks tanpa mengunggah file ke drive cloud terlebih dahulu. Kedua browser memerlukan koneksi online; pengiriman pesan offline tidak disediakan. Biarkan halaman tetap terbuka dan hindari mengubah jaringan selama transfer."
+            }
+        }
     }
 }

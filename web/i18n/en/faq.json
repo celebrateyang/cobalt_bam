@@ -18,7 +18,11 @@
         "home": "Back to downloader",
         "feedback": "Report an issue",
         "youtube": "YouTube guide",
-        "account": "Account & points"
+        "account": "Account & points",
+        "directory": "Download directory",
+        "guides": "Browse all download guides",
+        "guide_suffix": "guide",
+        "download_suffix": "download page"
     },
     "sections": {
         "basics": "Getting started",

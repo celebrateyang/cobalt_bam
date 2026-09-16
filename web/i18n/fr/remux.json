@@ -67,8 +67,8 @@
         "generic": "le traitement a échoué. essayez un autre format ou passez en mode compatible."
     },
     "seo": {
-        "title": "convertisseur video et extracteur audio",
-        "description": "Extrayez l audio de fichiers video et convertissez des formats comme AVI en MP4 directement dans votre navigateur. Traitement local, sans upload.",
+        "title": "Convertisseur vidéo et extracteur audio",
+        "description": "Extrayez l'audio de fichiers vidéo et convertissez des formats comme AVI en MP4 directement dans votre navigateur. Traitement local, sans téléversement.",
         "keywords": "convertisseur video, extracteur audio, AVI en MP4, MP4 en MP3, convertisseur MP3 gratuit, convertisseur audio en ligne, convertir video en MP3, sans installation"
     }
 }

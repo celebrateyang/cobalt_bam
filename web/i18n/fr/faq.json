@@ -18,7 +18,11 @@
         "home": "Retour au téléchargeur",
         "feedback": "Signaler un problème",
         "youtube": "Guide YouTube",
-        "account": "Compte et points"
+        "account": "Compte et points",
+        "directory": "Répertoire des téléchargements",
+        "guides": "Voir tous les guides de téléchargement",
+        "guide_suffix": "guide",
+        "download_suffix": "page de téléchargement"
     },
     "sections": {
         "basics": "Bien démarrer",

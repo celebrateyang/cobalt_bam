@@ -18,7 +18,11 @@
         "home": "Zurück zum Downloader",
         "feedback": "Problem melden",
         "youtube": "YouTube-Leitfaden",
-        "account": "Konto & Punkte"
+        "account": "Konto & Punkte",
+        "directory": "Downloadverzeichnis",
+        "guides": "Alle Download-Anleitungen ansehen",
+        "guide_suffix": "Anleitung",
+        "download_suffix": "Downloadseite"
     },
     "sections": {
         "basics": "Erste Schritte",

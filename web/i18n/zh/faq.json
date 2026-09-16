@@ -18,7 +18,11 @@
         "home": "返回首页",
         "feedback": "问题反馈",
         "youtube": "YouTube 教程",
-        "account": "账号与积分"
+        "account": "账号与积分",
+        "directory": "下载目录",
+        "guides": "查看全部下载指南",
+        "guide_suffix": "指南",
+        "download_suffix": "下载页"
     },
     "sections": {
         "basics": "使用入门",

@@ -18,7 +18,11 @@
         "home": "Quay lại trang tải",
         "feedback": "Báo lỗi",
         "youtube": "Hướng dẫn YouTube",
-        "account": "Tài khoản & điểm"
+        "account": "Tài khoản & điểm",
+        "directory": "Danh mục tải xuống",
+        "guides": "Xem tất cả hướng dẫn tải xuống",
+        "guide_suffix": "hướng dẫn",
+        "download_suffix": "trang tải xuống"
     },
     "sections": {
         "basics": "Bắt đầu",

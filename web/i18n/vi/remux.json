@@ -67,8 +67,8 @@
         "generic": "xử lý thất bại. hãy thử định dạng khác hoặc chuyển sang chế độ tương thích."
     },
     "seo": {
-        "title": "chuyen doi video va tach am thanh",
-        "description": "Tach am thanh tu tep video va chuyen cac dinh dang nhu AVI sang MP4 ngay trong trinh duyet. Xu ly cuc bo, khong can tai len.",
+        "title": "Chuyển đổi video và tách âm thanh",
+        "description": "Tách âm thanh từ tệp video và chuyển các định dạng như AVI sang MP4 ngay trong trình duyệt. Xử lý cục bộ, không cần tải lên.",
         "keywords": "chuyen doi video, tach am thanh, AVI sang MP4, MP4 sang MP3, chuyen doi MP3 mien phi, chuyen doi am thanh online, chuyen video sang MP3, khong can cai dat"
     }
 }

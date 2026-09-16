@@ -12,6 +12,8 @@ import * as svelteStore from 'svelte/store';
 // Only framework context and the decorative supported-services strip are stubbed.
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cache = new Map();
+const testPage = svelteStore.writable({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') });
+const testTranslations = svelteStore.writable(key => key);
 const framework = {
     '$env/static/public': {},
     '@sveltejs/kit': {
@@ -20,8 +22,8 @@ const framework = {
     },
     'svelte/internal': svelteInternal,
     'svelte/store': svelteStore,
-    '$app/stores': { page: svelteStore.readable({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') }) },
-    '$lib/i18n/translations': { t: svelteStore.readable(key => key) },
+    '$app/stores': { page: testPage },
+    '$lib/i18n/translations': { t: testTranslations },
     '$components/save/SupportedServices.svelte': { __esModule: true, default: svelteInternal.create_ssr_component(() => '') },
 };
 
@@ -64,6 +66,18 @@ async function component(file) {
     }, { filename });
     return evaluate(compile(processed.code, { filename, generate: 'ssr' }).js.code, filename).default;
 }
+
+function setTestLocale(lang, path = 'faq') {
+    testPage.set({ params: { lang }, url: new URL(`https://freesavevideo.online/${lang}/${path}`) });
+    testTranslations.set(key => {
+        const [namespace, ...parts] = key.split('.');
+        const resource = load(`i18n/${lang}/${namespace}.json`);
+        const dottedKey = parts.join('.');
+        return resource[dottedKey] ?? parts.reduce((value, part) => value?.[part], resource) ?? key;
+    });
+}
+
+const escapeText = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const routes = load('src/lib/seo/route-locales.ts');
 const links = load('src/lib/seo/internal-links.ts');
@@ -157,6 +171,40 @@ test('localized directory SSR exposes valid task links and localized headings', 
     assert.notEqual(getSeoLandingLocale(youtube, 'id').h1, getSeoLandingLocale(youtube, 'en').h1);
 });
 
+test('tools and FAQ SSR use localized copy and fixed route paths for every language', async () => {
+    const toolsPage = await component('src/routes/[lang]/free-video-tools/+page.svelte');
+    const faqPage = await component('src/routes/[lang]/faq/+page.svelte');
+    const { toolCapabilities } = load('src/lib/seo/capabilities.ts');
+    const { getSeoRuntimeContent } = load('src/lib/seo/runtime-content.ts');
+    try {
+        for (const lang of supportedLanguages) {
+            setTestLocale(lang, 'free-video-tools');
+            const faq = load(`i18n/${lang}/faq.json`);
+            const remux = load(`i18n/${lang}/remux.json`);
+            const rendered = toolsPage.render({ data: { lang } });
+            assert(rendered.html.includes(escapeText(faq.items.what_is.q)), lang);
+            assert(rendered.html.includes(escapeText(remux.seo.description)), lang);
+            assert(!rendered.html.includes('faq.actions.'), lang);
+            for (const tool of toolCapabilities) {
+                const localizedTool = getSeoRuntimeContent(lang).freeTools.find(item => `/${item.path}` === tool.path);
+                assert(localizedTool, `${lang}: missing tool ${tool.id}`);
+                assert(rendered.html.includes(escapeText(localizedTool.title)), `${lang}/${tool.id}`);
+                assert(rendered.html.includes(`href="/${lang}${tool.path}"`), `${lang}/${tool.id}`);
+            }
+            for (const schema of rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) JSON.parse(schema[1]);
+
+            setTestLocale(lang);
+            const faqHtml = faqPage.render({}).html;
+            assert(faqHtml.includes(escapeText(faq.actions.guides)), lang);
+            assert(faqHtml.includes(escapeText(faq.actions.directory)), lang);
+            assert(faqHtml.includes(`href="/${lang}/guide"`), lang);
+        }
+    } finally {
+        testTranslations.set(key => key);
+        testPage.set({ params: { lang: 'en' }, url: new URL('https://freesavevideo.online/en/faq') });
+    }
+});
+
 test('YouTube guides render distinct instructional content and matching FAQ schema', async () => {
     const page = await component('src/routes/[lang]/guide/[slug]/+page.svelte');
     const { getGuidePage } = load('src/lib/seo/guide-pages.ts');
@@ -173,12 +221,45 @@ test('YouTube guides render distinct instructional content and matching FAQ sche
     }
 });
 
+test('Korean guide hubs and usage notes do not fall back to English', async () => {
+    const lang = 'ko';
+    const index = await component('src/routes/[lang]/guide/+page.svelte');
+    const indexData = await load('src/routes/[lang]/guide/+page.ts').load({ params: { lang } });
+    const indexHtml = index.render({ data: indexData }).html;
+    assert(!indexHtml.includes('Download Guides'));
+    assert(!indexHtml.includes('Step-by-step download guides for popular platforms.'));
+    const detail = await component('src/routes/[lang]/guide/[slug]/+page.svelte');
+    const { getGuidePage } = load('src/lib/seo/guide-pages.ts');
+    const slug = 'youtube-download-guide';
+    const guide = getGuidePage(slug);
+    const html = detail.render({ data: { lang, slug, guide, landing: getSeoLandingPage(guide.landingSlug) } }).html;
+    assert(!html.includes('Copy the link and paste it into the downloader. Results depend on what the platform provides.'));
+    assert(!html.includes('If a link fails, confirm it is publicly accessible and try again later or switch networks.'));
+});
+
+test('Spanish, French and Vietnamese SEO titles retain native diacritics', () => {
+    const withoutDiacritics = value => value.normalize('NFD').replace(/\p{M}/gu, '');
+    for (const lang of ['es', 'fr', 'vi']) {
+        const homeTitle = load(`i18n/${lang}/general.json`).seo.home.title;
+        const youtubeTitle = getSeoLandingLocale(getSeoLandingPage('youtube-download'), lang).metaTitle;
+        assert.notEqual(homeTitle, withoutDiacritics(homeTitle), `${lang}: home title`);
+        assert.notEqual(youtubeTitle, withoutDiacritics(youtubeTitle), `${lang}: YouTube title`);
+    }
+});
+
 test('sitemap contains the repaired hubs and bilingual audio route without noindex entries', async () => {
     const { shouldNoindexLocalizedPath } = load('src/lib/seo/indexing.ts');
     const response = load('src/routes/sitemap.xml/+server.ts').GET();
     const xml = await response.text();
     for (const path of ['/en/download', '/zh/download', '/ja', '/ja/download', '/th', '/th/download', '/en/download/youtube-playlist-to-mp3']) assert(xml.includes(`<loc>https://freesavevideo.online${path}</loc>`));
     assert(!xml.includes('/fr/download/youtube-playlist-to-mp3'));
+    for (const lang of supportedLanguages) {
+        for (const page of ['guide', 'faq']) {
+            assert(!shouldNoindexLocalizedPath(`/${page}`, lang));
+            assert(xml.includes(`<loc>https://freesavevideo.online/${lang}/${page}</loc>`));
+            assert(xml.includes(`hreflang="${lang}" href="https://freesavevideo.online/${lang}/${page}"`));
+        }
+    }
     const locations = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
     assert.equal(new Set(locations).size, locations.length);
     for (const location of locations) {

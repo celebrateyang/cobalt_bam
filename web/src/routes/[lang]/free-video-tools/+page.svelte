@@ -1,93 +1,88 @@
 <script lang="ts">
     import env from '$lib/env';
+    import { t } from '$lib/i18n/translations';
+    import { getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import {
         additionalSupportedServices,
         capabilityServices,
-        siteCapabilities,
         toolCapabilities,
     } from '$lib/seo/capabilities';
 
     export let data: { lang: string };
 
     const fallbackHost = env.HOST || 'freesavevideo.online';
+    const toolDescriptionKeys: Record<string, string[]> = {
+        remux: ['remux.seo.description'],
+        videorecord: ['home.cards.videorecord.desc'],
+        clipboard: ['clipboard.guide.summary'],
+        discover: ['general.seo.discover.description'],
+        'random-chat': ['random-chat.header.subtitle', 'random-chat.header.membership_disclosure'],
+    };
 
-    $: isZh = data.lang === 'zh';
-    $: isJa = data.lang === 'ja';
-    $: isTh = data.lang === 'th';
     $: canonicalUrl = `https://${fallbackHost}/${data.lang}/free-video-tools`;
-    $: pageTitle = isZh
-        ? 'FreeSaveVideo 是什么？在线视频下载与免费浏览器工具介绍'
-        : 'What is FreeSaveVideo? Online Video Downloader and Free Browser Tools';
-    $: pageDesc = isZh
-        ? 'FreeSaveVideo 是一个以公开视频下载为核心的浏览器工具站，提供批量下载、合集解析、MP4 转 MP3、音频提取、视频格式转换、白板录制、文件传输、资源发现和随机视频聊天。'
-        : 'FreeSaveVideo is a browser-based public video downloader and media toolkit with batch downloads, playlist parsing, MP4 to MP3, audio extraction, video conversion, whiteboard recording, file transfer, discovery, and random video chat.';
     $: langPrefix = `/${data.lang}`;
-    $: localizedPageTitle = isJa
-        ? 'FreeSaveVideo とは？オンライン動画ダウンローダーと無料ブラウザツール'
-        : pageTitle;
-    $: localizedPageDesc = isJa
-        ? 'FreeSaveVideo は公開動画のダウンロードを中心に、一括処理、プレイリスト解析、MP4 から MP3 への変換、音声抽出、動画変換、録画、ファイル転送などを提供するブラウザメディアツールです。'
-        : pageDesc;
+    $: runtimeContent = getSeoRuntimeContent(data.lang);
+    $: productQuestion = String($t('faq.items.what_is.q'));
+    $: productAnswer = String($t('faq.items.what_is.a'));
+    $: localizedPageTitle = `${productQuestion} ${String($t('home.tools.title'))} | FreeSaveVideo`;
+    $: localizedPageDesc = productAnswer.replace(/\s+/g, ' ').trim();
     $: primaryServices = capabilityServices.slice(0, 14);
     $: serviceNames = [
         ...primaryServices.map((service) => service.name),
         ...additionalSupportedServices,
     ];
-    $: toolLinks = toolCapabilities.map((tool) => ({
-        ...tool,
-        href: `${langPrefix}${tool.path}`,
-    }));
-    const jaCoreFeatures = [
-        'オンライン動画ダウンロード',
-        '一括ダウンロード',
-        'コレクションとプレイリストの解析',
-        'WeChat 公式アカウント記事内の複数動画選択',
-        '利用可能な場合の音声のみ・ミュート保存',
-        'MP4 から MP3 への変換と音声抽出',
-        '動画形式の変換',
-        'ホワイトボードとプロンプター録画',
-        '端末間のファイル・テキスト転送',
-        '動画の発見と1対1ビデオチャット',
+    $: toolLinks = toolCapabilities.map((tool) => {
+        const localizedTool = runtimeContent.freeTools.find(
+            (item) => `/${item.path}` === tool.path,
+        );
+        return {
+            id: tool.id,
+            name: localizedTool?.title ?? String($t('home.tools.title')),
+            description: (toolDescriptionKeys[tool.id] ?? ['home.tools.description'])
+                .map((key) => String($t(key))).join(' '),
+            href: `${langPrefix}${tool.path}`,
+        };
+    });
+    $: displayedCoreFeatures = [
+        String($t('home.capabilities.supported.title')),
+        String($t('home.capabilities.collection.title')),
+        String($t('home.capabilities.batch.title')),
+        String($t('home.capabilities.watermark.title')),
+        String($t('home.capabilities.audio.title')),
     ];
-    const jaPolicy = [
-        'オンラインダウンローダーは公開状態でアクセスできる配信元コンテンツのみ対応します。',
-        '著作権、制作者の権利、配信元プラットフォームの規約を守ってください。',
-        'ローカルメディアツールは、可能な場合にブラウザ内でファイルを処理します。',
+    $: displayedPolicy = [
+        String($t('faq.items.private_paid.a')),
+        String($t('faq.items.privacy_logs.a')),
+        String($t('remux.seo.description')),
     ];
-    const jaFaqs = [
+    $: localizedFaqs = [
         {
-            q: 'FreeSaveVideo では何ができますか？',
-            a: '公開動画のオンラインダウンロードを中心に、一括ダウンロード、プレイリスト解析、MP4 から MP3 への変換、音声抽出、動画変換、録画、ファイル転送、動画の発見などを提供します。',
+            q: productQuestion,
+            a: productAnswer,
         },
         {
-            q: 'どのプラットフォームに対応していますか？',
-            a: '対応サービス一覧に表示される YouTube、TikTok、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit、NicoNico、NAVER、Amazon Live、WeChat Channels などの公開コンテンツに対応します。利用可能な形式は解析結果によって異なります。',
+            q: String($t('faq.items.supported_platforms.q')),
+            a: String($t('faq.items.supported_platforms.a')),
         },
         {
-            q: 'ローカル動画の変換時にファイルはアップロードされますか？',
-            a: '動画変換、MP4 から MP3 への変換、音声抽出は、対応ブラウザではローカルファイルをブラウザ内で処理します。',
+            q: String($t('faq.items.privacy_logs.q')),
+            a: String($t('faq.items.privacy_logs.a')),
         },
     ];
-    $: displayedCoreFeatures = isJa ? jaCoreFeatures : siteCapabilities.coreFeatures;
-    $: displayedPolicy = isJa ? jaPolicy : siteCapabilities.policy;
+    $: platformTitle = String($t('faq.items.supported_platforms.q'));
+    $: pageKeywords = [localizedPageTitle, ...serviceNames].join(',');
     $: appJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         '@id': `${canonicalUrl}#app`,
-        name: siteCapabilities.name,
+        name: 'FreeSaveVideo',
         url: canonicalUrl,
+        inLanguage: data.lang,
         applicationCategory: 'MultimediaApplication',
-        applicationSubCategory: 'Video Downloader and Browser Media Toolkit',
-        operatingSystem: 'Any',
-        browserRequirements: 'Requires JavaScript and a modern web browser.',
         isAccessibleForFree: true,
         description: localizedPageDesc,
-        featureList: siteCapabilities.coreFeatures,
-        knowsAbout: [
-            ...siteCapabilities.commonUseCases,
-            ...siteCapabilities.bestInputLinks,
-            ...siteCapabilities.notFor,
-        ],
+        featureList: displayedCoreFeatures,
+        knowsAbout: serviceNames,
         offers: {
             '@type': 'Offer',
             price: '0',
@@ -97,35 +92,8 @@
     $: faqJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: (isJa ? jaFaqs : isZh
-            ? [
-                  {
-                      q: 'FreeSaveVideo 主要提供哪些功能？',
-                      a: 'FreeSaveVideo 以在线视频下载为核心，并提供批量下载、合集/playlist 解析、MP4 转 MP3、音频提取、视频格式转换、白板视频录制、文件传输、资源发现和随机视频聊天。',
-                  },
-                  {
-                      q: 'FreeSaveVideo 支持哪些平台？',
-                      a: `FreeSaveVideo 支持视频号、微信公众号文章视频、YouTube、TikTok、抖音、Bilibili、NicoNico、快手、小红书、Amazon Live、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit 等平台；公众号文章可识别多个内嵌视频并按需选择，具体能力以解析结果和 capabilities.json 为准。`,
-                  },
-                  {
-                      q: '本地视频转换会上传文件吗？',
-                      a: '视频格式转换、MP4 转 MP3 和音频提取工具优先在浏览器本地处理，不需要把私人本地文件上传到 API 服务器。',
-                  },
-              ]
-            : [
-                  {
-                      q: 'What does FreeSaveVideo do?',
-                      a: 'FreeSaveVideo focuses on online video downloading and also provides batch downloads, collection/playlist parsing, MP4 to MP3, audio extraction, video conversion, whiteboard recording, file transfer, discovery, and random video chat.',
-                  },
-                  {
-                      q: 'Which platforms does FreeSaveVideo support?',
-                      a: 'FreeSaveVideo supports WeChat Channels, videos embedded in WeChat Official Account articles, YouTube, TikTok, Douyin, Bilibili, NicoNico, Kuaishou, Xiaohongshu, Amazon Live, Instagram, Facebook, X/Twitter, Vimeo, SoundCloud, Pinterest, Reddit, and more. WeChat articles can expose multiple selectable videos. Exact support depends on the parsed result and capabilities.json.',
-                  },
-                  {
-                      q: 'Are local video conversion files uploaded?',
-                      a: 'The video converter, MP4 to MP3, and audio extraction tools process local files in the browser where possible and do not require uploading private local files to the API server.',
-                  },
-              ]).map((item) => ({
+        inLanguage: data.lang,
+        mainEntity: localizedFaqs.map((item) => ({
             '@type': 'Question',
             name: item.q,
             acceptedAnswer: {
@@ -137,6 +105,7 @@
     $: itemListJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
+        inLanguage: data.lang,
         itemListElement: toolLinks.map((tool, index) => ({
             '@type': 'ListItem',
             position: index + 1,
@@ -147,7 +116,8 @@
     $: serviceItemListJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        name: isJa ? '対応ダウンロードプラットフォーム' : isZh ? '\u652f\u6301\u7684\u4e0b\u8f7d\u5e73\u53f0' : 'Supported download platforms',
+        name: platformTitle,
+        inLanguage: data.lang,
         itemListElement: primaryServices.map((service, index) => ({
             '@type': 'ListItem',
             position: index + 1,
@@ -165,7 +135,7 @@
     <meta name="description" content={localizedPageDesc} />
     <meta
         name="keywords"
-        content="FreeSaveVideo,online video downloader,public video downloader,batch video downloader,playlist downloader,collection downloader,YouTube downloader,TikTok downloader,Douyin downloader,Bilibili downloader,Amazon Live downloader,Amazon Live replay download,MP4 to MP3,video converter,audio extractor,whiteboard recorder,file transfer"
+        content={pageKeywords}
     />
     <meta property="og:title" content={localizedPageTitle} />
     <meta property="og:description" content={localizedPageDesc} />
@@ -181,24 +151,18 @@
 
 <main class="geo-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <section class="hero">
-        <p class="eyebrow">{isJa ? '製品情報' : isZh ? '产品事实页' : 'Product fact page'}</p>
-        <h1>{isJa ? 'FreeSaveVideo とは？' : isZh ? 'FreeSaveVideo 是什么？' : 'What is FreeSaveVideo?'}</h1>
-        <p>
-            {isZh
-                ? 'FreeSaveVideo 是一个以公开视频下载为核心的网站，同时提供多个免费的浏览器媒体工具，覆盖下载、转换、录制、传输、发现和视频社交场景。'
-                : isJa
-                  ? 'FreeSaveVideo は、公開動画のダウンロードを中心に、変換、録画、ファイル転送、動画の発見などを提供するブラウザメディアツールです。'
-                : siteCapabilities.summary}
-        </p>
+        <p class="eyebrow">{$t('home.tools.title')}</p>
+        <h1>{productQuestion}</h1>
+        <p>{productAnswer}</p>
         <div class="hero-actions">
-            <a href={`${langPrefix}`}>{isJa ? 'ダウンローダーを開く' : isZh ? '打开下载器' : 'Open downloader'}</a>
-            <a href={`${langPrefix}/download`}>{isJa ? 'ダウンロード一覧を見る' : isZh ? '查看下载目录' : 'View download directory'}</a>
+            <a href={`${langPrefix}`}>{$t('faq.actions.home')}</a>
+            <a href={`${langPrefix}/download`}>{$t('faq.actions.directory')}</a>
             <a href="/capabilities.json">capabilities.json</a>
         </div>
     </section>
 
     <section class="fact-block">
-        <h2>{isJa ? '主な機能' : isZh ? '主要功能' : 'Main capabilities'}</h2>
+        <h2>{$t('home.capabilities.aria')}</h2>
         <div class="feature-grid">
             {#each displayedCoreFeatures as feature}
                 <span>{feature}</span>
@@ -207,16 +171,8 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isJa ? '対応する動画・メディアプラットフォーム' : isZh ? '支持的视频与媒体平台' : isTh ? 'แพลตฟอร์มวิดีโอและสื่อที่รองรับ' : 'Supported video and media platforms'}</h2>
-        <p>
-            {isZh
-                ? 'FreeSaveVideo 支持服务列表中展示的视频、音频和社交平台，包括公开视频与 Amazon Live 公开回放。不同平台提供的视频、音频、无水印、合集或 playlist 能力不同。'
-                : isJa
-                  ? 'FreeSaveVideo は対応サービス一覧に表示される動画、音声、ソーシャルプラットフォームの公開コンテンツに対応します。動画、音声、透かしなし、コレクション、プレイリストの可否はプラットフォームによって異なります。'
-                : isTh
-                  ? 'FreeSaveVideo รองรับแพลตฟอร์มวิดีโอ เสียง และโซเชียลที่แสดงในรายการบริการ รวมถึงเนื้อหาสาธารณะและวิดีโอย้อนหลัง Amazon Live แบบสาธารณะ ความสามารถด้านวิดีโอ เสียง แบบไม่มีลายน้ำ คอลเลกชัน หรือ playlist แตกต่างกันตามแพลตฟอร์ม'
-                  : 'FreeSaveVideo supports the video, audio, and social platforms shown in the service list, including public content and public Amazon Live replays. Video, audio, no-watermark, collection, and playlist capabilities vary by platform.'}
-        </p>
+        <h2>{platformTitle}</h2>
+        <p>{$t('faq.items.supported_platforms.a')}</p>
         <div class="service-list">
             {#each serviceNames as service}
                 <span>{service}</span>
@@ -225,24 +181,19 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isJa ? '無料ブラウザツール' : isZh ? '免费浏览器工具' : 'Free browser tools'}</h2>
+        <h2>{$t('home.tools.title')}</h2>
         <div class="tool-grid">
             {#each toolLinks as tool}
                 <article>
                     <h3><a href={tool.href}>{tool.name}</a></h3>
                     <p>{tool.description}</p>
-                    <div class="tool-tags">
-                        {#each tool.features as feature}
-                            <span>{feature}</span>
-                        {/each}
-                    </div>
                 </article>
             {/each}
         </div>
     </section>
 
     <section class="fact-block">
-        <h2>{isJa ? 'プライバシーと利用範囲' : isZh ? '隐私与使用边界' : 'Privacy and use boundaries'}</h2>
+        <h2>{$t('faq.sections.privacy')}</h2>
         <ul>
             {#each displayedPolicy as item}
                 <li>{item}</li>
@@ -251,7 +202,7 @@
     </section>
 
     <section class="fact-block">
-        <h2>{isJa ? 'よくある質問' : isZh ? '常见问题' : 'FAQ'}</h2>
+        <h2>{$t('tabs.faq')}</h2>
         <div class="faq-list">
             {#each faqJsonLd.mainEntity as item}
                 <details>
@@ -332,8 +283,7 @@
 
     .hero-actions,
     .feature-grid,
-    .service-list,
-    .tool-tags {
+    .service-list {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
@@ -345,8 +295,7 @@
 
     .hero-actions a,
     .feature-grid span,
-    .service-list span,
-    .tool-tags span {
+    .service-list span {
         display: inline-flex;
         align-items: center;
         min-height: 34px;
@@ -381,13 +330,6 @@
         margin: 8px 0 12px;
         font-size: 0.94rem;
         opacity: 0.86;
-    }
-
-    .tool-tags span {
-        min-height: 26px;
-        padding: 4px 8px;
-        font-size: 0.78rem;
-        background: var(--button);
     }
 
     .faq-list {

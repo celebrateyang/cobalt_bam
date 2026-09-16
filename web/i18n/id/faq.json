@@ -18,7 +18,11 @@
         "home": "Kembali ke pengunduh",
         "feedback": "Laporkan masalah",
         "youtube": "Panduan YouTube",
-        "account": "Akun & poin"
+        "account": "Akun & poin",
+        "directory": "Direktori unduhan",
+        "guides": "Lihat semua panduan unduhan",
+        "guide_suffix": "panduan",
+        "download_suffix": "halaman unduhan"
     },
     "sections": {
         "basics": "Memulai",

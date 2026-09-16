@@ -89,7 +89,7 @@
         }
     },
     "hero": {
-        "eyebrow": "Telechargeur video en ligne",
+        "eyebrow": "Téléchargeur vidéo en ligne",
         "title": "Telechargez des videos en ligne sans filigrane",
         "subtitle": "Collez un lien Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube et plus encore pour recuperer des videos HD en quelques clics. Les vidéos publiques WeChat Channels et celles des articles de comptes officiels WeChat sont prises en charge ; une liste de sélection apparaît avant le téléchargement si l’article contient plusieurs vidéos.",
         "trust": "Les services compatibles proposent le telechargement par lots, les collections / playlists, l audio seul et le mode muet."
@@ -110,15 +110,15 @@
             "desc": "Traite le contenu public des principales plateformes de la liste des services. L'analyse utilise aussi une technologie basée sur yt-dlp ; les formats et la qualité dépendent du contenu source."
         },
         "collection": {
-            "title": "Telechargement de collections / playlists",
+            "title": "Téléchargement de collections / playlists",
             "desc": "Detecte automatiquement les collections, saisons et playlists et prepare la file complete quand c est pris en charge."
         },
         "batch": {
-            "title": "Telechargement par lots",
+            "title": "Téléchargement par lots",
             "desc": "Collez plusieurs liens separes par des espaces ou des retours a la ligne et traitez-les ensemble."
         },
         "watermark": {
-            "title": "Telechargement sans filigrane",
+            "title": "Téléchargement sans filigrane",
             "desc": "Enregistre des fichiers propres lorsque la plateforme fournit une source sans filigrane."
         },
         "audio": {

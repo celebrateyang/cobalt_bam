@@ -16,7 +16,7 @@ const lastModified = {
 // Include localized hubs that have complete, indexable task-selection content.
 const sitemapHubLanguages = ['en', 'zh', 'ja', 'th'];
 const languageHubPages = ['', 'download'];
-const englishSupportPages = ['guide', 'faq'];
+const localizedSupportPages = ['guide', 'faq'];
 
 const escapeXml = (value: string): string =>
     value
@@ -100,10 +100,19 @@ function generateSitemap(): string {
         }
     }
 
-    for (const page of englishSupportPages) {
-        urls.push(
-            urlEntry(`${site}/en/${page}`, '2026-09-06', 'weekly', '0.7', buildAlternateLinks(`/en/${page}`, ['en'])),
-        );
+    for (const lang of languages) {
+        for (const page of localizedSupportPages) {
+            const path = `/${lang}/${page}`;
+            urls.push(
+                urlEntry(
+                    `${site}${path}`,
+                    lastModified.site,
+                    'weekly',
+                    '0.7',
+                    buildAlternateLinks(path, languages),
+                ),
+            );
+        }
     }
 
     for (const slug of seoLandingSlugs) {

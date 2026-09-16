@@ -89,13 +89,13 @@
         }
     },
     "hero": {
-        "eyebrow": "Trinh tai video truc tuyen",
+        "eyebrow": "Trình tải video trực tuyến",
         "title": "Tai video truc tuyen khong watermark",
         "subtitle": "Dan lien ket tu Douyin, TikTok, Bilibili, Sohu Video, Kugou Music, Haokan, Weibo, Amazon Live, NAVER, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, YouTube va nhieu nen tang khac de tai video HD nhanh chong. Hỗ trợ video WeChat Channels công khai và video trong bài viết tài khoản chính thức WeChat; nếu có nhiều video, danh sách lựa chọn sẽ hiển thị trước khi tải.",
         "trust": "Cac dich vu duoc ho tro co san tai hang loat, bo suu tap / playlist, che do chi audio va che do tat tieng."
     },
     "tools": {
-        "title": "Cong cu khac",
+        "title": "Công cụ khác",
         "description": "Neu ban can hon ca tai video, cac cong cu nay van de tim thay ma khong lam loang chu de SEO cua trang chu."
     },
     "ecosystem": {
@@ -110,19 +110,19 @@
             "desc": "Xử lý nội dung công khai từ các nền tảng chính trong danh sách dịch vụ. Hệ thống cũng dùng công nghệ dựa trên yt-dlp để phân tích; định dạng và chất lượng phụ thuộc nội dung nguồn."
         },
         "collection": {
-            "title": "Tai bo suu tap / playlist",
+            "title": "Tải bộ sưu tập / danh sách phát",
             "desc": "Tu dong nhan dien bo suu tap, mua va lien ket playlist, sau do xep hang toan bo khi duoc ho tro."
         },
         "batch": {
-            "title": "Tai hang loat",
+            "title": "Tải hàng loạt",
             "desc": "Dan nhieu lien ket, ngan cach bang dau cach hoac xuong dong, roi xu ly cung luc."
         },
         "watermark": {
-            "title": "Tai khong watermark",
+            "title": "Tải không có hình mờ",
             "desc": "Luu file video sach khi nen tang cung cap nguon khong watermark."
         },
         "audio": {
-            "title": "Chi audio va che do tat tieng",
+            "title": "Chỉ âm thanh và chế độ tắt tiếng",
             "desc": "Chuyen giua tu dong, chi audio va tat tieng truoc khi tai xuong."
         },
         "aria": "Khả năng tải xuống"

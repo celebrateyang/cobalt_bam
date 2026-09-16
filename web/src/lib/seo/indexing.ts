@@ -10,7 +10,7 @@ const normalizePath = (path: string): string => {
 const isPathOrDescendant = (path: string, base: string): boolean =>
     path === base || path.startsWith(`${base}/`);
 
-export const shouldNoindexLocalizedPath = (path: string, lang: string): boolean => {
+export const shouldNoindexLocalizedPath = (path: string, _lang: string): boolean => {
     const normalizedPath = normalizePath(path || '/');
 
     if (publicNoindexPaths.some((base) => isPathOrDescendant(normalizedPath, base))) {
@@ -23,8 +23,7 @@ export const shouldNoindexLocalizedPath = (path: string, lang: string): boolean 
         return true;
     }
 
-    // Only the English support hubs are intentionally included in the sitemap.
-    return lang !== 'en' && (normalizedPath === '/faq' || normalizedPath === '/guide');
+    return false;
 };
 
 export const getLegacyRedirectTarget = (pathname: string): string | null => {

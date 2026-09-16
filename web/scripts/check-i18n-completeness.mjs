@@ -6,6 +6,21 @@ const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const i18nRoot = join(webRoot, 'i18n');
 const baselineLocale = 'en';
 const placeholderPattern = /(?<!{){[A-Za-z_][A-Za-z0-9_]*}(?!})|{{\s*[^{}]+?\s*}}|%[sdif]/g;
+const mustBeLocalized = new Map([
+    ['faq.json', new Set([
+        'actions.directory',
+        'actions.guides',
+        'actions.download_suffix',
+    ])],
+    ['random-chat.json', new Set([
+        'action.report',
+        'age.confirm_detail',
+        'report.reason',
+        'report.other',
+        'safe.intro',
+        'scenarios.intro',
+    ])],
+]);
 
 async function listJsonFiles(root) {
     const files = [];
@@ -91,6 +106,14 @@ for (const locale of locales) {
                 failures.push(
                     `${locale}/${file}:${key}: route path must remain ${JSON.stringify(expectedValue)}`,
                 );
+            }
+
+            if (
+                mustBeLocalized.get(file)?.has(key) &&
+                typeof expectedValue === 'string' &&
+                actualValue === expectedValue
+            ) {
+                failures.push(`${locale}/${file}:${key}: still matches the English fallback`);
             }
 
             const expectedPlaceholders = placeholders(expectedValue);

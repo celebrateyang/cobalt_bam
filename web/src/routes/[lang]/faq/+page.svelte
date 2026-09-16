@@ -267,25 +267,25 @@
     {/if}
 
     <section class="card related">
-        <h2>{lang === "zh" ? "猜你还要找" : "More to explore"}</h2>
+        <h2>{$t("faq.toc.title")}</h2>
         <div class="related-links">
             <a class="related-link related-link--primary" href={`/${lang}/download`}>
-                Download directory
+                {$t("faq.actions.directory")}
             </a>
             <a class="related-link related-link--primary" href={`/${lang}`}>
-                {lang === "zh" ? "返回首页下载" : "Back to home downloader"}
+                {$t("faq.actions.home")}
             </a>
             <a class="related-link related-link--primary" href={`/${lang}/guide`}>
-                {lang === "zh" ? "查看全部下载指南" : "Browse all download guides"}
+                {$t("faq.actions.guides")}
             </a>
             {#each featuredGuides as item}
                 <a class="related-link" href={`/${lang}/guide/${item.slug}`}>
-                    {item.platform} {lang === "zh" ? "指南" : "guide"}
+                    {item.platform} {$t("faq.actions.guide_suffix")}
                 </a>
             {/each}
             {#each featuredDownloads as item}
                 <a class="related-link" href={`/${lang}/download/${item.slug}`}>
-                    {item.platform} {lang === "zh" ? "下载页" : "download page"}
+                    {item.platform} {$t("faq.actions.download_suffix")}
                 </a>
             {/each}
         </div>

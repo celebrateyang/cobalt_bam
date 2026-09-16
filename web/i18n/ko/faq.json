@@ -18,7 +18,11 @@
         "home": "다운로더로 돌아가기",
         "feedback": "문제 신고",
         "youtube": "YouTube 가이드",
-        "account": "계정 및 포인트"
+        "account": "계정 및 포인트",
+        "directory": "다운로드 목록",
+        "guides": "모든 다운로드 가이드 보기",
+        "guide_suffix": "가이드",
+        "download_suffix": "다운로드 페이지"
     },
     "sections": {
         "basics": "시작하기",

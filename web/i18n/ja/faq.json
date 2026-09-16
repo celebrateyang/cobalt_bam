@@ -18,7 +18,11 @@
         "home": "ダウンローダーに戻る",
         "feedback": "問題を報告",
         "youtube": "YouTube ガイド",
-        "account": "アカウントとポイント"
+        "account": "アカウントとポイント",
+        "directory": "ダウンロード一覧",
+        "guides": "すべてのダウンロードガイドを見る",
+        "guide_suffix": "ガイド",
+        "download_suffix": "ダウンロードページ"
     },
     "sections": {
         "basics": "はじめに",

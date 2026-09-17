@@ -34,6 +34,7 @@ import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
+import xinpianchang from "./services/xinpianchang.js";
 import snapchat from "./services/snapchat.js";
 import loom from "./services/loom.js";
 import facebook from "./services/facebook.js";
@@ -651,6 +652,10 @@ export default async function({ host, patternMatch, params, authType }) {
                     ...patternMatch,
                     url,
                 });
+                break;
+
+            case "xinpianchang":
+                r = await xinpianchang({ ...patternMatch, quality: params.videoQuality });
                 break;
 
             case "douyin":

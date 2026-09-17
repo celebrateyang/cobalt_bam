@@ -82,5 +82,6 @@
     "queue.fetch.network_error": "다운로드 중 네트워크 오류가 발생했습니다. 몇 초 후에 다시 시도해 보세요.",
     "queue.fetch.crashed": "다운로드 작업자가 충돌했습니다. 몇 초 후에 다시 시도해 보세요.",
     "queue.fetch.timeout": "다운로드 시간이 너무 오래 걸리고 시간이 초과되었습니다. 다시 시도해 보세요.",
-    "queue.fetch.stalled": "데이터가 수신되지 않아 다운로드가 중단되었습니다. 다시 시도해 보세요."
+    "queue.fetch.stalled": "데이터가 수신되지 않아 다운로드가 중단되었습니다. 다시 시도해 보세요.",
+    "api.xinpianchang.browser_required": "신편장은 브라우저 확인이 필요합니다. 작품 페이지를 열고 확인을 완료한 후 동영상을 재생하고 FreeSaveVideo로 다운로드하세요."
 }

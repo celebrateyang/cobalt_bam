@@ -111,5 +111,12 @@
         "balance_enough": "Sie haben {{ current }} Punkte. Für diesen Download sind {{ required }}-Punkte erforderlich.",
         "first_grace": "Ihr erster Download kann eine automatische Kulanzabdeckung für die fehlenden {{ required }}-Punkte nutzen, sodass Sie fortfahren können.",
         "unknown": "Punkte können nicht geschätzt werden; Es gilt der tatsächliche Abzug. Weitermachen?"
-    }
+    },
+    "xinpianchang.title": "Mit der Browser-Erweiterung herunterladen",
+    "xinpianchang.body": "Xinpianchang verlangt eine Browserprüfung. Öffne das Video, bestätige die Prüfung, starte die Wiedergabe und lade es mit FreeSaveVideo herunter.",
+    "xinpianchang.install_title": "FreeSaveVideo Downloader installieren",
+    "xinpianchang.install_body": "Öffne nach der Installation das Video, starte die Wiedergabe und klicke auf die Erweiterung. Chrome und Edge werden unterstützt.",
+    "xinpianchang.installed": "Die Erweiterung ist installiert. Öffne das Video, starte die Wiedergabe und klicke auf FreeSaveVideo Downloader.",
+    "xinpianchang.open": "Video öffnen",
+    "xinpianchang.close": "Schließen"
 }

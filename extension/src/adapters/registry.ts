@@ -5,6 +5,7 @@ import { genericAdapter } from './generic';
 import { instagramAdapter } from './instagram';
 import { YOUTUBE_HOST_RE } from './runtime';
 import { tiktokAdapter } from './tiktok';
+import { xinpianchangAdapter } from './xinpianchang';
 import type { AdapterContext, AdapterResult, PlatformAdapter } from './types';
 
 const youtubePolicyAdapter: PlatformAdapter = {
@@ -27,6 +28,7 @@ const youtubePolicyAdapter: PlatformAdapter = {
 };
 
 const adapters: PlatformAdapter[] = [
+    xinpianchangAdapter,
     youtubePolicyAdapter,
     deeplearningaiAdapter,
     douyinAdapter,

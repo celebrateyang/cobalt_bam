@@ -111,5 +111,12 @@
     "tiktok_download.open_link": "Open link",
     "error.title": "Something went wrong",
     "bilibili_download.extension.title": "Install the browser extension for smoother Bilibili long-video downloads",
-    "bilibili_download.extension.body": "FreeSaveVideo extension can download through your browser when Bilibili CDN blocks page fetches, which makes large direct downloads more stable."
+    "bilibili_download.extension.body": "FreeSaveVideo extension can download through your browser when Bilibili CDN blocks page fetches, which makes large direct downloads more stable.",
+    "xinpianchang.title": "Download with the browser extension",
+    "xinpianchang.body": "Xinpianchang requires browser verification. Open the work, complete verification, play the video, then download with FreeSaveVideo.",
+    "xinpianchang.install_title": "Install FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "After installation, open the work, play the video and click the extension to download. Chrome and Edge are supported.",
+    "xinpianchang.installed": "The extension is installed. Open the work, play the video and click FreeSaveVideo Downloader to download.",
+    "xinpianchang.open": "Open the work",
+    "xinpianchang.close": "Close"
 }

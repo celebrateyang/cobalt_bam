@@ -82,5 +82,6 @@
     "queue.ffmpeg.out_of_memory": "หน่วยความจำสำหรับ ffmpeg ไม่เพียงพอ",
     "queue.ffmpeg.no_input_format": "ระบุรูปแบบไฟล์ต้นทางไม่ได้",
     "queue.ffmpeg.no_audio_channel": "วิดีโอนี้ไม่มีช่องเสียง",
-    "queue.ffmpeg.no_input_type": "ไฟล์ต้นทางไม่มีชนิดไฟล์"
+    "queue.ffmpeg.no_input_type": "ไฟล์ต้นทางไม่มีชนิดไฟล์",
+    "api.xinpianchang.browser_required": "Xinpianchang ต้องตรวจสอบเบราว์เซอร์ โปรดเปิดหน้าวิดีโอ ผ่านการตรวจสอบ เล่นวิดีโอ แล้วดาวน์โหลดด้วย FreeSaveVideo"
 }

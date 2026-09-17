@@ -26,6 +26,17 @@ const youtubeResult = {
     duration: 60,
 };
 
+test('returns Xinpianchang progressive media through a server tunnel', () => {
+    const response = matchAction({
+        ...baseArgs, host: 'xinpianchang',
+        r: { urls: 'https://us-xpc5-l2.xpccdn.com/work.mp4', filename: 'work.mp4',
+            headers: { Referer: 'https://www.xinpianchang.com/a13690233', Range: 'bytes=0-' } },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, 'tunnel');
+    assert.equal(new URL(response.body.url).pathname, '/tunnel');
+});
+
 test("keeps ordinary YouTube direct downloads on the redirect path", () => {
     const response = matchAction({
         ...baseArgs,

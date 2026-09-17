@@ -117,5 +117,12 @@
         "balance_enough": "คุณมีจุด {{ current }} การดาวน์โหลดนี้ต้องใช้คะแนน {{ required }}",
         "first_grace": "การดาวน์โหลดครั้งแรกของคุณสามารถใช้การครอบคลุมแบบผ่อนผันอัตโนมัติสำหรับจุด {{ required }} ที่ขาดหายไป คุณจึงสามารถดำเนินการต่อได้",
         "unknown": "ไม่สามารถประมาณคะแนนได้ หักตามจริง ดำเนินการต่อ?"
-    }
+    },
+    "xinpianchang.title": "ดาวน์โหลดด้วยส่วนขยายเบราว์เซอร์",
+    "xinpianchang.body": "Xinpianchang ต้องตรวจสอบเบราว์เซอร์ โปรดเปิดหน้าวิดีโอ ผ่านการตรวจสอบ เล่นวิดีโอ แล้วดาวน์โหลดด้วย FreeSaveVideo",
+    "xinpianchang.install_title": "ติดตั้ง FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "หลังติดตั้ง ให้เปิดหน้าวิดีโอ เล่นวิดีโอ แล้วคลิกส่วนขยายเพื่อดาวน์โหลด รองรับ Chrome และ Edge",
+    "xinpianchang.installed": "ติดตั้งส่วนขยายแล้ว โปรดเปิดหน้าวิดีโอ เล่นวิดีโอ แล้วคลิก FreeSaveVideo Downloader",
+    "xinpianchang.open": "เปิดหน้าวิดีโอ",
+    "xinpianchang.close": "ปิด"
 }

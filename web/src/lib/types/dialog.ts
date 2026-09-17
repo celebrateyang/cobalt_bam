@@ -104,6 +104,11 @@ type FeedbackDialog = Dialog & {
     initialVideoUrl?: string,
 };
 
+type XinpianchangDownloadDialog = Dialog & {
+    type: 'xinpianchang-download',
+    sourceUrl: string,
+};
+
 type MembershipUpgradeDialog = Dialog & {
     type: "membership-upgrade",
     feature: MembershipFeature,
@@ -111,4 +116,4 @@ type MembershipUpgradeDialog = Dialog & {
     returnPath?: string | null,
 };
 
-export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog;
+export type DialogInfo = SmallDialog | PickerDialog | SavingDialog | TikTokDownloadDialog | PreviewDownloadDialog | BatchDialog | FeedbackDialog | MembershipUpgradeDialog | XinpianchangDownloadDialog;

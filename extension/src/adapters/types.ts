@@ -1,4 +1,5 @@
 export type PlatformId =
+    | 'xinpianchang'
     | 'generic'
     | 'youtube-policy'
     | 'bilibili'
@@ -51,6 +52,7 @@ export type AdapterStatus =
     | 'policyBlocked';
 
 export type DetectedMedia = {
+    sourcePageUrl?: string;
     id: string;
     kind: MediaKind;
     url: string;

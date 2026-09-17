@@ -111,5 +111,12 @@
     "tiktok_download.open_link": "打开链接",
     "error.title": "出现问题",
     "bilibili_download.extension.title": "安装浏览器插件，Bilibili 长视频下载更稳",
-    "bilibili_download.extension.body": "Bilibili CDN 拦截页面 fetch 时，FreeSaveVideo 插件可以通过浏览器通道下载，让大文件直连下载更稳定。"
+    "bilibili_download.extension.body": "Bilibili CDN 拦截页面 fetch 时，FreeSaveVideo 插件可以通过浏览器通道下载，让大文件直连下载更稳定。",
+    "xinpianchang.title": "通过浏览器插件下载",
+    "xinpianchang.body": "新片场要求浏览器验证。请打开作品页，完成验证并播放视频，再使用 FreeSaveVideo 下载。",
+    "xinpianchang.install_title": "安装 FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "安装后打开作品页，播放视频，点击插件即可下载。支持 Chrome 和 Edge。",
+    "xinpianchang.installed": "已检测到插件。请打开作品页，播放视频，再点击 FreeSaveVideo Downloader 下载。",
+    "xinpianchang.open": "打开作品页",
+    "xinpianchang.close": "关闭"
 }

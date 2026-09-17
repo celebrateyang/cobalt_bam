@@ -1,4 +1,5 @@
 export const testers = {
+    xinpianchang: pattern => /^\d{1,16}$/.test(pattern.id || ''),
     "amazon": pattern =>
         /^[0-9a-f]{32}$/i.test(pattern.id || ""),
 

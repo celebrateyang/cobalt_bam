@@ -91,5 +91,6 @@
     "api.upstream.network": "解析节点的网络链路暂时不稳定。视频本身可能没有问题，请过几秒再试。",
     "api.upstream.incomplete": "解析节点的回包不完整，可能是短暂链路波动。请过几秒再试。",
     "api.youtube.timeout": "这次 YouTube 解析本身耗时较长。视频仍可能可下载，请稍后重试。",
-    "api.bilibili.collection_has_long_video": "这个 Bilibili 合集中包含超过 {{ limit }} 分钟的视频，因此已禁用合集批量下载。请打开单个视频逐一下载。"
+    "api.bilibili.collection_has_long_video": "这个 Bilibili 合集中包含超过 {{ limit }} 分钟的视频，因此已禁用合集批量下载。请打开单个视频逐一下载。",
+    "api.xinpianchang.browser_required": "新片场要求浏览器验证。请打开作品页，完成验证并播放视频，再使用 FreeSaveVideo 下载。"
 }

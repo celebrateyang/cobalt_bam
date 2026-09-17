@@ -123,7 +123,9 @@ export default async function (streamInfo, res) {
     const startedAt = Date.now();
     let routeInfo = getRouteInfo(streamInfo.urls);
     const tunnelId = streamInfo.tunnelId || "unknown";
-    const upstreamRange = shouldStripRangeForHls(streamInfo) ? undefined : streamInfo.range;
+    const upstreamRange = shouldStripRangeForHls(streamInfo) ? undefined : (
+        streamInfo.range || (streamInfo.service === 'xinpianchang' ? 'bytes=0-' : undefined)
+    );
     const rangeHeader = upstreamRange || "none";
     const requestedRangeSpanBytes = parseRangeSpanBytes(upstreamRange);
     let upstreamStatusCode;

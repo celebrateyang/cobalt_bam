@@ -82,5 +82,6 @@
     "queue.fetch.network_error": "Netzwerkfehler beim Herunterladen. Versuchen Sie es in ein paar Sekunden noch einmal.",
     "queue.fetch.crashed": "Download-Worker ist abgestürzt. Versuchen Sie es in ein paar Sekunden noch einmal.",
     "queue.fetch.timeout": "Der Download dauerte zu lange und es kam zu einer Zeitüberschreitung. versuchen Sie es erneut.",
-    "queue.fetch.stalled": "Der Download ist ins Stocken geraten, es wurden keine Daten empfangen. versuchen Sie es erneut."
+    "queue.fetch.stalled": "Der Download ist ins Stocken geraten, es wurden keine Daten empfangen. versuchen Sie es erneut.",
+    "api.xinpianchang.browser_required": "Xinpianchang verlangt eine Browserprüfung. Öffne das Video, bestätige die Prüfung, starte die Wiedergabe und lade es mit FreeSaveVideo herunter."
 }

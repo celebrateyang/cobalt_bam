@@ -304,6 +304,10 @@ export default function({
                     params = { type: r.type };
                     break;
 
+                case "xinpianchang":
+                    params = { type: 'proxy' };
+                    break;
+
                 case "reddit":
                     responseType = r.typeId;
                     params = { type: r.type };

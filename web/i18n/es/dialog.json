@@ -142,5 +142,12 @@
     "feedback.error.phenomenon_required": "por favor describe lo que pasó.",
     "feedback.error.video_too_long": "El enlace del vídeo es demasiado largo.",
     "feedback.error.phenomenon_too_long": "La descripción es demasiado larga.",
-    "feedback.error.suggestion_too_long": "La sugerencia es demasiado larga."
+    "feedback.error.suggestion_too_long": "La sugerencia es demasiado larga.",
+    "xinpianchang.title": "Descargar con la extensión",
+    "xinpianchang.body": "Xinpianchang requiere verificar el navegador. Abre el vídeo, completa la verificación, reprodúcelo y descárgalo con FreeSaveVideo.",
+    "xinpianchang.install_title": "Instalar FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "Después de instalar, abre el vídeo, reprodúcelo y pulsa la extensión para descargar. Compatible con Chrome y Edge.",
+    "xinpianchang.installed": "La extensión está instalada. Abre el vídeo, reprodúcelo y pulsa FreeSaveVideo Downloader.",
+    "xinpianchang.open": "Abrir el vídeo",
+    "xinpianchang.close": "Cerrar"
 }

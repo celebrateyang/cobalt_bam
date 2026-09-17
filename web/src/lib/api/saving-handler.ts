@@ -567,6 +567,16 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
+        if (response.error.code === 'error.api.xinpianchang.browser_required') {
+            downloadButtonState.set('idle');
+            if (!shouldSuppressError(response.error.code)) {
+                const lang = get(page)?.params?.lang || 'en';
+                await loadTranslations(lang, 'dialog');
+                createDialog({ id: 'xinpianchang-download', type: 'xinpianchang-download',
+                    sourceUrl: selectedRequest.url });
+            }
+            return response;
+        }
         if (response.platformRequest?.eligible) {
             const lang = get(page)?.params?.lang || "en";
             await loadTranslations(lang, "requests");

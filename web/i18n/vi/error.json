@@ -82,5 +82,6 @@
     "queue.fetch.network_error": "lỗi mạng khi tải xuống. hãy thử lại sau vài giây.",
     "queue.fetch.crashed": "công nhân tải xuống bị lỗi. hãy thử lại sau vài giây.",
     "queue.fetch.timeout": "quá trình tải xuống mất quá nhiều thời gian và hết thời gian. thử lại.",
-    "queue.fetch.stalled": "quá trình tải xuống bị đình trệ và không nhận được dữ liệu. thử lại."
+    "queue.fetch.stalled": "quá trình tải xuống bị đình trệ và không nhận được dữ liệu. thử lại.",
+    "api.xinpianchang.browser_required": "Xinpianchang yêu cầu xác minh trình duyệt. Mở trang video, hoàn tất xác minh, phát video rồi tải bằng FreeSaveVideo."
 }

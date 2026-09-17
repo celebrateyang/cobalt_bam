@@ -82,5 +82,6 @@
     "queue.fetch.network_error": "ダウンロード中にネットワークエラーが発生しました。数秒後に再試行してください。",
     "queue.fetch.crashed": "ダウンロード処理が停止しました。数秒後に再試行してください。",
     "queue.fetch.timeout": "ダウンロードに時間がかかりすぎたためタイムアウトしました。再試行してください。",
-    "queue.fetch.stalled": "データを受信できずダウンロードが停止しました。再試行してください。"
+    "queue.fetch.stalled": "データを受信できずダウンロードが停止しました。再試行してください。",
+    "api.xinpianchang.browser_required": "新片場ではブラウザーの確認が必要です。作品ページを開き、確認を完了して動画を再生し、FreeSaveVideo でダウンロードしてください。"
 }

@@ -82,5 +82,6 @@
     "queue.fetch.network_error": "error de red durante la descarga. inténtalo de nuevo.",
     "queue.fetch.no_file_reader": "no se pudo leer el flujo de descarga. inténtalo de nuevo.",
     "queue.fetch.stalled": "la descarga se detuvo sin recibir datos. inténtalo de nuevo.",
-    "queue.fetch.timeout": "la descarga tardó demasiado y agotó el tiempo. inténtalo de nuevo."
+    "queue.fetch.timeout": "la descarga tardó demasiado y agotó el tiempo. inténtalo de nuevo.",
+    "api.xinpianchang.browser_required": "Xinpianchang requiere verificar el navegador. Abre el vídeo, completa la verificación, reprodúcelo y descárgalo con FreeSaveVideo."
 }

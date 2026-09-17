@@ -117,5 +117,12 @@
         "balance_enough": "{{ current }} 포인트가 있습니다. 이 다운로드에는 {{ required }} 포인트가 필요합니다.",
         "first_grace": "첫 번째 다운로드에서는 누락된 {{ required }} 포인트에 대해 자동 유예 덮개를 사용할 수 있으므로 계속할 수 있습니다.",
         "unknown": "포인트를 추정할 수 없습니다. 실제 공제가 적용됩니다. 계속하다?"
-    }
+    },
+    "xinpianchang.title": "브라우저 확장 프로그램으로 다운로드",
+    "xinpianchang.body": "신편장은 브라우저 확인이 필요합니다. 작품 페이지를 열고 확인을 완료한 후 동영상을 재생하고 FreeSaveVideo로 다운로드하세요.",
+    "xinpianchang.install_title": "FreeSaveVideo Downloader 설치",
+    "xinpianchang.install_body": "설치 후 작품 페이지에서 동영상을 재생하고 확장 프로그램을 클릭하세요. Chrome과 Edge를 지원합니다.",
+    "xinpianchang.installed": "확장 프로그램이 설치되어 있습니다. 작품 페이지에서 동영상을 재생하고 FreeSaveVideo Downloader를 클릭하세요.",
+    "xinpianchang.open": "작품 페이지 열기",
+    "xinpianchang.close": "닫기"
 }

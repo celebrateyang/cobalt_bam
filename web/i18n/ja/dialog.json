@@ -111,5 +111,12 @@
         "balance_enough": "残高は {{ current }} ポイントです。このダウンロードには {{ required }} ポイント必要です。",
         "first_grace": "初回ダウンロードでは不足分 {{ required }} ポイントが自動的に補われるため、続行できます。",
         "unknown": "必要ポイントを見積もれません。実際の消費量が適用されます。続行しますか？"
-    }
+    },
+    "xinpianchang.title": "ブラウザー拡張機能でダウンロード",
+    "xinpianchang.body": "新片場ではブラウザーの確認が必要です。作品ページを開き、確認を完了して動画を再生し、FreeSaveVideo でダウンロードしてください。",
+    "xinpianchang.install_title": "FreeSaveVideo Downloader をインストール",
+    "xinpianchang.install_body": "インストール後、作品ページで動画を再生し、拡張機能をクリックしてください。Chrome と Edge に対応しています。",
+    "xinpianchang.installed": "拡張機能が見つかりました。作品ページで動画を再生し、FreeSaveVideo Downloader をクリックしてください。",
+    "xinpianchang.open": "作品ページを開く",
+    "xinpianchang.close": "閉じる"
 }

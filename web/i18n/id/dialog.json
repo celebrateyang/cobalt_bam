@@ -111,5 +111,12 @@
     "tiktok_download.open_link": "Buka tautan",
     "error.title": "Ada yang tidak beres",
     "bilibili_download.extension.title": "Instal ekstensi browser untuk pengunduhan video panjang Bilibili yang lebih lancar\nEkstensi ",
-    "bilibili_download.extension.body": "FreeSaveVideo dapat diunduh melalui browser Anda ketika Bilibili CDN memblokir pengambilan halaman, sehingga membuat unduhan langsung berukuran besar menjadi lebih stabil."
+    "bilibili_download.extension.body": "FreeSaveVideo dapat diunduh melalui browser Anda ketika Bilibili CDN memblokir pengambilan halaman, sehingga membuat unduhan langsung berukuran besar menjadi lebih stabil.",
+    "xinpianchang.title": "Unduh melalui ekstensi browser",
+    "xinpianchang.body": "Xinpianchang memerlukan verifikasi browser. Buka video, selesaikan verifikasi, putar video, lalu unduh dengan FreeSaveVideo.",
+    "xinpianchang.install_title": "Pasang FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "Setelah memasang, buka video, putar video, lalu klik ekstensi untuk mengunduh. Mendukung Chrome dan Edge.",
+    "xinpianchang.installed": "Ekstensi sudah terpasang. Buka video, putar video, lalu klik FreeSaveVideo Downloader.",
+    "xinpianchang.open": "Buka video",
+    "xinpianchang.close": "Tutup"
 }

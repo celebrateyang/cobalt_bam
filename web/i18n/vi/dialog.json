@@ -111,5 +111,12 @@
         "balance_enough": "Bạn có {{ current }} điểm. Bản tải xuống này cần {{ required }} điểm.",
         "first_grace": "Lần tải xuống đầu tiên của bạn có thể sử dụng chế độ gia hạn tự động cho những điểm {{ required }} còn thiếu để bạn có thể tiếp tục.",
         "unknown": "Không thể ước tính điểm; áp dụng khấu trừ thực tế. Tiếp tục?"
-    }
+    },
+    "xinpianchang.title": "Tải bằng tiện ích trình duyệt",
+    "xinpianchang.body": "Xinpianchang yêu cầu xác minh trình duyệt. Mở trang video, hoàn tất xác minh, phát video rồi tải bằng FreeSaveVideo.",
+    "xinpianchang.install_title": "Cài FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "Sau khi cài, mở trang video, phát video rồi nhấp vào tiện ích để tải. Hỗ trợ Chrome và Edge.",
+    "xinpianchang.installed": "Đã cài tiện ích. Mở trang video, phát video rồi nhấp FreeSaveVideo Downloader để tải.",
+    "xinpianchang.open": "Mở trang video",
+    "xinpianchang.close": "Đóng"
 }

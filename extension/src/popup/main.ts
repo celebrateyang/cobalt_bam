@@ -1,5 +1,6 @@
 import type { AdapterStatus, DetectedMedia, PageScanResult } from '../shared/messages';
 import { buildDownloadFilename } from '../downloader/filename';
+import { isXinpianchangMedia } from '../adapters/xinpianchang';
 import './styles.css';
 
 type State =
@@ -211,8 +212,12 @@ const downloadUrl = async (item: DetectedMedia, filename?: string) => {
             return;
         }
 
-        await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
-    } catch {
+        const response = await chrome.runtime.sendMessage({ type: 'FSV_DOWNLOAD_URL', url: item.url, filename, media: item });
+        if (!response?.ok) {
+            throw new Error(response?.error || 'Extension download failed.');
+        }
+    } catch (error) {
+        if (isXinpianchangMedia(item.url)) throw error;
         await sendPageDownload(item, filename);
     }
 };
@@ -258,7 +263,31 @@ const bindActions = () => {
             const url = button.dataset.downloadUrl;
             if (!url || state.kind !== 'ready') return;
             const item = state.result.media.find((candidate) => candidate.url === url);
-            if (item) void downloadUrl(item, button.dataset.downloadFilename);
+            if (!item) return;
+            button.disabled = true;
+            button.textContent = 'Starting...';
+            void downloadUrl(item, button.dataset.downloadFilename)
+                .then(() => {
+                    button.textContent = 'Started';
+                })
+                .catch((error) => {
+                    button.textContent = 'Failed';
+                    const message = error instanceof Error ? error.message : 'Download failed.';
+                    button.title = message;
+                    const article = button.closest('.media-item');
+                    if (article) {
+                        const previousError = article.querySelector('[data-download-error]');
+                        previousError?.remove();
+                        const errorText = document.createElement('div');
+                        errorText.dataset.downloadError = '';
+                        errorText.setAttribute('role', 'alert');
+                        errorText.textContent = message;
+                        article.querySelector('.media-body')?.append(errorText);
+                    }
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
         });
     });
     document.querySelectorAll<HTMLButtonElement>('[data-convert-jpeg-url]').forEach((button) => {

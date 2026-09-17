@@ -1,4 +1,5 @@
 const friendlyNames = {
+    xinpianchang: 'Xinpianchang',
     amazon: "Amazon Live",
     cctv: "CCTV",
     bilibili_cdn: "Bilibili CDN",

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
+    import { FREESAVEVIDEO_EXTENSION_STORE_URL } from "$lib/extension/freesavevideo";
 
     export let titleKey: string;
     export let bodyKey: string;
@@ -8,6 +9,15 @@
 </script>
 
 <div class="extension-prompt">
+    <a
+        class="extension-product"
+        href={FREESAVEVIDEO_EXTENSION_STORE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        <span class="extension-product-icon" aria-hidden="true">FSV</span>
+        <span class="extension-product-name">FreeSaveVideo Downloader</span>
+    </a>
     <div class="extension-prompt-copy">
         <strong>{$t(titleKey)}</strong>
         <p>{$t(bodyKey)}</p>
@@ -32,6 +42,38 @@
 </div>
 
 <style>
+    .extension-product {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text);
+        text-decoration: none;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .extension-product-icon {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: #4c7b16;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .extension-product-name {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .extension-product:hover .extension-product-name {
+        text-decoration: underline;
+    }
+
     .extension-prompt {
         display: flex;
         flex-direction: column;

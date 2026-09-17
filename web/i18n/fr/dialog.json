@@ -111,5 +111,12 @@
         "balance_enough": "Vous avez {{ current }} points. Ce téléchargement nécessite {{ required }} points.",
         "first_grace": "Votre premier téléchargement peut utiliser une couverture de grâce automatique pour les points {{ required }} manquants, afin que vous puissiez continuer.",
         "unknown": "Impossible d'estimer les points ; la déduction réelle s’applique. Continuer?"
-    }
+    },
+    "xinpianchang.title": "Télécharger avec l’extension",
+    "xinpianchang.body": "Xinpianchang exige une vérification du navigateur. Ouvrez la vidéo, terminez la vérification, lancez la lecture puis téléchargez avec FreeSaveVideo.",
+    "xinpianchang.install_title": "Installer FreeSaveVideo Downloader",
+    "xinpianchang.install_body": "Après l’installation, ouvrez la vidéo, lancez la lecture et cliquez sur l’extension. Chrome et Edge sont compatibles.",
+    "xinpianchang.installed": "L’extension est installée. Ouvrez la vidéo, lancez la lecture et cliquez sur FreeSaveVideo Downloader.",
+    "xinpianchang.open": "Ouvrir la vidéo",
+    "xinpianchang.close": "Fermer"
 }

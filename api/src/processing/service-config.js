@@ -4,6 +4,9 @@ export const audioIgnore = new Set(["vk", "ok", "loom"]);
 export const hlsExceptions = new Set(["amazon", "dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo"]);
 
 export const services = {
+    xinpianchang: {
+        patterns: ['a:id'],
+    },
     amazon: {
         patterns: [
             "live/video/:id",

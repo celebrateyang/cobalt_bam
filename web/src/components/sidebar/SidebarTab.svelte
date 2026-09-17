@@ -45,6 +45,7 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
     bind:this={tab}
     on:focus={() => showTab(tab)}
     aria-current={isTabActive ? "page" : undefined}
+    title={$t(`tabs.${tabName}`)}
 >
     {#if beta}
         <div class="beta-sign" aria-label={$t("general.beta")}>β</div>
@@ -62,10 +63,11 @@ export let preloadCode: "off" | "hover" | "tap" | "viewport" | "eager" | null = 
         <span class="notification-dot" aria-label="New notification"></span>
     {/if}
     <slot></slot>
-    {$t(`tabs.${tabName}`)}
+    <span class="tab-label">{$t(`tabs.${tabName}`)}</span>
 </a>
 
 <style>
+    .tab-label { max-width: 100%; overflow-wrap: anywhere; line-height: 1.35; }
     .sidebar-tab {
         display: flex;
         flex-direction: column;

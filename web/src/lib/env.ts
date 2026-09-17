@@ -1,4 +1,5 @@
 import * as _env from "$env/static/public";
+import { dev } from "$app/environment";
 
 const getEnv = (_key: string) => {
     const env = _env as Record<string, string | undefined>;
@@ -17,6 +18,9 @@ const variables = {
     ENABLE_WEBCODECS: getEnv('ENABLE_WEBCODECS') === 'true',
     ENABLE_DEPRECATED_YOUTUBE_HLS: getEnv('ENABLE_DEPRECATED_YOUTUBE_HLS') === 'true',
     CLERK_PUBLISHABLE_KEY: getEnv('CLERK_PUBLISHABLE_KEY'),
+    // Preview the workspace locally; production requires explicit opt-in.
+    VIDEO_AGENT_ENABLED: getEnv('VIDEO_AGENT_ENABLED') === '1'
+        || (dev && getEnv('VIDEO_AGENT_ENABLED') !== '0'),
 }
 
 const contacts = {

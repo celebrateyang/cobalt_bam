@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import { t } from "$lib/i18n/translations";
     import { onDestroy, onMount } from "svelte";
     import { fetchMembershipFeatureEligibility } from "$lib/api/membership";
     import { signIn } from "$lib/state/clerk";
@@ -252,13 +253,13 @@
     });
 </script>
 
-<svelte:head><title>{message("AI Video Studio", "AI 视频工作室")}</title></svelte:head>
+<svelte:head><title>{$t("tabs.ai_video")}</title></svelte:head>
 
 <main class="studio">
     <header class="hero">
         <div>
             <p class="eyebrow"><span></span> MEMBER STUDIO</p>
-            <h1>{message("AI Video Studio", "AI 视频工作室")}</h1>
+            <h1>{$t("tabs.ai_video")}</h1>
             <p class="hero-copy">{message("Turn long videos into polished short clips with translated subtitles.", "从长视频中自动发现高光，快速生成带翻译字幕的精彩短片。")}</p>
         </div>
         <div class="hero-badge" aria-hidden="true">

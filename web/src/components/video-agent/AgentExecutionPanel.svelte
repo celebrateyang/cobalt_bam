@@ -21,6 +21,7 @@
     $: activeRun=runs.find(value=>activeStates.includes(value.status));
     $: completedSteps=steps.filter(value=>value.status==="succeeded").length;
     $: if(planId && planRevision!==revision)planId="";
+    $: canCreatePlan=planLoaded && !refreshing && !busy && !pendingCommand && !planId && !!sourceRef && !!capabilities?.commandsEnabled && !activeRun;
     const report=(error:unknown)=>{errorCode=(error as {code?:string})?.code || "VIDEO_AGENT_REQUEST_FAILED";};
     const refresh=async()=>{
         if(!mounted || refreshing)return;
@@ -60,7 +61,7 @@
             const receipt=await submitAgentCommand(id,value);
             if(!mounted || version!==epoch)return;
             pendingCommand=null;revision=receipt.revision;
-            if(receipt.planId){planId=receipt.planId;planRevision=receipt.revision;}
+            if(receipt.planId){planId=receipt.planId;planRevision=receipt.revision;dirty=false;}
             if(receipt.runId){selectedRunId=receipt.runId;planId="";}
             dispatch("changed");await refresh();
         }catch(error){
@@ -73,8 +74,11 @@
         }finally{if(mounted && version===epoch)busy=false;}
     };
     const envelope=()=>({expectedRevision:revision,idempotencyKey:crypto.randomUUID()});
-    const createPlan=()=>command({type:"create_plan",...envelope(),input:{sourceRef,operation:"highlight_clips",targetLanguage,
-        clips:{requestedCount},subtitles:{enabled:true,mode:subtitleMode}}});
+    const createPlan=()=>{
+        if(!canCreatePlan || busy || pendingCommand || planId)return;
+        return command({type:"create_plan",...envelope(),input:{sourceRef,operation:"highlight_clips",targetLanguage,
+            clips:{requestedCount},subtitles:{enabled:true,mode:subtitleMode}}});
+    };
     const start=()=>command({type:"start_run",...envelope(),input:{planId}});
     const control=(type:"cancel_run" | "retry_run")=>run && command({type,...envelope(),input:{runId:run.id}});
     const chooseRun=()=>{run=null;steps=[];cursor="0";void refresh();};
@@ -129,9 +133,14 @@
         <select id="plan-subtitles" bind:value={subtitleMode} on:change={clearPlan} disabled={busy || !!pendingCommand}>
             <option value="bilingual">{$t("video-agent.subtitle_bilingual")}</option><option value="translated">{$t("video-agent.subtitle_translated")}</option>
         </select>
-        <button disabled={busy || !!pendingCommand || !sourceRef || !capabilities?.commandsEnabled || !!activeRun}>{$t("video-agent.create_plan")}</button>
+        <button class:saved={!!planId} disabled={!canCreatePlan}>{$t(planId ? "video-agent.plan_saved" : busy ? "video-agent.loading" : "video-agent.create_plan")}</button>
     </form>
-    {#if planId}<p role="status">{$t("video-agent.plan_ready")}</p>{/if}
+    {#if planId}
+        <div class="plan-success" role="status" aria-live="polite" aria-atomic="true">
+            <span class="success-icon" aria-hidden="true">&#10003;</span>
+            <div><strong>{$t("video-agent.plan_saved")}</strong><p>{$t("video-agent.plan_ready")}</p></div>
+        </div>
+    {/if}
     <button class="primary" on:click={start} disabled={busy || !!pendingCommand || !planId || !capabilities?.executionEnabled || !!activeRun}>{$t("video-agent.start")}</button>
     {#if !capabilities?.executionEnabled}<p class="muted">{$t("video-agent.pipeline_pending")}</p>{/if}
     <p class="muted">{$t("video-agent.charge_policy")}</p>
@@ -161,6 +170,10 @@
     h3,p { margin:0;line-height:1.6; } h3 { font-size:14px; }
     select,input,button { padding:10px;border:1px solid rgba(128,128,128,.25);border-radius:9px;background:var(--background);color:var(--text);font:inherit;min-width:0; }
     button { cursor:pointer; } button:disabled { opacity:.5;cursor:not-allowed; }
+    .plan-success { display:flex;align-items:center;gap:12px;padding:16px;border:2px solid #81b426;border-radius:12px;background:rgba(129,180,38,.12); }
+    .plan-success strong { font-size:15px; } .plan-success p { margin-top:4px; }
+    .success-icon { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#507b1c;color:white;font-size:20px; }
+    button.saved:disabled { opacity:1;border-color:#81b426;background:rgba(129,180,38,.12);cursor:default; }
     .primary { background:var(--accent);color:white; } .muted { opacity:.7; } .error { color:#c0392b;overflow-wrap:anywhere; }
     ol { margin:0;padding-left:20px; } li { margin:8px 0;overflow-wrap:anywhere; } .actions { display:flex;gap:8px; }
 </style>

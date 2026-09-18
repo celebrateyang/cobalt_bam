@@ -252,7 +252,7 @@ videoAgent:
         memory: 2Gi
         ephemeral-storage: 6Gi
   # Independent acceptance flag; existing AI video functionality is unchanged.
-  enabled: false
+  enabled: true
   # Internal control-plane acceptance only; Task 3-3 must admit runs before workers execute.
   runsEnabled: false
   admissionEnabled: false

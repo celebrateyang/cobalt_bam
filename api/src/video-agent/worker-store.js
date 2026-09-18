@@ -135,7 +135,11 @@ export const saveCheckpoint = (claim, checkpoint) => {
         await client.query(`UPDATE video_agent_steps SET checkpoint=$2,updated_at=$3 WHERE id=$1`, [step.id, checkpoint, now]);
     });
 };
-const persistOutputs = async (client,claim,{ step,now },{ checkpoint = {}, outputRefs = [], assets: uploaded = [] } = {}) => {
+const persistOutputs = async (client,claim,{ step,now },{ checkpoint = {}, outputRefs = [], assets: uploaded = [],provider,model } = {}) => {
+    if(provider!==undefined || model!==undefined){
+        if(!/^[a-z0-9_-]{1,80}$/.test(provider || "") || !/^[a-zA-Z0-9_.:/-]{1,120}$/.test(model || ""))throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid provider metadata");
+        await client.query("UPDATE video_agent_steps SET provider=$2,model=$3 WHERE id=$1",[step.id,provider,model]);
+    }
     if (!checkpoint || typeof checkpoint !== "object" || Array.isArray(checkpoint)) throw agentError("VIDEO_AGENT_CHECKPOINT_INVALID", 400, "Invalid checkpoint");
     if (!Array.isArray(uploaded) || uploaded.length>100 || !Array.isArray(outputRefs) || outputRefs.length>100) throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid outputs");
     for (const asset of uploaded) {

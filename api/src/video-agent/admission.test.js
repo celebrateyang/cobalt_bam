@@ -78,6 +78,19 @@ test("shared video admission: historical ledger, old/new concurrency and billing
         assert.equal((await getAiVideoUsage({userId:2,limitSeconds:300})).usedSeconds,120);await failStep(asr,{code:"INVALID_TRANSCRIPT",status:422});await advanceRuns();
         const retried=await command(next,"retry_run",{runId:r.runId});const usage=await getAiVideoUsage({userId:2,limitSeconds:300});assert.equal(usage.usedSeconds,120);assert.equal(usage.reservedSeconds,0);await cancel(next,retried.runId);
     });
+    await t.test("changing the ASR model creates a fresh billing operation rather than reusing prior paid usage",async()=>{
+        const f=await fixture(2,20000),r=await start(f);
+        await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<2",[r.runId]);await advanceRuns();
+        const claim=await claimStep({workerId:"changed-model-charge",stages:["transcribe"]});await failStep(claim,{status:422,code:"INVALID_TRANSCRIPT"});await advanceRuns();
+        const before=await getAiVideoUsage({userId:2,limitSeconds:300}),model=process.env.AI_VIDEO_TRANSCRIPTION_MODEL;
+        try{
+            process.env.AI_VIDEO_TRANSCRIPTION_MODEL=model==="whisper-1"?"gpt-4o-transcribe-diarize":"whisper-1";
+            const next=await command(f,"retry_run",{runId:r.runId});
+            const run=(await pg.query("SELECT * FROM video_agent_runs WHERE id=$1",[next.runId])).rows[0];assert.equal(run.budget_snapshot.alreadyCommitted,false);
+            const usage=await getAiVideoUsage({userId:2,limitSeconds:300});assert.equal(usage.usedSeconds,before.usedSeconds);assert.equal(usage.reservedSeconds,60);
+            await cancel(f,next.runId);
+        }finally{if(model===undefined)delete process.env.AI_VIDEO_TRANSCRIPTION_MODEL;else process.env.AI_VIDEO_TRANSCRIPTION_MODEL=model;}
+    });
     await t.test("deletion releases uncommitted quota but live leases keep user concurrency occupied",async()=>{
         const f=await fixture(3);const r=await start(f);await advanceRuns();const c=await claimStep({workerId:"delete",stages:["probe"]});
         await deleteProject({projectId:f.projectId,userId:3});await assert.rejects(old(3),{code:"AI_VIDEO_CONCURRENCY_LIMIT"});await failStep(c,new Error("cancel"));await advanceRuns();
@@ -94,7 +107,7 @@ test("shared video admission: historical ledger, old/new concurrency and billing
         const f=await fixture(2);const current=await request(`/projects/${f.projectId}/plan`,2);assert.equal(current.payload.data.plan.id,f.planId);assert.equal(current.payload.data.revision,1);
         assert.equal((await request(`/projects/${f.projectId}/plan`,1)).status,404);
         assert.equal((await request("/usage",0)).status,401);assert.equal((await request("/usage",2,{headers:{"x-disabled":"1"}})).status,403);
-        const usage=await request("/usage?userId=1",2);assert.equal(usage.payload.data.usage.usedSeconds,120);
+        const usage=await request("/usage?userId=1",2);assert.equal(usage.payload.data.usage.usedSeconds,180);
         const capabilities=await request("/capabilities",2);assert.equal(capabilities.payload.data.pipelineReady,false);assert.equal(capabilities.payload.data.executionEnabled,false);
         const body={type:"start_run",input:{planId:f.planId},expectedRevision:1,idempotencyKey:`http_command_${randomUUID()}`};
         const path=`/projects/${f.projectId}/commands`;

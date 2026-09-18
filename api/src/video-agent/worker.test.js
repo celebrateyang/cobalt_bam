@@ -12,7 +12,10 @@ import { ensureVideoAgentSchema,setVideoAgentDatabaseForTests,createProject } fr
 import { getAiVideoObjectStorage,resetAiVideoObjectStorageForTests } from "../ai-video/object-storage.js";
 import { submitCommand } from "./execution.js";
 import { advanceRuns,claimStep,heartbeatStep,saveCheckpoint,commitCheckpoint,succeedStep,failStep,retryDelay } from "./worker-store.js";
-import { uploadJsonArtifact,readJsonArtifact } from "./worker-artifacts.js";
+import { uploadJsonArtifact,readJsonArtifact,readAudioArtifact,uploadAudioArtifact } from "./worker-artifacts.js";
+import {createChunkHandler} from "./chunk-handler.js";
+import {inspectPcmWav} from "./chunk-plan.js";
+import {createTranscribeHandler} from "./transcribe-handler.js";
 import { executeClaim,workerTick } from "./worker.js";
 import { runAbortableProcess,productionHandlers } from "./worker-handlers.js";
 import { cleanupVideoAgent } from "./cleanup.js";
@@ -21,6 +24,7 @@ import { setAiVideoDatabaseForTests,ensureAiVideoSchema } from "../db/ai-video.j
 test("worker leases, fencing, durable artifacts, retry, cancellation and real media probing",{ timeout:120000 },async(t)=>{
     process.env.NODE_ENV="test";process.env.VIDEO_AGENT_ENABLED="1";process.env.VIDEO_AGENT_RUNS_ENABLED="1";
     process.env.VIDEO_AGENT_ADMISSION_ENABLED="0";process.env.AI_VIDEO_EXECUTION_GLOBAL_CONCURRENCY="1";
+    delete process.env.OPENAI_API_KEY; // Never contact a live paid service in Worker fixtures.
     const root=await mkdtemp(path.join(os.tmpdir(),"agent-worker-test-"));
     process.env.AI_VIDEO_STORAGE_PROVIDER="local";process.env.AI_VIDEO_LOCAL_STORAGE_ROOT=root;process.env.AI_VIDEO_STORAGE_PREFIX="worker-test";
     resetAiVideoObjectStorageForTests();
@@ -107,13 +111,107 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         await stop(f);await failStep(c,new Error("cancel"));await advanceRuns();await cleanupVideoAgent({storage});
         assert.equal((await pg.query("SELECT status FROM video_agent_sources WHERE id=$1",[f.sourceId])).rows[0].status,"deleted");
     });
-    await t.test("real ffprobe writes a durable result; unsupported chunk is not claimed",async()=>{
-        const input=path.join(root,"fixture.mp4");await runAbortableProcess(ffmpeg,["-y","-f","lavfi","-i","color=c=black:s=320x180:r=10:d=20","-f","lavfi","-i","sine=frequency=1000:duration=20","-c:v","libx264","-pix_fmt","yuv420p","-c:a","aac","-shortest",input]);
+    await t.test("real probe and chunk produce verified audio; unsupported transcribe is not claimed",async()=>{
+        const input=path.join(root,"fixture.mp4");await runAbortableProcess(ffmpeg,["-y","-f","lavfi","-i","color=c=black:s=320x180:r=10:d=20","-itsoffset","2","-f","lavfi","-i","sine=frequency=1000:duration=18","-c:v","libx264","-pix_fmt","yuv420p","-c:a","aac","-shortest",input]);
         const f=await seed({bytes:await readFile(input),probe:{durationMs:20000,width:320,height:180}});
         assert.equal(await workerTick({workerId:"real-probe",handlers:productionHandlers}),true);
         const steps=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 ORDER BY ordinal",[f.runId])).rows;
         assert.equal(steps[0].status,"succeeded");assert.equal(steps[0].checkpoint.width,320);assert.equal(steps[0].output_refs.length,1);assert.equal(steps[1].status,"ready");
-        assert.equal(await workerTick({workerId:"no-fake-handler"}),false);assert.equal((await pg.query("SELECT status FROM video_agent_runs WHERE id=$1",[f.runId])).rows[0].status,"running");await stop(f);
+        assert.equal(await workerTick({workerId:"real-chunk"}),true);
+        const chunk=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 AND stage='chunk'",[f.runId])).rows[0];
+        assert.equal(chunk.status,"succeeded");assert.equal(chunk.checkpoint.chunks.length,1);assert.equal(chunk.checkpoint.chunks[0].sampleCount,320000);
+        const asset=(await pg.query("SELECT * FROM video_agent_assets WHERE id=$1",[chunk.checkpoint.chunks[0].asset.id])).rows[0];assert.equal(asset.kind,"audio_chunk");assert.equal(asset.status,"ready");
+        assert.equal(await workerTick({workerId:"no-fake-handler"}),false);assert.equal((await pg.query("SELECT status FROM video_agent_runs WHERE id=$1",[f.runId])).rows[0].status,"running");
+        const reader=await claimStep({workerId:"offset-reader",stages:["transcribe"]}),filename=path.join(root,"offset.wav");
+        await readAudioArtifact(reader,asset.id,{filename});
+        const info=await inspectPcmWav(filename),fs=await import("node:fs/promises"),fd=await fs.open(filename,"r");
+        try{const firstSecond=Buffer.alloc(32000);await fd.read(firstSecond,0,firstSecond.length,info.dataOffset);assert.ok(firstSecond.every(byte=>byte===0),"late audio must retain leading silence on the video timeline");}finally{await fd.close();}
+        await stop(f);await failStep(reader,new Error("cancelled"));await advanceRuns();
+    });
+    await t.test("long media resumes after a saved chunk; binaries are fenced and dependency scoped",async()=>{
+        const input=path.join(root,"long.mp4");await runAbortableProcess(ffmpeg,["-nostdin","-v","error","-f","lavfi","-i","color=c=black:s=96x64:r=1:d=620","-f","lavfi","-i","sine=frequency=1000:duration=620","-c:v","libx264","-preset","ultrafast","-c:a","aac","-shortest",input]);
+        const f=await seed({bytes:await readFile(input),probe:{durationMs:620000,width:96,height:64}});
+        await workerTick({workerId:"long-probe"});
+        let encodes=0;const interrupted=createChunkHandler({runProcess:async(...args)=>{
+            if(args[1].includes("-af") && args[1].some(value=>value.startsWith("atrim=")) && ++encodes===2)throw Object.assign(new Error("fault"),{code:"ECONNRESET"});
+            return runAbortableProcess(...args);
+        }});
+        await workerTick({workerId:"fault-worker",handlers:{chunk:interrupted}});
+        let chunk=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 AND stage='chunk'",[f.runId])).rows[0];
+        assert.equal(chunk.status,"retry_wait");assert.equal(chunk.output_refs.length,1);const first=chunk.checkpoint.chunks[0].asset.id;
+        await pg.query("UPDATE video_agent_steps SET available_at=0 WHERE id=$1",[chunk.id]);
+        await advanceRuns();
+        const retry=await claimStep({workerId:"resume-worker",stages:["chunk"]});assert.equal(retry.step.attempt,2);
+        const oversized=path.join(root,"too-large.wav");await import("node:fs/promises").then(async fs=>{const fd=await fs.open(oversized,"w");await fd.truncate(24*1024*1024+1);await fd.close();});
+        await assert.rejects(uploadAudioArtifact(retry,oversized),{code:"VIDEO_AGENT_CHUNK_TOO_LARGE"});
+        let resumedEncodes=0;const resumed=createChunkHandler({runProcess:(command,args,options)=>{
+            if(args.some(value=>value.startsWith("atrim=")))resumedEncodes++;
+            return runAbortableProcess(command,args,options);
+        }});
+        await executeClaim(retry,{handlers:{chunk:resumed}});await advanceRuns();
+        chunk=await step(chunk.id);assert.equal(chunk.status,"succeeded");assert.equal(resumedEncodes,1);assert.equal(chunk.checkpoint.chunks[0].asset.id,first);
+        assert.equal(chunk.checkpoint.chunks.length,2);assert.equal(chunk.output_refs.length,3);assert.equal(chunk.checkpoint.chunks[1].ownershipStartMs,600000);assert.equal(chunk.checkpoint.chunks[1].processingStartMs,598000);
+        await assert.rejects(uploadAudioArtifact(retry,input),{code:"VIDEO_AGENT_LEASE_LOST"});
+        const transcribe=await claimStep({workerId:"binary-reader",stages:["transcribe"]});
+        const {manifestRef,...manifest}=chunk.checkpoint;
+        assert.deepEqual(await readJsonArtifact(transcribe,manifestRef),manifest);
+        const local=path.join(root,"downloaded.wav");const metadata=await readAudioArtifact(transcribe,first,{filename:local});assert.equal(metadata.id,first);assert.equal((await inspectPcmWav(local)).sampleCount,602000*16);
+        await assert.rejects(readAudioArtifact(transcribe,randomUUID()),{code:"VIDEO_AGENT_OUTPUT_INVALID"});
+        // Generation still matches after same-length corruption: SHA verification must catch it.
+        const row=(await pg.query("SELECT * FROM video_agent_assets WHERE id=$1",[first])).rows[0];
+        const fs=await import("node:fs/promises"),handle=await fs.open(storage.resolve(row.object_key),"r+");try{const byte=Buffer.alloc(1);await handle.read(byte,0,1,1000);byte[0]^=255;await handle.write(byte,0,1,1000);}finally{await handle.close();}
+        const head=await storage.headObject(row.object_key);await pg.query("UPDATE video_agent_assets SET generation=$2 WHERE id=$1",[first,head.generation]);
+        await assert.rejects(readAudioArtifact(transcribe,first),{code:"VIDEO_AGENT_OUTPUT_INVALID"});
+        await stop(f);await failStep(transcribe,new Error("cancelled"));await advanceRuns();
+    });
+    await t.test("ASR resumes durable chunks after rate limit and post-raw crash without repeating successful calls",async()=>{
+        const f=await seed({bytes:await readFile(path.join(root,"long.mp4")),probe:{durationMs:620000,width:96,height:64}});
+        await workerTick({workerId:"asr-probe"});await workerTick({workerId:"asr-chunks"});
+        const calls=[];let rate=true;
+        const provider={transcribe:async({filename,signal})=>{
+            signal.throwIfAborted();const ordinal=filename.includes("asr-0")?0:1;calls.push(ordinal);
+            if(ordinal===1 && rate){rate=false;throw Object.assign(new Error("limited"),{status:429,code:"VIDEO_AGENT_ASR_HTTP_429",retryAfterMs:5000});}
+            const raw=ordinal===0?{segments:[{start:599.8,end:600.15,text:"Hello"}],words:[{word:"Hello",start:599.8,end:600.15}]}:
+                {segments:[{start:1.9,end:3,text:"Hello world"}],words:[{word:"Hello",start:1.9,end:2.3},{word:"world",start:2.5,end:3}]};
+            return {raw:{...raw,originalMetadata:{tokens:[1,2,3]}},requestId:`fixture-${ordinal}`};
+        }};
+        const handler=createTranscribeHandler({provider});
+        await workerTick({workerId:"asr-rate",handlers:{transcribe:handler}});
+        let stepRow=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 AND stage='transcribe'",[f.runId])).rows[0];
+        assert.equal(stepRow.status,"retry_wait");assert.equal(stepRow.checkpoint.results.length,1);const firstRaw=stepRow.checkpoint.results[0].rawRef;
+        assert.ok(Number(stepRow.available_at)>Date.now()+3000);
+        const retry=async()=>{await pg.query("UPDATE video_agent_steps SET available_at=0 WHERE id=$1",[stepRow.id]);await advanceRuns();return claimStep({workerId:"asr-resume",stages:["transcribe"]});};
+        const secondClaim=await retry();
+        await executeClaim(secondClaim,{handlers:{transcribe:context=>handler({...context,commitCheckpoint:async output=>{
+            await context.commitCheckpoint(output);
+            if(output.checkpoint.results.length===2 && !output.checkpoint.results[1].normalizedRef)throw Object.assign(new Error("saved raw then interrupted"),{code:"VIDEO_AGENT_WORKER_INTERRUPTED"});
+        }})}});
+        stepRow=await step(stepRow.id);assert.equal(stepRow.status,"retry_wait");assert.equal(stepRow.checkpoint.results.length,2);assert.equal(stepRow.checkpoint.results[1].normalizedRef,undefined);
+        await executeClaim(await retry(),{handlers:{transcribe:handler}});await advanceRuns();
+        stepRow=await step(stepRow.id);assert.equal(stepRow.status,"succeeded");assert.equal(stepRow.provider,"openai");assert.equal(stepRow.model,stepRow.checkpoint.config.model);
+        assert.deepEqual(calls,[0,1,1]);assert.equal(stepRow.checkpoint.results[0].rawRef,firstRaw);assert.equal(stepRow.checkpoint.duplicateWords,1);
+        const reader=await claimStep({workerId:"normalized-reader",stages:["normalize"]});
+        const output=await readJsonArtifact(reader,stepRow.checkpoint.transcriptRef,{kind:"transcript"});assert.deepEqual(output.segments.map(segment=>segment.sourceText),["Hello","world"]);assert.equal(output.segments[1].startMs,600500);
+        const raw=await readJsonArtifact(reader,firstRaw,{kind:"asr_raw"});assert.deepEqual(raw.raw.originalMetadata,{tokens:[1,2,3]});
+        await assert.rejects(readJsonArtifact(reader,firstRaw),{code:"VIDEO_AGENT_OUTPUT_INVALID"});
+        await executeClaim(reader);await advanceRuns();
+        const normalizedStep=await step(reader.step.id);assert.equal(normalizedStep.status,"succeeded");assert.equal(normalizedStep.checkpoint.cueCount,1);
+        const selectedReader=await claimStep({workerId:"cue-reader",stages:["select_clips"]});
+        const normalized=await readJsonArtifact(selectedReader,normalizedStep.checkpoint.normalizedTranscriptRef,{kind:"transcript"});
+        assert.equal(normalized.cues[0].sourceText,"Hello world");assert.equal(normalized.cues[0].startMs,599800);assert.equal(normalized.cues[0].endMs,601000);assert.equal(normalized.sourceTranscriptRef,stepRow.checkpoint.transcriptRef);
+        await stop(f);await failStep(selectedReader,new Error("cancelled"));await advanceRuns();
+    });
+    await t.test("cancelling a live ASR request aborts the provider and prevents raw output publication",async()=>{
+        const f=await seed({bytes:await readFile(path.join(root,"long.mp4")),probe:{durationMs:620000,width:96,height:64}});
+        await workerTick({workerId:"cancel-probe"});await workerTick({workerId:"cancel-chunks"});
+        const provider={transcribe:async({signal})=>{
+            const wait=new Promise((_resolve,reject)=>signal.addEventListener("abort",()=>reject(signal.reason),{once:true}));
+            const row=(await pg.query("SELECT id FROM video_agent_runs WHERE project_id=$1",[f.projectId])).rows[0];
+            await command(f.projectId,"cancel_run",{runId:row.id},1);return wait;
+        }};
+        await workerTick({workerId:"cancel-asr",heartbeatMs:20,handlers:{transcribe:createTranscribeHandler({provider})}});
+        const run=(await pg.query("SELECT status FROM video_agent_runs WHERE id=$1",[f.runId])).rows[0];assert.equal(run.status,"cancelled");
+        const asr=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 AND stage='transcribe'",[f.runId])).rows[0];assert.equal(asr.status,"cancelled");assert.deepEqual(asr.output_refs,[]);
     });
     await t.test("all succeeded stages still cannot complete without verified publication",async()=>{
         const f=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1",[f.runId]);await advanceRuns();

@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 import { agentError } from "../db/video-agent.js";
+import { AUDIO_CHUNK_CONFIG } from "./chunk-plan.js";
+import { getAsrConfig } from "./asr-config.js";
+import { NORMALIZE_CONFIG } from "./normalize-config.js";
 
 export const PIPELINE_VERSION = "video-agent-v1";
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,8 +55,8 @@ export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     const stages = ["probe", "chunk", "transcribe", "normalize", "select_clips", "translate_selected", "build_subtitles", "render", "verify", "publish_results"];
     let upstreamHash = null;
     return stages.map((stage, index) => {
-        const config = stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage }
-            : stage === "select_clips" ? plan.clips : stage === "translate_selected" ? { targetLanguage: plan.targetLanguage }
+        const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
+            : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? plan.clips : stage === "translate_selected" ? { targetLanguage: plan.targetLanguage }
             : stage === "build_subtitles" ? plan.subtitles : stage === "render" ? plan.video : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);

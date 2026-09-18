@@ -18,6 +18,9 @@ const getClient = () => {
 const textModel = () => process.env.AI_VIDEO_TEXT_MODEL || "gpt-5-mini";
 const speechModel = () => process.env.AI_VIDEO_TRANSCRIPTION_MODEL || process.env.AI_VIDEO_TRANSCRIBE_MODEL || "gpt-4o-transcribe-diarize";
 
+// Reuse the existing credentials/base URL without changing legacy provider behavior.
+export const getAiVideoProviderClient = getClient;
+
 const structuredResponse = async ({ name, schema, system, input }) => {
     const response = await getClient().responses.create({
         model: textModel(),

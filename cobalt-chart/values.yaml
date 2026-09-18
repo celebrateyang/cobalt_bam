@@ -239,6 +239,9 @@ downloadAttemptCleanup:
   suspend: false
 
 videoAgent:
+  asr:
+    # Bump when the same model name points to different weights/adapter behavior.
+    modelRevision: "default"
   worker:
     enabled: false
     replicaCount: 1

@@ -69,6 +69,7 @@ import { initDatabase } from "../db/social-media.js";
 import userRouter from "../routes/user.js";
 import platformRequestsRouter from "../routes/platform-requests.js";
 import aiVideoRouter from "../routes/ai-video.js";
+import videoAgentRouter from "../routes/video-agent.js";
 import { createMediaImportToken, getMediaImportCandidate } from "../ai-video/media-import-token.js";
 import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
@@ -724,6 +725,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
     if (!isUpstreamServer) {
         app.use('/social', socialMediaRouter);
         app.use('/user/ai-video', aiVideoRouter);
+        app.use('/user/video-agent', videoAgentRouter);
         app.use('/user', userRouter);
         app.use('/platform-requests', platformRequestsRouter);
         app.use('/payments', paymentsRouter);

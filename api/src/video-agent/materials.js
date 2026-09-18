@@ -1,0 +1,155 @@
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { Readable } from "node:stream";
+import { agentError, assertSourceCapacity, ownedProject, ownedSource, sourceDTO, transaction } from "../db/video-agent.js";
+import { createOpaqueObjectKey, getAiVideoObjectStorage } from "../ai-video/object-storage.js";
+import { decryptUploadSession, encryptUploadSession } from "../ai-video/session-crypto.js";
+import { readMediaImportToken } from "../ai-video/media-import-token.js";
+
+export const CHUNK_BYTES = 8 * 1024 ** 2;
+export const MAX_BYTES = 1024 ** 3;
+const UPLOAD_TTL = 6 * 60 * 60 * 1000;
+const RETENTION = 30 * 24 * 60 * 60 * 1000;
+const invalid = (message) => { throw agentError("VIDEO_AGENT_INVALID_REQUEST", 400, message); };
+export const validateSourceInput = (body) => {
+    if (body?.kind === "download_import") {
+        if (typeof body.mediaImportToken !== "string" || body.mediaImportToken.length > 16384 || !body.mediaImportToken) invalid("Media import token is required");
+        return;
+    }
+    if (body?.kind !== "upload") invalid("Unsupported source kind");
+    if (!Number.isSafeInteger(body.sizeBytes) || body.sizeBytes <= 0) invalid("Invalid file size");
+    if (body.sizeBytes > MAX_BYTES) throw agentError("VIDEO_AGENT_FILE_TOO_LARGE", 413, "Maximum source size is 1 GiB");
+    if (typeof body.filename !== "string" || !body.filename.trim() || body.filename.length > 255 || /[\x00-\x1f]/.test(body.filename)) invalid("Invalid filename");
+    if (!["video/mp4", "video/quicktime", "video/webm", "video/x-matroska", "video/x-m4v"].includes(body.contentType)) invalid("Unsupported video type");
+    if (typeof body.fileFingerprint !== "string" || body.fileFingerprint.length < 16 || body.fileFingerprint.length > 512) invalid("Invalid file fingerprint");
+};
+export const uploadDTO = (session) => ({ status: session.status, committedBytes: Number(session.committed_bytes),
+    totalBytes: Number(session.total_bytes), chunkSizeBytes: session.chunk_size_bytes,
+    fileFingerprint: session.file_fingerprint, expiresAt: Number(session.expires_at) });
+
+export const addSource = async ({ projectId, userId, body, storage = getAiVideoObjectStorage() }) => {
+    validateSourceInput(body);
+    let sessionUri;
+    let objectKey;
+    let reservedSource;
+    try {
+        return await transaction(async (client) => {
+            const imported = body.kind === "download_import" ? readMediaImportToken(body.mediaImportToken, { expectedUserId: userId }) : null;
+            const sizeBytes = imported ? MAX_BYTES : body.sizeBytes; // Reserve maximum before downloading an unknown size.
+            await assertSourceCapacity(client, { userId, sizeBytes });
+            await ownedProject(client, { projectId, userId, lock: true });
+            if (imported) {
+                const used = await client.query(`INSERT INTO ai_video_import_nonces(nonce,user_id,expires_at,used_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING nonce`, [imported.nonce, userId, imported.expiresAt, Date.now()]);
+                if (!used.rowCount) throw agentError("AI_VIDEO_IMPORT_TOKEN_USED", 409, "Media import token was already used");
+            }
+            const now = Date.now();
+            const sourceId = randomUUID();
+            objectKey = createOpaqueObjectKey(process.env.AI_VIDEO_STORAGE_PREFIX);
+            // Encryption configuration is verified before creating the storage session.
+            const encryptedInput = imported ? encryptUploadSession(body.mediaImportToken) : null;
+            encryptUploadSession("configuration-check");
+            const result = await client.query(`INSERT INTO video_agent_sources(id,project_id,kind,filename,mime,size_bytes,
+                source_input_encrypted,object_key,status,retention_until,created_at,updated_at)
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11) RETURNING *`,
+            [sourceId, projectId, body.kind, imported?.filename || body.filename.trim(), imported?.mime || body.contentType,
+                sizeBytes, encryptedInput, objectKey, imported ? "queued_ingest" : "uploading", now + RETENTION, now]);
+            reservedSource = result.rows[0];
+            if (!imported) {
+                sessionUri = await storage.startResumableUpload({ objectKey, contentType: body.contentType });
+                await client.query(`INSERT INTO video_agent_upload_sessions(id,source_id,user_id,encrypted_storage_session,total_bytes,
+                    chunk_size_bytes,file_fingerprint,expires_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+                [randomUUID(), sourceId, userId, encryptUploadSession(sessionUri), sizeBytes, CHUNK_BYTES, body.fileFingerprint, now + UPLOAD_TTL, now]);
+            }
+            await client.query(`UPDATE video_agent_projects SET updated_at=$2 WHERE id=$1`, [projectId, now]);
+            return { source: sourceDTO(result.rows[0]) };
+        });
+    } catch (error) {
+        let cleanupFailed = false;
+        if (sessionUri) await storage.abortResumableUpload({ sessionUri }).catch(() => { cleanupFailed = true; });
+        if (objectKey) await storage.deleteObject(objectKey).catch(() => { cleanupFailed = true; });
+        // Retain a cleanup record even when the external storage session was created but the DB transaction failed.
+        if (reservedSource && sessionUri) {
+            await transaction(async (client) => {
+                const project = await client.query(`SELECT id FROM video_agent_projects WHERE id=$1 AND user_id=$2 FOR UPDATE`, [projectId, userId]);
+                if (!project.rowCount) return;
+                const now = Date.now();
+                await client.query(`INSERT INTO video_agent_sources(id,project_id,kind,filename,mime,size_bytes,object_key,status,error_code,retention_until,created_at,updated_at,cleanup_after)
+                    VALUES($1,$2,'upload',$3,$4,$5,$6,'failed','VIDEO_AGENT_UPLOAD_INIT_FAILED',$7,$8,$8,$8)
+                    ON CONFLICT(id) DO UPDATE SET status='failed',error_code='VIDEO_AGENT_UPLOAD_INIT_FAILED',cleanup_after=$8`,
+                [reservedSource.id, projectId, reservedSource.filename, reservedSource.mime, reservedSource.size_bytes, objectKey, now + 24 * 60 * 60 * 1000, now]);
+                if (cleanupFailed) await client.query(`INSERT INTO video_agent_upload_sessions(id,source_id,user_id,encrypted_storage_session,total_bytes,chunk_size_bytes,file_fingerprint,expires_at,updated_at)
+                    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$8) ON CONFLICT(source_id) DO UPDATE SET encrypted_storage_session=excluded.encrypted_storage_session`,
+                [randomUUID(), reservedSource.id, userId, encryptUploadSession(sessionUri), reservedSource.size_bytes, CHUNK_BYTES, body.fileFingerprint, now]);
+            }).catch(() => { console.error(`[VIDEO AGENT] source=${reservedSource.id} upload_initialization_cleanup_deferred`); });
+        }
+        throw error;
+    }
+};
+
+export const activeUpload = async (client, input) => {
+    const source = await ownedSource(client, input);
+    const session = (await client.query(`SELECT * FROM video_agent_upload_sessions WHERE source_id=$1 AND user_id=$2 FOR UPDATE`, [input.sourceId, input.userId])).rows[0];
+    if (!session) throw agentError("VIDEO_AGENT_UPLOAD_NOT_FOUND", 404, "Upload not found");
+    if (session.status !== "completed" && (session.status !== "active" || source.status !== "uploading" || Number(session.expires_at) <= Date.now())) {
+        throw agentError("VIDEO_AGENT_UPLOAD_EXPIRED", 410, "Upload has expired or is inactive");
+    }
+    return { source, session };
+};
+export const reconcileUpload = async (client, session, storage) => {
+    if (session.status === "completed") return { completed: true, committedBytes: Number(session.total_bytes) };
+    const remote = await storage.queryUploadOffset({ sessionUri: decryptUploadSession(session.encrypted_storage_session), totalBytes: Number(session.total_bytes) });
+    if (!Number.isSafeInteger(remote.committedBytes) || remote.committedBytes < 0 || remote.committedBytes > Number(session.total_bytes)) throw agentError("VIDEO_AGENT_STORAGE_ERROR", 502, "Invalid storage offset");
+    await client.query(`UPDATE video_agent_upload_sessions SET committed_bytes=$2,updated_at=$3 WHERE id=$1`, [session.id, remote.committedBytes, Date.now()]);
+    session.committed_bytes = remote.committedBytes;
+    return remote;
+};
+export const getUpload = (input) => transaction(async (client) => {
+    const { session } = await activeUpload(client, input);
+    await reconcileUpload(client, session, input.storage || getAiVideoObjectStorage());
+    return uploadDTO(session);
+});
+
+// Buffer one bounded chunk and verify its digest BEFORE writing any bytes to storage.
+export const readVerifiedChunk = async ({ body, length, digest }) => {
+    if (!Number.isSafeInteger(length) || length <= 0 || length > CHUNK_BYTES || !/^[A-Za-z0-9+/]{43}=$/.test(digest || "")) invalid("Invalid chunk headers");
+    const chunks = [];
+    let bytes = 0;
+    const timer = setTimeout(() => body.destroy?.(agentError("VIDEO_AGENT_UPLOAD_TIMEOUT", 408, "Upload chunk timed out")), 120000);
+    try { for await (const chunk of body) {
+        bytes += chunk.length;
+        if (bytes > length) invalid("Chunk length does not match");
+        chunks.push(chunk);
+    } } finally { clearTimeout(timer); }
+    if (bytes !== length) invalid("Chunk length does not match");
+    const buffer = Buffer.concat(chunks);
+    const actual = createHash("sha256").update(buffer).digest();
+    const expected = Buffer.from(digest, "base64");
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw agentError("VIDEO_AGENT_DIGEST_MISMATCH", 422, "Chunk digest does not match");
+    return buffer;
+};
+export const putUpload = (input) => transaction(async (client) => {
+    const { session } = await activeUpload(client, input);
+    if (session.status !== "active") throw agentError("VIDEO_AGENT_UPLOAD_INACTIVE", 409, "Upload is already complete");
+    const storage = input.storage || getAiVideoObjectStorage();
+    const remote = await reconcileUpload(client, session, storage);
+    const offset = input.offset;
+    const totalBytes = Number(session.total_bytes);
+    if (!Number.isSafeInteger(offset) || offset !== remote.committedBytes) throw agentError("VIDEO_AGENT_OFFSET_MISMATCH", 409, "Upload offset does not match", { committedBytes: remote.committedBytes });
+    if (offset + input.length > totalBytes || (offset + input.length < totalBytes && input.length !== session.chunk_size_bytes)) invalid("Invalid chunk size");
+    const buffer = await readVerifiedChunk(input);
+    const result = await storage.writeUploadChunk({ sessionUri: decryptUploadSession(session.encrypted_storage_session), body: Readable.from(buffer), offset, length: buffer.length, totalBytes });
+    if (result.committedBytes !== offset + buffer.length) throw agentError("VIDEO_AGENT_STORAGE_ERROR", 502, "Storage did not commit the complete chunk");
+    await client.query(`UPDATE video_agent_upload_sessions SET committed_bytes=$2,updated_at=$3 WHERE id=$1`, [session.id, result.committedBytes, Date.now()]);
+    return { committedBytes: result.committedBytes };
+});
+export const completeUpload = (input) => transaction(async (client) => {
+    const { source, session } = await activeUpload(client, input);
+    if (session.status === "completed") return { source: sourceDTO(source) };
+    const storage = input.storage || getAiVideoObjectStorage();
+    const remote = await reconcileUpload(client, session, storage);
+    if (!remote.completed || remote.committedBytes !== Number(session.total_bytes)) throw agentError("VIDEO_AGENT_UPLOAD_INCOMPLETE", 409, "Upload is incomplete", { committedBytes: remote.committedBytes });
+    const object = await storage.headObject(source.object_key);
+    if (object.sizeBytes !== Number(session.total_bytes)) throw agentError("VIDEO_AGENT_SIZE_MISMATCH", 422, "Object size does not match");
+    await client.query(`UPDATE video_agent_upload_sessions SET status='completed',encrypted_storage_session=NULL,updated_at=$2 WHERE id=$1`, [session.id, Date.now()]);
+    const updated = await client.query(`UPDATE video_agent_sources SET status='queued_ingest',generation=$2,updated_at=$3 WHERE id=$1 RETURNING *`, [source.id, object.generation, Date.now()]);
+    return { source: sourceDTO(updated.rows[0]) };
+});

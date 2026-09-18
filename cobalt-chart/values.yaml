@@ -238,6 +238,16 @@ downloadAttemptCleanup:
   startingDeadlineSeconds: 600
   suspend: false
 
+videoAgent:
+  # Independent acceptance flag; existing AI video functionality is unchanged.
+  enabled: false
+  ingestion:
+    enabled: false
+    replicaCount: 1
+  cleanup:
+    enabled: false
+    schedule: "25 * * * *"
+
 aiVideo:
   enabled: false
   # Kubernetes ServiceAccount used by the API, worker, and cleanup pods.

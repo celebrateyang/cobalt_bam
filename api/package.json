@@ -34,6 +34,10 @@
         "points:cleanup-holds": "node src/util/cleanup-points-holds.js",
         "ai-video:worker": "node src/ai-video/worker.js",
         "ai-video:cleanup": "node src/util/cleanup-ai-video-assets.js",
+        "video-agent:ingest": "node src/util/video-agent-ingest.js",
+        "video-agent:init": "node src/util/init-video-agent.js",
+        "video-agent:cleanup": "node src/util/cleanup-video-agent-assets.js",
+        "test:video-agent": "node --test src/video-agent/materials.test.js",
         "token:jwt": "node src/util/generate-jwt-secret",
         "init-social": "node init-social.js",
         "init-users": "node init-users.js"
@@ -80,5 +84,8 @@
         "freebind": "^0.2.2",
         "rate-limit-redis": "^4.2.0",
         "redis": "^4.7.0"
+    },
+    "devDependencies": {
+        "@electric-sql/pglite": "^0.5.8"
     }
 }

@@ -23,7 +23,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if and .Values.aiVideo.enabled .Values.aiVideo.serviceAccountName }}
+      {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) .Values.aiVideo.serviceAccountName }}
       serviceAccountName: {{ .Values.aiVideo.serviceAccountName | quote }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
@@ -51,7 +51,7 @@ spec:
               name: wechatpay-secret
               readOnly: true
             {{- end }}
-            {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+            {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
             - name: ai-video-gcs-credentials
               mountPath: {{ .Values.aiVideo.gcsCredentials.mountPath | quote }}
               readOnly: true
@@ -230,9 +230,11 @@ spec:
             - name: NOWPAYMENTS_PAYOUT_CURRENCY
               value: {{ .Values.nowpayments.payoutCurrency | quote }}
             {{- end }}
-            {{- if .Values.aiVideo.enabled }}
+            - name: VIDEO_AGENT_ENABLED
+              value: {{ ternary "1" "0" .Values.videoAgent.enabled | quote }}
+            {{- if or .Values.aiVideo.enabled .Values.videoAgent.enabled }}
             - name: AI_VIDEO_ENABLED
-              value: "1"
+              value: {{ ternary "1" "0" .Values.aiVideo.enabled | quote }}
             - name: AI_VIDEO_STORAGE_PROVIDER
               value: {{ .Values.aiVideo.storageProvider | quote }}
             - name: AI_VIDEO_GCS_BUCKET
@@ -322,7 +324,7 @@ spec:
           secret:
             secretName: {{ .Values.wechatpay.secretName | quote }}
         {{- end }}
-        {{- if and .Values.aiVideo.enabled (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
+        {{- if and (or .Values.aiVideo.enabled .Values.videoAgent.enabled) (eq .Values.aiVideo.storageProvider "gcs") .Values.aiVideo.gcsCredentials.secretName }}
         - name: ai-video-gcs-credentials
           secret:
             secretName: {{ .Values.aiVideo.gcsCredentials.secretName | quote }}

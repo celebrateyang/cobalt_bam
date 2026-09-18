@@ -1,5 +1,11 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
+    import { onMount } from "svelte";
+    import { clerkUser, clerkLoaded, signIn } from "$lib/state/clerk";
+    import { createAgentProject, deleteAgentProject, downloadAgentAsset, getAgentProject, importAgentSource, listAgentProjects, uploadAgentSource,
+        type AgentProject, type AgentSource } from "$lib/api/video-agent";
+    import { getPendingAiVideoImport, type PendingAiVideoImport } from "$lib/api/ai-video";
     import { t } from "$lib/i18n/translations";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
     import IconScissors from "@tabler/icons-svelte/IconScissors.svelte";
@@ -8,10 +14,117 @@
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
 
     let request = "";
-    let sourceUrl = "";
+    export let projectId = "";
+    let title = "";
+    let projects: AgentProject[] = [];
+    let sources: AgentSource[] = [];
+    let selectedProject: AgentProject | null = null;
+    let pendingImport: PendingAiVideoImport | null = null;
+    let nextCursor: string | null = null;
+    let busy = false;
+    let progress: number | null = null;
+    let errorKey = "";
+    let errorCode = "";
+    let loading = false;
+    let mounted = false;
+    let loadKey = "";
+    let epoch = 0;
+    let uploadController: AbortController | null = null;
+    let resumeSourceId: string | undefined;
+    let fileInput: HTMLInputElement;
     let activePanel: "conversation" | "results" = "conversation";
     const exampleKeys = ["clips_example", "translation_example", "dubbing_example"];
     $: highlightLink = `/${$page.params.lang || "en"}/ai-video`;
+    $: agentLink = `${highlightLink}/video-agent`;
+    $: if (mounted && $clerkLoaded && `${$clerkUser?.id || ""}:${projectId}` !== loadKey) {
+        loadKey = `${$clerkUser?.id || ""}:${projectId}`;
+        uploadController?.abort();
+        request = "";
+        void refresh();
+    }
+    const reportError = (error: unknown) => {
+        errorCode = (error as { code?: string })?.code || "VIDEO_AGENT_REQUEST_FAILED";
+        errorKey = errorCode === "SIGN_IN_REQUIRED" || errorCode === "UNAUTHORIZED" ? "sign_in" : errorCode === "MEMBERSHIP_REQUIRED" ? "membership_required"
+            : errorCode === "VIDEO_AGENT_FINGERPRINT_MISMATCH" ? "resume_original" : errorCode === "VIDEO_AGENT_STORAGE_LIMIT" ? "storage_limit"
+            : errorCode === "VIDEO_AGENT_UPLOAD_EXPIRED" ? "upload_expired" : errorCode === "VIDEO_AGENT_PROJECT_NOT_FOUND" ? "project_missing" : "request_failed";
+    };
+    const refresh = async () => {
+        const version = ++epoch;
+        projects = []; sources = []; selectedProject = null; errorKey = ""; errorCode = ""; nextCursor = null;
+        if (!$clerkUser) { loading = false; return; }
+        loading = true;
+        try {
+            const [listResult, detailResult] = await Promise.allSettled([listAgentProjects(), projectId ? getAgentProject(projectId) : Promise.resolve(null)]);
+            if (version !== epoch) return;
+            if (listResult.status === "fulfilled") { projects = listResult.value.projects; nextCursor = listResult.value.nextCursor; }
+            else reportError(listResult.reason);
+            if (detailResult.status === "fulfilled") { selectedProject = detailResult.value?.project || null; sources = detailResult.value?.sources || []; }
+            else reportError(detailResult.reason);
+        } catch (error) { if (version === epoch) reportError(error); }
+        finally { if (version === epoch) loading = false; }
+    };
+    const refreshSources = async () => {
+        const id = projectId;
+        const version = epoch;
+        if (!id || !$clerkUser) return;
+        const detail = await getAgentProject(id);
+        if (version === epoch && id === projectId) { selectedProject = detail.project; sources = detail.sources; }
+    };
+    const create = async () => {
+        busy = true; errorKey = "";
+        try { const result = await createAgentProject(title); title = ""; await goto(`${agentLink}/projects/${result.project.id}`); }
+        catch (error) { reportError(error); } finally { busy = false; }
+    };
+    const remove = async () => {
+        if (!selectedProject) return;
+        busy = true; errorKey = "";
+        try { await deleteAgentProject(selectedProject.id); await goto(agentLink); }
+        catch (error) { reportError(error); } finally { busy = false; }
+    };
+    const more = async () => {
+        if (!nextCursor) return;
+        busy = true;
+        try { const list = await listAgentProjects(nextCursor); projects = [...projects, ...list.projects]; nextCursor = list.nextCursor; }
+        catch (error) { reportError(error); } finally { busy = false; }
+    };
+    const chooseFile = (sourceId?: string) => { resumeSourceId = sourceId; fileInput.value = ""; fileInput.click(); };
+    const upload = async () => {
+        const file = fileInput.files?.[0];
+        if (!file || !selectedProject) return;
+        if (file.size > 1024 ** 3) { errorKey = "file_too_large"; errorCode = ""; return; }
+        const controller = new AbortController(); uploadController = controller;
+        busy = true; progress = 0; errorKey = "";
+        try { await uploadAgentSource({ projectId, file, sourceId: resumeSourceId, onProgress: (value) => { progress = value; }, signal: controller.signal }); }
+        catch (error) { if (!controller.signal.aborted) reportError(error); }
+        finally {
+            uploadController = null; busy = false; progress = null;
+            await refreshSources().catch(reportError);
+        }
+    };
+    const importSource = async () => {
+        pendingImport = getPendingAiVideoImport();
+        if (!pendingImport || !selectedProject) return;
+        busy = true; errorKey = "";
+        try {
+            await importAgentSource(projectId, pendingImport.token);
+            sessionStorage.removeItem("fsv_ai_video_import_v1"); pendingImport = null;
+            await refreshSources();
+        } catch (error) { reportError(error); } finally { busy = false; }
+    };
+    const download = async (source: AgentSource) => {
+        if (!source.assetId) return;
+        busy = true;
+        try { await downloadAgentAsset(projectId, source.assetId, source.filename); }
+        catch (error) { reportError(error); } finally { busy = false; }
+    };
+    onMount(() => {
+        mounted = true; pendingImport = getPendingAiVideoImport();
+        const timer = setInterval(() => {
+            pendingImport = getPendingAiVideoImport();
+            if (!busy && sources.some((source) => ["queued_ingest", "ingesting"].includes(source.status))) void refreshSources().catch(reportError);
+        }, 5000);
+        return () => { mounted = false; epoch++; clearInterval(timer); uploadController?.abort(); };
+    });
 
     const chooseExample = (key: string) => {
         request = $t(`video-agent.${key}`);
@@ -35,13 +148,30 @@
         <a href={highlightLink}>{$t("video-agent.open_highlight")}</a>
     </div>
 
+    {#if $clerkLoaded && !$clerkUser}
+        <button class="secondary account-action" on:click={() => signIn()}>{$t("video-agent.sign_in")}</button>
+    {/if}
+    {#if errorKey}<p class="error" role="alert">{$t(`video-agent.${errorKey}`)} {errorCode ? `(${errorCode})` : ""}</p>{/if}
+    {#if loading}<p class="muted" role="status">{$t("video-agent.loading")}</p>{/if}
+
     <div class="workspace">
         <aside class="card projects" aria-labelledby="agent-projects-title">
             <div class="panel-heading">
                 <h2 id="agent-projects-title">{$t("video-agent.projects")}</h2>
-                <span class="count">0</span>
+                <span class="count">{projects.length}</span>
             </div>
-            <p class="muted">{$t("video-agent.projects_empty")}</p>
+            <form class="project-create" on:submit|preventDefault={create}>
+                <label for="agent-project-title">{$t("video-agent.project_title")}</label>
+                <input id="agent-project-title" bind:value={title} maxlength={120} required disabled={busy || !$clerkUser} />
+                <button class="primary" disabled={busy || !$clerkUser || !title.trim()}>{$t("video-agent.create_project")}</button>
+            </form>
+            {#if !projects.length}<p class="muted">{$t("video-agent.projects_empty")}</p>{/if}
+            <div class="project-list">
+                {#each projects as project (project.id)}
+                    <a href={`${agentLink}/projects/${project.id}`} class:chosen={project.id === projectId} aria-current={project.id === projectId ? "page" : undefined}>{project.title}</a>
+                {/each}
+                {#if nextCursor}<button class="secondary" disabled={busy} on:click={more}>{$t("video-agent.load_more")}</button>{/if}
+            </div>
             <div class="quota"><IconScissors size={18} aria-hidden="true" /><p>{$t("video-agent.quota_pending")}</p></div>
         </aside>
 
@@ -63,12 +193,35 @@
                 {/each}
             </div>
             <div class="composer">
-                <label for="agent-source">{$t("video-agent.source_label")}</label>
-                <input id="agent-source" type="url" bind:value={sourceUrl} placeholder={$t("video-agent.source_placeholder")} aria-describedby="agent-execution-note" />
+                <h3>{selectedProject?.title || $t("video-agent.select_project")}</h3>
+                <p class="muted">{$t("video-agent.source_retention")}</p>
+                <input class="file-input" type="file" accept=".mp4,.mov,.webm,.mkv,.m4v" bind:this={fileInput} on:change={upload} aria-label={$t("video-agent.upload")} />
+                <div class="source-actions">
+                    <button type="button" class="secondary" disabled={busy || !selectedProject} on:click={() => chooseFile()}><IconUpload size={17} aria-hidden="true" />{$t("video-agent.upload")}</button>
+                    {#if pendingImport}<button type="button" class="secondary" disabled={busy || !selectedProject} on:click={importSource}>{$t("video-agent.import_download")}: {pendingImport.filename}</button>{/if}
+                </div>
+                <p class="muted">{$t("video-agent.import_hint")} <a href={`/${$page.params.lang || "en"}/`}>{$t("video-agent.open_downloader")}</a></p>
+                {#if progress !== null}
+                    <div role="status">{$t("video-agent.upload_progress")}: {progress}%</div>
+                    <progress value={progress} max="100">{progress}%</progress>
+                    <button type="button" class="secondary" on:click={() => uploadController?.abort()}>{$t("video-agent.pause_upload")}</button>
+                {/if}
+                <div class="sources">
+                    {#each sources as source (source.id)}
+                        <div class="source">
+                            <strong>{source.filename}</strong>
+                            <p class="muted">{$t(`video-agent.status_${source.status}`)} · {(source.sizeBytes / 1024 ** 2).toFixed(1)} MiB</p>
+                            {#if source.probe}<p class="muted">{Math.round(source.probe.durationSeconds)} s · {source.probe.width} × {source.probe.height}</p>{/if}
+                            {#if source.errorCode}<p class="error">{source.errorCode}</p>{/if}
+                            {#if source.status === "uploading"}<button type="button" class="secondary" disabled={busy} on:click={() => chooseFile(source.id)}>{$t("video-agent.resume_upload")}</button>{/if}
+                            {#if source.status === "ready" && source.assetId}<button type="button" class="secondary" disabled={busy} on:click={() => download(source)}>{$t("video-agent.download_source")}</button>{/if}
+                        </div>
+                    {/each}
+                </div>
+                {#if selectedProject}<button type="button" class="secondary delete" disabled={busy} on:click={remove}>{$t("video-agent.delete_project")}</button>{/if}
                 <label for="agent-request">{$t("video-agent.request_label")}</label>
                 <textarea id="agent-request" bind:value={request} maxlength={4000} rows={5} placeholder={$t("video-agent.request_placeholder")} aria-describedby="agent-execution-note"></textarea>
                 <div class="composer-actions">
-                    <button class="secondary" disabled aria-describedby="agent-execution-note"><IconUpload size={17} aria-hidden="true" />{$t("video-agent.upload")}</button>
                     <button class="primary" disabled aria-describedby="agent-execution-note"><IconSparkles size={17} aria-hidden="true" />{$t("video-agent.start")}</button>
                 </div>
                 <p id="agent-execution-note" class="muted execution-note">{$t("video-agent.unavailable")}</p>
@@ -137,9 +290,23 @@
     .plan { border-top: 1px solid rgba(128,128,128,.15); padding-top: 20px; }
     .plan h3 { font-size: 13px; }
     .panel-switch { display: none; }
+    .project-create { margin-bottom: 16px; }
+    .project-create button, .source button, .account-action { padding: 9px 12px; font-size: 12px; }
+    .project-list { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; }
+    .project-list a { padding: 9px; overflow-wrap: anywhere; color: inherit; border-radius: 9px; font-size: 12px; }
+    .project-list a.chosen { background: rgba(var(--accent-rgb), .15); }
+    .source-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .source-actions button { padding: 10px; font-size: 12px; overflow-wrap: anywhere; }
+    .file-input { display: none; }
+    .sources { display: grid; gap: 10px; margin: 16px 0; }
+    .source { padding: 12px; border: 1px solid rgba(128,128,128,.2); border-radius: 10px; overflow-wrap: anywhere; font-size: 12px; }
+    .source button { margin-top: 8px; }
+    .error { color: #c0392b; font-size: 12px; overflow-wrap: anywhere; }
+    .delete { padding: 8px; margin-bottom: 18px; font-size: 12px; }
+    progress { width: 100%; }
     @media (max-width: 1180px) {
         .workspace { grid-template-columns: minmax(300px, 400px) minmax(280px, 1fr); }
-        .projects { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
+        .projects { grid-column: 1 / -1; gap: 16px; }
         .projects .panel-heading { margin: 0; gap: 12px; flex-shrink: 0; }
         .quota { margin: 0 0 0 auto; padding: 0; max-width: 220px; }
     }

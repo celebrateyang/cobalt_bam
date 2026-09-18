@@ -60,7 +60,9 @@ export const testers = {
         (pattern.username?.length <= 30 && pattern.storyId?.length <= 24),
 
     "iqiyi": pattern =>
-        /^[0-9a-z]{6,32}$/i.test(pattern.pageId || ""),
+        /^[0-9a-z]{6,32}$/i.test(pattern.pageId || "") ||
+        /^[1-9][0-9]{0,19}$/.test(pattern.tvid || "") ||
+        /^[A-Za-z0-9_-]{1,64}$/.test(pattern.shortLink || ""),
 
     "kuaishou": pattern =>
         pattern.id?.length <= 32 ||

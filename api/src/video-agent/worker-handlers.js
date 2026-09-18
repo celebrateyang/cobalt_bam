@@ -5,6 +5,9 @@ import { chunkHandler } from "./chunk-handler.js";
 import { transcribeHandler } from "./transcribe-handler.js";
 import { speechConfigured } from "./asr-config.js";
 import { normalizeHandler } from "./normalize-handler.js";
+import { selectHandler } from "./select-handler.js";
+import { selectionConfigured } from "./select-config.js";
+import {translateHandler} from "./translate-handler.js";
 export { runAbortableProcess } from "./worker-media.js";
 
 const probeHandler = async ({ claim,signal,workDir,artifact }) => {
@@ -19,5 +22,5 @@ const probeHandler = async ({ claim,signal,workDir,artifact }) => {
     return { checkpoint,assets:[asset],outputRefs:[asset.id] };
 };
 // Unsupported stages are never claimed; full execution stays gated until Tasks 4-6 finish.
-export const productionHandlers = { probe:probeHandler,chunk:chunkHandler,transcribe:transcribeHandler,normalize:normalizeHandler };
-export const availableProductionHandlers=()=>speechConfigured()?productionHandlers:{probe:probeHandler,chunk:chunkHandler,normalize:normalizeHandler};
+export const productionHandlers = { probe:probeHandler,chunk:chunkHandler,transcribe:transcribeHandler,normalize:normalizeHandler,select_clips:selectHandler,translate_selected:translateHandler };
+export const availableProductionHandlers=()=>({probe:probeHandler,chunk:chunkHandler,normalize:normalizeHandler,...(speechConfigured()?{transcribe:transcribeHandler}:{}),...(selectionConfigured()?{select_clips:selectHandler,translate_selected:translateHandler}:{})});

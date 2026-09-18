@@ -1,0 +1,61 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import http from "node:http";
+import OpenAI from "openai";
+import {getSelectConfig} from "./select-config.js";
+import {buildSelectionWindows,validateCandidates,rankCandidates} from "./select-clips.js";
+import {createSelectHandler} from "./select-handler.js";
+import {createSelectionAdapter,parseSelectionResponse} from "./selection-adapter.js";
+import {compilePlan} from "./plans.js";
+const cues=Array.from({length:360},(_,i)=>({id:`cue-${i}`,sourceText:`Complete idea ${i}.`,startMs:i*10000,endMs:(i+1)*10000,flags:[]}));
+const transcript={version:"normalized-transcript-v1",sourceChecksum:"checksum",durationMs:3600000,cues};
+const limits={requestedCount:3,minSeconds:15,maxSeconds:90};
+const candidate=(start=0,end=2,score=.9)=>({startCueId:`cue-${start}`,endCueId:`cue-${end}`,title:"A useful idea",reason:"Clear opening and conclusion",score,completeIdea:true});
+const response=clips=>({raw:{status:"completed",output:[{type:"message",content:[{type:"output_text",text:JSON.stringify({clips})}]}]},requestId:"fixture"});
+test("hour-long windows have bounded prompts, unique ownership and cross-boundary context",()=>{
+    const config=getSelectConfig(),windows=buildSelectionWindows(transcript,config);
+    assert.equal(windows.length,6);assert.deepEqual(windows.flatMap(window=>window.core.map(cue=>cue.id)),cues.map(cue=>cue.id));
+    assert.ok(windows.every(window=>Buffer.byteLength(JSON.stringify(window))<=config.maxInputBytes));
+    assert.ok(windows[0].context.some(cue=>cue.id==="cue-61"));
+    assert.equal(validateCandidates({clips:[candidate(59,61)]},windows[0],cues,limits).clips[0].endMs,620000);
+    assert.equal(validateCandidates({clips:[candidate(60,62)]},windows[0],cues,limits).rejected[0].code,"context_start");
+    const dense={...transcript,cues:cues.map(cue=>({...cue,sourceText:"x".repeat(400)}))};assert.ok(buildSelectionWindows(dense,config).length>6);
+});
+test("candidate business validation rejects invented IDs/timestamps and filters invalid ranges",()=>{
+    const window=buildSelectionWindows(transcript,getSelectConfig())[0];
+    for(const value of [{clips:[{...candidate(),startCueId:"invented"}]},{clips:[{...candidate(),startMs:0}]},{clips:[{...candidate(),score:".9"}]},{clips:[{...candidate(),title:""}]}])assert.throws(()=>validateCandidates(value,window,cues,limits),{code:"VIDEO_AGENT_SELECTION_FORMAT_INVALID"});
+    const batch=validateCandidates({clips:[candidate(2,0),candidate(0,0),candidate(0,10),{...candidate(),completeIdea:false}]},window,cues,limits);
+    assert.deepEqual(batch.rejected.map(item=>item.code),["reversed_range","duration_out_of_bounds","duration_out_of_bounds","incomplete_idea"]);
+    assert.throws(()=>parseSelectionResponse({status:"incomplete"}),{code:"VIDEO_AGENT_SELECTION_INCOMPLETE"});
+});
+test("global ranking is deterministic, excludes overlap and reports insufficient candidates",()=>{
+    const window=buildSelectionWindows(transcript,getSelectConfig())[0],batch=validateCandidates({clips:[candidate(0,2,.7),candidate(1,3,.9),candidate(6,8,.8)]},window,cues,limits);
+    const result=rankCandidates([batch],{requestedCount:3,sourceChecksum:"checksum",configHash:"config"});
+    assert.deepEqual(result.clips.map(clip=>clip.startCueId),["cue-1","cue-6"]);assert.equal(result.shortfall,1);assert.equal(result.duplicateCount,1);assert.ok(result.shortfallReason);
+    assert.equal(result.clips[0].id,rankCandidates([batch],{requestedCount:3,sourceChecksum:"checksum",configHash:"config"}).clips[0].id);
+    const repeated={clips:batch.clips.filter(clip=>clip.startCueId!=="cue-0").map(clip=>({...clip,contentHash:"same-content"})),rejected:[]};
+    assert.equal(rankCandidates([repeated],{requestedCount:3,sourceChecksum:"checksum",configHash:"config"}).clips.length,1);
+});
+test("durable windows resume after raw commit; malformed output gets one repair only",async()=>{
+    const config=getSelectConfig(),assets=new Map();let id=0,calls=[],checkpoint,interrupt=true;
+    const claim={step:{input_snapshot:{config:{...config,limits}}},run:{plan:{clips:limits},source_snapshot:{checksum:"checksum",durationMs:3600000}}};
+    const ctx={claim,signal:new AbortController().signal,dependencies:[{stage:"normalize",input_hash:"normalize-hash",checkpoint:{normalizedTranscriptRef:"normalized"}}],readArtifact:async ref=>ref==="normalized"?transcript:assets.get(ref),artifact:async value=>{const ref=`asset-${++id}`;assets.set(ref,structuredClone(value));return {id:ref};},commitCheckpoint:async output=>{checkpoint=structuredClone(output.checkpoint);if(interrupt){interrupt=false;throw new Error("interrupted after commit");}}};
+    const provider={suggest:async({window,repair})=>{calls.push([window.ordinal,repair]);return window.ordinal===0&&!repair?response([{...candidate(),startCueId:"invented"}]):response([candidate(window.core[0].startMs/10000,window.core[0].startMs/10000+2)]);}};
+    const handler=createSelectHandler({provider});await assert.rejects(handler(ctx),/interrupted/);
+    const result=await handler({...ctx,checkpoint});assert.deepEqual(calls.slice(0,2),[[0,false],[0,true]]);assert.equal(calls.length,7);assert.equal(result.checkpoint.selectedCount,3);
+    const artifact=assets.get(result.checkpoint.selectedClipsRef);assert.equal(artifact.sourceTranscriptRef,"normalized");assert.equal(artifact.clips[0].startMs,0);
+    calls=[];await handler({...ctx,checkpoint:result.checkpoint});assert.equal(calls.length,0);
+    let repairs=0;const bad=createSelectHandler({provider:{suggest:async()=>{repairs++;return response([{...candidate(),startCueId:"invented"}]);}}});
+    await assert.rejects(bad({...ctx,checkpoint:undefined}),{code:"VIDEO_AGENT_SELECTION_FORMAT_INVALID"});assert.equal(repairs,2);
+    const controller=new AbortController();controller.abort(new Error("cancelled"));await assert.rejects(handler({...ctx,signal:controller.signal}),/cancelled/);
+});
+test("existing Responses SDK sends strict schema without hidden retries and honors cancellation",async t=>{
+    let request,count=0,mode="ok";const server=http.createServer(async(req,res)=>{count++;let body="";for await(const chunk of req)body+=chunk;request=JSON.parse(body);if(mode==="rate"){res.writeHead(429,{"content-type":"application/json","retry-after":"2"});res.end(JSON.stringify({error:{message:"limited"}}));return;}if(mode==="wait")return;res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify(response([candidate()]).raw));});
+    await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));t.after(()=>{server.closeAllConnections();server.close();});
+    const client=new OpenAI({apiKey:"dummy",baseURL:`http://127.0.0.1:${server.address().port}`,maxRetries:2}),adapter=createSelectionAdapter({client:()=>client});
+    const args={window:buildSelectionWindows(transcript,getSelectConfig())[0],limits,config:getSelectConfig(),signal:new AbortController().signal};
+    assert.equal(parseSelectionResponse((await adapter.suggest(args)).raw).clips.length,1);assert.equal(request.text.format.strict,true);assert.equal(request.store,false);assert.equal(request.model,getSelectConfig().model);
+    mode="rate";await assert.rejects(adapter.suggest(args),error=>error.status===429 && error.retryAfterMs===2000);assert.equal(count,2);
+    mode="wait";const controller=new AbortController(),pending=adapter.suggest({...args,signal:controller.signal});setTimeout(()=>controller.abort(new Error("cancelled")),30);await assert.rejects(pending,/cancelled/);
+    const stages=compilePlan({plan:{sourceLanguage:"en",clips:limits,subtitles:{},video:{},targetLanguage:"es"},sourceSnapshot:{},revision:1});assert.equal(stages.find(step=>step.stage==="select_clips").input.config.model,getSelectConfig().model);
+});

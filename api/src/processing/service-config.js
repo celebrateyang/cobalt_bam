@@ -131,7 +131,12 @@ export const services = {
     iqiyi: {
         patterns: [
             "v_:pageId.html",
+            "mp/sharePlay.html?tvid=:tvid",
+            "playShare.html?tvid=:tvid",
+            "_shortLink/:shortLink",
         ],
+        subdomains: ["m"],
+        altDomains: ["qy.net"],
     },
     kuaishou: {
         patterns: [

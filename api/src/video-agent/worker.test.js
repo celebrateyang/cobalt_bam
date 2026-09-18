@@ -16,6 +16,8 @@ import { uploadJsonArtifact,readJsonArtifact,readAudioArtifact,uploadAudioArtifa
 import {createChunkHandler} from "./chunk-handler.js";
 import {inspectPcmWav} from "./chunk-plan.js";
 import {createTranscribeHandler} from "./transcribe-handler.js";
+import {createSelectHandler} from "./select-handler.js";
+import {createTranslateHandler} from "./translate-handler.js";
 import { executeClaim,workerTick } from "./worker.js";
 import { runAbortableProcess,productionHandlers } from "./worker-handlers.js";
 import { cleanupVideoAgent } from "./cleanup.js";
@@ -199,7 +201,80 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         const selectedReader=await claimStep({workerId:"cue-reader",stages:["select_clips"]});
         const normalized=await readJsonArtifact(selectedReader,normalizedStep.checkpoint.normalizedTranscriptRef,{kind:"transcript"});
         assert.equal(normalized.cues[0].sourceText,"Hello world");assert.equal(normalized.cues[0].startMs,599800);assert.equal(normalized.cues[0].endMs,601000);assert.equal(normalized.sourceTranscriptRef,stepRow.checkpoint.transcriptRef);
-        await stop(f);await failStep(selectedReader,new Error("cancelled"));await advanceRuns();
+        await executeClaim(selectedReader,{handlers:{select_clips:createSelectHandler({provider:{suggest:async()=>({raw:{status:"completed",output_text:JSON.stringify({clips:[]})},requestId:"selection-fixture"})}})}});await advanceRuns();
+        const selectedStep=await step(selectedReader.step.id);assert.equal(selectedStep.status,"succeeded");assert.equal(selectedStep.checkpoint.selectedCount,0);assert.equal(selectedStep.checkpoint.shortfall,3);
+        const translatedReader=await claimStep({workerId:"selected-reader",stages:["translate_selected"]});
+        const selected=await readJsonArtifact(translatedReader,selectedStep.checkpoint.selectedClipsRef);assert.equal(selected.version,"selected-clips-v1");assert.equal(selected.sourceTranscriptRef,normalizedStep.checkpoint.normalizedTranscriptRef);assert.equal(selected.shortfallReason,"insufficient_valid_nonoverlapping_candidates");
+        await stop(f);await failStep(translatedReader,new Error("cancelled"));await advanceRuns();
+    });
+    await t.test("hour-long normalized transcript selects and translates with durable rate-limit and raw-crash recovery",async()=>{
+        const f=await seed({probe:{durationMs:3600000,width:320,height:180}});
+        await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<2",[f.runId]);await advanceRuns();
+        const asr=await claimStep({workerId:"long-asr-fixture",stages:["transcribe"]}),source=asr.run.source_snapshot;
+        const segments=Array.from({length:1200},(_,i)=>({id:`segment-${i}`,sourceText:`Idea number ${i}.`,startMs:i*3000,endMs:i*3000+2990,speakerLocalId:null,timingQuality:"word",words:[{id:`word-${i}`,text:`Idea number ${i}.`,startMs:i*3000,endMs:i*3000+2990,timingQuality:"word"}]}));
+        const rawTranscript=await uploadJsonArtifact(asr,{version:"transcript-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,configHash:"fixture-asr",segments},{kind:"transcript"});
+        await succeedStep(asr,{checkpoint:{transcriptRef:rawTranscript.id},assets:[rawTranscript],outputRefs:[rawTranscript.id]});await advanceRuns();
+        const normalize=await claimStep({workerId:"long-normalize",stages:["normalize"]});await executeClaim(normalize);await advanceRuns();
+        assert.equal((await step(normalize.step.id)).checkpoint.cueCount,1200);
+        const select=await claimStep({workerId:"long-select",stages:["select_clips"]}),calls=[];let limited=true;
+        const selector=createSelectHandler({provider:{suggest:async({window,repair})=>{
+            calls.push([window.ordinal,repair]);if(window.ordinal===1 && limited){limited=false;throw Object.assign(new Error("limited"),{status:429,retryAfterMs:2000,code:"VIDEO_AGENT_SELECTION_HTTP_429"});}
+            const clips=[{startCueId:window.ordinal===0&&!repair?"unknown":window.core[0].id,endCueId:window.core[9].id,title:"A complete idea",reason:"Clear opening and conclusion",score:.9,completeIdea:true}];
+            return {raw:{status:"completed",output_text:JSON.stringify({clips})},requestId:`window-${window.ordinal}`};
+        }}});
+        await executeClaim(select,{handlers:{select_clips:selector}});let row=await step(select.step.id);assert.equal(row.status,"retry_wait");const firstBatch=row.checkpoint.windows[0].validatedRef;
+        await pg.query("UPDATE video_agent_steps SET available_at=0 WHERE id=$1",[row.id]);await advanceRuns();
+        const selectRetry=await claimStep({workerId:"long-select-retry",stages:["select_clips"]});await executeClaim(selectRetry,{handlers:{select_clips:selector}});await advanceRuns();
+        row=await step(row.id);assert.equal(row.status,"succeeded");assert.equal(row.checkpoint.selectedCount,3);assert.equal(row.checkpoint.windows[0].validatedRef,firstBatch);assert.equal(calls.filter(([ordinal])=>ordinal===0).length,2);
+        const translation=await claimStep({workerId:"long-translate",stages:["translate_selected"]});let translationCalls=0;
+        const translator=createTranslateHandler({provider:{translate:async({batch})=>{translationCalls++;return {raw:{status:"completed",output_text:JSON.stringify({translations:batch.items.map(item=>({cueId:item.cueId,translatedText:`Idea numero ${item.text.match(/\d+/)[0]}.`}))})},requestId:"long-translation"};}}});
+        await executeClaim(translation,{handlers:{translate_selected:context=>translator({...context,commitCheckpoint:async output=>{await context.commitCheckpoint(output);throw Object.assign(new Error("interrupted after raw commit"),{code:"VIDEO_AGENT_WORKER_INTERRUPTED"});}})}});
+        let translationRow=await step(translation.step.id);assert.equal(translationRow.status,"retry_wait");const firstRaw=translationRow.checkpoint.nodes[0].rawRefs[0];
+        await pg.query("UPDATE video_agent_steps SET available_at=0 WHERE id=$1",[translationRow.id]);await advanceRuns();
+        const retry=await claimStep({workerId:"long-translate-retry",stages:["translate_selected"]});await executeClaim(retry,{handlers:{translate_selected:translator}});await advanceRuns();
+        translationRow=await step(translationRow.id);assert.equal(translationRow.status,"succeeded");assert.equal(translationCalls,1);assert.equal(translationRow.checkpoint.nodes[0].rawRefs[0],firstRaw);assert.equal(translationRow.checkpoint.translatedCueCount,30);
+        const reader=await claimStep({workerId:"long-handoff",stages:["build_subtitles"]}),output=await readJsonArtifact(reader,translationRow.checkpoint.translatedClipsRef,{kind:"transcript"});
+        assert.equal(output.clips.length,3);assert.equal(output.cues.length,30);assert.equal(output.cues[0].wordIds[0],"word-0");assert.ok(output.cues.every(cue=>cue.translatedText && cue.endMs<=3600000));assert.equal(output.clips[0].endMs,29990);
+        await stop(f);await failStep(reader,new Error("cancelled"));await advanceRuns();
+    });
+    await t.test("translation publishes owned cues with unchanged source timing and provenance",async()=>{
+        const f=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<3",[f.runId]);await advanceRuns();
+        const normalize=await claimStep({workerId:"translation-normalize-fixture",stages:["normalize"]}),source=normalize.run.source_snapshot;
+        const cues=[{id:"cue-one",sourceText:"A complete opening.",startMs:0,endMs:10000,flags:[],wordIds:["word-one"]},{id:"cue-two",sourceText:"A complete conclusion.",startMs:10000,endMs:20000,flags:[],wordIds:["word-two"]}];
+        const normalized=await uploadJsonArtifact(normalize,{version:"normalized-transcript-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,cues},{kind:"transcript"});
+        await succeedStep(normalize,{checkpoint:{normalizedTranscriptRef:normalized.id},assets:[normalized],outputRefs:[normalized.id]});await advanceRuns();
+        const select=await claimStep({workerId:"translation-select-fixture",stages:["select_clips"]});
+        const selected=await uploadJsonArtifact(select,{version:"selected-clips-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,sourceTranscriptRef:normalized.id,clips:[{id:"clip-one",startMs:0,endMs:20000,cueIds:["cue-one","cue-two"]}],shortfall:0,shortfallReason:null});
+        await succeedStep(select,{checkpoint:{selectedClipsRef:selected.id},assets:[selected],outputRefs:[selected.id,normalized.id]});await advanceRuns();
+        const translation=await claimStep({workerId:"translation-provider",stages:["translate_selected"]});let calls=0;
+        await executeClaim(translation,{handlers:{translate_selected:createTranslateHandler({provider:{translate:async({batch})=>{calls++;return {raw:{status:"completed",output_text:JSON.stringify({translations:batch.items.map(item=>({cueId:item.cueId,translatedText:"Una idea completa."}))})},requestId:"translation-fixture"};}}})}});await advanceRuns();
+        const row=await step(translation.step.id);assert.equal(row.status,"succeeded");assert.equal(row.provider,"openai");assert.equal(row.translatedCueCount,undefined);assert.equal(row.checkpoint.translatedCueCount,2);assert.equal(calls,1);
+        const reader=await claimStep({workerId:"translated-cue-reader",stages:["build_subtitles"]}),result=await readJsonArtifact(reader,row.checkpoint.translatedClipsRef,{kind:"transcript"});
+        assert.equal(result.version,"translated-clips-v1");assert.equal(result.cues[0].startMs,0);assert.equal(result.cues[1].endMs,20000);assert.equal(result.cues[1].wordIds[0],"word-two");assert.equal(result.sourceSelectedClipsRef,selected.id);
+        await stop(f);await failStep(reader,new Error("cancelled"));await advanceRuns();
+        const cancelled=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded',output_refs=$2,checkpoint=$3 WHERE run_id=$1 AND stage='select_clips'",[cancelled.runId,[selected.id,normalized.id],{selectedClipsRef:selected.id}]);
+        await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<4",[cancelled.runId]);await advanceRuns();
+        // Build project-owned fixtures for cancellation; cross-project assets must
+        // still be rejected, never used as a shortcut to a provider request.
+        let contacted=false;const isolated=await claimStep({workerId:"cross-project-translation",stages:["translate_selected"]});
+        await executeClaim(isolated,{handlers:{translate_selected:createTranslateHandler({provider:{translate:async()=>{contacted=true;throw new Error("must not call");}}})}});await advanceRuns();
+        assert.equal(contacted,false);assert.equal((await step(isolated.step.id)).error_code,"VIDEO_AGENT_OUTPUT_INVALID");
+    });
+    await t.test("cancelling live translation aborts provider and prevents raw and final publication",async()=>{
+        const f=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<3",[f.runId]);await advanceRuns();
+        const normalize=await claimStep({workerId:"cancel-translation-normalize",stages:["normalize"]}),source=normalize.run.source_snapshot;
+        const normalized=await uploadJsonArtifact(normalize,{version:"normalized-transcript-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,cues:[{id:"cancel-cue",sourceText:"A complete idea.",startMs:0,endMs:20000,flags:[]}]},{kind:"transcript"});
+        await succeedStep(normalize,{checkpoint:{normalizedTranscriptRef:normalized.id},assets:[normalized],outputRefs:[normalized.id]});await advanceRuns();
+        const select=await claimStep({workerId:"cancel-translation-select",stages:["select_clips"]});
+        const selected=await uploadJsonArtifact(select,{version:"selected-clips-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,sourceTranscriptRef:normalized.id,clips:[{id:"cancel-clip",startMs:0,endMs:20000,cueIds:["cancel-cue"]}]});
+        await succeedStep(select,{checkpoint:{selectedClipsRef:selected.id},assets:[selected],outputRefs:[selected.id,normalized.id]});await advanceRuns();
+        let aborted=false;const provider={translate:async({signal})=>{
+            const wait=new Promise((_resolve,reject)=>signal.addEventListener("abort",()=>{aborted=true;reject(signal.reason);},{once:true}));
+            await command(f.projectId,"cancel_run",{runId:f.runId},1);return wait;
+        }};
+        await workerTick({workerId:"cancel-live-translation",heartbeatMs:20,handlers:{translate_selected:createTranslateHandler({provider})}});
+        const row=(await pg.query("SELECT * FROM video_agent_steps WHERE run_id=$1 AND stage='translate_selected'",[f.runId])).rows[0];
+        assert.equal(aborted,true);assert.equal(row.status,"cancelled");assert.deepEqual(row.output_refs,[]);assert.equal((await pg.query("SELECT status FROM video_agent_runs WHERE id=$1",[f.runId])).rows[0].status,"cancelled");
     });
     await t.test("cancelling a live ASR request aborts the provider and prevents raw output publication",async()=>{
         const f=await seed({bytes:await readFile(path.join(root,"long.mp4")),probe:{durationMs:620000,width:96,height:64}});

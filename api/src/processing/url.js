@@ -60,6 +60,11 @@ function aliasURL(url) {
     const parts = url.pathname.replace(/\/+$/, '').split('/');
 
     switch (host.sld) {
+        case "qy":
+            if (url.hostname === "qy.net" && parts.length === 2 && /^[A-Za-z0-9_-]{1,64}$/.test(parts[1])) {
+                url = new URL(`https://iqiyi.com/_shortLink/${parts[1]}`);
+            }
+            break;
         case "youtube":
             if (url.pathname.startsWith('/live/') || url.pathname.startsWith('/shorts/')) {
                 url.pathname = '/watch';
@@ -270,6 +275,11 @@ function cleanURL(url) {
     }
 
     switch (host) {
+        case "iqiyi":
+            if (["/mp/sharePlay.html", "/playShare.html"].includes(url.pathname) && url.searchParams.has("tvid")) {
+                limitQuery("tvid");
+            }
+            break;
         case "pinterest":
             url.hostname = 'pinterest.com';
             break;

@@ -3,6 +3,8 @@ import { agentError } from "../db/video-agent.js";
 import { AUDIO_CHUNK_CONFIG } from "./chunk-plan.js";
 import { getAsrConfig } from "./asr-config.js";
 import { NORMALIZE_CONFIG } from "./normalize-config.js";
+import { getSelectConfig } from "./select-config.js";
+import { getTranslationConfig,normalizeGlossary } from "./translation-config.js";
 
 export const PIPELINE_VERSION = "video-agent-v1";
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,7 +27,7 @@ export const validateSettings = (input) => {
     return input;
 };
 export const normalizePlan = (input) => {
-    object(input, ["sourceRef", "operation", "sourceLanguage", "targetLanguage", "clips", "video", "subtitles", "dubbing", "executionMode"]);
+    object(input, ["sourceRef", "operation", "sourceLanguage", "targetLanguage", "clips", "video", "subtitles", "dubbing", "executionMode", "glossary"]);
     if (typeof input.sourceRef !== "string" || !UUID.test(input.sourceRef)) invalid("Invalid source reference");
     if (input.operation !== "highlight_clips") invalid("Only highlight_clips is supported in the initial pipeline");
     const sourceLanguage = input.sourceLanguage ?? "auto";
@@ -47,7 +49,7 @@ export const normalizePlan = (input) => {
     if (input.executionMode !== undefined && input.executionMode !== "execute") invalid("Unsupported execution mode");
     return { sourceRef: input.sourceRef.toLowerCase(), operation: "highlight_clips", sourceLanguage, targetLanguage: input.targetLanguage,
         clips: { requestedCount, minSeconds, maxSeconds }, video: { aspectRatio: "9:16", preset: "tiktok" },
-        subtitles: { enabled: true, mode: subtitles.mode }, dubbing: { enabled: false, voiceId: null }, executionMode: "execute" };
+        subtitles: { enabled: true, mode: subtitles.mode }, glossary:normalizeGlossary(input.glossary),dubbing: { enabled: false, voiceId: null }, executionMode: "execute" };
 };
 
 // Only server-defined stages/dependencies. Client plans cannot provide commands or a custom graph.
@@ -56,7 +58,7 @@ export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     let upstreamHash = null;
     return stages.map((stage, index) => {
         const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
-            : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? plan.clips : stage === "translate_selected" ? { targetLanguage: plan.targetLanguage }
+            : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? {...getSelectConfig(),limits:plan.clips} : stage === "translate_selected" ? getTranslationConfig(plan)
             : stage === "build_subtitles" ? plan.subtitles : stage === "render" ? plan.video : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);

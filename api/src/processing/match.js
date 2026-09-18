@@ -449,7 +449,7 @@ export default async function({ host, patternMatch, params, authType }) {
 
             case "iqiyi":
                 r = await iqiyi({
-                    pageId: patternMatch.pageId,
+                    ...patternMatch,
                     quality: params.videoQuality,
                     url,
                 });

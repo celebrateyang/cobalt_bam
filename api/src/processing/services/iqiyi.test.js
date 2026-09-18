@@ -6,6 +6,7 @@ import iqiyi, {
     decodeIqiyiPlayerData,
     decodeIqiyiTvid,
     selectIqiyiVideo,
+    resolveIqiyiShortLink,
 } from "./iqiyi.js";
 
 const tvid = "1532638125497600";
@@ -26,6 +27,21 @@ const encodePlayerData = (value) => JSON.stringify(value)
     .split("")
     .map((character) => String.fromCharCode(character.charCodeAt(0) ^ 90))
     .join("");
+
+test("resolves the shared qy.net URL and rejects external redirects", async () => {
+    const redirect = (location) => async (_, options) => {
+        assert.equal(options.redirect, "manual");
+        return new Response(null, { status: 302, headers: { location } });
+    };
+    assert.deepEqual(await resolveIqiyiShortLink("31JZyRo-f8", redirect(
+        "https://m.iqiyi.com/mp/sharePlay.html?tvid=4813496443243100&p1=2_22_222",
+    )), {
+        tvid: "4813496443243100",
+        url: "https://m.iqiyi.com/mp/sharePlay.html?tvid=4813496443243100&p1=2_22_222",
+    });
+    assert.equal(await resolveIqiyiShortLink("31JZyRo-f8", redirect("https://evil.example/video")), null);
+    assert.equal(await resolveIqiyiShortLink("31JZyRo-f8", redirect("https://qy.net/loop")), null);
+});
 
 test("decodes the page slug into the target tvid", () => {
     assert.equal(decodeIqiyiTvid("dwo67tu164"), tvid);
@@ -112,4 +128,23 @@ test("returns the complete main-program TS as the server remux source", async ()
     assert.equal(result.filenameAttributes.extension, "mp4");
     assert.equal(new URL(result.urls).pathname.endsWith(".ts"), true);
     assert.equal(result.urls.includes("ads.example"), false);
+    for (const input of [
+        { tvid, url: `https://m.iqiyi.com/mp/sharePlay.html?tvid=${tvid}` },
+        { shortLink: "31JZyRo-f8", url: "https://qy.net/31JZyRo-f8" },
+    ]) {
+        const shared = await iqiyi({
+            ...input,
+            quality: 720,
+            fetchImpl: async (target, options) => {
+                if (new URL(target).hostname === "qy.net") {
+                    return new Response(null, { status: 302, headers: {
+                        location: `https://m.iqiyi.com/mp/sharePlay.html?tvid=${tvid}`,
+                    } });
+                }
+                assert.equal(new URL(target).searchParams.get("tvid"), tvid);
+                return fetchImpl(target, options);
+            },
+        });
+        assert.equal(shared.urls, result.urls);
+    }
 });

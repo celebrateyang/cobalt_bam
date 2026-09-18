@@ -126,10 +126,41 @@ export const selectIqiyiVideo = ({ playerData, tvid, quality }) => {
     return candidates[0] || null;
 };
 
-export default async function({ pageId, quality, url, fetchImpl = fetch }) {
+export const resolveIqiyiShortLink = async (shortLink, fetchImpl = fetch) => {
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(shortLink || "")) return null;
+    let target = new URL(`https://qy.net/${shortLink}`);
+    for (let hop = 0; hop < 5; hop++) {
+        const response = await fetchImpl(target, {
+            method: "HEAD",
+            redirect: "manual",
+            headers: browserHeaders(target.toString()),
+            signal: AbortSignal.timeout(15000),
+        });
+        const location = response.headers.get("location");
+        if (![301, 302, 303, 307, 308].includes(response.status) || !location) return null;
+        target = new URL(location, target);
+        if (!["https:", "http:"].includes(target.protocol) || target.username || target.password || target.port) return null;
+        if (["iqiyi.com", "www.iqiyi.com", "m.iqiyi.com"].includes(target.hostname)) {
+            const pageId = /^\/v_([0-9a-z]{6,32})\.html$/i.exec(target.pathname)?.[1];
+            if (pageId) return { pageId, url: target.toString() };
+            const tvid = target.searchParams.get("tvid");
+            if (["/mp/sharePlay.html", "/playShare.html"].includes(target.pathname) && /^[1-9][0-9]{0,19}$/.test(tvid || "")) {
+                return { tvid, url: target.toString() };
+            }
+        } else if (target.hostname !== "qy.net") return null;
+    }
+    return null;
+};
+
+export default async function({ pageId, tvid: suppliedTvid, shortLink, quality, url, fetchImpl = fetch }) {
     try {
-        const tvid = decodeIqiyiTvid(pageId);
-        if (!tvid) return { error: "fetch.empty" };
+        if (shortLink) {
+            const resolved = await resolveIqiyiShortLink(shortLink, fetchImpl);
+            if (!resolved) return { error: "fetch.empty" };
+            ({ pageId, tvid: suppliedTvid, url } = resolved);
+        }
+        const tvid = suppliedTvid || decodeIqiyiTvid(pageId);
+        if (!/^[1-9][0-9]{0,19}$/.test(tvid || "")) return { error: "fetch.empty" };
 
         const api = new URL(PLAYER_API);
         for (const [key, value] of Object.entries({

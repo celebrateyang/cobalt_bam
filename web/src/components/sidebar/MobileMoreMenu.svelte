@@ -1,6 +1,5 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import env from "$lib/env";
     import { page } from "$app/stores";
     import { fly, fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
@@ -12,7 +11,6 @@
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
-    import IconScissors from "@tabler/icons-svelte/IconScissors.svelte";
     import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 
     import { defaultNavPage } from "$lib/subnav";
@@ -26,18 +24,11 @@
     $: menuItems = [
         {
             name: "ai_video",
-            icon: IconScissors,
+            icon: IconSparkles,
             link: `/${currentLang}/ai-video`,
             label: $t("tabs.ai_video"),
             memberOnly: true,
         },
-        ...(env.VIDEO_AGENT_ENABLED ? [{
-            name: "video_agent",
-            icon: IconSparkles,
-            link: `/${currentLang}/video-agent`,
-            label: $t("tabs.video_agent"),
-            memberOnly: true,
-        }] : []),
         {
             name: "random_video",
             icon: IconVideo,

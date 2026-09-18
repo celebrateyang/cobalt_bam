@@ -20,7 +20,8 @@
         "file_transfer": "파일 전송",
         "discover_trends": "트렌드 발견"
     },
-    "ai_video": "하이라이트 편집",
+    "ai_video": "AI 비디오",
+    "highlight_studio": "하이라이트 편집",
     "video_agent": "Video Agent",
     "more": "더"
 }

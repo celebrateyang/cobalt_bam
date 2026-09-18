@@ -1,6 +1,5 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import env from "$lib/env";
     import { page } from "$app/stores";
     import { onDestroy, onMount } from "svelte";
     import { defaultNavPage } from "$lib/subnav";
@@ -22,7 +21,6 @@
     import IconStack2 from "@tabler/icons-svelte/IconStack2.svelte";
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
-    import IconScissors from "@tabler/icons-svelte/IconScissors.svelte";
     import IconBulb from "@tabler/icons-svelte/IconBulb.svelte";
 
     import IconUserCircle from "@tabler/icons-svelte/IconUserCircle.svelte";
@@ -43,7 +41,6 @@
     $: discoverLink = `/${currentLang}/discover`;
     $: randomChatLink = `/${currentLang}/random-chat`;
     $: aiVideoLink = `/${currentLang}/ai-video`;
-    $: videoAgentLink = `/${currentLang}/video-agent`;
     $: remuxLink = `/${currentLang}/remux`;
     $: faqLink = `/${currentLang}/faq`;
     $: requestsLink = `/${currentLang}/requests`;
@@ -138,13 +135,8 @@
                     <IconClipboard />
                 </SidebarTab>
                 <SidebarTab tabName="ai_video" tabLink={aiVideoLink} memberOnly>
-                    <IconScissors />
+                    <IconSparkles />
                 </SidebarTab>
-                {#if env.VIDEO_AGENT_ENABLED}
-                    <SidebarTab tabName="video_agent" tabLink={videoAgentLink} memberOnly>
-                        <IconSparkles />
-                    </SidebarTab>
-                {/if}
                 <SidebarTab tabName="discover" tabLink={discoverLink}>
                     <IconStack2 />
                 </SidebarTab>

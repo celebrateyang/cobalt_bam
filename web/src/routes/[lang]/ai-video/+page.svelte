@@ -253,13 +253,13 @@
     });
 </script>
 
-<svelte:head><title>{$t("tabs.ai_video")}</title></svelte:head>
+<svelte:head><title>{$t("tabs.highlight_studio")}</title></svelte:head>
 
 <main class="studio">
     <header class="hero">
         <div>
             <p class="eyebrow"><span></span> MEMBER STUDIO</p>
-            <h1>{$t("tabs.ai_video")}</h1>
+            <h1>{$t("tabs.highlight_studio")}</h1>
             <p class="hero-copy">{message("Turn long videos into polished short clips with translated subtitles.", "从长视频中自动发现高光，快速生成带翻译字幕的精彩短片。")}</p>
         </div>
         <div class="hero-badge" aria-hidden="true">

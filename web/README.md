@@ -16,7 +16,7 @@ them, you must specify them when building the frontend (or running a vite server
 | `WEB_PLAUSIBLE_HOST` | `plausible.io`*             | enables plausible analytics with provided hostname as receiver backend.                                  |
 | `WEB_DEFAULT_API`    | `https://api.cobalt.tools/` | changes url which is used for api requests by frontend clients.                                          |
 | `WEB_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | enables Clerk authentication (sign in / sign up) in the frontend.                                        |
-| `WEB_VIDEO_AGENT_ENABLED` | `1` | shows the Video Agent preview workspace and navigation. Defaults to enabled in development and disabled in production. Set `0` to disable it locally too. |
+| `WEB_VIDEO_AGENT_ENABLED` | `1` | shows the Video Agent preview workspace and its AI Video submenu. Defaults to enabled in development and disabled in production. Set `0` to disable it locally too. |
 | `WEB_TURNSTILE_KEY`  | `1x00000000000000000000AA`  | [cloudflare turnstile](https://www.cloudflare.com/products/turnstile/) public key for antibot protection |
 
 \* don't use plausible.io as receiver backend unless you paid for their cloud service.
@@ -24,9 +24,13 @@ them, you must specify them when building the frontend (or running a vite server
 
 ## Video Agent workspace preview
 
-Highlight Studio keeps the existing `/<lang>/ai-video` route and processing flow.
-Video Agent has its own `/<lang>/video-agent` route, desktop menu item, and mobile
-More menu item. The same build-time flag controls navigation and direct route
+The main navigation keeps its AI Video entry. Inside `/<lang>/ai-video`, a page
+sidebar uses the same navigation components and layout as the admin console.
+It contains Highlight Studio (the existing route and processing flow) and
+Video Agent at `/<lang>/ai-video/video-agent`. On mobile, this page navigation
+appears above the content; the global More menu retains one AI Video entry.
+Earlier `/<lang>/video-agent` preview links redirect to the nested route.
+The same build-time flag controls the Video Agent submenu and direct route
 access; a disabled route returns 404. Restart the development server after
 changing the flag. Production changes require the next user-run build/deployment.
 

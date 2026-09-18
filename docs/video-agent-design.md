@@ -8,18 +8,18 @@
 
 现有功能命名为 **高光剪辑（Highlight Studio）**：上传或导入视频，自动推荐精彩片段，翻译字幕，人工编辑并输出竖屏短视频。新功能命名为 **Video Agent**：用户描述目标，系统规划并执行视频处理任务，支持通过对话继续修改结果。
 
-两个功能在左侧菜单并列，使用各自页面、任务列表和交互流程。高光剪辑保留原来的上传、分析、草稿编辑和手动渲染流程，只调整入口名称与必要的页面标题。不得把旧页面替换成聊天页，也不得迁移或隐藏旧任务。
+站点主菜单保留“AI爆款视频”入口，不增加独立 Video Agent 主菜单。进入 `/ai-video` 后，页面内部左侧子导航并列显示“高光剪辑”和“Video Agent”，使用各自页面、任务列表和交互流程。布局参考 `/console-manage-2025`，复用 PageNavSection / PageNavTab。高光剪辑保留原来的上传、分析、草稿编辑和手动渲染流程，只调整页面标题。不得把旧页面替换成聊天页，也不得迁移或隐藏旧任务。
 
 | 项目 | 高光剪辑 | Video Agent |
 | --- | --- | --- |
-| 菜单名 | 高光剪辑 / Highlight Studio | Video Agent |
-| 路由 | `/<lang>/ai-video`，保留现有 URL | `/<lang>/video-agent` |
-| 详情路由 | 保留当前选任务方式 | `/<lang>/video-agent/projects/<projectId>` |
+| 页面内子菜单名 | 高光剪辑 / Highlight Studio | Video Agent |
+| 路由 | `/<lang>/ai-video`，保留现有 URL | `/<lang>/ai-video/video-agent` |
+| 详情路由 | 保留当前选任务方式 | `/<lang>/ai-video/video-agent/projects/<projectId>` |
 | 主交互 | 表单、草稿编辑、手动生成 | 对话、任务计划、结果与编辑面板 |
 | 典型目标 | 自动提取精彩短片 | 下载、翻译、剪辑、字幕、可选配音 |
 | 执行行为 | 保持现有行为 | 明确指令可自动执行和渲染 |
 
-中文菜单使用“高光剪辑”；英文名称在页面副标题或较宽导航出现。窄侧边栏中 Video Agent 可分两行展示，仍需保持完整名称、悬浮提示和可访问标签。桌面菜单顺序建议为：文件传输 → 高光剪辑 → Video Agent → 发现。移动端在现有“更多”菜单加入两个独立入口。
+中文主菜单使用“AI爆款视频”，原 AI 图标保持；页面内部子菜单使用“高光剪辑”和“Video Agent”，分别使用剪刀与 AI 图标。内部侧栏宽度约 190px，左侧站点主导航保持现状。移动端“更多”菜单仍只有一个 AI 视频入口，页面内部子导航在内容上方显示。早期 `/<lang>/video-agent` 预览链接重定向至新的嵌套路由；功能开关关闭时旧链接和新路由均不可访问。
 
 UI 支持项目已有的 de/en/es/fr/ja/ko/ru/th/vi/zh 十种语言。媒体目标语言由 Provider 能力注册表定义，与 UI 语言分别管理；现有接口接受 id，不因新增设计删除其兼容能力。
 
@@ -40,7 +40,7 @@ UI 支持项目已有的 de/en/es/fr/ja/ko/ru/th/vi/zh 十种语言。媒体目�
 
 ### 3.1 空状态
 
-页面标题 Video Agent，说明“一句话完成视频下载、翻译、剪辑和字幕”。中心为多行输入框，支持粘贴链接、附件上传和素材选择；底部展示可用分钟额度。三个示例入口为“长视频生成 3 条短片”“生成翻译字幕”“给短片添加外语配音”。未开放的能力展示说明而不能启动。
+页面标题 Video Agent，位于 AI 视频共享页面框架中，页面内部左侧子导航始终可切回高光剪辑。说明“一句话完成视频下载、翻译、剪辑和字幕”。中心为多行输入框，支持粘贴链接、附件上传和素材选择；底部展示可用分钟额度。三个示例入口为“长视频生成 3 条短片”“生成翻译字幕”“给短片添加外语配音”。未开放的能力展示说明而不能启动。
 
 未登录用户可输入文本，但开始执行时进入现有 Clerk 登录流程；登录后恢复输入。非会员展示现有会员权益入口。输入和规划不会触发视频分钟扣费，仍有独立请求限流。
 
@@ -316,8 +316,9 @@ web/src/components/video-agent/
   AgentComposer.svelte AgentConversation.svelte PlanCard.svelte
   ProjectList.svelte RunProgress.svelte ResultWorkspace.svelte
   ClipEditor.svelte SubtitleEditor.svelte VersionPicker.svelte
-web/src/routes/[lang]/video-agent/+page.svelte
-web/src/routes/[lang]/video-agent/projects/[projectId]/+page.svelte
+web/src/routes/[lang]/ai-video/+layout.svelte
+web/src/routes/[lang]/ai-video/video-agent/+page.svelte
+web/src/routes/[lang]/ai-video/video-agent/projects/[projectId]/+page.svelte
 cobalt-chart/templates/video-agent-worker-deployment.yaml
 ```
 
@@ -353,7 +354,7 @@ LLM、ASR、翻译、TTS 分别定义 adapter，初版包装现有 Provider；�
 
 | 阶段 | 任务 | 交付门槛 |
 | --- | --- | --- |
-| A：产品隔离 | 菜单命名、独立路由、空状态和 feature flag | 原页面流程与旧链接不变，移动端可访问两个入口 |
+| A：产品隔离 | 保留主菜单、页面内部子导航、嵌套路由、空状态和 feature flag | 原页面流程与旧链接不变，移动端可访问两个子功能 |
 | B：执行底座 | 新表、源上传、commands、Run/DAG、lease/fencing、事件、统一额度 | 幂等/恢复/并发额度测试通过，无需 LLM 也能执行合法计划 |
 | C：稳定媒体 | 停顿分块、逐块 ASR、词级字幕、窗口选片、上下文翻译与缩批 | 长视频失败可恢复，时间线和真实输出验收通过 |
 | D：Agent 首版 | Planner、工具、会话、结果编辑、版本与自动执行 | 目标示例完整完成，修改只重做必要步骤 |
@@ -381,7 +382,7 @@ LLM、ASR、翻译、TTS 分别定义 adapter，初版包装现有 Provider；�
 
 | 任务 | 范围 | 状态 |
 | --- | --- | --- |
-| 1 | 独立入口、页面框架、功能开关、多语言文案 | 已实现；浏览器视觉与点击验收待完成 |
+| 1 | AI 视频页面内子导航、页面框架、功能开关、多语言文案 | 已实现并按页面内导航要求修正；浏览器视觉与点击验收待完成 |
 | 2 | 项目、素材、上传恢复、权限与清理 | 待实施 |
 | 3 | Run/DAG、Worker、幂等、恢复、统一额度和并发 | 待实施 |
 | 4 | 长视频分块、逐块转写、词级字幕对齐 | 待实施 |
@@ -392,9 +393,9 @@ LLM、ASR、翻译、TTS 分别定义 adapter，初版包装现有 Provider；�
 
 ### 任务 1 实施记录（2026-09-17）
 
-- 高光剪辑保留原 `/ai-video` 路由、API、会员权限、任务数据和处理流程；菜单与页面标题使用本地化名称，图标调整为剪刀。
-- 新增 `/video-agent` 独立页面和 VideoAgentWorkspace，包含项目空状态、对话输入、视频链接、示例请求、结果空状态与计划占位。移动端可切换对话/结果。
-- 桌面菜单与移动端更多菜单加入 Video Agent；入口使用独立图标，导航标签提供完整名称提示。
+- 高光剪辑保留原 `/ai-video` 路由、API、会员权限、任务数据和处理流程；主菜单保持“AI爆款视频”和原图标，页面标题使用高光剪辑本地化名称。
+- 新增 `/ai-video/video-agent` 子页面和 VideoAgentWorkspace，包含项目空状态、对话输入、视频链接、示例请求、结果空状态与计划占位。移动端可切换对话/结果。
+- 按 2026-09-18 用户纠正，新增 `/ai-video/+layout.svelte`，参考管理后台构建页面内部左侧子导航；主菜单和移动端更多菜单均只有原 AI 视频入口。旧 `/video-agent` 预览链接保留重定向兼容。
 - `WEB_VIDEO_AGENT_ENABLED=1` 显示入口并开放预览路由，`0` 关闭；未设置时开发环境开启、生产环境关闭。该开关仅控制前端预览，不能替代后续 API 受理和权益开关。
 - 所有新增 UI 文案覆盖十种项目语言，并补齐仓库已有 id 目录，共 11 个 locale。
 - 上传和执行按钮明确禁用；输入仅为当前页面内存草稿，不调用模型、创建项目或扣费。真实项目与详情页在任务 2 接入，运行状态和额度在任务 3 接入。

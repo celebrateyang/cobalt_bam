@@ -20,7 +20,8 @@
         "file_transfer": "ファイル転送",
         "discover_trends": "トレンドを発見"
     },
-    "ai_video": "ハイライト編集",
+    "ai_video": "AI動画",
+    "highlight_studio": "ハイライト編集",
     "video_agent": "Video Agent",
     "more": "もっと見る"
 }

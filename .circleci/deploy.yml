@@ -135,10 +135,6 @@ jobs:
               fi
             done
       - run:
-          name: Delete existing deployment to avoid usually stuck
-          command: |
-            kubectl delete deployment cobalt-cobalt-chart -n infra || true
-      - run:
           name: Deploy
           command: |
             UPSTREAM_URLS_VALUE="${UPSTREAM_URLS:-https://api3.freesavevideo.online}"

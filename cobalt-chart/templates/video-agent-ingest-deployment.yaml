@@ -3,6 +3,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argocd-video-agent-ingest
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/name: argocd-video-agent-ingest
     app.kubernetes.io/part-of: argoCD

@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 
-import { getClient, query } from "./pg-client.js";
+import * as productionDatabase from "./pg-client.js";
+import { ensureVideoAgentSchema } from "./video-agent.js";
+import { SHARED_USAGE_SCHEMA,assertExecutionAvailable,lockExecutionUser,sharedUsage,reserveExecutionUsage,executionCapacity } from "../ai-video/execution-admission.js";
+let database=productionDatabase;
+const query=(...args)=>database.query(...args);
+const getClient=()=>database.getClient();
+export const setAiVideoDatabaseForTests=(adapter)=>{ if(process.env.NODE_ENV!=="test")throw new Error("Test adapter only");database=adapter;schemaPromise=null; };
 
 export const AI_VIDEO_ACTIVE_STATUSES = Object.freeze([
     "uploading",
@@ -26,6 +32,12 @@ export const ensureAiVideoSchema = async () => {
     if (schemaPromise) return schemaPromise;
 
     schemaPromise = (async () => {
+        await ensureVideoAgentSchema();
+        const schemaClient=await getClient();
+        try {
+        await schemaClient.query("BEGIN");
+        await schemaClient.query("SELECT pg_advisory_xact_lock(2147483002)");
+        const query=(...args)=>schemaClient.query(...args);
         await query(`
             CREATE TABLE IF NOT EXISTS ai_video_jobs (
                 id UUID PRIMARY KEY,
@@ -66,6 +78,8 @@ export const ensureAiVideoSchema = async () => {
             );
         `);
         await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS failed_stage TEXT;`);
+        await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS entitlement_snapshot JSONB;`);
+        await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS budget_snapshot JSONB;`);
         await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS source_import_token TEXT;`);
         await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS render_snapshot JSONB;`);
         await query(`ALTER TABLE ai_video_jobs ADD COLUMN IF NOT EXISTS render_attempt_count INTEGER NOT NULL DEFAULT 0;`);
@@ -136,6 +150,7 @@ export const ensureAiVideoSchema = async () => {
                 updated_at BIGINT NOT NULL
             );
         `);
+        await query(SHARED_USAGE_SCHEMA);
         await query(`CREATE INDEX IF NOT EXISTS idx_ai_video_usage_period ON ai_video_usage_reservations(user_id, period_key, status);`);
 
         await query(`
@@ -200,6 +215,9 @@ export const ensureAiVideoSchema = async () => {
                 metadata JSONB
             );
         `);
+        await schemaClient.query("COMMIT");
+        }catch(error){await schemaClient.query("ROLLBACK");throw error;}
+        finally{schemaClient.release();}
     })().catch((error) => {
         schemaPromise = null;
         throw error;
@@ -249,26 +267,7 @@ const normalizeJob = (row) => row && ({
 
 export const getAiVideoUsage = async ({ userId, limitSeconds, now = Date.now(), client = null }) => {
     await ensureAiVideoSchema();
-    const db = client || { query };
-    const { periodKey, resetsAt } = utcPeriod(now);
-    const result = await db.query(
-        `SELECT
-            COALESCE(SUM(consumed_seconds) FILTER (WHERE status = 'committed'), 0)::int AS used_seconds,
-            COALESCE(SUM(reserved_seconds) FILTER (WHERE status = 'reserved'), 0)::int AS reserved_seconds
-         FROM ai_video_usage_reservations
-         WHERE user_id = $1 AND period_key = $2`,
-        [userId, periodKey],
-    );
-    const usedSeconds = result.rows[0]?.used_seconds || 0;
-    const reservedSeconds = result.rows[0]?.reserved_seconds || 0;
-    return {
-        limitSeconds,
-        usedSeconds,
-        reservedSeconds,
-        remainingSeconds: Math.max(0, limitSeconds - usedSeconds - reservedSeconds),
-        periodKey,
-        resetsAt,
-    };
+    return sharedUsage(client || {query},userId,limitSeconds,now);
 };
 
 export const createAiVideoJob = async ({ userId, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, monthlySeconds, importToken = null, importPayload = null, now = Date.now() }) => {
@@ -279,7 +278,7 @@ export const createAiVideoJob = async ({ userId, sourceKind, filename, contentTy
         await client.query("SELECT pg_advisory_xact_lock(2147483000)");
         await client.query("SELECT pg_advisory_xact_lock($1)", [userId]);
         const membership = await client.query(
-            `SELECT 1
+            `SELECT s.plan_id
              FROM subscriptions s
              JOIN plans p ON p.id = s.plan_id
              JOIN plan_entitlements pe ON pe.plan_id = p.id
@@ -294,6 +293,7 @@ export const createAiVideoJob = async ({ userId, sourceKind, filename, contentTy
             error.code = "MEMBERSHIP_REQUIRED";
             throw error;
         }
+        await assertExecutionAvailable(client,userId,{now});
         const active = await client.query(
             `SELECT id FROM ai_video_jobs WHERE user_id = $1 AND deleted_at IS NULL AND status = ANY($2::text[]) LIMIT 1`,
             [userId, AI_VIDEO_CONCURRENT_STATUSES],
@@ -339,10 +339,11 @@ export const createAiVideoJob = async ({ userId, sourceKind, filename, contentTy
             `INSERT INTO ai_video_jobs (
                 id, user_id, status, source_kind, source_filename, source_mime,
                 source_size_bytes, source_language, target_language, subtitle_mode,
-                current_stage, available_at, created_at, updated_at, source_import_token
-             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12,$13)
+                current_stage, available_at, created_at, updated_at, source_import_token,entitlement_snapshot
+             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12,$13,$14)
              RETURNING *`,
-            [id, userId, status, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, status, now, importToken],
+            [id, userId, status, sourceKind, filename, contentType, sizeBytes, sourceLanguage, targetLanguage, subtitleMode, status, now, importToken,
+                {entitlement:"ai_video_studio",planId:membership.rows[0].plan_id,checkedAt:now,monthlySeconds}],
         );
         await client.query("COMMIT");
         return { job: normalizeJob(result.rows[0]), usage };
@@ -576,12 +577,17 @@ export const softDeleteAiVideoJob = async ({ jobId, userId, now = Date.now() }) 
     }
 };
 
-export const claimAiVideoJob = async ({ workerId, leaseMs, now = Date.now() }) => {
+export const claimAiVideoJob = async ({ workerId, leaseMs, now }) => {
     await ensureAiVideoSchema();
-    const result = await query(
+    const client=await getClient();
+    try {
+    await client.query("BEGIN");
+    const available=await executionCapacity(client,now);
+    now ??= Date.now();
+    const result = await client.query(
         `WITH candidate AS (
             SELECT id FROM ai_video_jobs
-            WHERE status IN ('queued_ingest','ingesting','probing','transcribing','translating','analyzing','queued_render','rendering','cancel_requested') AND available_at <= $1
+            WHERE ($4::boolean OR status='cancel_requested') AND status IN ('queued_ingest','ingesting','probing','transcribing','translating','analyzing','queued_render','rendering','cancel_requested') AND available_at <= $1
               AND (status IN ('queued_ingest','queued_render') OR lease_expires_at < $1)
               AND (status='cancel_requested'
                    OR (status IN ('queued_render','rendering') AND render_attempt_count < 3)
@@ -599,9 +605,10 @@ export const claimAiVideoJob = async ({ workerId, leaseMs, now = Date.now() }) =
              render_attempt_count=render_attempt_count + CASE WHEN j.status IN ('queued_render','rendering') THEN 1 ELSE 0 END,
              updated_at=$1
          FROM candidate WHERE j.id=candidate.id RETURNING j.*`,
-        [now, workerId, now + leaseMs],
+        [now, workerId, now + leaseMs,available],
     );
-    return normalizeJob(result.rows[0] || null);
+    await client.query("COMMIT");return normalizeJob(result.rows[0] || null);
+    }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
 };
 
 export const getAiVideoWorkerJob = async ({ jobId, workerId }) => {
@@ -864,6 +871,7 @@ export const queueAiVideoRender = async ({ jobId, userId, expectedRevision, now 
     const client = await getClient();
     try {
         await client.query("BEGIN");
+        await lockExecutionUser(client,userId);
         const jobResult = await client.query(
             `SELECT * FROM ai_video_jobs WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL FOR UPDATE`,
             [jobId, userId],
@@ -885,6 +893,7 @@ export const queueAiVideoRender = async ({ jobId, userId, expectedRevision, now 
             await client.query("ROLLBACK");
             return { reason: "revision_conflict", revision: job.draft_revision };
         }
+        await assertExecutionAvailable(client,userId,{jobId,now});
         const [clipsResult, segmentsResult] = await Promise.all([
             client.query(`SELECT * FROM ai_video_clips WHERE job_id=$1 AND enabled=true ORDER BY sort_order LIMIT 5`, [jobId]),
             client.query(`SELECT * FROM ai_video_transcript_segments WHERE job_id=$1 ORDER BY segment_index`, [jobId]),
@@ -1050,7 +1059,12 @@ export const getAiVideoAsset = async ({ jobId, assetId, userId, now = Date.now()
 };
 
 export const retryAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
-    const result = await query(
+    await ensureAiVideoSchema();
+    const client=await getClient();
+    try {
+    await client.query("BEGIN");await lockExecutionUser(client,userId);
+    await assertExecutionAvailable(client,userId,{jobId,now});
+    const result = await client.query(
         `UPDATE ai_video_jobs SET
              status=CASE WHEN failed_stage='rendering' AND render_snapshot IS NOT NULL THEN 'queued_render' ELSE 'queued_ingest' END,
              current_stage=CASE WHEN failed_stage='rendering' AND render_snapshot IS NOT NULL THEN 'queued_render' ELSE 'queued_ingest' END,
@@ -1062,7 +1076,8 @@ export const retryAiVideoJob = async ({ jobId, userId, now = Date.now() }) => {
            AND COALESCE((error_detail->>'retryable')::boolean,false)=true RETURNING *`,
         [jobId, userId, now],
     );
-    return normalizeJob(result.rows[0] || null);
+    await client.query("COMMIT");return normalizeJob(result.rows[0] || null);
+    }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
 };
 
 export const heartbeatAiVideoJob = async ({ jobId, workerId, leaseMs, now = Date.now() }) => {
@@ -1076,35 +1091,13 @@ export const heartbeatAiVideoJob = async ({ jobId, workerId, leaseMs, now = Date
 
 export const reserveAiVideoUsage = async ({ jobId, userId, durationSeconds, limitSeconds, now = Date.now() }) => {
     await ensureAiVideoSchema();
-    const seconds = Math.ceil(durationSeconds / 60) * 60;
-    const client = await getClient();
-    try {
-        await client.query("BEGIN");
-        await client.query("SELECT pg_advisory_xact_lock($1)", [userId]);
-        const existing = await client.query(`SELECT * FROM ai_video_usage_reservations WHERE job_id=$1`, [jobId]);
-        if (existing.rowCount) {
-            await client.query("COMMIT");
-            return existing.rows[0];
-        }
-        const usage = await getAiVideoUsage({ userId, limitSeconds, now, client });
-        if (seconds > usage.remainingSeconds) {
-            const error = new Error("Monthly AI video quota is exhausted");
-            error.code = "AI_VIDEO_QUOTA_EXCEEDED";
-            throw error;
-        }
-        const result = await client.query(
-            `INSERT INTO ai_video_usage_reservations (id,user_id,job_id,period_key,reserved_seconds,status,created_at,updated_at)
-             VALUES ($1,$2,$3,$4,$5,'reserved',$6,$6) RETURNING *`,
-            [randomUUID(), userId, jobId, usage.periodKey, seconds, now],
-        );
-        await client.query("COMMIT");
-        return result.rows[0];
-    } catch (error) {
-        await client.query("ROLLBACK").catch(() => {});
-        throw error;
-    } finally {
-        client.release();
-    }
+    const client=await getClient();
+    try{
+        await client.query("BEGIN");await lockExecutionUser(client,userId);
+        const reservation=await reserveExecutionUsage(client,{jobId,userId,durationSeconds,limitSeconds,now});
+        await client.query(`UPDATE ai_video_jobs SET budget_snapshot=$3 WHERE id=$1 AND user_id=$2`,[jobId,userId,{reservationId:reservation.id,reservedSeconds:reservation.reserved_seconds,periodKey:reservation.period_key,chargePoint:"before_transcribe"}]);
+        await client.query("COMMIT");return reservation;
+    }catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}
 };
 
 export const claimExpiredAiVideoAssets = async ({ limit = 100, now = Date.now() }) => {

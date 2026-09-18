@@ -239,8 +239,23 @@ downloadAttemptCleanup:
   suspend: false
 
 videoAgent:
+  worker:
+    enabled: false
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 2Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+        ephemeral-storage: 6Gi
   # Independent acceptance flag; existing AI video functionality is unchanged.
   enabled: false
+  # Internal control-plane acceptance only; Task 3-3 must admit runs before workers execute.
+  runsEnabled: false
+  admissionEnabled: false
   ingestion:
     enabled: false
     replicaCount: 1
@@ -262,6 +277,8 @@ aiVideo:
     fileName: service-account.json
   localStorageRoot: .ai-video-storage
   monthlySeconds: 7200
+  # Conservative shared worker slots for both video products.
+  executionGlobalConcurrency: 1
   maxFileBytes: 1073741824
   maxDurationSeconds: 3600
   uploadChunkBytes: 16777216

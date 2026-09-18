@@ -184,5 +184,6 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     assert.equal((await pg.query(`SELECT count(*)::int AS n FROM video_agent_sources WHERE project_id=$1 AND status<>'deleted'`, [project.id])).rows[0].n, 0);
     assert.equal((await pg.query(`SELECT count(*)::int AS n FROM video_agent_assets WHERE project_id=$1 AND status<>'deleted'`, [project.id])).rows[0].n, 0);
     process.env.VIDEO_AGENT_ENABLED = "0";
-    assert.equal((await request("/projects")).status, 503);
+    assert.equal((await request("/projects")).status, 200);
+    assert.equal((await request("/projects", { method: "POST", body: { title: "Disabled" } })).status, 503);
 });

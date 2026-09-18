@@ -1,6 +1,7 @@
 import { agentQuery as query, ensureVideoAgentSchema, transaction } from "../db/video-agent.js";
 import { decryptUploadSession } from "../ai-video/session-crypto.js";
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
+import { cleanupExecutionHistory } from "./execution.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const missing = (error) => error.code === "ENOENT" || error.code === 404 || error.statusCode === 404;
@@ -16,13 +17,16 @@ export const cleanupVideoAgent = async ({ storage = getAiVideoObjectStorage(), l
     const now = Date.now();
     await query(`UPDATE video_agent_sources SET status='expired',cleanup_after=$1,source_input_encrypted=NULL,updated_at=$1
         WHERE status NOT IN ('deleting','deleted','expired') AND (retention_until<=$1 OR
-            (status='uploading' AND EXISTS(SELECT 1 FROM video_agent_upload_sessions u WHERE u.source_id=video_agent_sources.id AND u.expires_at<=$1)))`, [now]);
+            (status='uploading' AND EXISTS(SELECT 1 FROM video_agent_upload_sessions u WHERE u.source_id=video_agent_sources.id AND u.expires_at<=$1)))
+        AND NOT EXISTS(SELECT 1 FROM video_agent_runs r JOIN video_agent_steps s ON s.run_id=r.id
+            WHERE r.source_snapshot->>'id'=video_agent_sources.id::text AND s.status='running' AND s.lease_expires_at>$1)`, [now]);
     await query(`UPDATE video_agent_sources SET status='failed',error_code='VIDEO_AGENT_INGEST_ATTEMPTS_EXHAUSTED',cleanup_after=$1,source_input_encrypted=NULL
         WHERE status='ingesting' AND lease_until<$2 AND attempts>=3`, [now + DAY, now]);
-    const candidates = await query(`SELECT id FROM video_agent_sources WHERE status IN ('deleting','expired','failed') AND cleanup_after<=$1 LIMIT $2`, [now, limit]);
+    const candidates = await query(`SELECT id,project_id FROM video_agent_sources WHERE status IN ('deleting','expired','failed') AND cleanup_after<=$1 LIMIT $2`, [now, limit]);
     let cleaned = 0;
     for (const candidate of candidates.rows) {
         await transaction(async (client) => {
+            await client.query(`SELECT id FROM video_agent_projects WHERE id=$1 FOR UPDATE`,[candidate.project_id]);
             const source = (await client.query(`SELECT * FROM video_agent_sources WHERE id=$1 AND status IN ('deleting','expired','failed') AND cleanup_after<=$2 FOR UPDATE SKIP LOCKED`, [candidate.id, Date.now()])).rows[0];
             if (!source) return;
             try {
@@ -30,10 +34,12 @@ export const cleanupVideoAgent = async ({ storage = getAiVideoObjectStorage(), l
                 if (upload?.encrypted_storage_session) await storage.abortResumableUpload({ sessionUri: decryptUploadSession(upload.encrypted_storage_session) });
                 // Do not delete an object while a stale ingestion attempt is still writing to it.
                 if (source.lease_until && Number(source.lease_until) > Date.now()) throw new Error("Source lease still active");
+                const readers=await client.query(`SELECT s.id FROM video_agent_steps s JOIN video_agent_runs r ON r.id=s.run_id WHERE r.source_snapshot->>'id'=$1 AND s.status='running' AND s.lease_expires_at>$2 LIMIT 1`,[source.id,Date.now()]);
+                if(readers.rowCount)throw new Error("Source worker still active");
                 await deleteObject(storage, source.object_key, source.generation);
                 await client.query(`UPDATE video_agent_upload_sessions SET status='aborted',encrypted_storage_session=NULL,updated_at=$2 WHERE source_id=$1`, [source.id, Date.now()]);
                 await client.query(`UPDATE video_agent_sources SET status='deleted',cleanup_after=NULL,updated_at=$2 WHERE id=$1`, [source.id, Date.now()]);
-                await client.query(`UPDATE video_agent_assets SET status='expired',expires_at=$2 WHERE source_id=$1 AND status<>'deleted'`, [source.id, Date.now()]);
+                await client.query(`UPDATE video_agent_assets SET status='expired',expires_at=$2 WHERE source_id=$1 AND kind='source' AND status<>'deleted'`, [source.id, Date.now()]);
                 cleaned++;
             } catch {
                 await client.query(`UPDATE video_agent_sources SET cleanup_attempts=cleanup_attempts+1,cleanup_after=$2 WHERE id=$1`, [source.id, Date.now() + Math.min(DAY, 60000 * 2 ** Math.min(source.cleanup_attempts, 10))]);
@@ -41,16 +47,22 @@ export const cleanupVideoAgent = async ({ storage = getAiVideoObjectStorage(), l
         });
     }
     // Pending attempt records also cover objects abandoned by a process crash.
-    const assets = await query(`SELECT id FROM video_agent_assets WHERE status<>'deleted' AND expires_at<=$1 AND (cleanup_after IS NULL OR cleanup_after<=$1) LIMIT $2`, [Date.now(), limit]);
+    const assets = await query(`SELECT id,project_id FROM video_agent_assets WHERE status<>'deleted' AND expires_at<=$1 AND (cleanup_after IS NULL OR cleanup_after<=$1) LIMIT $2`, [Date.now(), limit]);
     for (const candidate of assets.rows) {
         await transaction(async (client) => {
+            await client.query(`SELECT id FROM video_agent_projects WHERE id=$1 FOR UPDATE`,[candidate.project_id]);
             const asset = (await client.query(`SELECT * FROM video_agent_assets WHERE id=$1 AND status<>'deleted' AND expires_at<=$2 AND (cleanup_after IS NULL OR cleanup_after<=$2) FOR UPDATE SKIP LOCKED`, [candidate.id, Date.now()])).rows[0];
             if (!asset) return;
             try {
+                const readers=await client.query(`SELECT id FROM video_agent_steps WHERE status='running' AND lease_expires_at>$1 AND
+                    (id=$2 OR output_refs @> $3::jsonb OR EXISTS(SELECT 1 FROM video_agent_steps dependency WHERE dependency.id=ANY(video_agent_steps.dependencies) AND dependency.output_refs @> $3::jsonb)
+                    OR ($4::boolean AND EXISTS(SELECT 1 FROM video_agent_runs r WHERE r.id=video_agent_steps.run_id AND r.source_snapshot->>'id'=$5))) LIMIT 1`,[Date.now(),asset.step_id,JSON.stringify([asset.id]),asset.kind==="source",asset.source_id]);
+                if(readers.rowCount)return;
                 await deleteObject(storage, asset.object_key, asset.generation);
                 await client.query(`UPDATE video_agent_assets SET status='deleted' WHERE id=$1`, [asset.id]);
             } catch { await client.query(`UPDATE video_agent_assets SET cleanup_after=$2,cleanup_attempts=cleanup_attempts+1 WHERE id=$1`, [asset.id, Date.now() + Math.min(DAY, 60000 * 2 ** Math.min(asset.cleanup_attempts, 10))]); }
         });
     }
-    return { cleaned };
+    const history = await cleanupExecutionHistory();
+    return { cleaned, history };
 };

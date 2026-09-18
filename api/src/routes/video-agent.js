@@ -4,8 +4,11 @@ import { create as contentDisposition } from "content-disposition-header";
 import { agentError, createProject, deleteProject, getProject, listProjects, ownedProject, transaction } from "../db/video-agent.js";
 import { addSource, completeUpload, getUpload, putUpload } from "../video-agent/materials.js";
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
+import { getPlan, getCurrentPlan,getRun, listEvents, listRevisions, listRuns, submitCommand } from "../video-agent/execution.js";
+import { admissionEnabled,executionReady,getExecutionUsage } from "../video-agent/admission.js";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const activeStreams = new Map();
 const fail = (res, error) => {
     const tokenStatus = { AI_VIDEO_IMPORT_TOKEN_INVALID: 400, AI_VIDEO_IMPORT_TOKEN_USER_MISMATCH: 403, AI_VIDEO_IMPORT_TOKEN_EXPIRED: 410 };
     const status = error.status || tokenStatus[error.code] || 500;
@@ -16,10 +19,12 @@ const fail = (res, error) => {
 // Dependencies are injectable for HTTP integration tests; production uses Clerk and PostgreSQL.
 export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) => {
     const router = express.Router();
-    const db = { createProject, deleteProject, getProject, listProjects, addSource, completeUpload, getUpload, putUpload, ...operations };
+    const db = { createProject, deleteProject, getProject, listProjects, addSource, completeUpload, getUpload, putUpload,
+        getPlan,getCurrentPlan, getRun, listEvents, listRevisions, listRuns, submitCommand, ...operations };
     router.use((req, res, next) => {
         res.setHeader("Cache-Control", "no-store");
-        if (process.env.VIDEO_AGENT_ENABLED !== "1") return fail(res, agentError("VIDEO_AGENT_NOT_ENABLED", 503, "Video Agent is not enabled"));
+        const existingControl = req.method === "GET" || req.method === "DELETE" || (req.method === "POST" && (/^\/projects\/[^/]+\/commands$/.test(req.path) || /^\/projects\/[^/]+\/runs\/[^/]+\/cancel$/.test(req.path)));
+        if (process.env.VIDEO_AGENT_ENABLED !== "1" && !existingControl) return fail(res, agentError("VIDEO_AGENT_NOT_ENABLED", 503, "Video Agent is not enabled"));
         next();
     });
     if (!authenticate) router.use(clerkMiddleware());
@@ -51,6 +56,78 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
         } catch (error) { fail(res, error); }
     });
     const success = (res, data, status = 200) => res.status(status).json({ status: "success", data });
+    const limit = (req) => Math.min(100, Math.max(1, Math.floor(Number(req.query.limit) || 20)));
+    const cursor = (req) => {
+        if (!req.query.cursor) return null;
+        const parts = String(req.query.cursor).split(":");
+        if (parts.length !== 2 || !/^\d+$/.test(parts[0]) || !Number.isSafeInteger(Number(parts[0])) || !uuid.test(parts[1])) throw agentError("VIDEO_AGENT_INVALID_REQUEST", 400, "Invalid cursor");
+        return { at: Number(parts[0]), id: parts[1] };
+    };
+    const eventAfter = (req) => {
+        const after = String(req.query.after ?? "0");
+        if (!/^\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n) throw agentError("VIDEO_AGENT_EVENT_CURSOR_INVALID", 400, "Invalid event cursor");
+        return after;
+    };
+    route("get", "/capabilities", async (_req, res) => success(res, { commandsEnabled: process.env.VIDEO_AGENT_ENABLED === "1",
+        runAcceptanceEnabled: process.env.VIDEO_AGENT_ENABLED === "1" && process.env.VIDEO_AGENT_RUNS_ENABLED === "1" && admissionEnabled(),
+        executionEnabled: process.env.VIDEO_AGENT_ENABLED === "1" && process.env.VIDEO_AGENT_RUNS_ENABLED === "1" && admissionEnabled() && await executionReady(),
+        pipelineReady: await executionReady(),admissionPolicy: admissionEnabled()?"shared_monthly_seconds":"disabled",operations: ["highlight_clips"], dubbingEnabled: false }));
+    route("get","/usage",async(_req,res,input)=>success(res,await getExecutionUsage(input)));
+    route("post", "/projects/:projectId/commands", async (req, res, input) => {
+        const receipt = await db.submitCommand({ ...input, body: req.body });
+        success(res, receipt, receipt.status === "accepted" ? 202 : 200);
+    });
+    route("get", "/projects/:projectId/revisions", async (req, res, input) => {
+        const raw = req.query.cursor;
+        if (raw !== undefined && (!/^\d+$/.test(String(raw)) || !Number.isSafeInteger(Number(raw)) || Number(raw) > 2147483647)) throw agentError("VIDEO_AGENT_INVALID_REQUEST", 400, "Invalid revision cursor");
+        success(res, await db.listRevisions({ ...input, before: raw === undefined ? null : Number(raw), limit: limit(req) }));
+    });
+    route("get", "/projects/:projectId/plans/:planId", async (_req, res, input) => success(res, await db.getPlan(input)));
+    route("get", "/projects/:projectId/plan", async (_req, res, input) => success(res, await db.getCurrentPlan(input)));
+    route("get", "/projects/:projectId/runs", async (req, res, input) => success(res, await db.listRuns({ ...input, cursor: cursor(req), limit: limit(req) })));
+    route("get", "/projects/:projectId/runs/:runId", async (_req, res, input) => success(res, await db.getRun(input)));
+    for (const action of ["cancel", "retry"]) route("post", `/projects/:projectId/runs/:runId/${action}`, async (req, res, input) => {
+        if (!req.body || Object.keys(req.body).some((key) => !["expectedRevision", "idempotencyKey"].includes(key))) throw agentError("VIDEO_AGENT_COMMAND_INVALID", 400, "Invalid control command");
+        const receipt = await db.submitCommand({ ...input, body: { type: `${action}_run`, expectedRevision: req.body.expectedRevision, idempotencyKey: req.body.idempotencyKey, input: { runId: input.runId } } });
+        success(res, receipt, receipt.status === "accepted" ? 202 : 200);
+    });
+    route("get", "/projects/:projectId/events", async (req, res, input) => {
+        success(res, await db.listEvents({ ...input, after: eventAfter(req), limit: limit(req) }));
+    });
+    route("get", "/projects/:projectId/events/stream", async (req, res, input) => {
+        let after = eventAfter(req);
+        let batch = await db.listEvents({ ...input, after, limit: 50 }); // Authenticate ownership before sending headers.
+        const streamCount = activeStreams.get(input.userId) || 0;
+        if (streamCount >= 2) throw agentError("VIDEO_AGENT_STREAM_LIMIT", 429, "Too many active streams");
+        activeStreams.set(input.userId, streamCount + 1);
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("X-Accel-Buffering", "no");
+        res.flushHeaders();
+        const controller = new AbortController();
+        res.on("close", () => controller.abort());
+        const deadline = setTimeout(() => controller.abort(), 25000);
+        const endAt = Date.now() + 25000;
+        try {
+            while (!controller.signal.aborted && Date.now() < endAt) {
+                if (batch.resetRequired) { res.write(`event: reset\ndata: ${JSON.stringify(batch)}\n\n`); break; }
+                for (const event of batch.events) {
+                    if (controller.signal.aborted) break;
+                    if (!res.write(`id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)) {
+                        await new Promise((resolve) => { const finish = () => { res.off("drain", finish); controller.signal.removeEventListener("abort", finish); resolve(); }; res.once("drain", finish); controller.signal.addEventListener("abort", finish, { once: true }); });
+                    }
+                    after = event.id;
+                }
+                if (!batch.hasMore) {
+                    res.write(": heartbeat\n\n");
+                    await new Promise((resolve) => { const finish = () => { clearTimeout(timer); controller.signal.removeEventListener("abort", finish); resolve(); }; const timer = setTimeout(finish, 1000); controller.signal.addEventListener("abort", finish, { once: true }); });
+                }
+                if (controller.signal.aborted) break;
+                batch = await db.listEvents({ ...input, after, limit: 50 });
+            }
+        } catch (error) { if (!controller.signal.aborted) res.write(`event: error\ndata: ${JSON.stringify({ code: error.status < 500 ? error.code : "VIDEO_AGENT_STREAM_FAILED" })}\n\n`); }
+        finally { clearTimeout(deadline); const remaining = (activeStreams.get(input.userId) || 1) - 1; if (remaining) activeStreams.set(input.userId, remaining); else activeStreams.delete(input.userId); res.end(); }
+    });
     route("post", "/projects", async (req, res, input) => {
         const title = req.body?.title;
         if (typeof title !== "string" || !title.trim() || title.length > 120 || /[\x00-\x1f]/.test(title)) throw agentError("VIDEO_AGENT_INVALID_REQUEST", 400, "Invalid project title");

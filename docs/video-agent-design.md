@@ -218,6 +218,7 @@ Agent 数据使用新增表，不在旧 job 表强行加入会话状态。时间
 | video_agent_upload_sessions | id、source_id、user_id、encrypted_storage_session、offset、size、fingerprint、expires_at |
 | video_agent_messages | id、project_id、run_id、role、content、attachment_refs、client_message_id、created_at |
 | video_agent_revisions | project_id、revision、parent_revision、settings_snapshot、edit_snapshot、created_by、created_at |
+| video_agent_plans | id、project_id、revision、plan、plan_hash、source_snapshot、pipeline_version、created_at |
 | video_agent_runs | id、project_id、base_revision、plan、plan_hash、status、entitlement_snapshot、budget_snapshot、created_at、completed_at |
 | video_agent_steps | id、run_id、stage、scope_id、dependencies、input_hash、pipeline_version、status、attempt、checkpoint、lease_owner、lease_expires_at、fencing_token、error |
 | video_agent_chunks | id、source_id、ordinal、actual_start/end、ownership_start/end、checksum、asr_config_hash、status、raw_asset_id |
@@ -384,7 +385,10 @@ LLM、ASR、翻译、TTS 分别定义 adapter，初版包装现有 Provider；�
 | --- | --- | --- |
 | 1 | AI 视频页面内子导航、页面框架、功能开关、多语言文案 | 已实现并按页面内导航要求修正；浏览器视觉与点击验收待完成 |
 | 2 | 项目、素材、上传恢复、权限与清理 | 已实现；生产 GCS 与浏览器验收待完成 |
-| 3 | Run/DAG、Worker、幂等、恢复、统一额度和并发 | 待实施 |
+| 3 | Run/DAG、Worker、幂等、恢复、统一额度和并发 | 执行底座已实现；完整媒体处理由任务 4–6 接入 |
+| 3-1 | 执行数据、命令幂等、状态转换、事件与权限接口 | 已实现；不含实际执行与统一扣费 |
+| 3-2 | Worker 调度、lease/fencing、取消与恢复 | 已实现；生产仅接入真实 probe 处理器 |
+| 3-3 | 新旧统一额度、并发准入与页面进度 | 已实现；完整处理链就绪前执行入口禁用 |
 | 4 | 长视频分块、逐块转写、词级字幕对齐 | 待实施 |
 | 5 | 窗口选片、全局去重、上下文翻译与局部恢复 | 待实施 |
 | 6 | 渲染验收、结果编辑、下载与版本 | 待实施 |
@@ -418,3 +422,40 @@ LLM、ASR、翻译、TTS 分别定义 adapter，初版包装现有 Provider；�
 验证：Video Agent 的隔离内存 PostgreSQL、HTTP、本地存储与真实 ffmpeg/ffprobe 集成测试通过，覆盖跨用户访问、会员、分块校验、丢失响应后恢复、重复完成、加密导入凭证重放、非视频文件拒绝、迟到进程、过期上传、失败清理退避与同时间游标。旧 AI 视频 infrastructure、delivery、analysis 测试通过。Svelte 检查、i18n 编码和完整性检查、Helm 模板检查通过。PGlite 测试使用单连接，不代替 GKE 多实例锁竞争验收；生产 GCS 与浏览器视觉验收未执行。未运行生产 build。
 
 启动配置、接口清单和验收步骤见 [任务 2 运维说明](video-agent-task2.md)。
+
+### 任务 3-1 实施记录（2026-09-18）
+
+- 新增执行控制层：配置 revisions、已校验 plans、Run、DAG steps、幂等 commands 和持久化 events；数据库初始化脚本沿用任务 2 的入口，仅增加表、索引和项目事件游标字段。
+- 统一命令支持 update_settings / create_plan / start_run / cancel_run / retry_run；项目行锁串行化写入，状态、版本、命令回执及事件在同一事务提交。同 key 同请求重放原回执，同 key 不同请求返回 409，版本冲突返回当前 revision。
+- 计划仅接受首版高光业务参数，严格拒绝未知字段、任意链接、对象 key、自定义 DAG、FFmpeg/CLI 参数和未实现的配音。计划和 Run 绑定真实可用素材的 checksum、generation、媒体信息与不可变版本。
+- 服务端编译 10 阶段依赖模板，保存 stage scope、input hash、pipelineVersion、checkpoint/output refs、attempt 和未来 lease/fencing 字段。目标语言和字幕模式的 hash 只使相关下游失效；后续媒体任务展开块/片段粒度并纳入实际产物、Provider 与编辑输入。
+- 启动接口单独受 VIDEO_AGENT_RUNS_ENABLED 控制，默认关闭。内部开启后也仅接受 queued/admission=pending 的元数据，步骤保持 pending；没有执行 Worker、真实输出或扣费。3-2 必须只领取已准入 Run，3-3 完成统一额度准入。
+- 取消与状态机禁止重开终态；失败或部分成功的人工重试创建新 Run，保留原记录。复用要求 hash、依赖闭包及有效资产引用匹配，最终验证和发布重做。项目删除同步取消或请求中止 Run。
+- 增加版本/计划/Run 查询、取消/重试接口、事件分页和鉴权 SSE；游标为十进制字符串，状态更新和事件保持一致。事件保留 90 天，过期游标要求重取 snapshot；项目删除后清理事件和命令回执。
+- 关闭新受理仍允许鉴权历史查询、取消和删除；已提交命令可重放。前端补齐类型和 API 调用，执行按钮仍不开放。
+- 验证：新的隔离 PostgreSQL/HTTP 控制层测试及任务 2 上传、真实媒体检查、清理测试通过；前端检查和 Helm 校验通过。测试不替代生产多连接锁竞争、Clerk/GCS 与浏览器验收。未构建、迁移或部署生产。
+
+以上为任务 3-1 的阶段记录；后续 3-2、3-3 实施情况见下文。接口、准入边界与后续接入要求见 [任务 3-1 说明](video-agent-task3-1.md)。
+
+### 任务 3-2 实施记录（2026-09-18）
+
+- 新增独立 Video Agent Worker，只领取已准入且具有权益和预算快照的 Run；公开启动命令仍创建 admission=pending，不能绕过任务 3-3。
+- 采用项目、Run、步骤一致锁顺序与 SKIP LOCKED 领取；120 秒租约、15 秒心跳、递增 fencing token。心跳、检查点、文件登记和结果提交均验证当前租约，过期 Worker 无法覆盖新尝试。
+- 新增尝试历史与产物尝试归属字段。检查点和中间文件引用可原子保存，重启后恢复；对象按 generation、字节数与 SHA-256 校验，失败提交整体回滚。
+- 瞬时错误退避重试，尊重 Retry-After，单步骤最多三次尝试；租约过期回收旧尝试。取消和退出通过 AbortSignal 中止流和媒体子进程，保留已提交检查点。
+- 清理流程保护仍被有效租约读写的文件；调度扫描轮转，等待后续处理器的项目不会饿死其他项目。完成条件要求已验证、可用的视频产物，JSON 检查点不能冒充视频。
+- 生产仅接入真实 FFprobe 探测处理器；切块、ASR、翻译和渲染仍由任务 4–6 接入。页面执行按钮继续禁用，旧高光剪辑行为保持。
+- 新增默认关闭的独立 Helm Worker Deployment、独立资源配置和运行脚本。未部署、未修改生产数据库、未执行生产构建。
+
+运行方式、恢复协议、保留期限和验证边界见 [任务 3-2 说明](video-agent-task3-2.md)。
+
+### 任务 3-3 实施记录（2026-09-18）
+
+- 扩展原会员时长额度账本，保留历史 job、月份、用量和状态，新增唯一 Run 归属，避免双账本重复统计。两个入口共享 UTC 月额度，时长仍按整分钟向上取整，不扣积分。
+- 新旧入口使用相同用户执行锁；Agent 准入、额度预留、快照、事件和命令回执同事务提交，重复请求不重复预留。旧创建、重试与渲染均检查共享并发；已删除任务的有效租约仍占用执行名额。
+- 两个 Worker 共用保守的全局执行槽，默认一个。Agent 在领取转录步骤时结算；结算前取消或失败释放预留，已结算不自动退款，同一计划的已结算重试不重复扣费。修复旧任务已释放预留后重试未重新预留的问题。
+- 页面接入共享额度、结构化计划创建与刷新恢复、运行历史分页、真实阶段状态、取消、重试、断线重连提示与幂等请求重放。自然语言仍是草稿，规划器在后续任务接入。
+- 新增独立准入开关，默认关闭。完整处理链未就绪时，公开启动接口拒绝请求且不留下 Run 或额度预留；页面开始按钮保持禁用。关闭受理仍可查询、取消和删除历史任务。
+- 多语言新增文案通过 UTF-8 检查；执行控制、Worker、统一准入及旧媒体功能测试通过，前端检查无错误，Helm 校验通过。未执行生产构建、数据库迁移或部署。
+
+任务 3 的执行底座已完成。完整视频处理还需任务 4–6 的真实媒体处理器，自然语言规划在任务 7 接入；详细协议、开关与部署顺序见 [任务 3-3 说明](video-agent-task3-3.md)。

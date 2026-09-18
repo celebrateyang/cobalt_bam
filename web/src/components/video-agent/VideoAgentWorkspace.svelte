@@ -12,6 +12,7 @@
     import IconUpload from "@tabler/icons-svelte/IconUpload.svelte";
     import IconPlayerPlay from "@tabler/icons-svelte/IconPlayerPlay.svelte";
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
+    import AgentExecutionPanel from "./AgentExecutionPanel.svelte";
 
     let request = "";
     export let projectId = "";
@@ -172,7 +173,7 @@
                 {/each}
                 {#if nextCursor}<button class="secondary" disabled={busy} on:click={more}>{$t("video-agent.load_more")}</button>{/if}
             </div>
-            <div class="quota"><IconScissors size={18} aria-hidden="true" /><p>{$t("video-agent.quota_pending")}</p></div>
+            <div class="quota"><IconScissors size={18} aria-hidden="true" /><p>{$t("video-agent.shared_quota")}</p></div>
         </aside>
 
         <div class="panel-switch" role="group" aria-label="Video Agent">
@@ -222,7 +223,7 @@
                 <label for="agent-request">{$t("video-agent.request_label")}</label>
                 <textarea id="agent-request" bind:value={request} maxlength={4000} rows={5} placeholder={$t("video-agent.request_placeholder")} aria-describedby="agent-execution-note"></textarea>
                 <div class="composer-actions">
-                    <button class="primary" disabled aria-describedby="agent-execution-note"><IconSparkles size={17} aria-hidden="true" />{$t("video-agent.start")}</button>
+                    <a href="#agent-results" on:click={()=>activePanel="results"}>{$t("video-agent.plan")}</a>
                 </div>
                 <p id="agent-execution-note" class="muted execution-note">{$t("video-agent.unavailable")}</p>
             </div>
@@ -230,6 +231,9 @@
 
         <section id="agent-results" class="card result-panel" class:mobile-hidden={activePanel !== "results"} aria-labelledby="agent-results-title">
             <div class="panel-heading"><h2 id="agent-results-title">{$t("video-agent.results")}</h2></div>
+            {#if selectedProject}
+                {#key selectedProject.id}<AgentExecutionPanel project={selectedProject} {sources} on:changed={()=>refreshSources().catch(reportError)} />{/key}
+            {:else}
             <div class="empty-results">
                 <div class="empty-icon" aria-hidden="true"><IconPlayerPlay size={32} /></div>
                 <h3>{$t("video-agent.results_empty")}</h3>
@@ -239,6 +243,7 @@
                 <h3>{$t("video-agent.plan")}</h3>
                 <p class="muted">{$t("video-agent.plan_hint")}</p>
             </div>
+            {/if}
         </section>
     </div>
 </main>
@@ -278,7 +283,7 @@
     textarea { resize: vertical; min-height: 140px; }
     input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .composer-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
-    .composer-actions button { padding: 11px 13px; font-size: 12px; }
+    .composer-actions a { padding: 11px 13px; font-size: 12px; color: inherit; }
     .primary { background: var(--accent); color: white; border-color: transparent; }
     .secondary { background: transparent; }
     button:disabled { opacity: .5; cursor: not-allowed; }

@@ -29,6 +29,8 @@ const requiredFiles = [
     manifest.action.default_popup,
     manifest.background.service_worker,
     'assets/content.js',
+    'download/index.html',
+    'assets/download.js',
     ...(manifest.content_scripts || []).flatMap((script) => script.js || []),
     ...Object.values(manifest.icons || {}),
 ];

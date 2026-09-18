@@ -272,6 +272,7 @@ router.post("/jobs/:jobId/retry", async (req, res) => {
         const job = await retryAiVideoJob({ jobId: req.params.jobId, userId: user.id });
         return job ? res.json({ status: "success", data: { job } }) : jsonError(res, 409, "AI_VIDEO_JOB_NOT_RETRYABLE", "Job cannot be retried");
     } catch (error) {
+        if(error.status)return jsonError(res,error.status,error.code,error.message);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to retry job");
     }
 });
@@ -288,6 +289,7 @@ router.post("/jobs/:jobId/render", async (req, res) => {
         if (result.reason) return jsonError(res, 409, "AI_VIDEO_JOB_NOT_RENDERABLE", "Job cannot be rendered");
         return res.status(result.idempotent ? 200 : 202).json({ status: "success", data: result });
     } catch (error) {
+        if(error.status)return jsonError(res,error.status,error.code,error.message);
         if (error.code === "23505") return jsonError(res, 409, "AI_VIDEO_CONCURRENCY_LIMIT", "Another AI video task is processing");
         console.error("POST AI video render error:", error);
         return jsonError(res, 500, "SERVER_ERROR", "Failed to queue render");

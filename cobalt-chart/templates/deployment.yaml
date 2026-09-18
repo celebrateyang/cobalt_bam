@@ -232,6 +232,12 @@ spec:
             {{- end }}
             - name: VIDEO_AGENT_ENABLED
               value: {{ ternary "1" "0" .Values.videoAgent.enabled | quote }}
+            - name: VIDEO_AGENT_RUNS_ENABLED
+              value: {{ ternary "1" "0" .Values.videoAgent.runsEnabled | quote }}
+            - name: VIDEO_AGENT_ADMISSION_ENABLED
+              value: {{ ternary "1" "0" .Values.videoAgent.admissionEnabled | quote }}
+            - name: AI_VIDEO_EXECUTION_GLOBAL_CONCURRENCY
+              value: {{ .Values.aiVideo.executionGlobalConcurrency | quote }}
             {{- if or .Values.aiVideo.enabled .Values.videoAgent.enabled }}
             - name: AI_VIDEO_ENABLED
               value: {{ ternary "1" "0" .Values.aiVideo.enabled | quote }}

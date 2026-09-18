@@ -207,7 +207,7 @@ const chooseDefaultKind = (media: DetectedMedia[]): DetectedMedia['kind'] | 'all
 
 const downloadUrl = async (item: DetectedMedia, filename?: string) => {
     try {
-        if (item.requiresPageContext) {
+        if (item.requiresPageContext && !isXinpianchangMedia(item.url)) {
             await sendPageDownload(item, filename);
             return;
         }

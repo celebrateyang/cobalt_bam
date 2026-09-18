@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { EXECUTION_SCHEMA } from "../video-agent/execution-schema.js";
 let database;
 const getDatabase = async () => database || await import("./pg-client.js");
 export const agentQuery = async (...args) => (await getDatabase()).query(...args);
@@ -50,7 +51,7 @@ export const ensureVideoAgentSchema = () => {
             nonce UUID PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
             expires_at BIGINT NOT NULL, used_at BIGINT NOT NULL
         );
-    `).catch((error) => { schemaPromise = null; throw error; });
+    ` + EXECUTION_SCHEMA).catch((error) => { schemaPromise = null; throw error; });
     return schemaPromise;
 };
 
@@ -100,13 +101,15 @@ export const listProjects = async ({ userId, limit, cursor }) => {
     return { projects: rows.map(projectDTO), nextCursor: result.rows.length > limit ? `${rows.at(-1).created_at}:${rows.at(-1).id}` : null };
 };
 export const getProject = (input) => transaction(async (client) => {
-    const project = await ownedProject(client, input);
+    const project = await ownedProject(client, { ...input, lock: true });
     const sources = await client.query(`SELECT s.*,a.id AS asset_id FROM video_agent_sources s LEFT JOIN video_agent_assets a ON a.source_id=s.id AND a.status='ready' AND a.object_key=s.object_key
         WHERE s.project_id=$1 ORDER BY s.created_at,s.id`, [input.projectId]);
     return { project: projectDTO(project), sources: sources.rows.map(sourceDTO) };
 });
 export const deleteProject = (input) => transaction(async (client) => {
     await ownedProject(client, { ...input, lock: true });
+    const { cancelProjectRuns } = await import("../video-agent/execution.js");
+    await cancelProjectRuns(client, input.projectId);
     const now = Date.now();
     await client.query(`UPDATE video_agent_projects SET status='deleted',deleted_at=$2,updated_at=$2 WHERE id=$1`, [input.projectId, now]);
     await client.query(`UPDATE video_agent_sources SET status='deleting',source_input_encrypted=NULL,cleanup_after=$2,updated_at=$2 WHERE project_id=$1 AND status<>'deleted'`, [input.projectId, now]);

@@ -10,6 +10,7 @@ export default defineConfig({
             input: {
                 background: resolve(__dirname, 'src/background.ts'),
                 popup: resolve(__dirname, 'src/popup/index.html'),
+                download: resolve(__dirname, 'src/download/index.html'),
             },
             output: {
                 entryFileNames: 'assets/[name].js',

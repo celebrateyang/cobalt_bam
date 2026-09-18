@@ -25,6 +25,40 @@ export const deleteAgentProject = (id: string) => agentRequest<void>(projectPath
 export const importAgentSource = (id: string, mediaImportToken: string) => agentRequest<{ source: AgentSource }>(`${projectPath(id)}/sources`, {
     method: "POST", body: JSON.stringify({ kind: "download_import", mediaImportToken }) });
 
+export type AgentPlanInput = {
+    sourceRef: string; operation: "highlight_clips"; sourceLanguage?: string; targetLanguage: string;
+    clips: { requestedCount: number; minSeconds?: number; maxSeconds?: number };
+    video?: { aspectRatio: "9:16"; preset: "tiktok" };
+    subtitles?: { enabled: true; mode: "translated" | "bilingual" };
+    dubbing?: { enabled: false; voiceId?: null }; executionMode?: "execute";
+};
+export type AgentCommand = { expectedRevision: number; idempotencyKey: string } & (
+    { type: "update_settings"; input: { sourceLanguage?: string; targetLanguage?: string; subtitleMode?: "translated" | "bilingual" } }
+    | { type: "create_plan"; input: AgentPlanInput } | { type: "start_run"; input: { planId: string } }
+    | { type: "cancel_run" | "retry_run"; input: { runId: string } });
+export type AgentReceipt = { commandId: string; status: "accepted" | "completed"; revision: number; replayed: boolean;
+    planId?: string; runId?: string; runRevision?: number; runStatus?: string; admissionStatus?: "pending" | "admitted" | "rejected" };
+export type AgentRun = { id: string; projectId: string; revision: number; planId: string; plan: AgentPlanInput;
+    status: "queued" | "planning" | "awaiting_input" | "running" | "cancelling" | "cancelled" | "completed" | "partially_completed" | "failed";
+    admissionStatus: "pending" | "admitted" | "rejected"; pipelineVersion: string; retryOfRunId: string | null;
+    requestedCount: number; producedCount: number; errorCode: string | null; createdAt: number; updatedAt: number; completedAt: number | null };
+export type AgentStep = { id: string; stage: string; scopeId: string; dependencies: string[];
+    status: "pending" | "ready" | "running" | "retry_wait" | "succeeded" | "failed" | "cancelled" | "skipped";
+    attempt: number; reusedStepId: string | null; errorCode: string | null };
+export type AgentEvent = { id: string; type: string; schemaVersion: number; runId: string | null; data: Record<string, unknown>; createdAt: number };
+export type AgentEvents = { events: AgentEvent[]; nextCursor: string; hasMore?: boolean; resetRequired: boolean; snapshotRequired?: boolean };
+export type AgentCapabilities = { commandsEnabled: boolean; runAcceptanceEnabled: boolean; executionEnabled: boolean; pipelineReady: boolean; admissionPolicy: string; operations: string[]; dubbingEnabled: boolean };
+export type AgentUsage = { limitSeconds: number; usedSeconds: number; reservedSeconds: number; remainingSeconds: number; periodKey: string; resetsAt: number };
+export const getAgentCapabilities = () => agentRequest<AgentCapabilities>("/capabilities");
+export const getAgentUsage = () => agentRequest<{ usage: AgentUsage }>("/usage");
+export const submitAgentCommand = (projectId: string, command: AgentCommand) => agentRequest<AgentReceipt>(`${projectPath(projectId)}/commands`, { method: "POST", body: JSON.stringify(command) });
+export const getAgentRun = (projectId: string, runId: string) => agentRequest<{ run: AgentRun; steps: AgentStep[]; eventCursor: string }>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}`);
+export const listAgentRuns = (projectId: string, cursor?: string) => agentRequest<{ runs: AgentRun[]; nextCursor: string | null }>(`${projectPath(projectId)}/runs${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+export const getAgentEvents = (projectId: string, after = "0", signal?: AbortSignal) => agentRequest<AgentEvents>(`${projectPath(projectId)}/events?after=${encodeURIComponent(after)}`, { signal });
+export const listAgentRevisions = (projectId: string, cursor?: string) => agentRequest<{ revision: number; revisions: { revision: number; parentRevision: number | null; settings: Record<string, unknown>; edits: Record<string, unknown>; createdAt: number }[]; nextCursor: string | null }>(`${projectPath(projectId)}/revisions${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+export const getAgentPlan = (projectId: string, planId: string) => agentRequest<{ plan: { id: string; revision: number; input: AgentPlanInput; pipelineVersion: string } }>(`${projectPath(projectId)}/plans/${encodeURIComponent(planId)}`);
+export const getCurrentAgentPlan = (projectId:string)=>agentRequest<{revision:number;plan:{id:string;revision:number;input:AgentPlanInput;pipelineVersion:string}|null}>(`${projectPath(projectId)}/plan`);
+
 export const uploadAgentSource = async ({ projectId, file, sourceId, onProgress, signal }: {
     projectId: string; file: File; sourceId?: string; onProgress: (percent: number) => void; signal: AbortSignal;
 }) => {

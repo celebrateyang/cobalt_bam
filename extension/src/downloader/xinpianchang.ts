@@ -14,7 +14,10 @@ export async function prepareXinpianchangDownload(url: string, sourcePageUrl?: s
     const id = 100000 + Math.floor(Math.random() * 1000000000);
     await chrome.declarativeNetRequest.updateSessionRules({ addRules: [{
         id, priority: 1,
-        condition: { urlFilter: `|${url}|`, isUrlFilterCaseSensitive: true },
+        // An explicit empty exclusion list includes main_frame too. Omitting both
+        // resource type fields excludes it, unlike the fetch used by the probe.
+        condition: { urlFilter: `|${url}|`, isUrlFilterCaseSensitive: true,
+            excludedResourceTypes: [] },
         action: {
             type: 'modifyHeaders' as chrome.declarativeNetRequest.RuleActionType,
             requestHeaders: [{ header: 'Referer', operation: 'set' as chrome.declarativeNetRequest.HeaderOperation,
@@ -27,13 +30,3 @@ export async function prepareXinpianchangDownload(url: string, sourcePageUrl?: s
 export async function removeXinpianchangRule(ruleId: number) {
     await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [ruleId] });
 }
-
-chrome.downloads.onChanged.addListener(delta => {
-    if (delta.state?.current !== 'complete' && delta.state?.current !== 'interrupted') return;
-    const key = `xpc-download-${delta.id}`;
-    void chrome.storage.session.get(key).then(async value => {
-        if (typeof value[key] !== 'number') return;
-        await removeXinpianchangRule(value[key]);
-        await chrome.storage.session.remove(key);
-    }).catch(error => console.warn('Could not clean up Xinpianchang download headers.', error));
-});

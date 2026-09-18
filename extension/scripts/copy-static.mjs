@@ -120,15 +120,13 @@ const writePng = async (file, size) => {
 };
 
 await fs.mkdir(path.join(dist, 'icons'), { recursive: true });
-await fs.mkdir(path.join(dist, 'popup'), { recursive: true });
 await fs.copyFile(path.join(root, 'manifest.json'), path.join(dist, 'manifest.json'));
 
-const builtPopupPath = path.join(dist, 'src', 'popup', 'index.html');
-const popupHtml = await fs.readFile(builtPopupPath, 'utf8');
-await fs.writeFile(
-    path.join(dist, 'popup', 'index.html'),
-    popupHtml.replaceAll('"/assets/', '"../assets/'),
-);
+for (const page of ['popup', 'download']) {
+    await fs.mkdir(path.join(dist, page), { recursive: true });
+    const html = await fs.readFile(path.join(dist, 'src', page, 'index.html'), 'utf8');
+    await fs.writeFile(path.join(dist, page, 'index.html'), html.replaceAll('"/assets/', '"../assets/'));
+}
 await fs.rm(path.join(dist, 'src'), { recursive: true, force: true });
 
 for (const size of [16, 32, 48, 128]) {

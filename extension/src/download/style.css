@@ -1,0 +1,6 @@
+body { margin: 0; background: #f6f8f3; color: #17220f; font: 16px system-ui, sans-serif; }
+main { margin: 12vh auto; max-width: 600px; padding: 32px; border-radius: 16px; background: white; box-shadow: 0 4px 24px #0001; }
+h1 { color: #4a7a1c; font-size: 24px; }
+#filename { overflow-wrap: anywhere; }
+progress { width: 100%; }
+button { padding: 10px 24px; border: 0; border-radius: 8px; background: #4a7a1c; color: white; cursor: pointer; }

@@ -257,7 +257,7 @@ videoAgent:
   runsEnabled: false
   admissionEnabled: false
   ingestion:
-    enabled: false
+    enabled: true
     replicaCount: 1
   cleanup:
     enabled: false

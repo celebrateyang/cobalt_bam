@@ -121,5 +121,19 @@
   "send_message": "Generate plan",
     "message_saved": "Saved",
   "message_saved_hint": "Your request is saved before planning. The task will not start automatically.",
-    "load_older": "Load older messages"
+    "load_older": "Load older messages",
+    "dubbing_enable": "Dub selected short clips",
+    "dubbing_voice": "Fixed voice",
+    "dubbing_replaces_audio": "Dubbing replaces the original audio, including background music.",
+    "dubbing_budget": "Estimated maximum",
+    "dubbing_characters": "characters",
+    "dubbing_over_budget": "This plan exceeds the dubbing budget.",
+    "dubbing_preview": "Listen to dub",
+    "dubbing_audio": "Download dub audio",
+    "dubbing_fit": "Audio fit",
+    "dubbing_download_fit": "Download fit report",
+    "stage_prepare_dub_text": "Prepare speech text",
+    "stage_tts": "Generate speech",
+    "stage_fit_dub_timeline": "Fit speech timing",
+    "stage_build_dub_subtitles": "Build dub subtitles"
 }

@@ -17,13 +17,18 @@ export const verifyHandler=async({claim,dependencies,signal,readArtifact,readFil
             if(!Number.isSafeInteger(span) || span<15000 || span>90000 || clip.startMs<0 || clip.endMs>claim.run.source_snapshot.durationMs || video?.width!==1080 || video?.height!==1920 || video.codec_name!=="h264" || video.pix_fmt!=="yuv420p" || video.avg_frame_rate!=="30/1" || audio?.codec_name!=="aac" || [duration,videoDuration,audioDuration].some(time=>!Number.isFinite(time) || Math.abs(time-span)>VERIFY_CONFIG.toleranceMs) || Math.abs(videoDuration-audioDuration)>VERIFY_CONFIG.toleranceMs)throw agentError("VIDEO_AGENT_VERIFY_FAILED",422,"Invalid rendered video streams or duration");
             await runAbortableProcess(ffmpeg,["-nostdin","-v","error","-xerror","-threads","1","-i",filename,"-map","0:v:0","-map","0:a:0","-f","null","-"],{signal,timeoutMs:15*60*1000});
             for(const [format,asset] of Object.entries(clip.subtitles))await readFileArtifact(asset.id,undefined,{kind:`subtitle_${format}`,maxBytes:2*1024*1024});
+            if(claim.run.plan.dubbing?.enabled){
+                if(!clip.dubAudio?.id || !clip.fit || clip.fit.speed>1.3 || clip.fit.speed<0.9 || clip.fit.spokenDurationMs<=0 || clip.fit.spokenDurationMs>span || Math.abs(clip.fit.fittedMs-span)>VERIFY_CONFIG.toleranceMs)
+                    throw agentError("VIDEO_AGENT_VERIFY_FAILED",422,"Dub fit report is invalid");
+                await readFileArtifact(clip.dubAudio.id,undefined,{kind:"dub_audio",maxBytes:24*1024*1024});
+            }
         }finally{await unlink(filename).catch(()=>{});}
     }
     const report=await artifact({...value,version:"verified-clips-v1",verified:true});
-    return {checkpoint:{verified:true,verifiedClipsRef:report.id},assets:[report],outputRefs:[report.id,...value.clips.flatMap(clip=>[clip.video.id,...Object.values(clip.subtitles).map(asset=>asset.id)])]};
+    return {checkpoint:{verified:true,verifiedClipsRef:report.id},assets:[report],outputRefs:[report.id,...value.clips.flatMap(clip=>[clip.video.id,...(clip.dubAudio?[clip.dubAudio.id]:[]),...Object.values(clip.subtitles).map(asset=>asset.id)])]};
 };
 export const publishHandler=async({claim,dependencies,signal,readArtifact})=>{
     signal.throwIfAborted();const verify=dependencies.find(step=>step.stage==="verify"),value=await readArtifact(verify?.checkpoint?.verifiedClipsRef);
-    if(!verify?.checkpoint?.verified || value.version!=="verified-clips-v1" || value.verified!==true || value.sourceChecksum!==claim.run.source_snapshot.checksum || !value.clips?.length || value.clips.length>claim.run.plan.clips.requestedCount || value.clips.some(clip=>!verify.output_refs.includes(clip.video.id)))throw agentError("VIDEO_AGENT_RESULTS_UNVERIFIED",422,"Results not verified");
+    if(!verify?.checkpoint?.verified || value.version!=="verified-clips-v1" || value.verified!==true || value.sourceChecksum!==claim.run.source_snapshot.checksum || !value.clips?.length || value.clips.length>claim.run.plan.clips.requestedCount || value.clips.some(clip=>!verify.output_refs.includes(clip.video.id) || (claim.run.plan.dubbing?.enabled && (!clip.dubAudio?.id || !verify.output_refs.includes(clip.dubAudio.id)))))throw agentError("VIDEO_AGENT_RESULTS_UNVERIFIED",422,"Results not verified");
     return {checkpoint:{producedCount:value.clips.length,results:value.clips,requiresReview:value.requiresReview},outputRefs:value.clips.map(clip=>clip.video.id)};
 };

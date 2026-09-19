@@ -121,5 +121,19 @@
   "send_message": "Plan erstellen",
     "message_saved": "Gespeichert",
   "message_saved_hint": "Ihre Anfrage wird vor der Planung gespeichert. Die Aufgabe startet nicht automatisch.",
-    "load_older": "Ältere Nachrichten laden"
+    "load_older": "Ältere Nachrichten laden",
+    "dubbing_enable": "Ausgewählte Kurzclips synchronisieren",
+    "dubbing_voice": "Feste Stimme",
+    "dubbing_replaces_audio": "Die Synchronisation ersetzt den Originalton einschließlich Hintergrundmusik.",
+    "dubbing_budget": "Geschätztes Maximum",
+    "dubbing_characters": "Zeichen",
+    "dubbing_over_budget": "Dieser Plan überschreitet das Synchronisationsbudget.",
+    "dubbing_preview": "Synchronisation anhören",
+    "dubbing_audio": "Synchronaudio herunterladen",
+    "dubbing_fit": "Audioanpassung",
+    "dubbing_download_fit": "Anpassungsbericht herunterladen",
+    "stage_prepare_dub_text": "Sprechtext vorbereiten",
+    "stage_tts": "Sprache erzeugen",
+    "stage_fit_dub_timeline": "Sprechdauer anpassen",
+    "stage_build_dub_subtitles": "Synchronuntertitel erstellen"
 }

@@ -8,21 +8,28 @@ import {getEditableResults} from "./results.js";
 import {executePlanTools} from "./tools.js";
 import {messageDTO} from "./conversation.js";
 import {resolveMessageSource} from "./source-resolver.js";
+import {getTtsConfig,ttsConfigured} from "./tts-config.js";
 
 const requiredKeys=["status","reply","sourceRef","sourceExplicit","sourceLanguage","targetLanguage","targetLanguageExplicit","requestedCount","minSeconds","maxSeconds","subtitleMode","executionIntent","missing","unsupportedCapabilities"];
 const languageCodes=new Set(["de","en","es","fr","id","ja","ko","ru","th","vi","zh"]);
 const safeReply=value=>typeof value==="string" && value.trim() && value.trim().length<=800 && Buffer.byteLength(value.trim())<=4096 && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value);
 const safeMetadata=value=>typeof value==="string" && value.length<=200 && /^[A-Za-z0-9._:/-]+$/.test(value)?value:null;
+const explicitDubIntent=text=>{
+    const request=String(text || "");
+    if(/\b(?:no|not|without|don't|do not)\s+(?:\w+\s+){0,2}(?:dub|dubbing|voiceover)\b|不要配音|不配音|保留原音|吹き替えない|더빙하지|sin doblaje|sans doublage/iu.test(request))return false;
+    return /\b(?:dub|dubbing|voice.?over|synchronisier|doublage|doblaje|doblar|sulih suara|ozvuch|long tieng)\b|配音|吹き替え|더빙|озвуч|พากย์|lồng tiếng/iu.test(request);
+};
 
-const validateCandidate=(value,sources)=>{
-    if(!value || typeof value!=="object" || Array.isArray(value) || Object.keys(value).length!==requiredKeys.length || Object.keys(value).some(key=>!requiredKeys.includes(key)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner fields are invalid");
+const validateCandidate=(value,sources,requestText="")=>{
+    if(!value || typeof value!=="object" || Array.isArray(value) || ![requiredKeys.length,requiredKeys.length+1].includes(Object.keys(value).length) || Object.keys(value).some(key=>![...requiredKeys,"dubbingRequested"].includes(key)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner fields are invalid");
     if(!["ready","needs_input","unsupported"].includes(value.status) || !safeReply(value.reply)
         || typeof value.sourceExplicit!=="boolean" || !["auto",...languageCodes].includes(value.sourceLanguage) || (value.targetLanguage!==null && !languageCodes.has(value.targetLanguage))
         || typeof value.targetLanguageExplicit!=="boolean" || !Number.isInteger(value.requestedCount) || value.requestedCount<1 || value.requestedCount>5
         || !Number.isInteger(value.minSeconds) || !Number.isInteger(value.maxSeconds) || value.minSeconds<15 || value.maxSeconds>90 || value.maxSeconds<value.minSeconds
         || !["translated","bilingual"].includes(value.subtitleMode) || !["plan_only","execute"].includes(value.executionIntent)
         || !Array.isArray(value.missing) || value.missing.some(item=>!["source","target_language"].includes(item)) || new Set(value.missing).size!==value.missing.length
-        || !Array.isArray(value.unsupportedCapabilities) || value.unsupportedCapabilities.some(item=>item!=="dubbing") || value.unsupportedCapabilities.length>1)throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner values are invalid");
+        || !Array.isArray(value.unsupportedCapabilities) || value.unsupportedCapabilities.some(item=>item!=="dubbing") || value.unsupportedCapabilities.length>1
+        || (value.dubbingRequested!==undefined && typeof value.dubbingRequested!=="boolean"))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner values are invalid");
     const available=new Map(sources.map(source=>[source.id.toLowerCase(),source]));
     let sourceRef=value.sourceRef;
     if(sourceRef!==null && (typeof sourceRef!=="string" || !UUID.test(sourceRef) || !available.has(sourceRef.toLowerCase())))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner selected an unavailable source");
@@ -30,15 +37,17 @@ const validateCandidate=(value,sources)=>{
     if(sources.length>1 && !value.sourceExplicit)sourceRef=null;
     const needsSource=!sourceRef;
     const needsTarget=!value.targetLanguageExplicit || value.targetLanguage===null;
-    const unsupported=value.unsupportedCapabilities.length>0;
+    const dubbingRequested=value.dubbingRequested===true;
+    if(dubbingRequested && !explicitDubIntent(requestText))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Dubbing requires an explicit user request");
+    const unsupported=value.unsupportedCapabilities.length>0 || dubbingRequested&&!ttsConfigured();
     const expectedStatus=unsupported?"unsupported":needsSource || needsTarget?"needs_input":"ready";
     const expectedMissing=[...(needsSource?["source"]:[]),...(needsTarget?["target_language"]:[])];
     if(value.status!==expectedStatus || value.missing.length!==expectedMissing.length || expectedMissing.some(item=>!value.missing.includes(item)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner readiness is inconsistent");
-    const base={...value,reply:value.reply.trim(),sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
+    const base={...value,dubbingRequested,reply:value.reply.trim(),sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
     if(expectedStatus!=="ready")return {outcome:base,plan:null};
     const plan=normalizePlan({sourceRef:base.sourceRef,operation:"highlight_clips",sourceLanguage:base.sourceLanguage,targetLanguage:base.targetLanguage,
         clips:{requestedCount:base.requestedCount,minSeconds:base.minSeconds,maxSeconds:base.maxSeconds},video:{aspectRatio:"9:16",preset:"tiktok"},
-        subtitles:{enabled:true,mode:base.subtitleMode},dubbing:{enabled:false,voiceId:null},executionMode:"execute"});
+        subtitles:{enabled:true,mode:base.subtitleMode},dubbing:{enabled:dubbingRequested,voiceId:dubbingRequested?getTtsConfig().voiceId:null},executionMode:"execute"});
     return {outcome:base,plan};
 };
 
@@ -189,7 +198,7 @@ export const planMessage=async(input,{adapter=plannerAdapter,edit=editAdapter,co
                 const suggestion=await adapter.suggest({context:claim.context,signal,repair:attempt>0});
                 requestId=suggestion.requestId || requestId;model=suggestion.model || model;
                 const value=suggestion.value ?? parsePlannerResponse(suggestion.raw);
-                validated=validateCandidate(value,claim.sources);break;
+                validated=validateCandidate(value,claim.sources,claim.context.latestRequest);break;
             }catch(error){lastError=error;if(!["VIDEO_AGENT_PLANNER_FORMAT_INVALID","VIDEO_AGENT_PLANNER_RESPONSE_INVALID","VIDEO_AGENT_PLANNER_INCOMPLETE"].includes(error.code) || attempt===2)throw error;}
         }
         if(!validated)throw lastError;

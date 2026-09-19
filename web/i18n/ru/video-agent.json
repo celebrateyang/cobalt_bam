@@ -121,5 +121,19 @@
   "send_message": "Создать план",
     "message_saved": "Сохранено",
   "message_saved_hint": "Запрос сохраняется до планирования. Задача не запускается автоматически.",
-    "load_older": "Загрузить ранние сообщения"
+    "load_older": "Загрузить ранние сообщения",
+    "dubbing_enable": "Озвучить выбранные короткие клипы",
+    "dubbing_voice": "Фиксированный голос",
+    "dubbing_replaces_audio": "Озвучка заменяет исходный звук, включая фоновую музыку.",
+    "dubbing_budget": "Оценочный максимум",
+    "dubbing_characters": "символов",
+    "dubbing_over_budget": "План превышает бюджет озвучки.",
+    "dubbing_preview": "Прослушать озвучку",
+    "dubbing_audio": "Скачать озвучку",
+    "dubbing_fit": "Подгонка аудио",
+    "dubbing_download_fit": "Скачать отчёт о подгонке",
+    "stage_prepare_dub_text": "Подготовить текст озвучки",
+    "stage_tts": "Создать речь",
+    "stage_fit_dub_timeline": "Подогнать длительность речи",
+    "stage_build_dub_subtitles": "Создать субтитры озвучки"
 }

@@ -42,7 +42,7 @@ export const readJsonArtifact = async (claim,id,{ signal,storage=getAiVideoObjec
 
 // Verify stored bytes before reusing a chunk; optionally stream to a local ASR input.
 export const readAudioArtifact = async (claim,id,{signal,storage=getAiVideoObjectStorage(),filename,maxBytes=24*1024*1024,kind="audio_chunk"}={}) => {
-    if(!["audio_chunk","rendered_video","subtitle_srt","subtitle_vtt","subtitle_ass"].includes(kind))throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid binary kind");
+    if(!["audio_chunk","tts_audio","dub_audio","rendered_video","subtitle_srt","subtitle_vtt","subtitle_ass"].includes(kind))throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid binary kind");
     const asset=await readableAsset(claim,id,kind);
     const sizeBytes=Number(asset.size_bytes);
     if(!Number.isSafeInteger(sizeBytes) || sizeBytes<=0 || sizeBytes>maxBytes)throw agentError("VIDEO_AGENT_OUTPUT_INVALID",409,"Audio artifact too large");
@@ -57,7 +57,7 @@ export const readAudioArtifact = async (claim,id,{signal,storage=getAiVideoObjec
 };
 
 export const uploadAudioArtifact = async (claim,filename,{signal,storage=getAiVideoObjectStorage(),maxBytes=24*1024*1024,kind="audio_chunk"}={}) => {
-    const types={audio_chunk:"audio/wav",rendered_video:"video/mp4",subtitle_srt:"application/x-subrip",subtitle_vtt:"text/vtt",subtitle_ass:"text/plain"};
+    const types={audio_chunk:"audio/wav",tts_audio:"audio/mpeg",dub_audio:"audio/wav",rendered_video:"video/mp4",subtitle_srt:"application/x-subrip",subtitle_vtt:"text/vtt",subtitle_ass:"text/plain"};
     if(!types[kind])throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid binary kind");
     const sizeBytes=(await stat(filename)).size;
     if(!Number.isSafeInteger(sizeBytes) || sizeBytes<=0 || sizeBytes>maxBytes)throw agentError("VIDEO_AGENT_CHUNK_TOO_LARGE",422,"Audio chunk exceeds byte limit");

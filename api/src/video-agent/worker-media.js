@@ -8,13 +8,14 @@ import { agentError } from "../db/video-agent.js";
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { withLease } from "./worker-store.js";
 
-export const runAbortableProcess = (command,args,{ signal,timeoutMs=120000,cwd }={}) => new Promise((resolve,reject) => {
+export const runAbortableProcess = (command,args,{ signal,timeoutMs=120000,cwd,captureStderr=false }={}) => new Promise((resolve,reject) => {
     signal?.throwIfAborted();
     const child=spawn(command,args,{ cwd,windowsHide:true,stdio:["ignore","pipe","pipe"] });
-    let stdout="",timedOut=false;
+    let stdout="",stderr="",timedOut=false;
     child.stdout.on("data",chunk=>{stdout=(stdout+chunk.toString("utf8")).slice(-1024*1024);});
     // Drain stderr without including source filenames or provider text in errors.
-    child.stderr.resume();
+    if(captureStderr)child.stderr.on("data",chunk=>{stderr=(stderr+chunk.toString("utf8")).slice(-65536);});
+    else child.stderr.resume();
     const abort=()=>child.kill("SIGKILL");
     signal?.addEventListener("abort",abort,{once:true});
     const timer=setTimeout(()=>{timedOut=true;abort();},timeoutMs);
@@ -24,7 +25,7 @@ export const runAbortableProcess = (command,args,{ signal,timeoutMs=120000,cwd }
         clear();
         if(signal?.aborted)reject(signal.reason);
         else if(timedOut)reject(Object.assign(new Error("Media process timed out"),{code:"ETIMEDOUT"}));
-        else if(code===0)resolve({stdout});
+        else if(code===0)resolve({stdout,stderr});
         else reject(agentError("VIDEO_AGENT_MEDIA_PROCESS_FAILED",422,"Media process failed"));
     });
 });

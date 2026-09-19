@@ -73,6 +73,11 @@ const createRun = async (client, project, planRow, retryOf = null, admissionPoli
     if (active.rowCount) throw agentError("VIDEO_AGENT_PROJECT_RUN_ACTIVE", 409, "Another project run is active");
     const count = (await client.query(`SELECT count(*)::int AS count FROM video_agent_runs WHERE project_id=$1`, [project.id])).rows[0].count;
     if (count >= 100) throw agentError("VIDEO_AGENT_RUN_LIMIT", 409, "Run limit reached");
+    if(planRow.plan.dubbing?.enabled){
+        const dayStart=Math.floor(Date.now()/86400000)*86400000;
+        const today=(await client.query(`SELECT count(*)::int AS count FROM video_agent_runs WHERE project_id=$1 AND created_at>=$2 AND plan->'dubbing'->>'enabled'='true'`,[project.id,dayStart])).rows[0].count;
+        if(today>=10)throw agentError("VIDEO_AGENT_DUB_DAILY_LIMIT",409,"Daily dubbing run limit reached");
+    }
     const currentSource = await readySource(client, project.id, planRow.plan.sourceRef);
     if (hashInput(currentSource) !== hashInput(planRow.source_snapshot)) throw agentError("VIDEO_AGENT_SOURCE_CHANGED", 409, "Source changed since planning");
     const runId = randomUUID();

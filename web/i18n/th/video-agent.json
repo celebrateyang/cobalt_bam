@@ -121,5 +121,19 @@
   "send_message": "สร้างแผน",
     "message_saved": "บันทึกแล้ว",
   "message_saved_hint": "ระบบจะบันทึกคำขอก่อนวางแผน และจะไม่เริ่มงานโดยอัตโนมัติ",
-    "load_older": "โหลดข้อความเก่า"
+    "load_older": "โหลดข้อความเก่า",
+    "dubbing_enable": "พากย์คลิปสั้นที่เลือก",
+    "dubbing_voice": "เสียงที่กำหนด",
+    "dubbing_replaces_audio": "เสียงพากย์จะแทนที่เสียงเดิมรวมถึงเพลงพื้นหลัง",
+    "dubbing_budget": "ค่าสูงสุดโดยประมาณ",
+    "dubbing_characters": "อักขระ",
+    "dubbing_over_budget": "แผนนี้เกินงบเสียงพากย์",
+    "dubbing_preview": "ฟังเสียงพากย์",
+    "dubbing_audio": "ดาวน์โหลดเสียงพากย์",
+    "dubbing_fit": "ปรับความยาวเสียง",
+    "dubbing_download_fit": "ดาวน์โหลดรายงานการปรับเสียง",
+    "stage_prepare_dub_text": "เตรียมข้อความเสียงพากย์",
+    "stage_tts": "สร้างเสียงพูด",
+    "stage_fit_dub_timeline": "ปรับระยะเวลาเสียงพูด",
+    "stage_build_dub_subtitles": "สร้างคำบรรยายเสียงพากย์"
 }

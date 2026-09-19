@@ -121,5 +121,19 @@
   "send_message": "Tạo kế hoạch",
     "message_saved": "Đã lưu",
   "message_saved_hint": "Yêu cầu được lưu trước khi lập kế hoạch. Tác vụ sẽ không tự động bắt đầu.",
-    "load_older": "Tải tin nhắn cũ"
+    "load_older": "Tải tin nhắn cũ",
+    "dubbing_enable": "Lồng tiếng cho các clip ngắn đã chọn",
+    "dubbing_voice": "Giọng cố định",
+    "dubbing_replaces_audio": "Lồng tiếng thay thế âm thanh gốc, kể cả nhạc nền.",
+    "dubbing_budget": "Mức tối đa ước tính",
+    "dubbing_characters": "ký tự",
+    "dubbing_over_budget": "Kế hoạch vượt ngân sách lồng tiếng.",
+    "dubbing_preview": "Nghe thử lồng tiếng",
+    "dubbing_audio": "Tải âm thanh lồng tiếng",
+    "dubbing_fit": "Điều chỉnh âm thanh",
+    "dubbing_download_fit": "Tải báo cáo điều chỉnh",
+    "stage_prepare_dub_text": "Chuẩn bị lời thoại",
+    "stage_tts": "Tạo giọng nói",
+    "stage_fit_dub_timeline": "Điều chỉnh thời lượng lời thoại",
+    "stage_build_dub_subtitles": "Tạo phụ đề lồng tiếng"
 }

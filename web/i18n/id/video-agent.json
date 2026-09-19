@@ -121,5 +121,19 @@
   "send_message": "Buat rencana",
     "message_saved": "Tersimpan",
   "message_saved_hint": "Permintaan disimpan sebelum perencanaan. Tugas tidak dimulai secara otomatis.",
-    "load_older": "Muat pesan lama"
+    "load_older": "Muat pesan lama",
+    "dubbing_enable": "Sulih suara klip pendek terpilih",
+    "dubbing_voice": "Suara tetap",
+    "dubbing_replaces_audio": "Sulih suara menggantikan audio asli, termasuk musik latar.",
+    "dubbing_budget": "Perkiraan maksimum",
+    "dubbing_characters": "karakter",
+    "dubbing_over_budget": "Rencana ini melebihi anggaran sulih suara.",
+    "dubbing_preview": "Dengarkan sulih suara",
+    "dubbing_audio": "Unduh audio sulih suara",
+    "dubbing_fit": "Penyesuaian audio",
+    "dubbing_download_fit": "Unduh laporan penyesuaian",
+    "stage_prepare_dub_text": "Siapkan teks suara",
+    "stage_tts": "Buat suara",
+    "stage_fit_dub_timeline": "Sesuaikan durasi suara",
+    "stage_build_dub_subtitles": "Buat subtitle sulih suara"
 }

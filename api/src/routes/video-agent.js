@@ -9,6 +9,7 @@ import { admissionEnabled,executionReady,getExecutionUsage } from "../video-agen
 import {getPublishedResults,getEditableResults} from "../video-agent/results.js";
 import {saveUserMessage,listMessages} from "../video-agent/conversation.js";
 import {planMessage} from "../video-agent/planner.js";
+import {getTtsConfig,ttsConfigured} from "../video-agent/tts-config.js";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const activeStreams = new Map();
@@ -71,10 +72,17 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
         if (!/^\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n) throw agentError("VIDEO_AGENT_EVENT_CURSOR_INVALID", 400, "Invalid event cursor");
         return after;
     };
-    route("get", "/capabilities", async (_req, res) => success(res, { commandsEnabled: process.env.VIDEO_AGENT_ENABLED === "1",
-        runAcceptanceEnabled: process.env.VIDEO_AGENT_ENABLED === "1" && process.env.VIDEO_AGENT_RUNS_ENABLED === "1" && admissionEnabled(),
-        executionEnabled: process.env.VIDEO_AGENT_ENABLED === "1" && process.env.VIDEO_AGENT_RUNS_ENABLED === "1" && admissionEnabled() && await executionReady(),
-        pipelineReady: await executionReady(),admissionPolicy: admissionEnabled()?"shared_monthly_seconds":"disabled",operations: ["highlight_clips"], dubbingEnabled: false }));
+    route("get", "/capabilities", async (_req, res) => {
+        const commandsEnabled=process.env.VIDEO_AGENT_ENABLED==="1";
+        const runAcceptanceEnabled=commandsEnabled && process.env.VIDEO_AGENT_RUNS_ENABLED==="1" && admissionEnabled();
+        const pipelineReady=await executionReady(),dubbingReady=await executionReady({dubbing:true});
+        const config=ttsConfigured()?getTtsConfig():null;
+        success(res,{commandsEnabled,runAcceptanceEnabled,executionEnabled:runAcceptanceEnabled && pipelineReady,
+            pipelineReady,admissionPolicy:admissionEnabled()?"shared_monthly_seconds":"disabled",operations:["highlight_clips"],
+            dubbingEnabled:runAcceptanceEnabled && dubbingReady,
+            dubbing:config?{voiceId:config.voiceId,maxRunChars:config.maxRunChars,maxRunAudioMs:config.maxRunAudioMs,
+                maxRunMicroUsd:config.maxRunMicroUsd,rateMicroUsdPerMillionChars:config.rateMicroUsdPerMillionChars}:null});
+    });
     route("get","/usage",async(_req,res,input)=>success(res,await getExecutionUsage(input)));
     route("post", "/projects/:projectId/commands", async (req, res, input) => {
         const receipt = await db.submitCommand({ ...input, body: req.body });
@@ -182,13 +190,13 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
             return result.rows[0];
         });
         const storage = getAiVideoObjectStorage();
-        const formats={rendered_video:["mp4","video/mp4"],subtitle_srt:["srt","application/x-subrip"],subtitle_vtt:["vtt","text/vtt"],subtitle_ass:["ass","text/plain; charset=utf-8"]};
+        const formats={rendered_video:["mp4","video/mp4"],dub_audio:["wav","audio/wav"],subtitle_srt:["srt","application/x-subrip"],subtitle_vtt:["vtt","text/vtt"],subtitle_ass:["ass","text/plain; charset=utf-8"]};
         if(asset.kind!=="source"){
             if(!formats[asset.kind])throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset unavailable");
             const [extension,mime]=formats[asset.kind];asset.mime=mime;asset.filename=`video-agent-${asset.id}.${extension}`;
             const published=await transaction(async client=>{
                 const rows=(await client.query(`SELECT s.checkpoint FROM video_agent_steps s JOIN video_agent_runs r ON r.id=s.run_id WHERE r.project_id=$1 AND r.status IN ('completed','partially_completed') AND s.stage='publish_results' AND s.status='succeeded'`,[input.projectId])).rows;
-                return rows.some(row=>row.checkpoint.results?.some(clip=>clip.video.id===asset.id || Object.values(clip.subtitles).some(item=>item.id===asset.id)));
+                return rows.some(row=>row.checkpoint.results?.some(clip=>clip.video.id===asset.id || clip.dubAudio?.id===asset.id || Object.values(clip.subtitles).some(item=>item.id===asset.id)));
             });
             if(!published)throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset not published");
         }

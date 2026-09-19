@@ -121,5 +121,19 @@
   "send_message": "計画を生成",
     "message_saved": "保存済み",
   "message_saved_hint": "計画前にリクエストを保存します。タスクは自動的に開始されません。",
-    "load_older": "過去のメッセージを読み込む"
+    "load_older": "過去のメッセージを読み込む",
+    "dubbing_enable": "選択した短いクリップを吹き替える",
+    "dubbing_voice": "固定音声",
+    "dubbing_replaces_audio": "吹き替えでは背景音楽を含む元の音声が置き換わります。",
+    "dubbing_budget": "推定上限",
+    "dubbing_characters": "文字",
+    "dubbing_over_budget": "このプランは吹き替え予算を超えています。",
+    "dubbing_preview": "吹き替えを試聴",
+    "dubbing_audio": "吹き替え音声をダウンロード",
+    "dubbing_fit": "音声の長さ調整",
+    "dubbing_download_fit": "調整レポートをダウンロード",
+    "stage_prepare_dub_text": "読み上げ文を準備",
+    "stage_tts": "音声を生成",
+    "stage_fit_dub_timeline": "音声の長さを調整",
+    "stage_build_dub_subtitles": "吹き替え字幕を作成"
 }

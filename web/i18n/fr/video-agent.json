@@ -121,5 +121,19 @@
   "send_message": "Générer le plan",
     "message_saved": "Enregistré",
   "message_saved_hint": "Votre demande est enregistrée avant la planification. La tâche ne démarre pas automatiquement.",
-    "load_older": "Charger les anciens messages"
+    "load_older": "Charger les anciens messages",
+    "dubbing_enable": "Doubler les courts extraits sélectionnés",
+    "dubbing_voice": "Voix fixe",
+    "dubbing_replaces_audio": "Le doublage remplace le son d'origine, y compris la musique de fond.",
+    "dubbing_budget": "Maximum estimé",
+    "dubbing_characters": "caractères",
+    "dubbing_over_budget": "Ce projet dépasse le budget de doublage.",
+    "dubbing_preview": "Écouter le doublage",
+    "dubbing_audio": "Télécharger l'audio doublé",
+    "dubbing_fit": "Ajustement audio",
+    "dubbing_download_fit": "Télécharger le rapport d'ajustement",
+    "stage_prepare_dub_text": "Préparer le texte parlé",
+    "stage_tts": "Générer la voix",
+    "stage_fit_dub_timeline": "Ajuster la durée de la voix",
+    "stage_build_dub_subtitles": "Créer les sous-titres doublés"
 }

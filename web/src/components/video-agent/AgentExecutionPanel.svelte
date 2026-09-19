@@ -25,7 +25,13 @@
     $: cueEditChanged=!!selectedCueId && cueDraft!==(currentEdits?.subtitles[selectedCueId] || selectedEditableClip?.cues.find(cue=>cue.id===selectedCueId)?.translatedText);
     const clearResults=()=>{Object.values(previewUrls).forEach(url=>{if(url.startsWith("blob:"))URL.revokeObjectURL(url);});previewUrls={};results=[];};
     const preview=async(assetId:string)=>{if(previewUrls[assetId])return;try{const version=epoch,id=selectedRunId,url=await getAgentPreview(project.id,assetId);if(!mounted || version!==epoch || id!==selectedRunId){if(url.startsWith("blob:"))URL.revokeObjectURL(url);return;}if(previewUrls[assetId]?.startsWith("blob:"))URL.revokeObjectURL(previewUrls[assetId]);previewUrls={...previewUrls,[assetId]:url};}catch(error){report(error);}};
-    let sourceRef="",targetLanguage="es",subtitleMode: "translated" | "bilingual"="bilingual",requestedCount=3;
+    const downloadFitReport=(result:AgentResult)=>{
+        if(!result.fit)return;
+        const url=URL.createObjectURL(new Blob([JSON.stringify({clipId:result.id,fit:result.fit},null,2)],{type:"application/json"}));
+        const link=document.createElement("a");link.href=url;link.download=`${result.id}-dub-fit.json`;link.click();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+    };
+    let sourceRef="",targetLanguage="es",subtitleMode: "translated" | "bilingual"="bilingual",requestedCount=3,dubbingEnabled=false;
     let planId="",latestPlanId="",planRevision=0,revision=project.revision,busy=false,refreshing=false,errorCode="",stale=false,editorConflict=false;
     let mounted=false,epoch=0,cursor="0",controller: AbortController | null=null;
     let pendingCommand: AgentCommand | null=null;
@@ -36,10 +42,15 @@
     $: readySources=sources.filter(source=>source.status==="ready" && source.retentionUntil>Date.now());
     $: if(!readySources.some(source=>source.id===sourceRef)){sourceRef=readySources[0]?.id || "";planId="";}
     $: activeRun=runs.find(value=>activeStates.includes(value.status));
+    $: dubEstimate=capabilities?.dubbing ? {chars:Math.ceil(requestedCount*90*15),audioMs:requestedCount*90000,
+        microUsd:Math.ceil(Math.ceil(requestedCount*90*15)*capabilities.dubbing.rateMicroUsdPerMillionChars/1000000)} : null;
+    $: dubWithinBudget=!dubbingEnabled || !!(dubEstimate && capabilities?.dubbing && dubEstimate.chars<=capabilities.dubbing.maxRunChars
+        && dubEstimate.audioMs<=capabilities.dubbing.maxRunAudioMs && dubEstimate.microUsd<=capabilities.dubbing.maxRunMicroUsd);
     $: editMatchesCurrent=!!run && (run.planId===latestPlanId || currentEdits?.baseRunId===run.id);
     $: completedSteps=steps.filter(value=>value.status==="succeeded").length;
     $: if(planId && planRevision!==revision)planId="";
-    $: canCreatePlan=planLoaded && !refreshing && !busy && !pendingCommand && !planId && !!sourceRef && !!capabilities?.commandsEnabled && !activeRun;
+    $: canCreatePlan=planLoaded && !refreshing && !busy && !pendingCommand && !planId && !!sourceRef && !!capabilities?.commandsEnabled && !activeRun
+        && dubWithinBudget && (!dubbingEnabled || !!capabilities?.dubbingEnabled);
     const report=(error:unknown)=>{errorCode=(error as {code?:string})?.code || "VIDEO_AGENT_REQUEST_FAILED";};
     const refresh=async()=>{
         if(!mounted || refreshing)return;
@@ -59,7 +70,7 @@
                 const current=settled[3].value;revision=Math.max(revision,current.revision);latestPlanId=current.plan?.id || "";
                 if(current.plan && ((!planLoaded && !dirty) || current.plan.revision>planRevision)){
                     const saved=current.plan;sourceRef=saved.input.sourceRef;targetLanguage=saved.input.targetLanguage;subtitleMode=saved.input.subtitles?.mode || "bilingual";requestedCount=saved.input.clips.requestedCount;
-                    planId=saved.id;planRevision=saved.revision;currentEdits=saved.input.edits;
+                    planId=saved.id;planRevision=saved.revision;currentEdits=saved.input.edits;dubbingEnabled=!!saved.input.dubbing?.enabled;
                     const selected=editable?.clips.find(clip=>clip.id===selectedClipId);if(selected && !editorConflict)chooseClip(selected);
                 }
                 planLoaded=true;
@@ -106,7 +117,8 @@
     const createPlan=()=>{
         if(!canCreatePlan || busy || pendingCommand || planId)return;
         return command({type:"create_plan",...envelope(),input:{sourceRef,operation:"highlight_clips",targetLanguage,
-            clips:{requestedCount},subtitles:{enabled:true,mode:subtitleMode}}});
+            clips:{requestedCount},subtitles:{enabled:true,mode:subtitleMode},
+            dubbing:{enabled:dubbingEnabled,voiceId:dubbingEnabled?capabilities?.dubbing?.voiceId || null:null}}});
     };
     const start=()=>command({type:"start_run",...envelope(),input:{planId}});
     const control=(type:"cancel_run" | "retry_run")=>run && command({type,...envelope(),input:{runId:run.id}});
@@ -172,6 +184,16 @@
         <select id="plan-subtitles" bind:value={subtitleMode} on:change={clearPlan} disabled={busy || !!pendingCommand}>
             <option value="bilingual">{$t("video-agent.subtitle_bilingual")}</option><option value="translated">{$t("video-agent.subtitle_translated")}</option>
         </select>
+        {#if capabilities?.dubbingEnabled && capabilities.dubbing}
+            <label for="plan-dubbing"><input id="plan-dubbing" type="checkbox" bind:checked={dubbingEnabled} on:change={clearPlan} disabled={busy || !!pendingCommand} /> {$t("video-agent.dubbing_enable")}</label>
+            {#if dubbingEnabled}
+                <p class="muted">{$t("video-agent.dubbing_voice")}: {capabilities.dubbing.voiceId}. {$t("video-agent.dubbing_replaces_audio")}</p>
+                <p class="muted">{$t("video-agent.dubbing_budget")}: {dubEstimate?.chars} / {capabilities.dubbing.maxRunChars} {$t("video-agent.dubbing_characters")};
+                    {Math.ceil((dubEstimate?.audioMs || 0)/1000)} / {Math.floor(capabilities.dubbing.maxRunAudioMs/1000)} s;
+                    ${((dubEstimate?.microUsd || 0)/1000000).toFixed(3)} / ${(capabilities.dubbing.maxRunMicroUsd/1000000).toFixed(3)} USD</p>
+                {#if !dubWithinBudget}<p class="error">{$t("video-agent.dubbing_over_budget")}</p>{/if}
+            {/if}
+        {/if}
         <button class:saved={!!planId} disabled={!canCreatePlan}>{$t(planId ? "video-agent.plan_saved" : busy ? "video-agent.loading" : "video-agent.create_plan")}</button>
     </form>
     {#if planId}
@@ -199,7 +221,12 @@
                 <h3>{result.title || result.id}</h3>
                 {#if previewUrls[result.video.id]}<video controls preload="metadata" src={previewUrls[result.video.id]}><track kind="captions" label="VTT" src={previewUrls[result.subtitles.vtt?.id] || undefined} /></video>{:else}<button on:click={()=>Promise.all([preview(result.video.id),...(result.subtitles.vtt?[preview(result.subtitles.vtt.id)]:[])])}>&#9654; MP4</button>{/if}
                 <div class="actions"><button on:click={()=>downloadAgentAsset(project.id,result.video.id,`${result.id}.mp4`).catch(report)}>MP4</button>
+                {#if result.dubAudio}<button on:click={()=>result.dubAudio && preview(result.dubAudio.id)}>{$t("video-agent.dubbing_preview")}</button>
+                    <button on:click={()=>result.dubAudio && downloadAgentAsset(project.id,result.dubAudio.id,`${result.id}-dub.wav`).catch(report)}>{$t("video-agent.dubbing_audio")}</button>{/if}
                 {#each Object.entries(result.subtitles) as [format,asset]}<button on:click={()=>downloadAgentAsset(project.id,asset.id,`${result.id}.${format}`).catch(report)}>{format.toUpperCase()}</button>{/each}</div>
+                {#if result.dubAudio && previewUrls[result.dubAudio.id]}<audio controls src={previewUrls[result.dubAudio.id]}></audio>{/if}
+                {#if result.fit}<p class="muted">{$t("video-agent.dubbing_fit")}: {(result.fit.originalMs/1000).toFixed(1)}s → {(result.fit.fittedMs/1000).toFixed(1)}s / {result.fit.speed.toFixed(2)}x</p>
+                    <button on:click={()=>downloadFitReport(result)}>{$t("video-agent.dubbing_download_fit")}</button>{/if}
             </article>
         {/each}
         {#if editable && editable.clips.length}

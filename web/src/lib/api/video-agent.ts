@@ -13,7 +13,8 @@ export type AgentPlannerOutcome = {status:"ready"|"needs_input"|"unsupported";re
     targetLanguageExplicit:boolean;requestedCount:number;minSeconds:number;maxSeconds:number;subtitleMode:"translated"|"bilingual";executionIntent:"plan_only"|"execute";
     missing:("source"|"target_language")[];unsupportedCapabilities:"dubbing"[];planId?:string;revision?:number;plan?:AgentPlanInput;pendingSourceId?:string;
     execution?:{status:"started"|"blocked";runId?:string;runStatus?:string;errorCode?:string}};
-export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};subtitles:Record<string,{id:string}>};
+export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};dubAudio?:{id:string}|null;
+    fit?:{originalMs:number;fittedMs:number;spokenDurationMs:number;speed:number;peakDb:number;meanDb:number;timingQuality:string};subtitles:Record<string,{id:string}>};
 export type AgentEditable = {runId:string;clips:{id:string;title:string;startMs:number;endMs:number;cues:{id:string;startMs:number;endMs:number;sourceText:string;translatedText:string}[]}[]};
 export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
 export const getAgentEditable=(projectId:string,runId:string)=>agentRequest<AgentEditable>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/editable`);
@@ -49,7 +50,7 @@ export type AgentPlanInput = {
     clips: { requestedCount: number; minSeconds?: number; maxSeconds?: number };
     video?: { aspectRatio: "9:16"; preset: "tiktok" };
     subtitles?: { enabled: true; mode: "translated" | "bilingual" };
-    dubbing?: { enabled: false; voiceId?: null }; executionMode?: "execute";
+    dubbing?: { enabled: boolean; voiceId: string|null }; executionMode?: "execute";
     edits?:{baseRunId:string;clips:Record<string,{title?:string;focusX?:number;startCueId?:string;endCueId?:string}>;subtitles:Record<string,string>};
 };
 export type AgentCommand = { expectedRevision: number; idempotencyKey: string } & (
@@ -70,7 +71,8 @@ export type AgentStep = { id: string; stage: string; scopeId: string; dependenci
     attempt: number; reusedStepId: string | null; errorCode: string | null };
 export type AgentEvent = { id: string; type: string; schemaVersion: number; runId: string | null; data: Record<string, unknown>; createdAt: number };
 export type AgentEvents = { events: AgentEvent[]; nextCursor: string; hasMore?: boolean; resetRequired: boolean; snapshotRequired?: boolean };
-export type AgentCapabilities = { commandsEnabled: boolean; runAcceptanceEnabled: boolean; executionEnabled: boolean; pipelineReady: boolean; admissionPolicy: string; operations: string[]; dubbingEnabled: boolean };
+export type AgentCapabilities = { commandsEnabled: boolean; runAcceptanceEnabled: boolean; executionEnabled: boolean; pipelineReady: boolean; admissionPolicy: string; operations: string[]; dubbingEnabled: boolean;
+    dubbing:{voiceId:string;maxRunChars:number;maxRunAudioMs:number;maxRunMicroUsd:number;rateMicroUsdPerMillionChars:number}|null };
 export type AgentUsage = { limitSeconds: number; usedSeconds: number; reservedSeconds: number; remainingSeconds: number; periodKey: string; resetsAt: number };
 export const getAgentCapabilities = () => agentRequest<AgentCapabilities>("/capabilities");
 export const getAgentUsage = () => agentRequest<{ usage: AgentUsage }>("/usage");

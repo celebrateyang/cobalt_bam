@@ -52,6 +52,18 @@ spec:
               value: {{ .Values.database.name | quote }}
             - name: VIDEO_AGENT_WORKER_ENABLED
               value: "1"
+            - name: VIDEO_AGENT_DUBBING_ENABLED
+              value: {{ ternary "1" "0" .Values.videoAgent.dubbing.enabled | quote }}
+            - name: VIDEO_AGENT_TTS_VOICE
+              value: {{ .Values.videoAgent.dubbing.voice | quote }}
+            - name: VIDEO_AGENT_TTS_MAX_RUN_CHARS
+              value: {{ .Values.videoAgent.dubbing.maxRunChars | quote }}
+            - name: VIDEO_AGENT_TTS_MAX_RUN_AUDIO_MS
+              value: {{ .Values.videoAgent.dubbing.maxRunAudioMs | quote }}
+            - name: VIDEO_AGENT_MAX_RUN_COST_MICRO_USD
+              value: {{ .Values.videoAgent.dubbing.maxRunCostMicroUsd | quote }}
+            - name: VIDEO_AGENT_TTS_MICRO_USD_PER_MILLION_CHARS
+              value: {{ .Values.videoAgent.dubbing.rateMicroUsdPerMillionChars | quote }}
             - name: AI_VIDEO_TEXT_MODEL
               value: {{ .Values.aiVideo.worker.textModel | quote }}
             - name: AI_VIDEO_TRANSCRIPTION_MODEL

@@ -239,6 +239,14 @@ downloadAttemptCleanup:
   suspend: false
 
 videoAgent:
+  dubbing:
+    enabled: false
+    voice: alloy
+    maxRunChars: 12000
+    maxRunAudioMs: 450000
+    # Set both micro-USD values for the contracted TTS provider before enabling.
+    maxRunCostMicroUsd: 0
+    rateMicroUsdPerMillionChars: 0
   asr:
     # Bump when the same model name points to different weights/adapter behavior.
     modelRevision: "default"

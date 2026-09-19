@@ -272,6 +272,12 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         }
         const published=await getPublishedResults({projectId:f.projectId,runId:f.runId,userId:1});assert.equal(published.results.length,1);assert.equal(published.results[0].video.id,videoId);assert.deepEqual(Object.keys(published.results[0].subtitles).sort(),["ass","srt","vtt"]);
         await assert.rejects(getPublishedResults({projectId:f.projectId,runId:f.runId,userId:99}),{status:404});
+        const dubId=randomUUID(),dubKey=`worker-test/${dubId}`,dubBytes=Buffer.from("RIFF-dub-delivery-fixture"),dubChecksum=createHash("sha256").update(dubBytes).digest("hex");
+        await pipeline(Readable.from(dubBytes),storage.createWriteStream(dubKey));const dubObject=await storage.headObject(dubKey);
+        await pg.query(`INSERT INTO video_agent_assets(id,project_id,source_id,kind,object_key,generation,checksum,size_bytes,status,expires_at,run_id)
+            VALUES($1,$2,$3,'dub_audio',$4,$5,$6,$7,'ready',$8,$9)`,[dubId,f.projectId,f.sourceId,dubKey,dubObject.generation,dubChecksum,dubBytes.length,Date.now()+86400000,f.runId]);
+        const resultWithDub={...published.results[0],dubAudio:{id:dubId,checksum:dubChecksum}};
+        await pg.query("UPDATE video_agent_steps SET checkpoint=$2 WHERE run_id=$1 AND stage='publish_results'",[f.runId,{producedCount:1,results:[resultWithDub]}]);
         const app=express();app.use(createVideoAgentRouter({authenticate:async req=>({id:Number(req.header("x-test-user") || 1)})}));
         const server=app.listen(0,"127.0.0.1");await new Promise(resolve=>server.once("listening",resolve));
         try{const base=`http://127.0.0.1:${server.address().port}/projects/${f.projectId}`;
@@ -279,6 +285,9 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
             for(const [format,asset] of [["mp4",published.results[0].video],...Object.entries(published.results[0].subtitles)]){
                 const response=await fetch(`${base}/assets/${asset.id}/download`);assert.equal(response.status,200);assert.ok(response.headers.get("content-disposition").includes(format));const bytes=Buffer.from(await response.arrayBuffer());assert.equal(createHash("sha256").update(bytes).digest("hex"),asset.checksum);
             }
+            const audioResponse=await fetch(`${base}/assets/${dubId}/download`);assert.equal(audioResponse.status,200);
+            assert.equal(audioResponse.headers.get("content-type"),"audio/wav");assert.deepEqual(Buffer.from(await audioResponse.arrayBuffer()),dubBytes);
+            assert.equal((await fetch(`${base}/assets/${dubId}/download`,{headers:{"x-test-user":"99"}})).status,404);
             assert.equal((await fetch(`${base}/assets/${videoId}/download`,{headers:{"x-test-user":"99"}})).status,404);
         }finally{await new Promise(resolve=>server.close(resolve));}
         const cancelled=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded',output_refs=$2,checkpoint=$3 WHERE run_id=$1 AND stage='select_clips'",[cancelled.runId,[selected.id,normalized.id],{selectedClipsRef:selected.id}]);

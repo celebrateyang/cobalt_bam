@@ -239,6 +239,18 @@ spec:
               value: {{ ternary "1" "0" .Values.videoAgent.runsEnabled | quote }}
             - name: VIDEO_AGENT_ADMISSION_ENABLED
               value: {{ ternary "1" "0" .Values.videoAgent.admissionEnabled | quote }}
+            - name: VIDEO_AGENT_DUBBING_ENABLED
+              value: {{ ternary "1" "0" .Values.videoAgent.dubbing.enabled | quote }}
+            - name: VIDEO_AGENT_TTS_VOICE
+              value: {{ .Values.videoAgent.dubbing.voice | quote }}
+            - name: VIDEO_AGENT_TTS_MAX_RUN_CHARS
+              value: {{ .Values.videoAgent.dubbing.maxRunChars | quote }}
+            - name: VIDEO_AGENT_TTS_MAX_RUN_AUDIO_MS
+              value: {{ .Values.videoAgent.dubbing.maxRunAudioMs | quote }}
+            - name: VIDEO_AGENT_MAX_RUN_COST_MICRO_USD
+              value: {{ .Values.videoAgent.dubbing.maxRunCostMicroUsd | quote }}
+            - name: VIDEO_AGENT_TTS_MICRO_USD_PER_MILLION_CHARS
+              value: {{ .Values.videoAgent.dubbing.rateMicroUsdPerMillionChars | quote }}
             {{- if .Values.videoAgent.enabled }}
             - name: VIDEO_AGENT_PLANNER_MODEL
               value: {{ .Values.videoAgent.planner.model | quote }}

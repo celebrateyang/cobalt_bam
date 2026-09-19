@@ -38,7 +38,7 @@
         "video-agent:worker": "node src/util/video-agent-worker.js",
         "video-agent:init": "node src/util/init-video-agent.js",
         "video-agent:cleanup": "node src/util/cleanup-video-agent-assets.js",
-    "test:video-agent": "node --test src/video-agent/materials.test.js src/video-agent/execution.test.js src/video-agent/worker.test.js src/video-agent/admission.test.js src/video-agent/chunk.test.js src/video-agent/transcribe.test.js src/video-agent/normalize.test.js src/video-agent/select.test.js src/video-agent/translate.test.js src/video-agent/handoff.test.js src/video-agent/delivery.test.js src/video-agent/conversation.test.js src/video-agent/planner.test.js src/video-agent/editing.test.js",
+    "test:video-agent": "node --test src/video-agent/materials.test.js src/video-agent/execution.test.js src/video-agent/worker.test.js src/video-agent/admission.test.js src/video-agent/chunk.test.js src/video-agent/transcribe.test.js src/video-agent/normalize.test.js src/video-agent/select.test.js src/video-agent/translate.test.js src/video-agent/handoff.test.js src/video-agent/delivery.test.js src/video-agent/conversation.test.js src/video-agent/planner.test.js src/video-agent/editing.test.js src/video-agent/tts.test.js src/video-agent/dub.test.js src/video-agent/dub-media.test.js",
         "test:video-agent-transcribe": "node --test src/video-agent/transcribe.test.js src/video-agent/worker.test.js src/video-agent/admission.test.js",
         "test:video-agent-chunk": "node --test src/video-agent/chunk.test.js src/video-agent/worker.test.js",
         "test:video-agent-admission": "node --test src/video-agent/admission.test.js",

@@ -121,5 +121,19 @@
   "send_message": "계획 생성",
     "message_saved": "저장됨",
   "message_saved_hint": "계획 전에 요청이 저장됩니다. 작업은 자동으로 시작되지 않습니다.",
-    "load_older": "이전 메시지 불러오기"
+    "load_older": "이전 메시지 불러오기",
+    "dubbing_enable": "선택한 짧은 클립 더빙",
+    "dubbing_voice": "고정 음성",
+    "dubbing_replaces_audio": "더빙은 배경 음악을 포함한 원본 오디오를 대체합니다.",
+    "dubbing_budget": "예상 최대치",
+    "dubbing_characters": "글자",
+    "dubbing_over_budget": "이 계획은 더빙 예산을 초과합니다.",
+    "dubbing_preview": "더빙 듣기",
+    "dubbing_audio": "더빙 오디오 다운로드",
+    "dubbing_fit": "오디오 길이 조정",
+    "dubbing_download_fit": "조정 보고서 다운로드",
+    "stage_prepare_dub_text": "음성 문구 준비",
+    "stage_tts": "음성 생성",
+    "stage_fit_dub_timeline": "음성 길이 조정",
+    "stage_build_dub_subtitles": "더빙 자막 만들기"
 }

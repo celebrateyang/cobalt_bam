@@ -121,5 +121,19 @@
   "send_message": "生成计划",
     "message_saved": "已保存",
   "message_saved_hint": "请求会在规划前保存，任务不会自动开始。",
-    "load_older": "加载更早消息"
+    "load_older": "加载更早消息",
+    "dubbing_enable": "为选中的短片配音",
+    "dubbing_voice": "固定音色",
+    "dubbing_replaces_audio": "配音会替换原音，包括背景音乐。",
+    "dubbing_budget": "预计上限",
+    "dubbing_characters": "字符",
+    "dubbing_over_budget": "该计划超出配音预算。",
+    "dubbing_preview": "试听配音",
+    "dubbing_audio": "下载配音音频",
+    "dubbing_fit": "音频时长适配",
+    "dubbing_download_fit": "下载适配报告",
+    "stage_prepare_dub_text": "准备朗读文案",
+    "stage_tts": "生成语音",
+    "stage_fit_dub_timeline": "适配语音时长",
+    "stage_build_dub_subtitles": "生成配音字幕"
 }

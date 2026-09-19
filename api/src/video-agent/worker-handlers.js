@@ -11,6 +11,8 @@ import {translateHandler} from "./translate-handler.js";
 import {subtitleHandler} from "./subtitle-handler.js";
 import {renderHandler} from "./render-handler.js";
 import {verifyHandler,publishHandler} from "./verify-handler.js";
+import {prepareDubTextHandler,ttsHandler,fitDubTimelineHandler,buildDubSubtitlesHandler} from "./dub-handlers.js";
+import {ttsConfigured} from "./tts-config.js";
 export { runAbortableProcess } from "./worker-media.js";
 
 const probeHandler = async ({ claim,signal,workDir,artifact }) => {
@@ -25,5 +27,9 @@ const probeHandler = async ({ claim,signal,workDir,artifact }) => {
     return { checkpoint,assets:[asset],outputRefs:[asset.id] };
 };
 // Missing provider configuration prevents claiming provider-dependent stages.
-export const productionHandlers = { probe:probeHandler,chunk:chunkHandler,transcribe:transcribeHandler,normalize:normalizeHandler,select_clips:selectHandler,translate_selected:translateHandler,build_subtitles:subtitleHandler,render:renderHandler,verify:verifyHandler,publish_results:publishHandler };
-export const availableProductionHandlers=()=>Object.fromEntries(Object.entries({...productionHandlers,...(!speechConfigured()?{transcribe:undefined}:{}),...(!selectionConfigured()?{select_clips:undefined,translate_selected:undefined}:{})}).filter(([,handler])=>typeof handler==="function"));
+export const productionHandlers = { probe:probeHandler,chunk:chunkHandler,transcribe:transcribeHandler,normalize:normalizeHandler,select_clips:selectHandler,translate_selected:translateHandler,
+    prepare_dub_text:prepareDubTextHandler,tts:ttsHandler,fit_dub_timeline:fitDubTimelineHandler,build_dub_subtitles:buildDubSubtitlesHandler,
+    build_subtitles:subtitleHandler,render:renderHandler,verify:verifyHandler,publish_results:publishHandler };
+export const availableProductionHandlers=()=>Object.fromEntries(Object.entries({...productionHandlers,...(!speechConfigured()?{transcribe:undefined}:{}),
+    ...(!selectionConfigured()?{select_clips:undefined,translate_selected:undefined}:{}),
+    ...(!ttsConfigured()?{prepare_dub_text:undefined,tts:undefined,fit_dub_timeline:undefined,build_dub_subtitles:undefined}:{})}).filter(([,handler])=>typeof handler==="function"));

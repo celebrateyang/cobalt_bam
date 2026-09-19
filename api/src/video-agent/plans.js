@@ -5,6 +5,7 @@ import { getAsrConfig } from "./asr-config.js";
 import { NORMALIZE_CONFIG } from "./normalize-config.js";
 import { getSelectConfig } from "./select-config.js";
 import { getTranslationConfig,normalizeGlossary } from "./translation-config.js";
+import {SUBTITLE_CONFIG,RENDER_CONFIG,VERIFY_CONFIG} from "./delivery-config.js";
 
 export const PIPELINE_VERSION = "video-agent-v1";
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -59,7 +60,7 @@ export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     return stages.map((stage, index) => {
         const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
             : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? {...getSelectConfig(),limits:plan.clips} : stage === "translate_selected" ? getTranslationConfig(plan)
-            : stage === "build_subtitles" ? plan.subtitles : stage === "render" ? plan.video : {};
+            : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles} : stage === "render" ? {...RENDER_CONFIG,...plan.video} : stage === "verify" ? VERIFY_CONFIG : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);
         upstreamHash = inputHash;

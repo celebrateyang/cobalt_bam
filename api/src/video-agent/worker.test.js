@@ -22,6 +22,9 @@ import { executeClaim,workerTick } from "./worker.js";
 import { runAbortableProcess,productionHandlers } from "./worker-handlers.js";
 import { cleanupVideoAgent } from "./cleanup.js";
 import { setAiVideoDatabaseForTests,ensureAiVideoSchema } from "../db/ai-video.js";
+import express from "express";
+import {createVideoAgentRouter} from "../routes/video-agent.js";
+import {getPublishedResults} from "./results.js";
 
 test("worker leases, fencing, durable artifacts, retry, cancellation and real media probing",{ timeout:120000 },async(t)=>{
     process.env.NODE_ENV="test";process.env.VIDEO_AGENT_ENABLED="1";process.env.VIDEO_AGENT_RUNS_ENABLED="1";
@@ -238,7 +241,7 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         await stop(f);await failStep(reader,new Error("cancelled"));await advanceRuns();
     });
     await t.test("translation publishes owned cues with unchanged source timing and provenance",async()=>{
-        const f=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<3",[f.runId]);await advanceRuns();
+        const f=await seed({bytes:await readFile(path.join(root,"fixture.mp4")),probe:{durationMs:20000,width:320,height:180}});await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<3",[f.runId]);await advanceRuns();
         const normalize=await claimStep({workerId:"translation-normalize-fixture",stages:["normalize"]}),source=normalize.run.source_snapshot;
         const cues=[{id:"cue-one",sourceText:"A complete opening.",startMs:0,endMs:10000,flags:[],wordIds:["word-one"]},{id:"cue-two",sourceText:"A complete conclusion.",startMs:10000,endMs:20000,flags:[],wordIds:["word-two"]}];
         const normalized=await uploadJsonArtifact(normalize,{version:"normalized-transcript-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,cues},{kind:"transcript"});
@@ -251,7 +254,33 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         const row=await step(translation.step.id);assert.equal(row.status,"succeeded");assert.equal(row.provider,"openai");assert.equal(row.translatedCueCount,undefined);assert.equal(row.checkpoint.translatedCueCount,2);assert.equal(calls,1);
         const reader=await claimStep({workerId:"translated-cue-reader",stages:["build_subtitles"]}),result=await readJsonArtifact(reader,row.checkpoint.translatedClipsRef,{kind:"transcript"});
         assert.equal(result.version,"translated-clips-v1");assert.equal(result.cues[0].startMs,0);assert.equal(result.cues[1].endMs,20000);assert.equal(result.cues[1].wordIds[0],"word-two");assert.equal(result.sourceSelectedClipsRef,selected.id);
-        await stop(f);await failStep(reader,new Error("cancelled"));await advanceRuns();
+        await executeClaim(reader);await advanceRuns();assert.equal((await step(reader.step.id)).status,"succeeded");
+        const render=await claimStep({workerId:"delivery-render",stages:["render"]});
+        await executeClaim(render,{handlers:{render:context=>productionHandlers.render({...context,commitCheckpoint:async output=>{
+            await context.commitCheckpoint(output);throw Object.assign(new Error("render saved then interrupted"),{code:"VIDEO_AGENT_WORKER_INTERRUPTED"});
+        }})}});
+        const interrupted=await step(render.step.id);assert.equal(interrupted.status,"retry_wait");const videoId=interrupted.checkpoint.clips[0].video.id;
+        await pg.query("UPDATE video_agent_steps SET available_at=0 WHERE id=$1",[render.step.id]);await advanceRuns();
+        await executeClaim(await claimStep({workerId:"delivery-resume",stages:["render"]}));await advanceRuns();
+        assert.equal((await step(render.step.id)).checkpoint.clips[0].video.id,videoId);
+        await workerTick({workerId:"delivery-verify"});await workerTick({workerId:"delivery-publish"});
+        const delivered=(await pg.query("SELECT * FROM video_agent_runs WHERE id=$1",[f.runId])).rows[0];assert.equal(delivered.status,"partially_completed");assert.equal(delivered.produced_count,1);
+        const videoRow=(await pg.query("SELECT object_key FROM video_agent_assets WHERE id=$1",[videoId])).rows[0];
+        for(const second of [1,19]){const frame=path.join(root,`delivery-frame-${second}.gray`);
+            await runAbortableProcess(ffmpeg,["-nostdin","-v","error","-y","-ss",String(second),"-i",storage.resolve(videoRow.object_key),"-frames:v","1","-vf","scale=270:480","-pix_fmt","gray","-f","rawvideo",frame]);
+            assert.ok((await readFile(frame)).some(byte=>byte>100),"Burned subtitles must be visible on the black source at both ends");
+        }
+        const published=await getPublishedResults({projectId:f.projectId,runId:f.runId,userId:1});assert.equal(published.results.length,1);assert.equal(published.results[0].video.id,videoId);assert.deepEqual(Object.keys(published.results[0].subtitles).sort(),["ass","srt","vtt"]);
+        await assert.rejects(getPublishedResults({projectId:f.projectId,runId:f.runId,userId:99}),{status:404});
+        const app=express();app.use(createVideoAgentRouter({authenticate:async req=>({id:Number(req.header("x-test-user") || 1)})}));
+        const server=app.listen(0,"127.0.0.1");await new Promise(resolve=>server.once("listening",resolve));
+        try{const base=`http://127.0.0.1:${server.address().port}/projects/${f.projectId}`;
+            const response=await fetch(`${base}/runs/${f.runId}/results`);assert.equal(response.status,200);
+            for(const [format,asset] of [["mp4",published.results[0].video],...Object.entries(published.results[0].subtitles)]){
+                const response=await fetch(`${base}/assets/${asset.id}/download`);assert.equal(response.status,200);assert.ok(response.headers.get("content-disposition").includes(format));const bytes=Buffer.from(await response.arrayBuffer());assert.equal(createHash("sha256").update(bytes).digest("hex"),asset.checksum);
+            }
+            assert.equal((await fetch(`${base}/assets/${videoId}/download`,{headers:{"x-test-user":"99"}})).status,404);
+        }finally{await new Promise(resolve=>server.close(resolve));}
         const cancelled=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded',output_refs=$2,checkpoint=$3 WHERE run_id=$1 AND stage='select_clips'",[cancelled.runId,[selected.id,normalized.id],{selectedClipsRef:selected.id}]);
         await pg.query("UPDATE video_agent_steps SET status='succeeded' WHERE run_id=$1 AND ordinal<4",[cancelled.runId]);await advanceRuns();
         // Build project-owned fixtures for cancellation; cross-project assets must

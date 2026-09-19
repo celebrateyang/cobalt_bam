@@ -25,6 +25,8 @@ export const executeClaim = async (claim,{ handlers=productionHandlers,signal,le
         const result=await handler({ claim,signal:controller.signal,workDir,checkpoint:claim.step.checkpoint,dependencies:claim.dependencies,
             saveCheckpoint:(checkpoint)=>saveCheckpoint(claim,checkpoint),commitCheckpoint:(result)=>commitCheckpoint(claim,result),readArtifact:(id,options)=>readJsonArtifact(claim,id,{...options,signal:controller.signal}),artifact:(value,options)=>uploadJsonArtifact(claim,value,{...options,signal:controller.signal}),
             audioArtifact:(filename)=>uploadAudioArtifact(claim,filename,{signal:controller.signal}),
+            fileArtifact:(filename,options)=>uploadAudioArtifact(claim,filename,{...options,signal:controller.signal}),
+            readFileArtifact:(id,filename,options)=>readAudioArtifact(claim,id,{...options,filename,signal:controller.signal}),
             readAudioArtifact:(id,filename)=>readAudioArtifact(claim,id,{signal:controller.signal,filename}) });
         controller.signal.throwIfAborted(); await succeedStep(claim,result);
         console.info("[VIDEO AGENT WORKER]",JSON.stringify({...context,event:"attempt.succeeded",durationMs:Date.now()-startedAt}));

@@ -41,8 +41,9 @@ export const readJsonArtifact = async (claim,id,{ signal,storage=getAiVideoObjec
 };
 
 // Verify stored bytes before reusing a chunk; optionally stream to a local ASR input.
-export const readAudioArtifact = async (claim,id,{signal,storage=getAiVideoObjectStorage(),filename,maxBytes=24*1024*1024}={}) => {
-    const asset=await readableAsset(claim,id,"audio_chunk");
+export const readAudioArtifact = async (claim,id,{signal,storage=getAiVideoObjectStorage(),filename,maxBytes=24*1024*1024,kind="audio_chunk"}={}) => {
+    if(!["audio_chunk","rendered_video","subtitle_srt","subtitle_vtt","subtitle_ass"].includes(kind))throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid binary kind");
+    const asset=await readableAsset(claim,id,kind);
     const sizeBytes=Number(asset.size_bytes);
     if(!Number.isSafeInteger(sizeBytes) || sizeBytes<=0 || sizeBytes>maxBytes)throw agentError("VIDEO_AGENT_OUTPUT_INVALID",409,"Audio artifact too large");
     const head=await storage.headObject(asset.object_key);
@@ -55,18 +56,20 @@ export const readAudioArtifact = async (claim,id,{signal,storage=getAiVideoObjec
     return {id:asset.id,generation:asset.generation,sizeBytes,checksum:asset.checksum};
 };
 
-export const uploadAudioArtifact = async (claim,filename,{signal,storage=getAiVideoObjectStorage(),maxBytes=24*1024*1024}={}) => {
+export const uploadAudioArtifact = async (claim,filename,{signal,storage=getAiVideoObjectStorage(),maxBytes=24*1024*1024,kind="audio_chunk"}={}) => {
+    const types={audio_chunk:"audio/wav",rendered_video:"video/mp4",subtitle_srt:"application/x-subrip",subtitle_vtt:"text/vtt",subtitle_ass:"text/plain"};
+    if(!types[kind])throw agentError("VIDEO_AGENT_OUTPUT_INVALID",400,"Invalid binary kind");
     const sizeBytes=(await stat(filename)).size;
     if(!Number.isSafeInteger(sizeBytes) || sizeBytes<=0 || sizeBytes>maxBytes)throw agentError("VIDEO_AGENT_CHUNK_TOO_LARGE",422,"Audio chunk exceeds byte limit");
     const id=randomUUID(),objectKey=createOpaqueObjectKey(process.env.AI_VIDEO_STORAGE_PREFIX);
     await withLease(claim,async(client,{step,now})=>{
         await client.query(`INSERT INTO video_agent_assets(id,project_id,source_id,kind,object_key,size_bytes,status,expires_at,run_id,step_id,attempt_token,input_hash)
-            VALUES($1,$2,$3,'audio_chunk',$4,$5,'pending',$6,$7,$8,$9,$10)`,
-        [id,claim.projectId,claim.run.source_snapshot.id,objectKey,sizeBytes,now+24*60*60*1000,claim.run.id,step.id,step.fencing_token,step.input_hash]);
+            VALUES($1,$2,$3,$11,$4,$5,'pending',$6,$7,$8,$9,$10)`,
+        [id,claim.projectId,claim.run.source_snapshot.id,objectKey,sizeBytes,now+24*60*60*1000,claim.run.id,step.id,step.fencing_token,step.input_hash,kind]);
     });
     let bytes=0;const hash=createHash("sha256");
     const verify=new Transform({transform(chunk,_encoding,done){bytes+=chunk.length;hash.update(chunk);done(bytes>sizeBytes?new Error("Audio file changed"):null,chunk);}});
-    await pipeline(createReadStream(filename),verify,storage.createWriteStream(objectKey,{metadata:{contentType:"audio/wav"}}),{signal});
+    await pipeline(createReadStream(filename),verify,storage.createWriteStream(objectKey,{metadata:{contentType:types[kind]}}),{signal});
     const head=await storage.headObject(objectKey);
     if(bytes!==sizeBytes || head.sizeBytes!==sizeBytes)throw new Error("Audio upload size mismatch");
     return {id,generation:head.generation,sizeBytes,checksum:hash.digest("hex")};

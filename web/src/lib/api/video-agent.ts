@@ -7,6 +7,14 @@ export type AgentSource = { id: string; kind: string; filename: string; mime: st
     errorCode: string | null; retentionUntil: number; assetId: string | null; probe: { durationSeconds: number; width: number; height: number } | null };
 type UploadState = { status: string; committedBytes: number; totalBytes: number; chunkSizeBytes: number; fileFingerprint: string; expiresAt: number };
 export type AgentDetail = { project: AgentProject; sources: AgentSource[] };
+export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};subtitles:Record<string,{id:string}>};
+export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
+export const getAgentPreview=async(projectId:string,assetId:string)=>{
+    const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`,signed=await agentRequest<{url:string|null}>(`${path}?url=1`);
+    if(signed.url)return signed.url;
+    const token=await getClerkToken(),response=await fetch(`${currentApiURL()}/user/video-agent${path}`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!response.ok)throw new Error("Preview unavailable");return URL.createObjectURL(await response.blob());
+};
 export const agentRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
     const token = await getClerkToken();
     if (!token) throw Object.assign(new Error("Sign in required"), { code: "SIGN_IN_REQUIRED" });

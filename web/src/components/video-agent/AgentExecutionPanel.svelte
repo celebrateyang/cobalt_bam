@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount,createEventDispatcher } from "svelte";
     import { t } from "$lib/i18n/translations";
+    import {getAgentResults,getAgentPreview,downloadAgentAsset,type AgentResult} from "$lib/api/video-agent";
     import { getAgentCapabilities,getAgentUsage,listAgentRuns,getAgentRun,getAgentEvents,getCurrentAgentPlan,submitAgentCommand,
         type AgentProject,type AgentSource,type AgentCapabilities,type AgentUsage,type AgentRun,type AgentStep,type AgentCommand } from "$lib/api/video-agent";
     export let project: AgentProject;
@@ -8,6 +9,9 @@
     const dispatch=createEventDispatcher();
     let capabilities: AgentCapabilities | null=null,usage: AgentUsage | null=null;
     let runs: AgentRun[]=[],selectedRunId="",run: AgentRun | null=null,steps: AgentStep[]=[];
+    let results:AgentResult[]=[],previewUrls:Record<string,string>={};
+    const clearResults=()=>{Object.values(previewUrls).forEach(url=>{if(url.startsWith("blob:"))URL.revokeObjectURL(url);});previewUrls={};results=[];};
+    const preview=async(assetId:string)=>{if(previewUrls[assetId])return;try{const version=epoch,id=selectedRunId,url=await getAgentPreview(project.id,assetId);if(!mounted || version!==epoch || id!==selectedRunId){if(url.startsWith("blob:"))URL.revokeObjectURL(url);return;}if(previewUrls[assetId]?.startsWith("blob:"))URL.revokeObjectURL(previewUrls[assetId]);previewUrls={...previewUrls,[assetId]:url};}catch(error){report(error);}};
     let sourceRef="",targetLanguage="es",subtitleMode: "translated" | "bilingual"="bilingual",requestedCount=3;
     let planId="",planRevision=0,revision=project.revision,busy=false,refreshing=false,errorCode="",stale=false;
     let mounted=false,epoch=0,cursor="0",controller: AbortController | null=null;
@@ -27,31 +31,32 @@
         if(!mounted || refreshing)return;
         refreshing=true;const version=epoch,id=project.id;
         try{
-            const results=await Promise.allSettled([getAgentCapabilities(),getAgentUsage(),listAgentRuns(id),getCurrentAgentPlan(id)]);
+            const settled=await Promise.allSettled([getAgentCapabilities(),getAgentUsage(),listAgentRuns(id),getCurrentAgentPlan(id)]);
             if(!mounted || version!==epoch)return;
-            if(results[0].status==="fulfilled")capabilities=results[0].value;else{capabilities=null;report(results[0].reason);}
-            if(results[1].status==="fulfilled")usage=results[1].value.usage;else report(results[1].reason);
-            if(results[2].status==="fulfilled"){
-                const latest=results[2].value.runs;
+            if(settled[0].status==="fulfilled")capabilities=settled[0].value;else{capabilities=null;report(settled[0].reason);}
+            if(settled[1].status==="fulfilled")usage=settled[1].value.usage;else report(settled[1].reason);
+            if(settled[2].status==="fulfilled"){
+                const latest=settled[2].value.runs;
                 runs=[...latest,...runs.filter(value=>!latest.some(item=>item.id===value.id) && !activeStates.includes(value.status))];
-                if(!historyLoaded)nextCursor=results[2].value.nextCursor;
+                if(!historyLoaded)nextCursor=settled[2].value.nextCursor;
                 if(!runs.some(value=>value.id===selectedRunId))selectedRunId=runs[0]?.id || "";
-            }else throw results[2].reason;
-            if(results[3].status==="fulfilled"){
-                const current=results[3].value;revision=Math.max(revision,current.revision);
+            }else throw settled[2].reason;
+            if(settled[3].status==="fulfilled"){
+                const current=settled[3].value;revision=Math.max(revision,current.revision);
                 if(!planLoaded && !dirty && current.plan){
                     const saved=current.plan;sourceRef=saved.input.sourceRef;targetLanguage=saved.input.targetLanguage;subtitleMode=saved.input.subtitles?.mode || "bilingual";requestedCount=saved.input.clips.requestedCount;
                     planId=saved.id;planRevision=saved.revision;
                 }
                 planLoaded=true;
-            }else report(results[3].reason);
+            }else report(settled[3].reason);
             if(selectedRunId){
                 const selected=selectedRunId;
                 const snapshot=await getAgentRun(id,selected);
                 if(!mounted || version!==epoch || selected!==selectedRunId)return;
                 run=snapshot.run;steps=snapshot.steps;cursor=snapshot.eventCursor;
-            }else{run=null;steps=[];}
-            stale=results.some(value=>value.status==="rejected");
+                if(["completed","partially_completed"].includes(run.status)){const published=await getAgentResults(id,selected);if(mounted && version===epoch && selected===selectedRunId)results=published.results;}else clearResults();
+            }else{run=null;steps=[];clearResults();}
+            stale=settled.some(value=>value.status==="rejected");
         }catch(error){if(mounted && version===epoch){stale=true;report(error);}}
         finally{refreshing=false;}
     };
@@ -81,7 +86,7 @@
     };
     const start=()=>command({type:"start_run",...envelope(),input:{planId}});
     const control=(type:"cancel_run" | "retry_run")=>run && command({type,...envelope(),input:{runId:run.id}});
-    const chooseRun=()=>{run=null;steps=[];cursor="0";void refresh();};
+    const chooseRun=()=>{clearResults();run=null;steps=[];cursor="0";void refresh();};
     const clearPlan=()=>{planId="";dirty=true;};
     const more=async()=>{
         if(!nextCursor)return;busy=true;const version=epoch;
@@ -102,7 +107,7 @@
                 if(events.resetRequired)dispatch("changed");
             }catch(error){if(mounted && version===epoch){stale=true;report(error);await refresh();}}
         },5000);
-        return()=>{mounted=false;epoch++;clearInterval(timer);controller?.abort();};
+        return()=>{mounted=false;epoch++;clearInterval(timer);controller?.abort();clearResults();};
     });
 </script>
 
@@ -155,6 +160,14 @@
     {#if run}
         <p role="status">{$t(`video-agent.run_${run.status}`)} / {$t("video-agent.steps_finished")}: {completedSteps}/{steps.length}</p>
         <p>{$t("video-agent.outputs_verified")}: {run.producedCount}/{run.requestedCount}</p>
+        {#each results as result (result.id)}
+            <article>
+                <h3>{result.title || result.id}</h3>
+                {#if previewUrls[result.video.id]}<video controls preload="metadata" src={previewUrls[result.video.id]}><track kind="captions" label="VTT" src={previewUrls[result.subtitles.vtt?.id] || undefined} /></video>{:else}<button on:click={()=>Promise.all([preview(result.video.id),...(result.subtitles.vtt?[preview(result.subtitles.vtt.id)]:[])])}>&#9654; MP4</button>{/if}
+                <div class="actions"><button on:click={()=>downloadAgentAsset(project.id,result.video.id,`${result.id}.mp4`).catch(report)}>MP4</button>
+                {#each Object.entries(result.subtitles) as [format,asset]}<button on:click={()=>downloadAgentAsset(project.id,asset.id,`${result.id}.${format}`).catch(report)}>{format.toUpperCase()}</button>{/each}</div>
+            </article>
+        {/each}
         {#if run.errorCode}<p class="error">{run.errorCode}</p>{/if}
         <ol>{#each steps as step (step.id)}<li>{$t(`video-agent.stage_${step.stage}`)}: {$t(`video-agent.step_${step.status}`)} ({step.attempt}) {step.errorCode || ""}</li>{/each}</ol>
         <div class="actions">
@@ -166,6 +179,7 @@
 
 <style>
     .execution { display:grid;gap:12px;font-size:12px; }
+    video {width:100%;max-height:480px;background:black;} article {display:grid;gap:12px;}
     form { display:grid;gap:9px;border-top:1px solid rgba(128,128,128,.2);padding-top:16px; }
     h3,p { margin:0;line-height:1.6; } h3 { font-size:14px; }
     select,input,button { padding:10px;border:1px solid rgba(128,128,128,.25);border-radius:9px;background:var(--background);color:var(--text);font:inherit;min-width:0; }
@@ -175,5 +189,5 @@
     .success-icon { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#507b1c;color:white;font-size:20px; }
     button.saved:disabled { opacity:1;border-color:#81b426;background:rgba(129,180,38,.12);cursor:default; }
     .primary { background:var(--accent);color:white; } .muted { opacity:.7; } .error { color:#c0392b;overflow-wrap:anywhere; }
-    ol { margin:0;padding-left:20px; } li { margin:8px 0;overflow-wrap:anywhere; } .actions { display:flex;gap:8px; }
+    ol { margin:0;padding-left:20px; } li { margin:8px 0;overflow-wrap:anywhere; } .actions { display:flex;flex-wrap:wrap;gap:8px; }
 </style>

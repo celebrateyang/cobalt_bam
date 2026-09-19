@@ -3,7 +3,7 @@
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { clerkUser, clerkLoaded, signIn } from "$lib/state/clerk";
-    import { createAgentProject, deleteAgentProject, downloadAgentAsset, getAgentProject, importAgentSource, listAgentProjects, uploadAgentSource,
+    import { createAgentProject, deleteAgentProject, downloadAgentAsset, getAgentProject, getAgentCapabilities, importAgentSource, listAgentProjects, uploadAgentSource,
         type AgentProject, type AgentSource } from "$lib/api/video-agent";
     import { getPendingAiVideoImport, type PendingAiVideoImport } from "$lib/api/ai-video";
     import { t } from "$lib/i18n/translations";
@@ -27,6 +27,7 @@
     let errorKey = "";
     let errorCode = "";
     let loading = false;
+    let executionEnabled = false;
     let mounted = false;
     let loadKey = "";
     let epoch = 0;
@@ -51,12 +52,13 @@
     };
     const refresh = async () => {
         const version = ++epoch;
-        projects = []; sources = []; selectedProject = null; errorKey = ""; errorCode = ""; nextCursor = null;
+        projects = []; sources = []; selectedProject = null; errorKey = ""; errorCode = ""; nextCursor = null; executionEnabled = false;
         if (!$clerkUser) { loading = false; return; }
         loading = true;
         try {
-            const [listResult, detailResult] = await Promise.allSettled([listAgentProjects(), projectId ? getAgentProject(projectId) : Promise.resolve(null)]);
+            const [listResult, detailResult, capabilitiesResult] = await Promise.allSettled([listAgentProjects(), projectId ? getAgentProject(projectId) : Promise.resolve(null), getAgentCapabilities()]);
             if (version !== epoch) return;
+            if(capabilitiesResult.status === "fulfilled")executionEnabled = capabilitiesResult.value.executionEnabled;
             if (listResult.status === "fulfilled") { projects = listResult.value.projects; nextCursor = listResult.value.nextCursor; }
             else reportError(listResult.reason);
             if (detailResult.status === "fulfilled") { selectedProject = detailResult.value?.project || null; sources = detailResult.value?.sources || []; }
@@ -145,7 +147,7 @@
 
     <div class="preview-note" role="note">
         <IconSparkles size={19} aria-hidden="true" />
-        <p>{$t("video-agent.preview_note")}</p>
+        <p>{$t(executionEnabled ? "video-agent.plan_controls_hint" : "video-agent.preview_note")}</p>
         <a href={highlightLink}>{$t("video-agent.open_highlight")}</a>
     </div>
 

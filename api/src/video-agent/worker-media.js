@@ -8,9 +8,9 @@ import { agentError } from "../db/video-agent.js";
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { withLease } from "./worker-store.js";
 
-export const runAbortableProcess = (command,args,{ signal,timeoutMs=120000 }={}) => new Promise((resolve,reject) => {
+export const runAbortableProcess = (command,args,{ signal,timeoutMs=120000,cwd }={}) => new Promise((resolve,reject) => {
     signal?.throwIfAborted();
-    const child=spawn(command,args,{ windowsHide:true,stdio:["ignore","pipe","pipe"] });
+    const child=spawn(command,args,{ cwd,windowsHide:true,stdio:["ignore","pipe","pipe"] });
     let stdout="",timedOut=false;
     child.stdout.on("data",chunk=>{stdout=(stdout+chunk.toString("utf8")).slice(-1024*1024);});
     // Drain stderr without including source filenames or provider text in errors.

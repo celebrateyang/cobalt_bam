@@ -6,6 +6,7 @@ import { addSource, completeUpload, getUpload, putUpload } from "../video-agent/
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { getPlan, getCurrentPlan,getRun, listEvents, listRevisions, listRuns, submitCommand } from "../video-agent/execution.js";
 import { admissionEnabled,executionReady,getExecutionUsage } from "../video-agent/admission.js";
+import {getPublishedResults} from "../video-agent/results.js";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const activeStreams = new Map();
@@ -143,6 +144,7 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
         success(res, await db.listProjects({ ...input, cursor, limit: Math.min(50, Math.max(1, Math.floor(Number(req.query.limit) || 20))) }));
     });
     route("get", "/projects/:projectId", async (_req, res, input) => success(res, await db.getProject(input)));
+    route("get", "/projects/:projectId/runs/:runId/results", async (_req,res,input)=>success(res,await getPublishedResults(input)));
     route("delete", "/projects/:projectId", async (_req, res, input) => { await db.deleteProject(input); res.status(204).end(); });
     route("post", "/projects/:projectId/sources", async (req, res, input) => success(res, await db.addSource({ ...input, body: req.body }), req.body?.kind === "download_import" ? 202 : 201));
     const uploadPath = "/projects/:projectId/sources/:sourceId";
@@ -162,6 +164,18 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
             return result.rows[0];
         });
         const storage = getAiVideoObjectStorage();
+        const formats={rendered_video:["mp4","video/mp4"],subtitle_srt:["srt","application/x-subrip"],subtitle_vtt:["vtt","text/vtt"],subtitle_ass:["ass","text/plain; charset=utf-8"]};
+        if(asset.kind!=="source"){
+            if(!formats[asset.kind])throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset unavailable");
+            const [extension,mime]=formats[asset.kind];asset.mime=mime;asset.filename=`video-agent-${asset.id}.${extension}`;
+            const published=await transaction(async client=>{
+                const rows=(await client.query(`SELECT s.checkpoint FROM video_agent_steps s JOIN video_agent_runs r ON r.id=s.run_id WHERE r.project_id=$1 AND r.status IN ('completed','partially_completed') AND s.stage='publish_results' AND s.status='succeeded'`,[input.projectId])).rows;
+                return rows.some(row=>row.checkpoint.results?.some(clip=>clip.video.id===asset.id || Object.values(clip.subtitles).some(item=>item.id===asset.id)));
+            });
+            if(!published)throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset not published");
+        }
+        const head=await storage.headObject(asset.object_key);
+        if(head.generation!==asset.generation || head.sizeBytes!==Number(asset.size_bytes))throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset changed");
         const disposition = contentDisposition(asset.filename);
         if (process.env.AI_VIDEO_STORAGE_PROVIDER === "gcs" || (!process.env.AI_VIDEO_STORAGE_PROVIDER && process.env.NODE_ENV === "production")) {
             const url = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, { responseDisposition: disposition, responseType: asset.mime });

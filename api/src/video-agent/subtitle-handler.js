@@ -21,11 +21,27 @@ export const buildSourceClipCues=(value,clip,mode)=>{
         return Array.from({length:count},(_,index)=>({id:count===1?id:`${id}_part${index}`,startMs:cue.startMs-clip.startMs+Math.round((cue.endMs-cue.startMs)*index/count),endMs:cue.startMs-clip.startMs+Math.round((cue.endMs-cue.startMs)*(index+1)/count),text:mode==="bilingual"?[partition(source,index),partition(translated,index)].filter(Boolean).join("\n"):partition(translated,index),timingQuality:count>1?"estimated":cue.timingQuality})).filter(cue=>cue.text);
     });
 };
+export const applyResultEdits=(value,edits)=>{
+    if(!edits)return value;
+    const clips=value.clips.map(clip=>{
+        const patch=edits.clips?.[clip.id];if(!patch)return clip;
+        const first=clip.cueIds.indexOf(patch.startCueId || clip.cueIds[0]);
+        const last=clip.cueIds.indexOf(patch.endCueId || clip.cueIds.at(-1));
+        const byId=new Map(value.cues.map(cue=>[cue.id,cue]));
+        if(first<0 || last<first)throw agentError("VIDEO_AGENT_EDIT_BOUNDARY_INVALID",422,"Edited clip boundary is unavailable");
+        const cueIds=clip.cueIds.slice(first,last+1),startMs=byId.get(cueIds[0]).startMs,endMs=byId.get(cueIds.at(-1)).endMs;
+        if(endMs-startMs<15000 || endMs-startMs>90000)throw agentError("VIDEO_AGENT_EDIT_BOUNDARY_INVALID",422,"Edited clip boundary is invalid");
+        return {...clip,cueIds,startMs,endMs,title:patch.title || clip.title,...(patch.focusX!==undefined?{focusX:patch.focusX}:{})};
+    });
+    const selected=new Set(clips.flatMap(clip=>clip.cueIds));
+    for(const id of Object.keys(edits.subtitles || {}))if(!selected.has(id))throw agentError("VIDEO_AGENT_EDIT_CUE_NOT_FOUND",422,"Edited subtitle cue is unavailable");
+    return {...value,clips,cues:value.cues.map(cue=>edits.subtitles?.[cue.id]!==undefined?{...cue,translatedText:edits.subtitles[cue.id]}:cue)};
+};
 export const subtitleHandler=async ctx=>{
     const {claim,dependencies,signal,readArtifact,artifact,fileArtifact,readFileArtifact,commitCheckpoint,workDir}=ctx;
-    const config={...SUBTITLE_CONFIG,...claim.run.plan.subtitles};if(hashInput(config)!==hashInput(claim.step.input_snapshot.config))throw agentError("VIDEO_AGENT_SUBTITLE_CONFIG_CHANGED",409,"Subtitle configuration changed");
+    const config={...SUBTITLE_CONFIG,...claim.run.plan.subtitles,...(claim.run.plan.edits?{edits:claim.run.plan.edits}:{})};if(hashInput(config)!==hashInput(claim.step.input_snapshot.config))throw agentError("VIDEO_AGENT_SUBTITLE_CONFIG_CHANGED",409,"Subtitle configuration changed");
     const source=claim.run.source_snapshot,ref=dependencies.find(step=>step.stage==="translate_selected")?.checkpoint?.translatedClipsRef;
-    const value=validateTranslatedClips(await readArtifact(ref,{kind:"transcript"}),{sourceChecksum:source.checksum,durationMs:source.durationMs,targetLanguage:claim.run.plan.targetLanguage,...claim.run.plan.clips});
+    const value=applyResultEdits(validateTranslatedClips(await readArtifact(ref,{kind:"transcript"}),{sourceChecksum:source.checksum,durationMs:source.durationMs,targetLanguage:claim.run.plan.targetLanguage,...claim.run.plan.clips}),claim.run.plan.edits);
     const configHash=hashInput({config,ref}),checkpoint=ctx.checkpoint?.configHash===configHash?ctx.checkpoint:{configHash,clips:[]};
     for(const clip of value.clips){signal.throwIfAborted();const existing=checkpoint.clips.find(item=>item.id===clip.id);if(existing){for(const [format,asset] of Object.entries(existing.subtitles))await readFileArtifact(asset.id,undefined,{kind:`subtitle_${format}`,maxBytes:2*1024*1024});continue;}
         const cues=buildSourceClipCues(value,clip,config.mode),subtitles={},assets=[];

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {buildSourceClipCues,subtitleHandler} from "./subtitle-handler.js";
+import {applyResultEdits,buildSourceClipCues,subtitleHandler} from "./subtitle-handler.js";
 import {verifyHandler,publishHandler} from "./verify-handler.js";
 import {SUBTITLE_CONFIG,VERIFY_CONFIG} from "./delivery-config.js";
 import {mkdtemp,rm,readFile,writeFile} from "node:fs/promises";
@@ -15,6 +15,29 @@ test("clip-relative subtitles preserve text and source boundaries with at most t
     assert.equal(split.map(cue=>cue.text.split("\n").filter(line=>line!=="Opening.").join("")).join("").replace(/\s/g,""),value.cues[0].translatedText.replace(/\s/g,""));
     assert.ok(split.every((cue,i)=>cue.text.split("\n").length<=2 && cue.timingQuality==="estimated" && (!i || cue.startMs===split[i-1].endMs)));
     value.cues[0].endMs=15100;assert.throws(()=>buildSourceClipCues(value,clip,"bilingual"),{code:"VIDEO_AGENT_SUBTITLE_UNREADABLE"});
+});
+test("result edits change exported subtitles and keep clip boundaries on source cues",async()=>{
+    const workDir=await mkdtemp(path.join(os.tmpdir(),"agent-edit-subtitles-"));
+    try{
+        const source={checksum:"f".repeat(64),durationMs:40000},cues=[
+            {id:"cue_a",sourceText:"First",translatedText:"Primero",startMs:0,endMs:10000,timingQuality:"word"},
+            {id:"cue_b",sourceText:"Second",translatedText:"Segundo",startMs:10000,endMs:20000,timingQuality:"word"},
+            {id:"cue_c",sourceText:"Third",translatedText:"Tercero",startMs:20000,endMs:30000,timingQuality:"word"}];
+        const value={version:"translated-clips-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,config:{targetLanguage:"es"},
+            clips:[{id:"clip_one",title:"Old",startMs:0,endMs:30000,cueIds:cues.map(cue=>cue.id)}],cues};
+        const edits={baseRunId:"00000000-0000-4000-8000-000000000001",clips:{clip_one:{title:"New",focusX:0.75,startCueId:"cue_b",endCueId:"cue_c"}},subtitles:{cue_b:"Texto nuevo"}};
+        const changed=applyResultEdits(value,edits);
+        assert.equal(changed.clips[0].startMs,10000);assert.equal(changed.clips[0].endMs,30000);assert.equal(changed.clips[0].focusX,0.75);
+        assert.deepEqual(changed.clips[0].cueIds,["cue_b","cue_c"]);
+        assert.equal(buildSourceClipCues(changed,changed.clips[0],"translated")[0].text,"Texto nuevo");
+        assert.throws(()=>applyResultEdits(value,{...edits,clips:{clip_one:{startCueId:"cue_c",endCueId:"cue_b"}}}),{code:"VIDEO_AGENT_EDIT_BOUNDARY_INVALID"});
+        const files={},config={...SUBTITLE_CONFIG,enabled:true,mode:"translated",edits};
+        const output=await subtitleHandler({claim:{run:{source_snapshot:source,plan:{targetLanguage:"es",subtitles:{enabled:true,mode:"translated"},clips:{},edits}},step:{input_snapshot:{config}}},
+            dependencies:[{stage:"translate_selected",checkpoint:{translatedClipsRef:"translation"}}],signal:new AbortController().signal,workDir,
+            readArtifact:async()=>value,artifact:async data=>({id:"manifest",value:data}),fileArtifact:async(filename,{kind})=>{files[kind]=await readFile(filename,"utf8");return {id:kind};},commitCheckpoint:async()=>{}});
+        assert.equal(output.checkpoint.clips[0].title,"New");assert.equal(output.checkpoint.clips[0].focusX,0.75);
+        assert.ok(files.subtitle_srt.includes("Texto nuevo"));assert.ok(!files.subtitle_srt.includes("Primero"));
+    }finally{await rm(workDir,{recursive:true,force:true});}
 });
 test("exports escape VTT and ASS markup and preserve UTF-8 text",async()=>{
     const workDir=await mkdtemp(path.join(os.tmpdir(),"agent-subtitles-"));

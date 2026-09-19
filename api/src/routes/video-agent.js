@@ -6,7 +6,9 @@ import { addSource, completeUpload, getUpload, putUpload } from "../video-agent/
 import { getAiVideoObjectStorage } from "../ai-video/object-storage.js";
 import { getPlan, getCurrentPlan,getRun, listEvents, listRevisions, listRuns, submitCommand } from "../video-agent/execution.js";
 import { admissionEnabled,executionReady,getExecutionUsage } from "../video-agent/admission.js";
-import {getPublishedResults} from "../video-agent/results.js";
+import {getPublishedResults,getEditableResults} from "../video-agent/results.js";
+import {saveUserMessage,listMessages} from "../video-agent/conversation.js";
+import {planMessage} from "../video-agent/planner.js";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const activeStreams = new Map();
@@ -20,7 +22,7 @@ const fail = (res, error) => {
 // Dependencies are injectable for HTTP integration tests; production uses Clerk and PostgreSQL.
 export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) => {
     const router = express.Router();
-    const db = { createProject, deleteProject, getProject, listProjects, addSource, completeUpload, getUpload, putUpload,
+    const db = { createProject, deleteProject, getProject, listProjects, addSource, completeUpload, getUpload, putUpload,saveUserMessage,listMessages,planMessage,
         getPlan,getCurrentPlan, getRun, listEvents, listRevisions, listRuns, submitCommand, ...operations };
     router.use((req, res, next) => {
         res.setHeader("Cache-Control", "no-store");
@@ -144,7 +146,23 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
         success(res, await db.listProjects({ ...input, cursor, limit: Math.min(50, Math.max(1, Math.floor(Number(req.query.limit) || 20))) }));
     });
     route("get", "/projects/:projectId", async (_req, res, input) => success(res, await db.getProject(input)));
+    route("get","/projects/:projectId/messages",async(req,res,input)=>success(res,await db.listMessages({...input,cursor:cursor(req),limit:limit(req)})));
+    route("post","/projects/:projectId/messages",async(req,res,input)=>{
+        if(!req.body || Object.keys(req.body).some(key=>!["content","clientMessageId"].includes(key)))throw agentError("VIDEO_AGENT_MESSAGE_INVALID",400,"Invalid conversation message");
+        const result=await db.saveUserMessage({...input,content:req.body.content,clientMessageId:req.body.clientMessageId});
+        success(res,{message:result.message},result.created?201:200);
+    });
+    route("post","/projects/:projectId/messages/:messageId/plan",async(req,res,input)=>{
+        if(req.body && Object.keys(req.body).length)throw agentError("VIDEO_AGENT_MESSAGE_INVALID",400,"Planner request body must be empty");
+        const controller=new AbortController();
+        const close=()=>controller.abort(Object.assign(new Error("Client disconnected"),{code:"VIDEO_AGENT_CLIENT_DISCONNECTED"}));
+        req.once("aborted",close);
+        const authorization=req.header("authorization") || "";
+        const clerkToken=/^Bearer ([^\s]+)$/u.exec(authorization)?.[1] || null;
+        try{success(res,await db.planMessage({...input,clerkToken,signal:controller.signal}));}finally{req.off("aborted",close);}
+    });
     route("get", "/projects/:projectId/runs/:runId/results", async (_req,res,input)=>success(res,await getPublishedResults(input)));
+    route("get", "/projects/:projectId/runs/:runId/editable", async (_req,res,input)=>success(res,await getEditableResults(input)));
     route("delete", "/projects/:projectId", async (_req, res, input) => { await db.deleteProject(input); res.status(204).end(); });
     route("post", "/projects/:projectId/sources", async (req, res, input) => success(res, await db.addSource({ ...input, body: req.body }), req.body?.kind === "download_import" ? 202 : 201));
     const uploadPath = "/projects/:projectId/sources/:sourceId";

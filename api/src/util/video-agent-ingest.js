@@ -1,4 +1,5 @@
 import { claimSource, ingestSource } from "../video-agent/ingestion.js";
+import { resumePendingSourcePlans } from "../video-agent/planner.js";
 import { closePool } from "../db/pg-client.js";
 
 let stopping = false;
@@ -9,8 +10,8 @@ try {
     do {
         const source = await claimSource();
         if (source) await ingestSource(source);
-        else if (process.argv.includes("--once")) break;
-        else await new Promise((resolve) => setTimeout(resolve, 3000));
+        await resumePendingSourcePlans({ limit: 1 });
+        if (!source && !process.argv.includes("--once")) await new Promise((resolve) => setTimeout(resolve, 3000));
     } while (!stopping && !process.argv.includes("--once"));
 } catch (error) {
     console.error(`[VIDEO AGENT] ingestion_stopped code=${error.code || "SERVER_ERROR"}`);

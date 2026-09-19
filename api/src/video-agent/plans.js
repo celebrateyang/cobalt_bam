@@ -27,8 +27,25 @@ export const validateSettings = (input) => {
     if (input.subtitleMode !== undefined && !["translated", "bilingual"].includes(input.subtitleMode)) invalid("Unsupported subtitle mode");
     return input;
 };
+export const normalizeEdits=(value)=>{
+    object(value,["baseRunId","clips","subtitles"]);
+    if(Buffer.byteLength(JSON.stringify(value))>32768)invalid("Result edit snapshot is too large");
+    if(!UUID.test(value.baseRunId || ""))invalid("Invalid edit base run");
+    const clips=value.clips ?? {},subtitles=value.subtitles ?? {};
+    if(!clips || typeof clips!=="object" || Array.isArray(clips) || Object.keys(clips).length>5 ||
+        !subtitles || typeof subtitles!=="object" || Array.isArray(subtitles) || Object.keys(subtitles).length>50)invalid("Too many edits");
+    for(const [id,patch] of Object.entries(clips)){
+        if(!id || id.length>128 || !/^[A-Za-z0-9_-]+$/.test(id))invalid("Invalid clip id");
+        object(patch,["title","focusX","startCueId","endCueId"]);
+        if(patch.title!==undefined && (typeof patch.title!=="string" || !patch.title.trim() || patch.title.length>120 || /[\u0000-\u001f\u007f]/u.test(patch.title)))invalid("Invalid clip title");
+        if(patch.focusX!==undefined && (typeof patch.focusX!=="number" || !Number.isFinite(patch.focusX) || patch.focusX<0 || patch.focusX>1))invalid("Invalid frame focus");
+        for(const key of ["startCueId","endCueId"])if(patch[key]!==undefined && (typeof patch[key]!=="string" || patch[key].length>128 || !/^[A-Za-z0-9_-]+$/.test(patch[key])))invalid("Invalid clip boundary");
+    }
+    for(const [id,text] of Object.entries(subtitles))if(!id || id.length>128 || !/^[A-Za-z0-9_-]+$/.test(id) || typeof text!=="string" || !text.trim() || text.length>2048 || /[\u0000-\u001f\u007f]/u.test(text))invalid("Invalid subtitle edit");
+    return {baseRunId:value.baseRunId.toLowerCase(),clips,subtitles};
+};
 export const normalizePlan = (input) => {
-    object(input, ["sourceRef", "operation", "sourceLanguage", "targetLanguage", "clips", "video", "subtitles", "dubbing", "executionMode", "glossary"]);
+    object(input, ["sourceRef", "operation", "sourceLanguage", "targetLanguage", "clips", "video", "subtitles", "dubbing", "executionMode", "glossary", "edits"]);
     if (typeof input.sourceRef !== "string" || !UUID.test(input.sourceRef)) invalid("Invalid source reference");
     if (input.operation !== "highlight_clips") invalid("Only highlight_clips is supported in the initial pipeline");
     const sourceLanguage = input.sourceLanguage ?? "auto";
@@ -50,7 +67,8 @@ export const normalizePlan = (input) => {
     if (input.executionMode !== undefined && input.executionMode !== "execute") invalid("Unsupported execution mode");
     return { sourceRef: input.sourceRef.toLowerCase(), operation: "highlight_clips", sourceLanguage, targetLanguage: input.targetLanguage,
         clips: { requestedCount, minSeconds, maxSeconds }, video: { aspectRatio: "9:16", preset: "tiktok" },
-        subtitles: { enabled: true, mode: subtitles.mode }, glossary:normalizeGlossary(input.glossary),dubbing: { enabled: false, voiceId: null }, executionMode: "execute" };
+        subtitles: { enabled: true, mode: subtitles.mode }, glossary:normalizeGlossary(input.glossary),dubbing: { enabled: false, voiceId: null }, executionMode: "execute",
+        ...(input.edits?{edits:normalizeEdits(input.edits)}:{}) };
 };
 
 // Only server-defined stages/dependencies. Client plans cannot provide commands or a custom graph.
@@ -60,7 +78,7 @@ export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     return stages.map((stage, index) => {
         const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
             : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? {...getSelectConfig(),limits:plan.clips} : stage === "translate_selected" ? getTranslationConfig(plan)
-            : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles} : stage === "render" ? {...RENDER_CONFIG,...plan.video} : stage === "verify" ? VERIFY_CONFIG : {};
+            : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles,...(plan.edits?{edits:plan.edits}:{})} : stage === "render" ? {...RENDER_CONFIG,...plan.video} : stage === "verify" ? VERIFY_CONFIG : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);
         upstreamHash = inputHash;

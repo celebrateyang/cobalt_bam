@@ -240,6 +240,12 @@ spec:
             - name: VIDEO_AGENT_ADMISSION_ENABLED
               value: {{ ternary "1" "0" .Values.videoAgent.admissionEnabled | quote }}
             {{- if .Values.videoAgent.enabled }}
+            - name: VIDEO_AGENT_PLANNER_MODEL
+              value: {{ .Values.videoAgent.planner.model | quote }}
+            - name: VIDEO_AGENT_PLANNER_TIMEOUT_MS
+              value: {{ .Values.videoAgent.planner.timeoutMs | quote }}
+            - name: VIDEO_AGENT_MAX_TOOL_CALLS
+              value: {{ .Values.videoAgent.planner.maxToolCalls | quote }}
             - name: AI_VIDEO_TEXT_MODEL
               value: {{ .Values.aiVideo.worker.textModel | quote }}
             - name: AI_VIDEO_TRANSCRIPTION_MODEL

@@ -3,8 +3,8 @@
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { clerkUser, clerkLoaded, signIn } from "$lib/state/clerk";
-    import { createAgentProject, deleteAgentProject, downloadAgentAsset, getAgentProject, getAgentCapabilities, importAgentSource, listAgentProjects, uploadAgentSource,
-        type AgentProject, type AgentSource } from "$lib/api/video-agent";
+    import { createAgentProject, deleteAgentProject, downloadAgentAsset, getAgentProject, getAgentCapabilities, importAgentSource, listAgentMessages,listAgentProjects,planAgentMessage,saveAgentMessage,uploadAgentSource,
+        type AgentMessage,type AgentProject, type AgentSource } from "$lib/api/video-agent";
     import { getPendingAiVideoImport, type PendingAiVideoImport } from "$lib/api/ai-video";
     import { t } from "$lib/i18n/translations";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
@@ -28,6 +28,10 @@
     let errorCode = "";
     let loading = false;
     let executionEnabled = false;
+    let messages:AgentMessage[]=[];
+    let messageCursor:string|null=null;
+    let messageBusy=false;
+    let planningMessageId="";
     let mounted = false;
     let loadKey = "";
     let epoch = 0;
@@ -52,17 +56,19 @@
     };
     const refresh = async () => {
         const version = ++epoch;
-        projects = []; sources = []; selectedProject = null; errorKey = ""; errorCode = ""; nextCursor = null; executionEnabled = false;
+        projects = []; sources = []; messages=[];messageCursor=null;selectedProject = null; errorKey = ""; errorCode = ""; nextCursor = null; executionEnabled = false;
         if (!$clerkUser) { loading = false; return; }
         loading = true;
         try {
-            const [listResult, detailResult, capabilitiesResult] = await Promise.allSettled([listAgentProjects(), projectId ? getAgentProject(projectId) : Promise.resolve(null), getAgentCapabilities()]);
+            const [listResult, detailResult, capabilitiesResult,messageResult] = await Promise.allSettled([listAgentProjects(), projectId ? getAgentProject(projectId) : Promise.resolve(null), getAgentCapabilities(),projectId?listAgentMessages(projectId):Promise.resolve(null)]);
             if (version !== epoch) return;
             if(capabilitiesResult.status === "fulfilled")executionEnabled = capabilitiesResult.value.executionEnabled;
             if (listResult.status === "fulfilled") { projects = listResult.value.projects; nextCursor = listResult.value.nextCursor; }
             else reportError(listResult.reason);
             if (detailResult.status === "fulfilled") { selectedProject = detailResult.value?.project || null; sources = detailResult.value?.sources || []; }
             else reportError(detailResult.reason);
+            if(messageResult.status==="fulfilled" && messageResult.value){messages=messageResult.value.messages;messageCursor=messageResult.value.nextCursor;}
+            else if(messageResult.status==="rejected")reportError(messageResult.reason);
         } catch (error) { if (version === epoch) reportError(error); }
         finally { if (version === epoch) loading = false; }
     };
@@ -73,6 +79,30 @@
         const detail = await getAgentProject(id);
         if (version === epoch && id === projectId) { selectedProject = detail.project; sources = detail.sources; }
     };
+    const refreshPendingMessages = async () => {
+        const id = projectId, version = epoch;
+        if (!id || !$clerkUser || !messages.some(message => ["awaiting_source", "processing"].includes(message.status))) return;
+        try {
+            const page = await listAgentMessages(id);
+            if (version !== epoch || id !== projectId) return;
+            const merged = new Map(messages.map(message => [message.id, message]));
+            for (const message of page.messages) merged.set(message.id, message);
+            messages = [...merged.values()].sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+            if (page.messages.some(message => message.outcome?.execution?.status === "started")) activePanel = "results";
+        } catch { /* Keep the last durable state until the next poll. */ }
+    };
+    const olderMessages=async()=>{if(!projectId || !messageCursor || messageBusy)return;messageBusy=true;try{const page=await listAgentMessages(projectId,messageCursor);messages=[...page.messages,...messages];messageCursor=page.nextCursor;}catch(error){reportError(error);}finally{messageBusy=false;}};
+    const runPlanner=async(project:AgentProject,message:AgentMessage)=>{planningMessageId=message.id;messages=messages.map(item=>item.id===message.id?{...item,status:"processing"}:item);
+        try{const result=await planAgentMessage(project.id,message.id);if(project.id!==selectedProject?.id)return;
+            messages=messages.map(item=>item.id===result.message.id?result.message:item);if(result.assistantMessage && !messages.some(item=>item.id===result.assistantMessage?.id))messages=[...messages,result.assistantMessage];
+            if(result.outcome.revision!==undefined){selectedProject={...project,revision:result.outcome.revision};projects=projects.map(item=>item.id===project.id?selectedProject as AgentProject:item);}
+            if(result.outcome.pendingSourceId)void refreshSources().catch(reportError);
+            if(result.outcome.execution?.status==="started")activePanel="results";
+        }catch(error){if(project.id===selectedProject?.id){messages=messages.map(item=>item.id===message.id?{...item,status:"failed"}:item);reportError(error);}}
+        finally{if(planningMessageId===message.id)planningMessageId="";}};
+    const retryPlanner=async(message:AgentMessage)=>{if(!selectedProject || messageBusy || planningMessageId)return;messageBusy=true;errorKey="";try{await runPlanner(selectedProject,message);}finally{messageBusy=false;}};
+    const sendMessage=async()=>{const content=request.trim();if(!selectedProject || !content || messageBusy || planningMessageId)return;messageBusy=true;errorKey="";const project=selectedProject;
+        try{const result=await saveAgentMessage(project.id,content,crypto.randomUUID());if(!messages.some(item=>item.id===result.message.id))messages=[...messages,result.message];request="";await runPlanner(project,result.message);}catch(error){reportError(error);}finally{messageBusy=false;}};
     const create = async () => {
         busy = true; errorKey = "";
         try { const result = await createAgentProject(title); title = ""; await goto(`${agentLink}/projects/${result.project.id}`); }
@@ -125,6 +155,7 @@
         const timer = setInterval(() => {
             pendingImport = getPendingAiVideoImport();
             if (!busy && sources.some((source) => ["queued_ingest", "ingesting"].includes(source.status))) void refreshSources().catch(reportError);
+            void refreshPendingMessages();
         }, 5000);
         return () => { mounted = false; epoch++; clearInterval(timer); uploadController?.abort(); };
     });
@@ -185,11 +216,14 @@
 
         <section id="agent-conversation" class="card conversation" class:mobile-hidden={activePanel !== "conversation"} aria-labelledby="agent-conversation-title">
             <div class="panel-heading"><h2 id="agent-conversation-title"><IconMessageCircle size={20} aria-hidden="true" />{$t("video-agent.conversation")}</h2></div>
-            <div class="welcome">
+            {#if messageCursor}<button class="secondary older" disabled={messageBusy} on:click={olderMessages}>{$t("video-agent.load_older")}</button>{/if}
+            {#if messages.length}<div class="message-list" aria-live="polite">{#each messages as message (message.id)}<article class="message" class:assistant={message.role==="assistant"}><p>{message.content}</p><small>{new Date(message.createdAt).toLocaleString()} · {$t(message.status==="processing"?"video-agent.loading":message.status==="failed"?"video-agent.request_failed":"video-agent.message_saved")}</small>{#if message.role==="assistant" && message.outcome?.execution?.status==="started"}<small role="status">{$t("video-agent.run_queued")} · {message.outcome.execution.runId}</small>{/if}{#if message.role==="assistant" && message.outcome?.execution?.status==="blocked"}<small class="error" role="alert">{$t("video-agent.request_failed")} ({message.outcome.execution.errorCode})</small>{/if}{#if message.role==="user" && message.status==="failed"}<button class="message-retry" disabled={messageBusy || !!planningMessageId} on:click={()=>retryPlanner(message)}>{$t("video-agent.replay_command")}</button>{/if}</article>{/each}</div>{/if}
+            {#if messages.some(message => message.status === "awaiting_source")}<p class="muted" role="status">{$t("video-agent.status_queued_ingest")}</p>{/if}
+            {#if !messages.length}<div class="welcome">
                 <IconSparkles size={26} aria-hidden="true" />
                 <h3>{$t("video-agent.request_label")}</h3>
                 <p class="muted">{$t("video-agent.request_placeholder")}</p>
-            </div>
+            </div>{/if}
             <div class="examples" aria-label={$t("video-agent.examples")}>
                 {#each exampleKeys as key}
                     <button class="example" on:click={() => chooseExample(key)}>{$t(`video-agent.${key}`)}</button>
@@ -225,9 +259,9 @@
                 <label for="agent-request">{$t("video-agent.request_label")}</label>
                 <textarea id="agent-request" bind:value={request} maxlength={4000} rows={5} placeholder={$t("video-agent.request_placeholder")} aria-describedby="agent-execution-note"></textarea>
                 <div class="composer-actions">
-                    <a href="#agent-results" on:click={()=>activePanel="results"}>{$t("video-agent.plan")}</a>
+                    <button type="button" class="primary" disabled={!selectedProject || !request.trim() || messageBusy || !!planningMessageId} on:click={sendMessage}>{$t(messageBusy || planningMessageId?"video-agent.loading":"video-agent.send_message")}</button>
                 </div>
-                <p id="agent-execution-note" class="muted execution-note">{$t("video-agent.unavailable")}</p>
+                <p id="agent-execution-note" class="muted execution-note">{$t("video-agent.message_saved_hint")}</p>
             </div>
         </section>
 
@@ -274,6 +308,8 @@
     .quota > :global(svg) { flex-shrink: 0; }
     .quota p { margin: 0; }
     .welcome { padding: 14px 0 18px; }
+    .older {margin-bottom:12px}.message-list{display:grid;gap:10px;max-height:420px;overflow:auto;margin-bottom:20px}.message{margin-left:28px;padding:12px;border-radius:12px;background:rgba(var(--accent-rgb),.12);overflow-wrap:anywhere}.message.assistant{margin-left:0;margin-right:28px;background:rgba(128,128,128,.08)}.message p{margin:0;white-space:pre-wrap}.message small{display:block;margin-top:7px;opacity:.6;font-size:10px}
+    .message-retry { margin-top: 9px; padding: 6px 9px; background: transparent; font-size: 10px; }
     .welcome > :global(svg) { color: var(--accent); margin-bottom: 14px; }
     .examples { display: grid; gap: 8px; margin-bottom: 22px; }
     button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; font: inherit; cursor: pointer; border: 1px solid rgba(128,128,128,.22); border-radius: 10px; color: inherit; }
@@ -285,7 +321,6 @@
     textarea { resize: vertical; min-height: 140px; }
     input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .composer-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
-    .composer-actions a { padding: 11px 13px; font-size: 12px; color: inherit; }
     .primary { background: var(--accent); color: white; border-color: transparent; }
     .secondary { background: transparent; }
     button:disabled { opacity: .5; cursor: not-allowed; }

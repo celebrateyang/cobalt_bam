@@ -256,6 +256,10 @@ videoAgent:
         ephemeral-storage: 6Gi
   # Enable the Video Agent API surface. Existing Highlight Studio remains independent.
   enabled: true
+  planner:
+    model: gpt-5-mini
+    timeoutMs: 120000
+    maxToolCalls: 12
   # Accept starts/retries and apply shared membership, concurrency and monthly quota admission.
   runsEnabled: true
   admissionEnabled: true

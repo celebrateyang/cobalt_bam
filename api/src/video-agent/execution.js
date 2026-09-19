@@ -1,11 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { agentError, ownedProject, transaction } from "../db/video-agent.js";
-import { compilePlan, hashInput, normalizePlan, PIPELINE_VERSION, UUID, validateSettings } from "./plans.js";
+import { agentError, agentQuery, ensureVideoAgentSchema, ownedProject, transaction } from "../db/video-agent.js";
+import { compilePlan, hashInput, normalizePlan, normalizeEdits, PIPELINE_VERSION, UUID, validateSettings } from "./plans.js";
+import {getEditableResults} from "./results.js";
 import { ACTIVE_RUN_STATES, assertTransition } from "./state-machine.js";
 import { lockExecutionUser,releaseRunUsage } from "../ai-video/execution-admission.js";
 import { prepareAdmission,admitRun,admissionEnabled } from "./admission.js";
 
-const commandTypes = ["update_settings", "create_plan", "start_run", "cancel_run", "retry_run"];
+const commandTypes = ["update_settings", "create_plan", "start_run", "cancel_run", "retry_run", "update_clip", "update_subtitles", "restore_revision"];
+const selectedEditableCues=(editable,edits)=>new Set(editable.clips.flatMap(clip=>{
+    const patch=edits.clips?.[clip.id] || {},ids=clip.cues.map(cue=>cue.id);
+    const first=ids.indexOf(patch.startCueId || ids[0]),last=ids.indexOf(patch.endCueId || ids.at(-1));
+    return first>=0 && last>=first?ids.slice(first,last+1):[];
+}));
 const defaults = { sourceLanguage: "auto", targetLanguage: "en", subtitleMode: "translated" };
 const requireFields = (input, fields) => {
     if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some((key) => !fields.includes(key))) throw agentError("VIDEO_AGENT_COMMAND_INVALID", 400, "Invalid command input");
@@ -59,7 +65,7 @@ const runDTO = (row) => ({ id: row.id, projectId: row.project_id, revision: row.
     errorCode: row.error_code, createdAt: Number(row.created_at), updatedAt: Number(row.updated_at),
     completedAt: row.completed_at === null ? null : Number(row.completed_at) });
 
-const createRun = async (client, project, planRow, retryOf = null, admissionPolicy) => {
+const createRun = async (client, project, planRow, retryOf = null, admissionPolicy, reuseOf = retryOf) => {
     if (process.env.VIDEO_AGENT_RUNS_ENABLED !== "1") throw agentError("VIDEO_AGENT_RUNS_NOT_ENABLED", 503, "Run acceptance is not enabled");
     if(!admissionEnabled() && !(process.env.NODE_ENV==="test" && admissionPolicy?.metadataOnly===true))throw agentError("VIDEO_AGENT_ADMISSION_NOT_ENABLED",503,"Execution admission is not enabled");
     if (planRow.pipeline_version !== PIPELINE_VERSION) throw agentError("VIDEO_AGENT_PIPELINE_OUTDATED", 409, "Create a plan for the current pipeline version");
@@ -77,7 +83,9 @@ const createRun = async (client, project, planRow, retryOf = null, admissionPoli
     [runId, project.id, planRow.revision, planRow.id, planRow.plan, planRow.plan_hash, currentSource, planRow.pipeline_version, retryOf?.id || null, planRow.plan.clips.requestedCount, now])).rows[0];
     const graph = compilePlan({ plan: planRow.plan, sourceSnapshot: currentSource, revision: planRow.revision });
     const ids = Object.fromEntries(graph.map((step) => [step.stage, randomUUID()]));
-    const previous = retryOf ? (await client.query(`SELECT * FROM video_agent_steps WHERE run_id=$1 ORDER BY created_at,id`, [retryOf.id])).rows : [];
+    const previous = reuseOf ? (await client.query(`SELECT * FROM video_agent_steps WHERE run_id=$1 ORDER BY created_at,id`, [reuseOf.id])).rows : [];
+    if(planRow.plan.edits && !previous.some(step=>step.stage==="translate_selected" && step.status==="succeeded"))
+        throw agentError("VIDEO_AGENT_EDIT_SOURCE_UNAVAILABLE",409,"Editable translation is unavailable");
     const reusedStages = new Set();
     for (const step of graph) {
         // Never reuse final publication/verification; these must validate the new run's result set.
@@ -97,6 +105,8 @@ const createRun = async (client, project, planRow, retryOf = null, admissionPoli
         [ids[step.stage], runId, step.stage, step.scopeId, step.dependsOn.map((dependency) => ids[dependency]), step.input, step.inputHash, PIPELINE_VERSION,
             reusable ? "succeeded" : "pending", reusable?.output_refs || [], reusable?.id || null, now, step.ordinal,reusable?.checkpoint || {},reusable?.provider || null,reusable?.model || null]);
     }
+    if(planRow.plan.edits && !reusedStages.has("translate_selected"))
+        throw agentError("VIDEO_AGENT_EDIT_SOURCE_UNAVAILABLE",409,"Editable translation assets have expired; create a fresh result before editing");
     const admitted=await admitRun(client,project,row,retryOf,admissionPolicy);
     await appendEvent(client, { projectId: project.id, runId, type: "run.status", payload: { runId, status: "queued", admissionStatus: admitted.admission_status, revision: planRow.revision } });
     return admitted;
@@ -116,6 +126,20 @@ const cancelRun = async (client, projectId, run) => {
 
 export const submitCommand = async ({ projectId, userId, body, admissionPolicy }) => {
     validateCommandEnvelope(body);
+    let editable=null;
+    if(["update_clip","update_subtitles"].includes(body.type)){
+        await ensureVideoAgentSchema();
+        const existing=(await agentQuery(`SELECT c.* FROM video_agent_commands c JOIN video_agent_projects p ON p.id=c.project_id
+            WHERE c.project_id=$1 AND c.user_id=$2 AND c.idempotency_key=$3 AND p.user_id=$2 AND p.deleted_at IS NULL`,
+        [projectId,userId,body.idempotencyKey])).rows[0];
+        if(existing){
+            if(existing.payload_hash!==hashInput({type:body.type,expectedRevision:body.expectedRevision,input:body.input}))
+                throw agentError("VIDEO_AGENT_IDEMPOTENCY_CONFLICT",409,"Idempotency key has a different payload");
+            return {...existing.receipt,replayed:true};
+        }
+        if(typeof body.input.runId!=="string" || !UUID.test(body.input.runId))throw agentError("VIDEO_AGENT_COMMAND_INVALID",400,"Invalid edit run");
+        editable=await getEditableResults({projectId,userId,runId:body.input.runId});
+    }
     await prepareAdmission();
     return transaction(async (client) => {
         await lockExecutionUser(client,userId);
@@ -136,6 +160,7 @@ export const submitCommand = async ({ projectId, userId, body, admissionPolicy }
             const patch = validateSettings(body.input);
             receipt.revision = await createRevision(client, project, { settings: { ...current.settings_snapshot, ...patch }, edits: current.edit_snapshot, userId });
         } else if (body.type === "create_plan") {
+            if(body.input.edits!==undefined)throw agentError("VIDEO_AGENT_COMMAND_INVALID",400,"Use result edit commands to create edited plans");
             const plan = normalizePlan(body.input);
             const snapshot = await readySource(client, projectId, plan.sourceRef);
             if (snapshot.durationMs < plan.clips.minSeconds * 1000) throw agentError("VIDEO_AGENT_SOURCE_TOO_SHORT", 400, "Source is shorter than the minimum clip duration");
@@ -144,13 +169,60 @@ export const submitCommand = async ({ projectId, userId, body, admissionPolicy }
             await client.query(`INSERT INTO video_agent_plans(id,project_id,revision,plan,plan_hash,source_snapshot,pipeline_version,created_at)
                 VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, [receipt.planId, projectId, receipt.revision, plan, hashInput({ plan, snapshot, revision: receipt.revision, pipelineVersion: PIPELINE_VERSION }), snapshot, PIPELINE_VERSION, Date.now()]);
             await appendEvent(client, { projectId, type: "plan.created", payload: { planId: receipt.planId, revision: receipt.revision, sourceId: plan.sourceRef, requestedCount: plan.clips.requestedCount } });
+        } else if(["update_clip","update_subtitles"].includes(body.type)){
+            const run=await ownedRun(client,projectId,body.input.runId);
+            if(!["completed","partially_completed"].includes(run.status))throw agentError("VIDEO_AGENT_EDIT_RUN_NOT_READY",409,"Completed run required for editing");
+            const prior=(await client.query("SELECT * FROM video_agent_plans WHERE project_id=$1 AND revision=$2 ORDER BY created_at DESC LIMIT 1",[projectId,project.current_revision])).rows[0];
+            if(!prior || (prior.id!==run.plan_id && prior.plan.edits?.baseRunId!==run.id))throw agentError("VIDEO_AGENT_EDIT_BASE_CONFLICT",409,"Select or restore the matching version first");
+            const edits=normalizeEdits(prior.plan.edits || {baseRunId:run.id,clips:{},subtitles:{}});
+            if(body.type==="update_clip"){
+                requireFields(body.input,["runId","clipId","patch"]);
+                const clip=editable.clips.find(item=>item.id===body.input.clipId);
+                if(!clip)throw agentError("VIDEO_AGENT_EDIT_CLIP_NOT_FOUND",404,"Clip not found in this run");
+                requireFields(body.input.patch,["title","focusX","startCueId","endCueId"]);
+                if(!Object.keys(body.input.patch).length)throw agentError("VIDEO_AGENT_COMMAND_INVALID",400,"Empty clip edit");
+                const patch={...(edits.clips[clip.id] || {}),...body.input.patch};
+                const first=clip.cues.findIndex(item=>item.id===(patch.startCueId || clip.cues[0]?.id));
+                const last=clip.cues.findIndex(item=>item.id===(patch.endCueId || clip.cues.at(-1)?.id));
+                if(first<0 || last<first || clip.cues[last].endMs-clip.cues[first].startMs<15000 || clip.cues[last].endMs-clip.cues[first].startMs>90000)
+                    throw agentError("VIDEO_AGENT_EDIT_BOUNDARY_INVALID",422,"Clip boundaries must span 15–90 seconds within the selected clip");
+                edits.clips={...edits.clips,[clip.id]:patch};
+                const selected=selectedEditableCues(editable,edits);
+                edits.subtitles=Object.fromEntries(Object.entries(edits.subtitles).filter(([id])=>selected.has(id)));
+            }else{
+                requireFields(body.input,["runId","cueId","text"]);
+                if(!selectedEditableCues(editable,edits).has(body.input.cueId))throw agentError("VIDEO_AGENT_EDIT_CUE_NOT_FOUND",404,"Subtitle cue not found in the selected clip range");
+                edits.subtitles={...edits.subtitles,[body.input.cueId]:body.input.text};
+            }
+            const plan=normalizePlan({...prior.plan,edits:normalizeEdits(edits)});
+            receipt.revision=await createRevision(client,project,{settings:current.settings_snapshot,edits:plan.edits,userId});
+            receipt.planId=randomUUID();
+            await client.query(`INSERT INTO video_agent_plans(id,project_id,revision,plan,plan_hash,source_snapshot,pipeline_version,created_at)
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,[receipt.planId,projectId,receipt.revision,plan,
+                hashInput({plan,snapshot:prior.source_snapshot,revision:receipt.revision,pipelineVersion:PIPELINE_VERSION}),prior.source_snapshot,PIPELINE_VERSION,Date.now()]);
+            await appendEvent(client,{projectId,type:"plan.edited",payload:{revision:receipt.revision,planId:receipt.planId,runId:run.id}});
+        } else if(body.type==="restore_revision"){
+            requireFields(body.input,["revision"]);
+            if(!Number.isInteger(body.input.revision) || body.input.revision<0 || body.input.revision>=project.current_revision)
+                throw agentError("VIDEO_AGENT_COMMAND_INVALID",400,"Invalid revision to restore");
+            const old=(await client.query("SELECT * FROM video_agent_revisions WHERE project_id=$1 AND revision=$2",[projectId,body.input.revision])).rows[0];
+            if(!old)throw agentError("VIDEO_AGENT_REVISION_NOT_FOUND",404,"Revision not found");
+            const oldPlan=(await client.query("SELECT * FROM video_agent_plans WHERE project_id=$1 AND revision=$2 ORDER BY created_at DESC LIMIT 1",[projectId,old.revision])).rows[0];
+            receipt.revision=await createRevision(client,project,{settings:old.settings_snapshot,edits:old.edit_snapshot,userId});
+            if(oldPlan){receipt.planId=randomUUID();await client.query(`INSERT INTO video_agent_plans(id,project_id,revision,plan,plan_hash,source_snapshot,pipeline_version,created_at)
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,[receipt.planId,projectId,receipt.revision,oldPlan.plan,
+                hashInput({plan:oldPlan.plan,snapshot:oldPlan.source_snapshot,revision:receipt.revision,pipelineVersion:oldPlan.pipeline_version}),oldPlan.source_snapshot,oldPlan.pipeline_version,Date.now()]);}
+            await appendEvent(client,{projectId,type:"revision.restored",payload:{revision:receipt.revision,restoredFrom:old.revision,planId:receipt.planId || null}});
         } else if (body.type === "start_run") {
             requireFields(body.input, ["planId"]);
             if (typeof body.input.planId !== "string" || !UUID.test(body.input.planId)) throw agentError("VIDEO_AGENT_COMMAND_INVALID", 400, "Invalid plan id");
             const plan = (await client.query(`SELECT * FROM video_agent_plans WHERE id=$1 AND project_id=$2`, [body.input.planId, projectId])).rows[0];
             if (!plan) throw agentError("VIDEO_AGENT_PLAN_NOT_FOUND", 404, "Plan not found");
             if (plan.revision !== project.current_revision) throw agentError("VIDEO_AGENT_PLAN_OUTDATED", 409, "Plan revision is outdated", { revision: project.current_revision });
-            const run = await createRun(client, project, plan,null,admissionPolicy);
+            const reuse=plan.plan.edits?(await ownedRun(client,projectId,plan.plan.edits.baseRunId)):
+                (await client.query(`SELECT * FROM video_agent_runs WHERE project_id=$1 AND status IN ('completed','partially_completed')
+                    ORDER BY created_at DESC LIMIT 1`,[projectId])).rows[0] || null;
+            const run = await createRun(client, project, plan,null,admissionPolicy,reuse);
             receipt = { ...receipt, status: "accepted", runId: run.id, admissionStatus: run.admission_status };
         } else {
             requireFields(body.input, ["runId"]);
@@ -220,8 +292,10 @@ export const cancelProjectRuns = async (client, projectId) => {
 export const cleanupExecutionHistory = async ({ limit = 100 } = {}) => transaction(async (client) => {
     const projects = (await client.query(`SELECT * FROM video_agent_projects WHERE
         (deleted_at IS NOT NULL AND (EXISTS(SELECT 1 FROM video_agent_events e WHERE e.project_id=video_agent_projects.id)
-            OR EXISTS(SELECT 1 FROM video_agent_commands c WHERE c.project_id=video_agent_projects.id))) OR
-        EXISTS(SELECT 1 FROM video_agent_events e WHERE e.project_id=video_agent_projects.id AND e.created_at<$1)
+            OR EXISTS(SELECT 1 FROM video_agent_commands c WHERE c.project_id=video_agent_projects.id)
+            OR EXISTS(SELECT 1 FROM video_agent_messages m WHERE m.project_id=video_agent_projects.id))) OR
+        EXISTS(SELECT 1 FROM video_agent_events e WHERE e.project_id=video_agent_projects.id AND e.created_at<$1) OR
+        EXISTS(SELECT 1 FROM video_agent_messages m WHERE m.project_id=video_agent_projects.id AND m.created_at<$1)
         ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $2`, [Date.now() - 90 * 24 * 60 * 60 * 1000, limit])).rows;
     for (const project of projects) {
         const expired = await client.query(`DELETE FROM video_agent_events WHERE project_id=$1 AND ($2::boolean OR created_at<$3) RETURNING id`, [project.id, project.deleted_at !== null, Date.now() - 90 * 24 * 60 * 60 * 1000]);
@@ -230,6 +304,7 @@ export const cleanupExecutionHistory = async ({ limit = 100 } = {}) => transacti
             await client.query(`UPDATE video_agent_projects SET event_floor_id=$2 WHERE id=$1`, [project.id, String(floor)]);
         }
         if (project.deleted_at !== null) await client.query(`DELETE FROM video_agent_commands WHERE project_id=$1`, [project.id]);
+        await client.query(`DELETE FROM video_agent_messages WHERE project_id=$1 AND ($2::boolean OR created_at<$3)`,[project.id,project.deleted_at!==null,Date.now()-90*24*60*60*1000]);
     }
     return { scanned: projects.length };
 });

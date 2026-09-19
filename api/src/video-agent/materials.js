@@ -26,17 +26,26 @@ export const uploadDTO = (session) => ({ status: session.status, committedBytes:
     totalBytes: Number(session.total_bytes), chunkSizeBytes: session.chunk_size_bytes,
     fileFingerprint: session.file_fingerprint, expiresAt: Number(session.expires_at) });
 
-export const addSource = async ({ projectId, userId, body, storage = getAiVideoObjectStorage() }) => {
+export const addSource = async ({ projectId, userId, body, originMessageId = null, storage = getAiVideoObjectStorage() }) => {
     validateSourceInput(body);
     let sessionUri;
     let objectKey;
     let reservedSource;
     try {
         return await transaction(async (client) => {
+            if (originMessageId) {
+                await ownedProject(client, { projectId, userId, lock: false });
+                const existing = (await client.query("SELECT * FROM video_agent_sources WHERE project_id=$1 AND origin_message_id=$2", [projectId, originMessageId])).rows[0];
+                if (existing) return { source: sourceDTO(existing) };
+            }
             const imported = body.kind === "download_import" ? readMediaImportToken(body.mediaImportToken, { expectedUserId: userId }) : null;
             const sizeBytes = imported ? MAX_BYTES : body.sizeBytes; // Reserve maximum before downloading an unknown size.
             await assertSourceCapacity(client, { userId, sizeBytes });
             await ownedProject(client, { projectId, userId, lock: true });
+            if (originMessageId) {
+                const existing = (await client.query("SELECT * FROM video_agent_sources WHERE project_id=$1 AND origin_message_id=$2", [projectId, originMessageId])).rows[0];
+                if (existing) return { source: sourceDTO(existing) };
+            }
             if (imported) {
                 const used = await client.query(`INSERT INTO ai_video_import_nonces(nonce,user_id,expires_at,used_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING nonce`, [imported.nonce, userId, imported.expiresAt, Date.now()]);
                 if (!used.rowCount) throw agentError("AI_VIDEO_IMPORT_TOKEN_USED", 409, "Media import token was already used");
@@ -48,10 +57,10 @@ export const addSource = async ({ projectId, userId, body, storage = getAiVideoO
             const encryptedInput = imported ? encryptUploadSession(body.mediaImportToken) : null;
             encryptUploadSession("configuration-check");
             const result = await client.query(`INSERT INTO video_agent_sources(id,project_id,kind,filename,mime,size_bytes,
-                source_input_encrypted,object_key,status,retention_until,created_at,updated_at)
-                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11) RETURNING *`,
+                source_input_encrypted,object_key,status,retention_until,created_at,updated_at,origin_message_id)
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12) RETURNING *`,
             [sourceId, projectId, body.kind, imported?.filename || body.filename.trim(), imported?.mime || body.contentType,
-                sizeBytes, encryptedInput, objectKey, imported ? "queued_ingest" : "uploading", now + RETENTION, now]);
+                sizeBytes, encryptedInput, objectKey, imported ? "queued_ingest" : "uploading", now + RETENTION, now, originMessageId]);
             reservedSource = result.rows[0];
             if (!imported) {
                 sessionUri = await storage.startResumableUpload({ objectKey, contentType: body.contentType });

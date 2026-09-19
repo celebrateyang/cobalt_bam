@@ -52,6 +52,26 @@ CREATE TABLE IF NOT EXISTS video_agent_events (
 );
 CREATE INDEX IF NOT EXISTS video_agent_events_project ON video_agent_events(project_id,id);
 CREATE INDEX IF NOT EXISTS video_agent_events_retention ON video_agent_events(project_id,created_at);
+CREATE TABLE IF NOT EXISTS video_agent_messages (
+    id UUID PRIMARY KEY, project_id UUID NOT NULL REFERENCES video_agent_projects(id),
+    user_id INTEGER NOT NULL REFERENCES users(id), client_message_id TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('user','assistant')),
+    content TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'received'
+        CHECK(status IN ('received','processing','awaiting_source','completed','failed')),
+    safe_metadata JSONB NOT NULL DEFAULT '{}', created_at BIGINT NOT NULL,
+    UNIQUE(project_id,user_id,client_message_id)
+);
+CREATE INDEX IF NOT EXISTS video_agent_messages_project ON video_agent_messages(project_id,created_at,id);
+CREATE INDEX IF NOT EXISTS video_agent_messages_pending ON video_agent_messages(status,created_at) WHERE status='received';
+ALTER TABLE video_agent_messages ADD COLUMN IF NOT EXISTS planner_attempt INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE video_agent_messages ADD COLUMN IF NOT EXISTS planner_claim_token UUID;
+ALTER TABLE video_agent_messages ADD COLUMN IF NOT EXISTS planner_claim_until BIGINT;
+ALTER TABLE video_agent_messages ADD COLUMN IF NOT EXISTS planner_output JSONB;
+ALTER TABLE video_agent_messages ADD COLUMN IF NOT EXISTS error_code TEXT;
+ALTER TABLE video_agent_messages DROP CONSTRAINT IF EXISTS video_agent_messages_status_check;
+ALTER TABLE video_agent_messages ADD CONSTRAINT video_agent_messages_status_check CHECK(status IN ('received','processing','awaiting_source','completed','failed'));
+ALTER TABLE video_agent_sources ADD COLUMN IF NOT EXISTS origin_message_id UUID UNIQUE REFERENCES video_agent_messages(id);
+CREATE INDEX IF NOT EXISTS video_agent_sources_origin_message ON video_agent_sources(origin_message_id) WHERE origin_message_id IS NOT NULL;
 ALTER TABLE video_agent_projects ADD COLUMN IF NOT EXISTS last_event_id BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE video_agent_projects ADD COLUMN IF NOT EXISTS event_floor_id BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE video_agent_projects ADD COLUMN IF NOT EXISTS scheduler_checked_at BIGINT NOT NULL DEFAULT 0;

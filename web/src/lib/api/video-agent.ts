@@ -7,8 +7,16 @@ export type AgentSource = { id: string; kind: string; filename: string; mime: st
     errorCode: string | null; retentionUntil: number; assetId: string | null; probe: { durationSeconds: number; width: number; height: number } | null };
 type UploadState = { status: string; committedBytes: number; totalBytes: number; chunkSizeBytes: number; fileFingerprint: string; expiresAt: number };
 export type AgentDetail = { project: AgentProject; sources: AgentSource[] };
+export type AgentMessage = {id:string;clientMessageId:string;role:"user"|"assistant";content:string;status:"received"|"processing"|"awaiting_source"|"completed"|"failed";createdAt:number;
+    outcome?:{status:"ready"|"needs_input"|"unsupported";planId:string|null;pendingSourceId:string|null;execution:{status:"started"|"blocked";runId:string|null;errorCode:string|null}|null}|null};
+export type AgentPlannerOutcome = {status:"ready"|"needs_input"|"unsupported";reply:string;sourceRef:string|null;sourceExplicit:boolean;sourceLanguage:string;targetLanguage:string|null;
+    targetLanguageExplicit:boolean;requestedCount:number;minSeconds:number;maxSeconds:number;subtitleMode:"translated"|"bilingual";executionIntent:"plan_only"|"execute";
+    missing:("source"|"target_language")[];unsupportedCapabilities:"dubbing"[];planId?:string;revision?:number;plan?:AgentPlanInput;pendingSourceId?:string;
+    execution?:{status:"started"|"blocked";runId?:string;runStatus?:string;errorCode?:string}};
 export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};subtitles:Record<string,{id:string}>};
+export type AgentEditable = {runId:string;clips:{id:string;title:string;startMs:number;endMs:number;cues:{id:string;startMs:number;endMs:number;sourceText:string;translatedText:string}[]}[]};
 export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
+export const getAgentEditable=(projectId:string,runId:string)=>agentRequest<AgentEditable>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/editable`);
 export const getAgentPreview=async(projectId:string,assetId:string)=>{
     const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`,signed=await agentRequest<{url:string|null}>(`${path}?url=1`);
     if(signed.url)return signed.url;
@@ -29,6 +37,9 @@ const projectPath = (id: string) => `/projects/${encodeURIComponent(id)}`;
 export const listAgentProjects = (cursor?: string) => agentRequest<{ projects: AgentProject[]; nextCursor: string | null }>(`/projects${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
 export const createAgentProject = (title: string) => agentRequest<{ project: AgentProject }>("/projects", { method: "POST", body: JSON.stringify({ title }) });
 export const getAgentProject = (id: string) => agentRequest<AgentDetail>(projectPath(id));
+export const listAgentMessages=(id:string,cursor?:string)=>agentRequest<{messages:AgentMessage[];nextCursor:string|null}>(`${projectPath(id)}/messages${cursor?`?cursor=${encodeURIComponent(cursor)}`:""}`);
+export const saveAgentMessage=(id:string,content:string,clientMessageId:string)=>agentRequest<{message:AgentMessage}>(`${projectPath(id)}/messages`,{method:"POST",body:JSON.stringify({content,clientMessageId})});
+export const planAgentMessage=(id:string,messageId:string)=>agentRequest<{message:AgentMessage;assistantMessage:AgentMessage|null;outcome:AgentPlannerOutcome;replayed:boolean}>(`${projectPath(id)}/messages/${encodeURIComponent(messageId)}/plan`,{method:"POST",body:"{}"});
 export const deleteAgentProject = (id: string) => agentRequest<void>(projectPath(id), { method: "DELETE" });
 export const importAgentSource = (id: string, mediaImportToken: string) => agentRequest<{ source: AgentSource }>(`${projectPath(id)}/sources`, {
     method: "POST", body: JSON.stringify({ kind: "download_import", mediaImportToken }) });
@@ -39,11 +50,15 @@ export type AgentPlanInput = {
     video?: { aspectRatio: "9:16"; preset: "tiktok" };
     subtitles?: { enabled: true; mode: "translated" | "bilingual" };
     dubbing?: { enabled: false; voiceId?: null }; executionMode?: "execute";
+    edits?:{baseRunId:string;clips:Record<string,{title?:string;focusX?:number;startCueId?:string;endCueId?:string}>;subtitles:Record<string,string>};
 };
 export type AgentCommand = { expectedRevision: number; idempotencyKey: string } & (
     { type: "update_settings"; input: { sourceLanguage?: string; targetLanguage?: string; subtitleMode?: "translated" | "bilingual" } }
     | { type: "create_plan"; input: AgentPlanInput } | { type: "start_run"; input: { planId: string } }
-    | { type: "cancel_run" | "retry_run"; input: { runId: string } });
+    | { type: "cancel_run" | "retry_run"; input: { runId: string } }
+    | { type:"update_clip";input:{runId:string;clipId:string;patch:{title?:string;focusX?:number;startCueId?:string;endCueId?:string}} }
+    | { type:"update_subtitles";input:{runId:string;cueId:string;text:string} }
+    | { type:"restore_revision";input:{revision:number} });
 export type AgentReceipt = { commandId: string; status: "accepted" | "completed"; revision: number; replayed: boolean;
     planId?: string; runId?: string; runRevision?: number; runStatus?: string; admissionStatus?: "pending" | "admitted" | "rejected" };
 export type AgentRun = { id: string; projectId: string; revision: number; planId: string; plan: AgentPlanInput;

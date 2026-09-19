@@ -122,7 +122,7 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    slug === 'youtube-download' && lang === 'id' ? '2026-09-06' : undefined,
+                    slug === 'xinpianchang-video-download' ? '2026-09-19' : slug === 'youtube-download' && lang === 'id' ? '2026-09-06' : undefined,
                     'weekly',
                     '0.9',
                     buildAlternateLinks(path, availableLanguages),

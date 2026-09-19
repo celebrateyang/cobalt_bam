@@ -80,6 +80,10 @@ const crossLinkEntries: CrossLinkEntry[] = [
         downloadSlug: 'wechat-video-download',
     },
     {
+        platform: 'Xinpianchang',
+        downloadSlug: 'xinpianchang-video-download',
+    },
+    {
         platform: 'Haokan',
         downloadSlug: 'haokan-video-download',
         guideSlug: 'haokan-download-guide',
@@ -197,6 +201,7 @@ const strategicDownloadOrder = [
     'toutiao-video-download',
     'weibo-video-download',
     'wechat-video-download',
+    'xinpianchang-video-download',
     'haokan-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',
@@ -216,6 +221,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'xinpianchang-video-download',
     'youtube-download',
     'youtube-playlist-downloader',
     'youtube-shorts-download',
@@ -291,6 +297,7 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'xinpianchang-video-download') return lang === 'en' || lang === 'zh';
     if (slug === 'youtube-playlist-to-mp3') return lang === 'en' || lang === 'zh';
     if (isEnglishOnlyDownloadSlug(slug)) return lang === 'en';
     return isInternationalDownloadSlug(slug) || lang === 'zh';
@@ -350,6 +357,7 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'bilibili-video-download',
     ],
     'bilibili-video-download': [
+        'xinpianchang-video-download',
         'douyin-no-watermark',
         'kuaishou-no-watermark',
         'weibo-video-download',
@@ -442,6 +450,12 @@ export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
         'twitter-x-video-download',
         'reddit-video-download',
         'soundcloud-audio-download',
+    ],
+    'xinpianchang-video-download': [
+        'bilibili-video-download',
+        'weibo-video-download',
+        'haokan-video-download',
+        'douyin-no-watermark',
     ],
     'youtube-playlist-downloader': [
         'youtube-download',

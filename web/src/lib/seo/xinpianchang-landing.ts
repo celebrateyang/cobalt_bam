@@ -1,0 +1,91 @@
+import type { SeoLandingPage } from './landing-pages';
+
+export const xinpianchangLanding: SeoLandingPage = {
+    slug: 'xinpianchang-video-download',
+    locales: {
+        zh: {
+            metaTitle: '新片场视频下载教程：通过 FreeSaveVideo 插件保存 MP4',
+            metaDescription: 'FreeSaveVideo 支持新片场公开作品视频下载。打开 xinpianchang.com/a... 作品页，手动完成浏览器验证并播放视频，再用 Chrome 或 Edge 插件保存可用的 MP4 文件。',
+            metaKeywords: ['新片场视频下载', '新片场下载器', 'xinpianchang 视频下载', '新片场 MP4 下载', 'FreeSaveVideo Downloader'],
+            h1: '新片场视频下载',
+            lede: 'FreeSaveVideo 支持从公开的新片场作品页保存可用的 MP4 视频。若网站要求验证浏览器，请在作品页手动完成验证并播放视频，再使用 FreeSaveVideo Downloader 浏览器插件下载。',
+            heroTags: ['公开作品链接', 'Chrome / Edge 插件', 'MP4 视频', '浏览器内保存'],
+            facts: [
+                '支持形如 https://www.xinpianchang.com/a13690233 的单个公开作品链接；也接受不带 www 的同类地址。',
+                '网站解析受浏览器验证限制时，FreeSaveVideo 会提示插件下载。用户须自行完成验证，插件不会代替用户操作验证。',
+                '插件在作品页播放后识别可用的 MP4，下载页核验完整文件，再由浏览器保存；请保持下载页打开直到显示保存成功。',
+            ],
+            stepsTitle: '如何下载新片场视频',
+            steps: [
+                '在 Chrome 或 Edge 中安装 FreeSaveVideo Downloader 插件，打开公开的新片场作品页。',
+                '如新片场要求浏览器验证，请手动完成；随后播放视频，让浏览器加载可用的视频资源。',
+                '点击浏览器工具栏中的 FreeSaveVideo Downloader，在检测到的 MP4 视频旁点击 Download。',
+                '插件会打开下载进度页。保持该页打开，等视频完整获取并保存成功后，在浏览器下载记录中查看 MP4 文件。',
+            ],
+            featuresTitle: '支持范围与限制',
+            features: [
+                '支持公开、可播放的单个新片场作品，以及作品当前可用的渐进式 MP4。',
+                '网站可直接解析时可先尝试粘贴作品链接；遇到浏览器验证提示时使用插件。',
+                '插件会校验文件类型和完整性，拒绝把验证页的 HTML 当成视频保存。',
+                '当前不承诺原始上传文件、固定画质、合集批量下载，或将 HLS/DASH 流合并为 MP4。',
+                '私密、已删除、无法播放或需要额外权限的作品不在支持范围内。',
+            ],
+            supportedLinksTitle: '支持的新片场链接',
+            supportedLinks: [
+                { title: '公开作品页', description: '例如 https://www.xinpianchang.com/a13690233；请使用作品地址，而非临时 CDN 视频地址。' },
+                { title: '视频资源', description: '播放作品后，插件识别当前可用的 MP4；视频画质取决于源站实际提供的资源。' },
+            ],
+            faqTitle: '新片场视频下载常见问题',
+            faqs: [
+                { q: 'FreeSaveVideo 支持新片场吗？', a: '支持公开的新片场单个作品链接。网站可访问时可以尝试在线解析；遇到浏览器验证时，按页面提示使用 FreeSaveVideo Downloader 插件。' },
+                { q: '为什么要先播放视频？', a: '插件从当前作品页已加载的媒体资源中识别 MP4；先播放可让浏览器加载该视频。' },
+                { q: '需要手动完成新片场的浏览器验证吗？', a: '需要。请在新片场作品页自行完成验证。插件只在可访问的页面中识别媒体，不代替用户通过验证。' },
+                { q: '为什么下载页必须保持打开？', a: '插件下载页先完整获取并校验 MP4，再让 Chrome 保存本地文件。页面关闭会中断当前任务。' },
+                { q: '能下载 4K、原片、合集或私密视频吗？', a: '不能保证。当前只处理作品中实际可用的渐进式 MP4，不提供原片、固定画质、合集批量或私密内容下载。' },
+            ],
+            disclaimer: '仅下载你有权保存的公开作品。请遵守版权和新片场的使用规则。',
+        },
+        en: {
+            metaTitle: 'Xinpianchang Video Downloader: Save Public MP4 Works | FreeSaveVideo',
+            metaDescription: 'Download available MP4 video from public Xinpianchang work pages. Complete browser verification yourself, play the video, then use the FreeSaveVideo Downloader extension for Chrome or Edge.',
+            metaKeywords: ['Xinpianchang video downloader', 'download Xinpianchang video', 'Xinpianchang MP4 download', '新片场视频下载', 'FreeSaveVideo Downloader'],
+            h1: 'Xinpianchang Video Downloader',
+            lede: 'FreeSaveVideo supports available MP4 video on public Xinpianchang work pages. If the site asks to verify your browser, complete that step yourself, play the work, and download with the FreeSaveVideo Downloader extension.',
+            heroTags: ['Public work URLs', 'Chrome / Edge extension', 'MP4 video', 'Local browser save'],
+            facts: [
+                'Use a single public work URL such as https://www.xinpianchang.com/a13690233; the equivalent hostname without www is also accepted.',
+                'When browser verification blocks server-side parsing, FreeSaveVideo offers an extension handoff. The extension does not complete verification for you.',
+                'After playback, the extension detects an available MP4, verifies the complete file, and saves it through your browser. Keep its download tab open until saving finishes.',
+            ],
+            stepsTitle: 'How to download a Xinpianchang video',
+            steps: [
+                'Install FreeSaveVideo Downloader in Chrome or Edge and open a public Xinpianchang work page.',
+                'Complete any browser verification yourself, then play the work so the browser loads its available media.',
+                'Open FreeSaveVideo Downloader from the browser toolbar and select Download beside the detected MP4.',
+                'Keep the new progress tab open until it reports that the file was saved; find the MP4 in your browser downloads.',
+            ],
+            featuresTitle: 'Supported content and limits',
+            features: [
+                'Supports individual public, playable Xinpianchang works with an available progressive MP4.',
+                'Try the work URL on the website first; use the extension if browser verification prevents online parsing.',
+                'Checks file type and completeness so an HTML verification page is not saved as video.',
+                'Does not promise the original upload, a fixed resolution, bulk collection downloads, or HLS/DASH merging.',
+                'Private, deleted, unplayable, or otherwise restricted works are outside this workflow.',
+            ],
+            supportedLinksTitle: 'Supported Xinpianchang links',
+            supportedLinks: [
+                { title: 'Public work page', description: 'For example https://www.xinpianchang.com/a13690233. Use the work URL rather than a temporary CDN media URL.' },
+                { title: 'Available video', description: 'After playback, the extension can detect an MP4 currently exposed by the work page. Quality depends on the source.' },
+            ],
+            faqTitle: 'Xinpianchang download FAQ',
+            faqs: [
+                { q: 'Does FreeSaveVideo support Xinpianchang?', a: 'Yes, for individual public works with available MP4 video. Try the website with the work URL, or use FreeSaveVideo Downloader when the site requires browser verification.' },
+                { q: 'Why must I play the video first?', a: 'The extension detects media loaded by the current work page; playback lets the browser request that media.' },
+                { q: 'Do I need to complete browser verification myself?', a: 'Yes. Complete verification on Xinpianchang. The extension detects media after the page becomes accessible; it does not perform verification for you.' },
+                { q: 'Why must the download tab stay open?', a: 'The extension fetches and validates the full MP4 before asking Chrome to save it. Closing the tab interrupts that task.' },
+                { q: 'Can I download 4K, original files, collections, or private works?', a: 'Those are not guaranteed or supported here. The current extension workflow handles available progressive MP4 from a public single-work page.' },
+            ],
+            disclaimer: 'Download only public works you have permission to save. Respect creators and platform rules.',
+        },
+    },
+};

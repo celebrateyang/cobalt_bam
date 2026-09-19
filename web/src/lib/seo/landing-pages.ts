@@ -1,4 +1,5 @@
 import { getLandingCapabilityContent } from '$lib/seo/landing-capabilities';
+import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 
 export type SeoLandingFaqItem = {
     q: string;
@@ -851,6 +852,7 @@ const buildGenericWorkflowLocales = (
 });
 
 export const seoLandingPages: SeoLandingPage[] = [
+    xinpianchangLanding,
 
     {
         slug: 'wechat-video-download',

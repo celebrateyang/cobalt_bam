@@ -18,13 +18,14 @@
 - Downloads publicly accessible online videos and media links when supported by the source platform.
 - Supports batch downloads, collection/playlist parsing, audio-only mode, and mute mode for supported services.
 - Supports public WeChat Channels share links and detects multiple embedded videos in public WeChat Official Account articles for selectable batch downloads.
+- Supports available progressive MP4 video from individual public Xinpianchang (新片场) work pages. When browser verification prevents website parsing, users complete verification and play the work, then use the FreeSaveVideo Downloader extension in Chrome or Edge. Keep the extension download tab open until saving completes; private works, original uploads, fixed resolution, and HLS/DASH merging are not promised.
 - Provides local browser tools for MP4 to MP3, audio extraction, M4A/WAV export, AVI to MP4, and MP4/WebM conversion.
 - Provides a whiteboard and teleprompter recorder with camera/microphone capture and MP4/WebM export.
 - Provides browser-based file/text transfer and temporary one-to-one text chat with someone you know.
 - Provides Discover pages for public video discovery and a random 1v1 video chat feature.
 
 ## Supported Service Summary
-Core supported platforms include WeChat Channels, WeChat Official Account articles, YouTube, TikTok, Douyin, Bilibili, Kuaishou, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
+Core supported platforms include WeChat Channels, WeChat Official Account articles, Xinpianchang (新片场), YouTube, TikTok, Douyin, Bilibili, Kuaishou, NicoNico, Xiaohongshu, Instagram, Threads, Facebook, X/Twitter, Vimeo, SoundCloud, Snapchat, Pinterest, Reddit, Bluesky, CCTV, Dailymotion, Loom, OK.ru, Rutube, Streamable, Tumblr, Twitch Clips, and VK.
 
 Different platforms expose different capabilities. Some support video, audio, no-watermark output, stories, reels, GIFs, images, multi-part videos, collections, or playlist parsing. See `/capabilities.json` for the most concise machine-readable service map.
 
@@ -35,6 +36,8 @@ Different platforms expose different capabilities. Some support video, audio, no
 - Chinese download directory: https://freesavevideo.online/zh/download
 - WeChat Channels and Official Account video downloader: https://freesavevideo.online/en/download/wechat-video-download
 - 视频号与微信公众号视频下载: https://freesavevideo.online/zh/download/wechat-video-download
+- Xinpianchang video downloader: https://freesavevideo.online/en/download/xinpianchang-video-download
+- 新片场视频下载: https://freesavevideo.online/zh/download/xinpianchang-video-download
 - Guide index: https://freesavevideo.online/en/guide
 - Learn hub: https://freesavevideo.online/en/learn
 - FAQ: https://freesavevideo.online/en/faq
@@ -74,6 +77,8 @@ Localized download and guide directories follow the same language prefix pattern
 ## Core Download Landing Pages
 - https://freesavevideo.online/en/download/wechat-video-download
 - https://freesavevideo.online/zh/download/wechat-video-download
+- https://freesavevideo.online/en/download/xinpianchang-video-download
+- https://freesavevideo.online/zh/download/xinpianchang-video-download
 - https://freesavevideo.online/en/download/tiktok-no-watermark
 - https://freesavevideo.online/en/download/tiktok-collection-download
 - https://freesavevideo.online/en/download/tiktok-mp3-download

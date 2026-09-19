@@ -4,6 +4,7 @@
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
+    import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
 
@@ -130,11 +131,11 @@
               '@type': 'HowTo',
               name: localeContent.stepsTitle,
               description: localeContent.lede,
-              totalTime: 'PT1M',
+              ...(data.slug === 'xinpianchang-video-download' ? {} : { totalTime: 'PT1M' }),
               tool: [
                   {
                       '@type': 'HowToTool',
-                      name: 'FreeSaveVideo',
+                      name: data.slug === 'xinpianchang-video-download' ? 'FreeSaveVideo Downloader browser extension' : 'FreeSaveVideo',
                   },
               ],
               step: localeContent.steps.map((step, index) => ({
@@ -165,7 +166,7 @@
                   name: localeContent.h1,
                   description: pageDesc,
                   applicationCategory: 'MultimediaApplication',
-                  operatingSystem: isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : localCopy?.browser ?? 'Web browser',
+                   operatingSystem: data.slug === 'xinpianchang-video-download' ? 'Chrome or Edge on desktop' : isJa ? 'Web ブラウザ' : isZh ? '\u6d4f\u89c8\u5668' : isTh ? 'เว็บเบราว์เซอร์' : localCopy?.browser ?? 'Web browser',
                   featureList: localeContent.features,
                   knowsAbout: [
                       localeContent.h1,
@@ -215,7 +216,7 @@
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
     <meta name="keywords" content={pageKeywords} />
-    <meta name="applicable-device" content="pc,mobile" />
+    <meta name="applicable-device" content={data.slug === 'xinpianchang-video-download' ? 'pc' : 'pc,mobile'} />
     <meta http-equiv="Cache-Control" content="no-transform" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
@@ -323,6 +324,18 @@
             <span>/</span>
             <span class="crumb-current">{localeContent.h1}</span>
         </nav>
+
+        {#if data.slug === 'xinpianchang-video-download'}
+            <section class="card xinpianchang-install">
+                <div>
+                    <h2>{isZh ? '安装 FreeSaveVideo Downloader 插件' : 'Install FreeSaveVideo Downloader'}</h2>
+                    <p>{isZh ? '新片场要求浏览器验证时，请自行完成验证并播放视频，然后点击插件中的 Download。支持 Chrome 和 Edge；下载页显示保存成功前请保持打开。' : 'If Xinpianchang requests browser verification, complete it yourself and play the video. Then click Download in the extension. Keep the progress tab open until Chrome saves the MP4.'}</p>
+                </div>
+                <a class="related-link related-link--primary" href={FREESAVEVIDEO_EXTENSION_STORE_URL} target="_blank" rel="noopener noreferrer">
+                    {isZh ? '前往 Chrome 网上应用店安装插件' : 'Get the Chrome / Edge extension'}
+                </a>
+            </section>
+        {/if}
 
         {#if localeContent.facts?.length}
             <section class="card fact-summary" aria-label={isJa ? '製品機能の概要' : isZh ? '产品能力说明' : isTh ? 'สรุปความสามารถของบริการ' : localCopy?.capability ?? 'Product capability summary'}>
@@ -574,6 +587,18 @@
 </div>
 
 <style>
+    .xinpianchang-install {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .xinpianchang-install h2 { margin: 0 0 8px; }
+    .xinpianchang-install p { margin: 0; line-height: 1.6; }
+    .xinpianchang-install a { flex-shrink: 0; }
+    @media (max-width: 680px) {
+        .xinpianchang-install { flex-direction: column; align-items: stretch; }
+    }
     .page {
         --download-surface: color-mix(in srgb, var(--popup-bg) 94%, #ffffff);
         --download-panel: color-mix(in srgb, var(--popup-bg) 86%, #ffffff);

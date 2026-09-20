@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS video_agent_runs (
 CREATE UNIQUE INDEX IF NOT EXISTS video_agent_one_active_project_run ON video_agent_runs(project_id)
     WHERE status IN ('queued','planning','awaiting_input','running','cancelling');
 CREATE INDEX IF NOT EXISTS video_agent_runs_queue ON video_agent_runs(admission_status,status,created_at);
+CREATE INDEX IF NOT EXISTS video_agent_runs_project_recent ON video_agent_runs(project_id,created_at DESC,id DESC);
 CREATE TABLE IF NOT EXISTS video_agent_steps (
     id UUID PRIMARY KEY, run_id UUID NOT NULL REFERENCES video_agent_runs(id),
     stage TEXT NOT NULL, ordinal INTEGER NOT NULL, scope_id TEXT NOT NULL, dependencies UUID[] NOT NULL,

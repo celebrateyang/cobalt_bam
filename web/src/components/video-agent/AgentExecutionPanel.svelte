@@ -91,6 +91,8 @@
                     if(editableRunId!==selected){const value=await getAgentEditable(id,selected);if(mounted && version===epoch && selected===selectedRunId){editable=value;editableRunId=selected;chooseClip(value.clips[0]);}}
                 }else{clearResults();editable=null;editableRunId="";}
             }else{run=null;steps=[];clearResults();editable=null;editableRunId="";}
+            const currentRun=runs.find(value=>activeStates.includes(value.status));
+            dispatch("state",{hasPlan:!!latestPlanId,runStatus:currentRun?.status || run?.status || null,resultCount:results.length});
             stale=settled.some(value=>value.status==="rejected");
         }catch(error){if(mounted && version===epoch){stale=true;report(error);}}
         finally{refreshing=false;}
@@ -196,7 +198,7 @@
         {/if}
     {:else}<p class="muted">{$t("video-agent.runs_empty")}</p>{/if}
 
-    <details class="utility-panel plan-panel" open={!run}>
+    <details class="utility-panel plan-panel" open={!!planId && !run}>
         <summary>{$t("video-agent.plan")}</summary>
         <div class="utility-content">
             <p class="muted">{$t("video-agent.plan_controls_hint")}</p>

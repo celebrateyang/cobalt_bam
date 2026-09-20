@@ -2,7 +2,8 @@ import { currentApiURL } from "$lib/api/api-url";
 import { getClerkToken } from "$lib/state/clerk";
 import { createFileFingerprint } from "$lib/api/ai-video";
 
-export type AgentProject = { id: string; title: string; status: string; revision: number; createdAt: number; updatedAt: number };
+export type AgentProject = { id: string; title: string; status: string; revision: number; createdAt: number; updatedAt: number;
+    latestRun?: {id:string;status:string;requestedCount:number;producedCount:number}|null };
 export type AgentSource = { id: string; kind: string; filename: string; mime: string; sizeBytes: number; status: string;
     errorCode: string | null; retentionUntil: number; assetId: string | null; probe: { durationSeconds: number; width: number; height: number } | null };
 type UploadState = { status: string; committedBytes: number; totalBytes: number; chunkSizeBytes: number; fileFingerprint: string; expiresAt: number };

@@ -70,7 +70,9 @@ export const transaction = async (action) => {
     } finally { client.release(); }
 };
 
-export const projectDTO = (row) => ({ id: row.id, title: row.title, status: row.status, revision: row.current_revision, createdAt: Number(row.created_at), updatedAt: Number(row.updated_at) });
+export const projectDTO = (row) => ({ id: row.id, title: row.title, status: row.status, revision: row.current_revision, createdAt: Number(row.created_at), updatedAt: Number(row.updated_at),
+    latestRun: row.latest_run_id ? { id: row.latest_run_id, status: row.latest_run_status, requestedCount: row.latest_requested_count,
+        producedCount: row.latest_produced_count } : null });
 export const sourceDTO = (row) => ({ id: row.id, kind: row.kind, filename: row.filename, mime: row.mime,
     sizeBytes: Number(row.size_bytes), status: row.status, probe: row.probe, errorCode: row.error_code,
     retentionUntil: Number(row.retention_until), assetId: row.asset_id || null });
@@ -95,8 +97,14 @@ export const createProject = ({ userId, title }) => transaction(async (client) =
 });
 export const listProjects = async ({ userId, limit, cursor }) => {
     await ensureVideoAgentSchema();
-    const result = await query(`SELECT * FROM video_agent_projects WHERE user_id=$1 AND deleted_at IS NULL
-        AND ($2::bigint IS NULL OR (created_at,id)<($2,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4`, [userId, cursor?.at || null, cursor?.id || null, limit + 1]);
+    const result = await query(`SELECT p.*,r.id AS latest_run_id,r.status AS latest_run_status,
+        r.requested_count AS latest_requested_count,r.produced_count AS latest_produced_count
+        FROM video_agent_projects p LEFT JOIN LATERAL (
+            SELECT id,status,requested_count,produced_count FROM video_agent_runs
+            WHERE project_id=p.id ORDER BY created_at DESC,id DESC LIMIT 1
+        ) r ON TRUE WHERE p.user_id=$1 AND p.deleted_at IS NULL
+        AND ($2::bigint IS NULL OR (p.created_at,p.id)<($2,$3::uuid))
+        ORDER BY p.created_at DESC,p.id DESC LIMIT $4`, [userId, cursor?.at || null, cursor?.id || null, limit + 1]);
     const rows = result.rows.slice(0, limit);
     return { projects: rows.map(projectDTO), nextCursor: result.rows.length > limit ? `${rows.at(-1).created_at}:${rows.at(-1).id}` : null };
 };

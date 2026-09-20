@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -80,6 +80,9 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     assert.equal((await request("/projects", { headers: { "x-test-disabled": "1" } })).status, 403);
     assert.equal((await request("/projects/not-a-uuid")).status, 400);
     const project = (await request("/projects", { method: "POST", body: { title: "Spanish clips" } })).data.project;
+    const listed = (await request("/projects")).data.projects;
+    assert.equal(listed[0].id, project.id);
+    assert.equal(listed[0].latestRun, null);
     const prefix = `/projects/${project.id}`;
     assert.equal((await request(prefix, { user: 2 })).status, 404);
     assert.equal((await request(prefix, { user: 2, method: "DELETE" })).status, 404);
@@ -173,6 +176,14 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     const list = await request("/projects?limit=1"); assert.equal(list.data.projects.length, 1); assert.ok(list.data.nextCursor);
     const next = await request(`/projects?limit=1&cursor=${encodeURIComponent(list.data.nextCursor)}`);
     assert.equal(next.data.projects.length,1); assert.notEqual(next.data.projects[0].id,list.data.projects[0].id);
+    const planId = randomUUID(), runId = randomUUID();
+    await pg.query(`INSERT INTO video_agent_revisions(project_id,revision,settings_snapshot,created_by,created_at) VALUES($1,0,'{}',1,1000)`, [sameTime.id]);
+    await pg.query(`INSERT INTO video_agent_plans(id,project_id,revision,plan,plan_hash,source_snapshot,pipeline_version,created_at)
+        VALUES($1,$2,0,'{}','test','{}','test',1000)`, [planId,sameTime.id]);
+    await pg.query(`INSERT INTO video_agent_runs(id,project_id,base_revision,plan_id,plan,plan_hash,source_snapshot,pipeline_version,status,requested_count,produced_count,created_at,updated_at)
+        VALUES($1,$2,0,$3,'{}','test','{}','test','completed',2,1,1000,1000)`, [runId,sameTime.id,planId]);
+    const withRun = (await request("/projects")).data.projects.find(item=>item.id===sameTime.id);
+    assert.deepEqual(withRun.latestRun, { id:runId, status:"completed", requestedCount:2, producedCount:1 });
     assert.equal((await request("/projects?cursor=bad")).status, 400);
     assert.equal((await request(prefix, { method: "DELETE" })).status, 204);
     assert.equal((await request(prefix)).status, 404); assert.equal((await request(assetPath)).status, 404);

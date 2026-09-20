@@ -108,7 +108,7 @@ const createRun = async (client, project, planRow, retryOf = null, admissionPoli
         await client.query(`INSERT INTO video_agent_steps(id,run_id,stage,scope_id,dependencies,input_snapshot,input_hash,pipeline_version,status,
             output_refs,reused_step_id,available_at,created_at,updated_at,ordinal,checkpoint,provider,model) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12,$13,$14,$15,$16)`,
         [ids[step.stage], runId, step.stage, step.scopeId, step.dependsOn.map((dependency) => ids[dependency]), step.input, step.inputHash, PIPELINE_VERSION,
-            reusable ? "succeeded" : "pending", reusable?.output_refs || [], reusable?.id || null, now, step.ordinal,reusable?.checkpoint || {},reusable?.provider || null,reusable?.model || null]);
+            reusable ? "succeeded" : "pending", JSON.stringify(reusable?.output_refs || []), reusable?.id || null, now, step.ordinal,reusable?.checkpoint || {},reusable?.provider || null,reusable?.model || null]);
     }
     if(planRow.plan.edits && !reusedStages.has("translate_selected"))
         throw agentError("VIDEO_AGENT_EDIT_SOURCE_UNAVAILABLE",409,"Editable translation assets have expired; create a fresh result before editing");

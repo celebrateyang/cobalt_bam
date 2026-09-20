@@ -35,7 +35,14 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
     resetAiVideoObjectStorageForTests();
     const storage=getAiVideoObjectStorage();const pg=new PGlite();
     await pg.exec("CREATE TABLE users(id INTEGER PRIMARY KEY); INSERT INTO users VALUES(1);");
-    const sql=async(text,params)=>{ const r=params?await pg.query(text,params):(await pg.exec(text)).at(-1);return { ...r,rowCount:r.affectedRows || r.rows?.length || 0 }; };
+    const sql=async(text,params)=>{
+        // node-postgres encodes a JavaScript array as a PostgreSQL array literal,
+        // which is invalid for a nonempty JSONB output_refs value in production.
+        const refs=String(text).includes("INSERT INTO video_agent_steps(")?params?.[9]
+            : String(text).includes("SET checkpoint=$2,output_refs=$3")?params?.[2]:undefined;
+        if(refs!==undefined){assert.equal(typeof refs,"string");assert.ok(Array.isArray(JSON.parse(refs)));}
+        const r=params?await pg.query(text,params):(await pg.exec(text)).at(-1);return { ...r,rowCount:r.affectedRows || r.rows?.length || 0 };
+    };
     let tail=Promise.resolve();const acquire=async()=>{let release;const next=new Promise((r)=>release=r);const prev=tail;tail=next;await prev;return release;};
     const adapter={ query:async(...args)=>{const release=await acquire();try{return await sql(...args);}finally{release();}},getClient:async()=>{const release=await acquire();return { query:sql,release };} };
     setVideoAgentDatabaseForTests(adapter);setAiVideoDatabaseForTests(adapter);

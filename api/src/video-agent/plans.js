@@ -82,14 +82,14 @@ export const normalizePlan = (input) => {
 // Only server-defined stages/dependencies. Client plans cannot provide commands or a custom graph.
 export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     const stages = ["probe", "chunk", "transcribe", "normalize", "select_clips", "translate_selected",
-        ...(plan.dubbing.enabled?["prepare_dub_text","tts","fit_dub_timeline","build_dub_subtitles"]:["build_subtitles"]),"render", "verify", "publish_results"];
+        ...(plan.dubbing?.enabled?["prepare_dub_text","tts","fit_dub_timeline","build_dub_subtitles"]:["build_subtitles"]),"render", "verify", "publish_results"];
     let upstreamHash = null;
     return stages.map((stage, index) => {
         const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
             : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? {...getSelectConfig(),limits:plan.clips} : stage === "translate_selected" ? getTranslationConfig(plan)
             : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles,...(plan.edits?{edits:plan.edits}:{})}
             : ["prepare_dub_text","tts","fit_dub_timeline","build_dub_subtitles"].includes(stage) ? {dubbing:plan.dubbing,budget:estimateRunTtsBudget(plan.clips,getTtsConfig()),tts:getTtsConfig(),...(plan.edits?{edits:plan.edits}:{})}
-            : stage === "render" ? {...RENDER_CONFIG,...plan.video,...(plan.dubbing.enabled?{dubbing:plan.dubbing}:{})} : stage === "verify" ? VERIFY_CONFIG : {};
+            : stage === "render" ? {...RENDER_CONFIG,...plan.video,...(plan.dubbing?.enabled?{dubbing:plan.dubbing}:{})} : stage === "verify" ? VERIFY_CONFIG : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);
         upstreamHash = inputHash;

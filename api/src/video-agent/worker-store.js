@@ -155,7 +155,7 @@ const persistOutputs = async (client,claim,{ step,now },{ checkpoint = {}, outpu
         const assets = await client.query(`SELECT id FROM video_agent_assets WHERE id=ANY($1::uuid[]) AND project_id=$2 AND status='ready' AND expires_at>$3`, [outputRefs, claim.projectId, now]);
         if (assets.rowCount !== new Set(outputRefs).size) throw agentError("VIDEO_AGENT_OUTPUT_INVALID", 409, "Output asset unavailable");
     }
-    await client.query(`UPDATE video_agent_steps SET checkpoint=$2,output_refs=$3,updated_at=$4 WHERE id=$1`, [step.id, checkpoint, outputRefs, now]);
+    await client.query(`UPDATE video_agent_steps SET checkpoint=$2,output_refs=$3::jsonb,updated_at=$4 WHERE id=$1`, [step.id, checkpoint, JSON.stringify(outputRefs), now]);
 };
 export const commitCheckpoint = (claim,result) => withLease(claim,async(client,context)=>{
     await persistOutputs(client,claim,context,result);

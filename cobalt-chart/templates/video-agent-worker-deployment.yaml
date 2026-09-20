@@ -76,6 +76,8 @@ spec:
             {{- end }}
             - name: AI_VIDEO_OPENAI_TIMEOUT_MS
               value: {{ .Values.aiVideo.worker.openaiTimeoutMs | quote }}
+            - name: VIDEO_AGENT_ASR_TIMEOUT_MS
+              value: {{ .Values.videoAgent.asr.timeoutMs | quote }}
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:

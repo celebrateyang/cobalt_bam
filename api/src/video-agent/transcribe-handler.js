@@ -36,7 +36,9 @@ export const createTranscribeHandler=({provider=existingSpeechAdapter,disk=statf
             try{
                 const audio=await readAudioArtifact(chunk.asset.id,filename);
                 if(hashInput(audio)!==hashInput(chunk.asset) || (await inspectPcmWav(filename)).sampleCount!==chunk.sampleCount)throw invalid();
-                response=await provider.transcribe({filename,language:claim.run.plan.sourceLanguage,signal,config});
+                response=await provider.transcribe({filename,language:claim.run.plan.sourceLanguage,signal,config,
+                    diagnostics:{runId:claim.run.id,stepId:claim.step.id,attempt:claim.step.attempt,chunkOrdinal:chunk.ordinal,
+                        chunkDurationMs:chunk.processingEndMs-chunk.processingStartMs}});
                 signal.throwIfAborted();
             }finally{await unlink(filename).catch(error=>{if(error.code!=="ENOENT")throw error;});}
             const raw=await artifact({version:"asr-raw-v1",configHash,config,sourceChecksum:source.checksum,chunk,requestId:response.requestId,raw:response.raw},{kind:"asr_raw"});

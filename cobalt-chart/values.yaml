@@ -250,6 +250,7 @@ videoAgent:
   asr:
     # Bump when the same model name points to different weights/adapter behavior.
     modelRevision: "default"
+    timeoutMs: 300000
   worker:
     enabled: true
     replicaCount: 1

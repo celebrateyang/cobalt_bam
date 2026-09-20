@@ -48,23 +48,46 @@ test("existing SDK sends proper formats, disables hidden retries, honors Retry-A
     let mode="ok",calls=0,body="";
     const server=http.createServer(async(req,res)=>{calls++;const chunks=[];for await(const part of req)chunks.push(part);body=Buffer.concat(chunks).toString();
         if(mode==="wait")return;
+        if(mode==="bodywait"){res.writeHead(200,{"Content-Type":"application/json","x-request-id":"slow-body"});res.flushHeaders();return;}
         if(mode==="huge"){res.writeHead(200,{"Content-Type":"application/json"});res.end(JSON.stringify({text:"x".repeat(8*1024*1024+1)}));return;}
         if(mode==="rate"){res.writeHead(429,{"Content-Type":"application/json","Retry-After":"5"});res.end(JSON.stringify({error:{message:"rate limit"}}));return;}
         res.writeHead(200,{"Content-Type":"application/json","x-request-id":"fixture-request"});res.end(JSON.stringify({text:"hello",segments:[{start:0,end:1,text:"hello"}],words:[{start:0,end:1,word:"hello"}],unmodified:{tokens:[1,2]}}));
     });
     await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));t.after(()=>{server.closeAllConnections();server.close();});
     const client=new OpenAI({apiKey:"fixture-key",baseURL:`http://127.0.0.1:${server.address().port}/v1`,maxRetries:2});
-    const adapter=createSpeechAdapter({client:()=>client});const config={...getAsrConfig(),model:"whisper-1",responseFormat:"verbose_json",timestampGranularities:["segment","word"]};
+    const records=[];const adapter=createSpeechAdapter({client:()=>client,log:record=>records.push(record)});const config={...getAsrConfig(),model:"whisper-1",responseFormat:"verbose_json",timestampGranularities:["segment","word"]};
     const output=await adapter.transcribe({filename,language:"es",signal:new AbortController().signal,config});assert.deepEqual(output.raw.unmodified,{tokens:[1,2]});assert.equal(output.requestId,"fixture-request");
+    assert.equal(records.find(record=>record.event==="request.started")?.audioBytes,64);
+    assert.equal(records.find(record=>record.event==="response.headers")?.requestId,"fixture-request");
+    assert.equal(records.find(record=>record.event==="request.succeeded")?.phase,"response_body");
+    assert.ok(records.find(record=>record.event==="request.succeeded")?.responseBytes>0);
+    assert.ok(records.every(record=>!JSON.stringify(record).includes("hello")));
     assert.match(body,/verbose_json/);assert.match(body,/timestamp_granularities\[\]/);assert.match(body,/name="language"/);
     await adapter.transcribe({filename,language:"auto",signal:new AbortController().signal,config:{...config,model:"gpt-4o-transcribe-diarize",responseFormat:"diarized_json",timestampGranularities:[]}});
     assert.match(body,/diarized_json/);assert.match(body,/chunking_strategy/);assert.doesNotMatch(body,/timestamp_granularities|name="language"/);
     mode="rate";const before=calls;await assert.rejects(adapter.transcribe({filename,language:"auto",signal:new AbortController().signal,config}),error=>error.status===429 && error.retryAfterMs===5000);assert.equal(calls,before+1);
+    assert.equal(records.at(-1).httpStatus,429);
     mode="wait";const controller=new AbortController(),pending=adapter.transcribe({filename,signal:controller.signal,config});setTimeout(()=>controller.abort(Object.assign(new Error("stop"),{code:"VIDEO_AGENT_CANCELLED"})),100);
     await assert.rejects(pending,{code:"VIDEO_AGENT_CANCELLED"});
+    assert.equal(records.at(-1).abortSource,"worker");
     const timeout=process.env.AI_VIDEO_OPENAI_TIMEOUT_MS;
-    try{process.env.AI_VIDEO_OPENAI_TIMEOUT_MS="100";await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config}),{code:"ETIMEDOUT"});}
+    try{process.env.AI_VIDEO_OPENAI_TIMEOUT_MS="100";await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config,diagnostics:{runId:"test-run",stepId:"test-step",chunkOrdinal:2,chunkDurationMs:602000}}),{code:"ETIMEDOUT"});
+        assert.equal(records.at(-1).abortSource,"asr_deadline");assert.equal(records.at(-1).phase,"awaiting_response");
+        assert.equal(records.at(-1).chunkOrdinal,2);assert.equal(records.at(-1).chunkDurationMs,602000);
+        mode="bodywait";await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config}),{code:"ETIMEDOUT"});
+        assert.equal(records.at(-1).phase,"response_body");assert.equal(records.at(-1).requestId,"slow-body");assert.equal(records.at(-1).responseBytes,0);
+    }
     finally{if(timeout===undefined)delete process.env.AI_VIDEO_OPENAI_TIMEOUT_MS;else process.env.AI_VIDEO_OPENAI_TIMEOUT_MS=timeout;}
+    mode="wait";const asrTimeout=process.env.VIDEO_AGENT_ASR_TIMEOUT_MS;
+    try{
+        process.env.AI_VIDEO_OPENAI_TIMEOUT_MS="5000";process.env.VIDEO_AGENT_ASR_TIMEOUT_MS="100";
+        await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config}),{code:"ETIMEDOUT"});
+        process.env.VIDEO_AGENT_ASR_TIMEOUT_MS="600001";
+        await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config}),{code:"VIDEO_AGENT_ASR_CONFIG_INVALID"});
+    }finally{
+        if(timeout===undefined)delete process.env.AI_VIDEO_OPENAI_TIMEOUT_MS;else process.env.AI_VIDEO_OPENAI_TIMEOUT_MS=timeout;
+        if(asrTimeout===undefined)delete process.env.VIDEO_AGENT_ASR_TIMEOUT_MS;else process.env.VIDEO_AGENT_ASR_TIMEOUT_MS=asrTimeout;
+    }
     mode="huge";await assert.rejects(adapter.transcribe({filename,signal:new AbortController().signal,config}),{code:"VIDEO_AGENT_ASR_RESPONSE_TOO_LARGE"});
     assert.equal(retryAfterMs(new Headers({"Retry-After":"Thu, 01 Jan 1970 00:00:10 GMT"}),0),10000);
 });

@@ -38,13 +38,15 @@ export const normalizeTranscript=(transcript,{sourceChecksum,durationMs,config=N
     }
     if(words.length>80000)throw invalid();
     words.sort((a,b)=>a.startMs-b.startMs || a.endMs-b.endMs || a.id.localeCompare(b.id));
-    // Small boundary jitter can be reconciled without dropping text. True overlap
-    // cannot be represented on one subtitle track and requires source review.
+    // Estimated words inherit segment timestamps, so adjacent segments can overlap
+    // even when their word order is unambiguous. Keep every word and flag the repair.
+    // Precise word timing and larger overlaps still require source review.
     for(let i=1;i<words.length;i++)if(words[i].startMs<words[i-1].endMs){
         const previous=words[i-1],current=words[i],overlap=previous.endMs-current.startMs;
-        if(overlap>100 || current.startMs<=previous.startMs)throw invalid();
+        const estimatedBoundary=previous.segmentId!==current.segmentId && previous.timingQuality==="estimated" && current.timingQuality==="estimated";
+        if(overlap>(estimatedBoundary?500:100) || current.startMs<=previous.startMs)throw invalid();
         previous.endMs=current.startMs;previous.timingQuality="estimated";
-        warnings.push({code:"timing_jitter_clipped",wordId:previous.id});
+        warnings.push({code:estimatedBoundary && overlap>100?"estimated_segment_overlap_clipped":"timing_jitter_clipped",wordId:previous.id});
     }
     const groups=[];let group=[];
     const flush=()=>{if(group.length)groups.push(group);group=[];};

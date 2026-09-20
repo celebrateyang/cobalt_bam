@@ -34,6 +34,22 @@ test("small jitter is marked estimated; invalid, ambiguous and out-of-source tim
     for(const words of [[{text:"one",startMs:0,endMs:1500},{text:"two",startMs:1000,endMs:2000}],[{text:"x",startMs:-1,endMs:1000}],[{text:"x",startMs:0,endMs:21000}],[{text:"",startMs:0,endMs:1000}],[{text:"x",startMs:0,endMs:0}]])assert.throws(()=>normalizeTranscript(input(words),source),{code:"VIDEO_AGENT_SUBTITLE_TIMELINE_INVALID"});
     assert.throws(()=>normalizeTranscript(input([{text:"x",startMs:0,endMs:1000}]),{...source,sourceChecksum:"other"}),{code:"VIDEO_AGENT_SUBTITLE_TIMELINE_INVALID"});
 });
+test("bounded estimated overlap across ASR segments keeps all words and requires review",()=>{
+    const transcript=input([{text:"first",startMs:1000,endMs:1400,timingQuality:"estimated"},{text:"third",startMs:1400,endMs:1650,timingQuality:"estimated"}]);
+    transcript.segments.push({id:"segment-2",speakerLocalId:"chunk-0:B",words:[
+        {id:"word-2",text:"second",startMs:1200,endMs:1500,timingQuality:"estimated"},
+        {id:"word-3",text:"fourth",startMs:1500,endMs:1800,timingQuality:"estimated"}]});
+    const before=JSON.stringify(transcript);
+    const result=normalizeTranscript(transcript,source);
+    assert.equal(JSON.stringify(transcript),before);
+    assert.deepEqual(result.cues.flatMap(cue=>cue.wordIds),["word-0","word-2","word-1","word-3"]);
+    assert.equal(result.requiresReview,true);
+    assert.equal(result.warnings.filter(warning=>warning.code==="estimated_segment_overlap_clipped").length,2);
+    const precise=structuredClone(transcript);precise.segments[1].words[0].timingQuality="word";
+    assert.throws(()=>normalizeTranscript(precise,source),{code:"VIDEO_AGENT_SUBTITLE_TIMELINE_INVALID"});
+    const excessive=structuredClone(transcript);excessive.segments[0].words[0].endMs=1800;
+    assert.throws(()=>normalizeTranscript(excessive,source),{code:"VIDEO_AGENT_SUBTITLE_TIMELINE_INVALID"});
+});
 test("normalize handler publishes typed derived artifacts, validates configuration and observes cancellation",async()=>{
     const transcript=input([{text:"Hello",startMs:0,endMs:1500}]);let calls=0;
     const ctx={signal:new AbortController().signal,claim:{step:{input_snapshot:{config:NORMALIZE_CONFIG}},run:{source_snapshot:{checksum:source.sourceChecksum,durationMs:source.durationMs},plan:{sourceLanguage:"en"}}},dependencies:[{stage:"transcribe",checkpoint:{transcriptRef:"raw-transcript"}}],readArtifact:async(ref,options)=>{assert.equal(ref,"raw-transcript");assert.equal(options.kind,"transcript");return transcript;},artifact:async(value,options)=>{calls++;assert.equal(options.kind,"transcript");assert.equal(value.sourceTranscriptRef,"raw-transcript");assert.equal(value.segments,transcript.segments);return {id:"normalized"};}};

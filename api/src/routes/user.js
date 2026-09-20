@@ -36,10 +36,11 @@ import {
     listDownloadAttempts,
 } from "../db/download-attempts.js";
 import {
-    getAdminAiVideoAsset,
-    getAdminAiVideoStorageSummary,
-    listAdminAiVideoAssets,
-} from "../db/ai-video-admin.js";
+    canPreviewStorageAsset,
+    getAdminStorageAsset,
+    getAdminStorageSummary,
+    listAdminStorageAssets,
+} from "../db/ai-video-storage-admin.js";
 import {
     createCuriousCatActivity,
     deleteCuriousCatActivity,
@@ -307,11 +308,13 @@ router.get("/admin/users", requireAdminAuth, async (req, res) => {
 
 router.get("/admin/ai-video/storage", requireAdminAuth, async (req, res) => {
     try {
-        const result = await listAdminAiVideoAssets({
+        const result = await listAdminStorageAssets({
             page: req.query?.page,
             limit: req.query?.limit,
             search: req.query?.search,
             kind: req.query?.kind,
+            kindGroup: req.query?.kindGroup,
+            product: req.query?.product,
             jobStatus: req.query?.jobStatus,
             cleanupStatus: req.query?.cleanupStatus,
             userId: req.query?.userId,
@@ -329,7 +332,7 @@ router.get("/admin/ai-video/storage", requireAdminAuth, async (req, res) => {
 
 router.get("/admin/ai-video/storage/summary", requireAdminAuth, async (_, res) => {
     try {
-        const summary = await getAdminAiVideoStorageSummary();
+        const summary = await getAdminStorageSummary();
         return res.json({ status: "success", data: { summary } });
     } catch (error) {
         console.error("GET /user/admin/ai-video/storage/summary error:", error);
@@ -339,9 +342,18 @@ router.get("/admin/ai-video/storage/summary", requireAdminAuth, async (_, res) =
 
 router.post("/admin/ai-video/storage/:assetId/preview-url", requireAdminAuth, async (req, res) => {
     try {
-        const asset = await getAdminAiVideoAsset(req.params.assetId);
+        const asset = await getAdminStorageAsset(req.params.assetId, { product: req.query?.product || "highlight" });
         if (!asset) {
             return jsonError(res, 404, "AI_VIDEO_ASSET_NOT_FOUND", "AI video asset not found");
+        }
+        if (!canPreviewStorageAsset(asset)) {
+            return jsonError(res, 404, "AI_VIDEO_ASSET_NOT_FOUND", "AI video asset unavailable");
+        }
+        if (asset.product === "video_agent") {
+            const head = await getAiVideoObjectStorage().headObject(asset.objectKey);
+            if (head.generation !== asset.objectGeneration || head.sizeBytes !== asset.sizeBytes) {
+                return jsonError(res, 404, "AI_VIDEO_ASSET_NOT_FOUND", "AI video asset changed");
+            }
         }
         const url = await getAiVideoObjectStorage().createDownloadUrl(
             asset.objectKey,

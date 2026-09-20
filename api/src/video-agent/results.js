@@ -7,14 +7,17 @@ export const getPublishedResults=input=>transaction(async client=>{
     await ownedProject(client,input);
     const run=(await client.query("SELECT * FROM video_agent_runs WHERE id=$1 AND project_id=$2",[input.runId,input.projectId])).rows[0];
     if(!run)throw agentError("VIDEO_AGENT_RUN_NOT_FOUND",404,"Run not found");
-    if(!["completed","partially_completed"].includes(run.status))return {results:[],producedCount:0};
+    if(!["completed","partially_completed"].includes(run.status))return {results:[],producedCount:0,selectionShortfall:0};
     const publish=(await client.query("SELECT checkpoint FROM video_agent_steps WHERE run_id=$1 AND stage='publish_results' AND status='succeeded'",[run.id])).rows[0];
+    const selection=(await client.query("SELECT checkpoint FROM video_agent_steps WHERE run_id=$1 AND stage='select_clips' AND status='succeeded'",[run.id])).rows[0];
     const results=publish?.checkpoint?.results || [],ids=results.flatMap(clip=>[clip.video.id,...(clip.dubAudio?[clip.dubAudio.id]:[]),...Object.values(clip.subtitles).map(asset=>asset.id)]);
     const ready=ids.length?(await client.query("SELECT id FROM video_agent_assets WHERE id=ANY($1::uuid[]) AND project_id=$2 AND status='ready' AND expires_at>$3",[ids,input.projectId,Date.now()])).rows:[];
     const available=new Set(ready.map(asset=>asset.id));
     return {results:results.filter(clip=>available.has(clip.video.id)).map(clip=>({...clip,
         ...(clip.dubAudio && !available.has(clip.dubAudio.id)?{dubAudio:null}:{}),
-        subtitles:Object.fromEntries(Object.entries(clip.subtitles).filter(([,asset])=>available.has(asset.id)))})),producedCount:run.produced_count,requiresReview:publish?.checkpoint?.requiresReview || false};
+        subtitles:Object.fromEntries(Object.entries(clip.subtitles).filter(([,asset])=>available.has(asset.id)))})),producedCount:run.produced_count,
+        selectionShortfall:Number.isInteger(selection?.checkpoint?.shortfall)?Math.max(0,selection.checkpoint.shortfall):0,
+        requiresReview:publish?.checkpoint?.requiresReview || false};
 });
 
 export const getEditableResults=async(input,{storage=getAiVideoObjectStorage()}={})=>{

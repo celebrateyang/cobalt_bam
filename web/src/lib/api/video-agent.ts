@@ -16,12 +16,12 @@ export type AgentPlannerOutcome = {status:"ready"|"needs_input"|"unsupported";re
 export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};dubAudio?:{id:string}|null;
     fit?:{originalMs:number;fittedMs:number;spokenDurationMs:number;speed:number;peakDb:number;meanDb:number;timingQuality:string};subtitles:Record<string,{id:string}>};
 export type AgentEditable = {runId:string;clips:{id:string;title:string;startMs:number;endMs:number;cues:{id:string;startMs:number;endMs:number;sourceText:string;translatedText:string}[]}[]};
-export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
+export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];selectionShortfall:number;requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
 export const getAgentEditable=(projectId:string,runId:string)=>agentRequest<AgentEditable>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/editable`);
 export const getAgentPreview=async(projectId:string,assetId:string)=>{
-    const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`,signed=await agentRequest<{url:string|null}>(`${path}?url=1`);
+    const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`,signed=await agentRequest<{url:string|null}>(`${path}?url=1&preview=1`);
     if(signed.url)return signed.url;
-    const token=await getClerkToken(),response=await fetch(`${currentApiURL()}/user/video-agent${path}`,{headers:{Authorization:`Bearer ${token}`}});
+    const token=await getClerkToken(),response=await fetch(`${currentApiURL()}/user/video-agent${path}?preview=1`,{headers:{Authorization:`Bearer ${token}`}});
     if(!response.ok)throw new Error("Preview unavailable");return URL.createObjectURL(await response.blob());
 };
 export const agentRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {

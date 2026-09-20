@@ -202,7 +202,8 @@ export const createVideoAgentRouter = ({ authenticate, operations = {} } = {}) =
         }
         const head=await storage.headObject(asset.object_key);
         if(head.generation!==asset.generation || head.sizeBytes!==Number(asset.size_bytes))throw agentError("VIDEO_AGENT_ASSET_UNAVAILABLE",404,"Asset changed");
-        const disposition = contentDisposition(asset.filename);
+        const preview = req.query.preview === "1" && ["rendered_video", "dub_audio", "subtitle_vtt"].includes(asset.kind);
+        const disposition = contentDisposition(asset.filename, preview ? { type: "inline" } : undefined);
         if (process.env.AI_VIDEO_STORAGE_PROVIDER === "gcs" || (!process.env.AI_VIDEO_STORAGE_PROVIDER && process.env.NODE_ENV === "production")) {
             const url = await storage.createDownloadUrl(asset.object_key, 10 * 60 * 1000, { responseDisposition: disposition, responseType: asset.mime });
             return req.query.url === "1" ? success(res, { url, expiresAt: Date.now() + 10 * 60 * 1000 }) : res.redirect(302, url);

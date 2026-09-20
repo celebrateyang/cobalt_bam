@@ -8,7 +8,6 @@
     import { getPendingAiVideoImport, type PendingAiVideoImport } from "$lib/api/ai-video";
     import { t } from "$lib/i18n/translations";
     import IconSparkles from "@tabler/icons-svelte/IconSparkles.svelte";
-    import IconScissors from "@tabler/icons-svelte/IconScissors.svelte";
     import IconUpload from "@tabler/icons-svelte/IconUpload.svelte";
     import IconPlayerPlay from "@tabler/icons-svelte/IconPlayerPlay.svelte";
     import IconMessageCircle from "@tabler/icons-svelte/IconMessageCircle.svelte";
@@ -38,6 +37,7 @@
     let uploadController: AbortController | null = null;
     let resumeSourceId: string | undefined;
     let fileInput: HTMLInputElement;
+    let requestInput: HTMLTextAreaElement;
     let activePanel: "conversation" | "results" = "conversation";
     const exampleKeys = ["clips_example", "translation_example", "dubbing_example"];
     $: highlightLink = `/${$page.params.lang || "en"}/ai-video`;
@@ -163,6 +163,16 @@
     const chooseExample = (key: string) => {
         request = $t(`video-agent.${key}`);
         activePanel = "conversation";
+        requestInput?.focus();
+    };
+    const chooseProject = (event: Event) => {
+        const id=(event.currentTarget as HTMLSelectElement).value;
+        void goto(id?`${agentLink}/projects/${id}`:agentLink);
+    };
+    const adjustRequest = () => {
+        activePanel="conversation";
+        requestInput?.focus();
+        requestInput?.scrollIntoView({behavior:"smooth",block:"center"});
     };
 </script>
 
@@ -189,25 +199,23 @@
     {#if loading}<p class="muted" role="status">{$t("video-agent.loading")}</p>{/if}
 
     <div class="workspace">
-        <aside class="card projects" aria-labelledby="agent-projects-title">
-            <div class="panel-heading">
-                <h2 id="agent-projects-title">{$t("video-agent.projects")}</h2>
-                <span class="count">{projects.length}</span>
-            </div>
-            <form class="project-create" on:submit|preventDefault={create}>
-                <label for="agent-project-title">{$t("video-agent.project_title")}</label>
-                <input id="agent-project-title" bind:value={title} maxlength={120} required disabled={busy || !$clerkUser} />
-                <button class="primary" disabled={busy || !$clerkUser || !title.trim()}>{$t("video-agent.create_project")}</button>
-            </form>
-            {#if !projects.length}<p class="muted">{$t("video-agent.projects_empty")}</p>{/if}
-            <div class="project-list">
-                {#each projects as project (project.id)}
-                    <a href={`${agentLink}/projects/${project.id}`} class:chosen={project.id === projectId} aria-current={project.id === projectId ? "page" : undefined}>{project.title}</a>
-                {/each}
+        <div class="project-toolbar card">
+            <div class="project-choice"><label for="agent-project-picker">{$t("video-agent.projects")}</label>
+                <select id="agent-project-picker" value={projectId} on:change={chooseProject} disabled={busy || !$clerkUser}>
+                    <option value="">{$t("video-agent.select_project")}</option>
+                    {#if selectedProject && !projects.some(item=>item.id===selectedProject?.id)}<option value={selectedProject.id}>{selectedProject.title}</option>{/if}
+                    {#each projects as project (project.id)}<option value={project.id}>{project.title}</option>{/each}
+                </select></div>
+            <details class="project-manage"><summary>{$t("video-agent.project_manage")}</summary>
+                <form class="project-create" on:submit|preventDefault={create}>
+                    <label for="agent-project-title">{$t("video-agent.project_title")}</label>
+                    <input id="agent-project-title" bind:value={title} maxlength={120} required disabled={busy || !$clerkUser} />
+                    <button class="primary" disabled={busy || !$clerkUser || !title.trim()}>{$t("video-agent.create_project")}</button>
+                </form>
                 {#if nextCursor}<button class="secondary" disabled={busy} on:click={more}>{$t("video-agent.load_more")}</button>{/if}
-            </div>
-            <div class="quota"><IconScissors size={18} aria-hidden="true" /><p>{$t("video-agent.shared_quota")}</p></div>
-        </aside>
+                {#if selectedProject}<button type="button" class="secondary delete" disabled={busy} on:click={remove}>{$t("video-agent.delete_project")}</button>{/if}
+            </details>
+        </div>
 
         <div class="panel-switch" role="group" aria-label="Video Agent">
             <button class:active={activePanel === "conversation"} aria-pressed={activePanel === "conversation"} aria-controls="agent-conversation" on:click={() => activePanel = "conversation"}>{$t("video-agent.conversation")}</button>
@@ -224,51 +232,48 @@
                 <h3>{$t("video-agent.request_label")}</h3>
                 <p class="muted">{$t("video-agent.request_placeholder")}</p>
             </div>{/if}
-            <div class="examples" aria-label={$t("video-agent.examples")}>
-                {#each exampleKeys as key}
-                    <button class="example" on:click={() => chooseExample(key)}>{$t(`video-agent.${key}`)}</button>
-                {/each}
-            </div>
             <div class="composer">
-                <h3>{selectedProject?.title || $t("video-agent.select_project")}</h3>
-                <p class="muted">{$t("video-agent.source_retention")}</p>
+                <label for="agent-request">{$t("video-agent.request_label")}</label>
+                <textarea id="agent-request" bind:this={requestInput} bind:value={request} maxlength={4000} rows={4} placeholder={$t("video-agent.request_placeholder")}></textarea>
+                <div class="composer-actions">
+                    <button type="button" class="primary" disabled={!selectedProject || !request.trim() || messageBusy || !!planningMessageId} on:click={sendMessage}>{$t(messageBusy || planningMessageId?"video-agent.loading":"video-agent.send_message")}</button>
+                </div>
                 <input class="file-input" type="file" accept=".mp4,.mov,.webm,.mkv,.m4v" bind:this={fileInput} on:change={upload} aria-label={$t("video-agent.upload")} />
                 <div class="source-actions">
                     <button type="button" class="secondary" disabled={busy || !selectedProject} on:click={() => chooseFile()}><IconUpload size={17} aria-hidden="true" />{$t("video-agent.upload")}</button>
                     {#if pendingImport}<button type="button" class="secondary" disabled={busy || !selectedProject} on:click={importSource}>{$t("video-agent.import_download")}: {pendingImport.filename}</button>{/if}
                 </div>
-                <p class="muted">{$t("video-agent.import_hint")} <a href={`/${$page.params.lang || "en"}/`}>{$t("video-agent.open_downloader")}</a></p>
                 {#if progress !== null}
                     <div role="status">{$t("video-agent.upload_progress")}: {progress}%</div>
                     <progress value={progress} max="100">{progress}%</progress>
                     <button type="button" class="secondary" on:click={() => uploadController?.abort()}>{$t("video-agent.pause_upload")}</button>
                 {/if}
-                <div class="sources">
-                    {#each sources as source (source.id)}
-                        <div class="source">
-                            <strong>{source.filename}</strong>
-                            <p class="muted">{$t(`video-agent.status_${source.status}`)} · {(source.sizeBytes / 1024 ** 2).toFixed(1)} MiB</p>
-                            {#if source.probe}<p class="muted">{Math.round(source.probe.durationSeconds)} s · {source.probe.width} × {source.probe.height}</p>{/if}
-                            {#if source.errorCode}<p class="error">{source.errorCode}</p>{/if}
-                            {#if source.status === "uploading"}<button type="button" class="secondary" disabled={busy} on:click={() => chooseFile(source.id)}>{$t("video-agent.resume_upload")}</button>{/if}
-                            {#if source.status === "ready" && source.assetId}<button type="button" class="secondary" disabled={busy} on:click={() => download(source)}>{$t("video-agent.download_source")}</button>{/if}
-                        </div>
-                    {/each}
-                </div>
-                {#if selectedProject}<button type="button" class="secondary delete" disabled={busy} on:click={remove}>{$t("video-agent.delete_project")}</button>{/if}
-                <label for="agent-request">{$t("video-agent.request_label")}</label>
-                <textarea id="agent-request" bind:value={request} maxlength={4000} rows={5} placeholder={$t("video-agent.request_placeholder")} aria-describedby="agent-execution-note"></textarea>
-                <div class="composer-actions">
-                    <button type="button" class="primary" disabled={!selectedProject || !request.trim() || messageBusy || !!planningMessageId} on:click={sendMessage}>{$t(messageBusy || planningMessageId?"video-agent.loading":"video-agent.send_message")}</button>
-                </div>
-                <p id="agent-execution-note" class="muted execution-note">{$t("video-agent.message_saved_hint")}</p>
+                <details class="source-details" open={!sources.length}><summary>{$t("video-agent.plan_source")} ({sources.length})</summary>
+                    <p class="muted">{$t("video-agent.source_retention")}</p>
+                    <p class="muted">{$t("video-agent.import_hint")} <a href={`/${$page.params.lang || "en"}/`}>{$t("video-agent.open_downloader")}</a></p>
+                    <div class="sources">
+                        {#each sources as source (source.id)}
+                            <div class="source">
+                                <strong>{source.filename}</strong>
+                                <p class="muted">{$t(`video-agent.status_${source.status}`)} · {(source.sizeBytes / 1024 ** 2).toFixed(1)} MiB</p>
+                                {#if source.probe}<p class="muted">{Math.round(source.probe.durationSeconds)} s · {source.probe.width} × {source.probe.height}</p>{/if}
+                                {#if source.errorCode}<p class="error">{source.errorCode}</p>{/if}
+                                {#if source.status === "uploading"}<button type="button" class="secondary" disabled={busy} on:click={() => chooseFile(source.id)}>{$t("video-agent.resume_upload")}</button>{/if}
+                                {#if source.status === "ready" && source.assetId}<button type="button" class="secondary" disabled={busy} on:click={() => download(source)}>{$t("video-agent.download_source")}</button>{/if}
+                            </div>
+                        {/each}
+                    </div>
+                </details>
+                <details class="example-details"><summary>{$t("video-agent.examples")}</summary>
+                    <div class="examples">{#each exampleKeys as key}<button class="example" on:click={() => chooseExample(key)}>{$t(`video-agent.${key}`)}</button>{/each}</div>
+                </details>
             </div>
         </section>
 
         <section id="agent-results" class="card result-panel" class:mobile-hidden={activePanel !== "results"} aria-labelledby="agent-results-title">
             <div class="panel-heading"><h2 id="agent-results-title">{$t("video-agent.results")}</h2></div>
             {#if selectedProject}
-                {#key selectedProject.id}<AgentExecutionPanel project={selectedProject} {sources} on:changed={()=>refreshSources().catch(reportError)} />{/key}
+                {#key selectedProject.id}<AgentExecutionPanel project={selectedProject} {sources} on:changed={()=>refreshSources().catch(reportError)} on:adjust={adjustRequest} />{/key}
             {:else}
             <div class="empty-results">
                 <div class="empty-icon" aria-hidden="true"><IconPlayerPlay size={32} /></div>
@@ -298,33 +303,40 @@
     .preview-note > :global(svg) { color: var(--accent); flex-shrink: 0; }
     .preview-note p { flex: 1; min-width: 180px; margin: 0; }
     .preview-note a { color: var(--text); text-underline-offset: 4px; }
-    .workspace { display: grid; grid-template-columns: 210px minmax(320px, 400px) minmax(280px, 1fr); gap: 16px; align-items: stretch; }
+    .workspace { display: grid; grid-template-columns: minmax(300px, 390px) minmax(0, 1fr); gap: 16px; align-items: start; }
     .card { min-width: 0; padding: 22px; border: 1px solid rgba(128,128,128,.18); border-radius: 20px; background: var(--button); box-shadow: 0 14px 40px rgba(25,35,18,.05); }
     .panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-    .count { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: rgba(128,128,128,.1); font-size: 11px; }
     .muted { opacity: .68; font-size: 12px; margin: 0; }
-    .projects { display: flex; flex-direction: column; }
-    .quota { display: flex; align-items: flex-start; gap: 9px; margin-top: auto; padding-top: 32px; color: var(--text); opacity: .65; font-size: 11px; }
-    .quota > :global(svg) { flex-shrink: 0; }
-    .quota p { margin: 0; }
+    .project-toolbar { grid-column: 1 / -1;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px; }
+    .project-choice { display:flex;align-items:center;gap:12px;flex:1;min-width:240px; }
+    .project-choice label { margin:0;white-space:nowrap; }
+    .project-choice select { min-width:180px;max-width:420px;width:100%;padding:10px;border:1px solid rgba(128,128,128,.25);border-radius:10px;background:var(--background);color:var(--text);font:inherit;font-size:12px; }
+    .project-manage { position:relative; }
+    .project-manage summary,.source-details summary,.example-details summary { cursor:pointer;font-size:12px;font-weight:650; }
+    .project-manage[open] { flex-basis:100%; }
+    .project-manage form { max-width:420px;margin-top:14px; }
+    .project-manage .delete { margin:10px 0 0; }
+    .conversation { display:flex;flex-direction:column; }
+    .conversation > .panel-heading { order:0; }
+    .composer { order:1;border-top:0;padding-top:0; }
+    .older { order:2; }
+    .message-list,.welcome { order:3; }
     .welcome { padding: 14px 0 18px; }
     .older {margin-bottom:12px}.message-list{display:grid;gap:10px;max-height:420px;overflow:auto;margin-bottom:20px}.message{margin-left:28px;padding:12px;border-radius:12px;background:rgba(var(--accent-rgb),.12);overflow-wrap:anywhere}.message.assistant{margin-left:0;margin-right:28px;background:rgba(128,128,128,.08)}.message p{margin:0;white-space:pre-wrap}.message small{display:block;margin-top:7px;opacity:.6;font-size:10px}
     .message-retry { margin-top: 9px; padding: 6px 9px; background: transparent; font-size: 10px; }
     .welcome > :global(svg) { color: var(--accent); margin-bottom: 14px; }
-    .examples { display: grid; gap: 8px; margin-bottom: 22px; }
+    .examples { display: grid; gap: 8px; margin-top:12px; }
     button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; font: inherit; cursor: pointer; border: 1px solid rgba(128,128,128,.22); border-radius: 10px; color: inherit; }
     .example { padding: 10px 12px; text-align: left; justify-content: flex-start; background: rgba(128,128,128,.04); line-height: 1.5; font-size: 11px; }
     .example:hover { background: rgba(var(--accent-rgb), .08); border-color: var(--accent); }
-    .composer { border-top: 1px solid rgba(128,128,128,.15); padding-top: 20px; }
     label { display: block; font-size: 12px; font-weight: 650; margin-bottom: 8px; }
     input, textarea { width: 100%; box-sizing: border-box; border: 1px solid rgba(128,128,128,.25); border-radius: 11px; padding: 12px; font: inherit; font-size: 12px; line-height: 1.6; background: var(--background); color: var(--text); margin-bottom: 16px; }
-    textarea { resize: vertical; min-height: 140px; }
+    textarea { resize: vertical; min-height: 110px; }
     input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .composer-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
     .primary { background: var(--accent); color: white; border-color: transparent; }
     .secondary { background: transparent; }
     button:disabled { opacity: .5; cursor: not-allowed; }
-    .execution-note { margin-top: 12px; font-size: 11px; }
     .result-panel { display: flex; flex-direction: column; }
     .empty-results { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 300px; padding: 28px 8px; }
     .empty-results p { max-width: 340px; }
@@ -332,12 +344,11 @@
     .plan { border-top: 1px solid rgba(128,128,128,.15); padding-top: 20px; }
     .plan h3 { font-size: 13px; }
     .panel-switch { display: none; }
-    .project-create { margin-bottom: 16px; }
+    .project-create { margin-bottom: 8px; }
     .project-create button, .source button, .account-action { padding: 9px 12px; font-size: 12px; }
-    .project-list { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; }
-    .project-list a { padding: 9px; overflow-wrap: anywhere; color: inherit; border-radius: 9px; font-size: 12px; }
-    .project-list a.chosen { background: rgba(var(--accent-rgb), .15); }
-    .source-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .source-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .source-details,.example-details { margin-top:12px;padding:12px;border:1px solid rgba(128,128,128,.18);border-radius:10px; }
+    .source-details p { margin-top:10px; }
     .source-actions button { padding: 10px; font-size: 12px; overflow-wrap: anywhere; }
     .file-input { display: none; }
     .sources { display: grid; gap: 10px; margin: 16px 0; }
@@ -346,18 +357,12 @@
     .error { color: #c0392b; font-size: 12px; overflow-wrap: anywhere; }
     .delete { padding: 8px; margin-bottom: 18px; font-size: 12px; }
     progress { width: 100%; }
-    @media (max-width: 1180px) {
-        .workspace { grid-template-columns: minmax(300px, 400px) minmax(280px, 1fr); }
-        .projects { grid-column: 1 / -1; gap: 16px; }
-        .projects .panel-heading { margin: 0; gap: 12px; flex-shrink: 0; }
-        .quota { margin: 0 0 0 auto; padding: 0; max-width: 220px; }
-    }
     @media (max-width: 760px) {
         .agent { width: calc(100% - 24px); padding-top: 24px; }
         .hero-icon { display: none; }
         .workspace { grid-template-columns: minmax(0, 1fr); }
-        .projects { flex-wrap: wrap; padding: 16px; }
-        .quota { max-width: none; flex-basis: 100%; margin: 0; }
+        .project-toolbar { padding:12px; }
+        .project-choice { min-width:0; }
         .panel-switch { display: flex; gap: 8px; }
         .panel-switch button { flex: 1; padding: 12px; background: var(--button); font-size: 12px; }
         .panel-switch button.active { border-color: var(--accent); background: rgba(var(--accent-rgb), .1); }

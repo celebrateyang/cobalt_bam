@@ -254,8 +254,8 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         const normalized=await uploadJsonArtifact(normalize,{version:"normalized-transcript-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,cues},{kind:"transcript"});
         await succeedStep(normalize,{checkpoint:{normalizedTranscriptRef:normalized.id},assets:[normalized],outputRefs:[normalized.id]});await advanceRuns();
         const select=await claimStep({workerId:"translation-select-fixture",stages:["select_clips"]});
-        const selected=await uploadJsonArtifact(select,{version:"selected-clips-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,sourceTranscriptRef:normalized.id,clips:[{id:"clip-one",startMs:0,endMs:20000,cueIds:["cue-one","cue-two"]}],shortfall:0,shortfallReason:null});
-        await succeedStep(select,{checkpoint:{selectedClipsRef:selected.id},assets:[selected],outputRefs:[selected.id,normalized.id]});await advanceRuns();
+        const selected=await uploadJsonArtifact(select,{version:"selected-clips-v1",sourceChecksum:source.checksum,durationMs:source.durationMs,sourceTranscriptRef:normalized.id,clips:[{id:"clip-one",startMs:0,endMs:20000,cueIds:["cue-one","cue-two"]}],shortfall:2,shortfallReason:"insufficient_valid_nonoverlapping_candidates"});
+        await succeedStep(select,{checkpoint:{selectedClipsRef:selected.id,selectedCount:1,shortfall:2},assets:[selected],outputRefs:[selected.id,normalized.id]});await advanceRuns();
         const translation=await claimStep({workerId:"translation-provider",stages:["translate_selected"]});let calls=0;
         await executeClaim(translation,{handlers:{translate_selected:createTranslateHandler({provider:{translate:async({batch})=>{calls++;return {raw:{status:"completed",output_text:JSON.stringify({translations:batch.items.map(item=>({cueId:item.cueId,translatedText:"Una idea completa."}))})},requestId:"translation-fixture"};}}})}});await advanceRuns();
         const row=await step(translation.step.id);assert.equal(row.status,"succeeded");assert.equal(row.provider,"openai");assert.equal(row.translatedCueCount,undefined);assert.equal(row.checkpoint.translatedCueCount,2);assert.equal(calls,1);
@@ -277,7 +277,7 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
             await runAbortableProcess(ffmpeg,["-nostdin","-v","error","-y","-ss",String(second),"-i",storage.resolve(videoRow.object_key),"-frames:v","1","-vf","scale=270:480","-pix_fmt","gray","-f","rawvideo",frame]);
             assert.ok((await readFile(frame)).some(byte=>byte>100),"Burned subtitles must be visible on the black source at both ends");
         }
-        const published=await getPublishedResults({projectId:f.projectId,runId:f.runId,userId:1});assert.equal(published.results.length,1);assert.equal(published.results[0].video.id,videoId);assert.deepEqual(Object.keys(published.results[0].subtitles).sort(),["ass","srt","vtt"]);
+        const published=await getPublishedResults({projectId:f.projectId,runId:f.runId,userId:1});assert.equal(published.results.length,1);assert.equal(published.results[0].video.id,videoId);assert.deepEqual(Object.keys(published.results[0].subtitles).sort(),["ass","srt","vtt"]);assert.equal(published.selectionShortfall,2);
         await assert.rejects(getPublishedResults({projectId:f.projectId,runId:f.runId,userId:99}),{status:404});
         const dubId=randomUUID(),dubKey=`worker-test/${dubId}`,dubBytes=Buffer.from("RIFF-dub-delivery-fixture"),dubChecksum=createHash("sha256").update(dubBytes).digest("hex");
         await pipeline(Readable.from(dubBytes),storage.createWriteStream(dubKey));const dubObject=await storage.headObject(dubKey);
@@ -290,11 +290,16 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
         try{const base=`http://127.0.0.1:${server.address().port}/projects/${f.projectId}`;
             const response=await fetch(`${base}/runs/${f.runId}/results`);assert.equal(response.status,200);
             for(const [format,asset] of [["mp4",published.results[0].video],...Object.entries(published.results[0].subtitles)]){
-                const response=await fetch(`${base}/assets/${asset.id}/download`);assert.equal(response.status,200);assert.ok(response.headers.get("content-disposition").includes(format));const bytes=Buffer.from(await response.arrayBuffer());assert.equal(createHash("sha256").update(bytes).digest("hex"),asset.checksum);
+                const response=await fetch(`${base}/assets/${asset.id}/download`);assert.equal(response.status,200);assert.match(response.headers.get("content-disposition"),/^attachment;/);assert.ok(response.headers.get("content-disposition").includes(format));const bytes=Buffer.from(await response.arrayBuffer());assert.equal(createHash("sha256").update(bytes).digest("hex"),asset.checksum);
+            }
+            for(const asset of [published.results[0].video,published.results[0].subtitles.vtt]){
+                const response=await fetch(`${base}/assets/${asset.id}/download?preview=1`);assert.equal(response.status,200);assert.match(response.headers.get("content-disposition"),/^inline;/);assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(storage.resolve((await pg.query("SELECT object_key FROM video_agent_assets WHERE id=$1",[asset.id])).rows[0].object_key)));
             }
             const audioResponse=await fetch(`${base}/assets/${dubId}/download`);assert.equal(audioResponse.status,200);
             assert.equal(audioResponse.headers.get("content-type"),"audio/wav");assert.deepEqual(Buffer.from(await audioResponse.arrayBuffer()),dubBytes);
+            const audioPreview=await fetch(`${base}/assets/${dubId}/download?preview=1`);assert.equal(audioPreview.status,200);assert.match(audioPreview.headers.get("content-disposition"),/^inline;/);
             assert.equal((await fetch(`${base}/assets/${dubId}/download`,{headers:{"x-test-user":"99"}})).status,404);
+            assert.equal((await fetch(`${base}/assets/${dubId}/download?preview=1`,{headers:{"x-test-user":"99"}})).status,404);
             assert.equal((await fetch(`${base}/assets/${videoId}/download`,{headers:{"x-test-user":"99"}})).status,404);
         }finally{await new Promise(resolve=>server.close(resolve));}
         const cancelled=await seed();await pg.query("UPDATE video_agent_steps SET status='succeeded',output_refs=$2,checkpoint=$3 WHERE run_id=$1 AND stage='select_clips'",[cancelled.runId,[selected.id,normalized.id],{selectedClipsRef:selected.id}]);

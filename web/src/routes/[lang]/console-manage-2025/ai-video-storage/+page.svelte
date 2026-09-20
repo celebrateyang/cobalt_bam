@@ -16,9 +16,16 @@
 
     type AiVideoAsset = {
         id: string;
-        jobId: string;
+        product: "highlight" | "video_agent";
+        jobId: string | null;
+        projectId: string | null;
+        projectTitle: string | null;
+        runId: string | null;
         userId: number;
         kind: string;
+        kindGroup: "source" | "output" | "subtitle" | "other";
+        assetStatus: string | null;
+        previewable: boolean;
         objectKey: string;
         objectGeneration: string;
         mime: string | null;
@@ -47,6 +54,9 @@
         sourceSizeBytes: number;
         outputSizeBytes: number;
         subtitleSizeBytes: number;
+        intermediateSizeBytes: number;
+        highlightCount: number;
+        agentCount: number;
         pendingCleanupSizeBytes: number;
         pendingCleanupCount: number;
     };
@@ -59,6 +69,9 @@
         sourceSizeBytes: 0,
         outputSizeBytes: 0,
         subtitleSizeBytes: 0,
+        intermediateSizeBytes: 0,
+        highlightCount: 0,
+        agentCount: 0,
         pendingCleanupSizeBytes: 0,
         pendingCleanupCount: 0,
     };
@@ -69,7 +82,8 @@
     let summaryLoading = true;
     let error = "";
     let search = "";
-    let kind = "";
+    let product = "";
+    let kindGroup = "";
     let jobStatus = "";
     let cleanupStatus = "";
     let rangeDays = 30;
@@ -140,8 +154,21 @@
             output: "生成视频",
             srt: "SRT 字幕",
             vtt: "VTT 字幕",
+            ass: "ASS 字幕",
+            rendered_video: "生成视频",
+            subtitle_srt: "SRT 字幕",
+            subtitle_vtt: "VTT 字幕",
+            subtitle_ass: "ASS 字幕",
+            dub_audio: "配音音频",
+            tts_audio: "TTS 音频",
+            audio_chunk: "音频片段",
+            transcript: "转写文本",
+            asr_raw: "转写原始数据",
+            checkpoint: "处理记录",
         }[value] || value;
     }
+
+    const assetKey = (asset: AiVideoAsset) => `${asset.product}:${asset.id}`;
 
     function rangeStart() {
         return rangeDays > 0 ? Date.now() - rangeDays * 24 * 60 * 60 * 1000 : null;
@@ -195,7 +222,8 @@
                 order: "desc",
             });
             if (search.trim()) params.set("search", search.trim());
-            if (kind) params.set("kind", kind);
+            if (product) params.set("product", product);
+            if (kindGroup) params.set("kindGroup", kindGroup);
             if (jobStatus) params.set("jobStatus", jobStatus);
             if (cleanupStatus) params.set("cleanupStatus", cleanupStatus);
             const from = rangeStart();
@@ -233,20 +261,21 @@
     }
 
     async function openPreview(asset: AiVideoAsset) {
+        const key = assetKey(asset);
         const previewWindow = window.open("", "_blank");
         if (!previewWindow) {
             previewErrors = {
                 ...previewErrors,
-                [asset.id]: "浏览器阻止了预览窗口，请允许弹窗后重试",
+                [key]: "浏览器阻止了预览窗口，请允许弹窗后重试",
             };
             return;
         }
         previewWindow.opener = null;
-        previewLoadingId = asset.id;
-        previewErrors = { ...previewErrors, [asset.id]: "" };
+        previewLoadingId = key;
+        previewErrors = { ...previewErrors, [key]: "" };
         try {
             const data = await adminFetch(
-                `/user/admin/ai-video/storage/${asset.id}/preview-url`,
+                `/user/admin/ai-video/storage/${asset.id}/preview-url?product=${asset.product}`,
                 { method: "POST" },
             );
             previewWindow.location.replace(data.url);
@@ -254,7 +283,7 @@
             previewWindow.close();
             previewErrors = {
                 ...previewErrors,
-                [asset.id]: caught instanceof Error ? caught.message : "预览失败",
+                [key]: caught instanceof Error ? caught.message : "预览失败",
             };
         } finally {
             previewLoadingId = "";
@@ -262,14 +291,15 @@
     }
 
     async function copyObjectKey(asset: AiVideoAsset) {
+        const key = assetKey(asset);
         try {
             await navigator.clipboard.writeText(asset.objectKey);
-            copiedId = asset.id;
+            copiedId = key;
             window.setTimeout(() => {
-                if (copiedId === asset.id) copiedId = "";
+                if (copiedId === key) copiedId = "";
             }, 1500);
         } catch {
-            previewErrors = { ...previewErrors, [asset.id]: "复制 Object Key 失败" };
+            previewErrors = { ...previewErrors, [key]: "复制 Object Key 失败" };
         }
     }
 </script>
@@ -282,7 +312,7 @@
     <header class="admin-header">
         <div>
             <h1>AI 视频存储</h1>
-            <p>查看 AI Video 上传和生成的文件、所属用户及清理状态。</p>
+            <p>查看高光剪辑与 Video Agent 的素材、成片、字幕和处理文件。</p>
         </div>
         <button
             class="btn-secondary"
@@ -298,12 +328,12 @@
         <article class="summary-card">
             <span>对象数量</span>
             <strong>{summaryLoading ? "…" : summary.objectCount}</strong>
-            <small>{summary.jobCount} 个任务 / {summary.userCount} 个用户</small>
+            <small>高光剪辑 {summary.highlightCount} / Video Agent {summary.agentCount} · {summary.jobCount} 个任务或项目 / {summary.userCount} 个用户</small>
         </article>
         <article class="summary-card">
             <span>总存储容量</span>
             <strong>{summaryLoading ? "…" : formatBytes(summary.totalSizeBytes)}</strong>
-            <small>数据库中未删除的资产</small>
+            <small>数据库中未删除的资产 · 处理文件 {formatBytes(summary.intermediateSizeBytes)}</small>
         </article>
         <article class="summary-card">
             <span>源视频</span>
@@ -325,16 +355,21 @@
     <div class="toolbar">
         <input
             type="search"
-            placeholder="邮箱、用户 ID、文件名、Job ID、Object Key"
+            placeholder="邮箱、用户 ID、文件名、项目/运行 ID、Object Key"
             bind:value={search}
             on:keydown={(event) => event.key === "Enter" && applyFilters()}
         />
-        <select bind:value={kind} on:change={applyFilters} aria-label="文件类型">
+        <select bind:value={product} on:change={applyFilters} aria-label="所属产品">
+            <option value="">全部产品</option>
+            <option value="highlight">高光剪辑</option>
+            <option value="video_agent">Video Agent</option>
+        </select>
+        <select bind:value={kindGroup} on:change={applyFilters} aria-label="文件类型">
             <option value="">全部文件类型</option>
             <option value="source">源视频</option>
             <option value="output">生成视频</option>
-            <option value="srt">SRT 字幕</option>
-            <option value="vtt">VTT 字幕</option>
+            <option value="subtitle">字幕</option>
+            <option value="other">处理文件</option>
         </select>
         <select bind:value={jobStatus} on:change={applyFilters} aria-label="任务状态">
             <option value="">全部任务状态</option>
@@ -345,6 +380,9 @@
             <option value="analyzing">analyzing</option>
             <option value="draft_ready">draft_ready</option>
             <option value="rendering">rendering</option>
+            <option value="ready">ready</option>
+            <option value="running">running</option>
+            <option value="partially_completed">partially_completed</option>
             <option value="completed">completed</option>
             <option value="failed">failed</option>
             <option value="cancelled">cancelled</option>
@@ -407,7 +445,7 @@
                 <thead>
                     <tr>
                         <th>上传/生成时间</th>
-                        <th>文件</th>
+                        <th>产品与文件</th>
                         <th>用户</th>
                         <th>大小与视频信息</th>
                         <th>任务状态</th>
@@ -416,20 +454,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each assets as asset (asset.id)}
+                    {#each assets as asset (assetKey(asset))}
                         <tr>
                             <td class="mono nowrap">{formatDate(asset.createdAt)}</td>
                             <td>
                                 <div class="file-heading">
-                                    <span class={`kind kind-${asset.kind}`}>{kindLabel(asset.kind)}</span>
+                                    <span class={`product product-${asset.product}`}>{asset.product === "highlight" ? "高光剪辑" : "Video Agent"}</span>
+                                    <span class={`kind kind-${asset.kindGroup}`}>{kindLabel(asset.kind)}</span>
                                     <strong title={asset.sourceFilename || asset.objectKey}>
                                         {asset.sourceFilename || `${asset.kind}-${asset.id.slice(0, 8)}`}
                                     </strong>
                                 </div>
+                                {#if asset.projectTitle}<div class="sub">项目：{asset.projectTitle}</div>{/if}
                                 <div class="sub mono ellipsis" title={asset.objectKey}>
                                     {asset.objectKey}
                                 </div>
-                                <div class="sub mono">Job: {asset.jobId}</div>
+                                {#if asset.jobId}<div class="sub mono">Job: {asset.jobId}</div>{/if}
+                                {#if asset.projectId}<div class="sub mono">Project: {asset.projectId}</div>{/if}
+                                {#if asset.runId}<div class="sub mono">Run: {asset.runId}</div>{/if}
                             </td>
                             <td>
                                 <strong>{asset.user.primaryEmail || asset.user.fullName || "未知用户"}</strong>
@@ -458,6 +500,7 @@
                                 <span class={`badge cleanup-${asset.cleanupStatus}`}>
                                     {asset.cleanupStatus}
                                 </span>
+                                {#if asset.assetStatus}<div class="sub">文件状态：{asset.assetStatus}</div>{/if}
                                 <div class="sub">
                                     到期：{formatDate(asset.expiresAt)}
                                 </div>
@@ -470,21 +513,21 @@
                                     <button
                                         class="link-button"
                                         type="button"
-                                        disabled={previewLoadingId === asset.id}
+                                        disabled={previewLoadingId === assetKey(asset) || !asset.previewable || (asset.product === "video_agent" && (asset.assetStatus !== "ready" || (asset.expiresAt !== null && asset.expiresAt <= Date.now())))}
                                         on:click={() => openPreview(asset)}
                                     >
-                                        {previewLoadingId === asset.id ? "生成中…" : "短时预览"}
+                                        {previewLoadingId === assetKey(asset) ? "生成中…" : "短时预览"}
                                     </button>
                                     <button
                                         class="link-button"
                                         type="button"
                                         on:click={() => copyObjectKey(asset)}
                                     >
-                                        {copiedId === asset.id ? "已复制" : "复制 Key"}
+                                        {copiedId === assetKey(asset) ? "已复制" : "复制 Key"}
                                     </button>
                                 </div>
-                                {#if previewErrors[asset.id]}
-                                    <div class="row-error">{previewErrors[asset.id]}</div>
+                                {#if previewErrors[assetKey(asset)]}
+                                    <div class="row-error">{previewErrors[assetKey(asset)]}</div>
                                 {/if}
                             </td>
                         </tr>
@@ -636,7 +679,7 @@
 
     table {
         width: 100%;
-        min-width: 1320px;
+        min-width: 1440px;
         border-collapse: collapse;
         color: var(--text);
         font-size: 0.88rem;
@@ -671,6 +714,7 @@
         white-space: nowrap;
     }
 
+    .product,
     .kind,
     .badge {
         display: inline-flex;
@@ -684,6 +728,7 @@
         white-space: nowrap;
     }
 
+    .product-highlight,
     .kind-source,
     .job-completed,
     .cleanup-active {
@@ -691,6 +736,7 @@
         color: #4a7a1c;
     }
 
+    .product-video_agent,
     .kind-output {
         background: rgba(35, 105, 190, 0.15);
         color: #2369be;

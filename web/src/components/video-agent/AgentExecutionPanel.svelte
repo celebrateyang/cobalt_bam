@@ -9,7 +9,7 @@
     const dispatch=createEventDispatcher();
     let capabilities: AgentCapabilities | null=null,usage: AgentUsage | null=null;
     let runs: AgentRun[]=[],selectedRunId="",run: AgentRun | null=null,steps: AgentStep[]=[];
-    let results:AgentResult[]=[],previewUrls:Record<string,string>={};
+    let results:AgentResult[]=[],previewUrls:Record<string,string>={},selectionShortfall=0;
     let editable:AgentEditable|null=null,editableRunId="",selectedClipId="",selectedCueId="";
     let titleDraft="",focusDraft=0.5,startCueId="",endCueId="",cueDraft="";
     let currentEdits:AgentPlanInput["edits"]|undefined;
@@ -23,7 +23,7 @@
         || startCueId!==(currentEdits?.clips[selectedClipId]?.startCueId || selectedEditableClip.cues[0]?.id)
         || endCueId!==(currentEdits?.clips[selectedClipId]?.endCueId || selectedEditableClip.cues.at(-1)?.id));
     $: cueEditChanged=!!selectedCueId && cueDraft!==(currentEdits?.subtitles[selectedCueId] || selectedEditableClip?.cues.find(cue=>cue.id===selectedCueId)?.translatedText);
-    const clearResults=()=>{Object.values(previewUrls).forEach(url=>{if(url.startsWith("blob:"))URL.revokeObjectURL(url);});previewUrls={};results=[];};
+    const clearResults=()=>{Object.values(previewUrls).forEach(url=>{if(url.startsWith("blob:"))URL.revokeObjectURL(url);});previewUrls={};results=[];selectionShortfall=0;};
     const preview=async(assetId:string)=>{if(previewUrls[assetId])return;try{const version=epoch,id=selectedRunId,url=await getAgentPreview(project.id,assetId);if(!mounted || version!==epoch || id!==selectedRunId){if(url.startsWith("blob:"))URL.revokeObjectURL(url);return;}if(previewUrls[assetId]?.startsWith("blob:"))URL.revokeObjectURL(previewUrls[assetId]);previewUrls={...previewUrls,[assetId]:url};}catch(error){report(error);}};
     const downloadFitReport=(result:AgentResult)=>{
         if(!result.fit)return;
@@ -87,7 +87,7 @@
                 if(!mounted || version!==epoch || selected!==selectedRunId)return;
                 run=snapshot.run;steps=snapshot.steps;cursor=snapshot.eventCursor;
                 if(["completed","partially_completed"].includes(run.status)){
-                    const published=await getAgentResults(id,selected);if(mounted && version===epoch && selected===selectedRunId)results=published.results;
+                    const published=await getAgentResults(id,selected);if(mounted && version===epoch && selected===selectedRunId){results=published.results;selectionShortfall=published.selectionShortfall || 0;}
                     if(editableRunId!==selected){const value=await getAgentEditable(id,selected);if(mounted && version===epoch && selected===selectedRunId){editable=value;editableRunId=selected;chooseClip(value.clips[0]);}}
                 }else{clearResults();editable=null;editableRunId="";}
             }else{run=null;steps=[];clearResults();editable=null;editableRunId="";}
@@ -158,80 +158,86 @@
 </script>
 
 <div class="execution">
-    <h3>{$t("video-agent.shared_quota")}</h3>
-    {#if usage}
-        <p class="muted">{$t("video-agent.quota_remaining")}: {Math.floor(usage.remainingSeconds/60)} min / {Math.floor(usage.limitSeconds/60)} min</p>
-        <p class="muted">{$t("video-agent.quota_reserved")}: {Math.ceil(usage.reservedSeconds/60)} min</p>
-        <p class="muted">{$t("video-agent.quota_reset")}: {new Date(usage.resetsAt).toISOString().slice(0,10)} UTC</p>
-    {/if}
     {#if errorCode}<p class="error" role="alert">{$t("video-agent.request_failed")} ({errorCode})</p>{/if}
     {#if stale}<p role="status">{$t("video-agent.progress_stale")}</p>{/if}
     {#if pendingCommand}<button disabled={busy} on:click={()=>pendingCommand && command(pendingCommand)}>{$t("video-agent.replay_command")}</button>{/if}
-    <form on:submit|preventDefault={createPlan}>
-        <h3>{$t("video-agent.plan")}</h3>
-        <p class="muted">{$t("video-agent.plan_controls_hint")}</p>
-        <label for="plan-source">{$t("video-agent.plan_source")}</label>
-        <select id="plan-source" bind:value={sourceRef} on:change={clearPlan} disabled={busy || !!pendingCommand}>
-            {#each readySources as source}<option value={source.id}>{source.filename}</option>{/each}
-        </select>
-        <label for="plan-language">{$t("video-agent.plan_language")}</label>
-        <select id="plan-language" bind:value={targetLanguage} on:change={clearPlan} disabled={busy || !!pendingCommand}>
-            {#each languages as language}<option value={language}>{language.toUpperCase()}</option>{/each}
-        </select>
-        <label for="plan-count">{$t("video-agent.plan_count")}</label>
-        <input id="plan-count" type="number" min="1" max="5" step="1" bind:value={requestedCount} on:input={clearPlan} disabled={busy || !!pendingCommand} />
-        <label for="plan-subtitles">{$t("video-agent.plan_subtitles")}</label>
-        <select id="plan-subtitles" bind:value={subtitleMode} on:change={clearPlan} disabled={busy || !!pendingCommand}>
-            <option value="bilingual">{$t("video-agent.subtitle_bilingual")}</option><option value="translated">{$t("video-agent.subtitle_translated")}</option>
-        </select>
-        {#if capabilities?.dubbingEnabled && capabilities.dubbing}
-            <label for="plan-dubbing"><input id="plan-dubbing" type="checkbox" bind:checked={dubbingEnabled} on:change={clearPlan} disabled={busy || !!pendingCommand} /> {$t("video-agent.dubbing_enable")}</label>
-            {#if dubbingEnabled}
-                <p class="muted">{$t("video-agent.dubbing_voice")}: {capabilities.dubbing.voiceId}. {$t("video-agent.dubbing_replaces_audio")}</p>
-                <p class="muted">{$t("video-agent.dubbing_budget")}: {dubEstimate?.chars} / {capabilities.dubbing.maxRunChars} {$t("video-agent.dubbing_characters")};
-                    {Math.ceil((dubEstimate?.audioMs || 0)/1000)} / {Math.floor(capabilities.dubbing.maxRunAudioMs/1000)} s;
-                    ${((dubEstimate?.microUsd || 0)/1000000).toFixed(3)} / ${(capabilities.dubbing.maxRunMicroUsd/1000000).toFixed(3)} USD</p>
-                {#if !dubWithinBudget}<p class="error">{$t("video-agent.dubbing_over_budget")}</p>{/if}
-            {/if}
-        {/if}
-        <button class:saved={!!planId} disabled={!canCreatePlan}>{$t(planId ? "video-agent.plan_saved" : busy ? "video-agent.loading" : "video-agent.create_plan")}</button>
-    </form>
-    {#if planId}
-        <div class="plan-success" role="status" aria-live="polite" aria-atomic="true">
-            <span class="success-icon" aria-hidden="true">&#10003;</span>
-            <div><strong>{$t("video-agent.plan_saved")}</strong><p>{$t("video-agent.plan_ready")}</p></div>
-        </div>
-    {/if}
-    <button class="primary" on:click={start} disabled={busy || !!pendingCommand || !planId || !capabilities?.executionEnabled || !!activeRun}>{$t("video-agent.start")}</button>
-    {#if !capabilities?.executionEnabled}<p class="muted">{$t("video-agent.pipeline_pending")}</p>{/if}
-    <p class="muted">{$t("video-agent.charge_policy")}</p>
-    <h3>{$t("video-agent.run_history")}</h3>
-    {#if runs.length}
-        <label for="selected-run">{$t("video-agent.select_run")}</label>
-        <select id="selected-run" bind:value={selectedRunId} on:change={chooseRun} disabled={busy}>
-            {#each runs as value}<option value={value.id}>{new Date(value.createdAt).toLocaleString()} / {$t(`video-agent.run_${value.status}`)}</option>{/each}
-        </select>
-        {#if nextCursor}<button on:click={more} disabled={busy || refreshing}>{$t("video-agent.load_more")}</button>{/if}
-    {/if}
     {#if run}
-        <p role="status">{$t(`video-agent.run_${run.status}`)} / {$t("video-agent.steps_finished")}: {completedSteps}/{steps.length}</p>
-        <p>{$t("video-agent.outputs_verified")}: {run.producedCount}/{run.requestedCount}</p>
-        {#each results as result (result.id)}
-            <article>
-                <h3>{result.title || result.id}</h3>
-                {#if previewUrls[result.video.id]}<video controls preload="metadata" src={previewUrls[result.video.id]}><track kind="captions" label="VTT" src={previewUrls[result.subtitles.vtt?.id] || undefined} /></video>{:else}<button on:click={()=>Promise.all([preview(result.video.id),...(result.subtitles.vtt?[preview(result.subtitles.vtt.id)]:[])])}>&#9654; MP4</button>{/if}
-                <div class="actions"><button on:click={()=>downloadAgentAsset(project.id,result.video.id,`${result.id}.mp4`).catch(report)}>MP4</button>
-                {#if result.dubAudio}<button on:click={()=>result.dubAudio && preview(result.dubAudio.id)}>{$t("video-agent.dubbing_preview")}</button>
-                    <button on:click={()=>result.dubAudio && downloadAgentAsset(project.id,result.dubAudio.id,`${result.id}-dub.wav`).catch(report)}>{$t("video-agent.dubbing_audio")}</button>{/if}
-                {#each Object.entries(result.subtitles) as [format,asset]}<button on:click={()=>downloadAgentAsset(project.id,asset.id,`${result.id}.${format}`).catch(report)}>{format.toUpperCase()}</button>{/each}</div>
-                {#if result.dubAudio && previewUrls[result.dubAudio.id]}<audio controls src={previewUrls[result.dubAudio.id]}></audio>{/if}
-                {#if result.fit}<p class="muted">{$t("video-agent.dubbing_fit")}: {(result.fit.originalMs/1000).toFixed(1)}s → {(result.fit.fittedMs/1000).toFixed(1)}s / {result.fit.speed.toFixed(2)}x</p>
-                    <button on:click={()=>downloadFitReport(result)}>{$t("video-agent.dubbing_download_fit")}</button>{/if}
-            </article>
-        {/each}
-        {#if editable && editable.clips.length}
-            <section class="editor" aria-label={$t("video-agent.edit_result")}>
-                <h3>{$t("video-agent.edit_result")}</h3>
+        <section class="result-summary" aria-live="polite">
+            <div class="result-heading">
+                <div><h3>{$t("video-agent.videos_created")}: {run.producedCount}/{run.requestedCount}</h3>
+                    <p class="muted">{$t(`video-agent.run_${run.status}`)} · {$t("video-agent.steps_finished")}: {completedSteps}/{steps.length}</p></div>
+                {#if activeStates.includes(run.status)}<button on:click={()=>control("cancel_run")} disabled={busy || !!pendingCommand || run.status==="cancelling"}>{$t("video-agent.cancel_run")}</button>{/if}
+            </div>
+            {#if run.status==="partially_completed" && run.producedCount<run.requestedCount}
+                <div class="shortfall-note" role="status"><p>{$t(selectionShortfall>0?"video-agent.selection_shortfall":"video-agent.partial_results")}</p>
+                    <button on:click={()=>dispatch("adjust")}>{$t("video-agent.adjust_request")}</button></div>
+            {/if}
+            {#if run.errorCode}<p class="error">{run.errorCode}</p>{/if}
+        </section>
+        {#if results.length}
+            <div class="clip-list">
+                {#each results as result, index (result.id)}
+                    <article class="clip-card">
+                        <div class="clip-heading"><span class="clip-number">{index+1}</span><h3>{result.title || result.id}</h3><span class="muted">{Math.round((result.endMs-result.startMs)/1000)} s</span></div>
+                        {#if previewUrls[result.video.id]}<video controls autoplay playsinline preload="metadata" src={previewUrls[result.video.id]}><track kind="captions" label="VTT" src={previewUrls[result.subtitles.vtt?.id] || undefined} /></video>
+                        {:else}<button class="play-button" on:click={()=>Promise.all([preview(result.video.id),...(result.subtitles.vtt?[preview(result.subtitles.vtt.id)]:[])])}>&#9654; {$t("video-agent.play_video")}</button>{/if}
+                        <div class="clip-actions"><button class="primary" on:click={()=>downloadAgentAsset(project.id,result.video.id,`${result.id}.mp4`).catch(report)}>{$t("video-agent.download_video")}</button>
+                            <details class="file-menu"><summary>{$t("video-agent.more_files")}</summary><div class="file-actions">
+                                {#if result.dubAudio}<button on:click={()=>result.dubAudio && preview(result.dubAudio.id)}>{$t("video-agent.dubbing_preview")}</button>
+                                    <button on:click={()=>result.dubAudio && downloadAgentAsset(project.id,result.dubAudio.id,`${result.id}-dub.wav`).catch(report)}>{$t("video-agent.dubbing_audio")}</button>{/if}
+                                {#each Object.entries(result.subtitles) as [format,asset]}<button on:click={()=>downloadAgentAsset(project.id,asset.id,`${result.id}.${format}`).catch(report)}>{format.toUpperCase()}</button>{/each}
+                                {#if result.fit}<button on:click={()=>downloadFitReport(result)}>{$t("video-agent.dubbing_download_fit")}</button>{/if}
+                            </div></details></div>
+                        {#if result.dubAudio && previewUrls[result.dubAudio.id]}<audio controls src={previewUrls[result.dubAudio.id]}></audio>{/if}
+                        {#if result.fit}<p class="muted">{$t("video-agent.dubbing_fit")}: {(result.fit.originalMs/1000).toFixed(1)}s → {(result.fit.fittedMs/1000).toFixed(1)}s / {result.fit.speed.toFixed(2)}x</p>{/if}
+                    </article>
+                {/each}
+            </div>
+        {/if}
+    {:else}<p class="muted">{$t("video-agent.runs_empty")}</p>{/if}
+
+    <details class="utility-panel plan-panel" open={!run}>
+        <summary>{$t("video-agent.plan")}</summary>
+        <div class="utility-content">
+            <p class="muted">{$t("video-agent.plan_controls_hint")}</p>
+            <form on:submit|preventDefault={createPlan}>
+                <label for="plan-source">{$t("video-agent.plan_source")}</label>
+                <select id="plan-source" bind:value={sourceRef} on:change={clearPlan} disabled={busy || !!pendingCommand}>
+                    {#each readySources as source}<option value={source.id}>{source.filename}</option>{/each}
+                </select>
+                <label for="plan-language">{$t("video-agent.plan_language")}</label>
+                <select id="plan-language" bind:value={targetLanguage} on:change={clearPlan} disabled={busy || !!pendingCommand}>
+                    {#each languages as language}<option value={language}>{language.toUpperCase()}</option>{/each}
+                </select>
+                <label for="plan-count">{$t("video-agent.plan_count")}</label>
+                <input id="plan-count" type="number" min="1" max="5" step="1" bind:value={requestedCount} on:input={clearPlan} disabled={busy || !!pendingCommand} />
+                <label for="plan-subtitles">{$t("video-agent.plan_subtitles")}</label>
+                <select id="plan-subtitles" bind:value={subtitleMode} on:change={clearPlan} disabled={busy || !!pendingCommand}>
+                    <option value="bilingual">{$t("video-agent.subtitle_bilingual")}</option><option value="translated">{$t("video-agent.subtitle_translated")}</option>
+                </select>
+                {#if capabilities?.dubbingEnabled && capabilities.dubbing}
+                    <label for="plan-dubbing"><input id="plan-dubbing" type="checkbox" bind:checked={dubbingEnabled} on:change={clearPlan} disabled={busy || !!pendingCommand} /> {$t("video-agent.dubbing_enable")}</label>
+                    {#if dubbingEnabled}
+                        <p class="muted">{$t("video-agent.dubbing_voice")}: {capabilities.dubbing.voiceId}. {$t("video-agent.dubbing_replaces_audio")}</p>
+                        <p class="muted">{$t("video-agent.dubbing_budget")}: {dubEstimate?.chars} / {capabilities.dubbing.maxRunChars} {$t("video-agent.dubbing_characters")};
+                            {Math.ceil((dubEstimate?.audioMs || 0)/1000)} / {Math.floor(capabilities.dubbing.maxRunAudioMs/1000)} s;
+                            ${((dubEstimate?.microUsd || 0)/1000000).toFixed(3)} / ${(capabilities.dubbing.maxRunMicroUsd/1000000).toFixed(3)} USD</p>
+                        {#if !dubWithinBudget}<p class="error">{$t("video-agent.dubbing_over_budget")}</p>{/if}
+                    {/if}
+                {/if}
+                <button class:saved={!!planId} disabled={!canCreatePlan}>{$t(planId ? "video-agent.plan_saved" : busy ? "video-agent.loading" : "video-agent.create_plan")}</button>
+            </form>
+            {#if planId}<div class="plan-success" role="status" aria-live="polite" aria-atomic="true"><span class="success-icon" aria-hidden="true">&#10003;</span><div><strong>{$t("video-agent.plan_saved")}</strong><p>{$t("video-agent.plan_ready")}</p></div></div>{/if}
+            <button class="primary" on:click={start} disabled={busy || !!pendingCommand || !planId || !capabilities?.executionEnabled || !!activeRun}>{$t("video-agent.start")}</button>
+            {#if !capabilities?.executionEnabled}<p class="muted">{$t("video-agent.pipeline_pending")}</p>{/if}
+            <p class="muted">{$t("video-agent.charge_policy")}</p>
+        </div>
+    </details>
+
+    {#if editable && editable.clips.length}
+        <details class="utility-panel editor">
+            <summary>{$t("video-agent.edit_result")}</summary>
+            <div class="utility-content">
                 {#if !editMatchesCurrent}<p class="muted">{$t("video-agent.edit_restore_first")}</p>{/if}
                 <label for="edit-clip">{$t("video-agent.edit_clip")}</label>
                 <select id="edit-clip" bind:value={selectedClipId} on:change={()=>{const clip=editable?.clips.find(item=>item.id===selectedClipId);if(clip)chooseClip(clip);}} disabled={busy}>
@@ -256,32 +262,70 @@
                         <button on:click={saveCue} disabled={busy || !!pendingCommand || !cueDraft.trim() || !capabilities?.commandsEnabled || !editMatchesCurrent || !cueEditChanged}>{$t("video-agent.save_edit")}</button>{/if}
                     <p class="muted">{$t("video-agent.edit_version_hint")}</p>
                 {/if}
-            </section>
-        {/if}
-        {#if run.errorCode}<p class="error">{run.errorCode}</p>{/if}
-        <ol>{#each steps as step (step.id)}<li>{$t(`video-agent.stage_${step.stage}`)}: {$t(`video-agent.step_${step.status}`)} ({step.attempt}) {step.errorCode || ""}</li>{/each}</ol>
-        <div class="actions">
-            {#if activeStates.includes(run.status)}<button on:click={()=>control("cancel_run")} disabled={busy || !!pendingCommand || run.status==="cancelling"}>{$t("video-agent.cancel_run")}</button>{/if}
-            {#if ["failed","partially_completed"].includes(run.status)}<button on:click={()=>control("retry_run")} disabled={busy || !!pendingCommand || !capabilities?.executionEnabled || !!activeRun}>{$t("video-agent.retry_run")}</button>{/if}
+            </div>
+        </details>
+    {/if}
+    <details class="utility-panel">
+        <summary>{$t("video-agent.run_history")}</summary>
+        <div class="utility-content">
+            {#if runs.length}
+                <label for="selected-run">{$t("video-agent.select_run")}</label>
+                <select id="selected-run" bind:value={selectedRunId} on:change={chooseRun} disabled={busy}>
+                    {#each runs as value}<option value={value.id}>{new Date(value.createdAt).toLocaleString()} / {$t(`video-agent.run_${value.status}`)}</option>{/each}
+                </select>
+                {#if nextCursor}<button on:click={more} disabled={busy || refreshing}>{$t("video-agent.load_more")}</button>{/if}
+            {/if}
+            {#if run}
+                <ol>{#each steps as step (step.id)}<li>{$t(`video-agent.stage_${step.stage}`)}: {$t(`video-agent.step_${step.status}`)} ({step.attempt}) {step.errorCode || ""}</li>{/each}</ol>
+                {#if run.status==="failed" || (run.status==="partially_completed" && selectionShortfall===0)}<button on:click={()=>control("retry_run")} disabled={busy || !!pendingCommand || !capabilities?.executionEnabled || !!activeRun}>{$t("video-agent.retry_run")}</button>{/if}
+            {/if}
         </div>
-    {:else}<p class="muted">{$t("video-agent.runs_empty")}</p>{/if}
+    </details>
+    <details class="utility-panel">
+        <summary>{$t("video-agent.shared_quota")}{#if usage}<span class="quota-compact">{Math.floor(usage.remainingSeconds/60)} / {Math.floor(usage.limitSeconds/60)} min</span>{/if}</summary>
+        {#if usage}<div class="utility-content"><p class="muted">{$t("video-agent.quota_reserved")}: {Math.ceil(usage.reservedSeconds/60)} min</p>
+            <p class="muted">{$t("video-agent.quota_reset")}: {new Date(usage.resetsAt).toISOString().slice(0,10)} UTC</p></div>{/if}
+    </details>
     {#if revisions.length>1}
-        <section class="versions" aria-label={$t("video-agent.versions")}>
-            <h3>{$t("video-agent.versions")}</h3>
+        <details class="utility-panel versions">
+            <summary>{$t("video-agent.versions")}</summary>
+            <div class="utility-content">
             <label for="restore-revision">{$t("video-agent.restore_version")}</label>
             <select id="restore-revision" bind:value={restoreTarget} disabled={busy}>
                 {#each revisions.filter(item=>item.revision<revision) as item}<option value={item.revision}>#{item.revision} · {new Date(item.createdAt).toLocaleString()}</option>{/each}
             </select>
             <button on:click={restore} disabled={busy || !!pendingCommand || !capabilities?.commandsEnabled}>{$t("video-agent.restore_version")}</button>
             {#if nextRevisionCursor}<button on:click={moreVersions} disabled={busy}>{$t("video-agent.load_more")}</button>{/if}
-        </section>
+            </div>
+        </details>
     {/if}
 </div>
 
 <style>
-    .execution { display:grid;gap:12px;font-size:12px; }
-    video {width:100%;max-height:480px;background:black;} article {display:grid;gap:12px;}
-    form { display:grid;gap:9px;border-top:1px solid rgba(128,128,128,.2);padding-top:16px; }
+    .execution { display:grid;gap:16px;font-size:12px; }
+    .result-summary { padding:18px;border:1px solid rgba(var(--accent-rgb),.22);border-radius:15px;background:rgba(var(--accent-rgb),.07); }
+    .result-heading,.clip-heading,.clip-actions { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+    .result-heading h3 { font-size:18px; }
+    .shortfall-note { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.18); }
+    .shortfall-note p { flex:1;min-width:200px; }
+    .clip-list { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px; }
+    .clip-card { display:grid;align-content:start;gap:12px;padding:14px;border:1px solid rgba(128,128,128,.22);border-radius:14px;background:var(--background); }
+    .clip-heading { justify-content:flex-start; }
+    .clip-heading h3 { flex:1;min-width:0;overflow-wrap:anywhere; }
+    .clip-number { display:grid;place-items:center;width:28px;height:28px;flex-shrink:0;border-radius:9px;background:rgba(var(--accent-rgb),.15);font-weight:700; }
+    video {width:100%;max-height:420px;background:black;border-radius:9px;}
+    audio { width:100%; }
+    .play-button { min-height:180px;background:#262626;color:white;font-size:14px; }
+    .clip-actions { justify-content:flex-start; }
+    .clip-actions .primary { font-weight:650; }
+    .file-menu { position:relative; }
+    .file-menu summary { border:1px solid rgba(128,128,128,.25);border-radius:9px;padding:10px; }
+    .file-actions { display:flex;flex-wrap:wrap;gap:8px;margin-top:8px; }
+    .utility-panel { border:1px solid rgba(128,128,128,.22);border-radius:12px;background:var(--background); }
+    .utility-panel > summary { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;font-size:13px;font-weight:650;cursor:pointer; }
+    .utility-content { display:grid;gap:12px;padding:0 14px 14px; }
+    .quota-compact { font-size:11px;font-weight:400;opacity:.7; }
+    form { display:grid;gap:9px; }
     h3,p { margin:0;line-height:1.6; } h3 { font-size:14px; }
     select,input,button { padding:10px;border:1px solid rgba(128,128,128,.25);border-radius:9px;background:var(--background);color:var(--text);font:inherit;min-width:0; }
     button { cursor:pointer; } button:disabled { opacity:.5;cursor:not-allowed; }
@@ -290,7 +334,6 @@
     .success-icon { display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#507b1c;color:white;font-size:20px; }
     button.saved:disabled { opacity:1;border-color:#81b426;background:rgba(129,180,38,.12);cursor:default; }
     .primary { background:var(--accent);color:white; } .muted { opacity:.7; } .error { color:#c0392b;overflow-wrap:anywhere; }
-    ol { margin:0;padding-left:20px; } li { margin:8px 0;overflow-wrap:anywhere; } .actions { display:flex;flex-wrap:wrap;gap:8px; }
-    .editor,.versions { display:grid;gap:8px;padding:14px;border:1px solid rgba(128,128,128,.25);border-radius:12px; }
+    ol { margin:0;padding-left:20px; } li { margin:8px 0;overflow-wrap:anywhere; }
     textarea { width:100%;box-sizing:border-box;padding:10px;border:1px solid rgba(128,128,128,.25);border-radius:9px;background:var(--background);color:var(--text);font:inherit; }
 </style>

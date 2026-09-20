@@ -195,7 +195,7 @@ export const planMessage=async(input,{adapter=plannerAdapter,edit=editAdapter,co
         let validated=claim.pendingOutcome?{outcome:claim.pendingOutcome,plan:claim.pendingOutcome.plan}:null,lastError,requestId=null,model=null;
         for(let attempt=0;!validated && attempt<3;attempt++){
             try{
-                const suggestion=await adapter.suggest({context:claim.context,signal,repair:attempt>0});
+                const suggestion=await adapter.suggest({context:claim.context,signal,repair:attempt>0,attempt});
                 requestId=suggestion.requestId || requestId;model=suggestion.model || model;
                 const value=suggestion.value ?? parsePlannerResponse(suggestion.raw);
                 validated=validateCandidate(value,claim.sources,claim.context.latestRequest);break;

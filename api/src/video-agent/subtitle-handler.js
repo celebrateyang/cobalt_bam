@@ -4,7 +4,7 @@ import {agentError} from "../db/video-agent.js";
 import {hashInput} from "./plans.js";
 import {validateTranslatedClips} from "./translated-contract.js";
 import {renderSrt,renderVtt,renderAss} from "../ai-video/subtitles.js";
-import {SUBTITLE_CONFIG} from "./delivery-config.js";
+import {SUBTITLE_CONFIG,getRenderLayout} from "./delivery-config.js";
 export const buildSourceClipCues=(value,clip,mode)=>{
     const byId=new Map(value.cues.map(cue=>[cue.id,cue]));
     const wrap=text=>{
@@ -45,14 +45,15 @@ export const applyResultEdits=(value,edits)=>{
 };
 export const subtitleHandler=async ctx=>{
     const {claim,dependencies,signal,readArtifact,artifact,fileArtifact,readFileArtifact,commitCheckpoint,workDir}=ctx;
-    const config={...SUBTITLE_CONFIG,...claim.run.plan.subtitles,...(claim.run.plan.edits?{edits:claim.run.plan.edits}:{})};if(hashInput(config)!==hashInput(claim.step.input_snapshot.config))throw agentError("VIDEO_AGENT_SUBTITLE_CONFIG_CHANGED",409,"Subtitle configuration changed");
+    const config={...SUBTITLE_CONFIG,...claim.run.plan.subtitles,video:claim.run.plan.video,...(claim.run.plan.edits?{edits:claim.run.plan.edits}:{})};if(hashInput(config)!==hashInput(claim.step.input_snapshot.config))throw agentError("VIDEO_AGENT_SUBTITLE_CONFIG_CHANGED",409,"Subtitle configuration changed");
     const source=claim.run.source_snapshot,ref=dependencies.find(step=>step.stage==="translate_selected")?.checkpoint?.translatedClipsRef;
     const value=applyResultEdits(validateTranslatedClips(await readArtifact(ref,{kind:"transcript"}),{sourceChecksum:source.checksum,durationMs:source.durationMs,targetLanguage:claim.run.plan.targetLanguage,...claim.run.plan.clips}),claim.run.plan.edits);
     const configHash=hashInput({config,ref}),checkpoint=ctx.checkpoint?.configHash===configHash?ctx.checkpoint:{configHash,clips:[]};
     for(const clip of value.clips){signal.throwIfAborted();const existing=checkpoint.clips.find(item=>item.id===clip.id);if(existing){for(const [format,asset] of Object.entries(existing.subtitles))await readFileArtifact(asset.id,undefined,{kind:`subtitle_${format}`,maxBytes:2*1024*1024});continue;}
         const cues=buildSourceClipCues(value,clip,config.mode),subtitles={},assets=[];
         const vttCues=cues.map(cue=>({...cue,text:cue.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}));
-        const text={srt:renderSrt(cues),vtt:renderVtt(vttCues),ass:renderAss(cues,{bilingual:config.mode==="bilingual"})};
+        const layout=getRenderLayout(claim.run.plan.video,source);if(!layout)throw agentError("VIDEO_AGENT_SUBTITLE_CONFIG_CHANGED",409,"Source dimensions are unavailable");
+        const text={srt:renderSrt(cues),vtt:renderVtt(vttCues),ass:renderAss(cues,{bilingual:config.mode==="bilingual",width:layout.width,height:layout.height})};
         for(const format of ["srt","vtt","ass"]){const filename=path.join(workDir,`subtitle.${format}`);await writeFile(filename,text[format],"utf8");try{subtitles[format]=await fileArtifact(filename,{kind:`subtitle_${format}`,maxBytes:2*1024*1024});assets.push(subtitles[format]);}finally{await unlink(filename);}}
         const {cueIds,...metadata}=clip;
         checkpoint.clips.push({...metadata,sourceCueCount:cueIds.length,subtitles,estimatedSubtitleTiming:cues.some(cue=>cue.timingQuality==="estimated")});await commitCheckpoint({checkpoint,assets,outputRefs:checkpoint.clips.flatMap(item=>Object.values(item.subtitles).map(asset=>asset.id))});

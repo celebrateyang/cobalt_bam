@@ -294,6 +294,7 @@ test("worker leases, fencing, durable artifacts, retry, cancellation and real me
             }
             for(const asset of [published.results[0].video,published.results[0].subtitles.vtt]){
                 const response=await fetch(`${base}/assets/${asset.id}/download?preview=1`);assert.equal(response.status,200);assert.match(response.headers.get("content-disposition"),/^inline;/);assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(storage.resolve((await pg.query("SELECT object_key FROM video_agent_assets WHERE id=$1",[asset.id])).rows[0].object_key)));
+                const proxied=await fetch(`${base}/assets/${asset.id}/download?preview=1&proxy=1`);assert.equal(proxied.status,200);assert.match(proxied.headers.get("content-disposition"),/^inline;/);
             }
             const audioResponse=await fetch(`${base}/assets/${dubId}/download`);assert.equal(audioResponse.status,200);
             assert.equal(audioResponse.headers.get("content-type"),"audio/wav");assert.deepEqual(Buffer.from(await audioResponse.arrayBuffer()),dubBytes);

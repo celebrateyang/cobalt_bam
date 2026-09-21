@@ -67,6 +67,7 @@ test("result edits create immutable revisions, reuse upstream steps and restore 
     assert.ok(steps.slice(0,6).every(step=>step.status==="succeeded" && step.reused_step_id));
     assert.equal(steps[6].stage,"build_subtitles");assert.equal(steps[6].status,"pending");
     assert.equal((await pg.query("SELECT status FROM video_agent_runs WHERE id=$1",[runId])).rows[0].status,"completed");
+    await pg.query("UPDATE video_agent_runs SET status='completed',completed_at=$2 WHERE id=$1",[rerun.runId,now+1]);
     assert.equal(isEditRequest("Change the subtitle in this clip"),true);
     assert.throws(()=>validateEditCandidate({status:"ready",reply:"Done",action:"update_subtitles",clipId:"other",cueId:"cue_b",title:null,focusX:null,startCueId:null,endCueId:null,text:"Otra",executionIntent:"plan_only"},editable),{code:"VIDEO_AGENT_EDIT_FORMAT_INVALID"});
     const saved=await saveUserMessage({projectId,userId:1,clientMessageId:"edit_conversation_0001",content:"Change the subtitle on the second line to Otra."});

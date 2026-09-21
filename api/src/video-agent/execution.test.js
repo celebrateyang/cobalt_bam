@@ -14,6 +14,7 @@ const planInput = (sourceRef = sourceId) => ({ sourceRef, operation: "highlight_
 test("strict business plans compile a fixed DAG with downstream invalidation", () => {
     const plan = normalizePlan(planInput());
     assert.equal(plan.sourceLanguage, "auto"); assert.equal(plan.clips.maxSeconds, 90);
+    assert.deepEqual(plan.video,{aspectRatio:"source",preset:"source"});
     for (const input of [{ ...planInput(), ffmpeg: "run" }, { ...planInput(), targetLanguage: "auto" },
         { ...planInput(), clips: { requestedCount: 6 } }, { ...planInput(), clips: { requestedCount: 1, minSeconds: 14 } },
         { ...planInput(), video: { aspectRatio: "16:9", preset: "tiktok" } }, { ...planInput(), dubbing: { enabled: true } },

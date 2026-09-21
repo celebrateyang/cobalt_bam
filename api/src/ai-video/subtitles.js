@@ -101,10 +101,12 @@ export const renderSrt = (cues) => `${cues.map((cue, index) => `${index + 1}\n${
 
 export const renderVtt = (cues) => `WEBVTT\n\n${cues.map((cue) => `${vttTime(cue.startMs)} --> ${vttTime(cue.endMs)}\n${cue.text}`).join("\n\n")}\n`;
 
-export const renderAss = (cues, { bilingual = false } = {}) => {
-    const fontSize = bilingual ? 58 : 66;
+export const renderAss = (cues, { bilingual = false, width = 1080, height = 1920 } = {}) => {
+    const safeWidth=Number.isSafeInteger(width) && width>=2?width:1080,safeHeight=Number.isSafeInteger(height) && height>=2?height:1920;
+    const fontSize = Math.max(24,Math.round(safeHeight*(bilingual ? 58 : 66)/1920));
+    const outline=Math.max(2,Math.round(safeHeight*4/1920)),marginX=Math.max(24,Math.round(safeWidth*96/1080)),marginV=Math.max(36,Math.round(safeHeight*190/1920));
     const events = cues.map((cue) => `Dialogue: 0,${assTime(cue.startMs)},${assTime(cue.endMs)},Default,,0,0,0,,${escapeAssText(cue.text)}`).join("\n");
-    return `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\nCollisions: Normal\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Noto Sans,${fontSize},&H00FFFFFF,&H000000FF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,4,0,2,96,96,190,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n${events}\n`;
+    return `[Script Info]\nScriptType: v4.00+\nPlayResX: ${safeWidth}\nPlayResY: ${safeHeight}\nWrapStyle: 0\nScaledBorderAndShadow: yes\nCollisions: Normal\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\nStyle: Default,Noto Sans,${fontSize},&H00FFFFFF,&H000000FF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,${outline},0,2,${marginX},${marginX},${marginV},1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n${events}\n`;
 };
 
 export const sanitizeOutputFilename = (value, fallback = "clip") => {

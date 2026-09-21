@@ -31,7 +31,7 @@
         const link=document.createElement("a");link.href=url;link.download=`${result.id}-dub-fit.json`;link.click();
         setTimeout(()=>URL.revokeObjectURL(url),60000);
     };
-    let sourceRef="",targetLanguage="es",subtitleMode: "translated" | "bilingual"="bilingual",requestedCount=3,dubbingEnabled=false;
+    let sourceRef="",targetLanguage="es",subtitleMode: "translated" | "bilingual"="bilingual",requestedCount=3,dubbingEnabled=false,videoMode:"source"|"tiktok"="source";
     let planId="",latestPlanId="",planRevision=0,revision=project.revision,busy=false,refreshing=false,errorCode="",stale=false,editorConflict=false;
     let mounted=false,epoch=0,cursor="0",controller: AbortController | null=null;
     let pendingCommand: AgentCommand | null=null;
@@ -70,7 +70,7 @@
                 const current=settled[3].value;revision=Math.max(revision,current.revision);latestPlanId=current.plan?.id || "";
                 if(current.plan && ((!planLoaded && !dirty) || current.plan.revision>planRevision)){
                     const saved=current.plan;sourceRef=saved.input.sourceRef;targetLanguage=saved.input.targetLanguage;subtitleMode=saved.input.subtitles?.mode || "bilingual";requestedCount=saved.input.clips.requestedCount;
-                    planId=saved.id;planRevision=saved.revision;currentEdits=saved.input.edits;dubbingEnabled=!!saved.input.dubbing?.enabled;
+                    planId=saved.id;planRevision=saved.revision;currentEdits=saved.input.edits;dubbingEnabled=!!saved.input.dubbing?.enabled;videoMode=saved.input.video?.aspectRatio==="9:16"?"tiktok":"source";
                     const selected=editable?.clips.find(clip=>clip.id===selectedClipId);if(selected && !editorConflict)chooseClip(selected);
                 }
                 planLoaded=true;
@@ -119,7 +119,7 @@
     const createPlan=()=>{
         if(!canCreatePlan || busy || pendingCommand || planId)return;
         return command({type:"create_plan",...envelope(),input:{sourceRef,operation:"highlight_clips",targetLanguage,
-            clips:{requestedCount},subtitles:{enabled:true,mode:subtitleMode},
+            clips:{requestedCount},video:videoMode==="tiktok"?{aspectRatio:"9:16",preset:"tiktok"}:{aspectRatio:"source",preset:"source"},subtitles:{enabled:true,mode:subtitleMode},
             dubbing:{enabled:dubbingEnabled,voiceId:dubbingEnabled?capabilities?.dubbing?.voiceId || null:null}}});
     };
     const start=()=>command({type:"start_run",...envelope(),input:{planId}});

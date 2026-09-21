@@ -29,7 +29,7 @@ test("an isolated ASR micro-cue is merged with its neighbor",()=>{
 test("result edits change exported subtitles and keep clip boundaries on source cues",async()=>{
     const workDir=await mkdtemp(path.join(os.tmpdir(),"agent-edit-subtitles-"));
     try{
-        const source={checksum:"f".repeat(64),durationMs:40000},cues=[
+        const source={checksum:"f".repeat(64),durationMs:40000,width:320,height:180},video={aspectRatio:"source",preset:"source"},cues=[
             {id:"cue_a",sourceText:"First",translatedText:"Primero",startMs:0,endMs:10000,timingQuality:"word"},
             {id:"cue_b",sourceText:"Second",translatedText:"Segundo",startMs:10000,endMs:20000,timingQuality:"word"},
             {id:"cue_c",sourceText:"Third",translatedText:"Tercero",startMs:20000,endMs:30000,timingQuality:"word"}];
@@ -41,8 +41,8 @@ test("result edits change exported subtitles and keep clip boundaries on source 
         assert.deepEqual(changed.clips[0].cueIds,["cue_b","cue_c"]);
         assert.equal(buildSourceClipCues(changed,changed.clips[0],"translated")[0].text,"Texto nuevo");
         assert.throws(()=>applyResultEdits(value,{...edits,clips:{clip_one:{startCueId:"cue_c",endCueId:"cue_b"}}}),{code:"VIDEO_AGENT_EDIT_BOUNDARY_INVALID"});
-        const files={},config={...SUBTITLE_CONFIG,enabled:true,mode:"translated",edits};
-        const output=await subtitleHandler({claim:{run:{source_snapshot:source,plan:{targetLanguage:"es",subtitles:{enabled:true,mode:"translated"},clips:{},edits}},step:{input_snapshot:{config}}},
+        const files={},config={...SUBTITLE_CONFIG,enabled:true,mode:"translated",video,edits};
+        const output=await subtitleHandler({claim:{run:{source_snapshot:source,plan:{targetLanguage:"es",subtitles:{enabled:true,mode:"translated"},clips:{},video,edits}},step:{input_snapshot:{config}}},
             dependencies:[{stage:"translate_selected",checkpoint:{translatedClipsRef:"translation"}}],signal:new AbortController().signal,workDir,
             readArtifact:async()=>value,artifact:async data=>({id:"manifest",value:data}),fileArtifact:async(filename,{kind})=>{files[kind]=await readFile(filename,"utf8");return {id:kind};},commitCheckpoint:async()=>{}});
         assert.equal(output.checkpoint.clips[0].title,"New");assert.equal(output.checkpoint.clips[0].focusX,0.75);
@@ -51,9 +51,9 @@ test("result edits change exported subtitles and keep clip boundaries on source 
 });
 test("exports escape VTT and ASS markup and preserve UTF-8 text",async()=>{
     const workDir=await mkdtemp(path.join(os.tmpdir(),"agent-subtitles-"));
-    try{const files={},config={...SUBTITLE_CONFIG,enabled:true,mode:"bilingual"},source={checksum:"a".repeat(64),durationMs:20000};
+    try{const files={},video={aspectRatio:"source",preset:"source"},config={...SUBTITLE_CONFIG,enabled:true,mode:"bilingual",video},source={checksum:"a".repeat(64),durationMs:20000,width:320,height:180};
         const value={version:"translated-clips-v1",sourceChecksum:source.checksum,durationMs:20000,config:{targetLanguage:"es"},clips:[{id:"clip",startMs:0,endMs:20000,cueIds:["cue"]}],cues:[{id:"cue",sourceText:"Hello {tag}",translatedText:"Hola <b> & \u4e2d\u6587",startMs:0,endMs:20000,timingQuality:"word"}]};
-        const output=await subtitleHandler({claim:{run:{source_snapshot:source,plan:{targetLanguage:"es",subtitles:config,clips:{}}},step:{input_snapshot:{config}}},dependencies:[{stage:"translate_selected",checkpoint:{translatedClipsRef:"translation"}}],signal:new AbortController().signal,workDir,readArtifact:async()=>value,artifact:async value=>({id:"manifest",value}),fileArtifact:async(filename,{kind})=>{files[kind]=await readFile(filename,"utf8");return {id:kind};},commitCheckpoint:async()=>{}});
+        const output=await subtitleHandler({claim:{run:{source_snapshot:source,plan:{targetLanguage:"es",subtitles:{enabled:true,mode:"bilingual"},clips:{},video}},step:{input_snapshot:{config}}},dependencies:[{stage:"translate_selected",checkpoint:{translatedClipsRef:"translation"}}],signal:new AbortController().signal,workDir,readArtifact:async()=>value,artifact:async value=>({id:"manifest",value}),fileArtifact:async(filename,{kind})=>{files[kind]=await readFile(filename,"utf8");return {id:kind};},commitCheckpoint:async()=>{}});
         assert.ok(files.subtitle_vtt.includes("&lt;b&gt; &amp;"));assert.ok(files.subtitle_ass.includes("\\{tag\\}"));assert.ok(files.subtitle_srt.includes("\u4e2d\u6587"));assert.equal(output.outputRefs.length,4);
     }finally{await rm(workDir,{recursive:true,force:true});}
 });

@@ -12,6 +12,7 @@ export type AgentMessage = {id:string;clientMessageId:string;role:"user"|"assist
     outcome?:{status:"ready"|"needs_input"|"unsupported";planId:string|null;pendingSourceId:string|null;execution:{status:"started"|"blocked";runId:string|null;errorCode:string|null}|null}|null};
 export type AgentPlannerOutcome = {status:"ready"|"needs_input"|"unsupported";reply:string;sourceRef:string|null;sourceExplicit:boolean;sourceLanguage:string;targetLanguage:string|null;
     targetLanguageExplicit:boolean;requestedCount:number;minSeconds:number;maxSeconds:number;subtitleMode:"translated"|"bilingual";executionIntent:"plan_only"|"execute";
+    verticalRequested:boolean;
     missing:("source"|"target_language")[];unsupportedCapabilities:"dubbing"[];planId?:string;revision?:number;plan?:AgentPlanInput;pendingSourceId?:string;
     execution?:{status:"started"|"blocked";runId?:string;runStatus?:string;errorCode?:string}};
 export type AgentResult = {id:string;title?:string;startMs:number;endMs:number;video:{id:string};dubAudio?:{id:string}|null;
@@ -20,9 +21,8 @@ export type AgentEditable = {runId:string;clips:{id:string;title:string;startMs:
 export const getAgentResults=(projectId:string,runId:string)=>agentRequest<{results:AgentResult[];selectionShortfall:number;requiresReview?:boolean}>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/results`);
 export const getAgentEditable=(projectId:string,runId:string)=>agentRequest<AgentEditable>(`${projectPath(projectId)}/runs/${encodeURIComponent(runId)}/editable`);
 export const getAgentPreview=async(projectId:string,assetId:string)=>{
-    const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`,signed=await agentRequest<{url:string|null}>(`${path}?url=1&preview=1`);
-    if(signed.url)return signed.url;
-    const token=await getClerkToken(),response=await fetch(`${currentApiURL()}/user/video-agent${path}?preview=1`,{headers:{Authorization:`Bearer ${token}`}});
+    const path=`${projectPath(projectId)}/assets/${encodeURIComponent(assetId)}/download`;
+    const token=await getClerkToken(),response=await fetch(`${currentApiURL()}/user/video-agent${path}?preview=1&proxy=1`,{headers:{Authorization:`Bearer ${token}`}});
     if(!response.ok)throw new Error("Preview unavailable");return URL.createObjectURL(await response.blob());
 };
 export const agentRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
@@ -49,7 +49,7 @@ export const importAgentSource = (id: string, mediaImportToken: string) => agent
 export type AgentPlanInput = {
     sourceRef: string; operation: "highlight_clips"; sourceLanguage?: string; targetLanguage: string;
     clips: { requestedCount: number; minSeconds?: number; maxSeconds?: number };
-    video?: { aspectRatio: "9:16"; preset: "tiktok" };
+    video?: { aspectRatio: "source"; preset: "source" } | { aspectRatio: "9:16"; preset: "tiktok" };
     subtitles?: { enabled: true; mode: "translated" | "bilingual" };
     dubbing?: { enabled: boolean; voiceId: string|null }; executionMode?: "execute";
     edits?:{baseRunId:string;clips:Record<string,{title?:string;focusX?:number;startCueId?:string;endCueId?:string}>;subtitles:Record<string,string>};

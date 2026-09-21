@@ -10,10 +10,12 @@ import {ttsAdapter} from "./tts-adapter.js";
 import {validateTranslatedClips} from "./translated-contract.js";
 import {applyResultEdits} from "./subtitle-handler.js";
 import {runAbortableProcess} from "./worker-media.js";
+import {getRenderLayout} from "./delivery-config.js";
 
-const dubConfig=plan=>({dubbing:plan.dubbing,budget:estimateRunTtsBudget(plan.clips,getTtsConfig()),tts:getTtsConfig(),...(plan.edits?{edits:plan.edits}:{})});
+const dubConfig=(plan,stage)=>({dubbing:plan.dubbing,budget:estimateRunTtsBudget(plan.clips,getTtsConfig()),tts:getTtsConfig(),...(stage==="build_dub_subtitles"?{video:plan.video}:{}),...(plan.edits?{edits:plan.edits}:{})});
 const assertConfig=claim=>{
-    if(!claim.run.plan.dubbing?.enabled || hashInput(dubConfig(claim.run.plan))!==hashInput(claim.step.input_snapshot.config))
+    const stage=claim.step.stage || (claim.step.input_snapshot.config.video?"build_dub_subtitles":null);
+    if(!claim.run.plan.dubbing?.enabled || hashInput(dubConfig(claim.run.plan,stage))!==hashInput(claim.step.input_snapshot.config))
         throw agentError("VIDEO_AGENT_DUB_CONFIG_CHANGED",409,"Dubbing configuration changed; create a new run");
     return getTtsConfig();
 };
@@ -168,7 +170,8 @@ export const buildDubSubtitlesHandler=async ctx=>{
         });
         if(cues.some(cue=>cue.endMs<=cue.startMs))throw agentError("VIDEO_AGENT_DUB_SUBTITLE_INVALID",422,"Dub subtitle timing is invalid");
         const vttCues=cues.map(cue=>({...cue,text:cue.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}));
-        const content={srt:renderSrt(cues),vtt:renderVtt(vttCues),ass:renderAss(cues,{bilingual})};
+        const layout=getRenderLayout(claim.run.plan.video,claim.run.source_snapshot);if(!layout)throw agentError("VIDEO_AGENT_DUB_SUBTITLE_INVALID",422,"Source dimensions are unavailable");
+        const content={srt:renderSrt(cues),vtt:renderVtt(vttCues),ass:renderAss(cues,{bilingual,width:layout.width,height:layout.height})};
         const subtitles={},assets=[];
         for(const format of ["srt","vtt","ass"]){const filename=path.join(workDir,`dub.${format}`);await writeFile(filename,content[format],"utf8");
             try{subtitles[format]=await fileArtifact(filename,{kind:`subtitle_${format}`,maxBytes:2*1024*1024});assets.push(subtitles[format]);}

@@ -56,9 +56,9 @@ export const normalizePlan = (input) => {
     const { requestedCount, minSeconds = 15, maxSeconds = 90 } = input.clips;
     if (!Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 5 || !Number.isInteger(minSeconds) || !Number.isInteger(maxSeconds)
         || minSeconds < 15 || maxSeconds > 90 || maxSeconds < minSeconds) invalid("Invalid clip limits");
-    const video = input.video ?? { aspectRatio: "9:16", preset: "tiktok" };
+    const video = input.video ?? { aspectRatio: "source", preset: "source" };
     object(video, ["aspectRatio", "preset"]);
-    if (video.aspectRatio !== "9:16" || video.preset !== "tiktok") invalid("Unsupported video preset");
+    if (!((video.aspectRatio === "source" && video.preset === "source") || (video.aspectRatio === "9:16" && video.preset === "tiktok"))) invalid("Unsupported video preset");
     const subtitles = input.subtitles ?? { enabled: true, mode: "translated" };
     object(subtitles, ["enabled", "mode"]);
     if (subtitles.enabled !== true || !["translated", "bilingual"].includes(subtitles.mode)) invalid("Unsupported subtitle settings");
@@ -74,7 +74,7 @@ export const normalizePlan = (input) => {
     }else if(dubbing.enabled!==false || (dubbing.voiceId!==undefined && dubbing.voiceId!==null))invalid("Invalid dubbing settings");
     if (input.executionMode !== undefined && input.executionMode !== "execute") invalid("Unsupported execution mode");
     return { sourceRef: input.sourceRef.toLowerCase(), operation: "highlight_clips", sourceLanguage, targetLanguage: input.targetLanguage,
-        clips: { requestedCount, minSeconds, maxSeconds }, video: { aspectRatio: "9:16", preset: "tiktok" },
+        clips: { requestedCount, minSeconds, maxSeconds }, video: { aspectRatio: video.aspectRatio, preset: video.preset },
         subtitles: { enabled: true, mode: subtitles.mode }, glossary:normalizeGlossary(input.glossary),dubbing: { enabled:!!voiceId, voiceId }, executionMode: "execute",
         ...(input.edits?{edits:normalizeEdits(input.edits)}:{}) };
 };
@@ -87,8 +87,8 @@ export const compilePlan = ({ plan, sourceSnapshot, revision }) => {
     return stages.map((stage, index) => {
         const config = stage === "chunk" ? AUDIO_CHUNK_CONFIG : stage === "transcribe" ? { sourceLanguage: plan.sourceLanguage,...getAsrConfig() }
             : stage === "normalize" ? NORMALIZE_CONFIG : stage === "select_clips" ? {...getSelectConfig(),limits:plan.clips} : stage === "translate_selected" ? getTranslationConfig(plan)
-            : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles,...(plan.edits?{edits:plan.edits}:{})}
-            : ["prepare_dub_text","tts","fit_dub_timeline","build_dub_subtitles"].includes(stage) ? {dubbing:plan.dubbing,budget:estimateRunTtsBudget(plan.clips,getTtsConfig()),tts:getTtsConfig(),...(plan.edits?{edits:plan.edits}:{})}
+            : stage === "build_subtitles" ? {...SUBTITLE_CONFIG,...plan.subtitles,video:plan.video,...(plan.edits?{edits:plan.edits}:{})}
+            : ["prepare_dub_text","tts","fit_dub_timeline","build_dub_subtitles"].includes(stage) ? {dubbing:plan.dubbing,budget:estimateRunTtsBudget(plan.clips,getTtsConfig()),tts:getTtsConfig(),...(stage==="build_dub_subtitles"?{video:plan.video}:{}),...(plan.edits?{edits:plan.edits}:{})}
             : stage === "render" ? {...RENDER_CONFIG,...plan.video,...(plan.dubbing?.enabled?{dubbing:plan.dubbing}:{})} : stage === "verify" ? VERIFY_CONFIG : {};
         const seed = { pipelineVersion: PIPELINE_VERSION, source: sourceSnapshot, stage, config, upstreamHash };
         const inputHash = hashInput(seed);

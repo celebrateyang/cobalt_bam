@@ -10,7 +10,7 @@ import {messageDTO} from "./conversation.js";
 import {resolveMessageSource} from "./source-resolver.js";
 import {getTtsConfig,ttsConfigured} from "./tts-config.js";
 
-const requiredKeys=["status","reply","sourceRef","sourceExplicit","sourceLanguage","targetLanguage","targetLanguageExplicit","requestedCount","minSeconds","maxSeconds","subtitleMode","executionIntent","missing","unsupportedCapabilities"];
+const requiredKeys=["status","reply","sourceRef","sourceExplicit","sourceLanguage","targetLanguage","targetLanguageExplicit","requestedCount","minSeconds","maxSeconds","subtitleMode","executionIntent","missing","unsupportedCapabilities","dubbingRequested","verticalRequested"];
 const languageCodes=new Set(["de","en","es","fr","id","ja","ko","ru","th","vi","zh"]);
 const safeReply=value=>typeof value==="string" && value.trim() && value.trim().length<=800 && Buffer.byteLength(value.trim())<=4096 && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value);
 const safeMetadata=value=>typeof value==="string" && value.length<=200 && /^[A-Za-z0-9._:/-]+$/.test(value)?value:null;
@@ -19,9 +19,10 @@ const explicitDubIntent=text=>{
     if(/\b(?:no|not|without|don't|do not)\s+(?:\w+\s+){0,2}(?:dub|dubbing|voiceover)\b|不要配音|不配音|保留原音|吹き替えない|더빙하지|sin doblaje|sans doublage/iu.test(request))return false;
     return /\b(?:dub|dubbing|voice.?over|synchronisier|doublage|doblaje|doblar|sulih suara|ozvuch|long tieng)\b|配音|吹き替え|더빙|озвуч|พากย์|lồng tiếng/iu.test(request);
 };
+const explicitVerticalIntent=text=>/\b(?:9\s*[:x]\s*16|tiktok|vertical|portrait)\b|\u7ad6\u5c4f|\u7ad6\u7248|\u7e26\u578b|\uc138\ub85c|\u0432\u0435\u0440\u0442\u0438\u043a\u0430\u043b|แนวตั้ง|dọc/iu.test(String(text || ""));
 
 const validateCandidate=(value,sources,requestText="")=>{
-    if(!value || typeof value!=="object" || Array.isArray(value) || ![requiredKeys.length,requiredKeys.length+1].includes(Object.keys(value).length) || Object.keys(value).some(key=>![...requiredKeys,"dubbingRequested"].includes(key)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner fields are invalid");
+    if(!value || typeof value!=="object" || Array.isArray(value) || Object.keys(value).length!==requiredKeys.length || Object.keys(value).some(key=>!requiredKeys.includes(key)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner fields are invalid");
     if(!["ready","needs_input","unsupported"].includes(value.status) || !safeReply(value.reply)
         || typeof value.sourceExplicit!=="boolean" || !["auto",...languageCodes].includes(value.sourceLanguage) || (value.targetLanguage!==null && !languageCodes.has(value.targetLanguage))
         || typeof value.targetLanguageExplicit!=="boolean" || !Number.isInteger(value.requestedCount) || value.requestedCount<1 || value.requestedCount>5
@@ -29,7 +30,7 @@ const validateCandidate=(value,sources,requestText="")=>{
         || !["translated","bilingual"].includes(value.subtitleMode) || value.executionIntent!=="plan_only"
         || !Array.isArray(value.missing) || value.missing.some(item=>!["source","target_language"].includes(item)) || new Set(value.missing).size!==value.missing.length
         || !Array.isArray(value.unsupportedCapabilities) || value.unsupportedCapabilities.some(item=>item!=="dubbing") || value.unsupportedCapabilities.length>1
-        || (value.dubbingRequested!==undefined && typeof value.dubbingRequested!=="boolean"))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner values are invalid");
+        || typeof value.dubbingRequested!=="boolean" || typeof value.verticalRequested!=="boolean")throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner values are invalid");
     const available=new Map(sources.map(source=>[source.id.toLowerCase(),source]));
     let sourceRef=value.sourceRef;
     if(sourceRef!==null && (typeof sourceRef!=="string" || !UUID.test(sourceRef) || !available.has(sourceRef.toLowerCase())))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner selected an unavailable source");
@@ -39,6 +40,8 @@ const validateCandidate=(value,sources,requestText="")=>{
     const needsTarget=!value.targetLanguageExplicit || value.targetLanguage===null;
     const dubbingRequested=value.dubbingRequested===true;
     if(dubbingRequested && !explicitDubIntent(requestText))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Dubbing requires an explicit user request");
+    const verticalRequested=value.verticalRequested===true;
+    if(verticalRequested && !explicitVerticalIntent(requestText))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Vertical output requires an explicit user request");
     const unsupported=value.unsupportedCapabilities.length>0 || dubbingRequested&&!ttsConfigured();
     const expectedStatus=unsupported?"unsupported":needsSource || needsTarget?"needs_input":"ready";
     const expectedMissing=[...(needsSource?["source"]:[]),...(needsTarget?["target_language"]:[])];
@@ -46,10 +49,10 @@ const validateCandidate=(value,sources,requestText="")=>{
     const missingSourceReply=/\p{Script=Han}/u.test(requestText)?"\u8bf7\u5148\u4e0a\u4f20\u89c6\u9891\u3002\u4e0a\u4f20\u5e76\u68c0\u67e5\u5b8c\u6210\u540e\uff0c\u7cfb\u7edf\u4f1a\u81ea\u52a8\u9009\u62e9\u8be5\u89c6\u9891\u5e76\u7ee7\u7eed\u5904\u7406\u3002":
         "Please upload a video. After the media check completes, it will be selected automatically and processing will continue.";
     const reply=expectedStatus==="needs_input" && needsSource && sources.length===0?missingSourceReply:value.reply.trim();
-    const base={...value,dubbingRequested,reply,sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
+    const base={...value,dubbingRequested,verticalRequested,reply,sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
     if(expectedStatus!=="ready")return {outcome:base,plan:null};
     const plan=normalizePlan({sourceRef:base.sourceRef,operation:"highlight_clips",sourceLanguage:base.sourceLanguage,targetLanguage:base.targetLanguage,
-        clips:{requestedCount:base.requestedCount,minSeconds:base.minSeconds,maxSeconds:base.maxSeconds},video:{aspectRatio:"9:16",preset:"tiktok"},
+        clips:{requestedCount:base.requestedCount,minSeconds:base.minSeconds,maxSeconds:base.maxSeconds},video:verticalRequested?{aspectRatio:"9:16",preset:"tiktok"}:{aspectRatio:"source",preset:"source"},
         subtitles:{enabled:true,mode:base.subtitleMode},dubbing:{enabled:dubbingRequested,voiceId:dubbingRequested?getTtsConfig().voiceId:null},executionMode:"execute"});
     return {outcome:base,plan};
 };

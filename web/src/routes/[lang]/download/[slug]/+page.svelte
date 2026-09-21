@@ -4,6 +4,7 @@
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
     import { isDePriorityLanding } from '$lib/seo/de-priority-landings';
+    import { isThPriorityLanding } from '$lib/seo/th-priority-landings';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
 
@@ -61,27 +62,29 @@
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
-    $: usesFocusedDeContent = data.lang === 'de' && isDePriorityLanding(data.slug);
-    $: productFaqs = usesFocusedDeContent ? [] : runtimeContent.productFaqs;
-    $: productTips = usesFocusedDeContent ? [] : runtimeContent.productTips;
-    $: productAdvantages = usesFocusedDeContent ? [] : runtimeContent.productAdvantages;
-    $: platformFaqs = usesFocusedDeContent
+    $: usesFocusedPriorityContent =
+        (data.lang === 'de' && isDePriorityLanding(data.slug)) ||
+        (data.lang === 'th' && isThPriorityLanding(data.slug));
+    $: productFaqs = usesFocusedPriorityContent ? [] : runtimeContent.productFaqs;
+    $: productTips = usesFocusedPriorityContent ? [] : runtimeContent.productTips;
+    $: productAdvantages = usesFocusedPriorityContent ? [] : runtimeContent.productAdvantages;
+    $: platformFaqs = usesFocusedPriorityContent
         ? []
         : runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
     $: platformPlaybook =
-        usesFocusedDeContent
+        usesFocusedPriorityContent
             ? { heading: '', notes: [], checklist: [] }
             : runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
-        usesFocusedDeContent
+        usesFocusedPriorityContent
             ? []
             : runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
-    $: landingFaqs = usesFocusedDeContent
+    $: landingFaqs = usesFocusedPriorityContent
         ? localeContent.faqs
         : data.slug === 'youtube-download'
         ? localeContent.faqs.slice(1)
         : localeContent.faqs;
-    $: freeTools = (usesFocusedDeContent ? [] : runtimeContent.freeTools).map((tool) => ({
+    $: freeTools = (usesFocusedPriorityContent ? [] : runtimeContent.freeTools).map((tool) => ({
         title: tool.title,
         desc: tool.desc,
         href: `/${data.lang}/${tool.path}`,

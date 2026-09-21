@@ -43,7 +43,10 @@ const validateCandidate=(value,sources,requestText="")=>{
     const expectedStatus=unsupported?"unsupported":needsSource || needsTarget?"needs_input":"ready";
     const expectedMissing=[...(needsSource?["source"]:[]),...(needsTarget?["target_language"]:[])];
     if(value.status!==expectedStatus || value.missing.length!==expectedMissing.length || expectedMissing.some(item=>!value.missing.includes(item)))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner readiness is inconsistent");
-    const base={...value,dubbingRequested,reply:value.reply.trim(),sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
+    const missingSourceReply=/\p{Script=Han}/u.test(requestText)?"\u8bf7\u5148\u4e0a\u4f20\u89c6\u9891\u3002\u4e0a\u4f20\u5e76\u68c0\u67e5\u5b8c\u6210\u540e\uff0c\u7cfb\u7edf\u4f1a\u81ea\u52a8\u9009\u62e9\u8be5\u89c6\u9891\u5e76\u7ee7\u7eed\u5904\u7406\u3002":
+        "Please upload a video. After the media check completes, it will be selected automatically and processing will continue.";
+    const reply=expectedStatus==="needs_input" && needsSource && sources.length===0?missingSourceReply:value.reply.trim();
+    const base={...value,dubbingRequested,reply,sourceRef:sourceRef?.toLowerCase() || null,missing:expectedMissing};
     if(expectedStatus!=="ready")return {outcome:base,plan:null};
     const plan=normalizePlan({sourceRef:base.sourceRef,operation:"highlight_clips",sourceLanguage:base.sourceLanguage,targetLanguage:base.targetLanguage,
         clips:{requestedCount:base.requestedCount,minSeconds:base.minSeconds,maxSeconds:base.maxSeconds},video:{aspectRatio:"9:16",preset:"tiktok"},

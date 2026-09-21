@@ -17,7 +17,7 @@ const lastModified = {
 const sitemapHubLanguages = ['en', 'zh', 'ja', 'th'];
 const languageHubPages = ['', 'download'];
 const localizedSupportPages = ['guide', 'faq'];
-const priorityDeLandingLastModified = new Set([
+const priorityLandingLastModified = new Set([
     'youtube-download',
     'youtube-shorts-download',
     'youtube-playlist-downloader',
@@ -134,7 +134,7 @@ function generateSitemap(): string {
                     `${site}${path}`,
                     slug === 'xinpianchang-video-download'
                         ? '2026-09-19'
-                        : lang === 'de' && priorityDeLandingLastModified.has(slug)
+                        : ['de', 'th'].includes(lang) && priorityLandingLastModified.has(slug)
                           ? '2026-09-21'
                           : slug === 'youtube-download' && lang === 'id'
                             ? '2026-09-06'

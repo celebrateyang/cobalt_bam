@@ -26,6 +26,22 @@ export const uploadDTO = (session) => ({ status: session.status, committedBytes:
     totalBytes: Number(session.total_bytes), chunkSizeBytes: session.chunk_size_bytes,
     fileFingerprint: session.file_fingerprint, expiresAt: Number(session.expires_at) });
 
+const linkLatestSourceRequest = async (client, { projectId, userId, sourceId, now }) => {
+    const message = (await client.query(`SELECT m.* FROM video_agent_messages m
+        WHERE m.project_id=$1 AND m.user_id=$2 AND m.role='user' AND m.status='completed'
+        AND m.planner_output->>'status'='needs_input' AND m.planner_output->'missing' ? 'source'
+        AND m.created_at>=$3
+        AND NOT EXISTS(SELECT 1 FROM video_agent_sources linked WHERE linked.origin_message_id=m.id)
+        ORDER BY m.created_at DESC,m.id DESC FOR UPDATE LIMIT 1`, [projectId, userId, now - 6 * 60 * 60 * 1000])).rows[0];
+    if (!message) return null;
+    const linked = await client.query(`UPDATE video_agent_sources SET origin_message_id=$2 WHERE id=$1 AND origin_message_id IS NULL RETURNING id`, [sourceId, message.id]);
+    if (!linked.rowCount) return null;
+    const outcome = { ...message.planner_output, pendingSourceId: sourceId };
+    await client.query(`UPDATE video_agent_messages SET status='awaiting_source',planner_output=$2,error_code=NULL,
+        planner_claim_token=NULL,planner_claim_until=NULL WHERE id=$1`, [message.id, outcome]);
+    return message.id;
+};
+
 export const addSource = async ({ projectId, userId, body, originMessageId = null, storage = getAiVideoObjectStorage() }) => {
     validateSourceInput(body);
     let sessionUri;
@@ -62,6 +78,7 @@ export const addSource = async ({ projectId, userId, body, originMessageId = nul
             [sourceId, projectId, body.kind, imported?.filename || body.filename.trim(), imported?.mime || body.contentType,
                 sizeBytes, encryptedInput, objectKey, imported ? "queued_ingest" : "uploading", now + RETENTION, now, originMessageId]);
             reservedSource = result.rows[0];
+            if (!originMessageId) await linkLatestSourceRequest(client, { projectId, userId, sourceId, now });
             if (!imported) {
                 sessionUri = await storage.startResumableUpload({ objectKey, contentType: body.contentType });
                 await client.query(`INSERT INTO video_agent_upload_sessions(id,source_id,user_id,encrypted_storage_session,total_bytes,

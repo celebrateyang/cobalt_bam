@@ -309,6 +309,9 @@ export const cleanupExecutionHistory = async ({ limit = 100 } = {}) => transacti
             await client.query(`UPDATE video_agent_projects SET event_floor_id=$2 WHERE id=$1`, [project.id, String(floor)]);
         }
         if (project.deleted_at !== null) await client.query(`DELETE FROM video_agent_commands WHERE project_id=$1`, [project.id]);
+        await client.query(`UPDATE video_agent_sources SET origin_message_id=NULL WHERE project_id=$1 AND origin_message_id IN
+            (SELECT id FROM video_agent_messages WHERE project_id=$1 AND ($2::boolean OR created_at<$3))`,
+        [project.id,project.deleted_at!==null,Date.now()-90*24*60*60*1000]);
         await client.query(`DELETE FROM video_agent_messages WHERE project_id=$1 AND ($2::boolean OR created_at<$3)`,[project.id,project.deleted_at!==null,Date.now()-90*24*60*60*1000]);
     }
     return { scanned: projects.length };

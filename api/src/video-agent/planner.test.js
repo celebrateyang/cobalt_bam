@@ -5,7 +5,7 @@ import express from "express";
 import {PGlite} from "@electric-sql/pglite";
 import {ensureVideoAgentSchema,setVideoAgentDatabaseForTests} from "../db/video-agent.js";
 import {createVideoAgentRouter} from "../routes/video-agent.js";
-import {planMessage,resumePendingSourcePlans} from "./planner.js";
+import {planMessage,resumePendingSourcePlans,validateCandidate} from "./planner.js";
 import {createPlannerAdapter,parsePlannerResponse} from "./planner-adapter.js";
 import {submitCommand} from "./execution.js";
 import {agentError} from "../db/video-agent.js";
@@ -14,6 +14,12 @@ import {extractVideoUrl,downloadSourceCandidate} from "./source-resolver.js";
 
 const ready=(overrides={})=>({status:"ready",reply:"Plan saved.",sourceRef:null,sourceExplicit:false,sourceLanguage:"auto",targetLanguage:"es",targetLanguageExplicit:true,
     requestedCount:3,minSeconds:15,maxSeconds:90,subtitleMode:"bilingual",executionIntent:"plan_only",missing:[],unsupportedCapabilities:[],...overrides});
+
+test("missing-source replies never expose internal source IDs",()=>{
+    const candidate=validateCandidate(ready({status:"needs_input",reply:"Please provide a source ID.",targetLanguage:"zh",missing:["source"]}),[],"\u8bf7\u628a\u89c6\u9891\u505a\u6210\u4e2d\u6587\u77ed\u7247");
+    assert.equal(candidate.outcome.reply,"\u8bf7\u5148\u4e0a\u4f20\u89c6\u9891\u3002\u4e0a\u4f20\u5e76\u68c0\u67e5\u5b8c\u6210\u540e\uff0c\u7cfb\u7edf\u4f1a\u81ea\u52a8\u9009\u62e9\u8be5\u89c6\u9891\u5e76\u7ee7\u7eed\u5904\u7406\u3002");
+    assert.doesNotMatch(candidate.outcome.reply,/source\s*(?:id|ref)/iu);
+});
 
 test("planner adapter uses bounded strict Responses output without provider retries",async()=>{
     let request,options;
@@ -96,6 +102,7 @@ test("natural-language planner repairs output, creates one plan, persists replie
     suggestions=[ready({status:"needs_input",reply:"Please upload a video and choose a target language.",sourceRef:null,targetLanguage:null,targetLanguageExplicit:false,missing:["source","target_language"]})];calls=0;
     const missing=await request(`/projects/${missingProject.id}/messages/${missingMessage.id}/plan`,{method:"POST",body:{}});
     assert.equal(missing.payload.data.outcome.status,"needs_input");assert.deepEqual(missing.payload.data.outcome.missing,["source","target_language"]);
+    assert.doesNotMatch(missing.payload.data.assistantMessage.content,/source\s*(?:id|ref)/iu);
     assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_plans WHERE project_id=$1",[missingProject.id])).rows[0].n,0);
 
     const secondSource=randomUUID();await pg.query(`INSERT INTO video_agent_sources(id,project_id,kind,filename,mime,size_bytes,object_key,generation,checksum,probe,status,retention_until,created_at,updated_at)

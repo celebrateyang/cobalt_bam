@@ -42,6 +42,8 @@
     const journeyKeys = ["step_choose_video", "request_label", "plan", "run_running", "results"];
     let executionState:{hasPlan:boolean;runStatus:string|null;resultCount:number}={hasPlan:false,runStatus:null,resultCount:0};
     $: readySourceCount=sources.filter(source=>source.status==="ready" && source.retentionUntil>Date.now()).length;
+    $: waitingForSource=messages.some(message=>message.role==="user" && message.status==="awaiting_source");
+    $: sourceError=["file_too_large","resume_original","storage_limit","upload_expired"].includes(errorKey);
     $: currentStep=executionState.runStatus && ["completed","partially_completed"].includes(executionState.runStatus) ? 5
         : executionState.runStatus ? 4 : executionState.hasPlan ? 3 : readySourceCount || messages.length ? 2 : 1;
     $: highlightLink = `/${$page.params.lang || "en"}/ai-video`;
@@ -95,9 +97,9 @@
         const detail = await getAgentProject(id);
         if (version === epoch && id === projectId) { selectedProject = detail.project; sources = detail.sources; }
     };
-    const refreshPendingMessages = async () => {
+    const refreshPendingMessages = async (force=false) => {
         const id = projectId, version = epoch;
-        if (!id || !$clerkUser || !messages.some(message => ["awaiting_source", "processing"].includes(message.status))) return;
+        if (!id || !$clerkUser || (!force && !messages.some(message => ["awaiting_source", "processing"].includes(message.status)))) return;
         try {
             const page = await listAgentMessages(id);
             if (version !== epoch || id !== projectId) return;
@@ -158,7 +160,7 @@
             uploadController = null; busy = false; progress = null;
             if(!projectId && destination){rememberDraft(destination);if(errorKey)sessionStorage.setItem(flashKey(destination),`${errorKey}:${errorCode}`);
                 await goto(`${agentLink}/projects/${destination}`);}
-            else await refreshSources().catch(reportError);
+            else await Promise.all([refreshSources(),refreshPendingMessages(true)]).catch(reportError);
         }
     };
     const importSource = async () => {
@@ -170,7 +172,7 @@
             if(!destination){const created=await createAgentProject(projectTitleFromFilename(pendingImport.filename));selectedProject=created.project;destination=created.project.id;}
             await importAgentSource(destination, pendingImport.token);
             sessionStorage.removeItem("fsv_ai_video_import_v1"); pendingImport = null;
-            if(projectId)await refreshSources();
+            if(projectId)await Promise.all([refreshSources(),refreshPendingMessages(true)]);
         } catch (error) { reportError(error); } finally { busy = false;
             if(!projectId && destination){rememberDraft(destination);if(errorKey)sessionStorage.setItem(flashKey(destination),`${errorKey}:${errorCode}`);
                 await goto(`${agentLink}/projects/${destination}`);}
@@ -292,6 +294,8 @@
                     <button type="button" class="secondary" disabled={busy || !selectedProject} on:click={() => chooseFile()}><IconUpload size={17} aria-hidden="true" />{$t("video-agent.upload")}</button>
                     {#if pendingImport}<button type="button" class="secondary" disabled={busy || !selectedProject} on:click={importSource}>{$t("video-agent.import_download")}: {pendingImport.filename}</button>{/if}
                 </div>
+                {#if sourceError}<p class="error" role="alert">{$t(`video-agent.${errorKey}`)} {errorCode ? `(${errorCode})` : ""}
+                    {#if errorKey==="storage_limit"} <a href={agentLink}>{$t("video-agent.my_projects")}</a>{/if}</p>{/if}
                 {#if progress !== null}
                     <div role="status">{$t("video-agent.upload_progress")}: {progress}%</div>
                     <progress value={progress} max="100">{progress}%</progress>
@@ -319,9 +323,9 @@
                     <div class="examples">{#each exampleKeys as key}<button class="example" on:click={() => chooseExample(key)}>{$t(`video-agent.${key}`)}</button>{/each}</div>
                 </details>
                 <label for="agent-request">{$t("video-agent.request_label")}</label>
-                <textarea id="agent-request" bind:this={requestInput} bind:value={request} maxlength={4000} rows={4} placeholder={$t("video-agent.request_placeholder")}></textarea>
+                <textarea id="agent-request" bind:this={requestInput} bind:value={request} maxlength={4000} rows={4} placeholder={$t("video-agent.request_placeholder")} disabled={waitingForSource}></textarea>
                 <div class="composer-actions">
-                    <button type="button" class="primary" disabled={!selectedProject || !request.trim() || messageBusy || !!planningMessageId} on:click={sendMessage}>{$t(messageBusy || planningMessageId?"video-agent.loading":"video-agent.send_message")}</button>
+                    <button type="button" class="primary" disabled={!selectedProject || !request.trim() || messageBusy || !!planningMessageId || waitingForSource} on:click={sendMessage}>{$t(messageBusy || planningMessageId || waitingForSource?"video-agent.loading":"video-agent.send_message")}</button>
                 </div>
 
             </div>

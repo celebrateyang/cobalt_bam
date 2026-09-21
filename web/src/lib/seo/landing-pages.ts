@@ -1,5 +1,6 @@
 import { getLandingCapabilityContent } from '$lib/seo/landing-capabilities';
 import { dePriorityLandingLocales } from '$lib/seo/de-priority-landings';
+import { thPriorityLandingLocales } from '$lib/seo/th-priority-landings';
 import { xinpianchangLanding } from '$lib/seo/xinpianchang-landing';
 
 export type SeoLandingFaqItem = {
@@ -4749,9 +4750,12 @@ export const getSeoLandingLocale = (
     page: SeoLandingPage,
     lang: string,
 ): SeoLandingLocaleContent => {
-    const locale = lang === 'de' && dePriorityLandingLocales[page.slug]
+    const priorityLocale = lang === 'de'
         ? dePriorityLandingLocales[page.slug]
-        : page.locales[lang] ?? page.locales.en;
+        : lang === 'th'
+          ? thPriorityLandingLocales[page.slug]
+          : undefined;
+    const locale = priorityLocale ?? page.locales[lang] ?? page.locales.en;
     const capabilities = getLandingCapabilityContent(page.slug, lang);
     return capabilities ? { ...capabilities, ...locale } : locale;
 };

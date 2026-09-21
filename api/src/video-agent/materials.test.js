@@ -93,7 +93,18 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     const input = { kind: "upload", filename: "fixture.mp4", contentType: "video/mp4", sizeBytes: bytes.length, fileFingerprint: "fixture-fingerprint-123" };
     assert.equal((await request(`/projects/${nonmember.id}/sources`, { user: 3, method: "POST", body: input })).error.code, "MEMBERSHIP_REQUIRED");
     assert.equal((await request(`${prefix}/sources`, { user: 2, method: "POST", body: input })).status, 404);
+    const olderWaitingMessageId=randomUUID(),waitingMessageId=randomUUID(),waitingAt=Date.now();
+    await pg.query(`INSERT INTO video_agent_messages(id,project_id,user_id,client_message_id,role,content,status,planner_output,created_at)
+        VALUES($1,$2,1,$3,'user','Make clips.','completed',$4,$5)`,
+    [olderWaitingMessageId,project.id,`waiting_${olderWaitingMessageId.replaceAll("-","")}`,{status:"needs_input",reply:"Upload a video.",missing:["source"]},waitingAt-1]);
+    await pg.query(`INSERT INTO video_agent_messages(id,project_id,user_id,client_message_id,role,content,status,planner_output,created_at)
+        VALUES($1,$2,1,$3,'user','Make three Chinese clips.','completed',$4,$5)`,
+    [waitingMessageId,project.id,`waiting_${waitingMessageId.replaceAll("-","")}`,{status:"needs_input",reply:"Upload a video.",missing:["source"]},waitingAt]);
     const source = (await request(`${prefix}/sources`, { method: "POST", body: input })).data.source;
+    const linkedMessage=(await pg.query(`SELECT status,planner_output FROM video_agent_messages WHERE id=$1`,[waitingMessageId])).rows[0];
+    assert.equal(linkedMessage.status,"awaiting_source");assert.equal(linkedMessage.planner_output.pendingSourceId,source.id);
+    assert.equal((await pg.query(`SELECT status FROM video_agent_messages WHERE id=$1`,[olderWaitingMessageId])).rows[0].status,"completed");
+    assert.equal((await pg.query(`SELECT origin_message_id FROM video_agent_sources WHERE id=$1`,[source.id])).rows[0].origin_message_id,waitingMessageId);
     const upload = `${prefix}/sources/${source.id}/upload`;
     assert.equal((await request(upload, { user: 2 })).status, 404);
     assert.equal((await request(upload, { method: "PUT", body: bytes, headers: { "Upload-Offset": "0", Digest: `sha-256=${digest(Buffer.from("bad"))}` } })).status, 422);

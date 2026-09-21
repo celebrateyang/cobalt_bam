@@ -197,6 +197,9 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     assert.deepEqual(withRun.latestRun, { id:runId, status:"completed", requestedCount:2, producedCount:1 });
     assert.equal((await request("/projects?cursor=bad")).status, 400);
     assert.equal((await request(prefix, { method: "DELETE" })).status, 204);
+    // Deleting a project must release its source quota immediately, even before
+    // the asynchronous object cleanup has changed those sources to "deleted".
+    assert.equal((await request(`/projects/${sameTime.id}/sources`, { method: "POST", body: input })).status, 201);
     assert.equal((await request(prefix)).status, 404); assert.equal((await request(assetPath)).status, 404);
     await cleanupVideoAgent({ storage: { ...storage, headObject: storage.headObject.bind(storage), deleteObject: async () => { throw new Error("storage offline"); } } });
     const retry = (await pg.query(`SELECT cleanup_attempts FROM video_agent_sources WHERE id=$1`, [source.id])).rows[0];

@@ -132,7 +132,7 @@ export const assertSourceCapacity = async (client, { userId, sizeBytes }) => {
     if (!membership.rowCount) throw agentError("MEMBERSHIP_REQUIRED", 403, "Active AI video membership is required");
     const usage = (await client.query(`SELECT count(*)::int AS count,coalesce(sum(s.size_bytes),0) AS bytes
         FROM video_agent_sources s JOIN video_agent_projects p ON p.id=s.project_id
-        WHERE p.user_id=$1 AND s.status<>'deleted'`, [userId])).rows[0];
+        WHERE p.user_id=$1 AND p.deleted_at IS NULL AND s.status NOT IN ('deleting','deleted')`, [userId])).rows[0];
     if (usage.count >= 3 || Number(usage.bytes) + sizeBytes > 3 * 1024 ** 3) throw agentError("VIDEO_AGENT_STORAGE_LIMIT", 409, "Source storage limit reached");
 };
 

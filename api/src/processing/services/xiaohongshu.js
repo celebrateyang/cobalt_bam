@@ -49,6 +49,13 @@ const canonicalNoteUrl = (noteId, xsecToken, originURL) => {
     return `https://${hostname}/explore/${noteId}?xsec_token=${encodeQueryValue(xsecToken)}`;
 };
 
+const noteRequestUrls = ({ noteId, xsecToken, submittedShortUrl, url }) => {
+    if (submittedShortUrl) return [submittedShortUrl];
+
+    const candidates = [url?.toString(), canonicalNoteUrl(noteId, xsecToken, url)];
+    return [...new Set(candidates.filter(Boolean))];
+};
+
 export const isUnavailableRedirectUrl = (value) => {
     try {
         const parsed = new URL(value);
@@ -288,32 +295,42 @@ export default async function ({ id, token, shareType, shareId, h265, isAudioOnl
 
     if (!noteId) return { error: "fetch.short_link" };
 
-    // Xiaohongshu currently serves complete note hydration for app share links
-    // only when the original short URL is followed with a mobile identity. A
-    // reconstructed /explore URL can be redirected to a security/empty page.
-    const noteUrl = submittedShortUrl || canonicalNoteUrl(noteId, xsecToken, url);
-    const res = await fetch(noteUrl, {
-        headers: {
-            "user-agent": submittedShortUrl ? mobileUserAgent : genericUserAgent,
-            "referer": "https://www.xiaohongshu.com/",
-        },
-        dispatcher,
-    });
-
-    const html = await res.text();
-    const redirectedToUnavailable = isUnavailableRedirectUrl(res.url || noteUrl);
-
+    // Desktop requests for public note URLs are frequently redirected to the
+    // login page. Mobile page requests still contain the hydrated note data.
+    // Prefer the submitted path because discovery/item URLs can carry routing
+    // context that is lost when they are reconstructed as /explore URLs.
     let note;
-    try {
-        note = extractNoteFromInitialState({
-            data: extractInitialState(html),
-            noteId,
-            redirectedToUnavailable,
+    let redirectedToUnavailable = false;
+    for (const noteUrl of noteRequestUrls({
+        noteId,
+        xsecToken,
+        submittedShortUrl,
+        url,
+    })) {
+        const res = await fetch(noteUrl, {
+            headers: {
+                "user-agent": mobileUserAgent,
+                "referer": "https://www.xiaohongshu.com/",
+            },
+            dispatcher,
         });
-    } catch (error) {
-        if (error?.message === "content.post.unavailable") {
-            return { error: "content.post.unavailable" };
+
+        const html = await res.text();
+        redirectedToUnavailable ||= isUnavailableRedirectUrl(res.url || noteUrl);
+
+        try {
+            note = extractNoteFromInitialState({
+                data: extractInitialState(html),
+                noteId,
+                redirectedToUnavailable,
+            });
+        } catch (error) {
+            if (error?.message === "content.post.unavailable") {
+                continue;
+            }
         }
+
+        if (note) break;
     }
 
     if (!note) {

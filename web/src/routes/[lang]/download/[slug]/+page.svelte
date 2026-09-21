@@ -3,6 +3,7 @@
 
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
+    import { isDePriorityLanding } from '$lib/seo/de-priority-landings';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
 
@@ -26,7 +27,7 @@
     const extraCopy: Record<string, Record<string, string>> = {
         es: { directory: 'Directorio de descargadores populares', guide: 'Cómo usar', guides: 'Guías de descarga populares', faq: 'Preguntas frecuentes de descarga', discover: 'Descubrir vídeos populares', related: 'Enlaces relacionados', core: 'Páginas principales', similar: 'Descargas similares', home: 'Inicio', download: 'Descargar', breadcrumb: 'Ruta de navegación', browser: 'Navegador web', capability: 'Resumen de funciones', collection: 'Otros formatos de colecciones compatibles', practical: 'Consejos prácticos de descarga', flow: 'Proceso de descarga y guardado', advantages: 'Ventajas de la plataforma', troubleshooting: 'Solución de problemas por plataforma', guidance: 'Indicaciones clave', checklist: 'Lista de comprobación', failures: 'Casos de error y soluciones' },
         fr: { directory: 'Répertoire des téléchargeurs populaires', guide: 'Comment utiliser', guides: 'Guides de téléchargement populaires', faq: 'FAQ sur le téléchargement', discover: 'Découvrir les vidéos populaires', related: 'Liens associés', core: 'Pages principales', similar: 'Téléchargements similaires', home: 'Accueil', download: 'Télécharger', breadcrumb: 'Fil d’Ariane', browser: 'Navigateur web', capability: 'Résumé des fonctionnalités', collection: 'Autres formats de collections compatibles', practical: 'Conseils pratiques de téléchargement', flow: 'Parcours de téléchargement et d’enregistrement', advantages: 'Avantages de la plateforme', troubleshooting: 'Dépannage par plateforme', guidance: 'Conseils essentiels', checklist: 'Liste de vérification', failures: 'Cas d’échec et solutions' },
-        de: { directory: 'Beliebte Video-Downloader', guide: 'Verwendung von', guides: 'Beliebte Download-Anleitungen', faq: 'Häufige Downloadfragen', discover: 'Beliebte Videos entdecken', related: 'Verwandte Links', core: 'Hauptseiten', similar: 'Ähnliche Downloads', home: 'Startseite', download: 'Download', breadcrumb: 'Brotkrümelnavigation', browser: 'Webbrowser', capability: 'Funktionsübersicht', collection: 'Weitere unterstützte Sammlungsformate', practical: 'Praktische Download-Tipps', flow: 'Download- und Speichervorgang', advantages: 'Plattformvorteile', troubleshooting: 'Plattformspezifische Fehlerbehebung', guidance: 'Wichtige Hinweise', checklist: 'Erfolgscheckliste', failures: 'Fehlerfälle und Lösungen' },
+        de: { directory: 'Beliebte Video-Downloader', guide: 'Verwendung von', guides: 'Beliebte Download-Anleitungen', faq: 'Häufige Downloadfragen', discover: 'Beliebte Videos entdecken', related: 'Verwandte Links', core: 'Hauptseiten', similar: 'Ähnliche Downloads', home: 'Startseite', download: 'Download', downloader: 'Downloader öffnen', breadcrumb: 'Brotkrümelnavigation', browser: 'Webbrowser', capability: 'Funktionsübersicht', collection: 'Weitere unterstützte Sammlungsformate', practical: 'Praktische Download-Tipps', flow: 'Download- und Speichervorgang', advantages: 'Plattformvorteile', troubleshooting: 'Plattformspezifische Fehlerbehebung', guidance: 'Wichtige Hinweise', checklist: 'Erfolgscheckliste', failures: 'Fehlerfälle und Lösungen' },
         vi: { directory: 'Danh mục công cụ tải video phổ biến', guide: 'Cách sử dụng', guides: 'Hướng dẫn tải xuống phổ biến', faq: 'Câu hỏi thường gặp', discover: 'Khám phá video phổ biến', related: 'Liên kết liên quan', core: 'Trang chính', similar: 'Nội dung tải tương tự', home: 'Trang chủ', download: 'Tải xuống', breadcrumb: 'Đường dẫn điều hướng', browser: 'Trình duyệt web', capability: 'Tóm tắt tính năng', collection: 'Các định dạng bộ sưu tập khác được hỗ trợ', practical: 'Mẹo tải xuống hữu ích', flow: 'Quy trình tải và lưu', advantages: 'Ưu điểm nền tảng', troubleshooting: 'Khắc phục sự cố theo nền tảng', guidance: 'Hướng dẫn chính', checklist: 'Danh sách kiểm tra', failures: 'Trường hợp lỗi và cách khắc phục' },
         ko: { directory: '인기 동영상 다운로더 목록', guide: '사용 방법', guides: '인기 다운로드 가이드', faq: '다운로드 자주 묻는 질문', discover: '인기 동영상 둘러보기', related: '관련 링크', core: '주요 페이지', similar: '비슷한 다운로드 도구', home: '홈', download: '다운로드', breadcrumb: '이동 경로', browser: '웹 브라우저', capability: '기능 요약', collection: '지원되는 다른 컬렉션 형식', practical: '실용적인 다운로드 팁', flow: '다운로드 및 저장 과정', advantages: '플랫폼별 장점', troubleshooting: '플랫폼별 문제 해결', guidance: '핵심 안내', checklist: '확인 목록', failures: '실패 사례와 해결 방법' },
         id: { directory: 'Direktori pengunduh video populer', guide: 'Cara menggunakan', guides: 'Panduan unduhan populer', faq: 'Tanya jawab unduhan', discover: 'Temukan video populer', related: 'Tautan terkait', core: 'Halaman utama', similar: 'Unduhan serupa', home: 'Beranda', download: 'Unduh', breadcrumb: 'Jejak navigasi', browser: 'Peramban web', capability: 'Ringkasan kemampuan', collection: 'Format koleksi lain yang didukung', practical: 'Tips unduhan praktis', flow: 'Alur unduh dan simpan', advantages: 'Keunggulan platform', troubleshooting: 'Pemecahan masalah per platform', guidance: 'Panduan utama', checklist: 'Daftar pemeriksaan', failures: 'Kasus kegagalan dan solusi' },
@@ -60,18 +61,27 @@
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
-    $: productFaqs = runtimeContent.productFaqs;
-    $: productTips = runtimeContent.productTips;
-    $: productAdvantages = runtimeContent.productAdvantages;
-    $: platformFaqs = runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
+    $: usesFocusedDeContent = data.lang === 'de' && isDePriorityLanding(data.slug);
+    $: productFaqs = usesFocusedDeContent ? [] : runtimeContent.productFaqs;
+    $: productTips = usesFocusedDeContent ? [] : runtimeContent.productTips;
+    $: productAdvantages = usesFocusedDeContent ? [] : runtimeContent.productAdvantages;
+    $: platformFaqs = usesFocusedDeContent
+        ? []
+        : runtimeContent.platformFaqs[platformKey] ?? runtimeContent.platformFaqs.generic;
     $: platformPlaybook =
-        runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
+        usesFocusedDeContent
+            ? { heading: '', notes: [], checklist: [] }
+            : runtimeContent.platformPlaybooks[platformKey] ?? runtimeContent.platformPlaybooks.generic;
     $: platformFailureCases =
-        runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
-    $: landingFaqs = data.slug === 'youtube-download'
+        usesFocusedDeContent
+            ? []
+            : runtimeContent.platformFailureCases[platformKey] ?? runtimeContent.platformFailureCases.generic;
+    $: landingFaqs = usesFocusedDeContent
+        ? localeContent.faqs
+        : data.slug === 'youtube-download'
         ? localeContent.faqs.slice(1)
         : localeContent.faqs;
-    $: freeTools = runtimeContent.freeTools.map((tool) => ({
+    $: freeTools = (usesFocusedDeContent ? [] : runtimeContent.freeTools).map((tool) => ({
         title: tool.title,
         desc: tool.desc,
         href: `/${data.lang}/${tool.path}`,
@@ -256,7 +266,7 @@
                     <svelte:component this={OmniboxComponent} />
                 {:else}
                     <a class="downloader-fallback" href={homeUrl}>
-                        {isJa ? 'ダウンローダーを開く' : isZh ? '打开下载器' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : 'Open downloader'}
+                        {isJa ? 'ダウンローダーを開く' : isZh ? '打开下载器' : isTh ? 'เปิดเครื่องมือดาวน์โหลด' : localCopy?.downloader ?? 'Open downloader'}
                     </a>
                 {/if}
             </div>

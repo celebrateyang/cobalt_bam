@@ -149,6 +149,7 @@
     type PromotionType = "post" | "video";
     type RecordsTab = "promotion" | "feedback";
     type AccountSection = "membership" | "topup" | "referral" | "promotion" | "contact";
+    type MembershipProductTarget = "yearly";
     type PromotionRecord = {
         id: number;
         promotion_type: string;
@@ -180,6 +181,7 @@
     let referralAccordionOpen = false;
     let promotionAccordionOpen = false;
     let requestedAccountSection: AccountSection | null = null;
+    let requestedMembershipProduct: MembershipProductTarget | null = null;
     let lastFocusedSectionKey = "";
     let paymentResumeTimer: ReturnType<typeof setTimeout> | null = null;
     let lastPaymentResumeKey = "";
@@ -256,7 +258,17 @@
         return null;
     };
 
-    const scrollToRequestedAccountSection = async (section: AccountSection) => {
+    const getRequestedMembershipProduct = (): MembershipProductTarget | null => {
+        if (!browser) return null;
+        return new URLSearchParams(window.location.search).get("product") === "yearly"
+            ? "yearly"
+            : null;
+    };
+
+    const scrollToRequestedAccountSection = async (
+        section: AccountSection,
+        product: MembershipProductTarget | null,
+    ) => {
         await tick();
 
         const sectionMap: Record<AccountSection, HTMLElement | null> = {
@@ -267,9 +279,14 @@
             contact: contactSectionEl,
         };
 
-        sectionMap[section]?.scrollIntoView({
+        const target =
+            section === "membership" && product === "yearly"
+                ? document.getElementById("yearly-membership")
+                : sectionMap[section];
+
+        target?.scrollIntoView({
             behavior: "smooth",
-            block: "start",
+            block: product === "yearly" ? "center" : "start",
         });
     };
 
@@ -296,6 +313,7 @@
     let lastRecordsUserId: string | null = null;
 
     $: requestedAccountSection = getRequestedAccountSection();
+    $: requestedMembershipProduct = getRequestedMembershipProduct();
 
     $: if (requestedAccountSection === "contact") {
         contactAccordionOpen = true;
@@ -311,14 +329,19 @@
 
     $: {
         const sectionToFocus = requestedAccountSection;
+        const productToFocus = requestedMembershipProduct;
+        const membershipTargetReady =
+            sectionToFocus !== "membership" ||
+            membershipProducts.length > 0 ||
+            Boolean(membershipProductsErrorKey);
         const focusKey =
-            browser && $clerkUser?.id && sectionToFocus
-                ? `${$clerkUser.id}:${sectionToFocus}`
+            browser && $clerkUser?.id && sectionToFocus && membershipTargetReady
+                ? `${$clerkUser.id}:${sectionToFocus}:${productToFocus || "section"}`
                 : "";
 
         if (sectionToFocus && focusKey && focusKey !== lastFocusedSectionKey) {
             lastFocusedSectionKey = focusKey;
-            void scrollToRequestedAccountSection(sectionToFocus);
+            void scrollToRequestedAccountSection(sectionToFocus, productToFocus);
         }
     }
 
@@ -2741,7 +2764,12 @@
                             {:else}
                                 <div class="products-grid membership-products-grid">
                                     {#each membershipProducts as product (product.key)}
-                                        <div class="product-card membership-product-card">
+                                        {@const isYearlyProduct = product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder"}
+                                        <div
+                                            id={isYearlyProduct ? "yearly-membership" : undefined}
+                                            class="product-card membership-product-card"
+                                            class:requested-product={requestedMembershipProduct === "yearly" && isYearlyProduct}
+                                        >
                                             <div class="product-main">
                                                 <div class="product-left">
                                                     <div class="product-points">
@@ -3811,6 +3839,36 @@
         box-shadow: 0 10px 24px rgba(32, 120, 255, 0.16);
     }
 
+    .product-card.requested-product {
+        position: relative;
+        border-color: var(--blue);
+        box-shadow: 0 10px 24px rgba(32, 120, 255, 0.16);
+        scroll-margin: 24px;
+    }
+
+    .product-card.requested-product::before {
+        content: "\1F449";
+        position: absolute;
+        top: 50%;
+        left: -52px;
+        z-index: 2;
+        font-size: 34px;
+        line-height: 1;
+        filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.18));
+        pointer-events: none;
+        animation: point-at-requested-product 0.9s ease-in-out infinite;
+    }
+
+    @keyframes point-at-requested-product {
+        0%,
+        100% {
+            transform: translate(-5px, -50%);
+        }
+        50% {
+            transform: translate(3px, -50%);
+        }
+    }
+
     .paypal-button-slot {
         width: min(225px, 100%);
         height: 45px;
@@ -4182,6 +4240,27 @@
             grid-template-columns: 1fr;
         }
 
+        .product-card.requested-product {
+            margin-top: 30px;
+        }
+
+        .product-card.requested-product::before {
+            content: "\1F447";
+            top: -42px;
+            left: 18px;
+            animation-name: point-down-at-requested-product;
+        }
+
+        @keyframes point-down-at-requested-product {
+            0%,
+            100% {
+                transform: translateY(-4px);
+            }
+            50% {
+                transform: translateY(3px);
+            }
+        }
+
         .payment-modal {
             padding: 14px;
             width: calc(100% - var(--padding) * 2);
@@ -4199,6 +4278,19 @@
 
         .actions :global(button) {
             flex: 1;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .product-card.requested-product::before {
+            animation: none;
+            transform: translate(-1px, -50%);
+        }
+    }
+
+    @media screen and (max-width: 535px) and (prefers-reduced-motion: reduce) {
+        .product-card.requested-product::before {
+            transform: none;
         }
     }
 </style>

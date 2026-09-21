@@ -17,6 +17,16 @@ const lastModified = {
 const sitemapHubLanguages = ['en', 'zh', 'ja', 'th'];
 const languageHubPages = ['', 'download'];
 const localizedSupportPages = ['guide', 'faq'];
+const priorityDeLandingLastModified = new Set([
+    'youtube-download',
+    'youtube-shorts-download',
+    'youtube-playlist-downloader',
+    'tiktok-no-watermark',
+    'tiktok-collection-download',
+    'tiktok-mp3-download',
+    'instagram-video-download',
+    'instagram-reels-download',
+]);
 
 const escapeXml = (value: string): string =>
     value
@@ -122,7 +132,13 @@ function generateSitemap(): string {
             urls.push(
                 urlEntry(
                     `${site}${path}`,
-                    slug === 'xinpianchang-video-download' ? '2026-09-19' : slug === 'youtube-download' && lang === 'id' ? '2026-09-06' : undefined,
+                    slug === 'xinpianchang-video-download'
+                        ? '2026-09-19'
+                        : lang === 'de' && priorityDeLandingLastModified.has(slug)
+                          ? '2026-09-21'
+                          : slug === 'youtube-download' && lang === 'id'
+                            ? '2026-09-06'
+                            : undefined,
                     'weekly',
                     '0.9',
                     buildAlternateLinks(path, availableLanguages),

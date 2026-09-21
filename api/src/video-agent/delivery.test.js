@@ -16,6 +16,16 @@ test("clip-relative subtitles preserve text and source boundaries with at most t
     assert.ok(split.every((cue,i)=>cue.text.split("\n").length<=2 && cue.timingQuality==="estimated" && (!i || cue.startMs===split[i-1].endMs)));
     value.cues[0].endMs=15100;assert.throws(()=>buildSourceClipCues(value,clip,"bilingual"),{code:"VIDEO_AGENT_SUBTITLE_UNREADABLE"});
 });
+test("an isolated ASR micro-cue is merged with its neighbor",()=>{
+    const cues=[
+        {id:"tiny",sourceText:"Brief.",translatedText:"短。",startMs:1000,endMs:1061,timingQuality:"estimated"},
+        {id:"next",sourceText:"A readable sentence.",translatedText:"一条可读的字幕。",startMs:1061,endMs:4000,timingQuality:"estimated"}
+    ],clip={startMs:1000,cueIds:cues.map(cue=>cue.id)};
+    const built=buildSourceClipCues({cues},clip,"bilingual");
+    assert.equal(built.length,1);assert.equal(built[0].startMs,0);assert.equal(built[0].endMs,3000);
+    assert.match(built[0].text,/Brief\./);assert.match(built[0].text,/A readable sentence\./);assert.match(built[0].text,/短。/);assert.match(built[0].text,/一条可读的字幕。/);
+    assert.equal(built[0].timingQuality,"estimated");
+});
 test("result edits change exported subtitles and keep clip boundaries on source cues",async()=>{
     const workDir=await mkdtemp(path.join(os.tmpdir(),"agent-edit-subtitles-"));
     try{

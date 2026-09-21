@@ -198,7 +198,7 @@
         {/if}
     {:else}<p class="muted">{$t("video-agent.runs_empty")}</p>{/if}
 
-    <details class="utility-panel plan-panel" open={!!planId && !run}>
+    {#if !activeRun}<details class="utility-panel plan-panel" open={!!planId && !run}>
         <summary>{$t("video-agent.plan")}</summary>
         <div class="utility-content">
             <p class="muted">{$t("video-agent.plan_controls_hint")}</p>
@@ -234,7 +234,7 @@
             {#if !capabilities?.executionEnabled}<p class="muted">{$t("video-agent.pipeline_pending")}</p>{/if}
             <p class="muted">{$t("video-agent.charge_policy")}</p>
         </div>
-    </details>
+    </details>{/if}
 
     {#if editable && editable.clips.length}
         <details class="utility-panel editor">

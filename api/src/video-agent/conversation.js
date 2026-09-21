@@ -16,6 +16,9 @@ export const saveUserMessage=input=>transaction(async client=>{
     const project=await ownedProject(client,{...input,lock:true});
     const existing=(await client.query("SELECT * FROM video_agent_messages WHERE project_id=$1 AND user_id=$2 AND client_message_id=$3",[project.id,input.userId,input.clientMessageId])).rows[0];
     if(existing){if(existing.content!==content || existing.role!=="user")throw agentError("VIDEO_AGENT_MESSAGE_CONFLICT",409,"Message id has different content");return {message:messageDTO(existing),created:false};}
+    const active=await client.query(`SELECT 1 FROM video_agent_runs WHERE project_id=$1
+        AND status IN ('queued','planning','awaiting_input','running','cancelling') LIMIT 1`,[project.id]);
+    if(active.rowCount)throw agentError("VIDEO_AGENT_PROJECT_RUN_ACTIVE",409,"Requirements cannot be changed while the task is running");
     const now=Date.now();
     await client.query("SELECT pg_advisory_xact_lock(2147482998,$1)",[input.userId]);
     const recent=(await client.query("SELECT count(*)::int AS count,min(created_at) AS oldest FROM video_agent_messages WHERE user_id=$1 AND role='user' AND created_at>=$2",[input.userId,now-60000])).rows[0];

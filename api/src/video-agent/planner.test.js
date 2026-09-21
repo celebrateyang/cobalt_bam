@@ -69,12 +69,11 @@ test("natural-language planner repairs output, creates one plan, persists replie
     const acquire=async()=>{let release;const next=new Promise(resolve=>{release=resolve;});const previous=tail;tail=next;await previous;return release;};
     setVideoAgentDatabaseForTests({query:async(...args)=>{const release=await acquire();try{return await sql(...args);}finally{release();}},getClient:async()=>{const release=await acquire();return {query:sql,release};}});
     await pg.exec("CREATE TABLE users(id INTEGER PRIMARY KEY,is_disabled BOOLEAN DEFAULT false);INSERT INTO users(id) VALUES(1),(2);");await ensureVideoAgentSchema();
-    let suggestions=[],calls=0,lastContext,dropReceipt=false,dropStartReceipt=false,attempts=[];
+    let suggestions=[],calls=0,lastContext,dropReceipt=false,attempts=[];
     const adapter={suggest:async({context,repair,attempt})=>{lastContext=context;attempts.push(attempt);const value=suggestions[Math.min(calls,suggestions.length-1)];calls++;return {value,requestId:repair?"repair-request":"initial-request",model:"fake-planner"};}};
     const planning=input=>planMessage(input,{adapter,command:async commandInput=>{
         const receipt=await submitCommand({...commandInput,admissionPolicy:{metadataOnly:true}});
         if(dropReceipt){dropReceipt=false;throw agentError("VIDEO_AGENT_PLANNER_CONNECTION_FAILED",503,"Simulated lost command receipt");}
-        if(dropStartReceipt && commandInput.body.type==="start_run"){dropStartReceipt=false;throw agentError("VIDEO_AGENT_PLANNER_CONNECTION_FAILED",503,"Simulated lost start receipt");}
         return receipt;
     }});
     const app=express();app.use(express.json());app.use(createVideoAgentRouter({operations:{planMessage:planning},authenticate:async req=>req.header("x-user")?{id:Number(req.header("x-user"))}:null}));
@@ -119,22 +118,12 @@ test("natural-language planner repairs output, creates one plan, persists replie
     const recovered=await request(`/projects/${missingProject.id}/messages/${lostMessage.id}/plan`,{method:"POST",body:{}});
     assert.equal(recovered.status,200);assert.equal(calls,1);assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_plans WHERE project_id=$1",[missingProject.id])).rows[0].n,1);
 
-    const blockedMessage=await save(missingProject,"Start three Spanish clips now.");suggestions=[ready({executionIntent:"execute"})];calls=0;
-    const blocked=await request(`/projects/${missingProject.id}/messages/${blockedMessage.id}/plan`,{method:"POST",body:{}});
-    assert.equal(blocked.status,200);assert.equal(blocked.payload.data.outcome.execution.status,"blocked");
-    assert.equal(blocked.payload.data.outcome.execution.errorCode,"VIDEO_AGENT_RUNS_NOT_ENABLED");
+    const explicitStartMessage=await save(missingProject,"Start three Spanish clips now.");suggestions=[ready()];calls=0;
+    const explicitStart=await request(`/projects/${missingProject.id}/messages/${explicitStartMessage.id}/plan`,{method:"POST",body:{}});
+    assert.equal(explicitStart.status,200);assert.ok(explicitStart.payload.data.outcome.planId);
+    assert.equal(explicitStart.payload.data.outcome.execution,undefined);
     assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_runs WHERE project_id=$1",[missingProject.id])).rows[0].n,0);
-
-    process.env.VIDEO_AGENT_RUNS_ENABLED="1";
-    const autoMessage=await save(missingProject,"Start three Spanish clips now.");suggestions=[ready({executionIntent:"execute"})];calls=0;dropStartReceipt=true;
-    assert.equal((await request(`/projects/${missingProject.id}/messages/${autoMessage.id}/plan`,{method:"POST",body:{}})).status,503);
-    const started=await request(`/projects/${missingProject.id}/messages/${autoMessage.id}/plan`,{method:"POST",body:{}});
-    assert.equal(started.status,200);assert.equal(started.payload.data.outcome.execution.status,"started");assert.ok(started.payload.data.outcome.execution.runId);
-    assert.deepEqual(started.payload.data.outcome.execution.tools.map(item=>item.tool),["get_project_context","start_run","get_run_status"]);
-    assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_runs WHERE project_id=$1",[missingProject.id])).rows[0].n,1);
-    assert.equal((await request(`/projects/${missingProject.id}/messages/${autoMessage.id}/plan`,{method:"POST",body:{}})).payload.data.outcome.execution.runId,started.payload.data.outcome.execution.runId);
-    const autoFeed=(await request(`/projects/${missingProject.id}/messages`)).payload.data.messages;
-    assert.equal(autoFeed.at(-1).outcome.execution.runId,started.payload.data.outcome.execution.runId);
+    assert.throws(()=>validateCandidate(ready({executionIntent:"execute"}),[{id:missingSourceId}],"Start now"),{code:"VIDEO_AGENT_PLANNER_FORMAT_INVALID"});
 
     const pendingProject=await createProject("Pending source");
     let pendingMessage=await save(pendingProject,"Download https://example.com/watch and make three Spanish clips.");
@@ -147,15 +136,15 @@ test("natural-language planner repairs output, creates one plan, persists replie
         [pendingSourceId,pendingProject.id,`planner/${pendingSourceId}`,pendingMessage.id,now+86400000,now]);
         return {id:pendingSourceId,status:"queued_ingest"};
     },command:commandInput=>submitCommand({...commandInput,admissionPolicy:{metadataOnly:true}})});
-    suggestions=[ready({executionIntent:"execute"})];calls=0;
+    suggestions=[ready()];calls=0;
     const waiting=await pendingPlanning({projectId:pendingProject.id,userId:1,messageId:pendingMessage.id});
     assert.equal(waiting.message.status,"awaiting_source");assert.equal(waiting.outcome.pendingSourceId,pendingSourceId);assert.equal(calls,0);
     await assert.rejects(pendingPlanning({projectId:pendingProject.id,userId:1,messageId:pendingMessage.id}),{code:"VIDEO_AGENT_SOURCE_PENDING"});
     await pg.query("UPDATE video_agent_sources SET status='ready',probe=$2,generation='1',checksum=$3 WHERE id=$1",[pendingSourceId,{durationMs:120000,durationSeconds:120,width:320,height:180},"d".repeat(64)]);
     assert.equal(await resumePendingSourcePlans({plan:pendingPlanning}),1);
     const resumed=(await request(`/projects/${pendingProject.id}/messages`)).payload.data.messages;
-    assert.equal(resumed[0].status,"completed");assert.equal(resumed[1].outcome.execution.status,"started");assert.equal(calls,1);
-    assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_runs WHERE project_id=$1",[pendingProject.id])).rows[0].n,1);
+    assert.equal(resumed[0].status,"completed");assert.ok(resumed[1].outcome.planId);assert.equal(resumed[1].outcome.execution,null);assert.equal(calls,1);
+    assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_runs WHERE project_id=$1",[pendingProject.id])).rows[0].n,0);
     assert.equal(await resumePendingSourcePlans({plan:pendingPlanning}),0);
     pendingMessage=await save(pendingProject,"Download https://example.com/another and make Spanish clips.");
     const failedSourceId=randomUUID();pendingSourceId=failedSourceId;

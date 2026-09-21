@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {randomUUID} from "node:crypto";
 import express from "express";
 import {PGlite} from "@electric-sql/pglite";
 import {ensureVideoAgentSchema,setVideoAgentDatabaseForTests} from "../db/video-agent.js";
@@ -30,5 +31,15 @@ test("conversation messages are owned, idempotent, paginated, bounded and retain
     const older=await request(`${prefix}?limit=2&cursor=${encodeURIComponent(latest.payload.data.nextCursor)}`);assert.deepEqual(older.payload.data.messages.map(item=>item.content),["Message 1","Message 2"]);
     for(let i=5;i<20;i++)await request(prefix,{method:"POST",body:{clientMessageId:`rate_message_${String(i).padStart(16,"0")}`,content:`Rate ${i}`}});
     assert.equal((await request(prefix,{method:"POST",body:{clientMessageId:"rate_message_blocked_0001",content:"Too many"}})).payload.error.code,"VIDEO_AGENT_MESSAGE_RATE_LIMIT");
+    const activeProject=(await request("/projects",{method:"POST",body:{title:"Active run"}})).payload.data.project;
+    const planId=randomUUID(),runId=randomUUID(),now=Date.now();
+    await pg.query(`INSERT INTO video_agent_revisions(project_id,revision,settings_snapshot,created_by,created_at)
+        VALUES($1,0,'{}',1,$2)`,[activeProject.id,now]);
+    await pg.query(`INSERT INTO video_agent_plans(id,project_id,revision,plan,plan_hash,source_snapshot,pipeline_version,created_at)
+        VALUES($1,$2,0,'{}','test','{}','test',$3)`,[planId,activeProject.id,now]);
+    await pg.query(`INSERT INTO video_agent_runs(id,project_id,base_revision,plan_id,plan,plan_hash,source_snapshot,pipeline_version,status,requested_count,created_at,updated_at)
+        VALUES($1,$2,0,$3,'{}','test','{}','test','running',1,$4,$4)`,[runId,activeProject.id,planId,now]);
+    const locked=await request(`/projects/${activeProject.id}/messages`,{method:"POST",body:{clientMessageId:"message_while_running_001",content:"Change it."}});
+    assert.equal(locked.status,409);assert.equal(locked.payload.error.code,"VIDEO_AGENT_PROJECT_RUN_ACTIVE");
     assert.equal((await request(`/projects/${project.id}`,{method:"DELETE"})).status,204);await cleanupExecutionHistory();assert.equal((await pg.query("SELECT count(*)::int AS n FROM video_agent_messages WHERE project_id=$1",[project.id])).rows[0].n,0);
 });

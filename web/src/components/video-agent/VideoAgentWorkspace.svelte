@@ -41,8 +41,11 @@
     const exampleKeys = ["clips_example", "translation_example", "dubbing_example"];
     const journeyKeys = ["step_choose_video", "request_label", "plan", "run_running", "results"];
     let executionState:{hasPlan:boolean;runStatus:string|null;resultCount:number}={hasPlan:false,runStatus:null,resultCount:0};
+    const activeRunStates=["queued","planning","awaiting_input","running","cancelling"];
     $: readySourceCount=sources.filter(source=>source.status==="ready" && source.retentionUntil>Date.now()).length;
     $: waitingForSource=messages.some(message=>message.role==="user" && message.status==="awaiting_source");
+    $: runLocked=!!executionState.runStatus && activeRunStates.includes(executionState.runStatus);
+    $: if(mounted && runLocked && activePanel!=="results")activePanel="results";
     $: sourceError=["file_too_large","resume_original","storage_limit","upload_expired"].includes(errorKey);
     $: currentStep=executionState.runStatus && ["completed","partially_completed"].includes(executionState.runStatus) ? 5
         : executionState.runStatus ? 4 : executionState.hasPlan ? 3 : readySourceCount || messages.length ? 2 : 1;
@@ -118,8 +121,8 @@
             if(result.outcome.execution?.status==="started")activePanel="results";
         }catch(error){if(project.id===selectedProject?.id){messages=messages.map(item=>item.id===message.id?{...item,status:"failed"}:item);reportError(error);}}
         finally{if(planningMessageId===message.id)planningMessageId="";}};
-    const retryPlanner=async(message:AgentMessage)=>{if(!selectedProject || messageBusy || planningMessageId)return;messageBusy=true;errorKey="";try{await runPlanner(selectedProject,message);}finally{messageBusy=false;}};
-    const sendMessage=async()=>{const content=request.trim();if(!selectedProject || !content || messageBusy || planningMessageId)return;messageBusy=true;errorKey="";const project=selectedProject;
+    const retryPlanner=async(message:AgentMessage)=>{if(!selectedProject || messageBusy || planningMessageId || runLocked)return;messageBusy=true;errorKey="";try{await runPlanner(selectedProject,message);}finally{messageBusy=false;}};
+    const sendMessage=async()=>{const content=request.trim();if(!selectedProject || !content || messageBusy || planningMessageId || runLocked)return;messageBusy=true;errorKey="";const project=selectedProject;
         try{const result=await saveAgentMessage(project.id,content,crypto.randomUUID());if(!messages.some(item=>item.id===result.message.id))messages=[...messages,result.message];request="";await runPlanner(project,result.message);}catch(error){reportError(error);}finally{messageBusy=false;}};
     const create = async () => {
         busy = true; errorKey = "";
@@ -284,6 +287,8 @@
 
         <section id="agent-conversation" class="card conversation" class:mobile-hidden={activePanel !== "conversation"} aria-labelledby="agent-conversation-title">
             <div class="panel-heading"><h2 id="agent-conversation-title"><IconMessageCircle size={20} aria-hidden="true" />{$t("video-agent.conversation")}</h2></div>
+            {#if runLocked}<div class="run-locked" role="status"><strong>{$t(`video-agent.run_${executionState.runStatus}`)}</strong></div>
+            {:else}
             {#if messageCursor}<button class="secondary older" disabled={messageBusy} on:click={olderMessages}>{$t("video-agent.load_older")}</button>{/if}
             {#if messages.length}<div class="message-list" aria-live="polite">{#each messages as message (message.id)}<article class="message" class:assistant={message.role==="assistant"}><p>{message.content}</p><small>{new Date(message.createdAt).toLocaleString()} · {$t(message.status==="processing"?"video-agent.loading":message.status==="failed"?"video-agent.request_failed":"video-agent.message_saved")}</small>{#if message.role==="assistant" && message.outcome?.execution?.status==="started"}<small role="status">{$t("video-agent.run_queued")} · {message.outcome.execution.runId}</small>{/if}{#if message.role==="assistant" && message.outcome?.execution?.status==="blocked"}<small class="error" role="alert">{$t("video-agent.request_failed")} ({message.outcome.execution.errorCode})</small>{/if}{#if message.role==="user" && message.status==="failed"}<button class="message-retry" disabled={messageBusy || !!planningMessageId} on:click={()=>retryPlanner(message)}>{$t("video-agent.replay_command")}</button>{/if}</article>{/each}</div>{/if}
             {#if messages.some(message => message.status === "awaiting_source")}<p class="muted" role="status">{$t("video-agent.status_queued_ingest")}</p>{/if}
@@ -329,6 +334,7 @@
                 </div>
 
             </div>
+            {/if}
         </section>
 
         <section id="agent-results" class="card result-panel" class:mobile-hidden={activePanel !== "results"} aria-labelledby="agent-results-title">
@@ -406,6 +412,7 @@
      .request-step { margin-top: 24px; }
     .conversation { display:flex;flex-direction:column; }
     .conversation > .panel-heading { order:0; }
+    .run-locked { min-height: 180px; display: grid; place-items: center; color: var(--subtext); }
     .composer { order:1;border-top:0;padding-top:0; }
     .older { order:2; }
      .message-list { order:3; }

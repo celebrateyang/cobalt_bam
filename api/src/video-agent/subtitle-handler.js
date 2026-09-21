@@ -15,10 +15,16 @@ export const buildSourceClipCues=(value,clip,mode)=>{
         }
         if(line.trim())lines.push(line.trim());return lines.join("\n");
     };
-    return clip.cueIds.flatMap(id=>{const cue=byId.get(id),source=wrap(cue.sourceText).split("\n"),translated=wrap(cue.translatedText).split("\n"),perLanguage=mode==="bilingual"?1:2,count=Math.max(1,Math.ceil(translated.length/perLanguage),mode==="bilingual"?source.length:1);
-        if(count>Math.floor((cue.endMs-cue.startMs)/200))throw agentError("VIDEO_AGENT_SUBTITLE_UNREADABLE",422,"Translation exceeds readable subtitle budget");
+    const describe=cues=>{const source=wrap(cues.map(cue=>cue.sourceText).join(" ")).split("\n"),translated=wrap(cues.map(cue=>cue.translatedText).join(" ")).split("\n"),perLanguage=mode==="bilingual"?1:2;
+        return {source,translated,count:Math.max(1,Math.ceil(translated.length/perLanguage),mode==="bilingual"?source.length:1),startMs:cues[0].startMs,endMs:cues.at(-1).endMs};};
+    const groups=[];let pending=[];
+    for(const id of clip.cueIds){pending.push(byId.get(id));const block=describe(pending);if(block.count<=Math.floor((block.endMs-block.startMs)/200)){groups.push(pending);pending=[];}}
+    if(pending.length){if(groups.length)groups.at(-1).push(...pending);else groups.push(pending);}
+    return groups.flatMap(cues=>{const block=describe(cues),source=block.source,translated=block.translated,count=block.count;
+        if(count>Math.floor((block.endMs-block.startMs)/200))throw agentError("VIDEO_AGENT_SUBTITLE_UNREADABLE",422,"Translation exceeds readable subtitle budget");
         const partition=(lines,index)=>lines.slice(Math.floor(index*lines.length/count),Math.floor((index+1)*lines.length/count)).join("\n");
-        return Array.from({length:count},(_,index)=>({id:count===1?id:`${id}_part${index}`,startMs:cue.startMs-clip.startMs+Math.round((cue.endMs-cue.startMs)*index/count),endMs:cue.startMs-clip.startMs+Math.round((cue.endMs-cue.startMs)*(index+1)/count),text:mode==="bilingual"?[partition(source,index),partition(translated,index)].filter(Boolean).join("\n"):partition(translated,index),timingQuality:count>1?"estimated":cue.timingQuality})).filter(cue=>cue.text);
+        const id=cues.length===1?cues[0].id:`${cues[0].id}_merged_${cues.at(-1).id}`,duration=block.endMs-block.startMs;
+        return Array.from({length:count},(_,index)=>({id:count===1?id:`${id}_part${index}`,startMs:block.startMs-clip.startMs+Math.round(duration*index/count),endMs:block.startMs-clip.startMs+Math.round(duration*(index+1)/count),text:mode==="bilingual"?[partition(source,index),partition(translated,index)].filter(Boolean).join("\n"):partition(translated,index),timingQuality:count>1 || cues.length>1?"estimated":cues[0].timingQuality})).filter(cue=>cue.text);
     });
 };
 export const applyResultEdits=(value,edits)=>{

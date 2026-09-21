@@ -26,7 +26,7 @@ const validateCandidate=(value,sources,requestText="")=>{
         || typeof value.sourceExplicit!=="boolean" || !["auto",...languageCodes].includes(value.sourceLanguage) || (value.targetLanguage!==null && !languageCodes.has(value.targetLanguage))
         || typeof value.targetLanguageExplicit!=="boolean" || !Number.isInteger(value.requestedCount) || value.requestedCount<1 || value.requestedCount>5
         || !Number.isInteger(value.minSeconds) || !Number.isInteger(value.maxSeconds) || value.minSeconds<15 || value.maxSeconds>90 || value.maxSeconds<value.minSeconds
-        || !["translated","bilingual"].includes(value.subtitleMode) || !["plan_only","execute"].includes(value.executionIntent)
+        || !["translated","bilingual"].includes(value.subtitleMode) || value.executionIntent!=="plan_only"
         || !Array.isArray(value.missing) || value.missing.some(item=>!["source","target_language"].includes(item)) || new Set(value.missing).size!==value.missing.length
         || !Array.isArray(value.unsupportedCapabilities) || value.unsupportedCapabilities.some(item=>item!=="dubbing") || value.unsupportedCapabilities.length>1
         || (value.dubbingRequested!==undefined && typeof value.dubbingRequested!=="boolean"))throw agentError("VIDEO_AGENT_PLANNER_FORMAT_INVALID",422,"Planner values are invalid");
@@ -64,6 +64,9 @@ const claimMessage=input=>transaction(async client=>{
         const assistant=(await client.query("SELECT * FROM video_agent_messages WHERE project_id=$1 AND user_id=$2 AND client_message_id=$3",[project.id,input.userId,assistantClientId(row.id)])).rows[0];
         return {replayed:true,message:messageDTO(row),assistantMessage:assistant?messageDTO(assistant):null,outcome:row.planner_output};
     }
+    const active=await client.query(`SELECT 1 FROM video_agent_runs WHERE project_id=$1
+        AND status IN ('queued','planning','awaiting_input','running','cancelling') LIMIT 1`,[project.id]);
+    if(active.rowCount)throw agentError("VIDEO_AGENT_PROJECT_RUN_ACTIVE",409,"Requirements cannot be changed while the task is running");
     let linked=(await client.query("SELECT id,filename,probe,status,retention_until FROM video_agent_sources WHERE project_id=$1 AND origin_message_id=$2",[project.id,row.id])).rows[0];
     if(row.status==="awaiting_source" && (!linked || linked.status!=="ready")){
         if(terminalSourceStatuses.has(linked?.status))throw agentError("VIDEO_AGENT_SOURCE_INGEST_FAILED",409,"Video source ingestion failed");
@@ -211,18 +214,6 @@ export const planMessage=async(input,{adapter=plannerAdapter,edit=editAdapter,co
             const receipt=await command({projectId:input.projectId,userId:input.userId,body:{type:"create_plan",expectedRevision:outcome.expectedRevision,
                 idempotencyKey:`planner_${input.messageId.replaceAll("-","")}`,input:validated.plan}});
             outcome={...outcome,planId:receipt.planId,revision:receipt.revision,plan:validated.plan};delete outcome.expectedRevision;
-            if(outcome.executionIntent==="execute"){
-                try{
-                    const execution=await executeTools({projectId:input.projectId,userId:input.userId,messageId:input.messageId,plan:validated.plan,
-                        planId:receipt.planId,revision:receipt.revision,command});
-                    outcome={...outcome,execution:{status:"started",runId:execution.runId,runStatus:execution.runStatus,
-                        admissionStatus:execution.admissionStatus,tools:execution.calls}};
-                }catch(error){
-                    const expected=error.status>=400 && error.status<500 || ["VIDEO_AGENT_RUNS_NOT_ENABLED","VIDEO_AGENT_ADMISSION_NOT_ENABLED","VIDEO_AGENT_PIPELINE_NOT_READY"].includes(error.code);
-                    if(!expected)throw error;
-                    outcome={...outcome,execution:{status:"blocked",errorCode:error.code || "VIDEO_AGENT_EXECUTION_BLOCKED"}};
-                }
-            }
         }
         return {...await completeMessage({...input,token:claim.token,outcome,requestId,model}),replayed:false};
     }catch(error){await failMessage({...input,token:claim.token,error}).catch(()=>{});throw error;}

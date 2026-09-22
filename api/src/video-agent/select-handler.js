@@ -26,7 +26,13 @@ export const createSelectHandler=({provider=selectionAdapter}={})=>async({claim,
         else for(let attempt=0;attempt<2;attempt++){
             if(!saved.rawRefs[attempt]){const response=await provider.suggest({window,limits,config,signal,repair:attempt>0});signal.throwIfAborted();const raw=await artifact({configHash,ordinal:window.ordinal,response});saved.rawRefs[attempt]=raw.id;await persist([raw]);}
             const raw=await readArtifact(saved.rawRefs[attempt]);if(raw.configHash!==configHash || raw.ordinal!==window.ordinal)throw agentError("VIDEO_AGENT_SELECTION_CHECKPOINT_INVALID",409,"Invalid raw selection artifact");
-            try{batch=validateCandidates(parseSelectionResponse(raw.response.raw),window,transcript.cues,limits);}catch(error){if(error.code==="VIDEO_AGENT_SELECTION_FORMAT_INVALID" && attempt===0)continue;throw error;}
+            try{batch=validateCandidates(parseSelectionResponse(raw.response.raw),window,transcript.cues,limits);}catch(error){
+                if(["VIDEO_AGENT_SELECTION_FORMAT_INVALID","VIDEO_AGENT_SELECTION_INCOMPLETE"].includes(error.code) && attempt===0)continue;
+                if(error.code==="VIDEO_AGENT_SELECTION_INCOMPLETE"){
+                    console.warn(`[VIDEO AGENT SELECTION] ${JSON.stringify({runId:claim.run.id,stepId:claim.step.id,windowOrdinal:window.ordinal,event:"window.skipped",reason:error.context?.reason || "incomplete"})}`);
+                    batch={clips:[],rejected:[{code:"model_incomplete",windowOrdinal:window.ordinal,reason:error.context?.reason || null}]};
+                }else throw error;
+            }
             const output=await artifact({configHash,ordinal:window.ordinal,batch});saved.validatedRef=output.id;await persist([output]);break;
         }
         batches.push(batch);

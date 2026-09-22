@@ -1,4 +1,7 @@
+import { parseSafeGenericURL } from "../generic/url-safety.js";
+
 const PLAYER_API = "https://mesh.if.iqiyi.com/player/lw/lwplay/accelerator.js";
+const VIDEO_RESOLVER = "https://data.video.iqiyi.com/videos";
 const TVID_MASK = 0x75706971676cn;
 
 const browserHeaders = (pageUrl) => ({
@@ -89,6 +92,63 @@ export const buildIqiyiDirectUrl = (manifest, expectedDuration) => {
     return first.toString();
 };
 
+export const getIqiyiFragmentPaths = (video) => {
+    if (!Array.isArray(video?.fs) || video.fs.length === 0 || video.fs.length > 500) {
+        return null;
+    }
+
+    const fragments = video.fs.map((fragment) => ({
+        path: typeof fragment?.l === "string" ? fragment.l : "",
+        duration: Number(fragment?.d),
+    }));
+    if (fragments.some(({ path, duration }) => (
+        !/^\/v[0-9]+\/[A-Za-z0-9/_-]+\.(?:f4v|flv)(?:\?[^\r\n]*)?$/i.test(path) ||
+        !Number.isFinite(duration) ||
+        duration <= 0
+    ))) return null;
+
+    const fragmentDuration = fragments.reduce((total, fragment) => total + fragment.duration, 0) / 1000;
+    if (
+        Number(video.duration) > 0 &&
+        Math.abs(fragmentDuration - Number(video.duration)) > 8
+    ) return null;
+
+    return fragments.map(({ path }) => path);
+};
+
+const isSafeResolvedFragment = (value, expectedPath) => {
+    try {
+        const parsed = parseSafeGenericURL(value);
+        if (!parsed) return false;
+        return parsed.protocol === "https:" &&
+            !parsed.username &&
+            !parsed.password &&
+            !parsed.port &&
+            !/[\r\n']/.test(parsed.toString()) &&
+            parsed.pathname === `/videos${new URL(expectedPath, VIDEO_RESOLVER).pathname}`;
+    } catch {
+        return false;
+    }
+};
+
+export const resolveIqiyiFragments = async (paths, pageUrl, fetchImpl = fetch) => {
+    if (!Array.isArray(paths) || paths.length === 0) return null;
+
+    const urls = [];
+    for (const path of paths) {
+        const response = await fetchImpl(`${VIDEO_RESOLVER}${path}`, {
+            headers: browserHeaders(pageUrl),
+            signal: AbortSignal.timeout(15000),
+        });
+        if (!response.ok) return null;
+
+        const resolved = await response.json();
+        if (!isSafeResolvedFragment(resolved?.l, path)) return null;
+        urls.push(new URL(resolved.l).toString());
+    }
+    return urls;
+};
+
 const qualityHeight = new Map([
     [200, 360],
     [300, 540],
@@ -112,15 +172,18 @@ export const selectIqiyiVideo = ({ playerData, tvid, quality }) => {
     const candidates = playerData.data.program.video
         .filter((video) => (
             typeof video?.vid === "string" &&
-            typeof video?.m3u8 === "string" &&
-            video.m3u8.length > 0 &&
+            (
+                (typeof video?.m3u8 === "string" && video.m3u8.length > 0) ||
+                Array.isArray(video?.fs)
+            ) &&
             Number(video?.isPreview || 0) === 0
         ))
         .map((video) => ({
             video,
             directUrl: buildIqiyiDirectUrl(video.m3u8, video.duration),
+            fragmentPaths: getIqiyiFragmentPaths(video),
         }))
-        .filter((candidate) => candidate.directUrl)
+        .filter((candidate) => candidate.directUrl || candidate.fragmentPaths)
         .sort((a, b) => qualityDistance(a.video, quality) - qualityDistance(b.video, quality));
 
     return candidates[0] || null;
@@ -190,11 +253,13 @@ export default async function({ pageId, tvid: suppliedTvid, shortLink, quality, 
         const selected = selectIqiyiVideo({ playerData, tvid, quality });
         if (!selected) return { error: "fetch.empty" };
 
-        const { video, directUrl } = selected;
+        const { video, directUrl, fragmentPaths } = selected;
+        const urls = directUrl || await resolveIqiyiFragments(fragmentPaths, url, fetchImpl);
+        if (!urls) return { error: "fetch.empty" };
         const height = qualityHeight.get(Number(video.bid));
         return {
             service: "iqiyi",
-            urls: directUrl,
+            urls,
             duration: Number(video.duration) || undefined,
             filenameAttributes: {
                 service: "iqiyi",

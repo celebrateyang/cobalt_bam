@@ -266,6 +266,7 @@ const remux = async (streamInfo, res) => {
 
     let inputStream;
     let args;
+    let inputCount = urls.length;
 
     if (streamInfo.service === 'iqiyi' && urls.length === 1) {
         // The Linux ffmpeg-static build can segfault while reading this CDN over
@@ -294,12 +295,25 @@ const remux = async (streamInfo, res) => {
 
         inputStream = Readable.fromWeb(sourceResponse.body);
         args = ['-f', 'mpegts', '-i', 'pipe:0'];
+    } else if (streamInfo.service === 'iqiyi' && urls.length > 1) {
+        // Older UGC entries expose multiple standalone F4V fragments instead
+        // of the progressive MPEG-TS object used by current videos.
+        inputStream = Readable.from([
+            urls.map(url => `file '${url}'`).join('\n'),
+        ]);
+        args = [
+            '-protocol_whitelist', 'file,http,https,tcp,tls,crypto,pipe',
+            '-f', 'concat',
+            '-safe', '0',
+            '-i', 'pipe:0',
+        ];
+        inputCount = 1;
     } else {
         args = urls.flatMap(url => buildInputArgs(url, streamInfo));
     }
 
     // if the stream type is merge, we expect two URLs
-    if (streamInfo.type === 'merge' && urls.length !== 2) {
+    if (streamInfo.type === 'merge' && inputCount !== 2) {
         console.log('[ffmpeg.remux] ERROR: merge type requires exactly 2 URLs');
         return closeResponse(res);
     }
@@ -307,12 +321,12 @@ const remux = async (streamInfo, res) => {
     if (streamInfo.subtitles) {
         args.push(
             '-i', streamInfo.subtitles,
-            '-map', `${urls.length}:s`,
+            '-map', `${inputCount}:s`,
             '-c:s', format === 'mp4' ? 'mov_text' : 'webvtt',
         );
     }
 
-    if (urls.length === 2) {
+    if (inputCount === 2) {
         args.push(
             '-map', '0:v',
             '-map', '1:a',

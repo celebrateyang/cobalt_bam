@@ -5,6 +5,8 @@ import iqiyi, {
     buildIqiyiDirectUrl,
     decodeIqiyiPlayerData,
     decodeIqiyiTvid,
+    getIqiyiFragmentPaths,
+    resolveIqiyiFragments,
     selectIqiyiVideo,
     resolveIqiyiShortLink,
 } from "./iqiyi.js";
@@ -69,6 +71,31 @@ test("rejects mixed-CDN manifests and duration mismatches", () => {
         null,
     );
     assert.equal(buildIqiyiDirectUrl(manifest, 60), null);
+});
+
+test("validates and resolves legacy iQIYI F4V fragments", async () => {
+    const files = [
+        { d: 3000, l: "/v0/20180601/aa/bb/first.f4v?qd_sc=one" },
+        { d: 3000, l: "/v0/20180601/aa/bb/second.f4v?qd_sc=two" },
+    ];
+    const paths = getIqiyiFragmentPaths({ duration: 6, fs: files });
+    assert.deepEqual(paths, files.map((file) => file.l));
+    assert.equal(getIqiyiFragmentPaths({ duration: 60, fs: files }), null);
+    assert.equal(getIqiyiFragmentPaths({ duration: 6, fs: [{ d: 6000, l: "https://evil.example/a.f4v" }] }), null);
+
+    const seen = [];
+    const urls = await resolveIqiyiFragments(paths, "https://www.iqiyi.com/v_example.html", async (target) => {
+        seen.push(target);
+        const path = new URL(target).pathname.replace(/^\/videos/, "");
+        return new Response(JSON.stringify({
+            l: `https://cdn.example.com/videos${path}?signed=yes`,
+        }), { status: 200 });
+    });
+    assert.equal(seen.length, 2);
+    assert.deepEqual(urls.map((value) => new URL(value).pathname), [
+        "/videos/v0/20180601/aa/bb/first.f4v",
+        "/videos/v0/20180601/aa/bb/second.f4v",
+    ]);
 });
 
 test("selects only the target non-preview program video", () => {
@@ -147,4 +174,43 @@ test("returns the complete main-program TS as the server remux source", async ()
         });
         assert.equal(shared.urls, result.urls);
     }
+});
+
+test("returns resolved legacy F4V fragments in playback order", async () => {
+    const files = [
+        { d: 3000, l: "/v0/20180601/aa/bb/first.f4v?qd_sc=one" },
+        { d: 3000, l: "/v0/20180601/aa/bb/second.f4v?qd_sc=two" },
+    ];
+    const playerData = {
+        code: "A00000",
+        data: {
+            tvid,
+            program: {
+                video: [{ vid: "legacy", bid: 500, duration: 6, isPreview: 0, m3u8Url: "", fs: files }],
+            },
+        },
+    };
+    const result = await iqiyi({
+        pageId: "dwo67tu164",
+        quality: 720,
+        url: "https://www.iqiyi.com/v_dwo67tu164.html",
+        fetchImpl: async (target) => {
+            const parsed = new URL(target);
+            if (parsed.hostname === "mesh.if.iqiyi.com") {
+                return new Response(JSON.stringify({
+                    videoInfo: { tvId: tvid, title: "Legacy program", effective: true, downloadAllowed: true },
+                    ev: encodePlayerData(playerData),
+                }), { status: 200 });
+            }
+            const path = parsed.pathname.replace(/^\/videos/, "");
+            return new Response(JSON.stringify({
+                l: `https://cdn.example.com/videos${path}?signed=yes`,
+            }), { status: 200 });
+        },
+    });
+
+    assert.equal(result.service, "iqiyi");
+    assert.equal(result.urls.length, 2);
+    assert.equal(new URL(result.urls[0]).pathname.endsWith("/first.f4v"), true);
+    assert.equal(new URL(result.urls[1]).pathname.endsWith("/second.f4v"), true);
 });

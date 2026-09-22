@@ -104,17 +104,30 @@ export const uploadAgentSource = async ({ projectId, file, sourceId, onProgress,
         const chunk = file.slice(state.committedBytes, state.committedBytes + state.chunkSizeBytes);
         const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", await chunk.arrayBuffer()));
         const digest = btoa(String.fromCharCode(...bytes));
-        let committedBytes: number;
-        try {
-            ({ committedBytes } = await agentRequest<{ committedBytes: number }>(`${path}/upload`, { method: "PUT", body: chunk, signal,
-                headers: { "Content-Type": "application/octet-stream", "Upload-Offset": String(state.committedBytes), Digest: `sha-256=${digest}` } }));
-        } catch (error) {
-            // A lost response or concurrent tab can leave storage ahead of the browser.
-            if (signal.aborted) throw error;
-            const remote = await agentRequest<UploadState>(`${path}/upload`, { signal });
-            if (remote.committedBytes <= state.committedBytes) throw error;
-            committedBytes = remote.committedBytes;
+        let committedBytes: number | undefined;
+        for (let attempt = 0; attempt < 3 && committedBytes === undefined; attempt++) {
+            try {
+                ({ committedBytes } = await agentRequest<{ committedBytes: number }>(`${path}/upload`, { method: "PUT", body: chunk, signal,
+                    headers: { "Content-Type": "application/octet-stream", "Upload-Offset": String(state.committedBytes), Digest: `sha-256=${digest}` } }));
+            } catch (error) {
+                // The server verifies before writing. Reconcile a lost response, then
+                // safely resend an unchanged chunk after transient transport corruption.
+                if (signal.aborted) throw error;
+                try {
+                    const remote = await agentRequest<UploadState>(`${path}/upload`, { signal });
+                    if (remote.committedBytes > state.committedBytes) {
+                        committedBytes = remote.committedBytes;
+                        break;
+                    }
+                } catch { /* The retry below also covers a transient reconciliation failure. */ }
+                const detail = error as { code?: string; status?: number };
+                const retryable = detail.code === "VIDEO_AGENT_DIGEST_MISMATCH" || !detail.status || detail.status === 408
+                    || detail.status === 429 || detail.status >= 500;
+                if (!retryable || attempt === 2) throw error;
+                await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+            }
         }
+        if (committedBytes === undefined) throw new Error("Upload chunk retry failed");
         if (committedBytes <= state.committedBytes || committedBytes > file.size) throw new Error("Invalid upload offset");
         state = { ...state, committedBytes };
         onProgress(Math.round(100 * committedBytes / file.size));

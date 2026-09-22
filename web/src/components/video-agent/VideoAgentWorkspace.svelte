@@ -69,7 +69,7 @@
     const reportError = (error: unknown) => {
         errorCode = (error as { code?: string })?.code || "VIDEO_AGENT_REQUEST_FAILED";
         errorKey = errorCode === "SIGN_IN_REQUIRED" || errorCode === "UNAUTHORIZED" ? "sign_in" : errorCode === "MEMBERSHIP_REQUIRED" ? "membership_required"
-            : errorCode === "VIDEO_AGENT_FINGERPRINT_MISMATCH" ? "resume_original" : errorCode === "VIDEO_AGENT_STORAGE_LIMIT" ? "storage_limit"
+            : errorCode === "VIDEO_AGENT_FINGERPRINT_MISMATCH" || errorCode === "VIDEO_AGENT_DIGEST_MISMATCH" ? "resume_original" : errorCode === "VIDEO_AGENT_STORAGE_LIMIT" ? "storage_limit"
             : errorCode === "VIDEO_AGENT_PROJECT_SOURCE_LIMIT" ? "project_source_limit"
             : errorCode === "VIDEO_AGENT_UPLOAD_EXPIRED" ? "upload_expired" : errorCode === "VIDEO_AGENT_PROJECT_NOT_FOUND" ? "project_missing" : "request_failed";
     };

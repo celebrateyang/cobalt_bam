@@ -152,7 +152,9 @@ export const readVerifiedChunk = async ({ body, length, digest }) => {
     const buffer = Buffer.concat(chunks);
     const actual = createHash("sha256").update(buffer).digest();
     const expected = Buffer.from(digest, "base64");
-    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw agentError("VIDEO_AGENT_DIGEST_MISMATCH", 422, "Chunk digest does not match");
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw agentError("VIDEO_AGENT_DIGEST_MISMATCH", 422, "Chunk digest does not match", {
+        length: bytes, expectedDigestPrefix: String(digest || "").slice(0, 12), actualDigestPrefix: actual.toString("base64").slice(0, 12),
+    });
     return buffer;
 };
 export const putUpload = (input) => transaction(async (client) => {
@@ -164,7 +166,12 @@ export const putUpload = (input) => transaction(async (client) => {
     const totalBytes = Number(session.total_bytes);
     if (!Number.isSafeInteger(offset) || offset !== remote.committedBytes) throw agentError("VIDEO_AGENT_OFFSET_MISMATCH", 409, "Upload offset does not match", { committedBytes: remote.committedBytes });
     if (offset + input.length > totalBytes || (offset + input.length < totalBytes && input.length !== session.chunk_size_bytes)) invalid("Invalid chunk size");
-    const buffer = await readVerifiedChunk(input);
+    let buffer;
+    try { buffer = await readVerifiedChunk(input); }
+    catch (error) {
+        if (error.code === "VIDEO_AGENT_DIGEST_MISMATCH") console.warn(`[VIDEO AGENT] upload_chunk_digest_mismatch source=${input.sourceId} offset=${offset} length=${input.length} expected=${error.context?.expectedDigestPrefix || "none"} actual=${error.context?.actualDigestPrefix || "none"}`);
+        throw error;
+    }
     const result = await storage.writeUploadChunk({ sessionUri: decryptUploadSession(session.encrypted_storage_session), body: Readable.from(buffer), offset, length: buffer.length, totalBytes });
     if (result.committedBytes !== offset + buffer.length) throw agentError("VIDEO_AGENT_STORAGE_ERROR", 502, "Storage did not commit the complete chunk");
     await client.query(`UPDATE video_agent_upload_sessions SET committed_bytes=$2,updated_at=$3 WHERE id=$1`, [session.id, result.committedBytes, Date.now()]);

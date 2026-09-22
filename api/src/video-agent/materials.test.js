@@ -22,7 +22,12 @@ const digest = (buffer) => createHash("sha256").update(buffer).digest("base64");
 test("chunk digest and declared length are checked before storage writes", async () => {
     const bytes = Buffer.from("video chunk");
     assert.deepEqual(await readVerifiedChunk({ body: Readable.from(bytes), length: bytes.length, digest: digest(bytes) }), bytes);
-    await assert.rejects(readVerifiedChunk({ body: Readable.from(bytes), length: bytes.length, digest: digest(Buffer.from("wrong")) }), { code: "VIDEO_AGENT_DIGEST_MISMATCH" });
+    await assert.rejects(readVerifiedChunk({ body: Readable.from(bytes), length: bytes.length, digest: digest(Buffer.from("wrong")) }), (error) => {
+        assert.equal(error.code, "VIDEO_AGENT_DIGEST_MISMATCH");
+        assert.equal(error.context.length, bytes.length);
+        assert.equal(error.context.actualDigestPrefix, createHash("sha256").update(bytes).digest("base64").slice(0, 12));
+        return true;
+    });
     await assert.rejects(readVerifiedChunk({ body: Readable.from(bytes), length: bytes.length - 1, digest: digest(bytes) }), { code: "VIDEO_AGENT_INVALID_REQUEST" });
     await assert.rejects(readVerifiedChunk({ body: Readable.from(bytes), length: bytes.length + 1, digest: digest(bytes) }), { code: "VIDEO_AGENT_INVALID_REQUEST" });
     await assert.rejects(readVerifiedChunk({ body: Readable.from(bytes), length: CHUNK_BYTES + 1, digest: digest(bytes) }), { code: "VIDEO_AGENT_INVALID_REQUEST" });

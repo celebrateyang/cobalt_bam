@@ -80,6 +80,7 @@
     "membership_required": "Un abonnement vidéo AI actif est requis.",
     "resume_original": "Sélectionnez le fichier original pour reprendre.",
     "storage_limit": "Limite : 3 vidéos / 3 GiB.",
+    "project_source_limit": "Chaque projet ne peut contenir qu’une seule vidéo source.",
     "upload_expired": "Transfert expiré. Envoyez le fichier à nouveau.",
     "project_missing": "Projet indisponible ou supprimé.",
     "request_failed": "Échec de la demande. Réessayez.",

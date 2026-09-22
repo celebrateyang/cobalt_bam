@@ -80,6 +80,7 @@
     "membership_required": "Eine aktive AI-Video-Mitgliedschaft ist erforderlich.",
     "resume_original": "Die Originaldatei zum Fortsetzen auswählen.",
     "storage_limit": "Quellenlimit: 3 Videos / 3 GiB.",
+    "project_source_limit": "Pro Projekt ist nur ein Quellvideo erlaubt.",
     "upload_expired": "Upload abgelaufen. Datei erneut hochladen.",
     "project_missing": "Projekt nicht verfügbar oder gelöscht.",
     "request_failed": "Anfrage fehlgeschlagen. Erneut versuchen.",

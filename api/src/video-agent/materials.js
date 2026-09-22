@@ -56,12 +56,15 @@ export const addSource = async ({ projectId, userId, body, originMessageId = nul
             }
             const imported = body.kind === "download_import" ? readMediaImportToken(body.mediaImportToken, { expectedUserId: userId }) : null;
             const sizeBytes = imported ? MAX_BYTES : body.sizeBytes; // Reserve maximum before downloading an unknown size.
-            await assertSourceCapacity(client, { userId, sizeBytes });
             await ownedProject(client, { projectId, userId, lock: true });
             if (originMessageId) {
                 const existing = (await client.query("SELECT * FROM video_agent_sources WHERE project_id=$1 AND origin_message_id=$2", [projectId, originMessageId])).rows[0];
                 if (existing) return { source: sourceDTO(existing) };
             }
+            const existingSource = await client.query(`SELECT 1 FROM video_agent_sources
+                WHERE project_id=$1 AND status NOT IN ('expired','deleting','deleted') LIMIT 1`, [projectId]);
+            if (existingSource.rowCount) throw agentError("VIDEO_AGENT_PROJECT_SOURCE_LIMIT", 409, "A project can contain only one source video");
+            await assertSourceCapacity(client, { userId, sizeBytes });
             if (imported) {
                 const used = await client.query(`INSERT INTO ai_video_import_nonces(nonce,user_id,expires_at,used_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING nonce`, [imported.nonce, userId, imported.expiresAt, Date.now()]);
                 if (!used.rowCount) throw agentError("AI_VIDEO_IMPORT_TOKEN_USED", 409, "Media import token was already used");

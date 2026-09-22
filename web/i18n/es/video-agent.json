@@ -80,6 +80,7 @@
     "membership_required": "Se requiere una membresía de vídeo AI activa.",
     "resume_original": "Selecciona el archivo original para reanudar.",
     "storage_limit": "Límite: 3 vídeos / 3 GiB.",
+    "project_source_limit": "Solo se permite un vídeo de origen por proyecto.",
     "upload_expired": "La carga caducó. Vuelve a subir el archivo.",
     "project_missing": "Proyecto no disponible o eliminado.",
     "request_failed": "La solicitud falló. Inténtalo de nuevo.",

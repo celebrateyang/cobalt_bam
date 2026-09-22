@@ -80,6 +80,7 @@
     "membership_required": "有効な AI 動画会員権が必要です。",
     "resume_original": "再開するには元のファイルを選択してください。",
     "storage_limit": "素材の上限：動画 3 本 / 3 GiB。",
+    "project_source_limit": "1つのプロジェクトにつき、元動画は1本のみです。",
     "upload_expired": "期限切れです。再度アップロードしてください。",
     "project_missing": "プロジェクトが利用できないか削除されています。",
     "request_failed": "リクエストに失敗しました。再試行してください。",

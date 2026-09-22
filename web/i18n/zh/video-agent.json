@@ -80,6 +80,7 @@
     "membership_required": "添加素材需要有效的 AI 视频会员权益。",
     "resume_original": "请选择原文件继续上传。",
     "storage_limit": "素材上限为 3 个视频 / 3 GiB。",
+    "project_source_limit": "每个项目只能使用一个源视频。",
     "upload_expired": "上传已过期，请重新上传文件。",
     "project_missing": "项目不可用或已删除。",
     "request_failed": "请求失败，请重试。",

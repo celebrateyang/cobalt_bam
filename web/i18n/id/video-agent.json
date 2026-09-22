@@ -80,6 +80,7 @@
     "membership_required": "Keanggotaan video AI aktif diperlukan.",
     "resume_original": "Pilih berkas asli untuk melanjutkan.",
     "storage_limit": "Batas sumber: 3 video / 3 GiB.",
+    "project_source_limit": "Setiap proyek hanya dapat memiliki satu video sumber.",
     "upload_expired": "Unggahan kedaluwarsa. Unggah lagi.",
     "project_missing": "Proyek tidak tersedia atau dihapus.",
     "request_failed": "Permintaan gagal. Coba lagi.",

@@ -101,6 +101,8 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
         VALUES($1,$2,1,$3,'user','Make three Chinese clips.','completed',$4,$5)`,
     [waitingMessageId,project.id,`waiting_${waitingMessageId.replaceAll("-","")}`,{status:"needs_input",reply:"Upload a video.",missing:["source"]},waitingAt]);
     const source = (await request(`${prefix}/sources`, { method: "POST", body: input })).data.source;
+    const duplicateSource = await request(`${prefix}/sources`, { method: "POST", body: input });
+    assert.equal(duplicateSource.status, 409); assert.equal(duplicateSource.error.code, "VIDEO_AGENT_PROJECT_SOURCE_LIMIT");
     const linkedMessage=(await pg.query(`SELECT status,planner_output FROM video_agent_messages WHERE id=$1`,[waitingMessageId])).rows[0];
     assert.equal(linkedMessage.status,"awaiting_source");assert.equal(linkedMessage.planner_output.pendingSourceId,source.id);
     assert.equal((await pg.query(`SELECT status FROM video_agent_messages WHERE id=$1`,[olderWaitingMessageId])).rows[0].status,"completed");
@@ -130,31 +132,37 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
     assert.equal((await request(assetPath, { user: 2 })).status, 404);
     const download = await fetch(base+assetPath, { headers: { "x-test-user": "1" } });
     assert.deepEqual(Buffer.from(await download.arrayBuffer()), bytes);
+    const importProject = (await request("/projects", { method: "POST", body: { title: "Imported source" } })).data.project;
+    const importPrefix = `/projects/${importProject.id}`;
     const token = createMediaImportToken({ userId: 1, url: "https://media.example/video", filename: "import.mp4", mime: "video/mp4", service: "tiktok" });
-    const imported = await request(`${prefix}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: token } });
+    const imported = await request(`${importPrefix}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: token } });
     assert.equal(imported.status, 202);
-    assert.equal((await request(`${prefix}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: token } })).error.code, "AI_VIDEO_IMPORT_TOKEN_USED");
+    const tokenCheckProject = (await request("/projects", { method: "POST", body: { title: "Token check" } })).data.project;
+    assert.equal((await request(`/projects/${tokenCheckProject.id}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: token } })).error.code, "AI_VIDEO_IMPORT_TOKEN_USED");
     assert.equal((await pg.query(`SELECT count(*)::int AS n FROM ai_video_import_nonces`)).rows[0].n, 1);
     await ingestSource(await claimSource(), { storage, download: async ({ targetPath }) => { await copyFile(fixture,targetPath); } });
-    assert.equal((await request(prefix)).data.sources[1].status, "ready");
-    const third = (await request(`${prefix}/sources`, { method: "POST", body: input })).data.source;
-    assert.equal((await request(`${prefix}/sources`, { method: "POST", body: input })).error.code, "VIDEO_AGENT_STORAGE_LIMIT");
+    assert.equal((await request(importPrefix)).data.sources[0].status, "ready");
+    const thirdProject = (await request("/projects", { method: "POST", body: { title: "Third source" } })).data.project;
+    const third = (await request(`/projects/${thirdProject.id}/sources`, { method: "POST", body: input })).data.source;
+    const capacityProject = (await request("/projects", { method: "POST", body: { title: "Capacity check" } })).data.project;
+    assert.equal((await request(`/projects/${capacityProject.id}/sources`, { method: "POST", body: input })).error.code, "VIDEO_AGENT_STORAGE_LIMIT");
     await pg.query(`UPDATE video_agent_upload_sessions SET expires_at=0 WHERE source_id=$1`, [third.id]);
-    assert.equal((await request(`${prefix}/sources/${third.id}/upload`)).status, 410);
+    assert.equal((await request(`/projects/${thirdProject.id}/sources/${third.id}/upload`)).status, 410);
     await cleanupVideoAgent({ storage });
     assert.equal((await pg.query(`SELECT status FROM video_agent_sources WHERE id=$1`, [third.id])).rows[0].status, "deleted");
     const otherOwner = (await request("/projects", { user: 2, method: "POST", body: { title: "Other owner" } })).data.project;
     assert.equal((await request(`/projects/${otherOwner.id}/sources`, { user: 2, method: "POST", body: { kind: "download_import", mediaImportToken: token } })).error.code, "AI_VIDEO_IMPORT_TOKEN_USER_MISMATCH");
     // A video extension or MIME is insufficient: invalid bytes must fail real ffprobe checks.
     const badBytes = Buffer.from("not a video");
-    const invalidSource = (await request(`${prefix}/sources`, { method: "POST", body: { ...input, sizeBytes: badBytes.length } })).data.source;
-    const invalidUpload = `${prefix}/sources/${invalidSource.id}/upload`;
+    const invalidProject = (await request("/projects", { method: "POST", body: { title: "Invalid media" } })).data.project;
+    const invalidSource = (await request(`/projects/${invalidProject.id}/sources`, { method: "POST", body: { ...input, sizeBytes: badBytes.length } })).data.source;
+    const invalidUpload = `/projects/${invalidProject.id}/sources/${invalidSource.id}/upload`;
     await request(invalidUpload, { method: "PUT", body: badBytes, headers: { "Upload-Offset": "0", Digest: `sha-256=${digest(badBytes)}` } });
     await request(`${invalidUpload}-complete`, { method: "POST", body: {} });
     await ingestSource(await claimSource(), { storage });
     const failed = (await pg.query(`SELECT * FROM video_agent_sources WHERE id=$1`, [invalidSource.id])).rows[0];
     assert.equal(failed.status, "failed"); assert.ok(Number(failed.cleanup_after)>Date.now());
-    assert.equal((await request(`${prefix}/sources`, { method: "POST", body: input })).error.code, "VIDEO_AGENT_STORAGE_LIMIT");
+    assert.equal((await request(`/projects/${capacityProject.id}/sources`, { method: "POST", body: input })).error.code, "VIDEO_AGENT_STORAGE_LIMIT");
     await pg.query(`UPDATE video_agent_sources SET cleanup_after=0 WHERE id=$1`, [invalidSource.id]);
     await cleanupVideoAgent({ storage });
     // A DB failure after storage session creation must leave a discoverable cleanup record.
@@ -167,13 +175,15 @@ test("real SQL + HTTP + local storage: ownership, resume, ingestion, import and 
         return sql(text,params);
     };
     setVideoAgentDatabaseForTests({ query: interruptedSql, getClient: async () => ({ query: interruptedSql, release() {} }) });
-    assert.equal((await request(`${prefix}/sources`, { method: "POST", body: input })).status, 500);
+    const interruptedProject = (await request("/projects", { method: "POST", body: { title: "Interrupted upload" } })).data.project;
+    assert.equal((await request(`/projects/${interruptedProject.id}/sources`, { method: "POST", body: input })).status, 500);
     setVideoAgentDatabaseForTests({ query: sql, getClient: async () => ({ query: sql, release() {} }) });
     assert.equal((await pg.query(`SELECT count(*)::int AS n FROM video_agent_sources WHERE error_code='VIDEO_AGENT_UPLOAD_INIT_FAILED' AND status='failed'`)).rows[0].n, 1);
     await cleanupVideoAgent({ storage });
     // Reclaim an expired ingest lease. A late former worker must not publish or fail the new attempt.
+    const recoveryProject = (await request("/projects", { method: "POST", body: { title: "Lease recovery" } })).data.project;
     const recoveryToken = createMediaImportToken({ userId: 1, url: "https://media.example/recovery", filename: "recovery.mp4", mime: "video/mp4", service: "tiktok" });
-    await request(`${prefix}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: recoveryToken } });
+    await request(`/projects/${recoveryProject.id}/sources`, { method: "POST", body: { kind: "download_import", mediaImportToken: recoveryToken } });
     const late = await claimSource();
     await pg.query(`UPDATE video_agent_sources SET lease_until=0 WHERE id=$1`, [late.id]);
     const successor = await claimSource(); assert.equal(successor.id, late.id); assert.notEqual(successor.lease_token, late.lease_token);

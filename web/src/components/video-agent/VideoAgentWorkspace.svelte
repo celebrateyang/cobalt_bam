@@ -43,10 +43,11 @@
     let executionState:{hasPlan:boolean;runStatus:string|null;resultCount:number}={hasPlan:false,runStatus:null,resultCount:0};
     const activeRunStates=["queued","planning","awaiting_input","running","cancelling"];
     $: readySourceCount=sources.filter(source=>source.status==="ready" && source.retentionUntil>Date.now()).length;
+    $: hasProjectSource=sources.some(source=>!["expired","deleting","deleted"].includes(source.status));
     $: waitingForSource=messages.some(message=>message.role==="user" && message.status==="awaiting_source");
     $: runLocked=!!executionState.runStatus && activeRunStates.includes(executionState.runStatus);
     $: if(mounted && runLocked && activePanel!=="results")activePanel="results";
-    $: sourceError=["file_too_large","resume_original","storage_limit","upload_expired"].includes(errorKey);
+    $: sourceError=["file_too_large","resume_original","storage_limit","project_source_limit","upload_expired"].includes(errorKey);
     $: currentStep=executionState.runStatus && ["completed","partially_completed"].includes(executionState.runStatus) ? 5
         : executionState.runStatus ? 4 : executionState.hasPlan ? 3 : readySourceCount || messages.length ? 2 : 1;
     $: highlightLink = `/${$page.params.lang || "en"}/ai-video`;
@@ -69,6 +70,7 @@
         errorCode = (error as { code?: string })?.code || "VIDEO_AGENT_REQUEST_FAILED";
         errorKey = errorCode === "SIGN_IN_REQUIRED" || errorCode === "UNAUTHORIZED" ? "sign_in" : errorCode === "MEMBERSHIP_REQUIRED" ? "membership_required"
             : errorCode === "VIDEO_AGENT_FINGERPRINT_MISMATCH" ? "resume_original" : errorCode === "VIDEO_AGENT_STORAGE_LIMIT" ? "storage_limit"
+            : errorCode === "VIDEO_AGENT_PROJECT_SOURCE_LIMIT" ? "project_source_limit"
             : errorCode === "VIDEO_AGENT_UPLOAD_EXPIRED" ? "upload_expired" : errorCode === "VIDEO_AGENT_PROJECT_NOT_FOUND" ? "project_missing" : "request_failed";
     };
     const refresh = async () => {
@@ -294,11 +296,11 @@
             {#if messages.some(message => message.status === "awaiting_source")}<p class="muted" role="status">{$t("video-agent.status_queued_ingest")}</p>{/if}
             <div class="composer">
                 <div class="flow-section"><span class="step-number">01</span><h3>{$t("video-agent.step_choose_video")}</h3></div>
-                {#if !readySourceCount}<p class="download-hint">{$t("video-agent.no_video_hint")} <a href={downloaderLink} target="_blank" rel="noopener noreferrer">{$t("video-agent.open_downloader")}</a></p>{/if}
-                <div class="source-actions">
+                {#if !hasProjectSource}<p class="download-hint">{$t("video-agent.no_video_hint")} <a href={downloaderLink} target="_blank" rel="noopener noreferrer">{$t("video-agent.open_downloader")}</a></p>{/if}
+                {#if !hasProjectSource}<div class="source-actions">
                     <button type="button" class="secondary" disabled={busy || !selectedProject} on:click={() => chooseFile()}><IconUpload size={17} aria-hidden="true" />{$t("video-agent.upload")}</button>
                     {#if pendingImport}<button type="button" class="secondary" disabled={busy || !selectedProject} on:click={importSource}>{$t("video-agent.import_download")}: {pendingImport.filename}</button>{/if}
-                </div>
+                </div>{:else}<p class="muted">{$t("video-agent.project_source_limit")}</p>{/if}
                 {#if sourceError}<p class="error" role="alert">{$t(`video-agent.${errorKey}`)} {errorCode ? `(${errorCode})` : ""}
                     {#if errorKey==="storage_limit"} <a href={agentLink}>{$t("video-agent.my_projects")}</a>{/if}</p>{/if}
                 {#if progress !== null}

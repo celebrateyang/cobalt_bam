@@ -80,6 +80,7 @@
     "membership_required": "Cần gói thành viên video AI còn hiệu lực.",
     "resume_original": "Chọn tệp gốc để tiếp tục.",
     "storage_limit": "Giới hạn: 3 video / 3 GiB.",
+    "project_source_limit": "Mỗi dự án chỉ được có một video nguồn.",
     "upload_expired": "Phiên tải hết hạn. Hãy tải lại.",
     "project_missing": "Dự án không khả dụng hoặc đã xóa.",
     "request_failed": "Yêu cầu thất bại. Hãy thử lại.",

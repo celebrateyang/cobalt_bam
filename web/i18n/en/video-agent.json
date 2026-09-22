@@ -80,6 +80,7 @@
     "membership_required": "An active AI video membership is required to add sources.",
     "resume_original": "Select the original file to resume.",
     "storage_limit": "Source limit reached: 3 videos / 3 GiB.",
+    "project_source_limit": "Each project can contain only one source video.",
     "upload_expired": "Upload expired. Upload the file again.",
     "project_missing": "Project unavailable or deleted.",
     "request_failed": "Request failed. Try again.",

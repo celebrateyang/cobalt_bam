@@ -80,6 +80,7 @@
     "membership_required": "유효한 AI 영상 멤버십이 필요합니다.",
     "resume_original": "재개하려면 원본 파일을 선택하세요.",
     "storage_limit": "소스 제한: 영상 3개 / 3 GiB.",
+    "project_source_limit": "프로젝트당 원본 동영상은 하나만 사용할 수 있습니다.",
     "upload_expired": "업로드가 만료되었습니다. 다시 업로드하세요.",
     "project_missing": "프로젝트를 사용할 수 없거나 삭제되었습니다.",
     "request_failed": "요청에 실패했습니다. 다시 시도하세요.",

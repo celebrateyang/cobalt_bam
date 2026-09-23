@@ -268,7 +268,31 @@ const remux = async (streamInfo, res) => {
     let args;
     let inputCount = urls.length;
 
-    if (streamInfo.service === 'iqiyi' && urls.length === 1) {
+    if (
+        streamInfo.service === 'iqiyi' &&
+        streamInfo.iqiyiTsConcat === true &&
+        urls.length > 1
+    ) {
+        // iq.com exposes the complete program as several progressive TS objects.
+        // Fetch them serially with Node and present one continuous MPEG-TS input
+        // to ffmpeg. This avoids hundreds of byte-range requests and the TLS
+        // instability seen when the Linux static ffmpeg reads this CDN itself.
+        inputStream = Readable.from((async function* () {
+            for (const url of urls) {
+                const sourceResponse = await fetch(url, {
+                    headers: streamInfo.headers,
+                    redirect: 'follow',
+                    signal: AbortSignal.timeout(120_000),
+                });
+                if (!sourceResponse.ok || !sourceResponse.body) {
+                    throw new Error(`iQIYI TS source fetch failed (${sourceResponse.status})`);
+                }
+                yield* Readable.fromWeb(sourceResponse.body);
+            }
+        })());
+        args = ['-f', 'mpegts', '-i', 'pipe:0'];
+        inputCount = 1;
+    } else if (streamInfo.service === 'iqiyi' && urls.length === 1) {
         // The Linux ffmpeg-static build can segfault while reading this CDN over
         // HTTPS. Let Node handle HTTP/TLS and stream the MPEG-TS bytes to stdin.
         let sourceResponse;

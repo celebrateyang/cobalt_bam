@@ -2,6 +2,7 @@ import { parseSafeGenericURL } from "../generic/url-safety.js";
 
 const PLAYER_API = "https://mesh.if.iqiyi.com/player/lw/lwplay/accelerator.js";
 const VIDEO_RESOLVER = "https://data.video.iqiyi.com/videos";
+const INTERNATIONAL_PAGE = "https://www.iq.com/play/";
 const TVID_MASK = 0x75706971676cn;
 
 const browserHeaders = (pageUrl) => ({
@@ -92,6 +93,81 @@ export const buildIqiyiDirectUrl = (manifest, expectedDuration) => {
     return first.toString();
 };
 
+export const buildIqiyiInternationalUrls = (manifest, expectedDuration) => {
+    if (
+        typeof manifest !== "string" ||
+        !manifest.startsWith("#EXTM3U") ||
+        !manifest.includes("#EXT-X-ENDLIST") ||
+        /#EXT-X-KEY:/i.test(manifest)
+    ) return null;
+
+    const mediaUrls = getMediaUrls(manifest);
+    if (
+        mediaUrls.length === 0 ||
+        mediaUrls.length > 1000 ||
+        mediaUrls.some((value) => !isIqiyiCdnUrl(value))
+    ) return null;
+
+    const manifestDuration = parseManifestDuration(manifest);
+    if (
+        !Number.isFinite(manifestDuration) ||
+        manifestDuration <= 0 ||
+        Number(expectedDuration) <= 0 ||
+        Math.abs(manifestDuration - Number(expectedDuration)) > 8
+    ) return null;
+
+    const urls = [];
+    const seenObjects = new Set();
+    let currentObject;
+    let currentEnd;
+    let currentBaseUrl;
+
+    for (const value of mediaUrls) {
+        const candidate = new URL(value);
+        if (!/\.ts$/i.test(candidate.pathname)) return null;
+
+        const start = Number(candidate.searchParams.get("start"));
+        const end = Number(candidate.searchParams.get("end"));
+        const contentLength = Number(candidate.searchParams.get("contentlength"));
+        if (
+            !Number.isSafeInteger(start) ||
+            !Number.isSafeInteger(end) ||
+            !Number.isSafeInteger(contentLength) ||
+            start < 0 ||
+            end <= start ||
+            contentLength !== end - start
+        ) return null;
+
+        const objectKey = `${candidate.origin}${candidate.pathname}`;
+        const baseUrl = new URL(candidate);
+        baseUrl.searchParams.delete("start");
+        baseUrl.searchParams.delete("end");
+        baseUrl.searchParams.delete("contentlength");
+        const comparableBaseUrl = new URL(baseUrl);
+        // `sd` is the segment start timestamp and legitimately changes for
+        // every byte range. The complete object URL should retain the first
+        // segment's `sd=0`, while signature/routing parameters must match.
+        comparableBaseUrl.searchParams.delete("sd");
+
+        if (objectKey !== currentObject) {
+            if (seenObjects.has(objectKey) || start !== 0 || urls.length >= 100) {
+                return null;
+            }
+            seenObjects.add(objectKey);
+            urls.push(baseUrl.toString());
+            currentObject = objectKey;
+            currentEnd = end;
+            currentBaseUrl = comparableBaseUrl.toString();
+            continue;
+        }
+
+        if (start !== currentEnd || comparableBaseUrl.toString() !== currentBaseUrl) return null;
+        currentEnd = end;
+    }
+
+    return urls;
+};
+
 export const getIqiyiFragmentPaths = (video) => {
     if (!Array.isArray(video?.fs) || video.fs.length === 0 || video.fs.length > 500) {
         return null;
@@ -162,6 +238,127 @@ const qualityDistance = (video, requestedQuality) => {
     return Math.abs(height - Number(requestedQuality));
 };
 
+const getNextData = (html) => {
+    if (typeof html !== "string" || html.length === 0 || html.length > 5_000_000) {
+        return null;
+    }
+
+    const marker = 'id="__NEXT_DATA__"';
+    const markerIndex = html.indexOf(marker);
+    if (markerIndex < 0) return null;
+
+    const start = html.indexOf(">", markerIndex + marker.length);
+    const end = html.indexOf("</script>", start + 1);
+    if (start < 0 || end < 0 || end - start > 4_000_000) return null;
+
+    try {
+        return JSON.parse(html.slice(start + 1, end));
+    } catch {
+        return null;
+    }
+};
+
+const findInternationalPlaylistEntry = (play, pageId) => {
+    const playlists = Object.values(play?.cachePlayList || {});
+    for (const playlist of playlists) {
+        if (!Array.isArray(playlist)) continue;
+        const match = playlist.find((entry) => entry?.qipuIdStr === pageId);
+        if (match) return match;
+    }
+    return null;
+};
+
+export const parseIqiyiInternationalPage = ({ html, pageId, quality, pageUrl }) => {
+    if (!/^[0-9a-z]{6,32}$/i.test(pageId || "")) return null;
+
+    const nextData = getNextData(html);
+    const play = nextData?.props?.initialState?.play;
+    const prePlayerData = nextData?.props?.initialProps?.pageProps?.prePlayerData;
+    const videoInfo = play?.curVideoInfo || play?.videoInfo;
+    const tvid = decodeIqiyiTvid(pageId);
+    if (
+        !tvid ||
+        videoInfo?.qipuIdStr !== pageId ||
+        String(videoInfo?.tvId || "") !== tvid ||
+        prePlayerData?.dash?.code !== "A00000" ||
+        String(prePlayerData?.dash?.data?.tvid || "") !== tvid
+    ) return null;
+
+    const playlistEntry = findInternationalPlaylistEntry(play, pageId);
+    const vipInfo = videoInfo?.vipInfo || playlistEntry?.vipInfo;
+    const payMark = String(videoInfo?.payMark || playlistEntry?.payMark || "").trim();
+    if (
+        Number(vipInfo?.isVip || 0) === 1 ||
+        payMark.length > 0 ||
+        Number(prePlayerData.dash.data?.content?.bossStatus || 0) !== 0
+    ) return null;
+
+    const videos = prePlayerData.dash.data?.program?.video;
+    if (!Array.isArray(videos)) return null;
+
+    const candidates = videos
+        .map((video) => ({
+            video,
+            urls: buildIqiyiInternationalUrls(video?.m3u8, video?.duration),
+        }))
+        .filter((candidate) => candidate.urls)
+        .sort((a, b) => qualityDistance(a.video, quality) - qualityDistance(b.video, quality));
+    const selected = candidates[0];
+    if (!selected) return null;
+
+    const height = qualityHeight.get(Number(selected.video.bid));
+    return {
+        service: "iqiyi",
+        urls: selected.urls.length === 1 ? selected.urls[0] : selected.urls,
+        headers: browserHeaders(pageUrl),
+        duration: Number(selected.video.duration) || undefined,
+        iqiyiTsConcat: selected.urls.length > 1,
+        filenameAttributes: {
+            service: "iqiyi",
+            id: tvid,
+            title: videoInfo.name || videoInfo.subTitle || `iqiyi_${tvid}`,
+            resolution: height ? `${height}p` : undefined,
+            extension: "mp4",
+        },
+    };
+};
+
+export const resolveIqiyiInternational = async ({ pageId, quality, fetchImpl = fetch }) => {
+    if (!/^[0-9a-z]{6,32}$/i.test(pageId || "")) return null;
+
+    const pageUrl = `${INTERNATIONAL_PAGE}${pageId}?lang=en_us`;
+    const requestUrl = new URL(pageUrl);
+    requestUrl.searchParams.set("fsv_ts", Date.now().toString());
+    const response = await fetchImpl(requestUrl, {
+        headers: {
+            ...browserHeaders(pageUrl),
+            accept: "text/html,application/xhtml+xml",
+            "cache-control": "no-cache",
+        },
+        redirect: "follow",
+        signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) return null;
+
+    if (response.url) {
+        const finalUrl = new URL(response.url);
+        if (
+            finalUrl.protocol !== "https:" ||
+            !["iq.com", "www.iq.com"].includes(finalUrl.hostname) ||
+            finalUrl.username ||
+            finalUrl.password ||
+            finalUrl.port
+        ) return null;
+    }
+
+    return parseIqiyiInternationalPage({
+        html: await response.text(),
+        pageId,
+        quality,
+        pageUrl,
+    });
+};
+
 export const selectIqiyiVideo = ({ playerData, tvid, quality }) => {
     if (
         String(playerData?.data?.tvid || "") !== String(tvid) ||
@@ -215,8 +412,16 @@ export const resolveIqiyiShortLink = async (shortLink, fetchImpl = fetch) => {
     return null;
 };
 
-export default async function({ pageId, tvid: suppliedTvid, shortLink, quality, url, fetchImpl = fetch }) {
+export default async function({ pageId, intlPageId, tvid: suppliedTvid, shortLink, quality, url, fetchImpl = fetch }) {
     try {
+        if (intlPageId) {
+            return await resolveIqiyiInternational({
+                pageId: intlPageId,
+                quality,
+                fetchImpl,
+            }) || { error: "fetch.empty" };
+        }
+
         if (shortLink) {
             const resolved = await resolveIqiyiShortLink(shortLink, fetchImpl);
             if (!resolved) return { error: "fetch.empty" };

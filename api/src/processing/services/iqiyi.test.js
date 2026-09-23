@@ -3,9 +3,11 @@ import test from "node:test";
 
 import iqiyi, {
     buildIqiyiDirectUrl,
+    buildIqiyiInternationalUrls,
     decodeIqiyiPlayerData,
     decodeIqiyiTvid,
     getIqiyiFragmentPaths,
+    parseIqiyiInternationalPage,
     resolveIqiyiFragments,
     selectIqiyiVideo,
     resolveIqiyiShortLink,
@@ -24,6 +26,70 @@ const manifest = [
     segment(100, 199),
     "#EXT-X-ENDLIST",
 ].join("\n");
+
+const internationalPageId = "q7bb47bdnc";
+const internationalTvid = "2534543267915700";
+const internationalSegment = (object, start, end) =>
+    `https://pcw-data.video.iqiyi.com/videos/vts/${object}.ts?start=${start}&end=${end}` +
+    `&contentlength=${end - start}&qd_index=vod&qd_tvid=${internationalTvid}&qd_sc=signed`;
+const internationalManifest = [
+    "#EXTM3U",
+    "#EXT-X-TARGETDURATION:3",
+    "#EXTINF:3.0,",
+    internationalSegment("first", 0, 100),
+    "#EXTINF:3.0,",
+    internationalSegment("first", 100, 220),
+    "#EXTINF:3.0,",
+    internationalSegment("second", 0, 80),
+    "#EXTINF:3.0,",
+    internationalSegment("second", 80, 200),
+    "#EXT-X-ENDLIST",
+].join("\n");
+
+const internationalHtml = ({ vip = false, manifest = internationalManifest } = {}) => {
+    const data = {
+        props: {
+            initialState: {
+                play: {
+                    curVideoInfo: {
+                        qipuIdStr: internationalPageId,
+                        tvId: Number(internationalTvid),
+                        name: "International program",
+                        vipInfo: vip ? { isVip: 1, payMark: "VIP_MARK" } : {},
+                    },
+                    cachePlayList: {
+                        1: [{
+                            qipuIdStr: internationalPageId,
+                            payMark: vip ? "VIP_MARK" : "",
+                        }],
+                    },
+                },
+            },
+            initialProps: {
+                pageProps: {
+                    prePlayerData: {
+                        dash: {
+                            code: "A00000",
+                            data: {
+                                tvid: Number(internationalTvid),
+                                content: { bossStatus: 0 },
+                                program: {
+                                    video: [{
+                                        vid: "international-main",
+                                        bid: 200,
+                                        duration: 12,
+                                        m3u8: manifest,
+                                    }],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    };
+    return `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(data)}</script></html>`;
+};
 
 const encodePlayerData = (value) => JSON.stringify(value)
     .split("")
@@ -71,6 +137,82 @@ test("rejects mixed-CDN manifests and duration mismatches", () => {
         null,
     );
     assert.equal(buildIqiyiDirectUrl(manifest, 60), null);
+});
+
+test("groups a complete international byte-range manifest into TS objects", () => {
+    const urls = buildIqiyiInternationalUrls(internationalManifest, 12);
+    assert.equal(urls.length, 2);
+    assert.deepEqual(urls.map((value) => new URL(value).pathname), [
+        "/videos/vts/first.ts",
+        "/videos/vts/second.ts",
+    ]);
+    for (const value of urls) {
+        const parsed = new URL(value);
+        assert.equal(parsed.searchParams.has("start"), false);
+        assert.equal(parsed.searchParams.has("end"), false);
+        assert.equal(parsed.searchParams.has("contentlength"), false);
+        assert.equal(parsed.searchParams.get("qd_sc"), "signed");
+    }
+});
+
+test("rejects incomplete, encrypted, and untrusted international manifests", () => {
+    assert.equal(buildIqiyiInternationalUrls(
+        internationalManifest.replace("start=100", "start=101"),
+        12,
+    ), null);
+    assert.equal(buildIqiyiInternationalUrls(
+        internationalManifest.replace("#EXT-X-TARGETDURATION:3", "#EXT-X-KEY:METHOD=AES-128,URI=\"key\""),
+        12,
+    ), null);
+    assert.equal(buildIqiyiInternationalUrls(
+        internationalManifest.replace("pcw-data.video.iqiyi.com", "media.example.com"),
+        12,
+    ), null);
+    assert.equal(buildIqiyiInternationalUrls(internationalManifest, 120), null);
+});
+
+test("extracts only complete free iQIYI international programs", async () => {
+    const pageUrl = `https://www.iq.com/play/${internationalPageId}?lang=en_us`;
+    const parsed = parseIqiyiInternationalPage({
+        html: internationalHtml(),
+        pageId: internationalPageId,
+        quality: 720,
+        pageUrl,
+    });
+    assert.equal(parsed.service, "iqiyi");
+    assert.equal(parsed.iqiyiTsConcat, true);
+    assert.equal(parsed.urls.length, 2);
+    assert.equal(parsed.duration, 12);
+    assert.equal(parsed.filenameAttributes.resolution, "360p");
+    assert.equal(parsed.headers.referer, pageUrl);
+
+    const result = await iqiyi({
+        intlPageId: internationalPageId,
+        quality: 720,
+        fetchImpl: async (target, options) => {
+            assert.equal(target.origin, "https://www.iq.com");
+            assert.equal(target.pathname, `/play/${internationalPageId}`);
+            assert.equal(target.searchParams.get("lang"), "en_us");
+            assert.match(target.searchParams.get("fsv_ts"), /^\d+$/);
+            assert.equal(options.redirect, "follow");
+            return new Response(internationalHtml(), { status: 200 });
+        },
+    });
+    assert.equal(result.service, "iqiyi");
+    assert.equal(result.filenameAttributes.title, "International program");
+
+    assert.equal(parseIqiyiInternationalPage({
+        html: internationalHtml({ vip: true }),
+        pageId: internationalPageId,
+        quality: 360,
+        pageUrl,
+    }), null);
+    assert.equal(parseIqiyiInternationalPage({
+        html: internationalHtml({ manifest: internationalManifest.replace("#EXT-X-ENDLIST", "") }),
+        pageId: internationalPageId,
+        quality: 360,
+        pageUrl,
+    }), null);
 });
 
 test("validates and resolves legacy iQIYI F4V fragments", async () => {

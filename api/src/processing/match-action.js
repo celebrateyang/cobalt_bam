@@ -75,6 +75,7 @@ export default function({
             cover: !disableMetadata ? r.cover : false,
             cropCover: !disableMetadata ? r.cropCover : false,
             duration: r.duration,
+            iqiyiTsConcat: r.iqiyiTsConcat === true,
         },
         params = {};
 
@@ -372,8 +373,8 @@ export default function({
                     break;
 
                 case "iqiyi":
-                    // iQIYI exposes the feature as a progressive MPEG-TS object.
-                    // Remux it on the API so browsers receive a playable MP4.
+                    // iQIYI exposes complete programs as one or more progressive
+                    // MPEG-TS objects. Remux them into a browser-compatible MP4.
                     params = { type: "remux" };
                     break;
 

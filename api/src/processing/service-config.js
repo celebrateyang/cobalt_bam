@@ -134,9 +134,10 @@ export const services = {
             "mp/sharePlay.html?tvid=:tvid",
             "playShare.html?tvid=:tvid",
             "_shortLink/:shortLink",
+            "_intl/:intlPageId",
         ],
         subdomains: ["m"],
-        altDomains: ["qy.net"],
+        altDomains: ["qy.net", "iq.com"],
     },
     kuaishou: {
         patterns: [

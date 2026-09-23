@@ -60,6 +60,17 @@ function aliasURL(url) {
     const parts = url.pathname.replace(/\/+$/, '').split('/');
 
     switch (host.sld) {
+        case "iq": {
+            if (!["iq.com", "www.iq.com"].includes(url.hostname)) break;
+
+            const playMatch = /^\/play\/([^/]+)\/?$/i.exec(url.pathname);
+            const pageId = playMatch?.[1]
+                ?.match(/(?:^|-)([0-9a-z]{6,32})$/i)?.[1];
+            if (pageId) {
+                url = new URL(`https://iqiyi.com/_intl/${pageId}`);
+            }
+            break;
+        }
         case "qy":
             if (url.hostname === "qy.net" && parts.length === 2 && /^[A-Za-z0-9_-]{1,64}$/.test(parts[1])) {
                 url = new URL(`https://iqiyi.com/_shortLink/${parts[1]}`);

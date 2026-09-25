@@ -26,6 +26,11 @@ export type LearnPage = {
     faqs: LearnFaq[];
     relatedDownloads: string[];
     relatedGuides: string[];
+    relatedTools?: Array<{
+        title: string;
+        description: string;
+        href: string;
+    }>;
     keywords: string[];
 };
 
@@ -970,6 +975,102 @@ export const learnPages: LearnPage[] = [
             'youtube playlist downloader error',
             'youtube playlist list parameter',
             'download youtube playlist',
+        ],
+    },
+    {
+        slug: 'online-whiteboard-video-recorder-teachers',
+        title: 'How to record a whiteboard lesson with slides, camera, and a teleprompter',
+        description:
+            'A practical browser workflow for teachers and trainers to record whiteboard lessons with slides, a camera overlay, microphone audio, and a private teleprompter.',
+        updatedAt: '2026-09-25',
+        readingTime: '7 min read',
+        category: 'Teaching videos',
+        summary:
+            'FreeSaveVideo includes a browser-based whiteboard recorder for creating lessons and tutorials. You can organize multiple slides, draw or type on the whiteboard, add a camera overlay and microphone, read from a private teleprompter, and export as MP4 or WebM depending on browser support.',
+        keyTakeaways: [
+            'Plan one idea per slide, then use the whiteboard for live explanations instead of crowding each page with text.',
+            'The teleprompter is a private browser overlay and is not included in the recorded canvas.',
+            'Run the built-in preflight check before a long recording so camera, microphone, and export format problems appear early.',
+        ],
+        sections: [
+            {
+                heading: 'Build a short slide sequence before recording',
+                body: [
+                    'Start with a simple lesson structure: introduce the problem, explain the main idea, work through an example, and finish with a recap. The recorder supports multiple whiteboard slides that you can add, reorder, and resize while preparing the session.',
+                    'Keep each slide focused on one teaching moment. A sparse canvas leaves room for handwriting, arrows, diagrams, and live annotations that make the explanation easier to follow.',
+                ],
+                bullets: [
+                    'Use a 16:9 frame for standard course and YouTube-style lessons.',
+                    'Use 9:16 for a vertical short lesson, or 1:1 for a square social clip.',
+                    'Choose the aspect ratio before placing detailed drawings so the composition stays predictable.',
+                ],
+            },
+            {
+                heading: 'Add camera and microphone only when they help the lesson',
+                body: [
+                    'A camera overlay can make an explanation feel more personal, while a microphone captures narration together with the whiteboard. The camera can be mirrored, moved, resized, or used to fill a portrait frame.',
+                    'Before recording, check that the camera does not cover important writing and that the microphone level is clear. The recorder also provides optional audio filtering for common low-frequency hum and 50/60 Hz electrical noise.',
+                ],
+            },
+            {
+                heading: 'Use the private teleprompter for a cleaner delivery',
+                body: [
+                    'Paste talking points into the teleprompter, then adjust its position, font size, opacity, and scroll speed. The panel is designed for the presenter and does not become part of the recorded canvas.',
+                    'Write prompts rather than a dense essay. Short lines make it easier to maintain eye contact with the camera and sound natural while drawing or changing slides.',
+                ],
+            },
+            {
+                heading: 'Run preflight, record, and export',
+                body: [
+                    'Use the preflight check to confirm browser recording support, the selected camera and microphone, and the available media format. You can set a countdown, pause and resume when supported, and enable a cursor highlight for demonstrations.',
+                    'MP4 is the default export choice. If the browser cannot record MP4 with a usable codec, the tool can fall back to WebM. For the most reliable experience, use a desktop or laptop in a current version of Chrome or Microsoft Edge.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Teaching need', 'Recorder setting', 'Practical reason'],
+            rows: [
+                ['Full lesson or course module', '16:9 with slides and microphone', 'Fits common desktop and video-player layouts'],
+                ['Short mobile tutorial', '9:16 with camera fill or overlay', 'Uses the vertical frame without a separate editor'],
+                ['Diagram explanation', 'Whiteboard, cursor highlight, and microphone', 'Keeps attention on the steps being drawn'],
+                ['Scripted training update', 'Private teleprompter and countdown', 'Reduces missed points and rushed openings'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Does the teleprompter appear in the exported video?',
+                a: 'No. The teleprompter is a presenter-only browser overlay and is not drawn into the recording canvas.',
+            },
+            {
+                q: 'Can I record my camera and whiteboard at the same time?',
+                a: 'Yes. You can show a movable camera overlay while recording the whiteboard, or fill a supported portrait frame with the camera.',
+            },
+            {
+                q: 'Does the whiteboard recorder export MP4?',
+                a: 'MP4 is the default choice. Browser codec support varies, so the recorder can fall back to WebM when MP4 recording is unavailable.',
+            },
+            {
+                q: 'Is a phone recommended for long whiteboard recordings?',
+                a: 'No. The recorder is performance-heavy on phones. A desktop or laptop provides a more reliable recording workflow.',
+            },
+        ],
+        relatedDownloads: [],
+        relatedGuides: [],
+        relatedTools: [
+            {
+                title: 'Open the whiteboard video recorder',
+                description:
+                    'Create slides, draw your lesson, add camera and microphone, use the private teleprompter, and export the recording.',
+                href: '/en/videorecord',
+            },
+        ],
+        keywords: [
+            'online whiteboard video recorder',
+            'record whiteboard lesson online',
+            'whiteboard recorder with camera',
+            'video recorder with teleprompter',
+            'record teaching video in browser',
+            'online lesson recorder MP4',
         ],
     },
 ];

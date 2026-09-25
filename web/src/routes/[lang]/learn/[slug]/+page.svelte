@@ -208,6 +208,20 @@
                 </div>
             </section>
         {/if}
+
+        {#if data.article.relatedTools?.length}
+            <section class="related" aria-labelledby="related-tools-title">
+                <h2 id="related-tools-title">Try the related tool</h2>
+                <div class="related-grid">
+                    {#each data.article.relatedTools as tool}
+                        <a href={tool.href}>
+                            <strong>{tool.title}</strong>
+                            <span>{tool.description}</span>
+                        </a>
+                    {/each}
+                </div>
+            </section>
+        {/if}
     </aside>
 </main>
 

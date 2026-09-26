@@ -1073,6 +1073,109 @@ export const learnPages: LearnPage[] = [
             'online lesson recorder MP4',
         ],
     },
+    {
+        slug: 'transfer-files-phone-computer-without-cloud-upload',
+        title: 'How to transfer files between a phone and computer without a cloud upload',
+        description:
+            'Use a browser session, QR code, and encrypted WebRTC connection to send files or text directly between two devices without first storing them in a cloud drive.',
+        updatedAt: '2026-09-26',
+        readingTime: '6 min read',
+        category: 'File transfer',
+        summary:
+            'FreeSaveVideo provides a browser-based transfer tool for two devices. Create a temporary session, join from the second device with a QR code, link, or session code, then send encrypted files and text while both browsers remain online.',
+        keyTakeaways: [
+            'Both devices need a WebRTC-capable browser and must stay online until the transfer finishes.',
+            'A QR code is the quickest way to connect a phone and computer without retyping a long link.',
+            'Files are split into smaller chunks, and missing chunks can be requested again when the connection is interrupted.',
+        ],
+        sections: [
+            {
+                heading: 'Create a temporary two-device session',
+                body: [
+                    'Open the transfer tool on the first device and create a random session. The page generates a session code, a share link, and a QR code. On the second device, scan the QR code or enter the code to join.',
+                    'Random sessions do not require an account. A signed-in user can also use a personal session on two devices with the same account. Each session is designed for one connected peer rather than a public group.',
+                ],
+                bullets: [
+                    'Use the QR code when moving a file between a phone and computer.',
+                    'Use the session link when you can send it privately to the other device.',
+                    'Do not publish session links or codes because they act as temporary connection credentials.',
+                ],
+            },
+            {
+                heading: 'Keep both browser pages open during the transfer',
+                body: [
+                    'The browsers establish a WebRTC data connection while the server coordinates the session. When a direct local-network route is available, the interface can identify the connection as LAN Direct.',
+                    'This is not an offline drop box. If either browser closes, sleeps, changes networks, or loses connectivity, the peer connection can stop and may need to reconnect before sending continues.',
+                ],
+            },
+            {
+                heading: 'Send files in chunks instead of one fragile upload',
+                body: [
+                    'The transfer tool divides files into small encrypted chunks. The receiving browser tracks chunk numbers, detects missing pieces, and can request retransmission rather than starting the entire file again.',
+                    'For a large file, keep both screens awake and avoid switching between Wi-Fi and mobile data. The received file is assembled in the second browser after all required chunks arrive.',
+                ],
+            },
+            {
+                heading: 'Use text sharing for links and short notes',
+                body: [
+                    'The same session can switch between file transfer and text. This is useful for moving a URL, address, command, or short note between your own devices without installing another messaging app.',
+                    'Ordinary texts remain in the current tab session. Optional disappearing texts stay in page memory and begin a roughly 30-second countdown when the recipient reveals them, but recipients can still copy or capture what they receive.',
+                ],
+            },
+            {
+                heading: 'Understand the privacy boundary',
+                body: [
+                    'WebRTC and the application encryption protect the transfer in transit, but this should not be described as complete anonymity or guaranteed deletion. The service still coordinates connections, and the recipient controls the downloaded file after it arrives.',
+                    'Only transfer files you own or are authorized to share. Do not use the tool for illegal material, private data sent to an untrusted recipient, or files that require permanent audited storage.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Method', 'Best use', 'Important limitation'],
+            rows: [
+                ['QR code', 'Phone-to-computer connection', 'The camera must be able to scan the displayed code'],
+                ['Session link', 'Two browsers where a private link can be shared', 'Anyone with the active link may try to join'],
+                ['Session code', 'Manual connection without scanning', 'The code must be entered accurately'],
+                ['Personal session', 'Your own signed-in devices', 'Both devices must use the same account'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Are files uploaded to a cloud drive first?',
+                a: 'No. The tool is designed to transfer file data through the active WebRTC browser connection rather than storing the file in a cloud drive first. A server still coordinates the session connection.',
+            },
+            {
+                q: 'Can I transfer a file from iPhone or Android to a computer?',
+                a: 'Yes, when both devices use compatible WebRTC browsers. Scan the session QR code on the phone and keep both browser pages open until the file finishes.',
+            },
+            {
+                q: 'What happens if part of a file is missed?',
+                a: 'The receiver tracks file chunks and can request missing chunks again. A closed page or long network interruption may still require reconnecting or restarting the transfer.',
+            },
+            {
+                q: 'Can the recipient save or copy what I send?',
+                a: 'Yes. Recipients can save files, copy text, or capture the screen. Only connect with a person or device you trust.',
+            },
+        ],
+        relatedDownloads: [],
+        relatedGuides: [],
+        relatedTools: [
+            {
+                title: 'Open cross-device file transfer',
+                description:
+                    'Create a session, connect a second device by QR code, link, or code, then send files and text.',
+                href: '/en/clipboard',
+            },
+        ],
+        keywords: [
+            'transfer files from phone to computer without cloud',
+            'send files by QR code online',
+            'browser to browser file transfer',
+            'WebRTC file transfer online',
+            'transfer files without installing an app',
+            'send files between devices online',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

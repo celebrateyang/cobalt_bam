@@ -2,6 +2,102 @@ import { resolveRedirectingURL } from "../url.js";
 import { genericUserAgent, env } from "../../config.js";
 import { getCookie, updateCookieValues } from "../cookie/manager.js";
 
+const redditVideoUrlPattern = /https:\/\/v\.redd\.it\/[a-z0-9]+/i;
+
+const parseIsoDuration = (value) => {
+    const match = /^PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?$/i.exec(value || "");
+    if (!match) return;
+
+    const seconds =
+        (Number(match[1] || 0) * 3600)
+        + (Number(match[2] || 0) * 60)
+        + Number(match[3] || 0);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) return;
+    return Math.round(seconds);
+};
+
+export const extractRedditVideoUrlFromRss = (rss, postId) => {
+    if (typeof rss !== "string" || typeof postId !== "string") return;
+
+    const postMarker = `<id>t3_${postId}</id>`;
+    const markerIndex = rss.indexOf(postMarker);
+    if (markerIndex < 0) return;
+
+    const entryStart = rss.lastIndexOf("<entry", markerIndex);
+    const entryEnd = rss.indexOf("</entry>", markerIndex);
+    if (entryStart < 0 || entryEnd < 0) return;
+
+    return rss.slice(entryStart, entryEnd).match(redditVideoUrlPattern)?.[0];
+};
+
+const getAdaptationSet = (manifest, contentType) => {
+    const sets = manifest.match(/<AdaptationSet\b[\s\S]*?<\/AdaptationSet>/gi) || [];
+    return sets.find((set) => new RegExp(`contentType=["']${contentType}["']`, "i").test(set));
+};
+
+const getBestRepresentation = (adaptationSet) => {
+    if (!adaptationSet) return;
+
+    const representations = [];
+    const pattern = /<Representation\b([^>]*)>[\s\S]*?<BaseURL>([^<]+)<\/BaseURL>[\s\S]*?<\/Representation>/gi;
+    let match;
+
+    while ((match = pattern.exec(adaptationSet))) {
+        const height = Number(/\bheight=["'](\d+)["']/i.exec(match[1])?.[1] || 0);
+        const bandwidth = Number(/\bbandwidth=["'](\d+)["']/i.exec(match[1])?.[1] || 0);
+        representations.push({
+            path: match[2].replace(/&amp;/g, "&"),
+            score: (height * 1_000_000_000) + bandwidth,
+        });
+    }
+
+    return representations.sort((a, b) => b.score - a.score)[0]?.path;
+};
+
+export const parseRedditDashManifest = (manifest, manifestUrl) => {
+    if (typeof manifest !== "string" || !manifestUrl) return;
+
+    const videoPath = getBestRepresentation(getAdaptationSet(manifest, "video"));
+    if (!videoPath) return;
+
+    const audioPath = getBestRepresentation(getAdaptationSet(manifest, "audio"));
+    const duration = parseIsoDuration(
+        /\bmediaPresentationDuration=["']([^"']+)["']/i.exec(manifest)?.[1]
+    );
+
+    return {
+        fallback_url: new URL(videoPath, manifestUrl).toString(),
+        audio_url: audioPath ? new URL(audioPath, manifestUrl).toString() : undefined,
+        duration,
+    };
+};
+
+export const fetchRedditVideoFromRss = async ({ postId, dispatcher, headers }) => {
+    const rssUrl = `https://www.reddit.com/comments/${postId}/.rss`;
+    const rss = await fetch(rssUrl, {
+        dispatcher,
+        headers: {
+            "user-agent": headers["user-agent"],
+            accept: "application/atom+xml, application/rss+xml, text/xml",
+        },
+    }).then(async (response) => response.ok ? response.text() : undefined).catch(() => {});
+
+    const videoBaseUrl = extractRedditVideoUrlFromRss(rss, postId);
+    if (!videoBaseUrl) return;
+
+    const manifestUrl = `${videoBaseUrl}/DASHPlaylist.mpd`;
+    const manifest = await fetch(manifestUrl, {
+        dispatcher,
+        headers: {
+            "user-agent": headers["user-agent"],
+            accept: "application/dash+xml, application/xml, text/xml",
+        },
+    }).then(async (response) => response.ok ? response.text() : undefined).catch(() => {});
+
+    return parseRedditDashManifest(manifest, manifestUrl);
+};
+
 async function getAccessToken() {
     /* "cookie" in cookiefile needs to contain:
      * client_id, client_secret, refresh_token
@@ -53,9 +149,9 @@ export default async function(obj) {
     const accessToken = await getAccessToken();
     const headers = {
         'user-agent': genericUserAgent,
-        authorization: accessToken && `Bearer ${accessToken}`,
         accept: 'application/json'
     };
+    if (accessToken) headers.authorization = `Bearer ${accessToken}`;
 
     if (params.shortId) {
         params = await resolveRedirectingURL(
@@ -78,14 +174,11 @@ export default async function(obj) {
     if (accessToken) url.hostname = 'oauth.reddit.com';
 
     let data = await fetch(
-        url, { headers }
+        url, { headers, dispatcher: obj.dispatcher }
     ).then(r => r.json()).catch(() => {});
 
-    if (!data || !Array.isArray(data)) {
-        return { error: "fetch.fail" }
-    }
-
-    data = data[0]?.data?.children[0]?.data;
+    const metadataFetchFailed = !Array.isArray(data);
+    data = Array.isArray(data) ? data[0]?.data?.children[0]?.data : undefined;
 
     let sourceId;
     if (params.sub || params.user) {
@@ -100,20 +193,30 @@ export default async function(obj) {
         filename: `reddit_${sourceId}.gif`,
     }
 
-    if (!data.secure_media?.reddit_video)
-        return { error: "fetch.empty" };
+    const redditVideo = data?.secure_media?.reddit_video
+        || await fetchRedditVideoFromRss({
+            postId: params.id,
+            dispatcher: obj.dispatcher,
+            headers,
+        });
 
-    if (data.secure_media?.reddit_video?.duration > env.durationLimit)
+    if (!redditVideo) {
+        return { error: metadataFetchFailed ? "fetch.fail" : "fetch.empty" };
+    }
+
+    if (redditVideo.duration > env.durationLimit)
         return { error: "content.too_long" };
 
-    const duration = data.secure_media?.reddit_video?.duration;
+    const duration = redditVideo.duration;
 
-    const video = data.secure_media?.reddit_video?.fallback_url?.split('?')[0];
+    const video = redditVideo.fallback_url?.split('?')[0];
+    if (!video) return { error: "fetch.empty" };
 
     let audio = false,
-        audioFileLink = `${data.secure_media?.reddit_video?.fallback_url?.split('DASH')[0]}audio`;
+        audioFileLink = redditVideo.audio_url
+            || `${redditVideo.fallback_url?.split('DASH')[0]}audio`;
 
-    if (video.match('.mp4')) {
+    if (!redditVideo.audio_url && video.match('.mp4')) {
         audioFileLink = `${video.split('_')[0]}_audio.mp4`
     }
 

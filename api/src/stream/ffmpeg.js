@@ -48,11 +48,16 @@ const killProcess = (p) => {
     }, 5000);
 }
 
+export const selectFfmpegExecutable = (
+    streamInfo,
+    platform = process.platform,
+) =>
+    ['amazon', 'iqiyi'].includes(streamInfo?.service) && platform !== 'win32'
+        ? '/usr/bin/ffmpeg'
+        : ffmpeg;
+
 const getCommand = (args, streamInfo) => {
-    const executable =
-        streamInfo?.service === 'iqiyi' && process.platform !== 'win32'
-            ? '/usr/bin/ffmpeg'
-            : ffmpeg;
+    const executable = selectFfmpegExecutable(streamInfo);
 
     if (typeof env.processingPriority === 'number' && !isNaN(env.processingPriority)) {
         return ['nice', ['-n', env.processingPriority.toString(), executable, ...args]]

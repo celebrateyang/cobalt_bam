@@ -1,5 +1,23 @@
 [
     {
+        "name": "legacy 2013 tv.cctv.com VOD page",
+        "url": "https://tv.cctv.com/2013/04/28/VIDE1367159278987477.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
+        "name": "legacy 2017 tv.cctv.com VOD page",
+        "url": "https://tv.cctv.com/2017/05/28/VIDEuPCB9cS6EqsP6BKgPaQr170528.shtml",
+        "params": {},
+        "expected": {
+            "code": 200,
+            "status": "tunnel"
+        }
+    },
+    {
         "name": "tv.cctv.com vod page",
         "url": "https://tv.cctv.com/2026/04/16/VIDEnJtM9YImth9DiCjlUzBC260416.shtml?spm=C28340.PdNvWY0LYxCP.EEFvxiFXcLF9.7",
         "params": {},

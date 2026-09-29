@@ -12,6 +12,13 @@ test("uses the system ffmpeg for Amazon HLS on Linux", () => {
     );
 });
 
+test("uses the system ffmpeg for CCTV HLS on Linux", () => {
+    assert.equal(
+        selectFfmpegExecutable({ service: "cctv" }, "linux"),
+        "/usr/bin/ffmpeg",
+    );
+});
+
 test("keeps the system ffmpeg workaround for iQIYI on Linux", () => {
     assert.equal(
         selectFfmpegExecutable({ service: "iqiyi" }, "linux"),

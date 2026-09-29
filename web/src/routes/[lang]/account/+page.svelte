@@ -776,7 +776,7 @@
         !isChinese &&
         !["buymeacoffee", "nowpayments"].includes(selectedPaymentProvider)
     ) {
-        selectedPaymentProvider = "nowpayments";
+        selectedPaymentProvider = "buymeacoffee";
         clearActiveOrder();
     }
     $: if (isChinese && selectedPaymentProvider !== "wechat") {
@@ -2658,11 +2658,16 @@
                                 {:else}
                                     <button
                                         type="button"
-                                        class="provider-option"
+                                        class="provider-option provider-option-with-avatar"
                                         class:active={selectedPaymentProvider === "buymeacoffee"}
                                         on:click={() => selectPaymentProvider("buymeacoffee")}
                                     >
-                                        Buy Me a Coffee
+                                        <img
+                                            class="provider-avatar"
+                                            src="/account/bambooyang-buymeacoffee.png"
+                                            alt="Bamboo Yang"
+                                        />
+                                        <span>Buy Me a Coffee</span>
                                     </button>
                                     <button
                                         type="button"
@@ -3031,9 +3036,20 @@
                 <div class="payment-modal" on:click|stopPropagation>
                     <div class="payment-header">
                         <div class="payment-title">
-                            {activeOrder.provider === "buymeacoffee"
-                                ? "Buy Me a Coffee"
-                                : $t("auth.wechat_qr_pay_title")}
+                            {#if activeOrder.provider === "buymeacoffee"}
+                                <span class="bmc-creator-identity">
+                                    <img
+                                        src="/account/bambooyang-buymeacoffee.png"
+                                        alt="Bamboo Yang"
+                                    />
+                                    <span>
+                                        <strong>Buy Me a Coffee</strong>
+                                        <small>Bamboo Yang · FreeSaveVideo</small>
+                                    </span>
+                                </span>
+                            {:else}
+                                {$t("auth.wechat_qr_pay_title")}
+                            {/if}
                         </div>
                         <button class="button elevated" on:click={clearActiveOrder}>
                             {$t("auth.close")}
@@ -3909,6 +3925,21 @@
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
     }
 
+    .provider-option-with-avatar {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding-left: 6px;
+    }
+
+    .provider-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0 0 2px var(--surface-2);
+    }
+
     .products-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4195,6 +4226,32 @@
         color: var(--text);
         letter-spacing: -0.02em;
         font-size: 16px;
+    }
+
+    .bmc-creator-identity {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .bmc-creator-identity > img {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0 0 2px var(--surface-2);
+    }
+
+    .bmc-creator-identity > span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .bmc-creator-identity small {
+        color: var(--subtext);
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .payment-subtitle {

@@ -194,6 +194,16 @@ nowpayments:
   payCurrencies: "usdcmatic,eth,usdttrc20,btc"
   payoutCurrency: "usdcmatic"
 
+# Buy Me a Coffee - fixed USD credit Shop products
+# Enable only after creating buymeacoffee-secret with BUYMEACOFFEE_WEBHOOK_SECRET.
+buymeacoffee:
+  enabled: true
+  secretName: buymeacoffee-secret
+  product199Id: "581332"
+  product199Url: "https://buymeacoffee.com/bambooyang/e/581332"
+  product499Id: "581334"
+  product499Url: "https://buymeacoffee.com/bambooyang/e/581334"
+
 # Social media sync (refresh thumbnails / latest videos for sync_enabled accounts)
 socialSync:
   enabled: true

@@ -87,6 +87,13 @@ import {
     toPublicNowInvoice,
     verifyNowPaymentsIpnSignature,
 } from "../payments/nowpayments.js";
+import {
+    BUYMEACOFFEE_CREDIT_PRODUCTS,
+    getBuyMeACoffeeProductByKey,
+    isBuyMeACoffeeConfigured,
+    parseBuyMeACoffeeCreatedEvent,
+    verifyBuyMeACoffeeSignature,
+} from "../payments/buymeacoffee.js";
 
 const router = express.Router();
 
@@ -269,13 +276,24 @@ const normalizeProvider = (rawProvider, fallback = "wechat") => {
     const normalized = String(rawProvider || "")
         .trim()
         .toLowerCase();
-    if (["wechat", "paypal", "nowpayments"].includes(normalized)) {
+    if (["wechat", "paypal", "nowpayments", "buymeacoffee"].includes(normalized)) {
         return normalized;
     }
     return fallback;
 };
 
 const buildPublicProducts = (provider) => {
+    if (provider === "buymeacoffee") {
+        const enabled = isBuyMeACoffeeConfigured();
+        return BUYMEACOFFEE_CREDIT_PRODUCTS.map((product) => ({
+            key: product.key,
+            points: product.points,
+            unitPriceFen: product.unitPriceFen,
+            amountFen: product.amountFen,
+            currency: product.currency,
+            enabled,
+        }));
+    }
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
         return NOWPAYMENTS_CREDIT_PRODUCTS.map((product) => ({
@@ -310,6 +328,7 @@ const buildPublicProducts = (provider) => {
 };
 
 const buildPublicMembershipProducts = (provider) => {
+    if (provider === "buymeacoffee") return [];
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
         return NOWPAYMENTS_MEMBERSHIP_PRODUCTS.map((product) => ({
@@ -914,6 +933,75 @@ router.post("/nowpayments/ipn", async (req, res) => {
     }
 });
 
+router.post("/buymeacoffee/webhook", async (req, res) => {
+    try {
+        if (!isBuyMeACoffeeConfigured()) {
+            return jsonError(res, 500, "BUYMEACOFFEE_NOT_CONFIGURED", "Buy Me a Coffee is not configured");
+        }
+        const signature = req.header("x-signature-sha256");
+        if (!verifyBuyMeACoffeeSignature({ rawBody: req.rawBody, signature })) {
+            console.warn("Buy Me a Coffee webhook signature invalid");
+            return jsonError(res, 401, "INVALID_SIGNATURE", "invalid signature");
+        }
+        if (req.body?.live_mode !== true) {
+            return res.status(200).json({ status: "test_received" });
+        }
+        if (req.body?.type === "extra_purchase.refunded") {
+            console.warn("Buy Me a Coffee purchase refunded; manual credit review required", {
+                eventId: req.body?.event_id || null,
+                transactionId: req.body?.data?.transaction_id || null,
+            });
+            return res.status(200).json({ status: "refund_recorded" });
+        }
+
+        const parsed = parseBuyMeACoffeeCreatedEvent(req.body || {});
+        if (!parsed.ok) {
+            const retryable = parsed.code === "ORDER_CODE_MISSING";
+            console.error("Buy Me a Coffee webhook rejected", {
+                code: parsed.code,
+                eventId: req.body?.event_id || null,
+            });
+            return retryable
+                ? jsonError(res, 500, parsed.code, "Buy Me a Coffee payment cannot be matched")
+                : res.status(200).json({ status: "ignored", code: parsed.code });
+        }
+        const order = await getCreditOrderByOutTradeNo(parsed.outTradeNo);
+        if (!order) {
+            return jsonError(res, 500, "ORDER_NOT_FOUND", "credit order not found");
+        }
+        if (order.provider !== "buymeacoffee" || order.product_key !== parsed.product.key) {
+            console.error("Buy Me a Coffee order/product mismatch", {
+                orderId: order.id,
+                provider: order.provider,
+                productKey: order.product_key,
+            });
+            return res.status(200).json({ status: "ignored", code: "ORDER_PRODUCT_MISMATCH" });
+        }
+        await updateCreditOrderProviderData(order.id, {
+            buymeacoffee_event_id: String(req.body?.event_id || ""),
+            buymeacoffee_product_id: parsed.product.productId,
+            supporter_email: String(req.body?.data?.supporter_email || ""),
+        });
+        const result = await markCreditOrderPaid({
+            outTradeNo: parsed.outTradeNo,
+            providerTransactionId: parsed.transactionId,
+            paidAt: parsed.paidAt,
+            totalFen: parsed.amountFen,
+            rawNotify: { source: "buymeacoffee_webhook", event: req.body || {} },
+        });
+        if (!result.ok) {
+            const retryable = result.code === "ORDER_NOT_FOUND";
+            return retryable
+                ? jsonError(res, 500, result.code, "credit order update failed")
+                : res.status(200).json({ status: "ignored", code: result.code });
+        }
+        return res.status(200).json({ status: "success" });
+    } catch (error) {
+        console.error("POST /payments/buymeacoffee/webhook error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "server error");
+    }
+});
+
 router.post("/wechat/notify", async (req, res) => {
     try {
         if (!isWechatPayConfigured()) {
@@ -1227,6 +1315,15 @@ if (!isClerkAuthConfigured) {
         );
     });
 
+    router.post("/credits/buymeacoffee", (_, res) => {
+        return jsonError(
+            res,
+            501,
+            "CLERK_NOT_CONFIGURED",
+            "Clerk request auth is not configured on this server",
+        );
+    });
+
     router.post("/credits/paypal/config", (_, res) => {
         return jsonError(
             res,
@@ -1300,6 +1397,60 @@ if (!isClerkAuthConfigured) {
     });
 } else {
     router.use(clerkMiddleware());
+
+    router.post("/credits/buymeacoffee", async (req, res) => {
+        try {
+            const auth = getAuth(req);
+            if (!auth.userId) {
+                return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+            }
+            if (!isBuyMeACoffeeConfigured()) {
+                return jsonError(
+                    res,
+                    501,
+                    "BUYMEACOFFEE_NOT_CONFIGURED",
+                    "Buy Me a Coffee is not configured on this server",
+                );
+            }
+            const product = getBuyMeACoffeeProductByKey(req.body?.productKey);
+            if (!product) {
+                return jsonError(res, 400, "INVALID_PRODUCT", "Invalid credit product");
+            }
+            const clerkUser = await clerkClient.users.getUser(auth.userId);
+            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const outTradeNo = `cpt_${nanoid(20)}`;
+            const attribution = sanitizeAttribution(req.body?.attribution);
+            const order = await createCreditOrder({
+                userId: user.id,
+                clerkUserId: user.clerk_user_id,
+                provider: "buymeacoffee",
+                productKey: product.key,
+                points: product.points,
+                amountFen: product.amountFen,
+                currency: product.currency,
+                outTradeNo,
+                providerData: {
+                    ...(attribution ? { attribution } : {}),
+                    buymeacoffee_product_id: product.productId,
+                    checkout_url: product.checkoutUrl,
+                },
+            });
+            return res.status(201).json({
+                status: "success",
+                data: {
+                    order,
+                    buymeacoffee: {
+                        checkoutUrl: product.checkoutUrl,
+                        paymentCode: outTradeNo,
+                        productId: product.productId,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("POST /payments/credits/buymeacoffee error:", error);
+            return jsonError(res, 500, "SERVER_ERROR", "Failed to create payment order");
+        }
+    });
 
     router.post("/credits/nowpayments", async (req, res) => {
         let createdOrder = null;

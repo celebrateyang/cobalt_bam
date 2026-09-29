@@ -233,6 +233,22 @@ spec:
             - name: NOWPAYMENTS_PAYOUT_CURRENCY
               value: {{ .Values.nowpayments.payoutCurrency | quote }}
             {{- end }}
+            {{- if .Values.buymeacoffee.enabled }}
+            # Buy Me a Coffee - fixed USD credit Shop products
+            - name: BUYMEACOFFEE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.buymeacoffee.secretName | quote }}
+                  key: BUYMEACOFFEE_WEBHOOK_SECRET
+            - name: BUYMEACOFFEE_PRODUCT_199_ID
+              value: {{ .Values.buymeacoffee.product199Id | quote }}
+            - name: BUYMEACOFFEE_PRODUCT_199_URL
+              value: {{ .Values.buymeacoffee.product199Url | quote }}
+            - name: BUYMEACOFFEE_PRODUCT_499_ID
+              value: {{ .Values.buymeacoffee.product499Id | quote }}
+            - name: BUYMEACOFFEE_PRODUCT_499_URL
+              value: {{ .Values.buymeacoffee.product499Url | quote }}
+            {{- end }}
             - name: VIDEO_AGENT_ENABLED
               value: {{ ternary "1" "0" .Values.videoAgent.enabled | quote }}
             - name: VIDEO_AGENT_RUNS_ENABLED

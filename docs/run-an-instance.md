@@ -131,6 +131,32 @@ hosted page may hide or reject a coin whose network or settlement minimum is
 above the invoice price. The configured payout currency is used to validate the
 final `outcome_currency` before granting the purchase.
 
+### optional: Buy Me a Coffee credit checkout
+
+Buy Me a Coffee provides fixed USD Shop products for international card
+checkout. Configure the production webhook signing secret:
+
+- `BUYMEACOFFEE_WEBHOOK_SECRET`
+- `BUYMEACOFFEE_PRODUCT_199_ID` (optional; defaults to `581332`)
+- `BUYMEACOFFEE_PRODUCT_199_URL` (optional; defaults to the public $1.99 product)
+- `BUYMEACOFFEE_PRODUCT_499_ID` (optional; defaults to `581334`)
+- `BUYMEACOFFEE_PRODUCT_499_URL` (optional; defaults to the public $4.99 product)
+
+Create a Buy Me a Coffee webhook with this endpoint:
+
+```text
+https://api.freesavevideo.online/payments/buymeacoffee/webhook
+```
+
+Subscribe to `extra_purchase.created` and `extra_purchase.refunded`. Copy the
+webhook detail page's Signing Secret into `BUYMEACOFFEE_WEBHOOK_SECRET`. Each
+Shop product must have exactly one required question asking for the
+FreeSaveVideo payment code. Keep quantity selection and pay-what-you-want off.
+The API verifies `x-signature-sha256` against the raw request body, then checks
+the local order code, Shop product ID, USD amount, quantity, and transaction ID
+before granting credits. Dashboard test events (`live_mode=false`) never grant
+credits.
+
 ### optional: discover/social module
 if you want to use the Discover page (`/discover`) and the admin console (`/console-manage-2025`), initialize the social tables (and re-run after pulling schema updates):
 

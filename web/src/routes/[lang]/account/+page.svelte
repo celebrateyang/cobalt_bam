@@ -54,7 +54,7 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat" | "paypal" | "nowpayments";
+        provider: "wechat" | "paypal" | "nowpayments" | "buymeacoffee";
         provider_data?: Record<string, unknown> | null;
     };
 
@@ -107,7 +107,7 @@
         | (CreditOrder & { kind: "credit" })
         | (MembershipOrder & { kind: "membership" });
 
-    type PaymentProvider = "wechat" | "paypal" | "nowpayments";
+    type PaymentProvider = "wechat" | "paypal" | "nowpayments" | "buymeacoffee";
     type NowPaymentsInvoice = {
         invoiceId: string;
         invoiceUrl: string;
@@ -724,6 +724,9 @@
     let activeOrder: ActivePaymentOrder | null = null;
     let codeUrl = "";
     let qrDataUrl = "";
+    let buyMeACoffeeCheckoutUrl = "";
+    let buyMeACoffeePaymentCode = "";
+    let buyMeACoffeeCodeCopied = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
@@ -732,7 +735,7 @@
     let paypalSdkPromise: Promise<PayPalSdkInstance> | null = null;
     let paypalSdkLocale = "";
     let paypalSdkPromiseLocale = "";
-    // PayPal remains disabled. Chinese checkout uses WeChat; other locales use crypto.
+    // PayPal remains disabled. Chinese checkout uses WeChat; other locales offer card and crypto.
     const PAYPAL_PAYMENT_VISIBLE = false;
     const PAYPAL_LOCALE_BY_LANGUAGE: Record<string, string> = {
         de: "de-DE",
@@ -771,7 +774,7 @@
     $: isChinese = $page.params.lang === "zh";
     $: if (
         !isChinese &&
-        selectedPaymentProvider !== "nowpayments"
+        !["buymeacoffee", "nowpayments"].includes(selectedPaymentProvider)
     ) {
         selectedPaymentProvider = "nowpayments";
         clearActiveOrder();
@@ -781,7 +784,9 @@
         clearActiveOrder();
     }
     $: topupSubtitleKey =
-        selectedPaymentProvider === "nowpayments"
+        selectedPaymentProvider === "buymeacoffee"
+            ? "auth.topup_subtitle_paypal"
+            : selectedPaymentProvider === "nowpayments"
             ? "auth.topup_subtitle_nowpayments"
             : selectedPaymentProvider === "paypal"
             ? "auth.topup_subtitle_paypal"
@@ -791,6 +796,8 @@
     const PAYPAL_RECOMMENDED_PRODUCT_KEY = "paypal_usd_499";
     const NOWPAYMENTS_BEST_VALUE_PRODUCT_KEY = "nowpayments_usd_999";
     const NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY = "nowpayments_usd_499";
+    const BUYMEACOFFEE_BEST_VALUE_PRODUCT_KEY = "buymeacoffee_usd_499";
+    const BUYMEACOFFEE_RECOMMENDED_PRODUCT_KEY = "buymeacoffee_usd_199";
     const WECHAT_RECOMMENDED_PRODUCT_KEY = "points_1000";
 
     const sortCreditProductsForDisplay = (
@@ -832,16 +839,21 @@
 
         if (
             selectedPaymentProvider === "paypal" ||
-            selectedPaymentProvider === "nowpayments"
+            selectedPaymentProvider === "nowpayments" ||
+            selectedPaymentProvider === "buymeacoffee"
         ) {
             const preferredBest =
                 selectedPaymentProvider === "nowpayments"
                     ? NOWPAYMENTS_BEST_VALUE_PRODUCT_KEY
-                    : PAYPAL_BEST_VALUE_PRODUCT_KEY;
+                    : selectedPaymentProvider === "buymeacoffee"
+                      ? BUYMEACOFFEE_BEST_VALUE_PRODUCT_KEY
+                      : PAYPAL_BEST_VALUE_PRODUCT_KEY;
             const preferredRecommended =
                 selectedPaymentProvider === "nowpayments"
                     ? NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY
-                    : PAYPAL_RECOMMENDED_PRODUCT_KEY;
+                    : selectedPaymentProvider === "buymeacoffee"
+                      ? BUYMEACOFFEE_RECOMMENDED_PRODUCT_KEY
+                      : PAYPAL_RECOMMENDED_PRODUCT_KEY;
             const fallbackBest = ranked[0]?.key ?? null;
             const fallbackRecommended =
                 ranked.find((product) => product.key !== fallbackBest)?.key ?? null;
@@ -909,6 +921,8 @@
                     ? WECHAT_RECOMMENDED_PRODUCT_KEY
                     : provider === "nowpayments"
                       ? NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY
+                      : provider === "buymeacoffee"
+                        ? BUYMEACOFFEE_RECOMMENDED_PRODUCT_KEY
                       : PAYPAL_RECOMMENDED_PRODUCT_KEY,
             );
             trackCreditProductListViewed(provider, trackedProducts);
@@ -1065,6 +1079,9 @@
         activeOrder = null;
         codeUrl = "";
         qrDataUrl = "";
+        buyMeACoffeeCheckoutUrl = "";
+        buyMeACoffeePaymentCode = "";
+        buyMeACoffeeCodeCopied = false;
         orderStatusLoading = false;
     };
 
@@ -1139,7 +1156,7 @@
             if (order) {
                 if (
                     showWechatModal &&
-                    ["wechat", "nowpayments"].includes(order.provider)
+                    ["wechat", "nowpayments", "buymeacoffee"].includes(order.provider)
                 ) {
                     activeOrder = { ...order, kind: "credit" };
                 }
@@ -1318,6 +1335,74 @@
         } catch (error) {
             purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create wechat pay order failed", error);
+        } finally {
+            purchaseLoading = false;
+        }
+    };
+
+    const copyBuyMeACoffeePaymentCode = async () => {
+        if (!buyMeACoffeePaymentCode) return;
+        try {
+            await navigator.clipboard.writeText(buyMeACoffeePaymentCode);
+            buyMeACoffeeCodeCopied = true;
+        } catch {
+            buyMeACoffeeCodeCopied = false;
+        }
+    };
+
+    const startBuyMeACoffeePay = async (productKey: string) => {
+        if (purchaseLoading || !$clerkUser) return;
+        if (activeOrder?.status === "CREATED") return;
+
+        const checkoutWindow = window.open("about:blank", "_blank");
+        if (checkoutWindow) checkoutWindow.opener = null;
+        purchaseLoading = true;
+        purchaseErrorKey = "";
+        purchaseNoticeKey = "";
+        lastPaymentResumeKey = "";
+        try {
+            const token = await getClerkToken();
+            if (!token) throw new Error("missing token");
+            const res = await fetch(`${currentApiURL()}/payments/credits/buymeacoffee`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productKey,
+                    attribution: getOrderAttribution(),
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data?.status !== "success") {
+                throw new Error(data?.error?.message || "failed to create order");
+            }
+            const order = data?.data?.order as CreditOrder | undefined;
+            const checkoutUrl = String(data?.data?.buymeacoffee?.checkoutUrl || "");
+            const paymentCode = String(data?.data?.buymeacoffee?.paymentCode || "");
+            if (!order?.id || !checkoutUrl || !paymentCode) {
+                throw new Error("invalid create order response");
+            }
+
+            trackCheckoutStarted({
+                id: productKey,
+                name: `${order.points} credits`,
+                value: order.amount_fen / 100,
+                currency: order.currency,
+                provider: order.provider,
+                kind: "credit",
+            });
+            activeOrder = { ...order, kind: "credit" };
+            buyMeACoffeeCheckoutUrl = checkoutUrl;
+            buyMeACoffeePaymentCode = paymentCode;
+            await copyBuyMeACoffeePaymentCode();
+            if (checkoutWindow) checkoutWindow.location.href = checkoutUrl;
+            startPolling(order.id);
+        } catch (error) {
+            checkoutWindow?.close();
+            purchaseErrorKey = "auth.payment_create_failed";
+            console.debug("create Buy Me a Coffee order failed", error);
         } finally {
             purchaseLoading = false;
         }
@@ -2044,7 +2129,8 @@
     }
 
     const selectPaymentProvider = (provider: PaymentProvider) => {
-        if (!isChinese) return;
+        if (isChinese && !["wechat", "paypal"].includes(provider)) return;
+        if (!isChinese && !["buymeacoffee", "nowpayments"].includes(provider)) return;
         if (provider === selectedPaymentProvider) return;
 
         selectedPaymentProvider = provider;
@@ -2550,24 +2636,43 @@
                             {/if}
                         </p>
 
-                        {#if isChinese && PAYPAL_PAYMENT_VISIBLE}
+                        {#if !isChinese || PAYPAL_PAYMENT_VISIBLE}
                             <div class="provider-switch" role="tablist">
-                                <button
-                                    type="button"
-                                    class="provider-option"
-                                    class:active={selectedPaymentProvider === "wechat"}
-                                    on:click={() => selectPaymentProvider("wechat")}
-                                >
-                                    {$t("auth.wechat_pay")}
-                                </button>
-                                <button
-                                    type="button"
-                                    class="provider-option"
-                                    class:active={selectedPaymentProvider === "paypal"}
-                                    on:click={() => selectPaymentProvider("paypal")}
-                                >
-                                    {$t("auth.international_pay")}
-                                </button>
+                                {#if isChinese}
+                                    <button
+                                        type="button"
+                                        class="provider-option"
+                                        class:active={selectedPaymentProvider === "wechat"}
+                                        on:click={() => selectPaymentProvider("wechat")}
+                                    >
+                                        {$t("auth.wechat_pay")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="provider-option"
+                                        class:active={selectedPaymentProvider === "paypal"}
+                                        on:click={() => selectPaymentProvider("paypal")}
+                                    >
+                                        {$t("auth.international_pay")}
+                                    </button>
+                                {:else}
+                                    <button
+                                        type="button"
+                                        class="provider-option"
+                                        class:active={selectedPaymentProvider === "buymeacoffee"}
+                                        on:click={() => selectPaymentProvider("buymeacoffee")}
+                                    >
+                                        Buy Me a Coffee
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="provider-option"
+                                        class:active={selectedPaymentProvider === "nowpayments"}
+                                        on:click={() => selectPaymentProvider("nowpayments")}
+                                    >
+                                        Crypto
+                                    </button>
+                                {/if}
                             </div>
                         {/if}
 
@@ -2621,6 +2726,17 @@
                                                     on:click={() => startWechatPay(product.key)}
                                                 >
                                                     {$t("auth.wechat_pay")}
+                                                </button>
+                                            {:else if selectedPaymentProvider === "buymeacoffee"}
+                                                <button
+                                                    class="button elevated active"
+                                                    disabled={purchaseLoading ||
+                                                        activeOrder?.status === "CREATED" ||
+                                                        product.enabled === false}
+                                                    on:click={() =>
+                                                        startBuyMeACoffeePay(product.key)}
+                                                >
+                                                    Buy Me a Coffee
                                                 </button>
                                             {:else if selectedPaymentProvider === "nowpayments"}
                                                 <button
@@ -2906,7 +3022,7 @@
             </div>
         </div>
 
-        {#if activeOrder && activeOrder.provider === "wechat"}
+        {#if activeOrder && ["wechat", "buymeacoffee"].includes(activeOrder.provider)}
             <div
                 class="payment-overlay"
                 role="presentation"
@@ -2914,7 +3030,11 @@
             >
                 <div class="payment-modal" on:click|stopPropagation>
                     <div class="payment-header">
-                        <div class="payment-title">{$t("auth.wechat_qr_pay_title")}</div>
+                        <div class="payment-title">
+                            {activeOrder.provider === "buymeacoffee"
+                                ? "Buy Me a Coffee"
+                                : $t("auth.wechat_qr_pay_title")}
+                        </div>
                         <button class="button elevated" on:click={clearActiveOrder}>
                             {$t("auth.close")}
                         </button>
@@ -2938,6 +3058,27 @@
                                             ? "auth.membership_payment_success"
                                             : "auth.payment_success",
                                     )}
+                                </div>
+                            {:else if activeOrder.provider === "buymeacoffee"}
+                                <div class="bmc-payment-code">
+                                    <strong>Payment code</strong>
+                                    <code>{buyMeACoffeePaymentCode}</code>
+                                    <button
+                                        class="button elevated"
+                                        on:click={copyBuyMeACoffeePaymentCode}
+                                    >
+                                        {buyMeACoffeeCodeCopied ? "Copied" : "Copy code"}
+                                    </button>
+                                    {#if buyMeACoffeeCheckoutUrl}
+                                        <a
+                                            class="button elevated active"
+                                            href={buyMeACoffeeCheckoutUrl}
+                                            target="_blank"
+                                            rel="noreferrer noopener nofollow"
+                                        >
+                                            Continue to checkout
+                                        </a>
+                                    {/if}
                                 </div>
                             {:else if qrDataUrl}
                                 <img
@@ -2986,7 +3127,11 @@
                             {:else}
                                 <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
-                                    {$t("auth.payment_waiting_hint")}
+                                    {#if activeOrder.provider === "buymeacoffee"}
+                                        Paste the payment code into the required checkout field. Keep this page open; credits are added after payment confirmation.
+                                    {:else}
+                                        {$t("auth.payment_waiting_hint")}
+                                    {/if}
                                 </div>
                             {/if}
 
@@ -4089,6 +4234,33 @@
         justify-content: center;
         color: var(--subtext);
         font-weight: 700;
+    }
+
+    .bmc-payment-code {
+        width: 100%;
+        min-height: 240px;
+        padding: 18px;
+        border-radius: 18px;
+        background: var(--surface-1);
+        box-shadow: 0 0 0 1px var(--surface-2) inset;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .bmc-payment-code code {
+        padding: 12px;
+        border-radius: 10px;
+        background: var(--surface-2);
+        color: var(--text);
+        overflow-wrap: anywhere;
+        user-select: all;
+    }
+
+    .bmc-payment-code :global(a.button) {
+        justify-content: center;
+        text-decoration: none;
     }
 
     .payment-status {

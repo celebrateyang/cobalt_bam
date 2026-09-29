@@ -464,7 +464,7 @@ export const initUserDatabase = async () => {
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             clerk_user_id TEXT NOT NULL,
-            provider TEXT NOT NULL, -- wechat | paypal | nowpayments
+            provider TEXT NOT NULL, -- wechat | paypal | nowpayments | buymeacoffee
             product_key TEXT NOT NULL,
             points INTEGER NOT NULL,
             amount_fen INTEGER NOT NULL,
@@ -496,6 +496,11 @@ export const initUserDatabase = async () => {
     );
     await query(
         `CREATE INDEX IF NOT EXISTS idx_credit_orders_status ON credit_orders(status);`,
+    );
+    await query(
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_orders_provider_transaction
+         ON credit_orders(provider, provider_transaction_id)
+         WHERE provider_transaction_id IS NOT NULL;`,
     );
 
     // Roles (RBAC) - optional, for future admin / internal permissions

@@ -49,10 +49,28 @@ const canonicalNoteUrl = (noteId, xsecToken, originURL) => {
     return `https://${hostname}/explore/${noteId}?xsec_token=${encodeQueryValue(xsecToken)}`;
 };
 
+const discoveryNoteUrl = (noteId, xsecToken, originURL) => {
+    const hostname = originURL?.hostname === "www.rednote.com"
+        ? "www.rednote.com"
+        : "www.xiaohongshu.com";
+    const target = new URL(`https://${hostname}/discovery/item/${noteId}`);
+
+    target.searchParams.set("xsec_source", "pc_share");
+    if (xsecToken) {
+        target.searchParams.set("xsec_token", xsecToken);
+    }
+
+    return target.toString();
+};
+
 const noteRequestUrls = ({ noteId, xsecToken, submittedShortUrl, url }) => {
     if (submittedShortUrl) return [submittedShortUrl];
 
-    const candidates = [url?.toString(), canonicalNoteUrl(noteId, xsecToken, url)];
+    const candidates = [
+        url?.toString(),
+        canonicalNoteUrl(noteId, xsecToken, url),
+        discoveryNoteUrl(noteId, xsecToken, url),
+    ];
     return [...new Set(candidates.filter(Boolean))];
 };
 
@@ -61,6 +79,7 @@ export const isUnavailableRedirectUrl = (value) => {
         const parsed = new URL(value);
         return (
             parsed.pathname === "/404"
+            || parsed.pathname.startsWith("/404/")
             || (
                 parsed.pathname === "/explore"
                 && parsed.searchParams.has("target_note_id")

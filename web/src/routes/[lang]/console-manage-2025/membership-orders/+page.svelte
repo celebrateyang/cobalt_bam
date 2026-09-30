@@ -241,7 +241,6 @@
                 <select bind:value={provider} on:change={applyFilters} disabled={loading}>
                     <option value="">全部</option>
                     <option value="wechat">wechat</option>
-                    <option value="paypal">paypal</option>
                     <option value="nowpayments">nowpayments</option>
                 </select>
             </label>

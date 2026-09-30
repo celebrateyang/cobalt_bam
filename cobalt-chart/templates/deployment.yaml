@@ -182,38 +182,6 @@ spec:
                 secretKeyRef:
                   name: clerk-secret
                   key: CLERK_PUBLISHABLE_KEY
-            {{- if .Values.paypal.enabled }}
-            # PayPal Checkout - international USD credits and memberships
-            - name: PAYPAL_ENV
-              value: {{ .Values.paypal.environment | quote }}
-            - name: PAYPAL_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.paypal.secretName | quote }}
-                  key: PAYPAL_CLIENT_ID
-            - name: PAYPAL_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.paypal.secretName | quote }}
-                  key: PAYPAL_CLIENT_SECRET
-            - name: PAYPAL_WEBHOOK_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.paypal.secretName | quote }}
-                  key: PAYPAL_WEBHOOK_ID
-            - name: PAYPAL_MEMBERSHIP_MONTHLY_PLAN_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.paypal.secretName | quote }}
-                  key: PAYPAL_MEMBERSHIP_MONTHLY_PLAN_ID
-                  optional: true
-            - name: PAYPAL_MEMBERSHIP_YEARLY_PLAN_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.paypal.secretName | quote }}
-                  key: PAYPAL_MEMBERSHIP_YEARLY_PLAN_ID
-                  optional: true
-            {{- end }}
             {{- if .Values.nowpayments.enabled }}
             # NOWPayments - international USD-priced checkout paid with crypto
             - name: NOWPAYMENTS_API_KEY

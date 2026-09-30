@@ -4,7 +4,6 @@ import { initFeedbackDatabase } from "./feedback.js";
 import { initReferralDatabase } from "./referrals.js";
 import { initPromotionSubmissionsDatabase } from "./promotion-submissions.js";
 import { ensureMembershipOrdersSchema } from "./membership-orders.js";
-import { ensurePayPalMembershipSubscriptionsSchema } from "./paypal-membership-subscriptions.js";
 import { ensureRandomChatSafetySchema } from "./random-chat-safety.js";
 import { initDownloadAttemptsDatabase } from "./download-attempts.js";
 import { initPlatformRequestsDatabase } from "./platform-requests.js";
@@ -464,7 +463,7 @@ export const initUserDatabase = async () => {
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             clerk_user_id TEXT NOT NULL,
-            provider TEXT NOT NULL, -- wechat | paypal | nowpayments | buymeacoffee
+            provider TEXT NOT NULL, -- wechat | nowpayments | buymeacoffee
             product_key TEXT NOT NULL,
             points INTEGER NOT NULL,
             amount_fen INTEGER NOT NULL,
@@ -687,7 +686,6 @@ export const initUserDatabase = async () => {
     );
 
     await ensureMembershipOrdersSchema();
-    await ensurePayPalMembershipSubscriptionsSchema();
     await ensureRandomChatSafetySchema();
     await ensureClipboardPersonalSchema();
 

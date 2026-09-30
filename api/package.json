@@ -18,7 +18,6 @@
         "test:random-chat-signaling": "node --test src/core/signaling.random-chat.test.js",
         "test:membership-features": "node --test src/core/membership-features.test.js",
         "test:membership-products": "node --test src/payments/membership-products.test.js",
-        "test:paypal": "node --test src/payments/paypal.test.js",
         "test:nowpayments": "node --test src/payments/nowpayments.test.js",
         "test:buymeacoffee": "node --test src/payments/buymeacoffee.test.js",
         "test:collection-window": "node --test src/processing/collection-window.test.js",

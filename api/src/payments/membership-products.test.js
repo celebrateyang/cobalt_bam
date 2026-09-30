@@ -3,11 +3,9 @@ import test from "node:test";
 
 import {
     NOWPAYMENTS_MEMBERSHIP_PRODUCTS,
-    PAYPAL_MEMBERSHIP_PRODUCTS,
     WECHAT_MEMBERSHIP_PRODUCTS,
     getMembershipProductDescription,
     getNowPaymentsMembershipProductByKey,
-    getPayPalMembershipProductByKey,
     getWechatMembershipProductByKey,
 } from "./membership-products.js";
 
@@ -81,52 +79,6 @@ test("offers three NOWPayments one-time membership passes", () => {
         ),
         "FreeSaveVideo Founding Annual Pass",
     );
-});
-
-test("offers PayPal recurring monthly/yearly plans and a one-month pass", () => {
-    assert.deepEqual(
-        PAYPAL_MEMBERSHIP_PRODUCTS.map(
-            ({ key, planKey, durationDays, amountFen, currency, billingType }) => ({
-                key,
-                planKey,
-                durationDays,
-                amountFen,
-                currency,
-                billingType,
-            }),
-        ),
-        [
-            {
-                key: "member_monthly_recurring",
-                planKey: "member_monthly",
-                durationDays: 30,
-                amountFen: 799,
-                currency: "USD",
-                billingType: "subscription",
-            },
-            {
-                key: "member_yearly_recurring",
-                planKey: "member_yearly",
-                durationDays: 365,
-                amountFen: 7999,
-                currency: "USD",
-                billingType: "subscription",
-            },
-            {
-                key: "member_monthly_onetime",
-                planKey: "member_monthly",
-                durationDays: 30,
-                amountFen: 999,
-                currency: "USD",
-                billingType: "one_time",
-            },
-        ],
-    );
-    assert.equal(
-        getPayPalMembershipProductByKey("member_monthly_onetime")?.amountFen,
-        999,
-    );
-    assert.equal(getPayPalMembershipProductByKey("member_3day"), undefined);
 });
 
 test("offers the new membership prices without reselling the legacy 7-day plan", () => {

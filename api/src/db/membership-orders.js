@@ -1,104 +1,104 @@
 import { getClient, query } from "./pg-client.js";
 
 export const MEMBERSHIP_ORDER_STATUS = Object.freeze({
-    created: "CREATED",
-    paid: "PAID",
-    closed: "CLOSED",
-    failed: "FAILED",
-    refunded: "REFUNDED",
+  created: "CREATED",
+  paid: "PAID",
+  closed: "CLOSED",
+  failed: "FAILED",
+  refunded: "REFUNDED",
 });
 
 const CHECKOUT_PLAN_METADATA = Object.freeze({
-    member_3day: Object.freeze({
-        name: "3-Day Member",
-        description: "3-day membership for downloads without points",
-    }),
-    member_monthly: Object.freeze({
-        name: "Monthly Member",
-        description: "Monthly membership for downloads without points",
-    }),
-    member_yearly: Object.freeze({
-        name: "Yearly Member",
-        description: "Yearly membership for downloads without points",
-    }),
-    member_3day_crypto: Object.freeze({
-        name: "3-Day Crypto Member",
-        description: "3-day crypto membership for standard downloads without points",
-        entitlements: Object.freeze(["member_download", "video_recording"]),
-    }),
-    member_monthly_crypto: Object.freeze({
-        name: "Monthly Crypto Member",
-        description: "30-day crypto membership for standard downloads without points",
-        entitlements: Object.freeze(["member_download", "video_recording"]),
-    }),
-    member_yearly_crypto: Object.freeze({
-        name: "Founding Annual Member",
-        description:
-            "365-day membership for standard downloads without points",
-        entitlements: Object.freeze(["member_download", "video_recording"]),
-    }),
+  member_3day: Object.freeze({
+    name: "3-Day Member",
+    description: "3-day membership for downloads without points",
+  }),
+  member_monthly: Object.freeze({
+    name: "Monthly Member",
+    description: "Monthly membership for downloads without points",
+  }),
+  member_yearly: Object.freeze({
+    name: "Yearly Member",
+    description: "Yearly membership for downloads without points",
+  }),
+  member_3day_crypto: Object.freeze({
+    name: "3-Day Crypto Member",
+    description:
+      "3-day crypto membership for standard downloads without points",
+    entitlements: Object.freeze(["member_download", "video_recording"]),
+  }),
+  member_monthly_crypto: Object.freeze({
+    name: "Monthly Crypto Member",
+    description:
+      "30-day crypto membership for standard downloads without points",
+    entitlements: Object.freeze(["member_download", "video_recording"]),
+  }),
+  member_yearly_crypto: Object.freeze({
+    name: "Founding Annual Member",
+    description: "365-day membership for standard downloads without points",
+    entitlements: Object.freeze(["member_download", "video_recording"]),
+  }),
 });
 
 const DEFAULT_MEMBERSHIP_ENTITLEMENTS = Object.freeze([
-    "member_download",
-    "ai_video_studio",
-    "video_recording",
-    "random_chat",
+  "member_download",
+  "ai_video_studio",
+  "video_recording",
+  "random_chat",
 ]);
 
 export const ensureMembershipCheckoutPlan = async (planKey) => {
-    const metadata = CHECKOUT_PLAN_METADATA[planKey];
-    if (!metadata) {
-        throw new Error(`Unsupported membership checkout plan: ${planKey}`);
-    }
+  const metadata = CHECKOUT_PLAN_METADATA[planKey];
+  if (!metadata) {
+    throw new Error(`Unsupported membership checkout plan: ${planKey}`);
+  }
 
-    const client = await getClient();
-    const now = Date.now();
-    const entitlements = metadata.entitlements || DEFAULT_MEMBERSHIP_ENTITLEMENTS;
+  const client = await getClient();
+  const now = Date.now();
+  const entitlements = metadata.entitlements || DEFAULT_MEMBERSHIP_ENTITLEMENTS;
 
-    try {
-        await client.query("BEGIN");
-        await client.query(
-            `INSERT INTO entitlements (key, description)
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO entitlements (key, description)
              VALUES
                 ('member_download', 'Allows downloads without consuming points within fair-use limits'),
                 ('ai_video_studio', 'Allows using AI video clipping and translated subtitles'),
                 ('video_recording', 'Allows using the browser video recording studio'),
                 ('random_chat', 'Allows using random video chat')
              ON CONFLICT (key) DO NOTHING;`,
-        );
-        await client.query(
-            `INSERT INTO plans (key, name, description, is_active, created_at, updated_at)
+    );
+    await client.query(
+      `INSERT INTO plans (key, name, description, is_active, created_at, updated_at)
              VALUES ($1, $2, $3, true, $4, $4)
              ON CONFLICT (key) DO UPDATE
              SET name = EXCLUDED.name,
                  description = EXCLUDED.description,
                  is_active = true,
                  updated_at = EXCLUDED.updated_at;`,
-            [planKey, metadata.name, metadata.description, now],
-        );
-        await client.query(
-            `INSERT INTO plan_entitlements (plan_id, entitlement_key)
+      [planKey, metadata.name, metadata.description, now],
+    );
+    await client.query(
+      `INSERT INTO plan_entitlements (plan_id, entitlement_key)
              SELECT p.id, entitlement.key
              FROM plans p
              CROSS JOIN unnest($2::text[]) AS entitlement(key)
              WHERE p.key = $1
              ON CONFLICT (plan_id, entitlement_key) DO NOTHING;`,
-            [planKey, entitlements],
-        );
-        await client.query("COMMIT");
-    } catch (error) {
-        try {
-            await client.query("ROLLBACK");
-        } catch {}
-        throw error;
-    } finally {
-        client.release();
-    }
+      [planKey, entitlements],
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw error;
+  } finally {
+    client.release();
+  }
 };
-
 export const ensureMembershipOrdersSchema = async () => {
-    await query(`
+  await query(`
         CREATE TABLE IF NOT EXISTS membership_orders (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
@@ -121,33 +121,33 @@ export const ensureMembershipOrdersSchema = async () => {
         );
     `);
 
-    await query(
-        `CREATE INDEX IF NOT EXISTS idx_membership_orders_user_id ON membership_orders(user_id, created_at DESC);`,
-    );
-    await query(
-        `CREATE INDEX IF NOT EXISTS idx_membership_orders_out_trade_no ON membership_orders(out_trade_no);`,
-    );
-    await query(
-        `CREATE INDEX IF NOT EXISTS idx_membership_orders_status ON membership_orders(status);`,
-    );
+  await query(
+    `CREATE INDEX IF NOT EXISTS idx_membership_orders_user_id ON membership_orders(user_id, created_at DESC);`,
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS idx_membership_orders_out_trade_no ON membership_orders(out_trade_no);`,
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS idx_membership_orders_status ON membership_orders(status);`,
+  );
 };
 
 export const createMembershipOrder = async ({
-    userId,
-    clerkUserId,
-    provider,
-    productKey,
-    planKey,
-    durationDays,
-    amountFen,
-    currency = "CNY",
-    outTradeNo,
-    providerData = null,
+  userId,
+  clerkUserId,
+  provider,
+  productKey,
+  planKey,
+  durationDays,
+  amountFen,
+  currency = "CNY",
+  outTradeNo,
+  providerData = null,
 }) => {
-    const now = Date.now();
+  const now = Date.now();
 
-    const result = await query(
-        `
+  const result = await query(
+    `
         INSERT INTO membership_orders (
             user_id,
             clerk_user_id,
@@ -165,74 +165,74 @@ export const createMembershipOrder = async ({
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
         RETURNING *;
         `,
-        [
-            userId,
-            clerkUserId,
-            provider,
-            productKey,
-            planKey,
-            durationDays,
-            amountFen,
-            currency,
-            outTradeNo,
-            MEMBERSHIP_ORDER_STATUS.created,
-            providerData,
-            now,
-            now,
-        ],
-    );
+    [
+      userId,
+      clerkUserId,
+      provider,
+      productKey,
+      planKey,
+      durationDays,
+      amountFen,
+      currency,
+      outTradeNo,
+      MEMBERSHIP_ORDER_STATUS.created,
+      providerData,
+      now,
+      now,
+    ],
+  );
 
-    return result.rows[0] || null;
+  return result.rows[0] || null;
 };
 
 export const getMembershipOrderById = async (id) => {
-    const result = await query(`SELECT * FROM membership_orders WHERE id = $1`, [
-        id,
-    ]);
-    return result.rows[0] || null;
+  const result = await query(`SELECT * FROM membership_orders WHERE id = $1`, [
+    id,
+  ]);
+  return result.rows[0] || null;
 };
 
 export const getMembershipOrderByOutTradeNo = async (outTradeNo) => {
-    const result = await query(
-        `SELECT * FROM membership_orders WHERE out_trade_no = $1`,
-        [outTradeNo],
-    );
-    return result.rows[0] || null;
+  const result = await query(
+    `SELECT * FROM membership_orders WHERE out_trade_no = $1`,
+    [outTradeNo],
+  );
+  return result.rows[0] || null;
 };
 
 export const updateMembershipOrderProviderData = async (id, providerData) => {
-    const now = Date.now();
-    const result = await query(
-        `
+  const now = Date.now();
+  const result = await query(
+    `
         UPDATE membership_orders
         SET provider_data = COALESCE(provider_data, '{}'::jsonb) || $2::jsonb,
             updated_at = $3
         WHERE id = $1
         RETURNING *;
         `,
-        [id, providerData, now],
-    );
-    return result.rows[0] || null;
+    [id, providerData, now],
+  );
+  return result.rows[0] || null;
 };
 
 export const updatePendingMembershipOrder = async ({
-    id,
-    status,
-    providerData = null,
-    rawNotify = null,
+  id,
+  status,
+  providerData = null,
+  rawNotify = null,
 }) => {
-    const allowedStatuses = new Set([
-        MEMBERSHIP_ORDER_STATUS.created,
-        MEMBERSHIP_ORDER_STATUS.closed,
-        MEMBERSHIP_ORDER_STATUS.failed,
-    ]);
-    if (!allowedStatuses.has(status)) {
-        throw new Error("invalid pending membership order status");
-    }
+  const allowedStatuses = new Set([
+    MEMBERSHIP_ORDER_STATUS.created,
+    MEMBERSHIP_ORDER_STATUS.closed,
+    MEMBERSHIP_ORDER_STATUS.failed,
+  ]);
+  if (!allowedStatuses.has(status)) {
+    throw new Error("invalid pending membership order status");
+  }
 
-    const now = Date.now();
-    const result = await query(
-        `
+  const now = Date.now();
+  const result = await query(
+    `
         UPDATE membership_orders
         SET status = $2,
             provider_data = COALESCE(provider_data, '{}'::jsonb) || $3::jsonb,
@@ -242,46 +242,46 @@ export const updatePendingMembershipOrder = async ({
           AND status = $6
         RETURNING *;
         `,
-        [
-            id,
-            status,
-            providerData || {},
-            rawNotify,
-            now,
-            MEMBERSHIP_ORDER_STATUS.created,
-        ],
-    );
-    return result.rows[0] || null;
+    [
+      id,
+      status,
+      providerData || {},
+      rawNotify,
+      now,
+      MEMBERSHIP_ORDER_STATUS.created,
+    ],
+  );
+  return result.rows[0] || null;
 };
 
 export const listMembershipOrders = async ({
-    page = 1,
-    limit = 20,
-    userId,
-    status,
-    provider,
-    search = "",
-    sort = "created_at",
-    order = "desc",
+  page = 1,
+  limit = 20,
+  userId,
+  status,
+  provider,
+  search = "",
+  sort = "created_at",
+  order = "desc",
 } = {}) => {
-    const parsedPage = Number.parseInt(String(page), 10);
-    const safePage =
-        Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const parsedPage = Number.parseInt(String(page), 10);
+  const safePage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-    const parsedLimit = Number.parseInt(String(limit), 10);
-    const safeLimitRaw =
-        Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 20;
-    const safeLimit = Math.min(Math.max(safeLimitRaw, 1), 200);
-    const offset = (safePage - 1) * safeLimit;
+  const parsedLimit = Number.parseInt(String(limit), 10);
+  const safeLimitRaw =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 20;
+  const safeLimit = Math.min(Math.max(safeLimitRaw, 1), 200);
+  const offset = (safePage - 1) * safeLimit;
 
-    const allowedSort = {
-        id: "o.id",
-        created_at: "o.created_at",
-        updated_at: "o.updated_at",
-        paid_at: "o.paid_at",
-        amount_fen: "o.amount_fen",
-        duration_days: "o.duration_days",
-        status: `CASE o.status
+  const allowedSort = {
+    id: "o.id",
+    created_at: "o.created_at",
+    updated_at: "o.updated_at",
+    paid_at: "o.paid_at",
+    amount_fen: "o.amount_fen",
+    duration_days: "o.duration_days",
+    status: `CASE o.status
             WHEN 'CREATED' THEN 1
             WHEN 'PAID' THEN 2
             WHEN 'FAILED' THEN 3
@@ -289,53 +289,53 @@ export const listMembershipOrders = async ({
             WHEN 'CLOSED' THEN 5
             ELSE 99
         END`,
-    };
+  };
 
-    const sortColumn = allowedSort[String(sort)] || allowedSort.created_at;
-    const orderDir = String(order).toLowerCase() === "asc" ? "ASC" : "DESC";
+  const sortColumn = allowedSort[String(sort)] || allowedSort.created_at;
+  const orderDir = String(order).toLowerCase() === "asc" ? "ASC" : "DESC";
 
-    const where = [];
-    const params = [];
-    let paramIndex = 1;
+  const where = [];
+  const params = [];
+  let paramIndex = 1;
 
-    const parsedUserId = Number.parseInt(String(userId), 10);
-    if (Number.isFinite(parsedUserId) && parsedUserId > 0) {
-        where.push(`o.user_id = $${paramIndex}`);
-        params.push(parsedUserId);
-        paramIndex += 1;
+  const parsedUserId = Number.parseInt(String(userId), 10);
+  if (Number.isFinite(parsedUserId) && parsedUserId > 0) {
+    where.push(`o.user_id = $${paramIndex}`);
+    params.push(parsedUserId);
+    paramIndex += 1;
+  }
+
+  const normalizedStatus = typeof status === "string" ? status.trim() : "";
+  if (normalizedStatus) {
+    const statuses = normalizedStatus
+      .split(",")
+      .map((value) => value.trim().toUpperCase())
+      .filter(Boolean);
+
+    if (statuses.length === 1) {
+      where.push(`o.status = $${paramIndex}`);
+      params.push(statuses[0]);
+      paramIndex += 1;
+    } else if (statuses.length > 1) {
+      where.push(`o.status = ANY($${paramIndex}::text[])`);
+      params.push(statuses);
+      paramIndex += 1;
     }
+  }
 
-    const normalizedStatus = typeof status === "string" ? status.trim() : "";
-    if (normalizedStatus) {
-        const statuses = normalizedStatus
-            .split(",")
-            .map((value) => value.trim().toUpperCase())
-            .filter(Boolean);
+  const normalizedProvider =
+    typeof provider === "string" ? provider.trim() : "";
+  if (normalizedProvider) {
+    where.push(`o.provider = $${paramIndex}`);
+    params.push(normalizedProvider);
+    paramIndex += 1;
+  }
 
-        if (statuses.length === 1) {
-            where.push(`o.status = $${paramIndex}`);
-            params.push(statuses[0]);
-            paramIndex += 1;
-        } else if (statuses.length > 1) {
-            where.push(`o.status = ANY($${paramIndex}::text[])`);
-            params.push(statuses);
-            paramIndex += 1;
-        }
-    }
-
-    const normalizedProvider =
-        typeof provider === "string" ? provider.trim() : "";
-    if (normalizedProvider) {
-        where.push(`o.provider = $${paramIndex}`);
-        params.push(normalizedProvider);
-        paramIndex += 1;
-    }
-
-    const normalizedSearch = String(search || "").trim();
-    if (normalizedSearch) {
-        const term = `%${normalizedSearch}%`;
-        where.push(
-            `(
+  const normalizedSearch = String(search || "").trim();
+  if (normalizedSearch) {
+    const term = `%${normalizedSearch}%`;
+    where.push(
+      `(
                 o.out_trade_no ILIKE $${paramIndex}
                 OR COALESCE(o.provider_transaction_id, '') ILIKE $${paramIndex}
                 OR o.product_key ILIKE $${paramIndex}
@@ -344,28 +344,30 @@ export const listMembershipOrders = async ({
                 OR COALESCE(u.primary_email, '') ILIKE $${paramIndex}
                 OR COALESCE(u.full_name, '') ILIKE $${paramIndex}
             )`,
-        );
-        params.push(term);
-        paramIndex += 1;
-    }
+    );
+    params.push(term);
+    paramIndex += 1;
+  }
 
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    const countResult = await query(
-        `
+  const countResult = await query(
+    `
         SELECT COUNT(*)::bigint AS total
         FROM membership_orders o
         JOIN users u ON u.id = o.user_id
         ${whereSql}
         `,
-        params,
-    );
-    const totalRaw = countResult.rows?.[0]?.total ?? 0;
-    const total =
-        typeof totalRaw === "string" ? Number.parseInt(totalRaw, 10) : Number(totalRaw);
+    params,
+  );
+  const totalRaw = countResult.rows?.[0]?.total ?? 0;
+  const total =
+    typeof totalRaw === "string"
+      ? Number.parseInt(totalRaw, 10)
+      : Number(totalRaw);
 
-    const listResult = await query(
-        `
+  const listResult = await query(
+    `
         SELECT
             o.id,
             o.user_id,
@@ -392,92 +394,92 @@ export const listMembershipOrders = async ({
         LIMIT $${paramIndex}
         OFFSET $${paramIndex + 1};
         `,
-        [...params, safeLimit, offset],
-    );
+    [...params, safeLimit, offset],
+  );
 
-    return {
-        orders: (listResult.rows || []).map((row) => ({
-            id: row.id,
-            user_id: row.user_id,
-            clerk_user_id: row.clerk_user_id,
-            provider: row.provider,
-            product_key: row.product_key,
-            plan_key: row.plan_key,
-            duration_days: row.duration_days,
-            amount_fen: row.amount_fen,
-            currency: row.currency,
-            out_trade_no: row.out_trade_no,
-            status: row.status,
-            provider_transaction_id: row.provider_transaction_id ?? null,
-            paid_at: row.paid_at ?? null,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            user: {
-                primary_email: row.primary_email ?? null,
-                full_name: row.full_name ?? null,
-                avatar_url: row.avatar_url ?? null,
-            },
-        })),
-        pagination: {
-            page: safePage,
-            limit: safeLimit,
-            total,
-            pages: safeLimit ? Math.ceil(total / safeLimit) : 0,
-        },
-    };
+  return {
+    orders: (listResult.rows || []).map((row) => ({
+      id: row.id,
+      user_id: row.user_id,
+      clerk_user_id: row.clerk_user_id,
+      provider: row.provider,
+      product_key: row.product_key,
+      plan_key: row.plan_key,
+      duration_days: row.duration_days,
+      amount_fen: row.amount_fen,
+      currency: row.currency,
+      out_trade_no: row.out_trade_no,
+      status: row.status,
+      provider_transaction_id: row.provider_transaction_id ?? null,
+      paid_at: row.paid_at ?? null,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      user: {
+        primary_email: row.primary_email ?? null,
+        full_name: row.full_name ?? null,
+        avatar_url: row.avatar_url ?? null,
+      },
+    })),
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total,
+      pages: safeLimit ? Math.ceil(total / safeLimit) : 0,
+    },
+  };
 };
 
 const getPlanByKeyForUpdate = async (client, planKey) => {
-    const result = await client.query(
-        `SELECT * FROM plans WHERE key = $1 AND is_active = true FOR UPDATE`,
-        [planKey],
-    );
-    return result.rows[0] || null;
+  const result = await client.query(
+    `SELECT * FROM plans WHERE key = $1 AND is_active = true FOR UPDATE`,
+    [planKey],
+  );
+  return result.rows[0] || null;
 };
 
 export const markMembershipOrderPaid = async ({
-    outTradeNo,
-    providerTransactionId,
-    paidAt,
-    rawNotify,
-    totalFen,
+  outTradeNo,
+  providerTransactionId,
+  paidAt,
+  rawNotify,
+  totalFen,
 }) => {
-    const client = await getClient();
-    const now = Date.now();
-    const resolvedPaidAt = Number.isFinite(Number(paidAt)) ? Number(paidAt) : now;
+  const client = await getClient();
+  const now = Date.now();
+  const resolvedPaidAt = Number.isFinite(Number(paidAt)) ? Number(paidAt) : now;
 
-    try {
-        await client.query("BEGIN");
+  try {
+    await client.query("BEGIN");
 
-        const orderResult = await client.query(
-            `SELECT * FROM membership_orders WHERE out_trade_no = $1 FOR UPDATE`,
-            [outTradeNo],
-        );
-        const order = orderResult.rows[0] || null;
-        if (!order) {
-            await client.query("ROLLBACK");
-            return {
-                ok: false,
-                code: "ORDER_NOT_FOUND",
-            };
-        }
+    const orderResult = await client.query(
+      `SELECT * FROM membership_orders WHERE out_trade_no = $1 FOR UPDATE`,
+      [outTradeNo],
+    );
+    const order = orderResult.rows[0] || null;
+    if (!order) {
+      await client.query("ROLLBACK");
+      return {
+        ok: false,
+        code: "ORDER_NOT_FOUND",
+      };
+    }
 
-        if (order.status === MEMBERSHIP_ORDER_STATUS.paid) {
-            await client.query("COMMIT");
-            return {
-                ok: true,
-                code: "ALREADY_PAID",
-                order,
-            };
-        }
+    if (order.status === MEMBERSHIP_ORDER_STATUS.paid) {
+      await client.query("COMMIT");
+      return {
+        ok: true,
+        code: "ALREADY_PAID",
+        order,
+      };
+    }
 
-        if (
-            typeof totalFen === "number" &&
-            Number.isFinite(totalFen) &&
-            totalFen !== order.amount_fen
-        ) {
-            const failed = await client.query(
-                `
+    if (
+      typeof totalFen === "number" &&
+      Number.isFinite(totalFen) &&
+      totalFen !== order.amount_fen
+    ) {
+      const failed = await client.query(
+        `
                 UPDATE membership_orders
                 SET status = $2,
                     provider_transaction_id = $3,
@@ -487,37 +489,37 @@ export const markMembershipOrderPaid = async ({
                 WHERE id = $1
                 RETURNING *;
                 `,
-                [
-                    order.id,
-                    MEMBERSHIP_ORDER_STATUS.failed,
-                    providerTransactionId || null,
-                    resolvedPaidAt,
-                    rawNotify || null,
-                    now,
-                ],
-            );
+        [
+          order.id,
+          MEMBERSHIP_ORDER_STATUS.failed,
+          providerTransactionId || null,
+          resolvedPaidAt,
+          rawNotify || null,
+          now,
+        ],
+      );
 
-            await client.query("COMMIT");
-            return {
-                ok: false,
-                code: "AMOUNT_MISMATCH",
-                order: failed.rows[0] || null,
-            };
-        }
+      await client.query("COMMIT");
+      return {
+        ok: false,
+        code: "AMOUNT_MISMATCH",
+        order: failed.rows[0] || null,
+      };
+    }
 
-        const plan = await getPlanByKeyForUpdate(client, order.plan_key);
-        if (!plan) {
-            await client.query("ROLLBACK");
-            return {
-                ok: false,
-                code: "PLAN_NOT_FOUND",
-                order,
-            };
-        }
+    const plan = await getPlanByKeyForUpdate(client, order.plan_key);
+    if (!plan) {
+      await client.query("ROLLBACK");
+      return {
+        ok: false,
+        code: "PLAN_NOT_FOUND",
+        order,
+      };
+    }
 
-        const durationMs = Math.max(1, Number(order.duration_days) || 1) * 86400000;
-        const currentResult = await client.query(
-            `
+    const durationMs = Math.max(1, Number(order.duration_days) || 1) * 86400000;
+    const currentResult = await client.query(
+      `
             SELECT *
             FROM subscriptions
             WHERE user_id = $1
@@ -529,29 +531,29 @@ export const markMembershipOrderPaid = async ({
             LIMIT 1
             FOR UPDATE;
             `,
-            [order.user_id, order.provider, resolvedPaidAt],
-        );
+      [order.user_id, order.provider, resolvedPaidAt],
+    );
 
-        const current = currentResult.rows[0] || null;
-        let periodStart = current?.current_period_end || resolvedPaidAt;
-        const maxActiveResult = await client.query(
-            `SELECT MAX(current_period_end)::bigint AS max_end
+    const current = currentResult.rows[0] || null;
+    let periodStart = current?.current_period_end || resolvedPaidAt;
+    const maxActiveResult = await client.query(
+      `SELECT MAX(current_period_end)::bigint AS max_end
              FROM subscriptions
              WHERE user_id = $1
                AND status = 'active'
                AND current_period_end > $2`,
-            [order.user_id, resolvedPaidAt],
-        );
-        periodStart = Math.max(
-            periodStart,
-            Number(maxActiveResult.rows[0]?.max_end) || 0,
-        );
-        const periodEnd = periodStart + durationMs;
-        let subscription = null;
+      [order.user_id, resolvedPaidAt],
+    );
+    periodStart = Math.max(
+      periodStart,
+      Number(maxActiveResult.rows[0]?.max_end) || 0,
+    );
+    const periodEnd = periodStart + durationMs;
+    let subscription = null;
 
-        if (current) {
-            const updated = await client.query(
-                `
+    if (current) {
+      const updated = await client.query(
+        `
                 UPDATE subscriptions
                 SET plan_id = $2,
                     provider_subscription_id = $3,
@@ -561,18 +563,12 @@ export const markMembershipOrderPaid = async ({
                 WHERE id = $1
                 RETURNING *;
                 `,
-                [
-                    current.id,
-                    plan.id,
-                    order.out_trade_no,
-                    periodEnd,
-                    now,
-                ],
-            );
-            subscription = updated.rows[0] || null;
-        } else {
-            const inserted = await client.query(
-                `
+        [current.id, plan.id, order.out_trade_no, periodEnd, now],
+      );
+      subscription = updated.rows[0] || null;
+    } else {
+      const inserted = await client.query(
+        `
                 INSERT INTO subscriptions (
                     user_id,
                     plan_id,
@@ -588,22 +584,22 @@ export const markMembershipOrderPaid = async ({
                 ) VALUES ($1,$2,$3,$4,$5,'active',$6,$7,false,$8,$8)
                 RETURNING *;
                 `,
-                [
-                    order.user_id,
-                    plan.id,
-                    order.provider,
-                    order.clerk_user_id,
-                    order.out_trade_no,
-                    resolvedPaidAt,
-                    periodEnd,
-                    now,
-                ],
-            );
-            subscription = inserted.rows[0] || null;
-        }
+        [
+          order.user_id,
+          plan.id,
+          order.provider,
+          order.clerk_user_id,
+          order.out_trade_no,
+          resolvedPaidAt,
+          periodEnd,
+          now,
+        ],
+      );
+      subscription = inserted.rows[0] || null;
+    }
 
-        const updatedOrderResult = await client.query(
-            `
+    const updatedOrderResult = await client.query(
+      `
             UPDATE membership_orders
             SET status = $2,
                 provider_transaction_id = $3,
@@ -613,119 +609,29 @@ export const markMembershipOrderPaid = async ({
             WHERE id = $1
             RETURNING *;
             `,
-            [
-                order.id,
-                MEMBERSHIP_ORDER_STATUS.paid,
-                providerTransactionId || null,
-                resolvedPaidAt,
-                rawNotify || null,
-                now,
-            ],
-        );
+      [
+        order.id,
+        MEMBERSHIP_ORDER_STATUS.paid,
+        providerTransactionId || null,
+        resolvedPaidAt,
+        rawNotify || null,
+        now,
+      ],
+    );
 
-        await client.query("COMMIT");
-        return {
-            ok: true,
-            code: "PAID",
-            order: updatedOrderResult.rows[0] || null,
-            subscription,
-        };
-    } catch (error) {
-        try {
-            await client.query("ROLLBACK");
-        } catch {}
-        throw error;
-    } finally {
-        client.release();
-    }
-};
-
-export const reverseMembershipOrderPayment = async ({
-    providerTransactionId,
-    rawNotify,
-    refundedAmountFen,
-    refundCurrency,
-    fullReversal = false,
-}) => {
-    const client = await getClient();
-    const now = Date.now();
+    await client.query("COMMIT");
+    return {
+      ok: true,
+      code: "PAID",
+      order: updatedOrderResult.rows[0] || null,
+      subscription,
+    };
+  } catch (error) {
     try {
-        await client.query("BEGIN");
-        const orderResult = await client.query(
-            `SELECT * FROM membership_orders
-             WHERE provider = 'paypal' AND provider_transaction_id = $1
-             FOR UPDATE`,
-            [providerTransactionId],
-        );
-        const order = orderResult.rows[0] || null;
-        if (!order) {
-            await client.query("ROLLBACK");
-            return { ok: false, code: "ORDER_NOT_FOUND" };
-        }
-        if (order.status === MEMBERSHIP_ORDER_STATUS.refunded) {
-            await client.query("COMMIT");
-            return { ok: true, code: "ALREADY_REFUNDED", order };
-        }
-        const isFullRefund =
-            fullReversal ||
-            (Number.isFinite(Number(refundedAmountFen)) &&
-                Number(refundedAmountFen) >= Number(order.amount_fen) &&
-                String(refundCurrency || "").toUpperCase() ===
-                    String(order.currency || "").toUpperCase());
-        if (!isFullRefund) {
-            const updated = await client.query(
-                `UPDATE membership_orders
-                 SET raw_notify = COALESCE(raw_notify, '{}'::jsonb) || $2::jsonb,
-                     updated_at = $3
-                 WHERE id = $1 RETURNING *`,
-                [order.id, rawNotify || {}, now],
-            );
-            await client.query("COMMIT");
-            return {
-                ok: true,
-                code: "PARTIAL_REFUND_RECORDED",
-                order: updated.rows[0] || null,
-            };
-        }
-        const entitlementResult = await client.query(
-            `SELECT * FROM subscriptions
-             WHERE provider = 'paypal'
-               AND provider_subscription_id = $1
-             FOR UPDATE`,
-            [order.out_trade_no],
-        );
-        const entitlement = entitlementResult.rows[0] || null;
-        if (entitlement) {
-            const durationMs = Math.max(1, Number(order.duration_days) || 1) * 86400000;
-            const reducedEnd = Math.max(
-                Number(entitlement.current_period_start) || now,
-                (Number(entitlement.current_period_end) || now) - durationMs,
-            );
-            await client.query(
-                `UPDATE subscriptions
-                 SET current_period_end = $2,
-                     status = CASE WHEN $2 > $3 THEN 'active' ELSE 'canceled' END,
-                     updated_at = $3
-                 WHERE id = $1`,
-                [entitlement.id, reducedEnd, now],
-            );
-        }
-        const updated = await client.query(
-            `UPDATE membership_orders
-             SET status = $2,
-                 raw_notify = COALESCE(raw_notify, '{}'::jsonb) || $3::jsonb,
-                 updated_at = $4
-             WHERE id = $1 RETURNING *`,
-            [order.id, MEMBERSHIP_ORDER_STATUS.refunded, rawNotify || {}, now],
-        );
-        await client.query("COMMIT");
-        return { ok: true, code: "REFUNDED", order: updated.rows[0] || null };
-    } catch (error) {
-        try {
-            await client.query("ROLLBACK");
-        } catch {}
-        throw error;
-    } finally {
-        client.release();
-    }
+      await client.query("ROLLBACK");
+    } catch {}
+    throw error;
+  } finally {
+    client.release();
+  }
 };

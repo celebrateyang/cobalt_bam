@@ -1176,6 +1176,103 @@ export const learnPages: LearnPage[] = [
             'send files between devices online',
         ],
     },
+    {
+        slug: 'convert-video-extract-audio-without-uploading',
+        title: 'How to convert video or extract audio without uploading the file',
+        description:
+            'Convert common local video files to MP4 or WebM, or extract MP3, M4A, or WAV audio directly in a compatible browser without sending the source file to a server.',
+        updatedAt: '2026-10-01',
+        readingTime: '7 min read',
+        category: 'Local media tools',
+        summary:
+            'FreeSaveVideo can process supported local media inside the browser. Choose one or more files, select audio extraction or video conversion, pick an output format, and save each completed result without first uploading the source to FreeSaveVideo.',
+        keyTakeaways: [
+            'Supported local inputs include common MP4, MOV, MKV, WebM, AVI, M4V, MP3, M4A, WAV, OGG, Opus, AAC, and FLAC files.',
+            'Audio outputs are MP3, M4A, and WAV; video outputs are MP4 and WebM.',
+            'Large files depend on browser memory and temporary storage, so close unnecessary tabs and keep the conversion page open.',
+        ],
+        sections: [
+            {
+                heading: 'Choose audio extraction or video conversion',
+                body: [
+                    'Use Extract audio when you want the sound track from a lecture, interview, personal recording, or other local video you are allowed to process. Choose MP3 for broad compatibility, M4A for efficient everyday playback, or WAV when an uncompressed file is useful for editing.',
+                    'Use Convert video when the file has a video stream but the container or codec does not work well in the target player. The available output containers are MP4 and WebM.',
+                ],
+            },
+            {
+                heading: 'Understand fast and compatible conversion',
+                body: [
+                    'A fast conversion can reuse compatible media streams and change the container without re-encoding. This is usually quicker and avoids quality loss, but it only works when the input streams are valid for the selected output.',
+                    'Compatible mode can re-encode the media when a simple container change is not enough. It takes longer and uses more browser resources, but it can solve playback problems caused by an unsupported source codec.',
+                ],
+                bullets: [
+                    'Try fast mode first when the video already plays but the file extension or container causes trouble.',
+                    'Use compatible mode when fast mode fails or the target device rejects the result.',
+                    'Conversion cannot repair a corrupt source file or create an audio track that is not present.',
+                ],
+            },
+            {
+                heading: 'Process files locally in the browser',
+                body: [
+                    'For supported workflows, the selected source stays on the device and is processed by browser media tools. The page does not need to upload the original file to FreeSaveVideo before conversion.',
+                    'Local processing is useful for personal recordings and sensitive drafts, but it is not the same as a permanent privacy guarantee. The browser, operating system, extensions, downloaded output, and anyone with access to the device can still affect file privacy.',
+                ],
+            },
+            {
+                heading: 'Plan for memory, storage, and browser limits',
+                body: [
+                    'Browser conversion needs temporary storage and memory. A long high-resolution video may fail even when a short clip in the same format succeeds. Process fewer files at once, close other heavy tabs, and make sure the device has free storage.',
+                    'Keep the tab open while processing. If the browser reports that no usable codec or temporary storage is available, try a current desktop browser or choose a different output and mode.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Goal', 'Recommended output', 'Why'],
+            rows: [
+                ['Listen on most phones and computers', 'MP3', 'Broad playback and sharing compatibility'],
+                ['Keep efficient audio quality', 'M4A', 'Often smaller than uncompressed audio'],
+                ['Edit uncompressed audio', 'WAV', 'Larger file with straightforward editing support'],
+                ['Improve general video compatibility', 'MP4', 'Commonly supported by browsers, phones, and editors'],
+                ['Use an open web-oriented video container', 'WebM', 'Designed for modern web playback'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Can I convert MP4 to MP3 without uploading it?',
+                a: 'Yes. Select the local MP4 file, choose Extract audio and MP3, then process it in a compatible browser. The supported workflow runs on the device.',
+            },
+            {
+                q: 'Why does a large video fail in the browser?',
+                a: 'Long or high-resolution files can exceed available browser memory or temporary storage. Close other tabs, free disk space, process fewer files, or try a smaller source.',
+            },
+            {
+                q: 'Does fast conversion always avoid re-encoding?',
+                a: 'Fast mode attempts to reuse compatible streams, but a selected output may require another attempt or compatible mode when the source codecs do not fit the target container.',
+            },
+            {
+                q: 'Can the tool extract audio from a silent video?',
+                a: 'No. The source file must contain an audio stream. A muted or video-only file has no audio track to extract.',
+            },
+        ],
+        relatedDownloads: [],
+        relatedGuides: [],
+        relatedTools: [
+            {
+                title: 'Open the local video converter',
+                description:
+                    'Extract MP3, M4A, or WAV audio, or convert supported local video files to MP4 or WebM.',
+                href: '/en/remux',
+            },
+        ],
+        keywords: [
+            'convert video without uploading',
+            'extract audio from video locally',
+            'MP4 to MP3 without upload',
+            'browser video converter local processing',
+            'AVI to MP4 without uploading',
+            'local WebM to MP4 converter',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

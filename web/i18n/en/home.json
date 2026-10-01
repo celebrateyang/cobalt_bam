@@ -34,6 +34,7 @@
         "close": "dismiss"
     },
     "platforms": {
+        "magnific": { "name": "Magnific Free Media Downloader", "desc": "Save public images and available video previews from Magnific pages explicitly marked free. Premium assets, private creations, and credit-based exports are excluded." },
         "title": "Watermark-Free Download from Popular Platforms",
         "description": "Supports publicly accessible content from the platforms shown in the supported services list, including YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X (Twitter), and Facebook. Save available formats on mobile or desktop; quality depends on the source and parsing result.",
         "douyin": {

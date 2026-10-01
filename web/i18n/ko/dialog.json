@@ -1,4 +1,10 @@
 {
+    "magnific.title": "브라우저에서 Magnific 무료 자산 열기",
+    "magnific.body": "Magnific이 서버 접근을 차단했습니다. 무료로 명시된 페이지만 지원하며 Premium, 비공개 작업물, Projects, 크레딧 내보내기는 제외됩니다.",
+    "magnific.install_title": "FreeSaveVideo Downloader 설치",
+    "magnific.install_body": "공개 무료 페이지를 열고 필요하면 동영상을 재생한 뒤 확장 프로그램으로 페이지에 공개된 미디어를 감지하세요.",
+    "magnific.installed": "무료 자산 페이지를 열고 확장 프로그램을 클릭하세요. 사용 전에 Magnific 라이선스와 출처 표시 조건을 확인하세요.",
+    "magnific.open": "Magnific 무료 자산 열기",
     "reset.title": "모든 설정을 초기화하시겠습니까?",
     "reset.body": "정말로 모든 설정을 초기화하시겠습니까? 이 작업은 즉시 실행되며 되돌릴 수 없습니다.",
     "picker.title": "저장할 항목 선택",

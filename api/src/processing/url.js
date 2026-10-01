@@ -355,6 +355,11 @@ function cleanURL(url) {
             // an otherwise valid temporary media URL unusable.
             stripQuery = false;
             break;
+        case "magnific":
+            // Magnific CDN links can contain resizing, expiry, and signature
+            // parameters that are required by the browser.
+            stripQuery = false;
+            break;
         case "wechat_channels":
             if (url.searchParams.get("id")) {
                 limitQuery("id");

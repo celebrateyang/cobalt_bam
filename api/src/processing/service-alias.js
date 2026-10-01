@@ -9,6 +9,7 @@ const friendlyNames = {
     haokan: "Haokan",
     iqiyi: "iQIYI",
     kuaishou: "Kuaishou",
+    magnific: "Magnific",
     kugou: "Kugou Music",
     naver: "Naver",
     niconico: "NicoNico",

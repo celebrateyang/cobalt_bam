@@ -1,4 +1,10 @@
 {
+    "magnific.title": "Buka aset Magnific gratis di browser",
+    "magnific.body": "Magnific memblokir akses server. Hanya halaman yang jelas ditandai gratis yang didukung; Premium, karya privat, Projects, dan ekspor berbasis kredit dikecualikan.",
+    "magnific.install_title": "Instal FreeSaveVideo Downloader",
+    "magnific.install_body": "Buka halaman gratis publik, putar video bila perlu, lalu gunakan ekstensi untuk mendeteksi media yang sudah ditampilkan halaman.",
+    "magnific.installed": "Buka halaman aset gratis lalu klik ekstensi. Periksa lisensi dan persyaratan atribusi Magnific sebelum menggunakan file.",
+    "magnific.open": "Buka aset Magnific gratis",
     "reset.title": "reset semua pengaturan?",
     "reset.body": "apakah Anda yakin ingin mengatur ulang semua pengaturan? tindakan ini bersifat segera dan tidak dapat diubah.",
     "picker.title": "pilih apa yang akan disimpan",

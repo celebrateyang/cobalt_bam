@@ -121,6 +121,7 @@ const isPreviewDownloadResponse = (response: CobaltAPIResponse) => (
     "service" in response &&
     (
         response.service === "deeplearningai" ||
+        response.service === "magnific" ||
         response.service === "bilibili" ||
         response.service === "bilibili_cdn" ||
         response.service === "douyin" ||
@@ -154,6 +155,11 @@ const openPreviewDownloadDialog = (
     response: { filename: string; service?: string },
     extensionUrls?: string[],
 ) => {
+    const mediaType = /\.(?:jpe?g|png|webp|gif|avif)$/i.test(response.filename)
+        ? "image"
+        : /\.(?:mp3|m4a|aac|ogg|opus|wav|flac)$/i.test(response.filename)
+          ? "audio"
+          : "video";
     const extensionPrompt =
         response.service === "bilibili" || response.service === "bilibili_cdn"
             ? {
@@ -174,7 +180,7 @@ const openPreviewDownloadDialog = (
         filename: response.filename,
         urls: mediaUrls,
         extensionUrls,
-        mediaType: "video",
+        mediaType,
         autoSave: true,
         ...extensionPrompt,
         ...cdnNotice,
@@ -567,13 +573,17 @@ export const savingHandler = async ({
     }
 
     if (response.status === "error") {
-        if (response.error.code === 'error.api.xinpianchang.browser_required') {
+        if (
+            response.error.code === 'error.api.xinpianchang.browser_required' ||
+            response.error.code === 'error.api.magnific.browser_required'
+        ) {
             downloadButtonState.set('idle');
             if (!shouldSuppressError(response.error.code)) {
+                const platform = response.error.code.includes('magnific') ? 'magnific' : 'xinpianchang';
                 const lang = get(page)?.params?.lang || 'en';
                 await loadTranslations(lang, 'dialog');
                 createDialog({ id: 'xinpianchang-download', type: 'xinpianchang-download',
-                    sourceUrl: selectedRequest.url });
+                    sourceUrl: selectedRequest.url, platform });
             }
             return response;
         }

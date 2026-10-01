@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Magnific 무료 미디어 다운로더", "desc": "무료로 명시된 Magnific 페이지의 공개 이미지와 동영상 미리보기를 저장합니다. Premium 및 비공개 콘텐츠는 제외됩니다." },
         "title": "인기 플랫폼 워터마크 없는 다운로드",
         "description": "YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Kugou Music, Haokan, Toutiao, Weibo, Amazon Live, NAVER(네이버), Xiaohongshu, Instagram, Threads, X(Twitter), Facebook 등 서비스 목록에 표시된 플랫폼의 공개 콘텐츠를 지원합니다. 모바일과 PC에서 사용 가능한 화질과 형식을 확인해 저장하세요.",
         "douyin": {

@@ -107,6 +107,7 @@ type FeedbackDialog = Dialog & {
 type XinpianchangDownloadDialog = Dialog & {
     type: 'xinpianchang-download',
     sourceUrl: string,
+    platform?: 'xinpianchang' | 'magnific',
 };
 
 type MembershipUpgradeDialog = Dialog & {

@@ -26,6 +26,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | haokan            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | facebook          | ✅            | ❌         | ✅         | ➖         | ➖              |
 | loom              | ✅            | ❌         | ✅         | ✅         | ➖              |
+| magnific          | ✅            | ✅         | ❌         | ➖         | ✅              |
 | naver             | ✅            | ✅         | ✅         | ✅         | ✅              |
 | newgrounds        | ✅            | ✅         | ✅         | ✅         | ✅              |
 | niconico          | ✅            | ✅         | ✅         | ✅         | ✅              |
@@ -60,6 +61,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | :--------  | :-----                                                                                                               |
 | amazon live | supports public `amazon.com/live/video/:id` and `amazon.com/vdp/:id` replay links with available HLS qualities.     |
 | instagram  | supports reels, photos, and videos. lets you pick what to save from multi-media posts.                               |
+| magnific   | supports media exposed by public pages explicitly marked free and direct Magnific CDN links. Premium, private, login-only, and credit-based exports are excluded. Free assets may require attribution. |
 | iqiyi      | supports public, free iQIYI `v_*.html` and international `iq.com/play/...` videos as server-remuxed MP4 files without player ads; international pages currently expose 360p. |
 | facebook   | supports public accessible videos content only.                                                                      |
 | haokan     | supports public Haokan/Baidu videos and quality selection from available mp4 variants.                              |

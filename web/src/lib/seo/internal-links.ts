@@ -88,6 +88,11 @@ const crossLinkEntries: CrossLinkEntry[] = [
         downloadSlug: 'xinpianchang-video-download',
     },
     {
+        platform: 'Magnific',
+        downloadSlug: 'magnific-download',
+        homeKey: 'magnific',
+    },
+    {
         platform: 'Haokan',
         downloadSlug: 'haokan-video-download',
         guideSlug: 'haokan-download-guide',
@@ -207,6 +212,7 @@ const strategicDownloadOrder = [
     'weibo-video-download',
     'wechat-video-download',
     'xinpianchang-video-download',
+    'magnific-download',
     'haokan-video-download',
     'douyin-collection-download',
     'tiktok-collection-download',
@@ -226,6 +232,7 @@ const strategicDownloadOrder = [
 ] as const;
 
 const internationalDownloadSlugs = new Set([
+    'magnific-download',
     'xinpianchang-video-download',
     'youtube-download',
     'youtube-playlist-downloader',
@@ -311,6 +318,12 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    'magnific-download': [
+        'pinterest-video-download',
+        'instagram-video-download',
+        'vimeo-video-download',
+        'soundcloud-audio-download',
+    ],
     'sooplive-video-download': [
         'naver-video-download',
         'youtube-download',

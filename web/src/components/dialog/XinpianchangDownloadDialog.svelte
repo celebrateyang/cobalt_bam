@@ -7,6 +7,7 @@
 
     export let id: string;
     export let sourceUrl: string;
+    export let platform: 'xinpianchang' | 'magnific' = 'xinpianchang';
     export let dismissable = true;
     let close: () => void;
     let installed = false;
@@ -19,27 +20,31 @@
         window.addEventListener('focus', refresh);
         return () => { active = false; window.removeEventListener('focus', refresh); };
     });
-    $: safeSourceUrl = /^https:\/\/(?:www\.)?xinpianchang\.com\/a\d+(?:[/?#]|$)/i.test(sourceUrl)
-        ? sourceUrl : 'https://www.xinpianchang.com/';
+    $: translationPrefix = platform === 'magnific' ? 'dialog.magnific' : 'dialog.xinpianchang';
+    $: safeSourceUrl = platform === 'magnific'
+        ? (/^https:\/\/(?:www\.)?magnific\.com\/(?:[a-z]{2}\/)?free-(?:photo|ai-image|vector|psd|video)\//i.test(sourceUrl)
+            ? sourceUrl : 'https://www.magnific.com/')
+        : (/^https:\/\/(?:www\.)?xinpianchang\.com\/a\d+(?:[/?#]|$)/i.test(sourceUrl)
+            ? sourceUrl : 'https://www.xinpianchang.com/');
 </script>
 
 <DialogContainer {id} {dismissable} bind:close>
     <div class="dialog-body xpc-dialog">
-        <h2>{$t('dialog.xinpianchang.title')}</h2>
-        <p>{$t('dialog.xinpianchang.body')}</p>
+        <h2>{$t(`${translationPrefix}.title`)}</h2>
+        <p>{$t(`${translationPrefix}.body`)}</p>
         {#if installed}
             <strong>FreeSaveVideo Downloader</strong>
-            <p>{$t('dialog.xinpianchang.installed')}</p>
+            <p>{$t(`${translationPrefix}.installed`)}</p>
         {:else}
             <ExtensionInstallPrompt
-                titleKey="dialog.xinpianchang.install_title"
-                bodyKey="dialog.xinpianchang.install_body"
+                titleKey={`${translationPrefix}.install_title`}
+                bodyKey={`${translationPrefix}.install_body`}
                 onInstall={openFreeSaveVideoExtensionStore}
                 onDismiss={close}
             />
         {/if}
         <a class="source-link" href={safeSourceUrl} target="_blank" rel="noopener noreferrer">
-            {$t('dialog.xinpianchang.open')}
+            {$t(`${translationPrefix}.open`)}
         </a>
         <button type="button" on:click={close}>{$t('dialog.xinpianchang.close')}</button>
     </div>

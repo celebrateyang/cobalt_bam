@@ -157,6 +157,14 @@ export const services = {
     loom: {
         patterns: ["share/:id", "embed/:id"],
     },
+    magnific: {
+        // The handler below this registry applies strict free-page and media
+        // URL allowlists. A wildcard is needed because Magnific uses several
+        // CDN path layouts and keeps legacy magnific.ai assets online.
+        patterns: ["*"],
+        tld: ["com", "ai"],
+        subdomains: "*",
+    },
     ok: {
         patterns: [
             "video/:id",

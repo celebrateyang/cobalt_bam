@@ -34,6 +34,7 @@
         "close": "不再提醒"
     },
     "platforms": {
+        "magnific": { "name": "Magnific 免费媒体下载器", "desc": "保存 Magnific 明确标记为免费的公开图片和可用视频预览；不支持 Premium 素材、私有创作和积分导出。" },
         "title": "热门平台无水印下载",
         "description": "支持当前「支持的网站」列表中的公开内容，包括抖音、B站、搜狐视频、NicoNico、快手、微博、小红书、CCTV、Amazon Live、NAVER、YouTube、Instagram、Threads、X（Twitter）和 Facebook 等。在手机或电脑上保存可用格式；清晰度以源站提供的资源和实际解析结果为准。",
         "douyin": {

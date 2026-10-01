@@ -83,5 +83,6 @@
     "queue.fetch.no_file_reader": "no se pudo leer el flujo de descarga. inténtalo de nuevo.",
     "queue.fetch.stalled": "la descarga se detuvo sin recibir datos. inténtalo de nuevo.",
     "queue.fetch.timeout": "la descarga tardó demasiado y agotó el tiempo. inténtalo de nuevo.",
-    "api.xinpianchang.browser_required": "Xinpianchang requiere verificar el navegador. Abre el vídeo, completa la verificación, reprodúcelo y descárgalo con FreeSaveVideo."
+    "api.xinpianchang.browser_required": "Xinpianchang requiere verificar el navegador. Abre el vídeo, completa la verificación, reprodúcelo y descárgalo con FreeSaveVideo.",
+    "api.magnific.browser_required": "Magnific bloqueó el acceso del servidor. Abre la página pública del recurso gratuito y usa la extensión de navegador FreeSaveVideo. No se admiten recursos Premium ni creaciones privadas."
 }

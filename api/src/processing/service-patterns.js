@@ -76,6 +76,9 @@ export const testers = {
     "loom": pattern =>
         pattern.id?.length <= 32,
 
+    "magnific": pattern =>
+        typeof pattern._ === "string" && pattern._.length > 0 && pattern._.length <= 4096,
+
     "newgrounds": pattern =>
         pattern.id?.length <= 12 ||
         pattern.audioId?.length <= 12,

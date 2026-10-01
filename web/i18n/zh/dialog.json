@@ -1,4 +1,10 @@
 {
+    "magnific.title": "在浏览器中打开 Magnific 免费素材",
+    "magnific.body": "Magnific 阻止了服务器访问。仅支持明确标记为免费的页面；不支持 Premium 素材、私有创作、Projects 和积分导出。",
+    "magnific.install_title": "安装 FreeSaveVideo Downloader",
+    "magnific.install_body": "打开公开免费素材页，视频如有需要请先播放，再使用扩展识别该页面已经公开的媒体。",
+    "magnific.installed": "打开免费素材页后点击扩展。使用文件前请检查 Magnific 的许可证与署名要求。",
+    "magnific.open": "打开 Magnific 免费素材",
     "reset.title": "重置所有设置？",
     "reset.body": "您确定要重置所有设置吗？此操作不可撤销。",
     "picker.title": "选择要保存的内容",

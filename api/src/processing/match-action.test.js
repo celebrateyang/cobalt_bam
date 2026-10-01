@@ -37,6 +37,27 @@ test('returns Xinpianchang progressive media through a server tunnel', () => {
     assert.equal(new URL(response.body.url).pathname, '/tunnel');
 });
 
+test("returns Magnific public media through Direct Bridge", () => {
+    const mediaUrl = "https://img.magnific.com/free-photo/example.jpg?w=1600";
+    const response = matchAction({
+        ...baseArgs,
+        host: "magnific",
+        r: {
+            service: "magnific",
+            urls: mediaUrl,
+            directClientDownload: true,
+            isPhoto: true,
+            filename: "example.jpg",
+        },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "redirect");
+    assert.equal(response.body.service, "magnific");
+    assert.equal(response.body.directUrl, mediaUrl);
+    assert.equal(response.body.tunnelUrl, undefined);
+});
+
 test("keeps ordinary YouTube direct downloads on the redirect path", () => {
     const response = matchAction({
         ...baseArgs,

@@ -34,6 +34,7 @@ import twitch from "./services/twitch.js";
 import rutube from "./services/rutube.js";
 import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
+import magnific from "./services/magnific.js";
 import xinpianchang from "./services/xinpianchang.js";
 import snapchat from "./services/snapchat.js";
 import sooplive from "./services/sooplive.js";
@@ -653,6 +654,10 @@ export default async function({ host, patternMatch, params, authType }) {
                     ...patternMatch,
                     url,
                 });
+                break;
+
+            case "magnific":
+                r = await magnific({ url });
                 break;
 
             case "xinpianchang":

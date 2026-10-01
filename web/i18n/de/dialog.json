@@ -1,4 +1,10 @@
 {
+    "magnific.title": "Kostenloses Magnific-Asset im Browser öffnen",
+    "magnific.body": "Magnific hat den Serverzugriff blockiert. Unterstützt werden nur ausdrücklich kostenlose Seiten, keine Premium-Inhalte, privaten Kreationen, Projects oder Credit-Exporte.",
+    "magnific.install_title": "FreeSaveVideo Downloader installieren",
+    "magnific.install_body": "Öffne die öffentliche Gratis-Seite, starte ein Video bei Bedarf und erkenne die dort bereitgestellten Medien mit der Erweiterung.",
+    "magnific.installed": "Öffne die Gratis-Seite und klicke auf die Erweiterung. Prüfe vorher Lizenz und Namensnennung.",
+    "magnific.open": "Kostenloses Magnific-Asset öffnen",
     "reset.title": "Alle Einstellungen zurücksetzen?",
     "reset.body": "Sind Sie sicher, dass Sie alle Einstellungen zurücksetzen möchten? Diese Aktion ist sofort und unumkehrbar.",
     "picker.title": "Wählen Sie aus, was gespeichert werden soll",

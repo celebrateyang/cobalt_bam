@@ -3,6 +3,7 @@ import { deeplearningaiAdapter } from './deeplearningai';
 import { douyinAdapter } from './douyin';
 import { genericAdapter } from './generic';
 import { instagramAdapter } from './instagram';
+import { magnificAdapter } from './magnific';
 import { YOUTUBE_HOST_RE } from './runtime';
 import { tiktokAdapter } from './tiktok';
 import { xinpianchangAdapter } from './xinpianchang';
@@ -30,6 +31,7 @@ const youtubePolicyAdapter: PlatformAdapter = {
 const adapters: PlatformAdapter[] = [
     xinpianchangAdapter,
     youtubePolicyAdapter,
+    magnificAdapter,
     deeplearningaiAdapter,
     douyinAdapter,
     bilibiliAdapter,

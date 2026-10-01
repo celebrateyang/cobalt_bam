@@ -83,5 +83,6 @@
     "queue.fetch.crashed": "công nhân tải xuống bị lỗi. hãy thử lại sau vài giây.",
     "queue.fetch.timeout": "quá trình tải xuống mất quá nhiều thời gian và hết thời gian. thử lại.",
     "queue.fetch.stalled": "quá trình tải xuống bị đình trệ và không nhận được dữ liệu. thử lại.",
-    "api.xinpianchang.browser_required": "Xinpianchang yêu cầu xác minh trình duyệt. Mở trang video, hoàn tất xác minh, phát video rồi tải bằng FreeSaveVideo."
+    "api.xinpianchang.browser_required": "Xinpianchang yêu cầu xác minh trình duyệt. Mở trang video, hoàn tất xác minh, phát video rồi tải bằng FreeSaveVideo.",
+    "api.magnific.browser_required": "Magnific đã chặn truy cập từ máy chủ. Hãy mở trang tài nguyên miễn phí công khai và dùng tiện ích trình duyệt FreeSaveVideo. Không hỗ trợ tài nguyên Premium hoặc tác phẩm riêng tư."
 }

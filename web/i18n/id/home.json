@@ -34,6 +34,7 @@
         "close": "tolak"
     },
     "platforms": {
+        "magnific": { "name": "Pengunduh Media Gratis Magnific", "desc": "Simpan gambar publik dan pratinjau video dari halaman Magnific yang ditandai gratis. Premium dan konten privat tidak didukung." },
         "title": "Unduh Tanpa Tanda Air dari Platform Populer",
         "description": "Mendukung konten publik dari platform yang tercantum dalam daftar layanan, termasuk YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter), dan Facebook. Periksa lalu simpan format yang tersedia di ponsel atau komputer.",
         "douyin": {

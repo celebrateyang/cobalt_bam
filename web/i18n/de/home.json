@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Magnific Downloader für kostenlose Medien", "desc": "Speichere öffentliche Bilder und verfügbare Videovorschauen von ausdrücklich kostenlosen Magnific-Seiten. Premium und private Inhalte sind ausgeschlossen." },
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",
         "description": "Unterstützt öffentliche Inhalte der in der Diensteliste aufgeführten Plattformen, darunter YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) und Facebook. Prüfen und speichern Sie verfügbare Formate auf Mobilgeräten oder Computern.",
         "douyin": {

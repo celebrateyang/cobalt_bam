@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Загрузчик бесплатных медиа Magnific", "desc": "Сохраняйте публичные изображения и превью видео со страниц Magnific, явно отмеченных как бесплатные. Premium и приватный контент исключены." },
         "title": "Скачивание без водяных знаков с популярных платформ",
         "description": "Поддерживает публичный контент платформ из списка сервисов, включая YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) и Facebook. Проверяйте и сохраняйте доступные форматы на телефоне или компьютере.",
         "douyin": {

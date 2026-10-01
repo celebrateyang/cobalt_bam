@@ -92,6 +92,16 @@ export default function({
     const shouldQueueForcedYouTube =
         host === "youtube" && alwaysProxy === true;
 
+    if (host === "magnific" && r.directClientDownload === true && typeof r.urls === "string") {
+        return createResponse("redirect", {
+            url: r.urls,
+            directUrl: r.urls,
+            directUrlCandidates: [r.urls],
+            filename: defaultParams.filename,
+            service: "magnific",
+        });
+    }
+
     if (
         host === "douyin" &&
         action === "video" &&

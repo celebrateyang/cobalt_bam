@@ -83,5 +83,6 @@
     "queue.fetch.crashed": "Le travailleur de téléchargement s'est écrasé. réessayez dans quelques secondes.",
     "queue.fetch.timeout": "le téléchargement a pris trop de temps et a expiré. essayer à nouveau.",
     "queue.fetch.stalled": "le téléchargement est bloqué sans aucune donnée reçue. essayer à nouveau.",
-    "api.xinpianchang.browser_required": "Xinpianchang exige une vérification du navigateur. Ouvrez la vidéo, terminez la vérification, lancez la lecture puis téléchargez avec FreeSaveVideo."
+    "api.xinpianchang.browser_required": "Xinpianchang exige une vérification du navigateur. Ouvrez la vidéo, terminez la vérification, lancez la lecture puis téléchargez avec FreeSaveVideo.",
+    "api.magnific.browser_required": "Magnific a bloqué l'accès du serveur. Ouvrez la page publique de la ressource gratuite et utilisez l'extension FreeSaveVideo. Les ressources Premium et les créations privées ne sont pas prises en charge."
 }

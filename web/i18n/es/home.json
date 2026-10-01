@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Descargador de medios gratuitos de Magnific", "desc": "Guarda imágenes públicas y vistas previas de vídeo de páginas Magnific marcadas como gratuitas. Se excluyen recursos Premium y privados." },
         "title": "Descarga sin marca de agua de plataformas populares",
         "description": "Admite contenido público de las plataformas mostradas en la lista de servicios, entre ellas YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) y Facebook. Consulta y guarda los formatos disponibles desde el móvil o el ordenador.",
         "douyin": {

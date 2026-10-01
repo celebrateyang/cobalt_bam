@@ -1,4 +1,10 @@
 {
+    "magnific.title": "Open the free Magnific asset in your browser",
+    "magnific.body": "Magnific blocked server-side access. Only pages explicitly marked free are supported; Premium assets, private creations, Projects, and credit-based exports are excluded.",
+    "magnific.install_title": "Install FreeSaveVideo Downloader",
+    "magnific.install_body": "Open the public free asset page, play a video if needed, then use the extension to detect media already exposed by that page.",
+    "magnific.installed": "Open the free asset page, then click the extension. Check Magnific's license and attribution requirements before using the file.",
+    "magnific.open": "Open free Magnific asset",
     "reset.title": "reset all settings?",
     "reset.body": "are you sure you want to reset all settings? this action is immediate and irreversible.",
     "picker.title": "select what to save",

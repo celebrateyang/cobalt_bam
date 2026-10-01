@@ -1,4 +1,10 @@
 {
+    "magnific.title": "Magnific の無料素材をブラウザーで開く",
+    "magnific.body": "Magnific がサーバーアクセスを拒否しました。無料と明記されたページのみ対応し、Premium、非公開作品、Projects、クレジット書き出しは対象外です。",
+    "magnific.install_title": "FreeSaveVideo Downloader をインストール",
+    "magnific.install_body": "公開無料ページを開き、必要なら動画を再生してから、拡張機能でページが公開するメディアを検出します。",
+    "magnific.installed": "無料素材ページを開いて拡張機能をクリックしてください。利用前にライセンスと帰属表示を確認してください。",
+    "magnific.open": "Magnific の無料素材を開く",
     "reset.title": "すべての設定をリセットしますか？",
     "reset.body": "本当にすべての設定をリセットしますか？この操作は即座に実行され、元に戻すことはできません。",
     "picker.title": "保存するものを選択",

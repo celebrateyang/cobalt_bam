@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Trình tải nội dung miễn phí Magnific", "desc": "Lưu ảnh công khai và bản xem trước video từ trang Magnific được đánh dấu miễn phí. Không hỗ trợ Premium và nội dung riêng tư." },
         "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",
         "description": "Hỗ trợ nội dung công khai từ các nền tảng hiển thị trong danh sách dịch vụ, gồm YouTube, TikTok, Bilibili, Sohu Video, NicoNico, Kuaishou, Weibo, Amazon Live, NAVER, Xiaohongshu, Instagram, Threads, X(Twitter) và Facebook. Kiểm tra rồi lưu định dạng có sẵn trên điện thoại hoặc máy tính.",
         "douyin": {

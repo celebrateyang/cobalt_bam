@@ -109,6 +109,7 @@
         "xiaohongshu",
         "instagram",
         "threads",
+        "magnific",
         "youtube",
         "facebook",
         "twitter",

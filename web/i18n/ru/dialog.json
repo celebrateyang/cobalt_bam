@@ -1,4 +1,10 @@
 {
+    "magnific.title": "Открыть бесплатный ресурс Magnific",
+    "magnific.body": "Magnific заблокировал доступ сервера. Поддерживаются только страницы, явно отмеченные бесплатными; Premium, приватные работы, Projects и экспорт за кредиты исключены.",
+    "magnific.install_title": "Установить FreeSaveVideo Downloader",
+    "magnific.install_body": "Откройте публичную бесплатную страницу, при необходимости запустите видео и найдите доступные медиа расширением.",
+    "magnific.installed": "Откройте бесплатный ресурс и нажмите расширение. Перед использованием проверьте лицензию и атрибуцию Magnific.",
+    "magnific.open": "Открыть бесплатный ресурс Magnific",
     "picker.select_item": "выбрать изображение {{ count }}",
     "picker.batch.save_selected": "сохранить выбранные ({{ count }})",
     "picker.batch.saving": "сохранение {{ count }} из {{ max }}...",

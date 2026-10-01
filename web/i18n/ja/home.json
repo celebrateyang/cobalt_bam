@@ -1,5 +1,6 @@
 {
     "platforms": {
+        "magnific": { "name": "Magnific 無料メディア ダウンローダー", "desc": "無料と明記された Magnific ページの公開画像と動画プレビューを保存します。Premium と非公開コンテンツは対象外です。" },
         "title": "人気プラットフォームから透かしなしでダウンロード",
         "description": "対応サービス一覧にある YouTube、TikTok、Instagram、Facebook、X/Twitter、Vimeo、SoundCloud、Pinterest、Reddit、NicoNico、NAVER、Amazon Live などの公開コンテンツを、スマートフォンやパソコンから保存できます。",
         "douyin": {

@@ -83,5 +83,6 @@
     "api.upstream.incomplete": "Node pemrosesan mengembalikan respons yang tidak lengkap selama fluktuasi tautan sementara. Silakan coba lagi dalam beberapa detik.",
     "api.youtube.timeout": "Penguraian YouTube sendiri kali ini memakan waktu lebih lama dari perkiraan. Video mungkin masih dapat diunduh. Silakan coba lagi nanti.",
     "api.bilibili.collection_has_long_video": "Koleksi Bilibili ini berisi video berdurasi lebih dari {{ limit }} menit, jadi pengunduhan batch dinonaktifkan. Buka setiap video dan unduh satu per satu.",
-    "api.xinpianchang.browser_required": "Xinpianchang memerlukan verifikasi browser. Buka video, selesaikan verifikasi, putar video, lalu unduh dengan FreeSaveVideo."
+    "api.xinpianchang.browser_required": "Xinpianchang memerlukan verifikasi browser. Buka video, selesaikan verifikasi, putar video, lalu unduh dengan FreeSaveVideo.",
+    "api.magnific.browser_required": "Magnific memblokir akses server. Buka halaman aset gratis yang publik dan gunakan ekstensi browser FreeSaveVideo. Aset Premium dan kreasi pribadi tidak didukung."
 }

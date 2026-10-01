@@ -2542,8 +2542,9 @@
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
                                         <strong>3. After paying, submit your code</strong>
-                                        <p>After payment, stay on the "Thank you for your purchase!" screen. Paste the complete code into the answer box under "Paste your payment code here" and submit your answer. This box is not on the card payment form.</p>
-                                        <p>Keep this page open, then return here to check your credits. If no question appears or credits do not arrive, keep your receipt and contact support: celebrateyang@gmail.com . Do not pay again.</p>
+                                        <p>After paying on Buy Me a Coffee, stay on the "Thank you for your purchase!" screen. Find the box asking for your payment code, paste the complete code, and submit it.</p>
+                                        <p>Then return here and click "check status" to see whether your credits have been added.</p>
+                                        <p>Already paid but need help submitting your code or receiving credits? Email celebrateyang@gmail.com with your payment code and receipt. Do not pay again.</p>
                                         {#if buyMeACoffeeStatusError}
                                             <p role="alert">Could not check payment status. Check your connection and try again. Do not pay again.</p>
                                         {/if}

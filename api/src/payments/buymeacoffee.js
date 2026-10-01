@@ -59,8 +59,8 @@ export const verifyBuyMeACoffeeSignature = ({ rawBody, signature }) => {
   );
 };
 
-export const parseBuyMeACoffeeCreatedEvent = (payload) => {
-  if (payload?.type !== "extra_purchase.created") {
+export const parseBuyMeACoffeePurchaseEvent = (payload) => {
+  if (!["extra_purchase.created", "extra_purchase.updated"].includes(payload?.type)) {
     return { ok: false, code: "UNSUPPORTED_EVENT" };
   }
   if (payload?.live_mode !== true) {
@@ -85,7 +85,6 @@ export const parseBuyMeACoffeeCreatedEvent = (payload) => {
   const outTradeNo = answers
     .map(clean)
     .find((answer) => /^cpt_[A-Za-z0-9_-]{10,64}$/.test(answer));
-  if (!outTradeNo) return { ok: false, code: "ORDER_CODE_MISSING" };
 
   const amountFen = Math.round(Number(data.amount) * 100);
   const currency = clean(data.currency).toUpperCase();
@@ -95,6 +94,10 @@ export const parseBuyMeACoffeeCreatedEvent = (payload) => {
 
   const transactionId = clean(data.transaction_id);
   if (!transactionId) return { ok: false, code: "TRANSACTION_ID_MISSING" };
+
+  // Shop questions are answered after purchase. A later updated event can
+  // include the answer; retrying the original created payload cannot add it.
+  if (!outTradeNo) return { ok: false, code: "ORDER_CODE_MISSING" };
 
   return {
     ok: true,

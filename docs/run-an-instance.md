@@ -103,10 +103,19 @@ Create a Buy Me a Coffee webhook with this endpoint:
 https://api.freesavevideo.online/payments/buymeacoffee/webhook
 ```
 
-Subscribe to `extra_purchase.created` and `extra_purchase.refunded`. Copy the
+Subscribe to `extra_purchase.created`, `extra_purchase.updated`, and
+`extra_purchase.refunded`. Copy the
 webhook detail page's Signing Secret into `BUYMEACOFFEE_WEBHOOK_SECRET`. Each
-Shop product must have exactly one required question asking for the
-FreeSaveVideo payment code. Keep quantity selection and pay-what-you-want off.
+Shop product must enable "Ask a question" asking for the FreeSaveVideo payment
+code. This question is answered AFTER purchase, not in the card checkout form.
+Keep quantity selection and pay-what-you-want off. The website must show the code
+and instructions before opening checkout. Buyers save it, pay, then submit the
+code in the post-purchase question using Post.
+Purchases without an answer are acknowledged as `awaiting_order_code` without
+granting credits. The updated event is also processed with the same validation.
+Verify a real purchase and subsequent answer delivery before promising automatic
+fulfillment; a dashboard test only verifies connectivity and signatures. Missing
+answers need manual reconciliation using the merchant order and payment receipt.
 The API verifies `x-signature-sha256` against the raw request body, then checks
 the local order code, Shop product ID, USD amount, quantity, and transaction ID
 before granting credits. Dashboard test events (`live_mode=false`) never grant

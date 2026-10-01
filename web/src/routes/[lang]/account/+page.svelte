@@ -689,6 +689,8 @@
     let buyMeACoffeeCheckoutUrl = "";
     let buyMeACoffeePaymentCode = "";
     let buyMeACoffeeCodeCopied = false;
+    let buyMeACoffeeCodeSaved = false;
+    let buyMeACoffeeCopyFailed = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
@@ -930,6 +932,8 @@
         buyMeACoffeeCheckoutUrl = "";
         buyMeACoffeePaymentCode = "";
         buyMeACoffeeCodeCopied = false;
+        buyMeACoffeeCodeSaved = false;
+        buyMeACoffeeCopyFailed = false;
         orderStatusLoading = false;
     };
 
@@ -1193,8 +1197,11 @@
         try {
             await navigator.clipboard.writeText(buyMeACoffeePaymentCode);
             buyMeACoffeeCodeCopied = true;
+            buyMeACoffeeCodeSaved = true;
+            buyMeACoffeeCopyFailed = false;
         } catch {
             buyMeACoffeeCodeCopied = false;
+            buyMeACoffeeCopyFailed = true;
         }
     };
 
@@ -1202,8 +1209,6 @@
         if (purchaseLoading || !$clerkUser) return;
         if (activeOrder?.status === "CREATED") return;
 
-        const checkoutWindow = window.open("about:blank", "_blank");
-        if (checkoutWindow) checkoutWindow.opener = null;
         purchaseLoading = true;
         purchaseErrorKey = "";
         purchaseNoticeKey = "";
@@ -1244,11 +1249,11 @@
             activeOrder = { ...order, kind: "credit" };
             buyMeACoffeeCheckoutUrl = checkoutUrl;
             buyMeACoffeePaymentCode = paymentCode;
-            await copyBuyMeACoffeePaymentCode();
-            if (checkoutWindow) checkoutWindow.location.href = checkoutUrl;
+            buyMeACoffeeCodeCopied = false;
+            buyMeACoffeeCodeSaved = false;
+            buyMeACoffeeCopyFailed = false;
             startPolling(order.id);
         } catch (error) {
-            checkoutWindow?.close();
             purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create Buy Me a Coffee order failed", error);
         } finally {
@@ -2414,7 +2419,7 @@
                                 </div>
                             {:else if activeOrder.provider === "buymeacoffee"}
                                 <div class="bmc-payment-code">
-                                    <strong>Payment code</strong>
+                                    <strong>1. Save your payment code</strong>
                                     <code>{buyMeACoffeePaymentCode}</code>
                                     <button
                                         class="button elevated"
@@ -2422,15 +2427,24 @@
                                     >
                                         {buyMeACoffeeCodeCopied ? "Copied" : "Copy code"}
                                     </button>
-                                    {#if buyMeACoffeeCheckoutUrl}
+                                    {#if buyMeACoffeeCopyFailed}
+                                        <p role="alert">Copy failed. Select the entire code above and copy it manually.</p>
+                                    {/if}
+                                    <label class="bmc-code-confirmation">
+                                        <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
+                                        <span>I have saved this code for after payment.</span>
+                                    </label>
+                                    {#if buyMeACoffeeCheckoutUrl && buyMeACoffeeCodeSaved}
                                         <a
                                             class="button elevated active"
                                             href={buyMeACoffeeCheckoutUrl}
                                             target="_blank"
                                             rel="noreferrer noopener nofollow"
                                         >
-                                            Continue to checkout
+                                            2. Continue to payment
                                         </a>
+                                    {:else}
+                                        <button class="button elevated" disabled>Save your code to continue</button>
                                     {/if}
                                 </div>
                             {:else if qrDataUrl}
@@ -2481,7 +2495,9 @@
                                 <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
-                                        Paste the payment code into the required checkout field. Keep this page open; credits are added after payment confirmation.
+                                        <strong>3. After paying, submit your code</strong>
+                                        <p>Buy Me a Coffee asks the product question after purchase, not on the card payment form. Paste your saved code into the answer field and click Post.</p>
+                                        <p>Keep this page open, then return here to check your credits. If no question appears or credits do not arrive, keep your receipt and contact support. Do not pay again.</p>
                                     {:else}
                                         {$t("auth.payment_waiting_hint")}
                                     {/if}
@@ -3625,6 +3641,13 @@
     .bmc-payment-code :global(a.button) {
         justify-content: center;
         text-decoration: none;
+    }
+
+    .bmc-code-confirmation {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 0.85rem;
     }
 
     .payment-status {

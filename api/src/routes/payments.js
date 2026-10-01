@@ -51,7 +51,7 @@ import {
     BUYMEACOFFEE_CREDIT_PRODUCTS,
     getBuyMeACoffeeProductByKey,
     isBuyMeACoffeeConfigured,
-    parseBuyMeACoffeeCreatedEvent,
+    parseBuyMeACoffeePurchaseEvent,
     verifyBuyMeACoffeeSignature,
 } from "../payments/buymeacoffee.js";
 
@@ -618,16 +618,21 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
             return res.status(200).json({ status: "refund_recorded" });
         }
 
-        const parsed = parseBuyMeACoffeeCreatedEvent(req.body || {});
+        const parsed = parseBuyMeACoffeePurchaseEvent(req.body || {});
         if (!parsed.ok) {
-            const retryable = parsed.code === "ORDER_CODE_MISSING";
+            if (parsed.code === "ORDER_CODE_MISSING") {
+                console.warn("Buy Me a Coffee purchase awaiting order code", {
+                    eventId: req.body?.event_id || null,
+                    transactionId: req.body?.data?.transaction_id || null,
+                    eventType: req.body?.type || null,
+                });
+                return res.status(200).json({ status: "awaiting_order_code" });
+            }
             console.error("Buy Me a Coffee webhook rejected", {
                 code: parsed.code,
                 eventId: req.body?.event_id || null,
             });
-            return retryable
-                ? jsonError(res, 500, parsed.code, "Buy Me a Coffee payment cannot be matched")
-                : res.status(200).json({ status: "ignored", code: parsed.code });
+            return res.status(200).json({ status: "ignored", code: parsed.code });
         }
         const order = await getCreditOrderByOutTradeNo(parsed.outTradeNo);
         if (!order) {

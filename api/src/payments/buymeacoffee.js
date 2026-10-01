@@ -82,9 +82,11 @@ export const parseBuyMeACoffeePurchaseEvent = (payload) => {
   const answers = Array.isArray(extras[0]?.question_answers)
     ? extras[0].question_answers
     : [];
-  const outTradeNo = answers
+  const orderCodes = [...new Set(answers
     .map(clean)
-    .find((answer) => /^cpt_[A-Za-z0-9_-]{10,64}$/.test(answer));
+    .filter((answer) => /^cpt_[A-Za-z0-9_-]{10,64}$/.test(answer)))];
+  if (orderCodes.length > 1) return { ok: false, code: "AMBIGUOUS_ORDER_CODE" };
+  const outTradeNo = orderCodes[0];
 
   const amountFen = Math.round(Number(data.amount) * 100);
   const currency = clean(data.currency).toUpperCase();

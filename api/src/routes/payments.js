@@ -646,11 +646,10 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
             });
             return res.status(200).json({ status: "ignored", code: "ORDER_PRODUCT_MISMATCH" });
         }
-        await updateCreditOrderProviderData(order.id, {
-            buymeacoffee_event_id: String(req.body?.event_id || ""),
-            buymeacoffee_product_id: parsed.product.productId,
-            supporter_email: String(req.body?.data?.supporter_email || ""),
-        });
+        if (order.status === "PAID" && order.provider_transaction_id !== parsed.transactionId) {
+            console.error("Buy Me a Coffee paid order received a different transaction", { orderId: order.id });
+            return res.status(200).json({ status: "manual_review", code: "TRANSACTION_MISMATCH" });
+        }
         const result = await markCreditOrderPaid({
             outTradeNo: parsed.outTradeNo,
             providerTransactionId: parsed.transactionId,
@@ -664,6 +663,19 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
                 ? jsonError(res, 500, result.code, "credit order update failed")
                 : res.status(200).json({ status: "ignored", code: result.code });
         }
+        if (result.code === "PAID") {
+            await updateCreditOrderProviderData(order.id, {
+                buymeacoffee_event_id: String(req.body?.event_id || ""),
+                buymeacoffee_product_id: parsed.product.productId,
+                supporter_email: String(req.body?.data?.supporter_email || ""),
+            });
+        }
+        console.info("Buy Me a Coffee payment processed", {
+            orderId: order.id,
+            eventType: req.body?.type,
+            eventId: req.body?.event_id,
+            result: result.code,
+        });
         return res.status(200).json({ status: "success" });
     } catch (error) {
         console.error("POST /payments/buymeacoffee/webhook error:", error);

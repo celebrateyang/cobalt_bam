@@ -691,6 +691,9 @@
     let buyMeACoffeeCodeCopied = false;
     let buyMeACoffeeCodeSaved = false;
     let buyMeACoffeeCopyFailed = false;
+    let buyMeACoffeeReturnHandled = false;
+    let buyMeACoffeeSavedOrderId = 0;
+    let buyMeACoffeeStatusError = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
@@ -1006,6 +1009,18 @@
 
             const order = data?.data?.order as CreditOrder | undefined;
             if (order) {
+                if (order.provider === "buymeacoffee") {
+                    buyMeACoffeeStatusError = false;
+                    buyMeACoffeePaymentCode = order.out_trade_no;
+                    buyMeACoffeeCheckoutUrl = String(order.provider_data?.checkout_url || "");
+                    if (order.status !== "CREATED") {
+                        buyMeACoffeeSavedOrderId = 0;
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete("bmc_order");
+                        window.history.replaceState({}, "", cleanUrl.toString());
+                        stopPolling();
+                    }
+                }
                 if (
                     showWechatModal &&
                     ["wechat", "nowpayments", "buymeacoffee"].includes(order.provider)
@@ -1030,6 +1045,9 @@
                 return order;
             }
         } catch (error) {
+            if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) {
+                buyMeACoffeeStatusError = true;
+            }
             console.debug("load order status failed", error);
         } finally {
             orderStatusLoading = false;
@@ -1117,6 +1135,7 @@
     ) => {
         stopPolling();
         pollTimer = setInterval(() => {
+            if (orderStatusLoading || document.hidden) return;
             if (kind === "membership") {
                 void fetchMembershipOrderStatus(
                     orderId,
@@ -1208,6 +1227,10 @@
     const startBuyMeACoffeePay = async (productKey: string) => {
         if (purchaseLoading || !$clerkUser) return;
         if (activeOrder?.status === "CREATED") return;
+        if (buyMeACoffeeSavedOrderId) {
+            await restoreBuyMeACoffeeOrder();
+            return;
+        }
 
         purchaseLoading = true;
         purchaseErrorKey = "";
@@ -1252,6 +1275,11 @@
             buyMeACoffeeCodeCopied = false;
             buyMeACoffeeCodeSaved = false;
             buyMeACoffeeCopyFailed = false;
+            buyMeACoffeeStatusError = false;
+            buyMeACoffeeSavedOrderId = order.id;
+            const returnUrl = new URL(window.location.href);
+            returnUrl.searchParams.set("bmc_order", String(order.id));
+            window.history.replaceState({}, "", returnUrl.toString());
             startPolling(order.id);
         } catch (error) {
             purchaseErrorKey = "auth.payment_create_failed";
@@ -1337,6 +1365,14 @@
         } finally {
             purchaseLoading = false;
         }
+    };
+
+    const restoreBuyMeACoffeeOrder = async () => {
+        if (!buyMeACoffeeSavedOrderId || orderStatusLoading) return;
+        const order = await fetchOrderStatus(buyMeACoffeeSavedOrderId, false, false);
+        if (order?.provider !== "buymeacoffee") return;
+        activeOrder = { ...order, kind: "credit" };
+        if (order.status === "CREATED") startPolling(order.id);
     };
 
     const resumeNowPaymentsCheckout = async () => {
@@ -1461,6 +1497,7 @@
     };
 
     const consumeRecommendedCheckoutIntent = () => {
+        if ($page.url.searchParams.has("bmc_order")) return;
         if (!browser || checkoutIntentHandled || !$clerkUser) return;
         const checkoutIntent = $page.url.searchParams.get("checkout");
 
@@ -1560,6 +1597,15 @@
 
     $: if (browser && $clerkUser && !nowPaymentsReturnHandled) {
         void resumeNowPaymentsCheckout();
+    }
+
+    $: if (browser && $clerkUser && !buyMeACoffeeReturnHandled) {
+        buyMeACoffeeReturnHandled = true;
+        const orderId = Number($page.url.searchParams.get("bmc_order"));
+        if (Number.isSafeInteger(orderId) && orderId > 0) {
+            buyMeACoffeeSavedOrderId = orderId;
+            void restoreBuyMeACoffeeOrder();
+        }
     }
 
     const selectPaymentProvider = (provider: PaymentProvider) => {
@@ -2496,8 +2542,11 @@
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
                                         <strong>3. After paying, submit your code</strong>
-                                        <p>Buy Me a Coffee asks the product question after purchase, not on the card payment form. Paste your saved code into the answer field and click Post.</p>
+                                        <p>After payment, stay on the "Thank you for your purchase!" screen. Paste the complete code into the answer box under "Paste your FreeSaveVideo payment code here" and submit your answer. This box is not on the card payment form.</p>
                                         <p>Keep this page open, then return here to check your credits. If no question appears or credits do not arrive, keep your receipt and contact support. Do not pay again.</p>
+                                        {#if buyMeACoffeeStatusError}
+                                            <p role="alert">Could not check payment status. Check your connection and try again. Do not pay again.</p>
+                                        {/if}
                                     {:else}
                                         {$t("auth.payment_waiting_hint")}
                                     {/if}
@@ -2515,12 +2564,19 @@
                                     {$t("auth.check_status")}
                                 </button>
                                 <button class="button elevated" on:click={clearActiveOrder}>
-                                    {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                    {activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID" ? "Close (payment is not cancelled)" : $t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        {/if}
+        {#if buyMeACoffeeSavedOrderId && !activeOrder}
+            <div class="card">
+                <p>Your Buy Me a Coffee order is still pending. Reopen it to copy your code or check payment. Do not pay again if you have already paid.</p>
+                <button class="button elevated" on:click={restoreBuyMeACoffeeOrder} disabled={orderStatusLoading}>Reopen payment instructions</button>
+                {#if buyMeACoffeeStatusError}<p role="alert">Could not load this order. Please check your connection and signed-in account.</p>{/if}
             </div>
         {/if}
 
@@ -3636,6 +3692,9 @@
         color: var(--text);
         overflow-wrap: anywhere;
         user-select: all;
+        white-space: nowrap;
+        overflow-x: auto;
+        font-size: 0.75rem;
     }
 
     .bmc-payment-code :global(a.button) {

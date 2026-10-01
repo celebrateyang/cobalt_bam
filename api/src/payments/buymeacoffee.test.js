@@ -103,3 +103,16 @@ test("updated events still require a successful, unrefunded, exact-price purchas
   assert.equal(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.refunded")).code,
     "UNSUPPORTED_EVENT");
 });
+
+test("accepts surrounding whitespace but never guesses between different order codes", () => {
+  const code = "cpt_abcdefghijklmnopqrst";
+  const result = parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", ["  " + code + "\n", code]));
+  assert.equal(result.ok, true);
+  assert.equal(result.outTradeNo, code);
+  assert.deepEqual(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", [code, "cpt_12345678901234567890"])), {
+    ok: false, code: "AMBIGUOUS_ORDER_CODE",
+  });
+  assert.deepEqual(parseBuyMeACoffeePurchaseEvent(purchase("extra_purchase.updated", ["invalid"])), {
+    ok: false, code: "ORDER_CODE_MISSING",
+  });
+});

@@ -37,7 +37,7 @@ export const siteCapabilities = {
     ],
     languages: ['en', 'zh', 'th', 'ru', 'ja', 'es', 'vi', 'ko', 'fr', 'de', 'id'],
     summary:
-        'FreeSaveVideo is a browser-based media downloader for public online videos, including WeChat Channels and videos embedded in WeChat Official Account articles, plus local media conversion, whiteboard recording, file transfer, discovery, and random 1v1 video chat.',
+        'FreeSaveVideo is a browser-based media downloader for public online videos, including SOOP (formerly AfreecaTV), WeChat Channels, and videos embedded in WeChat Official Account articles, plus local media conversion, whiteboard recording, file transfer, discovery, and random 1v1 video chat.',
     commonUseCases: [
         'Start a temporary one-to-one browser text conversation with someone you know, or share files between devices.',
         'Download publicly accessible online videos from supported platforms in a browser.',
@@ -92,6 +92,7 @@ export const siteCapabilities = {
         'public video download safety',
         'WeChat Channels video download',
         'WeChat Official Account article video download',
+        'SOOP and AfreecaTV VOD download',
     ],
     coreFeatures: [
         'online video download',
@@ -266,6 +267,30 @@ export const capabilityServices: CapabilityService[] = [
         notes: ['Supports public NAVER Shorts, naver.me share links, and m.naver.com/shorts media links.'],
         searchIntents: ['naver video downloader', 'naver shorts download', 'naver.me video download'],
         unsupportedCases: defaultUnsupportedCases,
+    },
+    {
+        id: 'sooplive',
+        name: 'SOOP (formerly AfreecaTV)',
+        category: 'video',
+        publicOnly: true,
+        audioMode: false,
+        noWatermark: false,
+        batchFriendly: true,
+        collectionFriendly: false,
+        landingSlug: 'sooplive-video-download',
+        notes: ['Supports public SOOP VOD and Catch player links, compatible legacy AfreecaTV VOD URLs, quality selection, and selectable multi-part replays.'],
+        searchIntents: [
+            'SOOP video downloader',
+            'AfreecaTV downloader',
+            'SOOP VOD download',
+            'SOOP 동영상 다운로드',
+            'SOOP 動画 ダウンロード',
+            'ดาวน์โหลดวิดีโอ SOOP',
+        ],
+        unsupportedCases: [
+            'Private, subscriber-only, adult login-gated, deleted, live, or DRM-protected content.',
+            'Station and channel pages without a concrete VOD player ID.',
+        ],
     },
     {
         id: 'niconico',

@@ -36,6 +36,7 @@ import dailymotion from "./services/dailymotion.js";
 import deeplearningai from "./services/deeplearningai.js";
 import xinpianchang from "./services/xinpianchang.js";
 import snapchat from "./services/snapchat.js";
+import sooplive from "./services/sooplive.js";
 import loom from "./services/loom.js";
 import facebook from "./services/facebook.js";
 import threads from "./services/threads.js";
@@ -677,6 +678,14 @@ export default async function({ host, patternMatch, params, authType }) {
                 r = await snapchat({
                     ...patternMatch,
                     alwaysProxy: params.alwaysProxy,
+                });
+                break;
+
+            case "sooplive":
+                r = await sooplive({
+                    ...patternMatch,
+                    quality: params.videoQuality,
+                    url,
                 });
                 break;
 

@@ -1,7 +1,7 @@
 import UrlPattern from "url-pattern";
 
-export const audioIgnore = new Set(["vk", "ok", "loom"]);
-export const hlsExceptions = new Set(["amazon", "dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo"]);
+export const audioIgnore = new Set(["vk", "ok", "loom", "sooplive"]);
+export const hlsExceptions = new Set(["amazon", "dailymotion", "vimeo", "rutube", "bsky", "youtube", "cctv", "bjnews", "niconico", "weibo", "sooplive"]);
 
 export const services = {
     xinpianchang: {
@@ -250,6 +250,16 @@ export const services = {
             "o/:spotlightId",
         ],
         subdomains: ["t", "story"],
+    },
+    sooplive: {
+        patterns: [
+            "player/:id",
+            "player/:id/:type",
+            "PLAYER/STATION/:id",
+            "PLAYER/STATION/:id/:type",
+        ],
+        subdomains: ["vod"],
+        altDomains: ["sooplive.co.kr", "afreecatv.com"],
     },
     soundcloud: {
         patterns: [

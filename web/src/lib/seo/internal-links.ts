@@ -64,6 +64,10 @@ const crossLinkEntries: CrossLinkEntry[] = [
         homeKey: 'naver',
     },
     {
+        platform: 'SOOP (AfreecaTV)',
+        downloadSlug: 'sooplive-video-download',
+    },
+    {
         platform: 'Toutiao',
         downloadSlug: 'toutiao-video-download',
         guideSlug: 'toutiao-download-guide',
@@ -198,6 +202,7 @@ const strategicDownloadOrder = [
     'xiaohongshu-video-download',
     'kuaishou-no-watermark',
     'naver-video-download',
+    'sooplive-video-download',
     'toutiao-video-download',
     'weibo-video-download',
     'wechat-video-download',
@@ -230,6 +235,7 @@ const internationalDownloadSlugs = new Set([
     'tiktok-collection-download',
     'tiktok-mp3-download',
     'naver-video-download',
+    'sooplive-video-download',
     'instagram-reels-download',
     'instagram-video-download',
     'batch-video-downloader',
@@ -297,6 +303,7 @@ const matchesAudience = (slug: string, audience: LinkAudience): boolean =>
 // Keep links and route generation on the same language policy. Do not advertise
 // translated URLs merely because an English fallback can render their content.
 export const isDownloadAvailableInLanguage = (slug: string, lang: string): boolean => {
+    if (slug === 'sooplive-video-download') return ['en', 'ko', 'ja', 'th'].includes(lang);
     if (slug === 'xinpianchang-video-download') return lang === 'en' || lang === 'zh';
     if (slug === 'youtube-playlist-to-mp3') return lang === 'en' || lang === 'zh';
     if (isEnglishOnlyDownloadSlug(slug)) return lang === 'en';
@@ -304,6 +311,12 @@ export const isDownloadAvailableInLanguage = (slug: string, lang: string): boole
 };
 
 export const topicalRelatedDownloadSlugs: Record<string, string[]> = {
+    'sooplive-video-download': [
+        'naver-video-download',
+        'youtube-download',
+        'tiktok-no-watermark',
+        'vimeo-video-download',
+    ],
     'tiktok-no-watermark': [
         'tiktok-collection-download',
         'tiktok-mp3-download',

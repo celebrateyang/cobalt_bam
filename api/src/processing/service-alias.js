@@ -13,6 +13,7 @@ const friendlyNames = {
     naver: "Naver",
     niconico: "NicoNico",
     podcast: "Podcast",
+    sooplive: "SOOP",
     tencent_video: "Tencent Video",
     threads: "Threads",
     toutiao: "Toutiao",

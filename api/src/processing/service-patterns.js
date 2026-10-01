@@ -114,6 +114,10 @@ export const testers = {
         pattern.spotlightId?.length <= 255 ||
         pattern.shortLink?.length <= 16,
 
+    "sooplive": pattern =>
+        /^\d{1,18}$/.test(pattern.id || "") &&
+        (!pattern.type || /^catch$/i.test(pattern.type)),
+
     "soundcloud": pattern =>
         (pattern.author?.length <= 255 && pattern.song?.length <= 255) ||
         pattern.shortLink?.length <= 32,

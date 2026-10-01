@@ -34,6 +34,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | reddit            | ✅            | ✅         | ✅         | ❌         | ❌              |
 | rutube            | ✅            | ✅         | ✅         | ✅         | ✅              |
 | snapchat          | ✅            | ✅         | ✅         | ➖         | ➖              |
+| soop (afreecatv)  | ✅            | ❌         | ✅         | ✅         | ✅              |
 | sohu video        | ✅            | ✅         | ✅         | ✅         | ✅              |
 | soundcloud        | ➖            | ✅         | ➖         | ✅         | ✅              |
 | streamable        | ✅            | ✅         | ✅         | ➖         | ➖              |
@@ -67,6 +68,7 @@ if the desired service isn't supported yet, feel free to create an appropriate i
 | pinterest  | supports photos, gifs, videos and stories.                                                                           |
 | reddit     | supports gifs and videos.                                                                                            |
 | snapchat   | supports spotlights and stories. lets you pick what to save from stories.                                            |
+| soop       | supports public SOOP (formerly AfreecaTV) VOD and Catch player links, available HLS qualities, and selectable multi-part replays. |
 | rutube     | supports yappy & private links.                                                                                      |
 | soundcloud | supports private links.                                                                                              |
 | tiktok     | supports videos with or without watermark, images from slideshow without watermark, and full (original) audios.      |

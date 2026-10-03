@@ -1273,6 +1273,104 @@ export const learnPages: LearnPage[] = [
             'local WebM to MP4 converter',
         ],
     },
+    {
+        slug: 'download-youtube-audio-playlist-for-offline-listening',
+        title: 'How to save YouTube audio or playlist items for offline listening',
+        description:
+            'A practical workflow for saving audio from public YouTube videos and supported playlists you own or are authorized to use, with per-item format selection and queue retries.',
+        updatedAt: '2026-10-02',
+        readingTime: '7 min read',
+        category: 'YouTube audio',
+        summary:
+            'FreeSaveVideo can inspect a public YouTube video or supported public playlist, show the audio resources available for each item, and add selected results to a browser download queue. The exact audio format depends on what YouTube exposes for that source.',
+        keyTakeaways: [
+            'Use a specific public watch URL or a normal public playlist URL containing a stable list ID.',
+            'Choose an available audio option for each item instead of assuming every video provides MP3.',
+            'Only save content you created, licensed, or have permission to keep; private, paid, members-only, and DRM-protected media are outside the supported workflow.',
+        ],
+        sections: [
+            {
+                heading: 'Start with the correct YouTube URL',
+                body: [
+                    'For one recording, paste the public watch URL. For several recordings, open the specific public playlist and copy the complete address with its list parameter. A channel page, search result, Watch Later list, or generated Mix is not a normal finite public playlist.',
+                    'A watch URL that also contains a list value can preserve playlist context. If only one item appears, copy the playlist page URL again and confirm that the list ID was not removed by the share action.',
+                ],
+            },
+            {
+                heading: 'Select audio based on the detected source',
+                body: [
+                    'After analysis, review the audio options shown for the video. YouTube sources commonly expose audio streams in formats such as M4A or WebM/Opus, but availability varies by item and can change.',
+                    'Do not assume that an option labelled MP3 will always exist. If you specifically need MP3 and the downloaded file uses another supported audio format, use the local browser audio converter after saving the authorized source.',
+                ],
+            },
+            {
+                heading: 'Review a playlist before adding items to the queue',
+                body: [
+                    'A supported playlist expands into selectable entries. Choose only the recordings you need, then review the available resource for each one. Playlist entries can differ in duration, availability, and audio formats.',
+                    'Selected entries run as separate queue tasks. A deleted, private, age-restricted, or region-restricted item can fail without requiring the remaining eligible items to be restarted.',
+                ],
+            },
+            {
+                heading: 'Use queue controls for longer listening collections',
+                body: [
+                    'Keep the browser tab open while queued tasks are processing. Completed items can be saved individually, while retry and continuation controls help when a network interruption affects one task.',
+                    'When the browser supports folder permission, choosing a dedicated save directory can reduce repeated prompts. Otherwise, use the Save action for each completed item and check the browser download folder.',
+                ],
+            },
+            {
+                heading: 'Keep the use case within content rights',
+                body: [
+                    'Good examples include your own uploads, recordings released with download permission, licensed training material, or public content whose owner has authorized your offline use.',
+                    'FreeSaveVideo does not unlock private, paid, members-only, or DRM-protected media. Downloading a publicly accessible page does not by itself grant permission to copy or redistribute its content.',
+                ],
+            },
+        ],
+        table: {
+            headers: ['Input', 'Recommended workflow', 'Important check'],
+            rows: [
+                ['One public YouTube video', 'Paste the watch URL and choose an available audio resource', 'Confirm you have permission to save it'],
+                ['Normal public playlist', 'Expand, select items, then add them to the queue', 'Keep the stable list ID in the URL'],
+                ['Channel or search page', 'Open a specific video or playlist first', 'These pages are not finite media lists'],
+                ['Downloaded non-MP3 audio', 'Use the local audio converter if MP3 is required', 'Conversion happens after the authorized download'],
+            ],
+        },
+        faqs: [
+            {
+                q: 'Can every YouTube video be downloaded as MP3?',
+                a: 'No. Available source resources differ. FreeSaveVideo shows the audio options detected for that public video; if you need MP3, a supported downloaded audio or video file can be converted locally afterward.',
+            },
+            {
+                q: 'Can I save the audio from a complete YouTube playlist?',
+                a: 'You can expand a supported normal public playlist, select eligible entries, and queue their available audio resources. Private, Watch Later, paid, members-only, generated Mix, and restricted items are not supported.',
+            },
+            {
+                q: 'Will one unavailable playlist item stop all downloads?',
+                a: 'No. Selected entries are handled as separate tasks, so other eligible items can continue while a failed item remains visible for inspection or retry.',
+            },
+            {
+                q: 'Where are completed audio files saved?',
+                a: 'They are saved through the browser. Check the browser download folder, or select a save directory when the browser offers folder permission.',
+            },
+        ],
+        relatedDownloads: ['youtube-download', 'youtube-playlist-to-mp3'],
+        relatedGuides: ['youtube-download-guide', 'how-to-download-multiple-videos'],
+        relatedTools: [
+            {
+                title: 'Convert a saved file to MP3 locally',
+                description:
+                    'Use the browser audio extractor when an authorized source is available as video, M4A, WebM, or another supported local format.',
+                href: '/en/remux',
+            },
+        ],
+        keywords: [
+            'download youtube audio for offline listening',
+            'youtube playlist audio downloader',
+            'save youtube playlist audio',
+            'youtube audio download queue',
+            'youtube video audio only download',
+            'convert youtube audio to mp3 locally',
+        ],
+    },
 ];
 
 export const learnSlugs = learnPages.map((page) => page.slug);

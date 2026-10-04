@@ -48,6 +48,14 @@ test("membership prices follow the revised BMC catalog", () => {
   );
 });
 
+test("BMC memberships grant the same full plans as WeChat", () => {
+  for (const product of BUYMEACOFFEE_MEMBERSHIP_PRODUCTS) {
+    assert.equal(product.planKey, product.key.replace("_buymeacoffee", ""));
+    assert.deepEqual(product.entitlements,
+      ["member_download", "ai_video_studio", "video_recording", "random_chat"]);
+  }
+});
+
 test("new draft products require the release gate; existing credits remain available", () => {
   const previous = process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
   try {

@@ -45,8 +45,8 @@ export const BUYMEACOFFEE_MEMBERSHIP_PRODUCTS = [
   ["monthly", 30, 799, "583009"], ["3day", 3, 199, "583007"], ["yearly", 365, 5000, "583011"],
 ].map(([period, durationDays, amountFen, productId]) => ({
   key: `member_${period}_buymeacoffee`, kind: "membership",
-  planKey: `member_${period}_crypto`, durationDays, amountFen, currency: "USD",
-  billingType: "one_time", entitlements: ["member_download", "video_recording"],
+  planKey: `member_${period}`, durationDays, amountFen, currency: "USD",
+  billingType: "one_time", entitlements: ["member_download", "ai_video_studio", "video_recording", "random_chat"],
   limits: { dailySuccessfulDownloads: 300, monthlySuccessfulDownloads: 5000 },
   productId: clean(process.env[`BUYMEACOFFEE_MEMBER_${durationDays}_ID`]) || productId,
   checkoutUrl: clean(process.env[`BUYMEACOFFEE_MEMBER_${durationDays}_URL`]) || `https://buymeacoffee.com/bambooyang/e/${productId}`,

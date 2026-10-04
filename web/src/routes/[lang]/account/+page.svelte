@@ -711,8 +711,8 @@
             0,
     );
     $: isChinese = $page.params.lang === "zh";
-    $: bmcPassPurchaseBlocked = Boolean(membership?.active && membership.entitlements?.some(
-        (key) => !["member_download", "video_recording"].includes(key),
+    $: bmcPassPurchaseBlocked = Boolean(membership?.active && membershipProducts.length && membershipProducts.every(
+        (product) => membership?.entitlements?.some((key) => !membershipProductHasEntitlement(product, key)),
     ));
     $: if (
         !isChinese &&
@@ -2275,7 +2275,7 @@
                                     {$t("auth.membership_title")}
                                 </div>
                                 <div class="subtext topup-subtitle">
-                                    {$t(selectedPaymentProvider === "wechat" ? "auth.membership_subtitle" : "auth.download_pass_subtitle")}
+                                    {$t(selectedPaymentProvider === "nowpayments" ? "auth.download_pass_subtitle" : "auth.membership_subtitle")}
                                 </div>
                             </div>
 

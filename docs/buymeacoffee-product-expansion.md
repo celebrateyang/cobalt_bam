@@ -1,13 +1,13 @@
 # Buy Me a Coffee product expansion - review draft
 
-Status: approved and implemented locally on 2026-10-04. All six new Shop
-products are saved and verified as drafts, with actual IDs mapped in code.
-They are not yet published or enabled in production. Existing Shop copy
+Status: approved and implemented locally on 2026-10-04. Shop membership
+prices and benefits have been updated and verified. API and frontend deployment
+are required to activate the latest full membership configuration. Shop copy
 remains brand-neutral.
 
 ## Product catalog
 
-Credit packages and pass entitlements follow the Crypto catalog. BMC pass
+Credit packages follow the Crypto catalog; BMC membership entitlements match WeChat. BMC pass
 prices were revised on 2026-10-04; Crypto prices are unchanged. All prices below are USD.
 
 | Type | Quantity / duration | Price | Shop title | Status |
@@ -17,9 +17,9 @@ prices were revised on 2026-10-04; Crypto prices are unchanged. All prices below
 | Credits | 5,000 | 9.99 | 5,000 Processing Credits (One-time Purchase) | Proposed |
 | Credits | 12,000 | 19.99 | 12,000 Processing Credits (One-time Purchase) | Proposed |
 | Credits | 35,000 | 49.99 | 35,000 Processing Credits (One-time Purchase) | Proposed |
-| Pass | 3 days | 1.99 | 3-Day Download Pass (One-time Purchase) | Proposed |
-| Pass | 30 days | 7.99 | 30-Day Download Pass (One-time Purchase) | Proposed |
-| Pass | 365 days | 50.00 | 365-Day Download Pass (One-time Purchase) | Proposed |
+| Pass | 3 days | 1.99 | 3-Day Service Membership (One-time Purchase) | Active |
+| Pass | 30 days | 7.99 | 30-Day Service Membership (One-time Purchase) | Active |
+| Pass | 365 days | 50.00 | 365-Day Service Membership (One-time Purchase) | Active |
 
 Credits never expire, are consumed according to the operation's credit cost,
 and do not grant membership. Passes grant membership for the purchased
@@ -32,21 +32,25 @@ No invented countdown, limited stock, historical price or lifetime-access promis
 
 ## Membership entitlements
 
-Match Crypto's actual entitlements, not the general membership marketing copy:
+All three BMC durations match WeChat's full membership entitlements. Crypto
+retains its existing download-and-recording-only plans:
 
 - Standard downloads without point deductions within fair-use limits.
 - Browser video recording.
 - Up to 300 successful downloads per day and 5,000 per month, using the
   existing membership quota periods and enforcement.
-- AI video processing and random video chat are not included.
+- AI highlight clips and translated subtitles, with 120 AI video minutes per month
+  during active membership, using the existing shared monthly quota.
+- Member-only random video chat.
 - All three durations have the same entitlements. No bundled credit balance.
 
 Implemented activation rules: start on verified payment plus successful account
 association; for an existing eligible pass with the same entitlements, append
 the purchased duration to its expiration. Preserve the existing cross-provider
-extension behavior. To avoid downgrading a full membership, the UI and order
-creation block BMC pass purchases while an active membership has additional
-entitlements; fulfillment rechecks this in its transaction. An incompatible
+extension behavior. Purchases use the existing WeChat plan keys; no separate
+Crypto plan is reused. To avoid downgrading an existing membership, the UI and order
+creation compare its entitlements with the purchased plan; fulfillment rechecks
+this in its transaction, including for legacy download-only orders. An incompatible
 paid receipt remains available for manual review. Provider paidAt is preserved
 on the order; BMC pass duration starts at successful fulfillment so delayed
 code submission does not consume purchased days.
@@ -111,19 +115,21 @@ not automatically revoke membership or subtract credits.
 
 Continue omitting the project brand from product titles, descriptions,
 confirmation messages and payment-code questions, as requested by the owner.
-Keep processing-service descriptions accurate.
+Do not mention video downloading in any Shop-facing copy. The account page
+continues to explain the complete membership benefits, matching actual WeChat
+plan entitlements. Shop membership copy lists editing, recording and chat features.
 
 Credits: reuse the live neutral credit copy from buymeacoffee-conversion.md,
 substituting quantity and price.
 
 Pass description (substitute duration and price):
 
-> Buy a 30-day download pass for US$7.99. One-time payment. No subscription or
+> Buy a 30-day service membership for US$7.99. One-time payment. No subscription or
 > automatic renewal. This pass grants access for 30 days; it is not a credit pack.
 >
-> Includes standard downloads without point deductions within fair-use limits
-> (up to 300 successful downloads per day and 5,000 per month), plus browser
-> video recording. AI video processing and random video chat are not included.
+> Includes AI-assisted highlight editing with translated subtitles
+> (120 minutes per month during active membership),
+> browser video recording, and member-only random video chat.
 >
 > Before paying, copy your payment code from your account's payment window.
 > After paying, paste the complete code into the payment-code question on the
@@ -143,7 +149,7 @@ Question:
 
 Pass confirmation:
 
-> Thank you for your purchase! One more step to activate your download pass:
+> Thank you for your purchase! One more step to activate your membership:
 > paste your complete payment code (starts with mbr_) into the question on this
 > page and submit your answer. Copy the code from your account's payment window,
 > then return to your account to confirm activation and your expiration date.
@@ -196,7 +202,7 @@ completion.
 
 ## Validation performed
 
-- `pnpm -C api test:buymeacoffee`: 11 passing tests, including real PostgreSQL
+- `pnpm -C api test:buymeacoffee`: 13 passing tests, including real PostgreSQL
   semantics via PGlite for activation, extension, replay protection, refunds,
   reconciliation and incompatible-membership protection.
 - Changed API modules pass `node --check`.

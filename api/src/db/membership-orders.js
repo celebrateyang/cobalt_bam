@@ -479,7 +479,10 @@ export const markMembershipOrderPaid = async ({
           WHERE s.user_id = $1 AND s.status = 'active'
             AND (s.current_period_end IS NULL OR s.current_period_end > $2)
             AND EXISTS (SELECT 1 FROM plan_entitlements pe WHERE pe.plan_id = s.plan_id
-              AND pe.entitlement_key NOT IN ('member_download', 'video_recording'))`, [order.user_id, now]);
+              AND NOT EXISTS (SELECT 1 FROM plan_entitlements purchased_pe
+                JOIN plans purchased_plan ON purchased_plan.id = purchased_pe.plan_id
+                WHERE purchased_plan.key = $3
+                  AND purchased_pe.entitlement_key = pe.entitlement_key))`, [order.user_id, now, order.plan_key]);
         if (incompatible.rows.length) {
           await client.query("ROLLBACK");
           return { ok: false, code: "MEMBERSHIP_INCOMPATIBLE", order };

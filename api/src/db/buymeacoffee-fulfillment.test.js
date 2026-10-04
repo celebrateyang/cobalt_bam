@@ -74,5 +74,15 @@ test("BMC fulfillment links each transaction once and extends passes without los
         await receipt('pi_full','mbr_full');
         assert.equal((await fulfill('mbr_full','pi_full')).code,'MEMBERSHIP_INCOMPATIBLE');
         assert.equal((await fulfill('mbr_first','pi_first')).code,'ALREADY_PAID');
+        await db.query("INSERT INTO plans (id,key) VALUES (3,'member_monthly')");
+        await db.query(`INSERT INTO plan_entitlements VALUES
+            (3,'member_download'),(3,'video_recording'),(3,'ai_video_studio'),(3,'random_chat')`);
+        await member('mbr_complete');
+        await db.query("UPDATE membership_orders SET plan_key='member_monthly' WHERE out_trade_no='mbr_complete'");
+        await receipt('pi_complete','mbr_complete');
+        const complete = await fulfill('mbr_complete','pi_complete');
+        assert.equal(complete.code,'PAID','full BMC membership can extend an active full membership');
+        assert.equal(complete.subscription.plan_id,3);
+        assert.equal(Number(complete.subscription.current_period_end),Number(extended.subscription.current_period_end)+30*day);
     } finally { await db.close(); }
 });

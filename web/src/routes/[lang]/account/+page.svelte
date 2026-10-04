@@ -698,6 +698,7 @@
     let showMoreCreditPackages = false;
     let buyMeACoffeeStatusError = false;
     let orderStatusLoading = false;
+    let paymentViewVersion = 0;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let checkoutIntentHandled = false;
     $: membershipDailyLimit = Number(
@@ -934,6 +935,7 @@
     };
 
     const clearActiveOrder = () => {
+        paymentViewVersion += 1;
         stopPolling();
         activeOrder = null;
         codeUrl = "";
@@ -987,6 +989,7 @@
     ): Promise<CreditOrder | null> => {
         if (!orderId) return null;
 
+        const requestViewVersion = paymentViewVersion;
         orderStatusLoading = true;
         try {
             const token = await getClerkToken();
@@ -1006,6 +1009,7 @@
                 },
             });
             const data = await res.json().catch(() => ({}));
+            if (requestViewVersion !== paymentViewVersion) return null;
             if (!res.ok || data?.status !== "success") {
                 throw new Error(
                     data?.error?.message || "failed to load order status",
@@ -1051,12 +1055,13 @@
                 return order;
             }
         } catch (error) {
+            if (requestViewVersion !== paymentViewVersion) return null;
             if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) {
                 buyMeACoffeeStatusError = true;
             }
             console.debug("load order status failed", error);
         } finally {
-            orderStatusLoading = false;
+            if (requestViewVersion === paymentViewVersion) orderStatusLoading = false;
         }
 
         return null;
@@ -1069,6 +1074,7 @@
     ): Promise<MembershipOrder | null> => {
         if (!orderId) return null;
 
+        const requestViewVersion = paymentViewVersion;
         orderStatusLoading = true;
         try {
             const token = await getClerkToken();
@@ -1088,6 +1094,7 @@
                 },
             });
             const data = await res.json().catch(() => ({}));
+            if (requestViewVersion !== paymentViewVersion) return null;
             if (!res.ok || data?.status !== "success") {
                 throw new Error(
                     data?.error?.message ||
@@ -1131,10 +1138,11 @@
                 return order;
             }
         } catch (error) {
+            if (requestViewVersion !== paymentViewVersion) return null;
             if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) buyMeACoffeeStatusError = true;
             console.debug("load membership order status failed", error);
         } finally {
-            orderStatusLoading = false;
+            if (requestViewVersion === paymentViewVersion) orderStatusLoading = false;
         }
 
         return null;
@@ -1246,11 +1254,11 @@
 
     const startBuyMeACoffeePay = async (productKey: string, kind: "credit" | "membership" = "credit") => {
         if (purchaseLoading || !$clerkUser) return;
-        if (activeOrder?.status === "CREATED") return;
-        if (buyMeACoffeeSavedOrderId) {
-            await restoreBuyMeACoffeeOrder();
-            return;
-        }
+        if (activeOrder?.status === "CREATED" && activeOrder.provider !== "buymeacoffee") return;
+
+        // A saved BMC order is optional recovery, not a lock on later purchases.
+        // Keep the server order payable; only replace the current payment view.
+        clearActiveOrder();
 
         purchaseLoading = true;
         purchaseErrorKey = "";
@@ -2233,7 +2241,6 @@
                                                 <button
                                                     class="button elevated active"
                                                     disabled={purchaseLoading ||
-                                                        activeOrder?.status === "CREATED" ||
                                                         product.enabled === false}
                                                     on:click={() =>
                                                         startBuyMeACoffeePay(product.key)}
@@ -2413,7 +2420,7 @@
                                             {/if}
                                             <div class="product-actions">
                                                 {#if selectedPaymentProvider === "buymeacoffee"}
-                                                    <button class="button elevated active" disabled={purchaseLoading || activeOrder?.status === "CREATED" || product.enabled === false || bmcPassPurchaseBlocked} on:click={() => startBuyMeACoffeePay(product.key, "membership")}>
+                                                    <button class="button elevated active" disabled={purchaseLoading || product.enabled === false || bmcPassPurchaseBlocked} on:click={() => startBuyMeACoffeePay(product.key, "membership")}>
                                                         {$t("auth.download_pass_buy", { days: product.durationDays, price: formatAmount(product.amountFen, product.currency) })}
                                                     </button>
                                                     {#if bmcPassPurchaseBlocked}<p class="subtext">{$t("auth.bmc_membership_incompatible")}</p>{/if}

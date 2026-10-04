@@ -17,6 +17,7 @@
         "test:seo": "pnpm build && pnpm check:seo-prerender",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "test:clipboard": "node ./scripts/test-clipboard-ephemeral.mjs",
+        "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
     },

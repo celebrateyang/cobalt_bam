@@ -3,6 +3,7 @@ import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { nanoid } from "nanoid";
 
 import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk } from "../db/users.js";
+import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
 import {
     createCreditOrder,
     getCreditOrderById,
@@ -611,6 +612,7 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
             return res.status(200).json({ status: "test_received" });
         }
         if (req.body?.type === "extra_purchase.refunded") {
+            await recordBuyMeACoffeeReceipt(req.body, { ok: false, code: "REFUND_REVIEW" });
             console.warn("Buy Me a Coffee purchase refunded; manual credit review required", {
                 eventId: req.body?.event_id || null,
                 transactionId: req.body?.data?.transaction_id || null,
@@ -619,6 +621,9 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
         }
 
         const parsed = parseBuyMeACoffeePurchaseEvent(req.body || {});
+        // Persist verified provider payments even when they cannot yet credit an order.
+        // A database failure returns 500 so the provider can retry rather than lose a receipt.
+        await recordBuyMeACoffeeReceipt(req.body, parsed);
         if (!parsed.ok) {
             if (parsed.code === "ORDER_CODE_MISSING") {
                 console.warn("Buy Me a Coffee purchase awaiting order code", {

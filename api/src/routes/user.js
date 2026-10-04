@@ -31,6 +31,7 @@ import {
     listCreditOrdersForUser,
 } from "../db/credit-orders.js";
 import { listMembershipOrders } from "../db/membership-orders.js";
+import { listUnmatchedBuyMeACoffeeReceipts } from "../db/buymeacoffee-receipts.js";
 import {
     getDownloadAttemptById,
     listDownloadAttempts,
@@ -375,6 +376,19 @@ router.post("/admin/ai-video/storage/:assetId/preview-url", requireAdminAuth, as
     } catch (error) {
         console.error("POST /user/admin/ai-video/storage/:assetId/preview-url error:", error);
         return jsonError(res, 502, "AI_VIDEO_STORAGE_ERROR", "Failed to create preview URL");
+    }
+});
+
+// Admin-only: provider payments awaiting reconciliation (paginated)
+router.get("/admin/buymeacoffee-receipts", requireAdminAuth, async (req, res) => {
+    try {
+        const data = await listUnmatchedBuyMeACoffeeReceipts({
+            page: req.query?.page, limit: req.query?.limit,
+        });
+        return res.json({ status: "success", data });
+    } catch (error) {
+        console.error("GET /user/admin/buymeacoffee-receipts error:", error);
+        return jsonError(res, 500, "SERVER_ERROR", "Failed to load payment receipts");
     }
 });
 

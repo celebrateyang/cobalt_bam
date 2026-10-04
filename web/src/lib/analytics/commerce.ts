@@ -15,6 +15,23 @@ type AnalyticsWindow = Window & {
 
 const analyticsWindow = () => window as AnalyticsWindow;
 
+export const trackPaymentStep = (
+  step: "code_copied" | "checkout_opened" | "help_opened",
+  orderId: number,
+) => {
+  try {
+    const target = analyticsWindow();
+    target.gtag?.("event", "payment_step", {
+      payment_type: "buymeacoffee",
+      step,
+      order_id: orderId,
+    });
+    target.clarity?.("event", `bmc_${step}`);
+  } catch {
+    // Analytics must not interrupt payment.
+  }
+};
+
 const gaItem = (item: CommerceItem) => ({
   item_id: item.id,
   item_name: item.name,

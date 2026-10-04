@@ -41,6 +41,43 @@
     let total = 0;
     let pages = 0;
 
+    type PaymentReceipt = {
+        transaction_id: string;
+        supporter_email: string;
+        amount: string;
+        currency: string;
+        order_code: string | null;
+        review_reason: string | null;
+        refunded: boolean;
+        first_received_at: number | string;
+        credited_order_id: number | null;
+    };
+    let receipts: PaymentReceipt[] = [];
+    let receiptsError = "";
+    let receiptsLoading = false;
+    let receiptsPage = 1;
+    let receiptsTotal = 0;
+
+    async function loadReceipts(nextPage = receiptsPage) {
+        if (receiptsLoading) return;
+        receiptsLoading = true;
+        receiptsError = "";
+        try {
+            const res = await fetch(`${currentApiURL()}/user/admin/buymeacoffee-receipts?page=${nextPage}&limit=10`, {
+                headers: { Authorization: `Bearer ${getToken()}` },
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== "success") throw new Error("Unable to load Buy Me a Coffee receipts");
+            receipts = data.data.receipts;
+            receiptsTotal = data.data.pagination.total;
+            receiptsPage = data.data.pagination.page;
+        } catch (e) {
+            receiptsError = e instanceof Error ? e.message : "Unable to load receipts";
+        } finally {
+            receiptsLoading = false;
+        }
+    }
+
     type SortKey = "created_at" | "paid_at" | "status";
     type SortOrder = "asc" | "desc";
 
@@ -62,6 +99,7 @@
         }
 
         await loadOrders();
+        await loadReceipts();
     });
 
     function formatDate(ts: number | string | null | undefined) {
@@ -278,6 +316,37 @@
     {#if error}
         <div class="error-message">{error}</div>
     {/if}
+
+    <details>
+        <summary>Buy Me a Coffee：待核对付款 / 退款 ({receiptsTotal})</summary>
+        <p>这里只显示已收到回调但尚未入账的付款，以及需要核对的退款。CREATED 不等于未付款。此列表不包含未收到回调的历史交易；请同时核对平台账单。</p>
+        <button class="btn-secondary" disabled={receiptsLoading} on:click={() => loadReceipts()}>刷新</button>
+        {#if receiptsError}<p role="alert" class="error-message">{receiptsError}</p>{/if}
+        {#if receipts.length}
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>平台交易号</th><th>付款邮箱</th><th>金额</th><th>订单码</th><th>核对原因</th><th>首次回调</th></tr></thead>
+                    <tbody>
+                        {#each receipts as receipt (receipt.transaction_id)}
+                            <tr>
+                                <td class="mono selectable">{receipt.transaction_id}</td>
+                                <td class="selectable">{receipt.supporter_email || "-"}</td>
+                                <td>{receipt.amount} {receipt.currency}</td>
+                                <td class="mono selectable">{receipt.order_code || "未提交"}</td>
+                                <td>{receipt.refunded ? `退款待核对${receipt.credited_order_id ? `（已入账订单 ${receipt.credited_order_id}）` : ""}` : receipt.review_reason === "ORDER_CODE_MISSING" ? "已付款，等待订单码" : receipt.review_reason || "已付款，尚未入账"}</td>
+                                <td>{formatDate(receipt.first_received_at)}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-secondary" disabled={receiptsLoading || receiptsPage <= 1} on:click={() => loadReceipts(receiptsPage - 1)}>上一页</button>
+            <span>{receiptsPage} / {Math.ceil(receiptsTotal / 10)}</span>
+            <button class="btn-secondary" disabled={receiptsLoading || receiptsPage * 10 >= receiptsTotal} on:click={() => loadReceipts(receiptsPage + 1)}>下一页</button>
+        {:else if !receiptsLoading && !receiptsError}
+            <p>暂无待核对的回调付款。</p>
+        {/if}
+    </details>
 
     {#if loading}
         <div class="loading">加载中...</div>

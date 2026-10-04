@@ -19,6 +19,7 @@
     import { currentApiURL } from "$lib/api/api-url";
     import {
         trackCheckoutStarted,
+        trackPaymentStep,
         trackCreditProductListViewed,
         trackPurchaseCompleted,
         trackReferralShared,
@@ -1218,6 +1219,7 @@
             buyMeACoffeeCodeCopied = true;
             buyMeACoffeeCodeSaved = true;
             buyMeACoffeeCopyFailed = false;
+            if (activeOrder) trackPaymentStep("code_copied", activeOrder.id);
         } catch {
             buyMeACoffeeCodeCopied = false;
             buyMeACoffeeCopyFailed = true;
@@ -2108,6 +2110,10 @@
                             </div>
                         </div>
 
+                        {#if selectedPaymentProvider === "buymeacoffee"}
+                            <p class="subtext">{$t("auth.bmc_checkout_notice")}</p>
+                        {/if}
+
                         <p class="purchase-policy-notice">
                             {#if isChinese}
                                 购买即表示你同意<a href={`/${$page.params.lang}/about/terms`}>服务条款</a>和<a href={`/${$page.params.lang}/about/refund`}>退款政策</a>。积分购买及已生效会员不退款；订阅可随时取消，并从下一计费周期停止续费。
@@ -2168,6 +2174,10 @@
                                                 <div class="subtext product-subtitle">
                                                     {formatUnitPrice(product)}
                                                 </div>
+                                                {#if selectedPaymentProvider === "buymeacoffee"}
+                                                    <p class="subtext">{$t("auth.bmc_terms")}</p>
+                                                    <p class="subtext">{$t("auth.bmc_usage_example")}</p>
+                                                {/if}
                                             </div>
                                             <div class="product-right">
                                                 {#if isTest}
@@ -2202,7 +2212,7 @@
                                                     on:click={() =>
                                                         startBuyMeACoffeePay(product.key)}
                                                 >
-                                                    Buy Me a Coffee
+                                                    {$t("auth.bmc_buy", { count: product.points, price: formatAmount(product.amountFen, product.currency) })}
                                                 </button>
                                             {:else if selectedPaymentProvider === "nowpayments"}
                                                 <button
@@ -2453,6 +2463,11 @@
                         {/if}
                     </div>
 
+                    {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
+                        <p class="subtext">{$t("auth.bmc_terms")}</p>
+                        <p class="subtext">{$t("auth.bmc_checkout_notice")}</p>
+                    {/if}
+
                     <div class="payment-body">
                         <div class="payment-qr">
                             {#if activeOrder.status === "PAID"}
@@ -2465,32 +2480,33 @@
                                 </div>
                             {:else if activeOrder.provider === "buymeacoffee"}
                                 <div class="bmc-payment-code">
-                                    <strong>1. Save your payment code</strong>
+                                    <strong>{$t("auth.bmc_step_save")}</strong>
                                     <code>{buyMeACoffeePaymentCode}</code>
                                     <button
                                         class="button elevated"
                                         on:click={copyBuyMeACoffeePaymentCode}
                                     >
-                                        {buyMeACoffeeCodeCopied ? "Copied" : "Copy code"}
+                                        {$t(buyMeACoffeeCodeCopied ? "auth.bmc_copied" : "auth.bmc_copy_continue")}
                                     </button>
                                     {#if buyMeACoffeeCopyFailed}
-                                        <p role="alert">Copy failed. Select the entire code above and copy it manually.</p>
+                                        <p role="alert">{$t("auth.bmc_copy_failed")}</p>
+                                        <label class="bmc-code-confirmation">
+                                            <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
+                                            <span>{$t("auth.bmc_saved_manually")}</span>
+                                        </label>
                                     {/if}
-                                    <label class="bmc-code-confirmation">
-                                        <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
-                                        <span>I have saved this code for after payment.</span>
-                                    </label>
                                     {#if buyMeACoffeeCheckoutUrl && buyMeACoffeeCodeSaved}
                                         <a
                                             class="button elevated active"
                                             href={buyMeACoffeeCheckoutUrl}
                                             target="_blank"
                                             rel="noreferrer noopener nofollow"
+                                            on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id)}
                                         >
-                                            2. Continue to payment
+                                            {$t("auth.bmc_step_pay")}
                                         </a>
                                     {:else}
-                                        <button class="button elevated" disabled>Save your code to continue</button>
+                                        <button class="button elevated" disabled>{$t("auth.bmc_save_required")}</button>
                                     {/if}
                                 </div>
                             {:else if qrDataUrl}
@@ -2541,12 +2557,17 @@
                                 <div class="payment-wait">{$t("auth.payment_waiting")}</div>
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
-                                        <strong>3. After paying, submit your code</strong>
-                                        <p>After paying on Buy Me a Coffee, stay on the "Thank you for your purchase!" screen. Find the box asking for your payment code, paste the complete code, and submit it.</p>
-                                        <p>Then return here and click "check status" to see whether your credits have been added.</p>
-                                        <p>Already paid but need help submitting your code or receiving credits? Email celebrateyang@gmail.com with your payment code and receipt. Do not pay again.</p>
+                                        <strong>{$t("auth.bmc_step_submit")}</strong>
+                                        <p>{$t("auth.bmc_submit_hint")}</p>
+                                        <p>{$t("auth.bmc_return_hint")}</p>
+                                        <a
+                                            class="button elevated"
+                                            href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
+                                            on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id)}
+                                        >{$t("auth.bmc_help")}</a>
+                                        <p>{$t("auth.bmc_help_hint")}</p>
                                         {#if buyMeACoffeeStatusError}
-                                            <p role="alert">Could not check payment status. Check your connection and try again. Do not pay again.</p>
+                                            <p role="alert">{$t("auth.bmc_status_error")}</p>
                                         {/if}
                                     {:else}
                                         {$t("auth.payment_waiting_hint")}
@@ -2565,7 +2586,7 @@
                                     {$t("auth.check_status")}
                                 </button>
                                 <button class="button elevated" on:click={clearActiveOrder}>
-                                    {activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID" ? "Close (payment is not cancelled)" : $t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                    {$t(activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID" ? "auth.bmc_close" : activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
                                 </button>
                             </div>
                         </div>
@@ -2575,9 +2596,9 @@
         {/if}
         {#if buyMeACoffeeSavedOrderId && !activeOrder}
             <div class="card">
-                <p>Your Buy Me a Coffee order is still pending. Reopen it to copy your code or check payment. Do not pay again if you have already paid.</p>
-                <button class="button elevated" on:click={restoreBuyMeACoffeeOrder} disabled={orderStatusLoading}>Reopen payment instructions</button>
-                {#if buyMeACoffeeStatusError}<p role="alert">Could not load this order. Please check your connection and signed-in account.</p>{/if}
+                <p>{$t("auth.bmc_pending")}</p>
+                <button class="button elevated" on:click={restoreBuyMeACoffeeOrder} disabled={orderStatusLoading}>{$t("auth.bmc_reopen")}</button>
+                {#if buyMeACoffeeStatusError}<p role="alert">{$t("auth.bmc_status_error")}</p>{/if}
             </div>
         {/if}
 

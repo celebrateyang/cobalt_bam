@@ -7,8 +7,8 @@ remains brand-neutral.
 
 ## Product catalog
 
-Match the current Crypto catalog to avoid different prices or entitlements
-for the same purchase across payment channels. All prices below are USD.
+Credit packages and pass entitlements follow the Crypto catalog. BMC pass
+prices were revised on 2026-10-04; Crypto prices are unchanged. All prices below are USD.
 
 | Type | Quantity / duration | Price | Shop title | Status |
 | --- | --- | --- | --- | --- |
@@ -18,19 +18,17 @@ for the same purchase across payment channels. All prices below are USD.
 | Credits | 12,000 | 19.99 | 12,000 Processing Credits (One-time Purchase) | Proposed |
 | Credits | 35,000 | 49.99 | 35,000 Processing Credits (One-time Purchase) | Proposed |
 | Pass | 3 days | 1.99 | 3-Day Download Pass (One-time Purchase) | Proposed |
-| Pass | 30 days | 4.99 | 30-Day Download Pass (One-time Purchase) | Proposed |
-| Pass | 365 days | 19.99 | 365-Day Download Pass (One-time Purchase) | Proposed |
+| Pass | 30 days | 7.99 | 30-Day Download Pass (One-time Purchase) | Proposed |
+| Pass | 365 days | 50.00 | 365-Day Download Pass (One-time Purchase) | Proposed |
 
 Credits never expire, are consumed according to the operation's credit cost,
 and do not grant membership. Passes grant membership for the purchased
 duration; they do not add credits. A pass expires and is not renewed or charged
 automatically. Do not apply the credits-never-expire claim to passes.
 
-The annual price matches Crypto's current founding annual product. It is
-approximately USD 1.67/month, substantially below USD 4.99 for 30 days.
-Keep the existing price for channel consistency, but review service costs and
-actual usage before promoting it heavily. No invented countdown, limited stock,
-historical price or lifetime-access promise.
+The annual pass is approximately USD 4.17/month, compared with USD 7.99 for
+30 days. Review service costs and actual usage before promoting it heavily.
+No invented countdown, limited stock, historical price or lifetime-access promise.
 
 ## Membership entitlements
 
@@ -101,7 +99,7 @@ not automatically revoke membership or subtract credits.
   since it is the actual minimum unit price. Remove the old 2,000 best-value tag.
 - Show 30-day, 3-day and 365-day passes; recommend the 30-day pass.
 - Buttons describe the purchase, such as "Buy 2,000 credits - US$4.99" or
-  "Buy 30-day pass - US$4.99"; the provider is secondary branding.
+  "Buy 30-day pass - US$7.99"; the provider is secondary branding.
 - Show "One-time payment. No automatic renewal." before checkout for all
   products. Show "Credits never expire" only for credits and the expiration
   duration only for passes.
@@ -120,7 +118,7 @@ substituting quantity and price.
 
 Pass description (substitute duration and price):
 
-> Buy a 30-day download pass for US$4.99. One-time payment. No subscription or
+> Buy a 30-day download pass for US$7.99. One-time payment. No subscription or
 > automatic renewal. This pass grants access for 30 days; it is not a credit pack.
 >
 > Includes standard downloads without point deductions within fair-use limits

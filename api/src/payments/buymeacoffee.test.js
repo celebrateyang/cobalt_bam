@@ -41,6 +41,13 @@ test("all approved packages validate exact prices and correct code kinds", () =>
   }
 });
 
+test("membership prices follow the revised BMC catalog", () => {
+  assert.deepEqual(
+    BUYMEACOFFEE_MEMBERSHIP_PRODUCTS.map(({ durationDays, amountFen }) => [durationDays, amountFen]),
+    [[30, 799], [3, 199], [365, 5000]],
+  );
+});
+
 test("new draft products require the release gate; existing credits remain available", () => {
   const previous = process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
   try {

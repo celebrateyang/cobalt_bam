@@ -42,7 +42,7 @@ export const BUYMEACOFFEE_CREDIT_PRODUCTS = DEFAULT_PRODUCTS.map((product) => ({
 }));
 
 export const BUYMEACOFFEE_MEMBERSHIP_PRODUCTS = [
-  ["monthly", 30, 499, "583009"], ["3day", 3, 199, "583007"], ["yearly", 365, 1999, "583011"],
+  ["monthly", 30, 799, "583009"], ["3day", 3, 199, "583007"], ["yearly", 365, 5000, "583011"],
 ].map(([period, durationDays, amountFen, productId]) => ({
   key: `member_${period}_buymeacoffee`, kind: "membership",
   planKey: `member_${period}_crypto`, durationDays, amountFen, currency: "USD",

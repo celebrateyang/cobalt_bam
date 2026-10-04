@@ -63,6 +63,7 @@
         active: boolean;
         planKey: string;
         planName?: string;
+        entitlements?: string[];
         currentPeriodEnd: number | null;
         limits?: {
             dailySuccessfulDownloads?: number;
@@ -97,7 +98,7 @@
         currency: string;
         status: string;
         out_trade_no: string;
-        provider: "wechat" | "nowpayments";
+        provider: "wechat" | "nowpayments" | "buymeacoffee";
         provider_data?: Record<string, unknown> | null;
         product_key: string;
         plan_key: string;
@@ -619,7 +620,7 @@
     const formatMembershipProductSubtitle = (product: MembershipProduct) => {
         if (
             product.key === "member_3day" ||
-            product.key === "member_3day_nowpayments"
+            product.key === "member_3day_nowpayments" || product.key === "member_3day_buymeacoffee"
         ) {
             return $t("auth.membership_3day_subtitle");
         }
@@ -635,7 +636,7 @@
         if (product.key === "member_monthly_onetime") {
             return $t("auth.membership_monthly_onetime_subtitle");
         }
-        if (product.key === "member_yearly_nowpayments_founder") {
+        if (product.durationDays === 365) {
             const perMonth = `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`;
             return $t("auth.membership_yearly_subtitle", { price: perMonth });
         }
@@ -694,6 +695,8 @@
     let buyMeACoffeeCopyFailed = false;
     let buyMeACoffeeReturnHandled = false;
     let buyMeACoffeeSavedOrderId = 0;
+    let buyMeACoffeeSavedKind: "credit" | "membership" = "credit";
+    let showMoreCreditPackages = false;
     let buyMeACoffeeStatusError = false;
     let orderStatusLoading = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -709,6 +712,9 @@
             0,
     );
     $: isChinese = $page.params.lang === "zh";
+    $: bmcPassPurchaseBlocked = Boolean(membership?.active && membership.entitlements?.some(
+        (key) => !["member_download", "video_recording"].includes(key),
+    ));
     $: if (
         !isChinese &&
         !["buymeacoffee", "nowpayments"].includes(selectedPaymentProvider)
@@ -729,8 +735,8 @@
 
     const NOWPAYMENTS_BEST_VALUE_PRODUCT_KEY = "nowpayments_usd_999";
     const NOWPAYMENTS_RECOMMENDED_PRODUCT_KEY = "nowpayments_usd_499";
-    const BUYMEACOFFEE_BEST_VALUE_PRODUCT_KEY = "buymeacoffee_usd_499";
-    const BUYMEACOFFEE_RECOMMENDED_PRODUCT_KEY = "buymeacoffee_usd_199";
+    const BUYMEACOFFEE_BEST_VALUE_PRODUCT_KEY = "buymeacoffee_usd_4999";
+    const BUYMEACOFFEE_RECOMMENDED_PRODUCT_KEY = "buymeacoffee_usd_499";
     const WECHAT_RECOMMENDED_PRODUCT_KEY = "points_1000";
 
     const sortCreditProductsForDisplay = (
@@ -1018,6 +1024,7 @@
                         buyMeACoffeeSavedOrderId = 0;
                         const cleanUrl = new URL(window.location.href);
                         cleanUrl.searchParams.delete("bmc_order");
+                        cleanUrl.searchParams.delete("bmc_kind");
                         window.history.replaceState({}, "", cleanUrl.toString());
                         stopPolling();
                     }
@@ -1092,6 +1099,20 @@
 
             const order = data?.data?.order as MembershipOrder | undefined;
             if (order) {
+                if (order.provider === "buymeacoffee") {
+                    buyMeACoffeeStatusError = false;
+                    buyMeACoffeePaymentCode = order.out_trade_no;
+                    buyMeACoffeeCheckoutUrl = String(order.provider_data?.checkout_url || "");
+                    if (order.status !== "CREATED") {
+                        buyMeACoffeeSavedOrderId = 0;
+                        const cleanUrl = new URL(window.location.href);
+                        cleanUrl.searchParams.delete("bmc_order");
+                        cleanUrl.searchParams.delete("bmc_kind");
+                        window.history.replaceState({}, "", cleanUrl.toString());
+                        stopPolling();
+                    }
+                }
+
                 if (showPaymentModal) {
                     activeOrder = { ...order, kind: "membership" };
                 }
@@ -1112,6 +1133,7 @@
                 return order;
             }
         } catch (error) {
+            if (activeOrder?.provider === "buymeacoffee" || buyMeACoffeeSavedOrderId === orderId) buyMeACoffeeStatusError = true;
             console.debug("load membership order status failed", error);
         } finally {
             orderStatusLoading = false;
@@ -1219,14 +1241,14 @@
             buyMeACoffeeCodeCopied = true;
             buyMeACoffeeCodeSaved = true;
             buyMeACoffeeCopyFailed = false;
-            if (activeOrder) trackPaymentStep("code_copied", activeOrder.id);
+            if (activeOrder) trackPaymentStep("code_copied", activeOrder.id, activeOrder.kind);
         } catch {
             buyMeACoffeeCodeCopied = false;
             buyMeACoffeeCopyFailed = true;
         }
     };
 
-    const startBuyMeACoffeePay = async (productKey: string) => {
+    const startBuyMeACoffeePay = async (productKey: string, kind: "credit" | "membership" = "credit") => {
         if (purchaseLoading || !$clerkUser) return;
         if (activeOrder?.status === "CREATED") return;
         if (buyMeACoffeeSavedOrderId) {
@@ -1241,7 +1263,7 @@
         try {
             const token = await getClerkToken();
             if (!token) throw new Error("missing token");
-            const res = await fetch(`${currentApiURL()}/payments/credits/buymeacoffee`, {
+            const res = await fetch(`${currentApiURL()}/payments/${kind === "membership" ? "memberships" : "credits"}/buymeacoffee`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -1253,10 +1275,11 @@
                 }),
             });
             const data = await res.json().catch(() => ({}));
+            if (data?.error?.code === "MEMBERSHIP_INCOMPATIBLE") { purchaseErrorKey = "auth.bmc_membership_incompatible"; return; }
             if (!res.ok || data?.status !== "success") {
                 throw new Error(data?.error?.message || "failed to create order");
             }
-            const order = data?.data?.order as CreditOrder | undefined;
+            const order = data?.data?.order as CreditOrder | MembershipOrder | undefined;
             const checkoutUrl = String(data?.data?.buymeacoffee?.checkoutUrl || "");
             const paymentCode = String(data?.data?.buymeacoffee?.paymentCode || "");
             if (!order?.id || !checkoutUrl || !paymentCode) {
@@ -1265,13 +1288,13 @@
 
             trackCheckoutStarted({
                 id: productKey,
-                name: `${order.points} credits`,
+                name: kind === "membership" ? (order as MembershipOrder).plan_key : `${(order as CreditOrder).points} credits`,
                 value: order.amount_fen / 100,
                 currency: order.currency,
                 provider: order.provider,
-                kind: "credit",
+                kind,
             });
-            activeOrder = { ...order, kind: "credit" };
+            activeOrder = kind === "membership" ? { ...(order as MembershipOrder), kind } : { ...(order as CreditOrder), kind };
             buyMeACoffeeCheckoutUrl = checkoutUrl;
             buyMeACoffeePaymentCode = paymentCode;
             buyMeACoffeeCodeCopied = false;
@@ -1279,10 +1302,12 @@
             buyMeACoffeeCopyFailed = false;
             buyMeACoffeeStatusError = false;
             buyMeACoffeeSavedOrderId = order.id;
+            buyMeACoffeeSavedKind = kind;
             const returnUrl = new URL(window.location.href);
             returnUrl.searchParams.set("bmc_order", String(order.id));
+            returnUrl.searchParams.set("bmc_kind", kind);
             window.history.replaceState({}, "", returnUrl.toString());
-            startPolling(order.id);
+            startPolling(order.id, kind);
         } catch (error) {
             purchaseErrorKey = "auth.payment_create_failed";
             console.debug("create Buy Me a Coffee order failed", error);
@@ -1371,10 +1396,11 @@
 
     const restoreBuyMeACoffeeOrder = async () => {
         if (!buyMeACoffeeSavedOrderId || orderStatusLoading) return;
-        const order = await fetchOrderStatus(buyMeACoffeeSavedOrderId, false, false);
+        const kind = buyMeACoffeeSavedKind;
+        const order = await (kind === "membership" ? fetchMembershipOrderStatus : fetchOrderStatus)(buyMeACoffeeSavedOrderId, false, false);
         if (order?.provider !== "buymeacoffee") return;
-        activeOrder = { ...order, kind: "credit" };
-        if (order.status === "CREATED") startPolling(order.id);
+        activeOrder = kind === "membership" ? { ...(order as MembershipOrder), kind } : { ...(order as CreditOrder), kind };
+        if (order.status === "CREATED") startPolling(order.id, kind);
     };
 
     const resumeNowPaymentsCheckout = async () => {
@@ -1513,7 +1539,9 @@
                 checkoutIntent === "membership_3day" ||
                 checkoutIntent === "membership_weekly";
             const productKey =
-                selectedPaymentProvider === "nowpayments"
+                selectedPaymentProvider === "buymeacoffee"
+                      ? wantsShortPass ? "member_3day_buymeacoffee" : "member_monthly_buymeacoffee"
+                      : selectedPaymentProvider === "nowpayments"
                       ? wantsShortPass
                           ? "member_3day_nowpayments"
                           : "member_monthly_nowpayments"
@@ -1538,6 +1566,8 @@
                 void startMembershipWechatPay(membershipProduct.key);
             } else if (selectedPaymentProvider === "nowpayments") {
                 void startNowPaymentsPay(membershipProduct.key, "membership");
+            } else if (selectedPaymentProvider === "buymeacoffee") {
+                void startBuyMeACoffeePay(membershipProduct.key, "membership");
             }
             return;
         }
@@ -1606,6 +1636,7 @@
         const orderId = Number($page.url.searchParams.get("bmc_order"));
         if (Number.isSafeInteger(orderId) && orderId > 0) {
             buyMeACoffeeSavedOrderId = orderId;
+            buyMeACoffeeSavedKind = $page.url.searchParams.get("bmc_kind") === "membership" ? "membership" : "credit";
             void restoreBuyMeACoffeeOrder();
         }
     }
@@ -2154,7 +2185,7 @@
                             <div class="subtext error">{$t(creditProductsErrorKey)}</div>
                         {:else}
                             <div class="products-grid">
-                                {#each displayedCreditProducts as product (product.key)}
+                                {#each displayedCreditProducts.filter((product) => selectedPaymentProvider !== "buymeacoffee" || showMoreCreditPackages || product.points < 35000) as product (product.key)}
                                     {@const isTest = product.key.startsWith("points_test_")}
                                     {@const isBest = !isTest && product.key === bestValueProductKey}
                                     {@const isRecommended =
@@ -2238,6 +2269,9 @@
                         {#if purchaseNoticeKey}
                             <div class="subtext notice">{$t(purchaseNoticeKey)}</div>
                         {/if}
+                        {#if selectedPaymentProvider === "buymeacoffee" && creditProducts.some((product) => product.points >= 35000)}
+                            <button class="button elevated" aria-expanded={showMoreCreditPackages} on:click={() => showMoreCreditPackages = !showMoreCreditPackages}>{$t(showMoreCreditPackages ? "auth.fewer_packages" : "auth.more_packages")}</button>
+                        {/if}
                     </section>
 
                     <section class="card membership-card" bind:this={membershipSectionEl}>
@@ -2246,7 +2280,7 @@
                                     {$t("auth.membership_title")}
                                 </div>
                                 <div class="subtext topup-subtitle">
-                                    {$t("auth.membership_subtitle")}
+                                    {$t(selectedPaymentProvider === "wechat" ? "auth.membership_subtitle" : "auth.download_pass_subtitle")}
                                 </div>
                             </div>
 
@@ -2317,7 +2351,7 @@
                             {:else}
                                 <div class="products-grid membership-products-grid">
                                     {#each membershipProducts as product (product.key)}
-                                        {@const isYearlyProduct = product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder"}
+                                        {@const isYearlyProduct = product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder" || product.key === "member_yearly_buymeacoffee"}
                                         <div
                                             id={isYearlyProduct ? "yearly-membership" : undefined}
                                             class="product-card membership-product-card"
@@ -2338,11 +2372,11 @@
                                                     </div>
                                                 </div>
                                                 <div class="product-right">
-                                                    {#if product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder"}
+                                                    {#if product.key === "member_yearly" || product.key === "member_yearly_recurring" || product.key === "member_yearly_nowpayments_founder" || product.key === "member_yearly_buymeacoffee"}
                                                         <span class="badge best">
                                                             {$t("auth.badge_best")}
                                                         </span>
-                                                    {:else if product.key === "member_3day" || product.key === "member_monthly_recurring" || product.key === "member_monthly_nowpayments"}
+                                                    {:else if product.key === "member_3day" || product.key === "member_monthly_recurring" || product.key === "member_monthly_nowpayments" || product.key === "member_monthly_buymeacoffee"}
                                                         <span class="badge rec">
                                                             {$t("auth.badge_recommended")}
                                                         </span>
@@ -2379,8 +2413,16 @@
                                                 {/if}
                                             </div>
 
+                                            {#if selectedPaymentProvider !== "wechat"}
+                                                <p class="subtext">{$t("auth.download_pass_terms", { days: product.durationDays })}</p>
+                                            {/if}
                                             <div class="product-actions">
-                                                {#if selectedPaymentProvider === "wechat"}
+                                                {#if selectedPaymentProvider === "buymeacoffee"}
+                                                    <button class="button elevated active" disabled={purchaseLoading || activeOrder?.status === "CREATED" || product.enabled === false || bmcPassPurchaseBlocked} on:click={() => startBuyMeACoffeePay(product.key, "membership")}>
+                                                        {$t("auth.download_pass_buy", { days: product.durationDays, price: formatAmount(product.amountFen, product.currency) })}
+                                                    </button>
+                                                    {#if bmcPassPurchaseBlocked}<p class="subtext">{$t("auth.bmc_membership_incompatible")}</p>{/if}
+                                                {:else if selectedPaymentProvider === "wechat"}
                                                     <button
                                                         class="button elevated active"
                                                         disabled={purchaseLoading ||
@@ -2464,8 +2506,8 @@
                     </div>
 
                     {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
-                        <p class="subtext">{$t("auth.bmc_terms")}</p>
-                        <p class="subtext">{$t("auth.bmc_checkout_notice")}</p>
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
                     {/if}
 
                     <div class="payment-body">
@@ -2501,7 +2543,7 @@
                                             href={buyMeACoffeeCheckoutUrl}
                                             target="_blank"
                                             rel="noreferrer noopener nofollow"
-                                            on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id)}
+                                             on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id, activeOrder.kind)}
                                         >
                                             {$t("auth.bmc_step_pay")}
                                         </a>
@@ -2558,13 +2600,13 @@
                                 <div class="subtext payment-hint">
                                     {#if activeOrder.provider === "buymeacoffee"}
                                         <strong>{$t("auth.bmc_step_submit")}</strong>
-                                        <p>{$t("auth.bmc_submit_hint")}</p>
-                                        <p>{$t("auth.bmc_return_hint")}</p>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_submit_hint" : "auth.bmc_submit_hint")}</p>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_return_hint" : "auth.bmc_return_hint")}</p>
                                         <a
                                             class="button elevated"
                                             href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
-                                            on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id)}
-                                        >{$t("auth.bmc_help")}</a>
+                                             on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id, activeOrder.kind)}
+                                        >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
                                         <p>{$t("auth.bmc_help_hint")}</p>
                                         {#if buyMeACoffeeStatusError}
                                             <p role="alert">{$t("auth.bmc_status_error")}</p>

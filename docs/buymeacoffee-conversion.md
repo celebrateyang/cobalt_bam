@@ -33,35 +33,38 @@ Repository changes require the usual release before appearing on FreeSaveVideo.
 
 Use these titles for the existing fixed-price Shop products:
 
-- Product 581332: `FreeSaveVideo - 600 Credits (One-time Purchase)` - USD 1.99
-- Product 581334: `FreeSaveVideo - 2,000 Credits (One-time Purchase)` - USD 4.99
+- Product 581332: `600 Processing Credits (One-time Purchase)` - USD 1.99
+- Product 581334: `2,000 Processing Credits (One-time Purchase)` - USD 4.99
+
+Updated live on 2026-10-04 at the owner's request to omit the project brand
+from Shop product titles, descriptions, confirmation messages and questions.
 
 Description (replace the credit count and amount for each product):
 
-> Buy 600 FreeSaveVideo credits for US$1.99. One-time purchase, no subscription
+> Buy 600 processing credits for US$1.99. One-time purchase, no subscription
 > or automatic renewal. Credits never expire and are deducted as you use them.
 >
-> FreeSaveVideo is provided by Bamboo Yang. This purchase adds credits to your
-> FreeSaveVideo account after you submit your payment code.
->
-> Before paying, copy your payment code from FreeSaveVideo. After paying, stay
+> Before paying, copy your payment code from your account's payment window. After paying, stay
 > on the thank-you page, paste the complete code starting with cpt_ into the
-> payment-code question, and submit your answer. Then return to FreeSaveVideo
-> and check status. Payment alone does not add credits.
+> payment-code question, and submit your answer. Payment alone does not add credits.
 >
 > If you paid but have not received credits, email celebrateyang@gmail.com
 > with your payment code and receipt. Do not pay again or send card details.
 
 Keep the existing post-purchase question:
 
-> Paste your FreeSaveVideo payment code here (starts with cpt_).
+> Paste your payment code here (starts with cpt_).
 
 Thank-you message:
 
-> One more step to receive your FreeSaveVideo credits: paste your complete
+> One more step to receive your processing credits: paste your complete
 > payment code into the question on this page and submit your answer. Return
-> to FreeSaveVideo to check status. If you need help, email
+> to your account to check status. If you need help, email
 > celebrateyang@gmail.com with your code and receipt. Do not pay again.
+
+Both descriptions and confirmation messages retain the one-time purchase,
+no automatic renewal, no expiry and non-transferable processing-service
+terms. Credits cannot be resold, withdrawn or redeemed for cash.
 
 Keep quantity selection and pay-what-you-want disabled. Verify the actual
 checkout total, any buyer-paid fees, available payment methods, and mobile

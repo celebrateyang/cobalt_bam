@@ -451,8 +451,9 @@ export const markCreditOrderPaid = async ({
     paidAt,
     rawNotify,
     totalFen,
+    clientFactory = getClient,
 }) => {
-    const client = await getClient();
+    const client = await clientFactory();
     const now = Date.now();
 
     try {
@@ -469,6 +470,15 @@ export const markCreditOrderPaid = async ({
                 ok: false,
                 code: "ORDER_NOT_FOUND",
             };
+        }
+
+        if (order.provider === "buymeacoffee") {
+            const { validateBuyMeACoffeeFulfillment } = await import("./buymeacoffee-receipts.js");
+            const code = await validateBuyMeACoffeeFulfillment(client, providerTransactionId, outTradeNo);
+            if (code || (order.status === CREDIT_ORDER_STATUS.paid && order.provider_transaction_id !== providerTransactionId)) {
+                await client.query("ROLLBACK");
+                return { ok: false, code: code || "TRANSACTION_MISMATCH", order };
+            }
         }
 
         if (order.status === CREDIT_ORDER_STATUS.paid) {

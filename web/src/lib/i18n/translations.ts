@@ -30,6 +30,7 @@ const config: Config<{
     limit?: number;
     service?: string;
     count?: number;
+    days?: number;
     max?: number;
     title?: string;
     current?: number;

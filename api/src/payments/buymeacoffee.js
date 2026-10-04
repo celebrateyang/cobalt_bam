@@ -19,12 +19,20 @@ const DEFAULT_PRODUCTS = Object.freeze([
     currency: "USD",
     unitPriceFen: 0.25,
   },
+  ...[[999, 5000, "583004"], [1999, 12000, "583005"], [4999, 35000, "583006"]].map(([amountFen, points, productId]) => ({
+    key: `buymeacoffee_usd_${amountFen}`,
+    productId,
+    checkoutUrl: `https://buymeacoffee.com/bambooyang/e/${productId}`,
+    requiresExpansion: true,
+    points, amountFen, currency: "USD", unitPriceFen: amountFen / points,
+  })),
 ]);
 
 const clean = (value) => String(value || "").trim();
 
 export const BUYMEACOFFEE_CREDIT_PRODUCTS = DEFAULT_PRODUCTS.map((product) => ({
   ...product,
+  kind: "credit",
   productId:
     clean(process.env[`BUYMEACOFFEE_PRODUCT_${product.amountFen}_ID`]) ||
     product.productId,
@@ -33,15 +41,41 @@ export const BUYMEACOFFEE_CREDIT_PRODUCTS = DEFAULT_PRODUCTS.map((product) => ({
     product.checkoutUrl,
 }));
 
+export const BUYMEACOFFEE_MEMBERSHIP_PRODUCTS = [
+  ["monthly", 30, 499, "583009"], ["3day", 3, 199, "583007"], ["yearly", 365, 1999, "583011"],
+].map(([period, durationDays, amountFen, productId]) => ({
+  key: `member_${period}_buymeacoffee`, kind: "membership",
+  planKey: `member_${period}_crypto`, durationDays, amountFen, currency: "USD",
+  billingType: "one_time", entitlements: ["member_download", "video_recording"],
+  limits: { dailySuccessfulDownloads: 300, monthlySuccessfulDownloads: 5000 },
+  productId: clean(process.env[`BUYMEACOFFEE_MEMBER_${durationDays}_ID`]) || productId,
+  checkoutUrl: clean(process.env[`BUYMEACOFFEE_MEMBER_${durationDays}_URL`]) || `https://buymeacoffee.com/bambooyang/e/${productId}`,
+  requiresExpansion: true,
+}));
+
+export const isBuyMeACoffeeProductEnabled = (product) => {
+  try {
+    const url = new URL(product.checkoutUrl);
+    return /^\d+$/.test(product.productId) && url.protocol === "https:" &&
+      url.hostname === "buymeacoffee.com" && url.pathname.endsWith(`/e/${product.productId}`);
+  } catch { return false; }
+};
+
+// New Shop products remain drafts until the backend and frontend are released.
+export const isBuyMeACoffeeProductAvailable = (product) =>
+  isBuyMeACoffeeProductEnabled(product) && (!product.requiresExpansion ||
+    process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED === "true");
+
 export const isBuyMeACoffeeConfigured = () =>
   Boolean(clean(process.env.BUYMEACOFFEE_WEBHOOK_SECRET));
 
 export const getBuyMeACoffeeProductByKey = (key) =>
-  BUYMEACOFFEE_CREDIT_PRODUCTS.find((product) => product.key === key) || null;
+  [...BUYMEACOFFEE_CREDIT_PRODUCTS, ...BUYMEACOFFEE_MEMBERSHIP_PRODUCTS]
+    .find((product) => product.key === key && isBuyMeACoffeeProductEnabled(product)) || null;
 
 export const getBuyMeACoffeeProductById = (productId) =>
-  BUYMEACOFFEE_CREDIT_PRODUCTS.find(
-    (product) => product.productId === clean(productId),
+  [...BUYMEACOFFEE_CREDIT_PRODUCTS, ...BUYMEACOFFEE_MEMBERSHIP_PRODUCTS].find(
+    (product) => product.productId === clean(productId) && isBuyMeACoffeeProductEnabled(product),
   ) || null;
 
 export const verifyBuyMeACoffeeSignature = ({ rawBody, signature }) => {
@@ -84,9 +118,12 @@ export const parseBuyMeACoffeePurchaseEvent = (payload) => {
     : [];
   const orderCodes = [...new Set(answers
     .map(clean)
-    .filter((answer) => /^cpt_[A-Za-z0-9_-]{10,64}$/.test(answer)))];
+    .filter((answer) => /^(cpt|mbr)_[A-Za-z0-9_-]{10,64}$/.test(answer)))];
   if (orderCodes.length > 1) return { ok: false, code: "AMBIGUOUS_ORDER_CODE" };
   const outTradeNo = orderCodes[0];
+  if (outTradeNo && !outTradeNo.startsWith(product.kind === "membership" ? "mbr_" : "cpt_")) {
+    return { ok: false, code: "ORDER_KIND_MISMATCH" };
+  }
 
   const amountFen = Math.round(Number(data.amount) * 100);
   const currency = clean(data.currency).toUpperCase();

@@ -443,8 +443,9 @@ export const markMembershipOrderPaid = async ({
   paidAt,
   rawNotify,
   totalFen,
+  clientFactory = getClient,
 }) => {
-  const client = await getClient();
+  const client = await clientFactory();
   const now = Date.now();
   const resolvedPaidAt = Number.isFinite(Number(paidAt)) ? Number(paidAt) : now;
 
@@ -462,6 +463,28 @@ export const markMembershipOrderPaid = async ({
         ok: false,
         code: "ORDER_NOT_FOUND",
       };
+    }
+
+    if (order.provider === "buymeacoffee") {
+      const { validateBuyMeACoffeeFulfillment } = await import("./buymeacoffee-receipts.js");
+      const code = await validateBuyMeACoffeeFulfillment(client, providerTransactionId, outTradeNo);
+      if (code || (order.status === MEMBERSHIP_ORDER_STATUS.paid && order.provider_transaction_id !== providerTransactionId)) {
+        await client.query("ROLLBACK");
+        return { ok: false, code: code || "TRANSACTION_MISMATCH", order };
+      }
+      if (order.status !== MEMBERSHIP_ORDER_STATUS.paid) {
+        // Serialize duration extension for concurrent purchases by the same user.
+        await client.query("SELECT id FROM users WHERE id = $1 FOR UPDATE", [order.user_id]);
+        const incompatible = await client.query(`SELECT s.id FROM subscriptions s
+          WHERE s.user_id = $1 AND s.status = 'active'
+            AND (s.current_period_end IS NULL OR s.current_period_end > $2)
+            AND EXISTS (SELECT 1 FROM plan_entitlements pe WHERE pe.plan_id = s.plan_id
+              AND pe.entitlement_key NOT IN ('member_download', 'video_recording'))`, [order.user_id, now]);
+        if (incompatible.rows.length) {
+          await client.query("ROLLBACK");
+          return { ok: false, code: "MEMBERSHIP_INCOMPATIBLE", order };
+        }
+      }
     }
 
     if (order.status === MEMBERSHIP_ORDER_STATUS.paid) {
@@ -518,6 +541,7 @@ export const markMembershipOrderPaid = async ({
     }
 
     const durationMs = Math.max(1, Number(order.duration_days) || 1) * 86400000;
+    const activationAt = order.provider === "buymeacoffee" ? now : resolvedPaidAt;
     const currentResult = await client.query(
       `
             SELECT *
@@ -531,18 +555,18 @@ export const markMembershipOrderPaid = async ({
             LIMIT 1
             FOR UPDATE;
             `,
-      [order.user_id, order.provider, resolvedPaidAt],
+      [order.user_id, order.provider, activationAt],
     );
 
     const current = currentResult.rows[0] || null;
-    let periodStart = current?.current_period_end || resolvedPaidAt;
+    let periodStart = current?.current_period_end || activationAt;
     const maxActiveResult = await client.query(
       `SELECT MAX(current_period_end)::bigint AS max_end
              FROM subscriptions
              WHERE user_id = $1
                AND status = 'active'
                AND current_period_end > $2`,
-      [order.user_id, resolvedPaidAt],
+      [order.user_id, activationAt],
     );
     periodStart = Math.max(
       periodStart,
@@ -590,7 +614,7 @@ export const markMembershipOrderPaid = async ({
           order.provider,
           order.clerk_user_id,
           order.out_trade_no,
-          resolvedPaidAt,
+          activationAt,
           periodEnd,
           now,
         ],

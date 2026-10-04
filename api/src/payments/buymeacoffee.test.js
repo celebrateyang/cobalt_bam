@@ -5,6 +5,9 @@ import test from "node:test";
 import {
   parseBuyMeACoffeePurchaseEvent,
   verifyBuyMeACoffeeSignature,
+  BUYMEACOFFEE_CREDIT_PRODUCTS,
+  BUYMEACOFFEE_MEMBERSHIP_PRODUCTS,
+  isBuyMeACoffeeProductAvailable,
 } from "./buymeacoffee.js";
 
 test("verifies the Buy Me a Coffee raw-body signature", () => {
@@ -19,6 +22,37 @@ test("verifies the Buy Me a Coffee raw-body signature", () => {
     verifyBuyMeACoffeeSignature({ rawBody, signature: "0".repeat(64) }),
     false,
   );
+});
+
+test("all approved packages validate exact prices and correct code kinds", () => {
+  for (const product of [...BUYMEACOFFEE_CREDIT_PRODUCTS, ...BUYMEACOFFEE_MEMBERSHIP_PRODUCTS]) {
+    const prefix = product.kind === "membership" ? "mbr" : "cpt";
+    const event = purchase("extra_purchase.updated", [`${prefix}_abcdefghijklmnopqrst`]);
+    event.data.amount = product.amountFen / 100;
+    event.data.extras[0].id = product.productId;
+    const parsed = parseBuyMeACoffeePurchaseEvent(event);
+    assert.equal(parsed.ok, true, product.key);
+    assert.equal(parsed.product.key, product.key);
+    event.data.extras[0].question_answers = [`${prefix === "mbr" ? "cpt" : "mbr"}_abcdefghijklmnopqrst`];
+    assert.equal(parseBuyMeACoffeePurchaseEvent(event).code, "ORDER_KIND_MISMATCH");
+    event.data.amount += 0.01;
+    event.data.extras[0].question_answers = [`${prefix}_abcdefghijklmnopqrst`];
+    assert.equal(parseBuyMeACoffeePurchaseEvent(event).code, "AMOUNT_MISMATCH");
+  }
+});
+
+test("new draft products require the release gate; existing credits remain available", () => {
+  const previous = process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
+  try {
+    delete process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
+    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_CREDIT_PRODUCTS[0]), true);
+    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_MEMBERSHIP_PRODUCTS[0]), false);
+    process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED = "true";
+    assert.equal(isBuyMeACoffeeProductAvailable(BUYMEACOFFEE_MEMBERSHIP_PRODUCTS[0]), true);
+  } finally {
+    if (previous === undefined) delete process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED;
+    else process.env.BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED = previous;
+  }
 });
 
 test("parses a live fixed-product purchase with an order code", () => {

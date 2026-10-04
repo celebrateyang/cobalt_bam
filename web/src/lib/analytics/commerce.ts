@@ -18,6 +18,7 @@ const analyticsWindow = () => window as AnalyticsWindow;
 export const trackPaymentStep = (
   step: "code_copied" | "checkout_opened" | "help_opened",
   orderId: number,
+  kind: "credit" | "membership" = "credit",
 ) => {
   try {
     const target = analyticsWindow();
@@ -25,6 +26,7 @@ export const trackPaymentStep = (
       payment_type: "buymeacoffee",
       step,
       order_id: orderId,
+      order_kind: kind,
     });
     target.clarity?.("event", `bmc_${step}`);
   } catch {

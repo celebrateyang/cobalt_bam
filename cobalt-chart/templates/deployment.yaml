@@ -216,6 +216,8 @@ spec:
               value: {{ .Values.buymeacoffee.product499Id | quote }}
             - name: BUYMEACOFFEE_PRODUCT_499_URL
               value: {{ .Values.buymeacoffee.product499Url | quote }}
+            - name: BUYMEACOFFEE_EXPANDED_PRODUCTS_ENABLED
+              value: {{ .Values.buymeacoffee.expandedProductsEnabled | default false | quote }}
             {{- end }}
             - name: VIDEO_AGENT_ENABLED
               value: {{ ternary "1" "0" .Values.videoAgent.enabled | quote }}

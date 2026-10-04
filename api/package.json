@@ -19,7 +19,7 @@
         "test:membership-features": "node --test src/core/membership-features.test.js",
         "test:membership-products": "node --test src/payments/membership-products.test.js",
         "test:nowpayments": "node --test src/payments/nowpayments.test.js",
-        "test:buymeacoffee": "node --test src/payments/buymeacoffee.test.js src/db/buymeacoffee-receipts.test.js",
+        "test:buymeacoffee": "node --test --test-concurrency=1 src/payments/buymeacoffee.test.js src/db/buymeacoffee-receipts.test.js src/db/buymeacoffee-fulfillment.test.js",
         "test:collection-window": "node --test src/processing/collection-window.test.js",
         "test:match-action": "node --test src/processing/match-action.test.js",
         "test:platform-requests": "node --test src/processing/platform-domain.test.js",

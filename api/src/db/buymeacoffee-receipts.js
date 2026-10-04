@@ -61,15 +61,32 @@ export const listUnmatchedBuyMeACoffeeReceipts = async ({ page = 1, limit = 20 }
     const filter = `FROM buymeacoffee_receipts r
         LEFT JOIN credit_orders o ON o.provider = 'buymeacoffee'
             AND o.provider_transaction_id = r.transaction_id AND o.status = 'PAID'
-        WHERE o.id IS NULL OR r.refunded = TRUE`;
+        LEFT JOIN membership_orders m ON m.provider = 'buymeacoffee'
+            AND m.provider_transaction_id = r.transaction_id AND m.status = 'PAID'
+        WHERE (o.id IS NULL AND m.id IS NULL) OR r.refunded = TRUE`;
     const count = await queryFn(`SELECT COUNT(*)::int AS total ${filter}`);
     const result = await queryFn(`SELECT r.transaction_id, r.supporter_email,
         r.amount, r.currency, r.order_code, r.review_reason, r.refunded,
-        r.first_received_at, r.updated_at, o.id AS credited_order_id
+        r.first_received_at, r.updated_at, o.id AS credited_order_id, m.id AS membership_order_id
         ${filter} ORDER BY r.updated_at DESC, r.transaction_id LIMIT $1 OFFSET $2`,
     [safeLimit, (safePage - 1) * safeLimit]);
     const total = Number(count.rows[0]?.total || 0);
     return { receipts: result.rows, pagination: {
         page: safePage, limit: safeLimit, total, pages: Math.ceil(total / safeLimit),
     } };
+};
+
+// Called within fulfillment's transaction. The receipt row serializes reuse of
+// the same provider transaction, including callbacks with a changed order code.
+export const validateBuyMeACoffeeFulfillment = async (client, transactionId, outTradeNo) => {
+    const receipt = await client.query(
+        "SELECT refunded FROM buymeacoffee_receipts WHERE transaction_id = $1 FOR UPDATE", [transactionId]);
+    if (!receipt.rows[0] || receipt.rows[0].refunded) return "RECEIPT_NOT_PAYABLE";
+    const used = await client.query(`
+        SELECT out_trade_no FROM credit_orders WHERE provider = 'buymeacoffee'
+          AND provider_transaction_id = $1 AND status = 'PAID'
+        UNION ALL
+        SELECT out_trade_no FROM membership_orders WHERE provider = 'buymeacoffee'
+          AND provider_transaction_id = $1 AND status = 'PAID'`, [transactionId]);
+    return used.rows.some((row) => row.out_trade_no !== outTradeNo) ? "TRANSACTION_ALREADY_USED" : null;
 };

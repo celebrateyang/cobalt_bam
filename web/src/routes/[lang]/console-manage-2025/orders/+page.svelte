@@ -51,6 +51,7 @@
         refunded: boolean;
         first_received_at: number | string;
         credited_order_id: number | null;
+        membership_order_id: number | null;
     };
     let receipts: PaymentReceipt[] = [];
     let receiptsError = "";
@@ -333,7 +334,7 @@
                                 <td class="selectable">{receipt.supporter_email || "-"}</td>
                                 <td>{receipt.amount} {receipt.currency}</td>
                                 <td class="mono selectable">{receipt.order_code || "未提交"}</td>
-                                <td>{receipt.refunded ? `退款待核对${receipt.credited_order_id ? `（已入账订单 ${receipt.credited_order_id}）` : ""}` : receipt.review_reason === "ORDER_CODE_MISSING" ? "已付款，等待订单码" : receipt.review_reason || "已付款，尚未入账"}</td>
+                                <td>{receipt.refunded ? `退款待核对${receipt.credited_order_id ? `（积分订单 ${receipt.credited_order_id}）` : receipt.membership_order_id ? `（会员订单 ${receipt.membership_order_id}）` : ""}` : receipt.review_reason === "ORDER_CODE_MISSING" ? "已付款，等待订单码" : receipt.review_reason || "已付款，尚未入账或开通"}</td>
                                 <td>{formatDate(receipt.first_received_at)}</td>
                             </tr>
                         {/each}

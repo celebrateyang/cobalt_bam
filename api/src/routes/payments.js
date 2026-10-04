@@ -2,7 +2,7 @@ import express from "express";
 import { clerkClient, clerkMiddleware, getAuth } from "@clerk/express";
 import { nanoid } from "nanoid";
 
-import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk } from "../db/users.js";
+import { MEMBER_DOWNLOAD_LIMITS, upsertUserFromClerk, getActiveMembershipForUser } from "../db/users.js";
 import { recordBuyMeACoffeeReceipt } from "../db/buymeacoffee-receipts.js";
 import {
     createCreditOrder,
@@ -50,6 +50,8 @@ import {
 } from "../payments/nowpayments.js";
 import {
     BUYMEACOFFEE_CREDIT_PRODUCTS,
+    BUYMEACOFFEE_MEMBERSHIP_PRODUCTS,
+    isBuyMeACoffeeProductAvailable,
     getBuyMeACoffeeProductByKey,
     isBuyMeACoffeeConfigured,
     parseBuyMeACoffeePurchaseEvent,
@@ -222,7 +224,7 @@ const buildPublicProducts = (provider) => {
             unitPriceFen: product.unitPriceFen,
             amountFen: product.amountFen,
             currency: product.currency,
-            enabled,
+            enabled: enabled && isBuyMeACoffeeProductAvailable(product),
         }));
     }
     if (provider === "nowpayments") {
@@ -247,7 +249,9 @@ const buildPublicProducts = (provider) => {
 };
 
 const buildPublicMembershipProducts = (provider) => {
-    if (provider === "buymeacoffee") return [];
+    if (provider === "buymeacoffee") return BUYMEACOFFEE_MEMBERSHIP_PRODUCTS.map((product) => ({
+        ...product, enabled: isBuyMeACoffeeConfigured() && isBuyMeACoffeeProductAvailable(product),
+    }));
     if (provider === "nowpayments") {
         const enabled = isNowPaymentsConfigured();
         return NOWPAYMENTS_MEMBERSHIP_PRODUCTS.map((product) => ({
@@ -639,9 +643,10 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
             });
             return res.status(200).json({ status: "ignored", code: parsed.code });
         }
-        const order = await getCreditOrderByOutTradeNo(parsed.outTradeNo);
+        const isMembership = parsed.product.kind === "membership";
+        const order = await (isMembership ? getMembershipOrderByOutTradeNo : getCreditOrderByOutTradeNo)(parsed.outTradeNo);
         if (!order) {
-            return jsonError(res, 500, "ORDER_NOT_FOUND", "credit order not found");
+            return jsonError(res, 500, "ORDER_NOT_FOUND", "payment order not found");
         }
         if (order.provider !== "buymeacoffee" || order.product_key !== parsed.product.key) {
             console.error("Buy Me a Coffee order/product mismatch", {
@@ -655,7 +660,7 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
             console.error("Buy Me a Coffee paid order received a different transaction", { orderId: order.id });
             return res.status(200).json({ status: "manual_review", code: "TRANSACTION_MISMATCH" });
         }
-        const result = await markCreditOrderPaid({
+        const result = await (isMembership ? markMembershipOrderPaid : markCreditOrderPaid)({
             outTradeNo: parsed.outTradeNo,
             providerTransactionId: parsed.transactionId,
             paidAt: parsed.paidAt,
@@ -669,7 +674,7 @@ router.post("/buymeacoffee/webhook", async (req, res) => {
                 : res.status(200).json({ status: "ignored", code: result.code });
         }
         if (result.code === "PAID") {
-            await updateCreditOrderProviderData(order.id, {
+            await (isMembership ? updateMembershipOrderProviderData : updateCreditOrderProviderData)(order.id, {
                 buymeacoffee_event_id: String(req.body?.event_id || ""),
                 buymeacoffee_product_id: parsed.product.productId,
                 supporter_email: String(req.body?.data?.supporter_email || ""),
@@ -851,7 +856,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post("/credits/buymeacoffee", (_, res) => {
+    router.post(["/credits/buymeacoffee", "/memberships/buymeacoffee"], (_, res) => {
         return jsonError(
             res,
             501,
@@ -898,7 +903,7 @@ if (!isClerkAuthConfigured) {
 } else {
     router.use(clerkMiddleware());
 
-    router.post("/credits/buymeacoffee", async (req, res) => {
+    router.post(["/credits/buymeacoffee", "/memberships/buymeacoffee"], async (req, res) => {
         try {
             const auth = getAuth(req);
             if (!auth.userId) {
@@ -913,19 +918,29 @@ if (!isClerkAuthConfigured) {
                 );
             }
             const product = getBuyMeACoffeeProductByKey(req.body?.productKey);
-            if (!product) {
-                return jsonError(res, 400, "INVALID_PRODUCT", "Invalid credit product");
+            const isMembership = req.path.startsWith("/memberships/");
+            if (!product || !isBuyMeACoffeeProductAvailable(product) || product.kind !== (isMembership ? "membership" : "credit")) {
+                return jsonError(res, 400, "INVALID_PRODUCT", "Invalid payment product");
             }
             const clerkUser = await clerkClient.users.getUser(auth.userId);
             const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
-            const outTradeNo = `cpt_${nanoid(20)}`;
+            if (isMembership) {
+                const active = await getActiveMembershipForUser(user.id);
+                if (active?.entitlements?.some((key) => !product.entitlements.includes(key))) {
+                    return jsonError(res, 409, "MEMBERSHIP_INCOMPATIBLE", "Your current membership includes additional benefits; wait until it expires before purchasing this pass");
+                }
+                await ensureMembershipCheckoutPlan(product.planKey);
+            }
+            const outTradeNo = `${isMembership ? "mbr" : "cpt"}_${nanoid(20)}`;
             const attribution = sanitizeAttribution(req.body?.attribution);
-            const order = await createCreditOrder({
+            const order = await (isMembership ? createMembershipOrder : createCreditOrder)({
                 userId: user.id,
                 clerkUserId: user.clerk_user_id,
                 provider: "buymeacoffee",
                 productKey: product.key,
                 points: product.points,
+                planKey: product.planKey,
+                durationDays: product.durationDays,
                 amountFen: product.amountFen,
                 currency: product.currency,
                 outTradeNo,

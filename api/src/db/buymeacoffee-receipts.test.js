@@ -13,11 +13,12 @@ const purchase = (answers = []) => ({
 });
 
 test("retains unmatched payments, deduplicates retries, and handles late answers and refunds", async () => {
-    const db = new PGlite();
+    const db = new PGlite({ initialMemory: 128 * 1024 * 1024 });
     const query = (sql, params) => db.query(sql, params);
     try {
         await db.exec(`CREATE TABLE credit_orders (id integer PRIMARY KEY,
             provider text, provider_transaction_id text, status text);`);
+        await db.exec(`CREATE TABLE membership_orders (LIKE credit_orders INCLUDING ALL);`);
         const event = purchase();
         await recordBuyMeACoffeeReceipt(event, parseBuyMeACoffeePurchaseEvent(event), query);
         await recordBuyMeACoffeeReceipt(event, parseBuyMeACoffeePurchaseEvent(event), query);

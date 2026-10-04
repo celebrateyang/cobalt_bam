@@ -185,6 +185,8 @@ nowpayments:
 # Enable only after creating buymeacoffee-secret with BUYMEACOFFEE_WEBHOOK_SECRET.
 buymeacoffee:
   enabled: true
+  # Enable after the expanded Shop drafts and matching frontend are released.
+  expandedProductsEnabled: true
   secretName: buymeacoffee-secret
   product199Id: "581332"
   product199Url: "https://buymeacoffee.com/bambooyang/e/581332"

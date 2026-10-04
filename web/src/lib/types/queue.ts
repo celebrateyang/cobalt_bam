@@ -1,4 +1,5 @@
 import type { CobaltSaveRequestBody } from "$lib/types/api";
+import type { SaveOutcome } from "$lib/analytics/saving";
 import type {
     CobaltFetchFailureDiagnostic,
     CobaltPipelineItem,
@@ -40,6 +41,8 @@ type CobaltQueueItemBase = {
     batchSessionId?: string;
     batchSelectionTotal?: number;
     saveRequested?: boolean;
+    saveOutcome?: SaveOutcome;
+    saveAttempts?: number;
     autoSave?: {
         enabled: boolean;
         state: "pending" | "saving" | "saved" | "error";

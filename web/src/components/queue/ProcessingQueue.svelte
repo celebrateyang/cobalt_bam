@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
     import { beforeNavigate, onNavigate } from "$app/navigation";
 
-    import { openFile } from "$lib/download";
+    import { getQueueSaveCandidates, saveQueueFile } from "$lib/task-manager/save-file";
+    import { device } from "$lib/device";
+    import settings from "$lib/state/settings";
     import { getProgress } from "$lib/task-manager/queue";
     import { pwaInstallBannerHeight } from "$lib/state/pwa-install-banner";
     import { queueVisible } from "$lib/state/queue-visibility";
@@ -11,7 +12,6 @@
     import {
         clearQueue,
         queue as readableQueue,
-        updateItem,
     } from "$lib/state/task-manager/queue";
 
     import SectionHeading from "$components/misc/SectionHeading.svelte";
@@ -102,7 +102,7 @@
         if (latestBatchSummary) {
             if (latestBatchSummary.finished) {
                 return {
-                    key: "queue.success_notice",
+                    key: "save.queue_finished",
                     count: latestBatchSummary.success,
                 };
             }
@@ -113,6 +113,12 @@
             };
         }
 
+        if (queue.length && queue.every(([, item]) => item.state === "done" || item.state === "error")) {
+            return {
+                key: "save.queue_finished",
+                count: queue.filter(([, item]) => item.state === "done").length,
+            };
+        }
         return {
             key: "queue.waiting_notice",
             count: queue.length,
@@ -137,40 +143,25 @@
         item.autoSave?.state !== "saving"
     ).length;
     $: canBulkSave = manualSaveCount > 0 && pendingCount === 0;
+    $: saveIndividually = device.is.mobile || !device.supports.directDownload || $settings.save.savingMethod !== "download";
 
-    const saveAllDownloaded = () => {
+    const saveAllDownloaded = async () => {
         if (bulkSaving || typeof window === "undefined") {
             return;
         }
 
-        const snapshot = Object.entries(get(readableQueue)).filter(([, item]) =>
-            item.state === "done" &&
-            Boolean(item.resultFile) &&
-            item.autoSave?.state !== "saved" &&
-            item.autoSave?.state !== "saving"
-        );
+        const snapshot = getQueueSaveCandidates($readableQueue, saveIndividually);
         if (!snapshot.length) {
             return;
         }
 
         bulkSaving = true;
         try {
-            for (const [id, item] of snapshot) {
-                if (item.state !== "done" || !item.resultFile) {
-                    continue;
-                }
-                try {
-                    openFile(new File([item.resultFile], item.filename, {
-                        type: item.mimeType,
-                    }));
-                    updateItem(id, (current) => ({
-                        ...current,
-                        saveRequested: true,
-                    }));
-                    console.log(`[queue] bulkSave: triggered download id=${id}`);
-                } catch (error) {
-                    console.error(`[queue] bulkSave: openFile failed id=${id}`, error);
-                }
+            // A share sheet/dialog needs a fresh tap for each file. Never replace
+            // a pending dialog with the next item or claim all files were saved.
+            for (const [id] of snapshot) {
+                const outcome = await saveQueueFile(id, "bulk");
+                if (outcome !== "download") break;
             }
         } finally {
             setTimeout(() => {
@@ -227,7 +218,7 @@
                             tabindex={!$queueVisible ? -1 : undefined}
                         >
                             <IconDownload />
-                            {$t("queue.save_all_done")}
+                            {$t(saveIndividually ? "save.action.next" : "queue.save_all_done")}
                         </button>
                     {/if}
                     {#if queue.length}
@@ -281,9 +272,11 @@
                     <IconAlertTriangle />
                 </span>
                 <p>
-                    {$t("queue.manual_save_warning")}
+                    {$t("save.result.ready")}
+                    {#if saveIndividually}{$t("save.individual")}{/if}
                 </p>
             </div>
+            <SaveLocationHint collapsible compact />
         {/if}
     </PopoverContainer>
 </div>

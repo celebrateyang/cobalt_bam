@@ -338,6 +338,10 @@
             </label>
         </div>
 
+        <p class="meta">
+            Status records the API response, not whether the file was saved on the device.
+            Points are recorded at request time; held means reserved, not a final charge.
+        </p>
         <div class="pager">
             <span class="meta">{total} rows</span>
             <label class="filter">
@@ -501,7 +505,7 @@
                             </td>
                             <td class="mono">{formatDuration(item.elapsed_ms)}</td>
                             <td>
-                                <div class="mono">{item.points_outcome || "-"}</div>
+                                <div class="mono">{item.points_outcome === "held" ? "held (reserved)" : item.points_outcome || "-"}</div>
                                 <div class="sub">
                                     {item.points_required ?? "-"} / {item.points_before ?? "-"} -> {item.points_after ?? "-"}
                                 </div>

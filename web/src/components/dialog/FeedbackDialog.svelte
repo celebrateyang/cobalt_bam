@@ -1,6 +1,8 @@
 <script lang="ts">
     import { get } from "svelte/store";
     import { t } from "$lib/i18n/translations";
+    import { page } from "$app/stores";
+    import SupportLink from "$components/save/SupportLink.svelte";
     import { currentApiURL } from "$lib/api/api-url";
     import { getClerkToken } from "$lib/state/clerk";
 
@@ -110,6 +112,7 @@
                 {title || $t("dialog.feedback.title")}
             </h2>
             <p class="subtitle">{$t("dialog.feedback.subtitle")}</p>
+            <p class="subtitle">{$t("save.support.body")} <SupportLink /></p>
         </div>
 
         <form class="form" on:submit|preventDefault={submit}>
@@ -135,6 +138,7 @@
                 />
             </label>
 
+            {#if $page.params.lang === "zh"}
             <div class="field wechat-contact">
                 <span class="label">{$t("dialog.feedback.wechat.title")}</span>
                 <div class="wechat-card">
@@ -147,6 +151,7 @@
                 </div>
                 <p class="wechat-hint">{$t("dialog.feedback.wechat.hint")}</p>
             </div>
+            {/if}
 
             {#if error}
                 <div class="message error" role="alert">{error}</div>

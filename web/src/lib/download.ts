@@ -5,6 +5,7 @@ import settings from "$lib/state/settings";
 import { device } from "$lib/device";
 import { t } from "$lib/i18n/translations";
 import { createDialog } from "$lib/state/dialogs";
+import { trackSave, type SaveContext, type SaveOutcome } from "$lib/analytics/saving";
 
 import type { DialogInfo } from "$lib/types/dialog";
 import type { CobaltFileUrlType } from "$lib/types/api";
@@ -13,6 +14,9 @@ type DownloadFileParams = {
     url?: string,
     file?: File,
     urlType?: CobaltFileUrlType,
+    forceDialog?: boolean,
+    onSaveResult?: (outcome: SaveOutcome) => void,
+    saveContext?: SaveContext,
 }
 
 type SavingDialogParams = {
@@ -20,19 +24,26 @@ type SavingDialogParams = {
     file?: File,
     body?: string,
     urlType?: CobaltFileUrlType,
+    onSaveResult?: (outcome: SaveOutcome) => void,
+    saveContext?: SaveContext,
 }
 
-const openSavingDialog = ({ url, file, body, urlType }: SavingDialogParams) => {
+const openSavingDialog = ({ url, file, body, urlType, onSaveResult, saveContext }: SavingDialogParams) => {
     const dialogData: DialogInfo = {
         type: "saving",
         id: "saving",
         file,
         url,
         urlType,
+        onSaveResult,
+        saveContext,
     }
     if (body) dialogData.bodyText = body;
 
-    createDialog(dialogData)
+    createDialog(dialogData);
+    trackSave("dialog", "ask", saveContext);
+    onSaveResult?.("dialog");
+    return "dialog" as const;
 }
 
 export const openFile = (file: File) => {
@@ -41,11 +52,20 @@ export const openFile = (file: File) => {
 
     a.href = url;
     a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
+    document.body.appendChild(a);
+    try {
+        a.click();
+    } finally {
+        a.remove();
+        // Give WebKit time to consume the blob before releasing it.
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
 }
 
 export const shareFile = async (file: File) => {
+    if (!navigator.share || (navigator.canShare && !navigator.canShare({ files: [file] }))) {
+        throw new Error("File sharing unavailable");
+    }
     return await navigator?.share({
         files: [
             new File([file], file.name, {
@@ -78,11 +98,13 @@ export const openURL = (url: string) => {
 
     /* if new tab got blocked by user agent, show a saving dialog */
     if (!open) {
-        return openSavingDialog({
+        openSavingDialog({
             url,
             body: get(t)("dialog.saving.blocked")
         });
+        return false;
     }
+    return true;
 }
 
 export const shareURL = async (url: string) => {
@@ -90,16 +112,49 @@ export const shareURL = async (url: string) => {
 }
 
 export const copyURL = async (url: string) => {
-    return await navigator?.clipboard?.writeText(url);
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+    return await navigator.clipboard.writeText(url);
 }
 
-export const downloadFile = ({ url, file, urlType }: DownloadFileParams) => {
+export const saveWithFeedback = async (
+    method: "download" | "share" | "copy",
+    { url, file, onSaveResult, saveContext }: DownloadFileParams,
+): Promise<SaveOutcome> => {
+    trackSave("attempt", method, saveContext);
+    let outcome: SaveOutcome;
+    try {
+        if (method === "share") {
+            if (file) await shareFile(file);
+            else if (url) await shareURL(url);
+            else throw new Error("Missing media");
+            outcome = "shared";
+        } else if (method === "copy" && url) {
+            await copyURL(url);
+            outcome = "copied";
+        } else if (method === "download" && file) {
+            openFile(file);
+            outcome = "download";
+        } else if (method === "download" && url) {
+            outcome = openURL(url) ? "download" : "dialog";
+        } else {
+            throw new Error("Unsupported saving method");
+        }
+    } catch (error) {
+        outcome = error instanceof Error && error.name === "AbortError" ? "cancelled" : "failed";
+    }
+    trackSave(outcome, method, saveContext);
+    onSaveResult?.(outcome);
+    return outcome;
+};
+
+export const downloadFile = async (params: DownloadFileParams): Promise<SaveOutcome> => {
+    const { url, file, urlType, forceDialog } = params;
     if (!url && !file) throw new Error("attempted to download void");
 
     const pref = get(settings).save.savingMethod;
 
-    if (pref === "ask") {
-        return openSavingDialog({ url, file, urlType });
+    if (forceDialog || pref === "ask") {
+        return openSavingDialog(params);
     }
 
     /*
@@ -115,33 +170,31 @@ export const downloadFile = ({ url, file, urlType }: DownloadFileParams) => {
     */
     if (!navigator?.userActivation?.isActive) {
         return openSavingDialog({
-            url,
-            file,
+            ...params,
             body: get(t)("dialog.saving.timeout"),
-            urlType
         });
     }
 
     try {
         if (file) {
             if (pref === "share" && device.supports.share) {
-                return shareFile(file);
+                return saveWithFeedback("share", params);
             } else if (pref === "download" && device.supports.directDownload) {
-                return openFile(file);
+                return saveWithFeedback("download", params);
             }
         }
 
         if (url) {
             if (pref === "share" && device.supports.share) {
-                return shareURL(url);
+                return saveWithFeedback("share", params);
             } else if (pref === "download" && device.supports.directDownload
                     && !(device.is.iOS && urlType === "redirect")) {
-                return openURL(url);
+                return saveWithFeedback("download", params);
             } else if (pref === "copy" && !file) {
-                return copyURL(url);
+                return saveWithFeedback("copy", params);
             }
         }
     } catch { /* catch & ignore */ }
 
-    return openSavingDialog({ url, file, urlType });
+    return openSavingDialog(params);
 }

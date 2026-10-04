@@ -2,12 +2,10 @@
     import { t } from "$lib/i18n/translations";
 
     import { device } from "$lib/device";
+    import { onDestroy } from "svelte";
+    import { trackSave, type SaveContext, type SaveOutcome } from "$lib/analytics/saving";
     import {
-        copyURL,
-        openURL,
-        shareURL,
-        openFile,
-        shareFile,
+        saveWithFeedback,
     } from "$lib/download";
 
     import type { CobaltFileUrlType } from "$lib/types/api";
@@ -18,6 +16,7 @@
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
     import SavingTutorial from "$components/dialog/SavingTutorial.svelte";
     import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
+    import SupportLink from "$components/save/SupportLink.svelte";
     import VerticalActionButton from "$components/buttons/VerticalActionButton.svelte";
 
     import IconShare2 from "@tabler/icons-svelte/IconShare2.svelte";
@@ -33,13 +32,42 @@
     export let url: string = "";
     export let file: File | undefined = undefined;
     export let urlType: CobaltFileUrlType | undefined = undefined;
+    export let onSaveResult: ((outcome: SaveOutcome) => void) | undefined = undefined;
+    export let saveContext: SaveContext = { source: "dialog" };
 
     let close: () => void;
 
     let copied = false;
+    let saving = false;
+    let outcome: SaveOutcome | undefined;
+    let attempted = false;
+
+    const save = async (method: "download" | "share" | "copy") => {
+        if (saving) return;
+        saving = true;
+        const repeat = attempted || saveContext.repeat;
+        attempted = true;
+        try {
+            outcome = await saveWithFeedback(method, {
+                file, url, urlType, onSaveResult,
+                saveContext: { ...saveContext, repeat },
+            });
+            copied = outcome === "copied";
+        } finally {
+            saving = false;
+        }
+    };
+
+    onDestroy(() => {
+        if (!attempted) {
+            trackSave("dismissed", "ask", saveContext);
+            onSaveResult?.("cancelled");
+        }
+    });
 
     $: canDirectDownload = device.supports.directDownload
         && !(device.is.iOS && urlType === "redirect");
+    $: canShare = device.supports.share && (!file || !navigator.canShare || navigator.canShare({ files: [file] }));
 
     $: if (copied) {
         setTimeout(() => {
@@ -68,34 +96,24 @@
                         id="save-download"
                         fill
                         elevated
-                        click={() => {
-                            if (file) {
-                                return openFile(file);
-                            } else if (url) {
-                                return openURL(url);
-                            }
-                        }}
+                        disabled={saving}
+                        click={() => save("download")}
                     >
                         <IconDownload />
-                        {$t("button.download")}
+                        {$t(device.is.iOS && file ? "save.action.files" : "button.download")}
                     </VerticalActionButton>
                 {/if}
 
-                {#if device.supports.share}
+                {#if canShare}
                     <VerticalActionButton
                         id="save-share"
                         fill
                         elevated
-                        click={async () => {
-                            if (file) {
-                                return await shareFile(file);
-                            } else if (url) {
-                                return await shareURL(url);
-                            }
-                        }}
+                        disabled={saving}
+                        click={() => save("share")}
                     >
                         <IconShare2 />
-                        {$t("button.share")}
+                        {$t(device.is.iOS && file ? "save.action.share" : "button.share")}
                     </VerticalActionButton>
                 {/if}
 
@@ -104,10 +122,8 @@
                         id="save-copy"
                         fill
                         elevated
-                        click={async () => {
-                            copyURL(url);
-                            copied = true;
-                        }}
+                        disabled={saving}
+                        click={() => save("copy")}
                         ariaLabel={copied ? $t("button.copied") : ""}
                     >
                         <CopyIcon check={copied} />
@@ -116,8 +132,18 @@
                 {/if}
             </div>
 
-            {#if device.is.iOS}
+            {#if device.is.iOS && !file}
                 <SavingTutorial />
+            {/if}
+
+            {#if outcome && outcome !== "dialog"}
+                <p class="body-text" role="status" aria-live="polite">{$t(`save.result.${outcome}`)}</p>
+                {#if outcome === "failed" || outcome === "cancelled"}<SupportLink />{/if}
+            {:else if file}
+                <p class="body-text">{$t("save.result.ready")}</p>
+            {/if}
+            {#if device.is.iOS && file}
+                <p class="body-text">{$t("save.ios_help")}</p>
             {/if}
 
             {#if bodyText}
@@ -198,6 +224,16 @@
         flex-direction: row;
         gap: calc(var(--padding) / 2);
         position: relative;
+    }
+
+    .action-buttons :global(.button.vertical.fill) {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        min-height: 64px;
+        padding: 10px 8px;
+        white-space: normal;
+        line-height: 1.3;
     }
 
     .body-text {

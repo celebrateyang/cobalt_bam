@@ -2,6 +2,7 @@ import type { CobaltFileUrlType } from "$lib/types/api";
 import type { DownloadModeOption } from "$lib/types/settings";
 import type { MeowbaltEmotions } from "$lib/types/meowbalt";
 import type { MembershipEligibilityReason, MembershipFeature } from "$lib/api/membership";
+import type { SaveContext, SaveOutcome } from "$lib/analytics/saving";
 
 export type DialogButton = {
     text: string,
@@ -60,6 +61,8 @@ type SavingDialog = Dialog & {
     url?: string,
     file?: File,
     urlType?: CobaltFileUrlType,
+    onSaveResult?: (outcome: SaveOutcome) => void,
+    saveContext?: SaveContext,
 };
 
 type TikTokDownloadDialog = Dialog & {

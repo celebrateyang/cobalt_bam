@@ -2,13 +2,14 @@
     import { t } from "$lib/i18n/translations";
     import { page } from "$app/stores";
     import { formatFileSize } from "$lib/util";
-    import { downloadFile } from "$lib/download";
+    import { saveQueueFile } from "$lib/task-manager/save-file";
+    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
+    import SupportLink from "$components/save/SupportLink.svelte";
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
 
     import {
         removeItem,
-        updateItem,
         waitForPointsRelease,
         waitForQueueItemTerminal,
     } from "$lib/state/task-manager/queue";
@@ -109,30 +110,13 @@
         }
     };
 
-    const download = (file: File) => {
+    const download = async () => {
         downloading = true;
-
-        downloadFile({
-            file: new File([file], info.filename, {
-                type: info.mimeType,
-            }),
-        });
-        updateItem(id, (item) => ({
-            ...item,
-            saveRequested: true,
-        }));
-
-        setTimeout(() => {
-            /*
-                fake timeout to prevent download button spam,
-                because there's no real way to await the real
-                saving process via object url (blob), which
-                takes some time on some devices depending on file size.
-                if you know of a way to do it in
-                lib/download.ts -> openFile(), please make a PR!
-            */
+        try {
+            await saveQueueFile(id);
+        } finally {
             downloading = false;
-        }, 3000)
+        }
     };
 
     const transfer = async (file: File) => {
@@ -213,7 +197,7 @@
             if (info.autoSave?.state === "error") {
                 return $t("queue.state.auto_save_failed");
             }
-            return formatFileSize(info.resultFile?.size);
+            return `${$t("save.result.ready")} ${formatFileSize(info.resultFile?.size)}`;
 
         case "error":
             if (retrying) return $t("queue.state.retrying");
@@ -267,16 +251,20 @@
     $: MediaTypeIcon = itemIcons[info.mediaType];
 
     const getPointsSummary = (points?: CobaltQueueItem["points"]) => {
+        if (points?.status === "held" && Number.isFinite(points.required)) {
+            return $t("save.points.held", { value: String(points.required) });
+        }
+        if (points?.status !== "finalized") return null;
         const charged = points?.charged;
         if (!Number.isFinite(charged)) return null;
 
         const before = points?.before;
         const after = points?.after;
         if (Number.isFinite(before) && Number.isFinite(after)) {
-            return `charged ${charged} points (${before} -> ${after})`;
+            return `${$t("save.points.charged", { value: String(charged) })} (${before} -> ${after})`;
         }
 
-        return `charged ${charged} points`;
+        return $t("save.points.charged", { value: String(charged) });
     };
 
     $: pointsSummary = info.state === "done" ? getPointsSummary(info.points) : null;
@@ -351,17 +339,16 @@
                     class="button action-button"
                     class:save-button={info.state === "done"}
                     class:saved={info.saveRequested}
-                    aria-label={$t(info.saveRequested ? "queue.save_started" : "button.save")}
-                    aria-pressed={info.saveRequested}
-                    on:click={() => download(info.resultFile)}
+                    aria-label={$t(info.saveRequested ? "save.action.again" : "button.save")}
+                    on:click={download}
                     disabled={downloading || info.autoSave?.state === "saving"}
                     class:downloading
                 >
                     {#if downloading || info.autoSave?.state === "saving"}
                         <IconLoader2 />
                     {:else if info.saveRequested}
-                        <IconCheck />
-                        <span>{$t("queue.save_started")}</span>
+                        <IconDownload />
+                        <span>{$t("save.action.again")}</span>
                     {:else}
                         {$t("button.save")}
                     {/if}
@@ -419,8 +406,22 @@
         {/if}
     </div>
 </div>
+{#if info.state === "done" && info.saveOutcome && info.saveOutcome !== "dialog"}
+    <div class="save-feedback" role="status" aria-live="polite">
+        <p>{$t(`save.result.${info.saveOutcome}`)}</p>
+        {#if info.saveOutcome === "failed"}<SupportLink />{/if}
+        <SaveLocationHint collapsible compact />
+    </div>
+{:else if info.state === "error"}
+    <div class="save-feedback">
+        <SupportLink />
+        <SaveLocationHint collapsible compact />
+    </div>
+{/if}
 
 <style>
+    .save-feedback { margin: 0 0 12px; font-size: 12px; line-height: 1.45; }
+    .save-feedback p { margin: 4px 0 8px; }
     .processing-item,
     .file-actions {
         display: flex;

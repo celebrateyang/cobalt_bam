@@ -1,0 +1,1 @@
+export const DISCORD_SUPPORT_URL = "https://discord.com/channels/1555733292337332314/1555734308600156283";

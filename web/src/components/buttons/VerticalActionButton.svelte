@@ -6,6 +6,7 @@
     export let fill = false;
     export let elevated = false;
     export let ariaLabel = "";
+    export let disabled = false;
 </script>
 
 <button
@@ -15,6 +16,7 @@
     class:elevated
     on:click={click}
     aria-label={ariaLabel}
+    {disabled}
 >
     <slot></slot>
 </button>

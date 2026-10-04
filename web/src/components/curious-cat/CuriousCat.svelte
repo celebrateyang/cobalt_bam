@@ -7,6 +7,7 @@
     import { curiousCat, type CuriousCatActivity } from "$lib/api/curious-cat";
     import { clerkUser, isSignedIn } from "$lib/state/clerk";
     import { queue } from "$lib/state/task-manager/queue";
+    import { canShowCampaign } from "$lib/curious-cat/visibility";
 
     const SESSION_KEY = "curious_cat_session_closed_v1";
     const DAILY_PREFIX = "curious_cat_daily_v1:";
@@ -48,6 +49,7 @@
     const canShow = () => {
         if (typeof window === "undefined") return false;
         if (!get(isSignedIn)) return false;
+        if (!canShowCampaign(lang, get(queue))) return false;
         if (visible) return false;
         if (window.sessionStorage.getItem(SESSION_KEY) === "1") return false;
         return getDailyCount() < MAX_DAILY_SHOWS;
@@ -123,6 +125,11 @@
         incrementDailyCount();
         void playMeow();
     };
+
+    $: if (visible && !canShowCampaign(lang, $queue)) {
+        visible = false;
+        detailOpen = false;
+    }
 
     const close = () => {
         visible = false;

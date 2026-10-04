@@ -1,6 +1,7 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
     import { device } from "$lib/device";
+    import SupportLink from "$components/save/SupportLink.svelte";
 
     import IconFolderDown from "@tabler/icons-svelte/IconFolderDown.svelte";
 
@@ -28,14 +29,16 @@
             {#if batch}
                 <p>{$t("save.location.batch_auto")}</p>
             {/if}
-            {#if afterClick}
+            {#if afterClick && !device.is.iOS}
                 <p>{$t("save.location.after_click")}</p>
             {/if}
             <p>{$t(platformKey)}</p>
-            <p>{$t("save.location.default")}</p>
+            {#if !device.is.iOS}<p>{$t("save.location.default")}</p>{/if}
             {#if device.browser.wechat}
                 <p>{$t("save.location.wechat")}</p>
             {/if}
+            <p>{$t("save.support.body")}</p>
+            <SupportLink />
         </div>
     </details>
 {:else}
@@ -48,14 +51,16 @@
             {#if batch}
                 <p>{$t("save.location.batch_auto")}</p>
             {/if}
-            {#if afterClick}
+            {#if afterClick && !device.is.iOS}
                 <p>{$t("save.location.after_click")}</p>
             {/if}
             <p>{$t(platformKey)}</p>
-            <p>{$t("save.location.default")}</p>
+            {#if !device.is.iOS}<p>{$t("save.location.default")}</p>{/if}
             {#if device.browser.wechat}
                 <p>{$t("save.location.wechat")}</p>
             {/if}
+            <p>{$t("save.support.body")}</p>
+            <SupportLink />
         </div>
     </div>
 {/if}

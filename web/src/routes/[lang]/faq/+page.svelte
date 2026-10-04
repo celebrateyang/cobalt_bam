@@ -4,6 +4,7 @@
     import env from "$lib/env";
     import { t } from "$lib/i18n/translations";
     import { getHubDownloadLinks, getHubGuideLinks } from "$lib/seo/internal-links";
+    import SupportLink from "$components/save/SupportLink.svelte";
 
     const fallbackHost = env.HOST || "freesavevideo.online";
     const normalizePathname = (pathname: string) => {
@@ -170,6 +171,7 @@
     <header class="hero card">
         <h1>{title}</h1>
         <p class="lede selectable">{description}</p>
+        <p>{$t("save.support.body")} <SupportLink /></p>
         <div class="actions">
             <a class="btn primary" href={`/${lang}`}>
                 {$t("faq.actions.home")}
@@ -227,6 +229,7 @@
     {#if visibleCount === 0}
         <section class="card empty">
             <h2 class="empty-title">{$t("faq.search.no_results")}</h2>
+            <p><SupportLink /></p>
             <p class="empty-hint">
                 <a class="text-link" href={`/${lang}?feedback=1`}>
                     {$t("faq.actions.feedback")}

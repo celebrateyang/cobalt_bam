@@ -690,7 +690,6 @@
     let qrDataUrl = "";
     let buyMeACoffeeCheckoutUrl = "";
     let buyMeACoffeePaymentCode = "";
-    let buyMeACoffeeCodeCopied = false;
     let buyMeACoffeeCodeSaved = false;
     let buyMeACoffeeCopyFailed = false;
     let buyMeACoffeeReturnHandled = false;
@@ -941,7 +940,6 @@
         qrDataUrl = "";
         buyMeACoffeeCheckoutUrl = "";
         buyMeACoffeePaymentCode = "";
-        buyMeACoffeeCodeCopied = false;
         buyMeACoffeeCodeSaved = false;
         buyMeACoffeeCopyFailed = false;
         orderStatusLoading = false;
@@ -1238,12 +1236,10 @@
         if (!buyMeACoffeePaymentCode) return;
         try {
             await navigator.clipboard.writeText(buyMeACoffeePaymentCode);
-            buyMeACoffeeCodeCopied = true;
             buyMeACoffeeCodeSaved = true;
             buyMeACoffeeCopyFailed = false;
             if (activeOrder) trackPaymentStep("code_copied", activeOrder.id, activeOrder.kind);
         } catch {
-            buyMeACoffeeCodeCopied = false;
             buyMeACoffeeCopyFailed = true;
         }
     };
@@ -1297,7 +1293,6 @@
             activeOrder = kind === "membership" ? { ...(order as MembershipOrder), kind } : { ...(order as CreditOrder), kind };
             buyMeACoffeeCheckoutUrl = checkoutUrl;
             buyMeACoffeePaymentCode = paymentCode;
-            buyMeACoffeeCodeCopied = false;
             buyMeACoffeeCodeSaved = false;
             buyMeACoffeeCopyFailed = false;
             buyMeACoffeeStatusError = false;
@@ -2524,12 +2519,6 @@
                                 <div class="bmc-payment-code">
                                     <strong>{$t("auth.bmc_step_save")}</strong>
                                     <code>{buyMeACoffeePaymentCode}</code>
-                                    <button
-                                        class="button elevated"
-                                        on:click={copyBuyMeACoffeePaymentCode}
-                                    >
-                                        {$t(buyMeACoffeeCodeCopied ? "auth.bmc_copied" : "auth.bmc_copy_continue")}
-                                    </button>
                                     {#if buyMeACoffeeCopyFailed}
                                         <p role="alert">{$t("auth.bmc_copy_failed")}</p>
                                         <label class="bmc-code-confirmation">
@@ -2548,7 +2537,12 @@
                                             {$t("auth.bmc_step_pay")}
                                         </a>
                                     {:else}
-                                        <button class="button elevated" disabled>{$t("auth.bmc_save_required")}</button>
+                                        <button
+                                            class="button elevated active"
+                                            on:click={copyBuyMeACoffeePaymentCode}
+                                        >
+                                            {$t("auth.bmc_copy_continue")}
+                                        </button>
                                     {/if}
                                 </div>
                             {:else if qrDataUrl}
@@ -2603,7 +2597,7 @@
                                         <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_submit_hint" : "auth.bmc_submit_hint")}</p>
                                         <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_return_hint" : "auth.bmc_return_hint")}</p>
                                         <a
-                                            class="button elevated"
+                                            class="bmc-help-link"
                                             href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
                                              on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id, activeOrder.kind)}
                                         >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
@@ -2627,9 +2621,11 @@
                                 >
                                     {$t("auth.check_status")}
                                 </button>
-                                <button class="button elevated" on:click={clearActiveOrder}>
-                                    {$t(activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID" ? "auth.bmc_close" : activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
-                                </button>
+                                {#if activeOrder.provider !== "buymeacoffee"}
+                                    <button class="button elevated" on:click={clearActiveOrder}>
+                                        {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                    </button>
+                                {/if}
                             </div>
                         </div>
                     </div>
@@ -3771,6 +3767,12 @@
         align-items: flex-start;
         gap: 8px;
         font-size: 0.85rem;
+    }
+
+    .bmc-help-link {
+        color: var(--green);
+        text-decoration: underline;
+        text-underline-offset: 3px;
     }
 
     .payment-status {

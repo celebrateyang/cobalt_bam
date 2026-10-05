@@ -158,7 +158,7 @@ export const completeDownloadAttempt = async ({
             points_after = $11,
             completed_at = $12,
             elapsed_ms = $13,
-            metadata = COALESCE($14, metadata),
+            metadata = COALESCE(metadata, '{}'::jsonb) || COALESCE($14::jsonb, '{}'::jsonb),
             updated_at = $12
         WHERE request_id = $1
         RETURNING *;
@@ -182,6 +182,21 @@ export const completeDownloadAttempt = async ({
     );
 
     return result.rows[0] || null;
+};
+
+export const recordBrowserDownloadOutcome = async ({ requestId, clerkUserId, outcome }) => {
+    if (!isPostgresEnabled()) return false;
+    // Match the exact extraction attempt and its authenticated owner. Queue IDs
+    // are reused on retry and cannot safely identify a browser outcome.
+    const result = await query(`
+        UPDATE download_attempts
+        SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('browserOutcome', $3::jsonb),
+            updated_at = $4
+        WHERE request_id = $1 AND clerk_user_id = $2
+          AND (body_status = 'local-processing' OR metadata->>'isBrowserQueued' = 'true')
+        RETURNING id;
+    `, [requestId, clerkUserId, JSON.stringify(outcome), Date.now()]);
+    return result.rowCount > 0;
 };
 
 export const getDownloadAttemptById = async (id) => {

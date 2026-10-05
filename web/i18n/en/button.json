@@ -25,5 +25,6 @@
     "no": "no",
     "clear": "clear",
     "remove": "remove",
-    "retry": "retry"
+    "retry": "retry",
+    "download.original_audio": "download original audio (no conversion)"
 }

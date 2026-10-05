@@ -86,6 +86,32 @@ test("keeps forced YouTube batch downloads in the processing queue", () => {
     assert.equal(response.body.tunnel.length, 1);
 });
 
+test("YouTube original audio bypasses the encoder while keeping browser points deferred", () => {
+    const response = matchAction({
+        ...baseArgs,
+        isAudioOnly: true,
+        audioFormat: "best",
+        disableMetadata: true,
+        alwaysProxy: true,
+        localProcessing: "forced",
+        r: {
+            urls: ["https://video.example/video", "https://video.example/audio"],
+            bestAudio: "opus",
+            filenameAttributes: { service: "youtube", id: "abc", title: "audio", extension: "mp4" },
+            fileMetadata: { title: "audio" },
+            cover: "https://video.example/cover.jpg",
+        },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.status, "local-processing");
+    assert.equal(response.body.type, "proxy");
+    assert.equal(response.body.tunnel.length, 1);
+    assert.equal(response.body.output.type.startsWith("audio/"), true);
+    assert.equal(response.body.output.filename.endsWith(".opus"), true);
+    assert.equal(response.body.output.metadata, undefined);
+    assert.equal(response.body.audio.cover, undefined);
+});
+
 test("keeps IP-bound TikTok yt-dlp media on the server tunnel", () => {
     const mediaUrl = "https://v16-webapp-prime.tiktok.com/video/example";
     const response = matchAction({

@@ -35,7 +35,9 @@ import { listUnmatchedBuyMeACoffeeReceipts } from "../db/buymeacoffee-receipts.j
 import {
     getDownloadAttemptById,
     listDownloadAttempts,
+    recordBrowserDownloadOutcome,
 } from "../db/download-attempts.js";
+import { normalizeBrowserDownloadOutcome } from "../core/browser-download-outcome.js";
 import {
     canPreviewStorageAsset,
     getAdminStorageAsset,
@@ -1359,6 +1361,21 @@ if (!isClerkApiConfigured) {
         });
     } else {
         router.use(clerkMiddleware());
+
+        router.post("/downloads/outcome", async (req, res) => {
+            try {
+                const auth = getAuth(req);
+                if (!auth.userId) return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
+                const report = normalizeBrowserDownloadOutcome(req.body, req.headers["user-agent"]);
+                if (!report) return jsonError(res, 400, "INVALID_INPUT", "Invalid browser download outcome");
+                const saved = await recordBrowserDownloadOutcome({ ...report, clerkUserId: auth.userId });
+                if (!saved) return jsonError(res, 404, "NOT_FOUND", "Queued download attempt not found");
+                return res.json({ status: "success" });
+            } catch (error) {
+                console.error("POST /user/downloads/outcome error:", error);
+                return jsonError(res, 500, "SERVER_ERROR", "Could not record browser outcome");
+            }
+        });
 
         const ensureLocalUserByClerkId = async (clerkUserId) => {
             const existing = await getUserByClerkId(clerkUserId);

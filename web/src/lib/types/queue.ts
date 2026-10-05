@@ -34,7 +34,9 @@ type CobaltQueueItemBase = {
     mimeType: string;
     mediaType: CobaltPipelineResultFileType;
     canRetry?: boolean;
+    downloadRequestId?: string;
     failureDiagnostic?: CobaltFetchFailureDiagnostic;
+    processingDiagnostic?: CobaltFetchFailureDiagnostic;
     originalRequest?: CobaltSaveRequestBody;
     points?: CobaltQueueItemPoints;
     collectionMemory?: CobaltQueueItemCollectionMemory;

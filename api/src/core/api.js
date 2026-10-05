@@ -1165,7 +1165,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                         .status(replayStatus)
                         .json(req.personalAgent ? { ...claim.responseBody, points: {
                             ...claim.responseBody?.points, outcome: 'idempotency_replay',
-                        } } : claim.responseBody);
+                        }, downloadRequestId: requestId } : { ...claim.responseBody, downloadRequestId: requestId });
                 }
                 if (!claim.ok) {
                     return failDownload(getIdempotencyErrorCode(claim.code), null, {
@@ -1662,6 +1662,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 downloadRequestClaim = null;
             }
 
+            if (isDownloadSuccess && result?.body) result.body.downloadRequestId = requestId;
             res.status(result.status).json(result.body);
         } catch (error) {
             // console.log(`[DOWNLOAD REQUEST] Processing failed for URL: ${normalizedRequest.url}, Error: ${error.message}`);

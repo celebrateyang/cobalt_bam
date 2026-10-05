@@ -7,6 +7,7 @@ import { clearFileStorage, removeFromFileStorage } from "$lib/storage/opfs";
 import { clearCurrentTasks, removeWorkerFromQueue } from "$lib/state/task-manager/current-tasks";
 import { clearFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
 import { finalizePointsHold, releasePointsHold } from "$lib/api/points";
+import { reportDownloadOutcome } from "$lib/api/download-outcome";
 import { markCollectionDownloadedItems } from "$lib/api/collection-memory";
 import { saveFileToAutoSaveDirectory } from "$lib/storage/auto-save";
 
@@ -93,7 +94,7 @@ const maybeShowQueueRefreshHint = (errorCode: string) => {
         type: "small",
         meowbalt: "error",
         title: get(t)("error.queue.refresh_required_title"),
-        bodyText: get(t)("error.queue.refresh_required"),
+        bodyText: get(t)("error.queue.worker_didnt_start"),
         buttons: [
             {
                 text: get(t)("button.gotit"),
@@ -347,6 +348,7 @@ export function itemError(
         return;
     }
     maybeShowQueueRefreshHint(error);
+    void reportDownloadOutcome(get(queue)[id]?.downloadRequestId, "failed", error, failureDiagnostic);
     console.log(`[queue] itemError: calling releaseQueueHold id=${id}`);
     const pendingRelease = releaseQueueHold(id, "queue_error", error, failureDiagnostic);
     pendingPointsReleases.set(id, pendingRelease);
@@ -373,6 +375,7 @@ export function itemDone(id: UUID, file: File) {
 
     schedule();
     clearFetchResumeStateForTask(id);
+    void reportDownloadOutcome(get(queue)[id]?.downloadRequestId, "processed", undefined, get(queue)[id]?.processingDiagnostic);
     void finalizeQueueHold(id);
     void autoSaveCompletedItem(id, file);
 }
@@ -421,12 +424,13 @@ const autoSaveCompletedItem = async (id: UUID, file: File) => {
     }
 };
 
-export function pipelineTaskDone(id: UUID, workerId: UUID, file: File) {
+export function pipelineTaskDone(id: UUID, workerId: UUID, file: File, diagnostic?: CobaltFetchFailureDiagnostic) {
     update(queueData => {
         const item = queueData[id];
 
         if (item && item.state === 'running') {
             item.pipelineResults[workerId] = file;
+            if (diagnostic) item.processingDiagnostic = diagnostic;
         }
 
         return queueData;

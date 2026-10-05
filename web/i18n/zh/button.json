@@ -25,5 +25,6 @@
     "no": "否",
     "clear": "清空",
     "remove": "移除",
-    "retry": "重试"
+    "retry": "重试",
+    "download.original_audio": "下载原始音频（不转码）"
 }

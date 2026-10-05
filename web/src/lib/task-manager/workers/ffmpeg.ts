@@ -31,18 +31,30 @@ const ffmpeg = async (
         })
     });
 
-    ff.init({ variant, yesthreads });
-
-    const error = (code: string) => {
+    const error = (code: string, cause?: unknown) => {
         self.postMessage({
             cobaltFFmpegWorker: {
                 error: code,
+                errorName: cause instanceof Error ? cause.name : undefined,
             }
         });
-        ff.terminate();
+        void ff.terminate().catch(() => undefined);
     }
 
     try {
+        const initializedAt = Date.now();
+        self.postMessage({ cobaltFFmpegWorker: { stage: "initializing" } });
+        try {
+            ff.init({ variant, yesthreads, noworker: !yesthreads });
+            if (!ff.libav) throw new Error("LibAV wasn't initialized");
+            await ff.libav;
+        } catch (e) {
+            return error("queue.generic_error", e);
+        }
+        self.postMessage({ cobaltFFmpegWorker: {
+            stage: "probing",
+            initializationMs: Date.now() - initializedAt,
+        } });
         // probing just the first file in files array (usually audio) for duration progress
         const probeFile = files[0];
         if (!probeFile) {
@@ -57,11 +69,11 @@ const ffmpeg = async (
             console.error("error from ffmpeg worker @ file_info:");
             if (e instanceof Error && e?.message?.toLowerCase().includes("out of memory")) {
                 console.error(e);
-                error("queue.ffmpeg.out_of_memory");
+                error("queue.ffmpeg.out_of_memory", e);
                 return self.close();
             } else {
                 console.error(e);
-                return error("queue.ffmpeg.probe_failed");
+                return error("queue.ffmpeg.probe_failed", e);
             }
         }
 
@@ -92,6 +104,7 @@ const ffmpeg = async (
         }
 
         let render;
+        self.postMessage({ cobaltFFmpegWorker: { stage: "encoding" } });
 
         try {
             render = await ff.render({
@@ -103,7 +116,7 @@ const ffmpeg = async (
             console.error("error from the ffmpeg worker @ render:");
             console.error(e);
             // TODO: more granular error codes
-            return error("queue.ffmpeg.crashed");
+            return error("queue.ffmpeg.crashed", e);
         }
 
         if (!render) {
@@ -120,7 +133,7 @@ const ffmpeg = async (
     } catch (e) {
         console.error("error from the ffmpeg worker:")
         console.error(e);
-        return error("queue.ffmpeg.crashed");
+        return error("queue.ffmpeg.crashed", e);
     }
 }
 

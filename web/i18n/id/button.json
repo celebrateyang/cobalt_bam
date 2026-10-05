@@ -25,5 +25,6 @@
     "no": "tidak",
     "clear": "jelas",
     "remove": "hapus",
-    "retry": "coba lagi"
+    "retry": "coba lagi",
+    "download.original_audio": "unduh audio asli (tanpa konversi)"
 }

@@ -21,6 +21,7 @@
         "test:bmc-translations": "node ./scripts/test-bmc-translations.mjs",
         "test:bmc-checkout": "node --test ./scripts/test-bmc-checkout.mjs",
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
+        "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
     },
     "license": "CC-BY-NC-SA-4.0",

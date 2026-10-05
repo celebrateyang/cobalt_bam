@@ -1,13 +1,12 @@
 import FFmpegWorker from "$lib/task-manager/workers/ffmpeg?worker";
-
-import { killWorker } from "$lib/task-manager/run-worker";
 import { updateWorkerProgress } from "$lib/state/task-manager/current-tasks";
 import { pipelineTaskDone, itemError, queue } from "$lib/state/task-manager/queue";
-
 import type { FileInfo } from "$lib/types/libav";
-import type { CobaltQueue } from "$lib/types/queue";
+import type { CobaltFetchFailureDiagnostic } from "$lib/types/workers";
 
-let startAttempts = 0;
+// Loading the ~10 MB encoder and compiling WASM takes longer than starting
+// the outer Worker. Give each initialization phase its own deadline.
+const PHASE_TIMEOUTS = { worker: 15_000, initializing: 120_000, probing: 60_000 };
 
 export const runFFmpegWorker = async (
     workerId: string,
@@ -17,90 +16,89 @@ export const runFFmpegWorker = async (
     output: FileInfo,
     variant: 'remux' | 'encode',
     yesthreads: boolean,
-    resetStartCounter = false,
 ) => {
-    const worker = new FFmpegWorker();
-
-    // sometimes chrome refuses to start libav wasm,
-    // so we check if it started, try 10 more times if not, and kill self if it still doesn't work
-    // TODO: fix the underlying issue because this is ridiculous
-
-    if (resetStartCounter) startAttempts = 0;
-
-    let bumpAttempts = 0;
-    const startCheck = setInterval(async () => {
-        bumpAttempts++;
-
-        if (bumpAttempts === 10) {
-            startAttempts++;
-            if (startAttempts <= 10) {
-                killWorker(worker, unsubscribe, startCheck);
-                return await runFFmpegWorker(
-                    workerId, parentId,
-                    files, args, output,
-                    variant, yesthreads
-                );
-            } else {
-                killWorker(worker, unsubscribe, startCheck);
-                return itemError(parentId, workerId, "queue.worker_didnt_start");
+    const taskStartedAt = Date.now();
+    const startAttempt = (attempt: number, threaded: boolean) => {
+        let worker: Worker | undefined;
+        let stage: NonNullable<CobaltFetchFailureDiagnostic["workerStage"]> = "worker";
+        let initializationMs: number | undefined;
+        let settled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let unsubscribe = () => {};
+        const cleanup = () => {
+            settled = true;
+            clearTimeout(timer);
+            unsubscribe();
+            worker?.terminate();
+        };
+        const fail = (code: string, errorName?: string) => {
+            if (settled) return;
+            const diagnostic: CobaltFetchFailureDiagnostic = {
+                workerStage: stage,
+                elapsedMs: Date.now() - taskStartedAt,
+                initializationMs,
+                attempt: attempt + 1,
+                threaded,
+                errorName,
+            };
+            cleanup();
+            // Retry initialization once in a fresh, single-threaded Worker.
+            // Input/probe/render failures are not initialization failures.
+            if (attempt === 0 && (stage === "worker" || stage === "initializing")) {
+                startAttempt(1, false);
+                return;
             }
-        }
-    }, 500);
-
-    const unsubscribe = queue.subscribe((queue: CobaltQueue) => {
-        if (!queue[parentId]) {
-            killWorker(worker, unsubscribe, startCheck);
-        }
-    });
-
-    worker.postMessage({
-        cobaltFFmpegWorker: {
-            variant,
-            files,
-            args,
-            output,
-            yesthreads,
-        }
-    });
-
-    worker.onerror = (e) => {
-        console.error("ffmpeg worker crashed:", e);
-        killWorker(worker, unsubscribe, startCheck);
-
-        return itemError(parentId, workerId, "queue.generic_error");
-    };
-
-    let totalDuration: number | null = null;
-
-    worker.onmessage = (event) => {
-        const eventData = event.data.cobaltFFmpegWorker;
-        if (!eventData) return;
-
-        clearInterval(startCheck);
-
-        if (eventData.progress) {
-            if (eventData.progress.duration) {
-                totalDuration = eventData.progress.duration;
-            }
-
-            updateWorkerProgress(workerId, {
-                percentage: totalDuration ? (eventData.progress.durationProcessed / totalDuration) * 100 : 0,
-                size: eventData.progress.size,
-            })
-        }
-
-        if (eventData.render) {
-            killWorker(worker, unsubscribe, startCheck);
-            return pipelineTaskDone(
-                parentId,
-                workerId,
-                eventData.render,
-            );
-        }
-
-        if (eventData.error) {
-            killWorker(worker, unsubscribe, startCheck);
-            return itemError(parentId, workerId, eventData.error);
+            itemError(parentId, workerId, code, diagnostic);
+        };
+        const armDeadline = () => {
+            clearTimeout(timer);
+            if (stage === "encoding") return;
+            timer = setTimeout(() => fail(stage === "probing" ? "queue.ffmpeg.probe_failed" : "queue.worker_didnt_start", "TimeoutError"), PHASE_TIMEOUTS[stage]);
+        };
+        try {
+            worker = new FFmpegWorker();
+            armDeadline();
+            unsubscribe = queue.subscribe((items) => {
+                if (items[parentId]?.state !== "running") cleanup();
+            });
+            // Svelte subscriptions run immediately, before assignment finishes.
+            if (settled) { unsubscribe(); return; }
+            worker.onerror = (event) => {
+                console.error("ffmpeg worker crashed:", event);
+                fail("queue.generic_error", "WorkerError");
+            };
+            worker.onmessageerror = () => fail("queue.generic_error", "DataCloneError");
+            let totalDuration: number | null = null;
+            worker.onmessage = (event) => {
+                if (settled) return;
+                const data = event.data?.cobaltFFmpegWorker;
+                if (!data) return;
+                if (data.stage === "initializing" || data.stage === "probing" || data.stage === "encoding") {
+                    stage = data.stage;
+                    if (Number.isFinite(data.initializationMs)) initializationMs = data.initializationMs;
+                    armDeadline();
+                }
+                if (data.error) { fail(data.error, data.errorName); return; }
+                if (data.progress) {
+                    if (data.progress.duration) totalDuration = data.progress.duration;
+                    updateWorkerProgress(workerId, {
+                        percentage: totalDuration && Number.isFinite(data.progress.durationProcessed)
+                            ? (data.progress.durationProcessed / totalDuration) * 100 : 0,
+                        size: data.progress.size ?? 0,
+                    });
+                }
+                if (data.render) {
+                    cleanup();
+                    pipelineTaskDone(parentId, workerId, data.render, {
+                        workerStage: stage, elapsedMs: Date.now() - taskStartedAt,
+                        initializationMs, attempt: attempt + 1, threaded,
+                    });
+                }
+            };
+            worker.postMessage({ cobaltFFmpegWorker: { variant, files, args, output, yesthreads: threaded } });
+        } catch (error) {
+            fail("queue.generic_error", error instanceof Error ? error.name : "UnknownError");
         }
     };
-}
+    startAttempt(0, yesthreads);
+};

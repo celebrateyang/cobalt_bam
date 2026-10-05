@@ -45,7 +45,6 @@ export const startWorker = async ({ worker, workerId, dependsOn, parentId, worke
                     workerArgs.output,
                     worker,
                     device.supports.multithreading,
-                    /*resetStartCounter=*/true,
                 );
             } else {
                 itemError(parentId, workerId, "queue.ffmpeg.no_args");

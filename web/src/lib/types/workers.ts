@@ -48,6 +48,12 @@ export type CobaltFetchFailureDiagnostic = {
     httpStatus?: number;
     contentType?: string;
     failureKind?: "http_status" | "html_response" | "content_type" | "network";
+    workerStage?: "worker" | "initializing" | "probing" | "encoding";
+    elapsedMs?: number;
+    initializationMs?: number;
+    attempt?: number;
+    threaded?: boolean;
+    errorName?: string;
 };
 
 type CobaltPipelineItemBase = {

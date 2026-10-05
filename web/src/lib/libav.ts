@@ -14,7 +14,7 @@ export default class LibAVWrapper {
 
     constructor(onProgress?: FFmpegProgressCallback) {
         this.libav = null;
-        this.concurrency = (typeof navigator !== "undefined") ? Math.min(4, navigator.hardwareConcurrency || 0) : 1;
+        this.concurrency = (typeof navigator !== "undefined") ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 1)) : 1;
         this.onProgress = onProgress;
         this.debugEnabled = false;
         this.debugStartedAt = Date.now();

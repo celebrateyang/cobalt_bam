@@ -1,7 +1,7 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
     import { page } from "$app/stores";
-    import { formatFileSize } from "$lib/util";
+    import { formatFileSize, uuid } from "$lib/util";
     import { saveQueueFile } from "$lib/task-manager/save-file";
     import SupportLink from "$components/save/SupportLink.svelte";
     import { getProgress } from "$lib/task-manager/queue";
@@ -19,7 +19,7 @@
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { hasFetchResumeStateForTask } from "$lib/state/task-manager/fetch-resume";
-    import { buildQueueRetryRequest } from "$lib/task-manager/retry-request";
+    import { buildQueueRetryRequest, buildOriginalAudioRetryRequest, canRetryOriginalAudio } from "$lib/task-manager/retry-request";
 
     import type { CobaltQueueItem, UUID } from "$lib/types/queue";
     import type { CobaltCurrentTasks } from "$lib/types/task-manager";
@@ -80,7 +80,7 @@
     };
     $: browserHandoffUrl = getWechatBrowserHandoffUrl(info);
 
-    const retry = async (info: CobaltQueueItem) => {
+    const retry = async (info: CobaltQueueItem, originalAudio = false) => {
         const originalRequest = info.originalRequest;
         if (info.canRetry && originalRequest) {
             retrying = true;
@@ -90,13 +90,13 @@
                     const pointsReleased = await waitForPointsRelease(id);
                     if (!pointsReleased) return null;
                     const response = await savingHandler({
-                        request: buildQueueRetryRequest(
+                        request: originalAudio ? buildOriginalAudioRetryRequest(originalRequest, uuid()) : buildQueueRetryRequest(
                             originalRequest,
                             id,
                             info.points?.status,
                         ),
                         oldTaskId: id,
-                        skipPoints: true,
+                        skipPoints: !originalAudio,
                     });
                     if (response?.status !== "error") {
                         await waitForQueueItemTerminal(id);
@@ -410,12 +410,32 @@
 </div>
 {#if info.state === "error" || (info.state === "done" && info.saveOutcome === "failed")}
     <div class="save-feedback">
+        {#if !retrying && canRetryOriginalAudio(info)}
+            <button
+                class="button original-audio-button"
+                on:click={() => retry(info, true)}
+                disabled={$retrySchedulerBusy}
+            >
+                <IconMusic />
+                <span>{$t("button.download.original_audio")}</span>
+            </button>
+        {/if}
         <SupportLink />
     </div>
 {/if}
 
 <style>
     .save-feedback { margin: 0 0 12px; font-size: 12px; line-height: 1.45; }
+    .original-audio-button {
+        display: flex;
+        gap: 6px;
+        max-width: 100%;
+        margin: 6px 0;
+        font-size: 12px;
+        white-space: normal;
+        text-align: start;
+    }
+    .original-audio-button :global(svg) { width: 18px; height: 18px; flex-shrink: 0; }
     .processing-item,
     .file-actions {
         display: flex;

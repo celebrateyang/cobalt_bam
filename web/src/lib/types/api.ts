@@ -184,6 +184,7 @@ export type CobaltAPIResponse = (CobaltErrorResponse
                               | CobaltTunnelResponse
                               | CobaltLocalProcessingResponse) & CobaltDuration & {
                                   points?: CobaltPointsInfo;
+                                  downloadRequestId?: string;
                                   mediaImportToken?: string;
                                   mediaImportExpiresAt?: number;
                               };

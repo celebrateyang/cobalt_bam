@@ -213,6 +213,7 @@ const applyQueueMeta = (
     if (
         !holdId &&
         !required &&
+        !response?.downloadRequestId &&
         !queueMeta?.collectionMemory &&
         !queueMeta?.batchSessionId &&
         !queueMeta?.batchSelectionTotal &&
@@ -221,6 +222,7 @@ const applyQueueMeta = (
 
     updateItem(taskId, (current) => ({
         ...current,
+        downloadRequestId: response?.downloadRequestId,
         points: {
             ...current.points,
             holdId: holdId ?? current.points?.holdId ?? null,

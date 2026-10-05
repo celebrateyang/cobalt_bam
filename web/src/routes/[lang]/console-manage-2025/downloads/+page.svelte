@@ -33,6 +33,15 @@
         submitted_at: number | string;
         completed_at: number | string | null;
         elapsed_ms: number | null;
+        metadata?: {
+            isBrowserQueued?: boolean;
+            browserOutcome?: {
+                state: "processed" | "failed";
+                errorCode?: string | null;
+                userAgent?: string | null;
+                diagnostic?: { workerStage?: string | null; elapsedMs?: number | null; initializationMs?: number | null; attempt?: number | null; threaded?: boolean | null; errorName?: string | null };
+            };
+        };
         user?: AttemptUser;
     };
 
@@ -95,6 +104,8 @@
     }
 
     function displayReason(item: DownloadAttempt) {
+        const outcome = item.metadata?.browserOutcome;
+        if (outcome?.state === "failed") return [outcome.errorCode, outcome.diagnostic?.workerStage, outcome.diagnostic?.errorName].filter(Boolean).join(" / ");
         if (item.status === "success") return "-";
         return item.error_message || item.error_code || item.body_status || "-";
     }
@@ -489,11 +500,19 @@
                             </td>
                             <td>
                                 <span class={`status-badge status-${item.status}`}>
-                                    {item.status}
+                                    API: {item.status}
                                 </span>
                                 <div class="sub">
                                     {item.http_status ?? "-"} / {item.body_status || "-"}
                                 </div>
+                                {#if item.metadata?.browserOutcome}
+                                    <div class={`status-badge status-${item.metadata.browserOutcome.state === "failed" ? "failed" : "success"}`}
+                                        title={item.metadata.browserOutcome.userAgent || ""}>
+                                        browser: {item.metadata.browserOutcome.state}
+                                    </div>
+                                {:else if item.body_status === "local-processing" || item.metadata?.isBrowserQueued}
+                                    <div class="sub">browser: unconfirmed</div>
+                                {/if}
                             </td>
                             <td>
                                 <div class="reason" title={displayReason(item)}>
@@ -501,6 +520,15 @@
                                 </div>
                                 {#if item.error_code}
                                     <div class="sub mono">{item.error_code}</div>
+                                {/if}
+                                {#if item.metadata?.browserOutcome?.diagnostic?.workerStage}
+                                    {@const diagnostic = item.metadata.browserOutcome.diagnostic}
+                                    <div class="sub mono">
+                                        {diagnostic.workerStage} / {formatDuration(diagnostic.elapsedMs)}
+                                        / init {formatDuration(diagnostic.initializationMs)}
+                                        / attempt {diagnostic.attempt ?? "-"}
+                                        / {diagnostic.threaded == null ? "unknown" : diagnostic.threaded ? "threads" : "single"}
+                                    </div>
                                 {/if}
                             </td>
                             <td class="mono">{formatDuration(item.elapsed_ms)}</td>

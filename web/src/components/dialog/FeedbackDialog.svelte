@@ -112,7 +112,10 @@
                 {title || $t("dialog.feedback.title")}
             </h2>
             <p class="subtitle">{$t("dialog.feedback.subtitle")}</p>
-            <p class="subtitle">{$t("save.support.body")} <SupportLink /></p>
+            <p class="subtitle">{$t("save.support.body")}</p>
+            <div class="discord-support">
+                <SupportLink />
+            </div>
         </div>
 
         <form class="form" on:submit|preventDefault={submit}>
@@ -214,6 +217,35 @@
         color: var(--gray);
         font-size: 13px;
         line-height: 1.4;
+    }
+
+    .discord-support {
+        margin-top: 4px;
+    }
+
+    .discord-support :global(a) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 8px 14px;
+        box-sizing: border-box;
+        border-radius: var(--border-radius);
+        background: var(--button);
+        color: var(--secondary);
+        box-shadow: var(--button-box-shadow);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .discord-support :global(a:hover) {
+        background: var(--button-hover);
+    }
+
+    .discord-support :global(a:focus-visible) {
+        outline: 2px solid var(--secondary);
+        outline-offset: 2px;
     }
 
     .form {

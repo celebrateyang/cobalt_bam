@@ -25,6 +25,7 @@ const framework = {
     svelte,
     'svelte/store': svelteStore,
     '$app/stores': { page: testPage },
+    '$app/environment': { browser: false, dev: false, building: false },
     '$lib/i18n/translations': { t: testTranslations },
     '$components/save/SupportedServices.svelte': { __esModule: true, default: svelteInternal.create_ssr_component(() => '') },
 };
@@ -78,6 +79,11 @@ function setTestLocale(lang, path = 'faq') {
         return resource[dottedKey] ?? parts.reduce((value, part) => value?.[part], resource) ?? key;
     });
 }
+
+framework['$components/home/PlatformMark.svelte'] = {
+    __esModule: true,
+    default: await component('src/components/home/PlatformMark.svelte'),
+};
 
 const escapeText = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -184,6 +190,11 @@ test('localized directory SSR exposes valid task links and localized headings', 
     for (const lang of supportedLanguages) {
         const rendered = page.render({ data: await loader.load({ params: { lang } }) });
         assert(rendered.html.includes(getDirectoryCopy(lang).title));
+        assert(!/yt-dlp/i.test(rendered.html));
+        const schemas = [...rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+        const itemList = schemas.find(schema => schema['@type'] === 'ItemList');
+        assert(itemList);
+        for (const item of itemList.itemListElement) assert(rendered.html.includes(item.url.replace('https://freesavevideo.online', '')));
         if (lang !== 'en') assert.notEqual(getDirectoryCopy(lang).title, getDirectoryCopy('en').title);
         for (const match of rendered.html.matchAll(/href="\/([^/]+)\/download\/([^"?#]+)"/g)) {
             assert(routes.getDownloadSeoLanguages(match[2]).includes(match[1]), match[0]);
@@ -193,6 +204,21 @@ test('localized directory SSR exposes valid task links and localized headings', 
     const youtube = getSeoLandingPage('youtube-download');
     assert(youtube.locales.id);
     assert.notEqual(getSeoLandingLocale(youtube, 'id').h1, getSeoLandingLocale(youtube, 'en').h1);
+});
+
+test('platform catalog matches the backend version and all logo references are local assets', () => {
+    const catalog = load('src/lib/data/platform-directory.json');
+    const dockerfile = readFileSync(resolve(root, '../Dockerfile'), 'utf8');
+    assert.equal(catalog.sourceVersion, dockerfile.match(/ARG YTDLP_VERSION=([\d.]+)/)[1]);
+    assert(catalog.primary.length >= 28);
+    assert(catalog.additional.length > 500);
+    const ids = new Set();
+    for (const platform of [...catalog.primary, ...catalog.additional]) {
+        assert(!ids.has(platform.id), platform.id);
+        ids.add(platform.id);
+        if (platform.logo) assert(existsSync(resolve(root, `static/platforms/${platform.logo}.svg`)));
+        if (platform.image) assert(existsSync(resolve(root, `static${platform.image}`)));
+    }
 });
 
 test('tools and FAQ SSR use localized copy and fixed route paths for every language', async () => {

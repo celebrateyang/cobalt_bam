@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "免费领取积分",
+        "points_summary": "通过聊天、邀请好友或分享 FreeSaveVideo，获取免费积分。",
+        "details": "查看详情",
+        "promotion_title": "宣传网站赚积分",
+        "promotion_post": "发布不少于 80 字、包含网站链接的介绍帖子，审核通过后奖励 50 积分。",
+        "promotion_video": "发布不少于 1 分钟、介绍网站功能的视频，审核通过后奖励 100 积分。",
+        "promotion_review": "完成后在账号页提交链接、账号主页等访问方式，管理员审核通过后发放积分。",
         "desktop": "适用于电脑端 Chrome",
         "no_ads": "无广告",
         "free_options": "提供免费使用途径",

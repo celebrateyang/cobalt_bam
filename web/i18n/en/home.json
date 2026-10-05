@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Get free points",
+        "points_summary": "Earn points by chatting with us, inviting friends, or introducing FreeSaveVideo to others.",
+        "details": "View details",
+        "promotion_title": "Promote FreeSaveVideo, earn points",
+        "promotion_post": "Publish a post of at least 80 words with the website link: 50 points after approval.",
+        "promotion_video": "Publish a video introducing the website, at least 1 minute long: 100 points after approval.",
+        "promotion_review": "Submit the link, profile, or other access details from your account. Points are awarded after administrator approval.",
         "desktop": "For Chrome on desktop",
         "no_ads": "No ads",
         "free_options": "Free options available",

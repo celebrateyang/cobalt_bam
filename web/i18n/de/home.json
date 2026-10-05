@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Kostenlose Punkte erhalten",
+        "points_summary": "Erhalte Punkte durch Gespräche, Einladungen oder Beiträge über FreeSaveVideo.",
+        "details": "Details ansehen",
+        "promotion_title": "FreeSaveVideo vorstellen und Punkte verdienen",
+        "promotion_post": "Beitrag mit mindestens 80 Wörtern und Website-Link: 50 Punkte nach Freigabe.",
+        "promotion_video": "Video über die Website mit mindestens 1 Minute Länge: 100 Punkte nach Freigabe.",
+        "promotion_review": "Reiche Link oder Profil im Konto ein. Punkte werden nach Prüfung durch den Administrator vergeben.",
         "desktop": "Für Chrome auf dem Desktop",
         "no_ads": "Ohne Werbung",
         "free_options": "Kostenlose Nutzungsmöglichkeiten",

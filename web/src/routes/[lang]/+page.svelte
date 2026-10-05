@@ -986,10 +986,10 @@
         <h2 id="home-help-title">{$t("home.welcome.help")}</h2>
         <div class="home-help-grid">
             <div>
-                <a class="help-title" href={`/${currentLocale}/account?section=contact`}>{$t("auth.contact_points_title")}</a>
-                <p>{$t("auth.contact_points_subtitle")}</p>
+                <a class="help-title" href={`/${currentLocale}/free-points`}>{$t("home.welcome.points_title")}</a>
+                <p>{$t("home.welcome.points_summary")}</p>
                 <p>{$t("home.welcome.paid_note")}</p>
-                <a href={`/${currentLocale}/account?section=membership`}>{$t("auth.membership_label")}</a>
+                <a href={`/${currentLocale}/free-points`}>{$t("home.welcome.details")} <span aria-hidden="true">&rarr;</span></a>
             </div>
             <div>
                 <div class="help-title"><SupportLink /></div>

@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Dapatkan poin gratis",
+        "points_summary": "Dapatkan poin dengan mengobrol, mengundang teman, atau memperkenalkan FreeSaveVideo.",
+        "details": "Lihat detail",
+        "promotion_title": "Perkenalkan FreeSaveVideo dan dapatkan poin",
+        "promotion_post": "Tulisan minimal 80 kata dengan tautan situs: 50 poin setelah disetujui.",
+        "promotion_video": "Video tentang situs minimal 1 menit: 100 poin setelah disetujui.",
+        "promotion_review": "Kirim tautan atau profil dari halaman akun. Poin diberikan setelah persetujuan administrator.",
         "desktop": "Untuk Chrome di komputer",
         "no_ads": "Tanpa iklan",
         "free_options": "Tersedia opsi gratis",

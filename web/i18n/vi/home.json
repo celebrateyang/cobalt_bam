@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Nhận điểm miễn phí",
+        "points_summary": "Nhận điểm bằng cách trò chuyện, mời bạn bè hoặc giới thiệu FreeSaveVideo.",
+        "details": "Xem chi tiết",
+        "promotion_title": "Giới thiệu FreeSaveVideo để nhận điểm",
+        "promotion_post": "Bài viết ít nhất 80 từ kèm liên kết trang web: 50 điểm sau khi duyệt.",
+        "promotion_video": "Video giới thiệu trang web dài ít nhất 1 phút: 100 điểm sau khi duyệt.",
+        "promotion_review": "Gửi liên kết hoặc trang cá nhân từ trang tài khoản. Điểm được cấp sau khi quản trị viên duyệt.",
         "desktop": "Dành cho Chrome trên máy tính",
         "no_ads": "Không quảng cáo",
         "free_options": "Có cách sử dụng miễn phí",

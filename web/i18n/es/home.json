@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Consigue puntos gratis",
+        "points_summary": "Gana puntos hablando con nosotros, invitando amigos o compartiendo FreeSaveVideo.",
+        "details": "Ver detalles",
+        "promotion_title": "Comparte FreeSaveVideo y gana puntos",
+        "promotion_post": "Publica al menos 80 palabras con el enlace del sitio: 50 puntos tras su aprobación.",
+        "promotion_video": "Publica un vídeo sobre el sitio de al menos 1 minuto: 100 puntos tras su aprobación.",
+        "promotion_review": "Envía el enlace o perfil desde tu cuenta. Los puntos se entregan tras la aprobación del administrador.",
         "desktop": "Para Chrome en ordenador",
         "no_ads": "Sin anuncios",
         "free_options": "Opciones gratuitas disponibles",

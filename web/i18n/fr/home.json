@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "Obtenir des points gratuits",
+        "points_summary": "Gagnez des points en discutant avec nous, en invitant des amis ou en présentant FreeSaveVideo.",
+        "details": "Voir les détails",
+        "promotion_title": "Présentez FreeSaveVideo et gagnez des points",
+        "promotion_post": "Publiez au moins 80 mots avec le lien du site : 50 points après validation.",
+        "promotion_video": "Publiez une vidéo sur le site d’au moins 1 minute : 100 points après validation.",
+        "promotion_review": "Envoyez le lien ou le profil depuis votre compte. Les points sont attribués après validation par un administrateur.",
         "desktop": "Pour Chrome sur ordinateur",
         "no_ads": "Sans publicité",
         "free_options": "Des options gratuites",

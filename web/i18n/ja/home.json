@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "無料ポイントを獲得",
+        "points_summary": "チャット、友達の招待、FreeSaveVideo の紹介でポイントを獲得できます。",
+        "details": "詳しく見る",
+        "promotion_title": "FreeSaveVideo を紹介してポイント獲得",
+        "promotion_post": "サイトへのリンクを含む80語以上の紹介記事：承認後に50ポイント。",
+        "promotion_video": "サイトを紹介する1分以上の動画：承認後に100ポイント。",
+        "promotion_review": "アカウントページからリンクやプロフィールを提出してください。管理者の承認後に付与されます。",
         "desktop": "パソコン版 Chrome 対応",
         "no_ads": "広告なし",
         "free_options": "無料で使う方法あり",

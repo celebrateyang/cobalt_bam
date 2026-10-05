@@ -1,5 +1,12 @@
 {
     "welcome": {
+        "points_title": "무료 포인트 받기",
+        "points_summary": "채팅, 친구 초대 또는 FreeSaveVideo 소개로 포인트를 받을 수 있습니다.",
+        "details": "자세히 보기",
+        "promotion_title": "FreeSaveVideo 소개하고 포인트 받기",
+        "promotion_post": "사이트 링크를 포함한 80단어 이상의 소개 글: 승인 후 50포인트.",
+        "promotion_video": "사이트를 소개하는 1분 이상의 영상: 승인 후 100포인트.",
+        "promotion_review": "계정 페이지에서 링크나 프로필을 제출하세요. 관리자 승인 후 포인트가 지급됩니다.",
         "desktop": "데스크톱 Chrome용",
         "no_ads": "광고 없음",
         "free_options": "무료 이용 방법 제공",

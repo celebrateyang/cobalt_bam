@@ -1,0 +1,4758 @@
+{
+  "sourceVersion": "2026.8.19",
+  "sourceUrl": "https://raw.githubusercontent.com/yt-dlp/yt-dlp/2026.08.19/supportedsites.md",
+  "primary": [
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "logo": "youtube",
+      "color": "#FF0000"
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "logo": "tiktok",
+      "color": "#000000"
+    },
+    {
+      "id": "douyin",
+      "name": "Douyin",
+      "logo": "tiktok",
+      "color": "#000000"
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "logo": "instagram",
+      "color": "#E4405F"
+    },
+    {
+      "id": "bilibili",
+      "name": "Bilibili",
+      "logo": "bilibili",
+      "color": "#00A1D6"
+    },
+    {
+      "id": "wechat_channels",
+      "name": "WeChat Channels",
+      "logo": "wechat",
+      "color": "#07C160"
+    },
+    {
+      "id": "facebook",
+      "name": "Facebook",
+      "logo": "facebook",
+      "color": "#0866FF"
+    },
+    {
+      "id": "twitter",
+      "name": "X / Twitter",
+      "logo": "x",
+      "color": "#000000"
+    },
+    {
+      "id": "xiaohongshu",
+      "name": "Xiaohongshu",
+      "logo": "xiaohongshu",
+      "color": "#FF2442"
+    },
+    {
+      "id": "pinterest",
+      "name": "Pinterest",
+      "logo": "pinterest",
+      "color": "#BD081C"
+    },
+    {
+      "id": "iqiyi",
+      "name": "iQIYI",
+      "image": "/platforms/iqiyi-favicon.ico",
+      "imageSource": "https://www.iqiyi.com/favicon.ico"
+    },
+    {
+      "id": "kuaishou",
+      "name": "Kuaishou",
+      "logo": "kuaishou",
+      "color": "#FF4906"
+    },
+    {
+      "id": "xinpianchang",
+      "name": "Xinpianchang"
+    },
+    {
+      "id": "magnific",
+      "name": "Magnific"
+    },
+    {
+      "id": "reddit",
+      "name": "Reddit",
+      "logo": "reddit",
+      "color": "#FF4500"
+    },
+    {
+      "id": "threads",
+      "name": "Threads",
+      "logo": "threads",
+      "color": "#000000"
+    },
+    {
+      "id": "vimeo",
+      "name": "Vimeo",
+      "logo": "vimeo",
+      "color": "#1AB7EA"
+    },
+    {
+      "id": "soundcloud",
+      "name": "SoundCloud",
+      "logo": "soundcloud",
+      "color": "#FF3300"
+    },
+    {
+      "id": "snapchat",
+      "name": "Snapchat",
+      "logo": "snapchat",
+      "color": "#FFFC00"
+    },
+    {
+      "id": "weibo",
+      "name": "Weibo",
+      "logo": "sinaweibo",
+      "color": "#E6162D"
+    },
+    {
+      "id": "naver",
+      "name": "NAVER",
+      "logo": "naver",
+      "color": "#03C75A"
+    },
+    {
+      "id": "sooplive",
+      "name": "SOOP",
+      "image": "/platforms/sooplive-favicon.png",
+      "imageSource": "https://res.sooplive.com/images/mobile/afreeca_mobile.png"
+    },
+    {
+      "id": "niconico",
+      "name": "Niconico",
+      "logo": "niconico",
+      "color": "#231815"
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon Live",
+      "logo": "amazon",
+      "color": "#FF9900"
+    },
+    {
+      "id": "haokan",
+      "name": "Haokan",
+      "logo": "baidu",
+      "color": "#2932E1"
+    },
+    {
+      "id": "toutiao",
+      "name": "Toutiao",
+      "image": "/platforms/toutiao-favicon.ico",
+      "imageSource": "https://sf3-cdn-tos.douyinstatic.com/obj/eden-cn/uhbfnupkbps/toutiao_favicon.ico"
+    },
+    {
+      "id": "sohu",
+      "name": "Sohu Video",
+      "image": "/platforms/sohu-favicon.png",
+      "imageSource": "https://css.tv.itc.cn/channel/v1/images/logo.png"
+    },
+    {
+      "id": "kugou",
+      "name": "Kugou Music"
+    },
+    {
+      "id": "bsky",
+      "name": "Bluesky",
+      "logo": "bluesky",
+      "color": "#0285FF"
+    },
+    {
+      "id": "cctv",
+      "name": "CCTV",
+      "image": "/platforms/cctv-favicon.ico",
+      "imageSource": "https://www.cctv.com/favicon.ico"
+    },
+    {
+      "id": "dailymotion",
+      "name": "Dailymotion",
+      "logo": "dailymotion",
+      "color": "#0A0A0A"
+    },
+    {
+      "id": "loom",
+      "name": "Loom",
+      "logo": "loom",
+      "color": "#625DF5"
+    },
+    {
+      "id": "newgrounds",
+      "name": "Newgrounds"
+    },
+    {
+      "id": "ok",
+      "name": "OK.ru",
+      "logo": "odnoklassniki",
+      "color": "#EE8208"
+    },
+    {
+      "id": "rutube",
+      "name": "Rutube"
+    },
+    {
+      "id": "streamable",
+      "name": "Streamable",
+      "image": "/platforms/streamable-favicon.ico",
+      "imageSource": "https://statics.streamable.com/static/favicon.ico"
+    },
+    {
+      "id": "tumblr",
+      "name": "Tumblr",
+      "logo": "tumblr",
+      "color": "#36465D"
+    },
+    {
+      "id": "twitch",
+      "name": "Twitch Clips",
+      "logo": "twitch",
+      "color": "#9146FF"
+    },
+    {
+      "id": "vk",
+      "name": "VK",
+      "logo": "vk",
+      "color": "#0077FF"
+    },
+    {
+      "id": "tencent_video",
+      "name": "Tencent Video",
+      "image": "/platforms/tencent_video-favicon.ico",
+      "imageSource": "https://v.qq.com/favicon.ico"
+    },
+    {
+      "id": "bjnews",
+      "name": "The Beijing News"
+    },
+    {
+      "id": "ourjiangsu",
+      "name": "Our Jiangsu",
+      "image": "/platforms/ourjiangsu-favicon.ico",
+      "imageSource": "https://www.ourjiangsu.com/favicon.ico"
+    },
+    {
+      "id": "deeplearningai",
+      "name": "DeepLearning.AI"
+    }
+  ],
+  "additional": [
+    {
+      "id": "9gag",
+      "name": "9GAG",
+      "logo": "9gag",
+      "color": "#000000"
+    },
+    {
+      "id": "allocine",
+      "name": "AlloCiné",
+      "logo": "allocine",
+      "color": "#FECC00"
+    },
+    {
+      "id": "animalplanet",
+      "name": "Animal Planet",
+      "logo": "animalplanet",
+      "color": "#0073FF"
+    },
+    {
+      "id": "aparat",
+      "name": "Aparat",
+      "logo": "aparat",
+      "color": "#ED145B"
+    },
+    {
+      "id": "audioboom",
+      "name": "Audioboom",
+      "logo": "audioboom",
+      "color": "#007CE2"
+    },
+    {
+      "id": "audiomack",
+      "name": "Audiomack",
+      "logo": "audiomack",
+      "color": "#FFA200"
+    },
+    {
+      "id": "baidu",
+      "name": "Baidu",
+      "logo": "baidu",
+      "color": "#2932E1"
+    },
+    {
+      "id": "bandcamp",
+      "name": "Bandcamp",
+      "logo": "bandcamp",
+      "color": "#408294"
+    },
+    {
+      "id": "bandlab",
+      "name": "BandLab",
+      "logo": "bandlab",
+      "color": "#F12C18"
+    },
+    {
+      "id": "beatport",
+      "name": "Beatport",
+      "logo": "beatport",
+      "color": "#01FF95"
+    },
+    {
+      "id": "boosty",
+      "name": "Boosty",
+      "logo": "boosty",
+      "color": "#F15F2C"
+    },
+    {
+      "id": "box",
+      "name": "Box",
+      "logo": "box",
+      "color": "#0061D5"
+    },
+    {
+      "id": "buzzfeed",
+      "name": "BuzzFeed",
+      "logo": "buzzfeed",
+      "color": "#EE3322"
+    },
+    {
+      "id": "clyp",
+      "name": "Clyp",
+      "logo": "clyp",
+      "color": "#3CBDB1"
+    },
+    {
+      "id": "cnn",
+      "name": "CNN",
+      "logo": "cnn",
+      "color": "#CC0000"
+    },
+    {
+      "id": "dropbox",
+      "name": "Dropbox",
+      "logo": "dropbox",
+      "color": "#0061FF"
+    },
+    {
+      "id": "ebay",
+      "name": "eBay",
+      "logo": "ebay",
+      "color": "#E53238"
+    },
+    {
+      "id": "egghead",
+      "name": "egghead",
+      "logo": "egghead",
+      "color": "#FCFBFA"
+    },
+    {
+      "id": "elementor",
+      "name": "Elementor",
+      "logo": "elementor",
+      "color": "#92003B"
+    },
+    {
+      "id": "fifa",
+      "name": "FIFA",
+      "logo": "fifa",
+      "color": "#326295"
+    },
+    {
+      "id": "flickr",
+      "name": "Flickr",
+      "logo": "flickr",
+      "color": "#0063DC"
+    },
+    {
+      "id": "floatplane",
+      "name": "Floatplane",
+      "logo": "floatplane",
+      "color": "#00AEEF"
+    },
+    {
+      "id": "fox",
+      "name": "FOX",
+      "logo": "fox",
+      "color": "#000000"
+    },
+    {
+      "id": "gamejolt",
+      "name": "Game Jolt",
+      "logo": "gamejolt",
+      "color": "#CCFF00"
+    },
+    {
+      "id": "genius",
+      "name": "Genius",
+      "logo": "genius",
+      "color": "#FFFF64"
+    },
+    {
+      "id": "googledrive",
+      "name": "Google Drive",
+      "logo": "googledrive",
+      "color": "#4285F4"
+    },
+    {
+      "id": "groupon",
+      "name": "Groupon",
+      "logo": "groupon",
+      "color": "#53A318"
+    },
+    {
+      "id": "hbo",
+      "name": "HBO",
+      "logo": "hbo",
+      "color": "#000000"
+    },
+    {
+      "id": "hearthisat",
+      "name": "hearthis.at",
+      "logo": "hearthisdotat",
+      "color": "#000000"
+    },
+    {
+      "id": "ign",
+      "name": "IGN",
+      "logo": "ign",
+      "color": "#BF1313"
+    },
+    {
+      "id": "iheartradio",
+      "name": "iHeartRadio",
+      "logo": "iheartradio",
+      "color": "#C6002B"
+    },
+    {
+      "id": "imdb",
+      "name": "IMDb",
+      "logo": "imdb",
+      "color": "#F5C518"
+    },
+    {
+      "id": "imgur",
+      "name": "Imgur",
+      "logo": "imgur",
+      "color": "#1BB76E"
+    },
+    {
+      "id": "infoq",
+      "name": "InfoQ",
+      "logo": "infoq",
+      "color": "#2C6CAF"
+    },
+    {
+      "id": "kakao",
+      "name": "Kakao",
+      "logo": "kakao",
+      "color": "#FFCD00"
+    },
+    {
+      "id": "khanacademy",
+      "name": "Khan Academy",
+      "logo": "khanacademy",
+      "color": "#14BF96"
+    },
+    {
+      "id": "kick",
+      "name": "Kick",
+      "logo": "kick",
+      "color": "#53FC19"
+    },
+    {
+      "id": "kickstarter",
+      "name": "Kickstarter",
+      "logo": "kickstarter",
+      "color": "#05CE78"
+    },
+    {
+      "id": "kinopoisk",
+      "name": "Kinopoisk",
+      "logo": "kinopoisk",
+      "color": "#FF5500"
+    },
+    {
+      "id": "lastfm",
+      "name": "Last.fm",
+      "logo": "lastdotfm",
+      "color": "#D51007"
+    },
+    {
+      "id": "lbry",
+      "name": "LBRY",
+      "logo": "lbry",
+      "color": "#2F9176"
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "logo": "linkedin",
+      "color": "#0A66C2"
+    },
+    {
+      "id": "mailru",
+      "name": "Mail.Ru",
+      "logo": "maildotru",
+      "color": "#005FF9"
+    },
+    {
+      "id": "metacritic",
+      "name": "Metacritic",
+      "logo": "metacritic",
+      "color": "#000000"
+    },
+    {
+      "id": "microsoft",
+      "name": "Microsoft",
+      "logo": "microsoft",
+      "color": "#5E5E5E"
+    },
+    {
+      "id": "minds",
+      "name": "Minds",
+      "logo": "minds",
+      "color": "#FED12F"
+    },
+    {
+      "id": "mixcloud",
+      "name": "Mixcloud",
+      "logo": "mixcloud",
+      "color": "#5000FF"
+    },
+    {
+      "id": "mlb",
+      "name": "MLB",
+      "logo": "mlb",
+      "color": "#041E42"
+    },
+    {
+      "id": "mocha",
+      "name": "Mocha",
+      "logo": "mocha",
+      "color": "#8D6748"
+    },
+    {
+      "id": "musescore",
+      "name": "MuseScore",
+      "logo": "musescore",
+      "color": "#1A70B8"
+    },
+    {
+      "id": "myspace",
+      "name": "Myspace",
+      "logo": "myspace",
+      "color": "#030303"
+    },
+    {
+      "id": "nbc",
+      "name": "NBC",
+      "logo": "nbc",
+      "color": "#222222"
+    },
+    {
+      "id": "ndr",
+      "name": "NDR",
+      "logo": "ndr",
+      "color": "#0C1754"
+    },
+    {
+      "id": "netapp",
+      "name": "NetApp",
+      "logo": "netapp",
+      "color": "#0067C5"
+    },
+    {
+      "id": "nintendo",
+      "name": "Nintendo",
+      "logo": "nintendo",
+      "color": "#E60012"
+    },
+    {
+      "id": "odnoklassniki",
+      "name": "Odnoklassniki",
+      "logo": "odnoklassniki",
+      "color": "#EE8208"
+    },
+    {
+      "id": "owncloud",
+      "name": "ownCloud",
+      "logo": "owncloud",
+      "color": "#041E42"
+    },
+    {
+      "id": "patreon",
+      "name": "Patreon",
+      "logo": "patreon",
+      "color": "#000000"
+    },
+    {
+      "id": "peertube",
+      "name": "PeerTube",
+      "logo": "peertube",
+      "color": "#F1680D"
+    },
+    {
+      "id": "peloton",
+      "name": "Peloton",
+      "logo": "peloton",
+      "color": "#181A1D"
+    },
+    {
+      "id": "photobucket",
+      "name": "Photobucket",
+      "logo": "photobucket",
+      "color": "#1C47CB"
+    },
+    {
+      "id": "piapro",
+      "name": "Piapro",
+      "logo": "piapro",
+      "color": "#E4007B"
+    },
+    {
+      "id": "platzi",
+      "name": "Platzi",
+      "logo": "platzi",
+      "color": "#98CA3F"
+    },
+    {
+      "id": "playerfm",
+      "name": "Player FM",
+      "logo": "playerfm",
+      "color": "#C8122A"
+    },
+    {
+      "id": "pluralsight",
+      "name": "Pluralsight",
+      "logo": "pluralsight",
+      "color": "#F15B2A"
+    },
+    {
+      "id": "redbull",
+      "name": "Red Bull",
+      "logo": "redbull",
+      "color": "#DB0A40"
+    },
+    {
+      "id": "reverbnation",
+      "name": "ReverbNation",
+      "logo": "reverbnation",
+      "color": "#E43526"
+    },
+    {
+      "id": "rottentomatoes",
+      "name": "Rotten Tomatoes",
+      "logo": "rottentomatoes",
+      "color": "#FA320A"
+    },
+    {
+      "id": "rte",
+      "name": "RTÉ",
+      "logo": "rte",
+      "color": "#00A7B3"
+    },
+    {
+      "id": "rumble",
+      "name": "Rumble",
+      "logo": "rumble",
+      "color": "#85C742"
+    },
+    {
+      "id": "safari",
+      "name": "Safari",
+      "logo": "safari",
+      "color": "#006CFF"
+    },
+    {
+      "id": "screencastify",
+      "name": "Screencastify",
+      "logo": "screencastify",
+      "color": "#FF8282"
+    },
+    {
+      "id": "sky",
+      "name": "Sky",
+      "logo": "sky",
+      "color": "#0072C9"
+    },
+    {
+      "id": "slideshare",
+      "name": "SlideShare",
+      "logo": "slideshare",
+      "color": "#008ED2"
+    },
+    {
+      "id": "spreaker",
+      "name": "Spreaker",
+      "logo": "spreaker",
+      "color": "#F5C300"
+    },
+    {
+      "id": "srgssr",
+      "name": "SRG SSR",
+      "logo": "srgssr",
+      "color": "#AF001E"
+    },
+    {
+      "id": "startrek",
+      "name": "Star Trek",
+      "logo": "startrek",
+      "color": "#FFE200"
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "logo": "steam",
+      "color": "#000000"
+    },
+    {
+      "id": "substack",
+      "name": "Substack",
+      "logo": "substack",
+      "color": "#FF6719"
+    },
+    {
+      "id": "ted",
+      "name": "TED",
+      "logo": "ted",
+      "color": "#E62B1E"
+    },
+    {
+      "id": "tele5",
+      "name": "TELE 5",
+      "logo": "tele5",
+      "color": "#FF00FF"
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "logo": "telegram",
+      "color": "#26A5E4"
+    },
+    {
+      "id": "tunein",
+      "name": "TuneIn",
+      "logo": "tunein",
+      "color": "#14D8CC"
+    },
+    {
+      "id": "telequebec",
+      "name": "Télé-Québec",
+      "logo": "telequebec",
+      "color": "#1343FB"
+    },
+    {
+      "id": "udemy",
+      "name": "Udemy",
+      "logo": "udemy",
+      "color": "#A435F0"
+    },
+    {
+      "id": "wistia",
+      "name": "Wistia",
+      "logo": "wistia",
+      "color": "#58B7FE"
+    },
+    {
+      "id": "wordpress",
+      "name": "WordPress",
+      "logo": "wordpress",
+      "color": "#21759B"
+    },
+    {
+      "id": "wwe",
+      "name": "WWE",
+      "logo": "wwe",
+      "color": "#000000"
+    },
+    {
+      "id": "x",
+      "name": "X",
+      "logo": "x",
+      "color": "#000000"
+    },
+    {
+      "id": "xbox",
+      "name": "Xbox",
+      "logo": "xbox",
+      "color": "#107C10"
+    },
+    {
+      "id": "zdf",
+      "name": "ZDF",
+      "logo": "zdf",
+      "color": "#FA7D19"
+    },
+    {
+      "id": "zhihu",
+      "name": "Zhihu",
+      "logo": "zhihu",
+      "color": "#0084FF"
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "logo": "zoom",
+      "color": "#0B5CFF"
+    },
+    {
+      "id": "10play",
+      "name": "10play"
+    },
+    {
+      "id": "17live",
+      "name": "17live"
+    },
+    {
+      "id": "1news",
+      "name": "1News"
+    },
+    {
+      "id": "1tv",
+      "name": "1tv"
+    },
+    {
+      "id": "23",
+      "name": "23"
+    },
+    {
+      "id": "24tvua",
+      "name": "24tv.ua"
+    },
+    {
+      "id": "3qsdn",
+      "name": "3qsdn"
+    },
+    {
+      "id": "3sat",
+      "name": "3sat"
+    },
+    {
+      "id": "4tube",
+      "name": "4tube"
+    },
+    {
+      "id": "56com",
+      "name": "56.com"
+    },
+    {
+      "id": "7plus",
+      "name": "7plus"
+    },
+    {
+      "id": "9c9media",
+      "name": "9c9media"
+    },
+    {
+      "id": "9news",
+      "name": "9News"
+    },
+    {
+      "id": "9nowcomau",
+      "name": "9now.com.au"
+    },
+    {
+      "id": "abcnetau",
+      "name": "abc.net.au"
+    },
+    {
+      "id": "abcnews",
+      "name": "abcnews"
+    },
+    {
+      "id": "abcotvs",
+      "name": "abcotvs"
+    },
+    {
+      "id": "abematv",
+      "name": "AbemaTV"
+    },
+    {
+      "id": "abematvtitle",
+      "name": "AbemaTVTitle"
+    },
+    {
+      "id": "academicearth",
+      "name": "AcademicEarth"
+    },
+    {
+      "id": "acast",
+      "name": "acast"
+    },
+    {
+      "id": "acfun",
+      "name": "AcFun"
+    },
+    {
+      "id": "acfunbangumi",
+      "name": "AcFunBangumi"
+    },
+    {
+      "id": "adn",
+      "name": "ADN"
+    },
+    {
+      "id": "adobetv",
+      "name": "adobetv"
+    },
+    {
+      "id": "adultswim",
+      "name": "AdultSwim"
+    },
+    {
+      "id": "aenetworks",
+      "name": "aenetworks"
+    },
+    {
+      "id": "aeonco",
+      "name": "AeonCo"
+    },
+    {
+      "id": "agalega",
+      "name": "agalega"
+    },
+    {
+      "id": "aitubekz",
+      "name": "AitubeKZ"
+    },
+    {
+      "id": "alibaba",
+      "name": "Alibaba"
+    },
+    {
+      "id": "aliexpresslive",
+      "name": "AliExpressLive"
+    },
+    {
+      "id": "aljazeera",
+      "name": "AlJazeera"
+    },
+    {
+      "id": "allstar",
+      "name": "Allstar"
+    },
+    {
+      "id": "alphaporno",
+      "name": "AlphaPorno"
+    },
+    {
+      "id": "altcensored",
+      "name": "altcensored"
+    },
+    {
+      "id": "alura",
+      "name": "Alura"
+    },
+    {
+      "id": "aluracourse",
+      "name": "AluraCourse"
+    },
+    {
+      "id": "amadeustv",
+      "name": "AmadeusTV"
+    },
+    {
+      "id": "amara",
+      "name": "Amara"
+    },
+    {
+      "id": "amcnetworks",
+      "name": "AMCNetworks"
+    },
+    {
+      "id": "americastestkitchen",
+      "name": "AmericasTestKitchen"
+    },
+    {
+      "id": "amhistory",
+      "name": "AmHistory"
+    },
+    {
+      "id": "anderetijden",
+      "name": "anderetijden"
+    },
+    {
+      "id": "angel",
+      "name": "Angel"
+    },
+    {
+      "id": "ant1newsgr",
+      "name": "ant1newsgr"
+    },
+    {
+      "id": "antenna",
+      "name": "antenna"
+    },
+    {
+      "id": "anvato",
+      "name": "Anvato"
+    },
+    {
+      "id": "apa",
+      "name": "APA"
+    },
+    {
+      "id": "apple",
+      "name": "apple"
+    },
+    {
+      "id": "archiveorg",
+      "name": "archive.org"
+    },
+    {
+      "id": "arcpublishing",
+      "name": "ArcPublishing"
+    },
+    {
+      "id": "ardaudiothek",
+      "name": "ARDAudiothek"
+    },
+    {
+      "id": "ardmediathek",
+      "name": "ARDMediathek"
+    },
+    {
+      "id": "art19",
+      "name": "Art19"
+    },
+    {
+      "id": "arteskyit",
+      "name": "arte.sky.it"
+    },
+    {
+      "id": "artetv",
+      "name": "ArteTV"
+    },
+    {
+      "id": "artetvcategory",
+      "name": "ArteTVCategory"
+    },
+    {
+      "id": "asobi",
+      "name": "asobi"
+    },
+    {
+      "id": "asobistage",
+      "name": "AsobiStage"
+    },
+    {
+      "id": "atresplayer",
+      "name": "AtresPlayer"
+    },
+    {
+      "id": "atscaleconfevent",
+      "name": "AtScaleConfEvent"
+    },
+    {
+      "id": "audimedia",
+      "name": "AudiMedia"
+    },
+    {
+      "id": "audiodraft",
+      "name": "Audiodraft"
+    },
+    {
+      "id": "audius",
+      "name": "Audius"
+    },
+    {
+      "id": "azmedien",
+      "name": "AZMedien"
+    },
+    {
+      "id": "banbye",
+      "name": "BanBye"
+    },
+    {
+      "id": "banned",
+      "name": "Banned"
+    },
+    {
+      "id": "bbc",
+      "name": "bbc"
+    },
+    {
+      "id": "bbccouk",
+      "name": "bbc.co.uk"
+    },
+    {
+      "id": "bbvtv",
+      "name": "BBVTV"
+    },
+    {
+      "id": "bbvtvlive",
+      "name": "BBVTVLive"
+    },
+    {
+      "id": "bbvtvrecordings",
+      "name": "BBVTVRecordings"
+    },
+    {
+      "id": "beacontv",
+      "name": "BeaconTv"
+    },
+    {
+      "id": "beeg",
+      "name": "Beeg"
+    },
+    {
+      "id": "berufetv",
+      "name": "BerufeTV"
+    },
+    {
+      "id": "bet",
+      "name": "Bet"
+    },
+    {
+      "id": "bfmtv",
+      "name": "bfmtv"
+    },
+    {
+      "id": "bibeltv",
+      "name": "bibeltv"
+    },
+    {
+      "id": "bigo",
+      "name": "Bigo"
+    },
+    {
+      "id": "bild",
+      "name": "Bild"
+    },
+    {
+      "id": "biliintl",
+      "name": "BiliIntl"
+    },
+    {
+      "id": "bililive",
+      "name": "BiliLive"
+    },
+    {
+      "id": "biobiochiletv",
+      "name": "BioBioChileTV"
+    },
+    {
+      "id": "biography",
+      "name": "Biography"
+    },
+    {
+      "id": "bitchute",
+      "name": "BitChute"
+    },
+    {
+      "id": "bitmovin",
+      "name": "Bitmovin"
+    },
+    {
+      "id": "blackboardcollaborate",
+      "name": "BlackboardCollaborate"
+    },
+    {
+      "id": "blackboardcollaboratelaunch",
+      "name": "BlackboardCollaborateLaunch"
+    },
+    {
+      "id": "blerp",
+      "name": "blerp"
+    },
+    {
+      "id": "bloggercom",
+      "name": "blogger.com"
+    },
+    {
+      "id": "bloomberg",
+      "name": "Bloomberg"
+    },
+    {
+      "id": "bongacams",
+      "name": "BongaCams"
+    },
+    {
+      "id": "bostonglobe",
+      "name": "BostonGlobe"
+    },
+    {
+      "id": "boxcast",
+      "name": "BoxCast"
+    },
+    {
+      "id": "bpb",
+      "name": "Bpb"
+    },
+    {
+      "id": "brainpop",
+      "name": "BrainPOP"
+    },
+    {
+      "id": "brainpopell",
+      "name": "BrainPOPELL"
+    },
+    {
+      "id": "brainpopesp",
+      "name": "BrainPOPEsp"
+    },
+    {
+      "id": "brainpopfr",
+      "name": "BrainPOPFr"
+    },
+    {
+      "id": "brainpopil",
+      "name": "BrainPOPIl"
+    },
+    {
+      "id": "brainpopjr",
+      "name": "BrainPOPJr"
+    },
+    {
+      "id": "bravotv",
+      "name": "BravoTV"
+    },
+    {
+      "id": "breitbart",
+      "name": "BreitBart"
+    },
+    {
+      "id": "brightcove",
+      "name": "brightcove"
+    },
+    {
+      "id": "brilliantpala",
+      "name": "Brilliantpala"
+    },
+    {
+      "id": "bt",
+      "name": "bt"
+    },
+    {
+      "id": "btvplus",
+      "name": "BTVPlus"
+    },
+    {
+      "id": "bundesliga",
+      "name": "Bundesliga"
+    },
+    {
+      "id": "bundestag",
+      "name": "Bundestag"
+    },
+    {
+      "id": "bunnycdn",
+      "name": "BunnyCdn"
+    },
+    {
+      "id": "businessinsider",
+      "name": "BusinessInsider"
+    },
+    {
+      "id": "caltrans",
+      "name": "Caltrans"
+    },
+    {
+      "id": "cam4",
+      "name": "CAM4"
+    },
+    {
+      "id": "camfm",
+      "name": "CamFM"
+    },
+    {
+      "id": "cammodels",
+      "name": "CamModels"
+    },
+    {
+      "id": "camsoda",
+      "name": "Camsoda"
+    },
+    {
+      "id": "camtasia",
+      "name": "Camtasia"
+    },
+    {
+      "id": "canal1",
+      "name": "Canal1"
+    },
+    {
+      "id": "canalalpha",
+      "name": "CanalAlpha"
+    },
+    {
+      "id": "canalc2tv",
+      "name": "canalc2.tv"
+    },
+    {
+      "id": "canalplus",
+      "name": "Canalplus"
+    },
+    {
+      "id": "canalsurmas",
+      "name": "Canalsurmas"
+    },
+    {
+      "id": "caracoltvplay",
+      "name": "CaracolTvPlay"
+    },
+    {
+      "id": "cbcca",
+      "name": "cbc.ca"
+    },
+    {
+      "id": "cbslocal",
+      "name": "CBSLocal"
+    },
+    {
+      "id": "cbslocallive",
+      "name": "CBSLocalLive"
+    },
+    {
+      "id": "cbsnews",
+      "name": "cbsnews"
+    },
+    {
+      "id": "ccma",
+      "name": "CCMA"
+    },
+    {
+      "id": "cda",
+      "name": "CDA"
+    },
+    {
+      "id": "cdafolder",
+      "name": "CDAFolder"
+    },
+    {
+      "id": "cellebrite",
+      "name": "Cellebrite"
+    },
+    {
+      "id": "ceskatelevize",
+      "name": "CeskaTelevize"
+    },
+    {
+      "id": "cgtn",
+      "name": "CGTN"
+    },
+    {
+      "id": "charlierose",
+      "name": "CharlieRose"
+    },
+    {
+      "id": "chaturbate",
+      "name": "Chaturbate"
+    },
+    {
+      "id": "chilloutzone",
+      "name": "Chilloutzone"
+    },
+    {
+      "id": "chzzk",
+      "name": "chzzk"
+    },
+    {
+      "id": "cielotvit",
+      "name": "cielotv.it"
+    },
+    {
+      "id": "cinetecamilano",
+      "name": "CinetecaMilano"
+    },
+    {
+      "id": "cineverse",
+      "name": "Cineverse"
+    },
+    {
+      "id": "cineversedetails",
+      "name": "CineverseDetails"
+    },
+    {
+      "id": "ciscolive",
+      "name": "CiscoLive"
+    },
+    {
+      "id": "ciscolivesession",
+      "name": "CiscoLiveSession"
+    },
+    {
+      "id": "ciscowebex",
+      "name": "ciscowebex"
+    },
+    {
+      "id": "cjsw",
+      "name": "CJSW"
+    },
+    {
+      "id": "clipchamp",
+      "name": "Clipchamp"
+    },
+    {
+      "id": "cloudflarestream",
+      "name": "CloudflareStream"
+    },
+    {
+      "id": "cloudycdn",
+      "name": "CloudyCDN"
+    },
+    {
+      "id": "cnbc",
+      "name": "CNBC"
+    },
+    {
+      "id": "cnnindonesia",
+      "name": "CNNIndonesia"
+    },
+    {
+      "id": "comedycentral",
+      "name": "ComedyCentral"
+    },
+    {
+      "id": "condenast",
+      "name": "CondeNast"
+    },
+    {
+      "id": "cooking",
+      "name": "Cooking"
+    },
+    {
+      "id": "corus",
+      "name": "Corus"
+    },
+    {
+      "id": "coub",
+      "name": "Coub"
+    },
+    {
+      "id": "cozytv",
+      "name": "CozyTV"
+    },
+    {
+      "id": "cp24",
+      "name": "cp24"
+    },
+    {
+      "id": "cpac",
+      "name": "cpac"
+    },
+    {
+      "id": "cracked",
+      "name": "Cracked"
+    },
+    {
+      "id": "craftsy",
+      "name": "Craftsy"
+    },
+    {
+      "id": "croatianfilm",
+      "name": "croatian.film"
+    },
+    {
+      "id": "crooksandliars",
+      "name": "CrooksAndLiars"
+    },
+    {
+      "id": "crowdbunker",
+      "name": "CrowdBunker"
+    },
+    {
+      "id": "crtvg",
+      "name": "Crtvg"
+    },
+    {
+      "id": "cspan",
+      "name": "CSpan"
+    },
+    {
+      "id": "cspancongress",
+      "name": "CSpanCongress"
+    },
+    {
+      "id": "ctsnews",
+      "name": "CtsNews"
+    },
+    {
+      "id": "ctvnews",
+      "name": "CTVNews"
+    },
+    {
+      "id": "cuntvcojp",
+      "name": "cu.ntv.co.jp"
+    },
+    {
+      "id": "cultureunplugged",
+      "name": "CultureUnplugged"
+    },
+    {
+      "id": "curiositystream",
+      "name": "curiositystream"
+    },
+    {
+      "id": "cybrary",
+      "name": "Cybrary"
+    },
+    {
+      "id": "cybrarycourse",
+      "name": "CybraryCourse"
+    },
+    {
+      "id": "dacast",
+      "name": "Dacast"
+    },
+    {
+      "id": "dacastvod",
+      "name": "DacastVOD"
+    },
+    {
+      "id": "dagelijksekost",
+      "name": "DagelijkseKost"
+    },
+    {
+      "id": "dailymail",
+      "name": "DailyMail"
+    },
+    {
+      "id": "dailywire",
+      "name": "DailyWire"
+    },
+    {
+      "id": "dailywirepodcast",
+      "name": "DailyWirePodcast"
+    },
+    {
+      "id": "damtomo",
+      "name": "damtomo"
+    },
+    {
+      "id": "dangalplay",
+      "name": "dangalplay"
+    },
+    {
+      "id": "daumnet",
+      "name": "daum.net"
+    },
+    {
+      "id": "daystar",
+      "name": "daystar"
+    },
+    {
+      "id": "dbtv",
+      "name": "DBTV"
+    },
+    {
+      "id": "dctptv",
+      "name": "DctpTv"
+    },
+    {
+      "id": "democracynow",
+      "name": "democracynow"
+    },
+    {
+      "id": "destinationamerica",
+      "name": "DestinationAmerica"
+    },
+    {
+      "id": "detik",
+      "name": "Detik"
+    },
+    {
+      "id": "deuxm",
+      "name": "DeuxM"
+    },
+    {
+      "id": "deuxmnews",
+      "name": "DeuxMNews"
+    },
+    {
+      "id": "digitalconcerthall",
+      "name": "DigitalConcertHall"
+    },
+    {
+      "id": "digiteka",
+      "name": "Digiteka"
+    },
+    {
+      "id": "digiview",
+      "name": "Digiview"
+    },
+    {
+      "id": "discogsrelease",
+      "name": "DiscogsRelease"
+    },
+    {
+      "id": "discoverylife",
+      "name": "DiscoveryLife"
+    },
+    {
+      "id": "discoverynetworksde",
+      "name": "DiscoveryNetworksDe"
+    },
+    {
+      "id": "discoveryplus",
+      "name": "DiscoveryPlus"
+    },
+    {
+      "id": "discoveryplusindia",
+      "name": "DiscoveryPlusIndia"
+    },
+    {
+      "id": "discoveryplusitaly",
+      "name": "DiscoveryPlusItaly"
+    },
+    {
+      "id": "disney",
+      "name": "Disney"
+    },
+    {
+      "id": "dlf",
+      "name": "dlf"
+    },
+    {
+      "id": "dlive",
+      "name": "dlive"
+    },
+    {
+      "id": "douyu",
+      "name": "Douyu"
+    },
+    {
+      "id": "douyutv",
+      "name": "DouyuTV"
+    },
+    {
+      "id": "dplay",
+      "name": "DPlay"
+    },
+    {
+      "id": "drbonanza",
+      "name": "DRBonanza"
+    },
+    {
+      "id": "dropout",
+      "name": "Dropout"
+    },
+    {
+      "id": "drtalks",
+      "name": "DrTalks"
+    },
+    {
+      "id": "drtuber",
+      "name": "DrTuber"
+    },
+    {
+      "id": "drtv",
+      "name": "drtv"
+    },
+    {
+      "id": "dumpert",
+      "name": "Dumpert"
+    },
+    {
+      "id": "duoplay",
+      "name": "Duoplay"
+    },
+    {
+      "id": "dvtv",
+      "name": "dvtv"
+    },
+    {
+      "id": "dzenru",
+      "name": "dzen.ru"
+    },
+    {
+      "id": "ebaumsworld",
+      "name": "EbaumsWorld"
+    },
+    {
+      "id": "eggs",
+      "name": "eggs"
+    },
+    {
+      "id": "einsundeinstv",
+      "name": "EinsUndEinsTV"
+    },
+    {
+      "id": "einsundeinstvlive",
+      "name": "EinsUndEinsTVLive"
+    },
+    {
+      "id": "einsundeinstvrecordings",
+      "name": "EinsUndEinsTVRecordings"
+    },
+    {
+      "id": "elonet",
+      "name": "Elonet"
+    },
+    {
+      "id": "elpais",
+      "name": "ElPais"
+    },
+    {
+      "id": "eltrecetv",
+      "name": "ElTreceTV"
+    },
+    {
+      "id": "embedly",
+      "name": "Embedly"
+    },
+    {
+      "id": "empflix",
+      "name": "EMPFlix"
+    },
+    {
+      "id": "epicon",
+      "name": "Epicon"
+    },
+    {
+      "id": "epidemicsound",
+      "name": "EpidemicSound"
+    },
+    {
+      "id": "eplus",
+      "name": "eplus"
+    },
+    {
+      "id": "epoch",
+      "name": "Epoch"
+    },
+    {
+      "id": "eporner",
+      "name": "Eporner"
+    },
+    {
+      "id": "ero",
+      "name": "Ero"
+    },
+    {
+      "id": "erocast",
+      "name": "Erocast"
+    },
+    {
+      "id": "errarhiiv",
+      "name": "ERRArhiiv"
+    },
+    {
+      "id": "errjupiter",
+      "name": "ERRJupiter"
+    },
+    {
+      "id": "ertflix",
+      "name": "ertflix"
+    },
+    {
+      "id": "ertwebtv",
+      "name": "ertwebtv"
+    },
+    {
+      "id": "espn",
+      "name": "ESPN"
+    },
+    {
+      "id": "espncricinfo",
+      "name": "ESPNCricInfo"
+    },
+    {
+      "id": "ettutv",
+      "name": "EttuTv"
+    },
+    {
+      "id": "europarlwebstream",
+      "name": "EuroParlWebstream"
+    },
+    {
+      "id": "europeantour",
+      "name": "EuropeanTour"
+    },
+    {
+      "id": "eurosport",
+      "name": "Eurosport"
+    },
+    {
+      "id": "euscreen",
+      "name": "EUScreen"
+    },
+    {
+      "id": "ewetv",
+      "name": "EWETV"
+    },
+    {
+      "id": "ewetvlive",
+      "name": "EWETVLive"
+    },
+    {
+      "id": "ewetvrecordings",
+      "name": "EWETVRecordings"
+    },
+    {
+      "id": "expressen",
+      "name": "Expressen"
+    },
+    {
+      "id": "fathom",
+      "name": "Fathom"
+    },
+    {
+      "id": "faulio",
+      "name": "Faulio"
+    },
+    {
+      "id": "fauliolive",
+      "name": "FaulioLive"
+    },
+    {
+      "id": "faznet",
+      "name": "faz.net"
+    },
+    {
+      "id": "fc2",
+      "name": "fc2"
+    },
+    {
+      "id": "fczenit",
+      "name": "Fczenit"
+    },
+    {
+      "id": "filmarchiv",
+      "name": "FilmArchiv"
+    },
+    {
+      "id": "filmon",
+      "name": "filmon"
+    },
+    {
+      "id": "filmweb",
+      "name": "Filmweb"
+    },
+    {
+      "id": "fivethirtyeight",
+      "name": "FiveThirtyEight"
+    },
+    {
+      "id": "fivetv",
+      "name": "FiveTV"
+    },
+    {
+      "id": "foodnetwork",
+      "name": "FoodNetwork"
+    },
+    {
+      "id": "footyroom",
+      "name": "FootyRoom"
+    },
+    {
+      "id": "formula1",
+      "name": "Formula1"
+    },
+    {
+      "id": "fox9",
+      "name": "FOX9"
+    },
+    {
+      "id": "fox9news",
+      "name": "FOX9News"
+    },
+    {
+      "id": "foxnews",
+      "name": "foxnews"
+    },
+    {
+      "id": "foxsports",
+      "name": "FoxSports"
+    },
+    {
+      "id": "fptplay",
+      "name": "fptplay"
+    },
+    {
+      "id": "francaisfacile",
+      "name": "FrancaisFacile"
+    },
+    {
+      "id": "franceculture",
+      "name": "FranceCulture"
+    },
+    {
+      "id": "franceinfo",
+      "name": "franceinfo"
+    },
+    {
+      "id": "francetv",
+      "name": "francetv"
+    },
+    {
+      "id": "freesound",
+      "name": "Freesound"
+    },
+    {
+      "id": "freespeechorg",
+      "name": "freespeech.org"
+    },
+    {
+      "id": "freetv",
+      "name": "freetv"
+    },
+    {
+      "id": "freetvmovies",
+      "name": "FreeTvMovies"
+    },
+    {
+      "id": "frontendmasters",
+      "name": "FrontendMasters"
+    },
+    {
+      "id": "frontendmasterscourse",
+      "name": "FrontendMastersCourse"
+    },
+    {
+      "id": "frontendmasterslesson",
+      "name": "FrontendMastersLesson"
+    },
+    {
+      "id": "funk",
+      "name": "Funk"
+    },
+    {
+      "id": "funker530",
+      "name": "Funker530"
+    },
+    {
+      "id": "fux",
+      "name": "Fux"
+    },
+    {
+      "id": "fuyintv",
+      "name": "FuyinTV"
+    },
+    {
+      "id": "gab",
+      "name": "Gab"
+    },
+    {
+      "id": "gaia",
+      "name": "Gaia"
+    },
+    {
+      "id": "gamedevtvdashboard",
+      "name": "GameDevTVDashboard"
+    },
+    {
+      "id": "gamejoltcommunity",
+      "name": "GameJoltCommunity"
+    },
+    {
+      "id": "gamejoltgame",
+      "name": "GameJoltGame"
+    },
+    {
+      "id": "gamejoltgamesoundtrack",
+      "name": "GameJoltGameSoundtrack"
+    },
+    {
+      "id": "gamespot",
+      "name": "GameSpot"
+    },
+    {
+      "id": "gamestar",
+      "name": "GameStar"
+    },
+    {
+      "id": "gaskrank",
+      "name": "Gaskrank"
+    },
+    {
+      "id": "gbnews",
+      "name": "GBNews"
+    },
+    {
+      "id": "gedidigital",
+      "name": "GediDigital"
+    },
+    {
+      "id": "gemcbcca",
+      "name": "gem.cbc.ca"
+    },
+    {
+      "id": "geniuslyrics",
+      "name": "GeniusLyrics"
+    },
+    {
+      "id": "germanupa",
+      "name": "Germanupa"
+    },
+    {
+      "id": "getcourseru",
+      "name": "GetCourseRu"
+    },
+    {
+      "id": "getcourseruplayer",
+      "name": "GetCourseRuPlayer"
+    },
+    {
+      "id": "gettr",
+      "name": "Gettr"
+    },
+    {
+      "id": "gettrstreaming",
+      "name": "GettrStreaming"
+    },
+    {
+      "id": "giantbomb",
+      "name": "GiantBomb"
+    },
+    {
+      "id": "glattvisiontv",
+      "name": "GlattvisionTV"
+    },
+    {
+      "id": "glattvisiontvlive",
+      "name": "GlattvisionTVLive"
+    },
+    {
+      "id": "glattvisiontvrecordings",
+      "name": "GlattvisionTVRecordings"
+    },
+    {
+      "id": "glide",
+      "name": "Glide"
+    },
+    {
+      "id": "globalplayer",
+      "name": "GlobalPlayer"
+    },
+    {
+      "id": "globalplayeraudio",
+      "name": "GlobalPlayerAudio"
+    },
+    {
+      "id": "globalplayerlive",
+      "name": "GlobalPlayerLive"
+    },
+    {
+      "id": "globo",
+      "name": "Globo"
+    },
+    {
+      "id": "glomex",
+      "name": "glomex"
+    },
+    {
+      "id": "gmanetwork",
+      "name": "GMANetwork"
+    },
+    {
+      "id": "godiscovery",
+      "name": "GoDiscovery"
+    },
+    {
+      "id": "godresource",
+      "name": "GodResource"
+    },
+    {
+      "id": "golem",
+      "name": "Golem"
+    },
+    {
+      "id": "goodgame",
+      "name": "goodgame"
+    },
+    {
+      "id": "gopro",
+      "name": "GoPro"
+    },
+    {
+      "id": "gotostage",
+      "name": "GoToStage"
+    },
+    {
+      "id": "graspop",
+      "name": "Graspop"
+    },
+    {
+      "id": "gronkh",
+      "name": "Gronkh"
+    },
+    {
+      "id": "harpodeon",
+      "name": "Harpodeon"
+    },
+    {
+      "id": "heise",
+      "name": "Heise"
+    },
+    {
+      "id": "hellporno",
+      "name": "HellPorno"
+    },
+    {
+      "id": "hetklokhuis",
+      "name": "hetklokhuis"
+    },
+    {
+      "id": "hgtvcom",
+      "name": "hgtv.com"
+    },
+    {
+      "id": "hgtvde",
+      "name": "HGTVDe"
+    },
+    {
+      "id": "hgtvusa",
+      "name": "HGTVUsa"
+    },
+    {
+      "id": "hidive",
+      "name": "HiDive"
+    },
+    {
+      "id": "historicfilms",
+      "name": "HistoricFilms"
+    },
+    {
+      "id": "history",
+      "name": "history"
+    },
+    {
+      "id": "hitrecord",
+      "name": "HitRecord"
+    },
+    {
+      "id": "hollywoodreporter",
+      "name": "HollywoodReporter"
+    },
+    {
+      "id": "holodex",
+      "name": "Holodex"
+    },
+    {
+      "id": "hotstar",
+      "name": "hotstar"
+    },
+    {
+      "id": "hrfernsehen",
+      "name": "hrfernsehen"
+    },
+    {
+      "id": "hrti",
+      "name": "HRTi"
+    },
+    {
+      "id": "hse",
+      "name": "HSE"
+    },
+    {
+      "id": "hseproduct",
+      "name": "HSEProduct"
+    },
+    {
+      "id": "huajiao",
+      "name": "Huajiao"
+    },
+    {
+      "id": "huffpost",
+      "name": "HuffPost"
+    },
+    {
+      "id": "hungama",
+      "name": "Hungama"
+    },
+    {
+      "id": "hungamaalbum",
+      "name": "HungamaAlbum"
+    },
+    {
+      "id": "hungamasong",
+      "name": "HungamaSong"
+    },
+    {
+      "id": "huya",
+      "name": "huya"
+    },
+    {
+      "id": "hypem",
+      "name": "Hypem"
+    },
+    {
+      "id": "hytale",
+      "name": "Hytale"
+    },
+    {
+      "id": "icareus",
+      "name": "Icareus"
+    },
+    {
+      "id": "idagio",
+      "name": "Idagio"
+    },
+    {
+      "id": "idagiopersonal",
+      "name": "IdagioPersonal"
+    },
+    {
+      "id": "idagiorecording",
+      "name": "IdagioRecording"
+    },
+    {
+      "id": "idagiotrack",
+      "name": "IdagioTrack"
+    },
+    {
+      "id": "iflix",
+      "name": "iflix"
+    },
+    {
+      "id": "igncom",
+      "name": "ign.com"
+    },
+    {
+      "id": "ilpost",
+      "name": "IlPost"
+    },
+    {
+      "id": "iltalehti",
+      "name": "Iltalehti"
+    },
+    {
+      "id": "ina",
+      "name": "Ina"
+    },
+    {
+      "id": "inc",
+      "name": "Inc"
+    },
+    {
+      "id": "indavideo",
+      "name": "Indavideo"
+    },
+    {
+      "id": "internazionale",
+      "name": "Internazionale"
+    },
+    {
+      "id": "investigationdiscovery",
+      "name": "InvestigationDiscovery"
+    },
+    {
+      "id": "iprima",
+      "name": "IPrima"
+    },
+    {
+      "id": "iprimacnn",
+      "name": "IPrimaCNN"
+    },
+    {
+      "id": "iqcom",
+      "name": "iq.com"
+    },
+    {
+      "id": "islam",
+      "name": "Islam"
+    },
+    {
+      "id": "islamchannel",
+      "name": "IslamChannel"
+    },
+    {
+      "id": "israelnationalnews",
+      "name": "IsraelNationalNews"
+    },
+    {
+      "id": "itprotv",
+      "name": "ITProTV"
+    },
+    {
+      "id": "itprotvcourse",
+      "name": "ITProTVCourse"
+    },
+    {
+      "id": "itv",
+      "name": "ITV"
+    },
+    {
+      "id": "itvbtcc",
+      "name": "ITVBTCC"
+    },
+    {
+      "id": "ivi",
+      "name": "ivi"
+    },
+    {
+      "id": "ivideon",
+      "name": "ivideon"
+    },
+    {
+      "id": "ivoox",
+      "name": "Ivoox"
+    },
+    {
+      "id": "iwara",
+      "name": "iwara"
+    },
+    {
+      "id": "ixigua",
+      "name": "Ixigua"
+    },
+    {
+      "id": "jamendo",
+      "name": "Jamendo"
+    },
+    {
+      "id": "jiosaavn",
+      "name": "jiosaavn"
+    },
+    {
+      "id": "joj",
+      "name": "Joj"
+    },
+    {
+      "id": "jove",
+      "name": "Jove"
+    },
+    {
+      "id": "jstream",
+      "name": "JStream"
+    },
+    {
+      "id": "jtbc",
+      "name": "JTBC"
+    },
+    {
+      "id": "jwplatform",
+      "name": "JWPlatform"
+    },
+    {
+      "id": "kaltura",
+      "name": "Kaltura"
+    },
+    {
+      "id": "kenh14",
+      "name": "Kenh14"
+    },
+    {
+      "id": "kicker",
+      "name": "Kicker"
+    },
+    {
+      "id": "kika",
+      "name": "Kika"
+    },
+    {
+      "id": "kommunetv",
+      "name": "Kommunetv"
+    },
+    {
+      "id": "kompas",
+      "name": "Kompas"
+    },
+    {
+      "id": "kth",
+      "name": "KTH"
+    },
+    {
+      "id": "ku6",
+      "name": "Ku6"
+    },
+    {
+      "id": "kukululive",
+      "name": "KukuluLive"
+    },
+    {
+      "id": "la7it",
+      "name": "la7.it"
+    },
+    {
+      "id": "laracasts",
+      "name": "laracasts"
+    },
+    {
+      "id": "laxarxames",
+      "name": "LaXarxaMes"
+    },
+    {
+      "id": "lci",
+      "name": "LCI"
+    },
+    {
+      "id": "le",
+      "name": "Le"
+    },
+    {
+      "id": "learningonscreen",
+      "name": "LearningOnScreen"
+    },
+    {
+      "id": "lecturio",
+      "name": "Lecturio"
+    },
+    {
+      "id": "lecturiocourse",
+      "name": "LecturioCourse"
+    },
+    {
+      "id": "lecturiodecourse",
+      "name": "LecturioDeCourse"
+    },
+    {
+      "id": "lefigarovideo",
+      "name": "LeFigaroVideo"
+    },
+    {
+      "id": "lefigarovideosection",
+      "name": "LeFigaroVideoSection"
+    },
+    {
+      "id": "lego",
+      "name": "LEGO"
+    },
+    {
+      "id": "lemonde",
+      "name": "Lemonde"
+    },
+    {
+      "id": "libsyn",
+      "name": "Libsyn"
+    },
+    {
+      "id": "life",
+      "name": "life"
+    },
+    {
+      "id": "likee",
+      "name": "likee"
+    },
+    {
+      "id": "liputan6",
+      "name": "Liputan6"
+    },
+    {
+      "id": "listennotes",
+      "name": "ListenNotes"
+    },
+    {
+      "id": "litv",
+      "name": "LiTV"
+    },
+    {
+      "id": "livestreamfails",
+      "name": "Livestreamfails"
+    },
+    {
+      "id": "lnk",
+      "name": "Lnk"
+    },
+    {
+      "id": "loc",
+      "name": "loc"
+    },
+    {
+      "id": "locipo",
+      "name": "Locipo"
+    },
+    {
+      "id": "loco",
+      "name": "Loco"
+    },
+    {
+      "id": "lovehomeporn",
+      "name": "LoveHomePorn"
+    },
+    {
+      "id": "lrtradio",
+      "name": "LRTRadio"
+    },
+    {
+      "id": "lrtstream",
+      "name": "LRTStream"
+    },
+    {
+      "id": "lrtvod",
+      "name": "LRTVOD"
+    },
+    {
+      "id": "lsmlr",
+      "name": "LSMLR"
+    },
+    {
+      "id": "lsmltv",
+      "name": "LSMLTV"
+    },
+    {
+      "id": "lsmreplay",
+      "name": "LSMReplay"
+    },
+    {
+      "id": "lumni",
+      "name": "Lumni"
+    },
+    {
+      "id": "maarivcoil",
+      "name": "maariv.co.il"
+    },
+    {
+      "id": "magellantv",
+      "name": "MagellanTV"
+    },
+    {
+      "id": "magentamusik",
+      "name": "MagentaMusik"
+    },
+    {
+      "id": "mainstreaming",
+      "name": "MainStreaming"
+    },
+    {
+      "id": "mangomolo",
+      "name": "mangomolo"
+    },
+    {
+      "id": "mangotv",
+      "name": "MangoTV"
+    },
+    {
+      "id": "manyvids",
+      "name": "ManyVids"
+    },
+    {
+      "id": "maoritv",
+      "name": "MaoriTV"
+    },
+    {
+      "id": "massengeschmacktv",
+      "name": "massengeschmack.tv"
+    },
+    {
+      "id": "masters",
+      "name": "Masters"
+    },
+    {
+      "id": "matchitv",
+      "name": "MatchiTV"
+    },
+    {
+      "id": "matchtv",
+      "name": "MatchTV"
+    },
+    {
+      "id": "mave",
+      "name": "mave"
+    },
+    {
+      "id": "mbn",
+      "name": "MBN"
+    },
+    {
+      "id": "mdr",
+      "name": "MDR"
+    },
+    {
+      "id": "medaltv",
+      "name": "MedalTV"
+    },
+    {
+      "id": "mediacccde",
+      "name": "media.ccc.de"
+    },
+    {
+      "id": "mediaite",
+      "name": "Mediaite"
+    },
+    {
+      "id": "mediaklikk",
+      "name": "MediaKlikk"
+    },
+    {
+      "id": "medialaan",
+      "name": "Medialaan"
+    },
+    {
+      "id": "mediaset",
+      "name": "Mediaset"
+    },
+    {
+      "id": "mediasite",
+      "name": "Mediasite"
+    },
+    {
+      "id": "mediasitecatalog",
+      "name": "MediasiteCatalog"
+    },
+    {
+      "id": "mediasitenamedcatalog",
+      "name": "MediasiteNamedCatalog"
+    },
+    {
+      "id": "mediastream",
+      "name": "MediaStream"
+    },
+    {
+      "id": "mediaworksnzvod",
+      "name": "MediaWorksNZVOD"
+    },
+    {
+      "id": "medici",
+      "name": "Medici"
+    },
+    {
+      "id": "megaphonefm",
+      "name": "megaphone.fm"
+    },
+    {
+      "id": "megatvcom",
+      "name": "megatvcom"
+    },
+    {
+      "id": "meipai",
+      "name": "Meipai"
+    },
+    {
+      "id": "mellowfan",
+      "name": "mellowfan"
+    },
+    {
+      "id": "melonvod",
+      "name": "MelonVOD"
+    },
+    {
+      "id": "mewatch",
+      "name": "mewatch"
+    },
+    {
+      "id": "microsoftbuild",
+      "name": "MicrosoftBuild"
+    },
+    {
+      "id": "microsoftlearn",
+      "name": "MicrosoftLearn"
+    },
+    {
+      "id": "microsoftlearnsession",
+      "name": "MicrosoftLearnSession"
+    },
+    {
+      "id": "microsoftmedius",
+      "name": "MicrosoftMedius"
+    },
+    {
+      "id": "mir24tv",
+      "name": "mir24.tv"
+    },
+    {
+      "id": "mirrativ",
+      "name": "mirrativ"
+    },
+    {
+      "id": "mirrorcouk",
+      "name": "MirrorCoUK"
+    },
+    {
+      "id": "mixch",
+      "name": "mixch"
+    },
+    {
+      "id": "mixlr",
+      "name": "Mixlr"
+    },
+    {
+      "id": "mixlrrecoring",
+      "name": "MixlrRecoring"
+    },
+    {
+      "id": "mlbtv",
+      "name": "MLBTV"
+    },
+    {
+      "id": "mlssoccer",
+      "name": "MLSSoccer"
+    },
+    {
+      "id": "mnettv",
+      "name": "MNetTV"
+    },
+    {
+      "id": "mnettvlive",
+      "name": "MNetTVLive"
+    },
+    {
+      "id": "mnettvrecordings",
+      "name": "MNetTVRecordings"
+    },
+    {
+      "id": "moje",
+      "name": "Moje"
+    },
+    {
+      "id": "monstercat",
+      "name": "Monstercat"
+    },
+    {
+      "id": "monstersiren",
+      "name": "monstersiren"
+    },
+    {
+      "id": "moviefap",
+      "name": "MovieFap"
+    },
+    {
+      "id": "moviepilot",
+      "name": "moviepilot"
+    },
+    {
+      "id": "movingimage",
+      "name": "MovingImage"
+    },
+    {
+      "id": "msn",
+      "name": "MSN"
+    },
+    {
+      "id": "mtg",
+      "name": "mtg"
+    },
+    {
+      "id": "mtv",
+      "name": "mtv"
+    },
+    {
+      "id": "mujrozhlas",
+      "name": "MujRozhlas"
+    },
+    {
+      "id": "murrtube",
+      "name": "Murrtube"
+    },
+    {
+      "id": "museai",
+      "name": "MuseAI"
+    },
+    {
+      "id": "mux",
+      "name": "Mux"
+    },
+    {
+      "id": "mx3",
+      "name": "Mx3"
+    },
+    {
+      "id": "mx3neo",
+      "name": "Mx3Neo"
+    },
+    {
+      "id": "mx3volksmusik",
+      "name": "Mx3Volksmusik"
+    },
+    {
+      "id": "mxplayer",
+      "name": "mxplayer"
+    },
+    {
+      "id": "myspass",
+      "name": "MySpass"
+    },
+    {
+      "id": "myvideoge",
+      "name": "MyVideoGe"
+    },
+    {
+      "id": "myvidster",
+      "name": "MyVidster"
+    },
+    {
+      "id": "mzaalo",
+      "name": "Mzaalo"
+    },
+    {
+      "id": "ntvde",
+      "name": "n-tv.de"
+    },
+    {
+      "id": "n1info",
+      "name": "N1Info"
+    },
+    {
+      "id": "n1infoasset",
+      "name": "N1InfoAsset"
+    },
+    {
+      "id": "nascarclassics",
+      "name": "NascarClassics"
+    },
+    {
+      "id": "nate",
+      "name": "Nate"
+    },
+    {
+      "id": "nateprogram",
+      "name": "NateProgram"
+    },
+    {
+      "id": "nationalgeographictv",
+      "name": "NationalGeographicTV"
+    },
+    {
+      "id": "nbcnews",
+      "name": "NBCNews"
+    },
+    {
+      "id": "nbcolympics",
+      "name": "nbcolympics"
+    },
+    {
+      "id": "nbcstations",
+      "name": "NBCStations"
+    },
+    {
+      "id": "nebula",
+      "name": "nebula"
+    },
+    {
+      "id": "nekohacker",
+      "name": "NekoHacker"
+    },
+    {
+      "id": "nest",
+      "name": "Nest"
+    },
+    {
+      "id": "netease",
+      "name": "netease"
+    },
+    {
+      "id": "netplustv",
+      "name": "NetPlusTV"
+    },
+    {
+      "id": "netplustvlive",
+      "name": "NetPlusTVLive"
+    },
+    {
+      "id": "netplustvrecordings",
+      "name": "NetPlusTVRecordings"
+    },
+    {
+      "id": "netzkino",
+      "name": "Netzkino"
+    },
+    {
+      "id": "newspicks",
+      "name": "NewsPicks"
+    },
+    {
+      "id": "newsy",
+      "name": "Newsy"
+    },
+    {
+      "id": "nexx",
+      "name": "Nexx"
+    },
+    {
+      "id": "nfb",
+      "name": "nfb"
+    },
+    {
+      "id": "nfhsnetwork",
+      "name": "NFHSNetwork"
+    },
+    {
+      "id": "nflcom",
+      "name": "nfl.com"
+    },
+    {
+      "id": "nhkforschoolbangumi",
+      "name": "NhkForSchoolBangumi"
+    },
+    {
+      "id": "nhkforschoolprogramlist",
+      "name": "NhkForSchoolProgramList"
+    },
+    {
+      "id": "nhkforschoolsubject",
+      "name": "NhkForSchoolSubject"
+    },
+    {
+      "id": "nhkradionewspage",
+      "name": "NhkRadioNewsPage"
+    },
+    {
+      "id": "nhkradiru",
+      "name": "NhkRadiru"
+    },
+    {
+      "id": "nhkradirulive",
+      "name": "NhkRadiruLive"
+    },
+    {
+      "id": "nhkvod",
+      "name": "NhkVod"
+    },
+    {
+      "id": "nhkvodprogram",
+      "name": "NhkVodProgram"
+    },
+    {
+      "id": "nhlcom",
+      "name": "nhl.com"
+    },
+    {
+      "id": "nickcom",
+      "name": "nick.com"
+    },
+    {
+      "id": "nico",
+      "name": "nico"
+    },
+    {
+      "id": "ninaprotocol",
+      "name": "NinaProtocol"
+    },
+    {
+      "id": "nitter",
+      "name": "Nitter"
+    },
+    {
+      "id": "njoy",
+      "name": "njoy"
+    },
+    {
+      "id": "nobelprize",
+      "name": "NobelPrize"
+    },
+    {
+      "id": "noicepodcast",
+      "name": "NoicePodcast"
+    },
+    {
+      "id": "nonktube",
+      "name": "NonkTube"
+    },
+    {
+      "id": "noodlemagazine",
+      "name": "NoodleMagazine"
+    },
+    {
+      "id": "nosnl",
+      "name": "NOSNL"
+    },
+    {
+      "id": "nova",
+      "name": "Nova"
+    },
+    {
+      "id": "novaplay",
+      "name": "NovaPlay"
+    },
+    {
+      "id": "nowcanal",
+      "name": "NowCanal"
+    },
+    {
+      "id": "nowness",
+      "name": "nowness"
+    },
+    {
+      "id": "npo",
+      "name": "npo"
+    },
+    {
+      "id": "nponl",
+      "name": "npo.nl"
+    },
+    {
+      "id": "npr",
+      "name": "Npr"
+    },
+    {
+      "id": "nrk",
+      "name": "NRK"
+    },
+    {
+      "id": "nrkradiopodkast",
+      "name": "NRKRadioPodkast"
+    },
+    {
+      "id": "nrkskole",
+      "name": "NRKSkole"
+    },
+    {
+      "id": "nrktv",
+      "name": "NRKTV"
+    },
+    {
+      "id": "nrktvdirekte",
+      "name": "NRKTVDirekte"
+    },
+    {
+      "id": "nrktvepisodes",
+      "name": "NRKTVEpisodes"
+    },
+    {
+      "id": "ntslive",
+      "name": "nts.live"
+    },
+    {
+      "id": "ntvru",
+      "name": "ntv.ru"
+    },
+    {
+      "id": "nubilesporn",
+      "name": "NubilesPorn"
+    },
+    {
+      "id": "nuvid",
+      "name": "Nuvid"
+    },
+    {
+      "id": "nytimes",
+      "name": "NYTimes"
+    },
+    {
+      "id": "nytimescookingguide",
+      "name": "NYTimesCookingGuide"
+    },
+    {
+      "id": "nytimescookingrecipe",
+      "name": "NYTimesCookingRecipe"
+    },
+    {
+      "id": "nzherald",
+      "name": "nzherald"
+    },
+    {
+      "id": "nzonscreen",
+      "name": "NZOnScreen"
+    },
+    {
+      "id": "nzz",
+      "name": "NZZ"
+    },
+    {
+      "id": "ocwmitedu",
+      "name": "ocw.mit.edu"
+    },
+    {
+      "id": "oftv",
+      "name": "OfTV"
+    },
+    {
+      "id": "olympicsreplay",
+      "name": "OlympicsReplay"
+    },
+    {
+      "id": "omnyfm",
+      "name": "Omnyfm"
+    },
+    {
+      "id": "on24",
+      "name": "on24"
+    },
+    {
+      "id": "ondemandchina",
+      "name": "OnDemandChina"
+    },
+    {
+      "id": "ondemandkorea",
+      "name": "OnDemandKorea"
+    },
+    {
+      "id": "ondemandkoreaprogram",
+      "name": "OnDemandKoreaProgram"
+    },
+    {
+      "id": "onefootball",
+      "name": "OneFootball"
+    },
+    {
+      "id": "oneplacepodcast",
+      "name": "OnePlacePodcast"
+    },
+    {
+      "id": "onetpl",
+      "name": "onet.pl"
+    },
+    {
+      "id": "onettv",
+      "name": "onet.tv"
+    },
+    {
+      "id": "onetmvp",
+      "name": "OnetMVP"
+    },
+    {
+      "id": "onsen",
+      "name": "onsen"
+    },
+    {
+      "id": "opencast",
+      "name": "Opencast"
+    },
+    {
+      "id": "orf",
+      "name": "orf"
+    },
+    {
+      "id": "osnateltv",
+      "name": "OsnatelTV"
+    },
+    {
+      "id": "osnateltvlive",
+      "name": "OsnatelTVLive"
+    },
+    {
+      "id": "osnateltvrecordings",
+      "name": "OsnatelTVRecordings"
+    },
+    {
+      "id": "outsidetv",
+      "name": "OutsideTV"
+    },
+    {
+      "id": "packtpub",
+      "name": "PacktPub"
+    },
+    {
+      "id": "packtpubcourse",
+      "name": "PacktPubCourse"
+    },
+    {
+      "id": "palcomp3",
+      "name": "PalcoMP3"
+    },
+    {
+      "id": "pandatv",
+      "name": "PandaTv"
+    },
+    {
+      "id": "panopto",
+      "name": "Panopto"
+    },
+    {
+      "id": "panoptolist",
+      "name": "PanoptoList"
+    },
+    {
+      "id": "paramountpressexpress",
+      "name": "ParamountPressExpress"
+    },
+    {
+      "id": "parler",
+      "name": "Parler"
+    },
+    {
+      "id": "parliamentlivetv",
+      "name": "parliamentlive.tv"
+    },
+    {
+      "id": "parlview",
+      "name": "Parlview"
+    },
+    {
+      "id": "parti",
+      "name": "parti"
+    },
+    {
+      "id": "pbs",
+      "name": "pbs"
+    },
+    {
+      "id": "pbskids",
+      "name": "PBSKids"
+    },
+    {
+      "id": "pear",
+      "name": "Pear"
+    },
+    {
+      "id": "peekvids",
+      "name": "PeekVids"
+    },
+    {
+      "id": "peertv",
+      "name": "peer.tv"
+    },
+    {
+      "id": "performgroup",
+      "name": "PerformGroup"
+    },
+    {
+      "id": "periscope",
+      "name": "periscope"
+    },
+    {
+      "id": "pgatour",
+      "name": "PGATour"
+    },
+    {
+      "id": "philharmoniedeparis",
+      "name": "PhilharmonieDeParis"
+    },
+    {
+      "id": "phoenixde",
+      "name": "phoenix.de"
+    },
+    {
+      "id": "pialive",
+      "name": "PiaLive"
+    },
+    {
+      "id": "picarto",
+      "name": "picarto"
+    },
+    {
+      "id": "piksel",
+      "name": "Piksel"
+    },
+    {
+      "id": "pinkbike",
+      "name": "Pinkbike"
+    },
+    {
+      "id": "platzicourse",
+      "name": "PlatziCourse"
+    },
+    {
+      "id": "playtv",
+      "name": "play.tv"
+    },
+    {
+      "id": "playerskyit",
+      "name": "player.sky.it"
+    },
+    {
+      "id": "playsuisse",
+      "name": "PlaySuisse"
+    },
+    {
+      "id": "playvids",
+      "name": "PlayVids"
+    },
+    {
+      "id": "plyr",
+      "name": "Plyr"
+    },
+    {
+      "id": "podbayfm",
+      "name": "PodbayFM"
+    },
+    {
+      "id": "podchaser",
+      "name": "Podchaser"
+    },
+    {
+      "id": "pokergo",
+      "name": "PokerGo"
+    },
+    {
+      "id": "polsatgo",
+      "name": "PolsatGo"
+    },
+    {
+      "id": "polskieradio",
+      "name": "PolskieRadio"
+    },
+    {
+      "id": "popcorntimes",
+      "name": "Popcorntimes"
+    },
+    {
+      "id": "popcorntv",
+      "name": "PopcornTV"
+    },
+    {
+      "id": "pornbox",
+      "name": "Pornbox"
+    },
+    {
+      "id": "pornerbros",
+      "name": "PornerBros"
+    },
+    {
+      "id": "pornflip",
+      "name": "PornFlip"
+    },
+    {
+      "id": "pornhub",
+      "name": "PornHub"
+    },
+    {
+      "id": "pornhubpagedvideolist",
+      "name": "PornHubPagedVideoList"
+    },
+    {
+      "id": "pornhubuservideosupload",
+      "name": "PornHubUserVideosUpload"
+    },
+    {
+      "id": "pornotube",
+      "name": "Pornotube"
+    },
+    {
+      "id": "porntop",
+      "name": "PornTop"
+    },
+    {
+      "id": "porntube",
+      "name": "PornTube"
+    },
+    {
+      "id": "pr0gramm",
+      "name": "Pr0gramm"
+    },
+    {
+      "id": "prankcast",
+      "name": "PrankCast"
+    },
+    {
+      "id": "prankcastpost",
+      "name": "PrankCastPost"
+    },
+    {
+      "id": "premiershiprugby",
+      "name": "PremiershipRugby"
+    },
+    {
+      "id": "presstv",
+      "name": "PressTV"
+    },
+    {
+      "id": "prx",
+      "name": "PRX"
+    },
+    {
+      "id": "prxaccount",
+      "name": "PRXAccount"
+    },
+    {
+      "id": "prxstories",
+      "name": "prxstories"
+    },
+    {
+      "id": "prxstory",
+      "name": "PRXStory"
+    },
+    {
+      "id": "puhutv",
+      "name": "puhutv"
+    },
+    {
+      "id": "py",
+      "name": "Py"
+    },
+    {
+      "id": "qdance",
+      "name": "QDance"
+    },
+    {
+      "id": "qingting",
+      "name": "QingTing"
+    },
+    {
+      "id": "qqmusic",
+      "name": "qqmusic"
+    },
+    {
+      "id": "quantumtv",
+      "name": "QuantumTV"
+    },
+    {
+      "id": "quantumtvlive",
+      "name": "QuantumTVLive"
+    },
+    {
+      "id": "quantumtvrecordings",
+      "name": "QuantumTVRecordings"
+    },
+    {
+      "id": "radiko",
+      "name": "Radiko"
+    },
+    {
+      "id": "radikoradio",
+      "name": "RadikoRadio"
+    },
+    {
+      "id": "radio1be",
+      "name": "Radio1Be"
+    },
+    {
+      "id": "radiocanada",
+      "name": "radiocanada"
+    },
+    {
+      "id": "radiofrance",
+      "name": "radiofrance"
+    },
+    {
+      "id": "radiofrancelive",
+      "name": "RadioFranceLive"
+    },
+    {
+      "id": "radiofrancepodcast",
+      "name": "RadioFrancePodcast"
+    },
+    {
+      "id": "radiofranceprogramschedule",
+      "name": "RadioFranceProgramSchedule"
+    },
+    {
+      "id": "radiokapital",
+      "name": "radiokapital"
+    },
+    {
+      "id": "radioradicale",
+      "name": "RadioRadicale"
+    },
+    {
+      "id": "radiozetpodcast",
+      "name": "RadioZetPodcast"
+    },
+    {
+      "id": "radlive",
+      "name": "radlive"
+    },
+    {
+      "id": "rai",
+      "name": "Rai"
+    },
+    {
+      "id": "raicultura",
+      "name": "RaiCultura"
+    },
+    {
+      "id": "rainews",
+      "name": "RaiNews"
+    },
+    {
+      "id": "raiplay",
+      "name": "RaiPlay"
+    },
+    {
+      "id": "raiplaylive",
+      "name": "RaiPlayLive"
+    },
+    {
+      "id": "raiplaysound",
+      "name": "RaiPlaySound"
+    },
+    {
+      "id": "raiplaysoundlive",
+      "name": "RaiPlaySoundLive"
+    },
+    {
+      "id": "raisudtirol",
+      "name": "RaiSudtirol"
+    },
+    {
+      "id": "raywenderlich",
+      "name": "RayWenderlich"
+    },
+    {
+      "id": "raywenderlichcourse",
+      "name": "RayWenderlichCourse"
+    },
+    {
+      "id": "rbgtum",
+      "name": "RbgTum"
+    },
+    {
+      "id": "rbgtumcourse",
+      "name": "RbgTumCourse"
+    },
+    {
+      "id": "rbgtumnewcourse",
+      "name": "RbgTumNewCourse"
+    },
+    {
+      "id": "rcs",
+      "name": "RCS"
+    },
+    {
+      "id": "rcsembeds",
+      "name": "RCSEmbeds"
+    },
+    {
+      "id": "rcsvarious",
+      "name": "RCSVarious"
+    },
+    {
+      "id": "rctiplus",
+      "name": "RCTIPlus"
+    },
+    {
+      "id": "rctiplustv",
+      "name": "RCTIPlusTV"
+    },
+    {
+      "id": "redbulltv",
+      "name": "RedBullTV"
+    },
+    {
+      "id": "redbulltvrrncontent",
+      "name": "RedBullTVRrnContent"
+    },
+    {
+      "id": "redgifs",
+      "name": "RedGifs"
+    },
+    {
+      "id": "redtube",
+      "name": "RedTube"
+    },
+    {
+      "id": "ridehome",
+      "name": "RideHome"
+    },
+    {
+      "id": "rinsefm",
+      "name": "RinseFM"
+    },
+    {
+      "id": "rinsefmartist",
+      "name": "RinseFMArtist"
+    },
+    {
+      "id": "rokfin",
+      "name": "Rokfin"
+    },
+    {
+      "id": "roosterteeth",
+      "name": "RoosterTeeth"
+    },
+    {
+      "id": "royalive",
+      "name": "RoyaLive"
+    },
+    {
+      "id": "rozhlas",
+      "name": "Rozhlas"
+    },
+    {
+      "id": "rozhlasvltava",
+      "name": "RozhlasVltava"
+    },
+    {
+      "id": "rtdocumentry",
+      "name": "RTDocumentry"
+    },
+    {
+      "id": "rtllu",
+      "name": "rtl.lu"
+    },
+    {
+      "id": "rtlnl",
+      "name": "rtl.nl"
+    },
+    {
+      "id": "rtllulive",
+      "name": "RTLLuLive"
+    },
+    {
+      "id": "rtlluradio",
+      "name": "RTLLuRadio"
+    },
+    {
+      "id": "rtnews",
+      "name": "RTNews"
+    },
+    {
+      "id": "rtp",
+      "name": "RTP"
+    },
+    {
+      "id": "rtrfm",
+      "name": "RTRFM"
+    },
+    {
+      "id": "rtvckaltura",
+      "name": "RTVCKaltura"
+    },
+    {
+      "id": "rtvcplay",
+      "name": "RTVCPlay"
+    },
+    {
+      "id": "rtvees",
+      "name": "rtve.es"
+    },
+    {
+      "id": "rtvslosi",
+      "name": "rtvslo.si"
+    },
+    {
+      "id": "rudo",
+      "name": "Rudo"
+    },
+    {
+      "id": "rule34",
+      "name": "Rule34"
+    },
+    {
+      "id": "ruptly",
+      "name": "Ruptly"
+    },
+    {
+      "id": "ruv",
+      "name": "Ruv"
+    },
+    {
+      "id": "ruvis",
+      "name": "ruv.is"
+    },
+    {
+      "id": "s4c",
+      "name": "S4C"
+    },
+    {
+      "id": "saktv",
+      "name": "SAKTV"
+    },
+    {
+      "id": "saktvlive",
+      "name": "SAKTVLive"
+    },
+    {
+      "id": "saktvrecordings",
+      "name": "SAKTVRecordings"
+    },
+    {
+      "id": "salttv",
+      "name": "SaltTV"
+    },
+    {
+      "id": "salttvlive",
+      "name": "SaltTVLive"
+    },
+    {
+      "id": "salttvrecordings",
+      "name": "SaltTVRecordings"
+    },
+    {
+      "id": "samplefocus",
+      "name": "SampleFocus"
+    },
+    {
+      "id": "sangiin",
+      "name": "Sangiin"
+    },
+    {
+      "id": "sapo",
+      "name": "Sapo"
+    },
+    {
+      "id": "sauceplus",
+      "name": "SaucePlus"
+    },
+    {
+      "id": "sbs",
+      "name": "SBS"
+    },
+    {
+      "id": "sbscokr",
+      "name": "sbs.co.kr"
+    },
+    {
+      "id": "schooltv",
+      "name": "schooltv"
+    },
+    {
+      "id": "science",
+      "name": "Science"
+    },
+    {
+      "id": "screen9",
+      "name": "Screen9"
+    },
+    {
+      "id": "screencast",
+      "name": "Screencast"
+    },
+    {
+      "id": "screencastomatic",
+      "name": "ScreencastOMatic"
+    },
+    {
+      "id": "screenrec",
+      "name": "ScreenRec"
+    },
+    {
+      "id": "scrippsnetworks",
+      "name": "ScrippsNetworks"
+    },
+    {
+      "id": "scrolller",
+      "name": "Scrolller"
+    },
+    {
+      "id": "sen",
+      "name": "Sen"
+    },
+    {
+      "id": "senategov",
+      "name": "senate.gov"
+    },
+    {
+      "id": "servus",
+      "name": "Servus"
+    },
+    {
+      "id": "seznamzpravy",
+      "name": "SeznamZpravy"
+    },
+    {
+      "id": "shahid",
+      "name": "Shahid"
+    },
+    {
+      "id": "sharepoint",
+      "name": "SharePoint"
+    },
+    {
+      "id": "shemaroome",
+      "name": "ShemarooMe"
+    },
+    {
+      "id": "shiey",
+      "name": "Shiey"
+    },
+    {
+      "id": "showroom",
+      "name": "showroom"
+    },
+    {
+      "id": "shugiinitvlive",
+      "name": "ShugiinItvLive"
+    },
+    {
+      "id": "shugiinitvliveroom",
+      "name": "ShugiinItvLiveRoom"
+    },
+    {
+      "id": "shugiinitvvod",
+      "name": "ShugiinItvVod"
+    },
+    {
+      "id": "sibnet",
+      "name": "Sibnet"
+    },
+    {
+      "id": "simplecast",
+      "name": "simplecast"
+    },
+    {
+      "id": "sina",
+      "name": "Sina"
+    },
+    {
+      "id": "skeb",
+      "name": "Skeb"
+    },
+    {
+      "id": "skyit",
+      "name": "sky.it"
+    },
+    {
+      "id": "skynewsau",
+      "name": "SkyNewsAU"
+    },
+    {
+      "id": "slideslive",
+      "name": "SlidesLive"
+    },
+    {
+      "id": "slutload",
+      "name": "Slutload"
+    },
+    {
+      "id": "smotrim",
+      "name": "smotrim"
+    },
+    {
+      "id": "softwhiteunderbelly",
+      "name": "SoftWhiteUnderbelly"
+    },
+    {
+      "id": "sonyliv",
+      "name": "SonyLIV"
+    },
+    {
+      "id": "soundgasm",
+      "name": "soundgasm"
+    },
+    {
+      "id": "southparkcccom",
+      "name": "southpark.cc.com"
+    },
+    {
+      "id": "southparkde",
+      "name": "southpark.de"
+    },
+    {
+      "id": "southparklat",
+      "name": "southpark.lat"
+    },
+    {
+      "id": "southparkstudioscouk",
+      "name": "southparkstudios.co.uk"
+    },
+    {
+      "id": "southparkstudioscombr",
+      "name": "southparkstudios.com.br"
+    },
+    {
+      "id": "southparkstudiosnu",
+      "name": "southparkstudios.nu"
+    },
+    {
+      "id": "sovietscloset",
+      "name": "SovietsCloset"
+    },
+    {
+      "id": "spankbang",
+      "name": "SpankBang"
+    },
+    {
+      "id": "spiegel",
+      "name": "Spiegel"
+    },
+    {
+      "id": "sport5",
+      "name": "Sport5"
+    },
+    {
+      "id": "sporteurope",
+      "name": "sporteurope"
+    },
+    {
+      "id": "sprout",
+      "name": "Sprout"
+    },
+    {
+      "id": "sr",
+      "name": "sr"
+    },
+    {
+      "id": "srgssrplay",
+      "name": "SRGSSRPlay"
+    },
+    {
+      "id": "stacommulive",
+      "name": "StacommuLive"
+    },
+    {
+      "id": "stacommuvod",
+      "name": "StacommuVOD"
+    },
+    {
+      "id": "stageplusvodconcert",
+      "name": "StagePlusVODConcert"
+    },
+    {
+      "id": "startv",
+      "name": "startv"
+    },
+    {
+      "id": "steamcommunity",
+      "name": "SteamCommunity"
+    },
+    {
+      "id": "steamcommunitybroadcast",
+      "name": "SteamCommunityBroadcast"
+    },
+    {
+      "id": "storyfire",
+      "name": "StoryFire"
+    },
+    {
+      "id": "streaks",
+      "name": "Streaks"
+    },
+    {
+      "id": "streamcz",
+      "name": "StreamCZ"
+    },
+    {
+      "id": "streetvoice",
+      "name": "StreetVoice"
+    },
+    {
+      "id": "stripchat",
+      "name": "Stripchat"
+    },
+    {
+      "id": "stv",
+      "name": "stv"
+    },
+    {
+      "id": "stvr",
+      "name": "stvr"
+    },
+    {
+      "id": "subsplash",
+      "name": "Subsplash"
+    },
+    {
+      "id": "sunporno",
+      "name": "SunPorno"
+    },
+    {
+      "id": "sverigesradio",
+      "name": "sverigesradio"
+    },
+    {
+      "id": "svt",
+      "name": "svt"
+    },
+    {
+      "id": "syfy",
+      "name": "Syfy"
+    },
+    {
+      "id": "sztvhu",
+      "name": "SztvHu"
+    },
+    {
+      "id": "taptapapp",
+      "name": "TapTapApp"
+    },
+    {
+      "id": "taptapappintl",
+      "name": "TapTapAppIntl"
+    },
+    {
+      "id": "taptapmoment",
+      "name": "TapTapMoment"
+    },
+    {
+      "id": "taptappostintl",
+      "name": "TapTapPostIntl"
+    },
+    {
+      "id": "tarangplus",
+      "name": "tarangplus"
+    },
+    {
+      "id": "tbs",
+      "name": "TBS"
+    },
+    {
+      "id": "tbsjp",
+      "name": "TBSJP"
+    },
+    {
+      "id": "tbsjpprogram",
+      "name": "TBSJPProgram"
+    },
+    {
+      "id": "teachablecourse",
+      "name": "TeachableCourse"
+    },
+    {
+      "id": "teamcoco",
+      "name": "Teamcoco"
+    },
+    {
+      "id": "teamtreehouse",
+      "name": "TeamTreeHouse"
+    },
+    {
+      "id": "techtvmitedu",
+      "name": "techtv.mit.edu"
+    },
+    {
+      "id": "tedtalk",
+      "name": "TedTalk"
+    },
+    {
+      "id": "tele13",
+      "name": "Tele13"
+    },
+    {
+      "id": "telebruxelles",
+      "name": "TeleBruxelles"
+    },
+    {
+      "id": "telecaribeplay",
+      "name": "TelecaribePlay"
+    },
+    {
+      "id": "telecinco",
+      "name": "Telecinco"
+    },
+    {
+      "id": "telegraaf",
+      "name": "Telegraaf"
+    },
+    {
+      "id": "telequebecemission",
+      "name": "TeleQuebecEmission"
+    },
+    {
+      "id": "telequebeclive",
+      "name": "TeleQuebecLive"
+    },
+    {
+      "id": "telequebecsquat",
+      "name": "TeleQuebecSquat"
+    },
+    {
+      "id": "telewebion",
+      "name": "Telewebion"
+    },
+    {
+      "id": "tennistv",
+      "name": "TennisTV"
+    },
+    {
+      "id": "tf1",
+      "name": "TF1"
+    },
+    {
+      "id": "theatercomplextown",
+      "name": "theatercomplextown"
+    },
+    {
+      "id": "thechosen",
+      "name": "TheChosen"
+    },
+    {
+      "id": "theguardianpodcast",
+      "name": "TheGuardianPodcast"
+    },
+    {
+      "id": "thehighwire",
+      "name": "TheHighWire"
+    },
+    {
+      "id": "theintercept",
+      "name": "TheIntercept"
+    },
+    {
+      "id": "theplatform",
+      "name": "ThePlatform"
+    },
+    {
+      "id": "theplatformfeed",
+      "name": "ThePlatformFeed"
+    },
+    {
+      "id": "thestar",
+      "name": "TheStar"
+    },
+    {
+      "id": "thesun",
+      "name": "TheSun"
+    },
+    {
+      "id": "theweather",
+      "name": "TheWeather"
+    },
+    {
+      "id": "thisamericanlife",
+      "name": "ThisAmericanLife"
+    },
+    {
+      "id": "thisoldhouse",
+      "name": "ThisOldHouse"
+    },
+    {
+      "id": "thisvid",
+      "name": "ThisVid"
+    },
+    {
+      "id": "thisvidmember",
+      "name": "ThisVidMember"
+    },
+    {
+      "id": "threespeak",
+      "name": "ThreeSpeak"
+    },
+    {
+      "id": "tlc",
+      "name": "TLC"
+    },
+    {
+      "id": "tmz",
+      "name": "TMZ"
+    },
+    {
+      "id": "tnaflix",
+      "name": "TNAFlix"
+    },
+    {
+      "id": "tnaflixnetwork",
+      "name": "TNAFlixNetwork"
+    },
+    {
+      "id": "toggle",
+      "name": "toggle"
+    },
+    {
+      "id": "toggo",
+      "name": "toggo"
+    },
+    {
+      "id": "tokfm",
+      "name": "tokfm"
+    },
+    {
+      "id": "toongoggles",
+      "name": "ToonGoggles"
+    },
+    {
+      "id": "toutv",
+      "name": "tou.tv"
+    },
+    {
+      "id": "travel",
+      "name": "Travel"
+    },
+    {
+      "id": "trtcocuk",
+      "name": "TrtCocuk"
+    },
+    {
+      "id": "trtworld",
+      "name": "TrtWorld"
+    },
+    {
+      "id": "trueid",
+      "name": "TrueID"
+    },
+    {
+      "id": "trunews",
+      "name": "TruNews"
+    },
+    {
+      "id": "truth",
+      "name": "Truth"
+    },
+    {
+      "id": "ttinglive",
+      "name": "ttinglive"
+    },
+    {
+      "id": "tubetugraz",
+      "name": "TubeTuGraz"
+    },
+    {
+      "id": "tubitv",
+      "name": "tubitv"
+    },
+    {
+      "id": "tvdfbde",
+      "name": "tv.dfb.de"
+    },
+    {
+      "id": "tv2",
+      "name": "TV2"
+    },
+    {
+      "id": "tv2dk",
+      "name": "TV2DK"
+    },
+    {
+      "id": "tv2dkbornholmplay",
+      "name": "TV2DKBornholmPlay"
+    },
+    {
+      "id": "tv2playhu",
+      "name": "tv2play.hu"
+    },
+    {
+      "id": "tv2playserieshu",
+      "name": "tv2playseries.hu"
+    },
+    {
+      "id": "tv4",
+      "name": "TV4"
+    },
+    {
+      "id": "tv5monde",
+      "name": "TV5MONDE"
+    },
+    {
+      "id": "tv5unis",
+      "name": "tv5unis"
+    },
+    {
+      "id": "tv8it",
+      "name": "tv8.it"
+    },
+    {
+      "id": "tvanouvelles",
+      "name": "TVANouvelles"
+    },
+    {
+      "id": "tvaplus",
+      "name": "tvaplus"
+    },
+    {
+      "id": "tvc",
+      "name": "TVC"
+    },
+    {
+      "id": "tver",
+      "name": "TVer"
+    },
+    {
+      "id": "tvigle",
+      "name": "tvigle"
+    },
+    {
+      "id": "tviplayer",
+      "name": "TVIPlayer"
+    },
+    {
+      "id": "tvnoe",
+      "name": "tvnoe"
+    },
+    {
+      "id": "tvo",
+      "name": "TVO"
+    },
+    {
+      "id": "tvopengr",
+      "name": "tvopengr"
+    },
+    {
+      "id": "tvp",
+      "name": "tvp"
+    },
+    {
+      "id": "tvplayhome",
+      "name": "TVPlayHome"
+    },
+    {
+      "id": "tvw",
+      "name": "tvw"
+    },
+    {
+      "id": "tweakers",
+      "name": "Tweakers"
+    },
+    {
+      "id": "twitcasting",
+      "name": "TwitCasting"
+    },
+    {
+      "id": "twitcastinglive",
+      "name": "TwitCastingLive"
+    },
+    {
+      "id": "txxx",
+      "name": "Txxx"
+    },
+    {
+      "id": "udn",
+      "name": "UDN"
+    },
+    {
+      "id": "ufctv",
+      "name": "UFCTV"
+    },
+    {
+      "id": "ulizaplayer",
+      "name": "UlizaPlayer"
+    },
+    {
+      "id": "ulizaportal",
+      "name": "UlizaPortal"
+    },
+    {
+      "id": "umg",
+      "name": "umg"
+    },
+    {
+      "id": "unistra",
+      "name": "Unistra"
+    },
+    {
+      "id": "unitednationswebtv",
+      "name": "UnitedNationsWebTv"
+    },
+    {
+      "id": "uolcombr",
+      "name": "uol.com.br"
+    },
+    {
+      "id": "uplynk",
+      "name": "uplynk"
+    },
+    {
+      "id": "urplay",
+      "name": "URPlay"
+    },
+    {
+      "id": "usanetwork",
+      "name": "USANetwork"
+    },
+    {
+      "id": "usatoday",
+      "name": "USAToday"
+    },
+    {
+      "id": "ustream",
+      "name": "ustream"
+    },
+    {
+      "id": "ustudio",
+      "name": "ustudio"
+    },
+    {
+      "id": "vbox7",
+      "name": "Vbox7"
+    },
+    {
+      "id": "veo",
+      "name": "Veo"
+    },
+    {
+      "id": "vevo",
+      "name": "Vevo"
+    },
+    {
+      "id": "vh1com",
+      "name": "vh1.com"
+    },
+    {
+      "id": "vhx",
+      "name": "vhx"
+    },
+    {
+      "id": "videa",
+      "name": "Videa"
+    },
+    {
+      "id": "videoarnessi",
+      "name": "video.arnes.si"
+    },
+    {
+      "id": "videogoogle",
+      "name": "video.google"
+    },
+    {
+      "id": "videoskyit",
+      "name": "video.sky.it"
+    },
+    {
+      "id": "videokenplayer",
+      "name": "VideoKenPlayer"
+    },
+    {
+      "id": "videopress",
+      "name": "VideoPress"
+    },
+    {
+      "id": "vidflex",
+      "name": "Vidflex"
+    },
+    {
+      "id": "vidio",
+      "name": "Vidio"
+    },
+    {
+      "id": "vidiolive",
+      "name": "VidioLive"
+    },
+    {
+      "id": "vidiopremier",
+      "name": "VidioPremier"
+    },
+    {
+      "id": "vidlii",
+      "name": "VidLii"
+    },
+    {
+      "id": "vidly",
+      "name": "Vidly"
+    },
+    {
+      "id": "vidsio",
+      "name": "vids.io"
+    },
+    {
+      "id": "vidyard",
+      "name": "Vidyard"
+    },
+    {
+      "id": "viewlift",
+      "name": "viewlift"
+    },
+    {
+      "id": "viidea",
+      "name": "Viidea"
+    },
+    {
+      "id": "vimp",
+      "name": "ViMP"
+    },
+    {
+      "id": "viously",
+      "name": "Viously"
+    },
+    {
+      "id": "visir",
+      "name": "Visir"
+    },
+    {
+      "id": "viu",
+      "name": "Viu"
+    },
+    {
+      "id": "viuottindonesia",
+      "name": "ViuOTTIndonesia"
+    },
+    {
+      "id": "vkplay",
+      "name": "VKPlay"
+    },
+    {
+      "id": "vkplaylive",
+      "name": "VKPlayLive"
+    },
+    {
+      "id": "vmtiktok",
+      "name": "vm.tiktok"
+    },
+    {
+      "id": "vocaroo",
+      "name": "Vocaroo"
+    },
+    {
+      "id": "vodplatform",
+      "name": "VODPlatform"
+    },
+    {
+      "id": "volejtv",
+      "name": "volejtv"
+    },
+    {
+      "id": "voxmedia",
+      "name": "VoxMedia"
+    },
+    {
+      "id": "voxmediavolume",
+      "name": "VoxMediaVolume"
+    },
+    {
+      "id": "vpro",
+      "name": "vpro"
+    },
+    {
+      "id": "vqq",
+      "name": "vqq"
+    },
+    {
+      "id": "vrsquare",
+      "name": "vrsquare"
+    },
+    {
+      "id": "vrt",
+      "name": "VRT"
+    },
+    {
+      "id": "vrtmax",
+      "name": "vrtmax"
+    },
+    {
+      "id": "vtm",
+      "name": "VTM"
+    },
+    {
+      "id": "vtv",
+      "name": "VTV"
+    },
+    {
+      "id": "vtvgo",
+      "name": "VTVGo"
+    },
+    {
+      "id": "vtxtv",
+      "name": "VTXTV"
+    },
+    {
+      "id": "vtxtvlive",
+      "name": "VTXTVLive"
+    },
+    {
+      "id": "vtxtvrecordings",
+      "name": "VTXTVRecordings"
+    },
+    {
+      "id": "walytv",
+      "name": "WalyTV"
+    },
+    {
+      "id": "walytvlive",
+      "name": "WalyTVLive"
+    },
+    {
+      "id": "walytvrecordings",
+      "name": "WalyTVRecordings"
+    },
+    {
+      "id": "washingtonpost",
+      "name": "washingtonpost"
+    },
+    {
+      "id": "wattv",
+      "name": "wat.tv"
+    },
+    {
+      "id": "watchespn",
+      "name": "WatchESPN"
+    },
+    {
+      "id": "wdr",
+      "name": "WDR"
+    },
+    {
+      "id": "wdrelefant",
+      "name": "WDRElefant"
+    },
+    {
+      "id": "wdrpage",
+      "name": "WDRPage"
+    },
+    {
+      "id": "webarchive",
+      "name": "web.archive"
+    },
+    {
+      "id": "webcamerapl",
+      "name": "Webcamerapl"
+    },
+    {
+      "id": "webcaster",
+      "name": "Webcaster"
+    },
+    {
+      "id": "webcasterfeed",
+      "name": "WebcasterFeed"
+    },
+    {
+      "id": "webofstories",
+      "name": "WebOfStories"
+    },
+    {
+      "id": "wetv",
+      "name": "wetv"
+    },
+    {
+      "id": "weverse",
+      "name": "Weverse"
+    },
+    {
+      "id": "weverselive",
+      "name": "WeverseLive"
+    },
+    {
+      "id": "weverselivetab",
+      "name": "WeverseLiveTab"
+    },
+    {
+      "id": "weversemedia",
+      "name": "WeverseMedia"
+    },
+    {
+      "id": "weversemediatab",
+      "name": "WeverseMediaTab"
+    },
+    {
+      "id": "weversemoment",
+      "name": "WeverseMoment"
+    },
+    {
+      "id": "wevidi",
+      "name": "WeVidi"
+    },
+    {
+      "id": "whyp",
+      "name": "Whyp"
+    },
+    {
+      "id": "wikimediaorg",
+      "name": "wikimedia.org"
+    },
+    {
+      "id": "wimbledon",
+      "name": "Wimbledon"
+    },
+    {
+      "id": "wimtv",
+      "name": "WimTV"
+    },
+    {
+      "id": "winsports",
+      "name": "WinSports"
+    },
+    {
+      "id": "wnl",
+      "name": "wnl"
+    },
+    {
+      "id": "worldstarhiphop",
+      "name": "WorldStarHipHop"
+    },
+    {
+      "id": "wppilot",
+      "name": "wppilot"
+    },
+    {
+      "id": "wrestleuniverse",
+      "name": "wrestleuniverse"
+    },
+    {
+      "id": "wsj",
+      "name": "WSJ"
+    },
+    {
+      "id": "wyborcza",
+      "name": "wyborcza"
+    },
+    {
+      "id": "wyborczapodcast",
+      "name": "WyborczaPodcast"
+    },
+    {
+      "id": "wykop",
+      "name": "wykop"
+    },
+    {
+      "id": "xhamster",
+      "name": "XHamster"
+    },
+    {
+      "id": "ximalaya",
+      "name": "ximalaya"
+    },
+    {
+      "id": "xnxx",
+      "name": "XNXX"
+    },
+    {
+      "id": "xxxymovies",
+      "name": "XXXYMovies"
+    },
+    {
+      "id": "yahoo",
+      "name": "yahoo"
+    },
+    {
+      "id": "yandex",
+      "name": "Yandex"
+    },
+    {
+      "id": "yandexdisk",
+      "name": "YandexDisk"
+    },
+    {
+      "id": "yandexmusic",
+      "name": "yandexmusic"
+    },
+    {
+      "id": "yandexvideopreview",
+      "name": "YandexVideoPreview"
+    },
+    {
+      "id": "yappy",
+      "name": "Yappy"
+    },
+    {
+      "id": "yfanefa",
+      "name": "yfanefa"
+    },
+    {
+      "id": "yleareena",
+      "name": "YleAreena"
+    },
+    {
+      "id": "youjizz",
+      "name": "YouJizz"
+    },
+    {
+      "id": "youku",
+      "name": "youku"
+    },
+    {
+      "id": "younow",
+      "name": "YouNow"
+    },
+    {
+      "id": "younowlive",
+      "name": "YouNowLive"
+    },
+    {
+      "id": "younowmoment",
+      "name": "YouNowMoment"
+    },
+    {
+      "id": "youporn",
+      "name": "YouPorn"
+    },
+    {
+      "id": "youporncategory",
+      "name": "YouPornCategory"
+    },
+    {
+      "id": "youpornstar",
+      "name": "YouPornStar"
+    },
+    {
+      "id": "youporntag",
+      "name": "YouPornTag"
+    },
+    {
+      "id": "zaiko",
+      "name": "Zaiko"
+    },
+    {
+      "id": "zaikoeticket",
+      "name": "ZaikoETicket"
+    },
+    {
+      "id": "zan",
+      "name": "zan"
+    },
+    {
+      "id": "zapiks",
+      "name": "Zapiks"
+    },
+    {
+      "id": "zattoo",
+      "name": "Zattoo"
+    },
+    {
+      "id": "zattoolive",
+      "name": "ZattooLive"
+    },
+    {
+      "id": "zattoomovies",
+      "name": "ZattooMovies"
+    },
+    {
+      "id": "zattoorecordings",
+      "name": "ZattooRecordings"
+    },
+    {
+      "id": "zenporn",
+      "name": "ZenPorn"
+    },
+    {
+      "id": "zetlanddk",
+      "name": "ZetlandDK"
+    },
+    {
+      "id": "zingmp3",
+      "name": "zingmp3"
+    },
+    {
+      "id": "zype",
+      "name": "Zype"
+    }
+  ]
+}

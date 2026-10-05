@@ -10,10 +10,11 @@
 - Agent services, pricing rules and limits: https://api.freesavevideo.online/agent/v1/capabilities
 - REST OpenAPI: https://api.freesavevideo.online/agent/openapi.json
 - MCP Streamable HTTP endpoint: https://api.freesavevideo.online/agent/mcp
-- Supported tools: get_capabilities, get_balance, resolve_media. Website features are not all exposed as agent tools.
+- Supported tools: get_capabilities, get_balance, resolve_media, list_payment_products, create_checkout, get_checkout. Website features are not all exposed as agent tools.
 - The user creates a scoped bearer credential at https://freesavevideo.online/en/account/agents (Chinese: https://freesavevideo.online/zh/account/agents). Never request their password or Clerk session.
 - MCP clients need custom Authorization header support; OAuth-only clients cannot connect through this manual credential flow.
-- Resolution can spend explicitly authorized points or membership quota. There is no automatic recharge or agent checkout in this phase.
+- Resolution can spend explicitly authorized points or membership quota. There is no automatic recharge.
+- With separate purchase permissions and currency/amount limits, agents can create unpaid orders. Present the confirmationUrl to the user; the user signs in, confirms and pays. Poll get_checkout at most once every 15 seconds and resume only when readyToContinue is true. Never use a return-page redirect as proof of payment.
 - Reuse idempotencyKey on immediate retries; replay follows a one-hour window. Saving the file is the caller's responsibility, and media URLs may expire.
 - Direct Bridge remains direct-first, extension-second and browser-handoff-last; do not automatically fall back to an API tunnel.
 

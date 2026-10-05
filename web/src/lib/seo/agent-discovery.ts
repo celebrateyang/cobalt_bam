@@ -6,9 +6,11 @@ export const personalAgentDiscovery = {
     capabilitiesUrl: 'https://api.freesavevideo.online/agent/v1/capabilities',
     openApiUrl: 'https://api.freesavevideo.online/agent/openapi.json',
     mcpUrl: 'https://api.freesavevideo.online/agent/mcp',
-    operations: ['get_capabilities', 'get_balance', 'resolve_media'],
+    operations: ['get_capabilities', 'get_balance', 'resolve_media', 'list_payment_products', 'create_checkout', 'get_checkout'],
     authentication: 'User-created scoped bearer credential; custom header support required for MCP.',
     automaticRecharge: false,
+    checkoutSupported: true,
+    userConfirmationRequired: true,
 } as const;
 
 export const agentDiscoveryLinkHeader = [

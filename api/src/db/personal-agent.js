@@ -29,6 +29,19 @@ export const ensurePersonalAgentSchema = () => {
         );
         CREATE INDEX IF NOT EXISTS personal_agent_calls_grant ON personal_agent_calls(grant_id,started_at);
         CREATE INDEX IF NOT EXISTS personal_agent_calls_user ON personal_agent_calls(user_id,started_at);
+        ALTER TABLE personal_agent_grants ADD COLUMN IF NOT EXISTS purchase_currency TEXT NOT NULL DEFAULT 'CNY';
+        ALTER TABLE personal_agent_grants ADD COLUMN IF NOT EXISTS max_purchase_amount INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE personal_agent_grants ADD COLUMN IF NOT EXISTS daily_purchase_amount INTEGER NOT NULL DEFAULT 0;
+        CREATE TABLE IF NOT EXISTS personal_agent_checkouts (
+            id UUID PRIMARY KEY, grant_id UUID NOT NULL REFERENCES personal_agent_grants(id),
+            user_id INTEGER NOT NULL REFERENCES users(id), idempotency_key TEXT NOT NULL,
+            kind TEXT NOT NULL, provider TEXT NOT NULL, product_key TEXT NOT NULL,
+            product JSONB NOT NULL, amount INTEGER NOT NULL, currency TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'AWAITING_CONFIRMATION', created_at BIGINT NOT NULL,
+            expires_at BIGINT NOT NULL, order_id INTEGER, error_code TEXT,
+            UNIQUE(grant_id,idempotency_key)
+        );
+        CREATE INDEX IF NOT EXISTS personal_agent_checkouts_grant ON personal_agent_checkouts(grant_id,created_at);
     `).catch(error => { schemaPromise = null; throw error; });
     return schemaPromise;
 };
@@ -50,15 +63,16 @@ export const createGrant = async (userId, input) => transaction(async client => 
     if (Number(count.rows[0].count) >= 10) throw agentError("AGENT_GRANT_LIMIT", 409);
     const token = newToken();
     const result = await client.query(`INSERT INTO personal_agent_grants
-        (id,user_id,name,token_hash,token_prefix,scopes,daily_calls,max_points_per_call,allow_membership,created_at,expires_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        (id,user_id,name,token_hash,token_prefix,scopes,daily_calls,max_points_per_call,allow_membership,created_at,expires_at,purchase_currency,max_purchase_amount,daily_purchase_amount)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
         [randomUUID(), userId, input.name, tokenHash(token), token.slice(0,18), JSON.stringify(input.scopes),
-            input.dailyCalls, input.maxPointsPerCall, input.allowMembership, now, now + input.expiresInDays * 86400000]);
+            input.dailyCalls, input.maxPointsPerCall, input.allowMembership, now, now + input.expiresInDays * 86400000,
+            input.purchaseCurrency, input.maxPurchaseAmount, input.dailyPurchaseAmount]);
     return { id: result.rows[0].id, token };
 });
 export const listGrants = async userId => {
     await ensurePersonalAgentSchema();
-    return (await query(`SELECT id,name,token_prefix,scopes,daily_calls,max_points_per_call,allow_membership,created_at,expires_at,revoked_at
+    return (await query(`SELECT id,name,token_prefix,scopes,daily_calls,max_points_per_call,allow_membership,created_at,expires_at,revoked_at,purchase_currency,max_purchase_amount,daily_purchase_amount
         FROM personal_agent_grants WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100`, [userId])).rows;
 };
 export const revokeGrant = async (userId, id) => {
@@ -98,3 +112,49 @@ export const listCalls = async userId => {
     return (await query(`SELECT c.id,c.grant_id,g.name,c.operation,c.source_host,c.started_at,c.completed_at,c.http_status,c.outcome,c.error_code,c.points_charged
         FROM personal_agent_calls c JOIN personal_agent_grants g ON g.id=c.grant_id WHERE c.user_id=$1 ORDER BY c.started_at DESC LIMIT 100`, [userId])).rows;
 };
+
+export const createCheckout = async (grant, input, product) => transaction(async client => {
+    await client.query("SELECT id FROM users WHERE id=$1 FOR UPDATE", [grant.user_id]);
+    const now = Date.now();
+    const current = (await client.query(`SELECT g.* FROM personal_agent_grants g JOIN users u ON u.id=g.user_id
+        WHERE g.id=$1 AND g.revoked_at IS NULL AND g.expires_at>$2 AND NOT u.is_disabled`, [grant.id,now])).rows[0];
+    if (!current) throw agentError("AGENT_AUTH_REVOKED",403);
+    if (!current.scopes.includes("payments:create")) throw agentError("AGENT_SCOPE_DENIED",403);
+    const previous = (await client.query("SELECT * FROM personal_agent_checkouts WHERE grant_id=$1 AND idempotency_key=$2", [grant.id,input.idempotencyKey])).rows[0];
+    if (previous) {
+        if (previous.kind!==input.kind || previous.provider!==input.provider || previous.product_key!==input.productKey)
+            throw agentError("AGENT_IDEMPOTENCY_CONFLICT",409);
+        return previous;
+    }
+    if (!Number.isSafeInteger(product.amountFen) || product.amountFen<=0 || product.currency!==current.purchase_currency || product.amountFen>current.max_purchase_amount)
+        throw agentError("AGENT_PURCHASE_LIMIT",403);
+    const total = (await client.query("SELECT COALESCE(SUM(amount),0) AS total FROM personal_agent_checkouts WHERE grant_id=$1 AND created_at>=$2", [grant.id,Math.floor(now/86400000)*86400000])).rows[0].total;
+    if (Number(total)+product.amountFen>current.daily_purchase_amount) throw agentError("AGENT_PURCHASE_DAILY_LIMIT",403);
+    return (await client.query(`INSERT INTO personal_agent_checkouts
+        (id,grant_id,user_id,idempotency_key,kind,provider,product_key,product,amount,currency,created_at,expires_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+        [randomUUID(),grant.id,grant.user_id,input.idempotencyKey,input.kind,input.provider,input.productKey,
+            JSON.stringify(product),product.amountFen,product.currency,now,Math.min(now+30*60000,Number(current.expires_at))])).rows[0];
+});
+export const getCheckout = async (id, userId, grantId) => {
+    await ensurePersonalAgentSchema();
+    return (await query(`SELECT * FROM personal_agent_checkouts WHERE id=$1 AND user_id=$2
+        ${grantId ? "AND grant_id=$3" : ""}`, grantId ? [id,userId,grantId] : [id,userId])).rows[0];
+};
+export const claimCheckout = async (id, userId) => transaction(async client => {
+    const checkout = (await client.query("SELECT * FROM personal_agent_checkouts WHERE id=$1 AND user_id=$2 FOR UPDATE", [id,userId])).rows[0];
+    if (!checkout) throw agentError("NOT_FOUND",404);
+    if (checkout.state!=="AWAITING_CONFIRMATION") return { checkout, claimed:false };
+    if (Number(checkout.expires_at)<=Date.now()) throw agentError("AGENT_CHECKOUT_EXPIRED",410);
+    const grant = (await client.query(`SELECT g.* FROM personal_agent_grants g JOIN users u ON u.id=g.user_id
+        WHERE g.id=$1 AND g.revoked_at IS NULL AND g.expires_at>$2 AND NOT u.is_disabled`, [checkout.grant_id,Date.now()])).rows[0];
+    if (!grant) throw agentError("AGENT_AUTH_REVOKED",403);
+    if (!grant.scopes.includes("payments:create")) throw agentError("AGENT_SCOPE_DENIED",403);
+    if (checkout.currency!==grant.purchase_currency || checkout.amount>grant.max_purchase_amount) throw agentError("AGENT_PURCHASE_LIMIT",403);
+    // Persist before provider I/O. A crash/timeout must never create a second order on retry.
+    await client.query("UPDATE personal_agent_checkouts SET state='CREATING' WHERE id=$1", [id]);
+    return { checkout:{...checkout,state:"CREATING"}, claimed:true };
+});
+export const finishCheckout = async (id, orderId, errorCode) => query(`UPDATE personal_agent_checkouts
+    SET state=$2,order_id=$3,error_code=$4 WHERE id=$1 AND state='CREATING'`,
+    [id,orderId ? "PENDING_PAYMENT" : "NEEDS_REVIEW",orderId || null,errorCode || null]);

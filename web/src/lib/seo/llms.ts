@@ -82,6 +82,7 @@ Personal agent access (REST and MCP supported):
 - MCP Streamable HTTP: ${capabilityPayload.personalAgent.mcpUrl}
 - Authentication: user-created scoped bearer credential. Never request the user's password or Clerk session.
 - Media resolution may spend user-authorized points or membership quota. There is no automatic recharge.
+- Tools list_payment_products, create_checkout and get_checkout support user-confirmed purchases. Purchase scopes and currency/amount limits are separate from download permissions. Present confirmationUrl, wait for readyToContinue, then resume the original task. Never infer payment from a browser redirect.
 - Reuse the same idempotencyKey on retries. Saving files is the caller's responsibility; URLs may expire.
 
 Languages:

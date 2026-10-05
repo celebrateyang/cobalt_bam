@@ -143,7 +143,7 @@ test("real PostgreSQL schema, HTTP authorization and MCP client complete isolate
         const transport = new StreamableHTTPClientTransport(new URL(`${origin}/agent/mcp`),{requestInit:{headers:{Authorization:`Bearer ${grant.token}`}}});
         try {
             await client.connect(transport);
-            const list = await client.listTools();assert.deepEqual(list.tools.map(tool=>tool.name).sort(),["get_balance","get_capabilities","resolve_media"]);
+            const list = await client.listTools();assert.deepEqual(list.tools.map(tool=>tool.name).sort(),["get_balance","get_capabilities","list_payment_products","resolve_media"]);
             const balance = await client.callTool({name:"get_balance",arguments:{}});
             assert.equal(JSON.parse(balance.content[0].text).data.points,98);
             const media = await client.callTool({name:"resolve_media",arguments:{...input,idempotencyKey:"mcp_task_123456"}});
@@ -159,7 +159,7 @@ test("real PostgreSQL schema, HTTP authorization and MCP client complete isolate
         const transport = new StreamableHTTPClientTransport(new URL(`${origin}/agent/mcp`),{requestInit:{headers:{Authorization:`Bearer ${readOnly.token}`}}});
         try {
             await client.connect(transport);
-            assert.deepEqual((await client.listTools()).tools.map(tool=>tool.name).sort(),["get_balance","get_capabilities"]);
+            assert.deepEqual((await client.listTools()).tools.map(tool=>tool.name).sort(),["get_balance","get_capabilities","list_payment_products"]);
             const denied = await client.callTool({name:"resolve_media",arguments:input});
             assert.equal(denied.isError,true);assert.equal(resolutions,2);
             await db.revokeGrant(2,readOnly.id);

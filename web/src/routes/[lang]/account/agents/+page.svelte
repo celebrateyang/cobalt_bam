@@ -5,12 +5,14 @@
     import { clerkEnabled, clerkLoaded, clerkUser, initClerk, getClerkToken, signIn } from '$lib/state/clerk';
 
     type Grant = { id: string; name: string; scopes: string[]; daily_calls: number; max_points_per_call: number;
-        allow_membership: boolean; expires_at: string; revoked_at: string | null };
+        allow_membership: boolean; expires_at: string; revoked_at: string | null;
+        purchase_currency:string; max_purchase_amount:number; daily_purchase_amount:number };
     type Call = { id: string; name: string; operation: string; source_host: string | null; started_at: string;
         outcome: string; error_code: string | null; points_charged: number };
     let grants: Grant[] = [], calls: Call[] = [];
     let name = '', expiresInDays = 7, dailyCalls = 10, maxPointsPerCall = 0;
     let allowResolve = true, allowMembership = false, consent = false;
+    let allowPurchase=false, purchaseCurrency='CNY', maxPurchaseAmount=0, dailyPurchaseAmount=0;
     let token = '', busy = false, error = '', copied = false;
     let loadedUser = '', mounted = false, disposed = false;
     $: chinese = $page.params.lang === 'zh';
@@ -44,7 +46,9 @@
         try {
             const data = await request('/grants', 'POST', { name, expiresInDays, dailyCalls, maxPointsPerCall,
                 allowMembership: allowResolve && allowMembership,
-                scopes: allowResolve ? ['balance:read', 'media:resolve'] : ['balance:read'] });
+                purchaseCurrency, maxPurchaseAmount:allowPurchase ? Math.round(maxPurchaseAmount*100) : 0,
+                dailyPurchaseAmount:allowPurchase ? Math.round(dailyPurchaseAmount*100) : 0,
+                scopes: ['balance:read', ...(allowResolve ? ['media:resolve'] : []), ...(allowPurchase ? ['payments:create','payments:read'] : [])] });
             if (disposed || expectedUser !== $clerkUser?.id) return;
             token = data.token; consent = false;
             const lists = await Promise.all([request('/grants'), request('/calls')]);
@@ -103,7 +107,16 @@
                 <label class="checkbox"><input type="checkbox" bind:checked={allowResolve} />{copy('Allow media resolution', '\u5141\u8bb8\u5a92\u4f53\u89e3\u6790')}</label>
                 <label class="checkbox"><input type="checkbox" bind:checked={allowMembership} disabled={!allowResolve} />{copy('Allow use of my membership download quota', '\u5141\u8bb8\u4f7f\u7528\u6211\u7684\u4f1a\u5458\u4e0b\u8f7d\u989d\u5ea6')}</label>
                 <p>{copy('Successful resolution costs 2 points per started minute (2 when duration is unknown), or uses an authorized membership download. Saving is performed by your agent. No automatic recharge. With a 0-point limit and membership disabled, paid resolutions are rejected.', '\u89e3\u6790\u6210\u529f\u540e\uff0c\u6bcf\u5206\u949f\u6536\u53d6 2 \u79ef\u5206\uff0c\u4e0d\u8db3\u4e00\u5206\u949f\u5411\u4e0a\u53d6\u6574\uff08\u65f6\u957f\u672a\u77e5\u6536\u53d6 2 \u79ef\u5206\uff09\uff0c\u6216\u4f7f\u7528\u5df2\u6388\u6743\u7684\u4f1a\u5458\u4e0b\u8f7d\u989d\u5ea6\u3002\u4fdd\u5b58\u6587\u4ef6\u7531 agent \u5b8c\u6210\uff0c\u4e0d\u4f1a\u81ea\u52a8\u5145\u503c\u3002\u79ef\u5206\u4e0a\u9650\u4e3a 0 \u4e14\u672a\u5f00\u542f\u4f1a\u5458\u6743\u9650\u65f6\uff0c\u9700\u4ed8\u8d39\u7684\u89e3\u6790\u4f1a\u88ab\u62d2\u7edd\u3002')}</p>
-                <label class="checkbox"><input type="checkbox" required bind:checked={consent} />{copy('I authorize these permissions and limits, including the stated point or membership usage.', '\u6211\u6388\u6743\u4ee5\u4e0a\u6743\u9650\u548c\u9650\u989d\uff0c\u5305\u62ec\u6240\u8bf4\u660e\u7684\u79ef\u5206\u6216\u4f1a\u5458\u989d\u5ea6\u4f7f\u7528\u3002')}</label>
+                <label class="checkbox"><input type="checkbox" bind:checked={allowPurchase} />{copy('Allow unpaid purchase orders and order status queries (you confirm and pay)', '\u5141\u8bb8\u521b\u5efa\u5f85\u4ed8\u6b3e\u8ba2\u5355\u548c\u67e5\u8be2\u8ba2\u5355\uff08\u7531\u4f60\u786e\u8ba4\u5e76\u4ed8\u6b3e\uff09')}</label>
+                {#if allowPurchase}
+                    <div class="fields">
+                        <label>{copy('Purchase currency','\u8d2d\u4e70\u5e01\u79cd')}<select bind:value={purchaseCurrency}><option>CNY</option><option>USD</option></select></label>
+                        <label>{copy('Maximum per order','\u5355\u7b14\u8ba2\u5355\u91d1\u989d\u4e0a\u9650')} ({purchaseCurrency})<input type="number" min="0.01" max="1000" step="0.01" required bind:value={maxPurchaseAmount} /></label>
+                        <label>{copy('Daily new order amount','\u6bcf\u65e5\u65b0\u5efa\u8ba2\u5355\u91d1\u989d\u4e0a\u9650')} ({purchaseCurrency})<input type="number" min="0.01" max="1000" step="0.01" required bind:value={dailyPurchaseAmount} /></label>
+                    </div>
+                    <p>{copy('Every order needs your confirmation and payment. Daily order amount resets at UTC 00:00, includes failed and expired orders, and is separate from download points. Purchasing membership does not enable membership use for this credential.','\u6bcf\u7b14\u8ba2\u5355\u90fd\u9700\u8981\u4f60\u786e\u8ba4\u5e76\u4ed8\u6b3e\u3002\u6bcf\u65e5\u8ba2\u5355\u91d1\u989d\u5728 UTC 00:00 \u91cd\u7f6e\uff0c\u5305\u542b\u5931\u8d25\u548c\u8fc7\u671f\u8ba2\u5355\uff0c\u4e0e\u4e0b\u8f7d\u79ef\u5206\u9650\u989d\u72ec\u7acb\u3002\u8d2d\u4e70\u4f1a\u5458\u4e0d\u4f1a\u81ea\u52a8\u5f00\u542f\u6b64\u51ed\u636e\u7684\u4f1a\u5458\u4f7f\u7528\u6743\u9650\u3002')}</p>
+                {/if}
+                <label class="checkbox"><input type="checkbox" required bind:checked={consent} />{copy('I authorize the permissions and limits above, including download usage and any unpaid orders that I must confirm and pay.', '\u6211\u6388\u6743\u4ee5\u4e0a\u6743\u9650\u548c\u9650\u989d\uff0c\u5305\u62ec\u4e0b\u8f7d\u989d\u5ea6\u4f7f\u7528\u53ca\u9700\u7531\u6211\u786e\u8ba4\u5e76\u4ed8\u6b3e\u7684\u5f85\u4ed8\u6b3e\u8ba2\u5355\u3002')}</label>
                 <button disabled={busy || !consent}>{copy('Create credential', '\u521b\u5efa\u51ed\u636e')}</button>
             </form>
             {#if token}
@@ -126,6 +139,7 @@
                     <p>{grant.daily_calls} {copy('calls/day', '\u6b21/\u5929')} &middot; {grant.max_points_per_call} {copy('points/call', '\u79ef\u5206/\u6b21')} &middot;
                         {copy('Membership', '\u4f1a\u5458\u989d\u5ea6')}: {grant.allow_membership ? copy('Allowed', '\u5141\u8bb8') : copy('Disabled', '\u7981\u7528')}</p>
                     <p>{copy('Expires', '\u5230\u671f')}: {formatDate(grant.expires_at)}</p>
+                    {#if grant.scopes.includes('payments:create')}<p>{copy('Purchase order limits','\u8d2d\u4e70\u8ba2\u5355\u9650\u989d')}: {grant.purchase_currency} {(grant.max_purchase_amount/100).toFixed(2)} / {copy('order','\u7b14')}, {(grant.daily_purchase_amount/100).toFixed(2)} / {copy('day','\u5929')}</p>{/if}
                     {#if grant.revoked_at}<span>{copy('Revoked', '\u5df2\u64a4\u9500')}</span>
                     {:else if Number(grant.expires_at) <= Date.now()}<span>{copy('Expired', '\u5df2\u8fc7\u671f')}</span>
                     {:else}<button type="button" disabled={busy} on:click={() => revoke(grant.id)}>{copy('Revoke access', '\u64a4\u9500\u6388\u6743')}</button>{/if}

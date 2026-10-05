@@ -34,7 +34,7 @@
         <h2>Connect via MCP or REST</h2>
         <p>MCP endpoint: <code>{agent.mcpUrl}</code></p>
         <p>The endpoint uses stateless Streamable HTTP. Use a client that supports an Authorization header with a user-created credential. OAuth-only clients cannot connect using this credential flow; use REST if your agent can make authorized HTTP requests.</p>
-        <p>Tools: <code>get_capabilities</code>, <code>get_balance</code> and <code>resolve_media</code>. Only authorized tools appear in the tool list.</p>
+        <p>Tools: <code>get_capabilities</code>, <code>get_balance</code>, <code>resolve_media</code>, <code>list_payment_products</code>, <code>create_checkout</code> and <code>get_checkout</code>. Only authorized account tools appear in the tool list.</p>
         <pre><code>{`GET /agent/v1/balance
 Authorization: Bearer <user-created-credential>
 
@@ -48,9 +48,15 @@ Content-Type: application/json
 
     <section>
         <h2>Spending and delivery</h2>
-        <p>Successful resolution can spend the user's authorized points or count against an authorized membership quota. Default spending permission is zero points, with membership use disabled. There is no automatic recharge or agent checkout in this phase; the user completes payment on the website.</p>
+        <p>Successful resolution can spend the user's authorized points or count against an authorized membership quota. Default spending permission is zero points, with membership use disabled. There is no automatic recharge.</p>
         <p>The agent saves the file after resolution. Check whether the result is a redirect, tunnel, picker or local-processing result. Media links can expire. Do not report a file as saved until saving completes.</p>
         <p>For Direct Bridge services such as TikTok, use the returned direct media URL. If browser fetch is blocked by CORS, use the browser extension or a user browser handoff. Do not silently fall back to an API tunnel.</p>
+    </section>
+    <section>
+        <h2>User-confirmed purchases</h2>
+        <p>List products with <code>list_payment_products</code> (REST: <code>GET /agent/v1/products?kind=credits&amp;provider=wechat</code>). Purchase orders require separate <code>payments:create</code> and <code>payments:read</code> scopes, a currency, a per-order amount ceiling and a daily new-order amount ceiling. Amounts in API requests are minor units: CNY fen or USD cents. Defaults are zero; existing credentials have no purchase permission.</p>
+        <p>Create an unpaid order with <code>create_checkout</code> (REST: <code>POST /agent/v1/checkouts</code>) using kind, provider, productKey and idempotencyKey. Reuse that key on every retry; order deduplication is durable and a different product conflicts. Present the returned confirmationUrl and amount to the user. The user signs in to the website, reviews the order, confirms it and completes payment.</p>
+        <p>Query <code>get_checkout</code> (REST: <code>GET /agent/v1/checkouts/&lt;checkoutId&gt;</code>) at most once every 15 seconds. Continue only when <code>readyToContinue</code> is true, based on verified payment fulfillment. A browser return URL does not prove payment. Read balance and resume the original task with the same download permissions; buying membership does not authorize membership use. For a previously failed resolution, use a new task key after checking the failure outcome. Never rerun a completed download outside its one-hour replay window.</p>
     </section>
     <p>This interface does not imply registration or compatibility with every agent platform. Verify your client's transport and credential support.</p>
 </main>

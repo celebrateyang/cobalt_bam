@@ -3,12 +3,24 @@ import { z } from "zod";
 
 export const grantSchema = z.object({
     name: z.string().trim().min(1).max(80),
-    scopes: z.array(z.enum(["balance:read", "media:resolve"])).min(1).max(2).transform(v => [...new Set(v)]),
+    scopes: z.array(z.enum(["balance:read", "media:resolve", "payments:create", "payments:read"])).min(1).max(4).transform(v => [...new Set(v)]),
     expiresInDays: z.number().int().min(1).max(30).default(7),
     dailyCalls: z.number().int().min(1).max(100).default(10),
     maxPointsPerCall: z.number().int().min(0).max(1000).default(0),
     allowMembership: z.boolean().default(false),
+    purchaseCurrency: z.enum(["CNY", "USD"]).default("CNY"),
+    maxPurchaseAmount: z.number().int().min(0).max(100000).default(0),
+    dailyPurchaseAmount: z.number().int().min(0).max(100000).default(0),
 }).strict();
+export const productSchema = z.object({
+    kind: z.enum(["credits", "memberships"]),
+    provider: z.enum(["wechat", "nowpayments", "buymeacoffee"]).default("wechat"),
+}).strict();
+export const checkoutSchema = productSchema.extend({
+    productKey: z.string().min(1).max(80),
+    idempotencyKey: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/),
+}).strict();
+export const checkoutStatusSchema = z.object({ checkoutId: z.string().uuid() }).strict();
 export const resolveSchema = z.object({
     url: z.string().url().max(4096).refine(value => {
         const url = new URL(value);

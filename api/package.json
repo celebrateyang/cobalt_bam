@@ -10,7 +10,7 @@
     },
     "scripts": {
         "personal-agent:init": "node src/util/init-personal-agent.js",
-        "test:personal-agent": "node --test src/personal-agent/personal-agent.test.js",
+        "test:personal-agent": "node --test src/personal-agent/personal-agent.test.js src/personal-agent/checkout.test.js src/personal-agent/payment-adapter.test.js",
         "start": "node src/cobalt",
         "dev": "node dev-start.js",
         "setup-youtube": "node setup-youtube-auth.js",

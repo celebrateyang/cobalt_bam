@@ -20,6 +20,7 @@ import {
     markMembershipOrderPaid,
     updateMembershipOrderProviderData,
     updatePendingMembershipOrder,
+    getMembershipCheckoutEntitlements,
 } from "../db/membership-orders.js";
 import {
     createWechatNativeTransaction,
@@ -59,6 +60,21 @@ import {
 } from "../payments/buymeacoffee.js";
 
 const router = express.Router();
+// These identities can only be supplied by in-process code, never HTTP input.
+const internalUsers = new WeakMap();
+const internalCheckoutIds = new WeakMap();
+const paymentMetadata = req => internalCheckoutIds.has(req) ? {agent_checkout_id:internalCheckoutIds.get(req)} : {};
+const userPaymentHandlers = new Map();
+const paymentAuth = req => internalUsers.has(req) ? { userId: internalUsers.get(req).clerk_user_id } : getAuth(req);
+const paymentUser = async req => {
+    if (internalUsers.has(req)) return internalUsers.get(req);
+    const profile = await clerkClient.users.getUser(getAuth(req).userId);
+    return upsertUserFromClerk(mapClerkUser(profile));
+};
+const userPaymentRoute = (method, paths, handler) => {
+    for (const path of Array.isArray(paths) ? paths : [paths]) userPaymentHandlers.set(`${method}:${path}`,handler);
+    router[method](paths,handler);
+};
 
 const WECHAT_CREDIT_PRODUCTS = [
     {
@@ -838,7 +854,7 @@ router.post("/wechat/notify", async (req, res) => {
 });
 
 if (!isClerkAuthConfigured) {
-    router.post("/credits/wechat/native", (_, res) => {
+    userPaymentRoute("post", "/credits/wechat/native", (_, res) => {
         return jsonError(
             res,
             501,
@@ -847,7 +863,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post("/credits/nowpayments", (_, res) => {
+    userPaymentRoute("post", "/credits/nowpayments", (_, res) => {
         return jsonError(
             res,
             501,
@@ -856,7 +872,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post(["/credits/buymeacoffee", "/memberships/buymeacoffee"], (_, res) => {
+    userPaymentRoute("post", ["/credits/buymeacoffee", "/memberships/buymeacoffee"], (_, res) => {
         return jsonError(
             res,
             501,
@@ -865,7 +881,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post("/memberships/wechat/native", (_, res) => {
+    userPaymentRoute("post", "/memberships/wechat/native", (_, res) => {
         return jsonError(
             res,
             501,
@@ -874,7 +890,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.post("/memberships/nowpayments", (_, res) => {
+    userPaymentRoute("post", "/memberships/nowpayments", (_, res) => {
         return jsonError(
             res,
             501,
@@ -883,7 +899,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.get("/credits/orders/:id", (_, res) => {
+    userPaymentRoute("get", "/credits/orders/:id", (_, res) => {
         return jsonError(
             res,
             501,
@@ -892,7 +908,7 @@ if (!isClerkAuthConfigured) {
         );
     });
 
-    router.get("/memberships/orders/:id", (_, res) => {
+    userPaymentRoute("get", "/memberships/orders/:id", (_, res) => {
         return jsonError(
             res,
             501,
@@ -903,9 +919,9 @@ if (!isClerkAuthConfigured) {
 } else {
     router.use(clerkMiddleware());
 
-    router.post(["/credits/buymeacoffee", "/memberships/buymeacoffee"], async (req, res) => {
+    userPaymentRoute("post", ["/credits/buymeacoffee", "/memberships/buymeacoffee"], async (req, res) => {
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -922,8 +938,7 @@ if (!isClerkAuthConfigured) {
             if (!product || !isBuyMeACoffeeProductAvailable(product) || product.kind !== (isMembership ? "membership" : "credit")) {
                 return jsonError(res, 400, "INVALID_PRODUCT", "Invalid payment product");
             }
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const user = await paymentUser(req);
             if (isMembership) {
                 const active = await getActiveMembershipForUser(user.id);
                 if (active?.entitlements?.some((key) => !product.entitlements.includes(key))) {
@@ -946,6 +961,7 @@ if (!isClerkAuthConfigured) {
                 outTradeNo,
                 providerData: {
                     ...(attribution ? { attribution } : {}),
+                    ...paymentMetadata(req),
                     buymeacoffee_product_id: product.productId,
                     checkout_url: product.checkoutUrl,
                 },
@@ -967,10 +983,10 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.post("/credits/nowpayments", async (req, res) => {
+    userPaymentRoute("post", "/credits/nowpayments", async (req, res) => {
         let createdOrder = null;
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1001,8 +1017,7 @@ if (!isClerkAuthConfigured) {
                     "Invalid checkout return URL",
                 );
             }
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const user = await paymentUser(req);
             const outTradeNo = `cpt_${nanoid(20)}`;
             const attribution = sanitizeAttribution(req.body?.attribution);
             createdOrder = await createCreditOrder({
@@ -1016,6 +1031,7 @@ if (!isClerkAuthConfigured) {
                 outTradeNo,
                 providerData: {
                     ...(attribution ? { attribution } : {}),
+                    ...paymentMetadata(req),
                     checkout_mode: "hosted_invoice",
                     expected_outcome_currency: getNowPaymentsPayoutCurrency(),
                 },
@@ -1107,10 +1123,10 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.post("/memberships/nowpayments", async (req, res) => {
+    userPaymentRoute("post", "/memberships/nowpayments", async (req, res) => {
         let createdOrder = null;
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1143,8 +1159,7 @@ if (!isClerkAuthConfigured) {
                     "Invalid checkout return URL",
                 );
             }
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const user = await paymentUser(req);
             await ensureMembershipCheckoutPlan(product.planKey);
 
             const outTradeNo = `mbr_${nanoid(20)}`;
@@ -1161,6 +1176,7 @@ if (!isClerkAuthConfigured) {
                 outTradeNo,
                 providerData: {
                     ...(attribution ? { attribution } : {}),
+                    ...paymentMetadata(req),
                     checkout_mode: "hosted_invoice",
                     expected_outcome_currency: getNowPaymentsPayoutCurrency(),
                 },
@@ -1255,9 +1271,9 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.post("/credits/wechat/native", async (req, res) => {
+    userPaymentRoute("post", "/credits/wechat/native", async (req, res) => {
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1282,8 +1298,7 @@ if (!isClerkAuthConfigured) {
                 );
             }
 
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const user = await paymentUser(req);
 
             const outTradeNo = `cpt_${nanoid(20)}`;
             const attribution = sanitizeAttribution(req.body?.attribution);
@@ -1296,7 +1311,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 outTradeNo,
-                providerData: attribution ? { attribution } : null,
+                providerData: { ...(attribution ? { attribution } : {}), ...paymentMetadata(req) },
             });
 
             const description = `Points top-up ${product.points}`;
@@ -1336,9 +1351,9 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.post("/memberships/wechat/native", async (req, res) => {
+    userPaymentRoute("post", "/memberships/wechat/native", async (req, res) => {
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1363,8 +1378,7 @@ if (!isClerkAuthConfigured) {
                 );
             }
 
-            const clerkUser = await clerkClient.users.getUser(auth.userId);
-            const user = await upsertUserFromClerk(mapClerkUser(clerkUser));
+            const user = await paymentUser(req);
             await ensureMembershipCheckoutPlan(product.planKey);
 
             const outTradeNo = `mbr_${nanoid(20)}`;
@@ -1379,7 +1393,7 @@ if (!isClerkAuthConfigured) {
                 amountFen: product.amountFen,
                 currency: product.currency,
                 outTradeNo,
-                providerData: attribution ? { attribution } : null,
+                providerData: { ...(attribution ? { attribution } : {}), ...paymentMetadata(req) },
             });
 
             const description = getMembershipProductDescription(product.key);
@@ -1422,9 +1436,9 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.get("/credits/orders/:id", async (req, res) => {
+    userPaymentRoute("get", "/credits/orders/:id", async (req, res) => {
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1555,9 +1569,9 @@ if (!isClerkAuthConfigured) {
         }
     });
 
-    router.get("/memberships/orders/:id", async (req, res) => {
+    userPaymentRoute("get", "/memberships/orders/:id", async (req, res) => {
         try {
-            const auth = getAuth(req);
+            const auth = paymentAuth(req);
             if (!auth.userId) {
                 return jsonError(res, 401, "UNAUTHORIZED", "Unauthenticated");
             }
@@ -1690,4 +1704,32 @@ if (!isClerkAuthConfigured) {
     });
 }
 
+// Reuse the exact website checkout/sync handlers after the caller has authenticated
+// an owner. This adapter is not an HTTP endpoint and cannot accept a caller user ID.
+export const getAgentPaymentProducts = async ({ kind, provider }) => {
+    const enabled = isClerkAuthConfigured && (provider === "wechat" ? isWechatPayConfigured()
+        : provider === "nowpayments" ? isNowPaymentsConfigured() : isBuyMeACoffeeConfigured());
+    return (kind === "credits" ? buildPublicProducts(provider) : buildPublicMembershipProducts(provider)).map(p => ({
+        key:p.key, amountFen:p.amountFen, currency:p.currency, enabled:enabled && p.enabled!==false,
+        ...(p.points ? {points:p.points} : {}), ...(p.durationDays ? {durationDays:p.durationDays} : {}),
+        ...(p.planKey ? {planKey:p.planKey} : {}), billingType:"one_time",
+        ...(kind==="memberships" ? {entitlements:p.entitlements || getMembershipCheckoutEntitlements(p.planKey),limits:p.limits || MEMBER_DOWNLOAD_LIMITS} : {}),
+    }));
+};
+export const runUserPaymentOperation = async ({ user, kind, provider, productKey, orderId, returnUrl, checkoutId }) => {
+    if (!["credits","memberships"].includes(kind) || !user?.id || !user?.clerk_user_id)
+        throw new Error("Invalid internal payment identity");
+    const method = orderId ? "get" : "post";
+    const path = orderId ? `/${kind}/orders/:id` : `/${kind}/${provider}${provider==="wechat" ? "/native" : ""}`;
+    const handler = userPaymentHandlers.get(`${method}:${path}`);
+    if (!handler) throw new Error("Payment operation unavailable");
+    const req = { body:{productKey,returnUrl}, params:{id:String(orderId)}, query:{sync:"1"}, path,
+        header: name => name.toLowerCase()==="origin" && returnUrl ? new URL(returnUrl).origin : "" };
+    internalUsers.set(req,user);
+    if (checkoutId) internalCheckoutIds.set(req,checkoutId);
+    let status = 200, body;
+    const res = { status(value) { status=value;return this; }, json(value) { body=value;return this; } };
+    try { await handler(req,res);return {status,body}; }
+    finally { internalUsers.delete(req); internalCheckoutIds.delete(req); }
+};
 export default router;

@@ -46,6 +46,8 @@ const DEFAULT_MEMBERSHIP_ENTITLEMENTS = Object.freeze([
   "video_recording",
   "random_chat",
 ]);
+export const getMembershipCheckoutEntitlements = planKey =>
+  CHECKOUT_PLAN_METADATA[planKey]?.entitlements || DEFAULT_MEMBERSHIP_ENTITLEMENTS;
 
 export const ensureMembershipCheckoutPlan = async (planKey) => {
   const metadata = CHECKOUT_PLAN_METADATA[planKey];

@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "Untuk Chrome di komputer",
+        "no_ads": "Tanpa iklan",
+        "free_options": "Tersedia opsi gratis",
+        "free_plugin": "Ekstensi browser gratis",
+        "platforms": "Platform yang didukung",
+        "more": "Lihat semua platform",
+        "extension_title": "Unduh dari halaman yang dibuka",
+        "steps": "Buka halaman → Klik ekstensi → Pilih dan unduh",
+        "help": "Opsi gratis dan bantuan",
+        "paid_note": "Beberapa fitur memerlukan kredit atau keanggotaan. Periksa harga dan ketentuan perpanjangan sebelum membeli.",
+        "intro": "Tempel tautan video, playlist, atau beberapa tautan. Pilih format dan simpan."
+    },
     "feedback": {
         "desc": "Laporkan masalah pengunduhan dan saran."
     },

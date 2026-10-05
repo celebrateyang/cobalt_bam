@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "Dành cho Chrome trên máy tính",
+        "no_ads": "Không quảng cáo",
+        "free_options": "Có cách sử dụng miễn phí",
+        "free_plugin": "Tiện ích trình duyệt miễn phí",
+        "platforms": "Nền tảng được hỗ trợ",
+        "more": "Xem tất cả nền tảng",
+        "extension_title": "Tải từ trang bạn đang xem",
+        "steps": "Mở trang → Nhấn tiện ích → Chọn và tải",
+        "help": "Cách dùng miễn phí và hỗ trợ",
+        "paid_note": "Một số tính năng cần điểm hoặc gói thành viên. Xem giá và điều kiện gia hạn trước khi mua.",
+        "intro": "Dán liên kết video, danh sách phát hoặc nhiều liên kết. Chọn định dạng và lưu."
+    },
     "platforms": {
         "magnific": { "name": "Trình tải nội dung miễn phí Magnific", "desc": "Lưu ảnh công khai và bản xem trước video từ trang Magnific được đánh dấu miễn phí. Không hỗ trợ Premium và nội dung riêng tư." },
         "title": "Tải xuống không hình mờ từ các nền tảng phổ biến",

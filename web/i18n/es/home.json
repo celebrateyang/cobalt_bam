@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "Para Chrome en ordenador",
+        "no_ads": "Sin anuncios",
+        "free_options": "Opciones gratuitas disponibles",
+        "free_plugin": "Extensión gratuita",
+        "platforms": "Plataformas compatibles",
+        "more": "Ver todas las plataformas",
+        "extension_title": "Descarga desde la página que visitas",
+        "steps": "Abre una página → Pulsa la extensión → Elige y descarga",
+        "help": "Opciones gratuitas y ayuda",
+        "paid_note": "Algunas funciones requieren créditos o una membresía. Consulta los precios y las condiciones de renovación antes de comprar.",
+        "intro": "Pega un enlace, una lista de reproducción o varios enlaces. Elige el formato y guarda."
+    },
     "platforms": {
         "magnific": { "name": "Descargador de medios gratuitos de Magnific", "desc": "Guarda imágenes públicas y vistas previas de vídeo de páginas Magnific marcadas como gratuitas. Se excluyen recursos Premium y privados." },
         "title": "Descarga sin marca de agua de plataformas populares",

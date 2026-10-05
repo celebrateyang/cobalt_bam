@@ -15,6 +15,12 @@
     let expanded = false;
     let loaded = true;
 
+    const serviceDisplayNames: Record<string, string> = {
+        "WeChat Channels and WeChat Official Account Articles": "\u89c6\u9891\u53f7",
+        "Xinpianchang (\u65b0\u7247\u573a)": "\u65b0\u7247\u573a",
+        "Magnific (formerly Freepik; legacy Magnific.ai)": "Magnific",
+    };
+
     const loadInfo = async () => {
         await getServerInfo();
 
@@ -53,7 +59,7 @@
         <div id="services-container">
             {#if loaded}
                 {#each services as service}
-                    <div class="service-item">{service}</div>
+                    <div class="service-item">{serviceDisplayNames[service] ?? service}</div>
                 {/each}
             {:else}
                 {#each { length: 17 } as _}

@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "Für Chrome auf dem Desktop",
+        "no_ads": "Ohne Werbung",
+        "free_options": "Kostenlose Nutzungsmöglichkeiten",
+        "free_plugin": "Kostenlose Browser-Erweiterung",
+        "platforms": "Unterstützte Plattformen",
+        "more": "Alle Plattformen",
+        "extension_title": "Direkt von der besuchten Seite herunterladen",
+        "steps": "Seite öffnen → Erweiterung anklicken → Auswählen und herunterladen",
+        "help": "Kostenlose Optionen und Hilfe",
+        "paid_note": "Einige Website-Funktionen benötigen Guthaben oder eine Mitgliedschaft. Prüfe Preise und Verlängerungsbedingungen vor dem Kauf.",
+        "intro": "Füge einen Videolink, eine Playlist oder mehrere Links ein. Wähle das Format und speichere."
+    },
     "platforms": {
         "magnific": { "name": "Magnific Downloader für kostenlose Medien", "desc": "Speichere öffentliche Bilder und verfügbare Videovorschauen von ausdrücklich kostenlosen Magnific-Seiten. Premium und private Inhalte sind ausgeschlossen." },
         "title": "Wasserzeichen-freier Download von beliebten Plattformen",

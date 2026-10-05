@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "For Chrome on desktop",
+        "no_ads": "No ads",
+        "free_options": "Free options available",
+        "free_plugin": "Free browser extension",
+        "platforms": "Supported platforms",
+        "more": "View all platforms",
+        "extension_title": "Download from the page you are browsing",
+        "steps": "Open a page → Click the extension → Choose and download",
+        "help": "Free options and real help",
+        "paid_note": "Some website features use credits or require membership. Check prices and renewal terms before purchasing.",
+        "intro": "Paste a video link, a playlist, or multiple links. Choose your format and save."
+    },
     "feedback": {
         "desc": "Report download issues and suggestions."
     },

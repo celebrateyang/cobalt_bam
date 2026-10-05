@@ -8,8 +8,11 @@
     import Omnibox from "$components/save/Omnibox.svelte";
     import SupportedServices from "$components/save/SupportedServices.svelte";
     import HomeDeferredSections from "$components/home/HomeDeferredSections.svelte";
-    import NoPainStudyCard from "$components/home/NoPainStudyCard.svelte";
     import ExtensionPromoCard from "$components/home/ExtensionPromoCard.svelte";
+    import HomeTrust from "$components/home/HomeTrust.svelte";
+    import HomePlatformLinks from "$components/home/HomePlatformLinks.svelte";
+    import HomeExtensionFeature from "$components/home/HomeExtensionFeature.svelte";
+    import SupportLink from "$components/save/SupportLink.svelte";
 
     import env from "$lib/env";
     import languages from "$i18n/languages.json";
@@ -461,6 +464,13 @@
         currentLocale === "en" ? "international" : "all",
         currentLocale,
     );
+    $: homeDownloadGroups = homeInternalLinks.reduce<Array<{ name: string; links: typeof homeInternalLinks }>>((groups, item) => {
+        const name = item.platform.startsWith("YouTube") ? "YouTube" : item.platform;
+        const group = groups.find((entry) => entry.name === name);
+        if (group) group.links.push(item);
+        else groups.push({ name, links: [item] });
+        return groups;
+    }, []);
     const zhPlatformNames: Record<string, string> = {
         Douyin: "\u6296\u97f3",
         Bilibili: "B\u7ad9",
@@ -660,8 +670,8 @@
     let deferredWorkArmed = false;
     let pointsFetchArmed = false;
     let homeInternalOpen = true;
-    let moreToolsOpen = true;
-    let homeDeferredOpen = true;
+    let moreToolsOpen = false;
+    let homeDeferredOpen = false;
     const disclosureLabel = (open: boolean) =>
         open
             ? currentLocale === "zh"
@@ -711,8 +721,6 @@
         let cancelNotificationInit = () => {};
 
         homeInternalOpen = !isCompactHome;
-        moreToolsOpen = !isCompactHome;
-        homeDeferredOpen = !isCompactHome;
 
         if (clerkRuntimeEnabled) {
             if (needsImmediateClerk) {
@@ -846,7 +854,7 @@
 
         <section class="download-hero" aria-labelledby="home-download-title">
             <h1 id="home-download-title">{$t("home.hero.title")}</h1>
-            <p class="hero-subtitle">{$t("home.hero.subtitle")}</p>
+            <p class="hero-subtitle">{$t("home.welcome.intro")}</p>
         </section>
 
         <Omnibox
@@ -860,8 +868,12 @@
             collectionGuidePlatforms={collectionGuidePlatforms.map(getGuidePlatformLabel)}
             batchGuidePlatforms={batchGuidePlatforms.map(getGuidePlatformLabel)}
         />
+        <HomeTrust />
         <!--<UserGuide/>-->
     </main>
+
+    <HomePlatformLinks {currentLocale} />
+    <HomeExtensionFeature {currentLocale} />
 
     <details class="seo-disclosure home-internal-disclosure" bind:open={homeInternalOpen}>
         <summary>
@@ -889,10 +901,15 @@
                 <div class="home-internal-link-group">
                     <h3>{currentLocale === "zh" ? "\u70ed\u95e8\u5e73\u53f0\u4e0b\u8f7d" : currentLocale === "ja" ? "人気ダウンローダー" : currentLocale === "th" ? "เครื่องมือดาวน์โหลดยอดนิยม" : currentLocale === "ko" ? "인기 다운로더" : extraHomeText("popular", "Popular downloaders")}</h3>
                     <div class="home-internal-links">
-                        {#each homeInternalLinks as item}
-                            <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
-                                {homeLinkLabel(item.platform)}
-                            </a>
+                        {#each homeDownloadGroups as group}
+                            <div class="download-link-group">
+                                {#if group.links.length > 1}<strong>{group.name}</strong>{/if}
+                                {#each group.links as item}
+                                    <a class="home-hub-link" href={`/${currentLocale}/download/${item.slug}`}>
+                                        {group.links.length > 1 ? homeLinkLabel(item.platform).replace("YouTube", "").trim() : homeLinkLabel(item.platform)}
+                                    </a>
+                                {/each}
+                            </div>
                         {/each}
                     </div>
                 </div>
@@ -929,7 +946,6 @@
         </section>
     </details>
 
-    <NoPainStudyCard />
 
     <details class="seo-disclosure home-deferred-disclosure" bind:open={homeDeferredOpen}>
         <summary>
@@ -966,6 +982,28 @@
             </div>
         </section>
     </details>
+    <section class="home-help" id="free-options" aria-labelledby="home-help-title">
+        <h2 id="home-help-title">{$t("home.welcome.help")}</h2>
+        <div class="home-help-grid">
+            <div>
+                <a class="help-title" href={`/${currentLocale}/account?section=contact`}>{$t("auth.contact_points_title")}</a>
+                <p>{$t("auth.contact_points_subtitle")}</p>
+                <p>{$t("home.welcome.paid_note")}</p>
+                <a href={`/${currentLocale}/account?section=membership`}>{$t("auth.membership_label")}</a>
+            </div>
+            <div>
+                <div class="help-title"><SupportLink /></div>
+                <p>{$t("save.support.body")}</p>
+                <a href={`/${currentLocale}/about/contact`}>{$t("about.page.contact")}</a>
+            </div>
+        </div>
+        <nav class="home-policy-links" aria-label="FreeSaveVideo">
+            <span>FreeSaveVideo</span>
+            <a href={`/${currentLocale}/about/privacy`}>{$t("about.page.privacy")}</a>
+            <a href={`/${currentLocale}/about/terms`}>{$t("about.page.terms")}</a>
+            <a href={`/${currentLocale}/about/refund`}>{$t("about.page.refund")}</a>
+        </nav>
+    </section>
     {#if showLowPointsBalloon}
         <div class="low-points-balloon-wrapper" aria-label={$t("home.points_balloon.aria")}>
             <button
@@ -1137,6 +1175,7 @@
     }
 
     .download-hero {
+        font-family: Arial, sans-serif;
         width: 100%;
         max-width: 860px;
         display: flex;
@@ -1146,6 +1185,9 @@
         text-align: center;
         margin-top: 0;
     }
+
+    #cobalt-save-container { --surface-1: var(--background); --surface-2: var(--popup-stroke); }
+    .download-hero :global(*), .home-internal-hub :global(*), .home-help :global(*) { font-family: Arial, sans-serif; }
 
     .download-hero h1 {
         margin: 0;
@@ -1162,7 +1204,7 @@
         max-width: 760px;
         font-size: clamp(0.94rem, 1.35vw, 1.04rem);
         line-height: 1.5;
-        color: var(--secondary-600);
+        color: var(--subtext);
         text-wrap: balance;
     }
 
@@ -1227,6 +1269,7 @@
     }
 
     .home-internal-hub {
+        font-family: Arial, sans-serif;
         width: 100%;
         max-width: none;
         margin: 10px auto 0;
@@ -1236,6 +1279,20 @@
         flex-direction: column;
         gap: 14px;
     }
+
+    .download-link-group { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+    .download-link-group strong { font-size: 13px; color: var(--text); }
+    .home-help { width: 100%; max-width: 1096px; margin: 20px auto; font-family: Arial, sans-serif; scroll-margin-top: 24px; }
+    .home-help h2 { margin: 0 0 16px; color: var(--text); font-size: 20px; }
+    .home-help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .home-help-grid > div { border: 1px solid var(--surface-2); border-radius: 14px; padding: 20px; background: var(--surface-1); }
+    .home-help a { color: var(--accent-strong); text-underline-offset: 3px; font-size: 13px; }
+    .home-help .help-title, .help-title :global(a) { color: var(--text); font-size: 15px; font-weight: 600; }
+    .home-help p { color: var(--subtext); font-size: 13px; line-height: 1.6; margin: 10px 0; }
+    .home-policy-links { display: flex; flex-wrap: wrap; gap: 12px 22px; border-top: 1px solid var(--surface-2); margin-top: 24px; padding-top: 18px; align-items: center; }
+    .home-policy-links span { color: var(--text); font-size: 13px; font-weight: 600; }
+    .home-help a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    @media (max-width: 600px) { .home-help-grid { grid-template-columns: 1fr; gap: 12px; } }
 
     .home-quick-actions {
         width: fit-content;

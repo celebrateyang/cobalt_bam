@@ -1,4 +1,17 @@
 {
+    "welcome": {
+        "desktop": "Pour Chrome sur ordinateur",
+        "no_ads": "Sans publicité",
+        "free_options": "Des options gratuites",
+        "free_plugin": "Extension gratuite",
+        "platforms": "Plateformes prises en charge",
+        "more": "Toutes les plateformes",
+        "extension_title": "Téléchargez depuis la page consultée",
+        "steps": "Ouvrez une page → Cliquez sur l’extension → Choisissez et téléchargez",
+        "help": "Options gratuites et assistance",
+        "paid_note": "Certaines fonctions nécessitent des crédits ou un abonnement. Consultez les tarifs et les conditions de renouvellement avant l’achat.",
+        "intro": "Collez un lien vidéo, une playlist ou plusieurs liens. Choisissez le format et enregistrez."
+    },
     "platforms": {
         "magnific": { "name": "Téléchargeur de médias gratuits Magnific", "desc": "Enregistrez les images publiques et aperçus vidéo des pages Magnific explicitement gratuites. Les contenus Premium et privés sont exclus." },
         "title": "Téléchargement sans filigrane depuis des plateformes populaires",

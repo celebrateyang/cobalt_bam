@@ -250,14 +250,6 @@
             </div>
         {/if}
 
-        {#if latestBatchSummary?.finished || autoSavedCount > 0}
-            <SaveLocationHint
-                batch={autoSavedCount > 0 || autoSaveBatchRunning}
-                open
-                compact
-            />
-        {/if}
-
         <div id="processing-list" role="list" aria-labelledby="queue-title">
             {#each queue as [id, item] (id)}
                 <ProcessingQueueItem {id} info={item} />
@@ -266,17 +258,18 @@
                 <ProcessingQueueStub />
             {/if}
         </div>
-        {#if manualSaveCount > 0}
+        {#if manualSaveCount > 1 && saveIndividually}
             <div class="queue-save-warning" role="note">
                 <span class="warning-icon" aria-hidden="true">
                     <IconAlertTriangle />
                 </span>
                 <p>
-                    {$t("save.result.ready")}
-                    {#if saveIndividually}{$t("save.individual")}{/if}
+                    {$t("save.individual")}
                 </p>
             </div>
-            <SaveLocationHint collapsible compact />
+        {/if}
+        {#if queue.some(([, item]) => item.state === "done")}
+            <SaveLocationHint batch={autoSavedCount > 0} collapsible compact />
         {/if}
     </PopoverContainer>
 </div>

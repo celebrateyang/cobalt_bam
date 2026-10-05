@@ -3,7 +3,6 @@
     import { page } from "$app/stores";
     import { formatFileSize } from "$lib/util";
     import { saveQueueFile } from "$lib/task-manager/save-file";
-    import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
     import SupportLink from "$components/save/SupportLink.svelte";
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
@@ -194,6 +193,9 @@
                     value: info.autoSave.directoryName || "",
                 });
             }
+            if (info.saveOutcome && info.saveOutcome !== "dialog") {
+                return `${$t(`save.result.${info.saveOutcome}`)} ${formatFileSize(info.resultFile?.size)}`;
+            }
             if (info.autoSave?.state === "error") {
                 return $t("queue.state.auto_save_failed");
             }
@@ -316,7 +318,7 @@
                 {/if}
             </div>
 
-            <div class="status-text">
+            <div class="status-text" role={info.state === "done" ? "status" : undefined} aria-live={info.state === "done" ? "polite" : "off"}>
                 {statusText}
             </div>
         </div>
@@ -406,22 +408,14 @@
         {/if}
     </div>
 </div>
-{#if info.state === "done" && info.saveOutcome && info.saveOutcome !== "dialog"}
-    <div class="save-feedback" role="status" aria-live="polite">
-        <p>{$t(`save.result.${info.saveOutcome}`)}</p>
-        {#if info.saveOutcome === "failed"}<SupportLink />{/if}
-        <SaveLocationHint collapsible compact />
-    </div>
-{:else if info.state === "error"}
+{#if info.state === "error" || (info.state === "done" && info.saveOutcome === "failed")}
     <div class="save-feedback">
         <SupportLink />
-        <SaveLocationHint collapsible compact />
     </div>
 {/if}
 
 <style>
     .save-feedback { margin: 0 0 12px; font-size: 12px; line-height: 1.45; }
-    .save-feedback p { margin: 4px 0 8px; }
     .processing-item,
     .file-actions {
         display: flex;

@@ -1,6 +1,15 @@
 <script lang="ts">
     // Minimal root layout - all UI and styles are in [lang]/+layout.svelte
+    import { personalAgentDiscovery } from '$lib/seo/agent-discovery';
 </script>
+
+<svelte:head>
+    <meta name="fsv-agent-access" content="Supported: REST and MCP; user authorization required" />
+    <link rel="help" href="/agents" type="text/html" title="AI agent access: REST and MCP" />
+    <link rel="help" href="/llms.txt" type="text/plain" title="AI agent discovery summary" />
+    <link rel="help" href="/capabilities.json" type="application/json" title="Site capabilities" />
+    <link rel="help" href={personalAgentDiscovery.openApiUrl} type="application/json" title="Personal agent REST OpenAPI" />
+</svelte:head>
 
 <slot></slot>
 

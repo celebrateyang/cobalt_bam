@@ -1,3 +1,5 @@
+import { personalAgentDiscovery } from './agent-discovery';
+
 export type CapabilityService = {
     id: string;
     name: string;
@@ -650,6 +652,7 @@ export const toolCapabilities: ToolCapability[] = [
 ];
 
 export const capabilityPayload = {
+    personalAgent: personalAgentDiscovery,
     generatedFrom: [
         'api/src/processing/service-config.js',
         'web/src/lib/seo/landing-pages.ts',

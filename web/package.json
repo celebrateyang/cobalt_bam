@@ -13,6 +13,7 @@
         "check:homepage-prerender": "node ./scripts/check-homepage-prerender.mjs",
         "check:seo-prerender": "node ./scripts/check-seo-prerender.mjs",
         "test:seo-contracts": "node ./scripts/test-seo-contracts.mjs",
+        "test:agent-discovery": "node --test ./scripts/test-agent-discovery.mjs",
         "test:homepage": "pnpm build && pnpm check:homepage-prerender",
         "test:seo": "pnpm build && pnpm check:seo-prerender",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

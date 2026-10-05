@@ -70,6 +70,8 @@ import userRouter from "../routes/user.js";
 import platformRequestsRouter from "../routes/platform-requests.js";
 import aiVideoRouter from "../routes/ai-video.js";
 import videoAgentRouter from "../routes/video-agent.js";
+import { createPersonalAgentRouter } from "../routes/personal-agent.js";
+import { checkChargePermission } from "../personal-agent/policy.js";
 import { createMediaImportToken, getMediaImportCandidate } from "../ai-video/media-import-token.js";
 import paymentsRouter from "../routes/payments.js";
 // import { initSocialMedia } from "../setup-social.js"; // init 程序已禁用
@@ -644,6 +646,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         "X-FSV-Trace-ID",
         "Upload-Offset",
         "Digest",
+        "MCP-Protocol-Version",
     ];
 
     app.use('/social', cors({
@@ -723,6 +726,17 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }),
     );
     if (!isUpstreamServer) {
+        app.use('/agent', createPersonalAgentRouter({ resolveMedia: async (req) => {
+            let result;
+            const response = {
+                statusCode: 200,
+                status(code) { this.statusCode = code; return this; },
+                json(body) { result = { status: this.statusCode, body }; return this; },
+            };
+            await handleDownload(req, response);
+            if (!result) throw new Error('Downloader returned no response');
+            return result;
+        } }));
         app.use('/social', socialMediaRouter);
         app.use('/user/ai-video', aiVideoRouter);
         app.use('/user/video-agent', videoAgentRouter);
@@ -730,7 +744,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         app.use('/platform-requests', platformRequestsRouter);
         app.use('/payments', paymentsRouter);
     } else {
-        app.use(['/social', '/user', '/platform-requests', '/payments'], (_, res) => {
+        app.use(['/agent', '/social', '/user', '/platform-requests', '/payments'], (_, res) => {
             res.sendStatus(404);
         });
     }
@@ -921,7 +935,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         }
     });
 
-    app.post('/', async (req, res) => {
+    const handleDownload = async (req, res) => {
         const request = req.body;
 
         if (!request.url) {
@@ -982,9 +996,13 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         };
 
         const isBypassRequest = req.authType === "key";
-        let pointsUser = null;
-        let clerkUserId = null;
-        if (isClerkAuthConfigured && !isBypassRequest && !isUpstreamServer) {
+        let pointsUser = req.personalAgent ? {
+            id: req.personalAgent.grant.user_id,
+            points: Number(req.personalAgent.grant.points),
+            is_disabled: req.personalAgent.grant.is_disabled,
+        } : null;
+        let clerkUserId = req.personalAgent?.grant.clerk_user_id ?? null;
+        if (!req.personalAgent && isClerkAuthConfigured && !isBypassRequest && !isUpstreamServer) {
             const auth = await getClerkUserIdFromTokenHeader(req);
             if (!auth.ok) {
                 const code = auth.reason === "missing"
@@ -1145,7 +1163,9 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                     );
                     return res
                         .status(replayStatus)
-                        .json(claim.responseBody);
+                        .json(req.personalAgent ? { ...claim.responseBody, points: {
+                            ...claim.responseBody?.points, outcome: 'idempotency_replay',
+                        } } : claim.responseBody);
                 }
                 if (!claim.ok) {
                     return failDownload(getIdempotencyErrorCode(claim.code), null, {
@@ -1216,7 +1236,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             }
         })();
 
-        if (pointsUser && !isWechatArticleCollectionPreview) {
+        if (pointsUser && !isWechatArticleCollectionPreview &&
+            (!req.personalAgent || req.personalAgent.grant.allow_membership)) {
             try {
                 membershipReservation = await reserveMemberDownloadUsage({
                     userId: pointsUser.id,
@@ -1341,7 +1362,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 request: normalizedRequest,
                 response: result?.body,
             });
-            const shouldDeferPointsCharge = isBrowserQueuedRequest;
+            const shouldDeferPointsCharge = isBrowserQueuedRequest && !req.personalAgent;
             let pointsOutcome = "skipped";
             let pointsRequired = null;
             let pointsBefore = null;
@@ -1377,6 +1398,29 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             ) {
                 pointsRequired = durationToPoints(result?.body?.duration);
                 pointsBefore = pointsUser.points;
+
+                if (req.personalAgent) {
+                    try {
+                        await checkChargePermission({
+                            grant: req.personalAgent.grant, points: pointsRequired,
+                            membership: Boolean(membershipReservation?.allowed && membershipReservation.membership),
+                            isActive: req.personalAgent.isActive,
+                        });
+                    } catch (error) {
+                        if (membershipReservation?.usageEvent?.id) {
+                            await completeMemberDownloadUsage({ usageEventId: membershipReservation.usageEvent.id,
+                                status: 'failed', metadata: { errorCode: error.code } });
+                        }
+                        if (downloadRequestClaim) {
+                            await failDownloadRequest(downloadRequestClaim);
+                            downloadRequestClaim = null;
+                        }
+                        // No media URLs, hold or debit may escape a denied authorization.
+                        return res.status(error.status || 503).json({ status: 'error', error: {
+                            code: error.code || 'AGENT_UNAVAILABLE', ...(error.context ? { context: error.context } : {}),
+                        } });
+                    }
+                }
 
                 if (
                     membershipReservation?.allowed &&
@@ -1486,7 +1530,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                             pointsUser.id,
                             pointsRequired,
                             {
-                                allowFirstDownloadGrace: true,
+                                allowFirstDownloadGrace: !req.personalAgent,
                                 maxGracePoints: FIRST_DOWNLOAD_GRACE_MAX_POINTS,
                                 markDownloadSuccess: true,
                                 queueId: normalizedRequest.queueId ?? null,
@@ -1578,7 +1622,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
                 },
             );
 
-            if (shouldDeferPointsCharge && result?.body && pointsOutcome !== "skipped") {
+            if ((shouldDeferPointsCharge || req.personalAgent) && result?.body && pointsOutcome !== "skipped") {
                 result.body.points = {
                     outcome: pointsOutcome,
                     required: pointsRequired,
@@ -1662,7 +1706,8 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             }
             fail(res, "error.api.generic");
         }
-    });
+    };
+    app.post('/', handleDownload);
 
     app.use('/tunnel', cors({
         methods: ['GET', 'POST', 'OPTIONS'],

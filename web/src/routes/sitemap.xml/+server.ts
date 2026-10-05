@@ -74,6 +74,7 @@ const urlEntry = (
 
 function generateSitemap(): string {
     const urls: string[] = [];
+    urls.push(urlEntry(`${site}/agents`, '2026-10-05', 'monthly', '0.7'));
 
     for (const lang of ['en', 'zh']) {
         const path = `/${lang}/clipboard`;

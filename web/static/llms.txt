@@ -5,6 +5,18 @@
 ## Canonical Site
 - https://freesavevideo.online/
 
+## Personal AI Agent Access (REST and MCP Supported)
+- Public integration guide: https://freesavevideo.online/agents
+- Agent services, pricing rules and limits: https://api.freesavevideo.online/agent/v1/capabilities
+- REST OpenAPI: https://api.freesavevideo.online/agent/openapi.json
+- MCP Streamable HTTP endpoint: https://api.freesavevideo.online/agent/mcp
+- Supported tools: get_capabilities, get_balance, resolve_media. Website features are not all exposed as agent tools.
+- The user creates a scoped bearer credential at https://freesavevideo.online/en/account/agents (Chinese: https://freesavevideo.online/zh/account/agents). Never request their password or Clerk session.
+- MCP clients need custom Authorization header support; OAuth-only clients cannot connect through this manual credential flow.
+- Resolution can spend explicitly authorized points or membership quota. There is no automatic recharge or agent checkout in this phase.
+- Reuse idempotencyKey on immediate retries; replay follows a one-hour window. Saving the file is the caller's responsibility, and media URLs may expire.
+- Direct Bridge remains direct-first, extension-second and browser-handoff-last; do not automatically fall back to an API tunnel.
+
 ## Machine-Readable Files
 - Capabilities JSON: https://freesavevideo.online/capabilities.json
 - Sitemap: https://freesavevideo.online/sitemap.xml

@@ -1,3 +1,7 @@
+# Public AI agent integration guide: https://freesavevideo.online/agents
+# AI discovery summary: https://freesavevideo.online/llms.txt
+# Machine-readable capabilities: https://freesavevideo.online/capabilities.json
+# These comments are discovery hints, not authorization to access user accounts.
 User-agent: *
 Allow: /
 Allow: /_app/

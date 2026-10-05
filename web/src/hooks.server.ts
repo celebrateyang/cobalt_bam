@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
+import { agentDiscoveryLinkHeader } from '$lib/seo/agent-discovery';
 
 import { getPreferredLanguage, getRequestCountry, isLangPrefixedPath } from '$lib/seo/language-routing';
 import {
@@ -10,6 +11,7 @@ import {
 
 const shouldSkipLangRedirect = (pathname: string) => {
     if (pathname === '/') return true;
+    if (pathname === '/agents') return true;
     if (pathname === '/sitemap.xml') return true;
     if (pathname === '/version.json') return true;
     if (pathname.startsWith('/api')) return true;
@@ -56,6 +58,12 @@ export const handle: Handle = async ({ event, resolve }) => {
         shouldNoindexLocalizedPath(localizedRoute.path, localizedRoute.lang)
     ) {
         response.headers.set('X-Robots-Tag', 'noindex, follow');
+    }
+
+    // HTTP-only crawlers can discover the same guide linked from the HTML head.
+    if (response.headers.get('Content-Type')?.includes('text/html')) {
+        const existingLinks = response.headers.get('Link');
+        response.headers.set('Link', existingLinks ? `${existingLinks}, ${agentDiscoveryLinkHeader}` : agentDiscoveryLinkHeader);
     }
 
     // Apply COOP/COEP headers to enable SharedArrayBuffer for libav.

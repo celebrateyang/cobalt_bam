@@ -1673,6 +1673,9 @@
             <span>{$t("auth.title")}</span>
         </h1>
         <div class="subtext subtitle">{$t("auth.subtitle")}</div>
+        <a href={`/${$page.params.lang}/account/agents`}>
+            {isChinese ? "个人 agent 授权" : "Personal agent access"}
+        </a>
     </header>
 
     {#if !clerkEnabled}

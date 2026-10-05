@@ -9,6 +9,8 @@
         "node": ">=18"
     },
     "scripts": {
+        "personal-agent:init": "node src/util/init-personal-agent.js",
+        "test:personal-agent": "node --test src/personal-agent/personal-agent.test.js",
         "start": "node src/cobalt",
         "dev": "node dev-start.js",
         "setup-youtube": "node setup-youtube-auth.js",
@@ -63,6 +65,7 @@
         "@google-cloud/storage": "^7.16.0",
         "@imput/psl": "^2.0.4",
         "@imput/version-info": "workspace:^",
+        "@modelcontextprotocol/sdk": "^1",
         "bcryptjs": "^2.4.3",
         "better-sqlite3": "^11.7.0",
         "content-disposition-header": "0.6.0",
@@ -84,7 +87,7 @@
         "url-pattern": "1.0.3",
         "ws": "^8.18.2",
         "youtubei.js": "15.1.1",
-        "zod": "^3.23.8"
+        "zod": "^3.25.76"
     },
     "optionalDependencies": {
         "freebind": "^0.2.2",

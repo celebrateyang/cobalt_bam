@@ -74,6 +74,16 @@ FreeSaveVideo canonical site: ${canonicalOrigin}/
 Summary:
 ${siteCapabilities.summary}
 
+Personal agent access (REST and MCP supported):
+- Public integration guide: ${capabilityPayload.personalAgent.documentationUrl}
+- User authorization: ${capabilityPayload.personalAgent.managementUrl}
+- Services and pricing: ${capabilityPayload.personalAgent.capabilitiesUrl}
+- REST OpenAPI: ${capabilityPayload.personalAgent.openApiUrl}
+- MCP Streamable HTTP: ${capabilityPayload.personalAgent.mcpUrl}
+- Authentication: user-created scoped bearer credential. Never request the user's password or Clerk session.
+- Media resolution may spend user-authorized points or membership quota. There is no automatic recharge.
+- Reuse the same idempotencyKey on retries. Saving files is the caller's responsibility; URLs may expire.
+
 Languages:
 ${lineList([...supportedSeoLanguages])}
 

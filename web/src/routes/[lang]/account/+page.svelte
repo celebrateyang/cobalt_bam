@@ -2418,9 +2418,6 @@
                                                 {/if}
                                             </div>
 
-                                            {#if selectedPaymentProvider !== "wechat"}
-                                                <p class="subtext">{$t("auth.download_pass_terms", { days: product.durationDays })}</p>
-                                            {/if}
                                             <div class="product-actions">
                                                 {#if selectedPaymentProvider === "buymeacoffee"}
                                                     <button class="button elevated active" disabled={purchaseLoading || product.enabled === false || bmcPassPurchaseBlocked} on:click={() => startBuyMeACoffeePay(product.key, "membership")}>

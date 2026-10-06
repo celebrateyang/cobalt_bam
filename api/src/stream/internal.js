@@ -152,6 +152,19 @@ async function* readChunks(streamInfo, size) {
         // console.log(`[readChunks] Chunk response: status=${chunk.statusCode}, content-length=${chunk.headers['content-length']}`);
         // console.log(`======> [readChunks] Authenticated chunk request result: status=${chunk.statusCode}`);
 
+        // Internal streams carry the parent's bound transplant callback, not
+        // originalRequest. It preserves the selected audio/video track and
+        // updates this stream's URL without restarting the downloaded prefix.
+        if (chunk.statusCode === 403 && streamInfo.service === "youtube" && streamInfo.transplant) {
+            safeDestroyBody(chunk.body);
+            forbiddenRetries += 1;
+            chunksSinceTransplant = 0;
+            if (forbiddenRetries > 4) throw new Error("youtube_chunk_forbidden");
+            tunnelDebugWarn(`[readChunks] Chunk forbidden; refreshing stream attempt=${forbiddenRetries} offset=${read}`);
+            await streamInfo.transplant(streamInfo.dispatcher);
+            continue;
+        }
+
         if (chunk.statusCode === 403 && streamInfo.originalRequest) {
             safeDestroyBody(chunk.body);
             forbiddenRetries += 1;
@@ -223,6 +236,12 @@ async function* readChunks(streamInfo, size) {
         }
 
         chunksSinceTransplant++;
+
+        // Never forward an HTTP error document as media bytes.
+        if (chunk.statusCode !== 200 && chunk.statusCode !== 206) {
+            safeDestroyBody(chunk.body);
+            throw new Error(`youtube_chunk_http_${chunk.statusCode}`);
+        }
 
         const expected = min(CHUNK_SIZE, size - read);
         const headerLength = parseBigIntHeaderValue(chunk.headers["content-length"]);

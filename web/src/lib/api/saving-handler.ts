@@ -308,6 +308,11 @@ const translateApiError = async (code: string, context?: Record<string, unknown>
 };
 
 const isHomePageRoute = () => get(page)?.route?.id === "/[lang]";
+const isYouTubeDownloadPageRoute = () => {
+    const currentPage = get(page);
+    return currentPage?.route?.id === "/[lang]/download/[slug]"
+        && currentPage.params.slug === "youtube-download";
+};
 const POINTS_PER_MINUTE = 2;
 const MIN_POINTS_PER_DOWNLOAD = 2;
 
@@ -397,6 +402,10 @@ const estimatePointsForUrl = async (
 };
 
 const confirmPointsPreview = async (url: string) => {
+    // The dedicated YouTube entry starts downloads directly. The API still
+    // validates the balance and reserves points for the actual request.
+    if (isYouTubeDownloadPageRoute()) return true;
+
     const [{ points, hasEstimate }, pointsProfile] = await Promise.all([
         estimatePointsForUrl(url),
         fetchCurrentUserPointsProfile(),

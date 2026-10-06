@@ -70,7 +70,11 @@ const config = {
         })
     ],
     kit: {
-        adapter: adapter(),
+        adapter: adapter({
+            // LibAV is copied by the Vite plugin and is absent from Kit's asset
+            // manifest. Keep this rule first: Pages limits routes to 100 rules.
+            routes: { exclude: ["/_libav/*", "<all>"] },
+        }),
         // CSP disabled to allow third-party ad scripts like Adsterra
         // Configure CSP via Firebase hosting headers or server instead
         /* csp: {

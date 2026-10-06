@@ -35,6 +35,30 @@ request identity and normal points preview/reservation.
 
 ## Persistent diagnostics
 
+### Download Worker startup
+
+The fetch runner allows three startup attempts, with a 15-second deadline per
+attempt. Constructor failures, message-cloning failures and Worker error events
+now report `workerStage: worker`, `errorName`, `elapsedMs` (the final attempt)
+and `attempt` through the existing browser outcome endpoint. The browser console
+also records the Worker error message, script filename and line number. Runtime
+crashes after startup do not automatically restart a partially downloaded file.
+Cancellation and late callbacks cannot restart a completed or removed task.
+
+### Cloudflare Pages LibAV assets
+
+The Vite plugin copies LibAV into `_libav`, outside SvelteKit's asset manifest.
+The Pages adapter must exclude `/_libav/*` from Function routing so Pages serves
+these files directly. Keep this exclusion before `<all>` because the adapter
+truncates exclusions when the total route count exceeds 100.
+
+After the user builds and deploys the web app, check that the generated
+`.svelte-kit/cloudflare/_routes.json` excludes `/_libav/*`, and that the public
+remux/encode `.mjs` and `.wasm` assets return HTTP 200 with JavaScript/WASM MIME
+types. Then test both `/zh/download/youtube-download` and `/zh/` with
+`https://www.youtube.com/watch?v=6d_FXbWt12s`. Mock startup tests cannot replace
+this production asset and browser verification.
+
 Successful extraction responses include `downloadRequestId`. The browser posts
 its terminal outcome to `POST /user/downloads/outcome` with a Clerk bearer token:
 
@@ -66,6 +90,7 @@ the API and web changes to enable reporting; older clients remain unconfirmed.
 ## Targeted verification
 
 - `pnpm -C web test:ffmpeg-startup`
+- `pnpm -C web test:fetch-startup`
 - `pnpm -C web test:saving`
 - `node --test api/src/core/browser-download-outcome.test.js api/src/db/users.test.js`
 - `pnpm -C api test:match-action` (requires an API URL for generating test tunnels)

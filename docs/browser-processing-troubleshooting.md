@@ -26,6 +26,19 @@ single-thread WASM directly inside that Worker. Probe and encoding failures do
 not restart initialization. Retries belong to each task independently. Removal
 or a terminal queue state terminates the Worker and clears its deadlines.
 
+Remux tasks always run single-thread WASM inside their processing Worker. A
+Chrome test with samples from YouTube `yWZa1UZzoBA` completed a ten-second
+stream copy in direct mode, while pthread mode remained stuck after entering
+render. The video's full inputs are about 445 MiB and 77 minutes; this sample
+test does not establish successful completion of the whole download.
+
+For remux only, 120 seconds without advancing output bytes or processed time
+restarts the processing Worker once with the same downloaded input files.
+Repeated zero-progress messages do not reset this deadline. A second stall
+reports `queue.ffmpeg.crashed` with `workerStage: encoding` and `TimeoutError`,
+so the existing failure flow releases the hold. Recovery does not submit a new
+extraction or points reservation. Transcoding retains no render idle deadline.
+
 If a YouTube audio task fails during browser processing, the user can explicitly
 choose **download original audio (no conversion)**. This requests `audioFormat:
 best`, disables metadata/cover processing and keeps a browser fetch queue. The

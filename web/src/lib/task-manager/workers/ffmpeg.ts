@@ -45,7 +45,7 @@ const ffmpeg = async (
         const initializedAt = Date.now();
         self.postMessage({ cobaltFFmpegWorker: { stage: "initializing" } });
         try {
-            ff.init({ variant, yesthreads, noworker: !yesthreads });
+            ff.init({ variant, yesthreads, noworker: !yesthreads, debug: true });
             if (!ff.libav) throw new Error("LibAV wasn't initialized");
             await ff.libav;
         } catch (e) {

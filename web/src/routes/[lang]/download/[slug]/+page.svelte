@@ -61,7 +61,7 @@
     $: localizedDiscoverLabel = isJa ? '人気動画を探す' : discoverLabel;
     $: pageTitle = localeContent.metaTitle;
     $: youtubeCopy = getYouTubeCopy(data.lang);
-    $: pageDesc = data.slug === 'youtube-download' ? youtubeCopy.description : localeContent.metaDescription;
+    $: pageDesc = data.slug === 'youtube-download' && data.lang !== 'en' ? youtubeCopy.description : localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);

@@ -3056,9 +3056,9 @@ export const seoLandingPages: SeoLandingPage[] = [
                 ],
             }),
             en: en({
-                metaTitle: `YouTube Downloader - Fast HD Video and Playlist Downloads | ${EN_BRAND}`,
+                metaTitle: `YouTube Downloader - HD Video & Audio | ${EN_BRAND}`,
                 metaDescription:
-                    'Use FreeSaveVideo as a fast, stable YouTube downloader for public videos, HD MP4, audio, and supported playlists. Paste a YouTube video or playlist URL to save single videos or batch playlist results online.',
+                    'Search YouTube videos by keyword or paste a link. Download public videos as HD MP4 or MP3 audio, with supported playlist downloads in your browser.',
                 metaKeywords: [
                     'youtube downloader',
                     'youtube video downloader',

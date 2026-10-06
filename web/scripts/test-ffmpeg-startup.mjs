@@ -47,10 +47,42 @@ const fixture = () => {
         }
         now = end;
     };
-    const run = (workerId = "encode", parentId = "task") => exports.runFFmpegWorker(workerId, parentId, [], [], {}, "encode", true);
+    const run = (workerId = "encode", parentId = "task", variant = "encode") => exports.runFFmpegWorker(workerId, parentId, [], [], {}, variant, true);
     return { run, advance, workers, errors, results, timers, subscribers, items,
         notify: () => [...subscribers].forEach(fn => fn(items)) };
 };
+
+test("remux starts single-threaded and a stalled render retries the existing inputs once", async () => {
+    const f = fixture(); await f.run("remux", "task", "remux");
+    const first = f.workers[0];
+    assert.equal(first.request.cobaltFFmpegWorker.yesthreads, false);
+    first.message({ stage: "encoding" });
+    first.message({ progress: { size: 48, durationProcessed: 0 } });
+    f.advance(119_000);
+    first.message({ progress: { size: 48, durationProcessed: 0 } });
+    f.advance(1_000);
+    assert.equal(first.terminated, true);
+    assert.equal(f.workers.length, 2); assert.equal(f.errors.length, 0);
+    assert.strictEqual(f.workers[1].request.cobaltFFmpegWorker.files, first.request.cobaltFFmpegWorker.files);
+    first.message({ render: "late" });
+    f.workers[1].message({ stage: "encoding" });
+    f.advance(120_000);
+    assert.equal(f.workers.length, 2); assert.equal(f.errors.length, 1);
+    assert.equal(f.errors[0][3].workerStage, "encoding");
+    assert.equal(f.errors[0][3].errorName, "TimeoutError");
+    assert.equal(f.timers.size, 0);
+});
+
+test("advancing remux progress extends its idle deadline and completion clears it", async () => {
+    const f = fixture(); await f.run("remux", "task", "remux");
+    const w = f.workers[0]; w.message({ stage: "encoding" });
+    for (let i = 1; i <= 4; i++) {
+        f.advance(100_000); w.message({ progress: { size: i * 1024, durationProcessed: i } });
+    }
+    assert.equal(f.workers.length, 1); assert.equal(f.errors.length, 0);
+    w.message({ render: "output" }); f.advance(200_000);
+    assert.equal(f.results.length, 1); assert.equal(f.timers.size, 0);
+});
 
 test("slow WASM loading survives the old five-second deadline and completes", async () => {
     const f = fixture(); await f.run();

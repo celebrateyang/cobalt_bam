@@ -52,7 +52,7 @@ export const selectFfmpegExecutable = (
     streamInfo,
     platform = process.platform,
 ) =>
-    ['amazon', 'cctv', 'iqiyi'].includes(streamInfo?.service) && platform !== 'win32'
+    ['amazon', 'cctv', 'iqiyi', 'sooplive'].includes(streamInfo?.service) && platform !== 'win32'
         ? '/usr/bin/ffmpeg'
         : ffmpeg;
 

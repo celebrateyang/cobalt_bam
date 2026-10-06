@@ -450,7 +450,7 @@ const shouldUseDirectFfmpegInputs = (streamInfo) =>
     (
         streamInfo?.service === 'iqiyi' ||
         (
-            ['amazon', 'bjnews', 'cctv', 'dailymotion', 'niconico', 'weibo'].includes(streamInfo?.service) &&
+            ['amazon', 'bjnews', 'cctv', 'dailymotion', 'niconico', 'sooplive', 'weibo'].includes(streamInfo?.service) &&
             streamInfo?.isHLS === true
         )
     );
@@ -501,7 +501,7 @@ function wrapStream(streamInfo) {
 
     // FFmpeg usually reads from signed public tunnels, but Vimeo HLS merge/remux
     // works more reliably through localhost itunnels to avoid auth failures.
-    // CCTV and NicoNico HLS inputs, plus iQIYI's progressive TS objects, are
+    // CCTV, NicoNico and SOOP HLS inputs, plus iQIYI's progressive TS objects, are
     // already resolved and can be read by ffmpeg without nesting public tunnels.
     if (
         isFfmpegStreamType(streamInfo.type) &&

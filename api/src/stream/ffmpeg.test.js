@@ -26,6 +26,17 @@ test("keeps the system ffmpeg workaround for iQIYI on Linux", () => {
     );
 });
 
+test("avoids the static ffmpeg SOOP crash on Linux", () => {
+    assert.equal(
+        selectFfmpegExecutable({ service: "sooplive", isHLS: true }, "linux"),
+        "/usr/bin/ffmpeg",
+    );
+    assert.equal(
+        selectFfmpegExecutable({ service: "sooplive", isHLS: true }, "win32"),
+        ffmpeg,
+    );
+});
+
 test("uses the static ffmpeg for other services", () => {
     assert.equal(
         selectFfmpegExecutable({ service: "youtube" }, "linux"),

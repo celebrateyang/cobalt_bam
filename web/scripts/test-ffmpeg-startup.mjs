@@ -150,9 +150,10 @@ test("the actual worker separates initialization from probing and supports singl
     const pending = self.onmessage({ data: { cobaltFFmpegWorker: {
         variant: "encode", files: [{ type: "audio/webm" }], args: [], output: { type: "audio/mpeg" }, yesthreads: false,
     } } });
-    assert.equal(events[0].stage, "initializing"); assert.equal(events.length, 1);
+    assert.equal(events[0].stage, "worker");
+    assert.equal(events[1].stage, "initializing"); assert.equal(events.length, 2);
     assert.equal(options[0].noworker, true); ready({}); await pending;
-    assert.deepEqual(events.filter(e => e.stage).map(e => e.stage), ["initializing", "probing", "encoding"]);
+    assert.deepEqual(events.filter(e => e.stage).map(e => e.stage), ["worker", "initializing", "probing", "encoding"]);
     assert.equal(events.at(-1).render, "output");
 });
 

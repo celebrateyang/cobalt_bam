@@ -1097,6 +1097,10 @@ const fetchFile = async (
     }
 }
 
+// Signal that the script was evaluated, independently of the media request.
+// This also gives the header rollout a new content-hashed Worker URL.
+self.postMessage({ cobaltFetchWorker: { started: true } });
+
 self.onmessage = async (event: MessageEvent) => {
     if (event.data.cobaltFetchWorker) {
         await fetchFile(

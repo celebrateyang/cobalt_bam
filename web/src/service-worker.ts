@@ -4,10 +4,13 @@ import { build, files, version } from '$service-worker';
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
+const isProcessingAsset = (path: string) =>
+    path.startsWith('/_app/immutable/workers/') || path.startsWith('/_libav/');
+
 const ASSETS = [
     ...build, // the app itself
     ...files  // everything in `static`
-].filter((path) => path !== '/404.html');
+].filter((path) => path !== '/404.html' && !isProcessingAsset(path));
 
 self.addEventListener('install', (event) => {
     // Create a new cache and add all files to it
@@ -58,6 +61,10 @@ self.addEventListener('fetch', (event) => {
     if (!(url.protocol === 'http:' || url.protocol === 'https:') || url.origin !== self.location.origin) {
         return;
     }
+
+    // A cache entry can retain pre-deployment headers incompatible with an
+    // isolated document. Processing assets use the browser's normal cache.
+    if (isProcessingAsset(url.pathname)) return;
 
     // Documents and SvelteKit data responses must always come from the active
     // deployment. Serving an older cached HTML document after a release can

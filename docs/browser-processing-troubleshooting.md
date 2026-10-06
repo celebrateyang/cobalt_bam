@@ -47,6 +47,26 @@ Cancellation and late callbacks cannot restart a completed or removed task.
 
 ### Cloudflare Pages LibAV assets
 
+Processing Worker and LibAV scripts need `Cross-Origin-Embedder-Policy:
+require-corp` even when the homepage itself is not isolated: client navigation
+from an isolated document (for example `/zh/remux`) retains that document's
+policy. Pages static assets bypass server hooks, so these headers are in
+`web/static/_headers`. The service worker bypasses processing assets to avoid
+replaying cached responses with older policies. A startup handshake changes
+the content-hashed Worker URLs so existing immutable HTTP cache entries cannot
+hide the header rollout. Neither account nor homepage isolation is expanded.
+
+For verification after deployment, open `/zh/remux` directly, navigate to the
+homepage through its sidebar, and download a short YouTube video. Also test a
+direct homepage load. Confirm fresh Worker scripts return the COEP header.
+The recurrence on October 6 (request `4e0dff15-26f5-4aa8-9fc7-e8f65026fa15`)
+reported `WorkerError`, attempt 3, elapsed 6 ms, with the points hold released.
+A controlled Chrome test reproduced the same generic `Event` with undefined
+message, filename and line when an isolated document loaded a Worker without
+COEP. The same Worker started after adding COEP, and both variants started in
+a non-isolated document. This confirms the policy defect; whether this user's
+incident followed the isolated navigation path still needs deployed verification.
+
 The Vite plugin copies LibAV into `_libav`, outside SvelteKit's asset manifest.
 The Pages adapter must exclude `/_libav/*` from Function routing so Pages serves
 these files directly. Keep this exclusion before `<all>` because the adapter
@@ -101,6 +121,7 @@ available if the browser blocks or cancels the download.
 
 - `pnpm -C web test:ffmpeg-startup`
 - `pnpm -C web test:fetch-startup`
+- `pnpm -C web test:worker-assets`
 - `pnpm -C web test:saving`
 - `node --test api/src/core/browser-download-outcome.test.js api/src/db/users.test.js`
 - `pnpm -C api test:match-action` (requires an API URL for generating test tunnels)

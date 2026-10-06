@@ -224,6 +224,8 @@ const hlsFetch = async (url: string, mimeType?: string) => {
     }
 };
 
+self.postMessage({ cobaltHlsFetchWorker: { started: true } });
+
 self.onmessage = async (event: MessageEvent) => {
     const payload = event.data?.cobaltHlsFetchWorker;
     if (payload?.url) {

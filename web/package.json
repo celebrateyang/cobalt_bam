@@ -23,6 +23,7 @@
         "test:saving": "node --test ./scripts/test-download-saving.mjs",
         "test:ffmpeg-startup": "node --test ./scripts/test-ffmpeg-startup.mjs",
         "test:fetch-startup": "node --test ./scripts/test-fetch-startup.mjs",
+        "test:worker-assets": "node --test ./scripts/test-worker-assets.mjs",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
     },
     "license": "CC-BY-NC-SA-4.0",

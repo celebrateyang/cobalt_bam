@@ -137,6 +137,8 @@ const ffmpeg = async (
     }
 }
 
+self.postMessage({ cobaltFFmpegWorker: { stage: "worker" } });
+
 self.onmessage = async (event: MessageEvent) => {
     const ed = event.data.cobaltFFmpegWorker;
     if (ed?.variant && ed?.files && ed?.args && ed?.output) {

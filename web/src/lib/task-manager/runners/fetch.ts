@@ -95,7 +95,13 @@ export const runFetchWorker = async (
     try {
         worker = new FetchWorker();
         worker.onerror = (event) => {
-            console.error("fetch worker failed:", event.message, event.filename, event.lineno);
+            console.error(`fetch worker failed: ${JSON.stringify({
+                message: event.message || "Script loading failed without error details",
+                filename: event.filename || null,
+                line: event.lineno || null,
+                attempt: startAttempt + 1,
+                started,
+            })}`);
             void restartOrFail("queue.generic_error", "WorkerError");
         };
 

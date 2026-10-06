@@ -1,3 +1,13 @@
 # Cloudflare Pages static/prerendered files bypass SvelteKit server hooks.
 /*
   Link: </agents>; rel="help"; type="text/html"; title="AI agent access: REST and MCP", </llms.txt>; rel="help"; type="text/plain"; title="AI agent discovery summary", </capabilities.json>; rel="help"; type="application/json"; title="Site capabilities"
+
+# Workers must be loadable from both isolated and ordinary documents. Static
+# files bypass hooks.server.ts, including after client-side route navigation.
+/_app/immutable/workers/*
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+
+/_libav/*
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin

@@ -15,6 +15,7 @@ type DownloadFileParams = {
     file?: File,
     urlType?: CobaltFileUrlType,
     forceDialog?: boolean,
+    automatic?: boolean,
     onSaveResult?: (outcome: SaveOutcome) => void,
     saveContext?: SaveContext,
 }
@@ -155,6 +156,13 @@ export const downloadFile = async (params: DownloadFileParams): Promise<SaveOutc
 
     if (forceDialog || pref === "ask") {
         return openSavingDialog(params);
+    }
+
+    // A finished local file can be handed to the download manager without
+    // opening a new window or invoking a gesture-gated sharing API.
+    if (params.automatic && file && pref === "download"
+            && device.supports.directDownload && !device.is.iOS) {
+        return saveWithFeedback("download", params);
     }
 
     /*

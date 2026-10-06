@@ -382,7 +382,22 @@ export function itemDone(id: UUID, file: File) {
 
 const autoSaveCompletedItem = async (id: UUID, file: File) => {
     const item = get(queue)[id];
-    if (!item?.autoSave?.enabled) return;
+    if (!item || item.state !== "done") return;
+    if (!item.autoSave?.enabled) {
+        // Single downloads start saving once. Batch downloads keep their
+        // explicit bulk/folder flow to avoid browser multi-download blocking.
+        if (item.batchSessionId || item.batchSelectionTotal || item.automaticSaveAttempted
+                || item.saveRequested || item.saveAttempts) return;
+        updateItem(id, current => ({ ...current, automaticSaveAttempted: true }));
+        try {
+            const { saveQueueFile } = await import("$lib/task-manager/save-file");
+            await saveQueueFile(id, "queue", true);
+        } catch (error) {
+            updateItem(id, current => ({ ...current, saveOutcome: "failed" }));
+            console.error("[queue] automatic browser save failed", error);
+        }
+        return;
+    }
 
     updateItem(id, (current) => ({
         ...current,

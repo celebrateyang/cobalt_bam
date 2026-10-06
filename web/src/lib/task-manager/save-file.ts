@@ -15,15 +15,17 @@ export const getQueueSaveCandidates = (items: CobaltQueue, individually: boolean
 };
 
 // Saving an existing result never submits another extraction or points request.
-export const saveQueueFile = async (id: UUID, source: "queue" | "bulk" = "queue") => {
+export const saveQueueFile = async (id: UUID, source: "queue" | "bulk" = "queue", automatic = false) => {
     const item = get(queue)[id];
     if (item?.state !== "done" || !item.resultFile ||
         item.autoSave?.state === "saved" || item.autoSave?.state === "saving") return;
     const attempts = item.saveAttempts || 0;
+    if (automatic && (attempts > 0 || item.saveRequested)) return;
     updateItem(id, current => ({ ...current, saveAttempts: attempts + 1 }));
     return downloadFile({
         file: new File([item.resultFile], item.filename, { type: item.mimeType }),
         forceDialog: device.is.iOS,
+        automatic,
         saveContext: { source, repeat: attempts > 0 || Boolean(item.saveRequested) },
         onSaveResult: (outcome: SaveOutcome) => updateItem(id, current => ({
             ...current,

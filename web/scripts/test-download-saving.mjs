@@ -187,6 +187,37 @@ test("campaigns do not interrupt overseas users, processing, saving or errors", 
     assert.equal(canShowCampaign("zh", { one: { state: "done", autoSave: { state: "saved" } } }), true);
 });
 
+test("automatic local download works after user activation expires and keeps manual fallback", async () => {
+    const f = fixture(); f.navigator.userActivation.isActive = false;
+    assert.equal(await f.api.downloadFile({ ...f.params, automatic: true }), "download");
+    assert.equal(f.dialogs.length, 0); assert.ok(f.dom.includes("click"));
+    for (const pref of ["ask", "share"]) {
+        const g = fixture(pref); g.navigator.userActivation.isActive = false;
+        assert.equal(await g.api.downloadFile({ ...g.params, automatic: true }), "dialog");
+        assert.deepEqual(g.dom, []);
+    }
+    const iphone = fixture(); iphone.device.is.iOS = true;
+    iphone.navigator.userActivation.isActive = false;
+    assert.equal(await iphone.api.downloadFile({ ...iphone.params, automatic: true }), "dialog");
+    assert.deepEqual(iphone.dom, []);
+});
+
+test("automatic queue saving reuses the result, allows manual repeat and skips a manual-save race", async () => {
+    const f = fixture(); f.navigator.userActivation.isActive = false;
+    const queue = { one: { state: "done", resultFile: f.params.file, filename: "ready.mp4", mimeType: "video/mp4" } };
+    const { saveQueueFile } = load("src/lib/task-manager/save-file.ts", {
+        "svelte/store": { get: store => store }, "$lib/device": { device: f.device }, "$lib/download": f.api,
+        "$lib/state/task-manager/queue": { queue, updateItem: (id, update) => { queue[id] = update(queue[id]); } },
+    });
+    assert.equal(await saveQueueFile("one", "queue", true), "download");
+    assert.equal(queue.one.saveRequested, true); assert.equal(queue.one.saveAttempts, 1);
+    await saveQueueFile("one", "queue", true);
+    assert.equal(queue.one.saveAttempts, 1);
+    f.navigator.userActivation.isActive = true;
+    assert.equal(await saveQueueFile("one"), "download");
+    assert.equal(queue.one.saveAttempts, 2); assert.equal(await queue.one.resultFile.text(), "media");
+});
+
 test("tracking failure cannot block saving", () => {
     const { trackSave } = load("src/lib/analytics/saving.ts", {}, {
         window: { gtag: () => { throw new Error("analytics unavailable"); } },

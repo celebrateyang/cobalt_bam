@@ -185,7 +185,7 @@ test("browser outcomes only update an exact attempt owned by the signed-in user"
 });
 
 const queueFixture = () => {
-    const releases = [], finalizes = [], reports = [];
+    const releases = [], finalizes = [], reports = [], automaticSaves = [];
     const store = { value: {} };
     const { exports: api } = load("../src/lib/state/task-manager/queue.ts", {
         "svelte/store": {
@@ -208,12 +208,45 @@ const queueFixture = () => {
         },
         "$lib/api/download-outcome": { reportDownloadOutcome: async (...args) => { reports.push(args); } },
         "$lib/api/collection-memory": { markCollectionDownloadedItems: async () => true },
-        "$lib/storage/auto-save": { saveFileToAutoSaveDirectory() {} },
-    }, { setTimeout, clearTimeout, Map });
+        "$lib/storage/auto-save": { saveFileToAutoSaveDirectory: async () => ({ directoryName: "Downloads", filename: "output" }) },
+        "$lib/task-manager/save-file": { saveQueueFile: async (...args) => automaticSaves.push(args) },
+    }, { setTimeout, clearTimeout, Map, DOMException });
     api.addItem({ id: "task", state: "running", pipeline: [], pipelineResults: {},
         downloadRequestId: "exact-attempt", points: { holdId: "hold", required: 14, status: "held" } });
-    return { api, store, releases, finalizes, reports };
+    return { api, store, releases, finalizes, reports, automaticSaves };
 };
+
+test("single completed download automatically saves once without a second points request", async () => {
+    const f = queueFixture();
+    f.api.itemDone("task", { name: "output" });
+    await new Promise(setImmediate);
+    assert.equal(f.automaticSaves.length, 1);
+    assert.equal(f.automaticSaves[0][0], "task");
+    assert.equal(f.automaticSaves[0][2], true);
+    assert.equal(f.finalizes.length, 1);
+    f.api.itemDone("task", { name: "output" });
+    await new Promise(setImmediate);
+    assert.equal(f.automaticSaves.length, 1);
+});
+
+test("batch and already saved queue items do not start another automatic save", async () => {
+    for (const meta of [{ batchSessionId: "batch" }, { batchSelectionTotal: 2 }, { saveRequested: true }, { saveAttempts: 1 }]) {
+        const f = queueFixture(); Object.assign(f.store.value.task, meta);
+        f.api.itemDone("task", { name: "output" });
+        await new Promise(setImmediate);
+        assert.equal(f.automaticSaves.length, 0);
+    }
+});
+
+test("an authorized output folder takes priority over automatic browser saving", async () => {
+    const f = queueFixture();
+    f.store.value.task.autoSave = { enabled: true, state: "pending" };
+    f.api.itemDone("task", { name: "output" });
+    await new Promise(setImmediate);
+    assert.equal(f.automaticSaves.length, 0);
+    assert.equal(f.store.value.task.autoSave.state, "saved");
+    assert.equal(f.store.value.task.saveRequested, true);
+});
 
 test("terminal encoder failure persists diagnostics and releases its hold without charging", async () => {
     const f = queueFixture();

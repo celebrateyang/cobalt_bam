@@ -45,6 +45,7 @@ type CobaltQueueItemBase = {
     saveRequested?: boolean;
     saveOutcome?: SaveOutcome;
     saveAttempts?: number;
+    automaticSaveAttempted?: boolean;
     autoSave?: {
         enabled: boolean;
         state: "pending" | "saving" | "saved" | "error";

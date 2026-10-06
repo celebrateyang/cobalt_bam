@@ -89,6 +89,16 @@ the API and web changes to enable reporting; older clients remain unconfirmed.
 
 ## Targeted verification
 
+Single queued downloads automatically start saving when processing completes.
+With the default download preference, supported non-iOS browsers receive the
+local file through the browser download manager even after transient activation
+expires. iOS and gesture-gated preferences retain a saving dialog. Batch items
+keep the bulk/folder flow; an authorized output directory takes priority. Each
+task attempts automatic saving once, and manual repeat saving reuses its result
+without a new extraction or points request. A browser download handoff is not
+proof of a file being saved to disk, so the result and repeat-save action remain
+available if the browser blocks or cancels the download.
+
 - `pnpm -C web test:ffmpeg-startup`
 - `pnpm -C web test:fetch-startup`
 - `pnpm -C web test:saving`

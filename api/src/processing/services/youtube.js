@@ -211,7 +211,7 @@ const probeYtDlp = async () => {
     return null;
 };
 
-const resolveYtDlpCommand = async () => {
+export const resolveYtDlpCommand = async () => {
     if (!ytDlpCommandPromise) {
         ytDlpCommandPromise = probeYtDlp();
     }

@@ -4,7 +4,7 @@ import settings from "$lib/state/settings";
 
 import { getSession, resetSession } from "$lib/api/session";
 import { currentApiURL } from "$lib/api/api-url";
-import { turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
+import { turnstileCreated, turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
 import cachedInfo from "$lib/state/server-info";
 import { getServerInfo } from "$lib/api/server-info";
 import { clerkUser, getClerkToken } from "$lib/state/clerk";
@@ -12,6 +12,7 @@ import { clerkUser, getClerkToken } from "$lib/state/clerk";
 import type { Optional } from "$lib/types/generic";
 import type { CobaltAPIResponse, CobaltErrorResponse, CobaltSaveRequestBody } from "$lib/types/api";
 import type { CobaltExpandResponse } from "$lib/types/expand";
+import type { YouTubeSearchResponse } from "$lib/types/youtube";
 
 const sanitizeLogHeaderValue = (value: unknown, maxLength: number) => {
     if (typeof value !== "string") return null;
@@ -72,11 +73,16 @@ const waitForTurnstile = async () => {
 }
 
 const getAuthorization = async () => {
+    const processing = get(settings).processing;
+    if (processing.enableCustomApiKey && processing.customApiKey) {
+        return `Api-Key ${processing.customApiKey}`;
+    }
     if (!get(turnstileEnabled)) {
         return;
     }
 
     if (!get(turnstileSolved)) {
+        turnstileCreated.set(true);
         try {
             await waitForTurnstile();
         } catch {
@@ -291,9 +297,47 @@ const probeCobaltTunnelMedia = async (url: string, timeoutMs = 8000) => {
     }
 }
 
+const searchYouTube = async (query: string, signal?: AbortSignal, justRetried = false): Promise<YouTubeSearchResponse> => {
+    if (!await getServerInfo()) {
+        return { status: 'error', error: { code: 'error.api.unreachable' } } as CobaltErrorResponse;
+    }
+    const authorization = await getAuthorization();
+    if (authorization && typeof authorization !== 'string') return authorization;
+    const timeout = AbortSignal.timeout(55000);
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal?.addEventListener('abort', abort, { once: true });
+    timeout.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) controller.abort();
+    try {
+        const response: YouTubeSearchResponse = await fetch(`${currentApiURL()}/youtube/search`, {
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(authorization ? { Authorization: authorization } : {}),
+            },
+            body: JSON.stringify({ query }),
+        }).then(response => response.json());
+        if (response.status === 'error' && response.error.code === 'error.api.auth.jwt.invalid' && !justRetried) {
+            resetSession();
+            return searchYouTube(query, signal, true);
+        }
+        return response;
+    } catch (error) {
+        if (signal?.aborted) throw error;
+        return { status: 'error', error: { code: timeout.aborted ? 'error.api.youtube.search.timeout' : 'error.api.unreachable' } } as CobaltErrorResponse;
+    } finally {
+        signal?.removeEventListener('abort', abort);
+        timeout.removeEventListener('abort', abort);
+    }
+};
+
 export default {
     request,
     expand,
+    searchYouTube,
     probeCobaltTunnel,
     probeCobaltTunnelMedia,
 }

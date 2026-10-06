@@ -3,12 +3,14 @@
 
     import env from '$lib/env';
     import { getSeoLandingLocale } from '$lib/seo/landing-pages';
+    import { getYouTubeCopy } from '$lib/youtube/copy';
     import { isDePriorityLanding } from '$lib/seo/de-priority-landings';
     import { isThPriorityLanding } from '$lib/seo/th-priority-landings';
     import { getPlatformKey, getSeoRuntimeContent } from '$lib/seo/runtime-content';
     import { FREESAVEVIDEO_EXTENSION_STORE_URL } from '$lib/extension/freesavevideo';
 
     import SupportedServices from '$components/save/SupportedServices.svelte';
+    import YouTubeDownloadPage from '$components/youtube/YouTubeDownloadPage.svelte';
 
     export let data: {
         lang: string;
@@ -58,7 +60,8 @@
     $: localizedFaqLabel = isJa ? '動画ダウンロードのよくある質問' : faqLabel;
     $: localizedDiscoverLabel = isJa ? '人気動画を探す' : discoverLabel;
     $: pageTitle = localeContent.metaTitle;
-    $: pageDesc = localeContent.metaDescription;
+    $: youtubeCopy = getYouTubeCopy(data.lang);
+    $: pageDesc = data.slug === 'youtube-download' ? youtubeCopy.description : localeContent.metaDescription;
     $: pageKeywords = localeContent.metaKeywords.join(',');
     $: runtimeContent = getSeoRuntimeContent(data.lang);
     $: platformKey = getPlatformKey(data.slug);
@@ -151,7 +154,9 @@
                       name: data.slug === 'xinpianchang-video-download' ? 'FreeSaveVideo Downloader browser extension' : 'FreeSaveVideo',
                   },
               ],
-              step: localeContent.steps.map((step, index) => ({
+              step: (data.slug === 'youtube-download'
+                  ? [youtubeCopy.step1Body, youtubeCopy.step2Body, youtubeCopy.step3Body]
+                  : localeContent.steps).map((step, index) => ({
                   '@type': 'HowToStep',
                   position: index + 1,
                   name: step,
@@ -205,8 +210,12 @@
 
     let copiedExampleTitle = '';
     let OmniboxComponent: typeof import('$components/save/Omnibox.svelte').default | null = null;
+    let mounted = false;
+    let loadingOmnibox = false;
 
-    onMount(() => {
+    onMount(() => { mounted = true; });
+    $: if (mounted && data.slug !== 'youtube-download' && !OmniboxComponent && !loadingOmnibox) {
+        loadingOmnibox = true;
         void import('$components/save/Omnibox.svelte')
             .then((module) => {
                 OmniboxComponent = module.default;
@@ -214,7 +223,7 @@
             .catch((error) => {
                 console.debug('Downloader controls failed to load', error);
             });
-    });
+    }
 
     const copyExampleLinks = async (title: string, urls: string[]) => {
         await navigator.clipboard.writeText(urls.join('\n'));
@@ -246,6 +255,9 @@
     {/if}
 </svelte:head>
 
+{#if data.slug === 'youtube-download'}
+    <YouTubeDownloadPage lang={data.lang} content={{ ...localeContent, faqs: mergedFaqs }} guideSlug={data.guideSlug} />
+{:else}
 <div class="page">
     <div class="services">
         <SupportedServices />
@@ -598,6 +610,7 @@
         <p class="disclaimer">{localeContent.disclaimer}</p>
     </main>
 </div>
+{/if}
 
 <style>
     .xinpianchang-install {

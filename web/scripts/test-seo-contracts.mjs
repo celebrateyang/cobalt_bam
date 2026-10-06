@@ -70,6 +70,10 @@ async function component(file) {
     return evaluate(compile(processed.code, { filename, generate: 'ssr' }).js.code, filename).default;
 }
 
+// Preload real nested components for this synchronous SSR module loader.
+framework['$components/save/SupportLink.svelte'] = { __esModule: true, default: await component('src/components/save/SupportLink.svelte') };
+framework['$components/youtube/YouTubeDownloadPage.svelte'] = { __esModule: true, default: await component('src/components/youtube/YouTubeDownloadPage.svelte') };
+
 function setTestLocale(lang, path = 'faq') {
     testPage.set({ params: { lang }, url: new URL(`https://freesavevideo.online/${lang}/${path}`) });
     testTranslations.set(key => {
@@ -277,11 +281,18 @@ test('every advertised download and guide detail renders localized shared labels
             const context = `${params.lang}/${kind}/${params.slug}`;
             const hasLabel = (tag, value) => [...html.matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]*)</${tag}>`, 'g'))]
                 .some(match => match[1] === escapeText(value));
-            assert(hasLabel('h2', labels.toolsWithoutPoints), context);
-            if (kind === 'download') {
+            if (kind === 'download' && params.slug === 'youtube-download') {
+                const copy = load('src/lib/youtube/copy.ts').getYouTubeCopy(params.lang);
+                assert(html.includes(escapeText(copy.search)), context);
+                assert(html.includes(escapeText(copy.placeholder)), context);
+                assert(html.includes('id="youtube-query"'), context);
+                assert(!html.includes('class="omnibox'), context);
+            } else if (kind === 'download') {
+                assert(hasLabel('h2', labels.toolsWithoutPoints), context);
                 assert(hasLabel('h3', labels.corePages), context);
                 assert(hasLabel('h3', labels.similarDownloads), context);
             } else {
+                assert(hasLabel('h2', labels.toolsWithoutPoints), context);
                 const eyebrow = html.match(/<p class="eyebrow[^\"]*">([^<]*)<\/p>/);
                 assert.equal(eyebrow?.[1], escapeText(labels.downloadGuide), context);
             }
@@ -294,6 +305,28 @@ test('every advertised download and guide detail renders localized shared labels
     }
     assert.deepEqual([...seenLanguages].sort(), [...supportedLanguages].sort());
     t.diagnostic(`Verified localized shared labels on ${renderedCount} detail pages across ${seenLanguages.size} languages`);
+});
+
+test('dedicated YouTube workspace renders keyword controls and FAQ schema in every supported language', async () => {
+    const page = await component('src/routes/[lang]/download/[slug]/+page.svelte');
+    const loader = load('src/routes/[lang]/download/[slug]/+page.ts');
+    const { getYouTubeCopy } = load('src/lib/youtube/copy.ts');
+    const english = getYouTubeCopy('en');
+    for (const lang of supportedLanguages) {
+        const data = await loader.load({ params: { lang, slug: 'youtube-download' } });
+        const rendered = page.render({ data });
+        const copy = getYouTubeCopy(lang);
+        assert(rendered.html.includes(escapeText(copy.placeholder)), lang);
+        assert(rendered.html.includes(escapeText(copy.searchNote)), lang);
+        assert(rendered.html.includes('2026 top songs'), lang);
+        if (lang !== 'en') assert.notEqual(copy.search, english.search, lang);
+        for (const schema of rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+            const value = JSON.parse(schema[1]);
+            if (value['@type'] === 'FAQPage') for (const question of value.mainEntity) {
+                assert(rendered.html.includes(escapeText(question.name)), lang);
+            }
+        }
+    }
 });
 
 test('YouTube guides render distinct instructional content and matching FAQ schema', async () => {

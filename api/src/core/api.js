@@ -24,6 +24,7 @@ import { createResponse, normalizeRequest, getIP } from "../processing/request.j
 import { getHeaders } from "../stream/shared.js";
 import { safeDestroyStream } from "../stream/safe-destroy.js";
 import { expandURL } from "../processing/expand.js";
+import { searchYouTube, YouTubeSearchError } from "../processing/youtube-search.js";
 import extractGeneric, {
     canAttemptGenericURL,
     getGenericServiceHost,
@@ -749,7 +750,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         });
     }
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
         if (!acceptRegex.test(req.header('Accept'))) {
             return fail(res, "error.api.header.accept");
         }
@@ -759,7 +760,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
         if (!env.apiKeyURL) {
             return next();
         }
@@ -787,7 +788,7 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         return next();
     });
 
-    app.post(['/', '/expand'], (req, res, next) => {
+    app.post(['/', '/expand', '/youtube/search'], (req, res, next) => {
         if (!env.sessionEnabled || req.rateLimitKey) {
             return next();
         }
@@ -819,7 +820,14 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
         next();
     });
 
-    app.post(['/', '/expand'], apiLimiter);
+    app.post(['/', '/expand', '/youtube/search'], apiLimiter);
+    const youtubeSearchLimiter = rateLimit({
+        windowMs: 60_000,
+        limit: 12,
+        keyGenerator,
+        store: await createStore('youtube-search'),
+        handler: handleRateExceeded,
+    });
     app.use('/', express.json({ limit: "32kb" }));
 
     app.use('/', (err, req, res, next) => {
@@ -873,6 +881,22 @@ export const runAPI = async (express, app, __dirname, isPrimary = true) => {
             res.json(jwt.generate(getIP(req, 32)));
         } catch {
             return fail(res, "error.api.generic");
+        }
+    });
+
+    app.post('/youtube/search', youtubeSearchLimiter, async (req, res) => {
+        const allowedServices = APIKeys.getAllowedServices(req.rateLimitKey) || env.enabledServices;
+        if (!env.enabledServices.has('youtube') || !allowedServices.has('youtube')) {
+            return res.status(503).json({ status: 'error', error: { code: 'error.api.youtube.search.unavailable' } });
+        }
+        try {
+            return res.json(await searchYouTube(req.body?.query));
+        } catch (error) {
+            const known = error instanceof YouTubeSearchError;
+            return res.status(known ? error.status : 503).json({
+                status: 'error',
+                error: { code: known ? error.code : 'error.api.youtube.search.unavailable' },
+            });
         }
     });
 

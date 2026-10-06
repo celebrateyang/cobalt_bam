@@ -5,8 +5,31 @@ this document provides info about methods and acceptable variables for all cobal
 > it [here](https://github.com/imputnet/cobalt/blob/7/docs/api.md)
 <!-- TODO: authorization -->
 
+## POST: `/youtube/search`
+
+Search public YouTube videos by keyword without downloading media or consuming download points.
+Use the same API-key/session authorization as the downloader and include `Accept: application/json`
+and `Content-Type: application/json`.
+
+Request: `{ "query": "2026 top songs" }`. Queries must contain 2–120 characters and must not be URLs.
+The response is `{ "status": "ok", "query": "2026 top songs", "items": [...] }`, with at most 12 items.
+Each item contains `id`, canonical `url`, `title`, `channel`, `thumbnail` and `duration` in seconds
+(`null` when unknown). Live and upcoming videos are excluded.
+
+The server uses its existing yt-dlp installation with metadata-only search, a three-minute cache,
+shared work for identical concurrent queries, and at most two active searches per instance.
+The endpoint permits 12 requests per minute per existing rate-limit identity, in addition to the
+regular API limit. Limits and cache are per instance unless the limiter uses the configured Redis store.
+
+Errors use the regular `{ "status": "error", "error": { "code": "..." } }` shape:
+`error.api.youtube.search.invalid_query` (400), `error.api.youtube.search.busy` (429),
+`error.api.youtube.search.timeout` (503), and `error.api.youtube.search.unavailable` (503).
+The existing API rate-limit and authorization errors may also be returned.
+
 ## POST: `/`
 cobalt's main processing endpoint.
+
+
 
 request body type: `application/json`
 response body type: `application/json`

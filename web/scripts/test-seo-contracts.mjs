@@ -317,7 +317,6 @@ test('dedicated YouTube workspace renders keyword controls and FAQ schema in eve
         const rendered = page.render({ data });
         const copy = getYouTubeCopy(lang);
         assert(rendered.html.includes(escapeText(copy.placeholder)), lang);
-        assert(rendered.html.includes(escapeText(copy.searchNote)), lang);
         assert(rendered.html.includes('2026 top songs'), lang);
         if (lang !== 'en') assert.notEqual(copy.search, english.search, lang);
         for (const schema of rendered.head.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {

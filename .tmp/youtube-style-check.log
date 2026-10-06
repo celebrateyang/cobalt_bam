@@ -1,0 +1,3128 @@
+
+> @imput/cobalt-web@10.1.0 check D:\code\cobalt_bam\web
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+
+====================================
+Loading svelte-check in workspace: d:\code\cobalt_bam\web
+Getting Svelte diagnostics...
+
+d:\code\cobalt_bam\web\src\components\clipboard\SessionManager.svelte:309:13
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+        >
+            <div class="scanner-panel" on:click|stopPropagation>
+                <div class="scanner-header">
+                    <h4 id={scannerTitleId}>{$t("clipboard.scan_with_camera")}</h4>
+                    <button
+                        class="close-scanner"
+                        on:click={closeScanner}
+                        aria-label={$t("clipboard.scan_cancel")}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <QrScanner on:result={handleScanResult} on:error={handleScannerError} />
+                {#if scannerError}
+                    <p class="scanner-error">{scannerError}</p>
+                {/if}
+                <ActionButton id="cancel-scan" click={closeScanner}>
+                    {$t("clipboard.scan_cancel")}
+                </ActionButton>
+            </div>
+        </div>
+
+
+d:\code\cobalt_bam\web\src\components\clipboard\SessionManager.svelte:309:13
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+        >
+            <div class="scanner-panel" on:click|stopPropagation>
+                <div class="scanner-header">
+                    <h4 id={scannerTitleId}>{$t("clipboard.scan_with_camera")}</h4>
+                    <button
+                        class="close-scanner"
+                        on:click={closeScanner}
+                        aria-label={$t("clipboard.scan_cancel")}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <QrScanner on:result={handleScanResult} on:error={handleScannerError} />
+                {#if scannerError}
+                    <p class="scanner-error">{scannerError}</p>
+                {/if}
+                <ActionButton id="cancel-scan" click={closeScanner}>
+                    {$t("clipboard.scan_cancel")}
+                </ActionButton>
+            </div>
+        </div>
+
+
+d:\code\cobalt_bam\web\src\components\clipboard\SessionManager.svelte:300:9
+Warn: A11y: noninteractive element cannot have nonnegative tabIndex value (svelte)
+    {#if showScanner}
+        <div
+            class="scanner-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={scannerTitleId}
+            tabindex="0"
+            on:click={closeScanner}
+            on:keydown={handleOverlayKeydown}
+        >
+            <div class="scanner-panel" on:click|stopPropagation>
+                <div class="scanner-header">
+                    <h4 id={scannerTitleId}>{$t("clipboard.scan_with_camera")}</h4>
+                    <button
+                        class="close-scanner"
+                        on:click={closeScanner}
+                        aria-label={$t("clipboard.scan_cancel")}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <QrScanner on:result={handleScanResult} on:error={handleScannerError} />
+                {#if scannerError}
+                    <p class="scanner-error">{scannerError}</p>
+                {/if}
+                <ActionButton id="cancel-scan" click={closeScanner}>
+                    {$t("clipboard.scan_cancel")}
+                </ActionButton>
+            </div>
+        </div>
+    {/if}
+
+
+d:\code\cobalt_bam\web\src\components\clipboard\SessionManager.svelte:300:9
+Warn: A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners. (svelte)
+    {#if showScanner}
+        <div
+            class="scanner-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={scannerTitleId}
+            tabindex="0"
+            on:click={closeScanner}
+            on:keydown={handleOverlayKeydown}
+        >
+            <div class="scanner-panel" on:click|stopPropagation>
+                <div class="scanner-header">
+                    <h4 id={scannerTitleId}>{$t("clipboard.scan_with_camera")}</h4>
+                    <button
+                        class="close-scanner"
+                        on:click={closeScanner}
+                        aria-label={$t("clipboard.scan_cancel")}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <QrScanner on:result={handleScanResult} on:error={handleScannerError} />
+                {#if scannerError}
+                    <p class="scanner-error">{scannerError}</p>
+                {/if}
+                <ActionButton id="cancel-scan" click={closeScanner}>
+                    {$t("clipboard.scan_cancel")}
+                </ActionButton>
+            </div>
+        </div>
+    {/if}
+
+
+d:\code\cobalt_bam\web\src\components\clipboard\SessionManager.svelte:604:5
+Warn: Unused CSS selector ".manual-hint" (svelte)
+
+    .manual-hint {
+        font-size: 0.75rem;
+
+
+d:\code\cobalt_bam\web\src\components\curious-cat\CuriousCat.svelte:265:9
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+        <section class="detail" role="dialog" aria-modal="true" aria-label={selected.title} on:click|stopPropagation>
+            <h2>{selected.title}</h2>
+            <p>{selected.body}</p>
+            {#if selected.image_url}
+                <img src={selected.image_url} alt={selected.title} />
+            {/if}
+            {#if selected.copy_text}
+                <textarea readonly value={selected.copy_text}></textarea>
+            {/if}
+            <div class="detail-actions">
+                <button type="button" class="secondary" on:click={() => (detailOpen = false)}>
+                    关闭
+                </button>
+            </div>
+        </section>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\components\curious-cat\CuriousCat.svelte:265:9
+Warn: A11y: Non-interactive element <section> should not be assigned mouse or keyboard event listeners. (svelte)
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+        <section class="detail" role="dialog" aria-modal="true" aria-label={selected.title} on:click|stopPropagation>
+            <h2>{selected.title}</h2>
+            <p>{selected.body}</p>
+            {#if selected.image_url}
+                <img src={selected.image_url} alt={selected.title} />
+            {/if}
+            {#if selected.copy_text}
+                <textarea readonly value={selected.copy_text}></textarea>
+            {/if}
+            <div class="detail-actions">
+                <button type="button" class="secondary" on:click={() => (detailOpen = false)}>
+                    关闭
+                </button>
+            </div>
+        </section>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\components\dialog\TikTokDownloadDialog.svelte:502:17
+Warn: A11y: <video> elements must have a <track kind="captions"> (svelte)
+            {#if filePreviewUrl && !previewFailed}
+                <video
+                    src={filePreviewUrl}
+                    controls
+                    playsinline
+                    preload="metadata"
+                    on:error={() => (previewFailed = true)}
+                ></video>
+            {:else if activeUrl && !previewFailed}
+
+
+d:\code\cobalt_bam\web\src\components\queue\ProcessingQueueItem.svelte:276:1
+Warn: A11y: noninteractive element cannot have nonnegative tabIndex value (svelte)
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div
+    class="processing-item"
+    class:done={info.state === "done"}
+    class:saved={info.saveRequested}
+    role="listitem"
+    tabindex={$queueVisible ? 0 : -1}
+    class:queue-hidden={!$queueVisible}
+>
+    <div class="processing-info">
+        <div class="file-title">
+            <div class="processing-type">
+                <MediaTypeIcon />
+            </div>
+            <span class="filename">
+                {info.filename}
+            </span>
+        </div>
+
+        {#if info.state === "running"}
+            <div class="progress-holder">
+                {#each info.pipeline as task}
+                    <ProgressBar
+                        percentage={getWorkerProgress(info, task.workerId) || 0}
+                        workerId={task.workerId}
+                        pipelineResults={info.pipelineResults}
+                    />
+                {/each}
+            </div>
+        {/if}
+
+        <div class="file-status {info.state}" class:retrying>
+            <div class="status-icon">
+                {#if info.state === "done"}
+                    <IconCheck />
+                {/if}
+                {#if info.state === "error" && !retrying}
+                    <IconExclamationCircle />
+                {/if}
+                {#if info.state === "running" || retrying}
+                    <div class="status-spinner">
+                        <IconLoader2 />
+                    </div>
+                {/if}
+            </div>
+
+            <div class="status-text" role={info.state === "done" ? "status" : undefined} aria-live={info.state === "done" ? "polite" : "off"}>
+                {statusText}
+            </div>
+        </div>
+        {#if showNetworkStalledNotice}
+            <div class="network-stalled-notice" role="status" aria-live="polite">
+                {$t("queue.network_stalled_waiting")}
+            </div>
+        {/if}
+        {#if pointsSummary}
+            <div class="points-status">
+                {pointsSummary}
+            </div>
+        {/if}
+    </div>
+
+    <div class="file-actions">
+        {#if info.state === "done" && info.resultFile}
+            {#if info.autoSave?.state !== "saved"}
+                <button
+                    class="button action-button"
+                    class:save-button={info.state === "done"}
+                    class:saved={info.saveRequested}
+                    aria-label={$t(info.saveRequested ? "save.action.again" : "button.save")}
+                    on:click={download}
+                    disabled={downloading || info.autoSave?.state === "saving"}
+                    class:downloading
+                >
+                    {#if downloading || info.autoSave?.state === "saving"}
+                        <IconLoader2 />
+                    {:else if info.saveRequested}
+                        <IconDownload />
+                        <span>{$t("save.action.again")}</span>
+                    {:else}
+                        {$t("button.save")}
+                    {/if}
+                </button>
+            {/if}
+            {#if info.autoSave?.state !== "saved"}
+                <button
+                    class="button action-button"
+                    aria-label="传到其他设备"
+                    title="Send to other device"
+                    on:click={() => transfer(info.resultFile)}
+                >
+                    <IconDeviceMobile />
+                </button>
+            {/if}
+        {/if}
+
+        {#if !retrying}
+            {#if info.state === "error" && info?.canRetry}
+                <button
+                    class="button action-button"
+                    class:resume-button={hasResumeSnapshot}
+                    aria-label={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
+                    title={$t(hasResumeSnapshot ? "button.continue" : "button.retry")}
+                    on:click={() => retry(info)}
+                    disabled={$retrySchedulerBusy}
+                >
+                    <IconReload />
+                    {#if hasResumeSnapshot}
+                        <span>{$t("button.continue")}</span>
+                    {/if}
+                </button>
+            {/if}
+            {#if browserHandoffUrl}
+                <a
+                    class="button action-button"
+                    href={browserHandoffUrl}
+                    download={info.filename}
+                    target="_blank"
+                    rel="noreferrer noopener nofollow"
+                    aria-label={$t("button.download")}
+                    title={$t("button.download")}
+                >
+                    <IconDownload />
+                </a>
+            {/if}
+            <button
+                class="button action-button"
+                aria-label={$t(`button.${info.state === "done" ? "delete" : "remove"}`)}
+                on:click={() => removeItem(id)}
+                disabled={downloading}
+            >
+                <IconX />
+            </button>
+        {/if}
+    </div>
+</div>
+{#if info.state === "error" || (info.state === "done" && info.saveOutcome === "failed")}
+
+
+d:\code\cobalt_bam\web\src\components\save\Omnibox.svelte:1353:9
+Warn: A11y: <div> with mouseenter, mouseleave handlers must have an ARIA role (svelte)
+    {#if activeGuideTitle && activeGuideBody}
+        <div
+            class="guide-popover-anchor guide-popover-anchor--mobile"
+            on:mouseenter={clearGuideHideTimer}
+            on:mouseleave={scheduleHideGuidePopover}
+        >
+            <div class="guide-popover-area guide-popover-area--mobile" role="presentation">
+                <div class="guide-popover" role="status" aria-live="polite">
+                    <div class="guide-popover-title">{activeGuideTitle}</div>
+                    <div class="guide-popover-body">{activeGuideBody}</div>
+                    {#if activeGuidePlatforms.length}
+                        <div
+                            class="guide-popover-platforms"
+                            aria-label="Supported platforms"
+                        >
+                            {#each activeGuidePlatforms as platform}
+                                <span class="guide-popover-chip">{platform}</span>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    {/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\account\+page.svelte:2478:17
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+            >
+                <div class="payment-modal" on:click|stopPropagation>
+                    <div class="payment-header">
+                        <div class="payment-title">
+                            {#if activeOrder.provider === "buymeacoffee"}
+                                <span class="bmc-creator-identity">
+                                    <img
+                                        src="/account/bambooyang-buymeacoffee.png"
+                                        alt="Bamboo Yang"
+                                    />
+                                    <span>
+                                        <strong>Buy Me a Coffee</strong>
+                                        <small>Bamboo Yang · FreeSaveVideo</small>
+                                    </span>
+                                </span>
+                            {:else}
+                                {$t("auth.wechat_qr_pay_title")}
+                            {/if}
+                        </div>
+                        <button class="button elevated" on:click={clearActiveOrder}>
+                            {$t("auth.close")}
+                        </button>
+                    </div>
+
+                    <div class="subtext payment-subtitle">
+                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
+                        {#if activeOrder.kind === "credit"}
+                            - {activeOrder.points} {$t("auth.points_label")}
+                        {:else}
+                            - {membershipPlanLabel(activeOrder.plan_key)}
+                        {/if}
+                    </div>
+
+                    {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
+                    {/if}
+
+                    <div class="payment-body">
+                        <div class="payment-qr">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="payment-success">
+                                    {$t(
+                                        activeOrder.kind === "membership"
+                                            ? "auth.membership_payment_success"
+                                            : "auth.payment_success",
+                                    )}
+                                </div>
+                            {:else if activeOrder.provider === "buymeacoffee"}
+                                <div class="bmc-payment-code">
+                                    <strong>{$t("auth.bmc_step_save")}</strong>
+                                    <code>{buyMeACoffeePaymentCode}</code>
+                                    {#if buyMeACoffeeCopyFailed}
+                                        <p role="alert">{$t("auth.bmc_copy_failed")}</p>
+                                        <label class="bmc-code-confirmation">
+                                            <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
+                                            <span>{$t("auth.bmc_saved_manually")}</span>
+                                        </label>
+                                    {/if}
+                                    {#if buyMeACoffeeCheckoutUrl && buyMeACoffeeCodeSaved}
+                                        <a
+                                            class="button elevated active"
+                                            href={buyMeACoffeeCheckoutUrl}
+                                            target="_blank"
+                                            rel="noreferrer noopener nofollow"
+                                             on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id, activeOrder.kind)}
+                                        >
+                                            {$t("auth.bmc_step_pay")}
+                                        </a>
+                                    {:else}
+                                        <button
+                                            class="button elevated active"
+                                            on:click={copyBuyMeACoffeePaymentCode}
+                                        >
+                                            {$t("auth.bmc_copy_continue")}
+                                        </button>
+                                    {/if}
+                                </div>
+                            {:else if qrDataUrl}
+                                <img
+                                    class="payment-qr-image"
+                                    src={qrDataUrl}
+                                    alt={$t("auth.wechat_qr_alt")}
+                                />
+                            {:else}
+                                <div class="payment-qr-placeholder">
+                                    {$t("auth.qr_generating")}
+                                </div>
+                            {/if}
+
+                        </div>
+
+                        <div class="payment-status">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="subtext payment-hint">
+                                    {$t("auth.payment_paid_hint")}
+                                </div>
+                                {#if referralLink}
+                                    <div class="payment-referral-cta">
+                                        <div class="payment-referral-copy">
+                                            <strong>{$t("auth.referral_title")}</strong>
+                                            <span>{$t("auth.referral_subtitle")}</span>
+                                        </div>
+                                        <button
+                                            class="button elevated payment-referral-button"
+                                            on:click={() =>
+                                                nativeShareSupported
+                                                    ? shareReferralLink("payment_success")
+                                                    : copyReferralLink("payment_success")}
+                                        >
+                                            {#if nativeShareSupported}
+                                                {$t("button.share")}
+                                            {:else if referralCopyState === "copied"}
+                                                {$t("auth.referral_copied")}
+                                            {:else if referralCopyState === "failed"}
+                                                {$t("auth.referral_copy_failed")}
+                                            {:else}
+                                                {$t("auth.referral_copy")}
+                                            {/if}
+                                        </button>
+                                    </div>
+                                {/if}
+                            {:else}
+                                <div class="payment-wait">{$t("auth.payment_waiting")}</div>
+                                <div class="subtext payment-hint">
+                                    {#if activeOrder.provider === "buymeacoffee"}
+                                        <strong>{$t("auth.bmc_step_submit")}</strong>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_submit_hint" : "auth.bmc_submit_hint")}</p>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_return_hint" : "auth.bmc_return_hint")}</p>
+                                        <a
+                                            class="bmc-help-link"
+                                            href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
+                                             on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id, activeOrder.kind)}
+                                        >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
+                                        <p>{$t("auth.bmc_help_hint")}</p>
+                                        {#if buyMeACoffeeStatusError}
+                                            <p role="alert">{$t("auth.bmc_status_error")}</p>
+                                        {/if}
+                                    {:else}
+                                        {$t("auth.payment_waiting_hint")}
+                                    {/if}
+                                </div>
+                            {/if}
+
+                            <div class="payment-actions">
+                                <button
+                                    class="button elevated"
+                                    on:click={() => {
+                                        if (activeOrder) checkActiveOrderStatus(activeOrder);
+                                    }}
+                                    disabled={orderStatusLoading}
+                                >
+                                    {$t("auth.check_status")}
+                                </button>
+                                {#if activeOrder.provider !== "buymeacoffee"}
+                                    <button class="button elevated" on:click={clearActiveOrder}>
+                                        {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                    </button>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\account\+page.svelte:2478:17
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+            >
+                <div class="payment-modal" on:click|stopPropagation>
+                    <div class="payment-header">
+                        <div class="payment-title">
+                            {#if activeOrder.provider === "buymeacoffee"}
+                                <span class="bmc-creator-identity">
+                                    <img
+                                        src="/account/bambooyang-buymeacoffee.png"
+                                        alt="Bamboo Yang"
+                                    />
+                                    <span>
+                                        <strong>Buy Me a Coffee</strong>
+                                        <small>Bamboo Yang · FreeSaveVideo</small>
+                                    </span>
+                                </span>
+                            {:else}
+                                {$t("auth.wechat_qr_pay_title")}
+                            {/if}
+                        </div>
+                        <button class="button elevated" on:click={clearActiveOrder}>
+                            {$t("auth.close")}
+                        </button>
+                    </div>
+
+                    <div class="subtext payment-subtitle">
+                        {$t("auth.order_total")}: {formatAmount(activeOrder.amount_fen, activeOrder.currency)}
+                        {#if activeOrder.kind === "credit"}
+                            - {activeOrder.points} {$t("auth.points_label")}
+                        {:else}
+                            - {membershipPlanLabel(activeOrder.plan_key)}
+                        {/if}
+                    </div>
+
+                    {#if activeOrder.provider === "buymeacoffee" && activeOrder.status !== "PAID"}
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.download_pass_terms" : "auth.bmc_terms", { days: activeOrder.kind === "membership" ? activeOrder.duration_days : 0 })}</p>
+                        <p class="subtext">{$t(activeOrder.kind === "membership" ? "auth.bmc_member_checkout_notice" : "auth.bmc_checkout_notice")}</p>
+                    {/if}
+
+                    <div class="payment-body">
+                        <div class="payment-qr">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="payment-success">
+                                    {$t(
+                                        activeOrder.kind === "membership"
+                                            ? "auth.membership_payment_success"
+                                            : "auth.payment_success",
+                                    )}
+                                </div>
+                            {:else if activeOrder.provider === "buymeacoffee"}
+                                <div class="bmc-payment-code">
+                                    <strong>{$t("auth.bmc_step_save")}</strong>
+                                    <code>{buyMeACoffeePaymentCode}</code>
+                                    {#if buyMeACoffeeCopyFailed}
+                                        <p role="alert">{$t("auth.bmc_copy_failed")}</p>
+                                        <label class="bmc-code-confirmation">
+                                            <input type="checkbox" bind:checked={buyMeACoffeeCodeSaved} />
+                                            <span>{$t("auth.bmc_saved_manually")}</span>
+                                        </label>
+                                    {/if}
+                                    {#if buyMeACoffeeCheckoutUrl && buyMeACoffeeCodeSaved}
+                                        <a
+                                            class="button elevated active"
+                                            href={buyMeACoffeeCheckoutUrl}
+                                            target="_blank"
+                                            rel="noreferrer noopener nofollow"
+                                             on:click={() => activeOrder && trackPaymentStep("checkout_opened", activeOrder.id, activeOrder.kind)}
+                                        >
+                                            {$t("auth.bmc_step_pay")}
+                                        </a>
+                                    {:else}
+                                        <button
+                                            class="button elevated active"
+                                            on:click={copyBuyMeACoffeePaymentCode}
+                                        >
+                                            {$t("auth.bmc_copy_continue")}
+                                        </button>
+                                    {/if}
+                                </div>
+                            {:else if qrDataUrl}
+                                <img
+                                    class="payment-qr-image"
+                                    src={qrDataUrl}
+                                    alt={$t("auth.wechat_qr_alt")}
+                                />
+                            {:else}
+                                <div class="payment-qr-placeholder">
+                                    {$t("auth.qr_generating")}
+                                </div>
+                            {/if}
+
+                        </div>
+
+                        <div class="payment-status">
+                            {#if activeOrder.status === "PAID"}
+                                <div class="subtext payment-hint">
+                                    {$t("auth.payment_paid_hint")}
+                                </div>
+                                {#if referralLink}
+                                    <div class="payment-referral-cta">
+                                        <div class="payment-referral-copy">
+                                            <strong>{$t("auth.referral_title")}</strong>
+                                            <span>{$t("auth.referral_subtitle")}</span>
+                                        </div>
+                                        <button
+                                            class="button elevated payment-referral-button"
+                                            on:click={() =>
+                                                nativeShareSupported
+                                                    ? shareReferralLink("payment_success")
+                                                    : copyReferralLink("payment_success")}
+                                        >
+                                            {#if nativeShareSupported}
+                                                {$t("button.share")}
+                                            {:else if referralCopyState === "copied"}
+                                                {$t("auth.referral_copied")}
+                                            {:else if referralCopyState === "failed"}
+                                                {$t("auth.referral_copy_failed")}
+                                            {:else}
+                                                {$t("auth.referral_copy")}
+                                            {/if}
+                                        </button>
+                                    </div>
+                                {/if}
+                            {:else}
+                                <div class="payment-wait">{$t("auth.payment_waiting")}</div>
+                                <div class="subtext payment-hint">
+                                    {#if activeOrder.provider === "buymeacoffee"}
+                                        <strong>{$t("auth.bmc_step_submit")}</strong>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_submit_hint" : "auth.bmc_submit_hint")}</p>
+                                        <p>{$t(activeOrder.kind === "membership" ? "auth.bmc_member_return_hint" : "auth.bmc_return_hint")}</p>
+                                        <a
+                                            class="bmc-help-link"
+                                            href={`mailto:celebrateyang@gmail.com?subject=${encodeURIComponent(`FreeSaveVideo payment help: ${buyMeACoffeePaymentCode}`)}&body=${encodeURIComponent(`Payment code: ${buyMeACoffeePaymentCode}\nPlease attach your Buy Me a Coffee receipt. Do not include card details.`)}`}
+                                             on:click={() => activeOrder && trackPaymentStep("help_opened", activeOrder.id, activeOrder.kind)}
+                                        >{$t(activeOrder.kind === "membership" ? "auth.bmc_member_help" : "auth.bmc_help")}</a>
+                                        <p>{$t("auth.bmc_help_hint")}</p>
+                                        {#if buyMeACoffeeStatusError}
+                                            <p role="alert">{$t("auth.bmc_status_error")}</p>
+                                        {/if}
+                                    {:else}
+                                        {$t("auth.payment_waiting_hint")}
+                                    {/if}
+                                </div>
+                            {/if}
+
+                            <div class="payment-actions">
+                                <button
+                                    class="button elevated"
+                                    on:click={() => {
+                                        if (activeOrder) checkActiveOrderStatus(activeOrder);
+                                    }}
+                                    disabled={orderStatusLoading}
+                                >
+                                    {$t("auth.check_status")}
+                                </button>
+                                {#if activeOrder.provider !== "buymeacoffee"}
+                                    <button class="button elevated" on:click={clearActiveOrder}>
+                                        {$t(activeOrder.status === "PAID" ? "auth.done" : "auth.cancel")}
+                                    </button>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:251:5
+Warn: Unused CSS selector ".hint" (svelte)
+
+    .hint {
+        margin-top: calc(var(--padding) * 2.5);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:261:5
+Warn: Unused CSS selector ".hint p" (svelte)
+
+    .hint p {
+        margin: 0 0 6px 0;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:265:5
+Warn: Unused CSS selector ".hint code" (svelte)
+
+    .hint code {
+        background: var(--button);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:275:5
+Warn: Unused CSS selector ".hint small" (svelte)
+
+    .hint small {
+        font-size: 0.75rem;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:346:9
+Warn: Unused CSS selector ".hint" (svelte)
+
+        .hint {
+            margin-top: calc(var(--padding) * 1.5);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\+page.svelte:352:9
+Warn: Unused CSS selector ".hint code" (svelte)
+
+        .hint code {
+            font-size: 0.8rem;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:412:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>平台</label>
+                    <select bind:value={formData.platform} required>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:422:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:431:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" bind:value={formData.display_name} />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:436:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>头像 URL</label>
+                    <input type="url" bind:value={formData.avatar_url} />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:441:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>主页 URL</label>
+                    <input type="url" bind:value={formData.profile_url} />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:446:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>简介</label>
+                    <textarea bind:value={formData.description} rows="3"
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:453:25
+Warn: A11y: A form label must be associated with a control. (svelte)
+                    <div class="form-group">
+                        <label>粉丝数</label>
+                        <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:462:25
+Warn: A11y: A form label must be associated with a control. (svelte)
+                    <div class="form-group">
+                        <label>优先级 (1-10)</label>
+                        <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:473:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>分类</label>
+                    <select bind:value={formData.category}>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:484:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:407:9
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingAccount ? "编辑账号" : "添加账号"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>平台</label>
+                    <select bind:value={formData.platform} required>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input
+                        type="text"
+                        bind:value={formData.username}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" bind:value={formData.display_name} />
+                </div>
+
+                <div class="form-group">
+                    <label>头像 URL</label>
+                    <input type="url" bind:value={formData.avatar_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>主页 URL</label>
+                    <input type="url" bind:value={formData.profile_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>简介</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>粉丝数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.follower_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>优先级 (1-10)</label>
+                        <input
+                            type="number"
+                            bind:value={formData.priority}
+                            min="1"
+                            max="10"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>分类</label>
+                    <select bind:value={formData.category}>
+                        <option value="beauty">美女</option>
+                        <option value="dance">舞蹈</option>
+                        <option value="fashion">时尚</option>
+                        <option value="lifestyle">生活</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_active}
+                        />
+                        启用此账号
+                    </label>
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.sync_enabled}
+                        />
+                        自动同步（最近 5 条 + 置顶）
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingAccount ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:407:9
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingAccount ? "编辑账号" : "添加账号"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>平台</label>
+                    <select bind:value={formData.platform} required>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input
+                        type="text"
+                        bind:value={formData.username}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" bind:value={formData.display_name} />
+                </div>
+
+                <div class="form-group">
+                    <label>头像 URL</label>
+                    <input type="url" bind:value={formData.avatar_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>主页 URL</label>
+                    <input type="url" bind:value={formData.profile_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>简介</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>粉丝数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.follower_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>优先级 (1-10)</label>
+                        <input
+                            type="number"
+                            bind:value={formData.priority}
+                            min="1"
+                            max="10"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>分类</label>
+                    <select bind:value={formData.category}>
+                        <option value="beauty">美女</option>
+                        <option value="dance">舞蹈</option>
+                        <option value="fashion">时尚</option>
+                        <option value="lifestyle">生活</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_active}
+                        />
+                        启用此账号
+                    </label>
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.sync_enabled}
+                        />
+                        自动同步（最近 5 条 + 置顶）
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingAccount ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:406:5
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+{#if showAddModal}
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingAccount ? "编辑账号" : "添加账号"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>平台</label>
+                    <select bind:value={formData.platform} required>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input
+                        type="text"
+                        bind:value={formData.username}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" bind:value={formData.display_name} />
+                </div>
+
+                <div class="form-group">
+                    <label>头像 URL</label>
+                    <input type="url" bind:value={formData.avatar_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>主页 URL</label>
+                    <input type="url" bind:value={formData.profile_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>简介</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>粉丝数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.follower_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>优先级 (1-10)</label>
+                        <input
+                            type="number"
+                            bind:value={formData.priority}
+                            min="1"
+                            max="10"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>分类</label>
+                    <select bind:value={formData.category}>
+                        <option value="beauty">美女</option>
+                        <option value="dance">舞蹈</option>
+                        <option value="fashion">时尚</option>
+                        <option value="lifestyle">生活</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_active}
+                        />
+                        启用此账号
+                    </label>
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.sync_enabled}
+                        />
+                        自动同步（最近 5 条 + 置顶）
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingAccount ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:406:5
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+{#if showAddModal}
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingAccount ? "编辑账号" : "添加账号"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>平台</label>
+                    <select bind:value={formData.platform} required>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input
+                        type="text"
+                        bind:value={formData.username}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" bind:value={formData.display_name} />
+                </div>
+
+                <div class="form-group">
+                    <label>头像 URL</label>
+                    <input type="url" bind:value={formData.avatar_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>主页 URL</label>
+                    <input type="url" bind:value={formData.profile_url} />
+                </div>
+
+                <div class="form-group">
+                    <label>简介</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>粉丝数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.follower_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>优先级 (1-10)</label>
+                        <input
+                            type="number"
+                            bind:value={formData.priority}
+                            min="1"
+                            max="10"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>分类</label>
+                    <select bind:value={formData.category}>
+                        <option value="beauty">美女</option>
+                        <option value="dance">舞蹈</option>
+                        <option value="fashion">时尚</option>
+                        <option value="lifestyle">生活</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_active}
+                        />
+                        启用此账号
+                    </label>
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.sync_enabled}
+                        />
+                        自动同步（最近 5 条 + 置顶）
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingAccount ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:800:5
+Warn: Unused CSS selector ".accounts-grid" (svelte)
+
+    .accounts-grid {
+        display: grid;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:806:5
+Warn: Unused CSS selector ".account-card" (svelte)
+
+    .account-card {
+        background: var(--popup-bg);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:814:5
+Warn: Unused CSS selector ".account-card:hover" (svelte)
+
+    .account-card:hover {
+        transform: translateY(-2px);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:818:5
+Warn: Unused CSS selector ".account-header" (svelte)
+
+    .account-header {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:825:5
+Warn: Unused CSS selector ".platform-badge" (svelte)
+
+    .platform-badge {
+        padding: 4px 10px;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:833:5
+Warn: Unused CSS selector ".platform-badge.tiktok" (svelte)
+
+    .platform-badge.tiktok {
+        background: #000;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:836:5
+Warn: Unused CSS selector ".platform-badge.instagram" (svelte)
+    }
+    .platform-badge.instagram {
+        background: linear-gradient(
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:846:5
+Warn: Unused CSS selector ".platform-badge.youtube" (svelte)
+    }
+    .platform-badge.youtube {
+        background: #ff0000;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:850:5
+Warn: Unused CSS selector ".toggle-btn" (svelte)
+
+    .toggle-btn {
+        padding: 4px 10px;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:860:5
+Warn: Unused CSS selector ".toggle-btn.active" (svelte)
+
+    .toggle-btn.active {
+        background: var(--green);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:865:5
+Warn: Unused CSS selector ".toggle-btn:not(.active)" (svelte)
+
+    .toggle-btn:not(.active) {
+        background: var(--red);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:870:5
+Warn: Unused CSS selector ".avatar" (svelte)
+
+    .avatar {
+        width: 100%;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:878:5
+Warn: Unused CSS selector ".account-card h3" (svelte)
+
+    .account-card h3 {
+        font-size: 1.15rem;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:885:5
+Warn: Unused CSS selector ".username" (svelte)
+
+    .username {
+        color: var(--subtext);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:891:5
+Warn: Unused CSS selector ".description" (svelte)
+
+    .description {
+        font-size: 0.85rem;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:898:5
+Warn: Unused CSS selector ".stats" (svelte)
+
+    .stats {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:906:5
+Warn: Unused CSS selector ".tags" (svelte)
+
+    .tags {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:913:5
+Warn: Unused CSS selector ".tag" (svelte)
+
+    .tag {
+        padding: 4px 8px;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\accounts\+page.svelte:921:5
+Warn: Unused CSS selector ".actions" (svelte)
+
+    .actions {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:176:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>内部名称</label>
+            <input bind:value={form.name} placeholder="微信群 2026-05" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:180:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>活动类型</label>
+            <select bind:value={form.activity_type}>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:191:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>标题</label>
+            <input bind:value={form.title} placeholder="喵，今天可以领积分" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:195:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>按钮文案</label>
+            <input bind:value={form.button_text} placeholder="查看二维码" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:199:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field field-wide">
+            <label>展示文案</label>
+            <textarea bind:value={form.body} rows="4"></textarea>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:203:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>动作</label>
+            <select bind:value={form.action_type}>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:211:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>跳转地址</label>
+            <input bind:value={form.target_url} placeholder="/{lang}/account?section=referral" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:215:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>二维码图片 URL</label>
+            <input bind:value={form.image_url} placeholder="https://..." />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:219:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>奖励积分展示</label>
+            <input bind:value={form.reward_points} inputmode="numeric" placeholder="20" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:223:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field">
+            <label>优先级</label>
+            <input bind:value={form.priority} inputmode="numeric" />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\curious-cat\+page.svelte:231:13
+Warn: A11y: A form label must be associated with a control. (svelte)
+        <div class="field field-wide">
+            <label>可复制宣传文案</label>
+            <textarea bind:value={form.copy_text} rows="4"></textarea>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\feedback\+page.svelte:707:9
+Warn: Also define the standard property 'line-clamp' for compatibility (css)
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\users\+page.svelte:665:9
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+    <div class="modal-overlay" on:click={closeOrders}>
+        <div class="modal modal-orders" on:click|stopPropagation>
+            <header class="modal-header">
+                <div class="modal-title">
+                    <h2>订单信息</h2>
+                    <div class="modal-subtitle mono selectable">
+                        用户 #{activeUser.id}
+                        {#if activeUser.primary_email}
+                            · {activeUser.primary_email}
+                        {:else if activeUser.full_name}
+                            · {activeUser.full_name}
+                        {:else}
+                            · {activeUser.clerk_user_id}
+                        {/if}
+                    </div>
+                </div>
+                <button class="btn-secondary btn-close" type="button" on:click={closeOrders}>
+                    关闭
+                </button>
+            </header>
+
+            <div class="modal-toolbar">
+                <label class="filter">
+                    <span>状态</span>
+                    <select
+                        bind:value={ordersStatus}
+                        on:change={() => void handleOrdersStatusChange(ordersStatus)}
+                        disabled={ordersLoading}
+                    >
+                        <option value="">全部</option>
+                        <option value="CREATED">CREATED</option>
+                        <option value="PAID">PAID</option>
+                        <option value="FAILED">FAILED</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </label>
+
+                <label class="filter">
+                    <span>每页</span>
+                    <select
+                        bind:value={ordersLimit}
+                        on:change={() => void handleOrdersLimitChange(ordersLimit)}
+                        disabled={ordersLoading}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={ordersLoading}
+                    on:click={() => void loadOrders()}
+                >
+                    刷新
+                </button>
+            </div>
+
+            {#if ordersError}
+                <div class="error-message">{ordersError}</div>
+            {/if}
+
+            {#if ordersLoading}
+                <div class="loading">加载中...</div>
+            {:else if orders.length === 0}
+                <div class="empty">暂无订单</div>
+            {:else}
+                <div class="table-wrap modal-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>状态</th>
+                                <th>积分</th>
+                                <th>金额</th>
+                                <th>渠道</th>
+                                <th>订单号</th>
+                                <th>支付时间</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each orders as o (o.id)}
+                                <tr>
+                                    <td class="mono">{o.id}</td>
+                                    <td>
+                                        <span
+                                            class={`status-badge status-${String(
+                                                o.status || "",
+                                            ).toLowerCase()}`}
+                                            >{o.status}</span
+                                        >
+                                    </td>
+                                    <td class="mono">{o.points}</td>
+                                    <td class="mono">
+                                        {formatAmount(o.amount_fen, o.currency)}
+                                    </td>
+                                    <td class="mono">{o.provider}</td>
+                                    <td>
+                                        <div class="order-no-cell">
+                                            <span
+                                                class="mono selectable order-no"
+                                                title={o.out_trade_no}
+                                                >{o.out_trade_no}</span
+                                            >
+                                            <button
+                                                class="btn-secondary btn-copy"
+                                                type="button"
+                                                on:click={() =>
+                                                    void handleCopyOutTradeNo(
+                                                        o.id,
+                                                        o.out_trade_no,
+                                                    )}
+                                            >
+                                                {copiedOrderId === o.id
+                                                    ? "已复制"
+                                                    : "复制"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="mono">{formatDate(o.paid_at)}</td>
+                                    <td class="mono">
+                                        {formatDate(o.created_at)}
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pager modal-pager">
+                    <span class="meta">共 {ordersTotal} 单</span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading || ordersPageNum <= 1}
+                        on:click={() => void goToOrdersPage(ordersPageNum - 1)}
+                        >上一页</button
+                    >
+                    <span class="meta">
+                        {#if ordersTotal === 0}
+                            0 / 0
+                        {:else}
+                            {ordersPageNum} / {ordersPages}
+                        {/if}
+                    </span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading ||
+                            (ordersPages ? ordersPageNum >= ordersPages : true)}
+                        on:click={() => void goToOrdersPage(ordersPageNum + 1)}
+                        >下一页</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\users\+page.svelte:665:9
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+    <div class="modal-overlay" on:click={closeOrders}>
+        <div class="modal modal-orders" on:click|stopPropagation>
+            <header class="modal-header">
+                <div class="modal-title">
+                    <h2>订单信息</h2>
+                    <div class="modal-subtitle mono selectable">
+                        用户 #{activeUser.id}
+                        {#if activeUser.primary_email}
+                            · {activeUser.primary_email}
+                        {:else if activeUser.full_name}
+                            · {activeUser.full_name}
+                        {:else}
+                            · {activeUser.clerk_user_id}
+                        {/if}
+                    </div>
+                </div>
+                <button class="btn-secondary btn-close" type="button" on:click={closeOrders}>
+                    关闭
+                </button>
+            </header>
+
+            <div class="modal-toolbar">
+                <label class="filter">
+                    <span>状态</span>
+                    <select
+                        bind:value={ordersStatus}
+                        on:change={() => void handleOrdersStatusChange(ordersStatus)}
+                        disabled={ordersLoading}
+                    >
+                        <option value="">全部</option>
+                        <option value="CREATED">CREATED</option>
+                        <option value="PAID">PAID</option>
+                        <option value="FAILED">FAILED</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </label>
+
+                <label class="filter">
+                    <span>每页</span>
+                    <select
+                        bind:value={ordersLimit}
+                        on:change={() => void handleOrdersLimitChange(ordersLimit)}
+                        disabled={ordersLoading}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={ordersLoading}
+                    on:click={() => void loadOrders()}
+                >
+                    刷新
+                </button>
+            </div>
+
+            {#if ordersError}
+                <div class="error-message">{ordersError}</div>
+            {/if}
+
+            {#if ordersLoading}
+                <div class="loading">加载中...</div>
+            {:else if orders.length === 0}
+                <div class="empty">暂无订单</div>
+            {:else}
+                <div class="table-wrap modal-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>状态</th>
+                                <th>积分</th>
+                                <th>金额</th>
+                                <th>渠道</th>
+                                <th>订单号</th>
+                                <th>支付时间</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each orders as o (o.id)}
+                                <tr>
+                                    <td class="mono">{o.id}</td>
+                                    <td>
+                                        <span
+                                            class={`status-badge status-${String(
+                                                o.status || "",
+                                            ).toLowerCase()}`}
+                                            >{o.status}</span
+                                        >
+                                    </td>
+                                    <td class="mono">{o.points}</td>
+                                    <td class="mono">
+                                        {formatAmount(o.amount_fen, o.currency)}
+                                    </td>
+                                    <td class="mono">{o.provider}</td>
+                                    <td>
+                                        <div class="order-no-cell">
+                                            <span
+                                                class="mono selectable order-no"
+                                                title={o.out_trade_no}
+                                                >{o.out_trade_no}</span
+                                            >
+                                            <button
+                                                class="btn-secondary btn-copy"
+                                                type="button"
+                                                on:click={() =>
+                                                    void handleCopyOutTradeNo(
+                                                        o.id,
+                                                        o.out_trade_no,
+                                                    )}
+                                            >
+                                                {copiedOrderId === o.id
+                                                    ? "已复制"
+                                                    : "复制"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="mono">{formatDate(o.paid_at)}</td>
+                                    <td class="mono">
+                                        {formatDate(o.created_at)}
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pager modal-pager">
+                    <span class="meta">共 {ordersTotal} 单</span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading || ordersPageNum <= 1}
+                        on:click={() => void goToOrdersPage(ordersPageNum - 1)}
+                        >上一页</button
+                    >
+                    <span class="meta">
+                        {#if ordersTotal === 0}
+                            0 / 0
+                        {:else}
+                            {ordersPageNum} / {ordersPages}
+                        {/if}
+                    </span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading ||
+                            (ordersPages ? ordersPageNum >= ordersPages : true)}
+                        on:click={() => void goToOrdersPage(ordersPageNum + 1)}
+                        >下一页</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\users\+page.svelte:664:5
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+{#if showOrdersModal && activeUser}
+    <div class="modal-overlay" on:click={closeOrders}>
+        <div class="modal modal-orders" on:click|stopPropagation>
+            <header class="modal-header">
+                <div class="modal-title">
+                    <h2>订单信息</h2>
+                    <div class="modal-subtitle mono selectable">
+                        用户 #{activeUser.id}
+                        {#if activeUser.primary_email}
+                            · {activeUser.primary_email}
+                        {:else if activeUser.full_name}
+                            · {activeUser.full_name}
+                        {:else}
+                            · {activeUser.clerk_user_id}
+                        {/if}
+                    </div>
+                </div>
+                <button class="btn-secondary btn-close" type="button" on:click={closeOrders}>
+                    关闭
+                </button>
+            </header>
+
+            <div class="modal-toolbar">
+                <label class="filter">
+                    <span>状态</span>
+                    <select
+                        bind:value={ordersStatus}
+                        on:change={() => void handleOrdersStatusChange(ordersStatus)}
+                        disabled={ordersLoading}
+                    >
+                        <option value="">全部</option>
+                        <option value="CREATED">CREATED</option>
+                        <option value="PAID">PAID</option>
+                        <option value="FAILED">FAILED</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </label>
+
+                <label class="filter">
+                    <span>每页</span>
+                    <select
+                        bind:value={ordersLimit}
+                        on:change={() => void handleOrdersLimitChange(ordersLimit)}
+                        disabled={ordersLoading}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={ordersLoading}
+                    on:click={() => void loadOrders()}
+                >
+                    刷新
+                </button>
+            </div>
+
+            {#if ordersError}
+                <div class="error-message">{ordersError}</div>
+            {/if}
+
+            {#if ordersLoading}
+                <div class="loading">加载中...</div>
+            {:else if orders.length === 0}
+                <div class="empty">暂无订单</div>
+            {:else}
+                <div class="table-wrap modal-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>状态</th>
+                                <th>积分</th>
+                                <th>金额</th>
+                                <th>渠道</th>
+                                <th>订单号</th>
+                                <th>支付时间</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each orders as o (o.id)}
+                                <tr>
+                                    <td class="mono">{o.id}</td>
+                                    <td>
+                                        <span
+                                            class={`status-badge status-${String(
+                                                o.status || "",
+                                            ).toLowerCase()}`}
+                                            >{o.status}</span
+                                        >
+                                    </td>
+                                    <td class="mono">{o.points}</td>
+                                    <td class="mono">
+                                        {formatAmount(o.amount_fen, o.currency)}
+                                    </td>
+                                    <td class="mono">{o.provider}</td>
+                                    <td>
+                                        <div class="order-no-cell">
+                                            <span
+                                                class="mono selectable order-no"
+                                                title={o.out_trade_no}
+                                                >{o.out_trade_no}</span
+                                            >
+                                            <button
+                                                class="btn-secondary btn-copy"
+                                                type="button"
+                                                on:click={() =>
+                                                    void handleCopyOutTradeNo(
+                                                        o.id,
+                                                        o.out_trade_no,
+                                                    )}
+                                            >
+                                                {copiedOrderId === o.id
+                                                    ? "已复制"
+                                                    : "复制"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="mono">{formatDate(o.paid_at)}</td>
+                                    <td class="mono">
+                                        {formatDate(o.created_at)}
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pager modal-pager">
+                    <span class="meta">共 {ordersTotal} 单</span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading || ordersPageNum <= 1}
+                        on:click={() => void goToOrdersPage(ordersPageNum - 1)}
+                        >上一页</button
+                    >
+                    <span class="meta">
+                        {#if ordersTotal === 0}
+                            0 / 0
+                        {:else}
+                            {ordersPageNum} / {ordersPages}
+                        {/if}
+                    </span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading ||
+                            (ordersPages ? ordersPageNum >= ordersPages : true)}
+                        on:click={() => void goToOrdersPage(ordersPageNum + 1)}
+                        >下一页</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\users\+page.svelte:664:5
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+{#if showOrdersModal && activeUser}
+    <div class="modal-overlay" on:click={closeOrders}>
+        <div class="modal modal-orders" on:click|stopPropagation>
+            <header class="modal-header">
+                <div class="modal-title">
+                    <h2>订单信息</h2>
+                    <div class="modal-subtitle mono selectable">
+                        用户 #{activeUser.id}
+                        {#if activeUser.primary_email}
+                            · {activeUser.primary_email}
+                        {:else if activeUser.full_name}
+                            · {activeUser.full_name}
+                        {:else}
+                            · {activeUser.clerk_user_id}
+                        {/if}
+                    </div>
+                </div>
+                <button class="btn-secondary btn-close" type="button" on:click={closeOrders}>
+                    关闭
+                </button>
+            </header>
+
+            <div class="modal-toolbar">
+                <label class="filter">
+                    <span>状态</span>
+                    <select
+                        bind:value={ordersStatus}
+                        on:change={() => void handleOrdersStatusChange(ordersStatus)}
+                        disabled={ordersLoading}
+                    >
+                        <option value="">全部</option>
+                        <option value="CREATED">CREATED</option>
+                        <option value="PAID">PAID</option>
+                        <option value="FAILED">FAILED</option>
+                        <option value="CLOSED">CLOSED</option>
+                    </select>
+                </label>
+
+                <label class="filter">
+                    <span>每页</span>
+                    <select
+                        bind:value={ordersLimit}
+                        on:change={() => void handleOrdersLimitChange(ordersLimit)}
+                        disabled={ordersLoading}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-secondary"
+                    type="button"
+                    disabled={ordersLoading}
+                    on:click={() => void loadOrders()}
+                >
+                    刷新
+                </button>
+            </div>
+
+            {#if ordersError}
+                <div class="error-message">{ordersError}</div>
+            {/if}
+
+            {#if ordersLoading}
+                <div class="loading">加载中...</div>
+            {:else if orders.length === 0}
+                <div class="empty">暂无订单</div>
+            {:else}
+                <div class="table-wrap modal-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>状态</th>
+                                <th>积分</th>
+                                <th>金额</th>
+                                <th>渠道</th>
+                                <th>订单号</th>
+                                <th>支付时间</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each orders as o (o.id)}
+                                <tr>
+                                    <td class="mono">{o.id}</td>
+                                    <td>
+                                        <span
+                                            class={`status-badge status-${String(
+                                                o.status || "",
+                                            ).toLowerCase()}`}
+                                            >{o.status}</span
+                                        >
+                                    </td>
+                                    <td class="mono">{o.points}</td>
+                                    <td class="mono">
+                                        {formatAmount(o.amount_fen, o.currency)}
+                                    </td>
+                                    <td class="mono">{o.provider}</td>
+                                    <td>
+                                        <div class="order-no-cell">
+                                            <span
+                                                class="mono selectable order-no"
+                                                title={o.out_trade_no}
+                                                >{o.out_trade_no}</span
+                                            >
+                                            <button
+                                                class="btn-secondary btn-copy"
+                                                type="button"
+                                                on:click={() =>
+                                                    void handleCopyOutTradeNo(
+                                                        o.id,
+                                                        o.out_trade_no,
+                                                    )}
+                                            >
+                                                {copiedOrderId === o.id
+                                                    ? "已复制"
+                                                    : "复制"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="mono">{formatDate(o.paid_at)}</td>
+                                    <td class="mono">
+                                        {formatDate(o.created_at)}
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pager modal-pager">
+                    <span class="meta">共 {ordersTotal} 单</span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading || ordersPageNum <= 1}
+                        on:click={() => void goToOrdersPage(ordersPageNum - 1)}
+                        >上一页</button
+                    >
+                    <span class="meta">
+                        {#if ordersTotal === 0}
+                            0 / 0
+                        {:else}
+                            {ordersPageNum} / {ordersPages}
+                        {/if}
+                    </span>
+                    <button
+                        class="btn-secondary"
+                        disabled={ordersLoading ||
+                            (ordersPages ? ordersPageNum >= ordersPages : true)}
+                        on:click={() => void goToOrdersPage(ordersPageNum + 1)}
+                        >下一页</button
+                    >
+                </div>
+            {/if}
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:645:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>所属账号 *</label>
+                    <select bind:value={formData.account_id} required>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:656:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" bind:value={formData.title} required />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:661:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea bind:value={formData.description} rows="3"
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:667:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>视频 URL *</label>
+                    <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:676:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>缩略图 URL</label>
+                    <input type="url" bind:value={formData.thumbnail_url} />
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:682:25
+Warn: A11y: A form label must be associated with a control. (svelte)
+                    <div class="form-group">
+                        <label>时长（秒）</label>
+                        <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:691:25
+Warn: A11y: A form label must be associated with a control. (svelte)
+                    <div class="form-group">
+                        <label>观看数</label>
+                        <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:700:25
+Warn: A11y: A form label must be associated with a control. (svelte)
+                    <div class="form-group">
+                        <label>点赞数</label>
+                        <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:710:21
+Warn: A11y: A form label must be associated with a control. (svelte)
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:640:9
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingVideo ? "编辑视频" : "添加视频"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>所属账号 *</label>
+                    <select bind:value={formData.account_id} required>
+                        {#each accountList as account}
+                            <option value={account.id}>
+                                {account.display_name || account.username} ({account.platform})
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" bind:value={formData.title} required />
+                </div>
+
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>视频 URL *</label>
+                    <input
+                        type="url"
+                        bind:value={formData.video_url}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>缩略图 URL</label>
+                    <input type="url" bind:value={formData.thumbnail_url} />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时长（秒）</label>
+                        <input
+                            type="number"
+                            bind:value={formData.duration}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>观看数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.view_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>点赞数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.like_count}
+                            min="0"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_featured}
+                        />
+                        设为精选视频
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingVideo ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:640:9
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingVideo ? "编辑视频" : "添加视频"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>所属账号 *</label>
+                    <select bind:value={formData.account_id} required>
+                        {#each accountList as account}
+                            <option value={account.id}>
+                                {account.display_name || account.username} ({account.platform})
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" bind:value={formData.title} required />
+                </div>
+
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>视频 URL *</label>
+                    <input
+                        type="url"
+                        bind:value={formData.video_url}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>缩略图 URL</label>
+                    <input type="url" bind:value={formData.thumbnail_url} />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时长（秒）</label>
+                        <input
+                            type="number"
+                            bind:value={formData.duration}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>观看数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.view_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>点赞数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.like_count}
+                            min="0"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_featured}
+                        />
+                        设为精选视频
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingVideo ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:639:5
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+{#if showAddModal}
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingVideo ? "编辑视频" : "添加视频"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>所属账号 *</label>
+                    <select bind:value={formData.account_id} required>
+                        {#each accountList as account}
+                            <option value={account.id}>
+                                {account.display_name || account.username} ({account.platform})
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" bind:value={formData.title} required />
+                </div>
+
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>视频 URL *</label>
+                    <input
+                        type="url"
+                        bind:value={formData.video_url}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>缩略图 URL</label>
+                    <input type="url" bind:value={formData.thumbnail_url} />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时长（秒）</label>
+                        <input
+                            type="number"
+                            bind:value={formData.duration}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>观看数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.view_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>点赞数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.like_count}
+                            min="0"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_featured}
+                        />
+                        设为精选视频
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingVideo ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:639:5
+Warn: A11y: <div> with click handler must have an ARIA role (svelte)
+{#if showAddModal}
+    <div class="modal-overlay" on:click={() => (showAddModal = false)}>
+        <div class="modal" on:click|stopPropagation>
+            <h2>{editingVideo ? "编辑视频" : "添加视频"}</h2>
+
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-group">
+                    <label>所属账号 *</label>
+                    <select bind:value={formData.account_id} required>
+                        {#each accountList as account}
+                            <option value={account.id}>
+                                {account.display_name || account.username} ({account.platform})
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>标题 *</label>
+                    <input type="text" bind:value={formData.title} required />
+                </div>
+
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea bind:value={formData.description} rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>视频 URL *</label>
+                    <input
+                        type="url"
+                        bind:value={formData.video_url}
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>缩略图 URL</label>
+                    <input type="url" bind:value={formData.thumbnail_url} />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时长（秒）</label>
+                        <input
+                            type="number"
+                            bind:value={formData.duration}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>观看数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.view_count}
+                            min="0"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label>点赞数</label>
+                        <input
+                            type="number"
+                            bind:value={formData.like_count}
+                            min="0"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>标签（逗号分隔）</label>
+                    <input
+                        type="text"
+                        bind:value={formData.tags}
+                        placeholder="美女, 自拍, 时尚"
+                    />
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            bind:checked={formData.is_featured}
+                        />
+                        设为精选视频
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        on:click={() => (showAddModal = false)}
+                    >
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        {editingVideo ? "保存" : "添加"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1090:5
+Warn: Unused CSS selector ".videos-grid" (svelte)
+
+    .videos-grid {
+        display: grid;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1096:5
+Warn: Unused CSS selector ".video-card" (svelte)
+
+    .video-card {
+        background: var(--popup-bg);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1105:5
+Warn: Unused CSS selector ".video-card:hover" (svelte)
+
+    .video-card:hover {
+        transform: translateY(-2px);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1109:5
+Warn: Unused CSS selector ".featured-badge" (svelte)
+
+    .featured-badge {
+        position: absolute;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1122:5
+Warn: Unused CSS selector ".video-thumbnail" (svelte)
+
+    .video-thumbnail {
+        position: relative;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1129:5
+Warn: Unused CSS selector ".video-thumbnail img" (svelte)
+
+    .video-thumbnail img {
+        width: 100%;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1135:5
+Warn: Unused CSS selector ".no-thumbnail" (svelte)
+
+    .no-thumbnail {
+        width: 100%;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1145:5
+Warn: Unused CSS selector ".duration" (svelte)
+
+    .duration {
+        position: absolute;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1168:5
+Warn: Unused CSS selector ".account-name" (svelte)
+
+    .account-name {
+        color: var(--subtext);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1174:5
+Warn: Unused CSS selector ".description" (svelte)
+
+    .description {
+        font-size: 0.85rem;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1185:5
+Warn: Unused CSS selector ".stats" (svelte)
+
+    .stats {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1193:5
+Warn: Unused CSS selector ".tags" (svelte)
+
+    .tags {
+        display: flex;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1200:5
+Warn: Unused CSS selector ".tag" (svelte)
+
+    .tag {
+        padding: 4px 8px;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1208:5
+Warn: Unused CSS selector ".actions" (svelte)
+
+    .actions {
+        display: grid;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1218:5
+Warn: Unused CSS selector ".btn-featured" (svelte)
+    .btn-delete,
+    .btn-featured {
+        padding: 10px 16px;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1247:5
+Warn: Unused CSS selector ".btn-featured" (svelte)
+
+    .btn-featured {
+        background: var(--yellow);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1254:5
+Warn: Unused CSS selector ".btn-featured.active" (svelte)
+
+    .btn-featured.active {
+        background: var(--button);
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:976:9
+Warn: Also define the standard property 'line-clamp' for compatibility (css)
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\console-manage-2025\videos\+page.svelte:1180:9
+Warn: Also define the standard property 'line-clamp' for compatibility (css)
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\discover\+page.svelte:1796:9
+Warn: Also define the standard property 'line-clamp' for compatibility (css)
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\discover\+page.svelte:2355:9
+Warn: Also define the standard property 'line-clamp' for compatibility (css)
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\random-chat\+page.svelte:1044:25
+Warn: A11y: <video> elements must have a <track kind="captions"> (svelte)
+                    {#if remoteStream}
+                        <video class="video remote-video" bind:this={remoteVideoEl} autoplay playsinline></video>
+                    {:else}
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\random-chat\+page.svelte:1173:13
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+    <div class="settings-mask" role="presentation" on:click={() => !reportBusy && (showReportDialog = false)}>
+            <div class="report-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
+                <header class="settings-head">
+                    <div>
+                        <h2>{$t("random-chat.report.title")}</h2>
+                        <p>{$t("random-chat.report.subtitle")}</p>
+                    </div>
+                    <button class="close-btn" on:click={() => (showReportDialog = false)} disabled={reportBusy}>
+                        {$t("random-chat.action.close")}
+                    </button>
+                </header>
+                <label class="field">
+                    <span>{$t("random-chat.report.reason")}</span>
+                    <select bind:value={reportReason}>
+                        <option value="inappropriate_content">{$t("random-chat.report.inappropriate_content")}</option>
+                        <option value="harassment">{$t("random-chat.report.harassment")}</option>
+                        <option value="suspected_minor">{$t("random-chat.report.suspected_minor")}</option>
+                        <option value="spam_or_scam">{$t("random-chat.report.spam_or_scam")}</option>
+                        <option value="other">{$t("random-chat.report.other")}</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>{$t("random-chat.report.details")}</span>
+                    <textarea bind:value={reportDetails} maxlength="500" rows="4"></textarea>
+                </label>
+                <p class="report-warning">{$t("random-chat.report.ends_match")}</p>
+                <button class="secondary-action danger" on:click={submitReport} disabled={reportBusy}>
+                    {$t("random-chat.report.submit")}
+                </button>
+            </div>
+        </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\random-chat\+page.svelte:1173:13
+Warn: A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners. (svelte)
+    <div class="settings-mask" role="presentation" on:click={() => !reportBusy && (showReportDialog = false)}>
+            <div class="report-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
+                <header class="settings-head">
+                    <div>
+                        <h2>{$t("random-chat.report.title")}</h2>
+                        <p>{$t("random-chat.report.subtitle")}</p>
+                    </div>
+                    <button class="close-btn" on:click={() => (showReportDialog = false)} disabled={reportBusy}>
+                        {$t("random-chat.action.close")}
+                    </button>
+                </header>
+                <label class="field">
+                    <span>{$t("random-chat.report.reason")}</span>
+                    <select bind:value={reportReason}>
+                        <option value="inappropriate_content">{$t("random-chat.report.inappropriate_content")}</option>
+                        <option value="harassment">{$t("random-chat.report.harassment")}</option>
+                        <option value="suspected_minor">{$t("random-chat.report.suspected_minor")}</option>
+                        <option value="spam_or_scam">{$t("random-chat.report.spam_or_scam")}</option>
+                        <option value="other">{$t("random-chat.report.other")}</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>{$t("random-chat.report.details")}</span>
+                    <textarea bind:value={reportDetails} maxlength="500" rows="4"></textarea>
+                </label>
+                <p class="report-warning">{$t("random-chat.report.ends_match")}</p>
+                <button class="secondary-action danger" on:click={submitReport} disabled={reportBusy}>
+                    {$t("random-chat.report.submit")}
+                </button>
+            </div>
+        </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\random-chat\+page.svelte:1207:13
+Warn: A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details. (svelte)
+        <div class="settings-mask" role="button" tabindex="0" on:click={() => (showSettings = false)} on:keydown={(event) => event.key === "Escape" && (showSettings = false)}>
+            <div class="settings-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
+                <header class="settings-head">
+                    <h2>{$t("random-chat.settings.title")}</h2>
+                    <button class="close-btn" on:click={() => (showSettings = false)}>
+                        {$t("random-chat.action.close")}
+                    </button>
+                </header>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.i_am")}</span>
+                    <select
+                        value={chatPrefs.selfGender}
+                        on:change={handleSelfGenderChange}
+                    >
+                        {#each RANDOM_CHAT_SELF_GENDER_OPTIONS as value}
+                            <option value={value}>{selfGenderLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.target_gender")}</span>
+                    <select
+                        value={chatPrefs.targetGender}
+                        on:change={handleTargetGenderChange}
+                    >
+                        {#each RANDOM_CHAT_TARGET_GENDER_OPTIONS as value}
+                            <option value={value}>{targetGenderLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.country")}</span>
+                    <select
+                        value={chatPrefs.targetCountry}
+                        on:change={handleCountryChange}
+                    >
+                        {#each RANDOM_CHAT_COUNTRY_OPTIONS as value}
+                            <option value={value}>{countryLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.language")}</span>
+                    <select
+                        value={chatPrefs.uiLanguage}
+                        on:change={handleUiLanguageChange}
+                    >
+                        <option value="auto">{$t("random-chat.language.auto")}</option>
+                        {#each Object.entries(languages) as [langCode, langName]}
+                            <option value={langCode}>{langName}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.useTextIcebreaker}
+                        on:change={handleUseTextIcebreakerChange}
+                    />
+                    <span>
+                        {$t("random-chat.settings.text_icebreaker")}
+                        <small>{$t("random-chat.settings.text_icebreaker_detail")}</small>
+                    </span>
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.autoNext}
+                        on:change={handleAutoNextChange}
+                    />
+                    {$t("random-chat.settings.auto_next")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.mirrorLocalVideo}
+                        on:change={handleMirrorLocalVideoChange}
+                    />
+                    {$t("random-chat.settings.mirror_local")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.muteRemoteOnJoin}
+                        on:change={handleMuteRemoteOnJoinChange}
+                    />
+                    {$t("random-chat.settings.mute_remote")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.showSafetyNotice}
+                        on:change={handleShowSafetyNoticeChange}
+                    />
+                    {$t("random-chat.settings.show_safety")}
+                </label>
+            </div>
+        </div>
+
+
+d:\code\cobalt_bam\web\src\routes\[lang]\random-chat\+page.svelte:1207:13
+Warn: A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners. (svelte)
+        <div class="settings-mask" role="button" tabindex="0" on:click={() => (showSettings = false)} on:keydown={(event) => event.key === "Escape" && (showSettings = false)}>
+            <div class="settings-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
+                <header class="settings-head">
+                    <h2>{$t("random-chat.settings.title")}</h2>
+                    <button class="close-btn" on:click={() => (showSettings = false)}>
+                        {$t("random-chat.action.close")}
+                    </button>
+                </header>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.i_am")}</span>
+                    <select
+                        value={chatPrefs.selfGender}
+                        on:change={handleSelfGenderChange}
+                    >
+                        {#each RANDOM_CHAT_SELF_GENDER_OPTIONS as value}
+                            <option value={value}>{selfGenderLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.target_gender")}</span>
+                    <select
+                        value={chatPrefs.targetGender}
+                        on:change={handleTargetGenderChange}
+                    >
+                        {#each RANDOM_CHAT_TARGET_GENDER_OPTIONS as value}
+                            <option value={value}>{targetGenderLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.country")}</span>
+                    <select
+                        value={chatPrefs.targetCountry}
+                        on:change={handleCountryChange}
+                    >
+                        {#each RANDOM_CHAT_COUNTRY_OPTIONS as value}
+                            <option value={value}>{countryLabel(value)}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>{$t("random-chat.field.language")}</span>
+                    <select
+                        value={chatPrefs.uiLanguage}
+                        on:change={handleUiLanguageChange}
+                    >
+                        <option value="auto">{$t("random-chat.language.auto")}</option>
+                        {#each Object.entries(languages) as [langCode, langName]}
+                            <option value={langCode}>{langName}</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.useTextIcebreaker}
+                        on:change={handleUseTextIcebreakerChange}
+                    />
+                    <span>
+                        {$t("random-chat.settings.text_icebreaker")}
+                        <small>{$t("random-chat.settings.text_icebreaker_detail")}</small>
+                    </span>
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.autoNext}
+                        on:change={handleAutoNextChange}
+                    />
+                    {$t("random-chat.settings.auto_next")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.mirrorLocalVideo}
+                        on:change={handleMirrorLocalVideoChange}
+                    />
+                    {$t("random-chat.settings.mirror_local")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.muteRemoteOnJoin}
+                        on:change={handleMuteRemoteOnJoinChange}
+                    />
+                    {$t("random-chat.settings.mute_remote")}
+                </label>
+
+                <label class="toggle">
+                    <input
+                        type="checkbox"
+                        checked={chatPrefs.showSafetyNotice}
+                        on:change={handleShowSafetyNoticeChange}
+                    />
+                    {$t("random-chat.settings.show_safety")}
+                </label>
+            </div>
+        </div>
+
+
+====================================
+svelte-check found 0 errors and 106 warnings in 14 files

@@ -30,6 +30,8 @@
     let requestNumber = 0;
     let disposed = false;
     let mode: CobaltSettings['save']['downloadMode'] = 'auto';
+    let SearchHelpers: typeof import('./YouTubeSearchHelpers.svelte').default | null = null;
+    let helperLocale = '';
     let quality: CobaltSettings['save']['videoQuality'] = '1080';
     let audioFormat: CobaltSettings['save']['audioFormat'] = 'mp3';
     let audioBitrate: CobaltSettings['save']['audioBitrate'] = '128';
@@ -37,6 +39,16 @@
     $: copy = getYouTubeCopy(lang);
     $: parsedInput = parseYouTubeInput(input);
     $: submitLabel = parsedInput?.kind === 'search' || !parsedInput ? copy.search : copy.open;
+    $: feedbackSource = selected?.url || (parsedInput && parsedInput.kind !== 'search' ? parsedInput.url : '');
+    $: if (SearchHelpers && helperLocale !== lang) void loadSearchHelpers(lang);
+
+    async function loadSearchHelpers(locale: string) {
+        helperLocale = locale;
+        const { loadTranslations } = await import('$lib/i18n/translations');
+        await Promise.all(['save', 'tabs', 'dialog', 'button', 'auth'].map(key => loadTranslations(locale, key)));
+        const module = await import('./YouTubeSearchHelpers.svelte');
+        if (!disposed && helperLocale === locale) SearchHelpers = module.default;
+    }
 
     function remember() {
         try {
@@ -192,6 +204,7 @@
     }
 
     onMount(() => {
+        void loadSearchHelpers(lang).catch(error => console.debug('YouTube helper controls failed to load', error));
         try {
             const state = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
             if (state && typeof state.input === 'string') {
@@ -221,30 +234,32 @@
 <main class="youtube-page" tabindex="-1" data-first-focus data-focus-ring-hidden>
     <header class="hero">
         <div class="hero-copy">
-            <p class="eyebrow"><span class="brand-mark" aria-hidden="true">▶</span> {copy.eyebrow}</p>
-            <h1>{content.h1}</h1>
-            <p class="hero-line">{copy.intro}</p>
+            <h1><span class="brand-mark" aria-hidden="true">▶</span>{content.h1}</h1>
             <p class="description">{copy.description}</p>
-        </div>
-        <div class="hero-art" aria-hidden="true">
-            <div class="art-card art-back"><span>SHORTS</span><i></i><i></i><i></i></div>
-            <div class="art-card art-front"><span>YOUTUBE</span><b>▶</b><div><span>MP4</span><span>MP3</span><span>HD</span></div></div>
         </div>
     </header>
 
     <section class="search-box" aria-label={copy.input}>
+        <div class="examples"><span>{copy.try}</span>{#each examples as example}<button disabled={searching || downloadBusy} on:click={() => submit(example)}>{example}<span aria-hidden="true">↗</span></button>{/each}</div>
+        <div class="input-with-feedback">
         <form on:submit|preventDefault={() => submit()}>
-            <label for="youtube-query">{copy.input}</label>
-            <div class="input-row">
-                <span class="search-icon" aria-hidden="true">⌕</span>
-                <input id="youtube-query" bind:this={inputElement} bind:value={input} placeholder={copy.placeholder} autocomplete="off" maxlength="2048" disabled={downloadBusy} aria-describedby="youtube-search-note" />
-                {#if input}<button type="button" class="utility" on:click={clear} disabled={downloadBusy} aria-label={copy.clear}>×</button>
-                {:else}<button type="button" class="utility paste" on:click={paste}>{copy.paste}</button>{/if}
-                <button class="primary search-submit" type="submit" disabled={!input.trim() || searching || downloadBusy}>{searching ? copy.searching : submitLabel}<span aria-hidden="true">↗</span></button>
+            <label for="youtube-query" class="sr-only">{copy.input}</label>
+            <div class="input-row" class:has-input={Boolean(input.trim())}>
+                <span class="search-icon" class:loading={searching} aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        {#if searching}<path d="M12 3a9 9 0 1 0 9 9" />
+                        {:else}<path d="M9 15l6-6M11 6l1-1a5 5 0 0 1 7 7l-1 1M13 18l-1 1a5 5 0 0 1-7-7l1-1" />{/if}
+                    </svg>
+                </span>
+                <input id="youtube-query" bind:this={inputElement} bind:value={input} placeholder={copy.placeholder} autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="2048" disabled={downloadBusy} />
+                {#if input}<button type="button" class="utility" on:click={clear} disabled={downloadBusy} aria-label={copy.clear}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg></button>{/if}
+                {#if input.trim()}<button class="search-submit" type="submit" disabled={searching || downloadBusy} aria-label={searching ? copy.searching : submitLabel} title={searching ? copy.searching : submitLabel}><span aria-hidden="true">{searching ? '...' : '>>'}</span></button>{/if}
             </div>
         </form>
-        <div class="examples"><span>{copy.try}</span>{#each examples as example}<button disabled={searching || downloadBusy} on:click={() => submit(example)}>{example}<span aria-hidden="true">↗</span></button>{/each}</div>
-        <p class="search-note" id="youtube-search-note">{copy.searchNote}</p>
+        {#if SearchHelpers}<svelte:component this={SearchHelpers} variant="feedback" {lang} sourceUrl={feedbackSource} beforeFeedback={remember} />{/if}
+        </div>
+        {#if SearchHelpers}<svelte:component this={SearchHelpers} variant="actions" {lang} {mode} disabled={downloadBusy} groupLabel={copy.choose} on:modechange={event => { mode = event.detail; remember(); }} on:paste={paste} />{/if}
+        {#if !SearchHelpers}<div class="search-actions"><button class="paste" on:click={paste} disabled={downloadBusy}>{copy.paste}</button></div>{/if}
     </section>
 
     {#if message}<p class="error" role="alert">{message}</p>{/if}
@@ -256,11 +271,6 @@
                 <div class="panel-heading"><p class="eyebrow">{copy.selected}</p><button class="text-button" disabled={downloadBusy} on:click={() => { selected = null; remember(); notice = ''; inputElement?.focus(); }}>{copy.change}</button></div>
                 <h2 id="youtube-selected-heading">{selected.title}</h2>
                 {#if selected.channel}<p class="channel">{selected.channel}</p>{/if}
-                <fieldset class="mode-options" disabled={downloadBusy}><legend class="sr-only">{copy.choose}</legend>
-                    {#each [['auto', copy.video], ['audio', copy.audio], ['mute', copy.mute]] as option}
-                        <label class:active={mode === option[0]}><input type="radio" name="youtube-mode" value={option[0]} bind:group={mode} />{option[1]}</label>
-                    {/each}
-                </fieldset>
                 <div class="format-options">
                     {#if mode === 'audio'}
                         <label>{copy.format}<select bind:value={audioFormat} disabled={downloadBusy}><option value="mp3">MP3</option><option value="best">M4A / Opus</option><option value="opus">Opus</option><option value="wav">WAV</option></select></label>
@@ -292,43 +302,47 @@
 </main>
 
 <style>
-    .youtube-page { --yt-accent:#d83d32; --yt-soft:color-mix(in srgb,var(--popup-bg) 92%,#f3c7a1); --yt-line:color-mix(in srgb,var(--button-stroke) 75%,#999); width:100%;max-width:1160px;padding:22px 24px 64px;color:var(--text);font-family:Arial,Helvetica,sans-serif; }
-    .hero { display:grid;grid-template-columns:1.5fr 1fr;align-items:center;gap:48px;padding:30px 0 40px; }
-    .eyebrow { color:var(--yt-accent);font-size:11px;font-weight:700;letter-spacing:.14em;line-height:1.5;margin:0 0 16px; }
-    .brand-mark { display:inline-grid;place-items:center;width:27px;height:20px;background:var(--yt-accent);border-radius:6px;color:white;margin-right:8px;font-size:12px; }
-    h1 { font-size:clamp(32px,4vw,52px);font-weight:750;letter-spacing:-.045em;line-height:1.12;margin:0;max-width:740px; }
-    .hero-line { font-size:22px;line-height:1.4;margin:20px 0 12px;letter-spacing:-.025em; }
-    .description { color:var(--subtext);font-size:15px;line-height:1.75;max-width:590px;margin:0; }
-    .hero-art { position:relative;height:220px; }
-    .art-card { position:absolute; width:250px;height:173px; border:1px solid var(--yt-line);border-radius:18px;padding:18px;box-shadow:0 16px 35px #0000000c; }
-    .art-back { right:45px;top:0;transform:rotate(-10deg);background:var(--yt-soft); }
-    .art-back span,.art-front>span { font-size:10px;font-weight:700;letter-spacing:.13em; }
-    .art-back i { display:inline-block;background:color-mix(in srgb,var(--yt-accent) 18%,var(--popup-bg));width:52px;height:90px;border-radius:9px;margin:15px 9px 0 0; }
-    .art-front { right:0;top:40px;transform:rotate(7deg);background:var(--popup-bg); }
-    .art-front b { display:grid;place-items:center;font-size:38px;color:white;background:var(--yt-accent);border-radius:16px;width:90px;height:65px;margin:14px auto; }
-    .art-front div { display:flex;justify-content:center;gap:8px; }
-    .art-front div span { border:1px solid var(--yt-line);border-radius:4px;padding:3px 8px;font-size:10px; }
-    .search-box { background:var(--popup-bg);border:1px solid var(--yt-line);border-radius:20px;padding:26px;box-shadow:0 12px 40px #00000006; }
-    form>label { display:block;font-size:13px;font-weight:700;margin-bottom:12px; }
-    .input-row { display:flex;align-items:center;border:1px solid var(--yt-line);border-radius:12px;padding:7px;gap:8px;background:var(--background); }
-    .input-row:focus-within { border-color:var(--yt-accent);box-shadow:0 0 0 3px #d83d3218; }
-    .search-icon { font-size:30px;margin:0 4px 0 10px;color:var(--subtext); }
-    input:not([type=radio]) { min-width:0;flex:1;background:transparent;border:0;color:var(--text);padding:10px 0;font:inherit;font-size:15px;outline:0; }
+    .youtube-page { --yt-accent:var(--accent-strong); --yt-soft:var(--button); --yt-line:var(--button-stroke); width:100%;max-width:1100px;box-sizing:border-box;padding:20px 12px 48px;color:var(--text); }
+    .hero { padding:12px 0 22px; }
+    .eyebrow { color:var(--yt-accent);font-size:12px;font-weight:600;line-height:1.5;margin:0 0 12px; }
+    .brand-mark { display:inline-grid;place-items:center;flex-shrink:0;width:36px;height:36px;background:var(--accent-background);border-radius:var(--border-radius);color:var(--yt-accent);font-size:17px; }
+    h1 { display:flex;align-items:center;gap:12px;font-size:clamp(24px,3vw,32px);font-weight:700;line-height:1.35;margin:0; }
+    .description { color:var(--subtext);font-size:14px;line-height:1.7;max-width:800px;margin:12px 0 0; }
+    .search-box { width:100%;max-width:820px;margin:0 auto;padding:6px 0 0; }
+    .input-with-feedback { display:flex;align-items:center;gap:10px; }
+    .input-with-feedback form { flex:1;min-width:0; }
+    .input-row { display:flex;align-items:center;flex:1;border:1px solid rgba(var(--accent-rgb),.72);border-radius:99px;padding:15px 22px;gap:14px;background:color-mix(in srgb,var(--background) 97%,white 3%);box-shadow:0 14px 30px rgba(20,55,15,.08),0 3px 8px rgba(0,0,0,.04);transition:all .2s ease; }
+    .input-row.has-input { padding-right:8px; }
+    .input-row:hover { border-color:var(--accent);box-shadow:0 16px 34px rgba(20,55,15,.11),0 4px 10px rgba(0,0,0,.05); }
+    .input-row:focus-within { border-color:var(--accent);box-shadow:0 18px 38px rgba(20,55,15,.14),0 0 0 3px rgba(var(--accent-rgb),.13);transform:translateY(-1px); }
+    .search-icon { display:flex;flex-shrink:0;color:var(--gray); }
+    .search-icon svg { width:24px;height:24px;transition:stroke .2s ease; }
+    .input-row:focus-within .search-icon,.input-row.has-input .search-icon { color:var(--secondary); }
+    .search-icon.loading svg { animation:search-spin .7s linear infinite; }
+    @keyframes search-spin { to { transform:rotate(360deg); } }
+    input:not([type=radio]) { min-width:0;flex:1;width:100%;height:24px;margin:0;padding:0;background:transparent;border:0;color:var(--text);font:inherit;font-size:17px;font-weight:500;outline:0; }
+    input:not([type=radio]):focus-visible { box-shadow:none !important; }
+    input::placeholder { color:var(--muted-strong);opacity:1; }
     button,a,select { -webkit-tap-highlight-color:transparent; }
     button { font:inherit;cursor:pointer; }
     button:disabled { cursor:default;opacity:.6; }
-    .primary { display:inline-flex;justify-content:center;align-items:center;gap:18px;border:0;background:var(--yt-accent);color:#fff;font-size:14px;font-weight:700;border-radius:9px;padding:15px 22px;min-height:48px; }
-    .primary:hover:not(:disabled) { background:#b92d26; }
-    .utility { background:transparent;border:0;color:var(--subtext);padding:8px;font-size:24px; }
-    .paste { font-size:12px; }
-    .examples { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:17px; }
+    .primary { display:inline-flex;justify-content:center;align-items:center;gap:12px;border:0;background:var(--button-active-bg);color:var(--button-active-text);font-size:14px;font-weight:600;border-radius:var(--border-radius);padding:12px 18px;min-height:44px; }
+    .primary:hover:not(:disabled) { background:var(--accent-hover);color:var(--white); }
+    .search-submit { height:24px;min-width:48px;width:48px;flex-shrink:0;border:0;border-left:1.5px solid var(--input-border);border-radius:0 var(--border-radius) var(--border-radius) 0;padding:0 13.5px 0 12px;background:none;box-shadow:none;color:var(--text); }
+    .search-submit span { font-size:24px;font-weight:400;text-indent:-5px;letter-spacing:-5.3px;margin-bottom:2px; }
+    .input-row:focus-within .search-submit { border-left:2px solid var(--secondary); }
+    .search-submit:hover:not(:disabled) { background:var(--button-hover-transparent); }
+    .utility { padding:3px;border-radius:100%;flex-shrink:0;color:var(--secondary); }
+    .utility svg { width:16px;height:16px; }
+    .search-actions { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px; }
+    .paste { flex-shrink:0;min-height:36px; }
+    .examples { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px; }
     .examples>span { font-size:12px;color:var(--subtext);margin-right:5px; }
-    .examples button { display:flex;gap:14px;font-size:12px;background:var(--yt-soft);color:var(--text);border:1px solid transparent;border-radius:20px;padding:7px 12px; }
+    .examples button { display:flex;gap:8px;font-size:12px;background:var(--background);color:var(--text);border:1px solid var(--yt-line);border-radius:var(--border-radius);padding:7px 10px; }
     .examples button:hover { border-color:var(--yt-accent); }
-    .search-note,.muted { font-size:12px;color:var(--subtext);line-height:1.7; }
-    .search-note { margin:16px 0 0; }
-    .error { padding:16px 20px;background:#d83d3212;border:1px solid #d83d3240;border-radius:12px;color:var(--text);line-height:1.6; }
-    .download-panel { display:grid;grid-template-columns:1fr 1.4fr;gap:30px;background:var(--popup-bg);border:1px solid var(--yt-line);border-radius:20px;padding:25px;margin-top:30px;scroll-margin:20px; }
+    .muted { font-size:12px;color:var(--subtext);line-height:1.7; }
+    .error { padding:14px 16px;background:var(--button);border:1px solid var(--red);border-radius:var(--border-radius);color:var(--text);line-height:1.6; }
+    .download-panel { display:grid;grid-template-columns:1fr 1.6fr;gap:22px;background:var(--button);border:1px solid var(--yt-line);border-radius:var(--border-radius);padding:18px;margin-top:18px;scroll-margin:20px; }
     .selected-media { position:relative;align-self:start;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--yt-soft); }
     .selected-media img,.thumbnail img { width:100%;height:100%;object-fit:cover; }
     .duration { position:absolute;bottom:10px;right:10px;font-size:12px;color:#fff;background:#151515dd;border-radius:4px;padding:4px 6px; }
@@ -336,14 +350,9 @@
     .panel-heading { display:flex;align-items:center;justify-content:space-between;gap:10px; }
     .panel-heading .eyebrow { margin:0; }
     .text-button { border:0;background:transparent;color:var(--subtext);font-size:11px;padding:6px; }
-    .download-controls h2 { font-size:20px;line-height:1.5;letter-spacing:-.02em;margin:12px 0;overflow-wrap:anywhere; }
+    .download-controls h2 { font-size:17px;line-height:1.5;margin:10px 0;overflow-wrap:anywhere; }
     .channel { color:var(--subtext);font-size:13px; }
-    .mode-options { display:flex;gap:5px;border:0;border-radius:10px;padding:5px;margin:20px 0;background:var(--yt-soft); }
-    .mode-options label { flex:1;position:relative;font-size:12px;text-align:center;padding:10px 4px;cursor:pointer;border:1px solid transparent;border-radius:7px; }
-    .mode-options input { position:absolute;opacity:0;width:1px;height:1px; }
-    .mode-options label.active { color:var(--yt-accent);background:var(--popup-bg);border-color:var(--yt-line);font-weight:700; }
-    .mode-options label:focus-within { outline:2px solid var(--yt-accent); }
-    .format-options { display:flex;gap:15px;align-items:end; }
+    .format-options { display:flex;gap:15px;align-items:end;margin-top:16px; }
     .format-options label { display:grid;gap:8px;font-size:12px;flex:1; }
     select { width:100%;font:inherit;color:var(--text);border:1px solid var(--yt-line);border-radius:8px;background:var(--popup-bg);padding:12px; }
     .format-tag { font-size:13px;font-weight:700;border:1px solid var(--yt-line);padding:12px;border-radius:8px;margin:0; }
@@ -352,15 +361,15 @@
     .download-actions .primary { flex:1; }
     .download-actions a { color:var(--subtext);font-size:12px; }
     .notice { color:var(--text);background:var(--yt-soft);padding:12px;border-radius:8px;font-size:13px;line-height:1.6; }
-    .results { margin:38px 0; }
+    .results { margin:26px 0; }
     .section-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px; }
     .section-heading .eyebrow { margin-bottom:6px; }
-    .section-heading h2 { font-size:24px;letter-spacing:-.025em;margin:0;overflow-wrap:anywhere; }
+    .section-heading h2 { font-size:20px;margin:0;overflow-wrap:anywhere; }
     .section-heading>span { color:var(--subtext);font-size:12px;border:1px solid var(--yt-line);border-radius:20px;padding:6px 12px; }
-    .video-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin-top:20px; }
+    .video-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px; }
     .video-card { display:block;width:100%;overflow:hidden;padding:0;text-align:left;background:var(--popup-bg);color:var(--text);border:1px solid var(--yt-line);border-radius:13px;transition:transform .15s,border-color .15s; }
     .video-card:hover:not(:disabled) { transform:translateY(-3px);border-color:var(--yt-accent); }
-    .video-card.chosen { border-color:var(--yt-accent);box-shadow:0 0 0 2px #d83d3218; }
+    .video-card.chosen { border-color:var(--accent);box-shadow:0 0 0 1px var(--accent); }
     .thumbnail { position:relative;aspect-ratio:16/9;background:var(--yt-soft); }
     .card-play { display:grid;place-items:center;position:absolute;inset:0;color:white;background:#00000010;font-size:24px;opacity:0; }
     .video-card:hover .card-play { opacity:1; }
@@ -394,7 +403,7 @@
     .secondary { border:1px solid var(--yt-line);border-radius:8px;padding:10px;background:var(--popup-bg);color:var(--text);font-size:12px; }
     .sr-only { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
     button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible { outline:2px solid var(--yt-accent);outline-offset:4px; }
-    @media(max-width:900px) { .hero { gap:20px;grid-template-columns:1.8fr 1fr; }.hero-art { transform:scale(.8);transform-origin:right center; }.download-panel { grid-template-columns:1fr 1.5fr;gap:20px; }.video-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-    @media(max-width:600px) { .youtube-page { padding:12px 4px 36px; }.hero { display:block;padding:20px 4px 26px; }.hero-art { display:none; }.hero-line { font-size:18px;margin-top:16px; }.search-box { padding:18px 14px;border-radius:15px; }.input-row { flex-wrap:wrap; }.input-row input { width:calc(100% - 90px); }.search-submit { width:100%; }.search-icon { margin-left:4px; }.examples { gap:6px; }.examples>span { width:100%;margin-bottom:4px; }.examples button { padding:7px 9px;gap:8px; }.download-panel { grid-template-columns:1fr;padding:16px;gap:18px; }.video-grid { gap:12px; }.card-copy { padding:11px; }.card-copy h3 { font-size:12px;min-height:39px; }.card-copy p,.card-action { font-size:11px; }.steps { grid-template-columns:1fr;gap:22px; }.download-actions { flex-wrap:wrap; }.download-actions .primary { min-width:65%; }.section-heading h2 { font-size:20px; }.section-heading { flex-wrap:wrap; }.duration { font-size:10px;bottom:6px;right:6px; } }
-    @media(prefers-reduced-motion:reduce) { .video-card { transition:none; }.video-card:hover:not(:disabled) { transform:none; } }
+    @media(max-width:900px) { .download-panel { grid-template-columns:1fr 1.5fr;gap:18px; }.video-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:600px) { .youtube-page { padding:12px 4px 36px; }.hero { padding:10px 4px 18px; }.search-box { max-width:100%;padding:4px 0 0; }.input-with-feedback { flex-direction:column;align-items:stretch;gap:0; }.input-row { padding:12px 16px;gap:10px; }.input-row.has-input { padding-right:8px; }.input-row input { font-size:16px; }.search-actions { flex-direction:column;align-items:stretch;gap:12px; }.paste { width:100%; }.examples { gap:6px; }.examples>span { width:100%;margin-bottom:4px; }.examples button { padding:7px 9px;gap:8px; }.download-panel { grid-template-columns:1fr;padding:14px;gap:16px; }.video-grid { gap:12px; }.card-copy { padding:11px; }.card-copy h3 { font-size:12px;min-height:39px; }.card-copy p,.card-action { font-size:11px; }.steps { grid-template-columns:1fr;gap:22px; }.download-actions { flex-wrap:wrap; }.download-actions .primary { min-width:65%; }.section-heading h2 { font-size:20px; }.section-heading { flex-wrap:wrap; }.duration { font-size:10px;bottom:6px;right:6px; } }
+    @media(prefers-reduced-motion:reduce) { .video-card,.input-row { transition:none; }.search-icon.loading svg { animation:none; }.input-row:focus-within { transform:none; }.video-card:hover:not(:disabled) { transform:none; } }
 </style>

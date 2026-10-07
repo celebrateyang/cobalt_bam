@@ -17,7 +17,9 @@ export const WECHAT_MEMBERSHIP_PRODUCTS = Object.freeze([
         key: "member_yearly",
         planKey: "member_yearly",
         durationDays: 365,
-        amountFen: 29800,
+        // Seasonal offer (disabled): restore this price alongside the account-page promo.
+        // amountFen: 29800,
+        amountFen: 50000,
         currency: "CNY",
     }),
 ]);

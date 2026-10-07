@@ -644,6 +644,7 @@
             product.key === "member_yearly"
                 ? `${formatAmount(Math.round(product.amountFen / 12), product.currency)} / ${$t("auth.membership_month_short")}`
                 : `${formatAmount(product.amountFen, product.currency)} / ${$t("auth.membership_month_short")}`;
+        /* Seasonal offer (disabled): restore with the API promotional price.
         if (
             selectedPaymentProvider === "wechat" &&
             product.key === "member_yearly"
@@ -652,15 +653,19 @@
                 price: perMonth,
             });
         }
+        */
         return product.key === "member_yearly"
             ? $t("auth.membership_yearly_subtitle", { price: perMonth })
             : $t("auth.membership_monthly_subtitle");
     };
 
+    /* Seasonal offer helper (disabled).
     const formatMembershipOriginalYearlySubtitle = () => {
         const perMonth = `${formatAmount(Math.round(50000 / 12), "CNY")} / ${$t("auth.membership_month_short")}`;
         return $t("auth.membership_yearly_subtitle", { price: perMonth });
     };
+
+    */
 
     const membershipProductHasEntitlement = (
         product: MembershipProduct,
@@ -2367,11 +2372,13 @@
                                                     <div class="product-points">
                                                         {membershipPlanLabel(product.planKey)}
                                                     </div>
+                                                    <!-- Seasonal offer (disabled): restore with the API promotional price.
                                                     {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
                                                         <div class="subtext product-subtitle product-subtitle-original">
                                                             {formatMembershipOriginalYearlySubtitle()}
                                                         </div>
                                                     {/if}
+                                                    -->
                                                     <div class="subtext product-subtitle">
                                                         {formatMembershipProductSubtitle(product)}
                                                     </div>
@@ -2386,6 +2393,7 @@
                                                             {$t("auth.badge_recommended")}
                                                         </span>
                                                     {/if}
+                                                    <!-- Seasonal offer (disabled): rename auth.membership_teacher_day_offer for the next campaign.
                                                     {#if selectedPaymentProvider === "wechat" && product.key === "member_yearly"}
                                                         <span class="membership-promotion-label">
                                                             {$t("auth.membership_teacher_day_offer")}
@@ -2396,6 +2404,7 @@
                                                             {formatAmount(50000, "CNY")}
                                                         </div>
                                                     {/if}
+                                                    -->
                                                     <div class="product-price">
                                                         {formatAmount(
                                                             product.amountFen,
@@ -3540,6 +3549,7 @@
         letter-spacing: -0.02em;
     }
 
+    /* Seasonal offer styles (disabled).
     .product-original-price {
         color: var(--subtext);
         font-size: 13px;
@@ -3556,14 +3566,18 @@
         text-align: right;
     }
 
+    */
+
     .product-subtitle {
         padding: 0;
         opacity: 0.85;
     }
 
+    /* Seasonal offer style (disabled).
     .product-subtitle-original {
         text-decoration: line-through;
     }
+    */
 
     .product-left {
         display: flex;

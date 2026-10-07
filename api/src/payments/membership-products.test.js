@@ -81,7 +81,7 @@ test("offers three NOWPayments one-time membership passes", () => {
     );
 });
 
-test("offers the new membership prices without reselling the legacy 7-day plan", () => {
+test("offers regular membership prices without reselling the legacy 7-day plan", () => {
     assert.deepEqual(WECHAT_MEMBERSHIP_PRODUCTS, [
         {
             key: "member_3day",
@@ -101,7 +101,7 @@ test("offers the new membership prices without reselling the legacy 7-day plan",
             key: "member_yearly",
             planKey: "member_yearly",
             durationDays: 365,
-            amountFen: 29800,
+            amountFen: 50000,
             currency: "CNY",
         },
     ]);

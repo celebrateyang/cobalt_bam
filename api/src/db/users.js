@@ -15,7 +15,7 @@ import { evaluateMembershipFeatureEligibility } from "../core/membership-feature
 const generateReferralCode = () => nanoid(10);
 const isUniqueViolation = (error) =>
     error && typeof error === "object" && error.code === "23505";
-export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 200;
+export const FIRST_DOWNLOAD_GRACE_MAX_POINTS = 800;
 const DOWNLOAD_REQUEST_LEASE_MS = 5 * 60 * 1000;
 const DOWNLOAD_REQUEST_REPLAY_MS = 60 * 60 * 1000;
 

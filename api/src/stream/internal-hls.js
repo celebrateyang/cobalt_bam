@@ -17,6 +17,12 @@ function transformObject(streamInfo, hlsObject) {
         return (object) => transformObject(streamInfo, object);
     }
 
+    // AES keys and initialization objects need the same headers and local
+    // transport as the media segments. Renditions may omit URI entirely.
+    if (hlsObject.map) hlsObject.map = transformObject(streamInfo, hlsObject.map);
+    if (hlsObject.key) hlsObject.key = transformObject(streamInfo, hlsObject.key);
+    if (!hlsObject.uri || /^data:/i.test(hlsObject.uri)) return hlsObject;
+
     let fullUrl;
     if (getURL(hlsObject.uri)) {
         fullUrl = new URL(hlsObject.uri);
@@ -44,9 +50,6 @@ function transformObject(streamInfo, hlsObject) {
             hlsObject.uri = createInternalStream(fullUrl.toString(), streamInfo);
         }
 
-        if (hlsObject.map) {
-            hlsObject.map = transformObject(streamInfo, hlsObject.map);
-        }
     }
 
     return hlsObject;
@@ -62,6 +65,7 @@ function transformMasterPlaylist(streamInfo, hlsPlaylist) {
         return variant;
     };
     hlsPlaylist.variants = hlsPlaylist.variants.map(makeInternalVariants);
+    hlsPlaylist.sessionKeyList = hlsPlaylist.sessionKeyList.map(makeInternalStream);
 
     return hlsPlaylist;
 }
@@ -76,7 +80,10 @@ function transformMediaPlaylist(streamInfo, hlsPlaylist) {
 const HLS_MIME_TYPES = ["application/vnd.apple.mpegurl", "audio/mpegurl", "application/x-mpegURL"];
 
 export function isHlsResponse(req, streamInfo) {
-    return HLS_MIME_TYPES.includes(req.headers['content-type'])
+    const contentType = String(req.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase();
+    return HLS_MIME_TYPES.some(type => type.toLowerCase() === contentType)
+        || contentType === 'audio/x-mpegurl'
+        || (streamInfo.isHLS && /(?:\.m3u8|\/m3u8)(?:$|[?])/i.test(streamInfo.url))
         // bluesky's cdn responds with wrong content-type for the hls playlist,
         // so we enforce it here until they fix it
         || (streamInfo.service === 'bsky' && streamInfo.url.endsWith('.m3u8'));

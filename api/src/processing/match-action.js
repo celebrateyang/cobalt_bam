@@ -76,6 +76,7 @@ export default function({
             cropCover: !disableMetadata ? r.cropCover : false,
             duration: r.duration,
             iqiyiTsConcat: r.iqiyiTsConcat === true,
+            genericDownload: host === "generic" ? r.genericDownload : undefined,
         },
         params = {};
 
@@ -462,8 +463,12 @@ export default function({
                     } else if (r.isHLS || r.subtitles) {
                         params = { type: "remux", isHLS: r.isHLS };
                     } else {
-                        responseType = "redirect";
+                        const needsSourceHeaders = Object.keys(r.headers || {}).some(
+                            key => /^(cookie|authorization|referer|origin)$/i.test(key),
+                        );
+                        responseType = needsSourceHeaders ? "tunnel" : "redirect";
                         params = {
+                            ...(needsSourceHeaders ? { type: "proxy" } : {}),
                             url: r.urls,
                             directUrl: r.urls,
                             directUrlCandidates: [r.urls].filter(

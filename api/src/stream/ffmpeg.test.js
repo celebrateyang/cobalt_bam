@@ -44,6 +44,11 @@ test("uses the static ffmpeg for other services", () => {
     );
 });
 
+test("avoids the static FFmpeg crash for generic Youku HLS", () => {
+    assert.equal(selectFfmpegExecutable({ service: 'v.youku.com', isHLS: true }, 'linux'), '/usr/bin/ffmpeg');
+    assert.equal(selectFfmpegExecutable({ service: 'v.youku.com', isHLS: true }, 'win32'), ffmpeg);
+});
+
 test("does not select the Linux system ffmpeg on Windows", () => {
     assert.equal(
         selectFfmpegExecutable({ service: "amazon" }, "win32"),

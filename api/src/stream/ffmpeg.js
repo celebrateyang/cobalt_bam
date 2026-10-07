@@ -7,6 +7,7 @@ import { env } from "../config.js";
 import { destroyInternalStream } from "./manage.js";
 import { hlsExceptions } from "../processing/service-config.js";
 import { closeResponse, pipe, estimateTunnelLength, estimateAudioMultiplier } from "./shared.js";
+import { renderGenericDownload } from "./generic-render.js";
 
 const metadataTags = new Set([
     "album",
@@ -52,7 +53,8 @@ export const selectFfmpegExecutable = (
     streamInfo,
     platform = process.platform,
 ) =>
-    ['amazon', 'cctv', 'iqiyi', 'sooplive'].includes(streamInfo?.service) && platform !== 'win32'
+    (['amazon', 'cctv', 'iqiyi', 'sooplive'].includes(streamInfo?.service)
+        || (streamInfo?.isHLS && (streamInfo?.genericDownload || isGenericHostService(streamInfo?.service)))) && platform !== 'win32'
         ? '/usr/bin/ffmpeg'
         : ffmpeg;
 
@@ -157,6 +159,9 @@ const buildInputArgs = (url, streamInfo) => {
 }
 
 const render = async (res, streamInfo, ffargs, estimateMultiplier, inputStream) => {
+    if (streamInfo.genericDownload) {
+        return renderGenericDownload(res, streamInfo, getCommand(['-loglevel', 'warning', '-xerror', ...ffargs], streamInfo));
+    }
     let process;
     let finalized = false;
     let muxBytes = 0;
@@ -363,7 +368,7 @@ const remux = async (streamInfo, res) => {
     } else {
         args.push(
             '-map', '0:v:0',
-            '-map', '0:a:0'
+            '-map', '0:a:0?'
         );
     }
 

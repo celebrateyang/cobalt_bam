@@ -197,6 +197,18 @@ test("returns a generic progressive MP4 as a direct redirect", () => {
     assert.equal(response.body.tunnelUrl, undefined);
 });
 
+test("keeps generic progressive media requiring CDN headers on a server tunnel", () => {
+    const response = matchAction({
+        host: 'generic', audioFormat: 'mp3', localProcessing: 'never',
+        r: {
+            urls: 'https://cdn.example.com/video.mp4', service: 'example.com',
+            headers: { Cookie: 'token=test', Referer: 'https://example.com/' },
+            filename: 'video.mp4',
+        },
+    });
+    assert.equal(response.body.status, 'tunnel');
+});
+
 test("keeps generic HLS media on the processing tunnel", () => {
     const response = matchAction({
         ...baseArgs,

@@ -551,7 +551,13 @@ const attemptGenericFallback = async ({ request, requestClientIp }) => {
     }
 
     return matchAction({
-        r: extracted,
+        r: {
+            ...extracted,
+            genericDownload: {
+                url: request.url,
+                videoQuality: request.videoQuality,
+            },
+        },
         host: "generic",
         isBatchRequest: request.batch === true,
         audioFormat: request.audioFormat,

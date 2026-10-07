@@ -61,7 +61,7 @@ const parseRangeSpanBytes = (rangeHeader) => {
 
 const shouldStripRangeForHls = (streamInfo) => {
     if (streamInfo?.isHLS !== true) return false;
-    return /\.m3u8(?:$|\?)/i.test(String(streamInfo.url || ""));
+    return /(?:\.m3u8|\/m3u8)(?:$|\?)/i.test(String(streamInfo.url || ""));
 };
 
 const parseBigIntHeaderValue = (value) => {
@@ -530,7 +530,7 @@ async function handleGenericStream(streamInfo, res) {
         return true;
     };
 
-    const baseAttempts = streamInfo.transplant ? 3 : 1;
+    const baseAttempts = streamInfo.transplant || streamInfo.genericDownload ? 3 : 1;
     const maxAttempts = baseAttempts + Math.max(0, candidateUrls.length - 1);
 
     const rawHeaders = Object.fromEntries(streamInfo.headers || []);
@@ -623,6 +623,14 @@ async function handleGenericStream(streamInfo, res) {
             const canRetryWithTransplant =
                 canRetryStatus &&
                 !!streamInfo.transplant;
+
+            if (canRetryStatus && streamInfo.genericDownload && !streamInfo.transplant) {
+                safeDestroyBody(fileResponse.body);
+                // Retry only before forwarding bytes; do not duplicate a
+                // partially delivered segment or skip an unavailable fragment.
+                await new Promise(resolve => setTimeout(resolve, attempt * 250));
+                continue;
+            }
 
             if (canRetryWithTransplant) {
                 safeDestroyBody(fileResponse.body);
@@ -717,6 +725,11 @@ async function handleGenericStream(streamInfo, res) {
                     "aborted",
                     ` attempt=${attempt}/${maxAttempts} range=${rangeHeader} target=${target}`,
                 );
+            }
+
+            if (streamInfo.genericDownload && attempt < maxAttempts && !res.headersSent) {
+                await new Promise(resolve => setTimeout(resolve, attempt * 250));
+                continue;
             }
 
             const canRetryWithCandidate =

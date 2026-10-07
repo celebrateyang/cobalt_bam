@@ -91,6 +91,7 @@ export function createStream(obj) {
             iqiyiTsConcat: obj.iqiyiTsConcat === true,
             bypassTunnelRateLimit: obj.bypassTunnelRateLimit === true,
             originalRequest: obj.originalRequest,
+            genericDownload: obj.genericDownload,
             urlCandidates: normalizedCandidates.length > 1 ? normalizedCandidates : undefined,
 
             // url to a subtitle file
@@ -228,7 +229,7 @@ export function createInternalStream(url, obj = {}, isSubtitles) {
 
     let headers;
     if (obj.headers) {
-        headers = new Map(Object.entries(obj.headers));
+        headers = new Map(obj.headers instanceof Map ? obj.headers : Object.entries(obj.headers));
     }
 
     // subtitles don't need special treatment unlike big media files
@@ -243,6 +244,7 @@ export function createInternalStream(url, obj = {}, isSubtitles) {
         controller,
         dispatcher,
         isHLS: obj.isHLS,
+        genericDownload: obj.genericDownload,
         transplant: obj.transplant
     });
 
@@ -441,8 +443,8 @@ const transplantTunnel = async function (dispatcher) {
 const isFfmpegStreamType = (type) => ['merge', 'remux', 'mute'].includes(type);
 
 const shouldUseInternalFfmpegInputs = (streamInfo) =>
-    isFfmpegStreamType(streamInfo?.type) &&
-    streamInfo?.service === 'vimeo.com' &&
+    (isFfmpegStreamType(streamInfo?.type) || streamInfo?.type === 'audio') &&
+    (streamInfo?.service === 'vimeo.com' || Boolean(streamInfo?.genericDownload)) &&
     streamInfo?.isHLS === true;
 
 const shouldUseDirectFfmpegInputs = (streamInfo) =>

@@ -13,6 +13,11 @@ is publicly accessible from the server or browser.
 - Playlist variants, media segments, initialization maps and AES key requests
   retain source headers. Temporary HTTP/network failures retry before any bytes
   are forwarded, up to three attempts per internal request.
+- Local playlist and resource URLs retain filename extensions for FFmpeg's HLS
+  validation. Both the filename route and the legacy internal route are served.
+- Browser downloads requiring server processing use the visible task queue,
+  with cancellation and failure reporting. The client allows 130 seconds for
+  the first byte, then applies its normal 90-second stall limit.
 - Generic FFmpeg responses finish only after its process exits successfully and
   has emitted bytes. Failed transfers after output begins destroy the HTTP
   connection so fetch clients see a failed body rather than a successful EOF.
@@ -55,3 +60,10 @@ FFmpeg probe on the API pod successfully produced a three-second MP4 sample.
 A local native yt-dlp download of the reported link produced 91,055,538 bytes;
 FFprobe found 960x720 video, audio and a duration of 605.605 seconds. These probes
 do not constitute deployment or a full production end-to-end verification.
+
+The follow-up investigation found that the system FFmpeg rejected extensionless
+local segment URLs (`allowed_segment_extensions`). A production-pod isolated
+probe with the fixed playlist/resource paths produced a three-second sample of
+464,428 bytes, with the first output at 5,846 ms and exit code 0. The browser
+regression checks verify that processing responses enter the task queue rather
+than opening a blank tab. The probe does not verify full-file browser delivery.

@@ -115,7 +115,7 @@ const streamTunnel = (req, res) => {
 export const setupTunnelHandler = () => {
     const tunnelHandler = express();
 
-    tunnelHandler.get('/itunnel', streamTunnel);
+    tunnelHandler.get(['/itunnel', '/itunnel/:filename'], streamTunnel);
 
     // fallback
     tunnelHandler.use((_, res) => res.sendStatus(400));
@@ -132,4 +132,5 @@ export const setupTunnelHandler = () => {
         console.log(`${Green('[✓]')} internal tunnel handler running on 127.0.0.1:${port}`);
         setTunnelPort(port);
     });
+    return server;
 }

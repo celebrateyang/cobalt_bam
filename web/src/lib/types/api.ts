@@ -72,6 +72,8 @@ type CobaltRedirectResponse = {
 
 type CobaltTunnelResponse = {
     status: CobaltResponseType.Tunnel,
+    type?: 'proxy' | 'merge' | 'remux' | 'mute' | 'audio' | 'gif',
+    isHLS?: boolean,
     service?: string,
     directUrl?: string,
     directUrlCandidates?: string[],

@@ -248,7 +248,11 @@ export function createInternalStream(url, obj = {}, isSubtitles) {
         transplant: obj.transplant
     });
 
-    let streamLink = new URL('/itunnel', `http://127.0.0.1:${env.tunnelPort}`);
+    // FFmpeg checks HLS segment extensions against the URL path. Keep a
+    // descriptive suffix even though the underlying resource is cached by ID.
+    const inputFilename = obj.internalFilename || (obj.isHLS ? 'playlist.m3u8' : undefined);
+    const inputPath = inputFilename ? `/itunnel/${encodeURIComponent(inputFilename)}` : '/itunnel';
+    let streamLink = new URL(inputPath, `http://127.0.0.1:${env.tunnelPort}`);
     streamLink.searchParams.set('id', streamID);
 
     const cleanup = () => {

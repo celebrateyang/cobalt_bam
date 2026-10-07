@@ -12,15 +12,15 @@ function getURL(url) {
     }
 }
 
-function transformObject(streamInfo, hlsObject) {
+function transformObject(streamInfo, hlsObject, fallbackFilename = 'segment.ts') {
     if (hlsObject === undefined) {
-        return (object) => transformObject(streamInfo, object);
+        return (object) => transformObject(streamInfo, object, fallbackFilename);
     }
 
     // AES keys and initialization objects need the same headers and local
     // transport as the media segments. Renditions may omit URI entirely.
-    if (hlsObject.map) hlsObject.map = transformObject(streamInfo, hlsObject.map);
-    if (hlsObject.key) hlsObject.key = transformObject(streamInfo, hlsObject.key);
+    if (hlsObject.map) hlsObject.map = transformObject(streamInfo, hlsObject.map, 'init.mp4');
+    if (hlsObject.key) hlsObject.key = transformObject(streamInfo, hlsObject.key, 'key.bin');
     if (!hlsObject.uri || /^data:/i.test(hlsObject.uri)) return hlsObject;
 
     let fullUrl;
@@ -47,7 +47,11 @@ function transformObject(streamInfo, hlsObject) {
                 filename: isNestedHls ? "playlist.m3u8" : "segment.ts",
             });
         } else {
-            hlsObject.uri = createInternalStream(fullUrl.toString(), streamInfo);
+            const extension = fullUrl.pathname.match(/\.(ts|m4s|mp4|aac|m4a|mp3|vtt|m3u8|key|bin)$/i)?.[1];
+            hlsObject.uri = createInternalStream(fullUrl.toString(), {
+                ...streamInfo,
+                internalFilename: extension ? `resource.${extension.toLowerCase()}` : fallbackFilename,
+            });
         }
 
     }
@@ -56,16 +60,16 @@ function transformObject(streamInfo, hlsObject) {
 }
 
 function transformMasterPlaylist(streamInfo, hlsPlaylist) {
-    const makeInternalStream = transformObject(streamInfo);
+    const makeInternalStream = transformObject(streamInfo, undefined, 'playlist.m3u8');
 
     const makeInternalVariants = (variant) => {
-        variant = transformObject(streamInfo, variant);
+        variant = transformObject(streamInfo, variant, 'playlist.m3u8');
         variant.video = variant.video.map(makeInternalStream);
         variant.audio = variant.audio.map(makeInternalStream);
         return variant;
     };
     hlsPlaylist.variants = hlsPlaylist.variants.map(makeInternalVariants);
-    hlsPlaylist.sessionKeyList = hlsPlaylist.sessionKeyList.map(makeInternalStream);
+    hlsPlaylist.sessionKeyList = hlsPlaylist.sessionKeyList.map(key => transformObject(streamInfo, key, 'key.bin'));
 
     return hlsPlaylist;
 }

@@ -100,6 +100,9 @@ export async function renderGenericDownload(res, info, command, {
         console.warn('[generic.download] ffmpeg_failed', {
             service: info.service, code: result.code, signal: result.signal,
             bytes, stderrPresent: Boolean(stderr),
+            reason: /allowed_segment_extensions/i.test(stderr) ? 'hls_segment_extension'
+                : /403|forbidden/i.test(stderr) ? 'source_forbidden'
+                : /invalid data/i.test(stderr) ? 'invalid_media' : 'process_failure',
         });
         clearInterval(timer);
         if (bytes || res.headersSent || res.destroyed || controller.signal.aborted) return fail();
@@ -107,6 +110,7 @@ export async function renderGenericDownload(res, info, command, {
         // Re-extract on the same server and use yt-dlp's native fragment
         // downloader, including its retry and signed-URL handling.
         if (!['remux', 'merge'].includes(info.type)) return fail();
+        console.log('[generic.download] fallback_start', { service: info.service, elapsedMs: Date.now() - startedAt });
         const file = await downloadFile(info, {
             signal: controller.signal,
             timeoutMs: Math.min(90_000, Math.max(1000, 110_000 - (Date.now() - startedAt))),
@@ -121,7 +125,13 @@ export async function renderGenericDownload(res, info, command, {
         } finally {
             await file.cleanup();
         }
-    } catch {
+    } catch (error) {
+        console.warn('[generic.download] failed', {
+            service: info.service, bytes,
+            reason: controller.signal.aborted ? 'cancelled'
+                : /timed out/i.test(error?.message || '') ? 'timeout'
+                : /busy/i.test(error?.message || '') ? 'capacity' : 'download_failure',
+        });
         fail();
     } finally {
         clearInterval(timer);

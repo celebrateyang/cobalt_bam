@@ -850,9 +850,11 @@ export const savingHandler = async ({
             hasTunnelUrl: Boolean(response.tunnelUrl),
         });
 
-        // In forced local-processing mode, even tunnel responses should be queued.
-        // This is especially useful for batch downloads where user activation can expire.
-        if (selectedRequest.localProcessing === "forced") {
+        // Server processing can wait for HLS probing or a full-file fallback.
+        // Keep it in the queue so progress, cancellation and errors remain
+        // visible instead of opening an unobservable blank browser tab.
+        if (selectedRequest.localProcessing === "forced"
+                || ["merge", "remux", "mute", "audio", "gif"].includes(response.type || "")) {
             downloadButtonState.set("done");
 
             createSavePipeline(

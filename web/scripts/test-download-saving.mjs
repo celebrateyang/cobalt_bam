@@ -59,6 +59,59 @@ const fixture = (pref = "download") => {
     return { api, params, device, navigator, dialogs, callbacks, timers, dom, events };
 };
 
+const tunnelFixture = () => {
+    const pipelines = [], downloads = [], states = [];
+    let probes = 0;
+    const source = readFileSync(new URL('src/lib/api/saving-handler.ts', root), 'utf8');
+    const compiled = ts.transpileModule(source, {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const exports = {};
+    const dependencies = {
+        'svelte/store': { get: value => value },
+        '$lib/state/clerk': { clerkEnabled: false },
+        '$lib/state/omnibox': { downloadButtonState: { set: state => states.push(state) } },
+        '$lib/state/task-manager/queue': { queue: {}, updateItem: () => {} },
+        '$lib/task-manager/queue': { createSavePipeline: (...args) => pipelines.push(args) },
+        '$lib/download': { downloadFile: (...args) => downloads.push(args) },
+        '$lib/history': { addToHistory: () => {} },
+        '$lib/util': { uuid: () => 'task-test' },
+        '$lib/api/api-url': { currentApiURL: () => 'https://api.example.com/' },
+        '$lib/api/api': { default: { probeCobaltTunnel: async () => { probes++; return 200; } } },
+    };
+    vm.runInNewContext(compiled, {
+        exports, URL, console: { log: () => {} },
+        window: { location: { origin: 'https://example.com' } },
+        require: name => dependencies[name] || {},
+    });
+    return { savingHandler: exports.savingHandler, pipelines, downloads, states, probes: () => probes };
+};
+
+test('server processing tunnels enter the visible queue without opening a blank tab', async () => {
+    for (const type of ['remux', 'merge', 'mute', 'audio', 'gif']) {
+        const f = tunnelFixture();
+        await f.savingHandler({
+            request: { url: 'https://v.youku.com/v_show/id_test.html', localProcessing: 'never' },
+            response: { status: 'tunnel', type, isHLS: true, url: 'https://api.example.com/tunnel?id=test', filename: 'video.mp4' },
+        });
+        assert.equal(f.pipelines.length, 1);
+        assert.equal(f.pipelines[0][0].tunnel[0], 'https://api.example.com/tunnel?id=test');
+        assert.equal(f.downloads.length, 0);
+        assert.equal(f.probes(), 0);
+    }
+});
+
+test('ordinary proxy tunnels retain the existing browser handoff', async () => {
+    const f = tunnelFixture();
+    await f.savingHandler({
+        request: { url: 'https://example.com/video', localProcessing: 'never' },
+        response: { status: 'tunnel', type: 'proxy', url: 'https://api.example.com/tunnel?id=test', filename: 'video.mp4' },
+    });
+    assert.equal(f.pipelines.length, 0);
+    assert.equal(f.downloads.length, 1);
+    assert.equal(f.probes(), 1);
+});
+
 test("browser handoff does not release a blob before the browser consumes it", async () => {
     const f = fixture();
     assert.equal(await f.api.downloadFile(f.params), "download");

@@ -2,6 +2,9 @@ import * as Storage from "$lib/storage";
 
 const TOTAL_TIMEOUT_MS = 60 * 60 * 1000;
 const STALL_TIMEOUT_MS = 90 * 1000;
+// Server HLS processing may need up to 110s plus media validation before its
+// first byte. Keep the normal stall bound once actual delivery has begun.
+const FIRST_BYTE_TIMEOUT_MS = 130 * 1000;
 const NETWORK_STALL_NOTICE_MS = 15 * 1000;
 const STALL_CHECK_INTERVAL_MS = 5000;
 const MAX_RETRIES = 10;
@@ -316,7 +319,7 @@ const fetchFile = async (
     const startStallMonitor = () => {
         stallInterval = setInterval(() => {
             const idleMs = Date.now() - lastProgressAt;
-            if (idleMs > STALL_TIMEOUT_MS) {
+            if (idleMs > (receivedBytes === 0 ? FIRST_BYTE_TIMEOUT_MS : STALL_TIMEOUT_MS)) {
                 abortReason = "stalled";
                 controller.abort();
                 return;

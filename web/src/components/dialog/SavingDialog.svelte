@@ -12,18 +12,12 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
-    import SavingTutorial from "$components/dialog/SavingTutorial.svelte";
     import SaveLocationHint from "$components/save/SaveLocationHint.svelte";
-    import SupportLink from "$components/save/SupportLink.svelte";
-    import VerticalActionButton from "$components/buttons/VerticalActionButton.svelte";
 
-    import IconShare2 from "@tabler/icons-svelte/IconShare2.svelte";
     import IconDownload from "@tabler/icons-svelte/IconDownload.svelte";
     import IconFileDownload from "@tabler/icons-svelte/IconFileDownload.svelte";
 
-    import CopyIcon from "$components/misc/CopyIcon.svelte";
 
     export let id: string;
     export let dismissable = true;
@@ -37,22 +31,23 @@
 
     let close: () => void;
 
-    let copied = false;
     let saving = false;
     let outcome: SaveOutcome | undefined;
     let attempted = false;
 
-    const save = async (method: "download" | "share" | "copy") => {
+    const save = async () => {
         if (saving) return;
         saving = true;
         const repeat = attempted || saveContext.repeat;
         attempted = true;
         try {
+            // Installed iOS apps save files through the native sheet.
+            const method = device.is.iOS && file && !device.supports.directDownload
+                && device.supports.share ? "share" : "download";
             outcome = await saveWithFeedback(method, {
                 file, url, urlType, onSaveResult,
                 saveContext: { ...saveContext, repeat },
             });
-            copied = outcome === "copied";
         } finally {
             saving = false;
         }
@@ -65,80 +60,25 @@
         }
     });
 
-    $: canDirectDownload = device.supports.directDownload
-        && !(device.is.iOS && urlType === "redirect");
-    $: canShare = device.supports.share && (!file || !navigator.canShare || navigator.canShare({ files: [file] }));
-
-    $: if (copied) {
-        setTimeout(() => {
-            copied = false;
-        }, 1500);
-    }
 </script>
 
 <DialogContainer {id} {dismissable} bind:close>
     <div class="dialog-body popup-body">
-        <div class="meowbalt-container">
-            <Meowbalt emotion="question" />
-        </div>
-
         <div class="dialog-inner-container">
             <div class="popup-header">
                 <IconFileDownload />
                 <h2 class="popup-title" tabindex="-1">
-                    {$t("dialog.saving.title")}
+                    {$t("button.download")}
                 </h2>
             </div>
 
-            <div class="action-buttons">
-                {#if canDirectDownload}
-                    <VerticalActionButton
-                        id="save-download"
-                        fill
-                        elevated
-                        disabled={saving}
-                        click={() => save("download")}
-                    >
-                        <IconDownload />
-                        {$t(device.is.iOS && file ? "save.action.files" : "button.download")}
-                    </VerticalActionButton>
-                {/if}
-
-                {#if canShare}
-                    <VerticalActionButton
-                        id="save-share"
-                        fill
-                        elevated
-                        disabled={saving}
-                        click={() => save("share")}
-                    >
-                        <IconShare2 />
-                        {$t(device.is.iOS && file ? "save.action.share" : "button.share")}
-                    </VerticalActionButton>
-                {/if}
-
-                {#if !file}
-                    <VerticalActionButton
-                        id="save-copy"
-                        fill
-                        elevated
-                        disabled={saving}
-                        click={() => save("copy")}
-                        ariaLabel={copied ? $t("button.copied") : ""}
-                    >
-                        <CopyIcon check={copied} />
-                        {$t("button.copy")}
-                    </VerticalActionButton>
-                {/if}
-            </div>
-
-            {#if device.is.iOS && !file}
-                <SavingTutorial />
-            {/if}
+            <button id="save-download" class="button active download-button" disabled={saving} on:click={save}>
+                <IconDownload />
+                {$t(device.is.iOS && file ? "save.action.files" : "button.download")}
+            </button>
 
             {#if outcome && outcome !== "dialog"}
                 <p class="body-text" role="status" aria-live="polite">{$t(`save.result.${outcome}`)}</p>
-                {#if outcome === "failed" || outcome === "cancelled"}<SupportLink />{/if}
             {:else if file}
                 <p class="body-text">{$t("save.result.ready")}</p>
             {/if}
@@ -146,20 +86,20 @@
                 <p class="body-text">{$t("save.ios_help")}</p>
             {/if}
 
-            {#if bodyText}
+            {#if bodyText && !outcome}
                 <div class="body-text">
                     {bodyText}
                 </div>
             {/if}
 
-            <SaveLocationHint afterClick={canDirectDownload} compact />
+            <SaveLocationHint afterClick={outcome === "download"} collapsible compact />
         </div>
 
         <DialogButtons
             buttons={[
                 {
                     text: $t("button.done"),
-                    main: true,
+                    main: false,
                     action: () => {},
                 },
             ]}
@@ -177,7 +117,7 @@
     }
 
     .dialog-inner-container {
-        overflow-y: scroll;
+        overflow-y: auto;
         gap: 8px;
         width: 100%;
     }
@@ -187,14 +127,6 @@
         width: calc(100% - var(--padding) - var(--dialog-padding) * 2);
         max-height: 70%;
         margin: calc(var(--padding) / 2);
-    }
-
-    .meowbalt-container {
-        position: absolute;
-        top: -126px;
-        right: 0;
-        /* simulate meowbalt being behind the popup */
-        clip-path: inset(0px 0px 14px 0px);
     }
 
     .popup-header {
@@ -219,21 +151,13 @@
         box-shadow: none !important;
     }
 
-    .action-buttons {
+    .download-button {
         display: flex;
-        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 44px;
         gap: calc(var(--padding) / 2);
-        position: relative;
-    }
-
-    .action-buttons :global(.button.vertical.fill) {
-        flex: 1 1 0;
-        min-width: 0;
-        width: auto;
-        min-height: 64px;
-        padding: 10px 8px;
-        white-space: normal;
-        line-height: 1.3;
     }
 
     .body-text {

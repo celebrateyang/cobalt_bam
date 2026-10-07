@@ -160,7 +160,7 @@ export const downloadFile = async (params: DownloadFileParams): Promise<SaveOutc
 
     // A finished local file can be handed to the download manager without
     // opening a new window or invoking a gesture-gated sharing API.
-    if (params.automatic && file && pref === "download"
+    if (file && pref === "download"
             && device.supports.directDownload && !device.is.iOS) {
         return saveWithFeedback("download", params);
     }

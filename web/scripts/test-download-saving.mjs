@@ -155,13 +155,25 @@ test("a missing clipboard cannot report a copied link", async () => {
     assert.equal(await f.api.downloadFile({ url: "https://example.com/video" }), "failed");
 });
 
-test("expired user activation shows a dialog without marking a file saved", async () => {
+test("expired user activation on a remote URL keeps the manual download fallback", async () => {
     const f = fixture();
     f.navigator.userActivation.isActive = false;
-    assert.equal(await f.api.downloadFile(f.params), "dialog");
+    assert.equal(await f.api.downloadFile({ url: 'https://example.com/video', onSaveResult: f.params.onSaveResult }), "dialog");
     assert.equal(f.dialogs.length, 1);
     assert.deepEqual(f.callbacks, ["dialog"]);
     assert.deepEqual(f.dom, []);
+});
+
+test("ready desktop files download without a second prompt after activation expires", async () => {
+    const f = fixture();
+    f.navigator.userActivation.isActive = false;
+    assert.equal(await f.api.downloadFile(f.params), "download");
+    assert.equal(f.dialogs.length, 0);
+    assert.deepEqual(f.callbacks, ["download"]);
+    assert.equal(f.dom.filter(value => value === "click").length, 1);
+    const forced = fixture();
+    assert.equal(await forced.api.downloadFile({ ...forced.params, forceDialog: true }), "dialog");
+    assert.deepEqual(forced.dom, []);
 });
 
 test("iPhone queue saving and repeat saving reuse the result and dialog callback", async () => {

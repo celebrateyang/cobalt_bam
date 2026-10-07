@@ -158,6 +158,9 @@ function aliasURL(url) {
                 url = new URL(`https://naver.com/_shortLink/${
                     encodeURIComponent(parts[1])
                 }`);
+            } else if (/^\/shorts\/oembed\/?$/.test(url.pathname)) {
+                // Embedded/share players identify the same video as /shorts.
+                url.pathname = "/shorts";
             }
             break;
 
@@ -334,7 +337,7 @@ function cleanURL(url) {
             if (url.searchParams.get("mediaId") || url.searchParams.get("seedMediaId")) {
                 const mediaId = url.searchParams.get("mediaId") || url.searchParams.get("seedMediaId");
                 const serviceType = url.searchParams.get("serviceType");
-                const mediaType = url.searchParams.get("mediaType");
+                const mediaType = url.searchParams.get("mediaType") || url.searchParams.get("seedMediaType");
                 const cleaned = new URLSearchParams();
 
                 cleaned.set("mediaId", mediaId);

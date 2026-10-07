@@ -1,7 +1,7 @@
 import { genericUserAgent } from "../../config.js";
 import { getRedirectingURL } from "../../misc/utils.js";
 
-const CARD_API_URL = "https://creatorhub-api.naver.com/api/v5.0/clipviewer/card";
+const CARD_API_URL = "https://creatorhub-api.naver.com/api/v7.0/clipviewer/card";
 
 const defaultHeaders = {
     "user-agent": genericUserAgent,
@@ -61,6 +61,9 @@ const collectRepresentations = (playback) => {
             : [set?.Representation].filter(Boolean);
 
         for (const item of items) {
+            // A DASH BaseURL with a SegmentTemplate is a directory, not a
+            // complete progressive video. Never return it as an MP4 download.
+            if (item?.SegmentTemplate || set?.SegmentTemplate) continue;
             const url = readFirst(item?.BaseURL);
             if (typeof url !== "string" || !/^https?:\/\//i.test(url)) {
                 continue;
@@ -101,7 +104,8 @@ const getSummaryText = (summary, key) => {
 const buildMetadata = (content, playback) => {
     const summary = readFirst(readFirst(playback?.MPD)?.Period)?.SupplementalProperty?.[0]?.["nvod:Summary"];
     const title =
-        String(content?.description || "").trim()
+        String(content?.title || "").trim()
+        || String(content?.description || "").trim()
         || getSummaryText(summary, "nvod:Title")
         || `naver_${content?.mediaId || "shorts"}`;
     const cover =
@@ -198,10 +202,11 @@ const fetchCard = async ({ mediaId, serviceType, mediaType }) => {
 
     const response = await fetch(url, {
         headers: defaultHeaders,
+        signal: AbortSignal.timeout(10_000),
     }).catch(() => null);
 
-    if (!response?.ok) return;
-    return response.json().catch(() => null);
+    if (!response?.ok) return { error: "fetch.fail" };
+    return response.json().catch(() => ({ error: "fetch.fail" }));
 };
 
 export default async function naver(obj) {
@@ -218,6 +223,8 @@ export default async function naver(obj) {
     }
 
     const data = await fetchCard(params);
+    if (data?.error) return data;
+    if (data?.header?.code && data.header.code !== 0) return { error: "fetch.fail" };
     const content = data?.body?.card?.content;
     const playback = content?.vod?.playback;
     if (!content || content?.vod?.playable === false || !playback) {
